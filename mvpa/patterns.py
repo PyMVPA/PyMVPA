@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 #
-#    Multivariate pattern analysis
+#    PyMVPA: Pattern handling and manipulation
 #
 #    Copyright (C) 2006-2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -18,88 +18,167 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 import numpy
+import random
+
+class Patterns(object):
+    def __init__( self, pattern = [], regs = [], origin = None ):
+        self.__patterns = [ i for i in pattern ]
+        self.__regs = [ i for i in regs ]
+
+        if origin == None:
+            origin = [ i for i in xrange( len( pattern ) ) ]
+
+        self.__origins = [ i for i in origin ]
+
+        if not ( len( self.__patterns ) == len( self.__regs ) == len( self.__origins ) ):
+            raise ValueError, "All sequences (pattern, regs (, origin)) have to be of equal length."
 
 
-def packPatterns( patterns, regs, origins = None ):
-    """ Pack information about pattern data, regressor value and pattern origin
-    into a single datastructure.
+    def addPatterns( self, pattern, reg, origin ):
+        """ Add patterns with a common regressor (reg) and origin.
 
-    This function can be useful if a data pattern has to be associated with
-    some properties (regressor value and origin of the pattern). This might be
-    necessary if a function has to be applied to a list of patterns without
-    loosing the association.
+        'pattern' has to be a sequence.
+        """
+        regs = [ reg for i in xrange(len(pattern)) ]
+        origins = [ origin for i in xrange(len(pattern)) ]
 
-    This function takes sequences of patterns, regressor values and origin
-    labels. All sequences have to be of equal length. The sequences have to be
-    ordered in the way that patterns[i], regs[i] and origins[i] contain data,
-    regressor and origin of pattern i.
+        # do list comprehension to be able to add other sequence types
+        # (or even numpy arrays) to the pattern list
+        self.__patterns += [ p for p in pattern ]
+        self.__regs += regs
+        self.__origins += origins
 
-    While the regressor associates patterns with certain conditions the origins
-    can be used to mark patterns to be structural similiar e.g. recorded during
-    the same session. If no origin value is specified each pattern will get a
-    unique origin label.
 
-    This function returns a sequence of 3-tupels (pattern, reg, origin).
+    def addPackedPatterns( self, pack ):
+        """
+        """
+        pat = [ p[0] for p in pack ]
+        reg = [ p[1] for p in pack ]
+        orig = [ p[2] for p in pack ]
 
-    Please see the unpackPatterns() that reverts this procedure.
+        self.__patterns += pat
+        self.__regs += reg
+        self.__origins += orig
+
+
+    def getPacked( self ):
+        """ Pack information about pattern data, regressor value and pattern origin
+        into a single datastructure.
+
+        This function can be useful if a data pattern has to be associated with
+        some properties (regressor value and origin of the pattern). This might be
+        necessary if a function has to be applied to a list of patterns without
+        loosing the association.
+
+        While the regressor associates patterns with certain conditions the origins
+        can be used to mark patterns to be structural similiar e.g. recorded during
+        the same session. If no origin value is specified each pattern will get a
+        unique origin label.
+
+        This function returns a sequence of 3-tupels (pattern, reg, origin).
+
+        Please see the unpackPatterns() that reverts this procedure.
+        """
+        return zip( self.pattern, self.reg, self.origin )
+
+
+    def clear( self ):
+        self.__patterns = []
+        self.__regs = []
+        self.__origins = []
+
+
+    def shuffle( self ):
+        # get the packed data
+        pack = self.getPacked()
+
+        # clear the data
+        self.clear()
+
+        # shuffle the data
+        random.shuffle( pack )
+
+        # and put it back
+        self.addPackedPatterns( pack )
+
+
+    def zscore( self, mean = None, std = None ):
+        pass
+
+
+    def selectFeatures(self, mask = None):
+        """ Uses all non-zero elements of a mask volume to select
+        elements in data array.
+
+        Returns a 2d array ( patterns x <number of non-zeros in mask> ).
+        """
+        # if there is nothing return nothing
+        if not len( self.pattern ):
+            return None
+
+        # convert data into an array
+        # this might be stupid as the data is finally transformed back into a list
+        # but it also makes sure that all patterns have a uniform shape
+        data = numpy.array( self.pattern )
+
+        # make sure to always have at least 2d data
+        # necessary because each pattern has to be an array as well otherwise
+        # one cannot use the nonzero coordinates to slice the data
+        if len( data.shape ) < 2:
+            data = data.reshape( data.shape + (1,) )
+
+        # use everything if there is no mask
+        if mask == None:
+            mask = numpy.ones(data.shape[1:])
+
+        if isinstance(mask, numpy.ndarray):
+            if not mask.shape == data.shape[1:]:
+                raise ValueError, 'Mask shape has to match data array shape' \
+                                + ' while ignoring 1st dimension, e,g. if data' \
+                                + ' is (10,2,3,4) mask has to be (2,3,4).'
+
+            # tuple of arrays containing the indexes of all nonzero elements
+            # of the mask
+            nz = mask.nonzero()
+
+        elif isinstance(mask, tuple):
+            # mask already contains the nonzero coordinates
+            if not len(mask) == len(data.shape[1:]):
+                raise ValueError, 'Number of mask dimensions has to match the' \
+                                + ' data array (except 1st data array dimension.'
+            nz = mask
+
+        else:
+            raise ValueError, "'mask' has to be either an array with one" \
+                            + " dimension less than the data array or an" \
+                            + " n-tuple of index arrays (like those returned" \
+                            + " by array.nonzero())"
+
+        # choose all elements with non-zero mask values from all patterns 
+        # and convert into a 2d array (patterns x features)
+        selected = numpy.array( [ p[nz] for p in data ] )
+
+        return selected
+
+
+   # read-only class properties
+    packed =  property( fget=getPacked)
+    pattern = property( fget=lambda self: self.__patterns )
+    reg =     property( fget=lambda self: self.__regs )
+    origin =  property( fget=lambda self: self.__origins )
+
+
+def feature2coord( nfeat, mask ):
+    """ Converts the feature id (number) into a coordinate in a given mask.
     """
-    # if no pattern origins are specified let every pattern be in it's own
-    if origins == None:
-        origins = range( len( patterns ) )
 
-    if not ( len( patterns ) == len( regs ) == len( origins ) ):
-        raise ValueError, "All sequences have to be of equal length."
+    # get the non-zero mask elements
+    nz = mask.nonzero()
 
-    return zip( patterns, regs, origins )
+    return tuple( [ nz[i][nfeat] for i in range(len(nz)) ] )
 
 
-def unpackPatterns( pack ):
-    """ Revert the procedure of packPatterns().
+def samplePatterns( pack, n, exclude_orig = None ):
+    """ 
     """
-
-    return [ p[0] for p in pack ], \
-           [ p[1] for p in pack ], \
-           [ p[2] for p in pack ]
-
-
-def selectFeatures(source, mask = None):
-    """Uses all non-zero elements of a 3d mask volume to select
-    data elements in all volumes of a 4d timeseries ('input').
-
-    Returns a 2d array ( volumes x <number of non-zeros in mask> ).
-    """
-    # make sure input is 5d
-    data = source.reshape( tuple([ 1 for i in range( 5 - len(source.shape) ) ]) + source.shape )
-
-    # use everything if there is no mask
-    if mask == None:
-        mask = numpy.ones(source.shape[-3:])
-
-    if isinstance(mask, numpy.ndarray):
-        if not len(mask.shape) == 3:
-            raise ValueError, "'mask' array must be 3d."
-        # tuple of arrays containing the indexes of all nonzero elements
-        # of the mask
-        nz = mask.nonzero()
-    elif isinstance(mask, tuple):
-        # mask already contains the nonzero coordinates
-        nz = mask
-    else:
-        raise ValueError, "'mask' has to be either a 3d array or a 3-tuple of index array (like those returned by array.nonzero())"
-
-    # how many nonzeros do we have
-    nzsize = len(nz[0])
-
-    # create the output array with desired size
-    # make space for all non-zeros in each step in the 5th dimension
-    # for all volumes (data.shape[1])
-    selected = numpy.zeros( (data.shape[1], data.shape[0] * nzsize), dtype=source.dtype)
-
-    # for all datasets (5th dim)
-    for d in xrange(data.shape[0]):
-        # for all volumes in the timeseries
-        for v in xrange(data.shape[1]):
-            # store the nonzero elements of all input volumes
-            selected[v,d*nzsize:d*nzsize+nzsize] = data[d,v][nz]
-
-    return selected
+    pass

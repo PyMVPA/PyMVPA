@@ -19,7 +19,7 @@
 import unittest
 
 # list all test modules (without .py extension)
-tests = [ 'test_mvpa' ]
+tests = [ 'test_patterns' ]
 
 
 # import all test modules

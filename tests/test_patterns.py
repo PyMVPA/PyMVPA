@@ -20,28 +20,42 @@ import mvpa
 import unittest
 import numpy
 
-class MVPATests(unittest.TestCase):
+class PatternTests(unittest.TestCase):
 
     def testSelectFeatures(self):
         # make random 4d data set
-        data = numpy.random.standard_normal( (10,2,3,4) )
+        data = mvpa.Patterns()
+        data.addPatterns( numpy.random.standard_normal( (10,2,3,4) ), 1, 1 )
         # make full 3d mask
         mask = numpy.ones( (2,3,4) )
         # check 4d -> 2d with 3d mask
-        selected = mvpa.selectFeatures( data, mask )
+        selected = data.selectFeatures( mask )
         self.failUnlessEqual( selected.shape, (10, 24) )
 
+        # now reduce mask
+        mask[1,1,1] = 0
+        # check the one feature is removed
+        selected = data.selectFeatures( mask )
+        self.failUnlessEqual( selected.shape, (10, 23) )
+
         # make random 2d data set
-        data = numpy.random.standard_normal( (10,5) )
+        data.clear()
+        data.addPatterns( numpy.random.standard_normal( (10,5) ), 1, 1)
         # make full 1d mask
         mask = numpy.ones( (5) )
         # check 2d -> 2d with 1d mask
-        selected = mvpa.selectFeatures( data, mask )
+        selected = data.selectFeatures( mask )
         self.failUnlessEqual( selected.shape, (10, 5) )
 
+        # make random 1d data set
+        data.clear()
+        data.addPatterns( numpy.random.standard_normal( 10), 1, 1 )
+        # check 1d -> 2d
+        selected = data.selectFeatures()
+        self.failUnlessEqual( selected.shape, (10, 1) )
 
 def suite():
-    return unittest.makeSuite(MVPATests)
+    return unittest.makeSuite(PatternTests)
 
 
 if __name__ == '__main__':
