@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 #
-#    Unit tests for PyMVPA
+#    Unit tests for PyMVPA pattern handling
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -53,6 +53,20 @@ class PatternTests(unittest.TestCase):
         # check 1d -> 2d
         selected = data.selectFeatures()
         self.failUnlessEqual( selected.shape, (10, 1) )
+
+
+    def testZScoring(self):
+        data = mvpa.Patterns()
+        # dataset: mean=2, std=1
+        pat = numpy.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) )
+        self.failUnlessEqual( pat.mean(), 2.0 )
+        self.failUnlessEqual( pat.std(), 1.0 )
+        data.addPatterns( pat, 1, 1)
+        data.zscore()
+
+        # check z-scoring
+        self.failUnless( data.pattern == [-2,-1,1,2,0,0,1,-1,-1,1,1,-1,0,0,0,0] )
+
 
 def suite():
     return unittest.makeSuite(PatternTests)

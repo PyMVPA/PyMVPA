@@ -103,7 +103,33 @@ class Patterns(object):
 
 
     def zscore( self, mean = None, std = None ):
-        pass
+        """ Z-Score the pattern data.
+
+        'mean' and 'std' can be used to pass custom values to the z-scoring. Both
+        may be scalars or arrays.
+        """
+        data = self.asarray() 
+        
+        # calculate mean if necessary
+        if not mean:
+            mean = data.mean()
+
+        # calculate std-deviation if necessary
+        if not std:
+            std = data.std()
+
+        # do the z-scoring (do not use in-place operations to ensure
+        # appropriate data upcasting
+        zscore = ( data - mean ) / std
+
+        # store the zscored data
+        self.__patterns = [ p for p in zscore ]
+
+
+    def asarray( self ):
+        """ Returns the pattern data as a NumPy array.
+        """
+        return numpy.array( self.pattern )
 
 
     def selectFeatures(self, mask = None):
@@ -119,7 +145,7 @@ class Patterns(object):
         # convert data into an array
         # this might be stupid as the data is finally transformed back into a list
         # but it also makes sure that all patterns have a uniform shape
-        data = numpy.array( self.pattern )
+        data = self.asarray()
 
         # make sure to always have at least 2d data
         # necessary because each pattern has to be an array as well otherwise
