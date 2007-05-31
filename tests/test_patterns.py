@@ -68,6 +68,12 @@ class PatternTests(unittest.TestCase):
         self.failUnless( data.pattern == [-2,-1,1,2,0,0,1,-1,-1,1,1,-1,0,0,0,0] )
 
 
+    def testPatternShape(self):
+        data = mvpa.Patterns()
+        data.addPatterns( numpy.ones((10,2,3,4)), 1, 1 )
+
+        self.failUnless( data.getPatternShape() == (2,3,4) )
+
 def suite():
     return unittest.makeSuite(PatternTests)
 

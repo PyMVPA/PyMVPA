@@ -17,3 +17,5 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 from patterns import *
+from crossval import *
+from algorithms import *

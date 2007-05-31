@@ -30,8 +30,9 @@ class Patterns(object):
 
         self.__origins = [ i for i in origin ]
 
-        if not ( len( self.__patterns ) == len( self.__regs ) == len( self.__origins ) ):
-            raise ValueError, "All sequences (pattern, regs (, origin)) have to be of equal length."
+        if not ( len( self.__patterns ) == len( self.__regs ) \
+                    == len( self.__origins ) ):
+            raise ValueError, "All sequences have to be of equal length."
 
 
     def addPatterns( self, pattern, reg, origin ):
@@ -62,24 +63,36 @@ class Patterns(object):
 
 
     def getPacked( self ):
-        """ Pack information about pattern data, regressor value and pattern origin
-        into a single datastructure.
+        """ Pack information about pattern data, regressor value and pattern
+        origin into a single datastructure.
 
         This function can be useful if a data pattern has to be associated with
-        some properties (regressor value and origin of the pattern). This might be
-        necessary if a function has to be applied to a list of patterns without
-        loosing the association.
+        some properties (regressor value and origin of the pattern). This
+        might be necessary if a function has to be applied to a list of
+        patterns without loosing the association.
 
-        While the regressor associates patterns with certain conditions the origins
-        can be used to mark patterns to be structural similiar e.g. recorded during
-        the same session. If no origin value is specified each pattern will get a
-        unique origin label.
+        While the regressor associates patterns with certain conditions the
+        origins can be used to mark patterns to be structural similiar e.g.
+        recorded during the same session. If no origin value is specified each
+        pattern will get a unique origin label.
 
         This function returns a sequence of 3-tupels (pattern, reg, origin).
 
         Please see the unpackPatterns() that reverts this procedure.
         """
         return zip( self.pattern, self.reg, self.origin )
+
+
+    def getPatternShape( self ):
+        """ Returns the shape of the pattern data.
+
+        Returns a tuple with the size along all axis, just like 
+        numpy.array.shape. If no patterns are present 'None' is returned.
+        """
+        if not len( self.pattern ):
+            return None
+
+        return numpy.array( self.pattern[0] ).shape
 
 
     def clear( self ):
@@ -105,8 +118,8 @@ class Patterns(object):
     def zscore( self, mean = None, std = None ):
         """ Z-Score the pattern data.
 
-        'mean' and 'std' can be used to pass custom values to the z-scoring. Both
-        may be scalars or arrays.
+        'mean' and 'std' can be used to pass custom values to the z-scoring.
+        Both may be scalars or arrays.
         """
         data = self.asarray() 
         
@@ -143,8 +156,8 @@ class Patterns(object):
             return None
 
         # convert data into an array
-        # this might be stupid as the data is finally transformed back into a list
-        # but it also makes sure that all patterns have a uniform shape
+        # this might be stupid as the data is finally transformed back into a
+        # list but it also makes sure that all patterns have a uniform shape
         data = self.asarray()
 
         # make sure to always have at least 2d data
@@ -160,8 +173,8 @@ class Patterns(object):
         if isinstance(mask, numpy.ndarray):
             if not mask.shape == data.shape[1:]:
                 raise ValueError, 'Mask shape has to match data array shape' \
-                                + ' while ignoring 1st dimension, e,g. if data' \
-                                + ' is (10,2,3,4) mask has to be (2,3,4).'
+                              + ' while ignoring 1st dimension, e,g. if data' \
+                              + ' is (10,2,3,4) mask has to be (2,3,4).'
 
             # tuple of arrays containing the indexes of all nonzero elements
             # of the mask
@@ -170,8 +183,9 @@ class Patterns(object):
         elif isinstance(mask, tuple):
             # mask already contains the nonzero coordinates
             if not len(mask) == len(data.shape[1:]):
-                raise ValueError, 'Number of mask dimensions has to match the' \
-                                + ' data array (except 1st data array dimension.'
+                raise ValueError, 'Number of mask dimensions has to match' \
+                                + ' the data array (except 1st data array' \
+                                + ' dimension).'
             nz = mask
 
         else:

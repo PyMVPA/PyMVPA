@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 #
-#    Main unit test interface for PyMVPA
+#    Unit tests for PyMVPA pattern handling
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -16,28 +16,28 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
+import mvpa
 import unittest
+import numpy
 
-# list all test modules (without .py extension)
-tests = [ 'test_patterns',
-          'test_algorithms',
-          'test_crossval' ]
+class AlgorithmTests(unittest.TestCase):
+
+    def testSphereGenerator(self):
+        minimal = [ coord
+            for coord in mvpa.SpheresInVolume(numpy.ones((1,1,1)), 1) ]
+
+        # only one sphere possible
+        self.failUnless( len(minimal) == 1 )
+        # check sphere
+        self.failUnless( (minimal[0][0] == 0).all() )
+        self.failUnless( (minimal[0][1] == 0).all() )
+        self.failUnless( (minimal[0][2] == 0).all() )
 
 
-# import all test modules
-for t in tests:
-    exec 'import ' + t
+def suite():
+    return unittest.makeSuite(AlgorithmTests)
 
 
 if __name__ == '__main__':
-
-    # load all tests suites
-    suites = [ eval(t + '.suite()') for t in tests ]
-
-    # and make global test suite
-    ts = unittest.TestSuite( suites )
-
-    # finally run it
-    unittest.TextTestRunner().run( ts )
-
+    unittest.main()
 
