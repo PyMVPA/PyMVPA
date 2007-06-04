@@ -60,6 +60,7 @@ class PatternTests(unittest.TestCase):
                                [ 1, 2, 3, 4 ],
                                [ 2, 2, 2 ] )
 
+
     def testShapeConversion(self):
         data = mvpa.MVPAPattern( numpy.arange(24).reshape((2,3,4)),1,1 )
         self.failUnlessEqual(data.npatterns, 2)
@@ -69,39 +70,6 @@ class PatternTests(unittest.TestCase):
                           numpy.array([range(12),range(12,24)] ) ).all() )
 
 
-#    def testSelectFeatures(self):
-#        # make random 4d data set
-#        data = mvpa.Patterns()
-#        data.addPatterns( numpy.random.standard_normal( (10,2,3,4) ), 1, 1 )
-#        # make full 3d mask
-#        mask = numpy.ones( (2,3,4) )
-#        # check 4d -> 2d with 3d mask
-#        selected = data.selectFeatures( mask )
-#        self.failUnlessEqual( selected.shape, (10, 24) )
-#
-#        # now reduce mask
-#        mask[1,1,1] = 0
-#        # check the one feature is removed
-#        selected = data.selectFeatures( mask )
-#        self.failUnlessEqual( selected.shape, (10, 23) )
-#
-#        # make random 2d data set
-#        data.clear()
-#        data.addPatterns( numpy.random.standard_normal( (10,5) ), 1, 1)
-#        # make full 1d mask
-#        mask = numpy.ones( (5) )
-#        # check 2d -> 2d with 1d mask
-#        selected = data.selectFeatures( mask )
-#        self.failUnlessEqual( selected.shape, (10, 5) )
-#
-#        # make random 1d data set
-#        data.clear()
-#        data.addPatterns( numpy.random.standard_normal( 10), 1, 1 )
-#        # check 1d -> 2d
-#        selected = data.selectFeatures()
-#        self.failUnlessEqual( selected.shape, (10, 1) )
-#
-#
     def testZScoring(self):
         # dataset: mean=2, std=1
         pat = numpy.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) )
@@ -161,6 +129,58 @@ class PatternTests(unittest.TestCase):
             pat = data.pattern[:, id ]
 
             self.failUnless( (orig == pat).all() )
+
+
+    def testPatternMasking(self):
+        origdata = numpy.random.standard_normal((10,2,4,3,5))
+        data = mvpa.MVPAPattern( origdata, 2, 2 )
+
+        unmasked = data.pattern.copy()
+
+        # default must be no mask
+        self.failUnless( data.getSelectedFeatures() == range( 120 ) )
+
+        # check that full mask uses all features
+        data.setPatternMask( numpy.ones((2,4,3,5)) )
+        self.failUnless( 
+            data.getSelectedFeatures() == \
+            range( data.pattern.shape[1] ) )
+
+        # check reset kills mask
+        data.setPatternMask()
+        self.failUnless( data.getSelectedFeatures() == range( 120 ) )
+        self.failUnless( data.pattern.shape[1] == 120 )
+
+        # check selection with nonzero tuple
+        data.setPatternMask( ((0,0,1),(0,2,3),(0,1,2),(0,2,4)) )
+        self.failUnless(data.getSelectedFeatures() == [0,37,119])
+
+        # check size of the masked patterns
+        self.failUnless( data.pattern.shape == (10,3) )
+
+        # check that the right features are selected
+        self.failUnless( (unmasked[:,[0,37,119]]==data.pattern).all() )
+
+        # check unmasked data shape
+        data.setPatternMask()
+        self.failUnless( data.pattern.shape == (10,120) )
+
+
+    def testOrigMaskExtraction(self):
+        origdata = numpy.random.standard_normal((10,2,4,3))
+        data = mvpa.MVPAPattern( origdata, 2, 2 )
+
+        origmask = data.getMaskInOrigShape()
+        self.failUnless( origmask.shape == origdata.shape[1:] )
+
+        # check full mask
+        self.failUnless( (origmask == numpy.ones((2,4,3))).all())
+
+        # check with custom mask
+        data.setPatternMask([5])
+        self.failUnless( data.pattern.shape[1] == 1 )
+        origmask = data.getMaskInOrigShape()
+        self.failUnless( origmask[0,1,2] == True )
 
 
 def suite():

@@ -26,6 +26,8 @@ class MVPAPattern(object):
         self.__patterns = None
         self.__regs = None
         self.__origins = None
+        self.__mask = None
+        self.__maskedpatterns = None
 
         self.addPattern( pattern, reg, origin )
 
@@ -105,77 +107,94 @@ class MVPAPattern(object):
         All computations are done in place.
         """
         # cast to floating point datatype if necessary
-        if str(self.pattern.dtype).startswith('uint') \
-           or str(self.pattern.dtype).startswith('int'):
-            self.__patterns = self.pattern.astype('float64')
+        if str(self.__patterns.dtype).startswith('uint') \
+           or str(self.__patterns.dtype).startswith('int'):
+            self.__patterns = self.__patterns.astype('float64')
 
         # calculate mean if necessary
         if not mean:
-            mean = self.pattern.mean(axis=0)
+            mean = self.__patterns.mean(axis=0)
 
         # calculate std-deviation if necessary
         if not std:
-            std = self.pattern.std(axis=0)
+            std = self.__patterns.std(axis=0)
 
         # do the z-scoring
         self.__patterns -= mean
         self.__patterns /= std
 
 
-    def selectFeatures(self, mask = None):
+    def getSelectedFeatures( self ):
+        if self.__mask == None:
+            return range( self.nfeatures )
+        else:
+            return self.__mask
+
+
+    def setPatternMask( self, mask = None ):
         """ Uses all non-zero elements of a mask volume to select
         elements in data array.
 
         Returns a 2d array ( patterns x <number of non-zeros in mask> ).
         """
-        # if there is nothing return nothing
-        if not len( self.pattern ):
-            return None
-
-        # convert data into an array
-        # this might be stupid as the data is finally transformed back into a
-        # list but it also makes sure that all patterns have a uniform shape
-        data = self.asarray()
-
-        # make sure to always have at least 2d data
-        # necessary because each pattern has to be an array as well otherwise
-        # one cannot use the nonzero coordinates to slice the data
-        if len( data.shape ) < 2:
-            data = data.reshape( data.shape + (1,) )
-
-        # use everything if there is no mask
+        # calling with nothing removes the pattern mask
         if mask == None:
-            mask = numpy.ones(data.shape[1:])
+            self.__mask = None
+            self.__maskedpatterns = None
+
+            return
 
         if isinstance(mask, numpy.ndarray):
-            if not mask.shape == data.shape[1:]:
-                raise ValueError, 'Mask shape has to match data array shape' \
-                              + ' while ignoring 1st dimension, e,g. if data' \
-                              + ' is (10,2,3,4) mask has to be (2,3,4).'
+            if not mask.shape == self.origshape:
+                raise ValueError, 'Mask shape has to match original data ' \
+                              + 'array shape (ignoring the pattern axis).' \
 
             # tuple of arrays containing the indexes of all nonzero elements
             # of the mask
-            nz = mask.nonzero()
+            self.__mask = [ self.getFeatureId( c ) \
+                                for c in numpy.transpose( mask.nonzero() ) ]
 
         elif isinstance(mask, tuple):
             # mask already contains the nonzero coordinates
-            if not len(mask) == len(data.shape[1:]):
+            if not len(mask) == len(self.origshape):
                 raise ValueError, 'Number of mask dimensions has to match' \
-                                + ' the data array (except 1st data array' \
-                                + ' dimension).'
-            nz = mask
+                                + ' the original data array (ignoring the' \
+                                + ' pattern axis).'
+            self.__mask = [ self.getFeatureId( c ) \
+                                for c in numpy.transpose( mask ) ]
+
+        elif isinstance(mask, list):
+            # assumed to be a list of feature ids
+            self.__mask = mask
 
         else:
-            raise ValueError, "'mask' has to be either an array with one" \
-                            + " dimension less than the data array or an" \
-                            + " n-tuple of index arrays (like those returned" \
-                            + " by array.nonzero())"
+            raise ValueError, "'mask' has to be either an array with" \
+                              " origshape or an n-tuple of index arrays" \
+                              " (like those returned by array.nonzero())" \
+                              " or a list of feature ids."
 
         # choose all elements with non-zero mask values from all patterns 
         # and convert into a 2d array (patterns x features)
-        selected = numpy.array( [ p[nz] for p in data ] )
+        self.__maskedpatterns = self.__patterns[:, self.__mask]
 
-        return selected
+
+    def getMaskInOrigShape( self ):
+        # return full matrix if no mask is there
+        if self.__mask == None:
+            return numpy.ones( self.origshape, dtype='bool' )
+
+        # initialize empty mask
+        origmask = numpy.zeros( self.origshape, dtype='bool' )
+
+        # translate feature ids into coordinates
+        coords = [ self.getCoordinate(f) for f in self.getSelectedFeatures() ]
+
+        # set mask to True at feature coordinates
+        # A note for the reader: The tuple() is really necessary as without
+        # it the whole indexing does not work.
+        origmask[ tuple( numpy.transpose(coords) ) ] = True
+
+        return origmask
 
 
     def getNumberOfPatterns( self ):
@@ -235,26 +254,17 @@ class MVPAPattern(object):
         return coord
 
 
+    def getPatterns( self ):
+        if self.__mask:
+            return self.__maskedpatterns
+        else:
+            return self.__patterns
+
+
     # read-only class properties
-    pattern =   property( fget=lambda self: self.__patterns )
+    pattern =   property( fget=getPatterns )
     reg =       property( fget=lambda self: self.__regs )
     origin =    property( fget=lambda self: self.__origins )
     npatterns = property( fget=getNumberOfPatterns )
     nfeatures = property( fget=getNumberOfFeatures )
     origshape = property( fget=lambda self: self.__origshape )
-
-
-def feature2coord( nfeat, mask ):
-    """ Converts the feature id (number) into a coordinate in a given mask.
-    """
-
-    # get the non-zero mask elements
-    nz = mask.nonzero()
-
-    return tuple( [ nz[i][nfeat] for i in range(len(nz)) ] )
-
-
-def samplePatterns( pack, n, exclude_orig = None ):
-    """ 
-    """
-    pass
