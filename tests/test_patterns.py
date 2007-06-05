@@ -46,6 +46,10 @@ class PatternTests(unittest.TestCase):
         self.failUnless( (data.origin == numpy.array([1,2,2]) ).all() )
 
 
+        # test unique automatic origins
+        data.addPattern( numpy.random.standard_normal((2,5)), 2 )
+        self.failUnless( (data.origin == numpy.array([1,2,2,3,4]) ).all() )
+
         # test wrong regressor length
         self.failUnlessRaises( ValueError,
                                mvpa.MVPAPattern,

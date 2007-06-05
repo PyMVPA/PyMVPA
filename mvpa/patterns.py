@@ -22,6 +22,12 @@ import numpy
 class MVPAPattern(object):
 
     def __init__( self, pattern, reg, origin = None ):
+        """ Initialize the pattern data.
+
+        The pattern data is finally loaded by calling 
+        MVPAPattern.addPattern(). Please see the documentation of this method
+        to learn what kind of data is required or supported.
+        """
         self.__origshape = None
         self.__patterns = None
         self.__regs = None
@@ -33,6 +39,37 @@ class MVPAPattern(object):
 
 
     def addPattern( self, pattern, reg, origin = None ):
+        """ Adds one or more pattern dataset(s).
+
+        Pattern can be an array or sequence with an arbitrary number of
+        dimensions. Internally the pattern data will be converted into a
+        2d matrix ( patterns x features ). This data can later be accessed
+        by using to 'pattern' property of this class.
+
+        When adding more patterns to an object that already holds soe patterns,
+        the new pattern data has to match the shape of the one that are already
+        loaded. An example: one first loads pattern data with shape (10,2,3,4).
+        This means 10 patterns shaped (2,3,4). Any pattern that shall be loaded
+        later has to be shaped <number of patterns> x (2,3,4).
+
+        A 1d array or simple sequence passed as 'pattern' arguments is assumed
+        to be a single pattern ( 1 x <number of features> ).
+
+        'reg' can be a single scalar or a sequence of value. These regressors
+        represent the target value for the classification, e.g. class labels.
+        If 'reg' is a scalar this value is used as regressor for all patterns
+        in 'pattern'. If 'reg' is a sequence its length has to match the number
+        of patterns and the values in 'reg' are associated with the
+        corresponding patterns.
+
+        The 'origin' parameter is used to associate patterns with each other.
+        This can be useful to exclude/include patterns set in a
+        cross-validation run. 'origin' is treated similar to the 'reg'
+        argument: scalars and sequences are supported. Additionally 'origin'
+        can also be 'None'. In this case a unique origin value is automatically
+        calculated for each pattern individually (this also takes already
+        present patterns into account).
+        """
         # 1d arrays or simple sequences are assumed to be a single pattern
         pattern = numpy.array( pattern, ndmin=2 )
 
@@ -79,6 +116,8 @@ class MVPAPattern(object):
         # if no origin is given assume that every pattern has its own
         if origin == None:
             origin = numpy.arange( len( pattern ) )
+            if self.__origins != None:
+                origin += self.__origins.max() + 1
         else:
             try:
                 if len( origin ) != len( pattern ):
@@ -95,7 +134,7 @@ class MVPAPattern(object):
         if self.__origins == None:
             self.__origins = origin
         else:
-            self.__origins = numpy.concatenate( (self.__origins, origin), axis=0 )
+            self.__origins = numpy.concatenate( (self.__origins, origin ), axis=0 )
 
 
     def zscore( self, mean = None, std = None ):
@@ -104,7 +143,11 @@ class MVPAPattern(object):
         'mean' and 'std' can be used to pass custom values to the z-scoring.
         Both may be scalars or arrays.
 
-        All computations are done in place.
+        All computations are done in place. Data upcasting is done
+        automatically if necessary.
+
+        Please note, that the whole dataset is z-scored and masking does
+        not affect the computation.
         """
         # cast to floating point datatype if necessary
         if str(self.__patterns.dtype).startswith('uint') \
@@ -125,17 +168,45 @@ class MVPAPattern(object):
 
 
     def getSelectedFeatures( self ):
+        """ Returns a list of currently selected feature ids.
+
+        Currently masked features are not listed.
+
+        Please see, the getMaskInOrigShape() method to get the current mask
+        in the original data space.
+        """
         if self.__mask == None:
             return range( self.nfeatures )
         else:
             return self.__mask
 
 
-    def setPatternMask( self, mask = None ):
-        """ Uses all non-zero elements of a mask volume to select
-        elements in data array.
+    def removeMask(self):
+        """ Disables any present feature mask. """
+        setPatternMask(None)
 
-        Returns a 2d array ( patterns x <number of non-zeros in mask> ).
+
+    def setPatternMask( self, mask = None ):
+        """ Mask certain features.
+
+        'mask' can either be an NumPy array, a tuple or a list.
+
+        If 'mask' is an array all nonzero array elements are used to select
+        features and all other features are masked. The shape of the mask array
+        has to match the original data space (see the origshape property).
+
+        If 'mask' is a tuple, it is assumed to be structures like to output of
+        Numpy.array.nonzero() ( tuple of sequences listing nonzero element
+        coordinates ).
+
+        If 'mask' is a list, it is assumed to be a list of to-be-selected
+        feature ids.
+
+        Calling this method without an argument (mask == None) removes any
+        possibly present mask and selects all available features.
+
+        After masking the class property 'pattern' will only return the
+        selected features.
         """
         # calling with nothing removes the pattern mask
         if mask == None:
@@ -179,6 +250,10 @@ class MVPAPattern(object):
 
 
     def getMaskInOrigShape( self ):
+        """ Returns to current mask as an array in the original data shape.
+
+        Currently selected features are set to 'True' all others are 'False'.
+        """
         # return full matrix if no mask is there
         if self.__mask == None:
             return numpy.ones( self.origshape, dtype='bool' )
@@ -198,14 +273,23 @@ class MVPAPattern(object):
 
 
     def getNumberOfPatterns( self ):
+        """ Currently available number of patterns. """
         return len( self.pattern )
 
 
     def getNumberOfFeatures( self ):
+        """ Number of features per pattern.
+
+        Please note, that the reported number depends on the current feature
+        mask!
+        """
         return self.pattern.shape[1]
 
 
     def getFeatureId( self, coord ):
+        """ Calculates the feature id from a coordinate value in the original
+        data space.
+        """
         # transform shape and coordinate into array for easy handling
         ac = numpy.array( coord )
         ao = numpy.array( self.origshape )
@@ -228,6 +312,9 @@ class MVPAPattern(object):
 
 
     def getCoordinate( self, feature_id ):
+        """ Computes the feature coordinates in the original data space 
+        for a given feature id.
+        """
         # transform shape and coordinate into array for easy handling
         ao = numpy.array( self.origshape )
 
@@ -255,6 +342,11 @@ class MVPAPattern(object):
 
 
     def getPatterns( self ):
+        """ Returns to pattern matrix.
+
+        Please note, that the size of the pattern matrix depends on the
+        current feature mask.
+        """
         if self.__mask:
             return self.__maskedpatterns
         else:
@@ -268,3 +360,4 @@ class MVPAPattern(object):
     npatterns = property( fget=getNumberOfPatterns )
     nfeatures = property( fget=getNumberOfFeatures )
     origshape = property( fget=lambda self: self.__origshape )
+
