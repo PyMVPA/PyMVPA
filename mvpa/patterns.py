@@ -353,6 +353,14 @@ class MVPAPattern(object):
             return self.__patterns
 
 
+    def getRegLabels( self ):
+        """ Returns an array with all unique class labels in the regressors
+        vector.
+        """
+
+        return numpy.unique( self.reg )
+
+
     # read-only class properties
     pattern =   property( fget=getPatterns )
     reg =       property( fget=lambda self: self.__regs )
@@ -360,4 +368,4 @@ class MVPAPattern(object):
     npatterns = property( fget=getNumberOfPatterns )
     nfeatures = property( fget=getNumberOfFeatures )
     origshape = property( fget=lambda self: self.__origshape )
-
+    reglabels = property( fget=getRegLabels )
