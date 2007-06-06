@@ -173,6 +173,32 @@ class PatternTests(unittest.TestCase):
         self.failUnless( data.pattern.shape == (10,120) )
 
 
+    def testPatternMasking(self):
+        origdata = numpy.random.standard_normal((10,2,4,3,5))
+        data = mvpa.MVPAPattern( origdata, 2, 2 )
+
+        self.failUnless( data.npatterns == 10 )
+
+        # set single pattern to enabled
+        data.setPatternMask(5)
+        self.failUnless( data.npatterns == 1 )
+
+        # remove mask
+        data.setPatternMask()
+        self.failUnless( data.npatterns == 10 )
+
+        # check duplicate selections
+        data.setPatternMask([5,5])
+        self.failUnless( data.npatterns == 2 )
+        self.failUnless( (data.pattern[0] == data.pattern[1]).all() )
+
+        # check feature masking
+        self.failUnless( data.pattern.shape == (2,120) )
+        data.setFeatureMask([2,3,4])
+        self.failUnless( data.pattern.shape == (2,3) )
+
+
+
     def testOrigMaskExtraction(self):
         origdata = numpy.random.standard_normal((10,2,4,3))
         data = mvpa.MVPAPattern( origdata, 2, 2 )

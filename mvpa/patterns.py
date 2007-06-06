@@ -137,6 +137,9 @@ class MVPAPattern(object):
         else:
             self.__origins = numpy.concatenate( (self.__origins, origin ), axis=0 )
 
+        # finally update masked patterns
+        self.__applyMasks()
+
 
     def zscore( self, mean = None, std = None ):
         """ Z-Score the pattern data.
@@ -167,6 +170,10 @@ class MVPAPattern(object):
         self.__patterns -= mean
         self.__patterns /= std
 
+        # this step is important to get the changes to the data array
+        # to the useraccessible pattern data
+        self.__applyMasks()
+
 
     def getSelectedFeatures( self ):
         """ Returns a list of currently selected feature ids.
@@ -182,9 +189,47 @@ class MVPAPattern(object):
             return self.__featuremask
 
 
-    def removeMask(self):
+    def removeFeatureMask( self ):
         """ Disables any present feature mask. """
+        setFeatureMask(None)
+
+
+    def __applyMasks( self ):
+        if self.__featuremask == None:
+            self.__maskedpatterns = self.__patterns[:,:]
+        else:
+            self.__maskedpatterns = self.__patterns[:, self.__featuremask]
+
+        if self.__patternmask != None:
+            self.__maskedpatterns = self.__maskedpatterns[self.__patternmask, ]
+
+
+    def removePatternMask( self ):
+        """ Disables any present pattern mask. """
         setPatternMask(None)
+
+
+    def setPatternMask( self, mask = None ):
+        """ Mask a subset of patterns.
+        """
+        # calling with nothing removes the pattern mask
+        if mask == None:
+            self.__patternmask = None
+
+            # finally update masked patterns
+            self.__applyMasks()
+
+            return
+
+        # without having a sequence a index the masked pattern array would
+        # loose its 2d layout
+        try:
+            len( mask )
+        except TypeError:
+            mask = [mask]
+
+        self.__patternmask = mask
+        self.__applyMasks()
 
 
     def setFeatureMask( self, mask = None ):
@@ -209,10 +254,12 @@ class MVPAPattern(object):
         After masking the class property 'pattern' will only return the
         selected features.
         """
-        # calling with nothing removes the pattern mask
+        # calling with nothing removes the feature mask
         if mask == None:
             self.__featuremask = None
-            self.__maskedpatterns = None
+
+            # finally update masked patterns
+            self.__applyMasks()
 
             return
 
@@ -245,9 +292,7 @@ class MVPAPattern(object):
                               " (like those returned by array.nonzero())" \
                               " or a list of feature ids."
 
-        # choose all elements with non-zero mask values from all patterns 
-        # and convert into a 2d array (patterns x features)
-        self.__maskedpatterns = self.__patterns[:, self.__featuremask]
+        self.__applyMasks()
 
 
     def getMaskInOrigShape( self ):
@@ -348,10 +393,7 @@ class MVPAPattern(object):
         Please note, that the size of the pattern matrix depends on the
         current feature mask.
         """
-        if self.__featuremask:
-            return self.__maskedpatterns
-        else:
-            return self.__patterns
+        return self.__maskedpatterns
 
 
     def getRegLabels( self ):
