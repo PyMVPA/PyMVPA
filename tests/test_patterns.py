@@ -138,7 +138,7 @@ class PatternTests(unittest.TestCase):
             self.failUnless( (orig == pat).all() )
 
 
-    def testPatternMasking(self):
+    def testFeatureMasking(self):
         origdata = numpy.random.standard_normal((10,2,4,3,5))
         data = mvpa.MVPAPattern( origdata, 2, 2 )
 
@@ -148,18 +148,18 @@ class PatternTests(unittest.TestCase):
         self.failUnless( data.getSelectedFeatures() == range( 120 ) )
 
         # check that full mask uses all features
-        data.setPatternMask( numpy.ones((2,4,3,5)) )
+        data.setFeatureMask( numpy.ones((2,4,3,5)) )
         self.failUnless( 
             data.getSelectedFeatures() == \
             range( data.pattern.shape[1] ) )
 
         # check reset kills mask
-        data.setPatternMask()
+        data.setFeatureMask()
         self.failUnless( data.getSelectedFeatures() == range( 120 ) )
         self.failUnless( data.pattern.shape[1] == 120 )
 
         # check selection with nonzero tuple
-        data.setPatternMask( ((0,0,1),(0,2,3),(0,1,2),(0,2,4)) )
+        data.setFeatureMask( ((0,0,1),(0,2,3),(0,1,2),(0,2,4)) )
         self.failUnless(data.getSelectedFeatures() == [0,37,119])
 
         # check size of the masked patterns
@@ -169,7 +169,7 @@ class PatternTests(unittest.TestCase):
         self.failUnless( (unmasked[:,[0,37,119]]==data.pattern).all() )
 
         # check unmasked data shape
-        data.setPatternMask()
+        data.setFeatureMask()
         self.failUnless( data.pattern.shape == (10,120) )
 
 
@@ -184,7 +184,7 @@ class PatternTests(unittest.TestCase):
         self.failUnless( (origmask == numpy.ones((2,4,3))).all())
 
         # check with custom mask
-        data.setPatternMask([5])
+        data.setFeatureMask([5])
         self.failUnless( data.pattern.shape[1] == 1 )
         origmask = data.getMaskInOrigShape()
         self.failUnless( origmask[0,1,2] == True )

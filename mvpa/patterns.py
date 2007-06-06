@@ -32,7 +32,8 @@ class MVPAPattern(object):
         self.__patterns = None
         self.__regs = None
         self.__origins = None
-        self.__mask = None
+        self.__featuremask = None
+        self.__patternmask = None
         self.__maskedpatterns = None
 
         self.addPattern( pattern, reg, origin )
@@ -175,10 +176,10 @@ class MVPAPattern(object):
         Please see, the getMaskInOrigShape() method to get the current mask
         in the original data space.
         """
-        if self.__mask == None:
+        if self.__featuremask == None:
             return range( self.nfeatures )
         else:
-            return self.__mask
+            return self.__featuremask
 
 
     def removeMask(self):
@@ -186,7 +187,7 @@ class MVPAPattern(object):
         setPatternMask(None)
 
 
-    def setPatternMask( self, mask = None ):
+    def setFeatureMask( self, mask = None ):
         """ Mask certain features.
 
         'mask' can either be an NumPy array, a tuple or a list.
@@ -210,7 +211,7 @@ class MVPAPattern(object):
         """
         # calling with nothing removes the pattern mask
         if mask == None:
-            self.__mask = None
+            self.__featuremask = None
             self.__maskedpatterns = None
 
             return
@@ -222,7 +223,7 @@ class MVPAPattern(object):
 
             # tuple of arrays containing the indexes of all nonzero elements
             # of the mask
-            self.__mask = [ self.getFeatureId( c ) \
+            self.__featuremask = [ self.getFeatureId( c ) \
                                 for c in numpy.transpose( mask.nonzero() ) ]
 
         elif isinstance(mask, tuple):
@@ -231,12 +232,12 @@ class MVPAPattern(object):
                 raise ValueError, 'Number of mask dimensions has to match' \
                                 + ' the original data array (ignoring the' \
                                 + ' pattern axis).'
-            self.__mask = [ self.getFeatureId( c ) \
+            self.__featuremask = [ self.getFeatureId( c ) \
                                 for c in numpy.transpose( mask ) ]
 
         elif isinstance(mask, list):
             # assumed to be a list of feature ids
-            self.__mask = mask
+            self.__featuremask = mask
 
         else:
             raise ValueError, "'mask' has to be either an array with" \
@@ -246,7 +247,7 @@ class MVPAPattern(object):
 
         # choose all elements with non-zero mask values from all patterns 
         # and convert into a 2d array (patterns x features)
-        self.__maskedpatterns = self.__patterns[:, self.__mask]
+        self.__maskedpatterns = self.__patterns[:, self.__featuremask]
 
 
     def getMaskInOrigShape( self ):
@@ -255,7 +256,7 @@ class MVPAPattern(object):
         Currently selected features are set to 'True' all others are 'False'.
         """
         # return full matrix if no mask is there
-        if self.__mask == None:
+        if self.__featuremask == None:
             return numpy.ones( self.origshape, dtype='bool' )
 
         # initialize empty mask
@@ -347,7 +348,7 @@ class MVPAPattern(object):
         Please note, that the size of the pattern matrix depends on the
         current feature mask.
         """
-        if self.__mask:
+        if self.__featuremask:
             return self.__maskedpatterns
         else:
             return self.__patterns

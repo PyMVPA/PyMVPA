@@ -69,15 +69,13 @@ class KNNTests(unittest.TestCase):
             p = k.predict( test.pattern )
             mv_perf.append( numpy.mean(p==test.reg) )
 
-            train.setPatternMask([0])
-            test.setPatternMask([0])
+            train.setFeatureMask([0])
+            test.setFeatureMask([0])
             p = k.predict( test.pattern )
             uv_perf.append( numpy.mean(p==test.reg) )
 
         mean_mv_perf = numpy.mean(mv_perf)
         mean_uv_perf = numpy.mean(uv_perf)
-
-        print mean_mv_perf, mean_uv_perf
 
         self.failUnless( mean_mv_perf > 0.9 )
         self.failUnless( mean_uv_perf < mean_mv_perf )
