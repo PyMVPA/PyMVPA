@@ -19,3 +19,4 @@
 from patterns import *
 from crossval import *
 from algorithms import *
+from knn import *

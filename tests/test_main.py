@@ -21,6 +21,7 @@ import unittest
 # list all test modules (without .py extension)
 tests = [ 'test_patterns',
           'test_algorithms',
+          'test_knn',
           'test_crossval' ]
 
 
