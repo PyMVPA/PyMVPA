@@ -65,14 +65,13 @@ class KNNTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            k = mvpa.kNN(train, k = 10)
-            p = k.predict( test.pattern )
-            mv_perf.append( numpy.mean(p==test.reg) )
+            k_mv = mvpa.kNN(train, k = 10)
+            p_mv = k_mv.predict( test.pattern )
+            mv_perf.append( numpy.mean(p_mv==test.reg) )
 
-            train.setFeatureMask([0])
-            test.setFeatureMask([0])
-            p = k.predict( test.pattern )
-            uv_perf.append( numpy.mean(p==test.reg) )
+            k_uv = mvpa.kNN(train.selectFeatures([0]), k = 10)
+            p_uv = k_uv.predict( test.selectFeatures([0]).pattern )
+            uv_perf.append( numpy.mean(p_uv==test.reg) )
 
         mean_mv_perf = numpy.mean(mv_perf)
         mean_uv_perf = numpy.mean(uv_perf)

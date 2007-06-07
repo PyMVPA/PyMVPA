@@ -1,4 +1,4 @@
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #    Unit tests for PyMVPA pattern handling
 #
@@ -14,7 +14,7 @@
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #    Lesser General Public License for more details.
 #
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import mvpa
 import unittest
@@ -138,61 +138,50 @@ class PatternTests(unittest.TestCase):
             self.failUnless( (orig == pat).all() )
 
 
-    def testFeatureMasking(self):
+    def testFeatureSelection(self):
         origdata = numpy.random.standard_normal((10,2,4,3,5))
         data = mvpa.MVPAPattern( origdata, 2, 2 )
 
         unmasked = data.pattern.copy()
 
         # default must be no mask
-        self.failUnless( data.getSelectedFeatures() == range( 120 ) )
+        self.failUnless( data.nfeatures == 120 )
 
         # check that full mask uses all features
-        data.setFeatureMask( numpy.ones((2,4,3,5)) )
-        self.failUnless( 
-            data.getSelectedFeatures() == \
-            range( data.pattern.shape[1] ) )
-
-        # check reset kills mask
-        data.setFeatureMask()
-        self.failUnless( data.getSelectedFeatures() == range( 120 ) )
-        self.failUnless( data.pattern.shape[1] == 120 )
+        sel = data.selectFeatures( numpy.ones((2,4,3,5)) )
+        self.failUnless( sel.nfeatures == data.pattern.shape[1] )
+        self.failUnless( data.nfeatures == 120 )
 
         # check selection with nonzero tuple
-        data.setFeatureMask( ((0,0,1),(0,2,3),(0,1,2),(0,2,4)) )
-        self.failUnless(data.getSelectedFeatures() == [0,37,119])
+        sel = data.selectFeatures( ((0,0,1),(0,2,3),(0,1,2),(0,2,4)) )
+        self.failUnless(sel.nfeatures == 3)
 
         # check size of the masked patterns
-        self.failUnless( data.pattern.shape == (10,3) )
+        self.failUnless( sel.pattern.shape == (10,3) )
 
         # check that the right features are selected
-        self.failUnless( (unmasked[:,[0,37,119]]==data.pattern).all() )
-
-        # check unmasked data shape
-        data.setFeatureMask()
-        self.failUnless( data.pattern.shape == (10,120) )
+        self.failUnless( (unmasked[:,[0,37,119]]==sel.pattern).all() )
 
 
-    def testPatternMasking(self):
+    def testPatternSelection(self):
         origdata = numpy.random.standard_normal((10,2,4,3,5))
         data = mvpa.MVPAPattern( origdata, 2, 2 )
 
         self.failUnless( data.npatterns == 10 )
 
         # set single pattern to enabled
-        data.setPatternMask(5)
-        self.failUnless( data.npatterns == 1 )
-
-        # remove mask
-        data.setPatternMask()
+        sel=data.selectPatterns(5)
+        self.failUnless( sel.npatterns == 1 )
         self.failUnless( data.npatterns == 10 )
 
         # check duplicate selections
-        data.setPatternMask([5,5])
-        self.failUnless( data.npatterns == 2 )
-        self.failUnless( (data.pattern[0] == data.pattern[1]).all() )
+        sel = data.selectPatterns([5,5])
+        self.failUnless( sel.npatterns == 2 )
+        self.failUnless( (sel.pattern[0] == sel.pattern[1]).all() )
+        self.failUnless( len(sel.reg) == 2 )
+        self.failUnless( len(sel.origin) == 2 )
 
-        self.failUnless( data.pattern.shape == (2,120) )
+        self.failUnless( sel.pattern.shape == (2,120) )
 
     def testCombinedPatternAndFeatureMasking(self):
         data = mvpa.MVPAPattern( 
@@ -200,29 +189,42 @@ class PatternTests(unittest.TestCase):
 
         self.failUnless( data.npatterns == 4 )
         self.failUnless( data.nfeatures == 5 )
-        data.setFeatureMask([1,2])
-        data.setPatternMask([0,3])
-        self.failUnless( data.npatterns == 2 )
-        self.failUnless( data.nfeatures == 2 )
+        fsel = data.selectFeatures([1,2])
+        fpsel = fsel.selectPatterns([0,3])
+        self.failUnless( fpsel.npatterns == 2 )
+        self.failUnless( fpsel.nfeatures == 2 )
 
-        self.failUnless( (data.pattern == [[1,2],[16,17]]).all() )
+        self.failUnless( (fpsel.pattern == [[1,2],[16,17]]).all() )
 
 
     def testOrigMaskExtraction(self):
         origdata = numpy.random.standard_normal((10,2,4,3))
         data = mvpa.MVPAPattern( origdata, 2, 2 )
 
-        origmask = data.getMaskInOrigShape()
-        self.failUnless( origmask.shape == origdata.shape[1:] )
-
-        # check full mask
-        self.failUnless( (origmask == numpy.ones((2,4,3))).all())
-
         # check with custom mask
-        data.setFeatureMask([5])
-        self.failUnless( data.pattern.shape[1] == 1 )
-        origmask = data.getMaskInOrigShape()
+        sel = data.selectFeatures([5])
+        self.failUnless( sel.pattern.shape[1] == 1 )
+        origmask = sel.features2origmask([5])
         self.failUnless( origmask[0,1,2] == True )
+        self.failUnless( origmask.shape == data.origshape )
+
+
+
+    def testPatternMerge(self):
+        data1 = mvpa.MVPAPattern( range(5), 1, 1 )
+        data2 = mvpa.MVPAPattern( range(5,10), 2, 1 )
+
+        merged = data1 + data2
+
+        self.failUnless( merged.npatterns == 2 )
+        self.failUnless( (merged.reg == [ 1,2]).all() )
+        self.failUnless( (merged.origin == [ 1,1]).all() )
+
+        data1 += data2
+
+        self.failUnless( data1.npatterns == 2 )
+        self.failUnless( (data1.reg == [ 1,2]).all() )
+        self.failUnless( (data1.origin == [ 1,1]).all() )
 
 
 def suite():
