@@ -1,4 +1,4 @@
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #    PyMVPA: General N-M cross-validation and utility functions
 #
@@ -15,14 +15,13 @@
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #    Lesser General Public License for more details.
 #
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import numpy
-from Bio import listfns
 
 
 class CrossValidation( object ):
-    def __init__( pattern, classifier, **kwargs ):
+    def __init__( self, pattern, classifier, **kwargs ):
         """
         Initialize the cross-validation.
 
@@ -34,8 +33,7 @@ class CrossValidation( object ):
           **kwargs:   All keyword arguments are passed to the classifiers
                       constructor.
         """
-        self.__pattern = pattern
-        self.__maskgenerator = None
+        self.__data = pattern
 
         # check and store the classifier
         self.setClassifier( classifier, **(kwargs) )
@@ -48,17 +46,6 @@ class CrossValidation( object ):
 
         self.__clf = classifier
         self.__clf_kwargs = kwargs
-
-
-    def setMaskGenerator( generator ):
-        """
-        """
-        if not hasattr( generator, 'next' ):
-            raise ValueError, "Generator object has to provide a 'next()' " \
-                        "method and also has to raise StopIteration " \
-                        "when done."
-
-        self.__maskgenerator = generator
 
 
     def start( self, cv = 1, classifier = None, **kwargs):
@@ -76,7 +63,7 @@ class CrossValidation( object ):
             self.setClassifier( classifier, **(kwargs) )
 
         # get the list of all combinations of to be excluded folds
-        cv_list = getLengthNCombinations(listfns.items(folds), cv)
+        cv_list = getUniqueLengthNCombinations(self.__data.originlabels, cv)
         print cv_list
 
         performance = []
@@ -85,23 +72,20 @@ class CrossValidation( object ):
         for exclude in cv_list:
             # build a boolean selector vector to choose training and test data
             # for this CV fold
-            selector = buildSelector(folds, exclude)
+            exclude_filter =  \
+                numpy.array( [ i in exclude for i in self.__data.origin ] )
 
             # split data and regs into training and test set
-            train_data = data[numpy.logical_not(selector)]
-            train_regs = regs[numpy.logical_not(selector)]
-            test_data = data[selector]
-            test_regs = regs[selector]
+            train = \
+                self.__data.selectPatterns( numpy.logical_not(exclude_filter))
+            test = self.__data.selectPatterns( exclude_filter )
 
             # create classifier (must include training if necessary)
-            clf = classifier(train_data, train_regs, **(kwargs) )
+            clf = self.__clf(train, **(kwargs) )
 
             # test
-            perf = numpy.array( clf.predict(test_data) )
-            print perf
-            perf = perf == test_regs
-            print test_regs
-            print perf.mean()
+            perf = numpy.array(clf.predict(test.pattern))
+            perf = perf == test.reg
 
             # store performance
             performance.append(perf.mean())
@@ -109,7 +93,7 @@ class CrossValidation( object ):
         return performance
 
 
-def getLengthNCombinations(data, n):
+def getUniqueLengthNCombinations(data, n):
     """Generates a list of lists containing all combinations of
     elements of data of length 'n' without repetitions.
 
