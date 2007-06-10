@@ -19,6 +19,7 @@
 import mvpa
 import unittest
 import numpy
+import scipy.stats as stat
 
 def pureMultivariateSignal(patterns, origin, signal2noise = 1.5):
     """ Create a 2d dataset with a clear multivariate signal, but no
@@ -54,6 +55,19 @@ def pureMultivariateSignal(patterns, origin, signal2noise = 1.5):
 
 class CrossValidationTests(unittest.TestCase):
 
+    def getMVPattern(self, s2n):
+        run1 = pureMultivariateSignal(5, 1, s2n)
+        run2 = pureMultivariateSignal(5, 2, s2n)
+        run3 = pureMultivariateSignal(5, 3, s2n)
+        run4 = pureMultivariateSignal(5, 4, s2n)
+        run5 = pureMultivariateSignal(5, 5, s2n)
+        run6 = pureMultivariateSignal(5, 6, s2n)
+
+        data = run1 + run2 + run3 + run4 + run5 + run6
+
+        return data
+
+
     def testMofNCombinations(self):
         self.failUnlessEqual( 
             mvpa.getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )
@@ -68,27 +82,45 @@ class CrossValidationTests(unittest.TestCase):
 
 
     def testSimpleNMinusOneCV(self):
-        run1 = pureMultivariateSignal(5, 1, 1.5)
-        run2 = pureMultivariateSignal(5, 2, 1.5)
-        run3 = pureMultivariateSignal(5, 3, 1.5)
-        run4 = pureMultivariateSignal(5, 4, 1.5)
-        run5 = pureMultivariateSignal(5, 5, 1.5)
-        run6 = pureMultivariateSignal(5, 6, 1.5)
-
-        data = run1 + run2 + run3 + run4 + run5 + run6
+        data = self.getMVPattern(3)
 
         self.failUnless( data.npatterns == 120 )
         self.failUnless( data.nfeatures == 2 )
         self.failUnless(
             (data.reg == [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0]*6 ).all() )
-        self.failUnless( (data.origin == [ k for k in range(1,7) for i in range(20) ] ).all() )
+        self.failUnless(
+            (data.origin == \
+                [ k for k in range(1,7) for i in range(20) ] ).all() )
 
 
         cv = mvpa.CrossValidation( data, mvpa.kNN )
-        perf = numpy.array(cv.start(cv=1))
-        print perf, perf.mean()
-        perf = numpy.array(cv.start(cv=2))
-        print perf, perf.mean()
+        perf = numpy.array(cv.run(cv=1))
+        self.failUnless( perf.mean() > 0.8 and perf.mean() <= 1.0 )
+        self.failUnless( len( perf ) == 6 )
+
+
+    def testCLFStatskNN(self):
+        data_h = self.getMVPattern(1)
+        data_l = self.getMVPattern(0.5)
+
+        data_h_uv = data_h.selectFeatures([0])
+
+        # it is difficult to find criteria for a correct CV
+        # when using random input data
+        # for now, CV level 1,2 and 3 are simply run w/o special tests
+        for cv in (1,2,3):
+            cv_h = mvpa.CrossValidation( data_h, mvpa.kNN )
+            perf_h = numpy.array( cv_h.run( cv=cv ) )
+
+            cv_l = mvpa.CrossValidation( data_l, mvpa.kNN )
+            perf_l = numpy.array( cv_l.run( cv=cv ) )
+
+            cv_h_uv = mvpa.CrossValidation( data_h_uv, mvpa.kNN )
+            perf_h_uv = numpy.array( cv_h_uv.run( cv=cv ) )
+
+            #print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
+            #print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
+            #print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1] <0.05
 
 
 def suite():

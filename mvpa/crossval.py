@@ -48,7 +48,7 @@ class CrossValidation( object ):
         self.__clf_kwargs = kwargs
 
 
-    def start( self, cv = 1, classifier = None, **kwargs):
+    def run( self, cv = 1, classifier = None, **kwargs):
         """ Start cross-validation function.
 
         Parameters:
@@ -64,7 +64,6 @@ class CrossValidation( object ):
 
         # get the list of all combinations of to be excluded folds
         cv_list = getUniqueLengthNCombinations(self.__data.originlabels, cv)
-        print cv_list
 
         performance = []
 
