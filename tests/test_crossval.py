@@ -20,6 +20,7 @@ import mvpa
 import unittest
 import numpy
 import scipy.stats as stat
+import sys
 
 def pureMultivariateSignal(patterns, origin, signal2noise = 1.5):
     """ Create a 2d dataset with a clear multivariate signal, but no
@@ -121,6 +122,31 @@ class CrossValidationTests(unittest.TestCase):
             #print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
             #print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
             #print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1] <0.05
+
+
+    def testCLFStatsSVM(self):
+        data_h = self.getMVPattern(1)
+        data_l = self.getMVPattern(0.5)
+
+        data_h_uv = data_h.selectFeatures([0])
+
+        # it is difficult to find criteria for a correct CV
+        # when using random input data
+        # for now, CV level 1,2 and 3 are simply run w/o special tests
+        for cv in (1,2,3):
+            cv_h = mvpa.CrossValidation( data_h, mvpa.SVM )
+            perf_h = numpy.array( cv_h.run( cv=cv ) )
+
+            cv_l = mvpa.CrossValidation( data_l, mvpa.SVM )
+            perf_l = numpy.array( cv_l.run( cv=cv ) )
+
+            cv_h_uv = mvpa.CrossValidation( data_h_uv, mvpa.SVM )
+            perf_h_uv = numpy.array( cv_h_uv.run( cv=cv ) )
+
+            print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
+            print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
+            print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1] <0.05
+
 
 
 def suite():
