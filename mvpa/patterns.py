@@ -165,7 +165,7 @@ class MVPAPattern(object):
         self.__origins = orig
 
 
-    def zscore( self, mean = None, std = None ):
+    def zscore( self, mean = None, std = None, origin=True ):
         """ Z-Score the pattern data.
 
         'mean' and 'std' can be used to pass custom values to the z-scoring.
@@ -174,25 +174,36 @@ class MVPAPattern(object):
         All computations are done in place. Data upcasting is done
         automatically if necessary.
 
-        Please note, that the whole dataset is z-scored and masking does
-        not affect the computation.
+        If origin is True patterns with the same origin are zscored independent
+        of patterns with other origin values, e.i. mean and standard deviation
+        are calculated individually.
         """
         # cast to floating point datatype if necessary
         if str(self.__patterns.dtype).startswith('uint') \
            or str(self.__patterns.dtype).startswith('int'):
             self.__patterns = self.__patterns.astype('float64')
 
-        # calculate mean if necessary
-        if not mean:
-            mean = self.__patterns.mean(axis=0)
+        def doit(pat, mean, std):
+            # calculate mean if necessary
+            if not mean:
+                mean = pat.mean(axis=0)
 
-        # calculate std-deviation if necessary
-        if not std:
-            std = self.__patterns.std(axis=0)
+            # calculate std-deviation if necessary
+            if not std:
+                std = pat.std(axis=0)
 
-        # do the z-scoring
-        self.__patterns -= mean
-        self.__patterns /= std
+            # do the z-scoring
+            pat -= mean
+            pat /= std
+
+            return pat
+
+        if origin:
+            for o in self.originlabels:
+                self.__patterns[self.__origins == o] = \
+                    doit( self.__patterns[self.__origins == o], mean, std )
+        else:
+            doit( self.__patterns, mean, std )
 
 
     def selectPatterns( self, mask ):

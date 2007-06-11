@@ -83,12 +83,15 @@ class PatternTests(unittest.TestCase):
         data = mvpa.MVPAPattern(pat.reshape((16,1)), 1, 1)
         self.failUnlessEqual( data.pattern.mean(), 2.0 )
         self.failUnlessEqual( data.pattern.std(), 1.0 )
-        data.zscore()
+        data.zscore(origin=True)
 
         # check z-scoring
         check = numpy.array([-2,-1,1,2,0,0,1,-1,-1,1,1,-1,0,0,0,0],dtype='float64')
         self.failUnless( (data.pattern ==  check.reshape(16,1)).all() )
 
+        data = mvpa.MVPAPattern(pat.reshape((16,1)), 1, 1)
+        data.zscore(origin=False)
+        self.failUnless( (data.pattern ==  check.reshape(16,1)).all() )
 
     def testPatternShape(self):
         data = mvpa.MVPAPattern(numpy.ones((10,2,3,4)), 1, 1 )
