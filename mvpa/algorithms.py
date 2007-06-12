@@ -20,81 +20,73 @@
 
 import numpy
 
-def SpheresInVolume(vol, radius, voxelsize=(1,1,1), forcesphere = False):
-    """Generates all possible spheres with a fixed radius within a 3d volume.
+def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
+    """Generates all possible spheres with a fixed radius within a mask.
 
-    SearchSpheres( 3dmask, radius [, (x,y,z)] ) -> SearchSpheres object
+    Each element with a non-zero value in 'mask' becomes the center of one
+    sphere. Each sphere contains all elements with a distance less-or-equal
+    than that given by 'radius' and a non-zero value in 'mask' (if
+    'forcesphere' isn't enabled). 'mask' can have any number of dimensions.
 
-    Each voxel with a non-zero value in 'vol' becomes the center of one sphere.
-    Each sphere contains all voxels with a distance less-or-equal than that
-    given by 'radius' and a non-zero value in 'vol'. 'vol' has to be a
-    three-dimensional array.
-
-    The radius can be specified in an arbitrary unit and 'voxelsize' is used
-    to map it to <number of voxels>.
+    The radius can be specified in an arbitrary unit and 'elementsize' is used
+    to map it to the mask elements. 'elementsize' must contain the extend of
+    a mask element along all mask dimensions.
 
     Instead of returning all spheres as a list, this function return a
-    generator object the can be used for looping. This is much more memory
-    efficient (like range() and xrange()).
+    generator object the can be used for looping (like xrange() instead of 
+    range()).
 
-    Each call of the generator object returns a tuple of three arrays
-    containing the coordinates of all voxels in the sphere (analog to the
-    return value of numpy.nonzero()).
+    Each call of the generator object returns a tuple of the center coordinates
+    and a tuple of three arrays containing the coordinates of all elements in
+    the sphere (analog to the return value of numpy.nonzero()).
 
-    By default each sphere will only contain voxels that are also part of the
-    mask. By setting forcesphere to True the spheres will contain all voxel in
-    range regardless of their status in the mask instead.
+    By default each sphere will only contain elements that are also part of the
+    mask. By setting 'forcesphere' to True the spheres will contain all element
+    in range regardless of their status in the mask instead.
     """
-    if not len(vol.shape) == 3:
-        raise ValueError, "'vol' must be a 3d array."
+    if elementsize == None:
+        elementsize = numpy.ones( len( mask.shape ) )
+    else:
+        elementsize = numpy.array( elementsize )
 
-    vs_trans = numpy.array([voxelsize[2], voxelsize[1], voxelsize[0]])
+    # compute radius in units of elementsize per axis
+    elementradius_per_axis = float(radius) / elementsize
 
-    # square the radius once here and later compare
-    # squared distances instead of endless sqrt() calls
-    sq_radius = radius**2
+    # build prototype sphere
+    filter = numpy.ones( ( numpy.ceil( elementradius_per_axis ) * 2 ) + 1 )
+    filter_center = numpy.array( filter.shape ) / 2
 
-    # loop over all matrix elements (voxels)
-    for z in xrange(vol.shape[0]):
-        for y in xrange(vol.shape[1]):
-            for x in xrange(vol.shape[2]):
-                # sphere center
-                coord = numpy.array([z,y,x])
-                # consider real voxelsizes
-                coord_trans = coord * vs_trans
+    # now zero out all too distant elements
+    f_coords = numpy.transpose( filter.nonzero() )
+    # check all filter element
+    for coord in f_coords:
+        # scale coordinates by elementsize (and de-mean)
+        trans_coord = (coord - filter_center) * elementsize
 
-                # list of voxel coords in sphere
-                vlistx = []
-                vlisty = []
-                vlistz = []
+        # compare with radius
+        if radius < numpy.linalg.norm( trans_coord ):
+            # zero everything that is too distant
+            filter[numpy.array(coord, ndmin=2).T.tolist()] = 0
 
-                # only consider voxel if non-zero in mask
-                if not vol[z,y,x] == 0:
-                    # determine sphere elements
-                    # only search in a minimal cube surrounding the sphere
-                    # note: add one because xrange does not include the stop value itself
-                    for sz in xrange( coord[0] - int( round( radius/voxelsize[0] ) ),
-                                    coord[0] + int( round( radius/voxelsize[0] ) + 1 ) ):
-                        for sy in xrange( coord[1] - int( round( radius/voxelsize[1] ) ),
-                                        coord[1] + int( round( radius/voxelsize[1] ) + 1 ) ):
-                            for sx in xrange( coord[2] - int( round( radius/voxelsize[2] ) ),
-                                            coord[2] + int( round( radius/voxelsize[2] ) + 1 ) ):
-                                # voxel coord potentially in sphere
-                                scoord = numpy.array([sz,sy,sx])
+    # convert spherical filter into releative coordinates
+    filter = numpy.array( filter.nonzero() ).T - filter_center
 
-                                # if this scoord is not outside the volume
-                                if ( not numpy.sum( scoord < 0 )
-                                    and not numpy.sum( scoord >= vol.shape ) ):
-                                    # and only if the volume mask is not zero at this point
-                                    if not vol[sz,sy,sx] == 0.0 or forcesphere:
-                                        # and if distance from center is less than sphere radius
-                                        # note: comparing squared values (using real voxelsizes)
-                                        if sq_radius >= numpy.sum((coord_trans-scoord*vs_trans)**2):
-                                            vlistx.append(sx)
-                                            vlisty.append(sy)
-                                            vlistz.append(sz)
+    # get the nonzero mask coordinates
+    coords = numpy.transpose( mask.nonzero() )
 
-                    yield ( numpy.array(vlistz),
-                            numpy.array(vlisty),
-                            numpy.array(vlistx) )
+    # for all nonzero mask elements (a.k.a. sphere centers)
+    for center in coords:
+        # make abs sphere mask
+        abs_sphere = center + filter
 
+        # check if mask elements are outside of mask
+        abs_sphere = [ v for v in abs_sphere \
+                        if (v >= numpy.zeros(len( mask.shape ) ) ).all() \
+                        and (v < mask.shape).all() ]
+
+        # exclude nonzero mask elements if not requested otherwise
+        if not forcesphere:
+            abs_sphere = [ v for v in abs_sphere \
+                        if mask[numpy.array(v, ndmin=2).T.tolist()] ]
+
+        yield center, numpy.transpose( abs_sphere )
