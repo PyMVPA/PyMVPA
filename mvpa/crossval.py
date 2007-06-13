@@ -19,7 +19,6 @@
 
 import numpy
 
-
 class CrossValidation( object ):
     def __init__( self, pattern, classifier, **kwargs ):
         """
@@ -37,6 +36,9 @@ class CrossValidation( object ):
 
         # check and store the classifier
         self.setClassifier( classifier, **(kwargs) )
+
+        # used to store the cv performances
+        self.__perf = []
 
 
     def setClassifier( self, classifier, **kwargs ):
@@ -63,20 +65,22 @@ class CrossValidation( object ):
             self.setClassifier( classifier, **(kwargs) )
 
         # get the list of all combinations of to be excluded folds
-        cv_list = getUniqueLengthNCombinations(self.__data.originlabels, cv)
-
-        performance = []
+        cv_list = getUniqueLengthNCombinations(self.__data.originlabels,
+                                               cv)
+        # clear the performance list
+        self.__perf = []
 
         # do cross-validation
         for exclude in cv_list:
-            # build a boolean selector vector to choose training and test data
-            # for this CV fold
+            # build a boolean selector vector to choose training and
+            # test data for this CV fold
             exclude_filter =  \
-                numpy.array( [ i in exclude for i in self.__data.origin ] )
+                numpy.array([ i in exclude for i in self.__data.origin ])
 
             # split data and regs into training and test set
             train = \
-                self.__data.selectPatterns( numpy.logical_not(exclude_filter))
+                self.__data.selectPatterns( 
+                    numpy.logical_not(exclude_filter) )
             test = self.__data.selectPatterns( exclude_filter )
 
             # create classifier (must include training if necessary)
@@ -87,9 +91,11 @@ class CrossValidation( object ):
             perf = perf == test.reg
 
             # store performance
-            performance.append(perf.mean())
+            self.__perf.append(perf.mean())
 
-        return performance
+        return self.__perf
+
+    perf = property( fget=lambda self: self.__perf )
 
 
 def getUniqueLengthNCombinations(data, n):
