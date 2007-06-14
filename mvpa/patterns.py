@@ -21,6 +21,11 @@ import numpy
 import operator
 
 class MVPAPattern(object):
+    """ This class provides a container to store all necessary data to perform
+    MVPA analyses. That is the actual pattern data, as well as the regressors
+    associated with these patterns. Additionally the origin of each pattern is
+    stored to be able to group patterns for cross-validation purposes.
+    """
 
     def __init__( self, pattern, reg, origin = None, clone = None ):
         """ Initialize the pattern data.
@@ -28,12 +33,21 @@ class MVPAPattern(object):
         The pattern data is finally loaded by calling 
         MVPAPattern.addPattern(). Please see the documentation of this method
         to learn what kind of data is required or supported.
+
+        Please ignore the 'clone' argument. It is only necessary for internal
+        stuff. You cannot trust 'clone' -- do not use it!
         """
+        # initialize containers
         self.__origshape = None
         self.__patterns = None
         self.__regs = None
         self.__origins = None
 
+        self.__origregs = None
+
+        # when in clone mode bypass all checks and directly assign
+        # the data. Otherwise call addPattern() that checks if the data
+        # is in good shape
         if isinstance( clone, tuple ):
             self.__initDataNoChecks(pattern, reg, origin, clone)
         else:
@@ -64,8 +78,8 @@ class MVPAPattern(object):
         2d matrix ( patterns x features ). This data can later be accessed
         by using to 'pattern' property of this class.
 
-        When adding more patterns to an object that already holds soe patterns,
-        the new pattern data has to match the shape of the one that are already
+        When adding more patterns to an object that already holds some patterns,
+        the new pattern data has to match the shape of the ones that are already
         loaded. An example: one first loads pattern data with shape (10,2,3,4).
         This means 10 patterns shaped (2,3,4). Any pattern that shall be loaded
         later has to be shaped <number of patterns> x (2,3,4).
@@ -165,6 +179,38 @@ class MVPAPattern(object):
         self.__origins = orig
 
 
+    def permutatedRegressors( self, status ):
+        """ Permutate the regressors.
+
+        Calling this method with 'status' set to True, the regressors are
+        permutated among all patterns sharing the same origin value. Therefore
+        only the association of a certain pattern with a regressor is permutated
+        while keeping the absolute number of occurences of each regressor value
+        with a certain origin constant.
+
+        If 'status' is False the original regressors are restored.
+        """
+
+        if not status:
+            # restore originals
+            if self.__origregs == None:
+                raise RuntimeError, 'Cannot restore regressors. ' \
+                                    'randomizedRegressors() has never been ' \
+                                    'called with status == True.'
+            self.__regs = self.__origregs
+            self.__origregs = None
+        else:
+            # permutate regs per origin
+
+            # make a backup of the original regressors
+            self.__origregs = self.__regs.copy()
+
+            # now scramble the rest
+            for o in self.originlabels:
+                self.__regs[self.__origins == o ] = \
+                    numpy.random.permutation( self.__regs[ self.__origins == o ] )
+
+
     def zscore( self, mean = None, std = None, origin=True ):
         """ Z-Score the pattern data.
 
@@ -174,7 +220,7 @@ class MVPAPattern(object):
         All computations are done in place. Data upcasting is done
         automatically if necessary.
 
-        If origin is True patterns with the same origin are zscored independent
+        If origin is True patterns with the same origin are z-scored independent
         of patterns with other origin values, e.i. mean and standard deviation
         are calculated individually.
         """
@@ -207,7 +253,9 @@ class MVPAPattern(object):
 
 
     def selectPatterns( self, mask ):
-        """ Mask a subset of patterns.
+        """ Choose a subset of patterns.
+
+        Returns a new MVPAPattern object containing the selected pattern subset.
         """
         # without having a sequence a index the masked pattern array would
         # loose its 2d layout
@@ -216,31 +264,27 @@ class MVPAPattern(object):
 
         return MVPAPattern( self.__patterns[mask,],
                             self.__regs[mask,],
-                            self.__origins[mask],
+                            self.__origins[mask,],
                             self.origshape )
 
 
     def selectFeatures( self, mask ):
-        """ Mask certain features.
+        """ Choose a subset of features.
 
         'mask' can either be an NumPy array, a tuple or a list.
 
         If 'mask' is an array all nonzero array elements are used to select
-        features and all other features are masked. The shape of the mask array
-        has to match the original data space (see the origshape property).
+        features. The shape of the mask array has to match the original data
+        space (see the origshape property).
 
-        If 'mask' is a tuple, it is assumed to be structures like to output of
+        If 'mask' is a tuple, it is assumed to be structured like to output of
         Numpy.array.nonzero() ( tuple of sequences listing nonzero element
         coordinates ).
 
         If 'mask' is a list, it is assumed to be a list of to-be-selected
         feature ids.
 
-        Calling this method without an argument (mask == None) removes any
-        possibly present mask and selects all available features.
-
-        After masking the class property 'pattern' will only return the
-        selected features.
+        Returns a new MVPAPattern object with the selected features.
         """
         if isinstance(mask, numpy.ndarray):
             if not mask.shape == self.origshape:
@@ -354,10 +398,8 @@ class MVPAPattern(object):
             axis_coord = feature_id / submatrix_size
             # substract what we already have
             feature_id -= axis_coord * submatrix_size
-
             # store
             coord.append( axis_coord )
-
         # store the offset on the last axis
         coord.append( feature_id % ao[-1] )
 
