@@ -19,6 +19,7 @@
 
 import numpy
 import operator
+import random
 
 class MVPAPattern(object):
     """ This class provides a container to store all necessary data to perform
@@ -252,10 +253,40 @@ class MVPAPattern(object):
             doit( self.__patterns, mean, std )
 
 
+    def getPatternSample( self, nperreg ):
+        """ Select a random sample of patterns.
+
+        If 'nperreg' is an integer value, the specified number of patterns is
+        randomly choosen from the group of patterns sharing a unique regressor
+        value ( total number of selected patterns: nperreg x len(reglabels).
+
+        If 'nperreg' is a list its length has to match the number of unique
+        regressor labels. In this case 'nperreg' specifies the number of
+        patters that shall be selected from the patterns with the corresponding
+        regressor label.
+
+        The method returns a MVPAPattern object containing the selected
+        patterns.
+        """
+        # if interger is given take this value for all classes
+        if isinstance(nperreg, int):
+            nperreg = [ nperreg for i in self.reglabels ]
+
+        sample = []
+        # for each available class
+        for i,r in enumerate(self.reglabels):
+            # get the list of pattern ids for this class
+            sample += random.sample( (self.reg == r).nonzero()[0],
+                                     nperreg[i] )
+
+        return self.selectPatterns( sample )
+
+
     def selectPatterns( self, mask ):
         """ Choose a subset of patterns.
 
-        Returns a new MVPAPattern object containing the selected pattern subset.
+        Returns a new MVPAPattern object containing the selected pattern
+        subset.
         """
         # without having a sequence a index the masked pattern array would
         # loose its 2d layout
@@ -448,6 +479,13 @@ class MVPAPattern(object):
         return numpy.unique( self.origin )
 
 
+    def getPatternsPerRegLabel( self ):
+        """ Returns the number of patterns per regressor label.
+        """
+        return [ len(self.__patterns[self.__regs == r]) \
+                    for r in self.reglabels ]
+
+
     # read-only class properties
     pattern =   property( fget=getPatterns )
     reg =       property( fget=getRegs )
@@ -457,3 +495,5 @@ class MVPAPattern(object):
     origshape = property( fget=lambda self: self.__origshape )
     reglabels = property( fget=getRegLabels )
     originlabels = property( fget=getOriginLabels )
+    patperreg = property( fget=getPatternsPerRegLabel )
+

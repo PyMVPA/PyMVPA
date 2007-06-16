@@ -230,12 +230,18 @@ class PatternTests(unittest.TestCase):
         self.failUnless( (data1.origin == [ 1,1]).all() )
 
 
-    def testRegressorRandomization(self):
+    def testRegressorRandomizationAndSampling(self):
         data = mvpa.MVPAPattern( numpy.ones((5,1)), range(5), 1 )
-        data.addPattern( numpy.ones((5,1)), range(5), 2 )
-        data.addPattern( numpy.ones((5,1)), range(5), 3 )
-        data.addPattern( numpy.ones((5,1)), range(5), 4 )
-        data.addPattern( numpy.ones((5,1)), range(5), 5 )
+        data.addPattern( numpy.ones((5,1))+1, range(5), 2 )
+        data.addPattern( numpy.ones((5,1))+2, range(5), 3 )
+        data.addPattern( numpy.ones((5,1))+3, range(5), 4 )
+        data.addPattern( numpy.ones((5,1))+4, range(5), 5 )
+
+        self.failUnless( data.patperreg == [ 5,5,5,5,5 ] )
+
+        sample = data.getPatternSample( 2 )
+
+        self.failUnless( sample.patperreg == [ 2,2,2,2,2 ] )
 
         self.failUnless( (data.originlabels == range(1,6)).all() )
 
