@@ -40,6 +40,22 @@ class CrossValidation( object ):
         # used to store the cv performances
         self.__perf = []
 
+        # pattern sampling status vars
+        self.__training_samplesize = None
+        self.__test_samplesize = None
+        self.__cvfold_nsamples = 1
+        self.__test_samplelog = []
+        self.__train_samplelog = []
+
+
+    def __clean_logdata( self ):
+        """ The internal method is called by run() to clean any previous log
+        data.
+        """
+        self.__perf = []
+        self.__test_samplelog = []
+        self.__train_samplelog = []
+
 
     def setClassifier( self, classifier, **kwargs ):
         if not hasattr( classifier, 'predict' ):
@@ -50,11 +66,42 @@ class CrossValidation( object ):
         self.__clf_kwargs = kwargs
 
 
-    def run( self, cv = 1, classifier = None, **kwargs):
+    def setTrainingPatternSampling( self, samplesize = 'auto' ):
+        """ None is off, 'auto' sets sample size to highest possible number
+        of patterns that can be provided by each class.
+        """
+        # check if automization is requested
+        if isinstance(samplesize, str):
+            if not samplesize == 'auto':
+                raise ValueError, "Only 'auto' is a valid string argument."
+
+        self.__training_samplesize = samplesize
+
+
+    def setTestPatternSampling( self, samplesize = 'auto' ):
+        """ None is off, 'auto' sets sample size to highest possible number
+        of patterns that can be provided by each class.
+        """
+        # check if automization is requested
+        if isinstance(samplesize, str):
+            if not samplesize == 'auto':
+                raise ValueError, "Only 'auto' is a valid string argument."
+
+        self.__test_samplesize = samplesize
+
+
+    def setNCVFoldSamples( self, nsamples ):
+        """ Set the number of sample runs that are performed per
+        cross-validation fold.
+        """
+        self.__cvfold_nsamples = nsamples
+
+
+    def run( self, cvtype = 1, classifier = None, **kwargs):
         """ Start cross-validation function.
 
         Parameters:
-          cv:         type of cross-validation: N-cv
+          cvtype:         type of cross-validation: N-cv
 
         Returns:
           List of performance values (fraction of correct classifications) for
@@ -66,9 +113,9 @@ class CrossValidation( object ):
 
         # get the list of all combinations of to be excluded folds
         cv_list = getUniqueLengthNCombinations(self.__data.originlabels,
-                                               cv)
-        # clear the performance list
-        self.__perf = []
+                                               cvtype)
+        # clean previous log data
+        self.__clean_logdata()
 
         # do cross-validation
         for exclude in cv_list:
@@ -83,19 +130,76 @@ class CrossValidation( object ):
                     numpy.logical_not(exclude_filter) )
             test = self.__data.selectPatterns( exclude_filter )
 
-            # create classifier (must include training if necessary)
-            clf = self.__clf(train, **(kwargs) )
+            for sample in xrange( self.__cvfold_nsamples ):
+                # choose a training pattern sample
+                if not self.__training_samplesize == None:
+                    # determine number number of patterns per class
+                    if self.__training_samplesize == 'auto':
+                        trainsamplesize =\
+                           numpy.array( train.getPatternsPerRegLabel() ).min()
+                    else:
+                        # take predefined number of patterns
+                        trainsamplesize = self.__training_samplesize
 
-            # test
-            perf = numpy.array(clf.predict(test.pattern))
-            perf = perf == test.reg
+                    # finally select the patterns
+                    train_samples = \
+                        train.getPatternSample( trainsamplesize )
+                    self.trainsamplelog.append( trainsamplesize )
 
-            # store performance
-            self.__perf.append(perf.mean())
+                else:
+                    # take all training patterns in the sampling run
+                    train_samples = train
+                    self.trainsamplelog.append( None )
 
-        return self.__perf
+                # choose a test pattern sample
+                if not self.__test_samplesize == None:
+                    # determine number number of patterns per class
+                    if self.__test_samplesize == 'auto':
+                        # choose the minimum number of patterns that is
+                        # available for all classes
+                        testsamplesize =\
+                           numpy.array( test.getPatternsPerRegLabel() ).min()
+                    else:
+                        # take predefined number of patterns
+                        testsamplesize = self.__test_samplesize
 
+                    # finally select the patterns
+                    test_samples = \
+                        test.getPatternSample( testsamplesize )
+                    self.testsamplelog.append( testsamplesize )
+
+                else:
+                    # take all test patterns in this sampling run
+                    test_samples = train
+                    self.testsamplelog.append( None )
+
+                # create classifier (must include training if necessary)
+                clf = self.__clf(train_samples, **(kwargs) )
+
+                # test
+                perf = numpy.array(clf.predict(test_samples.pattern))
+                perf = perf == test_samples.reg
+
+                # store performance
+                self.perf.append(perf.mean())
+
+        return self.perf
+
+
+    # read only props
     perf = property( fget=lambda self: self.__perf )
+    pattern = property( fget=lambda self: self.__data )
+    testsamplelog = property( fget=lambda self: self.__test_samplelog )
+    trainsamplelog = property( fget=lambda self: self.__train_samplelog )
+
+    # read/write props
+    testsamplecfg   = property( fget=lambda self: self.__test_samplesize,
+                                fset=setTestPatternSampling )
+    trainsamplecfg  = property( fget=lambda self: self.__train_samplesize,
+                                fset=setTrainingPatternSampling )
+    ncvfoldsamples  = property( fget=lambda self: self.__cvfold_nsamples,
+                                fset=setNCVFoldSamples )
+
 
 
 def getUniqueLengthNCombinations(data, n):

@@ -95,7 +95,7 @@ class CrossValidationTests(unittest.TestCase):
 
 
         cv = mvpa.CrossValidation( data, mvpa.kNN )
-        perf = numpy.array(cv.run(cv=1))
+        perf = numpy.array(cv.run(cvtype=1))
         self.failUnless( perf.mean() > 0.8 and perf.mean() <= 1.0 )
         self.failUnless( len( perf ) == 6 )
 
@@ -111,13 +111,13 @@ class CrossValidationTests(unittest.TestCase):
         # for now, CV level 1,2 and 3 are simply run w/o special tests
         for cv in (1,2,3):
             cv_h = mvpa.CrossValidation( data_h, mvpa.kNN )
-            perf_h = numpy.array( cv_h.run( cv=cv ) )
+            perf_h = numpy.array( cv_h.run( cvtype=cv ) )
 
             cv_l = mvpa.CrossValidation( data_l, mvpa.kNN )
-            perf_l = numpy.array( cv_l.run( cv=cv ) )
+            perf_l = numpy.array( cv_l.run( cvtype=cv ) )
 
             cv_h_uv = mvpa.CrossValidation( data_h_uv, mvpa.kNN )
-            perf_h_uv = numpy.array( cv_h_uv.run( cv=cv ) )
+            perf_h_uv = numpy.array( cv_h_uv.run( cvtype=cv ) )
 
             #print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
             #print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
@@ -135,18 +135,59 @@ class CrossValidationTests(unittest.TestCase):
         # for now, CV level 1,2 and 3 are simply run w/o special tests
         for cv in (1,2,3):
             cv_h = mvpa.CrossValidation( data_h, mvpa.SVM )
-            perf_h = numpy.array( cv_h.run( cv=cv ) )
+            perf_h = numpy.array( cv_h.run( cvtype=cv ) )
 
             cv_l = mvpa.CrossValidation( data_l, mvpa.SVM )
-            perf_l = numpy.array( cv_l.run( cv=cv ) )
+            perf_l = numpy.array( cv_l.run( cvtype=cv ) )
 
             cv_h_uv = mvpa.CrossValidation( data_h_uv, mvpa.SVM )
-            perf_h_uv = numpy.array( cv_h_uv.run( cv=cv ) )
+            perf_h_uv = numpy.array( cv_h_uv.run( cvtype=cv ) )
 
             print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
             print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
             print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1] <0.05
 
+
+    def testPatternSampling(self):
+        data = self.getMVPattern(3)
+
+        cv = mvpa.CrossValidation( data, mvpa.kNN )
+        cv.ncvfoldsamples = 2
+
+        perf = numpy.array(cv.run(cvtype=1))
+
+        # check that each cvfold is done twice
+        self.failUnless( len( perf ) == 12 )
+
+        # check that all training and test patterns are used for sampling
+        self.failUnless( cv.testsamplelog == [ None for i in range(12) ] )
+        self.failUnless( cv.trainsamplelog == [ None for i in range(12) ] )
+
+        # check total pattern number per reg
+        self.failUnless( cv.pattern.patperreg == [60,60] )
+
+        # enable automatic training pattern sampling
+        cv.trainsamplecfg = 'auto'
+
+        cv.run(cvtype=1)
+        # check that still all patterns are used for training and test patterns
+        # are not touched at all
+        self.failUnless( cv.trainsamplelog == [ 50 for i in range(12) ] )
+        self.failUnless( cv.testsamplelog == [ None for i in range(12) ] )
+
+        # now do pattern and training sampling
+        cv.trainsamplecfg = 28
+        cv.testsamplecfg = 6
+
+        cv.run(cvtype = 1)
+
+        self.failUnless( cv.trainsamplelog == [ 28 for i in range(12) ] )
+        self.failUnless( cv.testsamplelog == [ 6 for i in range(12) ] )
+
+        # now check that you cannot get more pattern samples than are available
+        cv.testsamplecfg = 11
+
+        self.failUnlessRaises( ValueError, cv.run, cvtype = 1 )
 
 
 def suite():
