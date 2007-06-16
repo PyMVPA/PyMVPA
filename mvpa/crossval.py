@@ -170,7 +170,7 @@ class CrossValidation( object ):
 
                 else:
                     # take all test patterns in this sampling run
-                    test_samples = train
+                    test_samples = test
                     self.testsamplelog.append( None )
 
                 # create classifier (must include training if necessary)
