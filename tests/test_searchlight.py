@@ -21,7 +21,7 @@ import mvpa.searchlight as sl
 import mvpa.algorithms
 import numpy
 
-class SearchlighTests(unittest.TestCase):
+class SearchlightTests(unittest.TestCase):
 
     def testSearchlight(self):
         data = numpy.random.standard_normal(( 100, 3, 6, 6 ))

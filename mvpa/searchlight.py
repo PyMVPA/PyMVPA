@@ -145,7 +145,7 @@ class Searchlight( object ):
                                            self.__clf,
                                            **(self.__clfargs) )
             # run cross-validation
-            perf = numpy.array( cv.run( cv=self.__cvtype ) )
+            perf = numpy.array( cv.run( cvtype=self.__cvtype ) )
 
             # translate center coordinate into array slicing index
             center_index = numpy.transpose( 
