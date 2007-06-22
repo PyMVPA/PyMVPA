@@ -186,6 +186,20 @@ class CrossValidation( object ):
         return self.perf
 
 
+    def makeContingencyTbl(self, targets, predictions ):
+        # create the contingency table template
+        tbl = numpy.zeros( ( len(self.pattern.reglabels),
+                             len(self.pattern.reglabels) ),
+                             dtype = 'uint' )
+
+        for t, tl in enumerate( self.pattern.reglabels ):
+            for p, pl in enumerate( self.pattern.reglabels ):
+                tbl[t, p] = \
+                    numpy.sum( predictions[targets==tl] == pl )
+
+        return tbl
+
+
     # read only props
     perf = property( fget=lambda self: self.__perf )
     pattern = property( fget=lambda self: self.__data )
