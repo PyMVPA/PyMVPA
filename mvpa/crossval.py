@@ -20,14 +20,19 @@
 import numpy
 
 class CrossValidation( object ):
+    """ Generic N-M cross-validation with arbitrary classification
+    algorithms.
+    """
     def __init__( self, pattern, classifier, **kwargs ):
         """
         Initialize the cross-validation.
 
+          pattern:    MVPAPattern object containing the data, classification
+                      targets and origins for the cross-validation.
           classifier: class that shall be used the actual classification. Its
                       constructor must not have more than two required
                       arguments (data and regs - in this order).
-                      The classifier has to train itself by creating the
+                      The classifier has to train itself when creating the
                       classifier object!
           **kwargs:   All keyword arguments are passed to the classifiers
                       constructor.
@@ -58,6 +63,8 @@ class CrossValidation( object ):
 
 
     def setClassifier( self, classifier, **kwargs ):
+        """ The supplied values overwrite those passed to the contructor.
+        """
         if not hasattr( classifier, 'predict' ):
             raise ValueError, "Classifier object has to provide a " \
                          "'predict()' method."
@@ -102,6 +109,9 @@ class CrossValidation( object ):
 
         Parameters:
           cvtype:         type of cross-validation: N-cv
+          classifier:     overwrites the classifier setting done in the 
+                          constructor
+          **kwargs:       additional arguments to be passed to the constructor
 
         Returns:
           List of performance values (fraction of correct classifications) for
@@ -187,6 +197,22 @@ class CrossValidation( object ):
 
 
     def makeContingencyTbl(self, targets, predictions ):
+        """ Create a (n x n) contingency table of two length-n vectors.
+
+        One containing the classification targets and the other the corresponding
+        predictions. The contingency table has to following layout:
+
+                      predictions
+                      1 2 . . . N
+                    1
+                    2
+          targets   .
+                    .
+                    N
+
+        where cell (i,j) contains the absolute number of predictions j where the
+        classification would have been i.
+        """
         # create the contingency table template
         tbl = numpy.zeros( ( len(self.pattern.reglabels),
                              len(self.pattern.reglabels) ),
