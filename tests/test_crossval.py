@@ -19,6 +19,7 @@
 import mvpa
 import mvpa.knn as knn
 import mvpa.svm_wrap as svm_wrap
+import mvpa.stats
 import unittest
 import numpy
 import scipy.stats as stat
@@ -145,9 +146,16 @@ class CrossValidationTests(unittest.TestCase):
             cv_h_uv = mvpa.CrossValidation( data_h_uv, svm_wrap.SVM )
             perf_h_uv = numpy.array( cv_h_uv.run( cvtype=cv ) )
 
-            print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
-            print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
-            print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1] <0.05
+            print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1]
+            print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1]
+            print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1]
+
+            print cv_h.contingencytbl, \
+                  mvpa.stats.chisquare(cv_h.contingencytbl)
+            print cv_l.contingencytbl, \
+                  mvpa.stats.chisquare(cv_l.contingencytbl)
+            print cv_h_uv.contingencytbl, \
+                  mvpa.stats.chisquare(cv_h_uv.contingencytbl)
 
 
     def testPatternSampling(self):

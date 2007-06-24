@@ -44,6 +44,7 @@ class CrossValidation( object ):
 
         # used to store the cv performances
         self.__perf = []
+        self.__contingency_tbl = None
 
         # pattern sampling status vars
         self.__training_samplesize = None
@@ -58,6 +59,7 @@ class CrossValidation( object ):
         data.
         """
         self.__perf = []
+        self.__contingency_tbl = None
         self.__test_samplelog = []
         self.__train_samplelog = []
 
@@ -104,23 +106,16 @@ class CrossValidation( object ):
         self.__cvfold_nsamples = nsamples
 
 
-    def run( self, cvtype = 1, classifier = None, **kwargs):
+    def run( self, cvtype = 1):
         """ Start cross-validation function.
 
         Parameters:
           cvtype:         type of cross-validation: N-cv
-          classifier:     overwrites the classifier setting done in the 
-                          constructor
-          **kwargs:       additional arguments to be passed to the constructor
 
         Returns:
           List of performance values (fraction of correct classifications) for
           each  cross-validation fold.
         """
-        # change classifier if requested
-        if classifier:
-            self.setClassifier( classifier, **(kwargs) )
-
         # get the list of all combinations of to be excluded folds
         cv_list = getUniqueLengthNCombinations(self.__data.originlabels,
                                                cvtype)
@@ -184,23 +179,40 @@ class CrossValidation( object ):
                     self.testsamplelog.append( None )
 
                 # create classifier (must include training if necessary)
-                clf = self.__clf(train_samples, **(kwargs) )
+                clf = self.__clf(train_samples )
 
                 # test
-                perf = numpy.array(clf.predict(test_samples.pattern))
-                perf = perf == test_samples.reg
+                predictions = numpy.array(clf.predict(test_samples.pattern))
+                perf = ( predictions == test_samples.reg )
 
                 # store performance
                 self.perf.append(perf.mean())
 
+                # store more details performance description
+                # as contingency table
+                self.__storeUpdateContingencyTbl( 
+                    self.makeContingencyTbl( test_samples.reg,
+                                             predictions ) )
+
         return self.perf
+
+
+    def __storeUpdateContingencyTbl( self, tbl ):
+        """ Internal method to store the sum of all contingency tables from
+        all CV runs.
+        """
+        if self.__contingency_tbl == None:
+            self.__contingency_tbl = tbl
+        else:
+            self.__contingency_tbl += tbl
 
 
     def makeContingencyTbl(self, targets, predictions ):
         """ Create a (n x n) contingency table of two length-n vectors.
 
-        One containing the classification targets and the other the corresponding
-        predictions. The contingency table has to following layout:
+        One containing the classification targets and the other the
+        corresponding predictions. The contingency table has to following
+        layout:
 
                       predictions
                       1 2 . . . N
@@ -210,8 +222,8 @@ class CrossValidation( object ):
                     .
                     N
 
-        where cell (i,j) contains the absolute number of predictions j where the
-        classification would have been i.
+        where cell (i,j) contains the absolute number of predictions j where
+        the classification would have been i.
         """
         # create the contingency table template
         tbl = numpy.zeros( ( len(self.pattern.reglabels),
@@ -231,6 +243,7 @@ class CrossValidation( object ):
     pattern = property( fget=lambda self: self.__data )
     testsamplelog = property( fget=lambda self: self.__test_samplelog )
     trainsamplelog = property( fget=lambda self: self.__train_samplelog )
+    contingencytbl = property( fget=lambda self: self.__contingency_tbl )
 
     # read/write props
     testsamplecfg   = property( fget=lambda self: self.__test_samplesize,
