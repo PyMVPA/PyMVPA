@@ -17,8 +17,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import unittest
+import mvpa
 import mvpa.searchlight as sl
-import mvpa.algorithms
+import mvpa.knn as knn
 import numpy
 
 class SearchlightTests(unittest.TestCase):
@@ -35,7 +36,7 @@ class SearchlightTests(unittest.TestCase):
                                  3.0,
                                  elementsize = (3,3,3),
                                  forcesphere = True,
-                                 classifier = mvpa.kNN,
+                                 classifier = knn.kNN,
                                  k = 5 )
 
         # check virgin results

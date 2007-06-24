@@ -17,6 +17,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import mvpa
+import mvpa.svm_wrap as svm_wrap
 import unittest
 import numpy
 
@@ -65,11 +66,11 @@ class SVMTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            s_mv = mvpa.SVM(train)
+            s_mv = svm_wrap.SVM(train)
             p_mv = s_mv.predict( test.pattern )
             mv_perf.append( numpy.mean(p_mv==test.reg) )
 
-            s_uv = mvpa.SVM(train.selectFeatures([0]))
+            s_uv = svm_wrap.SVM(train.selectFeatures([0]))
             p_uv = s_uv.predict( test.selectFeatures([0]).pattern )
             uv_perf.append( numpy.mean(p_uv==test.reg) )
 

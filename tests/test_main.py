@@ -24,7 +24,8 @@ tests = [ 'test_patterns',
           'test_knn',
           'test_svm',
           'test_crossval',
-          'test_searchlight' ]
+          'test_searchlight',
+          'test_stats' ]
 
 
 # import all test modules

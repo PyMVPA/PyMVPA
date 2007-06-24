@@ -16,8 +16,9 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-import mvpa
 import unittest
+import mvpa
+import mvpa.knn as knn
 import numpy
 
 
@@ -65,11 +66,11 @@ class KNNTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            k_mv = mvpa.kNN(train, k = 10)
+            k_mv = knn.kNN(train, k = 10)
             p_mv = k_mv.predict( test.pattern )
             mv_perf.append( numpy.mean(p_mv==test.reg) )
 
-            k_uv = mvpa.kNN(train.selectFeatures([0]), k = 10)
+            k_uv = knn.kNN(train.selectFeatures([0]), k = 10)
             p_uv = k_uv.predict( test.selectFeatures([0]).pattern )
             uv_perf.append( numpy.mean(p_uv==test.reg) )
 

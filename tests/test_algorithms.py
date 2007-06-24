@@ -16,7 +16,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-import mvpa
+import mvpa.algorithms as algorithms
 import unittest
 import numpy
 
@@ -24,7 +24,7 @@ class AlgorithmTests(unittest.TestCase):
 
     def testSphereGenerator(self):
         minimal = [ coords
-            for center, coords in mvpa.SpheresInMask(
+            for center, coords in algorithms.SpheresInMask(
                     numpy.ones((1,1,1)), 1) ]
 
         # only one sphere possible
@@ -41,7 +41,7 @@ class AlgorithmTests(unittest.TestCase):
 
         # get the spheres
         three = [ (center, coords)
-            for center, coords in mvpa.SpheresInMask(three_mask, 1) ]
+            for center, coords in algorithms.SpheresInMask(three_mask, 1) ]
         # check we have all but one
         self.failUnless( len(three) == 26 )
 
@@ -53,10 +53,10 @@ class AlgorithmTests(unittest.TestCase):
 
 
         s = [ (c,sc) for c,sc in \
-            mvpa.algorithms.SpheresInMask( numpy.ones((2,2,2)),
-                                           0.9,
-                                           elementsize=(1,1,1),
-                                           forcesphere=False ) ]
+            algorithms.SpheresInMask( numpy.ones((2,2,2)),
+                                      0.9,
+                                      elementsize=(1,1,1),
+                                      forcesphere=False ) ]
         # check for all possible sphere centers
         self.failUnless( len(s) == 8 )
         for coord in s:
