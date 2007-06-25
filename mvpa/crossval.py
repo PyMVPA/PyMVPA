@@ -103,6 +103,46 @@ class CrossValidation( object ):
         self.__cvfold_nsamples = nsamples
 
 
+    def getNCVFolds( self, cvtype ):
+        """ Returns the number of cross-validations folds that are performed
+        on the dataset for a given cvtype ( N-cvtype cross-validation).
+        """
+        return len( getUniqueLengthNCombinations(self.pattern.originlabels,
+                                                 cvtype) )
+
+
+    def getNPatternsPerCVFold( self, cvtype = 1 ):
+        """ Returns a tuple of two arrays with the number of patterns per
+        class and CV-fold. The first array lists the available training pattern
+        and the second array the test patterns.
+
+        Array rows: CV-folds, columns: regressor labels
+        """
+        # get the list of all combinations of to be excluded folds
+        cv_list = getUniqueLengthNCombinations(self.pattern.originlabels,
+                                               cvtype)
+
+        ntrainpat = numpy.zeros( (len(cv_list), len(self.pattern.reglabels) ) )
+        ntestpat = numpy.zeros( ntrainpat.shape )
+
+        for fold, exclude in enumerate(cv_list):
+            # build a boolean selector vector to choose training and
+            # test data for this CV fold
+            exclude_filter =  \
+                numpy.array([ i in exclude for i in self.__data.origin ])
+
+            # split data and regs into training and test set
+            train = \
+                self.__data.selectPatterns( 
+                    numpy.logical_not(exclude_filter) )
+            test = self.__data.selectPatterns( exclude_filter )
+
+            ntrainpat[fold] = train.getPatternsPerRegLabel()
+            ntestpat[fold] = test.getPatternsPerRegLabel()
+
+        return ntrainpat, ntestpat
+
+
     def run( self, classifier, cvtype = 1, **kwargs ):
         """ Perform cross-validation.
 

@@ -34,7 +34,7 @@ class kNN:
           pattern: MVPAPattern object containing all data.
           k:       number of nearest neighbours to be used for voting
         """
-        self.__data = mvpa_pat
+        self.__data = pattern
         self.__k = k
         self.__votingfx = self.getWeightedVote
         self.verbose = False

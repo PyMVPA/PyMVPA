@@ -102,6 +102,20 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( perf.mean() > 0.8 and perf.mean() <= 1.0 )
         self.failUnless( len( perf ) == 6 )
 
+        # check the number of CV folds
+        self.failUnless( cv.getNCVFolds(1) == 6 )
+
+        # check the number of available patterns per CV fold
+        ntrainpats, ntestpats = cv.getNPatternsPerCVFold(1)
+
+        self.failUnless( ntrainpats.shape == (6,2) )
+        self.failUnless( ntestpats.shape == (6,2) )
+        self.failUnless( (ntrainpats ==\
+                         numpy.array([ 50 for i in range(12) ]).reshape(6,2)
+                         ).all() )
+        self.failUnless( (ntestpats ==\
+                         numpy.array([ 10 for i in range(12) ]).reshape(6,2)
+                         ).all() )
 
     def testCLFStatskNN(self):
         data_h = self.getMVPattern(1)
