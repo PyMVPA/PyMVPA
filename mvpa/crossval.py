@@ -23,35 +23,43 @@ class CrossValidation( object ):
     """ Generic N-M cross-validation with arbitrary classification
     algorithms.
     """
-    def __init__( self, pattern, classifier, **kwargs ):
+    def __init__( self,
+                  pattern,
+                  trainingsamples = None,
+                  testsamples = None,
+                  ncvfoldsamples = 1 ):
         """
         Initialize the cross-validation.
 
           pattern:    MVPAPattern object containing the data, classification
                       targets and origins for the cross-validation.
-          classifier: class that shall be used the actual classification. Its
-                      constructor must not have more than two required
-                      arguments (data and regs - in this order).
-                      The classifier has to train itself when creating the
-                      classifier object!
-          **kwargs:   All keyword arguments are passed to the classifiers
-                      constructor.
+          trainingsamples:
+                      Number of training patterns to be used in each
+                      cross-validation fold. Please see the
+                      setTrainingPatternSamples() method for special arguments.
+          testsamples:
+                      Number of test pattern to be used in each
+                      cross-validation fold. Please see the
+                      setTestPatternSamples() method for special arguments.
+          ncvfoldsamples:
+                      Number of time each cross-validation fold is run. This
+                      is mostly usefull if a subset of the available patterns
+                      is used for classification and the subset is randomly
+                      selected for each CV-fold run (see the trainingsamples
+                      and testsamples arguments).
         """
         self.__data = pattern
-
-        # check and store the classifier
-        self.setClassifier( classifier, **(kwargs) )
 
         # used to store the cv performances
         self.__perf = []
         self.__contingency_tbl = None
 
         # pattern sampling status vars
-        self.__training_samplesize = None
-        self.__test_samplesize = None
-        self.__cvfold_nsamples = 1
         self.__test_samplelog = []
         self.__train_samplelog = []
+        self.setTrainingPatternSamples( trainingsamples )
+        self.setTestPatternSamples( testsamples )
+        self.setNCVFoldSamples( ncvfoldsamples )
 
 
     def __clean_logdata( self ):
@@ -64,18 +72,7 @@ class CrossValidation( object ):
         self.__train_samplelog = []
 
 
-    def setClassifier( self, classifier, **kwargs ):
-        """ The supplied values overwrite those passed to the contructor.
-        """
-        if not hasattr( classifier, 'predict' ):
-            raise ValueError, "Classifier object has to provide a " \
-                         "'predict()' method."
-
-        self.__clf = classifier
-        self.__clf_kwargs = kwargs
-
-
-    def setTrainingPatternSampling( self, samplesize = 'auto' ):
+    def setTrainingPatternSamples( self, samplesize ):
         """ None is off, 'auto' sets sample size to highest possible number
         of patterns that can be provided by each class.
         """
@@ -87,7 +84,7 @@ class CrossValidation( object ):
         self.__training_samplesize = samplesize
 
 
-    def setTestPatternSampling( self, samplesize = 'auto' ):
+    def setTestPatternSamples( self, samplesize ):
         """ None is off, 'auto' sets sample size to highest possible number
         of patterns that can be provided by each class.
         """
@@ -106,16 +103,28 @@ class CrossValidation( object ):
         self.__cvfold_nsamples = nsamples
 
 
-    def run( self, cvtype = 1):
-        """ Start cross-validation function.
+    def run( self, classifier, cvtype = 1, **kwargs ):
+        """ Perform cross-validation.
 
         Parameters:
-          cvtype:         type of cross-validation: N-cv
+          cvtype:     type of cross-validation: N-cvtype
+          classifier: class that shall be used the actual classification. Its
+                      constructor must not have more than two required
+                      arguments (data and regs - in this order).
+                      The classifier has to train itself when creating the
+                      classifier object!
+          **kwargs:   All keyword arguments are passed to the classifiers
+                      constructor.
 
         Returns:
           List of performance values (fraction of correct classifications) for
-          each  cross-validation fold.
+          each  cross-validation fold. More performance values are available
+          via several class attributes.
         """
+        if not hasattr( classifier, 'predict' ):
+            raise ValueError, "Classifier object has to provide a " \
+                         "'predict()' method."
+
         # get the list of all combinations of to be excluded folds
         cv_list = getUniqueLengthNCombinations(self.__data.originlabels,
                                                cvtype)
@@ -179,10 +188,11 @@ class CrossValidation( object ):
                     self.testsamplelog.append( None )
 
                 # create classifier (must include training if necessary)
-                clf = self.__clf(train_samples )
+                clf = classifier(train_samples )
 
                 # test
-                predictions = numpy.array(clf.predict(test_samples.pattern))
+                predictions = numpy.array(
+                                clf.predict(test_samples.pattern) )
                 perf = ( predictions == test_samples.reg )
 
                 # store performance
@@ -190,14 +200,14 @@ class CrossValidation( object ):
 
                 # store more details performance description
                 # as contingency table
-                self.__storeUpdateContingencyTbl( 
+                self.__updateContingencyTbl(
                     self.makeContingencyTbl( test_samples.reg,
                                              predictions ) )
 
         return self.perf
 
 
-    def __storeUpdateContingencyTbl( self, tbl ):
+    def __updateContingencyTbl( self, tbl ):
         """ Internal method to store the sum of all contingency tables from
         all CV runs.
         """
@@ -215,11 +225,11 @@ class CrossValidation( object ):
         layout:
 
                       predictions
-                      1 2 . . . N
+                      1  2  .  .  N
                     1
                     2
           targets   .
-                    .
+                    .     (i,j)
                     N
 
         where cell (i,j) contains the absolute number of predictions j where
@@ -247,9 +257,9 @@ class CrossValidation( object ):
 
     # read/write props
     testsamplecfg   = property( fget=lambda self: self.__test_samplesize,
-                                fset=setTestPatternSampling )
+                                fset=setTestPatternSamples )
     trainsamplecfg  = property( fget=lambda self: self.__train_samplesize,
-                                fset=setTrainingPatternSampling )
+                                fset=setTrainingPatternSamples )
     ncvfoldsamples  = property( fget=lambda self: self.__cvfold_nsamples,
                                 fset=setNCVFoldSamples )
 

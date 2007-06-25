@@ -35,27 +35,25 @@ class SearchlightTests(unittest.TestCase):
                                  numpy.ones( (3, 6, 6) ),
                                  3.0,
                                  elementsize = (3,3,3),
-                                 forcesphere = True,
-                                 classifier = knn.kNN,
-                                 k = 5 )
+                                 forcesphere = True )
 
         # check virgin results
         self.failUnless( (slight.perfmean == 0).all() )
         self.failUnless( (slight.perfvar == 0).all() )
-        self.failUnless( (slight.perfmin == 0).all() )
-        self.failUnless( (slight.perfmax == 0).all() )
+        self.failUnless( (slight.chisquare == 0).all() )
+        self.failUnless( (slight.chanceprob == 0).all() )
         self.failUnless( (slight.spheresize == 0).all() )
 
         self.failUnless( slight.ncvfolds == 5 )
 
         # run searchlight
-        slight.run(verbose=True)
+        slight.run(knn.kNN, verbose=True, k=5)
 
         # check that something happened
         self.failIf( (slight.perfmean == 0).all() )
         self.failIf( (slight.perfvar == 0).all() )
-        self.failIf( (slight.perfmin == 0).all() )
-        self.failIf( (slight.perfmax == 0).all() )
+        self.failIf( (slight.chisquare == 0).all() )
+        self.failIf( (slight.chanceprob == 0).all() )
         self.failIf( (slight.spheresize == 0).all() )
 
 

@@ -26,14 +26,18 @@ except:
     pass
 
 class kNN:
-
-    def __init__(self, mvpa_pat, k=2):
-
+    """ k-nearest-neighbour classification.
+    """
+    def __init__(self, pattern, k=2):
+        """
+        Parameters:
+          pattern: MVPAPattern object containing all data.
+          k:       number of nearest neighbours to be used for voting
+        """
         self.__data = mvpa_pat
         self.__k = k
         self.__votingfx = self.getWeightedVote
         self.verbose = False
-
 
 
     def predict(self, data):
@@ -48,15 +52,16 @@ class kNN:
             raise ValueError, "Data array must be two-dimensional."
 
         if not data.shape[1] == self.__data.nfeatures:
-            raise ValueError, "Length of data samples (features) does not match the classifier."
+            raise ValueError, "Length of data samples (features) does " \
+                              "not match the classifier."
 
         # predicted class labels will go here
         predicted = []
 
         # for all test pattern
         for p in data:
-            # calc the euclidean distance of the pattern vector to all patterns in the
-            # training data
+            # calc the euclidean distance of the pattern vector to all
+            # patterns in the training data
             dists = numpy.sqrt( 
                         numpy.sum( 
                             numpy.abs( self.__data.pattern - p )**2, axis=1
@@ -73,7 +78,8 @@ class kNN:
 
     def getMajorityVote(self, knn_ids):
         # create dictionary with an item for each condition
-        votes = dict( zip ( self.__data.reglabels, [0 for i in self.__data.reglabels ] ) )
+        votes = dict( zip ( self.__data.reglabels,
+                            [0 for i in self.__data.reglabels ] ) )
 
         # add 1 to a certain condition per NN
         for nn in knn_ids:
@@ -93,7 +99,8 @@ class kNN:
         votes = dict( zip ( self.__data.reglabels, 
                             [0 for i in self.__data.reglabels ] ) )
         weights = dict( zip ( self.__data.reglabels,
-                    [ 1 - ( float( self.__data.reg.tolist().count(i) ) / len(self.__data.reg) )
+                    [ 1 - ( float( self.__data.reg.tolist().count(i) ) \
+                      / len(self.__data.reg) )
                         for i in self.__data.reglabels ] ) )
 
         for nn in knn_ids:

@@ -27,10 +27,24 @@ import algorithms
 import numpy
 import crossval
 import sys
-import scipy.stats as stats
+import stats
 
 class Searchlight( object ):
-    """
+    """ Perform a cross-validation analysis in all possible spheres of a
+    certain size within a mask in the dataspace.
+
+    The algorithm is loosely implemented after:
+
+      Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006). 
+      'Information-based functional brain mapping.' Proceedings of the
+      National Academy of Sciences of the United States of America 103,
+      3863-3868.
+
+    The analysis results are a map of the mean classification performance
+    and their variance. Additionally a chisquare value per sphere and the
+    associated p-value provide information about the signal strength
+    within a certain sphere.
+
     The object provides a number of properties that can be used to access
     input and output data of the searchlight algorithm.
 
@@ -40,11 +54,15 @@ class Searchlight( object ):
 
         perfmean   - mean classification performance
         perfvar    - variance of classification performance
-        perfmin    - minimal classification performance of all CV-folds
-        perfmax    - maximal classification performance of all CV-folds
-        notchance  - two-tailed probability of the peformance being different
-                     from chance level ( 1 / <number of classes> ).
+        chisquare  - value of the chisquare test of classifications being
+                     equally distributed over all cells in the 
+                     target x predictions contingency table
+        chanceprob - probability of classifications being equally distributed
+                     over all cells in the target x prediction contingency 
+                     table, i.e. high probability means low classification
+                     performance and low signal in the data
         spheresize - number of features in the sphere
+
 
     These properties give access to the input data and other status variables:
 
@@ -57,9 +75,6 @@ class Searchlight( object ):
                       used to translate the radius into element units
         cvtype      - type of cross-validation that is used. 1 means N-1 CV,
                       2 means N-2 ...
-        clf         - a class providing a classifier
-        clfargs     - dictionary with keyword arguments for the classifiers
-                      constructor
         forcesphere - if True a full sphere is used regardless of the status
                       of the status of the sphere elements in the mask. If
                       False only elements are considered as sphere elements
@@ -72,7 +87,7 @@ class Searchlight( object ):
                   elementsize = None,
                   forcesphere = False,
                   cvtype = 1,
-                  classifier = None, **kwargs ):
+                  **kwargs ):
         self.__pattern = pattern
         self.__mask = mask
         self.__radius = radius
@@ -86,8 +101,7 @@ class Searchlight( object ):
 
         self.__forcesphere = forcesphere
         self.__cvtype = cvtype
-        self.__clf = classifier
-        self.__clfargs = kwargs
+        self.__cvargs = kwargs
 
         if not mask.shape == pattern.origshape:
             raise ValueError, 'Mask shape has to match the pattern origshape.'
@@ -98,14 +112,13 @@ class Searchlight( object ):
     def __clearResults( self ):
         # init the result maps
         self.__perfmean = numpy.zeros(self.pattern.origshape)
-        self.__perfmin = numpy.zeros(self.pattern.origshape)
-        self.__perfmax = numpy.zeros(self.pattern.origshape)
         self.__perfvar = numpy.zeros(self.pattern.origshape)
-        self.__notchance = numpy.zeros(self.pattern.origshape)
+        self.__chisquare = numpy.zeros(self.pattern.origshape)
+        self.__chanceprob = numpy.zeros(self.pattern.origshape)
         self.__spheresize = numpy.zeros(self.pattern.origshape, dtype='uint')
 
 
-    def run( self, verbose=False, classifier = None, **kwargs ):
+    def run( self, classifier, verbose=False, **kwargs ):
         """ Perform the spheresearch for all possible spheres in the
         mask.
 
@@ -116,14 +129,6 @@ class Searchlight( object ):
         classification algorithm. Additional keyword are passed to the
         classifier's contructor.
         """
-        # accept new classifier if any
-        if classifier:
-            self.__clf = classifier
-            self.__clfargs = kwargs
-
-        if not self.__clf:
-            raise RuntimeError, 'No classifier set.'
-
         # cleanup prior runs first
         self.__clearResults()
 
@@ -141,14 +146,16 @@ class Searchlight( object ):
             masked = self.__pattern.selectFeatures( tuple( sphere ) )
 
             # do the cross-validation
-            cv = crossval.CrossValidation( masked,
-                                           self.__clf,
-                                           **(self.__clfargs) )
+            cv = crossval.CrossValidation( masked )
+
             # run cross-validation
-            perf = numpy.array( cv.run( cvtype=self.__cvtype ) )
+            cv.run( classifier, cvtype=self.__cvtype, **(kwargs) )
+
+            # store the performance value as a vector
+            perf = numpy.array( cv.perf )
 
             # translate center coordinate into array slicing index
-            center_index = numpy.transpose( 
+            center_index = numpy.transpose(
                                numpy.array( center, ndmin=2 ) ).tolist()
 
             # store the interesting information
@@ -156,14 +163,10 @@ class Searchlight( object ):
             self.__perfmean[center_index] = perf.mean()
             # performance variance
             self.__perfvar[center_index] = perf.var()
-            # performance minimum
-            self.__perfmin[center_index] = perf.min()
-            # performance maximum
-            self.__perfmax[center_index] = perf.max()
             # significantly different from chance?
-            self.__notchance[center_index] = \
-                stats.ttest_1samp(perf, 
-                                  1.0 / len( self.pattern.reglabels ) )[1]
+            self.__chisquare[center_index], \
+            self.__chanceprob[center_index] = \
+                stats.chisquare( cv.contingencytbl )
             # spheresize / number of features
             self.__spheresize[center_index] = sphere.shape[1]
 
@@ -187,9 +190,8 @@ class Searchlight( object ):
     # access to the results
     perfmean = property( fget=lambda self: self.__perfmean )
     perfvar = property( fget=lambda self: self.__perfvar )
-    perfmin = property( fget=lambda self: self.__perfmin )
-    perfmax = property( fget=lambda self: self.__perfmax )
-    notchance = property( fget=lambda self: self.__notchance )
+    chisquare = property( fget=lambda self: self.__chisquare )
+    chanceprob = property( fget=lambda self: self.__chanceprob )
     spheresize = property( fget=lambda self: self.__spheresize )
 
     # other data access
@@ -198,7 +200,5 @@ class Searchlight( object ):
     radius = property( fget=lambda self: self.__radius )
     elementsize = property( fget=lambda self: self.__elementsize )
     cvtype = property( fget=lambda self: self.__cvtype )
-    clf = property( fget=lambda self: self.__clf )
-    clfargs = property( fget=lambda self: self.__clfargs )
     forcesphere = property( fget=lambda self: self.__forcesphere )
     ncvfolds = property( fget=getNCVFolds )

@@ -97,8 +97,8 @@ class CrossValidationTests(unittest.TestCase):
                 [ k for k in range(1,7) for i in range(20) ] ).all() )
 
 
-        cv = mvpa.CrossValidation( data, knn.kNN )
-        perf = numpy.array(cv.run(cvtype=1))
+        cv = mvpa.CrossValidation( data )
+        perf = numpy.array(cv.run(knn.kNN, cvtype=1))
         self.failUnless( perf.mean() > 0.8 and perf.mean() <= 1.0 )
         self.failUnless( len( perf ) == 6 )
 
@@ -113,14 +113,14 @@ class CrossValidationTests(unittest.TestCase):
         # when using random input data
         # for now, CV level 1,2 and 3 are simply run w/o special tests
         for cv in (1,2,3):
-            cv_h = mvpa.CrossValidation( data_h, knn.kNN )
-            perf_h = numpy.array( cv_h.run( cvtype=cv ) )
+            cv_h = mvpa.CrossValidation( data_h )
+            perf_h = numpy.array( cv_h.run( knn.kNN, cvtype=cv ) )
 
-            cv_l = mvpa.CrossValidation( data_l, knn.kNN )
-            perf_l = numpy.array( cv_l.run( cvtype=cv ) )
+            cv_l = mvpa.CrossValidation( data_l )
+            perf_l = numpy.array( cv_l.run( knn.kNN, cvtype=cv ) )
 
-            cv_h_uv = mvpa.CrossValidation( data_h_uv, knn.kNN )
-            perf_h_uv = numpy.array( cv_h_uv.run( cvtype=cv ) )
+            cv_h_uv = mvpa.CrossValidation( data_h_uv )
+            perf_h_uv = numpy.array( cv_h_uv.run( knn.kNN, cvtype=cv ) )
 
             #print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
             #print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
@@ -137,14 +137,15 @@ class CrossValidationTests(unittest.TestCase):
         # when using random input data
         # for now, CV level 1,2 and 3 are simply run w/o special tests
         for cv in (1,2,3):
-            cv_h = mvpa.CrossValidation( data_h, svm_wrap.SVM )
-            perf_h = numpy.array( cv_h.run( cvtype=cv ) )
+            cv_h = mvpa.CrossValidation( data_h )
+            perf_h = numpy.array( cv_h.run( svm_wrap.SVM, cvtype=cv ) )
 
-            cv_l = mvpa.CrossValidation( data_l, svm_wrap.SVM )
-            perf_l = numpy.array( cv_l.run( cvtype=cv ) )
+            cv_l = mvpa.CrossValidation( data_l )
+            perf_l = numpy.array( cv_l.run( svm_wrap.SVM, cvtype=cv ) )
 
-            cv_h_uv = mvpa.CrossValidation( data_h_uv, svm_wrap.SVM )
-            perf_h_uv = numpy.array( cv_h_uv.run( cvtype=cv ) )
+            cv_h_uv = mvpa.CrossValidation( data_h_uv )
+            perf_h_uv = numpy.array( cv_h_uv.run( svm_wrap.SVM,
+                                                  cvtype=cv ) )
 
             print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1]
             print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1]
@@ -158,13 +159,13 @@ class CrossValidationTests(unittest.TestCase):
                   mvpa.stats.chisquare(cv_h_uv.contingencytbl)
 
 
-    def testPatternSampling(self):
+    def testPatternSamples(self):
         data = self.getMVPattern(3)
 
-        cv = mvpa.CrossValidation( data, knn.kNN )
+        cv = mvpa.CrossValidation( data )
         cv.ncvfoldsamples = 2
 
-        perf = numpy.array(cv.run(cvtype=1))
+        perf = numpy.array(cv.run(knn.kNN, cvtype=1))
 
         # check that each cvfold is done twice
         self.failUnless( len( perf ) == 12 )
@@ -179,7 +180,7 @@ class CrossValidationTests(unittest.TestCase):
         # enable automatic training pattern sampling
         cv.trainsamplecfg = 'auto'
 
-        cv.run(cvtype=1)
+        cv.run(knn.kNN, cvtype=1)
         # check that still all patterns are used for training and test patterns
         # are not touched at all
         self.failUnless( cv.trainsamplelog == [ 50 for i in range(12) ] )
@@ -189,7 +190,7 @@ class CrossValidationTests(unittest.TestCase):
         cv.trainsamplecfg = 28
         cv.testsamplecfg = 6
 
-        cv.run(cvtype = 1)
+        cv.run(knn.kNN, cvtype = 1)
 
         self.failUnless( cv.trainsamplelog == [ 28 for i in range(12) ] )
         self.failUnless( cv.testsamplelog == [ 6 for i in range(12) ] )
@@ -197,15 +198,14 @@ class CrossValidationTests(unittest.TestCase):
         # now check that you cannot get more pattern samples than are available
         cv.testsamplecfg = 11
 
-        self.failUnlessRaises( ValueError, cv.run, cvtype = 1 )
+        self.failUnlessRaises( ValueError, cv.run, knn.kNN, cvtype = 1 )
 
 
     def testContingencyTbl(self):
         data = numpy.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = numpy.array([1,1,1,2,2,2,3,3,3])
 
-        cv = mvpa.CrossValidation( mvpa.MVPAPattern( data, reg ),
-                                   knn.kNN )
+        cv = mvpa.CrossValidation( mvpa.MVPAPattern( data, reg ) )
 
         tbl = cv.makeContingencyTbl( cv.pattern.reg,
                                      numpy.array([1,2,1,2,2,2,3,2,1]) )
