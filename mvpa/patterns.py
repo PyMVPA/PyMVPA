@@ -302,7 +302,7 @@ class MVPAPattern(object):
     def selectFeatures( self, mask ):
         """ Choose a subset of features.
 
-        'mask' can either be an NumPy array, a tuple or a list.
+        'mask' can either be a NumPy array, a tuple or a list.
 
         If 'mask' is an array all nonzero array elements are used to select
         features. The shape of the mask array has to match the original data

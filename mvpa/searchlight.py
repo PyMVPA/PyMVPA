@@ -88,6 +88,20 @@ class Searchlight( object ):
                   forcesphere = False,
                   cvtype = 1,
                   **kwargs ):
+        """
+        Parameters:
+            radius:       sphere radius
+            elementsize:  a vector specifying the extent of each data element
+                          along all dimensions in the dataset. This information
+                          is used to translate the radius into element units
+            forcesphere:  if True a full sphere is used regardless of the
+                          status of the status of the sphere elements in the
+                          mask. If False only elements are considered as sphere
+                          elements that have a non-zero value in the mask.
+            cvtype:       type of cross-validation that is used. 1 means N-1 CV
+            **kwargs:     additional arguments that are passed to the
+                          constructor of the CrossValidation class.
+        """
         self.__pattern = pattern
         self.__mask = mask
         self.__radius = radius
@@ -125,9 +139,9 @@ class Searchlight( object ):
         By setting 'verbose' to True one can enable some status messages that
         inform about the progress while processing the spheres.
 
-        The 'classifier' argument overrides can be used to select a new
-        classification algorithm. Additional keyword are passed to the
-        classifier's contructor.
+        The 'classifier' argument specifies a class that is used to perform
+        the classification. Additional keyword are passed to the classifier's
+        contructor.
         """
         # cleanup prior runs first
         self.__clearResults()
@@ -146,7 +160,7 @@ class Searchlight( object ):
             masked = self.__pattern.selectFeatures( tuple( sphere ) )
 
             # do the cross-validation
-            cv = crossval.CrossValidation( masked )
+            cv = crossval.CrossValidation( masked, **(self.__cvargs) )
 
             # run cross-validation
             cv.run( classifier, cvtype=self.__cvtype, **(kwargs) )
