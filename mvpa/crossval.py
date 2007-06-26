@@ -27,7 +27,8 @@ class CrossValidation( object ):
                   pattern,
                   trainingsamples = None,
                   testsamples = None,
-                  ncvfoldsamples = 1 ):
+                  ncvfoldsamples = 1,
+                  clfcallback = None ):
         """
         Initialize the cross-validation.
 
@@ -47,6 +48,10 @@ class CrossValidation( object ):
                       is used for classification and the subset is randomly
                       selected for each CV-fold run (see the trainingsamples
                       and testsamples arguments).
+          clfcallback:
+                      a callable that is called at the end of each
+                      cross-validation fold with the trained classifier as the
+                      only argument.
         """
         self.__data = pattern
 
@@ -60,6 +65,16 @@ class CrossValidation( object ):
         self.setTrainingPatternSamples( trainingsamples )
         self.setTestPatternSamples( testsamples )
         self.setNCVFoldSamples( ncvfoldsamples )
+
+
+        self.setClassifierCallback( clfcallback )
+
+
+    def setClassifierCallback( self, callable ):
+        """ Sets a callable that is called at the end of each cross-validation
+        fold with the trained classifier as the only argument.
+        """
+        self.__clf_callback = callable
 
 
     def __clean_logdata( self ):
@@ -235,8 +250,12 @@ class CrossValidation( object ):
                                 clf.predict(test_samples.pattern) )
                 perf = ( predictions == test_samples.reg )
 
+                # call classifier callback if any
+                if not self.__clf_callback == None:
+                    self.__clf_callback( clf )
+
                 # store performance
-                self.perf.append(perf.mean())
+                self.perf.append( perf.mean() )
 
                 # store more details performance description
                 # as contingency table
