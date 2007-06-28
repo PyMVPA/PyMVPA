@@ -46,7 +46,7 @@ class PLF:
         self.__criterion = criterion
         self.__reduce = reduce
 
-        self.__initialize()
+        self.__train()
 
     def __train(self):
         # Set up the environment for fitting the data
