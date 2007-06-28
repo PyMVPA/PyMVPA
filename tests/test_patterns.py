@@ -28,7 +28,7 @@ class PatternTests(unittest.TestCase):
         # simple sequence has to be a single pattern
         self.failUnlessEqual( data.npatterns, 1)
         # check correct pattern layout (1x5)
-        self.failUnless( 
+        self.failUnless(
             (data.pattern == numpy.array([[0, 1, 2, 3, 4]])).all() )
 
         # check for single regressor and origin
@@ -36,7 +36,7 @@ class PatternTests(unittest.TestCase):
         self.failUnless( (data.origin == numpy.array([1])).all() )
 
         # now try adding pattern with wrong shape
-        self.failUnlessRaises( ValueError, 
+        self.failUnlessRaises( ValueError,
                                data.addPattern, numpy.ones((2,3)), 1, 1 )
 
         # now add two real patterns
@@ -73,7 +73,7 @@ class PatternTests(unittest.TestCase):
         self.failUnlessEqual(data.npatterns, 2)
         self.failUnless( data.origshape == (3,4) )
         self.failUnlessEqual( data.pattern.shape, (2,12) )
-        self.failUnless( (data.pattern == 
+        self.failUnless( (data.pattern ==
                           numpy.array([range(12),range(12,24)] ) ).all() )
 
 
@@ -187,7 +187,7 @@ class PatternTests(unittest.TestCase):
         self.failUnless( sel.pattern.shape == (2,120) )
 
     def testCombinedPatternAndFeatureMasking(self):
-        data = mvpa.MVPAPattern( 
+        data = mvpa.MVPAPattern(
             numpy.arange( 20 ).reshape( (4,5) ), 1, 1 )
 
         self.failUnless( data.npatterns == 4 )
@@ -214,20 +214,20 @@ class PatternTests(unittest.TestCase):
 
 
     def testPatternMerge(self):
-        data1 = mvpa.MVPAPattern( range(5), 1, 1 )
-        data2 = mvpa.MVPAPattern( range(5,10), 2, 1 )
+        data1 = mvpa.MVPAPattern( numpy.ones((5,5,1)), 1, 1 )
+        data2 = mvpa.MVPAPattern( numpy.ones((3,5,1)), 2, 1 )
 
         merged = data1 + data2
 
-        self.failUnless( merged.npatterns == 2 )
-        self.failUnless( (merged.reg == [ 1,2]).all() )
-        self.failUnless( (merged.origin == [ 1,1]).all() )
+        self.failUnless( merged.npatterns == 8 )
+        self.failUnless( (merged.reg == [ 1,1,1,1,1,2,2,2]).all() )
+        self.failUnless( (merged.origin == [ 1,1,1,1,1,1,1,1]).all() )
 
         data1 += data2
 
-        self.failUnless( data1.npatterns == 2 )
-        self.failUnless( (data1.reg == [ 1,2]).all() )
-        self.failUnless( (data1.origin == [ 1,1]).all() )
+        self.failUnless( data1.npatterns == 8 )
+        self.failUnless( (data1.reg == [ 1,1,1,1,1,2,2,2]).all() )
+        self.failUnless( (data1.origin == [ 1,1,1,1,1,1,1,1]).all() )
 
 
     def testRegressorRandomizationAndSampling(self):
