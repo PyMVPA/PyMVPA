@@ -87,7 +87,7 @@ class PLF:
 
         # Optimize
         k = 0
-        while numpy.sum(numpy.ravel(dw.A**2))>criterion:
+        while numpy.sum(numpy.ravel(dw.A**2))>self.__criterion:
             p[:,:] = self.__f(w.T * X)
             g[:,:] = X * (d-p).T - Lambda * w
             H[:,:] = X * numpy.diag(p.A1 * (1-p.A1)) * X.T + Lambda
