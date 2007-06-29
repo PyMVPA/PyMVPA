@@ -68,7 +68,7 @@ class SearchlightTests(unittest.TestCase):
         roi = sl.makeSphericalROIMask( mask, 1 )
 
         self.failUnless( mask.shape == roi.shape)
-        self.failUnless( roi.dtype == 'uint' )
+        self.failUnless( roi.dtype == 'int32' )
 
         # check whether earlier ROIs or not overwritten by
         # later ones
