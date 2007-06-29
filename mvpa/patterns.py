@@ -28,15 +28,15 @@ class MVPAPattern(object):
     stored to be able to group patterns for cross-validation purposes.
     """
 
-    def __init__( self, pattern, reg, origin = None, clone = None ):
+    def __init__( self, pattern, reg, origin = None, **kwargs ):
         """ Initialize the pattern data.
 
         The pattern data is finally loaded by calling
         MVPAPattern.addPattern(). Please see the documentation of this method
         to learn what kind of data is required or supported.
 
-        Please ignore the 'clone' argument. It is only necessary for internal
-        stuff. You cannot trust 'clone' -- do not use it!
+        Please ignore the additional keyword arguments. They are only necessary
+        for internal stuff. You cannot trust them -- do not use them!
         """
         # initialize containers
         self.__origshape = None
@@ -46,16 +46,26 @@ class MVPAPattern(object):
 
         self.__origregs = None
 
-        # when in clone mode bypass all checks and directly assign
+        # when in internal mode bypass all checks and directly assign
         # the data. Otherwise call addPattern() that checks if the data
         # is in good shape
-        if isinstance( clone, tuple ):
-            self.__initDataNoChecks(pattern, reg, origin, clone)
+        if kwargs.has_key('internal'):
+            self.__initDataNoChecks( pattern, reg, origin, **(kwargs) )
         else:
             self.addPattern( pattern, reg, origin )
 
 
     def __iadd__( self, other ):
+        """ Merge the patterns of one MVPAPattern object to another (in-place).
+
+        Please note that the patterns, regressors and origins are simply
+        concatenated to create an MVPAPattern object that contains the
+        patterns of both objects. No further processing is done. In particular
+        the origin values are not modified: Patterns with the same origin from
+        both MVPAPattern object will still share the same origin and will
+        therefore be treated as they would belong together by the
+        CrossValidation algorithm.
+        """
         if self.origshape != other.origshape:
             raise ValueError, "Cannot add MVPAPattern, because origshapes " \
                               "do not match."
@@ -71,10 +81,21 @@ class MVPAPattern(object):
 
 
     def __add__( self, other ):
+        """ Merge the patterns of two MVPAPattern objects.
+
+        Please note that the patterns, regressors and origins are simply
+        concatenated to create an MVPAPattern object that contains the
+        patterns of both objects. No further processing is done. In particular
+        the origin values are not modified: Patterns with the same origin from
+        both MVPAPattern object will still share the same origin and will
+        therefore be treated as they would belong together by the
+        CrossValidation algorithm.
+        """
         out = MVPAPattern( self.__patterns,
                            self.__regs,
                            self.__origins,
-                           self.origshape )
+                           internal = True,
+                           origshape = self.origshape )
         out += other
 
         return out
@@ -171,19 +192,21 @@ class MVPAPattern(object):
                 origin = numpy.array( origin )
 
             except TypeError:
-                # make sequence of identical value matching the number of patterns
+                # make sequence of identical value matching the number of
+                # patterns
                 origin = numpy.repeat( origin, len( pattern ) )
 
         # simply assign or concatenate if already present
         if self.__origins == None:
             self.__origins = origin
         else:
-            self.__origins = numpy.concatenate( (self.__origins, origin ), axis=0 )
+            self.__origins = numpy.concatenate( (self.__origins, origin ),
+                                                axis=0 )
 
 
-    def __initDataNoChecks(self, pat, reg, orig, origshape):
+    def __initDataNoChecks(self, pat, reg, orig, **kwargs):
         """ Do not use! """
-        self.__origshape = origshape
+        self.__origshape = kwargs['origshape']
         self.__patterns = pat
         self.__regs = reg
         self.__origins = orig
@@ -305,7 +328,8 @@ class MVPAPattern(object):
         return MVPAPattern( self.__patterns[mask,],
                             self.__regs[mask,],
                             self.__origins[mask,],
-                            self.origshape )
+                            internal=True,
+                            origshape=self.origshape )
 
 
     def selectFeatures( self, mask ):
@@ -358,7 +382,8 @@ class MVPAPattern(object):
         return MVPAPattern( self.__patterns[:, featuremask],
                             self.__regs,
                             self.__origins,
-                            self.origshape )
+                            internal = True,
+                            origshape = self.origshape )
 
 
     def features2origmask( self, features ):
