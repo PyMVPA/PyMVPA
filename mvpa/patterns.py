@@ -31,7 +31,7 @@ class MVPAPattern(object):
     def __init__( self, pattern, reg, origin = None, clone = None ):
         """ Initialize the pattern data.
 
-        The pattern data is finally loaded by calling 
+        The pattern data is finally loaded by calling
         MVPAPattern.addPattern(). Please see the documentation of this method
         to learn what kind of data is required or supported.
 
@@ -56,16 +56,25 @@ class MVPAPattern(object):
 
 
     def __iadd__( self, other ):
-        self.addPattern( other.__patterns,
-                         other.__regs,
-                         other.__origins )
+        if self.origshape != other.origshape:
+            raise ValueError, "Cannot add MVPAPattern, because origshapes " \
+                              "do not match."
+
+        self.__patterns = \
+            numpy.concatenate( ( self.__patterns, other.__patterns ), axis=0)
+        self.__regs = \
+            numpy.concatenate( ( self.__regs, other.__regs ), axis=0)
+        self.__origins = \
+            numpy.concatenate( ( self.__origins, other.__origins ), axis=0)
+
         return self
 
 
     def __add__( self, other ):
         out = MVPAPattern( self.__patterns,
                            self.__regs,
-                           self.__origins )
+                           self.__origins,
+                           self.origshape )
         out += other
 
         return out
@@ -115,12 +124,12 @@ class MVPAPattern(object):
             if self.__origshape != pattern.shape[1:]:
                 raise ValueError, "Pattern shape does not match existing" \
                                   " patterns (exist: %s, new: %s)" \
-                                  % ( str(self.__origshape), 
+                                  % ( str(self.__origshape),
                                       str(pattern.shape[1:]) )
 
         # now reshape into a 2d array
         if not pattern.ndim == 2:
-            pattern = pattern.reshape( len( pattern ), 
+            pattern = pattern.reshape( len( pattern ),
                                        numpy.prod( pattern.shape[1:] ) )
 
         # simply assign or concatenate if already present
@@ -302,7 +311,7 @@ class MVPAPattern(object):
     def selectFeatures( self, mask ):
         """ Choose a subset of features.
 
-        'mask' can either be an NumPy array, a tuple or a list.
+        'mask' can either be a NumPy array, a tuple or a list.
 
         If 'mask' is an array all nonzero array elements are used to select
         features. The shape of the mask array has to match the original data
@@ -410,7 +419,7 @@ class MVPAPattern(object):
 
 
     def getCoordinate( self, feature_id ):
-        """ Computes the feature coordinates in the original data space 
+        """ Computes the feature coordinates in the original data space
         for a given feature id.
         """
         # transform shape and coordinate into array for easy handling
