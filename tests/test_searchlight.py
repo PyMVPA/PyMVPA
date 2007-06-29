@@ -57,6 +57,24 @@ class SearchlightTests(unittest.TestCase):
         self.failIf( (slight.spheresize == 0).all() )
 
 
+    def testSphericalROIMaskGenerator(self):
+        # make dummy mask
+        mask = numpy.zeros((4,4,4))
+        mask[2,2,2] = 1
+        mask[1,1,1] = 1
+        mask[2,1,1] = 1
+
+        # generate ROI mask
+        roi = sl.makeSphericalROIMask( mask, 1 )
+
+        self.failUnless( mask.shape == roi.shape)
+        self.failUnless( roi.dtype == 'uint' )
+
+        # check whether earlier ROIs or not overwritten by
+        # later ones
+        self.failUnless( roi[2,1,1] == 1 )
+
+
 def suite():
     return unittest.makeSuite(SearchlightTests)
 
