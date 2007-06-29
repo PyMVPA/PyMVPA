@@ -3,7 +3,7 @@
 #    PyMVPA: Implementation of the Searchlight algorithm -- loosely implemented
 #            after:
 #
-#            Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006). 
+#            Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
 #            'Information-based functional brain mapping.' Proceedings of the
 #            National Academy of Sciences of the United States of America 103,
 #            3863-3868.
@@ -24,7 +24,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import algorithms
-import numpy
+import numpy as np
 import crossval
 import sys
 import stats
@@ -35,7 +35,7 @@ class Searchlight( object ):
 
     The algorithm is loosely implemented after:
 
-      Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006). 
+      Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
       'Information-based functional brain mapping.' Proceedings of the
       National Academy of Sciences of the United States of America 103,
       3863-3868.
@@ -55,10 +55,10 @@ class Searchlight( object ):
         perfmean   - mean classification performance
         perfvar    - variance of classification performance
         chisquare  - value of the chisquare test of classifications being
-                     equally distributed over all cells in the 
+                     equally distributed over all cells in the
                      target x predictions contingency table
         chanceprob - probability of classifications being equally distributed
-                     over all cells in the target x prediction contingency 
+                     over all cells in the target x prediction contingency
                      table, i.e. high probability means low classification
                      performance and low signal in the data
         spheresize - number of features in the sphere
@@ -88,6 +88,20 @@ class Searchlight( object ):
                   forcesphere = False,
                   cvtype = 1,
                   **kwargs ):
+        """
+        Parameters:
+            radius:       sphere radius
+            elementsize:  a vector specifying the extent of each data element
+                          along all dimensions in the dataset. This information
+                          is used to translate the radius into element units
+            forcesphere:  if True a full sphere is used regardless of the
+                          status of the status of the sphere elements in the
+                          mask. If False only elements are considered as sphere
+                          elements that have a non-zero value in the mask.
+            cvtype:       type of cross-validation that is used. 1 means N-1 CV
+            **kwargs:     additional arguments that are passed to the
+                          constructor of the CrossValidation class.
+        """
         self.__pattern = pattern
         self.__mask = mask
         self.__radius = radius
@@ -111,11 +125,11 @@ class Searchlight( object ):
 
     def __clearResults( self ):
         # init the result maps
-        self.__perfmean = numpy.zeros(self.pattern.origshape)
-        self.__perfvar = numpy.zeros(self.pattern.origshape)
-        self.__chisquare = numpy.zeros(self.pattern.origshape)
-        self.__chanceprob = numpy.zeros(self.pattern.origshape)
-        self.__spheresize = numpy.zeros(self.pattern.origshape, dtype='uint')
+        self.__perfmean = np.zeros(self.pattern.origshape)
+        self.__perfvar = np.zeros(self.pattern.origshape)
+        self.__chisquare = np.zeros(self.pattern.origshape)
+        self.__chanceprob = np.zeros(self.pattern.origshape)
+        self.__spheresize = np.zeros(self.pattern.origshape, dtype='uint')
 
 
     def run( self, classifier, verbose=False, **kwargs ):
@@ -125,15 +139,15 @@ class Searchlight( object ):
         By setting 'verbose' to True one can enable some status messages that
         inform about the progress while processing the spheres.
 
-        The 'classifier' argument overrides can be used to select a new
-        classification algorithm. Additional keyword are passed to the
-        classifier's contructor.
+        The 'classifier' argument specifies a class that is used to perform
+        the classification. Additional keyword are passed to the classifier's
+        contructor.
         """
         # cleanup prior runs first
         self.__clearResults()
 
         if verbose:
-            nspheres = numpy.array( self.mask.nonzero() ).shape[1]
+            nspheres = np.array( self.mask.nonzero() ).shape[1]
             sphere_count = 0
 
         # for all possible spheres in the mask
@@ -146,17 +160,17 @@ class Searchlight( object ):
             masked = self.__pattern.selectFeatures( tuple( sphere ) )
 
             # do the cross-validation
-            cv = crossval.CrossValidation( masked )
+            cv = crossval.CrossValidation( masked, **(self.__cvargs) )
 
             # run cross-validation
             cv.run( classifier, cvtype=self.__cvtype, **(kwargs) )
 
             # store the performance value as a vector
-            perf = numpy.array( cv.perf )
+            perf = np.array( cv.perf )
 
             # translate center coordinate into array slicing index
-            center_index = numpy.transpose(
-                               numpy.array( center, ndmin=2 ) ).tolist()
+            center_index = np.transpose(
+                               np.array( center, ndmin=2 ) ).tolist()
 
             # store the interesting information
             # mean performance
@@ -202,3 +216,46 @@ class Searchlight( object ):
     cvtype = property( fget=lambda self: self.__cvtype )
     forcesphere = property( fget=lambda self: self.__forcesphere )
     ncvfolds = property( fget=getNCVFolds )
+
+
+
+def makeSphericalROIMask( mask, radius, elementsize=None ):
+    """
+    """
+    # use default elementsize if none is supplied
+    if not elementsize:
+        elementsize = [ 1 for i in range( len(mask.shape) ) ]
+    else:
+        if len( elementsize ) != len( mask.shape ):
+            raise ValueError, 'elementsize does not match mask dimensions.'
+
+    # rois will be drawn into this mask
+    roi_mask = np.zeros( mask.shape, dtype='int32' )
+
+    # while increase with every ROI
+    roi_id_counter = 1
+
+    # build spheres around every non-zero value in the mask
+    for center, sphere in \
+        algorithms.SpheresInMask( mask,
+                                  radius,
+                                  elementsize,
+                                  forcesphere = True ):
+
+        # all elements of the sphere
+        coords = np.transpose( sphere )
+
+        # now check for all coordinates in the sphere, whether it
+        # already belongs to a ROI
+        for coord in coords:
+            # need to convert it to a tuple to use numpy slicing
+            t_coord = tuple(coord)
+
+            # if not in ROI, make it part of the current ROI
+            if roi_mask[t_coord] == 0:
+                roi_mask[t_coord] = roi_id_counter
+
+        # increase ROI counter
+        roi_id_counter += 1
+
+    return roi_mask
