@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: Serial feature inclusion algorithm
+#    PyMVPA: Incremental feature inclusion algorithm
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -22,7 +22,7 @@ import crossval
 import sys
 import stats
 
-class SerialFeatureInclusion( object ):
+class IncrementalFeatureInclusion( object ):
     """ Tell me what this is!
 
     Two major methods: selectFeatures(), selectROIs()
