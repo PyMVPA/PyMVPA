@@ -73,15 +73,15 @@ class CrossValidationTests(unittest.TestCase):
 
 
     def testMofNCombinations(self):
-        self.failUnlessEqual( 
+        self.failUnlessEqual(
             mvpa.getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )
-        self.failUnlessEqual( 
-            mvpa.getUniqueLengthNCombinations( 
-                        range(4), 2 ), 
-                        [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]] 
+        self.failUnlessEqual(
+            mvpa.getUniqueLengthNCombinations(
+                        range(4), 2 ),
+                        [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
                         )
-        self.failUnlessEqual( 
-            mvpa.getUniqueLengthNCombinations( 
+        self.failUnlessEqual(
+            mvpa.getUniqueLengthNCombinations(
                         range(4), 3 ), [[0, 1, 2], [0, 1, 3], [0, 2, 3]] )
 
 
@@ -229,6 +229,26 @@ class CrossValidationTests(unittest.TestCase):
 
         # check table content
         self.failUnless( (tbl == [[2,1,0],[0,3,0],[1,1,1]]).all() )
+
+
+    def testNoiseClassification(self):
+        # get a dataset with a very high SNR
+        data = self.getMVPattern(10)
+
+        # do crossval
+        perf = mvpa.CrossValidation( data,
+                                   ncvfoldsamples= 10 ).run(knn.kNN, cvtype=1)
+        # must be perfect
+        self.failUnless( numpy.array(perf).mean() == 1.0 )
+
+        # do crossval with permutated regressors
+        perf = mvpa.CrossValidation( data,
+                                     ncvfoldsamples= 10,
+                                     permutate=True ).run(knn.kNN, cvtype=1)
+
+        # must be at chance level
+        pmean = numpy.array(perf).mean()
+        self.failUnless( pmean < 0.58 and pmean > 0.42 )
 
 
 def suite():
