@@ -16,7 +16,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mvpa.serialinclusion as si
+import mvpa.incrinclusion as si
 import mvpa
 import mvpa.knn as knn
 import mvpa.svm_wrap as svm_wrap
@@ -24,7 +24,7 @@ import unittest
 import numpy as np
 import scipy.stats as stats
 
-class SerialInclusionTests(unittest.TestCase):
+class IncrementalInclusionTests(unittest.TestCase):
 
     def setUp(self):
         # prepare demo dataset and mask
@@ -36,9 +36,9 @@ class SerialInclusionTests(unittest.TestCase):
 
 
 
-    def testSerialFeatureInclusion(self):
+    def testIncrementalInclusion(self):
         # init algorithm
-        sinc = si.SerialFeatureInclusion( self.pattern,
+        sinc = si.IncrementalFeatureInclusion( self.pattern,
                                           self.mask,
                                           ncvfoldsamples=1 )
 
@@ -53,14 +53,14 @@ class SerialInclusionTests(unittest.TestCase):
                          self.mask.shape )
 
 
-    def testSerialROIInclusion(self):
+    def testIncrementalROIInclusion(self):
         # make 3 slice roi mask
         self.mask[0] = 1
         self.mask[1] = 2
         self.mask[2] = 3
 
         # init algorithm
-        sinc = si.SerialFeatureInclusion( self.pattern,
+        sinc = si.IncrementalFeatureInclusion( self.pattern,
                                           self.mask,
                                           ncvfoldsamples=1 )
 
@@ -74,7 +74,7 @@ class SerialInclusionTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(SerialInclusionTests)
+    return unittest.makeSuite(IncrementalInclusionTests)
 
 
 if __name__ == '__main__':

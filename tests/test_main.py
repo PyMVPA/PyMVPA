@@ -25,7 +25,7 @@ tests = [ 'test_patterns',
           'test_svm',
           'test_crossval',
           'test_searchlight',
-          'test_serinclusion',
+          'test_incrinclusion',
           'test_support',
           'test_stats' ]
 
