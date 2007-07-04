@@ -256,6 +256,20 @@ class PatternTests(unittest.TestCase):
 
         self.failUnless( (data.reg == origregs).all() )
 
+        # now try another object with the same data
+        data2 = mvpa.MVPAPattern( data.pattern, data.reg, data.origin )
+
+        # regressors are the same as the originals
+        self.failUnless( (data2.reg == origregs).all() )
+
+        # now permutate in the new object
+        data2.permutatedRegressors( True )
+
+        # must not affect the old one
+        self.failUnless( (data.reg == origregs).all() )
+        # but only the new one
+        self.failIf( (data2.reg == origregs).all() )
+
 
 def suite():
     return unittest.makeSuite(PatternTests)

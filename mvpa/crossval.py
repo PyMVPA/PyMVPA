@@ -28,7 +28,8 @@ class CrossValidation( object ):
                   trainingsamples = None,
                   testsamples = None,
                   ncvfoldsamples = 1,
-                  clfcallback = None ):
+                  clfcallback = None,
+                  permutate = False ):
         """
         Initialize the cross-validation.
 
@@ -52,6 +53,10 @@ class CrossValidation( object ):
                       a callable that is called at the end of each
                       cross-validation fold with the trained classifier as the
                       only argument.
+          permutate:  If True the regressor vector is permutated for each
+                      cross-validation fold. In conjunction with ncvfoldsamples
+                      this might be useful to test a classification algorithm
+                      whether it can classify any noise ;)
         """
         self.__data = pattern
 
@@ -65,6 +70,7 @@ class CrossValidation( object ):
         self.setTrainingPatternSamples( trainingsamples )
         self.setTestPatternSamples( testsamples )
         self.setNCVFoldSamples( ncvfoldsamples )
+        self.__permutated_regressors = permutate
 
 
         self.setClassifierCallback( clfcallback )
@@ -148,7 +154,7 @@ class CrossValidation( object ):
 
             # split data and regs into training and test set
             train = \
-                self.__data.selectPatterns( 
+                self.__data.selectPatterns(
                     numpy.logical_not(exclude_filter) )
             test = self.__data.selectPatterns( exclude_filter )
 
@@ -158,16 +164,16 @@ class CrossValidation( object ):
         return ntrainpat, ntestpat
 
 
-    def run( self, classifier, cvtype = 1, **kwargs ):
+    def run( self, classifier, cvtype = 1, permutate = False, **kwargs ):
         """ Perform cross-validation.
 
         Parameters:
-          cvtype:     type of cross-validation: N-cvtype
-          classifier: class that shall be used the actual classification. Its
+          classifier: A class that shall be used the actual classification. Its
                       constructor must not have more than two required
                       arguments (data and regs - in this order).
                       The classifier has to train itself when creating the
                       classifier object!
+          cvtype:     Type of cross-validation: N-cvtype
           **kwargs:   All keyword arguments are passed to the classifiers
                       constructor.
 
@@ -195,11 +201,16 @@ class CrossValidation( object ):
 
             # split data and regs into training and test set
             train = \
-                self.__data.selectPatterns( 
+                self.__data.selectPatterns(
                     numpy.logical_not(exclude_filter) )
             test = self.__data.selectPatterns( exclude_filter )
 
             for sample in xrange( self.__cvfold_nsamples ):
+                # permutate the regressors in training and test dataset
+                if self.__permutated_regressors:
+                    train.permutatedRegressors( True )
+                    test.permutatedRegressors( True )
+
                 # choose a training pattern sample
                 if not self.__training_samplesize == None:
                     # determine number number of patterns per class
