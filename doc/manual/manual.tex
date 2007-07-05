@@ -1,0 +1,55 @@
+\documentclass[a4paper,11pt]{scrartcl}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{makeidx}
+\usepackage[T1]{fontenc}
+
+\usepackage{ifpdf}
+\ifpdf
+    \usepackage[pdftex]{graphicx}
+    \usepackage[pdftex]{hyperref}
+\else
+     \usepackage{graphicx}
+\fi
+% some stuff to make life easier
+\newcommand{\pymvpa}{PyMVPA~}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\author{Michael Hanke}
+\title{\pymvpa -- Multivariate Pattern Analysis with Python}
+\date{\today}
+
+% \makeindex
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+Write a nice little summary about \pymvpa\ldots
+\end{abstract} 
+
+\begin{center}
+This manual has been last updated for \pymvpa version xxx.
+\end{center}
+
+\tableofcontents
+
+\section{What MVPA is good for?}
+\section{A short example}
+\section{Classifiers}
+\subsection{Support vector machines}
+\subsection{k-nearest neighbours}
+\subsection{Logistic regression}
+\section{Feature selection strategies}
+\subsection{Searchlight}
+\subsection{Recursive feature elimination}
+\subsection{Incremental feature search}
+\section{Notes for developers}
+\subsection{Requirements for classes providing classifiers}
+\subsection{Passing arguments to the \code{CrossValidation} class}
+
+% Put the index at the end
+\index{Test}
+\printindex
+\end{document}
