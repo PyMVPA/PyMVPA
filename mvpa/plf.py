@@ -125,5 +125,5 @@ class PLF:
         Returns a list of class labels
         """
         data = numpy.matrix(numpy.array(data))
-        return self.__f(self.offset+data*self.w) > 0.5
+        return numpy.ravel(self.__f(self.offset+data*self.w) > 0.5)
 
