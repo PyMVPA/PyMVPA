@@ -117,6 +117,19 @@ class CrossValidationTests(unittest.TestCase):
                          numpy.array([ 10 for i in range(12) ]).reshape(6,2)
                          ).all() )
 
+    def testRegressorPermutation(self):
+        data = self.getMVPattern(4)
+
+        cv = mvpa.CrossValidation( data )
+        perf = numpy.array(cv.run(knn.kNN, cvtype=1))
+
+        data.permutatedRegressors( True )
+
+        perm_perf = numpy.array(cv.run(knn.kNN, cvtype=1))
+
+        self.failUnless( perf.mean() > perm_perf.mean())
+
+
     def testCLFStatskNN(self):
         data_h = self.getMVPattern(1)
         data_l = self.getMVPattern(0.5)
