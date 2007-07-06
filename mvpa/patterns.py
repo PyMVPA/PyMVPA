@@ -212,14 +212,16 @@ class MVPAPattern(object):
         self.__origins = orig
 
 
-    def permutatedRegressors( self, status ):
+    def permutatedRegressors( self, status, perorigin = True ):
         """ Permutate the regressors.
 
         Calling this method with 'status' set to True, the regressors are
-        permutated among all patterns sharing the same origin value. Therefore
-        only the association of a certain pattern with a regressor is permutated
-        while keeping the absolute number of occurences of each regressor value
-        with a certain origin constant.
+        permutated among all patterns.
+
+        If 'perorigin' is True permutation is limited to patterns sharing the
+        same origin value. Therefore only the association of a certain pattern
+        with a regressor is permutated while keeping the absolute number of
+        occurences of each regressor value with a certain origin constant.
 
         If 'status' is False the original regressors are restored.
         """
@@ -239,9 +241,13 @@ class MVPAPattern(object):
             self.__origregs = self.__regs.copy()
 
             # now scramble the rest
-            for o in self.originlabels:
-                self.__regs[self.__origins == o ] = \
-                    numpy.random.permutation( self.__regs[ self.__origins == o ] )
+            if perorigin:
+                for o in self.originlabels:
+                    self.__regs[self.__origins == o ] = \
+                        numpy.random.permutation(
+                                self.__regs[ self.__origins == o ] )
+            else:
+                self.__regs = numpy.random.permutation( self.__regs )
 
 
     def zscore( self, mean = None, std = None, origin=True ):
