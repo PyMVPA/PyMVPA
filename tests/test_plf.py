@@ -77,7 +77,12 @@ class PLFTests(unittest.TestCase):
         mean_mv_perf = np.mean(mv_perf)
         mean_uv_perf = np.mean(uv_perf)
 
+        print mean_mv_perf
+        print mean_uv_perf
+
+        # multivariate should be perfect
         self.failUnless( mean_mv_perf > 0.9 )
+        # univariate should be worse
         self.failUnless( mean_uv_perf < mean_mv_perf )
 
 
