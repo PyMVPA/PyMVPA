@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
-\usepackage{makeidx}
+% \usepackage{makeidx}
 \usepackage[T1]{fontenc}
 
 \usepackage{ifpdf}
@@ -27,7 +27,7 @@
 \maketitle
 \begin{abstract}
 Write a nice little summary about \pymvpa\ldots
-\end{abstract} 
+\end{abstract}
 
 \begin{center}
 This manual has been last updated for \pymvpa version xxx.
@@ -36,20 +36,66 @@ This manual has been last updated for \pymvpa version xxx.
 \tableofcontents
 
 \section{What MVPA is good for?}
+
+
+
 \section{A short example}
+
+
+
 \section{Classifiers}
 \subsection{Support vector machines}
 \subsection{k-nearest neighbours}
 \subsection{Logistic regression}
+
+
+
 \section{Feature selection strategies}
 \subsection{Searchlight}
 \subsection{Recursive feature elimination}
 \subsection{Incremental feature search}
+
+
+
 \section{Notes for developers}
+\subsection{Unit tests}
+Every part of \pymvpa should have a reasonable set of tests that ensure it is
+working as expected. All unit tests have to be put into the \code{tests}
+directory and shall be registered in the \code{tests/tests\_main.py} file.
+
 \subsection{Requirements for classes providing classifiers}
+With the \code{CrossValidation} class \pymvpa provides a generic cross-validation
+algorithm than can make use of an arbitrary classifier. \pymvpa already provides
+a number of algorithms, but additional classifiers can easily be added. There
+are only a few requirements that such classifier class has to comply with:
+
+\begin{description}
+ \item[One required constructor argument] The constructor must not have more
+    than one required argument. This argument is a \code{MVPAPattern} object
+    containing the training data -- and only the training data. The constructor
+    may take an arbitrary number of additional \textit{keyword arguments}.
+ \item[Automatic training] When a classifier object is created, the classifier
+    must automatically train itself. There must not be the need to make
+    additional method calls, e.g. the constructor has to deal with possible
+    problems like convergence errors automatically or raise an exception if it
+    cannot handle it.
+ \item[Must have \code{predict()} methods] Each classifier class has to provide
+    a \code{predict()} method that can be used to retrieve the classifiers
+    prediction for some test data. That method has to accept a sequence with the
+    test data and may not require more than this argument. The method has to
+    return a sequence with the list of predicted regressors -- one prediction
+    for each element of the supplied testdata sequence.
+ \end{description}
+
+In addition classifiers may provide more functionality like the
+\code{rateFeatures()} method required by the recursive feature elimination
+algorithm. However, this is not strictly necessary.
+
 \subsection{Passing arguments to the \code{CrossValidation} class}
 
+
+
 % Put the index at the end
-\index{Test}
-\printindex
+% \index{Test}
+% \printindex
 \end{document}

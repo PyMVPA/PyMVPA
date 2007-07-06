@@ -1,0 +1,1 @@
+* Add support for topology support for stuff other than dense mask matrices, e.g. meshes.
