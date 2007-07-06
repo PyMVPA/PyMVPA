@@ -22,6 +22,11 @@ import numpy
 
 class SVM:
     def __init__(self, data, **kwargs):
+        # check if there is a libsvm version with configurable
+        # noise reduction ;)
+        if hasattr(svm.svmc, 'svm_set_verbosity'):
+            svm.svmc.svm_set_verbosity( 0 )
+
         self.param = svm.svm_parameter( **(kwargs) )
 
         self.data = svm.svm_problem(data.reg.tolist(), data.pattern)
