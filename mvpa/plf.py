@@ -45,12 +45,14 @@ class PLF:
         self.__lm   = lm
         self.__criterion = criterion
         self.__reduce = reduce
+        self.__maxiter = maxiter
+        self.__verbose = verbose
 
         self.__train()
 
     def __train(self):
         # Set up the environment for fitting the data
-        X = self.__data.pattern
+        X = self.__data.pattern.T
         d = self.__data.reg
         if not list(set(d))==[0,1]:
             raise ValueError, "Regressors for logistic regression should be [0,1]"
@@ -81,7 +83,7 @@ class PLF:
         Lambda = self.__lm * numpy.identity(nfeatures+1,'d')
         Lambda[nfeatures,nfeatures] = 0
         # Gradient
-        g = numpy.matrix(numpy.zeros((npatterns,1),'d'))
+        g = numpy.matrix(numpy.zeros((nfeatures+1,1),'d'))
         # Fisher information matrix
         H = numpy.matrix(numpy.identity(nfeatures+1,'d'))
 
@@ -91,13 +93,13 @@ class PLF:
             p[:,:] = self.__f(w.T * X)
             g[:,:] = X * (d-p).T - Lambda * w
             H[:,:] = X * numpy.diag(p.A1 * (1-p.A1)) * X.T + Lambda
-            dw = H.I * g
+            dw[:,:] = H.I * g
             w += dw
             k += 1
-            if k>self.maxiter:
+            if k>self.__maxiter:
                 raise IterationError, "More than 20 Iterations without convergence"
 
-        if verbose:
+        if self.__verbose:
             sys.stderr.write(\
                     "PLF converged after %d steps\nError: %g\n" %\
                     (k,numpy.sum(numpy.ravel(dw.A**2))))
@@ -106,13 +108,15 @@ class PLF:
             # We have computed in rank reduced space ->
             # Project to original space
             self.w = V*w[:-1]
+            self.offset = w[-1]
         else:
             self.w = w[:-1]
+            self.offset = w[-1]
 
     def __f(self,y):
         """This is the logistic function f, that is used for determination of
         the vector w"""
-        return 1./(1+exp(-y))
+        return 1./(1+numpy.exp(-y))
 
     def predict(self,data):
         """
@@ -120,6 +124,6 @@ class PLF:
 
         Returns a list of class labels
         """
-        data = numpy.array(data)
-        return self.__f(w.T * data) > 0.5
+        data = numpy.matrix(numpy.array(data))
+        return self.__f(self.offset+data*self.w) > 0.5
 
