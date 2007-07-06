@@ -254,7 +254,7 @@ class CrossValidation( object ):
                     self.testsamplelog.append( None )
 
                 # create classifier (must include training if necessary)
-                clf = classifier(train_samples )
+                clf = classifier(train_samples, **(kwargs) )
 
                 # test
                 predictions = numpy.array(
