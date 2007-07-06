@@ -17,10 +17,10 @@ QuickBuild=
 
 [item:manual.tex]
 archive=true
-column=28
+column=51
 encoding=UTF-8
 highlight=LaTeX
-line=15
+line=87
 open=true
 
 [item:pymvpa_manual.kilepr]
