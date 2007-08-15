@@ -164,6 +164,61 @@ class CrossValidation( object ):
         return ntrainpat, ntestpat
 
 
+    def getTrainTestData( self, test_origin ):
+        """ Split the pattern data into a training and test set.
+
+        Parameter:
+            test_origin - sequence with origin values of patterns that shall
+                          be the test set.
+
+        Returns:
+            Tuple of MVPAPattern objects (train, test).
+        """
+        # build a boolean selector vector to choose training and
+        # test data
+        test_filter =  \
+            numpy.array([ i in test_origin for i in self.__data.origin ])
+
+        # split data and regs into training and test set
+        train = \
+            self.__data.selectPatterns(
+                numpy.logical_not(test_filter) )
+        test = self.__data.selectPatterns( test_filter )
+
+        return train, test
+
+
+    @staticmethod
+    def selectPatternSubset( pattern, samplesize ):
+        """ Select a number of patterns for each regressor value.
+
+        Parameter:
+            pattern    - MVPAPattern object with the source patterns
+            samplesize - number of to be selected patterns. Two special values
+                         are recognized. None is off (all patterns are
+                         selected), 'auto' sets sample size to highest
+                         possible number of patterns that can be provided by
+                         each class.
+
+        Returns:
+            - MVPAPattern object with the selected samples
+            - Number of selected patterns per regressor class
+        """
+        if not samplesize == None:
+            # determine number number of patterns per class
+            if samplesize == 'auto':
+                samplesize = \
+                   numpy.array( pattern.getPatternsPerRegLabel() ).min()
+
+            # finally select the patterns
+            samples = pattern.getPatternSample( samplesize )
+        else:
+            # take all training patterns in the sampling run
+            samples = pattern
+
+        return samples, samplesize
+
+
     def run( self, classifier, cvtype = 1, permutate = False, **kwargs ):
         """ Perform cross-validation.
 
@@ -194,16 +249,8 @@ class CrossValidation( object ):
 
         # do cross-validation
         for exclude in cv_list:
-            # build a boolean selector vector to choose training and
-            # test data for this CV fold
-            exclude_filter =  \
-                numpy.array([ i in exclude for i in self.__data.origin ])
-
-            # split data and regs into training and test set
-            train = \
-                self.__data.selectPatterns(
-                    numpy.logical_not(exclude_filter) )
-            test = self.__data.selectPatterns( exclude_filter )
+            # split into training and test data for this CV fold
+            train, test = self.getTrainTestData( exclude )
 
             for sample in xrange( self.__cvfold_nsamples ):
                 # permutate the regressors in training and test dataset
@@ -212,46 +259,14 @@ class CrossValidation( object ):
                     test.permutatedRegressors( True )
 
                 # choose a training pattern sample
-                if not self.__training_samplesize == None:
-                    # determine number number of patterns per class
-                    if self.__training_samplesize == 'auto':
-                        trainsamplesize =\
-                           numpy.array( train.getPatternsPerRegLabel() ).min()
-                    else:
-                        # take predefined number of patterns
-                        trainsamplesize = self.__training_samplesize
+                train_samples, trainsamplesize = \
+                    CrossValidation.selectPatternSubset( train, self.__training_samplesize )
+                self.trainsamplelog.append( trainsamplesize )
 
-                    # finally select the patterns
-                    train_samples = \
-                        train.getPatternSample( trainsamplesize )
-                    self.trainsamplelog.append( trainsamplesize )
-
-                else:
-                    # take all training patterns in the sampling run
-                    train_samples = train
-                    self.trainsamplelog.append( None )
-
-                # choose a test pattern sample
-                if not self.__test_samplesize == None:
-                    # determine number number of patterns per class
-                    if self.__test_samplesize == 'auto':
-                        # choose the minimum number of patterns that is
-                        # available for all classes
-                        testsamplesize =\
-                           numpy.array( test.getPatternsPerRegLabel() ).min()
-                    else:
-                        # take predefined number of patterns
-                        testsamplesize = self.__test_samplesize
-
-                    # finally select the patterns
-                    test_samples = \
-                        test.getPatternSample( testsamplesize )
-                    self.testsamplelog.append( testsamplesize )
-
-                else:
-                    # take all test patterns in this sampling run
-                    test_samples = test
-                    self.testsamplelog.append( None )
+                # choose a training pattern sample
+                test_samples, testsamplesize = \
+                    CrossValidation.selectPatternSubset( test, self.__test_samplesize )
+                self.testsamplelog.append( testsamplesize )
 
                 # create classifier (must include training if necessary)
                 clf = classifier(train_samples, **(kwargs) )
