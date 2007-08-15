@@ -164,10 +164,12 @@ class CrossValidation( object ):
         return ntrainpat, ntestpat
 
 
-    def getTrainTestData( self, test_origin ):
+    @staticmethod
+    def splitTrainTestData( pattern, test_origin ):
         """ Split the pattern data into a training and test set.
 
         Parameter:
+            pattern     - source MVPAPattern object
             test_origin - sequence with origin values of patterns that shall
                           be the test set.
 
@@ -177,13 +179,13 @@ class CrossValidation( object ):
         # build a boolean selector vector to choose training and
         # test data
         test_filter =  \
-            numpy.array([ i in test_origin for i in self.__data.origin ])
+            numpy.array([ i in test_origin for i in pattern.origin ])
 
         # split data and regs into training and test set
         train = \
-            self.__data.selectPatterns(
+            pattern.selectPatterns(
                 numpy.logical_not(test_filter) )
-        test = self.__data.selectPatterns( test_filter )
+        test = pattern.selectPatterns( test_filter )
 
         return train, test
 
@@ -250,7 +252,8 @@ class CrossValidation( object ):
         # do cross-validation
         for exclude in cv_list:
             # split into training and test data for this CV fold
-            train, test = self.getTrainTestData( exclude )
+            train, test = \
+                CrossValidation.splitTrainTestData( self.__data, exclude )
 
             for sample in xrange( self.__cvfold_nsamples ):
                 # permutate the regressors in training and test dataset
@@ -268,12 +271,12 @@ class CrossValidation( object ):
                     CrossValidation.selectPatternSubset( test, self.__test_samplesize )
                 self.testsamplelog.append( testsamplesize )
 
-                # create classifier (must include training if necessary)
-                clf = classifier(train_samples, **(kwargs) )
+                clf, predictions = \
+                    CrossValidation.getClassification( classifier,
+                                                       train_samples,
+                                                       test_samples,
+                                                       **(kwargs) )
 
-                # test
-                predictions = numpy.array(
-                                clf.predict(test_samples.pattern) )
                 perf = ( predictions == test_samples.reg )
 
                 # call classifier callback if any
@@ -290,6 +293,35 @@ class CrossValidation( object ):
                                              predictions ) )
 
         return self.perf
+
+
+    @staticmethod
+    def getClassification( clf, train, test, **kwargs ):
+        """ Perform classification and get classifier predictions.
+
+        Parameters:
+            clf    - A class that shall be used the actual classification. Its
+                     constructor must not have more than two required
+                     arguments (data and regs - in this order).
+                     The classifier has to train itself when creating the
+                     classifier object!
+            train  - MVPAPattern object with the training data.
+            test   - MVPAPattern object with the test data
+            ...    - all additional keyword arguments are passed to the
+                     classifier
+
+        Returns:
+            - the trained classifier
+            - a sequence with the classifier predictions
+        """
+        # create classifier (must include training if necessary)
+        clf = clf(train, **(kwargs) )
+
+        # test
+        predictions = numpy.array(
+                        clf.predict(test.pattern) )
+
+        return clf, predictions
 
 
     def __updateContingencyTbl( self, tbl ):

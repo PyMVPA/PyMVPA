@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: Incremental feature inclusion algorithm
+#    PyMVPA: Incremental feature search algorithm
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -22,7 +22,7 @@ import crossval
 import sys
 import stats
 
-class IncrementalFeatureInclusion( object ):
+class IncrementalFeatureSearch( object ):
     """ Tell me what this is!
 
     Two major methods: selectFeatures(), selectROIs()
