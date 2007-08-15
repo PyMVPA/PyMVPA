@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Unit tests for PyMVPA serial feature inclusion algorithm
+#    Unit tests for PyMVPA incremental feature search algorithm
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -16,7 +16,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mvpa.incrinclusion as si
+import mvpa.incrsearch as si
 import mvpa
 import mvpa.knn as knn
 import mvpa.svm_wrap as svm_wrap
@@ -24,7 +24,7 @@ import unittest
 import numpy as np
 import scipy.stats as stats
 
-class IncrementalInclusionTests(unittest.TestCase):
+class IncrementalSearchTests(unittest.TestCase):
 
     def setUp(self):
         # prepare demo dataset and mask
@@ -36,9 +36,9 @@ class IncrementalInclusionTests(unittest.TestCase):
 
 
 
-    def testIncrementalInclusion(self):
+    def testIncrementalSearch(self):
         # init algorithm
-        sinc = si.IncrementalFeatureInclusion( self.pattern,
+        sinc = si.IncrementalFeatureSearch( self.pattern,
                                           self.mask,
                                           ncvfoldsamples=1 )
 
@@ -53,14 +53,14 @@ class IncrementalInclusionTests(unittest.TestCase):
                          self.mask.shape )
 
 
-    def testIncrementalROIInclusion(self):
+    def testIncrementalROISearch(self):
         # make 3 slice roi mask
         self.mask[0] = 1
         self.mask[1] = 2
         self.mask[2] = 3
 
         # init algorithm
-        sinc = si.IncrementalFeatureInclusion( self.pattern,
+        sinc = si.IncrementalFeatureSearch( self.pattern,
                                           self.mask,
                                           ncvfoldsamples=1 )
 
@@ -74,7 +74,7 @@ class IncrementalInclusionTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(IncrementalInclusionTests)
+    return unittest.makeSuite(IncrementalSearchTests)
 
 
 if __name__ == '__main__':
