@@ -17,7 +17,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import svm
+from mvpa import svm
 import numpy
 
 class SVM:
@@ -29,7 +29,13 @@ class SVM:
 
         self.param = svm.svm_parameter( **(kwargs) )
 
-        self.data = svm.svm_problem(data.reg.tolist(), data.pattern)
+        # libsvm needs doubles
+        if data.pattern.dtype == 'float64':
+            src = data.pattern
+        else:
+            src = data.pattern.astype('double')
+
+        self.data = svm.svm_problem( data.reg.tolist(), src )
 
         self.train()
 
@@ -37,6 +43,11 @@ class SVM:
         self.model = svm.svm_model( self.data, self.param)
 
     def predict(self, data):
-        return [ self.model.predict( p ) for p in data ]
+        # libsvm needs doubles
+        if data.dtype == 'float64':
+            src = data
+        else:
+            src = data.astype('double')
+        return [ self.model.predict( p ) for p in src ]
 
 

@@ -18,9 +18,16 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-from distutils.core import setup
+from distutils.core import setup, Extension
+import numpy
 import os
 from glob import glob
+
+# C++ compiler is needed for the extension
+os.environ['CC'] = 'g++'
+
+# find numpy headers
+numpy_headers = os.path.join(os.path.dirname(numpy.__file__),'core','include')
 
 # Notes on the setup
 # Version scheme is:
@@ -34,6 +41,11 @@ setup(name       = 'pymvpa',
     url          = 'http://apsy.gse.uni-magdeburg.de/hanke',
     description  = 'Multivariate pattern analysis',
     long_description = """ """,
-    packages     = [ 'mvpa' ],
+    packages     = [ 'mvpa', 'mvpa.svm' ],
+    ext_modules  = [ Extension( 'mvpa.svm.svmc', [ 'mvpa/svm/svmc.i' ],
+            include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
+            libraries    = [ 'svm' ],
+            swig_opts    = [ '-c++', '-noproxy',
+                             '-I/usr/include/libsvm-2.0/libsvm',
+                             '-I' + numpy_headers ] ) ]
     )
-
