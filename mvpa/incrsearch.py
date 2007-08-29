@@ -32,6 +32,7 @@ class IncrementalFeatureSearch( object ):
                         mask,
                         cvtype = 1,
                         metacvtype = 1,
+                        break_crit = 0.001,
                         **kwargs ):
 
         """
@@ -50,6 +51,9 @@ class IncrementalFeatureSearch( object ):
                           at once by the algorithm.
             cvtype:       Type of cross-validation that is used. 1 means
                           N-1 cross-validation.
+            break_crit:   Stop searching if the next to-be-included feature
+                          provides less than this amount of increased
+                          classification performance.
             **kwargs:     Additional arguments that are passed to the
                           constructor of the CrossValidation class.
         """
@@ -57,6 +61,7 @@ class IncrementalFeatureSearch( object ):
         self.__mask = mask
         self.__cvtype = cvtype
         self.__metacvtype = metacvtype
+        self.__break_crit = break_crit
         self.__cvargs = kwargs
 
         if not mask.shape == pattern.origshape:
@@ -109,7 +114,10 @@ class IncrementalFeatureSearch( object ):
         cv_rois = []
 
         # meta crossvalidation
-        for exclude in self.__metacv_origins:
+        for i, exclude in enumerate(self.__metacv_origins):
+            if verbose:
+                print "Meta cross-validation fold:", i
+
             # split data for meta cross-validation
             meta_train, meta_test = \
                 crossval.CrossValidation.splitTrainTestData( self.pattern, 
@@ -202,7 +210,7 @@ class IncrementalFeatureSearch( object ):
 
             # check if the new candidate brings no value
             # if this is the case we are done.
-            if rating_array.max() < best_performance_ever:
+            if rating_array.max() - best_performance_ever < self.__break_crit:
                 break
 
             # the new candidate adds value, because the generalization error
@@ -324,6 +332,13 @@ class IncrementalFeatureSearch( object ):
             [ self.pattern.features2origmask( f ) for f in selected_features ]
 
         return selected_features
+
+
+    def getMeanSelectionMask( self ):
+        if len( self.__selection_masks ) < 1:
+            return None
+
+        return np.array(self.__selection_masks).mean(axis=0)
 
 
     # access to the results

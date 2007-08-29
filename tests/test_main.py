@@ -23,10 +23,10 @@ tests = [ 'test_patterns',
           'test_algorithms',
           'test_knn',
           'test_svm',
-          'test_plf',
+#          'test_plf',
           'test_crossval',
           'test_searchlight',
-          'test_incrinclusion',
+          'test_incrsearch',
           'test_support',
           'test_stats' ]
 
