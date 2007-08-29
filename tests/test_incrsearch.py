@@ -43,14 +43,18 @@ class IncrementalSearchTests(unittest.TestCase):
                                           ncvfoldsamples=1 )
 
         # run selection of single features
-        selected_features = sinc.selectFeatures( knn.kNN, verbose=True)
+        selected_features = sinc.selectFeatures( knn.kNN, verbose=False)
 
         # no real check yet, simply checking something happened
         # one must always be selected
-        #self.failUnless( len(selected_features) > 0 )
+        self.failUnless( len(selected_features) == 10 )
+        for f in selected_features:
+            self.failUnless( len(f) >= 1 )
+
+        res = sinc.getMeanSelectionMask()
+
         # mask have origshape
-        #self.failUnless( sinc.selectionmask.shape == \
-         #                self.mask.shape )
+        self.failUnless( res.shape == self.mask.shape )
 
 
     def testIncrementalROISearch(self):
@@ -65,12 +69,24 @@ class IncrementalSearchTests(unittest.TestCase):
                                           ncvfoldsamples=1 )
 
         # run selection of single features
-        selected_rois = sinc.selectROIs( knn.kNN, verbose=True)
+        selected_rois = sinc.selectROIs( knn.kNN, verbose=False)
 
-        # only three ROIs max
-        #self.failUnless( len( selected_rois ) <= 3 )
-        # each ROI has 9 so total selection number is dividable by 9
-        #self.failUnless( np.sum(sinc.selectionmask) % 9 == 0 )
+        # no real check yet, simply checking something happened
+        # one must always be selected
+        self.failUnless( len(selected_rois) == 10 )
+        for r in selected_rois:
+            self.failUnless( len(r) >= 1 )
+            # only three ROIs max
+            self.failUnless( len(r) <= 3 )
+
+        res = sinc.getMeanSelectionMask()
+
+        # mask have origshape
+        self.failUnless( res.shape == self.mask.shape )
+
+        for m in sinc.selectionmasks:
+            # each ROI has 9 so total selection number is dividable by 9
+            self.failUnless( np.sum(m) % 9 == 0 )
 
 
 def suite():
