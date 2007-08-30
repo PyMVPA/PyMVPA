@@ -19,7 +19,7 @@
 import mvpa.incrsearch as si
 import mvpa
 import mvpa.knn as knn
-import mvpa.svm_wrap as svm_wrap
+import mvpa.svm as svm
 import unittest
 import numpy as np
 import scipy.stats as stats

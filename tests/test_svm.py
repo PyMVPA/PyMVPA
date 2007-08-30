@@ -17,9 +17,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import mvpa
-import mvpa.svm_wrap as svm_wrap
+import mvpa.svm as svm
 import unittest
 import numpy
+
+
+def dumbFeatureSignal():
+    data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
+            [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
+            [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
+    regs = [1 for i in range(8)] \
+         + [2 for i in range(8)] \
+         + [3 for i in range(8)]
+
+    return mvpa.MVPAPattern(data, regs)
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):
@@ -56,7 +67,11 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
 
 class SVMTests(unittest.TestCase):
 
-    
+    def testCapabilityReport(self):
+        clf = svm.SVM(dumbFeatureSignal())
+        self.failUnless('feature_benchmark' in clf.capabilities)
+
+
     def testMultivariate(self):
 
         mv_perf = []
@@ -66,11 +81,11 @@ class SVMTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            s_mv = svm_wrap.SVM(train)
+            s_mv = svm.SVM(train)
             p_mv = s_mv.predict( test.pattern )
             mv_perf.append( numpy.mean(p_mv==test.reg) )
 
-            s_uv = svm_wrap.SVM(train.selectFeatures([0]))
+            s_uv = svm.SVM(train.selectFeatures([0]))
             p_uv = s_uv.predict( test.selectFeatures([0]).pattern )
             uv_perf.append( numpy.mean(p_uv==test.reg) )
 
@@ -79,6 +94,21 @@ class SVMTests(unittest.TestCase):
 
         self.failUnless( mean_mv_perf > 0.9 )
         self.failUnless( mean_uv_perf < mean_mv_perf )
+
+
+    def testFeatureBenchmark(self):
+        pat = dumbFeatureSignal()
+        clf = svm.SVM(pat)
+        rank = clf.getFeatureBenchmark()
+
+        # has to be 1d array
+        self.failUnless( len(rank.shape) == 1 ) 
+
+        # has to be one value per feature
+        self.failUnless( len(rank) == pat.nfeatures )
+
+        # first feature is discriminative, second is not
+        self.failUnless(rank[0] > rank[1])
 
 
 def suite():
