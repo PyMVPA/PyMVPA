@@ -17,11 +17,15 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+from classifier import *
 from mvpa import svm
 import numpy
 
-class SVM:
+class SVM(Classifier):
     def __init__(self, data, **kwargs):
+        # init base class
+        Classifier.__init__(self, data, [] )
+
         # check if there is a libsvm version with configurable
         # noise reduction ;)
         if hasattr(svm.svmc, 'svm_set_verbosity'):
