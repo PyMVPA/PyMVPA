@@ -34,15 +34,15 @@ numpy_headers = os.path.join(os.path.dirname(numpy.__file__),'core','include')
 # 0.<4-digit-year><2-digit-month><2-digit-day>.<ever-increasing-integer>
 
 setup(name       = 'pymvpa',
-    version      = '0.20070524.1',
+    version      = '0.20070829.1',
     author       = 'Michael Hanke',
     author_email = 'michael.hanke@gmail.com',
     license      = 'LGPL',
     url          = 'http://apsy.gse.uni-magdeburg.de/hanke',
     description  = 'Multivariate pattern analysis',
     long_description = """ """,
-    packages     = [ 'mvpa', 'mvpa.svm' ],
-    ext_modules  = [ Extension( 'mvpa.svm.svmc', [ 'mvpa/svm/svmc.i' ],
+    packages     = [ 'mvpa', 'mvpa.libsvm' ],
+    ext_modules  = [ Extension( 'mvpa.libsvm.svmc', [ 'mvpa/libsvm/svmc.i' ],
             include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
             libraries    = [ 'svm' ],
             swig_opts    = [ '-c++', '-noproxy',

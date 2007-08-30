@@ -18,7 +18,7 @@
 
 import mvpa
 import mvpa.knn as knn
-import mvpa.svm_wrap as svm_wrap
+import mvpa.svm as svm
 import mvpa.stats
 import unittest
 import numpy
@@ -165,13 +165,13 @@ class CrossValidationTests(unittest.TestCase):
         # for now, CV level 1,2 and 3 are simply run w/o special tests
         for cv in (1,2,3):
             cv_h = mvpa.CrossValidation( data_h )
-            perf_h = numpy.array( cv_h.run( svm_wrap.SVM, cvtype=cv ) )
+            perf_h = numpy.array( cv_h.run( svm.SVM, cvtype=cv ) )
 
             cv_l = mvpa.CrossValidation( data_l )
-            perf_l = numpy.array( cv_l.run( svm_wrap.SVM, cvtype=cv ) )
+            perf_l = numpy.array( cv_l.run( svm.SVM, cvtype=cv ) )
 
             cv_h_uv = mvpa.CrossValidation( data_h_uv )
-            perf_h_uv = numpy.array( cv_h_uv.run( svm_wrap.SVM,
+            perf_h_uv = numpy.array( cv_h_uv.run( svm.SVM,
                                                   cvtype=cv ) )
 
             print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1]

@@ -334,7 +334,7 @@ class svm_model:
 					self.nr_class - 1,
 					self.get_total_nSV() )
 
-	def get_feature_ranking(self):
+	def get_feature_benchmark(self):
 		""" Returns a vector with a feature importance ranking.
 
 		The rank is derived from the SV coefficients of the trained model.
