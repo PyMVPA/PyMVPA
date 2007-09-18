@@ -3,13 +3,13 @@ Section: science
 Priority: optional
 Maintainer: Michael Hanke <michael.hanke@gmail.com>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-central (>= 0.5.6), python-numpy-ext, libsvm-dev
+Build-Depends: debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-central (>= 0.5.6), python-numpy-ext, libsvm-dev (>=2.84.0)
 XS-Python-Version: << 2.5
 Standards-Version: 3.7.2
 
 Package: python-mvpa
 Architecture: any
-Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-numpy-ext
+Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-numpy-ext, python-scipy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: yet to come
