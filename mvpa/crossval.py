@@ -18,6 +18,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import numpy
+import support
 
 class CrossValidation( object ):
     """ Generic N-M cross-validation with arbitrary classification
@@ -289,8 +290,9 @@ class CrossValidation( object ):
                 # store more details performance description
                 # as contingency table
                 self.__updateContingencyTbl(
-                    self.makeContingencyTbl( test_samples.reg,
-                                             predictions ) )
+                    support.buildConfusionMatrix( self.pattern.reglabels,
+                                                  test_samples.reg,
+                                                  predictions ) )
 
         return self.perf
 
@@ -333,36 +335,6 @@ class CrossValidation( object ):
         else:
             self.__contingency_tbl += tbl
 
-
-    def makeContingencyTbl(self, targets, predictions ):
-        """ Create a (n x n) contingency table of two length-n vectors.
-
-        One containing the classification targets and the other the
-        corresponding predictions. The contingency table has to following
-        layout:
-
-                      predictions
-                      1  2  .  .  N
-                    1
-                    2
-          targets   .
-                    .     (i,j)
-                    N
-
-        where cell (i,j) contains the absolute number of predictions j where
-        the classification would have been i.
-        """
-        # create the contingency table template
-        tbl = numpy.zeros( ( len(self.pattern.reglabels),
-                             len(self.pattern.reglabels) ),
-                             dtype = 'uint' )
-
-        for t, tl in enumerate( self.pattern.reglabels ):
-            for p, pl in enumerate( self.pattern.reglabels ):
-                tbl[t, p] = \
-                    numpy.sum( predictions[targets==tl] == pl )
-
-        return tbl
 
 
     # read only props

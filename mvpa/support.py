@@ -56,3 +56,38 @@ def transformWithBoxcar( data, startpoints, boxlength, offset=0):
     selected = [ np.mean( data[ np.array(box) ], axis=0 ) for box in selector ]
 
     return np.array( selected )
+
+
+def buildConfusionMatrix( labels, targets, predictions ):
+    """ Create a (N x N) confusion matrix.
+
+    'N' is the number of labels in the matrix. The labels itself have to be
+    given in the 'labels' argument. 'targets' and 'predictions' are two
+    length-n vectors, one containing the classification targets and the other
+    the corresponding predictions. The confusion matrix has to following
+    layout:
+
+                  predictions
+                  1  2  .  .  N
+                1
+                2
+      targets   .
+                .     (i,j)
+                N
+
+    where cell (i,j) contains the absolute number of predictions j where
+    the target would have been i.
+    """
+    # needs to be an array
+    pred = np.array(predictions)
+
+    # create the contingency table template
+    mat = np.zeros( (len(labels), len(labels)), dtype = 'uint' )
+
+    for t, tl in enumerate( labels ):
+        for p, pl in enumerate( labels ):
+            mat[t, p] = np.sum( pred[targets==tl] == pl )
+
+    return mat
+
+
