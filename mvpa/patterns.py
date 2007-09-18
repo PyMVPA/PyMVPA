@@ -28,22 +28,31 @@ class MVPAPattern(object):
     stored to be able to group patterns for cross-validation purposes.
     """
 
-    def __init__( self, pattern, reg, origin = None, **kwargs ):
+    def __init__( self, pattern, reg, origin = None, mask = None, **kwargs ):
         """ Initialize the pattern data.
 
         The pattern data is finally loaded by calling
         MVPAPattern.addPattern(). Please see the documentation of this method
         to learn what kind of data is required or supported.
 
+        Parameters:
+          pattern -
+          reg     -
+          origin  -
+          mask    -
+
         Please ignore the additional keyword arguments. They are only necessary
         for internal stuff. You cannot trust them -- do not use them!
         """
         # initialize containers
-        self.__origshape = None
+        if not mask == None:
+                self.__mask = numpy.array(mask, dtype='bool')
+        else:
+            self.__mask = None
+
         self.__patterns = None
         self.__regs = None
         self.__origins = None
-
         self.__origregs = None
 
         # when in internal mode bypass all checks and directly assign
@@ -66,8 +75,8 @@ class MVPAPattern(object):
         therefore be treated as they would belong together by the
         CrossValidation algorithm.
         """
-        if self.origshape != other.origshape:
-            raise ValueError, "Cannot add MVPAPattern, because origshapes " \
+        if not (self.__mask == other.__mask).all():
+            raise ValueError, "Cannot add MVPAPattern, because pattern masks " \
                               "do not match."
 
         self.__patterns = \
@@ -94,8 +103,9 @@ class MVPAPattern(object):
         out = MVPAPattern( self.__patterns,
                            self.__regs,
                            self.__origins,
-                           internal = True,
-                           origshape = self.origshape )
+                           mask = self.__mask,
+                           internal = True )
+
         out += other
 
         return out
@@ -109,11 +119,15 @@ class MVPAPattern(object):
         2d matrix ( patterns x features ). This data can later be accessed
         by using to 'pattern' property of this class.
 
-        When adding more patterns to an object that already holds some patterns,
-        the new pattern data has to match the shape of the ones that are already
-        loaded. An example: one first loads pattern data with shape (10,2,3,4).
-        This means 10 patterns shaped (2,3,4). Any pattern that shall be loaded
-        later has to be shaped <number of patterns> x (2,3,4).
+        When adding more patterns to an object that already holds some
+        patterns, the new pattern data has to match the shape of the ones that
+        are already loaded. An example: one first loads pattern data with shape
+        (10,2,3,4). This means 10 patterns shaped (2,3,4). Any pattern that
+        shall be loaded later has to be shaped <number of patterns> x (2,3,4).
+
+        If a feature mask is present the pattern will be masked and only
+        features corresponding to non-zero mask elements will end up in the 2d
+        pattern matrix.
 
         A 1d array or simple sequence passed as 'pattern' arguments is assumed
         to be a single pattern ( 1 x <number of features> ).
@@ -139,19 +153,22 @@ class MVPAPattern(object):
 
         # store the shape of a single pattern for later coordinate
         # reconstruction
-        if self.__origshape == None:
-            self.__origshape = pattern.shape[1:]
+        if self.__mask == None:
+            self.__mask = numpy.ones(pattern.shape[1:], dtype='bool')
         else:
-            if self.__origshape != pattern.shape[1:]:
+            if self.__mask.shape != pattern.shape[1:]:
                 raise ValueError, "Pattern shape does not match existing" \
                                   " patterns (exist: %s, new: %s)" \
-                                  % ( str(self.__origshape),
+                                  % ( str(self.__mask.shape),
                                       str(pattern.shape[1:]) )
 
         # now reshape into a 2d array
         if not pattern.ndim == 2:
             pattern = pattern.reshape( len( pattern ),
                                        numpy.prod( pattern.shape[1:] ) )
+
+        # apply feature mask
+        pattern = pattern[:, self.__mask.ravel()]
 
         # simply assign or concatenate if already present
         if self.__patterns == None:
@@ -206,7 +223,6 @@ class MVPAPattern(object):
 
     def __initDataNoChecks(self, pat, reg, orig, **kwargs):
         """ Do not use! """
-        self.__origshape = kwargs['origshape']
         self.__patterns = pat
         self.__regs = reg
         self.__origins = orig
@@ -334,8 +350,67 @@ class MVPAPattern(object):
         return MVPAPattern( self.__patterns[mask,],
                             self.__regs[mask,],
                             self.__origins[mask,],
-                            internal=True,
-                            origshape=self.origshape )
+                            mask = self.__mask,
+                            internal=True )
+
+
+    def selectFeaturesById( self, ids, maintain_mask = True ):
+        """ Select a number of features from the current set.
+
+        Parameters:
+            ids           - list of feature IDs
+            maintain_mask - This will take the current feature mask and remove
+                            all unselected features from it. This modified mask
+                            becomes the feature mask of the returned
+                            MVPAPattern object. This is useful if it is
+                            necessary to reconstruct the location of certain
+                            features in the original data space.
+                            If this is not required it can be disabled to speep
+                            up the selection process.
+
+        Returns a new MVPAPattern object with a view of the original pattern
+        array (no copying is performed).
+        """
+        # no default mask
+        new_mask = None
+        # reconstruct an updated feature mask if requested
+        # only keep the selected non-zero features of the current mask
+        if maintain_mask:
+            new_mask = numpy.zeros( self.__mask.shape, dtype='bool' )
+            new_mask[tuple(numpy.transpose(self.__mask.nonzero())[ids].T)] = 1
+
+        return MVPAPattern( self.__patterns[:, ids],
+                            self.__regs,
+                            self.__origins,
+                            mask = new_mask,
+                            internal = True )
+
+
+    def selectFeaturesByMask( self, mask ):
+        """ Use a mask array to select features from the current set.
+
+        The mask array shape must match the current feature mask (data shape).
+        The final selection mask only contains features that are present in the
+        current feature mask AND the selection mask passed to this method.
+
+        Returns a new MVPAPattern object with a view of the original pattern
+        array (no copying is performed).
+        """
+        if not mask.shape == self.__mask.shape:
+            raise ValueError, 'Selection mask shape has to match the original' \
+                              + ' mask.'
+
+        if not mask.dtype == 'bool':
+            mask = mask.astype('bool')
+
+        # final selection mask
+        new_mask = mask[self.__mask]
+
+        return MVPAPattern( self.__patterns[:, new_mask.ravel()],
+                            self.__regs,
+                            self.__origins,
+                            mask = new_mask,
+                            internal = True )
 
 
     def selectFeatures( self, mask ):
@@ -343,73 +418,91 @@ class MVPAPattern(object):
 
         'mask' can either be a NumPy array, a tuple or a list.
 
-        If 'mask' is an array all nonzero array elements are used to select
-        features. The shape of the mask array has to match the original data
-        space (see the origshape property).
-
-        If 'mask' is a tuple, it is assumed to be structured like to output of
-        Numpy.array.nonzero() ( tuple of sequences listing nonzero element
-        coordinates ).
+        If 'mask' is an array a logical and is performed with the current mask
+        and all common elements are selected. The shape of the mask array has
+        to match the original data space (see the origshape property).
 
         If 'mask' is a list, it is assumed to be a list of to-be-selected
         feature ids.
 
         Returns a new MVPAPattern object with the selected features.
         """
+        featuremask = numpy.zeros( self.__mask.shape, dtype='bool' )
         if isinstance(mask, numpy.ndarray):
-            if not mask.shape == self.origshape:
-                raise ValueError, 'Mask shape has to match original data ' \
-                              + 'array shape (ignoring the pattern axis).' \
-
-            # tuple of arrays containing the indexes of all nonzero elements
-            # of the mask
-            featuremask = [ self.getFeatureId( c ) \
-                          for c in numpy.transpose( mask.nonzero() ) ]
-
-        elif isinstance(mask, tuple):
-            # mask already contains the nonzero coordinates
-            if not len(mask) == len(self.origshape):
-                raise ValueError, 'Number of mask dimensions has to match' \
-                                + ' the original data array (ignoring the' \
-                                + ' pattern axis).'
-            featuremask = [ self.getFeatureId( c ) \
-                          for c in numpy.transpose( mask ) ]
+            return self.selectFeaturesByMask( mask )
+#        elif isinstance(mask, tuple):
+#            # mask already contains the nonzero coordinates
+#            if not len(mask) == len(self.origshape):
+#                raise ValueError, 'Number of mask dimensions has to match' \
+#                                + ' the original data array (ignoring the' \
+#                                + ' pattern axis).'
+#            featurelist = []
+#
+#            featurelist = [ MVPAPattern.absolute_coord2id( c, self.__mask.shape ) \
+#                                for c in numpy.transpose( mask ) ]
+#            featuremask[mask] = True
+#            return MVPAPattern( self.__patterns[:, featurelist],
+#                                self.__regs,
+#                                self.__origins,
+#                                mask = featuremask,
+#                                internal = True )
 
         elif isinstance(mask, list):
-            # assumed to be a list of feature ids
-            featuremask = mask
-
+            return self.selectFeaturesById( mask )
         else:
             raise ValueError, "'mask' has to be either an array with" \
-                              " origshape or an n-tuple of index arrays" \
-                              " (like those returned by array.nonzero())" \
-                              " or a list of feature ids."
-
-        return MVPAPattern( self.__patterns[:, featuremask],
-                            self.__regs,
-                            self.__origins,
-                            internal = True,
-                            origshape = self.origshape )
+                              " origshape or a list of feature ids."
 
 
-    def features2origmask( self, features ):
-        """ Transforms a sequence of feature ids into a boolean mask in the
-        original data shape (see the origshape property).
+    def getFeatureId( self, coord ):
+        """ Translate a feature mask coordinate into a feature ID.
 
-        Selected features are set to 'True' all others are 'False'.
+        Warning: This method is painfully slow, avoid if possible!
         """
-        # initialize empty mask
-        origmask = numpy.zeros( self.origshape, dtype='bool' )
+        coord = list(coord)
 
-        # translate feature ids into coordinates
-        coords = [ self.getCoordinate(f) for f in features ]
+        featcoords = numpy.transpose(self.__mask.nonzero()).tolist()
 
-        # set mask to True at feature coordinates
-        # A note for the reader: The tuple() is really necessary as without
-        # it the whole indexing does not work.
-        origmask[ tuple( numpy.transpose(coords) ) ] = True
+        for i, c in enumerate( featcoords ):
+            if c == coord:
+                return i
 
-        return origmask
+        raise ValueError, "There is no used feature at this mask coordinate."
+
+
+    def getCoordinate( self, feature_id ):
+        """ Returns a features coordinate in the original data space
+        for a given feature id.
+        """
+        return numpy.transpose(self.__mask.nonzero())[feature_id]
+
+
+    @staticmethod
+    def absolute_coord2id( coord, dims ):
+        """ Calculates the feature id from a coordinate value within certain
+        dimensions.
+        """
+        # transform shape and coordinate into array for easy handling
+        ac = numpy.array( coord )
+        ao = numpy.array( dims )
+
+#        # check for sane coordinates
+#        if (ac >= ao).all() \
+#           or (ac < numpy.repeat( 0, len( ac ) ) ).all():
+#            raise ValueError, 'Invalid coordinate: outside array ' \
+#                              '( coord: %s, arrayshape: %s )' % \
+#                              ( str(coord), str(dims) )
+
+        # compute offsets on each axis
+        offsets = [ ac[d] * ao[d+1:].prod() for d in range(len(ao)) ]
+
+        return sum(offsets)
+
+
+    def getFeatureMask(self):
+        """Return a copy of the current binary feature mask.
+        """
+        return self.__mask.copy()
 
 
     def getNumberOfPatterns( self ):
@@ -422,59 +515,6 @@ class MVPAPattern(object):
         """ Number of features per pattern.
         """
         return self.pattern.shape[1]
-
-
-    def getFeatureId( self, coord ):
-        """ Calculates the feature id from a coordinate value in the original
-        data space.
-        """
-        # transform shape and coordinate into array for easy handling
-        ac = numpy.array( coord )
-        ao = numpy.array( self.origshape )
-
-        # check for sane coordinates
-        if (ac >= ao).all() \
-           or (ac < numpy.repeat( 0, len( ac ) ) ).all():
-            raise ValueError, 'Invalid coordinate: outside array ' \
-                              '( coord: %s, arrayshape: %s )' % \
-                              ( str(coord), str(self.origshape) )
-
-        # this will hold the feature number
-        f_id = 0
-
-        # for all axes
-        for d in range(len(ao)):
-            f_id += ac[d] * ao[d+1:].prod()
-
-        return f_id
-
-
-    def getCoordinate( self, feature_id ):
-        """ Computes the feature coordinates in the original data space
-        for a given feature id.
-        """
-        # transform shape and coordinate into array for easy handling
-        ao = numpy.array( self.origshape )
-
-        # check for sane feature id
-        if feature_id < 0 or feature_id >= ao.prod():
-            raise ValueError, 'Invalid feature id (recieved: %i)' % feature_id
-
-        coord = []
-
-        # for all axes, except the last
-        for d in range(1, len(ao) ):
-            # offset on current axis
-            submatrix_size = ao[d:].prod()
-            axis_coord = feature_id / submatrix_size
-            # substract what we already have
-            feature_id -= axis_coord * submatrix_size
-            # store
-            coord.append( axis_coord )
-        # store the offset on the last axis
-        coord.append( feature_id % ao[-1] )
-
-        return coord
 
 
     def getPatterns( self ):
@@ -532,7 +572,7 @@ class MVPAPattern(object):
     origin =    property( fget=getOrigins )
     npatterns = property( fget=getNumberOfPatterns )
     nfeatures = property( fget=getNumberOfFeatures )
-    origshape = property( fget=lambda self: self.__origshape )
+    origshape = property( fget=lambda self: self.__mask.shape )
     reglabels = property( fget=getRegLabels )
     originlabels = property( fget=getOriginLabels )
     patperreg = property( fget=getPatternsPerRegLabel )
