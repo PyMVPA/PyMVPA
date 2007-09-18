@@ -47,7 +47,7 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless( slight.ncvfolds == 5 )
 
         # run searchlight
-        slight.run(knn.kNN, verbose=True, k=5)
+        slight.run(knn.kNN, verbose=False, k=5)
 
         # check that something happened
         self.failIf( (slight.perfmean == 0).all() )
@@ -69,10 +69,6 @@ class SearchlightTests(unittest.TestCase):
 
         self.failUnless( mask.shape == roi.shape)
         self.failUnless( roi.dtype == 'int32' )
-
-        # check whether earlier ROIs or not overwritten by
-        # later ones
-        self.failUnless( roi[2,1,1] == 1 )
 
 
 def suite():

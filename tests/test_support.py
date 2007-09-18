@@ -58,6 +58,20 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless( trans.shape == (4,3,4,2) )
 
 
+    def testConfusionMatrix(self):
+        data = np.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        reg = np.array([1,1,1,2,2,2,3,3,3])
+
+        tbl = support.buildConfusionMatrix( np.unique(reg), reg, np.array([1,2,1,2,2,2,3,2,1]) )
+
+        # should be square matrix (len(reglabels) x len(reglabels)
+        self.failUnless( tbl.shape == (3,3) )
+
+        # check table content
+        self.failUnless( (tbl == [[2,1,0],[0,3,0],[1,1,1]]).all() )
+
+
+
 def suite():
     return unittest.makeSuite(SupportFxTests)
 

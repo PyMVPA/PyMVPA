@@ -155,8 +155,8 @@ class PatternTests(unittest.TestCase):
         self.failUnless( sel.nfeatures == data.pattern.shape[1] )
         self.failUnless( data.nfeatures == 120 )
 
-        # check selection with nonzero tuple
-        sel = data.selectFeatures( ((0,0,1),(0,2,3),(0,1,2),(0,2,4)) )
+        # check selection with feature list
+        sel = data.selectFeatures( [0,37,119] )
         self.failUnless(sel.nfeatures == 3)
 
         # check size of the masked patterns
@@ -207,7 +207,7 @@ class PatternTests(unittest.TestCase):
         # check with custom mask
         sel = data.selectFeatures([5])
         self.failUnless( sel.pattern.shape[1] == 1 )
-        origmask = sel.features2origmask([5])
+        origmask = sel.getFeatureMask()
         self.failUnless( origmask[0,1,2] == True )
         self.failUnless( origmask.shape == data.origshape )
 
@@ -269,6 +269,29 @@ class PatternTests(unittest.TestCase):
         self.failUnless( (data.reg == origregs).all() )
         # but only the new one
         self.failIf( (data2.reg == origregs).all() )
+
+
+    def testFeatureMasking(self):
+        mask = numpy.zeros((5,3),dtype='bool')
+        mask[2,1] = True; mask[4,0] = True
+        data = mvpa.MVPAPattern(
+            numpy.arange( 60 ).reshape( (4,5,3) ), 1, 1, mask=mask )
+
+        # check simple masking
+        self.failUnless( data.nfeatures == 2 )
+        self.failUnless( data.getFeatureId( (2,1) ) == 0 
+                     and data.getFeatureId( (4,0) ) == 1 )
+        self.failUnlessRaises( ValueError, data.getFeatureId, (2,3) )
+        self.failUnless( data.getFeatureMask().shape == (5,3) )
+        self.failUnless( tuple(data.getCoordinate( 1 )) == (4,0) )
+
+        # selection should be idempotent
+        self.failUnless(data.selectFeatures( mask ).nfeatures == data.nfeatures )
+        # check that correct feature get selected
+        self.failUnless( (data.selectFeatures([1]).pattern[:,0] \
+                          == numpy.array([12, 27, 42, 57]) ).all() )
+        self.failUnless(tuple( data.selectFeatures([1]).getCoordinate(0) ) == (4,0) )
+        self.failUnless( data.selectFeatures([1]).getFeatureMask().sum() == 1 )
 
 
 def suite():

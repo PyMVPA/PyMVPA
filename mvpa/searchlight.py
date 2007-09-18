@@ -151,13 +151,13 @@ class Searchlight( object ):
             sphere_count = 0
 
         # for all possible spheres in the mask
-        for center, sphere in \
+        for center, spheremask in \
             algorithms.SpheresInMask( self.__mask,
                                       self.__radius,
                                       self.__elementsize,
                                       self.__forcesphere ):
             # select features inside the sphere
-            masked = self.__pattern.selectFeatures( tuple( sphere ) )
+            masked = self.__pattern.selectFeaturesByMask( spheremask )
 
             # do the cross-validation
             cv = crossval.CrossValidation( masked, **(self.__cvargs) )
@@ -182,12 +182,12 @@ class Searchlight( object ):
             self.__chanceprob[center_index] = \
                 stats.chisquare( cv.contingencytbl )
             # spheresize / number of features
-            self.__spheresize[center_index] = sphere.shape[1]
+            self.__spheresize[center_index] = spheremask.sum()
 
             if verbose:
                 sphere_count += 1
-                print "\rDoing %i spheres: %i%%" \
-                    % (nspheres, float(sphere_count)/nspheres*100,),
+                print "\rDoing %i spheres: %i (%i%%)" \
+                    % (nspheres, sphere_count, float(sphere_count)/nspheres*100,),
                 sys.stdout.flush()
 
         if verbose:
@@ -236,24 +236,27 @@ def makeSphericalROIMask( mask, radius, elementsize=None ):
     roi_id_counter = 1
 
     # build spheres around every non-zero value in the mask
-    for center, sphere in \
+    for center, spheremask in \
         algorithms.SpheresInMask( mask,
                                   radius,
                                   elementsize,
                                   forcesphere = True ):
 
-        # all elements of the sphere
-        coords = np.transpose( sphere )
-
-        # now check for all coordinates in the sphere, whether it
-        # already belongs to a ROI
-        for coord in coords:
-            # need to convert it to a tuple to use numpy slicing
-            t_coord = tuple(coord)
-
-            # if not in ROI, make it part of the current ROI
-            if roi_mask[t_coord] == 0:
-                roi_mask[t_coord] = roi_id_counter
+        # set all elements that match the current spheremask to the
+        # current ROI index value
+        roi_mask[spheremask] = roi_id_counter
+#        # all elements of the sphere
+#        coords = np.transpose( sphere )
+#
+#        # now check for all coordinates in the sphere, whether it
+#        # already belongs to a ROI
+#        for coord in coords:
+#            # need to convert it to a tuple to use numpy slicing
+#            t_coord = tuple(coord)
+#
+#            # if not in ROI, make it part of the current ROI
+#            if roi_mask[t_coord] == 0:
+#                roi_mask[t_coord] = roi_id_counter
 
         # increase ROI counter
         roi_id_counter += 1

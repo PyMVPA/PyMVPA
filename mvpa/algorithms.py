@@ -37,8 +37,13 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
     range()).
 
     Each call of the generator object returns a tuple of the center coordinates
-    and a tuple of three arrays containing the coordinates of all elements in
-    the sphere (analog to the return value of numpy.nonzero()).
+    and a boolean NumPy array matching the size of the mask with all sphere
+    elements set to true (rest is false).
+
+    ATTENTION: The return spheremask array is re-used in every iteration.
+               If one only stores a reference of this array its content will
+               change when the next iteration is performed! If one want to
+               store the spheremask they have to be copied.
 
     By default each sphere will only contain elements that are also part of the
     mask. By setting 'forcesphere' to True the spheres will contain all element
@@ -74,6 +79,9 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
     # get the nonzero mask coordinates
     coords = numpy.transpose( mask.nonzero() )
 
+    # the absolute sphere mask (gets recycled everytime)
+    spheremask = numpy.zeros(mask.shape, dtype='bool')
+
     # for all nonzero mask elements (a.k.a. sphere centers)
     for center in coords:
         # make abs sphere mask
@@ -89,4 +97,10 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
             abs_sphere = [ v for v in abs_sphere \
                         if mask[numpy.array(v, ndmin=2).T.tolist()] ]
 
-        yield center, numpy.transpose( abs_sphere )
+        # reset the mask
+        spheremask[:] = False
+
+        # put current sphere into the mask
+        spheremask[tuple( numpy.transpose( abs_sphere ) ) ] = True
+
+        yield center, spheremask

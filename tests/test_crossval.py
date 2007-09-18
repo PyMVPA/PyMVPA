@@ -174,16 +174,16 @@ class CrossValidationTests(unittest.TestCase):
             perf_h_uv = numpy.array( cv_h_uv.run( svm.SVM,
                                                   cvtype=cv ) )
 
-            print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1]
-            print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1]
-            print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1]
+            #print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1]
+            #print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1]
+            #print perf_h_uv.mean(), stat.ttest_1samp( perf_h_uv, 0.5 )[1]
 
-            print cv_h.contingencytbl, \
-                  mvpa.stats.chisquare(cv_h.contingencytbl)
-            print cv_l.contingencytbl, \
-                  mvpa.stats.chisquare(cv_l.contingencytbl)
-            print cv_h_uv.contingencytbl, \
-                  mvpa.stats.chisquare(cv_h_uv.contingencytbl)
+            #print cv_h.contingencytbl, \
+            #      mvpa.stats.chisquare(cv_h.contingencytbl)
+            #print cv_l.contingencytbl, \
+            #      mvpa.stats.chisquare(cv_l.contingencytbl)
+            #print cv_h_uv.contingencytbl, \
+            #      mvpa.stats.chisquare(cv_h_uv.contingencytbl)
 
 
     def testPatternSamples(self):
@@ -226,22 +226,6 @@ class CrossValidationTests(unittest.TestCase):
         cv.testsamplecfg = 11
 
         self.failUnlessRaises( ValueError, cv.run, knn.kNN, cvtype = 1 )
-
-
-    def testContingencyTbl(self):
-        data = numpy.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
-        reg = numpy.array([1,1,1,2,2,2,3,3,3])
-
-        cv = mvpa.CrossValidation( mvpa.MVPAPattern( data, reg ) )
-
-        tbl = cv.makeContingencyTbl( cv.pattern.reg,
-                                     numpy.array([1,2,1,2,2,2,3,2,1]) )
-
-        # should be square matrix (len(reglabels) x len(reglabels)
-        self.failUnless( tbl.shape == (3,3) )
-
-        # check table content
-        self.failUnless( (tbl == [[2,1,0],[0,3,0],[1,1,1]]).all() )
 
 
     def testNoiseClassification(self):
