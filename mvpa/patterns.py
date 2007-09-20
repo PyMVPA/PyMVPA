@@ -499,10 +499,16 @@ class MVPAPattern(object):
         return sum(offsets)
 
 
-    def getFeatureMask(self):
-        """Return a copy of the current binary feature mask.
+    def getFeatureMask(self, copy = True):
+        """By default returns a copy of the current binary feature mask.
+
+        If 'copy' is set to False a reference to the mask is returned instead.
+        This shared mask must not be modified! 
         """
-        return self.__mask.copy()
+        if copy:
+            return self.__mask.copy()
+        else:
+            return self.__mask
 
 
     def getNumberOfPatterns( self ):
