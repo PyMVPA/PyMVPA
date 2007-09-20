@@ -91,3 +91,44 @@ def buildConfusionMatrix( labels, targets, predictions ):
     return mat
 
 
+def getUniqueLengthNCombinations(data, n):
+    """Generates a list of lists containing all combinations of
+    elements of data of length 'n' without repetitions.
+
+        data: list
+        n:    integer
+
+    This function is adapted from a Java version posted in some forum on
+    the web as an answer to the question 'How can I generate all possible
+    combinations of length n?'. Unfortunately I cannot remember which
+    forum it was.
+    """
+
+    # to be returned
+    combos = []
+
+    # local function that will be called recursively to collect the
+    # combination elements
+    def take(data, occupied, depth, taken):
+        for i, d in enumerate(data):
+            # only do something if this element hasn't been touch yet
+            if occupied[i] == False:
+                # see whether will reached the desired length
+                if depth < n-1:
+                    # flag the current element as touched
+                    occupied[i] = True
+                    # next level
+                    take(data, occupied, depth+1, taken + [data[i]])
+                    # 'free' the current element
+                    occupied[i] == False
+                else:
+                    # store the final combination
+                    combos.append(taken + [data[i]])
+    # some kind of bitset that stores the status of each element
+    # (contained in combination or not)
+    occupied = [ False for i in data ]
+    # get the combinations
+    take(data, occupied, 0, [])
+
+    # return the result
+    return combos

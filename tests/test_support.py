@@ -71,6 +71,18 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless( (tbl == [[2,1,0],[0,3,0],[1,1,1]]).all() )
 
 
+    def testMofNCombinations(self):
+        self.failUnlessEqual(
+            support.getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )
+        self.failUnlessEqual(
+            support.getUniqueLengthNCombinations(
+                        range(4), 2 ),
+                        [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
+                        )
+        self.failUnlessEqual(
+            support.getUniqueLengthNCombinations(
+                        range(4), 3 ), [[0, 1, 2], [0, 1, 3], [0, 2, 3]] )
+
 
 def suite():
     return unittest.makeSuite(SupportFxTests)
