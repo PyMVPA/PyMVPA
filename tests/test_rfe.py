@@ -131,6 +131,17 @@ class RFETests(unittest.TestCase):
         self.failUnless( confmat.shape == (3,3) )
 
 
+    def testEliminationMask(self):
+        obj = rfe.RecursiveFeatureElimination( self.dumbpattern )
+        # kill the dumb feature
+        elim_mask = obj.selectFeatures( 1, 
+                                        eliminate_by='number',
+                                        kill_per_iter = 1)
+
+        self.failUnless( elim_mask.shape == self.dumbpattern.origshape )
+        self.failUnless( elim_mask[0] == 0 and elim_mask[1] == 1 )
+
+
 def suite():
     return unittest.makeSuite(RFETests)
 

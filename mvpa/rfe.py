@@ -61,9 +61,29 @@ class RecursiveFeatureElimination( object ):
     def selectFeatures( self, n, eliminate_by = 'fraction',
                         kill_per_iter = 0.1 ):
         """ Select n predictive features from the dataset.
+
+        This method performs as many iterations as necessary until only 'n'
+        feature are remaining. The number of iteration depend on the elimination
+        method that is used.
+
+        'eliminate_by' and 'kill_per_iter' are used to determine how many
+        features are removed in each iteration.
+
+        Supported values for 'eliminate_by' and the associated meaning of
+        'kill_per_iter' are listed below:
+
+        eliminate_by: 'fraction'
+            in this case 100*'kill_per_iter' represents the percentage of
+            features that are removed at each iteration
+
+        eliminate_by: 'number'
+            each iteration removed 'number' features
         """
         # are we talking integers?
         n = int( n )
+
+        # elimination log mask
+        elim_mask = np.zeros( self.pattern.origshape, dtype='uint' )
 
         # do it until there are more feature than there should be
         while n < self.pattern.nfeatures:
@@ -97,8 +117,13 @@ class RecursiveFeatureElimination( object ):
                 self.pattern.selectFeatures( 
                         (featrank.argsort()[nkill:]).tolist() )
 
+            # increment all features still present in the elim mask
+            elim_mask[ self.pattern.getFeatureMask(copy=False) ] += 1
+
             # retrain the classifier with the new feature set
             self.__trainClassifier()
+
+        return elim_mask
 
 
     def killNFeatures( self, n,
@@ -129,8 +154,22 @@ class RecursiveFeatureElimination( object ):
 
 
     def testSelection( self, pattern ):
-        """
-        'pattern' is an MVPAPattern object.
+        """ Test the performance of the current feature set on a given dataset.
+
+        The datasets in 'pattern' (MVPAPattern) are passed to the internal
+        classifier object. No retraining is performed. The classifiers
+        predictions are compared to the regressor values in 'pattern'.
+
+        'pattern' either has to provide the same number of features as the
+        current feature set or has to match the original data shape. In case of
+        the latter an automatic feature selection is performed and only those
+        features from 'pattern' are used for the prediction that are also
+        present in the current internal feature set.
+
+        The method returns a 3-tuple:
+            ( list of classifier prediction (one per dataset),
+              mean classifier performance (0 < x < 1),
+              confusion matrix of classifications )
         """
         if not pattern.nfeatures == self.pattern.nfeatures:
             # select necessary features from the provided patterns
@@ -142,7 +181,6 @@ class RecursiveFeatureElimination( object ):
         # get the predictions from the classifier
         predicted = self.clf.predict( masked.pattern )
 
-        print self.pattern.reglabels
         confmat = support.buildConfusionMatrix( self.pattern.reglabels,
                                                 masked.reg,
                                                 predicted )
@@ -153,6 +191,9 @@ class RecursiveFeatureElimination( object ):
 
 
     def setVerbosity( self, value ):
+        """ If verbosity is set to True, some status messages will be printed
+        during recursive feature selection.
+        """
         self.__verbose = value
 
 
