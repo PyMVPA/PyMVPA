@@ -400,16 +400,19 @@ class MVPAPattern(object):
             raise ValueError, 'Selection mask shape has to match the original' \
                               + ' mask.'
 
+        # always copy to prevent confusion
         if not mask.dtype == 'bool':
             mask = mask.astype('bool')
+        else:
+            mask = mask.copy()
 
         # final selection mask
-        new_mask = mask[self.__mask]
+        mask *= self.__mask
 
-        return MVPAPattern( self.__patterns[:, new_mask.ravel()],
+        return MVPAPattern( self.__patterns[:, mask[self.__mask].ravel()],
                             self.__regs,
                             self.__origins,
-                            mask = new_mask,
+                            mask = mask,
                             internal = True )
 
 
