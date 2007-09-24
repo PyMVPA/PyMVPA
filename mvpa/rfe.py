@@ -110,18 +110,24 @@ class RecursiveFeatureElimination( object ):
                 nkill = 1
 
             if self.__verbose:
-                print "Removing", nkill, "features."
+                print "Removing", nkill, "features.",
 
             # eliminate the first 'nkill' features (with the lowest ranking)
+            # HEY, ATTENTION: the list of selected features needs to be sorted
+            # otherwise the feature mask will become inconsistent with the
+            # dataset and you need 2 days to discover the bug
             self.__pattern = \
-                self.pattern.selectFeatures( 
-                        (featrank.argsort()[nkill:]).tolist() )
+                self.pattern.selectFeaturesById(
+                        np.sort( featrank.argsort()[nkill:] ) )
 
             # increment all features still present in the elim mask
             elim_mask[ self.pattern.getFeatureMask(copy=False) ] += 1
 
             # retrain the classifier with the new feature set
             self.__trainClassifier()
+
+            if self.__verbose:
+                print "New performance:", self.trainperf
 
         return elim_mask
 
