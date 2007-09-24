@@ -72,19 +72,6 @@ class CrossValidationTests(unittest.TestCase):
         return data
 
 
-    def testMofNCombinations(self):
-        self.failUnlessEqual(
-            mvpa.getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )
-        self.failUnlessEqual(
-            mvpa.getUniqueLengthNCombinations(
-                        range(4), 2 ),
-                        [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
-                        )
-        self.failUnlessEqual(
-            mvpa.getUniqueLengthNCombinations(
-                        range(4), 3 ), [[0, 1, 2], [0, 1, 3], [0, 2, 3]] )
-
-
     def testSimpleNMinusOneCV(self):
         data = self.getMVPattern(3)
 
@@ -103,10 +90,10 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( len( perf ) == 6 )
 
         # check the number of CV folds
-        self.failUnless( cv.getNCVFolds(1) == 6 )
+        self.failUnless( cv.xvalpattern.getNCVFolds(1) == 6 )
 
         # check the number of available patterns per CV fold
-        ntrainpats, ntestpats = cv.getNPatternsPerCVFold(1)
+        ntrainpats, ntestpats = cv.xvalpattern.getNPatternsPerCVFold(1)
 
         self.failUnless( ntrainpats.shape == (6,2) )
         self.failUnless( ntestpats.shape == (6,2) )
@@ -189,8 +176,7 @@ class CrossValidationTests(unittest.TestCase):
     def testPatternSamples(self):
         data = self.getMVPattern(3)
 
-        cv = mvpa.CrossValidation( data )
-        cv.ncvfoldsamples = 2
+        cv = mvpa.CrossValidation( data, ncvfoldsamples = 2 )
 
         perf = numpy.array(cv.run(knn.kNN, cvtype=1))
 
@@ -202,10 +188,10 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( cv.trainsamplelog == [ None for i in range(12) ] )
 
         # check total pattern number per reg
-        self.failUnless( cv.pattern.patperreg == [60,60] )
+        self.failUnless( cv.xvalpattern.pattern.patperreg == [60,60] )
 
         # enable automatic training pattern sampling
-        cv.trainsamplecfg = 'auto'
+        cv.xvalpattern.trainsamplesize = 'auto'
 
         cv.run(knn.kNN, cvtype=1)
         # check that still all patterns are used for training and test patterns
@@ -214,8 +200,8 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( cv.testsamplelog == [ None for i in range(12) ] )
 
         # now do pattern and training sampling
-        cv.trainsamplecfg = 28
-        cv.testsamplecfg = 6
+        cv.xvalpattern.trainsamplesize = 28
+        cv.xvalpattern.testsamplesize = 6
 
         cv.run(knn.kNN, cvtype = 1)
 
@@ -223,7 +209,7 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( cv.testsamplelog == [ 6 for i in range(12) ] )
 
         # now check that you cannot get more pattern samples than are available
-        cv.testsamplecfg = 11
+        cv.xvalpattern.testsamplesize = 11
 
         self.failUnlessRaises( ValueError, cv.run, knn.kNN, cvtype = 1 )
 
@@ -239,9 +225,11 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( numpy.array(perf).mean() == 1.0 )
 
         # do crossval with permutated regressors
-        perf = mvpa.CrossValidation( data,
-                                     ncvfoldsamples= 10,
-                                     permutate=True ).run(knn.kNN, cvtype=1)
+        perf = mvpa.CrossValidation(
+                    data,
+                    ncvfoldsamples= 10 ).run(knn.kNN,
+                                             cvtype=1,
+                                             permutate = True)
 
         # must be at chance level
         pmean = numpy.array(perf).mean()

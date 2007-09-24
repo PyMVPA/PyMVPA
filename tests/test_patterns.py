@@ -155,6 +155,14 @@ class PatternTests(unittest.TestCase):
         self.failUnless( sel.nfeatures == data.pattern.shape[1] )
         self.failUnless( data.nfeatures == 120 )
 
+        # check partial array mask
+        partial_mask = numpy.zeros((2,4,3,5), dtype='uint')
+        partial_mask[0,0,2,2] = 1
+        partial_mask[1,2,2,0] = 1
+        sel = data.selectFeatures( partial_mask )
+        self.failUnless( sel.nfeatures == 2 )
+        self.failUnless( sel.getFeatureMask().shape == (2,4,3,5))
+
         # check selection with feature list
         sel = data.selectFeatures( [0,37,119] )
         self.failUnless(sel.nfeatures == 3)
@@ -209,7 +217,7 @@ class PatternTests(unittest.TestCase):
         self.failUnless( sel.pattern.shape[1] == 1 )
         origmask = sel.getFeatureMask()
         self.failUnless( origmask[0,1,2] == True )
-        self.failUnless( origmask.shape == data.origshape )
+        self.failUnless( origmask.shape == data.origshape == (2,4,3) )
 
 
 

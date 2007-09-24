@@ -37,7 +37,7 @@ class CrossValidationTests(unittest.TestCase):
         cvpg = xvalpattern.CrossvalPatternGenerator(self.data)
 
         # now get the xval pattern sets One-Fold CV)
-        xvpat = [ (train, test) for (train,test) in cvpg(1) ]
+        xvpat = [ (train, test) for (train,trs,test,tes) in cvpg(1) ]
 
         self.failUnless( len(xvpat) == 10 )
 

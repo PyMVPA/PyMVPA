@@ -25,6 +25,7 @@
 
 import algorithms
 import numpy as np
+import support
 import crossval
 import sys
 import stats
@@ -197,7 +198,7 @@ class Searchlight( object ):
         """ Returns the number of cross-validation folds that is used by
         the searchlight algorithm.
         """
-        return len( crossval.getUniqueLengthNCombinations(
+        return len( support.getUniqueLengthNCombinations(
                         self.pattern.originlabels,
                         self.cvtype ) )
 

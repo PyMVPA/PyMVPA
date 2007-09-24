@@ -20,6 +20,7 @@ import unittest
 import numpy as np
 import mvpa.rfe as rfe
 import mvpa
+import mvpa.svm
 
 def dumbFeatureSignal():
     data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
@@ -140,6 +141,38 @@ class RFETests(unittest.TestCase):
 
         self.failUnless( elim_mask.shape == self.dumbpattern.origshape )
         self.failUnless( elim_mask[0] == 0 and elim_mask[1] == 1 )
+
+#        pat = mvpa.MVPAPattern( np.random.normal(0,size=(20,16,16,8)),
+#                                [i%2 for i in range(20)],
+#                                0 )
+#
+#        mask = np.ones((16,16,8),dtype='int16')
+#        mask[0:4,   0:4,   0:2]=False
+#        mask[12:16, 0:4,   0:2]=False
+#        mask[0:4,   12:16, 0:2]=False
+#        mask[12:16, 12:16, 0:2]=False
+#
+#        pat_sel = pat.selectFeatures(mask)
+
+
+    def testEliminationEvenMore(self):
+
+        pat = mvpa.MVPAPattern( np.random.normal(size=(100,2,3,4)),
+                                [i%2 for i in range(100)],
+                                [i/5 for i in range(100)] )
+
+        # make a copy of the original patterns
+        sec_pat = pat.pattern.copy()
+
+        el = rfe.RecursiveFeatureElimination( pat )
+        el.killNFeatures(5, eliminate_by = 'number', kill_per_iter = 1 )
+
+        features = np.transpose(el.pattern.getFeatureMask().nonzero())
+
+        for i,f in enumerate(features):
+            orig_id = mvpa.MVPAPattern.absolute_coord2id(f,pat.origshape)
+            orig_f = sec_pat[:,orig_id]
+            self.failUnless( (el.pattern.pattern[:,i] == orig_f).all() )
 
 
 def suite():
