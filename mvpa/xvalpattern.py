@@ -28,8 +28,7 @@ class CrossvalPatternGenerator( object ):
                   pattern,
                   trainingsamples = None,
                   testsamples = None,
-                  ncvfoldsamples = 1,
-                  permutate = False ):
+                  ncvfoldsamples = 1):
         """
         Initialize the cross-validation.
 
@@ -49,10 +48,6 @@ class CrossvalPatternGenerator( object ):
                       is used for classification and the subset is randomly
                       selected for each CV-fold run (see the trainingsamples
                       and testsamples arguments).
-          permutate:  If True the regressor vector is permutated for each
-                      cross-validation fold. In conjunction with ncvfoldsamples
-                      this might be useful to test a classification algorithm
-                      whether it can classify any noise ;)
         """
         self.__data = pattern
 
@@ -60,7 +55,6 @@ class CrossvalPatternGenerator( object ):
         self.setTrainingPatternSamples( trainingsamples )
         self.setTestPatternSamples( testsamples )
         self.setNCVFoldSamples( ncvfoldsamples )
-        self.__permutated_regressors = permutate
 
 
     def setTrainingPatternSamples( self, samplesize ):
@@ -98,8 +92,8 @@ class CrossvalPatternGenerator( object ):
         """ Returns the number of cross-validations folds that are performed
         on the dataset for a given cvtype ( N-cvtype cross-validation).
         """
-        return len( getUniqueLengthNCombinations(self.pattern.originlabels,
-                                                 cvtype) )
+        return len( support.getUniqueLengthNCombinations(
+                        self.pattern.originlabels, cvtype) )
 
 
     def getNPatternsPerCVFold( self, cvtype = 1 ):
@@ -110,8 +104,8 @@ class CrossvalPatternGenerator( object ):
         Array rows: CV-folds, columns: regressor labels
         """
         # get the list of all combinations of to be excluded folds
-        cv_list = getUniqueLengthNCombinations(self.pattern.originlabels,
-                                               cvtype)
+        cv_list = support.getUniqueLengthNCombinations(
+                        self.pattern.originlabels, cvtype)
 
         ntrainpat = np.zeros( (len(cv_list), len(self.pattern.reglabels) ) )
         ntestpat = np.zeros( ntrainpat.shape )
@@ -211,7 +205,7 @@ class CrossvalPatternGenerator( object ):
             # do the sampling for this CV fold
             for sample in xrange( self.__cvfold_nsamples ):
                 # permutate the regressors in training and test dataset
-                if self.__permutated_regressors:
+                if permutate:
                     train.permutatedRegressors( True )
                     test.permutatedRegressors( True )
 
@@ -221,10 +215,15 @@ class CrossvalPatternGenerator( object ):
                                                     self.__training_samplesize )
 
                 # choose a test pattern sample
-                test_samples, testsamplesize = \
-                    CrossvalPatternGenerator.selectPatternSubset( test, self.__test_samplesize )
+                test_samples, test_samplesize = \
+                    CrossvalPatternGenerator.selectPatternSubset(
+                            test,
+                            self.__test_samplesize )
 
-                yield train_samples, test_samples
+                yield train_samples, \
+                      train_samplesize, \
+                      test_samples, \
+                      test_samplesize
 
 
     # read only props
@@ -237,6 +236,3 @@ class CrossvalPatternGenerator( object ):
                                 fset=setTrainingPatternSamples )
     ncvfoldsamples  = property( fget=lambda self: self.__cvfold_nsamples,
                                 fset=setNCVFoldSamples )
-
-
-
