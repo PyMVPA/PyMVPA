@@ -49,7 +49,7 @@ class Searchlight( object ):
     The object provides a number of properties that can be used to access
     input and output data of the searchlight algorithm.
 
-    The following properties provide access to array that match the size of
+    The following properties provide access to arrays that match the size of
     the mask shape. Each element contains information about the sphere that
     is centered on the respective location in the mask:
 
@@ -133,7 +133,7 @@ class Searchlight( object ):
         self.__spheresize = np.zeros(self.pattern.origshape, dtype='uint')
 
 
-    def run( self, classifier, verbose=False, **kwargs ):
+    def __call__( self, classifier, verbose=False, **kwargs ):
         """ Perform the spheresearch for all possible spheres in the
         mask.
 
@@ -246,18 +246,6 @@ def makeSphericalROIMask( mask, radius, elementsize=None ):
         # set all elements that match the current spheremask to the
         # current ROI index value
         roi_mask[spheremask] = roi_id_counter
-#        # all elements of the sphere
-#        coords = np.transpose( sphere )
-#
-#        # now check for all coordinates in the sphere, whether it
-#        # already belongs to a ROI
-#        for coord in coords:
-#            # need to convert it to a tuple to use numpy slicing
-#            t_coord = tuple(coord)
-#
-#            # if not in ROI, make it part of the current ROI
-#            if roi_mask[t_coord] == 0:
-#                roi_mask[t_coord] = roi_id_counter
 
         # increase ROI counter
         roi_id_counter += 1

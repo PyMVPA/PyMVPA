@@ -47,7 +47,7 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless( slight.ncvfolds == 5 )
 
         # run searchlight
-        slight.run(knn.kNN, verbose=False, k=5)
+        slight(knn.kNN, verbose=False, k=5)
 
         # check that something happened
         self.failIf( (slight.perfmean == 0).all() )
