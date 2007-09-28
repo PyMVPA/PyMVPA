@@ -30,6 +30,7 @@ import crossval
 import sys
 import stats
 
+
 class Searchlight( object ):
     """ Perform a cross-validation analysis in all possible spheres of a
     certain size within a mask in the dataspace.
@@ -84,17 +85,16 @@ class Searchlight( object ):
                       the searchlight algorithm for each sphere
     """
     def __init__( self, pattern, mask,
-                  radius = 1.0,
                   elementsize = None,
                   forcesphere = False,
                   cvtype = 1,
                   **kwargs ):
         """
         Parameters:
-            radius:       sphere radius
             elementsize:  a vector specifying the extent of each data element
                           along all dimensions in the dataset. This information
-                          is used to translate the radius into element units
+                          is used to translate the radius passed to the
+                          __call__() method into element units
             forcesphere:  if True a full sphere is used regardless of the
                           status of the status of the sphere elements in the
                           mask. If False only elements are considered as sphere
@@ -105,7 +105,6 @@ class Searchlight( object ):
         """
         self.__pattern = pattern
         self.__mask = mask
-        self.__radius = radius
 
         if not elementsize:
             self.__elementsize = [ 1 for i in range( len(pattern.origshape) ) ]
@@ -133,7 +132,7 @@ class Searchlight( object ):
         self.__spheresize = np.zeros(self.pattern.origshape, dtype='uint')
 
 
-    def __call__( self, classifier, verbose=False, **kwargs ):
+    def __call__( self, classifier, radius = 1.0, verbose=False, **kwargs ):
         """ Perform the spheresearch for all possible spheres in the
         mask.
 
@@ -154,7 +153,7 @@ class Searchlight( object ):
         # for all possible spheres in the mask
         for center, spheremask in \
             algorithms.SpheresInMask( self.__mask,
-                                      self.__radius,
+                                      radius,
                                       self.__elementsize,
                                       self.__forcesphere ):
             # select features inside the sphere
@@ -194,6 +193,7 @@ class Searchlight( object ):
         if verbose:
             print ''
 
+
     def getNCVFolds( self ):
         """ Returns the number of cross-validation folds that is used by
         the searchlight algorithm.
@@ -201,6 +201,7 @@ class Searchlight( object ):
         return len( support.getUniqueLengthNCombinations(
                         self.pattern.originlabels,
                         self.cvtype ) )
+
 
     # access to the results
     perfmean = property( fget=lambda self: self.__perfmean )
@@ -212,11 +213,58 @@ class Searchlight( object ):
     # other data access
     pattern = property( fget=lambda self: self.__pattern )
     mask = property( fget=lambda self: self.__mask )
-    radius = property( fget=lambda self: self.__radius )
     elementsize = property( fget=lambda self: self.__elementsize )
     cvtype = property( fget=lambda self: self.__cvtype )
     forcesphere = property( fget=lambda self: self.__forcesphere )
     ncvfolds = property( fget=getNCVFolds )
+
+
+
+class OptimalSearchlight( object ):
+    def __init__( self,
+                  searchlight,
+                  test_radii,
+                  classifier,
+                  verbose=False,
+                  **kwargs ):
+        """
+        """
+        # results will end up here
+        self.__perfmeans = []
+        self.__perfvars = []
+        self.__chisquares = []
+        self.__chanceprobs = []
+        self.__spheresizes = []
+
+        # run searchligh for all radii in the list
+        for radius in test_radii:
+            if verbose:
+                print 'Using searchlight with radius:', radius
+            # compute the results
+            searchlight( classifier, radius, verbose, **(kwargs) )
+
+            self.__perfmeans.append( searchlight.perfmean )
+            self.__perfvars.append( searchlight.perfvar )
+            self.__chisquares.append( searchlight.chisquare )
+            self.__chanceprobs.append( searchlight.chanceprob )
+            self.__spheresizes.append( searchlight.spheresize )
+
+
+        # now determine the best classification accuracy
+        best = np.array(self.__perfmeans).argmax( axis=0 )
+
+        # select the corresponding values of the best classification
+        # in all data tables
+        self.perfmean   = best.choose(*(self.__perfmeans))
+        self.perfvar    = best.choose(*(self.__perfvars))
+        self.chisquare  = best.choose(*(self.__chisquares))
+        self.chanceprob = best.choose(*(self.__chanceprobs))
+        self.spheresize = best.choose(*(self.__spheresizes))
+
+        # store the best performing radius
+        self.bestradius = np.zeros( self.perfmean.shape, dtype='uint' )
+        self.bestradius[searchlight.mask==True] = \
+            best.choose( test_radii )[searchlight.mask==True]
 
 
 
