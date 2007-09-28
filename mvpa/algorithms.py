@@ -50,7 +50,7 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
     in range regardless of their status in the mask instead.
     """
     if elementsize == None:
-        elementsize = numpy.ones( len( mask.shape ) )
+        elementsize = numpy.ones( len( mask.shape ), dtype='uint' )
     else:
         elementsize = numpy.array( elementsize )
 
@@ -66,7 +66,7 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
     # check all filter element
     for coord in f_coords:
         # scale coordinates by elementsize (and de-mean)
-        trans_coord = (coord - filter_center) * elementsize
+        trans_coord = ((coord - filter_center) * elementsize) - elementsize/2
 
         # compare with radius
         if radius < numpy.linalg.norm( trans_coord ):
@@ -75,13 +75,11 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
 
     # convert spherical filter into releative coordinates
     filter = numpy.array( filter.nonzero() ).T - filter_center
-
     # get the nonzero mask coordinates
     coords = numpy.transpose( mask.nonzero() )
 
     # the absolute sphere mask (gets recycled everytime)
     spheremask = numpy.zeros(mask.shape, dtype='bool')
-
     # for all nonzero mask elements (a.k.a. sphere centers)
     for center in coords:
         # make abs sphere mask
