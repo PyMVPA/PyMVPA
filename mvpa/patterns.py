@@ -45,10 +45,12 @@ class MVPAPattern(object):
         for internal stuff. You cannot trust them -- do not use them!
         """
         # initialize containers
-        if not mask == None:
-                self.__mask = numpy.array(mask, dtype='bool')
-        else:
+        if mask == None:
             self.__mask = None
+        elif isinstance( mask, numpy.ndarray):
+            self.__mask = mask
+        else:
+            raise ValueError, "Mask has to be NumPy array."
 
         self.__patterns = None
         self.__regs = None
@@ -167,8 +169,8 @@ class MVPAPattern(object):
             pattern = pattern.reshape( len( pattern ),
                                        numpy.prod( pattern.shape[1:] ) )
 
-        # apply feature mask
-        pattern = pattern[:, self.__mask.ravel()]
+        # apply feature mask: use '>0' to cope with integer masks
+        pattern = pattern[:, self.__mask.ravel() > 0]
 
         # simply assign or concatenate if already present
         if self.__patterns == None:
@@ -371,11 +373,13 @@ class MVPAPattern(object):
         Returns a new MVPAPattern object with a view of the original pattern
         array (no copying is performed).
         """
-        # no default mask
+       # no default mask
         new_mask = None
         # reconstruct an updated feature mask if requested
         # only keep the selected non-zero features of the current mask
         if maintain_mask:
+            # sort to preserv feature order (otherwise mask gets corrupted)
+            ids = sorted( ids )
             new_mask = numpy.zeros( self.__mask.shape, dtype='bool' )
             new_mask[tuple(numpy.transpose(self.__mask.nonzero())[ids].T)] = 1
 
@@ -401,19 +405,35 @@ class MVPAPattern(object):
                               + ' mask.'
 
         # always copy to prevent confusion
-        if not mask.dtype == 'bool':
-            mask = mask.astype('bool')
-        else:
-            mask = mask.copy()
+        mask = mask.copy()
 
         # final selection mask
-        mask *= self.__mask
+        mask *= self.__mask > 0
 
-        return MVPAPattern( self.__patterns[:, mask[self.__mask].ravel()],
+        # use '>0' to deal with integer masks
+        return MVPAPattern( self.__patterns[:, mask[self.__mask>0].ravel()>0],
                             self.__regs,
                             self.__origins,
                             mask = mask,
                             internal = True )
+
+
+    def selectFeaturesByGroup( self, group_ids ):
+        """ 'group_ids' is a sequence of mask values where each unique mask
+        value forms a single group.
+        """
+        # build boolean filer
+        if len(group_ids) > 1:
+            # all features in any of the given groups
+            filter = \
+                numpy.logical_or( *([self.__mask == id for id in group_ids]) )
+        else:
+            filter = self.__mask == group_ids[0]
+
+        # preserve ROI ids for selected features
+        mask = filter * self.__mask
+
+        return self.selectFeaturesByMask( mask )
 
 
     def selectFeatures( self, mask ):
@@ -433,23 +453,6 @@ class MVPAPattern(object):
         featuremask = numpy.zeros( self.__mask.shape, dtype='bool' )
         if isinstance(mask, numpy.ndarray):
             return self.selectFeaturesByMask( mask )
-#        elif isinstance(mask, tuple):
-#            # mask already contains the nonzero coordinates
-#            if not len(mask) == len(self.origshape):
-#                raise ValueError, 'Number of mask dimensions has to match' \
-#                                + ' the original data array (ignoring the' \
-#                                + ' pattern axis).'
-#            featurelist = []
-#
-#            featurelist = [ MVPAPattern.absolute_coord2id( c, self.__mask.shape ) \
-#                                for c in numpy.transpose( mask ) ]
-#            featuremask[mask] = True
-#            return MVPAPattern( self.__patterns[:, featurelist],
-#                                self.__regs,
-#                                self.__origins,
-#                                mask = featuremask,
-#                                internal = True )
-
         elif isinstance(mask, list):
             return self.selectFeaturesById( mask )
         else:

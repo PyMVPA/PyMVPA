@@ -302,6 +302,33 @@ class PatternTests(unittest.TestCase):
         self.failUnless( data.selectFeatures([1]).getFeatureMask().sum() == 1 )
 
 
+    def testROIMasking(self):
+        mask=numpy.array([i/6 for i in range(60)], dtype='int').reshape(6,10)
+        data = mvpa.MVPAPattern(
+            numpy.arange( 180 ).reshape( (3,6,10) ), 1, 1, mask=mask )
+
+        self.failIf( data.getFeatureMask().dtype == 'bool' )
+        # check that the 0 masked features get cut
+        self.failUnless( data.nfeatures == 54 )
+        self.failUnless( (data.pattern[:,0] == [6,66,126]).all() )
+        self.failUnless( data.getFeatureMask().shape == (6,10) )
+
+        featsel = data.selectFeaturesById([19])
+        self.failUnless( (data.pattern[:,19] == featsel.pattern[:,0]).all() )
+
+        # check single ROI selection works
+        roisel = data.selectFeaturesByGroup([4])
+        self.failUnless( (data.pattern[:,19] == roisel.pattern[:,1]).all() )
+
+        # check dual ROI selection works (plus keep feature order)
+        roisel = data.selectFeaturesByGroup([6,4])
+        self.failUnless( (data.pattern[:,19] == roisel.pattern[:,1]).all() )
+        self.failUnless( (data.pattern[:,32] == roisel.pattern[:,8]).all() )
+
+        # check if feature coords can be recovered
+        self.failUnless( (roisel.getCoordinate(8) == (3,8)).all() )
+
+
 def suite():
     return unittest.makeSuite(PatternTests)
 
