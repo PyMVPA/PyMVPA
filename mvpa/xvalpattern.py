@@ -26,6 +26,7 @@ class CrossvalPatternGenerator( object ):
     """
     def __init__( self,
                   pattern,
+                  cvtype = 1,
                   trainingsamples = None,
                   testsamples = None,
                   ncvfoldsamples = 1):
@@ -34,6 +35,7 @@ class CrossvalPatternGenerator( object ):
 
           pattern:    MVPAPattern object containing the data, classification
                       targets and origins for the cross-validation.
+          cvtype:     Type of cross-validation: N-cvtype
           trainingsamples:
                       Number of training patterns to be used in each
                       cross-validation fold. Please see the
@@ -55,6 +57,7 @@ class CrossvalPatternGenerator( object ):
         self.setTrainingPatternSamples( trainingsamples )
         self.setTestPatternSamples( testsamples )
         self.setNCVFoldSamples( ncvfoldsamples )
+        self.setCVType( cvtype )
 
 
     def setTrainingPatternSamples( self, samplesize ):
@@ -86,6 +89,14 @@ class CrossvalPatternGenerator( object ):
         cross-validation fold.
         """
         self.__cvfold_nsamples = nsamples
+
+
+    def setCVType( self, type ):
+        """ Set the cross-validation type.
+
+        (N-'type')-fold cross-validation.
+        """
+        self.__cvtype = type
 
 
     def getNCVFolds( self, cvtype ):
@@ -185,7 +196,7 @@ class CrossvalPatternGenerator( object ):
         return samples, samplesize
 
 
-    def __call__( self, cvtype = 1, permutate = False ):
+    def __call__( self, permutate = False ):
         """ Perform cross-validation.
 
         Parameter:
@@ -194,7 +205,7 @@ class CrossvalPatternGenerator( object ):
         # get the list of all combinations of to be excluded folds
         cv_list = \
             support.getUniqueLengthNCombinations(self.__data.originlabels,
-                                                 cvtype)
+                                                 self.__cvtype)
 
         # do cross-validation
         for exclude in cv_list:
@@ -236,3 +247,5 @@ class CrossvalPatternGenerator( object ):
                                 fset=setTrainingPatternSamples )
     ncvfoldsamples  = property( fget=lambda self: self.__cvfold_nsamples,
                                 fset=setNCVFoldSamples )
+    cvtype          = property( fget=lambda self: self.__cvtype,
+                                fset=setCVType )

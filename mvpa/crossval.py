@@ -17,7 +17,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import numpy
+import numpy as N
 import support
 import xvalpattern
 
@@ -27,6 +27,8 @@ class CrossValidation( object ):
     """
     def __init__( self,
                   pattern,
+                  classifier,
+                  cvtype = 1,
                   trainingsamples = None,
                   testsamples = None,
                   ncvfoldsamples = 1,
@@ -36,6 +38,9 @@ class CrossValidation( object ):
 
           pattern:    MVPAPattern object containing the data, classification
                       targets and origins for the cross-validation.
+          classifier: A classifier instance that shall be used to do the actual
+                      classification.
+          cvtype:     Type of cross-validation: N-cvtype
           trainingsamples:
                       Number of training patterns to be used in each
                       cross-validation fold. Please see the
@@ -60,21 +65,15 @@ class CrossValidation( object ):
         self.__cvpg.setTrainingPatternSamples( trainingsamples )
         self.__cvpg.setTestPatternSamples( testsamples )
         self.__cvpg.setNCVFoldSamples( ncvfoldsamples )
+        self.__cvpg.setCVType( cvtype )
+
+        self.setClassifier( classifier )
+        self.setClassifierCallback( clfcallback )
 
         self.__perf = []
         self.__contingency_tbl = None
         self.__test_samplelog = []
         self.__train_samplelog = []
-
-
-        self.setClassifierCallback( clfcallback )
-
-
-    def setClassifierCallback( self, callable ):
-        """ Sets a callable that is called at the end of each cross-validation
-        fold with the trained classifier as the only argument.
-        """
-        self.__clf_callback = callable
 
 
     def __clean_logdata( self ):
@@ -87,7 +86,26 @@ class CrossValidation( object ):
         self.__train_samplelog = []
 
 
-    def run( self, classifier, cvtype = 1, permutate = False, **kwargs ):
+    def setClassifier( self, classifier ):
+        """ Set a classifier instance that is used to perform the
+        classification.
+        """
+        if not hasattr( classifier, 'predict' ):
+            raise ValueError, "Classifier object has to provide a " \
+                         "'predict()' method."
+
+        self.__clf = classifier
+
+
+    def setClassifierCallback( self, callable ):
+
+        """ Sets a callable that is called at the end of each cross-validation
+        fold with the trained classifier as the only argument.
+        """
+        self.__clf_callback = callable
+
+
+    def __call__( self, permutate = False ):
         """ Perform cross-validation.
 
         Parameters:
@@ -95,40 +113,27 @@ class CrossValidation( object ):
                       cross-validation fold. In conjunction with ncvfoldsamples
                       this might be useful to test a classification algorithm
                       whether it can classify any noise ;)
-          classifier: A class that shall be used the actual classification. Its
-                      constructor must not have more than two required
-                      arguments (data and regs - in this order).
-                      The classifier has to train itself when creating the
-                      classifier object!
-          cvtype:     Type of cross-validation: N-cvtype
-          **kwargs:   All keyword arguments are passed to the classifiers
-                      constructor.
 
         Returns:
           List of performance values (fraction of correct classifications) for
           each  cross-validation fold. More performance values are available
           via several class attributes.
         """
-        if not hasattr( classifier, 'predict' ):
-            raise ValueError, "Classifier object has to provide a " \
-                         "'predict()' method."
-
         # clean previous log data
         self.__clean_logdata()
 
         for train_samples, \
             train_samplesize, \
             test_samples, \
-            test_samplesize in self.__cvpg(cvtype, permutate):
+            test_samplesize in self.__cvpg(permutate):
                 # log the sizes
                 self.trainsamplelog.append( train_samplesize )
                 self.testsamplelog.append( test_samplesize )
 
                 clf, predictions = \
-                    CrossValidation.getClassification( classifier,
+                    CrossValidation.getClassification( self.__clf,
                                                        train_samples,
-                                                       test_samples,
-                                                       **(kwargs) )
+                                                       test_samples )
 
                 perf = ( predictions == test_samples.reg )
 
@@ -151,29 +156,24 @@ class CrossValidation( object ):
 
 
     @staticmethod
-    def getClassification( clf, train, test, **kwargs ):
+    def getClassification( clf, train, test ):
         """ Perform classification and get classifier predictions.
 
         Parameters:
-            clf    - A class that shall be used the actual classification. Its
-                     constructor must not have more than two required
-                     arguments (data and regs - in this order).
-                     The classifier has to train itself when creating the
-                     classifier object!
+            clf    - A classifier instance that shall be used to do the actual
+                     classification.
             train  - MVPAPattern object with the training data.
             test   - MVPAPattern object with the test data
-            ...    - all additional keyword arguments are passed to the
-                     classifier
 
         Returns:
             - the trained classifier
             - a sequence with the classifier predictions
         """
-        # create classifier (must include training if necessary)
-        clf = clf(train, **(kwargs) )
+        # train the classifier
+        clf.train(train)
 
         # test
-        predictions = numpy.array(
+        predictions = N.array(
                         clf.predict(test.pattern) )
 
         return clf, predictions
@@ -192,7 +192,9 @@ class CrossValidation( object ):
 
     # read only props
     perf = property( fget=lambda self: self.__perf )
-    xvalpattern = property( fget=lambda self: self.__cvpg )
-    testsamplelog = property( fget=lambda self: self.__test_samplelog )
+    clf  = property( fget=lambda self: self.__clf,
+                     fset=setClassifier )
+    xvalpattern    = property( fget=lambda self: self.__cvpg )
+    testsamplelog  = property( fget=lambda self: self.__test_samplelog )
     trainsamplelog = property( fget=lambda self: self.__train_samplelog )
     contingencytbl = property( fget=lambda self: self.__contingency_tbl )

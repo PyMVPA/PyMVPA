@@ -25,22 +25,18 @@ import support
 class RecursiveFeatureElimination( object ):
     """
     """
-    def __init__( self, pattern, clf = svm.SVM, **kwargs ):
+    def __init__( self, pattern, clf = svm.SVM() ):
         self.__pattern = pattern
         self.__verbose = False
 
-        self.__clf_class = clf
-        if len( kwargs ) == 0:
-            self.__clf_args = {'kernel_type': svm.libsvm.LINEAR}
-        else:
-            self.__clf_args = kwargs
+        self.__clf = clf
 
         # train the classifier with the initial feature set
         self.__trainClassifier()
 
 
     def __trainClassifier(self):
-        self.__clf = self.__clf_class(self.pattern, **self.__clf_args)
+        self.__clf.train( self.__pattern )
         self.__testClassifierOnTrainingSet()
 
         # feature rating: large values == important

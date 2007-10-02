@@ -19,16 +19,15 @@
 
 from classifier import *
 from mvpa import libsvm
-import numpy
 
 class SVM(Classifier):
     """ Support Vector Machine Classifier.
-    
+
     This is a simple interface to the libSVM package.
     """
-    def __init__(self, data, **kwargs):
+    def __init__(self, **kwargs):
         # init base class
-        Classifier.__init__(self, data, ['feature_benchmark'] )
+        Classifier.__init__(self, ['feature_benchmark'] )
 
         # check if there is a libsvm version with configurable
         # noise reduction ;)
@@ -37,19 +36,17 @@ class SVM(Classifier):
 
         self.param = libsvm.svm_parameter( **(kwargs) )
 
+
+    def train(self, data):
         # libsvm needs doubles
         if data.pattern.dtype == 'float64':
             src = data.pattern
         else:
             src = data.pattern.astype('double')
 
-        self.data = libsvm.svm_problem( data.reg.tolist(), src )
+        svmprob = libsvm.svm_problem( data.reg.tolist(), src )
 
-        self.train()
-
-
-    def train(self):
-        self.model = libsvm.svm_model( self.data, self.param)
+        self.model = libsvm.svm_model( svmprob, self.param)
 
 
     def predict(self, data):

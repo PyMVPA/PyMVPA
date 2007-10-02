@@ -34,10 +34,10 @@ class CrossValidationTests(unittest.TestCase):
 
     def testSimplestCVPatGen(self):
         # create the generator
-        cvpg = xvalpattern.CrossvalPatternGenerator(self.data)
+        cvpg = xvalpattern.CrossvalPatternGenerator(self.data, cvtype=1)
 
         # now get the xval pattern sets One-Fold CV)
-        xvpat = [ (train, test) for (train,trs,test,tes) in cvpg(1) ]
+        xvpat = [ (train, test) for (train,trs,test,tes) in cvpg() ]
 
         self.failUnless( len(xvpat) == 10 )
 

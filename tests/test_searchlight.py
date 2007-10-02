@@ -33,8 +33,10 @@ class SearchlightTests(unittest.TestCase):
         self.pattern = mvpa.MVPAPattern( data, reg, origin )
         self.slight = sl.Searchlight( self.pattern,
                                       numpy.ones( (3, 6, 6) ),
+                                      knn.kNN(k=5),
                                       elementsize = (3,3,3),
-                                      forcesphere = True )
+                                      forcesphere = True,
+                                      verbose = False )
 
 
     def testSearchlight(self):
@@ -45,10 +47,8 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless( (self.slight.chanceprob == 0).all() )
         self.failUnless( (self.slight.spheresize == 0).all() )
 
-        self.failUnless( self.slight.ncvfolds == 5 )
-
         # run searchlight
-        self.slight(knn.kNN, 3.0, verbose=False, k=5)
+        self.slight(3.0)
 
         # check that something happened
         self.failIf( (self.slight.perfmean == 0).all() )
@@ -60,11 +60,10 @@ class SearchlightTests(unittest.TestCase):
 
     def testOptimalSearchlight(self):
         test_radii = [3,6,9]
+        clf = knn.kNN(k=5)
         osl = sl.OptimalSearchlight( self.slight,
                                      test_radii,
-                                     knn.kNN,
-                                     verbose = False,
-                                     k=5 )
+                                     verbose = False )
 
         # check that only valid radii are in bestradius array
         self.failUnless( 

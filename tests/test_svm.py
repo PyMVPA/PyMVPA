@@ -68,7 +68,8 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
 class SVMTests(unittest.TestCase):
 
     def testCapabilityReport(self):
-        clf = svm.SVM(dumbFeatureSignal())
+        clf = svm.SVM()
+        clf.train(dumbFeatureSignal())
         self.failUnless('feature_benchmark' in clf.capabilities)
 
 
@@ -81,11 +82,13 @@ class SVMTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            s_mv = svm.SVM(train)
+            s_mv = svm.SVM()
+            s_mv.train(train)
             p_mv = s_mv.predict( test.pattern )
             mv_perf.append( numpy.mean(p_mv==test.reg) )
 
-            s_uv = svm.SVM(train.selectFeatures([0]))
+            s_uv = svm.SVM()
+            s_uv.train(train.selectFeatures([0]))
             p_uv = s_uv.predict( test.selectFeatures([0]).pattern )
             uv_perf.append( numpy.mean(p_uv==test.reg) )
 
@@ -98,7 +101,8 @@ class SVMTests(unittest.TestCase):
 
     def testFeatureBenchmark(self):
         pat = dumbFeatureSignal()
-        clf = svm.SVM(pat)
+        clf = svm.SVM()
+        clf.train(pat)
         rank = clf.getFeatureBenchmark()
 
         # has to be 1d array

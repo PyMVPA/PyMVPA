@@ -84,8 +84,8 @@ class CrossValidationTests(unittest.TestCase):
                 [ k for k in range(1,7) for i in range(20) ] ).all() )
 
 
-        cv = mvpa.CrossValidation( data )
-        perf = numpy.array(cv.run(knn.kNN, cvtype=1))
+        cv = mvpa.CrossValidation( data, knn.kNN(), cvtype=1)
+        perf = numpy.array(cv())
         self.failUnless( perf.mean() > 0.8 and perf.mean() <= 1.0 )
         self.failUnless( len( perf ) == 6 )
 
@@ -107,12 +107,12 @@ class CrossValidationTests(unittest.TestCase):
     def testRegressorPermutation(self):
         data = self.getMVPattern(4)
 
-        cv = mvpa.CrossValidation( data )
-        perf = numpy.array(cv.run(knn.kNN, cvtype=1))
+        cv = mvpa.CrossValidation( data, knn.kNN(), cvtype=1)
+        perf = numpy.array(cv())
 
         data.permutatedRegressors( True )
 
-        perm_perf = numpy.array(cv.run(knn.kNN, cvtype=1))
+        perm_perf = numpy.array(cv())
 
         self.failUnless( perf.mean() > perm_perf.mean())
 
@@ -126,15 +126,16 @@ class CrossValidationTests(unittest.TestCase):
         # it is difficult to find criteria for a correct CV
         # when using random input data
         # for now, CV level 1,2 and 3 are simply run w/o special tests
+        clf = knn.kNN()
         for cv in (1,2,3):
-            cv_h = mvpa.CrossValidation( data_h )
-            perf_h = numpy.array( cv_h.run( knn.kNN, cvtype=cv ) )
+            cv_h = mvpa.CrossValidation( data_h, clf, cvtype=cv )
+            perf_h = numpy.array( cv_h() )
 
-            cv_l = mvpa.CrossValidation( data_l )
-            perf_l = numpy.array( cv_l.run( knn.kNN, cvtype=cv ) )
+            cv_l = mvpa.CrossValidation( data_l, clf, cvtype=cv )
+            perf_l = numpy.array( cv_l() )
 
-            cv_h_uv = mvpa.CrossValidation( data_h_uv )
-            perf_h_uv = numpy.array( cv_h_uv.run( knn.kNN, cvtype=cv ) )
+            cv_h_uv = mvpa.CrossValidation( data_h_uv, clf, cvtype=cv )
+            perf_h_uv = numpy.array( cv_h_uv() )
 
             #print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1] < 0.05
             #print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1] < 0.05
@@ -150,16 +151,16 @@ class CrossValidationTests(unittest.TestCase):
         # it is difficult to find criteria for a correct CV
         # when using random input data
         # for now, CV level 1,2 and 3 are simply run w/o special tests
+        clf = svm.SVM()
         for cv in (1,2,3):
-            cv_h = mvpa.CrossValidation( data_h )
-            perf_h = numpy.array( cv_h.run( svm.SVM, cvtype=cv ) )
+            cv_h = mvpa.CrossValidation( data_h, clf, cvtype=cv )
+            perf_h = numpy.array( cv_h() )
 
-            cv_l = mvpa.CrossValidation( data_l )
-            perf_l = numpy.array( cv_l.run( svm.SVM, cvtype=cv ) )
+            cv_l = mvpa.CrossValidation( data_l, clf, cvtype=cv )
+            perf_l = numpy.array( cv_l() )
 
-            cv_h_uv = mvpa.CrossValidation( data_h_uv )
-            perf_h_uv = numpy.array( cv_h_uv.run( svm.SVM,
-                                                  cvtype=cv ) )
+            cv_h_uv = mvpa.CrossValidation( data_h_uv, clf, cvtype=cv )
+            perf_h_uv = numpy.array( cv_h_uv() )
 
             #print perf_h.mean(), stat.ttest_1samp( perf_h, 0.5 )[1]
             #print perf_l.mean(), stat.ttest_1samp( perf_l, 0.5 )[1]
@@ -176,9 +177,9 @@ class CrossValidationTests(unittest.TestCase):
     def testPatternSamples(self):
         data = self.getMVPattern(3)
 
-        cv = mvpa.CrossValidation( data, ncvfoldsamples = 2 )
+        cv = mvpa.CrossValidation( data, knn.kNN(), cvtype=1, ncvfoldsamples = 2 )
 
-        perf = numpy.array(cv.run(knn.kNN, cvtype=1))
+        perf = numpy.array(cv())
 
         # check that each cvfold is done twice
         self.failUnless( len( perf ) == 12 )
@@ -193,7 +194,7 @@ class CrossValidationTests(unittest.TestCase):
         # enable automatic training pattern sampling
         cv.xvalpattern.trainsamplesize = 'auto'
 
-        cv.run(knn.kNN, cvtype=1)
+        cv()
         # check that still all patterns are used for training and test patterns
         # are not touched at all
         self.failUnless( cv.trainsamplelog == [ 50 for i in range(12) ] )
@@ -203,7 +204,7 @@ class CrossValidationTests(unittest.TestCase):
         cv.xvalpattern.trainsamplesize = 28
         cv.xvalpattern.testsamplesize = 6
 
-        cv.run(knn.kNN, cvtype = 1)
+        cv()
 
         self.failUnless( cv.trainsamplelog == [ 28 for i in range(12) ] )
         self.failUnless( cv.testsamplelog == [ 6 for i in range(12) ] )
@@ -211,7 +212,8 @@ class CrossValidationTests(unittest.TestCase):
         # now check that you cannot get more pattern samples than are available
         cv.xvalpattern.testsamplesize = 11
 
-        self.failUnlessRaises( ValueError, cv.run, knn.kNN, cvtype = 1 )
+        cv.setClassifier( knn.kNN() )
+        self.failUnlessRaises( ValueError, cv )
 
 
     def testNoiseClassification(self):
@@ -219,17 +221,16 @@ class CrossValidationTests(unittest.TestCase):
         data = self.getMVPattern(10)
 
         # do crossval
-        perf = mvpa.CrossValidation( data,
-                                   ncvfoldsamples= 10 ).run(knn.kNN, cvtype=1)
+        clf = knn.kNN()
+        perf = mvpa.CrossValidation( data, clf, cvtype=1,
+                                      ncvfoldsamples=10 )()
         # must be perfect
         self.failUnless( numpy.array(perf).mean() == 1.0 )
 
         # do crossval with permutated regressors
         perf = mvpa.CrossValidation(
-                    data,
-                    ncvfoldsamples= 10 ).run(knn.kNN,
-                                             cvtype=1,
-                                             permutate = True)
+                    data, clf, cvtype=1,
+                    ncvfoldsamples= 10 )(permutate = True)
 
         # must be at chance level
         pmean = numpy.array(perf).mean()

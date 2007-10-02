@@ -70,27 +70,27 @@ class Searchlight( object ):
 
         pattern     - the MVPAPattern object that holds the data set
         mask        - the mask that is used to generate the spheres
+        clf         - the classifier instance that is used
         radius      - the sphere radius in an arbitrary unit (see elementsize
                       property)
         elementsize - a vector specifying the extent of each data element
                       along all dimensions in the dataset. This information is
                       used to translate the radius into element units
-        cvtype      - type of cross-validation that is used. 1 means N-1 CV,
-                      2 means N-2 ...
         forcesphere - if True a full sphere is used regardless of the status
                       of the status of the sphere elements in the mask. If
                       False only elements are considered as sphere elements
                       that have a non-zero value in the mask.
-        ncvfolds    - number of cross-validation folds that are computed by
-                      the searchlight algorithm for each sphere
     """
     def __init__( self, pattern, mask,
+                  classifier,
                   elementsize = None,
                   forcesphere = False,
-                  cvtype = 1,
-                  **kwargs ):
+                  verbose = False ):
         """
         Parameters:
+            pattern:      
+            mask:         
+            classifier:   
             elementsize:  a vector specifying the extent of each data element
                           along all dimensions in the dataset. This information
                           is used to translate the radius passed to the
@@ -99,12 +99,13 @@ class Searchlight( object ):
                           status of the status of the sphere elements in the
                           mask. If False only elements are considered as sphere
                           elements that have a non-zero value in the mask.
-            cvtype:       type of cross-validation that is used. 1 means N-1 CV
-            **kwargs:     additional arguments that are passed to the
-                          constructor of the CrossValidation class.
+            verbose:      Is set to True some status messages are enabled.
         """
         self.__pattern = pattern
         self.__mask = mask
+        self.__verbose = verbose
+
+        self.setClassifier( classifier )
 
         if not elementsize:
             self.__elementsize = [ 1 for i in range( len(pattern.origshape) ) ]
@@ -114,8 +115,6 @@ class Searchlight( object ):
             self.__elementsize = elementsize
 
         self.__forcesphere = forcesphere
-        self.__cvtype = cvtype
-        self.__cvargs = kwargs
 
         if not mask.shape == pattern.origshape:
             raise ValueError, 'Mask shape has to match the pattern origshape.'
@@ -132,21 +131,24 @@ class Searchlight( object ):
         self.__spheresize = np.zeros(self.pattern.origshape, dtype='uint')
 
 
-    def __call__( self, classifier, radius = 1.0, verbose=False, **kwargs ):
+    def setClassifier( self, classifier ):
+        """ Set a classifier instance that is used to perform the
+        classification.
+        """
+        self.__clf = classifier
+
+
+    def __call__( self, radius = 1.0, **kwargs ):
         """ Perform the spheresearch for all possible spheres in the
         mask.
 
-        By setting 'verbose' to True one can enable some status messages that
-        inform about the progress while processing the spheres.
-
-        The 'classifier' argument specifies a class that is used to perform
-        the classification. Additional keyword are passed to the classifier's
-        contructor.
+        Additional keyword arguments that are passed to the CrossValidation
+        class.
         """
         # cleanup prior runs first
         self.__clearResults()
 
-        if verbose:
+        if self.__verbose:
             nspheres = np.array( self.mask.nonzero() ).shape[1]
             sphere_count = 0
 
@@ -160,10 +162,9 @@ class Searchlight( object ):
             masked = self.__pattern.selectFeaturesByMask( spheremask )
 
             # do the cross-validation
-            cv = crossval.CrossValidation( masked, **(self.__cvargs) )
-
+            cv = crossval.CrossValidation( masked, self.__clf, **(kwargs) )
             # run cross-validation
-            cv.run( classifier, cvtype=self.__cvtype, **(kwargs) )
+            cv()
 
             # store the performance value as a vector
             perf = np.array( cv.perf )
@@ -184,23 +185,14 @@ class Searchlight( object ):
             # spheresize / number of features
             self.__spheresize[center_index] = spheremask.sum()
 
-            if verbose:
+            if self.__verbose:
                 sphere_count += 1
                 print "\rDoing %i spheres: %i (%i%%)" \
                     % (nspheres, sphere_count, float(sphere_count)/nspheres*100,),
                 sys.stdout.flush()
 
-        if verbose:
+        if self.__verbose:
             print ''
-
-
-    def getNCVFolds( self ):
-        """ Returns the number of cross-validation folds that is used by
-        the searchlight algorithm.
-        """
-        return len( support.getUniqueLengthNCombinations(
-                        self.pattern.originlabels,
-                        self.cvtype ) )
 
 
     # access to the results
@@ -213,10 +205,10 @@ class Searchlight( object ):
     # other data access
     pattern = property( fget=lambda self: self.__pattern )
     mask = property( fget=lambda self: self.__mask )
+    clf  = property( fget=lambda self: self.__clf,
+                     fset=setClassifier )
     elementsize = property( fget=lambda self: self.__elementsize )
-    cvtype = property( fget=lambda self: self.__cvtype )
     forcesphere = property( fget=lambda self: self.__forcesphere )
-    ncvfolds = property( fget=getNCVFolds )
 
 
 
@@ -224,7 +216,6 @@ class OptimalSearchlight( object ):
     def __init__( self,
                   searchlight,
                   test_radii,
-                  classifier,
                   verbose=False,
                   **kwargs ):
         """
@@ -241,7 +232,7 @@ class OptimalSearchlight( object ):
             if verbose:
                 print 'Using searchlight with radius:', radius
             # compute the results
-            searchlight( classifier, radius, verbose, **(kwargs) )
+            searchlight( radius, **(kwargs) )
 
             self.__perfmeans.append( searchlight.perfmean )
             self.__perfvars.append( searchlight.perfvar )
