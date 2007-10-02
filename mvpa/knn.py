@@ -17,7 +17,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import numpy
+import numpy as N
 
 try:
     import psyco
@@ -28,16 +28,19 @@ except:
 class kNN:
     """ k-nearest-neighbour classification.
     """
-    def __init__(self, pattern, k=2):
+    def __init__(self, k=2):
         """
         Parameters:
           pattern: MVPAPattern object containing all data.
           k:       number of nearest neighbours to be used for voting
         """
-        self.__data = pattern
         self.__k = k
         self.__votingfx = self.getWeightedVote
         self.verbose = False
+
+
+    def train( self, data ):
+        self.__data = data
 
 
     def predict(self, data):
@@ -46,7 +49,7 @@ class kNN:
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = numpy.array( data )
+        data = N.array( data )
 
         if not data.ndim == 2:
             raise ValueError, "Data array must be two-dimensional."
@@ -62,9 +65,9 @@ class kNN:
         for p in data:
             # calc the euclidean distance of the pattern vector to all
             # patterns in the training data
-            dists = numpy.sqrt( 
-                        numpy.sum( 
-                            numpy.abs( self.__data.pattern - p )**2, axis=1
+            dists = N.sqrt(
+                        N.sum(
+                            N.abs( self.__data.pattern - p )**2, axis=1
                             )
                         )
             # get the k nearest neighbours from the sorted list of distances 

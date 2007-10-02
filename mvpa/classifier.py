@@ -20,10 +20,21 @@
 import operator
 
 class Classifier(object):
-    def __init__(self, patterns, capabilities):
+    """
+    Required behavior:
+    
+    For every classifier is has to be possible to be instanciated without
+    having to specify the training pattern.
+
+    Repeated calls to the train() method with different training data have to
+    result in a valid classifier, trained for the particular dataset.
+
+    It must be possible to specify all classifier parameters as keyword arguments
+    to the constructor.
+    """
+    def __init__(self, capabilities):
         """
           Parameters:
-            data         - MVPAPattern instance with the training data
             capabilities - List of strings with capability labels (see below)
 
           List of classifier capability labels:
@@ -34,10 +45,9 @@ class Classifier(object):
             raise ValueError, 'capabilities has to be a sequence'
 
         self.__capabilities = capabilities
-        self.__patterns = patterns
 
 
-    def train(self):
+    def train(self, data):
         raise NotImplementedError
 
 
@@ -51,4 +61,3 @@ class Classifier(object):
 
     # read-only properties
     capabilities = property( fget=lambda self: self.__capabilities )
-    patterns = property( fget=lambda self: self.__patterns )

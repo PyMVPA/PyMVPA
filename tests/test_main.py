@@ -27,7 +27,7 @@ tests = [ 'test_patterns',
           'test_xvalpattern',
           'test_crossval',
           'test_searchlight',
-#          'test_incrsearch',
+          'test_incrsearch',
           'test_rfe',
           'test_support',
           'test_stats' ]
