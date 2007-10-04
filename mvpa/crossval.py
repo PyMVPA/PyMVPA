@@ -28,11 +28,8 @@ class CrossValidation( object ):
     def __init__( self,
                   pattern,
                   classifier,
-                  cvtype = 1,
-                  trainingsamples = None,
-                  testsamples = None,
-                  ncvfoldsamples = 1,
-                  clfcallback = None ):
+                  clfcallback = None,
+                  **kwargs ):
         """
         Initialize the cross-validation.
 
@@ -40,32 +37,16 @@ class CrossValidation( object ):
                       targets and origins for the cross-validation.
           classifier: A classifier instance that shall be used to do the actual
                       classification.
-          cvtype:     Type of cross-validation: N-cvtype
-          trainingsamples:
-                      Number of training patterns to be used in each
-                      cross-validation fold. Please see the
-                      setTrainingPatternSamples() method for special arguments.
-          testsamples:
-                      Number of test pattern to be used in each
-                      cross-validation fold. Please see the
-                      setTestPatternSamples() method for special arguments.
-          ncvfoldsamples:
-                      Number of time each cross-validation fold is run. This
-                      is mostly usefull if a subset of the available patterns
-                      is used for classification and the subset is randomly
-                      selected for each CV-fold run (see the trainingsamples
-                      and testsamples arguments).
           clfcallback:
                       a callable that is called at the end of each
                       cross-validation fold with the trained classifier as the
                       only argument.
+
+        Additional keyword arguments are passed to the CrossvalPatternGenerator
+        object (see its documentation for more info).
         """
         # setup pattern generation for xval
-        self.__cvpg = xvalpattern.CrossvalPatternGenerator(pattern)
-        self.__cvpg.setTrainingPatternSamples( trainingsamples )
-        self.__cvpg.setTestPatternSamples( testsamples )
-        self.__cvpg.setNCVFoldSamples( ncvfoldsamples )
-        self.__cvpg.setCVType( cvtype )
+        self.__cvpg = xvalpattern.CrossvalPatternGenerator(pattern, **(kwargs))
 
         self.setClassifier( classifier )
         self.setClassifierCallback( clfcallback )
