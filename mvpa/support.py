@@ -19,7 +19,7 @@
 
 import numpy as np
 
-def transformWithBoxcar( data, startpoints, boxlength, offset=0):
+def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = np.mean ):
     """ This function transforms a dataset by calculating the mean of a set of
     patterns. Such a pattern set is defined by a starting point and the size
     of the window along the first axis of the data ('boxlength').
@@ -53,7 +53,7 @@ def transformWithBoxcar( data, startpoints, boxlength, offset=0):
                  for i in startpoints ]
 
     # average each box
-    selected = [ np.mean( data[ np.array(box) ], axis=0 ) for box in selector ]
+    selected = [ fx( data[ np.array(box) ], axis=0 ) for box in selector ]
 
     return np.array( selected )
 
