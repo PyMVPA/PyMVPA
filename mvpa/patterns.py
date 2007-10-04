@@ -480,29 +480,14 @@ class MVPAPattern(object):
         """ Returns a features coordinate in the original data space
         for a given feature id.
         """
-        return numpy.transpose(self.__mask.nonzero())[feature_id]
+        return self.getFeatureCoordinates()[feature_id]
 
 
-    @staticmethod
-    def absolute_coord2id( coord, dims ):
-        """ Calculates the feature id from a coordinate value within certain
-        dimensions.
+    def getFeatureCoordinates( self ):
+        """ Returns a 2d array where each row contains the coordinate of the
+        feature with the corresponding id.
         """
-        # transform shape and coordinate into array for easy handling
-        ac = numpy.array( coord )
-        ao = numpy.array( dims )
-
-#        # check for sane coordinates
-#        if (ac >= ao).all() \
-#           or (ac < numpy.repeat( 0, len( ac ) ) ).all():
-#            raise ValueError, 'Invalid coordinate: outside array ' \
-#                              '( coord: %s, arrayshape: %s )' % \
-#                              ( str(coord), str(dims) )
-
-        # compute offsets on each axis
-        offsets = [ ac[d] * ao[d+1:].prod() for d in range(len(ao)) ]
-
-        return sum(offsets)
+        return numpy.transpose(self.__mask.nonzero())
 
 
     def getFeatureMask(self, copy = True):

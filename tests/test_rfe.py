@@ -51,7 +51,7 @@ class RFETests(unittest.TestCase):
         self.pattern = mvpa.MVPAPattern(data, reg, orig)
 
     def testFeatureRanking(self):
-        obj = rfe.RecursiveFeatureElimination( self.dumbpattern )
+        obj = rfe.RFE( self.dumbpattern )
 
         self.failUnless( obj.pattern.nfeatures == 2 )
 
@@ -65,7 +65,7 @@ class RFETests(unittest.TestCase):
 
 
     def testSelectFeatures(self):
-        obj = rfe.RecursiveFeatureElimination( self.pattern )
+        obj = rfe.RFE( self.pattern )
         self.failUnless( obj.pattern.nfeatures == 20 )
 
         obj.selectFeatures(10)
@@ -76,7 +76,7 @@ class RFETests(unittest.TestCase):
 
 
     def testKillNFeatures(self):
-        obj = rfe.RecursiveFeatureElimination( self.pattern )
+        obj = rfe.RFE( self.pattern )
         self.failUnless( obj.pattern.nfeatures == 20 )
 
         obj.killNFeatures(3)
@@ -87,7 +87,7 @@ class RFETests(unittest.TestCase):
 
 
     def testKillFeatureFraction(self):
-        obj = rfe.RecursiveFeatureElimination( self.pattern )
+        obj = rfe.RFE( self.pattern )
         self.failUnless( obj.pattern.nfeatures == 20 )
 
         obj.killFeatureFraction(0.75)
@@ -98,7 +98,7 @@ class RFETests(unittest.TestCase):
 
 
     def testDataTesting(self):
-        obj = rfe.RecursiveFeatureElimination( self.dumbpattern )
+        obj = rfe.RFE( self.dumbpattern )
         # kill the dumb feature
         obj.killNFeatures(1)
 
@@ -133,7 +133,7 @@ class RFETests(unittest.TestCase):
 
 
     def testEliminationMask(self):
-        obj = rfe.RecursiveFeatureElimination( self.dumbpattern )
+        obj = rfe.RFE( self.dumbpattern )
         # kill the dumb feature
         elim_mask = obj.selectFeatures( 1, 
                                         eliminate_by='number',
@@ -157,6 +157,26 @@ class RFETests(unittest.TestCase):
 
     def testEliminationEvenMore(self):
 
+        def absolute_coord2id( coord, dims ):
+            """ Calculates the feature id from a coordinate value within certain
+            dimensions.
+            """
+            # transform shape and coordinate into array for easy handling
+            ac = np.array( coord )
+            ao = np.array( dims )
+
+#            # check for sane coordinates
+#            if (ac >= ao).all() \
+#               or (ac < numpy.repeat( 0, len( ac ) ) ).all():
+#                raise ValueError, 'Invalid coordinate: outside array ' \
+#                                  '( coord: %s, arrayshape: %s )' % \
+#                                  ( str(coord), str(dims) )
+
+            # compute offsets on each axis
+            offsets = [ ac[d] * ao[d+1:].prod() for d in range(len(ao)) ]
+
+            return sum(offsets)
+
         pat = mvpa.MVPAPattern( np.random.normal(size=(100,2,3,4)),
                                 [i%2 for i in range(100)],
                                 [i/5 for i in range(100)] )
@@ -164,13 +184,13 @@ class RFETests(unittest.TestCase):
         # make a copy of the original patterns
         sec_pat = pat.pattern.copy()
 
-        el = rfe.RecursiveFeatureElimination( pat )
+        el = rfe.RFE( pat )
         el.killNFeatures(5, eliminate_by = 'number', kill_per_iter = 1 )
 
         features = np.transpose(el.pattern.getFeatureMask().nonzero())
 
         for i,f in enumerate(features):
-            orig_id = mvpa.MVPAPattern.absolute_coord2id(f,pat.origshape)
+            orig_id = absolute_coord2id(f,pat.origshape)
             orig_f = sec_pat[:,orig_id]
             self.failUnless( (el.pattern.pattern[:,i] == orig_f).all() )
 
