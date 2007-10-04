@@ -22,8 +22,8 @@ import svm
 import support
 
 
-class RecursiveFeatureElimination( object ):
-    """
+class RFE( object ):
+    """ Recursive feature elimination.
     """
     def __init__( self, pattern, clf = svm.SVM() ):
         self.__pattern = pattern
