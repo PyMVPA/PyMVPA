@@ -183,7 +183,7 @@ class Searchlight( object ):
             self.__chanceprob[center_index] = \
                 stats.chisquare( cv.contingencytbl )
             # spheresize / number of features
-            self.__spheresize[center_index] = spheremask.sum()
+            self.__spheresize[center_index] = masked.nfeatures
 
             if self.__verbose:
                 sphere_count += 1
