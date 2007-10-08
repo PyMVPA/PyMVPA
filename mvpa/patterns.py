@@ -169,7 +169,7 @@ class MVPAPattern(object):
             pattern = pattern.reshape( len( pattern ),
                                        numpy.prod( pattern.shape[1:] ) )
 
-        # apply feature mask: use '>0' to cope with integer masks
+        # apply feature mask: use '>0' to cope with non-binary masks
         pattern = pattern[:, self.__mask.ravel() > 0]
 
         # simply assign or concatenate if already present
@@ -356,6 +356,18 @@ class MVPAPattern(object):
                             internal=True )
 
 
+    def buildFeatureMaskFromIds( self, ids ):
+        """ Returns a mask with a features in ids selected from the
+        current feature set.
+        """
+        # sort to preserve feature order (otherwise mask gets corrupted)
+        ids = sorted( ids )
+        mask = numpy.zeros( self.__mask.shape, dtype='bool' )
+        mask[ tuple( numpy.transpose(self.__mask.nonzero())[ids].T ) ] = True
+
+        return mask
+
+
     def selectFeaturesById( self, ids, maintain_mask = True ):
         """ Select a number of features from the current set.
 
@@ -367,7 +379,7 @@ class MVPAPattern(object):
                             MVPAPattern object. This is useful if it is
                             necessary to reconstruct the location of certain
                             features in the original data space.
-                            If this is not required it can be disabled to speep
+                            If this is not required it can be disabled to speed
                             up the selection process.
 
         Returns a new MVPAPattern object with a view of the original pattern
@@ -378,10 +390,7 @@ class MVPAPattern(object):
         # reconstruct an updated feature mask if requested
         # only keep the selected non-zero features of the current mask
         if maintain_mask:
-            # sort to preserv feature order (otherwise mask gets corrupted)
-            ids = sorted( ids )
-            new_mask = numpy.zeros( self.__mask.shape, dtype='bool' )
-            new_mask[tuple(numpy.transpose(self.__mask.nonzero())[ids].T)] = 1
+            new_mask = self.buildFeatureMaskFromIds( ids )
 
         return MVPAPattern( self.__patterns[:, ids],
                             self.__regs,
@@ -418,7 +427,7 @@ class MVPAPattern(object):
                             internal = True )
 
 
-    def selectFeaturesByGroup( self, group_ids ):
+    def buildFeatureMaskFromGroupIds( self, group_ids):
         """ 'group_ids' is a sequence of mask values where each unique mask
         value forms a single group.
         """
@@ -431,33 +440,12 @@ class MVPAPattern(object):
             filter = self.__mask == group_ids[0]
 
         # preserve ROI ids for selected features
-        mask = filter * self.__mask
-
-        return self.selectFeaturesByMask( mask )
+        return filter * self.__mask
 
 
-    def selectFeatures( self, mask ):
-        """ Choose a subset of features.
-
-        'mask' can either be a NumPy array, a tuple or a list.
-
-        If 'mask' is an array a logical and is performed with the current mask
-        and all common elements are selected. The shape of the mask array has
-        to match the original data space (see the origshape property).
-
-        If 'mask' is a list, it is assumed to be a list of to-be-selected
-        feature ids.
-
-        Returns a new MVPAPattern object with the selected features.
-        """
-        featuremask = numpy.zeros( self.__mask.shape, dtype='bool' )
-        if isinstance(mask, numpy.ndarray):
-            return self.selectFeaturesByMask( mask )
-        elif isinstance(mask, list):
-            return self.selectFeaturesById( mask )
-        else:
-            raise ValueError, "'mask' has to be either an array with" \
-                              " origshape or a list of feature ids."
+    def selectFeaturesByGroup( self, group_ids ):
+        return self.selectFeaturesByMask(
+            self.buildFeatureMaskFromGroupIds( group_ids ) )
 
 
     def getFeatureId( self, coord ):
