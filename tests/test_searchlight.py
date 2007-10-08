@@ -20,6 +20,7 @@ import unittest
 import mvpa
 import mvpa.searchlight as sl
 import mvpa.knn as knn
+import mvpa.svm as svm
 import numpy
 
 class SearchlightTests(unittest.TestCase):
@@ -31,40 +32,49 @@ class SearchlightTests(unittest.TestCase):
         orig = numpy.repeat( range(5), 10 )
         origin = numpy.concatenate( (orig, orig) )
         self.pattern = mvpa.MVPAPattern( data, reg, origin )
-        self.slight = sl.Searchlight( self.pattern,
-                                      numpy.ones( (3, 6, 6) ),
-                                      knn.kNN(k=5),
-                                      elementsize = (3,3,3),
-                                      forcesphere = True,
-                                      verbose = False )
 
 
     def testSearchlight(self):
+        mask = numpy.zeros( (3, 6, 6) )
+        mask[0,0,0] = 1
+        mask[1,3,2] = 1
+        slight = sl.Searchlight( self.pattern,
+                                 mask,
+                                 knn.kNN(k=5),
+                                 elementsize = (3,3,3),
+                                 forcesphere = True,
+                                 verbose = False )
+
         # check virgin results
-        self.failUnless( (self.slight.perfmean == 0).all() )
-        self.failUnless( (self.slight.perfvar == 0).all() )
-        self.failUnless( (self.slight.chisquare == 0).all() )
-        self.failUnless( (self.slight.chanceprob == 0).all() )
-        self.failUnless( (self.slight.spheresize == 0).all() )
+        self.failUnless( (slight.perfmean == 0).all() )
+        self.failUnless( (slight.perfvar == 0).all() )
+        self.failUnless( (slight.chisquare == 0).all() )
+        self.failUnless( (slight.chanceprob == 0).all() )
+        self.failUnless( (slight.spheresize == 0).all() )
 
         # run searchlight
-        self.slight(3.0)
+        slight(3.0)
 
         # check that something happened
-        self.failIf( (self.slight.perfmean == 0).all() )
-        self.failIf( (self.slight.perfvar == 0).all() )
-        self.failIf( (self.slight.chisquare == 0).all() )
-        self.failIf( (self.slight.chanceprob == 0).all() )
-        self.failIf( (self.slight.spheresize == 0).all() )
+        self.failIf( (slight.perfmean == 0).all() )
+        self.failIf( (slight.perfvar == 0).all() )
+        self.failIf( (slight.chisquare == 0).all() )
+        self.failIf( (slight.chanceprob == 0).all() )
+        self.failIf( (slight.spheresize == 0).all() )
 
 
     def testOptimalSearchlight(self):
+        slight = sl.Searchlight( self.pattern,
+                                 numpy.ones((3,6,6)),
+                                 svm.SVM(),
+                                 elementsize = (3,3,3),
+                                 forcesphere = True,
+                                 verbose = False )
         test_radii = [3,6,9]
         clf = knn.kNN(k=5)
-        osl = sl.OptimalSearchlight( self.slight,
+        osl = sl.OptimalSearchlight( slight,
                                      test_radii,
                                      verbose = False )
-
         # check that only valid radii are in bestradius array
         self.failUnless( 
             ( numpy.array([ i in test_radii for i in numpy.unique(osl.bestradius) ]) \
