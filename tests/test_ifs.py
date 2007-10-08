@@ -16,7 +16,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mvpa.incrsearch as si
+import mvpa.ifs as si
 import mvpa
 import mvpa.svm as svm
 import unittest
@@ -39,7 +39,7 @@ class IncrementalSearchTests(unittest.TestCase):
         sinc = si.IFS()
 
         # run selection of single features
-        selected_features = sinc.selectFeatures( self.pattern,
+        selected_features, rank_map = sinc.selectFeatures( self.pattern,
                                                  svm.SVM(),
                                                  ncvfoldsamples=1)
 
@@ -47,14 +47,18 @@ class IncrementalSearchTests(unittest.TestCase):
         # one must always be selected
         self.failUnless( selected_features.nfeatures >= 1 )
 
+        self.failUnless( rank_map.shape == self.pattern.origshape )
+        self.failIf( (rank_map == 0.0).any() )
+
         # mask have origshape
         self.failUnless( selected_features.origshape == \
                          self.mask.shape )
 
         sinc.ntoselect = 5
-        selected_features = sinc.selectFeatures( self.pattern,
-                                                 svm.SVM(),
-                                                 ncvfoldsamples=1)
+        selected_features, rank_map = \
+            sinc.selectFeatures( self.pattern,
+                                 svm.SVM(),
+                                 ncvfoldsamples=1)
 
         # five must always be selected
         self.failUnless( selected_features.nfeatures >= 5 )

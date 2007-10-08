@@ -75,7 +75,9 @@ class IFS( object ):
             ...           Additional keyword arguments are passed to the
                           CrossValidation class.
 
-        Returns a MVPAPattern object with the selected features.
+        Returns a MVPAPattern object with the selected features and a map of
+        all features (in patterns origspace; range [0,1]) with higher values
+        indication larger contributions to the classification performance.
         """
         # feature candidate are all features in the pattern object
         candidates = range( pattern.nfeatures )
@@ -86,19 +88,31 @@ class IFS( object ):
         # initially empty list of selected features
         selected = []
 
+        # assign each feature in pattern a value between 0 and 1 that reflects
+        # its contribution to the classification
+        rating_map = N.zeros( pattern.origshape, dtype='float32' )
+
+        # selection iteration counter
+        sel_counter = 0
+
         # as long as there are candidates left
         # the loop might get broken earlier if the generalization
         # error does not go down when a new ROI is selected
         while len( candidates ):
-            # holds the performance value of each candidate
-            candidate_rating = []
+            # do something complicated to be able to map each candidates
+            # performance back into a map in pattern orig space
+            candidate_mask = pattern.buildFeatureMaskFromIds( candidates )
+            candidate_rating_orig = \
+                N.zeros(candidate_mask.shape, dtype='float32')
+            candidate_rating = \
+                candidate_rating_orig[ candidate_mask > 0 ]
 
             # for all possible candidates
-            for candidate in candidates:
+            for i,candidate in enumerate(candidates):
                 # display some status output about the progress if requested
                 if self.__verbose:
                     print "\rTested %i; nselected %i; mean performance: %.3f" \
-                        % ( len(candidate_rating),
+                        % ( len(i),
                             len(selected),
                             best_performance_ever ),
                     sys.stdout.flush()
@@ -116,20 +130,18 @@ class IFS( object ):
                 cv()
 
                 # store the generalization performance for this feature set
-                candidate_rating.append( N.mean(cv.perf) )
-
-            # I like arrays!
-            rating_array = N.array( candidate_rating )
+                candidate_rating[i] = N.mean(cv.perf)
 
             # check if the new candidate brings value
             # if this is not the case we are done.
-            if rating_array.max() - best_performance_ever < self.__break_crit:
+            if candidate_rating.max() - best_performance_ever \
+               < self.__break_crit:
                 break
 
             # determine the best performing additonal candidates (get their id)
             best_ids = \
                 [ candidates[i] \
-                    for i in rating_array.argsort()[-1*self.__ntoselect:] ]
+                    for i in candidate_rating.argsort()[-1*self.__ntoselect:] ]
 
             # the new candidate adds value, because the generalization error
             # went down, therefore add it to the list of selected features
@@ -141,8 +153,20 @@ class IFS( object ):
                 candidates.remove( i )
 
             # update the latest best performance
-            best_performance_ever = rating_array.max()
+            best_performance_ever = candidate_rating.max()
             # and look for the next best thing (TM)
+
+            # map current candidate set to orig space
+            candidate_rating_orig[ candidate_mask > 0 ] = candidate_rating
+            candidate_rating_orig[ \
+                pattern.buildFeatureMaskFromIds( selected ).nonzero() ] \
+                    = best_performance_ever
+
+            # add the ratings of this iteration to the map
+            rating_map += candidate_rating_orig
+
+            # next iteration
+            sel_counter += 1
 
         # if no candidates are left or the generalization performance
         # went down
@@ -150,8 +174,11 @@ class IFS( object ):
             # end pending line
             print ''
 
+        # make rating_map range independent of iterations
+        rating_map /= sel_counter
+
         # apply the final feature selection to the pattern dataset
-        return pattern.selectFeatures( selected )
+        return pattern.selectFeaturesById( selected ), rating_map
 
 
 
