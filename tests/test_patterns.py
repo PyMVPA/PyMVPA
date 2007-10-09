@@ -151,7 +151,7 @@ class PatternTests(unittest.TestCase):
         self.failUnless( data.nfeatures == 120 )
 
         # check that full mask uses all features
-        sel = data.selectFeatures( numpy.ones((2,4,3,5)) )
+        sel = data.selectFeaturesByMask( numpy.ones((2,4,3,5)) )
         self.failUnless( sel.nfeatures == data.pattern.shape[1] )
         self.failUnless( data.nfeatures == 120 )
 
@@ -159,12 +159,12 @@ class PatternTests(unittest.TestCase):
         partial_mask = numpy.zeros((2,4,3,5), dtype='uint')
         partial_mask[0,0,2,2] = 1
         partial_mask[1,2,2,0] = 1
-        sel = data.selectFeatures( partial_mask )
+        sel = data.selectFeaturesByMask( partial_mask )
         self.failUnless( sel.nfeatures == 2 )
         self.failUnless( sel.getFeatureMask().shape == (2,4,3,5))
 
         # check selection with feature list
-        sel = data.selectFeatures( [0,37,119] )
+        sel = data.selectFeaturesById( [0,37,119] )
         self.failUnless(sel.nfeatures == 3)
 
         # check size of the masked patterns
@@ -200,7 +200,7 @@ class PatternTests(unittest.TestCase):
 
         self.failUnless( data.npatterns == 4 )
         self.failUnless( data.nfeatures == 5 )
-        fsel = data.selectFeatures([1,2])
+        fsel = data.selectFeaturesById([1,2])
         fpsel = fsel.selectPatterns([0,3])
         self.failUnless( fpsel.npatterns == 2 )
         self.failUnless( fpsel.nfeatures == 2 )
@@ -213,7 +213,7 @@ class PatternTests(unittest.TestCase):
         data = mvpa.MVPAPattern( origdata, 2, 2 )
 
         # check with custom mask
-        sel = data.selectFeatures([5])
+        sel = data.selectFeaturesById([5])
         self.failUnless( sel.pattern.shape[1] == 1 )
         origmask = sel.getFeatureMask()
         self.failUnless( origmask[0,1,2] == True )
@@ -294,12 +294,12 @@ class PatternTests(unittest.TestCase):
         self.failUnless( tuple(data.getCoordinate( 1 )) == (4,0) )
 
         # selection should be idempotent
-        self.failUnless(data.selectFeatures( mask ).nfeatures == data.nfeatures )
+        self.failUnless(data.selectFeaturesByMask( mask ).nfeatures == data.nfeatures )
         # check that correct feature get selected
-        self.failUnless( (data.selectFeatures([1]).pattern[:,0] \
+        self.failUnless( (data.selectFeaturesById([1]).pattern[:,0] \
                           == numpy.array([12, 27, 42, 57]) ).all() )
-        self.failUnless(tuple( data.selectFeatures([1]).getCoordinate(0) ) == (4,0) )
-        self.failUnless( data.selectFeatures([1]).getFeatureMask().sum() == 1 )
+        self.failUnless(tuple( data.selectFeaturesById([1]).getCoordinate(0) ) == (4,0) )
+        self.failUnless( data.selectFeaturesById([1]).getFeatureMask().sum() == 1 )
 
 
     def testROIMasking(self):

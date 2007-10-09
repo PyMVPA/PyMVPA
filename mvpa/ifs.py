@@ -112,7 +112,7 @@ class IFS( object ):
                 # display some status output about the progress if requested
                 if self.__verbose:
                     print "\rTested %i; nselected %i; mean performance: %.3f" \
-                        % ( len(i),
+                        % ( i,
                             len(selected),
                             best_performance_ever ),
                     sys.stdout.flush()

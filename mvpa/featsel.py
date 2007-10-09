@@ -54,9 +54,11 @@ class FeatSelValidation( object ):
             test_samples, \
             test_samplesize in self.__cvpg( permutate=False ):
 
-            select_pat = featsel.selectFeatures( train_samples,
-                                                 classifier,
-                                                 **(kwargs) )
+            select_pat,rating_map = \
+                    featsel.selectFeatures( train_samples,
+                                            classifier,
+                                            **(kwargs) )
+
             selected.append( select_pat )
 
             classifier.train( select_pat )

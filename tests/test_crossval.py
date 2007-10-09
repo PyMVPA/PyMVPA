@@ -121,7 +121,7 @@ class CrossValidationTests(unittest.TestCase):
         data_h = self.getMVPattern(1)
         data_l = self.getMVPattern(0.5)
 
-        data_h_uv = data_h.selectFeatures([0])
+        data_h_uv = data_h.selectFeaturesById([0])
 
         # it is difficult to find criteria for a correct CV
         # when using random input data
@@ -146,7 +146,7 @@ class CrossValidationTests(unittest.TestCase):
         data_h = self.getMVPattern(1)
         data_l = self.getMVPattern(0.5)
 
-        data_h_uv = data_h.selectFeatures([0])
+        data_h_uv = data_h.selectFeaturesById([0])
 
         # it is difficult to find criteria for a correct CV
         # when using random input data
