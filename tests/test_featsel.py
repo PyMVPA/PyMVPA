@@ -16,10 +16,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mvpa.incrsearch as ifs
+import mvpa.ifs as ifs
 import mvpa.featsel
 import mvpa
-import mvpa.knn as knn
+import mvpa.svm as svm
 import unittest
 import numpy as N
 
@@ -30,19 +30,21 @@ class FeatSelValidationTests(unittest.TestCase):
         self.mask = N.ones((3,3,3))
         data = N.random.normal(0,1,(100,) + (self.mask.shape))
         reg = N.arange(100) / 50
-        orig = range(10) * 10
+        orig = range(5) * 20
         self.pattern = mvpa.MVPAPattern(data, reg, orig)
 
 
     def testIncrementalSearch(self):
         fselect = ifs.IFS( verbose = True)
-        clf = knn.kNN()
+        clf = svm.SVM()
 
         fsv = mvpa.featsel.FeatSelValidation( self.pattern )
 
         spat, gperf = fsv( fselect, clf )
 
-        print gperf
+        self.failUnless (len(spat) == len(gperf) == 5)
+        # pattern is noise, so generalization should be chance
+        self.failUnless(0.35 < N.mean(gperf) < 0.65)
 
 
 def suite():

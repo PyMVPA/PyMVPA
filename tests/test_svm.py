@@ -88,8 +88,8 @@ class SVMTests(unittest.TestCase):
             mv_perf.append( numpy.mean(p_mv==test.reg) )
 
             s_uv = svm.SVM()
-            s_uv.train(train.selectFeatures([0]))
-            p_uv = s_uv.predict( test.selectFeatures([0]).pattern )
+            s_uv.train(train.selectFeaturesById([0]))
+            p_uv = s_uv.predict( test.selectFeaturesById([0]).pattern )
             uv_perf.append( numpy.mean(p_uv==test.reg) )
 
         mean_mv_perf = numpy.mean(mv_perf)

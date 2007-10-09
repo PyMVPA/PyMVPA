@@ -72,8 +72,8 @@ class KNNTests(unittest.TestCase):
             mv_perf.append( numpy.mean(p_mv==test.reg) )
 
             k_uv = knn.kNN(k=10)
-            k_uv.train(train.selectFeatures([0]))
-            p_uv = k_uv.predict( test.selectFeatures([0]).pattern )
+            k_uv.train(train.selectFeaturesById([0]))
+            p_uv = k_uv.predict( test.selectFeaturesById([0]).pattern )
             uv_perf.append( numpy.mean(p_uv==test.reg) )
 
         mean_mv_perf = numpy.mean(mv_perf)
