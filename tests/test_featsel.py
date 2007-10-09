@@ -40,11 +40,16 @@ class FeatSelValidationTests(unittest.TestCase):
 
         fsv = mvpa.featsel.FeatSelValidation( self.pattern )
 
-        spat, gperf = fsv( fselect, clf )
+        fsv( fselect, clf )
 
-        self.failUnless (len(spat) == len(gperf) == 5)
+        self.failUnless (len(fsv.selections) == len(fsv.perfs) == 5)
         # pattern is noise, so generalization should be chance
-        self.failUnless(0.35 < N.mean(gperf) < 0.65)
+        self.failUnless(0.35 < N.mean(fsv.perfs) < 0.65)
+
+        mrm = fsv.getMeanRatingMap()
+
+        self.failUnless(mrm.shape == self.mask.shape)
+        self.failUnless( (mrm != 0).all() )
 
 
 def suite():

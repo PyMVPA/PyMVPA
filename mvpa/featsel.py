@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: Generic feature selection algorithms
+#    PyMVPA: Generic feature selection algorithm frontend
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -46,30 +46,46 @@ class FeatSelValidation( object ):
         each cross-validation fold.
         """
 
-        selected = []
-        gen_perfs = []
+        # reset status vars first
+        self.__selected = []
+        self.__rating_maps = []
+        self.__perfs = []
 
+        # for all cross validation folds
         for train_samples, \
             train_samplesize, \
             test_samples, \
             test_samplesize in self.__cvpg( permutate=False ):
 
+            # perform feature selection and store the MVPAPattern
+            # with the selected features of the CV fold and its associated
+            # rating map for _all_ features in the original pattern object
             select_pat,rating_map = \
                     featsel.selectFeatures( train_samples,
                                             classifier,
                                             **(kwargs) )
+            self.__selected.append( select_pat )
+            self.__rating_maps.append( rating_map)
 
-            selected.append( select_pat )
-
+            # finally test selected features against the training set
+            # and store validation performance
             classifier.train( select_pat )
             predictions = \
                 classifier.predict( 
                     test_samples.selectFeaturesByMask( 
                         select_pat.getFeatureMask( copy=False) ).pattern )
-            gen_perf = N.mean( predictions == test_samples.reg )
-            gen_perfs.append( gen_perf )
+            self.__perfs.append( N.mean( predictions == test_samples.reg ) )
 
 
+    def getMeanRatingMap( self ):
+        return N.mean( self.rating_maps, axis=0 )
 
-        return selected, gen_perfs
 
+    def getFeatureMasks( self ):
+        return [ s.getFeatureMask(copy=True) for s in self.selections ]
+
+
+    xvalpattern    = property( fget=lambda self: self.__cvpg )
+    selections     = property( fget=lambda self: self.__selected )
+    rating_maps    = property( fget=lambda self: self.__rating_maps )
+    perfs          = property( fget=lambda self: self.__perfs )
