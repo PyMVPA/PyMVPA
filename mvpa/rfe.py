@@ -109,12 +109,8 @@ class RFE( object ):
                 print "Removing", nkill, "features.",
 
             # eliminate the first 'nkill' features (with the lowest ranking)
-            # HEY, ATTENTION: the list of selected features needs to be sorted
-            # otherwise the feature mask will become inconsistent with the
-            # dataset and you need 2 days to discover the bug
             self.__pattern = \
-                self.pattern.selectFeaturesById(
-                        np.sort( featrank.argsort()[nkill:] ) )
+                self.pattern.selectFeaturesById( featrank.argsort()[nkill:] )
 
             # increment all features still present in the elim mask
             elim_mask[ self.pattern.getFeatureMask(copy=False) ] += 1

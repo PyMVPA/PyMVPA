@@ -360,8 +360,6 @@ class MVPAPattern(object):
         """ Returns a mask with a features in ids selected from the
         current feature set.
         """
-        # sort to preserve feature order (otherwise mask gets corrupted)
-        ids = sorted( ids )
         mask = numpy.zeros( self.__mask.shape, dtype='bool' )
         mask[ tuple( numpy.transpose(self.__mask.nonzero())[ids].T ) ] = True
 
@@ -385,8 +383,13 @@ class MVPAPattern(object):
         Returns a new MVPAPattern object with a view of the original pattern
         array (no copying is performed).
         """
-       # no default mask
+        # HEY, ATTENTION: the list of selected features needs to be sorted
+        # otherwise the feature mask will become inconsistent with the
+        # dataset and you need 2 days to discover the bug
+        ids = sorted( ids )
+        # no default mask
         new_mask = None
+
         # reconstruct an updated feature mask if requested
         # only keep the selected non-zero features of the current mask
         if maintain_mask:
