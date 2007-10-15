@@ -19,7 +19,7 @@
 import unittest
 import numpy as np
 import mvpa.rfe as rfe
-import mvpa
+import mvpa.maskeddataset
 import mvpa.svm
 
 def dumbFeatureSignal():
@@ -30,7 +30,7 @@ def dumbFeatureSignal():
          + [2 for i in range(8)] \
          + [3 for i in range(8)]
 
-    return mvpa.MVPAPattern(data, regs)
+    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
 
 
 class RFETests(unittest.TestCase):
@@ -48,7 +48,7 @@ class RFETests(unittest.TestCase):
                              np.arange(100) < 75).astype('int')
         reg = (np.arange(100) > 49).astype('int')
         orig = np.arange(100) % 5
-        self.pattern = mvpa.MVPAPattern(data, reg, orig)
+        self.pattern = mvpa.maskeddataset.MaskedDataset(data, reg, orig)
 
     def testFeatureRanking(self):
         obj = rfe.RFE( self.dumbpattern )
@@ -60,8 +60,8 @@ class RFETests(unittest.TestCase):
 
         # check that the important is still in
         self.failUnless( obj.pattern.nfeatures == 1)
-        self.failUnless( ( obj.pattern.pattern[:,0] ==\
-                           self.dumbpattern.pattern[:,1] ).all() )
+        self.failUnless( ( obj.pattern.samples[:,0] ==\
+                           self.dumbpattern.samples[:,1] ).all() )
 
 
     def testSelectFeatures(self):
@@ -108,19 +108,20 @@ class RFETests(unittest.TestCase):
 
         # prediction has to be perfect
         self.failUnless( perf == 1.0 )
-        self.failUnless( ( pred == self.dumbpattern.reg ).all() )
+        self.failUnless( ( pred == self.dumbpattern.regs ).all() )
         self.failUnless( confmat.shape == (3,3) )
 
 
         # make slightly different dataset, but with the same underlying
         # concept
         tdata = \
-            mvpa.MVPAPattern( [[1.5],[2.5],[3.5],
+            mvpa.maskeddataset.MaskedDataset( [[1.5],[2.5],[3.5],
                                [5.5],[6.5],[7.5],
                                [9.5],[10.5],[11.5]],
                                [1 for i in range(3)] \
                                + [2 for i in range(3)] \
-                               + [3 for i in range(3)] )
+                               + [3 for i in range(3)],
+                               None )
 
         # check performance on the new dataset
         # includes a check whether a dataset not matching the original
@@ -128,7 +129,7 @@ class RFETests(unittest.TestCase):
         pred, perf, confmat = obj.testSelection(tdata)
         # prediction has to be perfect
         self.failUnless( perf == 1.0 )
-        self.failUnless( ( pred == tdata.reg ).all() )
+        self.failUnless( ( pred == tdata.regs ).all() )
         self.failUnless( confmat.shape == (3,3) )
 
 
@@ -139,7 +140,7 @@ class RFETests(unittest.TestCase):
                                         eliminate_by='number',
                                         kill_per_iter = 1)
 
-        self.failUnless( elim_mask.shape == self.dumbpattern.origshape )
+        self.failUnless( elim_mask.shape == self.dumbpattern.mapper.dsshape )
         self.failUnless( elim_mask[0] == 0 and elim_mask[1] == 1 )
 
 #        pat = mvpa.MVPAPattern( np.random.normal(0,size=(20,16,16,8)),
@@ -177,22 +178,22 @@ class RFETests(unittest.TestCase):
 
             return sum(offsets)
 
-        pat = mvpa.MVPAPattern( np.random.normal(size=(100,2,3,4)),
+        pat = mvpa.maskeddataset.MaskedDataset( np.random.normal(size=(100,2,3,4)),
                                 [i%2 for i in range(100)],
                                 [i/5 for i in range(100)] )
 
         # make a copy of the original patterns
-        sec_pat = pat.pattern.copy()
+        sec_pat = pat.samples.copy()
 
         el = rfe.RFE( pat )
         el.killNFeatures(5, eliminate_by = 'number', kill_per_iter = 1 )
 
-        features = np.transpose(el.pattern.getFeatureMask().nonzero())
+        features = np.transpose(el.pattern.mapper.getMask().nonzero())
 
         for i,f in enumerate(features):
-            orig_id = absolute_coord2id(f,pat.origshape)
+            orig_id = absolute_coord2id(f,pat.mapper.dsshape)
             orig_f = sec_pat[:,orig_id]
-            self.failUnless( (el.pattern.pattern[:,i] == orig_f).all() )
+            self.failUnless( (el.pattern.samples[:,i] == orig_f).all() )
 
 
 def suite():

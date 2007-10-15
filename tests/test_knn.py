@@ -17,7 +17,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 import unittest
-import mvpa
+import mvpa.maskeddataset
 import mvpa.knn as knn
 import numpy
 
@@ -51,7 +51,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
         + [0 for i in xrange(patterns)]
     regs = numpy.array(regs)
 
-    return mvpa.MVPAPattern(data, regs)
+    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
 
 
 class KNNTests(unittest.TestCase):
@@ -68,13 +68,13 @@ class KNNTests(unittest.TestCase):
 
             k_mv = knn.kNN(k = 10)
             k_mv.train(train)
-            p_mv = k_mv.predict( test.pattern )
-            mv_perf.append( numpy.mean(p_mv==test.reg) )
+            p_mv = k_mv.predict( test.samples )
+            mv_perf.append( numpy.mean(p_mv==test.regs) )
 
             k_uv = knn.kNN(k=10)
-            k_uv.train(train.selectFeaturesById([0]))
-            p_uv = k_uv.predict( test.selectFeaturesById([0]).pattern )
-            uv_perf.append( numpy.mean(p_uv==test.reg) )
+            k_uv.train(train.selectFeatures([0]))
+            p_uv = k_uv.predict( test.selectFeatures([0]).samples )
+            uv_perf.append( numpy.mean(p_uv==test.regs) )
 
         mean_mv_perf = numpy.mean(mv_perf)
         mean_uv_perf = numpy.mean(uv_perf)

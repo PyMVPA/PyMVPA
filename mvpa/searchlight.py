@@ -108,7 +108,7 @@ class Searchlight( object ):
         self.setClassifier( classifier )
 
         if not elementsize:
-            self.__elementsize = [ 1 for i in range( len(pattern.origshape) ) ]
+            self.__elementsize = [ 1 for i in range( len(pattern.mapper.dsshape) ) ]
         else:
             if not len( elementsize ) == len( mask.shape ):
                 raise ValueError, 'elementsize does not match mask dimensions.'
@@ -116,19 +116,19 @@ class Searchlight( object ):
 
         self.__forcesphere = forcesphere
 
-        if not mask.shape == pattern.origshape:
-            raise ValueError, 'Mask shape has to match the pattern origshape.'
+        if not mask.shape == pattern.mapper.dsshape:
+            raise ValueError, 'Mask shape has to match the datasets dataspace shape.'
 
         self.__clearResults()
 
 
     def __clearResults( self ):
         # init the result maps
-        self.__perfmean = np.zeros(self.pattern.origshape)
-        self.__perfvar = np.zeros(self.pattern.origshape)
-        self.__chisquare = np.zeros(self.pattern.origshape)
-        self.__chanceprob = np.zeros(self.pattern.origshape)
-        self.__spheresize = np.zeros(self.pattern.origshape, dtype='uint')
+        self.__perfmean = np.zeros(self.pattern.mapper.dsshape)
+        self.__perfvar = np.zeros(self.pattern.mapper.dsshape)
+        self.__chisquare = np.zeros(self.pattern.mapper.dsshape)
+        self.__chanceprob = np.zeros(self.pattern.mapper.dsshape)
+        self.__spheresize = np.zeros(self.pattern.mapper.dsshape, dtype='uint')
 
 
     def setClassifier( self, classifier ):

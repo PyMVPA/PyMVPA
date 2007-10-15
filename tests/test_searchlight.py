@@ -17,7 +17,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import unittest
-import mvpa
+import mvpa.maskeddataset
 import mvpa.searchlight as sl
 import mvpa.knn as knn
 import mvpa.svm as svm
@@ -31,7 +31,7 @@ class SearchlightTests(unittest.TestCase):
                                    numpy.repeat( 1, 50 ) ) )
         orig = numpy.repeat( range(5), 10 )
         origin = numpy.concatenate( (orig, orig) )
-        self.pattern = mvpa.MVPAPattern( data, reg, origin )
+        self.pattern = mvpa.maskeddataset.MaskedDataset( data, reg, origin )
 
 
     def testSearchlight(self):

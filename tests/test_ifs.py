@@ -17,7 +17,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import mvpa.ifs as si
-import mvpa
+import mvpa.maskeddataset
 import mvpa.svm as svm
 import unittest
 import numpy as N
@@ -30,7 +30,7 @@ class IncrementalSearchTests(unittest.TestCase):
         data = N.random.uniform(0,1,(100,) + (self.mask.shape))
         reg = N.arange(100) / 50
         orig = range(10) * 10
-        self.pattern = mvpa.MVPAPattern(data, reg, orig)
+        self.pattern = mvpa.maskeddataset.MaskedDataset(data, reg, orig)
 
 
 
@@ -47,11 +47,11 @@ class IncrementalSearchTests(unittest.TestCase):
         # one must always be selected
         self.failUnless( selected_features.nfeatures >= 1 )
 
-        self.failUnless( rank_map.shape == self.pattern.origshape )
+        self.failUnless( rank_map.shape == self.pattern.mapper.dsshape )
         self.failIf( (rank_map == 0.0).any() )
 
         # mask have origshape
-        self.failUnless( selected_features.origshape == \
+        self.failUnless( selected_features.mapper.dsshape == \
                          self.mask.shape )
 
         sinc.ntoselect = 5

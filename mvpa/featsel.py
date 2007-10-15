@@ -73,8 +73,8 @@ class FeatSelValidation( object ):
             predictions = \
                 classifier.predict( 
                     test_samples.selectFeaturesByMask( 
-                        select_pat.getFeatureMask( copy=False) ).pattern )
-            self.__perfs.append( N.mean( predictions == test_samples.reg ) )
+                        select_pat.mapper.getMask( copy=False) ).samples )
+            self.__perfs.append( N.mean( predictions == test_samples.regs ) )
 
 
     def getMeanRatingMap( self ):

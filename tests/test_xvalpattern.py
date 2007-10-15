@@ -16,7 +16,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mvpa
+import mvpa.maskeddataset
 import mvpa.xvalpattern as xvalpattern
 import unittest
 import numpy as np
@@ -26,7 +26,7 @@ class CrossValidationTests(unittest.TestCase):
 
     def setUp(self):
         self.data = \
-            mvpa.MVPAPattern(np.random.normal(size=(100,10)),
+            mvpa.maskeddataset.MaskedDataset(np.random.normal(size=(100,10)),
             [ i%4 for i in range(100) ],
             [ i/10 for i in range(100) ] )
 
@@ -43,9 +43,9 @@ class CrossValidationTests(unittest.TestCase):
 
         for i,p in enumerate(xvpat):
             self.failUnless( len(p) == 2 )
-            self.failUnless( p[0].npatterns == 90 )
-            self.failUnless( p[1].npatterns == 10 )
-            self.failUnless( p[1].origin[0] == i )
+            self.failUnless( p[0].nsamples == 90 )
+            self.failUnless( p[1].nsamples == 10 )
+            self.failUnless( p[1].chunks[0] == i )
 
 
 def suite():
