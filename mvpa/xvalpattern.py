@@ -104,7 +104,7 @@ class CrossvalPatternGenerator( object ):
         on the dataset for a given cvtype ( N-cvtype cross-validation).
         """
         return len( support.getUniqueLengthNCombinations(
-                        self.pattern.originlabels, cvtype) )
+                        self.pattern.chunklabels, cvtype) )
 
 
     def getNPatternsPerCVFold( self, cvtype = 1 ):
@@ -116,7 +116,7 @@ class CrossvalPatternGenerator( object ):
         """
         # get the list of all combinations of to be excluded folds
         cv_list = support.getUniqueLengthNCombinations(
-                        self.pattern.originlabels, cvtype)
+                        self.pattern.chunklabels, cvtype)
 
         ntrainpat = np.zeros( (len(cv_list), len(self.pattern.reglabels) ) )
         ntestpat = np.zeros( ntrainpat.shape )
@@ -125,16 +125,16 @@ class CrossvalPatternGenerator( object ):
             # build a boolean selector vector to choose training and
             # test data for this CV fold
             exclude_filter =  \
-                np.array([ i in exclude for i in self.__data.origin ])
+                np.array([ i in exclude for i in self.__data.chunks ])
 
             # split data and regs into training and test set
             train = \
-                self.__data.selectPatterns(
+                self.__data.selectSamples(
                     np.logical_not(exclude_filter) )
-            test = self.__data.selectPatterns( exclude_filter )
+            test = self.__data.selectSamples( exclude_filter )
 
-            ntrainpat[fold] = train.getPatternsPerRegLabel()
-            ntestpat[fold] = test.getPatternsPerRegLabel()
+            ntrainpat[fold] = train.getNSamplesPerReg()
+            ntestpat[fold] = test.getNSamplesPerReg()
 
         return ntrainpat, ntestpat
 
@@ -154,13 +154,13 @@ class CrossvalPatternGenerator( object ):
         # build a boolean selector vector to choose training and
         # test data
         test_filter =  \
-            np.array([ i in test_origin for i in pattern.origin ])
+            np.array([ i in test_origin for i in pattern.chunks ])
 
         # split data and regs into training and test set
         train = \
-            pattern.selectPatterns(
+            pattern.selectSamples(
                 np.logical_not(test_filter) )
-        test = pattern.selectPatterns( test_filter )
+        test = pattern.selectSamples( test_filter )
 
         return train, test
 
@@ -185,10 +185,10 @@ class CrossvalPatternGenerator( object ):
             # determine number number of patterns per class
             if samplesize == 'auto':
                 samplesize = \
-                   np.array( pattern.getPatternsPerRegLabel() ).min()
+                   np.array( pattern.getNSamplesPerReg() ).min()
 
             # finally select the patterns
-            samples = pattern.getPatternSample( samplesize )
+            samples = pattern.getRandomSamples( samplesize )
         else:
             # take all training patterns in the sampling run
             samples = pattern
@@ -204,7 +204,7 @@ class CrossvalPatternGenerator( object ):
         """
         # get the list of all combinations of to be excluded folds
         cv_list = \
-            support.getUniqueLengthNCombinations(self.__data.originlabels,
+            support.getUniqueLengthNCombinations(self.__data.chunklabels,
                                                  self.__cvtype)
 
         # do cross-validation

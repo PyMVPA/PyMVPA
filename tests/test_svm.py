@@ -16,7 +16,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mvpa
+import mvpa.maskeddataset
 import mvpa.svm as svm
 import unittest
 import numpy
@@ -30,7 +30,7 @@ def dumbFeatureSignal():
          + [2 for i in range(8)] \
          + [3 for i in range(8)]
 
-    return mvpa.MVPAPattern(data, regs)
+    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):
@@ -62,7 +62,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
         + [0 for i in xrange(patterns)]
     regs = numpy.array(regs)
 
-    return mvpa.MVPAPattern(data, regs)
+    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
 
 
 class SVMTests(unittest.TestCase):
@@ -84,13 +84,13 @@ class SVMTests(unittest.TestCase):
 
             s_mv = svm.SVM()
             s_mv.train(train)
-            p_mv = s_mv.predict( test.pattern )
-            mv_perf.append( numpy.mean(p_mv==test.reg) )
+            p_mv = s_mv.predict( test.samples )
+            mv_perf.append( numpy.mean(p_mv==test.regs) )
 
             s_uv = svm.SVM()
-            s_uv.train(train.selectFeaturesById([0]))
-            p_uv = s_uv.predict( test.selectFeaturesById([0]).pattern )
-            uv_perf.append( numpy.mean(p_uv==test.reg) )
+            s_uv.train(train.selectFeatures([0]))
+            p_uv = s_uv.predict( test.selectFeatures([0]).samples )
+            uv_perf.append( numpy.mean(p_uv==test.regs) )
 
         mean_mv_perf = numpy.mean(mv_perf)
         mean_uv_perf = numpy.mean(uv_perf)

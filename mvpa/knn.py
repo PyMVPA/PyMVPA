@@ -67,7 +67,7 @@ class kNN:
             # patterns in the training data
             dists = N.sqrt(
                         N.sum(
-                            N.abs( self.__data.pattern - p )**2, axis=1
+                            N.abs( self.__data.samples - p )**2, axis=1
                             )
                         )
             # get the k nearest neighbours from the sorted list of distances 
@@ -86,7 +86,7 @@ class kNN:
 
         # add 1 to a certain condition per NN
         for nn in knn_ids:
-            votes[self.__data.reg[nn]] += 1
+            votes[self.__data.regs[nn]] += 1
 
         # find the condition with most votes
         best_cond = None; most_votes = None
@@ -102,12 +102,12 @@ class kNN:
         votes = dict( zip ( self.__data.reglabels, 
                             [0 for i in self.__data.reglabels ] ) )
         weights = dict( zip ( self.__data.reglabels,
-                    [ 1 - ( float( self.__data.reg.tolist().count(i) ) \
-                      / len(self.__data.reg) )
+                    [ 1 - ( float( self.__data.regs.tolist().count(i) ) \
+                      / len(self.__data.regs) )
                         for i in self.__data.reglabels ] ) )
 
         for nn in knn_ids:
-            votes[self.__data.reg[nn]] += weights[self.__data.reg[nn]]
+            votes[self.__data.regs[nn]] += weights[self.__data.regs[nn]]
 
         # find the condition with most votes
         best_cond = None; most_votes = None

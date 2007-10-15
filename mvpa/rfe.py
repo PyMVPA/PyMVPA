@@ -44,11 +44,11 @@ class RFE( object ):
 
 
     def __testClassifierOnTrainingSet(self):
-        predictions = np.array(self.__clf.predict( self.pattern.pattern ))
+        predictions = np.array(self.__clf.predict( self.pattern.samples ))
 
         self.__training_confusion_mat = \
             support.buildConfusionMatrix( self.pattern.reglabels,
-                                          self.pattern.reg,
+                                          self.pattern.regs,
                                           predictions )
         self.__training_perf = \
             float(self.trainconfmat.diagonal().sum()) / self.trainconfmat.sum()
@@ -79,7 +79,7 @@ class RFE( object ):
         n = int( n )
 
         # elimination log mask
-        elim_mask = np.zeros( self.pattern.origshape, dtype='uint' )
+        elim_mask = np.zeros( self.pattern.mapper.dsshape, dtype='uint' )
 
         # do it until there are more feature than there should be
         while n < self.pattern.nfeatures:
@@ -110,10 +110,10 @@ class RFE( object ):
 
             # eliminate the first 'nkill' features (with the lowest ranking)
             self.__pattern = \
-                self.pattern.selectFeaturesById( featrank.argsort()[nkill:] )
+                self.pattern.selectFeatures( featrank.argsort()[nkill:] )
 
             # increment all features still present in the elim mask
-            elim_mask[ self.pattern.getFeatureMask(copy=False) ] += 1
+            elim_mask[ self.pattern.mapper.getMask(copy=False) ] += 1
 
             # retrain the classifier with the new feature set
             self.__trainClassifier()
@@ -172,18 +172,18 @@ class RFE( object ):
         if not pattern.nfeatures == self.pattern.nfeatures:
             # select necessary features from the provided patterns
             masked = pattern.selectFeaturesByMask( 
-                            self.pattern.getFeatureMask() )
+                            self.pattern.mapper.getMask() )
         else:
             masked = pattern
 
         # get the predictions from the classifier
-        predicted = self.clf.predict( masked.pattern )
+        predicted = self.clf.predict( masked.samples )
 
         confmat = support.buildConfusionMatrix( self.pattern.reglabels,
-                                                masked.reg,
+                                                masked.regs,
                                                 predicted )
 
-        perf = np.mean( predicted == masked.reg )
+        perf = np.mean( predicted == masked.regs )
 
         return predicted, perf, confmat
 

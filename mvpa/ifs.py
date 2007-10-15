@@ -90,7 +90,7 @@ class IFS( object ):
 
         # assign each feature in pattern a value between 0 and 1 that reflects
         # its contribution to the classification
-        rating_map = N.zeros( pattern.origshape, dtype='float32' )
+        rating_map = N.zeros( pattern.mapper.dsshape, dtype='float32' )
 
         # selection iteration counter
         sel_counter = 0
@@ -101,7 +101,7 @@ class IFS( object ):
         while len( candidates ):
             # do something complicated to be able to map each candidates
             # performance back into a map in pattern orig space
-            candidate_mask = pattern.buildFeatureMaskFromIds( candidates )
+            candidate_mask = pattern.mapper.buildMaskFromFeatureIds( candidates )
             candidate_rating_orig = \
                 N.zeros(candidate_mask.shape, dtype='float32')
             candidate_rating = \
@@ -120,8 +120,7 @@ class IFS( object ):
                 # take the new candidate and all already selected features
                 # select a new temporay feature subset from the dataset
                 temp_pat = \
-                    pattern.selectFeaturesById( selected + [candidate],
-                                                maintain_mask = False )
+                    pattern.selectFeatures( selected + [candidate] )
 
                 # now do cross-validation with the current feature set
                 cv = crossval.CrossValidation( temp_pat, classifier,
@@ -159,7 +158,7 @@ class IFS( object ):
             # map current candidate set to orig space
             candidate_rating_orig[ candidate_mask > 0 ] = candidate_rating
             candidate_rating_orig[ \
-                pattern.buildFeatureMaskFromIds( selected ).nonzero() ] \
+                pattern.mapper.buildMaskFromFeatureIds( selected ).nonzero() ] \
                     = best_performance_ever
 
             # add the ratings of this iteration to the map
@@ -178,7 +177,7 @@ class IFS( object ):
         rating_map /= sel_counter
 
         # apply the final feature selection to the pattern dataset
-        return pattern.selectFeaturesById( selected ), rating_map
+        return pattern.selectFeatures( selected ), rating_map
 
 
 

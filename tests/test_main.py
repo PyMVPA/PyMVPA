@@ -19,7 +19,9 @@
 import unittest
 
 # list all test modules (without .py extension)
-tests = [ 'test_patterns',
+tests = [ 'dataset',
+          'maskmapper',
+          'maskeddataset',
           'test_algorithms',
           'test_knn',
           'test_svm',

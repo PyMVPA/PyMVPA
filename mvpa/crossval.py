@@ -116,7 +116,7 @@ class CrossValidation( object ):
                                                        train_samples,
                                                        test_samples )
 
-                perf = ( predictions == test_samples.reg )
+                perf = ( predictions == test_samples.regs )
 
                 # call classifier callback if any
                 if not self.__clf_callback == None:
@@ -130,7 +130,7 @@ class CrossValidation( object ):
                 self.__updateContingencyTbl(
                     support.buildConfusionMatrix( 
                         self.xvalpattern.pattern.reglabels,
-                        test_samples.reg,
+                        test_samples.regs,
                         predictions ) )
 
         return self.perf
@@ -155,7 +155,7 @@ class CrossValidation( object ):
 
         # test
         predictions = N.array(
-                        clf.predict(test.pattern) )
+                        clf.predict(test.samples) )
 
         return clf, predictions
 

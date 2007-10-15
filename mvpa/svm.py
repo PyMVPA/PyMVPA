@@ -39,12 +39,12 @@ class SVM(Classifier):
 
     def train(self, data):
         # libsvm needs doubles
-        if data.pattern.dtype == 'float64':
-            src = data.pattern
+        if data.samples.dtype == 'float64':
+            src = data.samples
         else:
-            src = data.pattern.astype('double')
+            src = data.samples.astype('double')
 
-        svmprob = libsvm.svm_problem( data.reg.tolist(), src )
+        svmprob = libsvm.svm_problem( data.regs.tolist(), src )
 
         self.model = libsvm.svm_model( svmprob, self.param)
 

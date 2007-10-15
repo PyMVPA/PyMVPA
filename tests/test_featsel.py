@@ -18,7 +18,7 @@
 
 import mvpa.ifs as ifs
 import mvpa.featsel
-import mvpa
+import mvpa.maskeddataset
 import mvpa.svm as svm
 import unittest
 import numpy as N
@@ -31,7 +31,7 @@ class FeatSelValidationTests(unittest.TestCase):
         data = N.random.normal(0,1,(100,) + (self.mask.shape))
         reg = N.arange(100) / 50
         orig = range(5) * 20
-        self.pattern = mvpa.MVPAPattern(data, reg, orig)
+        self.pattern = mvpa.maskeddataset.MaskedDataset(data, reg, orig)
 
 
     def testIncrementalSearch(self):
