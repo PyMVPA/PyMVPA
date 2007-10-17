@@ -1,6 +1,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: General N-M cross-validation and utility functions
+#    PyMVPA: Generic Cross-Validation
 #
 #    Copyright (C) 2006-2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -19,7 +19,36 @@
 
 import numpy as N
 import support
-import xvalpattern
+
+
+class CrossValidation(object):
+    """
+    """
+    def __init__( self,
+                  dataset,
+                  splitter,
+                  classifier,
+                  errorfx ):
+        """
+        """
+        pass
+
+
+    def __call__( self, dataset ):
+        """
+
+        Returns a sequence of error function objects.
+        """
+        pass
+
+
+###############
+##           ##
+## Old stuff ##
+##           ##
+###############
+
+
 
 class CrossValidation( object ):
     """ Generic N-M cross-validation with arbitrary classification
