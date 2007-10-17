@@ -17,16 +17,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import mvpa.maskeddataset
-import mvpa.xvalpattern as xvalpattern
+import mvpa.nfoldsplitter as nfoldsplitter
 import unittest
-import numpy as np
+import numpy as N
 
 
-class CrossValidationTests(unittest.TestCase):
+class NFoldSplitterTest(unittest.TestCase):
 
     def setUp(self):
         self.data = \
-            mvpa.maskeddataset.MaskedDataset(np.random.normal(size=(100,10)),
+            mvpa.maskeddataset.MaskedDataset(N.random.normal(size=(100,10)),
             [ i%4 for i in range(100) ],
             [ i/10 for i in range(100) ] )
 
@@ -34,10 +34,10 @@ class CrossValidationTests(unittest.TestCase):
 
     def testSimplestCVPatGen(self):
         # create the generator
-        cvpg = xvalpattern.CrossvalPatternGenerator(self.data, cvtype=1)
+        nfs = nfoldsplitter.NFoldSplitter(cvtype=1)
 
         # now get the xval pattern sets One-Fold CV)
-        xvpat = [ (train, test) for (train,trs,test,tes) in cvpg() ]
+        xvpat = [ (train, test) for (train,test) in nfs(self.data) ]
 
         self.failUnless( len(xvpat) == 10 )
 
@@ -49,7 +49,7 @@ class CrossValidationTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(CrossValidationTests)
+    return unittest.makeSuite(NFoldSplitterTests)
 
 
 if __name__ == '__main__':
