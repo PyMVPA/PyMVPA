@@ -25,7 +25,7 @@ class Mapper(object):
 	on the entire dataset. get(In|Out)Id[s] operate on per element.
 
     Subclasses should define 'dsshape' and 'nfeatures' properties that point to
-    getDataspaceShape() and getNMappedFeatures() respectively. This cannot be
+    getInShape() and getOutSize() respectively. This cannot be
     done in the baseclass as standard Python properties would still point to
     the baseclass methods.
 
@@ -63,7 +63,7 @@ class Mapper(object):
     # with functions like  getEmptyFrom / getEmptyTo
     #
     def getInShape(self):
-		# RRR was getDataspaceShape
+		# RRR was getInShape
         """
 		Returns the shape (or other dimensionality speicification)
 		of the original dataspace.
@@ -85,7 +85,7 @@ class Mapper(object):
 
 
 	def getOutSize(self):
-		# RRR Substitutes getNMappedFeatures
+		# RRR Substitutes getOutSize
 		""" Returns the size of the entity in output space """
 		raise NotImplementedError
 
@@ -101,17 +101,17 @@ class Mapper(object):
 
 
 	def getInId(self, outId):
-		# RRR getFeatureCoordinate
+		# RRR getInId
 		"""For a given Id in "out" returns corresponding "in" Id """
 		raise NotImplementedError
 
 	def getInIds(self):
-		# RRR getFeatureCoordinates
+		# RRR getInIds
 		"""Returns corresponding "in" Ids """
 		raise NotImplementedError
 
 	def getOutId(self, inId):
-		# RRR getFeatureId
+		# RRR getOutId
 		"""Returns corresponding "out" Id """
 
 ### yoh: To think about generalization
