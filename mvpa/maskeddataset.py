@@ -15,6 +15,8 @@
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 #    Lesser General Public License for more details.
 #
+# Modified by Yaroslav Halchenko 2007
+#
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import numpy as N
@@ -22,6 +24,7 @@ from mappeddataset import *
 from maskmapper import *
 
 
+# XXX should be really provided by any Mapper + MappedDataset tandem
 class MaskedDataset(MappedDataset):
     """
     """
