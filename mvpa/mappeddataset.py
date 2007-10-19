@@ -22,11 +22,11 @@ from dataset import *
 class MappedDataset(Dataset, Mapper):
     """
     """
-    def __init__(self, samples, regs, chunks, mapper ):
+    def __init__(self, samples, labels, chunks, mapper ):
         """
         """
         # store the mapper and put the rest into the baseclass
-        Dataset.__init__(self, samples, regs, chunks)
+        Dataset.__init__(self, samples, labels, chunks)
 
         if not self.nfeatures == mapper.nfeatures:
             raise ValueError, "The mapper doesn't match the number of " \
@@ -50,7 +50,7 @@ class MappedDataset(Dataset, Mapper):
         operator is used for the merged dataset.
         """
         out = MappedDataset( self.samples,
-                             self.regs,
+                             self.labels,
                              self.chunks,
                              self.mapper )
 
@@ -96,7 +96,7 @@ class MappedDataset(Dataset, Mapper):
 
         # XXX should be generic...
         return MappedDataset( self.samples[mask,],
-                              self.regs[mask,],
+                              self.labels[mask,],
                               self.chunks[mask,],
                               self.mapper )
 

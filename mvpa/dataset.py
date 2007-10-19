@@ -24,23 +24,23 @@ import random
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
-    MVPA analyses. These are the data samples, as well as the regressors
+    MVPA analyses. These are the data samples, as well as the labels
     associated with these patterns. Additionally samples can be grouped into
     chunks.
     """
-    def __init__(self, samples, regs, chunks ):
+    def __init__(self, samples, labels, chunks ):
         """ Initialize the Dataset.
 
         Parameters:
           samples -
-          regs    -
+          labels  -
           chunks  -
         """
         # initialize containers
         self.__samples = None
-        self.__regs = None
+        self.__labels = None
         self.__chunks = None
-        self.__origregs = None
+        self.__origlabels = None
 
         # 1d arrays or simple sequences are assumed to be a single pattern
         if (not isinstance(samples, N.ndarray)) or samples.ndim < 2:
@@ -55,20 +55,20 @@ class Dataset(object):
         # done -> store
         self.__samples = samples
 
-        # check if regs is supplied as a sequence
+        # check if labels is supplied as a sequence
         try:
-            if len( regs ) != len( self.samples ):
-                raise ValueError, "Length of 'reg' has to match the number" \
+            if len( labels ) != len( self.samples ):
+                raise ValueError, "Length of 'labels' has to match the number" \
                                   " of patterns."
             # store the sequence as array
-            regs = N.array( regs )
+            labels = N.array( labels )
 
         except TypeError:
             # make sequence of identical value matching the number of patterns
-            regs = N.repeat( regs, len( self.samples ) )
+            labels = N.repeat( labels, len( self.samples ) )
 
         # done -> store
-        self.__regs = regs
+        self.__labels = labels
 
         # if no chunk information is given assume that every pattern is its
         # own chunk
@@ -94,7 +94,7 @@ class Dataset(object):
     def __iadd__( self, other ):
         """ Merge the samples of one Dataset object to another (in-place).
 
-        Please note that the samples, regressors and chunks are simply
+        Please note that the samples, labels and chunks are simply
         concatenated to create a Dataset object that contains the patterns of
         both objects. No further processing is done. In particular the chunk
         values are not modified: Samples with the same origin from both
@@ -106,8 +106,8 @@ class Dataset(object):
 
         self.__samples = \
             N.concatenate( ( self.samples, other.samples ), axis=0)
-        self.__regs = \
-            N.concatenate( ( self.regs, other.regs ), axis=0)
+        self.__labels = \
+            N.concatenate( ( self.labels, other.labels ), axis=0)
         self.__chunks = \
             N.concatenate( ( self.chunks, other.chunks ), axis=0)
 
@@ -117,14 +117,14 @@ class Dataset(object):
     def __add__( self, other ):
         """ Merge the samples two Dataset objects.
 
-        Please note that the samples, regressors and chunks are simply
+        Please note that the samples, labels and chunks are simply
         concatenated to create a Dataset object that contains the patterns of
         both objects. No further processing is done. In particular the chunk
         values are not modified: Samples with the same origin from both
         Datasets will still share the same chunk.
         """
         out = Dataset( self.__samples,
-                       self.__regs,
+                       self.__labels,
                        self.__chunks )
 
         out += other
@@ -141,7 +141,7 @@ class Dataset(object):
         array (no copying is performed).
         """
         return Dataset( self.__samples[:, ids],
-                        self.__regs,
+                        self.__labels,
                         self.__chunks )
 
 
@@ -157,71 +157,71 @@ class Dataset(object):
             mask = [mask]
 
         return Dataset( self.samples[mask,],
-                        self.regs[mask,],
+                        self.labels[mask,],
                         self.chunks[mask,] )
 
 
     def permutatedRegressors( self, status, perchunk = True ):
-        """ Permutate the regressors.
+        """ Permutate the labels.
 
-        Calling this method with 'status' set to True, the regressors are
+        Calling this method with 'status' set to True, the labels are
         permutated among all samples.
 
         If 'perorigin' is True permutation is limited to samples sharing the
         same chunk value. Therefore only the association of a certain sample
-        with a regressor is permutated while keeping the absolute number of
-        occurences of each regressor value within a certain chunk constant.
+        with a label is permutated while keeping the absolute number of
+        occurences of each label value within a certain chunk constant.
 
-        If 'status' is False the original regressors are restored.
+        If 'status' is False the original labels are restored.
         """
         if not status:
             # restore originals
-            if self.__origregs == None:
-                raise RuntimeError, 'Cannot restore regressors. ' \
+            if self.__origlabels == None:
+                raise RuntimeError, 'Cannot restore labels. ' \
                                     'randomizedRegressors() has never been ' \
                                     'called with status == True.'
-            self.__regs = self.__origregs
-            self.__origregs = None
+            self.__labels = self.__origlabels
+            self.__origlabels = None
         else:
-            # permutate regs per origin
+            # permutate labels per origin
 
-            # make a backup of the original regressors
-            self.__origregs = self.__regs.copy()
+            # make a backup of the original labels
+            self.__origlabels = self.__labels.copy()
 
             # now scramble the rest
             if perchunk:
-                for o in self.chunklabels:
-                    self.__regs[self.chunks == o ] = \
-                        N.random.permutation( self.regs[ self.chunks == o ] )
+                for o in self.uniquechunks:
+                    self.__labels[self.chunks == o ] = \
+                        N.random.permutation( self.labels[ self.chunks == o ] )
             else:
-                self.__regs = N.random.permutation( self.__regs )
+                self.__labels = N.random.permutation( self.__labels )
 
 
-    def getRandomSamples( self, nperreg ):
+    def getRandomSamples( self, nperlabel ):
         """ Select a random set of samples.
 
-        If 'nperreg' is an integer value, the specified number of samples is
-        randomly choosen from the group of samples sharing a unique regressor
-        value ( total number of selected samples: nperreg x len(reglabels).
+        If 'nperlabel' is an integer value, the specified number of samples is
+        randomly choosen from the group of samples sharing a unique label
+        value ( total number of selected samples: nperlabel x len(uniquelabels).
 
-        If 'nperreg' is a list which's length has to match the number of unique
-        regressor labels. In this case 'nperreg' specifies the number of
+        If 'nperlabel' is a list which's length has to match the number of
+        unique label values. In this case 'nperlabel' specifies the number of
         samples that shall be selected from the samples with the corresponding
-        regressor label.
+        label.
 
         The method returns a Dataset object containing the selected
         samples.
         """
         # if interger is given take this value for all classes
-        if isinstance(nperreg, int):
-            nperreg = [ nperreg for i in self.reglabels ]
+        if isinstance(nperlabel, int):
+            nperlabel = [ nperlabel for i in self.uniquelabels ]
 
         sample = []
         # for each available class
-        for i,r in enumerate(self.reglabels):
+        for i,r in enumerate(self.uniquelabels):
             # get the list of pattern ids for this class
-            sample += random.sample( (self.regs == r).nonzero()[0],
-                                     nperreg[i] )
+            sample += random.sample( (self.labels == r).nonzero()[0],
+                                     nperlabel[i] )
 
         return self.selectSamples( sample )
 
@@ -244,10 +244,10 @@ class Dataset(object):
         return self.__samples
 
 
-    def getRegs( self ):
-        """ Returns the regressors vector.
+    def getLabels( self ):
+        """ Returns the label vector.
         """
-        return self.__regs
+        return self.__labels
 
 
     def getChunks( self ):
@@ -258,42 +258,41 @@ class Dataset(object):
         return self.__chunks
 
 
-    def getRegLabels( self ):
-        """ Returns an array with all unique class labels in the regressors
-        vector.
+    def getUniqueLabels( self ):
+        """ Returns an array with all unique class labels in the labels vector.
         """
 
-        return N.unique( self.regs )
+        return N.unique( self.labels )
 
 
-    def getChunkLabels( self ):
+    def getUniqueChunks( self ):
         """ Returns an array with all unique labels in the chunk vector.
         """
 
         return N.unique( self.chunks )
 
 
-    def getNSamplesPerReg( self ):
-        """ Returns the number of patterns per regressor label.
+    def getNSamplesPerLabel( self ):
+        """ Returns the number of samples per unique label.
         """
-        return [ len(self.samples[self.regs == r]) \
-                    for r in self.reglabels ]
+        return [ len(self.samples[self.labels == l]) \
+                    for l in self.uniquelabels ]
 
 
     def getNSamplesPerChunk( self ):
-        """ Returns the number of patterns per regressor label.
+        """ Returns the number of samples per unique chunk value.
         """
-        return [ len(self.samples[self.regs == r]) \
-                    for r in self.reglabels ]
+        return [ len(self.samples[self.chunks == c]) \
+                    for c in self.uniquechunks ]
 
 
     # read-only class properties
     samples         = property( fget=getSamples )
-    regs            = property( fget=getRegs )
+    labels          = property( fget=getLabels )
     chunks          = property( fget=getChunks )
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
-    reglabels       = property( fget=getRegLabels )
-    chunklabels     = property( fget=getChunkLabels )
-    samplesperreg   = property( fget=getNSamplesPerReg )
+    uniquelabels    = property( fget=getUniqueLabels )
+    uniquechunks    = property( fget=getUniqueChunks )
+    samplesperlabel = property( fget=getNSamplesPerLabel )
     samplesperchunk = property( fget=getNSamplesPerChunk )
