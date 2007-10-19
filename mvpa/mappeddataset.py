@@ -19,7 +19,7 @@
 
 from dataset import *
 
-class MappedDataset(Dataset):
+class MappedDataset(Dataset, Mapper):
     """
     """
     def __init__(self, samples, regs, chunks, mapper ):
@@ -71,6 +71,18 @@ class MappedDataset(Dataset):
         self.__mapper = mapper
 
 
+    def forward(self, data):
+        """ Map data from the original dataspace into featurespace.
+        """
+        return self.__mapper.forward(data)
+
+
+    def reverse(self, data):
+        """ Reverse map data from featurespace into the original dataspace.
+        """
+        return self.__mapper.reverse(data)
+
+
     def selectSamples( self, mask ):
         """ Choose a subset of samples.
 
@@ -82,6 +94,7 @@ class MappedDataset(Dataset):
         if not operator.isSequenceType( mask ):
             mask = [mask]
 
+        # XXX should be generic...
         return MappedDataset( self.samples[mask,],
                               self.regs[mask,],
                               self.chunks[mask,],
