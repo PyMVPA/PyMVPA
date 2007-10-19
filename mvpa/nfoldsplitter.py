@@ -52,8 +52,8 @@ class NFoldSplitter(Splitter):
                       is used in each fold and the subset is randomly
                       selected for each run (see the nworkingsamples
                       and nsparesamples arguments).
-          permutate:  If set to True, the regs of each generated dataset will be
-                      permutated on a per-chunk basis.
+          permutate:  If set to True, the labels of each generated dataset
+                      will be permutated on a per-chunk basis.
         """
         # pattern sampling status vars
         self.setNWorkingSetSamples( nworkingsamples )
@@ -104,16 +104,16 @@ class NFoldSplitter(Splitter):
 
     def getNSamplesPerFold( self, dataset ):
         """ Returns a tuple of two arrays with the number of samples per
-        regressor value and fold. The first array lists the available
+        unique label value and fold. The first array lists the available
         working set samples and the second array the spare samples.
 
-        Array rows: folds, columns: regressor labels
+        Array rows: folds, columns: labels
         """
         # get the list of all combinations of to be excluded folds
         cv_list = support.getUniqueLengthNCombinations(
-                        dataset.chunklabels, self.__cvtype)
+                        dataset.uniquechunks, self.__cvtype)
 
-        nwsamples = N.zeros( (len(cv_list), len(dataset.reglabels) ) )
+        nwsamples = N.zeros( (len(cv_list), len(dataset.uniquelabels) ) )
         nssamples = N.zeros( nwsamples.shape )
 
         for fold, exclude in enumerate(cv_list):
@@ -161,7 +161,7 @@ class NFoldSplitter(Splitter):
 
     @staticmethod
     def selectSampleSubset( dataset, samplesize ):
-        """ Select a number of patterns for each regressor value.
+        """ Select a number of patterns for each label value.
 
         Parameter:
             dataset    - Dataset object with the source samples
@@ -169,7 +169,7 @@ class NFoldSplitter(Splitter):
                          are recognized. None is off (all samples are
                          selected), 'auto' sets sample size to highest
                          possible number of samples that can be provided by
-                         each regressor class.
+                         each label class.
 
         Returns:
             - Dataset object with the selected samples
@@ -196,7 +196,7 @@ class NFoldSplitter(Splitter):
         """
         # get the list of all combinations of to be excluded chunks
         cv_list = \
-            support.getUniqueLengthNCombinations( dataset.chunklabels,
+            support.getUniqueLengthNCombinations( dataset.uniquechunks,
                                                   self.__cvtype )
 
         # do cross-validation
@@ -207,7 +207,7 @@ class NFoldSplitter(Splitter):
 
             # do the sampling for this CV fold
             for run in xrange( self.__runsperfold ):
-                # permutate the regressors in training and test dataset
+                # permutate the labels in training and test dataset
                 if self.__permutate:
                     wset.permutatedRegressors( True, perchunk=True )
                     sset.permutatedRegressors( True, perchunk=True )
