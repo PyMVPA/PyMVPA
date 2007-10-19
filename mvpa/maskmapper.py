@@ -69,7 +69,7 @@ class MaskMapper(Mapper):
         return mapped
 
 
-    def getDataspaceShape(self):
+    def getInShape(self):
         return self.__mask.shape
 
 
