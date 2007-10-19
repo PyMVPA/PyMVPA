@@ -22,7 +22,7 @@ import unittest
 import numpy as N
 
 
-class NFoldSplitterTest(unittest.TestCase):
+class NFoldSplitterTests(unittest.TestCase):
 
     def setUp(self):
         self.data = \

@@ -22,18 +22,19 @@ import unittest
 tests = [ 'dataset',
           'maskmapper',
           'maskeddataset',
-          'test_algorithms',
-          'test_knn',
-          'test_svm',
+          'nfoldsplitter' ]
+#          'test_algorithms',
+#          'test_knn',
+#          'test_svm',
 #          'test_plf',
-          'test_xvalpattern',
-          'test_crossval',
-          'test_searchlight',
-          'test_ifs',
-          'test_rfe',
-          'test_featsel',
-          'test_support',
-          'test_stats' ]
+#          'test_xvalpattern',
+#          'test_crossval',
+#          'test_searchlight',
+#          'test_ifs',
+#          'test_rfe',
+#          'test_featsel',
+#          'test_support',
+#          'test_stats' ]
 
 
 # import all test modules

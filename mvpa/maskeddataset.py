@@ -25,7 +25,7 @@ from maskmapper import *
 class MaskedDataset(MappedDataset):
     """
     """
-    def __init__( self, samples, regs, chunks, mask=None ):
+    def __init__( self, samples, labels, chunks, mask=None ):
         """
         'mask' can be:
             * None: Mask using full dataspace is generated
@@ -54,7 +54,7 @@ class MaskedDataset(MappedDataset):
 
         MappedDataset.__init__( self,
                                 mapped_samples,
-                                regs,
+                                labels,
                                 chunks,
                                 mapper )
 
@@ -65,7 +65,7 @@ class MaskedDataset(MappedDataset):
         operator is used for the merged dataset.
         """
         out = MaskedDataset( self.samples,
-                             self.regs,
+                             self.labels,
                              self.chunks,
                              self.mapper )
 
@@ -92,7 +92,7 @@ class MaskedDataset(MappedDataset):
         mask =  self.mapper.buildMaskFromFeatureIds( ids )
 
         return MaskedDataset( self.samples[:, ids],
-                              self.regs,
+                              self.labels,
                               self.chunks,
                               mask = MaskMapper( mask ) )
 
@@ -113,7 +113,7 @@ class MaskedDataset(MappedDataset):
         fmask = self.mapper.forward( comb_mask > 0 )
 
         return MaskedDataset( self.samples[:, fmask],
-                              self.regs,
+                              self.labels,
                               self.chunks,
                               mask = MaskMapper( comb_mask ) )
 
@@ -130,7 +130,7 @@ class MaskedDataset(MappedDataset):
             mask = [mask]
 
         return MaskedDataset( self.samples[mask,],
-                              self.regs[mask,],
+                              self.labels[mask,],
                               self.chunks[mask,],
                               self.mapper )
 
