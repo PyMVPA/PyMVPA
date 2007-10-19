@@ -21,7 +21,8 @@
 class Mapper(object):
     """
 	Interface to provide mapping between two spaces: in and out.
-	Methods are prefixed correspondingly.
+	Methods are prefixed correspondingly. forward/reverse operate
+	on the entire dataset. get(In|Out)Id[s] operate on per element.
 
     Subclasses should define 'dsshape' and 'nfeatures' properties that point to
     getDataspaceShape() and getNMappedFeatures() respectively. This cannot be
