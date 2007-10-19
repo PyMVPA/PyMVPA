@@ -44,7 +44,7 @@ class SVM(Classifier):
         else:
             src = data.samples.astype('double')
 
-        svmprob = libsvm.svm_problem( data.regs.tolist(), src )
+        svmprob = libsvm.svm_problem( data.labels.tolist(), src )
 
         self.model = libsvm.svm_model( svmprob, self.param)
 
