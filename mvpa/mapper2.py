@@ -33,7 +33,8 @@ class Mapper(object):
         pass
 
 
-    def forward(self, data):
+    template <class T>
+    def forward(self, T data):
         """ Map data from the original dataspace into featurespace.
         """
         raise NotImplementedError
@@ -43,6 +44,12 @@ class Mapper(object):
         """ Reverse map data from featurespace into the original dataspace.
         """
         raise NotImplementedError
+
+    template <class T>
+    def recreverse(self, T x):
+        """ Reverse map data from featurespace into the original dataspace.
+        """
+        T 
 
 
     def __call__(self, data):
