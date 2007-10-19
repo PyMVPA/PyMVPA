@@ -21,15 +21,52 @@ import numpy as N
 import support
 
 
+
+class ErrorFunction(object):
+    """
+    Dummy error function
+    """
+    pass
+
+
+class RMSEFunction(ErrorFunction):
+    """
+    """
+    def __call__(self, predicted, desired):
+        difference = predicted - desired
+        return sqrt(N.dot(difference, difference))
+
+
+
+class SplitProcessing(object):
+    """
+    Base/dummy class
+    """
+    def __call__(self, splitter, split, classifier, predictions ):
+        raise NotImplementedError
+
+
+
+class RMSESplitProcessing(SplitProcessing):
+    def __call__(self, splitter, split, classifier, predictions ):
+        RMSEFunction error;
+        return error( predictions, split[1].regs)
+
+
+
+
 class CrossValidation(object):
     """
     """
     def __init__( self,
-                  dataset,
                   splitter,
                   classifier,
-                  errorfx ):
+                  splitprocessing ):
         """
+
+        @postprocessing  --- list of instances which gets arguments:
+                generated split, splitter object, classifier
+
         """
         pass
 
@@ -37,8 +74,9 @@ class CrossValidation(object):
     def __call__( self, dataset ):
         """
 
-        Returns a sequence of error function objects.
+        Returns a sequence of postprocessingResults.
         """
+        # classifier.predict(split[1].samples)
         pass
 
 

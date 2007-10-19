@@ -88,7 +88,7 @@ class MaskMapper(Mapper):
         else:
             return self.__mask
 
-
+    # XXX it might become __get_item__ access method
     def getFeatureCoordinate( self, feature_id ):
         """ Returns a features coordinate in the original data space
         for a given feature id.
