@@ -23,6 +23,12 @@ class Mapper(object):
 	Interface to provide mapping between two spaces: in and out.
 	Methods are prefixed correspondingly. forward/reverse operate
 	on the entire dataset. get(In|Out)Id[s] operate on per element.
+          forward
+	in   ---------> out
+         <--------/
+           reverse
+
+    tools/refactor.sh
 
     Subclasses should define 'dsshape' and 'nfeatures' properties that point to
     getInShape() and getOutSize() respectively. This cannot be
@@ -63,7 +69,6 @@ class Mapper(object):
     # with functions like  getEmptyFrom / getEmptyTo
     #
     def getInShape(self):
-		# RRR was getInShape
         """
 		Returns the shape (or other dimensionality speicification)
 		of the original dataspace.
@@ -85,7 +90,6 @@ class Mapper(object):
 
 
 	def getOutSize(self):
-		# RRR Substitutes getOutSize
 		""" Returns the size of the entity in output space """
 		raise NotImplementedError
 
@@ -101,17 +105,14 @@ class Mapper(object):
 
 
 	def getInId(self, outId):
-		# RRR getInId
 		"""For a given Id in "out" returns corresponding "in" Id """
 		raise NotImplementedError
 
 	def getInIds(self):
-		# RRR getInIds
 		"""Returns corresponding "in" Ids """
 		raise NotImplementedError
 
 	def getOutId(self, inId):
-		# RRR getOutId
 		"""Returns corresponding "out" Id """
 
 ### yoh: To think about generalization
