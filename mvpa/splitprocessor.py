@@ -26,14 +26,11 @@ class SplitProcessing(object):
       split       - the actual datasplit tuple (returned by the splitter)
       classifier  - classifier instance trained on the first dataset in the
                    'split' tuple
-      predictions - sequence of predictions made by the classifier on a
-                    validation dataset (most likely the second dataset in
-                    the split tuple) -- if applicable
 
     Every SplitProcessing subclass has to implement a __call__() method
     that returns the result of the processing. The __call__() method has to deal
     with multiple calls to it and must make sure that previously returned
     results are not modified (e.g. when sharing NumPy array).
     """
-    def __call__(self, splitter, split, classifier, predictions=None):
+    def __call__(self, splitter, split, classifier):
         raise NotImplementedError
