@@ -6,13 +6,12 @@
 #    Michael Hanke <michael.hanke@gmail.com>
 #
 #    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the GNU Lesser General Public
-#    version 2 of the License, or (at your option) any later version.
+#    modify it under the terms of the MIT License.
 #
 #    This package is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    Lesser General Public License for more details.
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
+#    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
@@ -66,11 +65,13 @@ class PLFTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            k_mv = plf.PLF(train)
+            k_mv = plf.PLF()
+            k_mv.train(train)
             p_mv = k_mv.predict( test.pattern )
             mv_perf.append( np.mean(p_mv==test.reg) )
 
-            k_uv = plf.PLF(train.selectFeatures([0]))
+            k_uv = plf.PLF()
+            k_uv.train(train.selectFeatures([0]))
             p_uv = k_uv.predict( test.selectFeatures([0]).pattern )
             uv_perf.append( np.mean(p_uv==test.reg) )
 

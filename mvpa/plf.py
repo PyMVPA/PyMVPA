@@ -6,14 +6,12 @@
 #    Ingo Fruend <ingo.fruend@gmail.com>
 #
 #    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the GNU Lesser General Public
-#    License as published by the Free Software Foundation; either
-#    version 2 of the License, or (at your option) any later version.
+#    modify it under the terms of the MIT License.
 #
 #    This package is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    Lesser General Public License for more details.
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
+#    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
@@ -22,14 +20,14 @@ import numpy,sys
 class IterationError(Exception):
     pass
 
-class PLF:
-    def __init__(self,data,lm=1,criterion=1,reduce=False,maxiter=20,verbose=False):
+class PLF(Classifier):
+    def __init__(self,lm=1,criterion=1,reduce=False,maxiter=20,verbose=False):
         """
         Initialize a penalized logistic regression analysis
 
         Input:
         =====
-        data   is a MVPApattern object containing the data
+
         lm     the penalty term lambda
         criterion is the criterion applied to judge convergence
         if reduce is not False, the rank of the data is reduced before
@@ -41,19 +39,20 @@ class PLF:
                this number of iterations, an exception is raised
         verbose switches on/off logging information to stderr
         """
-        self.__data = data
         self.__lm   = lm
         self.__criterion = criterion
         self.__reduce = reduce
         self.__maxiter = maxiter
         self.__verbose = verbose
 
-        self.__train()
 
-    def __train(self):
+    def train(self,data):
+        """
+        data   is a MVPApattern object containing the data
+        """
         # Set up the environment for fitting the data
-        X = self.__data.pattern.T
-        d = self.__data.reg
+        X = data.pattern.T
+        d = data.reg
         if not list(set(d))==[0,1]:
             raise ValueError, "Regressors for logistic regression should be [0,1]"
 

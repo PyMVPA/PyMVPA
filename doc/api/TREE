@@ -1,0 +1,44 @@
+
+Mapper                              Dataset (S1)
+                                       \ appendtohistory(item)
+  | \-ICAMapper          \             |
+MaskMapper 				  \-------	MappedDataset (S1, Mapper)
+   \ forward(ndarray)                  |
+								  	MaskedDataset (S1, mask)
+
+
+Splitter                               ErrorFunction
+  |                                         |
+NFoldSplitter(S2)				                           CrossValidation
+     \ call(dataset)
+
+
+
+ Classifier  (LinearSVM)
+  train          \- weights 
+  predict
+      |
+ OptimizedClassifier(optimizer)
+
+
+
+ OptimizedClassifier(parameteroptimizer)
+
+
+
+ SensitivityAnalyzer
+      |
+ PerturbationSensitivityAnalyzer   LinearSVMSensitivityAnalyzer NonLinearSVMAnalyzer
+
+
+
+ OptimizerAlgorithm
+      |
+ LineSearchOptimizer   GridSearch   FeatureStrip(SensitivityAnalyzer)
+									   after train return ErrorFunction, sensitivity, 
+
+
+ Optimizer
+      |
+   ParameterOptimizer(optimizeralgorithm, parameter, classifier)
+   BoostedOptimizer(splitter, optimizer)

@@ -1,6 +1,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Import helper for PyMVPA
+#    PyMVPA: Common error function interface, computing the difference between
+#            some desired and some predicted values
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -15,4 +16,18 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from dataset import *
+from errorfxbase import *
+
+class ErrorFunction(ErrorFunctionBase):
+    """ Common error function interface, computing the difference between
+    some desired and some predicted values.
+    """
+    def __call__(self, predicted, desired):
+        """ Compute some error value from the given desired and predicted
+        values (both sequences).
+        """
+        raise NotImplemented
+
+
+
+
