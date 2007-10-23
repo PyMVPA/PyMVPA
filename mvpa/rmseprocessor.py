@@ -15,10 +15,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+from rmserrorfx import *
 
 class RMSEProcessor(SplitProcessor):
     """ Computes the root mean squared error of a cross-validation fold.
     """
-    def __call__(self, splitter, split, classifier, predictions ):
-        RMSEFunction error;
-        return error( predictions, split[1].regs)
+    def __call__(self, splitter, split, classifier):
+        predictions = classifier.predict( split[1].samples )
+        return RMSErrorFx()( predictions, split[1].labels )

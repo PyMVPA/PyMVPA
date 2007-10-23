@@ -18,15 +18,13 @@
 
 class Mapper(object):
     """
-	Interface to provide mapping between two spaces: in and out.
-	Methods are prefixed correspondingly. forward/reverse operate
-	on the entire dataset. get(In|Out)Id[s] operate on per element.
+    Interface to provide mapping between two spaces: in and out.
+    Methods are prefixed correspondingly. forward/reverse operate
+    on the entire dataset. get(In|Out)Id[s] operate per element.
           forward
-	in   ---------> out
+    in   ---------> out
          <--------/
            reverse
-
-    tools/refactor.sh
 
     Subclasses should define 'dsshape' and 'nfeatures' properties that point to
     getInShape() and getOutSize() respectively. This cannot be
@@ -68,50 +66,50 @@ class Mapper(object):
     #
     def getInShape(self):
         """
-		Returns the shape (or other dimensionality speicification)
-		of the original dataspace.
-		"""
+        Returns the shape (or other dimensionality speicification)
+        of the original dataspace.
+        """
         raise NotImplementedError
 
 
     def getOutShape(self):
         """
-		Returns the shape (or other dimensionality speicification)
-		of the destination dataspace.
-		"""
+        Returns the shape (or other dimensionality speicification)
+        of the destination dataspace.
+        """
         raise NotImplementedError
 
 
-	def getInSize(self):
-		""" Returns the size of the entity in input space """
-		raise NotImplementedError
+    def getInSize(self):
+        """ Returns the size of the entity in input space """
+        raise NotImplementedError
 
 
-	def getOutSize(self):
-		""" Returns the size of the entity in output space """
-		raise NotImplementedError
+    def getOutSize(self):
+        """ Returns the size of the entity in output space """
+        raise NotImplementedError
 
 
-	def getInEmpty(self):
-		""" Returns empty instance of input object """
-		raise NotImplementedError
+    def getInEmpty(self):
+        """ Returns empty instance of input object """
+        raise NotImplementedError
 
 
-	def getOutEmpty(self):
-		""" Returns empty instance of output object """
-		raise NotImplementedError
+    def getOutEmpty(self):
+        """ Returns empty instance of output object """
+        raise NotImplementedError
 
 
-	def getInId(self, outId):
-		"""For a given Id in "out" returns corresponding "in" Id """
-		raise NotImplementedError
+    def getInId(self, outId):
+        """For a given Id in "out" returns corresponding "in" Id """
+        raise NotImplementedError
 
-	def getInIds(self):
-		"""Returns corresponding "in" Ids """
-		raise NotImplementedError
+    def getInIds(self):
+        """Returns corresponding "in" Ids """
+        raise NotImplementedError
 
-	def getOutId(self, inId):
-		"""Returns corresponding "out" Id """
+    def getOutId(self, inId):
+        """Returns corresponding "out" Id """
 
 ### yoh: To think about generalization
 ##

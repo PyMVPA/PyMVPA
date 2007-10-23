@@ -21,13 +21,13 @@ import unittest
 tests = [ 'dataset',
           'maskmapper',
           'maskeddataset',
-          'nfoldsplitter' ]
+          'nfoldsplitter',
+          'crossval' ]
 #          'test_algorithms',
 #          'test_knn',
 #          'test_svm',
 #          'test_plf',
 #          'test_xvalpattern',
-#          'test_crossval',
 #          'test_searchlight',
 #          'test_ifs',
 #          'test_rfe',

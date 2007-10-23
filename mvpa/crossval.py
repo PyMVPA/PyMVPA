@@ -49,11 +49,11 @@ class CrossValidation(object):
 
         # splitter
         for split in self.__splitter( dataset ):
-            classifier.train( split[0] )
+            self.__classifier.train( split[0] )
 
             for splitprocessor in self.__splitprocessor:
                 results.append( splitprocessor( self.__splitter,
                                                 split,
-                                                classifier )  )
+                                                self.__classifier )  )
 
         return results
