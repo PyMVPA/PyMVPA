@@ -1,3 +1,5 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #    PyMVPA: Abstract base class of all data mappers
@@ -14,7 +16,6 @@
 #    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-
 
 class Mapper(object):
     """
@@ -110,6 +111,11 @@ class Mapper(object):
 
     def getOutId(self, inId):
         """Returns corresponding "out" Id """
+        raise NotImplementedError
+
+
+
+
 
 ### yoh: To think about generalization
 ##

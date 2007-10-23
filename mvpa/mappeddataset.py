@@ -18,7 +18,7 @@
 from dataset import *
 from mapper import *
 
-class MappedDataset(Dataset, Mapper):
+class MappedDataset(Dataset):
     """
     """
     def __init__(self, samples, labels, chunks, mapper ):
