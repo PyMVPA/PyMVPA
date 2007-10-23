@@ -110,6 +110,7 @@ class Mapper(object):
 
     def getOutId(self, inId):
         """Returns corresponding "out" Id """
+        raise NotImplementedError
 
 
 class NeighborMapper(Mapper):
@@ -118,9 +119,9 @@ class NeighborMapper(Mapper):
     """
 
     def getNeighbors(self, outIds, distance=0):
-    """ Return the list of outIds for the neighbors.
-    """
-
+        """ Return the list of outIds for the neighbors.
+        """
+        raise NotImplementedError
 
 ### yoh: To think about generalization
 ##
