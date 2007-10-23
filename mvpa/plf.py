@@ -20,14 +20,14 @@ import numpy,sys
 class IterationError(Exception):
     pass
 
-class PLF:
-    def __init__(self,data,lm=1,criterion=1,reduce=False,maxiter=20,verbose=False):
+class PLF(Classifier):
+    def __init__(self,lm=1,criterion=1,reduce=False,maxiter=20,verbose=False):
         """
         Initialize a penalized logistic regression analysis
 
         Input:
         =====
-        data   is a MVPApattern object containing the data
+
         lm     the penalty term lambda
         criterion is the criterion applied to judge convergence
         if reduce is not False, the rank of the data is reduced before
@@ -39,19 +39,20 @@ class PLF:
                this number of iterations, an exception is raised
         verbose switches on/off logging information to stderr
         """
-        self.__data = data
         self.__lm   = lm
         self.__criterion = criterion
         self.__reduce = reduce
         self.__maxiter = maxiter
         self.__verbose = verbose
 
-        self.__train()
 
-    def __train(self):
+    def train(self,data):
+        """
+        data   is a MVPApattern object containing the data
+        """
         # Set up the environment for fitting the data
-        X = self.__data.pattern.T
-        d = self.__data.reg
+        X = data.pattern.T
+        d = data.reg
         if not list(set(d))==[0,1]:
             raise ValueError, "Regressors for logistic regression should be [0,1]"
 
