@@ -109,7 +109,7 @@ class MaskedDatasetTests(unittest.TestCase):
             # choose random coord
             c = randomCoord(data.mapper.dsshape)
             # tranform to feature_id
-            id = data.mapper.getFeatureId(c)
+            id = data.mapper.getOutId(c)
 
             # compare data from orig array (selected by coord)
             # and data from pattern array (selected by feature id)
@@ -128,7 +128,7 @@ class MaskedDatasetTests(unittest.TestCase):
 
         for id in xrange(data.nfeatures):
             # transform to coordinate
-            c = data.mapper.getFeatureCoordinate(id)
+            c = data.mapper.getInId(id)
             self.failUnlessEqual(len(c), 4)
 
             # compare data from orig array (selected by coord)
@@ -285,18 +285,18 @@ class MaskedDatasetTests(unittest.TestCase):
 
         # check simple masking
         self.failUnless( data.nfeatures == 2 )
-        self.failUnless( data.mapper.getFeatureId( (2,1) ) == 0 
-                     and data.mapper.getFeatureId( (4,0) ) == 1 )
-        self.failUnlessRaises( ValueError, data.mapper.getFeatureId, (2,3) )
+        self.failUnless( data.mapper.getOutId( (2,1) ) == 0 
+                     and data.mapper.getOutId( (4,0) ) == 1 )
+        self.failUnlessRaises( ValueError, data.mapper.getOutId, (2,3) )
         self.failUnless( data.mapper.getMask().shape == (5,3) )
-        self.failUnless( tuple(data.mapper.getFeatureCoordinate( 1 )) == (4,0) )
+        self.failUnless( tuple(data.mapper.getInId( 1 )) == (4,0) )
 
         # selection should be idempotent
         self.failUnless(data.selectFeaturesByMask( mask ).nfeatures == data.nfeatures )
         # check that correct feature get selected
         self.failUnless( (data.selectFeatures([1]).samples[:,0] \
                           == N.array([12, 27, 42, 57]) ).all() )
-        self.failUnless(tuple( data.selectFeatures([1]).mapper.getFeatureCoordinate(0) ) == (4,0) )
+        self.failUnless(tuple( data.selectFeatures([1]).mapper.getInId(0) ) == (4,0) )
         self.failUnless( data.selectFeatures([1]).mapper.getMask().sum() == 1 )
 
 

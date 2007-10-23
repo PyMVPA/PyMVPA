@@ -22,7 +22,7 @@ class Mapper(object):
     """
 
     Subclasses should define 'dsshape' and 'nfeatures' properties that point to
-    getDataspaceShape() and getNMappedFeatures() respectively. This cannot be
+    getInShape() and getOutSize() respectively. This cannot be
     done in the baseclass as standard Python properties would still point to
     the baseclass methods.
 
@@ -60,11 +60,11 @@ class Mapper(object):
     # XXX -- should be deprecated and  might be substituted
     # with functions like  getEmptyFrom / getEmptyTo
     #
-    def getDataspaceShape(self):
+    def getInShape(self):
         """ Returns the shape of the original dataspace. """
         raise NotImplementedError
 
-    def getNMappedFeatures(self):
+    def getOutSize(self):
         """ Returns the number of features the original dataspace is mapped
         onto. """
         raise NotImplementedError
