@@ -50,7 +50,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
         + [0 for i in xrange(patterns)]
     regs = np.array(regs)
 
-    return mvpa.MVPAPattern(data, regs)
+    return mvpa.Dataset(data, regs, None)
 
 
 class PLFTests(unittest.TestCase):
@@ -67,13 +67,13 @@ class PLFTests(unittest.TestCase):
 
             k_mv = plf.PLF()
             k_mv.train(train)
-            p_mv = k_mv.predict( test.pattern )
-            mv_perf.append( np.mean(p_mv==test.reg) )
+            p_mv = k_mv.predict( test.samples )
+            mv_perf.append( np.mean(p_mv==test.labels) )
 
             k_uv = plf.PLF()
             k_uv.train(train.selectFeatures([0]))
-            p_uv = k_uv.predict( test.selectFeatures([0]).pattern )
-            uv_perf.append( np.mean(p_uv==test.reg) )
+            p_uv = k_uv.predict( test.selectFeatures([0]).samples )
+            uv_perf.append( np.mean(p_uv==test.labels) )
 
         mean_mv_perf = np.mean(mv_perf)
         mean_uv_perf = np.mean(uv_perf)
