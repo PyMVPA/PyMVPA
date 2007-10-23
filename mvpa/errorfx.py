@@ -16,6 +16,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+from errorfxbase import *
 
 class ErrorFunction(ErrorFunctionBase):
     """ Common error function interface, computing the difference between

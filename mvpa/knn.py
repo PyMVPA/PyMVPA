@@ -79,12 +79,12 @@ class kNN:
 
     def getMajorityVote(self, knn_ids):
         # create dictionary with an item for each condition
-        votes = dict( zip ( self.__data.reglabels,
-                            [0 for i in self.__data.reglabels ] ) )
+        votes = dict( zip ( self.__data.uniquelabels,
+                            [0 for i in self.__data.uniquelabels ] ) )
 
         # add 1 to a certain condition per NN
         for nn in knn_ids:
-            votes[self.__data.regs[nn]] += 1
+            votes[self.__data.labels[nn]] += 1
 
         # find the condition with most votes
         best_cond = None; most_votes = None
@@ -97,15 +97,15 @@ class kNN:
 
     def getWeightedVote(self, knn_ids):
         # create dictionary with an item for each condition
-        votes = dict( zip ( self.__data.reglabels, 
-                            [0 for i in self.__data.reglabels ] ) )
-        weights = dict( zip ( self.__data.reglabels,
-                    [ 1 - ( float( self.__data.regs.tolist().count(i) ) \
-                      / len(self.__data.regs) )
-                        for i in self.__data.reglabels ] ) )
+        votes = dict( zip ( self.__data.uniquelabels, 
+                            [0 for i in self.__data.uniquelabels ] ) )
+        weights = dict( zip ( self.__data.uniquelabels,
+                    [ 1 - ( float( self.__data.labels.tolist().count(i) ) \
+                      / len(self.__data.labels) )
+                        for i in self.__data.uniquelabels ] ) )
 
         for nn in knn_ids:
-            votes[self.__data.regs[nn]] += weights[self.__data.regs[nn]]
+            votes[self.__data.labels[nn]] += weights[self.__data.labels[nn]]
 
         # find the condition with most votes
         best_cond = None; most_votes = None

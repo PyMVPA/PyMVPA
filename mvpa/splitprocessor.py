@@ -16,7 +16,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 
-class SplitProcessing(object):
+class SplitProcessor(object):
     """
     Base/dummy class
 

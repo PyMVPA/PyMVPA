@@ -16,6 +16,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from dataset import *
+from mapper import *
 
 class MappedDataset(Dataset, Mapper):
     """
