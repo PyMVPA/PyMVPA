@@ -6,14 +6,12 @@
 #    Michael Hanke <michael.hanke@gmail.com>
 #
 #    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the GNU Lesser General Public
-#    License as published by the Free Software Foundation; either
-#    version 2 of the License, or (at your option) any later version.
+#    modify it under the terms of the MIT License.
 #
 #    This package is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    Lesser General Public License for more details.
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
+#    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
@@ -69,11 +67,11 @@ class MaskMapper(Mapper):
         return mapped
 
 
-    def getDataspaceShape(self):
+    def getInShape(self):
         return self.__mask.shape
 
 
-    def getNMappedFeatures(self):
+    def getOutSize(self):
         return len(self.__mask.nonzero()[0])
 
 
@@ -89,21 +87,21 @@ class MaskMapper(Mapper):
             return self.__mask
 
     # XXX it might become __get_item__ access method
-    def getFeatureCoordinate( self, feature_id ):
+    def getInId( self, feature_id ):
         """ Returns a features coordinate in the original data space
         for a given feature id.
         """
-        return self.getFeatureCoordinates()[feature_id]
+        return self.getInIds()[feature_id]
 
 
-    def getFeatureCoordinates( self ):
+    def getInIds( self ):
         """ Returns a 2d array where each row contains the coordinate of the
         feature with the corresponding id.
         """
         return N.transpose(self.__mask.nonzero())
 
 
-    def getFeatureId( self, coord ):
+    def getOutId( self, coord ):
         """ Translate a feature mask coordinate into a feature ID.
 
         Warning: This method is painfully slow, avoid if possible!
@@ -129,6 +127,6 @@ class MaskMapper(Mapper):
 
 
     # Read-only props
-    dsshape = property( fget=getDataspaceShape )
-    nfeatures = property( fget=getNMappedFeatures )
+    dsshape = property( fget=getInShape )
+    nfeatures = property( fget=getOutSize )
 

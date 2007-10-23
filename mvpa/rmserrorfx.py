@@ -1,6 +1,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Import helper for PyMVPA
+#    PyMVPA: Error function object that computes the root mean squared error
+#            of some desired and some predicted values
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -15,4 +16,20 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from dataset import *
+import numpy as N
+
+class RMSErrorFx(ErrorFunction):
+    """ Computes the root mean squared error of some desired and some
+    predicted values.
+    """
+    def __call__(self, predicted, desired):
+        """ Both 'predicted' and 'desired' can be either scalars or sequences,
+        but have to be of the same length.
+        """
+        difference = N.subtract(predicted, desired)
+
+        return sqrt(N.dot(difference, difference))
+
+
+
+
