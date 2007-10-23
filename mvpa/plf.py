@@ -15,6 +15,8 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+from classifier import *
+
 import numpy,sys
 
 class IterationError(Exception):
@@ -51,8 +53,8 @@ class PLF(Classifier):
         data   is a MVPApattern object containing the data
         """
         # Set up the environment for fitting the data
-        X = data.pattern.T
-        d = data.reg
+        X = data.samples.T
+        d = data.labels
         if not list(set(d))==[0,1]:
             raise ValueError, "Regressors for logistic regression should be [0,1]"
 
