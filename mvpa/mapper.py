@@ -111,6 +111,17 @@ class Mapper(object):
     def getOutId(self, inId):
         """Returns corresponding "out" Id """
 
+
+class NeighborMapper(Mapper):
+    """ The mapper which knows about structure of the data and thus can provide
+        information about the neighbors
+    """
+
+    def getNeighbors(self, outIds, distance=0):
+    """ Return the list of outIds for the neighbors.
+    """
+
+
 ### yoh: To think about generalization
 ##
 ## getMask... it might be more generic... so far seems to be specific for featsel and rfe
