@@ -22,7 +22,7 @@ import numpy,sys
 class IterationError(Exception):
     pass
 
-class PLF:
+class PLF(Classifier):
     def __init__(self,lm=1,criterion=1,reduce=False,maxiter=20,verbose=False):
         """
         Initialize a penalized logistic regression analysis
@@ -47,9 +47,8 @@ class PLF:
         self.__maxiter = maxiter
         self.__verbose = verbose
 
-        self.__train()
 
-    def __train(self,data):
+    def train(self,data):
         """
         data   is a MVPApattern object containing the data
         """

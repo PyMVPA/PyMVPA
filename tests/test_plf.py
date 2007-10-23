@@ -66,11 +66,13 @@ class PLFTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            k_mv = plf.PLF(train)
+            k_mv = plf.PLF()
+            k_mv.train(train)
             p_mv = k_mv.predict( test.pattern )
             mv_perf.append( np.mean(p_mv==test.reg) )
 
-            k_uv = plf.PLF(train.selectFeatures([0]))
+            k_uv = plf.PLF()
+            k_uv.train(train.selectFeatures([0]))
             p_uv = k_uv.predict( test.selectFeatures([0]).pattern )
             uv_perf.append( np.mean(p_uv==test.reg) )
 
