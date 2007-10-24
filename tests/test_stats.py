@@ -17,19 +17,19 @@
 
 import mvpa.stats as ms
 import unittest
-import numpy as np
+import numpy as N
 
 class StatsTests(unittest.TestCase):
 
     def testChiSquare(self):
         # test equal distribution
-        tbl = np.array([[5,5],[5,5]])
+        tbl = N.array([[5,5],[5,5]])
         chi, p = ms.chisquare( tbl )
         self.failUnless( chi == 0.0 )
         self.failUnless( p == 1.0 )
 
         # test non-equal distribution
-        tbl = np.array([[4,0],[0,4]])
+        tbl = N.array([[4,0],[0,4]])
         chi, p = ms.chisquare( tbl )
         self.failUnless( chi == 8.0 )
         self.failUnless( p < 0.05 )

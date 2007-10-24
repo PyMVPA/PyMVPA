@@ -3,7 +3,7 @@ from svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR
 from svmc import LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED
 from math import exp, fabs
 import re
-import numpy
+import numpy as N
 
 def _int_array(seq):
 	size = len(seq)
@@ -339,8 +339,8 @@ class svm_model:
 
 		The rank is derived from the SV coefficients of the trained model.
 		"""
-		return numpy.abs( ( numpy.matrix( self.get_SV_coef() )
-							* numpy.matrix( self.get_SV() ) ).mean(axis=0).A1 )
+		return N.abs( ( N.matrix( self.get_SV_coef() )
+							* N.matrix( self.get_SV() ) ).mean(axis=0).A1 )
 
 
 def cross_validation(prob, param, fold):

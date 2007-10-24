@@ -22,7 +22,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import algorithms
-import numpy as np
+import numpy as N
 import support
 import crossval
 import sys
@@ -122,11 +122,11 @@ class Searchlight( object ):
 
     def __clearResults( self ):
         # init the result maps
-        self.__perfmean = np.zeros(self.pattern.mapper.dsshape)
-        self.__perfvar = np.zeros(self.pattern.mapper.dsshape)
-        self.__chisquare = np.zeros(self.pattern.mapper.dsshape)
-        self.__chanceprob = np.zeros(self.pattern.mapper.dsshape)
-        self.__spheresize = np.zeros(self.pattern.mapper.dsshape, dtype='uint')
+        self.__perfmean = N.zeros(self.pattern.mapper.dsshape)
+        self.__perfvar = N.zeros(self.pattern.mapper.dsshape)
+        self.__chisquare = N.zeros(self.pattern.mapper.dsshape)
+        self.__chanceprob = N.zeros(self.pattern.mapper.dsshape)
+        self.__spheresize = N.zeros(self.pattern.mapper.dsshape, dtype='uint')
 
 
     def setClassifier( self, classifier ):
@@ -147,7 +147,7 @@ class Searchlight( object ):
         self.__clearResults()
 
         if self.__verbose:
-            nspheres = np.array( self.mask.nonzero() ).shape[1]
+            nspheres = N.array( self.mask.nonzero() ).shape[1]
             sphere_count = 0
 
         # for all possible spheres in the mask
@@ -165,11 +165,11 @@ class Searchlight( object ):
             cv()
 
             # store the performance value as a vector
-            perf = np.array( cv.perf )
+            perf = N.array( cv.perf )
 
             # translate center coordinate into array slicing index
-            center_index = np.transpose(
-                               np.array( center, ndmin=2 ) ).tolist()
+            center_index = N.transpose(
+                               N.array( center, ndmin=2 ) ).tolist()
 
             # store the interesting information
             # mean performance
@@ -240,7 +240,7 @@ class OptimalSearchlight( object ):
 
 
         # now determine the best classification accuracy
-        best = np.array(self.__perfmeans).argmax( axis=0 )
+        best = N.array(self.__perfmeans).argmax( axis=0 )
 
         # select the corresponding values of the best classification
         # in all data tables
@@ -251,7 +251,7 @@ class OptimalSearchlight( object ):
         self.spheresize = best.choose(*(self.__spheresizes))
 
         # store the best performing radius
-        self.bestradius = np.zeros( self.perfmean.shape, dtype='uint' )
+        self.bestradius = N.zeros( self.perfmean.shape, dtype='uint' )
         self.bestradius[searchlight.mask==True] = \
             best.choose( test_radii )[searchlight.mask==True]
 
@@ -268,7 +268,7 @@ def makeSphericalROIMask( mask, radius, elementsize=None ):
             raise ValueError, 'elementsize does not match mask dimensions.'
 
     # rois will be drawn into this mask
-    roi_mask = np.zeros( mask.shape, dtype='int32' )
+    roi_mask = N.zeros( mask.shape, dtype='int32' )
 
     # while increase with every ROI
     roi_id_counter = 1
