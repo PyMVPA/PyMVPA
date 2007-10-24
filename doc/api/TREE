@@ -1,15 +1,15 @@
 
 Mapper                              Dataset (S1)
-                                       \ appendtohistory(item)
+  |                                    \- appendtohistory(item)
   | \-ICAMapper          \             |
-MaskMapper 				  \-------	MappedDataset (S1, Mapper)
+MaskMapper                \-------  MappedDataset (S1, Mapper)
    \ forward(ndarray)                  |
-								  	MaskedDataset (S1, mask)
+                                    MaskedDataset (S1, mask)
 
 
 Splitter                               ErrorFunction
   |                                         |
-NFoldSplitter(S2)				                           CrossValidation
+NFoldSplitter(S2)                     CrossValidation
      \ call(dataset)
 
 
@@ -28,14 +28,16 @@ NFoldSplitter(S2)				                           CrossValidation
 
  SensitivityAnalyzer
       |
- PerturbationSensitivityAnalyzer   LinearSVMSensitivityAnalyzer NonLinearSVMAnalyzer
+ ClassifierBasedSensitivityAnalyzer(classifier)
+      |
+ PerturbationSensitivityAnalyzer   LinearSVMSensitivityAnalyzer   NonLinearSVMAnalyzer
 
 
 
  OptimizerAlgorithm
       |
  LineSearchOptimizer   GridSearch   FeatureStrip(SensitivityAnalyzer)
-									   after train return ErrorFunction, sensitivity, 
+                                       after train return ErrorFunction, sensitivity, 
 
 
  Optimizer
