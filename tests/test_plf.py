@@ -18,7 +18,7 @@
 import unittest
 import mvpa
 import mvpa.plf as plf
-import numpy as np
+import numpy as N
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):
@@ -33,7 +33,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
     """
 
     # start with noise
-    data=np.random.normal(size=(4*patterns,2))
+    data=N.random.normal(size=(4*patterns,2))
 
     # add signal
     data[:2*patterns,1] += signal2noise
@@ -48,7 +48,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
         + [1 for i in xrange(patterns)] \
         + [1 for i in xrange(patterns)] \
         + [0 for i in xrange(patterns)]
-    regs = np.array(regs)
+    regs = N.array(regs)
 
     return mvpa.MVPAPattern(data, regs)
 
@@ -68,15 +68,15 @@ class PLFTests(unittest.TestCase):
             k_mv = plf.PLF()
             k_mv.train(train)
             p_mv = k_mv.predict( test.pattern )
-            mv_perf.append( np.mean(p_mv==test.reg) )
+            mv_perf.append( N.mean(p_mv==test.reg) )
 
             k_uv = plf.PLF()
             k_uv.train(train.selectFeatures([0]))
             p_uv = k_uv.predict( test.selectFeatures([0]).pattern )
-            uv_perf.append( np.mean(p_uv==test.reg) )
+            uv_perf.append( N.mean(p_uv==test.reg) )
 
-        mean_mv_perf = np.mean(mv_perf)
-        mean_uv_perf = np.mean(uv_perf)
+        mean_mv_perf = N.mean(mv_perf)
+        mean_uv_perf = N.mean(uv_perf)
 
         print mean_mv_perf
         print mean_uv_perf

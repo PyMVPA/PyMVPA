@@ -15,7 +15,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import numpy as np
+import numpy as N
 import scipy.stats as stats
 
 def chisquare( obs, exp = None ):
@@ -27,22 +27,22 @@ def chisquare( obs, exp = None ):
 
     Returns: chisquare-stats, associated p-value (upper tail)
     """
-    obs = np.array( obs )
+    obs = N.array( obs )
 
     # get total number of observations
-    N = np.sum( obs )
+    N = N.sum( obs )
 
     # if no expected value are supplied assume equal distribution
     if exp == None:
-        exp = np.ones(obs.shape) * N / np.prod(obs.shape)
+        exp = N.ones(obs.shape) * N / N.prod(obs.shape)
 
     # make sure to have floating point data
     exp = exp.astype( float )
 
     # compute chisquare value
-    chisq = np.sum( ( obs - exp )**2 / exp )
+    chisq = N.sum( ( obs - exp )**2 / exp )
 
     # return chisq and probability (upper tail)
-    return chisq, stats.chisqprob( chisq, np.prod( obs.shape ) - 1 )
+    return chisq, stats.chisqprob( chisq, N.prod( obs.shape ) - 1 )
 
 

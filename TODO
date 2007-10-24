@@ -3,14 +3,6 @@
 * Hide libsvm interface from user and provide a unique classifier for linear
   SVM.
 * (features selected on all folds)/(features selected on any fold)
-
-
-* unify import of numpy as "import numpy as np". Now there are 3
-   variants:
-  import numpy
-  import numpy as N
-  import numpy as np
-
 * setup some conventions on names and formatting: camelback etc... may
    be should choose some confromant with pylint. if to go with
    camelback -- ask Yarik about pylintrc ;-)

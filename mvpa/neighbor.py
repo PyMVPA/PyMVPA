@@ -17,12 +17,12 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import numpy as np
+import numpy as N
 
 def cartesianDistance(a, b):
     """ Return cartesian distance between a and b
     """
-    return np.linalg.norm(a-b)
+    return N.linalg.norm(a-b)
 
 
 def absminDistance(a, b):
@@ -72,7 +72,7 @@ class DescreteNeighborFinder(NeighborFinder):
         self.__distance_function = distance_function
 
         # XXX might not need assume compatible spacementric
-        self.__elementsize = np.array(elementsize)
+        self.__elementsize = N.array(elementsize)
         self.__Ndims = len(self.__elementsize)
 
 
@@ -83,12 +83,12 @@ class DescreteNeighborFinder(NeighborFinder):
         elementradius_per_axis = float(radius) / self.__elementsize
 
         # build prototype search space
-		filter_center = filter_radiuses = np.array(map(lambda x: int(np.ceil(abs(x))), \
+		filter_center = filter_radiuses = N.array(map(lambda x: int(N.ceil(abs(x))), \
 													   elementradius_per_axis))
-		filter_mask = np.ones( ( filter_radiuses * 2 ) + 1 )
+		filter_mask = N.ones( ( filter_radiuses * 2 ) + 1 )
 
         # now zero out all too distant elements
-        f_coords = np.transpose( filter_mask.nonzero() )
+        f_coords = N.transpose( filter_mask.nonzero() )
 
         # check all filter element
         for coord in f_coords:
@@ -97,9 +97,9 @@ class DescreteNeighborFinder(NeighborFinder):
             # compare with radius
             if radius < dist:
                 # zero too distant
-                filter_mask[np.array(coord, ndmin=2).T.tolist()] = 0
+                filter_mask[N.array(coord, ndmin=2).T.tolist()] = 0
 
-        self.__filter_coord = np.array( filter_mask.nonzero() ).T \
+        self.__filter_coord = N.array( filter_mask.nonzero() ).T \
 							            - filter_center
         self.__filter_radius = radius
 

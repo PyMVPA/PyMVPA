@@ -15,7 +15,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import numpy as np
+import numpy as N
 import svm
 import support
 
@@ -42,7 +42,7 @@ class RFE( object ):
 
 
     def __testClassifierOnTrainingSet(self):
-        predictions = np.array(self.__clf.predict( self.pattern.samples ))
+        predictions = N.array(self.__clf.predict( self.pattern.samples ))
 
         self.__training_confusion_mat = \
             support.buildConfusionMatrix( self.pattern.reglabels,
@@ -77,7 +77,7 @@ class RFE( object ):
         n = int( n )
 
         # elimination log mask
-        elim_mask = np.zeros( self.pattern.mapper.dsshape, dtype='uint' )
+        elim_mask = N.zeros( self.pattern.mapper.dsshape, dtype='uint' )
 
         # do it until there are more feature than there should be
         while n < self.pattern.nfeatures:
@@ -181,7 +181,7 @@ class RFE( object ):
                                                 masked.regs,
                                                 predicted )
 
-        perf = np.mean( predicted == masked.regs )
+        perf = N.mean( predicted == masked.regs )
 
         return predicted, perf, confmat
 

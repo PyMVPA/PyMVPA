@@ -16,14 +16,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 import unittest
-import numpy as np
+import numpy as N
 import mvpa.support as support
 
 class SupportFxTests(unittest.TestCase):
 
     def testTransformWithBoxcar(self):
-        data = np.arange(10)
-        sp = np.arange(10)
+        data = N.arange(10)
+        sp = N.arange(10)
 
         # check if stupid thing don't work
         self.failUnlessRaises(ValueError, 
@@ -44,24 +44,24 @@ class SupportFxTests(unittest.TestCase):
                                2 )
 
         # now something that should work
-        sp = np.arange(9)
+        sp = N.arange(9)
         trans = support.transformWithBoxcar( data, sp, 2)
         self.failUnless( ( trans == \
                            [0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5] ).all() )
 
 
         # now test for proper data shape
-        data = np.ones((10,3,4,2))
+        data = N.ones((10,3,4,2))
         sp = [ 2, 4, 3, 5 ]
         trans = support.transformWithBoxcar( data, sp, 4)
         self.failUnless( trans.shape == (4,3,4,2) )
 
 
     def testConfusionMatrix(self):
-        data = np.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
-        reg = np.array([1,1,1,2,2,2,3,3,3])
+        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        reg = N.array([1,1,1,2,2,2,3,3,3])
 
-        tbl = support.buildConfusionMatrix( np.unique(reg), reg, np.array([1,2,1,2,2,2,3,2,1]) )
+        tbl = support.buildConfusionMatrix( N.unique(reg), reg, N.array([1,2,1,2,2,2,3,2,1]) )
 
         # should be square matrix (len(reglabels) x len(reglabels)
         self.failUnless( tbl.shape == (3,3) )
