@@ -6,3 +6,13 @@
 * setup some conventions on names and formatting: camelback etc... may
    be should choose some confromant with pylint. if to go with
    camelback -- ask Yarik about pylintrc ;-)
+
+   Michael's comment:
+      We should probably use the official coding guidelines
+
+      http://www.python.org/dev/peps/pep-0008/
+
+      and not come up with something 'new'. The most important difference to the      current practice is that class methods should be all lowercase (separated
+      by underscores) -- I consider this ugly, but for the sake of conformance
+      I have no problem the fit future code to this scheme and modify old stuff,
+      when touched for any other reason.
