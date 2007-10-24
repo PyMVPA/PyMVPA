@@ -12,7 +12,8 @@
 
       http://www.python.org/dev/peps/pep-0008/
 
-      and not come up with something 'new'. The most important difference to the      current practice is that class methods should be all lowercase (separated
+      and not come up with something 'new'. The most important difference to the
+      current practice is that class methods should be all lowercase (separated
       by underscores) -- I consider this ugly, but for the sake of conformance
       I have no problem the fit future code to this scheme and modify old stuff,
       when touched for any other reason.
