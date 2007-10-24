@@ -15,9 +15,9 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import numpy as np
+import numpy as N
 
-def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = np.mean ):
+def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """ This function transforms a dataset by calculating the mean of a set of
     patterns. Such a pattern set is defined by a starting point and the size
     of the window along the first axis of the data ('boxlength').
@@ -51,9 +51,9 @@ def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = np.mean ):
                  for i in startpoints ]
 
     # average each box
-    selected = [ fx( data[ np.array(box) ], axis=0 ) for box in selector ]
+    selected = [ fx( data[ N.array(box) ], axis=0 ) for box in selector ]
 
-    return np.array( selected )
+    return N.array( selected )
 
 
 def buildConfusionMatrix( labels, targets, predictions ):
@@ -77,14 +77,14 @@ def buildConfusionMatrix( labels, targets, predictions ):
     the target would have been i.
     """
     # needs to be an array
-    pred = np.array(predictions)
+    pred = N.array(predictions)
 
     # create the contingency table template
-    mat = np.zeros( (len(labels), len(labels)), dtype = 'uint' )
+    mat = N.zeros( (len(labels), len(labels)), dtype = 'uint' )
 
     for t, tl in enumerate( labels ):
         for p, pl in enumerate( labels ):
-            mat[t, p] = np.sum( pred[targets==tl] == pl )
+            mat[t, p] = N.sum( pred[targets==tl] == pl )
 
     return mat
 

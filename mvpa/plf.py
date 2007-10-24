@@ -17,7 +17,8 @@
 
 from classifier import *
 
-import numpy,sys
+import sys
+import numpy as N
 
 class IterationError(Exception):
     pass
@@ -66,34 +67,34 @@ class PLF(Classifier):
             # Select only the n largest eigenvectors
             U,S,V = svd(X.T)
             S /= S[0]
-            V = numpy.matrix(V[:,:numpy.max(numpy.where(S>self.__reduce))+1])
+            V = N.matrix(V[:,:N.max(N.where(S>self.__reduce))+1])
             X = (X.T*V).T # Map Data to the subspace spanned by the eigenvectors
 
         nfeatures,npatterns = X.shape
 
         # Weighting vector
-        w  = numpy.matrix(numpy.zeros( (nfeatures+1,1),'d'))
+        w  = N.matrix(N.zeros( (nfeatures+1,1),'d'))
         # Error for convergence criterion
-        dw = numpy.matrix(numpy.ones(  (nfeatures+1,1),'d'))
+        dw = N.matrix(N.ones(  (nfeatures+1,1),'d'))
         # Patterns of interest in the columns
-        X = numpy.matrix(\
-                numpy.concatenate((X,numpy.ones((1,npatterns),'d')),0)\
+        X = N.matrix(\
+                N.concatenate((X,N.ones((1,npatterns),'d')),0)\
                 )
-        p = numpy.matrix(numpy.zeros((1,npatterns),'d'))
+        p = N.matrix(N.zeros((1,npatterns),'d'))
         # Matrix implementation of penalty term
-        Lambda = self.__lm * numpy.identity(nfeatures+1,'d')
+        Lambda = self.__lm * N.identity(nfeatures+1,'d')
         Lambda[nfeatures,nfeatures] = 0
         # Gradient
-        g = numpy.matrix(numpy.zeros((nfeatures+1,1),'d'))
+        g = N.matrix(N.zeros((nfeatures+1,1),'d'))
         # Fisher information matrix
-        H = numpy.matrix(numpy.identity(nfeatures+1,'d'))
+        H = N.matrix(N.identity(nfeatures+1,'d'))
 
         # Optimize
         k = 0
-        while numpy.sum(numpy.ravel(dw.A**2))>self.__criterion:
+        while N.sum(N.ravel(dw.A**2))>self.__criterion:
             p[:,:] = self.__f(w.T * X)
             g[:,:] = X * (d-p).T - Lambda * w
-            H[:,:] = X * numpy.diag(p.A1 * (1-p.A1)) * X.T + Lambda
+            H[:,:] = X * N.diag(p.A1 * (1-p.A1)) * X.T + Lambda
             dw[:,:] = H.I * g
             w += dw
             k += 1
@@ -103,7 +104,7 @@ class PLF(Classifier):
         if self.__verbose:
             sys.stderr.write(\
                     "PLF converged after %d steps\nError: %g\n" %\
-                    (k,numpy.sum(numpy.ravel(dw.A**2))))
+                    (k,N.sum(N.ravel(dw.A**2))))
 
         if self.__reduce:
             # We have computed in rank reduced space ->
@@ -117,7 +118,7 @@ class PLF(Classifier):
     def __f(self,y):
         """This is the logistic function f, that is used for determination of
         the vector w"""
-        return 1./(1+numpy.exp(-y))
+        return 1./(1+N.exp(-y))
 
     def predict(self,data):
         """
@@ -125,6 +126,6 @@ class PLF(Classifier):
 
         Returns a list of class labels
         """
-        data = numpy.matrix(numpy.array(data))
-        return numpy.ravel(self.__f(self.offset+data*self.w) > 0.5)
+        data = N.matrix(N.array(data))
+        return N.ravel(self.__f(self.offset+data*self.w) > 0.5)
 

@@ -18,7 +18,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 from distutils.core import setup, Extension
-import numpy
+import numpy as N
 import os
 from glob import glob
 
@@ -26,7 +26,7 @@ from glob import glob
 os.environ['CC'] = 'g++'
 
 # find numpy headers
-numpy_headers = os.path.join(os.path.dirname(numpy.__file__),'core','include')
+numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
 # Notes on the setup
 # Version scheme is:

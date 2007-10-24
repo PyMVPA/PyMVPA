@@ -20,21 +20,21 @@ import mvpa.maskeddataset
 import mvpa.searchlight as sl
 import mvpa.knn as knn
 import mvpa.svm as svm
-import numpy
+import numpy as N
 
 class SearchlightTests(unittest.TestCase):
 
     def setUp(self):
-        data = numpy.random.standard_normal(( 100, 3, 6, 6 ))
-        reg = numpy.concatenate( ( numpy.repeat( 0, 50 ),
-                                   numpy.repeat( 1, 50 ) ) )
-        orig = numpy.repeat( range(5), 10 )
-        origin = numpy.concatenate( (orig, orig) )
+        data = N.random.standard_normal(( 100, 3, 6, 6 ))
+        reg = N.concatenate( ( N.repeat( 0, 50 ),
+                                   N.repeat( 1, 50 ) ) )
+        orig = N.repeat( range(5), 10 )
+        origin = N.concatenate( (orig, orig) )
         self.pattern = mvpa.maskeddataset.MaskedDataset( data, reg, origin )
 
 
     def testSearchlight(self):
-        mask = numpy.zeros( (3, 6, 6) )
+        mask = N.zeros( (3, 6, 6) )
         mask[0,0,0] = 1
         mask[1,3,2] = 1
         slight = sl.Searchlight( self.pattern,
@@ -64,7 +64,7 @@ class SearchlightTests(unittest.TestCase):
 
     def testOptimalSearchlight(self):
         slight = sl.Searchlight( self.pattern,
-                                 numpy.ones((3,6,6)),
+                                 N.ones((3,6,6)),
                                  svm.SVM(),
                                  elementsize = (3,3,3),
                                  forcesphere = True,
@@ -76,13 +76,13 @@ class SearchlightTests(unittest.TestCase):
                                      verbose = False )
         # check that only valid radii are in bestradius array
         self.failUnless( 
-            ( numpy.array([ i in test_radii for i in numpy.unique(osl.bestradius) ]) \
+            ( N.array([ i in test_radii for i in N.unique(osl.bestradius) ]) \
               == True ).all() )
 
 
     def testSphericalROIMaskGenerator(self):
         # make dummy mask
-        mask = numpy.zeros((4,4,4))
+        mask = N.zeros((4,4,4))
         mask[2,2,2] = 1
         mask[1,1,1] = 1
         mask[2,1,1] = 1
