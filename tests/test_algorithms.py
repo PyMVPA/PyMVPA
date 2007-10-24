@@ -17,14 +17,14 @@
 
 import mvpa.algorithms as algorithms
 import unittest
-import numpy
+import numpy as N
 
 class AlgorithmTests(unittest.TestCase):
 
     def testSphereGenerator(self):
         minimal = [ coords
             for center, coords in algorithms.SpheresInMask(
-                    numpy.ones((1,1,1)), 1) ]
+                    N.ones((1,1,1)), 1) ]
 
         # only one sphere possible
         self.failUnless( len(minimal) == 1 )
@@ -33,7 +33,7 @@ class AlgorithmTests(unittest.TestCase):
         self.failUnless( minimal[0][0,0,0] == True )
 
         # make bigger 3d mask
-        three_mask = numpy.ones((3,3,3))
+        three_mask = N.ones((3,3,3))
         # disable a single voxel
         three_mask[1,1,1] = 0
 
@@ -51,7 +51,7 @@ class AlgorithmTests(unittest.TestCase):
 
 
         s = [ (c,sc.copy()) for c,sc in \
-            algorithms.SpheresInMask( numpy.ones((2,2,2)),
+            algorithms.SpheresInMask( N.ones((2,2,2)),
                                       0.9,
                                       elementsize=(1,1,1),
                                       forcesphere=False ) ]
@@ -66,7 +66,7 @@ class AlgorithmTests(unittest.TestCase):
             self.failUnless( coord[1].sum() == 1 )
             # the sphere center is the only voxel
             self.failUnless( ( coord[0] == \
-                             numpy.transpose( coord[1].nonzero())).all() )
+                             N.transpose( coord[1].nonzero())).all() )
 
 
 

@@ -18,13 +18,13 @@
 
 from mvpa.neighbor import *
 import unittest
-import numpy as np
+import numpy as N
 
 class NeighborFinderTests(unittest.TestCase):
 
     def testDistances(self):
-        a = np.array([3,8])
-        b = np.array([6,4])
+        a = N.array([3,8])
+        b = N.array([6,4])
         # test distances or yarik recalls unit testing ;)
         self.failUnless( cartesianDistance(a, b) == 5.0 )
         self.failUnless( manhattenDistance(a, b) == 7 )
@@ -41,7 +41,7 @@ class NeighborFinderTests(unittest.TestCase):
 		finder = DescreteNeighborFinder(elsize)
 
         # simple check
-        target = np.array([ [1,2], [2,1], [2,2], [2,3], [3,2] ])
+        target = N.array([ [1,2], [2,1], [2,2], [2,3], [3,2] ])
         self.failUnless( (finder([2,2], 2.6) == target).all())
 
         # a bit longer one... not sure what for

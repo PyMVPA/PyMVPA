@@ -16,7 +16,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 
-import numpy
+import numpy as N
 
 def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
     """Generates all possible spheres with a fixed radius within a mask.
@@ -48,36 +48,36 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
     in range regardless of their status in the mask instead.
     """
     if elementsize == None:
-        elementsize = numpy.ones( len( mask.shape ), dtype='uint' )
+        elementsize = N.ones( len( mask.shape ), dtype='uint' )
     else:
-        elementsize = numpy.array( elementsize )
+        elementsize = N.array( elementsize )
 
     # compute radius in units of elementsize per axis
     elementradius_per_axis = float(radius) / elementsize
 
     # build prototype sphere
-    filter = numpy.ones( ( numpy.ceil( elementradius_per_axis ) * 2 ) + 1 )
-    filter_center = numpy.array( filter.shape ) / 2
+    filter = N.ones( ( N.ceil( elementradius_per_axis ) * 2 ) + 1 )
+    filter_center = N.array( filter.shape ) / 2
 
     # now zero out all too distant elements
-    f_coords = numpy.transpose( filter.nonzero() )
+    f_coords = N.transpose( filter.nonzero() )
     # check all filter element
     for coord in f_coords:
         # scale coordinates by elementsize (and de-mean)
         trans_coord = ((coord - filter_center) * elementsize) - elementsize/2
 
         # compare with radius
-        if radius < numpy.linalg.norm( trans_coord ):
+        if radius < N.linalg.norm( trans_coord ):
             # zero everything that is too distant
-            filter[numpy.array(coord, ndmin=2).T.tolist()] = 0
+            filter[N.array(coord, ndmin=2).T.tolist()] = 0
 
     # convert spherical filter into releative coordinates
-    filter = numpy.array( filter.nonzero() ).T - filter_center
+    filter = N.array( filter.nonzero() ).T - filter_center
     # get the nonzero mask coordinates
-    coords = numpy.transpose( mask.nonzero() )
+    coords = N.transpose( mask.nonzero() )
 
     # the absolute sphere mask (gets recycled everytime)
-    spheremask = numpy.zeros(mask.shape, dtype='bool')
+    spheremask = N.zeros(mask.shape, dtype='bool')
     # for all nonzero mask elements (a.k.a. sphere centers)
     for center in coords:
         # make abs sphere mask
@@ -85,18 +85,18 @@ def SpheresInMask( mask, radius, elementsize=None, forcesphere = False):
 
         # check if mask elements are outside of mask
         abs_sphere = [ v for v in abs_sphere \
-                        if (v >= numpy.zeros(len( mask.shape ) ) ).all() \
+                        if (v >= N.zeros(len( mask.shape ) ) ).all() \
                         and (v < mask.shape).all() ]
 
         # exclude nonzero mask elements if not requested otherwise
         if not forcesphere:
             abs_sphere = [ v for v in abs_sphere \
-                        if mask[numpy.array(v, ndmin=2).T.tolist()] ]
+                        if mask[N.array(v, ndmin=2).T.tolist()] ]
 
         # reset the mask
         spheremask[:] = False
 
         # put current sphere into the mask
-        spheremask[tuple( numpy.transpose( abs_sphere ) ) ] = True
+        spheremask[tuple( N.transpose( abs_sphere ) ) ] = True
 
         yield center, spheremask

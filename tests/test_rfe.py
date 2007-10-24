@@ -16,7 +16,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import unittest
-import numpy as np
+import numpy as N
 import mvpa.rfe as rfe
 import mvpa.maskeddataset
 import mvpa.svm
@@ -38,15 +38,15 @@ class RFETests(unittest.TestCase):
         self.dumbpattern = dumbFeatureSignal()
 
         # prepare second demo dataset and mask
-        self.mask = np.ones((20))
-        data = np.repeat(np.arange(100),20).reshape((100,20))
+        self.mask = N.ones((20))
+        data = N.repeat(N.arange(100),20).reshape((100,20))
         # add noise; first remains pristine
         for d in range(data.shape[1]):
-            data[:,d] += np.random.normal(0, d + 10, 100)
-        reg = np.logical_and(np.arange(100) > 24,
-                             np.arange(100) < 75).astype('int')
-        reg = (np.arange(100) > 49).astype('int')
-        orig = np.arange(100) % 5
+            data[:,d] += N.random.normal(0, d + 10, 100)
+        reg = N.logical_and(N.arange(100) > 24,
+                             N.arange(100) < 75).astype('int')
+        reg = (N.arange(100) > 49).astype('int')
+        orig = N.arange(100) % 5
         self.pattern = mvpa.maskeddataset.MaskedDataset(data, reg, orig)
 
     def testFeatureRanking(self):
@@ -142,11 +142,11 @@ class RFETests(unittest.TestCase):
         self.failUnless( elim_mask.shape == self.dumbpattern.mapper.dsshape )
         self.failUnless( elim_mask[0] == 0 and elim_mask[1] == 1 )
 
-#        pat = mvpa.MVPAPattern( np.random.normal(0,size=(20,16,16,8)),
+#        pat = mvpa.MVPAPattern( N.random.normal(0,size=(20,16,16,8)),
 #                                [i%2 for i in range(20)],
 #                                0 )
 #
-#        mask = np.ones((16,16,8),dtype='int16')
+#        mask = N.ones((16,16,8),dtype='int16')
 #        mask[0:4,   0:4,   0:2]=False
 #        mask[12:16, 0:4,   0:2]=False
 #        mask[0:4,   12:16, 0:2]=False
@@ -162,8 +162,8 @@ class RFETests(unittest.TestCase):
             dimensions.
             """
             # transform shape and coordinate into array for easy handling
-            ac = np.array( coord )
-            ao = np.array( dims )
+            ac = N.array( coord )
+            ao = N.array( dims )
 
 #            # check for sane coordinates
 #            if (ac >= ao).all() \
@@ -177,7 +177,7 @@ class RFETests(unittest.TestCase):
 
             return sum(offsets)
 
-        pat = mvpa.maskeddataset.MaskedDataset( np.random.normal(size=(100,2,3,4)),
+        pat = mvpa.maskeddataset.MaskedDataset( N.random.normal(size=(100,2,3,4)),
                                 [i%2 for i in range(100)],
                                 [i/5 for i in range(100)] )
 
@@ -187,7 +187,7 @@ class RFETests(unittest.TestCase):
         el = rfe.RFE( pat )
         el.killNFeatures(5, eliminate_by = 'number', kill_per_iter = 1 )
 
-        features = np.transpose(el.pattern.mapper.getMask().nonzero())
+        features = N.transpose(el.pattern.mapper.getMask().nonzero())
 
         for i,f in enumerate(features):
             orig_id = absolute_coord2id(f,pat.mapper.dsshape)
