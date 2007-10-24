@@ -159,15 +159,15 @@ class Dataset(object):
                         self.chunks[mask,] )
 
 
-    def permutatedRegressors( self, status, perchunk = True ):
-        """ Permutate the labels.
+    def permutedRegressors( self, status, perchunk = True ):
+        """ Permute the labels.
 
         Calling this method with 'status' set to True, the labels are
-        permutated among all samples.
+        permuted among all samples.
 
         If 'perorigin' is True permutation is limited to samples sharing the
         same chunk value. Therefore only the association of a certain sample
-        with a label is permutated while keeping the absolute number of
+        with a label is permuted while keeping the absolute number of
         occurences of each label value within a certain chunk constant.
 
         If 'status' is False the original labels are restored.
@@ -181,7 +181,7 @@ class Dataset(object):
             self.__labels = self.__origlabels
             self.__origlabels = None
         else:
-            # permutate labels per origin
+            # permute labels per origin
 
             # make a backup of the original labels
             self.__origlabels = self.__labels.copy()
