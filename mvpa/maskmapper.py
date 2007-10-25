@@ -57,7 +57,7 @@ class MaskMapper(Mapper):
         # it could be done with a dictionary, but since mask
         # might be relatively big, it is better to simply use
         # a chunk of RAM ;-)
-        self.__forwardmap = N.zeros(mask.shape, dtype=N.uint64)
+        self.__forwardmap = N.zeros(mask.shape, dtype=N.int64)
         # under assumption that we +1 values in forwardmap so that
         # 0 can be used to signal outside of mask
         for voxelIndex in xrange(self.__masknonzerosize):
@@ -178,7 +178,7 @@ class MaskMapper(Mapper):
             raise ValueError, \
                   "The point %s didn't belong to the mask" % (`coord`)
         else:
-            return outId-1
+            return outId - 1
 
 
     def buildMaskFromFeatureIds(self, ids):
@@ -208,17 +208,29 @@ class MaskNeighborMapper(MaskMapper, NeighborFinder):
         NeighborFinder.__init__(self)
         self.__finder = neighborFinder
 
-    def getNeighbor(self, coord, radius=0):
+    def getNeighborIn(self, inId, radius=0):
         """ Return the list of coordinates for the neighbors.
         XXX See TODO below: what to return -- list of arrays or list of tuples?
         """
         mask = self.mask
         maskshape = mask.shape
-        for neighbor in self.__finder(coord, radius):
+        # TODO Check dimensionality of inId
+        for neighbor in self.__finder(inId, radius):
             tneighbor = tuple(neighbor)
             if ( isInVolume(neighbor, maskshape) and
                  self.mask[tneighbor] != 0 ):
                 yield neighbor
+
+    def getNeighbor(self, outId, radius=0):
+        """ Return the list of Ids for the neighbors.
+
+        Returns a list of outIds
+        """
+        # TODO Check dimensionality of outId
+        inId = self.getInId(outId)
+        for inId in self.getNeighborIn(inId, radius):
+            yield self.getOutId(inId)
+
 
     def getFinder(self):
         """ To make pylint happy """
