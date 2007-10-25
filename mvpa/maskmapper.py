@@ -17,7 +17,7 @@
 """PyMVPA: Mapper using a mask array to map dataspace to featurespace"""
 
 from mapper import Mapper
-from neighbor import NeighborFinder
+from metric import Metric
 
 import numpy as N
 
@@ -189,17 +189,17 @@ class MaskMapper(Mapper):
     mask = property(fget=lambda self:self.getMask(False))
 
 
-class MaskNeighborMapper(MaskMapper, NeighborFinder):
-    """ MaskMapper which also knows the neighborhood - ie can satisfy
-    the interface of the Neighbor class.
+class MaskMetricMapper(MaskMapper, Metric):
+    """ MaskMapper which also knows the metric - ie can satisfy
+    the interface of the Metric class.
     """
 
-    def __init__(self, mask, neighborFinder):
-        """ Initialize using the mask and some appropriate neighbor finder.
+    def __init__(self, mask, metric):
+        """ Initialize using the mask and some appropriate neighbor metric.
         """
         MaskMapper.__init__(self, mask)
-        NeighborFinder.__init__(self)
-        self.__finder = neighborFinder
+        Metric.__init__(self)
+        self.__metric = metric
 
     def getNeighborIn(self, inId, radius=0):
         """ Return the list of coordinates for the neighbors.
@@ -208,7 +208,7 @@ class MaskNeighborMapper(MaskMapper, NeighborFinder):
         mask = self.mask
         maskshape = mask.shape
         # TODO Check dimensionality of inId
-        for neighbor in self.__finder(inId, radius):
+        for neighbor in self.__metric(inId, radius):
             tneighbor = tuple(neighbor)
             if ( isInVolume(neighbor, maskshape) and
                  self.mask[tneighbor] != 0 ):
@@ -225,14 +225,14 @@ class MaskNeighborMapper(MaskMapper, NeighborFinder):
             yield self.getOutId(inId)
 
 
-    def getFinder(self):
+    def getMetric(self):
         """ To make pylint happy """
-        return self.__finder
+        return self.__metric
 
-    neighborFinder = property(fget=getFinder)
+    metric = property(fget=getMetric)
 
     # TODO Need to disambiguate __call__ which is defined in both
-    # Mapper and NeighborFinder
+    # Mapper and Metric
 
     # TODO Unify tuple/array conversion of coordinates. tuples are needed
     #      for easy reference, arrays are needed when doing computation on
