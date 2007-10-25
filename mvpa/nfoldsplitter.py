@@ -31,7 +31,7 @@ class NFoldSplitter(Splitter):
                   nworkingsamples = None,
                   nsparesamples = None,
                   nrunsperfold = 1,
-                  permutate = False ):
+                  permute = False ):
         """
         Initialize the N-fold splitter.
 
@@ -50,8 +50,8 @@ class NFoldSplitter(Splitter):
                       is used in each fold and the subset is randomly
                       selected for each run (see the nworkingsamples
                       and nsparesamples arguments).
-          permutate:  If set to True, the labels of each generated dataset
-                      will be permutated on a per-chunk basis.
+          permute:  If set to True, the labels of each generated dataset
+                      will be permuted on a per-chunk basis.
         """
         # pattern sampling status vars
         self.setNWorkingSetSamples( nworkingsamples )
@@ -59,7 +59,7 @@ class NFoldSplitter(Splitter):
         self.setNRunsPerFold( nrunsperfold )
         self.setCVType( cvtype )
 
-        self.__permutate = permutate
+        self.__permute = permute
 
 
     def setNWorkingSetSamples( self, samplesize ):
@@ -205,10 +205,10 @@ class NFoldSplitter(Splitter):
 
             # do the sampling for this CV fold
             for run in xrange( self.__runsperfold ):
-                # permutate the labels in training and test dataset
-                if self.__permutate:
-                    wset.permutatedRegressors( True, perchunk=True )
-                    sset.permutatedRegressors( True, perchunk=True )
+                # permute the labels in training and test dataset
+                if self.__permute:
+                    wset.permutedRegressors( True, perchunk=True )
+                    sset.permutedRegressors( True, perchunk=True )
 
                 # choose a training pattern sample
                 wset_samples = NFoldSplitter.selectSampleSubset(
