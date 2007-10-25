@@ -106,9 +106,9 @@ class CrossValidationTests(unittest.TestCase):
         # must be perfect
         self.failUnless( N.array(results).mean() == 1.0 )
 
-        # do crossval with permutated regressors
+        # do crossval with permuted regressors
         cv = mvpa.crossval.CrossValidation( 
-                mvpa.nfoldsplitter.NFoldSplitter(cvtype=1, permutate=True),
+                mvpa.nfoldsplitter.NFoldSplitter(cvtype=1, permute=True),
                 knn.kNN(),
                 mvpa.mmatchprocessor.MeanMatchProcessor() )
         results = cv(data)

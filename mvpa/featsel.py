@@ -53,7 +53,7 @@ class FeatSelValidation( object ):
         for train_samples, \
             train_samplesize, \
             test_samples, \
-            test_samplesize in self.__cvpg( permutate=False ):
+            test_samplesize in self.__cvpg( permute=False ):
 
             # perform feature selection and store the MVPAPattern
             # with the selected features of the CV fold and its associated

@@ -83,11 +83,11 @@ class CrossValidation( object ):
         self.__clf_callback = callable
 
 
-    def __call__( self, permutate = False ):
+    def __call__( self, permute = False ):
         """ Perform cross-validation.
 
         Parameters:
-          permutate:  If True the regressor vector is permutated for each
+          permute:  If True the regressor vector is permuted for each
                       cross-validation fold. In conjunction with ncvfoldsamples
                       this might be useful to test a classification algorithm
                       whether it can classify any noise ;)
@@ -103,7 +103,7 @@ class CrossValidation( object ):
         for train_samples, \
             train_samplesize, \
             test_samples, \
-            test_samplesize in self.__cvpg(permutate):
+            test_samplesize in self.__cvpg(permute):
                 # log the sizes
                 self.trainsamplelog.append( train_samplesize )
                 self.testsamplelog.append( test_samplesize )

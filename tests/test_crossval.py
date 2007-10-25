@@ -110,7 +110,7 @@ class CrossValidationTests(unittest.TestCase):
         cv = mvpa.crossval.CrossValidation( data, knn.kNN(), cvtype=1)
         perf = N.array(cv())
 
-        data.permutatedRegressors( True )
+        data.permutedRegressors( True )
 
         perm_perf = N.array(cv())
 
@@ -227,10 +227,10 @@ class CrossValidationTests(unittest.TestCase):
         # must be perfect
         self.failUnless( N.array(perf).mean() == 1.0 )
 
-        # do crossval with permutated regressors
+        # do crossval with permuted regressors
         perf = mvpa.crossval.CrossValidation(
                     data, clf, cvtype=1,
-                    ncvfoldsamples= 10 )(permutate = True)
+                    ncvfoldsamples= 10 )(permute = True)
 
         # must be at chance level
         pmean = N.array(perf).mean()
