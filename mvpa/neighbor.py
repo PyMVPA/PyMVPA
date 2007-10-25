@@ -123,7 +123,6 @@ class DescreteNeighborFinder(NeighborFinder):
             # compare with radius
             if radius < dist:
                 # zero too distant
-
                 filter_mask[N.array(coord, ndmin=2).T.tolist()] = 0
 
         self.__filter_coord = N.array( filter_mask.nonzero() ).T \
@@ -147,6 +146,8 @@ class DescreteNeighborFinder(NeighborFinder):
         if radius != self.__filter_radius:
             self._computeFilter(radius)
 
+        # for the ease of future references, it is better to transform
+        # coordinates into tuples
         return origin + self.__filter_coord
 
     def _setFilter(self, filter_coord):
