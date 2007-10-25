@@ -1,6 +1,6 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-#
-#    Unit tests for PyMVPA mask mapper
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -14,8 +14,10 @@
 #    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Unit tests for PyMVPA mask mapper"""
 
 from mvpa.maskmapper import *
+from mvpa.neighbor import *
 import unittest
 import numpy as N
 
@@ -23,18 +25,18 @@ class MaskMapperTests(unittest.TestCase):
 
     def testForwardMaskMapper(self):
         mask = N.ones((3,2))
-        map = MaskMapper(mask)
+        map_ = MaskMapper(mask)
 
         # test shape reports
-        self.failUnless( map.dsshape == mask.shape )
-        self.failUnless( map.nfeatures == 6 )
+        self.failUnless( map_.dsshape == mask.shape )
+        self.failUnless( map_.nfeatures == 6 )
 
         # test 1sample mapping
-        self.failUnless( ( map.forward( N.arange(6).reshape(3,2) ) \
+        self.failUnless( ( map_.forward( N.arange(6).reshape(3,2) ) \
                            == [0,1,2,3,4,5]).all() )
 
         # test 4sample mapping
-        foursample = map.forward( N.arange(24).reshape(4,3,2)) 
+        foursample = map_.forward( N.arange(24).reshape(4,3,2)) 
         self.failUnless( ( foursample \
                            == [[0,1,2,3,4,5],
                                [6,7,8,9,10,11],
@@ -43,23 +45,23 @@ class MaskMapperTests(unittest.TestCase):
 
         # check incomplete masks
         mask[1,1] = 0
-        map = MaskMapper(mask)
-        self.failUnless( map.nfeatures == 5 )
-        self.failUnless( ( map.forward( N.arange(6).reshape(3,2) ) \
+        map_ = MaskMapper(mask)
+        self.failUnless( map_.nfeatures == 5 )
+        self.failUnless( ( map_.forward( N.arange(6).reshape(3,2) ) \
                            == [0,1,2,4,5]).all() )
 
         # check that it doesn't accept wrong dataspace
         self.failUnlessRaises( ValueError,
-                               map.forward,
+                               map_.forward,
                                N.arange(4).reshape(2,2) )
 
 
     def testReverseMaskMapper(self):
         mask = N.ones((3,2))
         mask[1,1] = 0
-        map = MaskMapper(mask)
+        map_ = MaskMapper(mask)
 
-        rmapped = map(N.arange(1,6))
+        rmapped = map_(N.arange(1,6))
         self.failUnless( rmapped.shape == (3,2) )
         self.failUnless( rmapped[1,1] == 0 )
         self.failUnless( rmapped[2,1] == 5 )
@@ -67,15 +69,32 @@ class MaskMapperTests(unittest.TestCase):
 
         # check that it doesn't accept wrong dataspace
         self.failUnlessRaises( ValueError,
-                               map,
+                               map_,
                                N.arange(6))
 
-        rmapped2 = map(N.arange(1,11).reshape(2,5))
+        rmapped2 = map_(N.arange(1,11).reshape(2,5))
         self.failUnless( rmapped2.shape == (2,3,2) )
         self.failUnless( rmapped2[0,1,1] == 0 )
         self.failUnless( rmapped2[1,1,1] == 0 )
         self.failUnless( rmapped2[0,2,1] == 5 )
         self.failUnless( rmapped2[1,2,1] == 10 )
+
+    def testMaskNeighborMapper(self):
+        """ Test MaskNeighborMapper
+        """
+        mask = N.ones((3,2))
+        mask[1,1] = 0
+
+        # take space with non-square elements
+        neighborFinder = DescreteNeighborFinder([0.5, 2])
+        map_ = MaskNeighborMapper(mask, neighborFinder)
+
+        # test getNeighbors
+        # now it returns list of arrays
+        target = [N.array([0, 0]), N.array([0, 1]),
+                  N.array([1, 0]), N.array([2, 0])]
+        result = map_.getNeighbors([0,0], 2)
+        self.failUnless(N.array(map(lambda x,y:(x==y).all(), result, target)).all())
 
 
 def suite():

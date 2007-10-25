@@ -45,13 +45,20 @@ class NeighborFinder(object):
 
     Classes subclasses from this class show know about structure of
     the data and thus be able to provide information about the
-    neighbors
+    neighbors.
+    At least one of the methods (getNeighbors, getNeighbor) has to be
+    overriden in the derived class.
+    NOTE: derived #2 from derived class #1 has to override all methods
+    which were overrident in class #1
     """
 
-    def getNeighbors(self, coord, **kwargs):
+    def getNeighbors(self, *args, **kwargs):
         """ Return the list of coordinates for the neighbors.
+
+        By default it simply constracts the list based on
+        the generator getNeighbor
         """
-        raise NotImplementedError
+        return [ x for x in self.getNeighbor(*args, **kwargs) ]
 
     def getNeighbor(self, *args, **kwargs):
         """ Generator to return coordinate of the neighbor.
@@ -116,7 +123,6 @@ class DescreteNeighborFinder(NeighborFinder):
             # compare with radius
             if radius < dist:
                 # zero too distant
-
                 filter_mask[N.array(coord, ndmin=2).T.tolist()] = 0
 
         self.__filter_coord = N.array( filter_mask.nonzero() ).T \
@@ -140,6 +146,8 @@ class DescreteNeighborFinder(NeighborFinder):
         if radius != self.__filter_radius:
             self._computeFilter(radius)
 
+        # for the ease of future references, it is better to transform
+        # coordinates into tuples
         return origin + self.__filter_coord
 
     def _setFilter(self, filter_coord):

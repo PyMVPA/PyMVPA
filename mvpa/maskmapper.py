@@ -17,6 +17,8 @@
 """PyMVPA: Mapper using a mask array to map dataspace to featurespace"""
 
 from mapper import Mapper
+from neighbor import NeighborFinder
+
 import numpy as N
 
 class MaskMapper(Mapper):
@@ -158,6 +160,9 @@ class MaskMapper(Mapper):
     def getOutId(self, coord):
         """ Translate a feature mask coordinate into a feature ID.
         """
+        # FIXME Since lists/arrays accept negative indexes to go from
+        # the end -- we need to check coordinates explicitely. Otherwise
+        # we would get warping effect
         try:
             outId = self.__forwardmap[tuple(coord)]
         except TypeError:
@@ -188,5 +193,57 @@ class MaskMapper(Mapper):
     # TODO: refactor the property names? make them vproperty?
     dsshape = property(fget=getInShape)
     nfeatures = property(fget=getOutSize)
+    mask = property(fget=lambda self:self.getMask(False))
 
 
+class MaskNeighborMapper(MaskMapper, NeighborFinder):
+    """ MaskMapper which also knows the neighborhood - ie can satisfy
+    the interface of the Neighbor class.
+    """
+
+    def __init__(self, mask, neighborFinder):
+        """ Initialize using the mask and some appropriate neighbor finder.
+        """
+        MaskMapper.__init__(self, mask)
+        NeighborFinder.__init__(self)
+        self.__finder = neighborFinder
+
+    def getNeighbor(self, coord, radius=0):
+        """ Return the list of coordinates for the neighbors.
+        XXX See TODO below: what to return -- list of arrays or list of tuples?
+        """
+        mask = self.mask
+        maskshape = mask.shape
+        for neighbor in self.__finder(coord, radius):
+            tneighbor = tuple(neighbor)
+            if ( isInVolume(neighbor, maskshape) and
+                 self.mask[tneighbor] != 0 ):
+                yield neighbor
+
+    def getFinder(self):
+        """ To make pylint happy """
+        return self.__finder
+
+    neighborFinder = property(fget=getFinder)
+
+    # TODO Need to disambiguate __call__ which is defined in both
+    # Mapper and NeighborFinder
+
+    # TODO Unify tuple/array conversion of coordinates. tuples are needed
+    #      for easy reference, arrays are needed when doing computation on
+    #      coordinates: for some reason numpy doesn't handle casting into
+    #      array from tuples while performing arithm operations...
+
+# helper functions which might be absorbed later on by some module or a class
+
+def isInVolume(coord, shape):
+    """For given coord check if it is within a specified volume size.
+
+    Returns True/False. Assumes that volume coordinates start at 0.
+    No more generalization (arbitrary minimal coord) is done to save
+    on performance
+    """
+    for i in xrange(len(coord)):
+        if coord[i] < 0 or coord[i] >= shape[i]:
+            return False
+    return True
