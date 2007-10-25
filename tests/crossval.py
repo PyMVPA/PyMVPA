@@ -82,7 +82,7 @@ class CrossValidationTests(unittest.TestCase):
                 [ k for k in range(1,7) for i in range(20) ] ).all() )
 
 
-        cv = mvpa.crossval.CrossValidation( 
+        cv = mvpa.crossval.CrossValidation(
                 mvpa.nfoldsplitter.NFoldSplitter(cvtype=1),
                 knn.kNN(),
                 mvpa.mmatchprocessor.MeanMatchProcessor() )
@@ -97,18 +97,18 @@ class CrossValidationTests(unittest.TestCase):
         data = self.getMVPattern(10)
 
         # do crossval
-        cv = mvpa.crossval.CrossValidation( 
+        cv = mvpa.crossval.CrossValidation(
                 mvpa.nfoldsplitter.NFoldSplitter(cvtype=1),
                 knn.kNN(),
                 mvpa.mmatchprocessor.MeanMatchProcessor() )
         results = cv(data)
 
         # must be perfect
-        self.failUnless( N.array(results).mean() == 1.0 )
+        self.failUnless( N.array(results).mean() > 0.95 )
 
         # do crossval with permuted regressors
-        cv = mvpa.crossval.CrossValidation( 
-                mvpa.nfoldsplitter.NFoldSplitter(cvtype=1, permute=True),
+        cv = mvpa.crossval.CrossValidation(
+                mvpa.nfoldsplitter.NFoldSplitter(cvtype=1, permute=True, nrunsperfold=10),
                 knn.kNN(),
                 mvpa.mmatchprocessor.MeanMatchProcessor() )
         results = cv(data)
