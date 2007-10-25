@@ -91,10 +91,18 @@ class MaskMapperTests(unittest.TestCase):
 
         # test getNeighbors
         # now it returns list of arrays
-        target = [N.array([0, 0]), N.array([0, 1]),
-                  N.array([1, 0]), N.array([2, 0])]
-        result = map_.getNeighbors([0,0], 2)
-        self.failUnless(N.array(map(lambda x,y:(x==y).all(), result, target)).all())
+        #target = [N.array([0, 0]), N.array([0, 1]),
+        #          N.array([1, 0]), N.array([2, 0])]
+        #result = map_.getNeighborIn([0, 0], 2)
+        #self.failUnless(N.array(map(lambda x,y:(x==y).all(), result, target)).all())
+
+        # check by providing outId
+        target = [0,1,2,3]
+        result = map_.getNeighbors(0, 2)
+        #print map_.getInIds()[result]
+        target = [0,1,2,3]
+        #self.failUnless(N.array(map(lambda x,y:(x==y).all(), result, target)).all())
+        self.failUnless( result == target )
 
 
 def suite():
