@@ -1,3 +1,5 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 #
 #    Main unit test interface for PyMVPA
@@ -20,7 +22,7 @@ import unittest
 # list all test modules (without .py extension)
 tests = [ 'dataset',
           'maskmapper',
-		  'neighbor',
+          'neighbor',
           'maskeddataset',
           'nfoldsplitter',
           'crossval' ]
@@ -52,5 +54,4 @@ if __name__ == '__main__':
 
     # finally run it
     unittest.TextTestRunner().run( ts )
-
 
