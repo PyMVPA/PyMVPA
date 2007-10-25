@@ -24,7 +24,7 @@ class SVMBase(Classifier):
     This is a simple interface to the libSVM package.
     """
 
-	_param = [ 'nu' ] + Classifier._param
+	_param = [ 'eps' ] + Classifier._param
 
     def __init__(self, **kwargs):
         # init base class

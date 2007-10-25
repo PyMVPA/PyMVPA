@@ -1,4 +1,7 @@
-mvpa
+# NOTE: use full (not relative) path within the code, so it could be
+  searched/replaced easily if files/modules move around
+
+mvpa/
 
 __init__.py
 
@@ -32,12 +35,15 @@ libsvm
 
 searchlight.py -> searchlightsa.py
 
+* algo /
+
 # svmsa
 
 * misc
 support.py
 vproperty.py
 stats.py
+fsl
 
 # AGGREGATE in errorfx
 errorfx.py
@@ -46,7 +52,6 @@ rmserrorfx.py
 mmatcherrorfx.py
 
 --------
-
 
 crossval.py
 splitprocessor.py

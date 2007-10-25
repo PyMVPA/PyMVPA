@@ -18,8 +18,10 @@
 import operator
 
 
+
 class CrossValidation(object):
     """
+	Assumptions:
     """
     def __init__( self,
                   splitter,
