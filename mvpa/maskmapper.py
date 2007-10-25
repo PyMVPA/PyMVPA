@@ -28,7 +28,8 @@ class MaskMapper(Mapper):
         """
         Mapper.__init__(self)
         self.__mask = self.__maskdim = self.__masksize = \
-            None # to make pylint happy
+                      self.__masknonzerosize = self.__forwardmap = \
+                      self.__masknonzero = None # to make pylint happy
         self._initMask(mask)
 
     def _initMask(self, mask):
@@ -41,12 +42,25 @@ class MaskMapper(Mapper):
         self.__mask = mask
         self.__maskdim = len(mask.shape)
         self.__masksize = N.prod(mask.shape)
+
         # Following introduces space penalty but are needed
         # for efficient processing.
         # Store all coordinates for backward mapping
         self.__masknonzero = mask.nonzero()
+        self.__masknonzerosize = len(self.__masknonzero[0])
+
         # Store forward mapping (ie from coord into outId)
-        # self.__forwardmap = N.ndarray(mask.shape)
+        # TODO to save space might take appropriate int type
+        #     depending on masknonzerosize
+        # it could be done with a dictionary, but since mask
+        # might be relatively big, it is better to simply use
+        # a chunk of RAM ;-)
+        self.__forwardmap = N.zeros(mask.shape, dtype=N.uint64)
+        # under assumption that we +1 values in forwardmap so that
+        # 0 can be used to signal outside of mask
+        for voxelIndex in xrange(self.__masknonzerosize):
+            coordIn = self.getInId(voxelIndex)
+            self.__forwardmap[tuple(coordIn)] = voxelIndex + 1
 
     def forward(self, data):
         """ Map data from the original dataspace into featurespace.
@@ -62,11 +76,13 @@ class MaskMapper(Mapper):
                   "Shape of the to be mapped data, does not match the " \
                   "mapper mask. Only one (optional) additional dimension " \
                   "exceeding the mask shape is supported."
-        # XXX: masked out by previous check?
+        # XXX: this condition is masked out by the previous check... so is
+        # previous needed?
         if self.__maskdim == datadim:
             return data[ self.__mask > 0 ]
         elif self.__maskdim+1 == datadim:
-            # XXX yoh -- changed >0 to != 0 especially since nonzero() below
+            # XXX !!! yoh -- changed >0 to != 0 especially since nonzero()
+            #         so negative values also get considered
             return data[ :, self.__mask != 0 ]
         else:
             raise RuntimeError, 'This should not happen!'
@@ -99,7 +115,7 @@ class MaskMapper(Mapper):
 
     def getOutShape(self):
         """OutShape is a shape of target dataset"""
-        # XXX should worry about state-full class.
+        # should worry about state-full class.
         # TODO: add exception 'InvalidStateError' which is raised
         #       by some class if state is not yet defined:
         #         classifier has not yet been trained
@@ -108,7 +124,7 @@ class MaskMapper(Mapper):
 
     def getOutSize(self):
         """OutSize is a number of non-0 elements in the mask"""
-        return len(self.__masknonzero[0])
+        return self.__masknonzerosize
 
     def getMask(self, copy = True):
         """By default returns a copy of the current mask.
@@ -141,18 +157,24 @@ class MaskMapper(Mapper):
 
     def getOutId(self, coord):
         """ Translate a feature mask coordinate into a feature ID.
-
-        Warning: This method is painfully slow, avoid if possible!
         """
-        coord = list(coord)
+        try:
+            outId = self.__forwardmap[tuple(coord)]
+        except TypeError:
+            raise ValueError, \
+                  "Coordinates %s are of incorrect dimension. " % `coord` + \
+                  "The mask has %d dimensions." % self.__maskdim
+        except IndexError:
+            raise ValueError, \
+                  "Coordinates %s are out of mask boundary. " % `coord` + \
+                  "The mask is of %s shape." % `self.__mask.shape`
 
-        featcoords = N.transpose(self.__masknonzero).tolist()
+        if not outId:
+            raise ValueError, \
+                  "The point %s didn't belong to the mask" % (`coord`)
+        else:
+            return outId-1
 
-        for i, c in enumerate(featcoords):
-            if c == coord:
-                return i
-
-        raise ValueError, "There is no used feature at this mask coordinate."
 
     def buildMaskFromFeatureIds(self, ids):
         """ Returns a mask with all features in ids selected from the
@@ -163,11 +185,8 @@ class MaskMapper(Mapper):
         return self.reverse(fmask)
 
     # Read-only props
+    # TODO: refactor the property names? make them vproperty?
     dsshape = property(fget=getInShape)
     nfeatures = property(fget=getOutSize)
 
 
-# XXX: Issues:
-#   __mask.nonzero() is relatively expensive, so should be done once and kept
-#   due to above getInId is way too expensive -- all of Ids are computed
-#   and only 1 returned
