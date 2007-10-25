@@ -1,7 +1,6 @@
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 noet:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-#
-#    Unit tests for PyMVPA finders
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -15,6 +14,7 @@
 #    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Unit tests for PyMVPA finders"""
 
 from mvpa.neighbor import *
 import unittest
@@ -52,6 +52,27 @@ class NeighborFinderTests(unittest.TestCase):
         finder = DescreteNeighborFinder(elsize, manhattenDistance)
         for point in finder([2,2], distance):
             self.failUnless( manhattenDistance(point, [2,2]) <= distance)
+
+    def testGetNeighbors(self):
+        """Test if generator getNeighbor and method getNeighbors
+        return the right thing"""
+
+        class B(NeighborFinder):
+            """ Class which overrides only getNeighbor
+            """
+            def getNeighbor(self):
+                for n in [4,5,6]: yield n
+
+        class C(NeighborFinder):
+            """ Class which overrides only getNeighbor
+            """
+            def getNeighbors(self):
+                return [1,2,3]
+
+        b = B()
+        self.failUnless(b.getNeighbors() == [4,5,6])
+        c = C()
+        self.failUnless([ x for x in c.getNeighbor()] == [1,2,3])
 
 
 def suite():
