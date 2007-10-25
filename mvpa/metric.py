@@ -40,7 +40,7 @@ def manhattenDistance(a, b):
     return sum(abs(a-b))
 
 
-class NeighborFinder(object):
+class Metric(object):
     """ Abstract class for any finder.
 
     Classes subclasses from this class show know about structure of
@@ -75,7 +75,7 @@ class NeighborFinder(object):
         return self.getNeighbor(*args, **kwargs)
 
 
-class DescreteNeighborFinder(NeighborFinder):
+class DescreteMetric(Metric):
     """ Find neighboring points in descretized space
 
     If input space is descretized and all points fill in
@@ -92,7 +92,7 @@ class DescreteNeighborFinder(NeighborFinder):
         """
         Initialize the class provided @elementsize and @distance_function
         """
-        NeighborFinder.__init__(self)
+        Metric.__init__(self)
         self.__filter_radius = None
         self.__filter_coord = None
         self.__distance_function = distance_function
@@ -164,7 +164,7 @@ class DescreteNeighborFinder(NeighborFinder):
 
 # Template for future classes
 #
-# class MeshNeighborFinder(NeighborFinder):
+# class MeshMetric(Metric):
 #     """ Return list of neighboring points on a mesh
 #     """
 #     def getNeighbors(self, origin, distance=0):

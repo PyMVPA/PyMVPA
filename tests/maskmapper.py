@@ -17,7 +17,7 @@
 """Unit tests for PyMVPA mask mapper"""
 
 from mvpa.maskmapper import *
-from mvpa.neighbor import *
+from mvpa.metric import *
 import unittest
 import numpy as N
 
@@ -79,15 +79,15 @@ class MaskMapperTests(unittest.TestCase):
         self.failUnless( rmapped2[0,2,1] == 5 )
         self.failUnless( rmapped2[1,2,1] == 10 )
 
-    def testMaskNeighborMapper(self):
-        """ Test MaskNeighborMapper
+    def testMaskMetricMapper(self):
+        """ Test MaskMetricMapper
         """
         mask = N.ones((3,2))
         mask[1,1] = 0
 
         # take space with non-square elements
-        neighborFinder = DescreteNeighborFinder([0.5, 2])
-        map_ = MaskNeighborMapper(mask, neighborFinder)
+        neighborFinder = DescreteMetric([0.5, 2])
+        map_ = MaskMetricMapper(mask, neighborFinder)
 
         # test getNeighbors
         # now it returns list of arrays
