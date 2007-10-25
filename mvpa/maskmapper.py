@@ -72,22 +72,15 @@ class MaskMapper(Mapper):
             raise ValueError, \
                   "To be mapped data does not match the mapper mask."
 
-        # XXX yoh Q: can't we mask 3D (no samples) into 2D with a single sample?
-        if self.__maskdim + 1 < len(data.shape):
+        if self.__maskdim == datadim:
+            return data[ self.__mask != 0 ]
+        elif self.__maskdim+1 == datadim:
+            return data[ :, self.__mask != 0 ]
+        else:
             raise ValueError, \
                   "Shape of the to be mapped data, does not match the " \
                   "mapper mask. Only one (optional) additional dimension " \
                   "exceeding the mask shape is supported."
-        # XXX: this condition is masked out by the previous check... so is
-        # previous needed?
-        if self.__maskdim == datadim:
-            return data[ self.__mask > 0 ]
-        elif self.__maskdim+1 == datadim:
-            # XXX !!! yoh -- changed >0 to != 0 especially since nonzero()
-            #         so negative values also get considered
-            return data[ :, self.__mask != 0 ]
-        else:
-            raise RuntimeError, 'This should not happen!'
 
     def reverse(self, data):
         """ Reverse map data from featurespace into the original dataspace.
