@@ -18,11 +18,14 @@
 from classifier import *
 from mvpa import libsvm
 
-class SVM(Classifier):
+class SVMBase(Classifier):
     """ Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
     """
+
+	_param = [ 'nu' ] + Classifier._param
+
     def __init__(self, **kwargs):
         # init base class
         Classifier.__init__(self, ['feature_benchmark'] )
