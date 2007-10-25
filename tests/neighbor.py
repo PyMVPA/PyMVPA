@@ -14,13 +14,13 @@
 #    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA finders"""
+"""Unit tests for PyMVPA metrics"""
 
-from mvpa.neighbor import *
+from mvpa.metric import *
 import unittest
 import numpy as N
 
-class NeighborFinderTests(unittest.TestCase):
+class MetricTests(unittest.TestCase):
 
     def testDistances(self):
         a = N.array([3,8])
@@ -31,39 +31,39 @@ class NeighborFinderTests(unittest.TestCase):
         self.failUnless( absminDistance(a, b) == 4 )
 
 
-    def testDescreteNeighborFinder(self):
+    def testDescreteMetric(self):
         # who said that we will not use FSL's data
         # with negative dimensions? :-)
         elsize = [-2.5, 1.5]
         distance = 3
 
         # use default function
-        finder = DescreteNeighborFinder(elsize)
+        metric = DescreteMetric(elsize)
 
         # simple check
         target = N.array([ [1,2], [2,1], [2,2], [2,3], [3,2] ])
-        self.failUnless( (finder.getNeighbors([2,2], 2.6) == target).all())
+        self.failUnless( (metric.getNeighbors([2,2], 2.6) == target).all())
 
         # a bit longer one... not sure what for
-        for point in finder([2,2], distance):
+        for point in metric([2,2], distance):
             self.failUnless( cartesianDistance(point, [2,2]) <= distance)
 
         # use manhattenDistance function
-        finder = DescreteNeighborFinder(elsize, manhattenDistance)
-        for point in finder([2,2], distance):
+        metric = DescreteMetric(elsize, manhattenDistance)
+        for point in metric([2,2], distance):
             self.failUnless( manhattenDistance(point, [2,2]) <= distance)
 
     def testGetNeighbors(self):
         """Test if generator getNeighbor and method getNeighbors
         return the right thing"""
 
-        class B(NeighborFinder):
+        class B(Metric):
             """ Class which overrides only getNeighbor
             """
             def getNeighbor(self):
                 for n in [4,5,6]: yield n
 
-        class C(NeighborFinder):
+        class C(Metric):
             """ Class which overrides only getNeighbor
             """
             def getNeighbors(self):
@@ -76,7 +76,7 @@ class NeighborFinderTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(NeighborFinderTests)
+    return unittest.makeSuite(MetricTests)
 
 
 if __name__ == '__main__':
