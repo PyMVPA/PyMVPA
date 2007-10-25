@@ -1,4 +1,4 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #    Unit tests for PyMVPA finders
@@ -32,24 +32,24 @@ class NeighborFinderTests(unittest.TestCase):
 
 
     def testDescreteNeighborFinder(self):
-		# who said that we will not use FSL's data
-		# with negative dimensions? :-)
-		elsize = [-2.5, 1.5]
+        # who said that we will not use FSL's data
+        # with negative dimensions? :-)
+        elsize = [-2.5, 1.5]
         distance = 3
 
-		# use default function
-		finder = DescreteNeighborFinder(elsize)
+        # use default function
+        finder = DescreteNeighborFinder(elsize)
 
         # simple check
         target = N.array([ [1,2], [2,1], [2,2], [2,3], [3,2] ])
-        self.failUnless( (finder([2,2], 2.6) == target).all())
+        self.failUnless( (finder.getNeighbors([2,2], 2.6) == target).all())
 
         # a bit longer one... not sure what for
         for point in finder([2,2], distance):
             self.failUnless( cartesianDistance(point, [2,2]) <= distance)
 
         # use manhattenDistance function
-		finder = DescreteNeighborFinder(elsize, manhattenDistance)
+        finder = DescreteNeighborFinder(elsize, manhattenDistance)
         for point in finder([2,2], distance):
             self.failUnless( manhattenDistance(point, [2,2]) <= distance)
 
