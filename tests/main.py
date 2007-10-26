@@ -25,7 +25,8 @@ tests = [ 'dataset',
           'neighbor',
           'maskeddataset',
           'nfoldsplitter',
-          'crossval' ]
+          #'crossval'
+		  ]
 #          'test_algorithms',
 #          'test_knn',
 #          'test_svm',
