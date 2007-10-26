@@ -67,15 +67,48 @@ do
 until the world collapses into
 
 
-smth
- |
-smthClassifier(classifier, splitter)
- \ __call__(dataset)
-    { splits < splitter(dataset)
-      classifier.ty(
-    
+#smth
+# |
+#smthClassifier(classifier, splitter)
+# \ __call__(dataset)
+#    { splits < splitter(dataset)
+#      classifier.ty(
 
-SEARCHLIGHT(dataset, smth)
-foreach sphere do
- value <- smth(dataset[sphere])
-done
+
+##############################################
+ GET A GRIP ON: SensitivityAnalysers
+
+# we need a new base class, here is the proposed name
+
+RunMeOnADatasetAndITellYouHowMuchInformationIsInIt
+
+# thinking again this might be a SensitivityAnalyser, but it does not provide
+# a sens value per feature, but only a combined measure for all features
+# together
+
+# or even more generic: this is a class that provides a metric to quantify
+# information in a dataset (not limited to classification). it should provide
+# an interface that exposes this metric plus some interesting statistics
+# (not sure what really generic candidates would be)
+ \ provides vprop 'information' or similar
+ \ __call__(dataset) # no further args
+ |
+ClfCrossValidation(clf,splitter,errorfx)
+ \__call__(dataset)
+    does what CrossValidation does now, but without the splitprocessor bloat
+    just computing a single performance value (e.g. mean generalization error)
+    however more exposed information is most likely required
+
+
+SensitivityAnalyser
+ |
+Searchlight(RunMeOnADatasetAndITellYouHowMuchInformationIsInIt)
+# Searchlight is a SensitivityAnalyser that runs another SensAna
+#  with the 'RunMeOnADatasetAndITellYouHowMuchInformationIsInIt'-interface
+# on all possible spheres in the dataset
+ \__call__(dataset)
+ |   foreach sphere do
+ |       value <- RunMeOnADatasetAndITellYouHowMuchInformationIsInIt(dataset[sphere])
+ |   done
+ |
+ \sensitivity_map
