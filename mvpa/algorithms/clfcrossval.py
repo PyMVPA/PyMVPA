@@ -1,61 +1,82 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: Generic Cross-Validation
-#
-#    Copyright (C) 2006-2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: Cross-validate a classifier on a dataset"""
 
-import operator
+import numpy as N
+
 from mvpa.algorithms.datameasure import DataMeasure
+from mvpa.misc.errorfx import MeanMatchErrorFx
+from mvpa.datasets.splitter import NoneSplitter
 
 
 class ClfCrossValidation(DataMeasure):
+    """ Cross validate a classifier on datasets generate by a splitter from a
+    source dataset.
+
+    Arbitrary performance/error values can be computed by specifying and error
+    function (used to compute an error value for each cross-validation fold) and
+    a combiner function that aggregates all computed error values across
+    cross-validation folds.
     """
-	Assumptions:
-    """
-    def __init__( self,
-                  splitter,
-                  classifier,
-                  splitprocessor ):
+    def __init__(self,
+                 clf,
+                 splitter=NoneSplitter,
+                 errorfx=MeanMatchErrorFx,
+                 combinerfx=N.mean,
+                 **kwargs):
         """
-        @splitprocessor  --- list of instances which gets arguments:
-                             generated split, splitter object, classifier
+        Cheap initialization.
+
+        Parameters:
+            clf        - classifier instance
+            splitter   - splitter instance used to split the dataset for
+                         cross-validation folds. By convention the first dataset
+                         in the tuple returned by the splitter is used to train
+                         the provided classifier. If the first element is 'None'
+                         no training is performed. The second dataset is used to
+                         generate predictions with the (trained) classifier.
+            errorfx    - function that computes a scalar error value from the
+                         vectors of desired and predicted values (subclass of
+                         ErrorFx)
+            combinerfx - function that is used to aggregate the error values of
+                         all cross-validation folds
+            ...        - all additonal keyword arguments are passed to the
+                         'combinerfx' function
         """
         self.__splitter = splitter
-        self.__classifier = classifier
-
-        # make sure we always deal with sequences
-        if not operator.isSequenceType( splitprocessor ):
-            self.__splitprocessor = [ splitprocessor ]
-        else:
-            self.__splitprocessor = splitprocessor
+        self.__clf = clf
+        self.__errorfx = errorfx
+        self.__combinerfx = combinerfx
+        self.__combinerfx_args = kwargs
 
 
     def __call__(self, dataset, callbacks=[]):
-        """
+        """ Perform cross-validation on a dataset.
 
-        Returns a sequence of postprocessingResults.
+        'dataset' is passed to the splitter instance and serves as the source
+        dataset to generate split for the single cross-validation folds.
         """
         # store the results of the splitprocessor
         results = []
 
         # splitter
-        for split in self.__splitter( dataset ):
-            self.__classifier.train( split[0] )
+        for split in self.__splitter(dataset):
+            # only train classifier if splitter provides something in first
+            # element of tuple
+            if not split[0] == None:
+                self.__clf.train( split[0] )
 
-            for splitprocessor in self.__splitprocessor:
-                results.append( splitprocessor( self.__splitter,
-                                                split,
-                                                self.__classifier )  )
+            # compute error from desired and predicted values
+            error = self.__errorfx(self.__clf.predict(split[1].samples),
+                                   split[1].labels))
+            results.append(error)
 
-        return results
+            # XXX add callbacks
+
+        return self.__combinerfx( results, **(self.__combinerfx_args) )
