@@ -1,7 +1,6 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-#
-#    PyMVPA: Error function object that computes the root mean squared error
-#            of some desired and some predicted values
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -15,21 +14,5 @@
 #    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-
-import numpy as N
-
-class RMSErrorFx(ErrorFunction):
-    """ Computes the root mean squared error of some desired and some
-    predicted values.
-    """
-    def __call__(self, predicted, desired):
-        """ Both 'predicted' and 'desired' can be either scalars or sequences,
-        but have to be of the same length.
-        """
-        difference = N.subtract(predicted, desired)
-
-        return sqrt(N.dot(difference, difference))
-
-
-
+"""Import helper for PyMVPA datasets and utilities"""
 

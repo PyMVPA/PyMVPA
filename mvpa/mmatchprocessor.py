@@ -16,8 +16,8 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from mmatcherrorfx import *
-from splitprocessor import *
+from mvpa.misc.errorfx import MeanMatchErrorFx
+from mvpa.splitprocessor import *
 
 class MeanMatchProcessor(SplitProcessor):
     """ Computes the percentage of correct classifications of a

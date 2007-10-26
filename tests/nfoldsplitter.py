@@ -15,8 +15,8 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mvpa.maskeddataset
-import mvpa.nfoldsplitter as nfoldsplitter
+import mvpa.datasets.maskeddataset
+import mvpa.datasets.nfoldsplitter as nfoldsplitter
 import unittest
 import numpy as N
 
@@ -25,7 +25,8 @@ class NFoldSplitterTests(unittest.TestCase):
 
     def setUp(self):
         self.data = \
-            mvpa.maskeddataset.MaskedDataset(N.random.normal(size=(100,10)),
+            mvpa.datasets.maskeddataset.MaskedDataset(
+            N.random.normal(size=(100,10)),
             [ i%4 for i in range(100) ],
             [ i/10 for i in range(100) ] )
 

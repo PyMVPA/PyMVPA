@@ -1,29 +1,23 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Unit tests for PyMVPA dataset handling
-#
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: Unit tests for PyMVPA dataset handling"""
 
-import mvpa
 import unittest
-import numpy as N
 import random
+import numpy as N
+from mvpa.datasets.dataset import Dataset
 
 class DatasetTests(unittest.TestCase):
 
     def testAddPatterns(self):
-        data = mvpa.Dataset(range(5), 1, 1)
+        data = Dataset(range(5), 1, 1)
         # simple sequence has to be a single pattern
         self.failUnlessEqual( data.nsamples, 1)
         # check correct pattern layout (1x5)
@@ -36,17 +30,17 @@ class DatasetTests(unittest.TestCase):
 
         # now try adding pattern with wrong shape
         self.failUnlessRaises( ValueError,
-                               data.__iadd__, mvpa.Dataset(N.ones((2,3)), 1, 1))
+                               data.__iadd__, Dataset(N.ones((2,3)), 1, 1))
 
         # now add two real patterns
-        data += mvpa.Dataset(N.random.standard_normal((2,5)), 2, 2 )
+        data += Dataset(N.random.standard_normal((2,5)), 2, 2 )
         self.failUnlessEqual( data.nfeatures, 5 )
         self.failUnless( (data.labels == N.array([1,2,2]) ).all() )
         self.failUnless( (data.chunks == N.array([1,2,2]) ).all() )
 
 
         # test automatic origins
-        data += mvpa.Dataset( N.random.standard_normal((2,5)), 3, None )
+        data += Dataset( N.random.standard_normal((2,5)), 3, None )
         self.failUnless( (data.chunks == N.array([1,2,2,0,1]) ).all() )
 
         # test unique class labels
@@ -54,14 +48,14 @@ class DatasetTests(unittest.TestCase):
 
         # test wrong label length
         self.failUnlessRaises( ValueError,
-                               mvpa.Dataset,
+                               Dataset,
                                N.random.standard_normal((4,5)),
                                [ 1, 2, 3 ],
                                2 )
 
         # test wrong origin length
         self.failUnlessRaises( ValueError,
-                               mvpa.Dataset,
+                               Dataset,
                                N.random.standard_normal((4,5)),
                                [ 1, 2, 3, 4 ],
                                [ 2, 2, 2 ] )
@@ -69,7 +63,7 @@ class DatasetTests(unittest.TestCase):
 
     def testFeatureSelection(self):
         origdata = N.random.standard_normal((10,100))
-        data = mvpa.Dataset( origdata, 2, 2 )
+        data = Dataset( origdata, 2, 2 )
 
         unmasked = data.samples.copy()
 
@@ -89,7 +83,7 @@ class DatasetTests(unittest.TestCase):
 
     def testPatternSelection(self):
         origdata = N.random.standard_normal((10,100))
-        data = mvpa.Dataset( origdata, 2, 2 )
+        data = Dataset( origdata, 2, 2 )
 
         self.failUnless( data.nsamples == 10 )
 
@@ -108,8 +102,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( sel.samples.shape == (2,100) )
 
     def testCombinedPatternAndFeatureMasking(self):
-        data = mvpa.Dataset(
-            N.arange( 20 ).reshape( (4,5) ), 1, 1 )
+        data = Dataset(N.arange( 20 ).reshape( (4,5) ), 1, 1)
 
         self.failUnless( data.nsamples == 4 )
         self.failUnless( data.nfeatures == 5 )
@@ -122,8 +115,8 @@ class DatasetTests(unittest.TestCase):
 
 
     def testPatternMerge(self):
-        data1 = mvpa.Dataset( N.ones((5,5)), 1, 1 )
-        data2 = mvpa.Dataset( N.ones((3,5)), 2, 1 )
+        data1 = Dataset( N.ones((5,5)), 1, 1 )
+        data2 = Dataset( N.ones((3,5)), 2, 1 )
 
         merged = data1 + data2
 
@@ -139,11 +132,11 @@ class DatasetTests(unittest.TestCase):
 
 
     def testRegressorRandomizationAndSampling(self):
-        data = mvpa.Dataset( N.ones((5,1)), range(5), 1 )
-        data += mvpa.Dataset( N.ones((5,1))+1, range(5), 2 )
-        data += mvpa.Dataset( N.ones((5,1))+2, range(5), 3 )
-        data += mvpa.Dataset( N.ones((5,1))+3, range(5), 4 )
-        data += mvpa.Dataset( N.ones((5,1))+4, range(5), 5 )
+        data = Dataset( N.ones((5,1)), range(5), 1 )
+        data += Dataset( N.ones((5,1))+1, range(5), 2 )
+        data += Dataset( N.ones((5,1))+2, range(5), 3 )
+        data += Dataset( N.ones((5,1))+3, range(5), 4 )
+        data += Dataset( N.ones((5,1))+4, range(5), 5 )
 
         self.failUnless( data.samplesperlabel == [ 5,5,5,5,5 ] )
 
@@ -165,7 +158,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data.labels == origlabels).all() )
 
         # now try another object with the same data
-        data2 = mvpa.Dataset( data.samples, data.labels, data.chunks )
+        data2 = Dataset( data.samples, data.labels, data.chunks )
 
         # labels are the same as the originals
         self.failUnless( (data2.labels == origlabels).all() )

@@ -16,8 +16,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import numpy as N
-import support
-from splitter import *
+
+import mvpa.misc.support as support
+from mvpa.datasets.splitter import *
 
 class NFoldSplitter(Splitter):
     """ Generic N-fold data splitter.
