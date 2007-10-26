@@ -28,8 +28,7 @@ class ClfCrossValidation(DataMeasure):
                  clf,
                  splitter=NoneSplitter,
                  errorfx=MeanMatchErrorFx,
-                 combinerfx=N.mean,
-                 **kwargs):
+                 combinerfx=N.mean):
         """
         Cheap initialization.
 
@@ -46,14 +45,11 @@ class ClfCrossValidation(DataMeasure):
                          ErrorFx)
             combinerfx - function that is used to aggregate the error values of
                          all cross-validation folds
-            ...        - all additonal keyword arguments are passed to the
-                         'combinerfx' function
         """
         self.__splitter = splitter
         self.__clf = clf
         self.__errorfx = errorfx
         self.__combinerfx = combinerfx
-        self.__combinerfx_args = kwargs
 
 
     def __call__(self, dataset, callbacks=[]):
@@ -79,4 +75,4 @@ class ClfCrossValidation(DataMeasure):
 
             # XXX add callbacks
 
-        return self.__combinerfx( results, **(self.__combinerfx_args) )
+        return self.__combinerfx(results)
