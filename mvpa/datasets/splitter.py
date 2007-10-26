@@ -23,13 +23,26 @@ class Splitter(object):
     via __call__(). This method has to be implemented like a generator, i.e. it
     has to return every possible split with a yield() call.
 
-    Each split has to be returned as a tuple of Dataset(s). The first containing
-    the selected data. There might be additional Dataset objects in the returned
-    tuple depending on the purpose of the splitter. BUT even if there is only
-    one Dataset returned it has to be the first element of a one-tuple and not
-    just the Dataset object!
+    Each split has to be returned as a tuple of Dataset(s). The properties
+    of the splitted dataset may vary between implementations. It is possible
+    to declare tuple element as 'None'. 
+
+    Please note, that even if there is only one Dataset returned it has to be
+    an element in a tupleand not just the Dataset object!
     """
     def __call__(self, dataset):
         """
         """
         raise NotImplementedError
+
+
+
+class NoneSplitter(Splitter):
+    """ This is a dataset splitter that does NOT split. It simply returns the
+    full dataset that it is called with.
+    """
+    def __call__(self, dataset):
+        """ This splitter returns the passed dataset as the second element of
+        a 2-tuple. The first element of that tuple will always be 'None'.
+        """
+        return (None, dataset)
