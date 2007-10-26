@@ -16,7 +16,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA metrics"""
 
-from mvpa.metric import *
+from mvpa.datasets.metric import *
 import unittest
 import numpy as N
 

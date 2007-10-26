@@ -16,8 +16,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA mask mapper"""
 
-from mvpa.maskmapper import *
-from mvpa.metric import *
+from mvpa.datasets.maskmapper import *
+from mvpa.datasets.metric import *
 import unittest
 import numpy as N
 

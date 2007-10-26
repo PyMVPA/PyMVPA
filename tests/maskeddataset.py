@@ -15,7 +15,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from mvpa.maskeddataset import *
+from mvpa.datasets.maskeddataset import *
 import unittest
 import numpy as N
 import random

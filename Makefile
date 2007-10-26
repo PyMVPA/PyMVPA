@@ -2,7 +2,9 @@ all:
 
 distclean:
 	-rm MANIFEST Changelog
-	-rm mvpa/libsvm/*.{c,so} mvpa/libsvm/svmc.py mvpa/libsvm/svmc_wrap.cpp
+	-rm mvpa/clf/libsvm/*.{c,so} \
+		mvpa/clf/libsvm/svmc.py \
+		mvpa/clf/libsvm/svmc_wrap.cpp
 	find . -name '*.pyc' -exec rm \{\} \;
 	-rm -r build
 	-rm -r dist

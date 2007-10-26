@@ -1,19 +1,12 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Abstract base class for all classifiers.
-#
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: Abstract base class for all classifiers."""
 
 import operator
 
@@ -28,11 +21,11 @@ class Classifier(object):
     Repeated calls to the train() method with different training data have to
     result in a valid classifier, trained for the particular dataset.
 
-    It must be possible to specify all classifier parameters as keyword arguments
-    to the constructor.
+    It must be possible to specify all classifier parameters as keyword
+    arguments to the constructor.
     """
 
-	__params = []
+    _params = []
 
     def __init__(self, property):
         """
@@ -49,7 +42,8 @@ class Classifier(object):
         self.__capabilities = capabilities
 
 
-	def setProperty(self, propName, propValue):
+    def setProperty(self, propName, propValue):
+        raise NotImplementedError
 
     def train(self, data):
         raise NotImplementedError

@@ -15,16 +15,15 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from classifier import *
-from mvpa import libsvm
+from mvpa.clf.classifier import Classifier
+from mvpa.clf import libsvm
 
-class SVMBase(Classifier):
+class SVM(Classifier):
     """ Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
     """
-
-	_param = [ 'eps' ] + Classifier._param
+    _param = [ 'eps' ] + Classifier._param
 
     def __init__(self, **kwargs):
         # init base class

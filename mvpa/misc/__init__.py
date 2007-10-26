@@ -1,6 +1,6 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-#
-#    PyMVPA: Base class of all error function objects
 #
 #    Copyright (C) 2007 by
 #    Michael Hanke <michael.hanke@gmail.com>
@@ -14,13 +14,5 @@
 #    file that comes with this package for more details.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-
-
-class ErrorFunctionBase(object):
-    """
-    Dummy error function base class
-    """
-    pass
-
-
+"""Import helper for PyMVPA misc modules"""
 

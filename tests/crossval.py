@@ -17,10 +17,11 @@
 
 import unittest
 import numpy as N
-import mvpa.maskeddataset
+
+import mvpa.datasets.maskeddataset
 import mvpa.crossval
-import mvpa.knn as knn
-import mvpa.nfoldsplitter
+import mvpa.clf.knn as knn
+import mvpa.datasets.nfoldsplitter
 import mvpa.mmatchprocessor
 
 def pureMultivariateSignal(patterns, origin, signal2noise = 1.5):
@@ -52,7 +53,7 @@ def pureMultivariateSignal(patterns, origin, signal2noise = 1.5):
         + [0 for i in xrange(patterns)]
     regs = N.array(regs)
 
-    return mvpa.maskeddataset.MaskedDataset(data, regs, origin)
+    return mvpa.datasets.maskeddataset.MaskedDataset(data, regs, origin)
 
 
 class CrossValidationTests(unittest.TestCase):
@@ -83,7 +84,7 @@ class CrossValidationTests(unittest.TestCase):
 
 
         cv = mvpa.crossval.CrossValidation(
-                mvpa.nfoldsplitter.NFoldSplitter(cvtype=1),
+                mvpa.datasets.nfoldsplitter.NFoldSplitter(cvtype=1),
                 knn.kNN(),
                 mvpa.mmatchprocessor.MeanMatchProcessor() )
 
@@ -98,7 +99,7 @@ class CrossValidationTests(unittest.TestCase):
 
         # do crossval
         cv = mvpa.crossval.CrossValidation(
-                mvpa.nfoldsplitter.NFoldSplitter(cvtype=1),
+                mvpa.datasets.nfoldsplitter.NFoldSplitter(cvtype=1),
                 knn.kNN(),
                 mvpa.mmatchprocessor.MeanMatchProcessor() )
         results = cv(data)
@@ -108,7 +109,9 @@ class CrossValidationTests(unittest.TestCase):
 
         # do crossval with permuted regressors
         cv = mvpa.crossval.CrossValidation(
-                mvpa.nfoldsplitter.NFoldSplitter(cvtype=1, permute=True, nrunsperfold=10),
+                mvpa.datasets.nfoldsplitter.NFoldSplitter(cvtype=1,
+                                                          permute=True,
+                                                          nrunsperfold=10),
                 knn.kNN(),
                 mvpa.mmatchprocessor.MeanMatchProcessor() )
         results = cv(data)
