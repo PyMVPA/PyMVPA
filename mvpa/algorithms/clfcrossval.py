@@ -1,19 +1,12 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: Generic Cross-Validation
-#
-#    Copyright (C) 2006-2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: Generic Cross-Validation"""
 
 import operator
 from mvpa.algorithms.datameasure import DataMeasure
@@ -21,7 +14,7 @@ from mvpa.algorithms.datameasure import DataMeasure
 
 class ClfCrossValidation(DataMeasure):
     """
-	Assumptions:
+    Assumptions:
     """
     def __init__( self,
                   splitter,
