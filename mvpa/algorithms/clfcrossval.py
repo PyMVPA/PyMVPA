@@ -16,10 +16,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import operator
+from mvpa.algorithms.datameasure import DataMeasure
 
 
-
-class CrossValidation(object):
+class ClfCrossValidation(DataMeasure):
     """
 	Assumptions:
     """
@@ -41,7 +41,7 @@ class CrossValidation(object):
             self.__splitprocessor = splitprocessor
 
 
-    def __call__( self, dataset ):
+    def __call__(self, dataset, callbacks=[]):
         """
 
         Returns a sequence of postprocessingResults.
