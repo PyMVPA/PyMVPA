@@ -5,7 +5,7 @@ distclean:
 	-@rm -f mvpa/clf/libsvm/*.{c,so} \
 		mvpa/clf/libsvm/svmc.py \
 		mvpa/clf/libsvm/svmc_wrap.cpp
-	@find . -name '*.pyc' -exec rm -f \{\} \;
+	@find . -name '*.pyc' -o -iname '*~' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
 	-@rm -rf doc/api/html
