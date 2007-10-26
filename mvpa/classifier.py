@@ -17,10 +17,11 @@
 
 import operator
 
+
 class Classifier(object):
     """
     Required behavior:
-    
+
     For every classifier is has to be possible to be instanciated without
     having to specify the training pattern.
 
@@ -30,7 +31,10 @@ class Classifier(object):
     It must be possible to specify all classifier parameters as keyword arguments
     to the constructor.
     """
-    def __init__(self, capabilities):
+
+	__params = []
+
+    def __init__(self, property):
         """
           Parameters:
             capabilities - List of strings with capability labels (see below)
@@ -44,6 +48,8 @@ class Classifier(object):
 
         self.__capabilities = capabilities
 
+
+	def setProperty(self, propName, propValue):
 
     def train(self, data):
         raise NotImplementedError

@@ -14,23 +14,30 @@ NFoldSplitter(S2)                     CrossValidation
 
 
 
- Classifier  (LinearSVM)
+   Clf  (LinearSVM)
   train          \- weights 
   predict
       |
- OptimizedClassifier(optimizer)
+ BoostedClassifier    
 
 
+ Clf  <- optimizeClassifier(optimizer, clf, parameter_to_optimize)
 
- OptimizedClassifier(parameteroptimizer)
 
-
+CVA
 
  SensitivityAnalyzer
+       \- sensitivity_map (1D array) <- __call__(dataset)
       |
  ClassifierBasedSensitivityAnalyzer(classifier)
-      |
+      | \- CombinedSensitivityAnalyzer(splitter, sensanalyzer, combiner)
+	  |      \-  __call__(dataset)
  PerturbationSensitivityAnalyzer   LinearSVMSensitivityAnalyzer   NonLinearSVMAnalyzer
+
+default combiner = average
+
+TheFunction
+GeneralizationTesting
 
 
 
@@ -44,3 +51,31 @@ NFoldSplitter(S2)                     CrossValidation
       |
    ParameterOptimizer(optimizeralgorithm, parameter, classifier)
    BoostedOptimizer(splitter, optimizer)
+
+
+# NOTES
+
+Sensitivity -> RankList (N.argsort)
+
+sens <- Combine
+dataset <- selectImportantFeature
+
+RFE(dataset, sensAnalyzer):
+do
+  sens <- sensAnalyzer(dataset)
+  dataset <- selectImportantFeature(dataset, sens)
+until the world collapses into
+
+
+smth
+ |
+smthClassifier(classifier, splitter)
+ \ __call__(dataset)
+    { splits < splitter(dataset)
+      classifier.ty(
+    
+
+SEARCHLIGHT(dataset, smth)
+foreach sphere do
+ value <- smth(dataset[sphere])
+done
