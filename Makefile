@@ -1,15 +1,15 @@
 all:
 
 distclean:
-	-rm MANIFEST Changelog
-	-rm mvpa/clf/libsvm/*.{c,so} \
+	-@rm -f MANIFEST Changelog
+	-@rm -f mvpa/clf/libsvm/*.{c,so} \
 		mvpa/clf/libsvm/svmc.py \
 		mvpa/clf/libsvm/svmc_wrap.cpp
-	find . -name '*.pyc' -exec rm \{\} \;
-	-rm -r build
-	-rm -r dist
-	-rm -rf doc/api/html
-	-cd doc/manual && rm *.log *.aux *.pdf *.backup *.out *.toc
+	@find . -name '*.pyc' -exec rm -f \{\} \;
+	-@rm -rf build
+	-@rm -rf dist
+	-@rm -rf doc/api/html
+	-@cd doc/manual && rm -f *.log *.aux *.pdf *.backup *.out *.toc
 
 
 manual:
