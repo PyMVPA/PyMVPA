@@ -36,11 +36,6 @@ CVA
 
 default combiner = average
 
-TheFunction
-GeneralizationTesting
-
-
-
  OptimizerAlgorithm
       |
  LineSearchOptimizer   GridSearch   FeatureStrip(SensitivityAnalyzer)
@@ -51,7 +46,7 @@ GeneralizationTesting
       |
    ParameterOptimizer(optimizeralgorithm, parameter, classifier)
    BoostedOptimizer(splitter, optimizer)
-
+   
 
 # NOTES
 
@@ -80,8 +75,7 @@ until the world collapses into
 
 # we need a new base class, here is the proposed name
 
-RunMeOnADatasetAndITellYouHowMuchInformationIsInIt
-
+DatasetMeasure / DatasetFunctor
 # thinking again this might be a SensitivityAnalyser, but it does not provide
 # a sens value per feature, but only a combined measure for all features
 # together
@@ -90,25 +84,42 @@ RunMeOnADatasetAndITellYouHowMuchInformationIsInIt
 # information in a dataset (not limited to classification). it should provide
 # an interface that exposes this metric plus some interesting statistics
 # (not sure what really generic candidates would be)
- \ provides vprop 'information' or similar
- \ __call__(dataset) # no further args
- |
-ClfCrossValidation(clf,splitter,errorfx)
- \__call__(dataset)
-    does what CrossValidation does now, but without the splitprocessor bloat
-    just computing a single performance value (e.g. mean generalization error)
-    however more exposed information is most likely required
-
-
+| \ provides vprop 'information' or similar
+| \ __call__(dataset) # no further args
+| |
+| ClfCrossValidation(clf, splitter=NoneSplitter, errorfx=, combinerfx=MeanFx)
+|  \__call__(dataset, callables=[])
+|   does what CrossValidation does now, but without the splitprocessor bloat
+|   just computing a single performance value (e.g. mean generalization error)
+|   however more exposed information is most likely required
+|
+|	collables are provided with locals()
+|
+|   NoneSplitter -- doesn't split and returns just original dataset
+|   logic inside __call__ should not train a classifier if splitter
+|   has only 1 dataset spitted out   (,dataset)
+|
+|   Assumption is such that splitter returns (train, predict,...)
+|   (,dataset1) -> clf.predict(dataset1)
+|   (dataset1, dataset2) -> clf.train(dataset1), clf.predict(dataset2)
+|
+|
+|
 SensitivityAnalyser
  |
-Searchlight(RunMeOnADatasetAndITellYouHowMuchInformationIsInIt)
+Searchlight(datasetmeasure, combinefx=None)
 # Searchlight is a SensitivityAnalyser that runs another SensAna
-#  with the 'RunMeOnADatasetAndITellYouHowMuchInformationIsInIt'-interface
+#  with the 'DatasetMeasure'-interface
 # on all possible spheres in the dataset
- \__call__(dataset)
- |   foreach sphere do
- |       value <- RunMeOnADatasetAndITellYouHowMuchInformationIsInIt(dataset[sphere])
+ \ [values] <- __call__(dataset, callables=[])
+ |   values = [None for i in dataset.Nfeatures]
+ |   self->sizes = [0 for i in dataset.Nfeatures]
+ |   foreach featireId do
+ |       sphere = dataset.mapper.getNeighbor(featireId)
+ |       values[featureId] = DatasetMeasure(dataset[sphere]) # d1: d2:
+ |       self->sizes[featureId] = size(sphere)
  |   done
- |
+ |   return values
+ | NB Exemplar code might look like dataset.mapper.reverse(N.array(searchlight(dataset)))
+ |    to get the searchlightmap in original space
  \sensitivity_map
