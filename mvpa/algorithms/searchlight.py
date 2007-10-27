@@ -1,25 +1,12 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: Implementation of the Searchlight algorithm -- loosely implemented
-#            after:
-#
-#            Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
-#            'Information-based functional brain mapping.' Proceedings of the
-#            National Academy of Sciences of the United States of America 103,
-#            3863-3868.
-#
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: Implementation of the Searchlight algorithm"""
 
 import algorithms
 import numpy as N
