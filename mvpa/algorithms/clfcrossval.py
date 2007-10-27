@@ -27,7 +27,7 @@ class ClfCrossValidation(DataMeasure):
     def __init__(self,
                  clf,
                  splitter=NoneSplitter,
-                 errorfx=MeanMatchErrorFx,
+                 errorfx=MeanMatchErrorFx(),
                  combinerfx=N.mean):
         """
         Cheap initialization.
@@ -70,7 +70,7 @@ class ClfCrossValidation(DataMeasure):
 
             # compute error from desired and predicted values
             error = self.__errorfx(self.__clf.predict(split[1].samples),
-                                   split[1].labels))
+                                   split[1].labels)
             results.append(error)
 
             # XXX add callbacks
