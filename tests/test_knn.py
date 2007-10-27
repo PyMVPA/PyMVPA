@@ -9,9 +9,11 @@
 """PyMVPA: Unit tests for PyMVPA kNN classifier"""
 
 import unittest
-import mvpa.maskeddataset
-import mvpa.knn as knn
+
 import numpy as N
+
+from mvpa.datasets.dataset import Dataset
+from mvpa.clf.knn import kNN
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):
@@ -37,18 +39,17 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
     data[3*patterns:4*patterns,0] += signal2noise
 
     # two conditions
-    regs = [0 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [0 for i in xrange(patterns)]
-    regs = N.array(regs)
+    labels = [0 for i in xrange(patterns)] \
+             + [1 for i in xrange(patterns)] \
+             + [1 for i in xrange(patterns)] \
+             + [0 for i in xrange(patterns)]
+    labels = N.array(labels)
 
-    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
+    return Dataset(data, labels, None)
 
 
 class KNNTests(unittest.TestCase):
 
-    
     def testMultivariate(self):
 
         mv_perf = []
@@ -58,15 +59,15 @@ class KNNTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            k_mv = knn.kNN(k = 10)
+            k_mv = kNN(k = 10)
             k_mv.train(train)
             p_mv = k_mv.predict( test.samples )
-            mv_perf.append( N.mean(p_mv==test.regs) )
+            mv_perf.append( N.mean(p_mv==test.labels) )
 
-            k_uv = knn.kNN(k=10)
+            k_uv = kNN(k=10)
             k_uv.train(train.selectFeatures([0]))
             p_uv = k_uv.predict( test.selectFeatures([0]).samples )
-            uv_perf.append( N.mean(p_uv==test.regs) )
+            uv_perf.append( N.mean(p_uv==test.labels) )
 
         mean_mv_perf = N.mean(mv_perf)
         mean_uv_perf = N.mean(uv_perf)
