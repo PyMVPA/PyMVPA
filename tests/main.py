@@ -11,15 +11,15 @@
 import unittest
 
 # list all test modules (without .py extension)
-tests = [ 'dataset',
-          'maskmapper',
-          'neighbor',
-          'maskeddataset',
-          'nfoldsplitter',
-          #'crossval'
+tests = [ 'test_dataset',
+          'test_maskmapper',
+          'test_neighbor',
+          'test_maskeddataset',
+          'test_nfoldsplitter',
+          'test_knn',
+          'test_clfcrossval'
           ]
 #          'test_algorithms',
-#          'test_knn',
 #          'test_svm',
 #          'test_plf',
 #          'test_xvalpattern',

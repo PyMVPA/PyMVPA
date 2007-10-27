@@ -6,18 +6,19 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA pattern handling"""
+"""PyMVPA: Unit tests for PyMVPA classifier cross-validation"""
 
 import unittest
 import numpy as N
 
-import mvpa.datasets.maskeddataset
-import mvpa.crossval
-import mvpa.clf.knn as knn
-import mvpa.datasets.nfoldsplitter
-import mvpa.mmatchprocessor
+from mvpa.datasets.dataset import Dataset
+from mvpa.clf.knn import kNN
+from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.algorithms.clfcrossval import ClfCrossValidation
+from mvpa.misc.errorfx import MeanMatchErrorFx
 
-def pureMultivariateSignal(patterns, origin, signal2noise = 1.5):
+
+def pureMultivariateSignal(nsamples, chunk, signal2noise = 1.5):
     """ Create a 2d dataset with a clear multivariate signal, but no
     univariate information.
 
@@ -29,24 +30,24 @@ def pureMultivariateSignal(patterns, origin, signal2noise = 1.5):
     """
 
     # start with noise
-    data=N.random.normal(size=(4*patterns,2))
+    data=N.random.normal(size=(4*nsamples,2))
 
     # add signal
-    data[:2*patterns,1] += signal2noise
-    data[2*patterns:4*patterns,1] -= signal2noise
-    data[:patterns,0] -= signal2noise
-    data[2*patterns:3*patterns,0] -= signal2noise
-    data[patterns:2+patterns,0] += signal2noise
-    data[3*patterns:4*patterns,0] += signal2noise
+    data[:2*nsamples,1] += signal2noise
+    data[2*nsamples:4*nsamples,1] -= signal2noise
+    data[:nsamples,0] -= signal2noise
+    data[2*nsamples:3*nsamples,0] -= signal2noise
+    data[nsamples:2+nsamples,0] += signal2noise
+    data[3*nsamples:4*nsamples,0] += signal2noise
 
     # two conditions
-    regs = [0 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [0 for i in xrange(patterns)]
-    regs = N.array(regs)
+    labels = [0 for i in xrange(nsamples)] \
+             + [1 for i in xrange(nsamples)] \
+             + [1 for i in xrange(nsamples)] \
+             + [0 for i in xrange(nsamples)]
+    labels = N.array(labels)
 
-    return mvpa.datasets.maskeddataset.MaskedDataset(data, regs, origin)
+    return Dataset(data, labels, chunk)
 
 
 class CrossValidationTests(unittest.TestCase):
@@ -76,37 +77,31 @@ class CrossValidationTests(unittest.TestCase):
                 [ k for k in range(1,7) for i in range(20) ] ).all() )
 
 
-        cv = mvpa.crossval.CrossValidation(
-                mvpa.datasets.nfoldsplitter.NFoldSplitter(cvtype=1),
-                knn.kNN(),
-                mvpa.mmatchprocessor.MeanMatchProcessor() )
+        cv = ClfCrossValidation(
+                kNN(),
+                NFoldSplitter(cvtype=1))
 
         results = cv(data)
-        self.failUnless( N.mean(results) > 0.8 and N.mean(results) <= 1.0 )
-        self.failUnless( len( results ) == 6 )
+        self.failUnless( results > 0.8 and results <= 1.0 )
 
 
     def testNoiseClassification(self):
         # get a dataset with a very high SNR
         data = self.getMVPattern(10)
 
-        # do crossval
-        cv = mvpa.crossval.CrossValidation(
-                mvpa.datasets.nfoldsplitter.NFoldSplitter(cvtype=1),
-                knn.kNN(),
-                mvpa.mmatchprocessor.MeanMatchProcessor() )
-        results = cv(data)
+        # do crossval with default errorfx and 'mean' combiner
+        cv = ClfCrossValidation(kNN(), NFoldSplitter(cvtype=1)) 
+
+        # must return a scalar value
+        result = cv(data)
 
         # must be perfect
-        self.failUnless( N.array(results).mean() > 0.95 )
+        self.failUnless( result > 0.95 )
 
         # do crossval with permuted regressors
-        cv = mvpa.crossval.CrossValidation(
-                mvpa.datasets.nfoldsplitter.NFoldSplitter(cvtype=1,
-                                                          permute=True,
-                                                          nrunsperfold=10),
-                knn.kNN(),
-                mvpa.mmatchprocessor.MeanMatchProcessor() )
+        cv = ClfCrossValidation(
+                  kNN(),
+                  NFoldSplitter(cvtype=1, permute=True, nrunsperfold=10) )
         results = cv(data)
 
         # must be at chance level
