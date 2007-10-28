@@ -38,7 +38,7 @@ class Mapper(object):
     def __getitem__(self, data):
         """ Calls the mappers forward() method.
         """
-        return self.reverse(data)
+        return self.forward(data)
 
     def reverse(self, data):
         """ Reverse map data from featurespace into the original dataspace.
