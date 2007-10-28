@@ -53,6 +53,7 @@ class Metric(object):
         """
         return [ x for x in self.getNeighbor(*args, **kwargs) ]
 
+
     def getNeighbor(self, *args, **kwargs):
         """ Generator to return coordinate of the neighbor.
 
@@ -63,9 +64,12 @@ class Metric(object):
         for neighbor in self.getNeighbors(*args, **kwargs):
             yield neighbor
 
-    def __call__(self, *args, **kwargs):
-        """ Sugar -- call implements the generator """
-        return self.getNeighbor(*args, **kwargs)
+# XXX Disabled by Michael as it doesn't seem to be required and conflicts
+# with Mapper interface when doing multiple inheritance.
+#    def __call__(self, *args, **kwargs):
+#        """ Sugar -- call implements the generator """
+#        return self.getNeighbor(*args, **kwargs)
+
 
 
 class DescreteMetric(Metric):
@@ -93,6 +97,7 @@ class DescreteMetric(Metric):
         # XXX might not need assume compatible spacementric
         self.__elementsize = N.array(elementsize)
         self.__Ndims = len(self.__elementsize)
+
 
     def _computeFilter(self, radius):
         """ (Re)Computer filter_coord based on given radius
@@ -122,6 +127,7 @@ class DescreteMetric(Metric):
                                         - filter_center
         self.__filter_radius = radius
 
+
     def getNeighbors(self, origin, radius=0):
         """ Returns coordinates of the neighbors which are within
         distance from coord
@@ -143,10 +149,12 @@ class DescreteMetric(Metric):
         # coordinates into tuples
         return origin + self.__filter_coord
 
+
     def _setFilter(self, filter_coord):
         """ Lets allow to specify some custom filter to use
         """
         self.__filter_coord = filter_coord
+
 
     def _getFilter(self):
         """ Lets allow to specify some custom filter to use

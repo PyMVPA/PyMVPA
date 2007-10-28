@@ -38,12 +38,12 @@ class MetricTests(unittest.TestCase):
         self.failUnless( (metric.getNeighbors([2,2], 2.6) == target).all())
 
         # a bit longer one... not sure what for
-        for point in metric([2,2], distance):
+        for point in metric.getNeighbor([2,2], distance):
             self.failUnless( cartesianDistance(point, [2,2]) <= distance)
 
         # use manhattenDistance function
         metric = DescreteMetric(elsize, manhattenDistance)
-        for point in metric([2,2], distance):
+        for point in metric.getNeighbor([2,2], distance):
             self.failUnless( manhattenDistance(point, [2,2]) <= distance)
 
     def testGetNeighbors(self):

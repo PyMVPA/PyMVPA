@@ -9,10 +9,11 @@
 """PyMVPA: Mapper using a mask array to map dataspace to featurespace"""
 
 
-from mapper import Mapper
-from metric import Metric
-
 import numpy as N
+
+from mvpa.datasets.mapper import Mapper
+from mvpa.datasets.metric import Metric
+
 
 class MaskMapper(Mapper):
     """Mapper which uses a binary mask to select "Features" """
@@ -201,7 +202,7 @@ class MaskMetricMapper(MaskMapper, Metric):
         mask = self.mask
         maskshape = mask.shape
         # TODO Check dimensionality of inId
-        for neighbor in self.__metric(inId, radius):
+        for neighbor in self.__metric.getNeighbor(inId, radius):
             tneighbor = tuple(neighbor)
             if ( isInVolume(neighbor, maskshape) and
                  self.mask[tneighbor] != 0 ):
