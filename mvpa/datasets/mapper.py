@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Abstract base class of all data mappers"""
 
+from mvpa.datasets.metric import Metric
 
 class Mapper(object):
     """
@@ -101,4 +102,31 @@ class Mapper(object):
 ## getMask... it might be more generic... so far seems to be
 ##            specific for featsel and rfe
 ## buildMaskFromFeatureIds ... used in ifs
+
+
+
+class MetricMapper(Mapper, Metric):
+    """ Mapper which has information about the metrics of the dataspace it is
+    mapping.
+    """
+    def __init__(self, metric):
+        """Cheap initialisation.
+
+        'metric' is a subclass of Metric.
+        """
+        Mapper.__init__(self)
+
+        if not isinstance(metric, Metric):
+            print type(metric)
+            raise ValueError, "MetricMapper has to be initialized with an " \
+                              "instance of a 'Metric' object."
+        self.__metric = metric
+
+
+    def getMetric(self):
+        """ To make pylint happy """
+        return self.__metric
+
+    metric = property(fget=getMetric)
+
 
