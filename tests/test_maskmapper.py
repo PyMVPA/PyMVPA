@@ -73,7 +73,7 @@ class MaskMapperTests(unittest.TestCase):
         self.failUnless( rmapped2[1,2,1] == 10 )
 
 
-    def testMaskMetricMapper(self):
+    def testMaskMapperMetrics(self):
         """ Test MaskMetricMapper
         """
         mask = N.ones((3,2))
@@ -81,7 +81,7 @@ class MaskMapperTests(unittest.TestCase):
 
         # take space with non-square elements
         neighborFinder = DescreteMetric([0.5, 2])
-        map_ = MaskMetricMapper(mask, neighborFinder)
+        map_ = MaskMapper(mask, neighborFinder)
 
         # test getNeighbors
         # now it returns list of arrays
