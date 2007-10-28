@@ -94,8 +94,8 @@ class DescreteMetric(Metric):
         self.__filter_coord = None
         self.__distance_function = distance_function
 
-        # XXX might not need assume compatible spacementric
-        self.__elementsize = N.array(elementsize)
+        # XXX might not need assume compatible spacemetric
+        self.__elementsize = N.array(elementsize, ndmin=1)
         self.__Ndims = len(self.__elementsize)
 
 
