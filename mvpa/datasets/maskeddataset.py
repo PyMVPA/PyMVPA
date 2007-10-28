@@ -14,6 +14,11 @@ from maskmapper import *
 
 
 # XXX should be really provided by any Mapper + MappedDataset tandem
+# Michael: I agree, but what about keeping mapper and dataset synchronized
+#          when a subset of features is selected? Some part of the code has to
+#          take care and I currently cannot see a solution that would scale
+#          to any kind of mapper. Mapper interface would need
+#          improve/enhacements...
 class MaskedDataset(MappedDataset):
     """
     """
