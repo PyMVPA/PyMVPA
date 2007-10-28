@@ -72,6 +72,7 @@ class MaskMapperTests(unittest.TestCase):
         self.failUnless( rmapped2[0,2,1] == 5 )
         self.failUnless( rmapped2[1,2,1] == 10 )
 
+
     def testMaskMetricMapper(self):
         """ Test MaskMetricMapper
         """
@@ -93,6 +94,41 @@ class MaskMapperTests(unittest.TestCase):
         target = [0,1,2,3]
         result = map_.getNeighbors(0, 2.1)
         self.failUnless( result == target )
+
+
+    def testMapperAliases(self):
+        mm=MaskMapper(N.ones((3,4,2)))
+
+        self.failUnless((mm(N.arange(24)) == mm.reverse(N.arange(24))).all())
+        self.failUnless((mm[N.ones((3,4,2))] \
+                        == mm.forward(N.ones((3,4,2)))).all())
+
+
+    def testGetInOutIdBehaviour(self):
+        mask=N.zeros((3,4,2))
+        mask[0,0,1]=1
+        mask[2,1,0]=1
+        mask[0,3,1]=1
+
+        mm=MaskMapper(mask)
+
+        self.failUnless(mm.nfeatures==3)
+
+        # 'In' 
+        self.failUnless((mm.getInIds() \
+                         == N.array([[0, 0, 1],[0, 3, 1],[2, 1, 0]])).all())
+        self.failUnless((mm.getInId(1) == [0,3,1]).all())
+        # called with list gives nonzero() like output
+        self.failUnless((mm.getInId(range(mm.nfeatures)) \
+                         == mm.getInIds().T).all())
+
+        # 'Out'
+        self.failUnlessRaises( ValueError,
+                               mm.getOutId,
+                               (0,0,0))
+        self.failUnless(mm.getOutId((0,0,1)) == 0
+                        and mm.getOutId((0,3,1)) == 1
+                        and mm.getOutId((2,1,0)) == 2)
 
 
 def suite():

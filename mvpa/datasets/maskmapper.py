@@ -130,6 +130,11 @@ class MaskMapper(Mapper):
         """ Returns a features coordinate in the original data space
         for a given feature id.
 
+        If this method is called with a list of feature ids it returns a
+        2d-array where the first axis corresponds the dimensions in 'In'
+        dataspace and along the second axis are the coordinates of the features
+        on this dimension (like the output of NumPy.array.nonzero()).
+
         XXX it might become __get_item__ access method
 
         """
