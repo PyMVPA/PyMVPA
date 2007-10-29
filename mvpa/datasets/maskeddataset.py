@@ -8,7 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: PyMVPA:"""
 
+import operator
+
 import numpy as N
+
 from mappeddataset import *
 from maskmapper import *
 
