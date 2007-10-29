@@ -2,19 +2,12 @@
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Classes to provide search for the neighbors"""
+
 
 import numpy as N
 
@@ -60,6 +53,7 @@ class Metric(object):
         """
         return [ x for x in self.getNeighbor(*args, **kwargs) ]
 
+
     def getNeighbor(self, *args, **kwargs):
         """ Generator to return coordinate of the neighbor.
 
@@ -70,9 +64,12 @@ class Metric(object):
         for neighbor in self.getNeighbors(*args, **kwargs):
             yield neighbor
 
-    def __call__(self, *args, **kwargs):
-        """ Sugar -- call implements the generator """
-        return self.getNeighbor(*args, **kwargs)
+# XXX Disabled by Michael as it doesn't seem to be required and conflicts
+# with Mapper interface when doing multiple inheritance.
+#    def __call__(self, *args, **kwargs):
+#        """ Sugar -- call implements the generator """
+#        return self.getNeighbor(*args, **kwargs)
+
 
 
 class DescreteMetric(Metric):
@@ -97,9 +94,10 @@ class DescreteMetric(Metric):
         self.__filter_coord = None
         self.__distance_function = distance_function
 
-        # XXX might not need assume compatible spacementric
-        self.__elementsize = N.array(elementsize)
+        # XXX might not need assume compatible spacemetric
+        self.__elementsize = N.array(elementsize, ndmin=1)
         self.__Ndims = len(self.__elementsize)
+
 
     def _computeFilter(self, radius):
         """ (Re)Computer filter_coord based on given radius
@@ -129,6 +127,7 @@ class DescreteMetric(Metric):
                                         - filter_center
         self.__filter_radius = radius
 
+
     def getNeighbors(self, origin, radius=0):
         """ Returns coordinates of the neighbors which are within
         distance from coord
@@ -150,10 +149,12 @@ class DescreteMetric(Metric):
         # coordinates into tuples
         return origin + self.__filter_coord
 
+
     def _setFilter(self, filter_coord):
         """ Lets allow to specify some custom filter to use
         """
         self.__filter_coord = filter_coord
+
 
     def _getFilter(self):
         """ Lets allow to specify some custom filter to use

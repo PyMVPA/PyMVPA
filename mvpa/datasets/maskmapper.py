@@ -2,37 +2,43 @@
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Mapper using a mask array to map dataspace to featurespace"""
 
-from mapper import Mapper
-from metric import Metric
 
 import numpy as N
 
-class MaskMapper(Mapper):
+from mvpa.datasets.mapper import MetricMapper
+from mvpa.datasets.metric import Metric, DescreteMetric, cartesianDistance
+
+
+class MaskMapper(MetricMapper):
     """Mapper which uses a binary mask to select "Features" """
 
-    def __init__(self, mask):
+    def __init__(self, mask, metric=None):
         """ 'mask' has to be an array in the original dataspace and its nonzero
         elements are used to define the features.
+
+        'metric' can be any instance of a 'Metric' object, no attempt is made
+        to determine whether a certain metric is reasonable for this mapper. If
+        'metric' is None as default 'DiscreteMetric' is constructed that assumes
+        an equal spacing of all mask elements with a cartesian distance of 1
+        along all axes.
         """
-        Mapper.__init__(self)
+        if metric == None:
+            metric = DescreteMetric(elementsize=[1 for i in mask.shape],
+                                     distance_function=cartesianDistance)
+
+        MetricMapper.__init__(self, metric)
+
         self.__mask = self.__maskdim = self.__masksize = \
                       self.__masknonzerosize = self.__forwardmap = \
                       self.__masknonzero = None # to make pylint happy
         self._initMask(mask)
+
 
     def _initMask(self, mask):
         """Initialize internal state with mask-derived information
@@ -64,6 +70,7 @@ class MaskMapper(Mapper):
             coordIn = self.getInId(voxelIndex)
             self.__forwardmap[tuple(coordIn)] = voxelIndex + 1
 
+
     def forward(self, data):
         """ Map data from the original dataspace into featurespace.
         """
@@ -81,6 +88,7 @@ class MaskMapper(Mapper):
                   "Shape of the to be mapped data, does not match the " \
                   "mapper mask. Only one (optional) additional dimension " \
                   "exceeding the mask shape is supported."
+
 
     def reverse(self, data):
         """ Reverse map data from featurespace into the original dataspace.
@@ -100,13 +108,16 @@ class MaskMapper(Mapper):
 
         return mapped
 
+
     def getInShape(self):
         """InShape is a shape of original mask"""
         return self.__mask.shape
 
+
     def getInSize(self):
         """InShape is a shape of original mask"""
         return self.__masksize
+
 
     def getOutShape(self):
         """OutShape is a shape of target dataset"""
@@ -117,9 +128,11 @@ class MaskMapper(Mapper):
         #         mapped yet see the dataset
         raise NotImplementedError
 
+
     def getOutSize(self):
         """OutSize is a number of non-0 elements in the mask"""
         return self.__masknonzerosize
+
 
     def getMask(self, copy = True):
         """By default returns a copy of the current mask.
@@ -132,9 +145,15 @@ class MaskMapper(Mapper):
         else:
             return self.__mask
 
+
     def getInId(self, outId):
         """ Returns a features coordinate in the original data space
         for a given feature id.
+
+        If this method is called with a list of feature ids it returns a
+        2d-array where the first axis corresponds the dimensions in 'In'
+        dataspace and along the second axis are the coordinates of the features
+        on this dimension (like the output of NumPy.array.nonzero()).
 
         XXX it might become __get_item__ access method
 
@@ -144,11 +163,13 @@ class MaskMapper(Mapper):
         return N.array([self.__masknonzero[i][outId]
                         for i in xrange(self.__maskdim)])
 
+
     def getInIds(self):
         """ Returns a 2d array where each row contains the coordinate of the
         feature with the corresponding id.
         """
         return N.transpose(self.__masknonzero)
+
 
     def getOutId(self, coord):
         """ Translate a feature mask coordinate into a feature ID.
@@ -182,24 +203,6 @@ class MaskMapper(Mapper):
         fmask[ids] = True
         return self.reverse(fmask)
 
-    # Read-only props
-    # TODO: refactor the property names? make them vproperty?
-    dsshape = property(fget=getInShape)
-    nfeatures = property(fget=getOutSize)
-    mask = property(fget=lambda self:self.getMask(False))
-
-
-class MaskMetricMapper(MaskMapper, Metric):
-    """ MaskMapper which also knows the metric - ie can satisfy
-    the interface of the Metric class.
-    """
-
-    def __init__(self, mask, metric):
-        """ Initialize using the mask and some appropriate neighbor metric.
-        """
-        MaskMapper.__init__(self, mask)
-        Metric.__init__(self)
-        self.__metric = metric
 
     def getNeighborIn(self, inId, radius=0):
         """ Return the list of coordinates for the neighbors.
@@ -208,11 +211,12 @@ class MaskMetricMapper(MaskMapper, Metric):
         mask = self.mask
         maskshape = mask.shape
         # TODO Check dimensionality of inId
-        for neighbor in self.__metric(inId, radius):
+        for neighbor in self.metric.getNeighbor(inId, radius):
             tneighbor = tuple(neighbor)
             if ( isInVolume(neighbor, maskshape) and
                  self.mask[tneighbor] != 0 ):
                 yield neighbor
+
 
     def getNeighbor(self, outId, radius=0):
         """ Return the list of Ids for the neighbors.
@@ -225,14 +229,12 @@ class MaskMetricMapper(MaskMapper, Metric):
             yield self.getOutId(inId)
 
 
-    def getMetric(self):
-        """ To make pylint happy """
-        return self.__metric
+    # Read-only props
+    # TODO: refactor the property names? make them vproperty?
+    dsshape = property(fget=getInShape)
+    nfeatures = property(fget=getOutSize)
+    mask = property(fget=lambda self:self.getMask(False))
 
-    metric = property(fget=getMetric)
-
-    # TODO Need to disambiguate __call__ which is defined in both
-    # Mapper and Metric
 
     # TODO Unify tuple/array conversion of coordinates. tuples are needed
     #      for easy reference, arrays are needed when doing computation on
@@ -240,6 +242,8 @@ class MaskMetricMapper(MaskMapper, Metric):
     #      array from tuples while performing arithm operations...
 
 # helper functions which might be absorbed later on by some module or a class
+
+
 
 def isInVolume(coord, shape):
     """For given coord check if it is within a specified volume size.
