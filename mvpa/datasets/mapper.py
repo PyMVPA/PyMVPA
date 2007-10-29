@@ -2,21 +2,13 @@
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA: Abstract base class of all data mappers
-#
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Module that contains abstract base class of all data mappers"""
+"""PyMVPA: Abstract base class of all data mappers"""
+
+from mvpa.datasets.metric import Metric
 
 class Mapper(object):
     """
@@ -47,7 +39,7 @@ class Mapper(object):
     def __getitem__(self, data):
         """ Calls the mappers forward() method.
         """
-        return self.reverse(data)
+        return self.forward(data)
 
     def reverse(self, data):
         """ Reverse map data from featurespace into the original dataspace.
@@ -110,4 +102,31 @@ class Mapper(object):
 ## getMask... it might be more generic... so far seems to be
 ##            specific for featsel and rfe
 ## buildMaskFromFeatureIds ... used in ifs
+
+
+
+class MetricMapper(Mapper, Metric):
+    """ Mapper which has information about the metrics of the dataspace it is
+    mapping.
+    """
+    def __init__(self, metric):
+        """Cheap initialisation.
+
+        'metric' is a subclass of Metric.
+        """
+        Mapper.__init__(self)
+
+        if not isinstance(metric, Metric):
+            print type(metric)
+            raise ValueError, "MetricMapper has to be initialized with an " \
+                              "instance of a 'Metric' object."
+        self.__metric = metric
+
+
+    def getMetric(self):
+        """ To make pylint happy """
+        return self.__metric
+
+    metric = property(fget=getMetric)
+
 

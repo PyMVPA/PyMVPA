@@ -1,20 +1,12 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    PyMVPA:
-#
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#    Yaroslav Halchenko <debianqonerussian.org>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: PyMVPA:"""
 
 import numpy as N
 from mappeddataset import *
@@ -22,6 +14,11 @@ from maskmapper import *
 
 
 # XXX should be really provided by any Mapper + MappedDataset tandem
+# Michael: I agree, but what about keeping mapper and dataset synchronized
+#          when a subset of features is selected? Some part of the code has to
+#          take care and I currently cannot see a solution that would scale
+#          to any kind of mapper. Mapper interface would need
+#          improve/enhacements...
 class MaskedDataset(MappedDataset):
     """
     """

@@ -24,15 +24,6 @@ NFoldSplitter(S2)                     CrossValidation
  Clf  <- optimizeClassifier(optimizer, clf, parameter_to_optimize)
 
 
-CVA
-
- SensitivityAnalyzer
-       \- sensitivity_map (1D array) <- __call__(dataset)
-      |
- ClassifierBasedSensitivityAnalyzer(classifier)
-      | \- CombinedSensitivityAnalyzer(splitter, sensanalyzer, combiner)
-	  |      \-  __call__(dataset)
- PerturbationSensitivityAnalyzer   LinearSVMSensitivityAnalyzer   NonLinearSVMAnalyzer
 
 default combiner = average
 
@@ -60,14 +51,6 @@ do
   sens <- sensAnalyzer(dataset)
   dataset <- selectImportantFeature(dataset, sens)
 until the world collapses into
-
-
-#smth
-# |
-#smthClassifier(classifier, splitter)
-# \ __call__(dataset)
-#    { splits < splitter(dataset)
-#      classifier.ty(
 
 
 ##############################################
@@ -106,7 +89,16 @@ DatasetMeasure / DatasetFunctor
 |
 |
 SensitivityAnalyser
- |
+| |  |     \- sensitivity_map (1D array) <- __call__(dataset)
+| |  |
+| |  PerturbationSensitivityAnalyzer   LinearSVMSensitivityAnalyzer   NonLinearSVMAnalyzer
+| |
+| |   
+| ClassifierBasedSensitivityAnalyzer(classifier)
+|    |
+|   CombinedSensitivityAnalyzer(splitter, sensanalyzer, combiner)
+|         \-  __call__(dataset)
+|
 Searchlight(datasetmeasure, combinefx=None)
 # Searchlight is a SensitivityAnalyser that runs another SensAna
 #  with the 'DatasetMeasure'-interface

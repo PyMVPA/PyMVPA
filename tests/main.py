@@ -1,33 +1,25 @@
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Main unit test interface for PyMVPA
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
-#
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: Main unit test interface for PyMVPA"""
 
 import unittest
 
 # list all test modules (without .py extension)
-tests = [ 'dataset',
-          'maskmapper',
-          'neighbor',
-          'maskeddataset',
-          'nfoldsplitter',
-          'crossval' ]
+tests = [ 'test_dataset',
+          'test_maskmapper',
+          'test_neighbor',
+          'test_maskeddataset',
+          'test_nfoldsplitter',
+          'test_knn',
+          'test_clfcrossval'
+          ]
 #          'test_algorithms',
-#          'test_knn',
 #          'test_svm',
 #          'test_plf',
 #          'test_xvalpattern',

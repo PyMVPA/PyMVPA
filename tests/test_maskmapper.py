@@ -2,19 +2,12 @@
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#    Copyright (C) 2007 by
-#    Michael Hanke <michael.hanke@gmail.com>
-#
-#    This package is free software; you can redistribute it and/or
-#    modify it under the terms of the MIT License.
-#
-#    This package is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the COPYING
-#    file that comes with this package for more details.
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA mask mapper"""
+"""PyMVPA: Unit tests for PyMVPA mask mapper"""
+
 
 from mvpa.datasets.maskmapper import *
 from mvpa.datasets.metric import *
@@ -79,7 +72,8 @@ class MaskMapperTests(unittest.TestCase):
         self.failUnless( rmapped2[0,2,1] == 5 )
         self.failUnless( rmapped2[1,2,1] == 10 )
 
-    def testMaskMetricMapper(self):
+
+    def testMaskMapperMetrics(self):
         """ Test MaskMetricMapper
         """
         mask = N.ones((3,2))
@@ -87,7 +81,7 @@ class MaskMapperTests(unittest.TestCase):
 
         # take space with non-square elements
         neighborFinder = DescreteMetric([0.5, 2])
-        map_ = MaskMetricMapper(mask, neighborFinder)
+        map_ = MaskMapper(mask, neighborFinder)
 
         # test getNeighbors
         # now it returns list of arrays
@@ -100,6 +94,41 @@ class MaskMapperTests(unittest.TestCase):
         target = [0,1,2,3]
         result = map_.getNeighbors(0, 2.1)
         self.failUnless( result == target )
+
+
+    def testMapperAliases(self):
+        mm=MaskMapper(N.ones((3,4,2)))
+
+        self.failUnless((mm(N.arange(24)) == mm.reverse(N.arange(24))).all())
+        self.failUnless((mm[N.ones((3,4,2))] \
+                        == mm.forward(N.ones((3,4,2)))).all())
+
+
+    def testGetInOutIdBehaviour(self):
+        mask=N.zeros((3,4,2))
+        mask[0,0,1]=1
+        mask[2,1,0]=1
+        mask[0,3,1]=1
+
+        mm=MaskMapper(mask)
+
+        self.failUnless(mm.nfeatures==3)
+
+        # 'In' 
+        self.failUnless((mm.getInIds() \
+                         == N.array([[0, 0, 1],[0, 3, 1],[2, 1, 0]])).all())
+        self.failUnless((mm.getInId(1) == [0,3,1]).all())
+        # called with list gives nonzero() like output
+        self.failUnless((mm.getInId(range(mm.nfeatures)) \
+                         == mm.getInIds().T).all())
+
+        # 'Out'
+        self.failUnlessRaises( ValueError,
+                               mm.getOutId,
+                               (0,0,0))
+        self.failUnless(mm.getOutId((0,0,1)) == 0
+                        and mm.getOutId((0,3,1)) == 1
+                        and mm.getOutId((2,1,0)) == 2)
 
 
 def suite():
