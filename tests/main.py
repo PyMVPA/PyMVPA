@@ -17,13 +17,13 @@ tests = [ 'test_dataset',
           'test_maskeddataset',
           'test_nfoldsplitter',
           'test_knn',
-          'test_clfcrossval'
+          'test_clfcrossval',
+          'test_searchlight'
           ]
 #          'test_algorithms',
 #          'test_svm',
 #          'test_plf',
 #          'test_xvalpattern',
-#          'test_searchlight',
 #          'test_ifs',
 #          'test_rfe',
 #          'test_featsel',
