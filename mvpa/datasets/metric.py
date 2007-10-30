@@ -162,6 +162,7 @@ class DescreteMetric(Metric):
         return self.__filter_coord
 
     filter_coord = property(fget=_getFilter, fset=_setFilter)
+    elementsize = property(fget=lambda self: self.__elementsize)
 
 # Template for future classes
 #

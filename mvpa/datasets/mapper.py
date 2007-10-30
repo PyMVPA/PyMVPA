@@ -127,6 +127,12 @@ class MetricMapper(Mapper, Metric):
         """ To make pylint happy """
         return self.__metric
 
-    metric = property(fget=getMetric)
+
+    def setMetric(self, metric):
+        """ To make pylint happy """
+        self.__metric = metric
+
+
+    metric = property(fget=getMetric, fset=setMetric)
 
 

@@ -39,6 +39,7 @@ class MaskedDataset(MappedDataset):
             # assume full dataspace mask
             mask = N.ones( samples.shape[1:], dtype='bool' )
 
+
         if isinstance( mask, N.ndarray ):
             # check for compatibility
             if not samples.shape[1:] == mask.shape:
@@ -46,7 +47,6 @@ class MaskedDataset(MappedDataset):
                                   "compatible with the shape of the provided " \
                                   "data samples [%s]." % (`mask.shape`,
                                                           `samples.shape[1:]`)
-
             # map samples with mask
             mapper = MaskMapper( mask )
             mapped_samples = mapper.forward( samples )
