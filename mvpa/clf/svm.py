@@ -9,25 +9,25 @@
 """PyMVPA: Wrap the libsvm package into a very simple class interface."""
 
 from mvpa.clf.classifier import Classifier
-from mvpa.clf import libsvm
+from mvpa.clf.libsvm.svm import *
 
 class SVM(Classifier):
     """ Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
     """
-    _param = [ 'eps' ] + Classifier._param
+#    _param = [ 'eps' ] + Classifier._param
 
     def __init__(self, **kwargs):
         # init base class
-        Classifier.__init__(self, ['feature_benchmark'] )
+        Classifier.__init__(self)
 
         # check if there is a libsvm version with configurable
         # noise reduction ;)
-        if hasattr(libsvm.svmc, 'svm_set_verbosity'):
-            libsvm.svmc.svm_set_verbosity( 0 )
+        if hasattr(svmc, 'svm_set_verbosity'):
+            svmc.svm_set_verbosity( 0 )
 
-        self.param = libsvm.svm_parameter( **(kwargs) )
+        self.param = svm_parameter( **(kwargs) )
 
 
     def train(self, data):
@@ -37,9 +37,9 @@ class SVM(Classifier):
         else:
             src = data.samples.astype('double')
 
-        svmprob = libsvm.svm_problem( data.labels.tolist(), src )
+        svmprob = svm_problem( data.labels.tolist(), src )
 
-        self.model = libsvm.svm_model( svmprob, self.param)
+        self.model = svm_model( svmprob, self.param)
 
 
     def predict(self, data):

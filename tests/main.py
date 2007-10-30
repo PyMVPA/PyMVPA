@@ -17,15 +17,15 @@ tests = [ 'test_dataset',
           'test_maskeddataset',
           'test_nfoldsplitter',
           'test_knn',
+          'test_svm',
           'test_clfcrossval',
-          'test_searchlight'
+          'test_searchlight',
+          'test_stats',
+          'test_support'
           ]
-#          'test_svm',
 #          'test_plf',
 #          'test_ifs',
 #          'test_rfe',
-#          'test_support',
-#          'test_stats' ]
 
 
 # import all test modules
