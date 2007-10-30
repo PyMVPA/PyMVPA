@@ -1,9 +1,24 @@
-import svmc
-from svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR
-from svmc import LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""PyMVPA: Python interface to the SWIG-wrapped libsvm"""
+
+
 from math import exp, fabs
 import re
+
 import numpy as N
+
+from mvpa.clf.libsvm import svmc
+from mvpa.clf.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
+                                 NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
+                                 PRECOMPUTED
+
 
 def _int_array(seq):
 	size = len(seq)

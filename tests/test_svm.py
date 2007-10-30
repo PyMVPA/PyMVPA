@@ -8,10 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Unit tests for SVM classifier"""
 
-import mvpa.maskeddataset
-import mvpa.svm as svm
 import unittest
+
 import numpy as N
+
+from mvpa.datasets.dataset import Dataset
+from mvpa.clf.svm import SVM
 
 
 def dumbFeatureSignal():
@@ -22,7 +24,7 @@ def dumbFeatureSignal():
          + [2 for i in range(8)] \
          + [3 for i in range(8)]
 
-    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
+    return Dataset(data, regs, None)
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):
@@ -54,16 +56,10 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
         + [0 for i in xrange(patterns)]
     regs = N.array(regs)
 
-    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
+    return Dataset(data, regs, None)
 
 
 class SVMTests(unittest.TestCase):
-
-    def testCapabilityReport(self):
-        clf = svm.SVM()
-        clf.train(dumbFeatureSignal())
-        self.failUnless('feature_benchmark' in clf.capabilities)
-
 
     def testMultivariate(self):
 
@@ -74,15 +70,15 @@ class SVMTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            s_mv = svm.SVM()
+            s_mv = SVM()
             s_mv.train(train)
-            p_mv = s_mv.predict( test.samples )
-            mv_perf.append( N.mean(p_mv==test.regs) )
+            p_mv = s_mv.predict(test.samples )
+            mv_perf.append(N.mean(p_mv==test.labels))
 
-            s_uv = svm.SVM()
+            s_uv = SVM()
             s_uv.train(train.selectFeatures([0]))
-            p_uv = s_uv.predict( test.selectFeatures([0]).samples )
-            uv_perf.append( N.mean(p_uv==test.regs) )
+            p_uv = s_uv.predict(test.selectFeatures([0]).samples)
+            uv_perf.append(N.mean(p_uv==test.labels))
 
         mean_mv_perf = N.mean(mv_perf)
         mean_uv_perf = N.mean(uv_perf)
@@ -93,15 +89,15 @@ class SVMTests(unittest.TestCase):
 
     def testFeatureBenchmark(self):
         pat = dumbFeatureSignal()
-        clf = svm.SVM()
+        clf = SVM()
         clf.train(pat)
         rank = clf.getFeatureBenchmark()
 
         # has to be 1d array
-        self.failUnless( len(rank.shape) == 1 ) 
+        self.failUnless(len(rank.shape) == 1)
 
         # has to be one value per feature
-        self.failUnless( len(rank) == pat.nfeatures )
+        self.failUnless(len(rank) == pat.nfeatures)
 
         # first feature is discriminative, second is not
         self.failUnless(rank[0] > rank[1])

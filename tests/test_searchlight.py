@@ -9,82 +9,52 @@
 """PyMVPA: Unit tests for PyMVPA searchlight algorithm"""
 
 import unittest
-import mvpa.maskeddataset
-import mvpa.searchlight as sl
-import mvpa.knn as knn
-import mvpa.svm as svm
+
 import numpy as N
+
+from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.algorithms.searchlight import Searchlight
+from mvpa.clf.knn import kNN
+from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.algorithms.clfcrossval import ClfCrossValidation
+
 
 class SearchlightTests(unittest.TestCase):
 
     def setUp(self):
         data = N.random.standard_normal(( 100, 3, 6, 6 ))
-        reg = N.concatenate( ( N.repeat( 0, 50 ),
-                                   N.repeat( 1, 50 ) ) )
-        orig = N.repeat( range(5), 10 )
-        origin = N.concatenate( (orig, orig) )
-        self.pattern = mvpa.maskeddataset.MaskedDataset( data, reg, origin )
+        labels = N.concatenate( ( N.repeat( 0, 50 ),
+                                  N.repeat( 1, 50 ) ) )
+        chunks = N.repeat( range(5), 10 )
+        chunks = N.concatenate( (chunks, chunks) )
+        mask = N.ones( (3, 6, 6) )
+        mask[0,0,0] = 0
+        mask[1,3,2] = 0
+        self.dataset = MaskedDataset(data, labels, chunks, mask)
 
 
     def testSearchlight(self):
-        mask = N.zeros( (3, 6, 6) )
-        mask[0,0,0] = 1
-        mask[1,3,2] = 1
-        slight = sl.Searchlight( self.pattern,
-                                 mask,
-                                 knn.kNN(k=5),
-                                 elementsize = (3,3,3),
-                                 forcesphere = True,
-                                 verbose = False )
-
-        # check virgin results
-        self.failUnless( (slight.perfmean == 0).all() )
-        self.failUnless( (slight.perfvar == 0).all() )
-        self.failUnless( (slight.chisquare == 0).all() )
-        self.failUnless( (slight.chanceprob == 0).all() )
-        self.failUnless( (slight.spheresize == 0).all() )
+        # compute N-1 cross-validation for each sphere
+        cv = ClfCrossValidation(
+                kNN(k=5),
+                NFoldSplitter(cvtype=1))
+        # contruct radius 1 searchlight
+        sl = Searchlight( cv, radius=1.0 )
 
         # run searchlight
-        slight(3.0)
+        results = sl(self.dataset)
 
-        # check that something happened
-        self.failIf( (slight.perfmean == 0).all() )
-        self.failIf( (slight.perfvar == 0).all() )
-        self.failIf( (slight.chisquare == 0).all() )
-        self.failIf( (slight.chanceprob == 0).all() )
-        self.failIf( (slight.spheresize == 0).all() )
+        # check for correct number of spheres
+        self.failUnless(len(results) == 106)
 
+        # check for chance-level performance across all spheres
+        self.failUnless(0.4 < results.mean() < 0.6)
 
-    def testOptimalSearchlight(self):
-        slight = sl.Searchlight( self.pattern,
-                                 N.ones((3,6,6)),
-                                 svm.SVM(),
-                                 elementsize = (3,3,3),
-                                 forcesphere = True,
-                                 verbose = False )
-        test_radii = [3,6,9]
-        clf = knn.kNN(k=5)
-        osl = sl.OptimalSearchlight( slight,
-                                     test_radii,
-                                     verbose = False )
-        # check that only valid radii are in bestradius array
-        self.failUnless( 
-            ( N.array([ i in test_radii for i in N.unique(osl.bestradius) ]) \
-              == True ).all() )
+        # check resonable sphere sizes
+        self.failUnless(len(sl.spheresizes) == 106)
+        self.failUnless(max(sl.spheresizes) == 7)
+        self.failUnless(min(sl.spheresizes) == 4)
 
-
-    def testSphericalROIMaskGenerator(self):
-        # make dummy mask
-        mask = N.zeros((4,4,4))
-        mask[2,2,2] = 1
-        mask[1,1,1] = 1
-        mask[2,1,1] = 1
-
-        # generate ROI mask
-        roi = sl.makeSphericalROIMask( mask, 1 )
-
-        self.failUnless( mask.shape == roi.shape)
-        self.failUnless( roi.dtype == 'int32' )
 
 
 def suite():

@@ -8,8 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Mapped Dataset"""
 
-from dataset import *
-from mapper import *
+from mvpa.datasets.dataset import Dataset
 
 class MappedDataset(Dataset):
     """

@@ -8,7 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: PyMVPA:"""
 
+import operator
+
 import numpy as N
+
 from mappeddataset import *
 from maskmapper import *
 
@@ -37,14 +40,23 @@ class MaskedDataset(MappedDataset):
             mask = N.ones( samples.shape[1:], dtype='bool' )
 
         if isinstance( mask, N.ndarray ):
+            # check for compatibility
+            if not samples.shape[1:] == mask.shape:
+                raise ValueError, "The mask dataspace shape [%s] is not " \
+                                  "compatible with the shape of the provided " \
+                                  "data samples [%s]." % (`mask.shape`,
+                                                          `samples.shape[1:]`)
+
             # map samples with mask
             mapper = MaskMapper( mask )
             mapped_samples = mapper.forward( samples )
+
         elif isinstance( mask, MaskMapper ):
             # if mask is mapper assume the samples are already mapped
             # used to mimic a copy constructor
             mapper = mask
             mapped_samples = samples
+
         else:
             raise ValueError, "'mask' can only be None, ndarray or a " \
                               "MaskMapper instance."

@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Abstract base class for all classifiers."""
 
-import operator
-
 
 class Classifier(object):
     """
@@ -27,20 +25,9 @@ class Classifier(object):
 
     _params = []
 
-    def __init__(self, property):
+    def __init__(self):
         """
-          Parameters:
-            capabilities - List of strings with capability labels (see below)
-
-          List of classifier capability labels:
-            feature_benchmarks - implements getFeatureBenchmark()
         """
-
-        if not operator.isSequenceType( capabilities ):
-            raise ValueError, 'capabilities has to be a sequence'
-
-        self.__capabilities = capabilities
-
 
     def setProperty(self, propName, propValue):
         raise NotImplementedError
@@ -55,7 +42,3 @@ class Classifier(object):
 
     def getFeatureBenchmark(self):
         raise NotImplementedError
-
-
-    # read-only properties
-    capabilities = property( fget=lambda self: self.__capabilities )
