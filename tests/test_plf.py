@@ -9,8 +9,8 @@
 """PyMVPA: Unit tests for PyMVPA logistic regression classifier"""
 
 import unittest
-import mvpa
-import mvpa.plf as plf
+from mvpa.datasets.dataset import Dataset
+from mvpa.clf.plf import PLF
 import numpy as N
 
 
@@ -43,7 +43,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
         + [0 for i in xrange(patterns)]
     regs = N.array(regs)
 
-    return mvpa.Dataset(data, regs, None)
+    return Dataset(data, regs, None)
 
 
 class PLFTests(unittest.TestCase):
@@ -58,12 +58,12 @@ class PLFTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            k_mv = plf.PLF()
+            k_mv = PLF()
             k_mv.train(train)
             p_mv = k_mv.predict( test.samples )
             mv_perf.append( N.mean(p_mv==test.labels) )
 
-            k_uv = plf.PLF()
+            k_uv = PLF()
             k_uv.train(train.selectFeatures([0]))
             p_uv = k_uv.predict( test.selectFeatures([0]).samples )
             uv_perf.append( N.mean(p_uv==test.labels) )
