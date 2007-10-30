@@ -16,7 +16,7 @@ class DataMeasure(object):
     so it is possible to get the same type of measure for multiple datasets
     by passing them to the __call__() method successively.
     """
-    def __call(self, dataset, callbacks=[]):
+    def __call__(self, dataset, callbacks=[]):
         """
         Each implementation has to handle two arguments. The first is the
         source dataset and the second is a list of callables which have to be
@@ -28,13 +28,13 @@ class DataMeasure(object):
 
 
 
-class SensitivityAnalyzser(DataMeasure):
+class SensitivityAnalyzer(DataMeasure):
     """ Base class of all sensitivity analysers.
 
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.
     """
-    def __call(self, dataset, callbacks=[]):
+    def __call__(self, dataset, callbacks=[]):
         """
         Each implementation has to handle two arguments. The first is the
         source dataset and the second is a list of callables which have to be

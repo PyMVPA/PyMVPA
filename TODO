@@ -4,37 +4,6 @@
   SVM.
 * (features selected on all folds)/(features selected on any fold)
 
-* setup some conventions on names and formatting: camelback etc... may
-   be should choose some confromant with pylint. if to go with
-   camelback -- ask Yarik about pylintrc ;-)
-
-   Michael's comment:
-      We should probably use the official coding guidelines
-
-      http://www.python.org/dev/peps/pep-0008/
-
-      and not come up with something 'new'. The most important difference to the
-      current practice is that class methods should be all lowercase (separated
-      by underscores) -- I consider this ugly, but for the sake of conformance
-      I have no problem the fit future code to this scheme and modify old stuff,
-      when touched for any other reason.
-
-   Yarik:
-    added pylintrc into doc/misc/pylintrc. It assumes camelback notation
-    and indentation using 4 spaces (ie no tabs)
-    No final agreement yet though was made on how to treat
-   variables... how much camelbacking should be done and should _ing be
-   forbidden completely?
-
-  NB According to original python style guidelines: single empty line
-   to separate methods within class, and 2 empty lines between classes
-
-* Does Michael really want copyright statement on top of each file?
-
-  may be it is better simply to have a single copyright/license file
-   for the project? and in each file have at most 1 line stating
-   the copyright owner and the type of license (for references).
-
 * each module should start with a docstring describing the module
    (which is not inside the hashed-comment of each file)
   look at mapper or neighbor for tentative organization if copyright/license
@@ -45,3 +14,6 @@
  maskmapper:
   dsshape -> inShape
   nfeatures -> outSize
+
+ in  --> data         -> dataShape
+ out --> features     -> 
