@@ -20,13 +20,10 @@ tests = [ 'test_dataset',
           'test_clfcrossval',
           'test_searchlight'
           ]
-#          'test_algorithms',
 #          'test_svm',
 #          'test_plf',
-#          'test_xvalpattern',
 #          'test_ifs',
 #          'test_rfe',
-#          'test_featsel',
 #          'test_support',
 #          'test_stats' ]
 
