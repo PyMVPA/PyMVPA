@@ -22,6 +22,12 @@ class NiftiDataset(MaskedDataset):
     def __init__(self, filename, labels, chunks, mask=None):
         """
         """
+        # we have to handle the nifti elementsize at the end if
+        # mask is not already a MaskMapper
+        set_elementsize = False
+        if not isinstance(mask, MaskMapper):
+            set_elementsize = True
+
         # default way to use the constructor: with NIfTI image filename
         if isinstance(filename, str):
             # open the nifti file
@@ -40,23 +46,30 @@ class NiftiDataset(MaskedDataset):
             # if mask is also a nifti file open, it and take the image array
             mask = NiftiImage(mask).data
 
-            # now create the mapper to bypass default mapping in MaskedDataset
-            # NiftiDataset uses a MaskMapper with DescreteMetric with cartesian
-            # distance and element size from the NIfTI header 
-
-            # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-            elementsize = [i for i in reversed(self.__nifti.voxdim)]
-            mapper = MaskMapper(
-                        mask,
-                        DescreteMetric(elementsize=elementsize,
-                                       distance_function=cartesianDistance))
-            samples = mapper.forward( samples )
-
+        # by default init the dataset now
+        # if mask is a MaskMapper already, this is a cheap init. This is
+        # important as this is the default mode for the copy constructor
+        # and might be called really often!!
         MaskedDataset.__init__(self,
                                samples,
                                labels,
                                chunks,
                                mask)
+
+
+        if set_elementsize:
+            # in case the MaskMapper wasn't already passed to the constructor
+            # overwrite the default metric of it here to take the NIfTI element
+            # properties into account
+
+            # NiftiDataset uses a MaskMapper with DescreteMetric with cartesian
+            # distance and element size from the NIfTI header 
+
+            # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
+            elementsize = [i for i in reversed(self.__nifti.voxdim)]
+            self.mapper.setMetric(
+                        DescreteMetric(elementsize=elementsize,
+                                       distance_function=cartesianDistance))
 
 
     @staticmethod
@@ -104,7 +117,7 @@ class NiftiDataset(MaskedDataset):
         The final selection mask only contains features that are present in the
         current feature mask AND the selection mask passed to this method.
 
-        Returns a new MaskedDataset object with a view of the original pattern
+        Returns a new NiftiDataset object with a view of the original pattern
         array (no copying is performed).
         """
         sub = MaskedDataset.selectFeaturesByMask(self, mask)
@@ -114,12 +127,13 @@ class NiftiDataset(MaskedDataset):
     def selectSamples( self, mask ):
         """ Choose a subset of samples.
 
-        Returns a new MaskedDataset object containing the selected sample
+        Returns a new NiftiDataset object containing the selected sample
         subset.
         """
         sub = MaskedDataset.selectSamples(self, mask)
         return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
 
-    niftihdr = property(fget=lambda self: self.__nifti.header)
+    niftihdr = property(fget=lambda self: self.__nifti.header,
+                        doc='Access to the NIfTI header dictionary.')
 
