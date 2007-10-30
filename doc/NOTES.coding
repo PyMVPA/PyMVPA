@@ -1,0 +1,16 @@
+* conventions:
+   should be confromant with pylint driven by config
+   doc/misc/pylintrc.
+   It assumes camelback notation and indentation using 4 spaces (ie no tabs)
+   Variables are low-case and can have up to 2 _s.
+
+  According to original python style guidelines: single empty line
+   to separate methods within class, and 2 empty lines between classes
+  BUT we do 2 empty between methods, 3 empty between classes
+
+* Commits:
+ BF: bug fix
+ RF: refactoring
+ NF: new feature
+
+* header: each file should contain a header from doc/misc/header.py

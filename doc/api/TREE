@@ -1,3 +1,5 @@
+XXX Dataset might need to get labelweights parameter which could be
+    used by some classifiers
 
 Mapper                              Dataset (S1)
   |                                    \- appendtohistory(item)
