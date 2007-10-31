@@ -29,7 +29,7 @@ class Searchlight(SensitivityAnalyzer):
       National Academy of Sciences of the United States of America 103,
       3863-3868.
     """
-    def __init__(self, datameasure, combinefx=N.array, radius=1.0):
+    def __init__(self, datameasure, combinefx=N.array, radius=1.0, verbose=False):
         """Initialize Searchlight to compute 'datameasure' for each sphere with
         a certain 'radius' in a given dataset (see __call__()).
 
@@ -39,7 +39,7 @@ class Searchlight(SensitivityAnalyzer):
         self.__datameasure = datameasure
         self.__radius = radius
         self.__combinefx = combinefx
-        self.__verbose = False
+        self.__verbose = verbose
 
         self._resetState()
 
@@ -83,9 +83,10 @@ class Searchlight(SensitivityAnalyzer):
 
             if self.__verbose:
                 sphere_count += 1
-                print "\rDoing %i spheres: %i (%i%%)" \
+                print "\rDoing %i spheres: %i (%i features) [%i%%]" \
                     % (nspheres,
                        sphere_count,
+                       sphere.nfeatures,
                        float(sphere_count)/nspheres*100,),
                 sys.stdout.flush()
 
