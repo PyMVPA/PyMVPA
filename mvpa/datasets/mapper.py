@@ -115,6 +115,7 @@ class MetricMapper(Mapper, Metric):
         'metric' is a subclass of Metric.
         """
         Mapper.__init__(self)
+        Metric.__init__(self)
 
         if not isinstance(metric, Metric):
             print type(metric)

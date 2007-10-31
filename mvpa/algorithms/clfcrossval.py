@@ -46,6 +46,8 @@ class ClfCrossValidation(DataMeasure):
             combinerfx - function that is used to aggregate the error values of
                          all cross-validation folds
         """
+        DataMeasure.__init__(self)
+
         self.__splitter = splitter
         self.__clf = clf
         self.__errorfx = errorfx

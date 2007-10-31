@@ -11,7 +11,7 @@
 import numpy as N
 
 import mvpa.misc.support as support
-from mvpa.datasets.splitter import *
+from mvpa.datasets.splitter import Splitter
 
 class NFoldSplitter(Splitter):
     """ Generic N-fold data splitter.
@@ -47,6 +47,14 @@ class NFoldSplitter(Splitter):
           permute:  If set to True, the labels of each generated dataset
                       will be permuted on a per-chunk basis.
         """
+        Splitter.__init__(self)
+
+        # pylint happyness block
+        self.__cvtype = None
+        self.__working_samplesize = None
+        self.__runsperfold = None
+        self.__spare_samplesize = None
+
         # pattern sampling status vars
         self.setNWorkingSetSamples( nworkingsamples )
         self.setNSpareSetSamples( nsparesamples )
@@ -86,12 +94,12 @@ class NFoldSplitter(Splitter):
         self.__runsperfold = runs
 
 
-    def setCVType( self, type ):
+    def setCVType( self, cvtype ):
         """ Set the cross-validation type.
 
         (N-'type')-fold cross-validation.
         """
-        self.__cvtype = type
+        self.__cvtype = cvtype
 
 
     def getNSamplesPerFold( self, dataset ):
@@ -127,7 +135,7 @@ class NFoldSplitter(Splitter):
 
 
     @staticmethod
-    def splitWorkingSpareDataset( dataset, spare_chunks ):
+    def splitWorkingSpareDataset( dataset, sparechunks ):
         """ Split a dataset into a working and a spare set separating
         the samples of some chunks.
 
@@ -142,7 +150,7 @@ class NFoldSplitter(Splitter):
         # build a boolean selector vector to choose training and
         # test data
         spare_filter =  \
-            N.array([ i in spare_chunks for i in dataset.chunks ])
+            N.array([ i in sparechunks for i in dataset.chunks ])
 
         # split data into working and spare set
         wset = dataset.selectSamples( N.logical_not( spare_filter) )

@@ -147,9 +147,9 @@ class Dataset(object):
         if not operator.isSequenceType( mask ):
             mask = [mask]
 
-        return Dataset( self.samples[mask,],
-                        self.labels[mask,],
-                        self.chunks[mask,] )
+        return Dataset( self.samples[mask, ],
+                        self.labels[mask, ],
+                        self.chunks[mask, ] )
 
 
     def permutedRegressors( self, status, perchunk = True ):
@@ -209,7 +209,7 @@ class Dataset(object):
 
         sample = []
         # for each available class
-        for i,r in enumerate(self.uniquelabels):
+        for i, r in enumerate(self.uniquelabels):
             # get the list of pattern ids for this class
             sample += random.sample( (self.labels == r).nonzero()[0],
                                      nperlabel[i] )
