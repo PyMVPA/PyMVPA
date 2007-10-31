@@ -20,8 +20,9 @@ class MappedDataset(Dataset):
         Dataset.__init__(self, samples, labels, chunks)
 
         if not self.nfeatures == mapper.nfeatures:
-            raise ValueError, "The mapper doesn't match the number of " \
-                              "features in the samples array."
+            raise ValueError, "The mapper [%i] doesn't match the number of " \
+                              "features in the samples array [%i]." \
+                              % (mapper.nfeatures, self.nfeatures)
         self.__mapper = mapper
 
 
