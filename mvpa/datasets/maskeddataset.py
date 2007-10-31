@@ -12,8 +12,8 @@ import operator
 
 import numpy as N
 
-from mappeddataset import *
-from maskmapper import *
+from mvpa.datasets.mappeddataset import MappedDataset
+from mvpa.datasets.maskmapper import MaskMapper
 
 
 # XXX should be really provided by any Mapper + MappedDataset tandem
@@ -138,9 +138,9 @@ class MaskedDataset(MappedDataset):
         if not operator.isSequenceType( mask ):
             mask = [mask]
 
-        return MaskedDataset( self.samples[mask,],
-                              self.labels[mask,],
-                              self.chunks[mask,],
+        return MaskedDataset( self.samples[mask, ],
+                              self.labels[mask, ],
+                              self.chunks[mask, ],
                               self.mapper )
 
 

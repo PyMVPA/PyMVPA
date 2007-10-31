@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Mapped Dataset"""
 
+import operator
+
 from mvpa.datasets.dataset import Dataset
 
 class MappedDataset(Dataset):
@@ -26,7 +28,7 @@ class MappedDataset(Dataset):
         self.__mapper = mapper
 
 
-    def __iadd__( self, other ):
+    def __iadd__(self, other):
         """
         Warning: the current mapper is kept!
         """
@@ -36,22 +38,22 @@ class MappedDataset(Dataset):
         return self
 
 
-    def __add__( self, other ):
+    def __add__(self, other):
         """
         When adding two MappedDatasets the mapper of the dataset left of the
         operator is used for the merged dataset.
         """
-        out = MappedDataset( self.samples,
-                             self.labels,
-                             self.chunks,
-                             self.mapper )
+        out = MappedDataset(self.samples,
+                            self.labels,
+                            self.chunks,
+                            self.mapper)
 
         out += other
 
         return out
 
 
-    def setMapper( self, mapper ):
+    def setMapper(self, mapper):
         """
         """
         # if the new mapper operates on a different number of features
@@ -75,7 +77,7 @@ class MappedDataset(Dataset):
         return self.__mapper.reverse(data)
 
 
-    def selectSamples( self, mask ):
+    def selectSamples(self, mask):
         """ Choose a subset of samples.
 
         Returns a new MappedDataset object containing the selected sample
@@ -83,15 +85,15 @@ class MappedDataset(Dataset):
         """
         # without having a sequence a index the masked sample array would
         # loose its 2d layout
-        if not operator.isSequenceType( mask ):
+        if not operator.isSequenceType(mask):
             mask = [mask]
 
         # XXX should be generic...
-        return MappedDataset( self.samples[mask,],
-                              self.labels[mask,],
-                              self.chunks[mask,],
-                              self.mapper )
+        return MappedDataset(self.samples[mask, ],
+                             self.labels[mask, ],
+                             self.chunks[mask, ],
+                             self.mapper)
 
 
     # read-only class properties
-    mapper = property( fget=lambda self: self.__mapper )
+    mapper = property(fget=lambda self: self.__mapper)
