@@ -44,7 +44,9 @@ class NiftiDataset(MaskedDataset):
 
         if isinstance(mask, str):
             # if mask is also a nifti file open, it and take the image array
-            mask = NiftiImage(mask).data
+            # use a copy of the mask data as otherwise segfault will embarass
+            # you, once the 'mask' NiftiImage get deleted
+            mask = NiftiImage(mask).asarray()
 
         # by default init the dataset now
         # if mask is a MaskMapper already, this is a cheap init. This is
