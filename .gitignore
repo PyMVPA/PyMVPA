@@ -3,3 +3,6 @@
 \.\#*#
 *.pyc
 /doc/api/html
+build
+*.prof
+*.kcache
