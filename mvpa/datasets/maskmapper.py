@@ -12,7 +12,7 @@
 import numpy as N
 
 from mvpa.datasets.mapper import MetricMapper
-from mvpa.datasets.metric import Metric, DescreteMetric, cartesianDistance
+from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 
 
 class MaskMapper(MetricMapper):

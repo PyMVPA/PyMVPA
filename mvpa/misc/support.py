@@ -34,9 +34,9 @@ def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     for sp in startpoints:
         if ( sp + offset + boxlength - 1 > len(data)-1 ) \
            or ( sp + offset < 0 ):
-              raise ValueError, \
-                    'Illegal box: start: %i, offset: %i, length: %i' \
-                    % (sp, offset, boxlength)
+            raise ValueError, \
+                  'Illegal box: start: %i, offset: %i, length: %i' \
+                  % (sp, offset, boxlength)
 
     # build a list of list where each sublist contains the indexes of to be
     # averaged data elements
