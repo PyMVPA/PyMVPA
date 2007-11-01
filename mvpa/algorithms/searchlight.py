@@ -12,6 +12,9 @@ import sys
 
 import numpy as N
 
+if __debug__:
+    from mvpa.misc import debug
+
 from mvpa.datasets.mappeddataset import MappedDataset
 from mvpa.datasets.mapper import MetricMapper
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
@@ -29,7 +32,7 @@ class Searchlight(SensitivityAnalyzer):
       National Academy of Sciences of the United States of America 103,
       3863-3868.
     """
-    def __init__(self, datameasure, combinefx=N.array, radius=1.0, verbose=False):
+    def __init__(self, datameasure, combinefx=N.array, radius=1.0):
         """Initialize Searchlight to compute 'datameasure' for each sphere with
         a certain 'radius' in a given dataset (see __call__()).
 
@@ -39,7 +42,6 @@ class Searchlight(SensitivityAnalyzer):
         self.__datameasure = datameasure
         self.__radius = radius
         self.__combinefx = combinefx
-        self.__verbose = verbose
 
         self._resetState()
 
@@ -59,7 +61,7 @@ class Searchlight(SensitivityAnalyzer):
 
         self._resetState()
 
-        if self.__verbose:
+        if __debug__:
             nspheres = dataset.nfeatures
             sphere_count = 0
 
@@ -81,17 +83,16 @@ class Searchlight(SensitivityAnalyzer):
             # store the size of the sphere dataset
             self.__spheresizes.append(sphere.nfeatures)
 
-            if self.__verbose:
+            if __debug__:
                 sphere_count += 1
-                print "\rDoing %i spheres: %i (%i features) [%i%%]" \
+                debug('SLC', "Doing %i spheres: %i (%i features) [%i%%]" \
                     % (nspheres,
                        sphere_count,
                        sphere.nfeatures,
-                       float(sphere_count)/nspheres*100,),
-                sys.stdout.flush()
+                       float(sphere_count)/nspheres*100,), cr=True)
 
-        if self.__verbose:
-            print ''
+        if __debug__:
+            debug('SLC', '')
 
         # transform the results with the user-supplied function and return
         return self.__combinefx(results)
