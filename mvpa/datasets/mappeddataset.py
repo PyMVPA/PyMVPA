@@ -77,7 +77,7 @@ class MappedDataset(Dataset):
         return self.__mapper.reverse(data)
 
 
-    def selectSamples(self, mask):
+    def selectSamples(self, samplesmask):
         """ Choose a subset of samples.
 
         Returns a new MappedDataset object containing the selected sample
@@ -85,13 +85,13 @@ class MappedDataset(Dataset):
         """
         # without having a sequence a index the masked sample array would
         # loose its 2d layout
-        if not operator.isSequenceType(mask):
-            mask = [mask]
+        if not operator.isSequenceType(samplesmask):
+            samplesmask = [samplesmask]
 
         # XXX should be generic...
-        return MappedDataset(self.samples[mask, ],
-                             self.labels[mask, ],
-                             self.chunks[mask, ],
+        return MappedDataset(self.samples[samplesmask, ],
+                             self.labels[samplesmask, ],
+                             self.chunks[samplesmask, ],
                              self.mapper)
 
 
