@@ -83,6 +83,13 @@ class Dataset(object):
         self.__chunks = chunks
 
 
+    def __repr__(self):
+        """ String summary over the object
+        """
+        return """Dataset: [%d x %d]""" % \
+               (self.nsamples, self.nfeatures)
+
+
     def __iadd__( self, other ):
         """ Merge the samples of one Dataset object to another (in-place).
 

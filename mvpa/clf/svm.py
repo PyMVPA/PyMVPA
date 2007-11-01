@@ -28,9 +28,19 @@ class SVM(Classifier):
             svmc.svm_set_verbosity( 0 )
 
         self.param = SVMParameter( **(kwargs) )
+        self.model = None
+
+
+    def __repr__(self):
+        """ String summary over the object
+        """
+        return """SVM:
+ params: %s """ % (self.param)
 
 
     def train(self, data):
+        """Train SVM
+        """
         # libsvm needs doubles
         if data.samples.dtype == 'float64':
             src = data.samples
@@ -43,6 +53,8 @@ class SVM(Classifier):
 
 
     def predict(self, data):
+        """Predict values for the data
+        """
         # libsvm needs doubles
         if data.dtype == 'float64':
             src = data
@@ -52,5 +64,7 @@ class SVM(Classifier):
 
 
     def getFeatureBenchmark(self):
+        """XXX Do we need this one?
+        """
         return self.model.getFeatureBenchmark()
 
