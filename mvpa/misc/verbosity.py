@@ -36,7 +36,8 @@ class Logger(object):
         Each hanlder must have write() method implemented
         """
         self._setHandlers(handlers)
-        self.__newlineprev = True
+        self.__lfprev = True
+        self.__crprev = 0               # number of symbols in previous cr-ed
 
 
     def _setHandlers(self, handlers):
@@ -53,22 +54,47 @@ class Logger(object):
         return self.__handlers
 
 
-    def __call__(self, msg, newline=True):
+    def __call__(self, msg, lf=True, cr=False, *args, **kwargs):
         """
-        Write msg to each of the handlers, appending newline if requested
+        Write msg to each of the handlers.
 
-        it appends a newline since most commonly each call is a separate
-        message
+        It can append a newline (lf = Line Feed) or return
+        to the beginning before output and to take care about
+        cleaning previous message if present
+
+        it appends a newline (lf = Line Feed) since most commonly each
+        call is a separate message
         """
-        if newline:
+        if cr:
+            msg_ = ""
+            if self.__crprev>0:
+                # wipe out older line to make sure to see no ghosts
+                msg_ = "\r%s\r" % (" "*self.__crprev)
+            msg_ += msg
+            self.__crprev = len(msg)
+            msg = msg_
+            # since it makes no sense this days for cr and lf,
+            # override lf
+            lf = False
+        else:
+            self.__crprev += len(msg)
+
+        if lf:
             msg = msg + "\n"
+            self.__crprev = 0           # nothing to clear
+
         for handler in self.__handlers:
             handler.write(msg)
-        self.__newlineprev = newline
+            try:
+                handler.flush()
+            except:
+                # it might be not implemented..
+                pass
 
+        self.__lfprev = lf
 
     handlers = property(fget=_getHandlers, fset=_setHandlers)
-    newlineprev = property(fget=lambda self:self.__newlineprev)
+    lfprev = property(fget=lambda self:self.__lfprev)
 
 
 
@@ -78,7 +104,13 @@ class LevelLogger(Logger):
     than specified level
     """
 
-    def __init__(self, level=0, indent=True, *args, **kwargs):
+    def __init__(self, level=0, indent=" ", *args, **kwargs):
+        """Define level logger.
+
+        It is defined by
+          @level up to which messages are reported
+          @indent symbol used to indent
+        """
         Logger.__init__(self, *args, **kwargs)
         self.__level = level            # damn pylint ;-)
         self.__indent = indent
@@ -98,21 +130,21 @@ class LevelLogger(Logger):
 
     def _setIndent(self, indent):
         """Either to indent the lines based on message log level"""
-        self.__indent = indent
+        self.__indent = "%s" % indent
 
 
-    def __call__(self, level, msg, newline=True):
+    def __call__(self, level, msg, *args, **kwargs):
         """
-        Write msg and space indent it if it was requested
+        Write msg and indent using self.indent it if it was requested
 
         it appends a newline since most commonly each call is a separate
         message
         """
-        if level >= self.level:
-            if self.newlineprev and self.indent:
+        if level <= self.level:
+            if self.lfprev and self.indent:
                 # indent if previous line ended with newline
-                msg = " "*level + msg
-            Logger.__call__(self, msg, newline)
+                msg = self.indent*level + msg
+            Logger.__call__(self, msg, *args, **kwargs)
 
     level = property(fget=lambda self: self.__level, fset=_setLevel)
     indent = property(fget=lambda self: self.__indent, fset=_setIndent)
@@ -143,7 +175,7 @@ class SetLogger(Logger):
         self.__printsetid = printsetid
 
 
-    def __call__(self, setid, msg, newline=True):
+    def __call__(self, setid, msg, *args, **kwargs):
         """
         Write msg
 
@@ -156,7 +188,7 @@ class SetLogger(Logger):
         if setid in self.__active:
             if self.__printsetid:
                 msg = "[%s] " % (setid) + msg
-            Logger.__call__(self, msg, newline)
+            Logger.__call__(self, msg, *args, **kwargs)
 
 
     def register(self, setid, description):
@@ -241,13 +273,6 @@ if __debug__:
             if len(msg_)>0:
                 msg_ = "{%s}" % msg_
 
-            SetLogger.__call__(self, setid, "DEBUG%s: %s" % (msg_, msg))
-
-    # TODO: check if they are actually singletons...
-
-    # NOTE: all calls to debug must be preconditioned with
-    # if __debug__:
-    debug = DebugLogger()
-
-verbose = LevelLogger()
+            SetLogger.__call__(self, setid, "DEBUG%s: %s" % (msg_, msg),
+                               *args, **kwargs)
 
