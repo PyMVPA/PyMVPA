@@ -88,13 +88,16 @@ class kNN:
     def getMajorityVote(self, knn_ids):
         """TODO docstring
         """
+
+        labels = self.__data.labels
+        uniquelabels = self.__data.uniquelabels
+
         # create dictionary with an item for each condition
-        votes = dict( zip ( self.__data.uniquelabels,
-                            [0 for i in self.__data.uniquelabels ] ) )
+        votes = dict( zip ( uniquelabels, [0]*len(uniquelabels) ) )
 
         # add 1 to a certain condition per NN
         for nn in knn_ids:
-            votes[self.__data.labels[nn]] += 1
+            votes[labels[nn]] += 1
 
         # find the condition with most votes
         best_cond = None
@@ -111,16 +114,19 @@ class kNN:
         """TODO docstring
         """
 
+        labels = self.__data.labels
+        Nlabels = len(labels)
+        uniquelabels = self.__data.uniquelabels
+        Nuniquelabels = len(uniquelabels)
+
         # create dictionary with an item for each condition
-        votes = dict( zip ( self.__data.uniquelabels,
-                            [0 for i in self.__data.uniquelabels ] ) )
-        weights = dict( zip ( self.__data.uniquelabels,
-                    [ 1 - ( float( self.__data.labels.tolist().count(i) ) \
-                      / len(self.__data.labels) )
-                        for i in self.__data.uniquelabels ] ) )
+        votes = dict( zip ( uniquelabels, [0]*Nuniquelabels ) )
+        weights = dict( zip (uniquelabels,
+                    [ 1 - ( float(labels.tolist().count(i)) / Nlabels )
+                        for i in uniquelabels ] ) )
 
         for nn in knn_ids:
-            votes[self.__data.labels[nn]] += weights[self.__data.labels[nn]]
+            votes[labels[nn]] += weights[labels[nn]]
 
         # find the condition with most votes
         best_cond = None
