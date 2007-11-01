@@ -30,3 +30,4 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('SLC', "Searchlight call")
+    debug.register('PLF', "PLF call")

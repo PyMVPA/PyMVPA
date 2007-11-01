@@ -13,11 +13,14 @@ from classifier import *
 import sys
 import numpy as N
 
+if __debug__:
+    from mvpa.misc import debug
+
 class IterationError(Exception):
     pass
 
 class PLF(Classifier):
-    def __init__(self,lm=1,criterion=1,reduce=False,maxiter=20,verbose=False):
+    def __init__(self,lm=1,criterion=1,reduce=False,maxiter=20):
         """
         Initialize a penalized logistic regression analysis
 
@@ -33,13 +36,21 @@ class PLF(Classifier):
                is reduce=0.01
         maxiter maximum number of iterations. If no convergence occurs after
                this number of iterations, an exception is raised
-        verbose switches on/off logging information to stderr
         """
         self.__lm   = lm
         self.__criterion = criterion
         self.__reduce = reduce
         self.__maxiter = maxiter
-        self.__verbose = verbose
+
+
+    def __repr__(self):
+        """ String summary over the object
+        """
+        return """PLF:
+ lm: %f
+ criterion: %d
+ reduce: %s
+ maxiter: %d""" % (self.__lm, self.__criterion, self.__reduce, self.__maxiter)
 
 
     def train(self,data):
@@ -94,10 +105,10 @@ class PLF(Classifier):
             if k>self.__maxiter:
                 raise IterationError, "More than 20 Iterations without convergence"
 
-        if self.__verbose:
-            sys.stderr.write(\
-                    "PLF converged after %d steps\nError: %g\n" %\
-                    (k,N.sum(N.ravel(dw.A**2))))
+        if __debug__:
+            debug("PLF",\
+                  "PLF converged after %d steps. Error: %g" %\
+                  (k,N.sum(N.ravel(dw.A**2))))
 
         if self.__reduce:
             # We have computed in rank reduced space ->
@@ -108,10 +119,12 @@ class PLF(Classifier):
             self.w = w[:-1]
             self.offset = w[-1]
 
+
     def __f(self,y):
         """This is the logistic function f, that is used for determination of
         the vector w"""
         return 1./(1+N.exp(-y))
+
 
     def predict(self,data):
         """

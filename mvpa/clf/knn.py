@@ -10,11 +10,14 @@
 
 import numpy as N
 
+from mvpa.misc import verbose
+
 try:
     import psyco
     psyco.profile()
 except:
-    pass
+    verbose(5, "Psyco online compilation is not enabled in knn")
+
 
 class kNN:
     """ k-nearest-neighbour classification.
@@ -22,15 +25,27 @@ class kNN:
     def __init__(self, k=2):
         """
         Parameters:
-          pattern: MVPAPattern object containing all data.
           k:       number of nearest neighbours to be used for voting
         """
         self.__k = k
         self.__votingfx = self.getWeightedVote
-        self.verbose = False
+        self.__data = None
+
+
+    def __repr__(self):
+        """ String summary over the object
+        """
+        return """kNN:
+ k (# of nearest neighbors): %d
+ votingfx: TODO
+ data: %s""" % (self.__k, `self.__data`)
 
 
     def train( self, data ):
+        """ Train the classifier.
+
+        For kNN it is degenerate -- just stores the data.
+        """
         self.__data = data
 
 
@@ -61,7 +76,7 @@ class kNN:
                             N.abs( self.__data.samples - p )**2, axis=1
                             )
                         )
-            # get the k nearest neighbours from the sorted list of distances 
+            # get the k nearest neighbours from the sorted list of distances
             knn = dists.argsort()[:self.__k]
 
             # finally get the class label
@@ -71,6 +86,8 @@ class kNN:
 
 
     def getMajorityVote(self, knn_ids):
+        """TODO docstring
+        """
         # create dictionary with an item for each condition
         votes = dict( zip ( self.__data.uniquelabels,
                             [0 for i in self.__data.uniquelabels ] ) )
@@ -80,17 +97,22 @@ class kNN:
             votes[self.__data.labels[nn]] += 1
 
         # find the condition with most votes
-        best_cond = None; most_votes = None
+        best_cond = None
+        most_votes = None
         for cond, vote in votes.iteritems():
             if best_cond is None or vote > most_votes:
-                best_cond = cond; most_votes = vote
+                best_cond = cond
+                most_votes = vote
 
         return best_cond
 
 
     def getWeightedVote(self, knn_ids):
+        """TODO docstring
+        """
+
         # create dictionary with an item for each condition
-        votes = dict( zip ( self.__data.uniquelabels, 
+        votes = dict( zip ( self.__data.uniquelabels,
                             [0 for i in self.__data.uniquelabels ] ) )
         weights = dict( zip ( self.__data.uniquelabels,
                     [ 1 - ( float( self.__data.labels.tolist().count(i) ) \
@@ -101,9 +123,11 @@ class kNN:
             votes[self.__data.labels[nn]] += weights[self.__data.labels[nn]]
 
         # find the condition with most votes
-        best_cond = None; most_votes = None
+        best_cond = None
+        most_votes = None
         for cond, vote in votes.iteritems():
             if best_cond is None or vote > most_votes:
-                best_cond = cond; most_votes = vote
+                best_cond = cond
+                most_votes = vote
 
         return best_cond

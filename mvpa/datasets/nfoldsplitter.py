@@ -64,6 +64,15 @@ class NFoldSplitter(Splitter):
         self.__permute = permute
 
 
+    def __repr__(self):
+        """ String summary over the object
+        """
+        return """%d-fold splitter [%s, %d, %s, %s]""" % \
+               (self.__cvtype, self.__working_samplesize,
+                self.__runsperfold, self.__spare_samplesize,
+                self.__permute)
+
+
     def setNWorkingSetSamples( self, samplesize ):
         """ None is off, 'auto' sets sample size to highest possible number
         of patterns that can be provided by each class.
