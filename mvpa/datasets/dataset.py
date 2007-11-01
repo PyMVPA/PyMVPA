@@ -48,11 +48,12 @@ class Dataset(object):
 
         # check if labels is supplied as a sequence
         try:
-            if len( labels ) != len( self.samples ):
-                raise ValueError, "Length of 'labels' has to match the number" \
-                                  " of patterns."
+            if len(labels) != len(self.samples):
+                raise ValueError, "Length of 'labels' [have %d]"%len(labels)\
+                      + " has to match the number of patterns" \
+                      + " [have %d]." % len(self.samples)
             # store the sequence as array
-            labels = N.array( labels )
+            labels = N.array(labels)
 
         except TypeError:
             # make sequence of identical value matching the number of patterns
