@@ -27,7 +27,7 @@ class SVM(Classifier):
         if hasattr(svmc, 'svm_set_verbosity'):
             svmc.svm_set_verbosity( 0 )
 
-        self.param = svm_parameter( **(kwargs) )
+        self.param = SVMParameter( **(kwargs) )
 
 
     def train(self, data):
@@ -37,9 +37,9 @@ class SVM(Classifier):
         else:
             src = data.samples.astype('double')
 
-        svmprob = svm_problem( data.labels.tolist(), src )
+        svmprob = SVMProblem( data.labels.tolist(), src )
 
-        self.model = svm_model( svmprob, self.param)
+        self.model = SVMModel( svmprob, self.param)
 
 
     def predict(self, data):
@@ -52,5 +52,5 @@ class SVM(Classifier):
 
 
     def getFeatureBenchmark(self):
-        return self.model.get_feature_benchmark()
+        return self.model.getFeatureBenchmark()
 

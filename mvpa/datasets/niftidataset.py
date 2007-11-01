@@ -8,11 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Dataset that gets its samples from a NIfTI file"""
 
-import numpy as N
 from nifti import NiftiImage
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.datasets.metric import Metric, DescreteMetric, cartesianDistance
+from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 from mvpa.datasets.maskmapper import MaskMapper
 
 
