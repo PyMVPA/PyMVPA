@@ -22,7 +22,8 @@ from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.algorithms.searchlight import Searchlight
 
 from mvpa.misc import verbose
-from mvpa.misc.cmdline import commonOptions
+from mvpa.misc.cmdline import \
+     optsCommon, optRadius, optKNearestDegree, optCrossfoldDegree
 
 usage = """\
 %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask>
@@ -33,20 +34,10 @@ values (separated by a single space). -- one tuple per line.""" \
 % sys.argv[0]
 
 
-parser = OptionParser(usage = usage, option_list=commonOptions)
+parser = OptionParser(usage=usage,
+                      option_list=optsCommon + \
+                      [optRadius, optKNearestDegree, optCrossfoldDegree])
 
-# TODO: Pre-Define options given below by corresponding modules
-parser.add_option("-r", "--radius",
-                  action="store", type="float", dest="radius", default=5.0,
-                  help="Radius to be used for the searchlight")
-
-parser.add_option("-k", "--k-nearest",
-                  action="store", type="int", dest="knearest", default=3,
-                  help="Degree of k-nearest classifier")
-
-parser.add_option("-c", "--crossfold",
-                  action="store", type="int", dest="crossfold", default=1,
-                  help="Degree of N-fold")
 
 (options, files) = parser.parse_args()
 
@@ -78,8 +69,8 @@ verbose(1, "Computing")
 
 verbose(3, "Assigning a measure to be CrossValidation")
 # compute N-1 cross-validation with a kNN classifier in each sphere
-cv = ClfCrossValidation(kNN(k=options.knearest),
-                        NFoldSplitter(cvtype=options.crossfold))
+cv = ClfCrossValidation(kNN(k=options.knearestdegree),
+                        NFoldSplitter(cvtype=options.crossfolddegree))
 
 verbose(3, "Generating Searchlight instance")
 # contruct searchlight with 5mm radius
