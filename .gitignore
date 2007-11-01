@@ -2,6 +2,7 @@
 \#*#
 \.\#*#
 *.pyc
+*.pyo
 /doc/api/html
 build
 *.prof
