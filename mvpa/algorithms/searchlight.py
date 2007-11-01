@@ -76,8 +76,8 @@ class Searchlight(SensitivityAnalyzer):
         # measure within them
         for f in xrange(dataset.nfeatures):
             sphere = dataset.selectFeatures(
-                        dataset.mapper.getNeighbors(f,
-                                                    self.__radius))
+                dataset.mapper.getNeighbors(f, self.__radius),
+                plain=True)
 
             # compute the datameasure and store in results
             # XXX implement callbacks!

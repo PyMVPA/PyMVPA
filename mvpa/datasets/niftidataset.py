@@ -10,6 +10,7 @@
 
 from nifti import NiftiImage
 
+from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 from mvpa.datasets.maskmapper import MaskMapper
@@ -100,27 +101,39 @@ class NiftiDataset(MaskedDataset):
         return NiftiDataset._fromMaskedDataset(merged, self.__nifti)
 
 
-    def selectFeatures(self, ids):
+    def selectFeatures(self, ids, plain=False):
         """ Select a number of features from the current set.
 
-        'ids' is a list of feature IDs
+        @ids is a list of feature IDs
+        @plain=True directs to return a simple Dataset
+        if @plain=False -- returns a new NiftiDataset object
 
-        Returns a new NiftiDataset object with a view of the original data
+        Return object is a view of the original data
         (no copying is performed).
         """
+        if plain:
+            return Dataset.selectFeatures(self, ids)
+
         sub = MaskedDataset.selectFeatures(self, ids)
         return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
 
-    def selectFeaturesByMask(self, mask):
+    def selectFeaturesByMask(self, mask, plain=False):
         """ Use a mask array to select features from the current set.
 
         The final selection mask only contains features that are present in the
         current feature mask AND the selection mask passed to this method.
 
-        Returns a new NiftiDataset object with a view of the original pattern
-        array (no copying is performed).
+        @ids is a list of feature IDs
+        @plain=True directs to return a simple Dataset
+        if @plain=False -- returns a new NiftiDataset object
+
+        Return object is a view of the original data (no copying is
+        performed).
         """
+        if plain:
+            raise NotImplementedError #return Dataset.selectFeatures(self, ids)
+
         sub = MaskedDataset.selectFeaturesByMask(self, mask)
         return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
