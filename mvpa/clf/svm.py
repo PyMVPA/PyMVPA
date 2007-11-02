@@ -27,22 +27,34 @@ class SVM(Classifier):
         if hasattr(svmc, 'svm_set_verbosity'):
             svmc.svm_set_verbosity( 0 )
 
-        self.param = svm_parameter( **(kwargs) )
+        self.param = SVMParameter( **(kwargs) )
+        self.model = None
+
+
+    def __repr__(self):
+        """ String summary over the object
+        """
+        return """SVM:
+ params: %s """ % (self.param)
 
 
     def train(self, data):
+        """Train SVM
+        """
         # libsvm needs doubles
         if data.samples.dtype == 'float64':
             src = data.samples
         else:
             src = data.samples.astype('double')
 
-        svmprob = svm_problem( data.labels.tolist(), src )
+        svmprob = SVMProblem( data.labels.tolist(), src )
 
-        self.model = svm_model( svmprob, self.param)
+        self.model = SVMModel( svmprob, self.param)
 
 
     def predict(self, data):
+        """Predict values for the data
+        """
         # libsvm needs doubles
         if data.dtype == 'float64':
             src = data
@@ -52,5 +64,7 @@ class SVM(Classifier):
 
 
     def getFeatureBenchmark(self):
-        return self.model.get_feature_benchmark()
+        """XXX Do we need this one?
+        """
+        return self.model.getFeatureBenchmark()
 

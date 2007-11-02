@@ -21,7 +21,9 @@ tests = [ 'test_dataset',
           'test_clfcrossval',
           'test_searchlight',
           'test_stats',
-          'test_support'
+          'test_support',
+          'test_niftidataset',
+          'test_verbosity'
           ]
 #          'test_plf',
 #          'test_ifs',

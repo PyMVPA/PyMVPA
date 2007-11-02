@@ -8,11 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Dataset that gets its samples from a NIfTI file"""
 
-import numpy as N
 from nifti import NiftiImage
 
+from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.datasets.metric import Metric, DescreteMetric, cartesianDistance
+from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 from mvpa.datasets.maskmapper import MaskMapper
 
 
@@ -22,6 +22,12 @@ class NiftiDataset(MaskedDataset):
     def __init__(self, filename, labels, chunks, mask=None):
         """
         """
+        # we have to handle the nifti elementsize at the end if
+        # mask is not already a MaskMapper
+        set_elementsize = False
+        if not isinstance(mask, MaskMapper):
+            set_elementsize = True
+
         # default way to use the constructor: with NIfTI image filename
         if isinstance(filename, str):
             # open the nifti file
@@ -38,25 +44,34 @@ class NiftiDataset(MaskedDataset):
 
         if isinstance(mask, str):
             # if mask is also a nifti file open, it and take the image array
-            mask = NiftiImage(mask).data
+            # use a copy of the mask data as otherwise segfault will embarass
+            # you, once the 'mask' NiftiImage get deleted
+            mask = NiftiImage(mask).asarray()
 
-            # now create the mapper to bypass default mapping in MaskedDataset
-            # NiftiDataset uses a MaskMapper with DescreteMetric with cartesian
-            # distance and element size from the NIfTI header 
-
-            # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-            elementsize = [i for i in reversed(self.__nifti.voxdim)]
-            mapper = MaskMapper(
-                        mask,
-                        DescreteMetric(elementsize=elementsize,
-                                       distance_function=cartesianDistance))
-            samples = mapper.forward( samples )
-
+        # by default init the dataset now
+        # if mask is a MaskMapper already, this is a cheap init. This is
+        # important as this is the default mode for the copy constructor
+        # and might be called really often!!
         MaskedDataset.__init__(self,
                                samples,
                                labels,
                                chunks,
                                mask)
+
+
+        if set_elementsize:
+            # in case the MaskMapper wasn't already passed to the constructor
+            # overwrite the default metric of it here to take the NIfTI element
+            # properties into account
+
+            # NiftiDataset uses a MaskMapper with DescreteMetric with cartesian
+            # distance and element size from the NIfTI header 
+
+            # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
+            elementsize = [i for i in reversed(self.__nifti.voxdim)]
+            self.mapper.setMetric(
+                        DescreteMetric(elementsize=elementsize,
+                                       distance_function=cartesianDistance))
 
 
     @staticmethod
@@ -86,27 +101,39 @@ class NiftiDataset(MaskedDataset):
         return NiftiDataset._fromMaskedDataset(merged, self.__nifti)
 
 
-    def selectFeatures(self, ids):
+    def selectFeatures(self, ids, plain=False):
         """ Select a number of features from the current set.
 
-        'ids' is a list of feature IDs
+        @ids is a list of feature IDs
+        @plain=True directs to return a simple Dataset
+        if @plain=False -- returns a new NiftiDataset object
 
-        Returns a new NiftiDataset object with a view of the original data
+        Return object is a view of the original data
         (no copying is performed).
         """
+        if plain:
+            return Dataset.selectFeatures(self, ids)
+
         sub = MaskedDataset.selectFeatures(self, ids)
         return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
 
-    def selectFeaturesByMask(self, mask):
+    def selectFeaturesByMask(self, mask, plain=False):
         """ Use a mask array to select features from the current set.
 
         The final selection mask only contains features that are present in the
         current feature mask AND the selection mask passed to this method.
 
-        Returns a new MaskedDataset object with a view of the original pattern
-        array (no copying is performed).
+        @ids is a list of feature IDs
+        @plain=True directs to return a simple Dataset
+        if @plain=False -- returns a new NiftiDataset object
+
+        Return object is a view of the original data (no copying is
+        performed).
         """
+        if plain:
+            raise NotImplementedError #return Dataset.selectFeatures(self, ids)
+
         sub = MaskedDataset.selectFeaturesByMask(self, mask)
         return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
@@ -114,12 +141,13 @@ class NiftiDataset(MaskedDataset):
     def selectSamples( self, mask ):
         """ Choose a subset of samples.
 
-        Returns a new MaskedDataset object containing the selected sample
+        Returns a new NiftiDataset object containing the selected sample
         subset.
         """
         sub = MaskedDataset.selectSamples(self, mask)
         return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
 
-    niftihdr = property(fget=lambda self: self.__nifti.header)
+    niftihdr = property(fget=lambda self: self.__nifti.header,
+                        doc='Access to the NIfTI header dictionary.')
 

@@ -12,7 +12,7 @@
 import numpy as N
 
 from mvpa.datasets.mapper import MetricMapper
-from mvpa.datasets.metric import Metric, DescreteMetric, cartesianDistance
+from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 
 
 class MaskMapper(MetricMapper):
@@ -24,15 +24,16 @@ class MaskMapper(MetricMapper):
 
         'metric' can be any instance of a 'Metric' object, no attempt is made
         to determine whether a certain metric is reasonable for this mapper. If
-        'metric' is None as default 'DiscreteMetric' is constructed that assumes
-        an equal spacing of all mask elements with a cartesian distance of 1
-        along all axes.
+        'metric' is None as default 'DiscreteMetric' is constructed that
+        assumes an equal spacing of all mask elements with a cartesian
+        distance of 1 along all axes.
         """
         if metric == None:
             metric = DescreteMetric(elementsize=[1 for i in mask.shape],
                                      distance_function=cartesianDistance)
 
         MetricMapper.__init__(self, metric)
+
 
         self.__mask = self.__maskdim = self.__masksize = \
                       self.__masknonzerosize = self.__forwardmap = \
@@ -66,6 +67,8 @@ class MaskMapper(MetricMapper):
         self.__forwardmap = N.zeros(mask.shape, dtype=N.int64)
         # under assumption that we +1 values in forwardmap so that
         # 0 can be used to signal outside of mask
+
+        # XXX this loop takes forever!!!!
         for voxelIndex in xrange(self.__masknonzerosize):
             coordIn = self.getInId(voxelIndex)
             self.__forwardmap[tuple(coordIn)] = voxelIndex + 1
