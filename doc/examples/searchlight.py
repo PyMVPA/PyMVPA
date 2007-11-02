@@ -63,7 +63,7 @@ conds = N.fromfile(cfile, sep=' ', dtype=int).reshape(2, -1)
 cfile.close()
 
 verbose(2, "Loading volume file %s" % dfile)
-data = NiftiDataset(dfile, conds[0], conds[1], mfile)
+data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
 
 verbose(1, "Computing")
 
