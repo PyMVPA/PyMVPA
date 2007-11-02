@@ -28,6 +28,7 @@ class kNN:
           k:       number of nearest neighbours to be used for voting
         """
         self.__k = k
+        # XXX So is the voting function fixed forever?
         self.__votingfx = self.getWeightedVote
         self.__data = None
 
@@ -47,7 +48,7 @@ class kNN:
         For kNN it is degenerate -- just stores the data.
         """
         self.__data = data
-
+        self.__weights = None
 
     def predict(self, data):
         """ Predict the class labels for the provided data.
@@ -114,19 +115,33 @@ class kNN:
         """TODO docstring
         """
 
-        labels = self.__data.labels
-        Nlabels = len(labels)
-        uniquelabels = self.__data.uniquelabels
-        Nuniquelabels = len(uniquelabels)
+        # Lazy evaluation
+        if self.__weights is None:
+            #
+            # It seemed to Yarik that this has to be evaluated just once per
+            # training dataset.
+            #
+            self.__labels = self.__data.labels
+            Nlabels = len(self.__labels)
+            uniquelabels = self.__data.uniquelabels
+            Nuniquelabels = len(uniquelabels)
 
-        # create dictionary with an item for each condition
-        votes = dict( zip ( uniquelabels, [0]*Nuniquelabels ) )
-        weights = dict( zip (uniquelabels,
-                    [ 1 - ( float(labels.tolist().count(i)) / Nlabels )
-                        for i in uniquelabels ] ) )
+            # create dictionary with an item for each condition
+            self.__votes_init = dict( zip ( uniquelabels, [0]*Nuniquelabels ) )
+
+            labelslist = self.__labels.tolist()
+            # TODO: To get proper speed up for the next line only,
+            #       histogram should be computed
+            #       via sorting + counting "same" elements while reducing.
+            #       Guaranteed complexity is NlogN whenever now it is N^2
+            self.__weights = dict( zip (uniquelabels,
+                                [ 1 - ( float(labelslist.count(i)) / Nlabels )
+                                  for i in uniquelabels ] ) )
+
+        votes = self.__votes_init.copy()
 
         for nn in knn_ids:
-            votes[labels[nn]] += weights[labels[nn]]
+            votes[self.__labels[nn]] += self.__weights[self.__labels[nn]]
 
         # find the condition with most votes
         best_cond = None
