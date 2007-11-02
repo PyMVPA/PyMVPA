@@ -9,14 +9,17 @@
 """PyMVPA: Recursive feature elimination"""
 
 import numpy as N
-import svm
-import support
+
+from mvpa.misc.support import buildConfusionMatrix
 
 
 class RFE( object ):
     """ Recursive feature elimination.
     """
-    def __init__( self, pattern, clf = svm.SVM() ):
+
+    def __init__( self, pattern, clf ):
+        """ Initialize recurse feature elimination
+        """
         self.__pattern = pattern
         self.__verbose = False
 
@@ -38,9 +41,9 @@ class RFE( object ):
         predictions = N.array(self.__clf.predict( self.pattern.samples ))
 
         self.__training_confusion_mat = \
-            support.buildConfusionMatrix( self.pattern.reglabels,
-                                          self.pattern.regs,
-                                          predictions )
+            buildConfusionMatrix( self.pattern.reglabels,
+                                  self.pattern.regs,
+                                  predictions )
         self.__training_perf = \
             float(self.trainconfmat.diagonal().sum()) / self.trainconfmat.sum()
 
@@ -170,9 +173,9 @@ class RFE( object ):
         # get the predictions from the classifier
         predicted = self.clf.predict( masked.samples )
 
-        confmat = support.buildConfusionMatrix( self.pattern.reglabels,
-                                                masked.regs,
-                                                predicted )
+        confmat = buildConfusionMatrix( self.pattern.reglabels,
+                                        masked.regs,
+                                        predicted )
 
         perf = N.mean( predicted == masked.regs )
 
