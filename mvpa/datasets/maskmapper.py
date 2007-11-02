@@ -57,6 +57,9 @@ class MaskMapper(MetricMapper):
         # Store all coordinates for backward mapping
         self.__masknonzero = mask.nonzero()
         self.__masknonzerosize = len(self.__masknonzero[0])
+        #from IPython.Shell import IPShellEmbed
+        #ipshell = IPShellEmbed()
+        #ipshell()
 
         # Store forward mapping (ie from coord into outId)
         # TODO to save space might take appropriate int type
