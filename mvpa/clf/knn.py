@@ -22,6 +22,9 @@ except:
 class kNN:
     """ k-nearest-neighbour classification.
     """
+
+    __warned = False
+
     def __init__(self, k=2):
         """
         Parameters:
@@ -37,9 +40,9 @@ class kNN:
         """ String summary over the object
         """
         return """kNN:
- k (# of nearest neighbors): %d
- votingfx: TODO
- data: %s""" % (self.__k, `self.__data`)
+         k (# of nearest neighbors): %d
+         votingfx: TODO
+         data: %s""" % (self.__k, `self.__data`)
 
 
     def train( self, data ):
@@ -48,6 +51,14 @@ class kNN:
         For kNN it is degenerate -- just stores the data.
         """
         self.__data = data
+        if __debug__:
+            if not kNN.__warned and \
+                   data.samples.dtype in [N.int8, N.int16, N.int32, N.int64]:
+                kNN.__warned = True
+                verbose(1, "kNN: input data is in integers. " + \
+                        "Overflow on arithmetic operations might result in"+\
+                        " errors. Please convert dataset's samples into" +\
+                        " floating datatype if any error is reported.")
         self.__weights = None
 
     def predict(self, data):
