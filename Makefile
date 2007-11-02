@@ -4,7 +4,8 @@ distclean:
 	-@rm -f MANIFEST Changelog
 	-@rm -f mvpa/clf/libsvm/*.{c,so} \
 		mvpa/clf/libsvm/svmc.py \
-		mvpa/clf/libsvm/svmc_wrap.cpp
+		mvpa/clf/libsvm/svmc_wrap.cpp \
+		tests/*.{prof,kcache}
 	@find . -name '*.pyc' -o -iname '*~' -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist

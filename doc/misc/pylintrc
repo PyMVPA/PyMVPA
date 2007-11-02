@@ -36,6 +36,10 @@ argument-rgx=[a-z][a-zA-Z0-9]*$
 # Regular expression which should only match correct variable names
 variable-rgx=[a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?$
 
+# Regular expression which should only match correct module level names
+# Default: (([A-Z_][A-Z1-9_]*)|(__.*__))$
+const-rgx=[a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?
+
 [FORMAT]
 indent-string='    '
 

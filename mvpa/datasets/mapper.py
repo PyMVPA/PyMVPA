@@ -115,6 +115,7 @@ class MetricMapper(Mapper, Metric):
         'metric' is a subclass of Metric.
         """
         Mapper.__init__(self)
+        Metric.__init__(self)
 
         if not isinstance(metric, Metric):
             print type(metric)
@@ -127,6 +128,12 @@ class MetricMapper(Mapper, Metric):
         """ To make pylint happy """
         return self.__metric
 
-    metric = property(fget=getMetric)
+
+    def setMetric(self, metric):
+        """ To make pylint happy """
+        self.__metric = metric
+
+
+    metric = property(fget=getMetric, fset=setMetric)
 
 

@@ -7,10 +7,12 @@ Build-Depends: debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-cent
 XS-Python-Version: >= 2.4
 Standards-Version: 3.7.2
 
+
 Package: python-mvpa
 Architecture: any
-Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-numpy-ext, python-scipy
+Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-scipy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
+Recommends: python-nifti
 Description: yet to come
  none

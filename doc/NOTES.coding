@@ -14,3 +14,8 @@
  NF: new feature
 
 * header: each file should contain a header from doc/misc/header.py
+
+* __repr__
+  most of the classes should provide meaningful and concise summary
+  over their identity (name + parameters + some summary over results
+  if any)

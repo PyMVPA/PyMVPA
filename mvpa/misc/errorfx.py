@@ -9,7 +9,9 @@
 """PyMVPA: Error functions"""
 
 
+from cmath import sqrt
 import numpy as N
+
 
 class ErrorFunctionBase(object):
     """

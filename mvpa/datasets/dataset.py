@@ -12,6 +12,7 @@ import numpy as N
 import operator
 import random
 
+# TODO? yoh: There is too much in common between chunks and labels....
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
@@ -32,6 +33,8 @@ class Dataset(object):
         self.__labels = None
         self.__chunks = None
         self.__origlabels = None
+        self.__uniqueLabels = None
+        self.__uniqueChunks = None
 
         # 1d arrays or simple sequences are assumed to be a single pattern
         if (not isinstance(samples, N.ndarray)) or samples.ndim < 2:
@@ -48,18 +51,19 @@ class Dataset(object):
 
         # check if labels is supplied as a sequence
         try:
-            if len( labels ) != len( self.samples ):
-                raise ValueError, "Length of 'labels' has to match the number" \
-                                  " of patterns."
+            if len(labels) != len(self.samples):
+                raise ValueError, "Length of 'labels' [%d]" % len(labels)\
+                      + " has to match the number of patterns" \
+                      + " [%d]." % len(self.samples)
             # store the sequence as array
-            labels = N.array( labels )
+            labels = N.array(labels)
 
         except TypeError:
             # make sequence of identical value matching the number of patterns
             labels = N.repeat( labels, len( self.samples ) )
 
         # done -> store
-        self.__labels = labels
+        self._setLabels(labels)
 
         # if no chunk information is given assume that every pattern is its
         # own chunk
@@ -79,7 +83,13 @@ class Dataset(object):
                 chunks = N.repeat( chunks, len( self.samples ) )
 
         # done -> store
-        self.__chunks = chunks
+        self._setChunks(chunks)
+
+    def __repr__(self):
+        """ String summary over the object
+        """
+        return """Dataset: [%d x %d]""" % \
+               (self.nsamples, self.nfeatures)
 
 
     def __iadd__( self, other ):
@@ -97,10 +107,8 @@ class Dataset(object):
 
         self.__samples = \
             N.concatenate( ( self.samples, other.samples ), axis=0)
-        self.__labels = \
-            N.concatenate( ( self.labels, other.labels ), axis=0)
-        self.__chunks = \
-            N.concatenate( ( self.chunks, other.chunks ), axis=0)
+        self._setLabels( N.concatenate( ( self.labels, other.labels ), axis=0) )
+        self._setChunks( N.concatenate( ( self.chunks, other.chunks ), axis=0) )
 
         return self
 
@@ -147,9 +155,9 @@ class Dataset(object):
         if not operator.isSequenceType( mask ):
             mask = [mask]
 
-        return Dataset( self.samples[mask,],
-                        self.labels[mask,],
-                        self.chunks[mask,] )
+        return Dataset( self.samples[mask, ],
+                        self.labels[mask, ],
+                        self.chunks[mask, ] )
 
 
     def permutedRegressors( self, status, perchunk = True ):
@@ -171,7 +179,7 @@ class Dataset(object):
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'randomizedRegressors() has never been ' \
                                     'called with status == True.'
-            self.__labels = self.__origlabels
+            self._setLabels(self.__origlabels)
             self.__origlabels = None
         else:
             # permute labels per origin
@@ -184,8 +192,9 @@ class Dataset(object):
                 for o in self.uniquechunks:
                     self.__labels[self.chunks == o ] = \
                         N.random.permutation( self.labels[ self.chunks == o ] )
+                self._setLabels(self.__labels) # to recompute uniquelabels
             else:
-                self.__labels = N.random.permutation( self.__labels )
+                self._setLabels(N.random.permutation(self.__labels))
 
 
     def getRandomSamples( self, nperlabel ):
@@ -209,12 +218,26 @@ class Dataset(object):
 
         sample = []
         # for each available class
-        for i,r in enumerate(self.uniquelabels):
+        for i, r in enumerate(self.uniquelabels):
             # get the list of pattern ids for this class
             sample += random.sample( (self.labels == r).nonzero()[0],
                                      nperlabel[i] )
 
         return self.selectSamples( sample )
+
+
+    def _setLabels(self, labels):
+        """ Sets labels and recomputes uniquelabels
+        """
+        self.__labels = labels
+        self.__uniqueLabels = None # None!since we might not need them
+
+
+    def _setChunks(self, chunks):
+        """ Sets chunks and recomputes uniquechunks
+        """
+        self.__chunks = chunks
+        self.__uniqueChunks = None # None!since we might not need them
 
 
     def getNSamples( self ):
@@ -249,18 +272,26 @@ class Dataset(object):
         return self.__chunks
 
 
-    def getUniqueLabels( self ):
+    def getUniqueLabels(self):
         """ Returns an array with all unique class labels in the labels vector.
-        """
 
-        return N.unique( self.labels )
+        Late evaluation for speedup in cases when uniquelabels is not needed
+        """
+        if self.__uniqueLabels is None:
+            self.__uniqueLabels = N.unique( self.labels )
+            assert(not self.__uniqueLabels is None)
+        return self.__uniqueLabels
 
 
     def getUniqueChunks( self ):
         """ Returns an array with all unique labels in the chunk vector.
-        """
 
-        return N.unique( self.chunks )
+        Late evaluation for speedup in cases when uniquechunks is not needed
+        """
+        if self.__uniqueChunks is None:
+            self.__uniqueChunks = N.unique( self.chunks )
+            assert(not self.__uniqueChunks is None)
+        return self.__uniqueChunks
 
 
     def getNSamplesPerLabel( self ):
