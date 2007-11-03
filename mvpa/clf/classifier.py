@@ -22,23 +22,29 @@ class Classifier(object):
     It must be possible to specify all classifier parameters as keyword
     arguments to the constructor.
     """
-
-    _params = []
+    # Dict that contains the parameters of a classifier.
+    # This shall provide an interface to plug generic parameter optimizer
+    # on all classifiers (e.g. grid- or line-search optimizer)
+    # A dictionary is used because Michael thinks that access by name is nicer.
+    # Additonally Michael thinks ATM that additonal information might be
+    # necessary in some situations (e.g. reasonably predefined parameter range,
+    # minimal iteration stepsize, ...), therefore the value to each key should
+    # also be a dict or we should use mvpa.misc.param.Parameter'...
+    params = {}
 
     def __init__(self):
         """
         """
 
-    def setProperty(self, propName, propValue):
-        raise NotImplementedError
 
     def train(self, data):
+        """
+        """
         raise NotImplementedError
 
 
     def predict(self, data):
+        """
+        """
         raise NotImplementedError
 
-
-    def getFeatureBenchmark(self):
-        raise NotImplementedError
