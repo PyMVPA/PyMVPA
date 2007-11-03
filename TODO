@@ -9,6 +9,13 @@
   look at mapper or neighbor for tentative organization if copyright/license
   has to be present in each file.
 
+* Regression tests: for instance using sample dataset which we have
+   already, run doc/examples/searchlight.py and store output to
+   validate against. Probably the best would be to create a regression
+   test suite within unit tests which would load the dataset and run
+   various algorithms on it a verify the results against previousely
+   obtained (and dumped to the disk)
+
 * confirm with Michael and refactor:
 
  maskmapper:
@@ -17,3 +24,4 @@
 
  in  --> data         -> dataShape
  out --> features     -> 
+

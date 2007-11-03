@@ -20,13 +20,22 @@ class Dataset(object):
     associated with these patterns. Additionally samples can be grouped into
     chunks.
     """
-    def __init__(self, samples, labels, chunks ):
+
+    # Common parameters for all subclasses. To don't replicate, __init__.__doc__
+    # has to be extended with them after it is defined
+    # TODO: discard such way or accept and introduce to derived methods...
+    __initparams__ = \
+        """samples -
+        labels  -
+        chunks  -
+        dtype   - if None -- do not change data type if samples
+                  is an ndarray. Otherwise convert samples to dtype
+        """
+
+    def __init__(self, samples, labels, chunks, dtype=None ):
         """ Initialize the Dataset.
 
         Parameters:
-          samples -
-          labels  -
-          chunks  -
         """
         # initialize containers
         self.__samples = None
@@ -37,8 +46,14 @@ class Dataset(object):
         self.__uniqueChunks = None
 
         # 1d arrays or simple sequences are assumed to be a single pattern
-        if (not isinstance(samples, N.ndarray)) or samples.ndim < 2:
-            samples = N.array( samples, ndmin=2 )
+        if (not isinstance(samples, N.ndarray)):
+            samples = N.array(samples, ndmin=2)
+        else:
+            if samples.ndim < 2 \
+                   or (not dtype is None and dtype != samples.dtype):
+                if dtype is None:
+                    dtype = samples.dtype
+                samples = N.array(samples, ndmin=2, dtype=dtype)
 
         # only samples x features matrices are supported
         if len(samples.shape) > 2:
@@ -84,6 +99,9 @@ class Dataset(object):
 
         # done -> store
         self._setChunks(chunks)
+
+    __init__.__doc__ += __initparams__
+
 
     def __repr__(self):
         """ String summary over the object

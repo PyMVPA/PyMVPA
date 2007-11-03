@@ -15,11 +15,11 @@ from mvpa.datasets.dataset import Dataset
 class MappedDataset(Dataset):
     """
     """
-    def __init__(self, samples, labels, chunks, mapper ):
+    def __init__(self, samples, labels, chunks, mapper, dtype=None ):
         """
         """
         # store the mapper and put the rest into the baseclass
-        Dataset.__init__(self, samples, labels, chunks)
+        Dataset.__init__(self, samples, labels, chunks, dtype)
 
         if not self.nfeatures == mapper.nfeatures:
             raise ValueError, "The mapper [%i] doesn't match the number of " \
