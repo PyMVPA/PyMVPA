@@ -10,9 +10,10 @@
 
 import unittest
 import numpy as N
-import mvpa.rfe as rfe
-import mvpa.maskeddataset
-import mvpa.svm
+
+from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.clf.rfe import RFE
+from mvpa.clf.svm import SVM
 
 def dumbFeatureSignal():
     data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
@@ -22,13 +23,16 @@ def dumbFeatureSignal():
          + [2 for i in range(8)] \
          + [3 for i in range(8)]
 
-    return mvpa.maskeddataset.MaskedDataset(data, regs, None)
+    return MaskedDataset(data, regs, None)
 
 
 class RFETests(unittest.TestCase):
 
     def setUp(self):
         self.dumbpattern = dumbFeatureSignal()
+
+        #
+        self.svm = SVM()
 
         # prepare second demo dataset and mask
         self.mask = N.ones((20))
@@ -40,10 +44,10 @@ class RFETests(unittest.TestCase):
                              N.arange(100) < 75).astype('int')
         reg = (N.arange(100) > 49).astype('int')
         orig = N.arange(100) % 5
-        self.pattern = mvpa.maskeddataset.MaskedDataset(data, reg, orig)
+        self.pattern = MaskedDataset(data, reg, orig)
 
     def testFeatureRanking(self):
-        obj = rfe.RFE( self.dumbpattern )
+        obj = RFE(self.dumbpattern, self.svm)
 
         self.failUnless( obj.pattern.nfeatures == 2 )
 
@@ -57,7 +61,7 @@ class RFETests(unittest.TestCase):
 
 
     def testSelectFeatures(self):
-        obj = rfe.RFE( self.pattern )
+        obj = RFE( self.pattern, self.svm )
         self.failUnless( obj.pattern.nfeatures == 20 )
 
         obj.selectFeatures(10)
@@ -68,7 +72,7 @@ class RFETests(unittest.TestCase):
 
 
     def testKillNFeatures(self):
-        obj = rfe.RFE( self.pattern )
+        obj = RFE( self.pattern, self.svm )
         self.failUnless( obj.pattern.nfeatures == 20 )
 
         obj.killNFeatures(3)
@@ -79,7 +83,7 @@ class RFETests(unittest.TestCase):
 
 
     def testKillFeatureFraction(self):
-        obj = rfe.RFE( self.pattern )
+        obj = RFE( self.pattern, self.svm )
         self.failUnless( obj.pattern.nfeatures == 20 )
 
         obj.killFeatureFraction(0.75)
@@ -90,7 +94,7 @@ class RFETests(unittest.TestCase):
 
 
     def testDataTesting(self):
-        obj = rfe.RFE( self.dumbpattern )
+        obj = RFE( self.dumbpattern, self.svm )
         # kill the dumb feature
         obj.killNFeatures(1)
 
@@ -107,7 +111,7 @@ class RFETests(unittest.TestCase):
         # make slightly different dataset, but with the same underlying
         # concept
         tdata = \
-            mvpa.maskeddataset.MaskedDataset( [[1.5],[2.5],[3.5],
+            MaskedDataset( [[1.5],[2.5],[3.5],
                                [5.5],[6.5],[7.5],
                                [9.5],[10.5],[11.5]],
                                [1 for i in range(3)] \
@@ -126,7 +130,7 @@ class RFETests(unittest.TestCase):
 
 
     def testEliminationMask(self):
-        obj = rfe.RFE( self.dumbpattern )
+        obj = RFE( self.dumbpattern, self.svm )
         # kill the dumb feature
         elim_mask = obj.selectFeatures( 1, 
                                         eliminate_by='number',
@@ -170,14 +174,14 @@ class RFETests(unittest.TestCase):
 
             return sum(offsets)
 
-        pat = mvpa.maskeddataset.MaskedDataset( N.random.normal(size=(100,2,3,4)),
+        pat = MaskedDataset( N.random.normal(size=(100,2,3,4)),
                                 [i%2 for i in range(100)],
                                 [i/5 for i in range(100)] )
 
         # make a copy of the original patterns
         sec_pat = pat.samples.copy()
 
-        el = rfe.RFE( pat )
+        el = RFE( pat, self.svm )
         el.killNFeatures(5, eliminate_by = 'number', kill_per_iter = 1 )
 
         features = N.transpose(el.pattern.mapper.getMask().nonzero())

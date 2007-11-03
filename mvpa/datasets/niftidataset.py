@@ -19,7 +19,7 @@ from mvpa.datasets.maskmapper import MaskMapper
 class NiftiDataset(MaskedDataset):
     """
     """
-    def __init__(self, filename, labels, chunks, mask=None):
+    def __init__(self, filename, labels, chunks, mask=None, dtype=None):
         """
         """
         # we have to handle the nifti elementsize at the end if
@@ -56,7 +56,8 @@ class NiftiDataset(MaskedDataset):
                                samples,
                                labels,
                                chunks,
-                               mask)
+                               mask,
+                               dtype)
 
 
         if set_elementsize:

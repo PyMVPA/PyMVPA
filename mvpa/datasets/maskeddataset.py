@@ -26,7 +26,7 @@ from mvpa.datasets.dataset import Dataset
 class MaskedDataset(MappedDataset):
     """
     """
-    def __init__( self, samples, labels, chunks, mask=None ):
+    def __init__( self, samples, labels, chunks, mask=None, dtype=None ):
         """
         'mask' can be:
             * None: Mask using full dataspace is generated
@@ -66,7 +66,8 @@ class MaskedDataset(MappedDataset):
                                 mapped_samples,
                                 labels,
                                 chunks,
-                                mapper )
+                                mapper,
+                                dtype )
 
 
     def __add__( self, other ):

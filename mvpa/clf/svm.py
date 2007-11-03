@@ -35,7 +35,7 @@ class SVM(Classifier):
         """ String summary over the object
         """
         return """SVM:
- params: %s """ % (self.param)
+         params: %s """ % (self.param)
 
 
     def train(self, data):
