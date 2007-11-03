@@ -8,15 +8,22 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA: Wrap the libsvm package into a very simple class interface."""
 
+from mvpa.misc.param import Parameter
 from mvpa.clf.classifier import Classifier
 from mvpa.clf.libsvm.svm import *
 
-class SVM(Classifier):
+
+class SVMBase(Classifier):
     """ Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
     """
-#    _param = [ 'eps' ] + Classifier._param
+    # init the parameter interface
+    params = Classifier.params.copy()
+    params['eps'] = Parameter(0.001,
+                              min=0,
+                              descr='tolerance of termination criterium')
+
 
     def __init__(self, **kwargs):
         # init base class
@@ -63,8 +70,8 @@ class SVM(Classifier):
         return [ self.model.predict( p ) for p in src ]
 
 
-    def getFeatureBenchmark(self):
-        """XXX Do we need this one?
-        """
-        return self.model.getFeatureBenchmark()
-
+#    def getFeatureBenchmark(self):
+#        """XXX Do we need this one?
+#        """
+#        return self.model.getFeatureBenchmark()
+#
