@@ -26,7 +26,7 @@ from mvpa.misc.cmdline import \
      optsCommon, optRadius, optKNearestDegree, optCrossfoldDegree
 
 usage = """\
-%s [options] <NIfTI samples> <labels+blocks> <NIfTI mask>
+%s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> <output>
 
 where labels+blocks is a text file that lists the class label and the
 associated block of each data sample/volume as a tuple of two integer
@@ -41,8 +41,8 @@ parser = OptionParser(usage=usage,
 
 (options, files) = parser.parse_args()
 
-if len(files)!=3:
-    parser.error("Please provide 3 files in the command line")
+if len(files)!=4:
+    parser.error("Please provide 4 files in the command line")
     sys.exit(1)
 
 verbose(1, "Loading data")
@@ -53,6 +53,8 @@ dfile = files[0]
 cfile = files[1]
 # mask volume filename
 mfile = files[2]
+# outfile name
+ofile = files[3]
 
 # read conditions into an array (assumed to be two columns of integers)
 # TODO: We need some generic helper to read conditions stored in some
@@ -82,7 +84,9 @@ sl = Searchlight(cv, radius=options.radius)
 verbose(3, "Running searchlight on loaded data")
 results = sl(data)
 
-print results
+# map the result vector back into a nifti image
+rimg=data.map2Nifti(results)
 
-# XXX add function to NiftiDataset that calls the mapper and creates a
-# new NiftiImage from the results.
+# save to file
+rimg.save(ofile)
+
