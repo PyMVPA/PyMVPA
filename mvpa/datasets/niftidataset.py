@@ -43,7 +43,7 @@ class NiftiDataset(MaskedDataset):
             raise ValueError, "Unrecognized value in 'filename' argument."
 
         if isinstance(mask, str):
-            # if mask is also a nifti file open, it and take the image array
+            # if mask is also a nifti file, open it and take the image array
             # use a copy of the mask data as otherwise segfault will embarass
             # you, once the 'mask' NiftiImage get deleted
             mask = NiftiImage(mask).asarray()
