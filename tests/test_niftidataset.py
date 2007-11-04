@@ -47,6 +47,17 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnless(merged.samples[3, 120000] == merged.samples[1, 120000])
 
 
+    def testNiftiMapper(self):
+        data = NiftiDataset(os.path.join('data','example4d'), [1,2], None)
+
+
+        vol = data.map2Nifti(N.ones((294912,), dtype='int16'))
+
+        self.failUnless(vol.data.shape == (24,96,128))
+        self.failUnless((vol.data == 1).all())
+
+
+
 def suite():
     return unittest.makeSuite(NiftiDatasetTests)
 

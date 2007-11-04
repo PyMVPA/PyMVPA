@@ -149,6 +149,15 @@ class NiftiDataset(MaskedDataset):
         return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
 
+    def map2Nifti(self, data):
+        """Maps a data vector into the dataspace and wraps it with a
+        NiftiImage. The header data of this object is used to initialize
+        the new NiftiImage.
+        """
+        dsarray = self.mapper.reverse(data)
+        return NiftiImage(dsarray, self.niftihdr)
+
+
     niftihdr = property(fget=lambda self: self.__nifti.header,
                         doc='Access to the NIfTI header dictionary.')
 
