@@ -153,8 +153,7 @@ class kNN:
                 self.__weights[label] += 1.0
 
             for k, v in self.__weights.iteritems():
-                self.__weights[label] = 1.0 - (self.__weights[label] / Nlabels)
-
+                self.__weights[k] = 1.0 - (v / Nlabels)
 
         votes = self.__votes_init.copy()
 
