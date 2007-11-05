@@ -11,6 +11,7 @@
 import numpy as N
 
 from mvpa.misc import verbose
+from mvpa.misc.support import indentDoc
 
 try:
     import psyco
@@ -39,10 +40,9 @@ class kNN:
     def __repr__(self):
         """ String summary over the object
         """
-        return """kNN:
-         k (# of nearest neighbors): %d
-         votingfx: TODO
-         data: %s""" % (self.__k, `self.__data`)
+        return """kNN / k=%d
+ votingfx: TODO
+ data: %s""" % (self.__k, indentDoc(self.__data))
 
 
     def train( self, data ):
