@@ -86,7 +86,7 @@ class SVMParameter:
 
         # yoh: unfortunately do not know cleaner way to overload here
         if len(kw)==1 and kw.items()[0][0]=="svmc_parameter" and \
-               re.match("^<Swig Object of type 'struct SVMParameter \*'",
+               re.match("^<Swig Object of type 'struct svm_parameter \*'",
                         kw.items()[0][1].__repr__()):
             rval = kw.items()[0][1]
             # following doesn't work nicely. Need to figure things out. XXX
@@ -136,11 +136,11 @@ class SVMParameter:
 
 
     def __repr__(self):
-        ret = '<SVMParameter:'
+        ret = '<svm_parameter:'
         for name in dir(svmc):
-            if name[:len('SVMParameter_')] == 'SVMParameter_' \
+            if name[:len('svm_parameter_')] == 'svm_parameter_' \
                and name[-len('_set'):] == '_set':
-                attr = name[len('SVMParameter_'):-len('_set')]
+                attr = name[len('svm_parameter_'):-len('_set')]
                 if attr == 'weight_label':
                     ret = ret+' weight_label = %s, ' \
                             % intArray2List(self.weight_label,
