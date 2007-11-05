@@ -13,7 +13,8 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.svm import SVMBase
+from mvpa.clf.svm import SVMBase,LinearNuSVMC
+from mvpa.clf.libsvm import svmc
 
 
 def dumbFeatureSignal():
@@ -43,10 +44,11 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
 
     # add signal
     data[:2*patterns,1] += signal2noise
+
     data[2*patterns:4*patterns,1] -= signal2noise
     data[:patterns,0] -= signal2noise
     data[2*patterns:3*patterns,0] -= signal2noise
-    data[patterns:2+patterns,0] += signal2noise
+    data[patterns:2*patterns,0] += signal2noise
     data[3*patterns:4*patterns,0] += signal2noise
 
     # two conditions
@@ -70,14 +72,16 @@ class SVMTests(unittest.TestCase):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            s_mv = SVMBase()
-            s_mv.train(train)
-            p_mv = s_mv.predict(test.samples )
+            clf = SVMBase(kernel_type=svmc.RBF,
+                          svm_type=svmc.NU_SVC,
+                          nu=0.5,
+                          eps=0.001)
+            clf.train(train)
+            p_mv = clf.predict(test.samples)
             mv_perf.append(N.mean(p_mv==test.labels))
 
-            s_uv = SVMBase()
-            s_uv.train(train.selectFeatures([0]))
-            p_uv = s_uv.predict(test.selectFeatures([0]).samples)
+            clf.train(train.selectFeatures([0]))
+            p_uv = clf.predict(test.selectFeatures([0]).samples)
             uv_perf.append(N.mean(p_uv==test.labels))
 
         mean_mv_perf = N.mean(mv_perf)
