@@ -12,6 +12,7 @@ import numpy as N
 
 from mvpa.algorithms.datameasure import DataMeasure
 from mvpa.misc.errorfx import MeanMatchErrorFx
+from mvpa.misc.support import indentDoc
 from mvpa.datasets.splitter import NoneSplitter
 
 
@@ -56,12 +57,12 @@ class ClfCrossValidation(DataMeasure):
     def __repr__(self):
         """ String summary over the object
         """
-        return """ClfCrossValidation:
+        return """ClfCrossValidation /
  splitter: %s
  classifier: %s
  errorfx: %s
- combinerfx: %s""" % (`self.__splitter`, `self.__clf`,
-                     `self.__errorfx`, `self.__combinerfx`)
+ combinerfx: %s""" % (indentDoc(self.__splitter), indentDoc(self.__clf),
+                      indentDoc(self.__errorfx), indentDoc(self.__combinerfx))
 
 
     def __call__(self, dataset, callbacks=[]):
