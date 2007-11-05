@@ -11,23 +11,103 @@
 import numpy as N
 
 from mvpa.misc.support import buildConfusionMatrix
+from mvpa.exceptions import UnknownStateError
+
+class FeatureSelection(object):
+    """ Base class for any feature selection
+
+    TODO...
+    """
+
+    def __init__(self):
+        self.__mask = None
+        """Binary mask defining the voxels which were selected"""
 
 
-class RFE( object ):
+    def __call__(self, dataset, callables=[]):
+        """Invocation of the feature selection
+
+        - `dataset`: actually dataset.
+        - `callables`: a list of functors to be called with locals()
+
+        Returns a dataset with selected features.  Derived classes
+        must provide interface to access other relevant to the feature
+        selection process information (e.g. mask, elimination step
+        (in RFE), etc)
+        """
+        raise NotImplementedError
+
+
+    def getMask(self):
+        """ Returns a mask computed during previous call()
+        """
+        if self.__mask is None:
+            raise UnknownStateError
+        return self.__mask
+
+    mask = VProperty(fget=getMask)
+
+
+
+class RFE(FeatureSelection):
     """ Recursive feature elimination.
     """
 
-    def __init__( self, pattern, clf ):
+    def __init__(self,
+                 sensana,
+                 feature_selector=RemoveXPercent,
+                 stopping_criterion=StopAsSoonAsAtMinForXSteps,
+                 error_oracle=???
+                 ):
         """ Initialize recurse feature elimination
+        `sensana`: `SensitivityAnalyzer`
+        `feature_selector`: functor
+        `stopping_criterion`: functor
         """
-        self.__pattern = pattern
-        self.__verbose = False
 
-        self.__clf = clf
+        self.__sensana = sensana
+        """Sensitivity analyzer used to call at each step"""
 
-        # train the classifier with the initial feature set
-        self.__trainClassifier()
+        self.__feature_selector = feature_selector
+        """Functor which takes care about removing some features"""
 
+        self.__stopping_criterion = stopping_criterion
+
+        self.__error_oracle = error_oracle
+
+
+    def __call__(self, dataset, callables=[]):
+        """Proceed and select the features recursively eliminating less
+        important ones
+        """
+        errors = []
+        go = True
+        result = None
+
+        # TODO
+        #mapping = N.ndarrayrange(dataset.nfeatures)
+        """Maps resultant Id into original Id"""
+
+        while True:
+
+            # Compute
+            sensitivity = self.__sensana(dataset)
+
+            selected_ids = self.__feature_selector(sensitivity)
+
+            dataset = dataset.selectFeatures(selected_ids)
+
+            errors.append(error_oracle(dataset))
+
+            for callable_ in callables:
+                callable_(locals())
+
+            (go, isTheBest) = self.__stopping_criterion(errors)
+
+            if isTheBest:
+                result = dataset
+
+        return result
 
     def __trainClassifier(self):
         self.__clf.train( self.__pattern )
