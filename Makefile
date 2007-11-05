@@ -32,3 +32,7 @@ orig-src: distclean
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
+
+fetch-data:
+	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
+
