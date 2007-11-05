@@ -12,6 +12,7 @@
  BF: bug fix
  RF: refactoring
  NF: new feature
+ OPT: optimization
 
 * header: each file should contain a header from doc/misc/header.py
 
