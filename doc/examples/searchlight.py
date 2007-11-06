@@ -27,85 +27,91 @@ from mvpa.misc.cmdline import \
      optsCommon, optClf, optsSVM, optRadius, optKNearestDegree, \
      optCrossfoldDegree
 
-usage = """\
-%s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
+def main():
+    """ Wrapped into a function call for easy profiling later on
+    """
 
-where labels+blocks is a text file that lists the class label and the
-associated block of each data sample/volume as a tuple of two integer
-values (separated by a single space). -- one tuple per line.""" \
-% sys.argv[0]
+    usage = """\
+    %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
 
-
-parser = OptionParser(usage=usage,
-                      option_list=optsCommon + \
-                      [optClf, optRadius, optKNearestDegree,
-                       optCrossfoldDegree] + optsSVM)
+    where labels+blocks is a text file that lists the class label and the
+    associated block of each data sample/volume as a tuple of two integer
+    values (separated by a single space). -- one tuple per line.""" \
+    % sys.argv[0]
 
 
-(options, files) = parser.parse_args()
+    parser = OptionParser(usage=usage,
+                          option_list=optsCommon + \
+                          [optClf, optRadius, optKNearestDegree,
+                           optCrossfoldDegree] + optsSVM)
 
-if not len(files) in [3, 4]:
-    parser.error("Please provide 3 or 4 files in the command line")
-    sys.exit(1)
+    (options, files) = parser.parse_args()
 
-verbose(1, "Loading data")
+    if not len(files) in [3, 4]:
+        parser.error("Please provide 3 or 4 files in the command line")
+        sys.exit(1)
 
-# data filename
-dfile = files[0]
-# text file with labels and block definitions (chunks)
-cfile = files[1]
-# mask volume filename
-mfile = files[2]
+    verbose(1, "Loading data")
 
-ofile = None
-if len(files)>=4:
-    # outfile name
-    ofile = files[3]
+    # data filename
+    dfile = files[0]
+    # text file with labels and block definitions (chunks)
+    cfile = files[1]
+    # mask volume filename
+    mfile = files[2]
 
-# read conditions into an array (assumed to be two columns of integers)
-# TODO: We need some generic helper to read conditions stored in some
-#       common formats
-verbose(2, "Reading conditions from file %s" % cfile)
-cfile = open(cfile, 'r')
-conds = N.fromfile(cfile, sep=' ', dtype=int).reshape(2, -1)
-cfile.close()
+    ofile = None
+    if len(files)>=4:
+        # outfile name
+        ofile = files[3]
 
-verbose(2, "Loading volume file %s" % dfile)
-data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
+    # read conditions into an array (assumed to be two columns of integers)
+    # TODO: We need some generic helper to read conditions stored in some
+    #       common formats
+    verbose(2, "Reading conditions from file %s" % cfile)
+    cfile = open(cfile, 'r')
+    conds = N.fromfile(cfile, sep=' ', dtype=int).reshape(2, -1)
+    cfile.close()
+
+    verbose(2, "Loading volume file %s" % dfile)
+    data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
 
 
-if options.clf == 'knn':
-    clf = kNN(k=options.knearestdegree)
-elif options.clf == 'lin_nu_svmc':
-    clf = LinearNuSVMC(options.nu)
-elif options.clf == 'rbf_nu_svmc':
-    clf = RbfNuSVMC(options.nu)
-else:
-    raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
-verbose(3, "Using '%s' classifier" % options.clf)
+    if options.clf == 'knn':
+        clf = kNN(k=options.knearestdegree)
+    elif options.clf == 'lin_nu_svmc':
+        clf = LinearNuSVMC(options.nu)
+    elif options.clf == 'rbf_nu_svmc':
+        clf = RbfNuSVMC(options.nu)
+    else:
+        raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
+    verbose(3, "Using '%s' classifier" % options.clf)
 
-verbose(1, "Computing")
+    verbose(1, "Computing")
 
-verbose(3, "Assigning a measure to be CrossValidation")
-# compute N-1 cross-validation with the selected classifier in each sphere
-cv = ClfCrossValidation(clf,
-                        NFoldSplitter(cvtype=options.crossfolddegree))
+    verbose(3, "Assigning a measure to be CrossValidation")
+    # compute N-1 cross-validation with the selected classifier in each sphere
+    cv = ClfCrossValidation(clf,
+                            NFoldSplitter(cvtype=options.crossfolddegree))
 
-verbose(3, "Generating Searchlight instance")
-# contruct searchlight with 5mm radius
-# this assumes that the spatial pixdim values in the source NIfTI file
-# are specified in mm
-sl = Searchlight(cv, radius=options.radius)
+    verbose(3, "Generating Searchlight instance")
+    # contruct searchlight with 5mm radius
+    # this assumes that the spatial pixdim values in the source NIfTI file
+    # are specified in mm
+    sl = Searchlight(cv, radius=options.radius)
 
-# run searchlight
-verbose(3, "Running searchlight on loaded data")
-results = sl(data)
+    # run searchlight
+    verbose(3, "Running searchlight on loaded data")
+    results = sl(data)
 
-if not ofile is None:
-    # map the result vector back into a nifti image
-    rimg = data.map2Nifti(results)
+    if not ofile is None:
+        # map the result vector back into a nifti image
+        rimg = data.map2Nifti(results)
 
-    # save to file
-    rimg.save(ofile)
-else:
-    print results
+        # save to file
+        rimg.save(ofile)
+    else:
+        print results
+
+if __name__ == "__main__":
+    main()
