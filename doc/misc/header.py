@@ -6,5 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: """
+""""""
+
+__docformat__ = 'restructuredtext'
 

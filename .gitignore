@@ -9,3 +9,4 @@ build
 *.kcache
 *.so
 data
+build-arch*
