@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA metrics"""
+"""Unit tests for PyMVPA metrics"""
 
 
 from mvpa.datasets.metric import *

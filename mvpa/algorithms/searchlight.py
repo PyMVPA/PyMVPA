@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Implementation of the Searchlight algorithm"""
+"""Implementation of the Searchlight algorithm"""
 
 import sys
 

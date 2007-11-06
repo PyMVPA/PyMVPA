@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: MultiVariate PXXX Analysis"""
+"""MultiVariate Pattern Analysis"""
 
 
 #from mvpa.dataset import *

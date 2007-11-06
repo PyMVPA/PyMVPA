@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: base class for data measures, algorithms that quantify properties of
+"""base class for data measures, algorithms that quantify properties of
            datasets."""
 
 

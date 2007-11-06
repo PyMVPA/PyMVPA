@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA incremental feature search algorithm"""
+"""Unit tests for PyMVPA incremental feature search algorithm"""
 
 import mvpa.ifs as si
 import mvpa.maskeddataset

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Python interface to the SWIG-wrapped libsvm"""
+"""Python interface to the SWIG-wrapped libsvm"""
 
 
 from math import exp, fabs

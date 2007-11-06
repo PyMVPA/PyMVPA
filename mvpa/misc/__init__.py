@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Import helper for PyMVPA misc modules"""
+"""Import helper for PyMVPA misc modules"""
 
 from sys import stdout, stderr
 

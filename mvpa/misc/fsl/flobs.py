@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Wrapper around FSLs halfcosbasis to generate HRF kernels"""
+"""Wrapper around FSLs halfcosbasis to generate HRF kernels"""
 
 import os
 import tempfile

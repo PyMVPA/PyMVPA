@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Example demonstrating a searchlight analysis on an fMRI dataset"""
+"""Example demonstrating a searchlight analysis on an fMRI dataset"""
 
 import sys
 

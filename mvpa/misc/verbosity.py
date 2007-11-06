@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Verbose output and debugging facility
+"""Verbose output and debugging facility
 
 Examples:
 from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")

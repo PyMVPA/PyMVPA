@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Abstract base class for all classifiers."""
+"""Abstract base class for all classifiers."""
 
 
 class Classifier(object):

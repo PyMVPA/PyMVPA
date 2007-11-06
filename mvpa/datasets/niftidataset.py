@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Dataset that gets its samples from a NIfTI file"""
+"""Dataset that gets its samples from a NIfTI file"""
 
 from nifti import NiftiImage
 

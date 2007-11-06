@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: C++-like virtual properties"""
+"""C++-like virtual properties"""
 
 
 class VProperty(object):

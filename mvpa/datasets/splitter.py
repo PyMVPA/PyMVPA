@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Base class of all dataset splitter"""
+"""Base class of all dataset splitter"""
 
 class Splitter(object):
     """ Base class of a data splitter.

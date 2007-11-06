@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA recursive feature elimination"""
+"""Unit tests for PyMVPA recursive feature elimination"""
 
 import unittest
 import numpy as N
