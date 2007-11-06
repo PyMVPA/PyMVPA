@@ -10,3 +10,4 @@ build
 *.so
 data
 build-arch*
+svmc_wrap.cpp
