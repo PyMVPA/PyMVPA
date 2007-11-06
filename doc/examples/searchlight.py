@@ -18,12 +18,14 @@ from optparse import OptionParser
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.knn import kNN
+from mvpa.clf.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.algorithms.searchlight import Searchlight
 
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \
-     optsCommon, optRadius, optKNearestDegree, optCrossfoldDegree
+     optsCommon, optClf, optsSVM, optRadius, optKNearestDegree, \
+     optCrossfoldDegree
 
 usage = """\
 %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
@@ -36,7 +38,8 @@ values (separated by a single space). -- one tuple per line.""" \
 
 parser = OptionParser(usage=usage,
                       option_list=optsCommon + \
-                      [optRadius, optKNearestDegree, optCrossfoldDegree])
+                      [optClf, optRadius, optKNearestDegree,
+                       optCrossfoldDegree] + optsSVM)
 
 
 (options, files) = parser.parse_args()
@@ -70,11 +73,22 @@ cfile.close()
 verbose(2, "Loading volume file %s" % dfile)
 data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
 
+
+if options.clf == 'knn':
+    clf = kNN(k=options.knearestdegree)
+elif options.clf == 'lin_nu_svmc':
+    clf = LinearNuSVMC(options.nu)
+elif options.clf == 'rbf_nu_svmc':
+    clf = RbfNuSVMC(options.nu)
+else:
+    raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
+verbose(3, "Using '%s' classifier" % options.clf)
+
 verbose(1, "Computing")
 
 verbose(3, "Assigning a measure to be CrossValidation")
-# compute N-1 cross-validation with a kNN classifier in each sphere
-cv = ClfCrossValidation(kNN(k=options.knearestdegree),
+# compute N-1 cross-validation with the selected classifier in each sphere
+cv = ClfCrossValidation(clf,
                         NFoldSplitter(cvtype=options.crossfolddegree))
 
 verbose(3, "Generating Searchlight instance")
