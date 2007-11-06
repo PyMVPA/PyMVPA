@@ -11,7 +11,8 @@
 import numpy as N
 
 from mvpa.misc.support import buildConfusionMatrix
-from mvpa.exceptions import UnknownStateError
+from mvpa.misc.exceptions import UnknownStateError
+from mvpa.misc.vproperty import VProperty
 
 class FeatureSelection(object):
     """ Base class for any feature selection
@@ -48,6 +49,136 @@ class FeatureSelection(object):
     mask = VProperty(fget=getMask)
 
 
+#
+# TODO: Elaborate this sceletons whenever it becomes necessary
+#
+
+class StoppingCriterion(object):
+    """Base class for all functors to decide when to stop RFE (or may
+    be general optimization... so it probably will be moved out into
+    some other module
+    """
+
+    def __call__(self, errors):
+        """Instruct when to stop
+
+        Returns tuple (`go`, `isthebest`)
+        """
+        raise NotImplementedError
+
+
+class StopNBackHistoryCriterion(StoppingCriterion):
+    """ Stop computation if for a number of steps error was increasing
+    """
+
+    def __init__(self, steps=10, func=min):
+        """Initialize with number of steps
+        `steps`: int, for how many steps to check after optimal value
+        `fun`: functor, to select the best results. Defaults to min
+        """
+        if steps<0:
+            raise ValueError, \
+                  "Number of steps (got %d) should be non-negative" % steps
+        self.__steps = steps
+        self.__func = func
+
+
+    def __call__(self, errors):
+        isbest = False
+        stop = False
+
+        # just to prevent ValueError
+        if len(errors)==0:
+            return (isbest, stop)
+
+        minerror = self.__func(errors)
+        minindex = errors.index(minerror)
+
+        # if minimal is the last one reported -- it is the best
+        if minindex == len(errors)-1:
+            isbest = True
+
+        # if number of elements after the min >= len -- stop
+        if len(errors) - minindex >= self.__steps:
+            stop = True
+
+        return (stop, isbest)
+
+    steps = property(fget=lambda x:x.__steps)
+
+class FeatureSelector(object):
+    """Base class to implement functors to select the set of properties
+    """
+    pass
+
+
+class XPercentFeatureSelector(FeatureSelector):
+    """Given a sensitivity map, provide Ids given a percentage of features
+
+    Since silly Yarik could not recall alternative to "proportion" to select
+    in units like 0.05 for 5%, now this selector does take values in percents
+    TODO: Should be DiscardSelector on top of it... __repr__, ndiscarded should
+          belong to it.
+    """
+
+    def __init__(self, perc_discard=5.0, removeminimal=True):
+        """XXX???
+        """
+        if perc_discard>100 or perc_discard<0:
+            raise ValueError, \
+                  "Percentage (%f) cannot be outside of [0,100]" \
+                  % perc_discard
+        self.__perc_discard = perc_discard
+        self.__removeminimal = removeminimal
+        self.__ndiscarded = None
+        """Store number of discarded since for a given value we might
+        remove more than 1 if they are all equal -- it would be unfair
+        to leave some features in while another with the same value
+        got discarded
+        """
+
+
+    def __repr__(self):
+        s = "%s: perc=%f minimal=%s" % (
+            self.__name__, self.__perc_discard, self.__removeminimal)
+        if not self.__ndiscarded is None:
+            s += " discarded: %d" % self.ndiscarded
+
+
+    def __call__(self, sensitivity):
+        nfeatures = len(sensitivity)
+        # how many to discard
+        nremove = self.__perc * nfeatures * 1.0 / 100.0
+        sensmap = N.array(sensitivity)  # assure that it is ndarray
+        sensmap2 = sensmap.copy()       # make a copy to sort
+        sensmap2.sort()                 # sort inplace
+        if self.__removeminimal:
+            good_ids = sensmap[sensmap>sensmap2[nremove-1]]
+        else:
+            # remove maximal elements
+            good_ids = sensmap[sensmap<sensmap2[-nremove]]
+        # compute actual number of discarded elements
+        self.__ndiscarded = nfeatures - len(good_ids)
+        return good_ids
+
+
+    def getNDiscarded(self):
+        """Return number of discarded elements
+
+        Raises an UnknownStateError exception if the instance wasn't
+        called yet
+        """
+        if self.__ndiscarded == None:
+            raise UnknownStateError
+        return self.__ndiscarded
+
+    ndiscarded = property(fget=getNDiscarded)
+
+# TODO: Abs value of sensitivity should be able to rule RFE
+# Often it is what abs value of the sensitivity is what matters.
+# So we should either provide a simple decorator around arbitrary
+# FeatureSelector to convert sensitivities to abs values before calling
+# actual selector, or a decorator around SensitivityEstimators
 
 class RFE(FeatureSelection):
     """ Recursive feature elimination.
@@ -55,9 +186,9 @@ class RFE(FeatureSelection):
 
     def __init__(self,
                  sensana,
-                 feature_selector=RemoveXPercent,
-                 stopping_criterion=StopAsSoonAsAtMinForXSteps,
-                 error_oracle=???
+                 feature_selector=XPercentFeatureSelector,
+                 stopping_criterion=StopNBackHistoryCriterion,
+                 error_oracle=None
                  ):
         """ Initialize recurse feature elimination
         `sensana`: `SensitivityAnalyzer`
@@ -78,34 +209,41 @@ class RFE(FeatureSelection):
 
     def __call__(self, dataset, callables=[]):
         """Proceed and select the features recursively eliminating less
-        important ones
+        important ones.
         """
         errors = []
         go = True
         result = None
 
-        # TODO
-        #mapping = N.ndarrayrange(dataset.nfeatures)
-        """Maps resultant Id into original Id"""
-
-        while True:
-
+        while dataset.nfeatures>0:
             # Compute
             sensitivity = self.__sensana(dataset)
+            # Record the error
+            errors.append(error_oracle(dataset))
+            # Check if it is time to stop and if we got
+            # the best result
+            (go, isthebest) = self.__stopping_criterion(errors)
 
+            # store result
+            if isthebest:
+                result = dataset
+
+            # stop if it is time to finish
+            if dataset.nfeatures == 1 or not go:
+                break
+
+            # Select features to preserve
             selected_ids = self.__feature_selector(sensitivity)
 
-            dataset = dataset.selectFeatures(selected_ids)
-
-            errors.append(error_oracle(dataset))
+            # Create a dataset only with selected features
+            newdataset = dataset.selectFeatures(selected_ids)
 
             for callable_ in callables:
                 callable_(locals())
 
-            (go, isTheBest) = self.__stopping_criterion(errors)
-
-            if isTheBest:
-                result = dataset
+            # reassign, so in callables we got both older and new
+            # datasets
+            dataset = newdataset
 
         return result
 
