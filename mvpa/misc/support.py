@@ -9,6 +9,7 @@
 """PyMVPA: Support function -- little helpers in everyday life"""
 
 import numpy as N
+import re
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """ This function transforms a dataset by calculating the mean of a set of
@@ -123,3 +124,12 @@ def getUniqueLengthNCombinations(data, n):
 
     # return the result
     return combos
+
+
+def indentDoc(v):
+    """Given a `value` returns a string where each line is indented
+
+    Needed for a cleaner __repr__ output
+    `v` - arbitrary
+    """
+    return re.sub('\n', '\n  ', `v`)

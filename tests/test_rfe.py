@@ -12,185 +12,53 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.clf.rfe import RFE
-from mvpa.clf.svm import SVM
+from mvpa.clf.rfe import RFE, \
+     StopNBackHistoryCriterion, XPercentFeatureSelector
+#from mvpa.clf.svm import SVM
 
-def dumbFeatureSignal():
-    data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
-            [0,5],[1,5],[0,6],[1,6],[0,7],[1,7],[0,8],[1,8],
-            [0,9],[1,9],[0,10],[1,10],[0,11],[1,11],[0,12],[1,12]]
-    regs = [1 for i in range(8)] \
-         + [2 for i in range(8)] \
-         + [3 for i in range(8)]
-
-    return MaskedDataset(data, regs, None)
-
+from mvpa.misc.exceptions import UnknownStateError
 
 class RFETests(unittest.TestCase):
 
-    def setUp(self):
-        self.dumbpattern = dumbFeatureSignal()
+    def testStopCriterion(self):
+        """Test stopping criterions"""
+        stopcrit = StopNBackHistoryCriterion()
+        # for empty history -- no best but just go
+        self.failUnless(stopcrit([]) == (False, False))
+        # we got the best if we have just 1
+        self.failUnless(stopcrit([1]) == (False, True))
+        # we got the best if we have the last minimal
+        self.failUnless(stopcrit([1, 0.9, 0.8]) == (False, True))
+        # should not stop if we got 10 more after minimal
+        self.failUnless(stopcrit(
+            [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == (False, False))
+        # should stop if we got 10 more after minimal
+        self.failUnless(stopcrit(
+            [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == (True, False))
 
-        #
-        self.svm = SVM()
-
-        # prepare second demo dataset and mask
-        self.mask = N.ones((20))
-        data = N.repeat(N.arange(100),20).reshape((100,20))
-        # add noise; first remains pristine
-        for d in range(data.shape[1]):
-            data[:,d] += N.random.normal(0, d + 10, 100)
-        reg = N.logical_and(N.arange(100) > 24,
-                             N.arange(100) < 75).astype('int')
-        reg = (N.arange(100) > 49).astype('int')
-        orig = N.arange(100) % 5
-        self.pattern = MaskedDataset(data, reg, orig)
-
-    def testFeatureRanking(self):
-        obj = RFE(self.dumbpattern, self.svm)
-
-        self.failUnless( obj.pattern.nfeatures == 2 )
-
-        # kill the dumb feature
-        obj.killNFeatures(1)
-
-        # check that the important is still in
-        self.failUnless( obj.pattern.nfeatures == 1)
-        self.failUnless( ( obj.pattern.samples[:,0] ==\
-                           self.dumbpattern.samples[:,1] ).all() )
+        # test for alternative func
+        stopcrit = StopNBackHistoryCriterion(func=max)
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]) == (False, True))
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == (False, False))
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == (True, False))
 
 
-    def testSelectFeatures(self):
-        obj = RFE( self.pattern, self.svm )
-        self.failUnless( obj.pattern.nfeatures == 20 )
+    def testFeatureSelector(self):
+        """Test feature selector"""
+        # remove 10% weekest
+        selector = XPercentFeatureSelector(10)
+        dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
+        target10 = N.array([3.5, 10, 7, 5, 0, 0, 2, 10, 9])
+        target20 = N.array([3.5, 10, 7, 5, 2, 10, 9])
 
-        obj.selectFeatures(10)
-        self.failUnless( obj.pattern.nfeatures == 10 )
+        self.failUnlessRaises(UnknownStateError, selector._getNDiscarded)
+        self.failUnless((selector(dataset) == target10).all())
+        selector.perc_discard = 20      # discard 20%
+                                        # but since there are 2 0s
+        self.failUnless((selector(dataset) == target20).all())
+        self.failUnless(selector.ndiscarded == 3) # se 3 were discarded
 
-        # ensure unchanges original array
-        self.failUnless(self.pattern.nfeatures == 20)
-
-
-    def testKillNFeatures(self):
-        obj = RFE( self.pattern, self.svm )
-        self.failUnless( obj.pattern.nfeatures == 20 )
-
-        obj.killNFeatures(3)
-        self.failUnless( obj.pattern.nfeatures == 17 )
-
-        # ensure unchanges original array
-        self.failUnless(self.pattern.nfeatures == 20)
-
-
-    def testKillFeatureFraction(self):
-        obj = RFE( self.pattern, self.svm )
-        self.failUnless( obj.pattern.nfeatures == 20 )
-
-        obj.killFeatureFraction(0.75)
-        self.failUnless( obj.pattern.nfeatures == 5 )
-
-        # ensure unchanges original array
-        self.failUnless(self.pattern.nfeatures == 20)
-
-
-    def testDataTesting(self):
-        obj = RFE( self.dumbpattern, self.svm )
-        # kill the dumb feature
-        obj.killNFeatures(1)
-
-        # check performance on the training data
-        # includes an implicite feature selection with the RFE internal mask
-        pred, perf, confmat = obj.testSelection(self.dumbpattern)
-
-        # prediction has to be perfect
-        self.failUnless( perf == 1.0 )
-        self.failUnless( ( pred == self.dumbpattern.regs ).all() )
-        self.failUnless( confmat.shape == (3,3) )
-
-
-        # make slightly different dataset, but with the same underlying
-        # concept
-        tdata = \
-            MaskedDataset( [[1.5],[2.5],[3.5],
-                               [5.5],[6.5],[7.5],
-                               [9.5],[10.5],[11.5]],
-                               [1 for i in range(3)] \
-                               + [2 for i in range(3)] \
-                               + [3 for i in range(3)],
-                               None )
-
-        # check performance on the new dataset
-        # includes a check whether a dataset not matching the original
-        # shape can be used, as long as the number of features match
-        pred, perf, confmat = obj.testSelection(tdata)
-        # prediction has to be perfect
-        self.failUnless( perf == 1.0 )
-        self.failUnless( ( pred == tdata.regs ).all() )
-        self.failUnless( confmat.shape == (3,3) )
-
-
-    def testEliminationMask(self):
-        obj = RFE( self.dumbpattern, self.svm )
-        # kill the dumb feature
-        elim_mask = obj.selectFeatures( 1, 
-                                        eliminate_by='number',
-                                        kill_per_iter = 1)
-
-        self.failUnless( elim_mask.shape == self.dumbpattern.mapper.dsshape )
-        self.failUnless( elim_mask[0] == 0 and elim_mask[1] == 1 )
-
-#        pat = mvpa.MVPAPattern( N.random.normal(0,size=(20,16,16,8)),
-#                                [i%2 for i in range(20)],
-#                                0 )
-#
-#        mask = N.ones((16,16,8),dtype='int16')
-#        mask[0:4,   0:4,   0:2]=False
-#        mask[12:16, 0:4,   0:2]=False
-#        mask[0:4,   12:16, 0:2]=False
-#        mask[12:16, 12:16, 0:2]=False
-#
-#        pat_sel = pat.selectFeatures(mask)
-
-
-    def testEliminationEvenMore(self):
-
-        def absolute_coord2id( coord, dims ):
-            """ Calculates the feature id from a coordinate value within certain
-            dimensions.
-            """
-            # transform shape and coordinate into array for easy handling
-            ac = N.array( coord )
-            ao = N.array( dims )
-
-#            # check for sane coordinates
-#            if (ac >= ao).all() \
-#               or (ac < numpy.repeat( 0, len( ac ) ) ).all():
-#                raise ValueError, 'Invalid coordinate: outside array ' \
-#                                  '( coord: %s, arrayshape: %s )' % \
-#                                  ( str(coord), str(dims) )
-
-            # compute offsets on each axis
-            offsets = [ ac[d] * ao[d+1:].prod() for d in range(len(ao)) ]
-
-            return sum(offsets)
-
-        pat = MaskedDataset( N.random.normal(size=(100,2,3,4)),
-                                [i%2 for i in range(100)],
-                                [i/5 for i in range(100)] )
-
-        # make a copy of the original patterns
-        sec_pat = pat.samples.copy()
-
-        el = RFE( pat, self.svm )
-        el.killNFeatures(5, eliminate_by = 'number', kill_per_iter = 1 )
-
-        features = N.transpose(el.pattern.mapper.getMask().nonzero())
-
-        for i,f in enumerate(features):
-            orig_id = absolute_coord2id(f,pat.mapper.dsshape)
-            orig_f = sec_pat[:,orig_id]
-            self.failUnless( (el.pattern.samples[:,i] == orig_f).all() )
-
+        # XXX more needed
 
 def suite():
     return unittest.makeSuite(RFETests)

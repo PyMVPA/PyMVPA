@@ -67,7 +67,8 @@ class NFoldSplitter(Splitter):
     def __repr__(self):
         """ String summary over the object
         """
-        return """%d-fold splitter [%s, %d, %s, %s]""" % \
+        return \
+          "%d-fold splitter / work:%s runs-per-fold:%d spare:%s permute:%s "%\
                (self.__cvtype, self.__working_samplesize,
                 self.__runsperfold, self.__spare_samplesize,
                 self.__permute)

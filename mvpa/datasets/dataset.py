@@ -25,12 +25,12 @@ class Dataset(object):
     # has to be extended with them after it is defined
     # TODO: discard such way or accept and introduce to derived methods...
     __initparams__ = \
-        """samples -
+        """
+        samples -
         labels  -
         chunks  -
         dtype   - if None -- do not change data type if samples
-                  is an ndarray. Otherwise convert samples to dtype
-        """
+                  is an ndarray. Otherwise convert samples to dtype"""
 
     def __init__(self, samples, labels, chunks, dtype=None ):
         """ Initialize the Dataset.
@@ -106,7 +106,7 @@ class Dataset(object):
     def __repr__(self):
         """ String summary over the object
         """
-        return """Dataset: [%d x %d]""" % \
+        return """Dataset / %d x %d""" % \
                (self.nsamples, self.nfeatures)
 
 

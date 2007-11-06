@@ -11,6 +11,7 @@
 import numpy as N
 
 from mvpa.misc import verbose
+from mvpa.misc.support import indentDoc
 
 try:
     import psyco
@@ -39,10 +40,9 @@ class kNN:
     def __repr__(self):
         """ String summary over the object
         """
-        return """kNN:
-         k (# of nearest neighbors): %d
-         votingfx: TODO
-         data: %s""" % (self.__k, `self.__data`)
+        return """kNN / k=%d
+ votingfx: TODO
+ data: %s""" % (self.__k, indentDoc(self.__data))
 
 
     def train( self, data ):
@@ -140,14 +140,20 @@ class kNN:
             # create dictionary with an item for each condition
             self.__votes_init = dict( zip ( uniquelabels, [0]*Nuniquelabels ) )
 
-            labelslist = self.__labels.tolist()
             # TODO: To get proper speed up for the next line only,
             #       histogram should be computed
             #       via sorting + counting "same" elements while reducing.
             #       Guaranteed complexity is NlogN whenever now it is N^2
-            self.__weights = dict( zip (uniquelabels,
-                                [ 1 - ( float(labelslist.count(i)) / Nlabels )
-                                  for i in uniquelabels ] ) )
+            self.__weights = {}
+
+            for label in uniquelabels:
+                self.__weights[label] = 0.0
+
+            for label in self.__labels:
+                self.__weights[label] += 1.0
+
+            for k, v in self.__weights.iteritems():
+                self.__weights[k] = 1.0 - (v / Nlabels)
 
         votes = self.__votes_init.copy()
 
