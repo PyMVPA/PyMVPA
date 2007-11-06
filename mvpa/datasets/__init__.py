@@ -6,6 +6,6 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Import helper for PyMVPA datasets and utilities"""
+"""Import helper for PyMVPA datasets and utilities"""
 
 

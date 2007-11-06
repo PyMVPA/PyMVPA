@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA dataset handling"""
+"""Unit tests for PyMVPA dataset handling"""
 
 import unittest
 import random

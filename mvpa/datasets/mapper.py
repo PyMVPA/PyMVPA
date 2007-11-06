@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Abstract base class of all data mappers"""
+"""Abstract base class of all data mappers"""
 
 from mvpa.datasets.metric import Metric
 

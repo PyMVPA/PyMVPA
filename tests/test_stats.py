@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA stats helpers"""
+"""Unit tests for PyMVPA stats helpers"""
 
 import unittest
 

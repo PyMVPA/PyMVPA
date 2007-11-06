@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for Feature Selection Validation"""
+"""Unit tests for Feature Selection Validation"""
 
 import mvpa.ifs as ifs
 import mvpa.featsel

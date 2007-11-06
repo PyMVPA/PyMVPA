@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Common functions and options definitions for command line
+"""Common functions and options definitions for command line
 
 Conventions:
 Every option (instance of optparse.Option) has prefix "opt". Lists of options

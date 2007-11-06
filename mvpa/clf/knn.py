@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: k-Nearest-Neighbour classification"""
+"""k-Nearest-Neighbour classification"""
 
 import numpy as N
 

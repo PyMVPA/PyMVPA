@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Wrap the libsvm package into a very simple class interface."""
+"""Wrap the libsvm package into a very simple class interface."""
 
 __docformat__ = 'restructuredtext'
 

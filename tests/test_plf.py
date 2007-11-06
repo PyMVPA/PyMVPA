@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA logistic regression classifier"""
+"""Unit tests for PyMVPA logistic regression classifier"""
 
 import unittest
 import mvpa

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA classifier cross-validation"""
+"""Unit tests for PyMVPA classifier cross-validation"""
 
 import unittest
 import numpy as N

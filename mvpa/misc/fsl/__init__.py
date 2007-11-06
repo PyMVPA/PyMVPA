@@ -6,5 +6,5 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Import helper for FSL"""
+"""Import helper for FSL"""
 

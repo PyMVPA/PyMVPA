@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Classes to provide search for the neighbors"""
+"""Classes to provide search for the neighbors"""
 
 
 import numpy as N

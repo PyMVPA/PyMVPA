@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA serial feature inclusion algorithm"""
+"""Unit tests for PyMVPA serial feature inclusion algorithm"""
 
 import unittest
 

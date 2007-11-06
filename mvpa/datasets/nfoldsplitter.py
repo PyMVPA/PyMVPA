@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Generic N-M fold combination splitter"""
+"""Generic N-M fold combination splitter"""
 
 import numpy as N
 

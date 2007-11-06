@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Cross-validate a classifier on a dataset"""
+"""Cross-validate a classifier on a dataset"""
 
 import numpy as N
 

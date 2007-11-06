@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Support function -- little helpers in everyday life"""
+"""Support function -- little helpers in everyday life"""
 
 import numpy as N
 import re

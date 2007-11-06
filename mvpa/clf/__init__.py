@@ -6,6 +6,6 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Import helper for PyMVPA classifiers"""
+"""Import helper for PyMVPA classifiers"""
 
 

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA pattern handling"""
+"""Unit tests for PyMVPA pattern handling"""
 
 import mvpa.datasets.maskeddataset
 import mvpa.datasets.nfoldsplitter as nfoldsplitter
