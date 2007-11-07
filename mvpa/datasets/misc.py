@@ -23,6 +23,9 @@ def zscore(dataset, mean = None, std = None, perchunk=True):
     If `perchunk` is True samples within the same chunk are z-scored independent
     of samples from other chunks, e.i. mean and standard deviation are
     calculated individually.
+
+    TODO(from yoh): add parameter baselabels to z-score relevant to the
+          mean/std in the samples with label in baselables
     """
     # cast to floating point datatype if necessary
     if str(dataset.samples.dtype).startswith('uint') \
