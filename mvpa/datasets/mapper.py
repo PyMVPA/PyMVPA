@@ -75,6 +75,12 @@ class Mapper(object):
         """ Returns the size of the entity in output space """
         raise NotImplementedError
 
+
+    def discardOut(self, ids):
+        """ Remove some elements in 'out'/feature space and adjust """
+        raise NotImplementedError
+
+
 # comment out for now... introduce when needed
 #    def getInEmpty(self):
 #        """ Returns empty instance of input object """
