@@ -10,36 +10,45 @@
 
 __docformat__ = 'restructuredtext'
 
+import operator
+import numpy as N
+from sets import Set
 
-def zscore(dataset, mean = None, std = None, perchunk=True):
+def zscore(dataset, mean = None, std = None,
+           perchunk=True, baselabels=None, targetdtype='float64'):
     """Z-Score the samples of a `Dataset` (in-place).
 
     `mean` and `std` can be used to pass custom values to the z-scoring.
     Both may be scalars or arrays.
 
     All computations are done in place. Data upcasting is done
-    automatically if necessary.
+    automatically if necessary into `targetdtype`
+
+    If `baselabels` provided, and `mean` or `std` aren't provided, it would
+    compute the corresponding measure based only on labels in `baselabels`
 
     If `perchunk` is True samples within the same chunk are z-scored independent
     of samples from other chunks, e.i. mean and standard deviation are
     calculated individually.
-
-    TODO(from yoh): add parameter baselabels to z-score relevant to the
-          mean/std in the samples with label in baselables
     """
     # cast to floating point datatype if necessary
     if str(dataset.samples.dtype).startswith('uint') \
        or str(dataset.samples.dtype).startswith('int'):
-        dataset.setSamplesDType('float64')
+        dataset.setSamplesDType(targetdtype)
 
-    def doit(samples, mean, std):
+    def doit(samples, mean, std, statsamples=None):
+
+        if statsamples is None:
+            # if nothing provided  -- mean/std on all samples
+            statsamples = samples
+
         # calculate mean if necessary
         if not mean:
-            mean = samples.mean(axis=0)
+            mean = statsamples.mean(axis=0)
 
         # calculate std-deviation if necessary
         if not std:
-            std = samples.std(axis=0)
+            std = statsamples.std(axis=0)
 
         # do the z-scoring
         samples -= mean
@@ -47,9 +56,27 @@ def zscore(dataset, mean = None, std = None, perchunk=True):
 
         return samples
 
+    if baselabels is None:
+        statids = None
+    else:
+        statids = Set(dataset.getSampleIdsByLabels(baselabels))
+
+    # for the sake of speed yoh didn't simply create a list
+    # [True]*dataset.nsamples to provide easy selection of everything
     if perchunk:
         for c in dataset.uniquechunks:
-            slicer = dataset.chunks == c
-            dataset.samples[slicer] = doit(dataset.samples[slicer], mean, std)
+            slicer = N.where(dataset.chunks == c)[0]
+            if not statids is None:
+                statslicer = list(statids.intersection(Set(slicer)))
+                dataset.samples[slicer] = doit(dataset.samples[slicer],
+                                               mean, std,
+                                               dataset.samples[statslicer])
+            else:
+                slicedsamples = dataset.samples[slicer]
+                dataset.samples[slicer] = doit(slicedsamples,
+                                               mean, std,
+                                               slicedsamples)
+    elif statids is None:
+        doit(dataset.samples, mean, std, dataset.samples)
     else:
-        doit(dataset.samples, mean, std)
+        doit(dataset.samples, mean, std, dataset.samples[list(statids)])
