@@ -118,7 +118,10 @@ class SVMBase(Classifier):
                         shrinking=shrinking,
                         weight_label=weight_label,
                         weight=weight)
+        """Store SVM parameters in libSVM compatible format."""
+
         self.model = None
+        """Holds the trained SVM."""
 
 
     def __repr__(self):
@@ -151,6 +154,10 @@ class SVMBase(Classifier):
         else:
             src = data.astype('double')
         return [ self.model.predict( p ) for p in src ]
+
+
+    model = property(fget=lambda self: self.__model)
+    """Access to the SVM model."""
 
 
 
