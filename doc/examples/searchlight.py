@@ -20,12 +20,13 @@ from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.knn import kNN
 from mvpa.clf.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.datasets.misc import zscore
 from mvpa.algorithms.searchlight import Searchlight
 
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \
      optsCommon, optClf, optsSVM, optRadius, optKNearestDegree, \
-     optCrossfoldDegree
+     optCrossfoldDegree, optZScore
 
 def main():
     """ Wrapped into a function call for easy profiling later on
@@ -43,7 +44,7 @@ def main():
     parser = OptionParser(usage=usage,
                           option_list=optsCommon + \
                           [optClf, optRadius, optKNearestDegree,
-                           optCrossfoldDegree] + optsSVM)
+                           optCrossfoldDegree, optZScore] + optsSVM)
 
     (options, files) = parser.parse_args()
 
@@ -76,6 +77,9 @@ def main():
     verbose(2, "Loading volume file %s" % dfile)
     data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
 
+    if options.zscore:
+        verbose(1, "Zscoring data samples")
+        zscore(data, perchunk=True)
 
     if options.clf == 'knn':
         clf = kNN(k=options.knearestdegree)

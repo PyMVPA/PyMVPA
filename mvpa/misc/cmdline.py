@@ -100,3 +100,8 @@ optCrossfoldDegree = \
     Option("-c", "--crossfold",
            action="store", type="int", dest="crossfolddegree", default=1,
            help="Degree of N-fold crossfold. Default: 1")
+
+optZScore = \
+    Option("--zscore",
+           action="store_true", dest="zscore", default=0,
+           help="Enable zscoring of dataset samples. Default: Off")
