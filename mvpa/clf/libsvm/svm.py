@@ -399,12 +399,3 @@ class SVMModel:
                     svmc.svm_model_sv_coef_get( self.model ),
                     self.nr_class - 1,
                     self.getTotalNSV() )
-
-
-    def getFeatureBenchmark(self):
-        """ Returns a vector with a feature importance ranking.
-
-        The rank is derived from the SV coefficients of the trained model.
-        """
-        return N.abs( ( N.matrix( self.getSVCoef() )
-                            * N.matrix( self.getSV() ) ).mean(axis=0).A1 )
