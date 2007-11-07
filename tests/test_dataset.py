@@ -1,4 +1,3 @@
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -102,6 +101,19 @@ class DatasetTests(unittest.TestCase):
 
         self.failUnless( sel.samples.shape == (2,100) )
 
+        # # check selection by labels
+        # sel = data.selectSamplesByLabels(2)
+        # self.failUnless( sel.nsamples == data.nsamples )
+		#
+        # # not present label
+        # sel = data.selectSamplesByLabels(3)
+        # self.failUnless( sel.nsamples == 0 )
+
+        data = Dataset(origdata, [8, 9, 4, 3, 3, 3, 4, 2, 8, 9], 2)
+        self.failUnless( (data.getSampleIdsByLabels([2, 3]) == \
+                          [ 3.,  4.,  5.,  7.]).all() )
+
+
     def testCombinedPatternAndFeatureMasking(self):
         data = Dataset(N.arange( 20 ).reshape( (4,5) ), 1, 1)
 
@@ -175,10 +187,10 @@ class DatasetTests(unittest.TestCase):
 
     def testZScoring(self):
         # dataset: mean=2, std=1
-        samples = N.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) )
-        data = Dataset(samples.reshape((16,1)),
-                       range(16),
-                       [0 for i in xrange(16)])
+        samples = N.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) ).\
+            reshape((16, 1))
+        data = Dataset(samples,
+                       range(16), [0]*16)
         self.failUnlessEqual( data.samples.mean(), 2.0 )
         self.failUnlessEqual( data.samples.std(), 1.0 )
         zscore(data, perchunk=True)
@@ -188,12 +200,17 @@ class DatasetTests(unittest.TestCase):
                         dtype='float64').reshape(16,1)
         self.failUnless( (data.samples ==  check).all() )
 
-        data = Dataset(samples.reshape((16,1)),
-                       range(16),
-                       [0 for i in xrange(16)])
+        data = Dataset(samples,
+                       range(16), [0]*16)
         zscore(data, perchunk=False)
         self.failUnless( (data.samples ==  check).all() )
 
+        # check z-scoring taking set of labels as a baseline
+        data = Dataset(samples,
+                       [0, 2, 2, 2, 1] + [2]*11,
+                       [0]*16)
+        zscore(data, baselabels=[0, 1])
+        self.failUnless((samples == data.samples+1.0).all())
 
 
 def suite():

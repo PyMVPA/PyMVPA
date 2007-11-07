@@ -123,8 +123,9 @@ class Dataset(object):
     def __repr__(self):
         """ String summary over the object
         """
-        return """Dataset / %d x %d""" % \
-               (self.nsamples, self.nfeatures)
+        return """Dataset / %s %d x %d, %d uniq labels, %d uniq chunks""" % \
+               (self.samples.dtype, self.nsamples, self.nfeatures,
+                len(self.uniquelabels), len(self.uniquechunks))
 
 
     def __iadd__( self, other ):
@@ -193,6 +194,25 @@ class Dataset(object):
         return Dataset( self.samples[mask, ],
                         self.labels[mask, ],
                         self.chunks[mask, ] )
+
+
+    def getSampleIdsByLabels(self, labels):
+        """ Return indecies of samples given a list of labels
+        """
+
+        if not operator.isSequenceType(labels):
+            labels = [ labels ]
+
+        # TODO: compare to plain for loop through the labels
+        #       on a real data example
+        sel = N.array([], dtype=N.int16)
+        for label in labels:
+            sel = N.concatenate((sel, N.where(self.__labels==label)[0]))
+
+        # place samples in the right order
+        sel.sort()
+
+        return sel
 
 
     def permutedRegressors( self, status, perchunk = True ):
