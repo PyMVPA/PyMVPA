@@ -53,7 +53,8 @@ class kNN:
         self.__data = data
         if __debug__:
             if not kNN.__warned and \
-                   data.samples.dtype in [N.int8, N.int16, N.int32, N.int64]:
+                str(data.samples.dtype).startswith('uint') \
+                or str(data.samples.dtype).startswith('int'):
                 kNN.__warned = True
                 verbose(1, "kNN: input data is in integers. " + \
                         "Overflow on arithmetic operations might result in"+\
