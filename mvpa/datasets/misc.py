@@ -40,7 +40,7 @@ def zscore(dataset, mean = None, std = None, perchunk=True):
 
         # do the z-scoring
         samples -= mean
-        samples /= std
+        samples[:,std!=0] /= std[std!=0]
 
         return samples
 
