@@ -43,10 +43,10 @@ class Dataset(object):
     # TODO: discard such way or accept and introduce to derived methods...
     __initparams__ = \
         """
-        samples -
-        labels  -
-        chunks  -
-        dtype   - if None -- do not change data type if samples
+        `samples` -
+        `labels`  -
+        `chunks`  -
+        `dtype`   - if None -- do not change data type if samples
                   is an ndarray. Otherwise convert samples to dtype"""
 
     def __init__(self, samples, labels, chunks, dtype=None ):
