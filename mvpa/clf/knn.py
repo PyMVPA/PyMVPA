@@ -13,12 +13,6 @@ import numpy as N
 from mvpa.misc import verbose
 from mvpa.misc.support import indentDoc
 
-try:
-    import psyco
-    psyco.profile()
-except:
-    verbose(5, "Psyco online compilation is not enabled in knn")
-
 
 class kNN:
     """ k-nearest-neighbour classification.
