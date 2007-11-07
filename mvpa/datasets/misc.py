@@ -15,7 +15,7 @@ import numpy as N
 from sets import Set
 
 def zscore(dataset, mean = None, std = None,
-           perchunk=True, baselabels=None, targetdtype='float64'):
+           perchunk=True, baselinelabels=None, targetdtype='float64'):
     """Z-Score the samples of a `Dataset` (in-place).
 
     `mean` and `std` can be used to pass custom values to the z-scoring.
