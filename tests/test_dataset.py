@@ -101,13 +101,13 @@ class DatasetTests(unittest.TestCase):
 
         self.failUnless( sel.samples.shape == (2,100) )
 
-        # # check selection by labels
-        # sel = data.selectSamplesByLabels(2)
-        # self.failUnless( sel.nsamples == data.nsamples )
-		#
-        # # not present label
-        # sel = data.selectSamplesByLabels(3)
-        # self.failUnless( sel.nsamples == 0 )
+        # check selection by labels
+        sel = data.getSampleIdsByLabels(2)
+        self.failUnless( len(sel) == data.nsamples )
+
+        # not present label
+        sel = data.getSampleIdsByLabels(3)
+        self.failUnless( len(sel) == 0 )
 
         data = Dataset(origdata, [8, 9, 4, 3, 3, 3, 4, 2, 8, 9], 2)
         self.failUnless( (data.getSampleIdsByLabels([2, 3]) == \
