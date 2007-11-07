@@ -13,6 +13,7 @@ import unittest
 import random
 import numpy as N
 from mvpa.datasets.dataset import Dataset
+from mvpa.datasets.misc import zscore
 
 class DatasetTests(unittest.TestCase):
 
@@ -170,6 +171,29 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data.labels == origlabels).all() )
         # but only the new one
         self.failIf( (data2.labels == origlabels).all() )
+
+
+    def testZScoring(self):
+        # dataset: mean=2, std=1
+        samples = N.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) )
+        data = Dataset(samples.reshape((16,1)),
+                       range(16),
+                       [0 for i in xrange(16)])
+        self.failUnlessEqual( data.samples.mean(), 2.0 )
+        self.failUnlessEqual( data.samples.std(), 1.0 )
+        zscore(data, perchunk=True)
+
+        # check z-scoring
+        check = N.array([-2,-1,1,2,0,0,1,-1,-1,1,1,-1,0,0,0,0],
+                        dtype='float64').reshape(16,1)
+        self.failUnless( (data.samples ==  check).all() )
+
+        data = Dataset(samples.reshape((16,1)),
+                       range(16),
+                       [0 for i in xrange(16)])
+        zscore(data, perchunk=False)
+        self.failUnless( (data.samples ==  check).all() )
+
 
 
 def suite():

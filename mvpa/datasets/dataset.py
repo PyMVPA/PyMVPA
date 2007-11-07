@@ -13,6 +13,23 @@ import operator
 import random
 
 # TODO? yoh: There is too much in common between chunks and labels....
+#   michael: they might be two instances of some label that is attached to
+#            a data sample. In some cases 'chunks' is not necessary. There also
+#            might be cases where more than labels+chunks is necessary. Maybe
+#            we should move towards something like 'sample_properties', where
+#            you can have any number of them in each dataset. And maybe we
+#            should put them in a dict so we can access them by name and just
+#            make a policy that labels should be 'labels' and chunks should be
+#            'chunks'. But addtionally there might be more of them and 3rd party
+#            algorithms might use them. To summarize:
+#
+#            sample_properties = \
+#               {'name': <1d container with len() == samples.shape[0], ... }
+#
+#            This would also allow for non-numerical properties. But we might
+#            want to enforce ndarray for 'labels', not sure though.
+#            Thinking again, selectSamples() really relies on the slicing
+#            capabilities of ndarray....
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
@@ -324,6 +341,13 @@ class Dataset(object):
         """
         return [ len(self.samples[self.chunks == c]) \
                     for c in self.uniquechunks ]
+
+
+    def setSamplesDType(self, dtype):
+        """Set the data type of the samples array.
+        """
+        if self.__samples.dtype != dtype:
+            self.__samples = self.__samples.astype(dtype)
 
 
     # read-only class properties
