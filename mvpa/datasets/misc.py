@@ -24,8 +24,8 @@ def zscore(dataset, mean = None, std = None,
     All computations are done in place. Data upcasting is done
     automatically if necessary into `targetdtype`
 
-    If `baselabels` provided, and `mean` or `std` aren't provided, it would
-    compute the corresponding measure based only on labels in `baselabels`
+    If `baselinelabels` provided, and `mean` or `std` aren't provided, it would
+    compute the corresponding measure based only on labels in `baselinelabels`
 
     If `perchunk` is True samples within the same chunk are z-scored independent
     of samples from other chunks, e.i. mean and standard deviation are
@@ -56,10 +56,10 @@ def zscore(dataset, mean = None, std = None,
 
         return samples
 
-    if baselabels is None:
+    if baselinelabels is None:
         statids = None
     else:
-        statids = Set(dataset.getSampleIdsByLabels(baselabels))
+        statids = Set(dataset.getSampleIdsByLabels(baselinelabels))
 
     # for the sake of speed yoh didn't simply create a list
     # [True]*dataset.nsamples to provide easy selection of everything

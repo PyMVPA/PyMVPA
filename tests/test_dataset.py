@@ -209,7 +209,7 @@ class DatasetTests(unittest.TestCase):
         data = Dataset(samples,
                        [0, 2, 2, 2, 1] + [2]*11,
                        [0]*16)
-        zscore(data, baselabels=[0, 1])
+        zscore(data, baselinelabels=[0, 1])
         self.failUnless((samples == data.samples+1.0).all())
 
 
