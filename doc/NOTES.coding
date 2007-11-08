@@ -13,6 +13,7 @@
  RF: refactoring
  NF: new feature
  OPT: optimization
+ BK: breaks something and/or tests fail
 
 * header: each file should contain a header from doc/misc/header.py
 
