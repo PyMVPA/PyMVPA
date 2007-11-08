@@ -120,7 +120,7 @@ class SVMBase(Classifier):
                         weight=weight)
         """Store SVM parameters in libSVM compatible format."""
 
-        self.model = None
+        self.__model = None
         """Holds the trained SVM."""
 
 
@@ -142,7 +142,7 @@ class SVMBase(Classifier):
 
         svmprob = svm.SVMProblem( data.labels.tolist(), src )
 
-        self.model = svm.SVMModel( svmprob, self.param)
+        self.__model = svm.SVMModel( svmprob, self.param)
 
 
     def predict(self, data):
@@ -186,7 +186,7 @@ class LinearSVM(SVMBase):
                          eps=eps, p=p, probability=probability,
                          shrinking=shrinking, weight_label=weight_label,
                          weight=weight)
-        self.model = None
+        self.__model = None
 
 
 
