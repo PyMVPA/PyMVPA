@@ -76,7 +76,7 @@ class Mapper(object):
         raise NotImplementedError
 
 
-    def selectOut(self, ids):
+    def selectOut(self, outIds):
         """ Remove some elements and leave only ids in 'out'/feature space"""
         raise NotImplementedError
 
