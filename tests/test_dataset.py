@@ -1,4 +1,3 @@
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -7,17 +6,18 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA dataset handling"""
+"""Unit tests for PyMVPA dataset handling"""
 
 import unittest
 import random
 import numpy as N
 from mvpa.datasets.dataset import Dataset
+from mvpa.datasets.misc import zscore
 
 class DatasetTests(unittest.TestCase):
 
     def testAddPatterns(self):
-        data = Dataset(range(5), 1, 1)
+        data = Dataset(range(5), labels=1, chunks=1)
         # simple sequence has to be a single pattern
         self.failUnlessEqual( data.nsamples, 1)
         # check correct pattern layout (1x5)
@@ -30,17 +30,19 @@ class DatasetTests(unittest.TestCase):
 
         # now try adding pattern with wrong shape
         self.failUnlessRaises( ValueError,
-                               data.__iadd__, Dataset(N.ones((2,3)), 1, 1))
+                               data.__iadd__, Dataset(N.ones((2,3)),
+                                                      labels=1,
+                                                      chunks=1))
 
         # now add two real patterns
-        data += Dataset(N.random.standard_normal((2,5)), 2, 2 )
+        data += Dataset(N.random.standard_normal((2,5)), labels=2, chunks=2 )
         self.failUnlessEqual( data.nfeatures, 5 )
         self.failUnless( (data.labels == N.array([1,2,2]) ).all() )
         self.failUnless( (data.chunks == N.array([1,2,2]) ).all() )
 
 
         # test automatic origins
-        data += Dataset( N.random.standard_normal((2,5)), 3, None )
+        data += Dataset( N.random.standard_normal((2,5)), labels=3)
         self.failUnless( (data.chunks == N.array([1,2,2,0,1]) ).all() )
 
         # test unique class labels
@@ -50,20 +52,20 @@ class DatasetTests(unittest.TestCase):
         self.failUnlessRaises( ValueError,
                                Dataset,
                                N.random.standard_normal((4,5)),
-                               [ 1, 2, 3 ],
-                               2 )
+                               labels=[ 1, 2, 3 ],
+                               chunks=2 )
 
         # test wrong origin length
         self.failUnlessRaises( ValueError,
                                Dataset,
                                N.random.standard_normal((4,5)),
-                               [ 1, 2, 3, 4 ],
-                               [ 2, 2, 2 ] )
+                               labels=[ 1, 2, 3, 4 ],
+                               chunks=[ 2, 2, 2 ] )
 
 
     def testFeatureSelection(self):
         origdata = N.random.standard_normal((10,100))
-        data = Dataset( origdata, 2, 2 )
+        data = Dataset( origdata, labels=2, chunks=2 )
 
         unmasked = data.samples.copy()
 
@@ -83,7 +85,7 @@ class DatasetTests(unittest.TestCase):
 
     def testPatternSelection(self):
         origdata = N.random.standard_normal((10,100))
-        data = Dataset( origdata, 2, 2 )
+        data = Dataset( origdata, labels=2, chunks=2 )
 
         self.failUnless( data.nsamples == 10 )
 
@@ -101,8 +103,22 @@ class DatasetTests(unittest.TestCase):
 
         self.failUnless( sel.samples.shape == (2,100) )
 
+        # check selection by labels
+        sel = data.getSampleIdsByLabels(2)
+        self.failUnless( len(sel) == data.nsamples )
+
+        # not present label
+        sel = data.getSampleIdsByLabels(3)
+        self.failUnless( len(sel) == 0 )
+
+        data = Dataset(origdata, labels=[8, 9, 4, 3, 3, 3, 4, 2, 8, 9],
+                       chunks=2)
+        self.failUnless( (data.getSampleIdsByLabels([2, 3]) == \
+                          [ 3.,  4.,  5.,  7.]).all() )
+
+
     def testCombinedPatternAndFeatureMasking(self):
-        data = Dataset(N.arange( 20 ).reshape( (4,5) ), 1, 1)
+        data = Dataset(N.arange( 20 ).reshape( (4,5) ), labels=1, chunks=1)
 
         self.failUnless( data.nsamples == 4 )
         self.failUnless( data.nfeatures == 5 )
@@ -115,8 +131,8 @@ class DatasetTests(unittest.TestCase):
 
 
     def testPatternMerge(self):
-        data1 = Dataset( N.ones((5,5)), 1, 1 )
-        data2 = Dataset( N.ones((3,5)), 2, 1 )
+        data1 = Dataset( N.ones((5,5)), labels=1, chunks=1 )
+        data2 = Dataset( N.ones((3,5)), labels=2, chunks=1 )
 
         merged = data1 + data2
 
@@ -132,11 +148,11 @@ class DatasetTests(unittest.TestCase):
 
 
     def testRegressorRandomizationAndSampling(self):
-        data = Dataset( N.ones((5,1)), range(5), 1 )
-        data += Dataset( N.ones((5,1))+1, range(5), 2 )
-        data += Dataset( N.ones((5,1))+2, range(5), 3 )
-        data += Dataset( N.ones((5,1))+3, range(5), 4 )
-        data += Dataset( N.ones((5,1))+4, range(5), 5 )
+        data = Dataset( N.ones((5,1)), labels=range(5), chunks=1 )
+        data += Dataset( N.ones((5,1))+1, labels=range(5), chunks=2 )
+        data += Dataset( N.ones((5,1))+2, labels=range(5), chunks=3 )
+        data += Dataset( N.ones((5,1))+3, labels=range(5), chunks=4 )
+        data += Dataset( N.ones((5,1))+4, labels=range(5), chunks=5 )
 
         self.failUnless( data.samplesperlabel == [ 5,5,5,5,5 ] )
 
@@ -158,7 +174,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data.labels == origlabels).all() )
 
         # now try another object with the same data
-        data2 = Dataset( data.samples, data.labels, data.chunks )
+        data2 = Dataset( data.samples, labels=data.labels, chunks=data.chunks )
 
         # labels are the same as the originals
         self.failUnless( (data2.labels == origlabels).all() )
@@ -170,6 +186,34 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data.labels == origlabels).all() )
         # but only the new one
         self.failIf( (data2.labels == origlabels).all() )
+
+
+    def testZScoring(self):
+        # dataset: mean=2, std=1
+        samples = N.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) ).\
+            reshape((16, 1))
+        data = Dataset(samples,
+                       labels=range(16), chunks=[0]*16)
+        self.failUnlessEqual( data.samples.mean(), 2.0 )
+        self.failUnlessEqual( data.samples.std(), 1.0 )
+        zscore(data, perchunk=True)
+
+        # check z-scoring
+        check = N.array([-2,-1,1,2,0,0,1,-1,-1,1,1,-1,0,0,0,0],
+                        dtype='float64').reshape(16,1)
+        self.failUnless( (data.samples ==  check).all() )
+
+        data = Dataset(samples,
+                       labels=range(16), chunks=[0]*16)
+        zscore(data, perchunk=False)
+        self.failUnless( (data.samples ==  check).all() )
+
+        # check z-scoring taking set of labels as a baseline
+        data = Dataset(samples,
+                       labels=[0, 2, 2, 2, 1] + [2]*11,
+                       chunks=[0]*16)
+        zscore(data, baselinelabels=[0, 1])
+        self.failUnless((samples == data.samples+1.0).all())
 
 
 def suite():

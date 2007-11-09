@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Main unit test interface for PyMVPA"""
+"""Main unit test interface for PyMVPA"""
 
 import unittest
 

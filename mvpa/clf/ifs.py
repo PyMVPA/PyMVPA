@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Incremental feature search algorithm"""
+"""Incremental feature search algorithm"""
 
 import numpy as N
 import crossval

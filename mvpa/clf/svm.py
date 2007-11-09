@@ -6,7 +6,9 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Wrap the libsvm package into a very simple class interface."""
+"""Wrap the libsvm package into a very simple class interface."""
+
+__docformat__ = 'restructuredtext'
 
 from mvpa.misc.param import Parameter
 from mvpa.clf.classifier import Classifier
@@ -54,19 +56,19 @@ class SVMBase(Classifier):
 
         svm_type can be one of C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR.
 
-        C_SVC:              C-SVM classification
-        NU_SVC:             nu-SVM classification
-        ONE_CLASS:          one-class-SVM
-        EPSILON_SVR:        epsilon-SVM regression
-        NU_SVR:             nu-SVM regression
+        - `C_SVC`: C-SVM classification
+        - `NU_SVC`: nu-SVM classification
+        - `ONE_CLASS`: one-class-SVM
+        - `EPSILON_SVR`: epsilon-SVM regression
+        - `NU_SVR`: nu-SVM regression
 
         kernel_type can be one of LINEAR, POLY, RBF, SIGMOID.
 
-        LINEAR:     u'*v
-        POLY:       (gamma*u'*v + coef0)^degree
-        RBF:        exp(-gamma*|u-v|^2)
-        SIGMOID:    tanh(gamma*u'*v + coef0)
-        PRECOMPUTED: kernel values in training_set_file
+        - `LINEAR`: u'*v
+        - `POLY`: (gamma*u'*v + coef0)^degree
+        - `RBF`: exp(-gamma*|u-v|^2)
+        - `SIGMOID`: tanh(gamma*u'*v + coef0)
+        - `PRECOMPUTED`: kernel values in training_set_file
 
         cache_size is the size of the kernel cache, specified in megabytes.
         C is the cost of constraints violation. (we usually use 1 to 1000)
@@ -116,7 +118,10 @@ class SVMBase(Classifier):
                         shrinking=shrinking,
                         weight_label=weight_label,
                         weight=weight)
-        self.model = None
+        """Store SVM parameters in libSVM compatible format."""
+
+        self.__model = None
+        """Holds the trained SVM."""
 
 
     def __repr__(self):
@@ -137,7 +142,7 @@ class SVMBase(Classifier):
 
         svmprob = svm.SVMProblem( data.labels.tolist(), src )
 
-        self.model = svm.SVMModel( svmprob, self.param)
+        self.__model = svm.SVMModel( svmprob, self.param)
 
 
     def predict(self, data):
@@ -149,6 +154,10 @@ class SVMBase(Classifier):
         else:
             src = data.astype('double')
         return [ self.model.predict( p ) for p in src ]
+
+
+    model = property(fget=lambda self: self.__model)
+    """Access to the SVM model."""
 
 
 
@@ -177,12 +186,12 @@ class LinearSVM(SVMBase):
                          eps=eps, p=p, probability=probability,
                          shrinking=shrinking, weight_label=weight_label,
                          weight=weight)
-        self.model = None
+        self.__model = None
 
 
 
 class LinearNuSVMC(LinearSVM):
-    """ Classifier for linear Nu SVM classification.
+    """ Classifier for linear Nu-SVM classification.
     """
     params = LinearSVM.params.copy()
     params['nu'] = Parameter(0.5,
@@ -211,3 +220,101 @@ class LinearNuSVMC(LinearSVM):
                            nu=nu, eps=eps, probability=probability,
                            shrinking=shrinking, weight_label=weight_label,
                            weight=weight, cache_size=cache_size)
+
+
+
+class LinearCSVMC(LinearSVM):
+    """ Classifier for linear C-SVM classification.
+    """
+    params = LinearSVM.params.copy()
+    params['C'] = Parameter(1.0,
+                            min=0.0,
+                            descr='cumulative constraint violation')
+
+
+    def __init__(self,
+                 C=1.0,
+                 eps=0.00001,
+                 probability=0,
+                 shrinking=1,
+                 weight_label=[],
+                 weight=[],
+                 cache_size=100):
+        """
+        """
+        # init base class
+        LinearSVM.__init__(self, svm_type=svm.svmc.C_SVC,
+                           C=C, eps=eps, probability=probability,
+                           shrinking=shrinking, weight_label=weight_label,
+                           weight=weight, cache_size=cache_size)
+
+
+
+class RbfNuSVMC(SVMBase):
+    """Nu-SVM classifier using a radial basis function kernel.
+    """
+    params = SVMBase.params.copy()
+    params['nu'] = Parameter(0.5,
+                             min=0.0,
+                             max=1.0,
+                             descr='fraction of datapoints within the margin')
+    # overwrite eps param with new default value (information taken from libSVM
+    # docs
+    params['eps'] = Parameter(0.001,
+                              min=0,
+                              descr='tolerance of termination criterium')
+    params['gamma'] = \
+        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
+                                      'defaults to 1/(#classes)')
+
+
+    def __init__(self,
+                 nu=0.5,
+                 gamma=0.0,
+                 eps=0.001,
+                 probability=0,
+                 shrinking=1,
+                 weight_label=[],
+                 weight=[],
+                 cache_size=100):
+        """
+        """
+        # init base class
+        SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
+                         svm_type=svm.svmc.NU_SVC, nu=nu, gamma=gamma,
+                         cache_size=cache_size, eps=eps,
+                         probability=probability, shrinking=shrinking,
+                         weight_label=weight_label, weight=weight)
+
+
+
+class RbfCSVMC(SVMBase):
+    """C-SVM classifier using a radial basis function kernel.
+    """
+    params = SVMBase.params.copy()
+    params['C'] = Parameter(1.0,
+                            min=0.0,
+                            descr='cumulative constraint violation')
+    params['gamma'] = \
+        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
+                                      'defaults to 1/(#classes)')
+
+
+    def __init__(self,
+                 C=1.0,
+                 gamma=0.0,
+                 eps=0.00001,
+                 probability=0,
+                 shrinking=1,
+                 weight_label=[],
+                 weight=[],
+                 cache_size=100):
+        """
+        """
+        # init base class
+        SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
+                         svm_type=svm.svmc.C_SVC, C=C, gamma=gamma,
+                         cache_size=cache_size, eps=eps,
+                         probability=probability, shrinking=shrinking,
+                         weight_label=weight_label, weight=weight)
+

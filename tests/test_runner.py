@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Helper module to enable profiling of the testcase
+"""Helper module to enable profiling of the testcase
 
  If environment variable PROFILELEVEL is set it uses hotshot profiler
  for unittest.main() call. Value of PROFILELEVEL defines number of top

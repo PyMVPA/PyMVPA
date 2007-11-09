@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Example demonstrating a searchlight analysis on an fMRI dataset"""
+"""Example demonstrating a searchlight analysis on an fMRI dataset"""
 
 import sys
 
@@ -18,80 +18,104 @@ from optparse import OptionParser
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.knn import kNN
+from mvpa.clf.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.datasets.misc import zscore
 from mvpa.algorithms.searchlight import Searchlight
 
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \
-     optsCommon, optRadius, optKNearestDegree, optCrossfoldDegree
+     optsCommon, optClf, optsSVM, optRadius, optKNearestDegree, \
+     optCrossfoldDegree, optZScore
 
-usage = """\
-%s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
+def main():
+    """ Wrapped into a function call for easy profiling later on
+    """
 
-where labels+blocks is a text file that lists the class label and the
-associated block of each data sample/volume as a tuple of two integer
-values (separated by a single space). -- one tuple per line.""" \
-% sys.argv[0]
+    usage = """\
+    %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
+
+    where labels+blocks is a text file that lists the class label and the
+    associated block of each data sample/volume as a tuple of two integer
+    values (separated by a single space). -- one tuple per line.""" \
+    % sys.argv[0]
 
 
-parser = OptionParser(usage=usage,
-                      option_list=optsCommon + \
-                      [optRadius, optKNearestDegree, optCrossfoldDegree])
+    parser = OptionParser(usage=usage,
+                          option_list=optsCommon + \
+                          [optClf, optRadius, optKNearestDegree,
+                           optCrossfoldDegree, optZScore] + optsSVM)
 
+    (options, files) = parser.parse_args()
 
-(options, files) = parser.parse_args()
+    if not len(files) in [3, 4]:
+        parser.error("Please provide 3 or 4 files in the command line")
+        sys.exit(1)
 
-if not len(files) in [3, 4]:
-    parser.error("Please provide 3 or 4 files in the command line")
-    sys.exit(1)
+    verbose(1, "Loading data")
 
-verbose(1, "Loading data")
+    # data filename
+    dfile = files[0]
+    # text file with labels and block definitions (chunks)
+    cfile = files[1]
+    # mask volume filename
+    mfile = files[2]
 
-# data filename
-dfile = files[0]
-# text file with labels and block definitions (chunks)
-cfile = files[1]
-# mask volume filename
-mfile = files[2]
+    ofile = None
+    if len(files)>=4:
+        # outfile name
+        ofile = files[3]
 
-ofile = None
-if len(files)>=4:
-    # outfile name
-    ofile = files[3]
+    # read conditions into an array (assumed to be two columns of integers)
+    # TODO: We need some generic helper to read conditions stored in some
+    #       common formats
+    verbose(2, "Reading conditions from file %s" % cfile)
+    cfile = open(cfile, 'r')
+    conds = N.fromfile(cfile, sep=' ', dtype=int).reshape(2, -1)
+    cfile.close()
 
-# read conditions into an array (assumed to be two columns of integers)
-# TODO: We need some generic helper to read conditions stored in some
-#       common formats
-verbose(2, "Reading conditions from file %s" % cfile)
-cfile = open(cfile, 'r')
-conds = N.fromfile(cfile, sep=' ', dtype=int).reshape(2, -1)
-cfile.close()
+    verbose(2, "Loading volume file %s" % dfile)
+    data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
 
-verbose(2, "Loading volume file %s" % dfile)
-data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
+    if options.zscore:
+        verbose(1, "Zscoring data samples")
+        zscore(data, perchunk=True)
 
-verbose(1, "Computing")
+    if options.clf == 'knn':
+        clf = kNN(k=options.knearestdegree)
+    elif options.clf == 'lin_nu_svmc':
+        clf = LinearNuSVMC(options.nu)
+    elif options.clf == 'rbf_nu_svmc':
+        clf = RbfNuSVMC(options.nu)
+    else:
+        raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
+    verbose(3, "Using '%s' classifier" % options.clf)
 
-verbose(3, "Assigning a measure to be CrossValidation")
-# compute N-1 cross-validation with a kNN classifier in each sphere
-cv = ClfCrossValidation(kNN(k=options.knearestdegree),
-                        NFoldSplitter(cvtype=options.crossfolddegree))
+    verbose(1, "Computing")
 
-verbose(3, "Generating Searchlight instance")
-# contruct searchlight with 5mm radius
-# this assumes that the spatial pixdim values in the source NIfTI file
-# are specified in mm
-sl = Searchlight(cv, radius=options.radius)
+    verbose(3, "Assigning a measure to be CrossValidation")
+    # compute N-1 cross-validation with the selected classifier in each sphere
+    cv = ClfCrossValidation(clf,
+                            NFoldSplitter(cvtype=options.crossfolddegree))
 
-# run searchlight
-verbose(3, "Running searchlight on loaded data")
-results = sl(data)
+    verbose(3, "Generating Searchlight instance")
+    # contruct searchlight with 5mm radius
+    # this assumes that the spatial pixdim values in the source NIfTI file
+    # are specified in mm
+    sl = Searchlight(cv, radius=options.radius)
 
-if not ofile is None:
-    # map the result vector back into a nifti image
-    rimg = data.map2Nifti(results)
+    # run searchlight
+    verbose(3, "Running searchlight on loaded data")
+    results = sl(data)
 
-    # save to file
-    rimg.save(ofile)
-else:
-    print results
+    if not ofile is None:
+        # map the result vector back into a nifti image
+        rimg = data.map2Nifti(results)
+
+        # save to file
+        rimg.save(ofile)
+    else:
+        print results
+
+if __name__ == "__main__":
+    main()

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Common functions and options definitions for command line
+"""Common functions and options definitions for command line
 
 Conventions:
 Every option (instance of optparse.Option) has prefix "opt". Lists of options
@@ -70,18 +70,38 @@ if __debug__:
 #
 # Classifiers options
 #
+optClf = \
+    Option("--clf",
+           action="store", type="string", dest="clf",
+           default='knn',
+           help="Type of classifier to be used. Possible values are: 'knn', " \
+                "'lin_nu_svmc', 'rbf_nu_svmc'. Default: knn")
+
 optRadius = \
     Option("-r", "--radius",
            action="store", type="float", dest="radius",
            default=5.0,
-           help="Radius to be used (eg for the searchlight)")
+           help="Radius to be used (eg for the searchlight). Default: 5.0")
 
 optKNearestDegree = \
     Option("-k", "--k-nearest",
            action="store", type="int", dest="knearestdegree", default=3,
-           help="Degree of k-nearest classifier")
+           help="Degree of k-nearest classifier. Default: 3")
+
+optSVMNu = \
+    Option("--nu",
+           action="store", type="float", dest="nu", default=0.1,
+           help="nu parameter for soft-margin nu-SVM classification. " \
+                "Default: 0.1")
+
+optsSVM = [optSVMNu]
 
 optCrossfoldDegree = \
     Option("-c", "--crossfold",
            action="store", type="int", dest="crossfolddegree", default=1,
-           help="Degree of N-fold crossfold")
+           help="Degree of N-fold crossfold. Default: 1")
+
+optZScore = \
+    Option("--zscore",
+           action="store_true", dest="zscore", default=0,
+           help="Enable zscoring of dataset samples. Default: Off")

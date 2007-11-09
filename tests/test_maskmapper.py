@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA mask mapper"""
+"""Unit tests for PyMVPA mask mapper"""
 
 
 from mvpa.datasets.maskmapper import *

@@ -6,14 +6,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for SVM classifier"""
+"""Unit tests for SVM classifier"""
 
 import unittest
 
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.svm import SVMBase,LinearNuSVMC
+from mvpa.clf.svm import RbfNuSVMC,LinearNuSVMC
 from mvpa.clf.libsvm import svmc
 
 
@@ -66,28 +66,40 @@ class SVMTests(unittest.TestCase):
     def testMultivariate(self):
 
         mv_perf = []
+        mv_lin_perf = []
         uv_perf = []
+
+        nl_clf = RbfNuSVMC()
+        l_clf = LinearNuSVMC()
 
         for i in xrange(20):
             train = pureMultivariateSignal( 20, 3 )
             test = pureMultivariateSignal( 20, 3 )
 
-            clf = SVMBase(kernel_type=svmc.RBF,
-                          svm_type=svmc.NU_SVC,
-                          nu=0.5,
-                          eps=0.001)
-            clf.train(train)
-            p_mv = clf.predict(test.samples)
+            # use non-linear CLF on 2d data
+            nl_clf.train(train)
+            p_mv = nl_clf.predict(test.samples)
             mv_perf.append(N.mean(p_mv==test.labels))
 
-            clf.train(train.selectFeatures([0]))
-            p_uv = clf.predict(test.selectFeatures([0]).samples)
+            # use linear CLF on 2d data
+            l_clf.train(train)
+            p_lin_mv = l_clf.predict(test.samples)
+            mv_lin_perf.append(N.mean(p_lin_mv==test.labels))
+
+            # use non-linear CLF on 1d data
+            nl_clf.train(train.selectFeatures([0]))
+            p_uv = nl_clf.predict(test.selectFeatures([0]).samples)
             uv_perf.append(N.mean(p_uv==test.labels))
 
         mean_mv_perf = N.mean(mv_perf)
+        mean_mv_lin_perf = N.mean(mv_lin_perf)
         mean_uv_perf = N.mean(uv_perf)
 
+        # non-linear CLF has to be close to perfect
         self.failUnless( mean_mv_perf > 0.9 )
+        # linear CLF cannot learn this problem!
+        self.failUnless( mean_mv_perf > mean_mv_lin_perf )
+        # univariate has insufficient information
         self.failUnless( mean_uv_perf < mean_mv_perf )
 
 

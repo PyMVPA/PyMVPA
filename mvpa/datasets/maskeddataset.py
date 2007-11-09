@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: PyMVPA:"""
+"""Dataset with applied mask"""
 
 import operator
 
@@ -88,9 +88,9 @@ class MaskedDataset(MappedDataset):
     def selectFeatures(self, ids, plain=False):
         """ Select a number of features from the current set.
 
-        @ids is a list of feature IDs
-        @plain=True directs to return a simple Dataset
-        if @plain=False -- returns a new MaskedDataset object
+        `ids` is a list of feature IDs
+        `plain`=`True` directs to return a simple Dataset
+        if `plain`==False -- returns a new MaskedDataset object
 
         Return object is a view of the original data (no copying is
         performed).

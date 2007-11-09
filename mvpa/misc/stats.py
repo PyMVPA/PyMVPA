@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Little statistics helper"""
+"""Little statistics helper"""
 
 import scipy.stats as stats
 import numpy as N

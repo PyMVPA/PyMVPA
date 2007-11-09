@@ -6,7 +6,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: MultiVariate PXXX Analysis"""
+"""MultiVariate Pattern Analysis"""
 
+if not __debug__:
+# TODO: psyco should be moved upstairs anyways
+    try:
+        import psyco
+        psyco.profile()
+    except:
+        verbose(5, "Psyco online compilation is not enabled in knn")
 
 #from mvpa.dataset import *

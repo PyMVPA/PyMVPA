@@ -6,13 +6,30 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Dataset container"""
+"""Dataset container"""
 
 import numpy as N
 import operator
 import random
 
 # TODO? yoh: There is too much in common between chunks and labels....
+#   michael: they might be two instances of some label that is attached to
+#            a data sample. In some cases 'chunks' is not necessary. There also
+#            might be cases where more than labels+chunks is necessary. Maybe
+#            we should move towards something like 'sample_properties', where
+#            you can have any number of them in each dataset. And maybe we
+#            should put them in a dict so we can access them by name and just
+#            make a policy that labels should be 'labels' and chunks should be
+#            'chunks'. But addtionally there might be more of them and 3rd party
+#            algorithms might use them. To summarize:
+#
+#            sample_properties = \
+#               {'name': <1d container with len() == samples.shape[0], ... }
+#
+#            This would also allow for non-numerical properties. But we might
+#            want to enforce ndarray for 'labels', not sure though.
+#            Thinking again, selectSamples() really relies on the slicing
+#            capabilities of ndarray....
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
@@ -26,25 +43,40 @@ class Dataset(object):
     # TODO: discard such way or accept and introduce to derived methods...
     __initparams__ = \
         """
-        samples -
-        labels  -
-        chunks  -
-        dtype   - if None -- do not change data type if samples
+        `samples` -
+        `labels`  -
+        `chunks`  -
+        `dtype`   - if None -- do not change data type if samples
                   is an ndarray. Otherwise convert samples to dtype"""
 
-    def __init__(self, samples, labels, chunks, dtype=None ):
-        """ Initialize the Dataset.
-
-        Parameters:
+    def __init__(self, samples, sattr=None, dsattr=None, dtype=None, \
+                 labels=None, chunks=None, check_sattr=True):
         """
+        - `samples`: 2d array (samples x features).
+        - `sattr`: Dict with an arbitrary number of entries. To value for
+                   each key in the dict has to be a 1d ndarray with the
+                   same length as the number of rows in the samples array.
+                   Each value in those 1d arrays is assigned to the
+                   corresponding sample.
+        - `ds_attr`: Dictionary of dataset attributes. An arbitrary number of
+                     arbitrarily named and typed objects can be stored here.
+        - `dtype`: If None -- do not change data type if samples
+                   is an ndarray. Otherwise convert samples to dtype.
+        - `labels`: array or scalar value
+        - `chunks`: array or scalar value
+                   """
         # initialize containers
         self.__samples = None
-        self.__labels = None
-        self.__chunks = None
-        self.__origlabels = None
-        self.__uniqueLabels = None
-        self.__uniqueChunks = None
+        """Samples array."""
+        self.__sattr = {}
+        """Sample attributes."""
+        self.__dsattr = {}
+        """Dataset attriibutes."""
 
+        if not dsattr == None:
+            self.__dsattr = dsattr
+
+        # put samples array into correct shape
         # 1d arrays or simple sequences are assumed to be a single pattern
         if (not isinstance(samples, N.ndarray)):
             samples = N.array(samples, ndmin=2)
@@ -64,50 +96,70 @@ class Dataset(object):
         # done -> store
         self.__samples = samples
 
-        # check if labels is supplied as a sequence
+        # if there is no ready sample attributes dict try using some keyword
+        # arguments to initialize one
+        if sattr == None:
+            if not labels == None:
+                self.__sattr['labels'] = \
+                    self._expandSampleAttribute(labels, 'labels')
+            if chunks == None:
+                # if no chunk information is given assume that every pattern
+                # is its own chunk
+                self.__sattr['chunks'] = N.arange(len(self.__samples))
+            else:
+                self.__sattr['chunks'] = \
+                    self._expandSampleAttribute(chunks, 'chunks')
+        elif isinstance(sattr, dict):
+            # if there is one, use provided attributes dict
+            self.__sattr = sattr
+        else:
+            raise ValueError, "Don't mess with 'sattr'!!!"
+
+        if check_sattr:
+            self._checkSampleAttributes
+
+        # XXX make those two go away
+        self.__uniqueLabels = None
+        self.__uniqueChunks = None
+
+
+    def _checkSampleAttributes(self):
+        """Checks all elements in the sample attributes dictionary whether
+        their length matches the number of samples in the dataset.
+        """
+        for k, v in self.__sattr.iteritems():
+            if not len(v) == len(self.__samples):
+                raise ValueError, \
+                      "Length of sample attribute '%s' does not " \
+                      "match the number of samples in the dataset." % k
+
+
+    def _expandSampleAttribute(self, attr, attr_name):
+        """If a sample attribute is given as a scalar expand/repeat it to a
+        length matching the number of samples in the dataset.
+        """
         try:
-            if len(labels) != len(self.samples):
-                raise ValueError, "Length of 'labels' [%d]" % len(labels)\
-                      + " has to match the number of patterns" \
-                      + " [%d]." % len(self.samples)
+            if len(attr) != len(self.__samples):
+                raise ValueError, \
+                      "Length of sample attribute '%s' [%d]" \
+                      % (attr_name, len(attr)) \
+                      + " has to match the number of samples" \
+                      + " [%d]." % len(self.__samples)
             # store the sequence as array
-            labels = N.array(labels)
+            return N.array(attr)
 
         except TypeError:
-            # make sequence of identical value matching the number of patterns
-            labels = N.repeat( labels, len( self.samples ) )
-
-        # done -> store
-        self._setLabels(labels)
-
-        # if no chunk information is given assume that every pattern is its
-        # own chunk
-        if chunks == None:
-            chunks = N.arange( len( self.samples ) )
-        else:
-            try:
-                if len( chunks ) != len( self.samples ):
-                    raise ValueError, "Length of 'chunks' has to match the" \
-                                      " number of samples."
-                # store the sequence as array
-                chunks = N.array( chunks )
-
-            except TypeError:
-                # make sequence of identical value matching the number of
-                # patterns
-                chunks = N.repeat( chunks, len( self.samples ) )
-
-        # done -> store
-        self._setChunks(chunks)
-
-    __init__.__doc__ += __initparams__
+            # make sequence of identical value matching the number of
+            # samples
+            return N.repeat( attr, len( self.samples ) )
 
 
     def __repr__(self):
         """ String summary over the object
         """
-        return """Dataset / %d x %d""" % \
-               (self.nsamples, self.nfeatures)
+        return """Dataset / %s %d x %d, %d uniq labels, %d uniq chunks""" % \
+               (self.samples.dtype, self.nsamples, self.nfeatures,
+                len(self.uniquelabels), len(self.uniquechunks))
 
 
     def __iadd__( self, other ):
@@ -125,8 +177,10 @@ class Dataset(object):
 
         self.__samples = \
             N.concatenate( ( self.samples, other.samples ), axis=0)
-        self._setLabels( N.concatenate( ( self.labels, other.labels ), axis=0) )
-        self._setChunks( N.concatenate( ( self.chunks, other.chunks ), axis=0) )
+
+        # concatenate all sample attributes
+        for k, v in self.__sattr.iteritems():
+            self.__sattr[k] = N.concatenate((v, other.__sattr[k]), axis=0)
 
         return self
 
@@ -140,9 +194,22 @@ class Dataset(object):
         values are not modified: Samples with the same origin from both
         Datasets will still share the same chunk.
         """
-        out = Dataset( self.__samples,
-                       self.__labels,
-                       self.__chunks )
+        # create a new object of the same type it is now and NOT onyl Dataset
+        out = super(Dataset, self).__new__(self.__class__)
+
+        # XXX need to make copy of sample attributes otherwise
+        # it will result in modified attributes in 'self', because of the
+        # behaviour of __iadd__
+        # maybe reimplment this whole thing!!
+        sattr = {}
+        for k, v in self.__sattr.iteritems():
+            sattr[k] = v.copy()
+
+        # now init it: to make it work all Dataset contructors have to accept
+        # Class(ndarray, sattr=Dict, dsattr=Dict)
+        out.__init__(self.__samples,
+                     sattr=sattr,
+                     dsattr=self.__dsattr)
 
         out += other
 
@@ -157,15 +224,22 @@ class Dataset(object):
         Returns a new Dataset object with a view of the original samples
         array (no copying is performed).
         """
-        return Dataset( self.__samples[:, ids],
-                        self.__labels,
-                        self.__chunks )
+        # create a new object of the same type it is now and NOT onyl Dataset
+        dataset = super(Dataset, self).__new__(self.__class__)
+
+        # now init it: to make it work all Dataset contructors have to accept
+        # Class(ndarray, sattr=Dict, dsattr=Dict)
+        dataset.__init__(self.__samples[:, ids],
+                         sattr=self.__sattr,
+                         dsattr=self.__dsattr)
+
+        return dataset
 
 
     def selectSamples( self, mask ):
         """ Choose a subset of samples.
 
-        Returns a new Dataset object containing the selected sample
+        Returns a new dataset object containing the selected sample
         subset.
         """
         # without having a sequence a index the masked sample array would
@@ -173,9 +247,41 @@ class Dataset(object):
         if not operator.isSequenceType( mask ):
             mask = [mask]
 
-        return Dataset( self.samples[mask, ],
-                        self.labels[mask, ],
-                        self.chunks[mask, ] )
+        # mask all sample attributes
+        sattr = {}
+        for k, v in self.__sattr.iteritems():
+            sattr[k] = v[mask,]
+
+        # create a new object of the same type it is now and NOT onyl Dataset
+        dataset = super(Dataset, self).__new__(self.__class__)
+
+        # now init it: to make it work all Dataset contructors have to accept
+        # Class(ndarray, sattr=Dict, dsattr=Dict)
+        dataset.__init__(self.__samples[mask,],
+                         sattr=sattr,
+                         dsattr=self.__dsattr)
+
+        return dataset
+
+
+    def getSampleIdsByLabels(self, labels):
+        """ Return indecies of samples given a list of labels
+        """
+
+        if not operator.isSequenceType(labels):
+            labels = [ labels ]
+
+        # TODO: compare to plain for loop through the labels
+        #       on a real data example
+        sel = N.array([], dtype=N.int16)
+        for label in labels:
+            sel = N.concatenate((
+                        sel, N.where(self.__sattr['labels']==label)[0]))
+
+        # place samples in the right order
+        sel.sort()
+
+        return sel
 
 
     def permutedRegressors( self, status, perchunk = True ):
@@ -193,26 +299,27 @@ class Dataset(object):
         """
         if not status:
             # restore originals
-            if self.__origlabels == None:
+            if self.__sattr['origlabels'] == None:
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'randomizedRegressors() has never been ' \
                                     'called with status == True.'
-            self._setLabels(self.__origlabels)
-            self.__origlabels = None
+            self._setLabels(self.__sattr['origlabels'])
+            self.__sattr['origlabels'] = None
         else:
             # permute labels per origin
 
             # make a backup of the original labels
-            self.__origlabels = self.__labels.copy()
+            self.__sattr['origlabels'] = self.__sattr['labels'].copy()
 
             # now scramble the rest
             if perchunk:
                 for o in self.uniquechunks:
-                    self.__labels[self.chunks == o ] = \
+                    self.__sattr['labels'][self.chunks == o ] = \
                         N.random.permutation( self.labels[ self.chunks == o ] )
-                self._setLabels(self.__labels) # to recompute uniquelabels
+                # to recompute uniquelabels
+                self._setLabels(self.__sattr['labels'])
             else:
-                self._setLabels(N.random.permutation(self.__labels))
+                self._setLabels(N.random.permutation(self.__sattr['labels']))
 
 
     def getRandomSamples( self, nperlabel ):
@@ -247,14 +354,14 @@ class Dataset(object):
     def _setLabels(self, labels):
         """ Sets labels and recomputes uniquelabels
         """
-        self.__labels = labels
+        self.__sattr['labels'] = labels
         self.__uniqueLabels = None # None!since we might not need them
 
 
     def _setChunks(self, chunks):
         """ Sets chunks and recomputes uniquechunks
         """
-        self.__chunks = chunks
+        self.__sattr['chunks'] = chunks
         self.__uniqueChunks = None # None!since we might not need them
 
 
@@ -279,7 +386,7 @@ class Dataset(object):
     def getLabels( self ):
         """ Returns the label vector.
         """
-        return self.__labels
+        return self.__sattr['labels']
 
 
     def getChunks( self ):
@@ -287,7 +394,7 @@ class Dataset(object):
 
         Each unique value in this vector defines a group of samples.
         """
-        return self.__chunks
+        return self.__sattr['chunks']
 
 
     def getUniqueLabels(self):
@@ -324,6 +431,13 @@ class Dataset(object):
         """
         return [ len(self.samples[self.chunks == c]) \
                     for c in self.uniquechunks ]
+
+
+    def setSamplesDType(self, dtype):
+        """Set the data type of the samples array.
+        """
+        if self.__samples.dtype != dtype:
+            self.__samples = self.__samples.astype(dtype)
 
 
     # read-only class properties
