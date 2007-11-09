@@ -76,11 +76,12 @@ class Dataset(object):
 
         if copy_dsattr:
             # deep copy
+            if __debug__:
+                debug('DS', "Deep copying dsattr %s" % `dsattr`)
             lcl_dsattr = copy.deepcopy(dsattr)
         else:
             # shallow copy
-            # XXX? same here
-            lcl_data = copy.copy(dsattr)
+            lcl_dsattr = copy.copy(dsattr)
 
         # has to be not private since otherwise derived methods
         # would have problem accessing it and _registerAttribute
