@@ -59,7 +59,7 @@ def zscore(dataset, mean = None, std = None,
     if baselinelabels is None:
         statids = None
     else:
-        statids = Set(dataset.getSampleIdsByLabels(baselinelabels))
+        statids = Set(dataset.idsbylabels(baselinelabels))
 
     # for the sake of speed yoh didn't simply create a list
     # [True]*dataset.nsamples to provide easy selection of everything

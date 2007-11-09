@@ -183,6 +183,27 @@ class Dataset(object):
             result[l] += 1
         return result
 
+
+    def _getSampleIdsByAttr(self, values, attrib="labels"):
+        """ Return indecies of samples given a list of attributes
+        """
+
+        if not operator.isSequenceType(values):
+            values = [ values ]
+
+        # TODO: compare to plain for loop through the labels
+        #       on a real data example
+        sel = N.array([], dtype=N.int16)
+        for value in values:
+            sel = N.concatenate((
+                sel, N.where(self._data[attrib]==value)[0]))
+
+        # place samples in the right order
+        sel.sort()
+
+        return sel
+
+
     def _shapeSamples(self, samples, dtype, copy):
         """Adapt different kinds of samples
 
@@ -305,6 +326,19 @@ class Dataset(object):
 
                 cls._uniqueattributes.append(uniquekey)
 
+                # create idsby<ATTR> properties
+                sampleskey = "idsby%s" % key # remove ending 's' XXX
+                if __debug__:
+                    debug("DS", "Registering new property %s.%s" %
+                          (cls.__name__, sampleskey))
+
+                exec "%s.%s = %s" % (cls.__name__, sampleskey,
+                      "lambda self, x: self._getSampleIdsByAttr(x,attrib='%s')" % key)
+
+                cls._uniqueattributes.append(uniquekey)
+
+
+
         elif __debug__:
             debug('DS', 'Trying to reregister attribute `%s`. For now ' +
                   'such facility is not active')
@@ -423,27 +457,6 @@ class Dataset(object):
         return dataset
 
 
-    def getSampleIdsByAttr(self, values, attrib="labels"):
-        """ Return indecies of samples given a list of attributes
-        """
-
-        if not operator.isSequenceType(values):
-            values = [ values ]
-
-        # TODO: compare to plain for loop through the labels
-        #       on a real data example
-        sel = N.array([], dtype=N.int16)
-        for value in values:
-            sel = N.concatenate((
-                sel, N.where(self._data[attrib]==value)[0]))
-
-        # place samples in the right order
-        sel.sort()
-
-        return sel
-
-    # shortcut... can be removed I guess ;-)
-    getSampleIdsByLabels = lambda self, x:self.getSampleIdsByAttr(x, "labels")
 
     def permutedRegressors( self, status, perchunk = True ):
         """ Permute the labels.
