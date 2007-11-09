@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA nifti dataset"""
+"""Unit tests for PyMVPA nifti dataset"""
 
 import unittest
 import os.path

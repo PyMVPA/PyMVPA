@@ -9,3 +9,5 @@ build
 *.kcache
 *.so
 data
+build-arch*
+svmc_wrap.cpp

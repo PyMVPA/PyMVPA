@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Abstract base class of all data mappers"""
+"""Abstract base class of all data mappers"""
 
 from mvpa.datasets.metric import Metric
 
@@ -74,6 +74,12 @@ class Mapper(object):
     def getOutSize(self):
         """ Returns the size of the entity in output space """
         raise NotImplementedError
+
+
+    def discardOut(self, ids):
+        """ Remove some elements in 'out'/feature space and adjust """
+        raise NotImplementedError
+
 
 # comment out for now... introduce when needed
 #    def getInEmpty(self):

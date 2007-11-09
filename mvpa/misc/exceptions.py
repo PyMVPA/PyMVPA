@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Exception classes which might get thrown"""
+"""Exception classes which might get thrown"""
 
 class UnknownStateError(Exception):
     """ Thrown if the internal state of the class is not yet defined.

@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Feature selcetion by weight magnitude"""
+"""Feature selcetion by weight magnitude"""
 
 import numpy as N
 import support

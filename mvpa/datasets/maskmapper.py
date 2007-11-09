@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Mapper using a mask array to map dataspace to featurespace"""
+"""Mapper using a mask array to map dataspace to featurespace"""
 
 
 import numpy as N

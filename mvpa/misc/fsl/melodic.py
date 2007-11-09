@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Wrapper around the output of MELODIC (part of FSL)"""
+"""Wrapper around the output of MELODIC (part of FSL)"""
 
 import numpy as N
 import nifti

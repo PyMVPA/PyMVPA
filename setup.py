@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Python distutils setup for PyMVPA"""
+"""Python distutils setup for PyMVPA"""
 
 from distutils.core import setup, Extension
 import numpy as N

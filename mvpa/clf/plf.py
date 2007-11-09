@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Wrap the python libsvm package into a very simple class interface."""
+"""Wrap the python libsvm package into a very simple class interface."""
 
 from classifier import *
 

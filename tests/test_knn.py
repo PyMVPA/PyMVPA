@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA kNN classifier"""
+"""Unit tests for PyMVPA kNN classifier"""
 
 import unittest
 

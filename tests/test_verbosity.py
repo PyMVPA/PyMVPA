@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA verbose and debug output"""
+"""Unit tests for PyMVPA verbose and debug output"""
 
 import unittest
 from StringIO import StringIO

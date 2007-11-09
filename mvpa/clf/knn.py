@@ -6,18 +6,12 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: k-Nearest-Neighbour classification"""
+"""k-Nearest-Neighbour classification"""
 
 import numpy as N
 
 from mvpa.misc import verbose
 from mvpa.misc.support import indentDoc
-
-try:
-    import psyco
-    psyco.profile()
-except:
-    verbose(5, "Psyco online compilation is not enabled in knn")
 
 
 class kNN:
@@ -53,7 +47,8 @@ class kNN:
         self.__data = data
         if __debug__:
             if not kNN.__warned and \
-                   data.samples.dtype in [N.int8, N.int16, N.int32, N.int64]:
+                str(data.samples.dtype).startswith('uint') \
+                or str(data.samples.dtype).startswith('int'):
                 kNN.__warned = True
                 verbose(1, "kNN: input data is in integers. " + \
                         "Overflow on arithmetic operations might result in"+\

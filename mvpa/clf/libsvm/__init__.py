@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Import helper for PySVM"""
+"""Import helper for PySVM"""
 
 from mvpa.clf.libsvm import svmc
 from mvpa.clf.libsvm.svm import *

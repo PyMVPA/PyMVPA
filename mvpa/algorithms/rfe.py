@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Recursive feature elimination"""
+"""Recursive feature elimination"""
 
 import numpy as N
 

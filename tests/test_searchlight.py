@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA: Unit tests for PyMVPA searchlight algorithm"""
+"""Unit tests for PyMVPA searchlight algorithm"""
 
 import unittest
 

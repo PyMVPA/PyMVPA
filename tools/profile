@@ -1,0 +1,147 @@
+#!/usr/bin/python
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+""""""
+
+__docformat__ = 'restructuredtext'
+
+import sys, os
+
+from optparse import OptionParser
+from os import environ, path
+
+from mvpa.misc.verbosity import LevelLogger
+from mvpa.misc.cmdline import optVerbose
+
+if __name__ == "__main__":
+
+    usage = """Usage: %s [options] <python module> ...
+    """ % sys.argv[0]
+
+
+    # default options
+    convert2kcache = True
+    displaykcachegrinder = True
+    printstats = False
+    pfilename = None
+    profilelines = True
+    profilelevel = 10                   # how many most hungry to list in stats
+    run = True                          # either to run profiling at all
+
+    verbose = LevelLogger(handlers=[sys.stderr])
+    verbose.level = 1    # do we need to know lots by default? :-)
+    verbose.indent = '> ' # to discriminate easily with program output
+    verbose(2, "Initial cmdline params: %s" % `sys.argv`)
+    removed = sys.argv.pop(0)
+    verbose(3, "Removed %s" % removed)
+    verbose(3, "Remained ", sys.argv)
+
+    if not len(sys.argv):
+            verbose(0, "No python module to profile specified.")
+            print usage
+            sys.exit(1)
+
+    while sys.argv[0].startswith('-'):
+        if sys.argv[0] in ["-v", "--verbose"]:
+            verbose.level = int(sys.argv[1])
+            sys.argv.pop(0)
+        elif sys.argv[0] in ["-l", "--level"]:
+            profilelevel = int(sys.argv[1])
+            sys.argv.pop(0)
+        elif sys.argv[0] in ["-o", "--output-file"]:
+            pfilename = sys.argv[1]
+            sys.argv.pop(0)
+        elif sys.argv[0] in ["-s", "--stats"]:
+            printstats = True
+            verbose(2, "Enabling printing stats")
+            convert2kcache = False
+            displaykcachegrinder = False
+            verbose(2, "Disabling conversion to kcache")
+        elif sys.argv[0] in ["-n", "--no-run"]:
+            run = False
+            verbose(2, "Disabling running main. Just do conversions and stats")
+        elif sys.argv[0] in ["-P", "--no-profilelines"]:
+            profilelines = False
+            verbose(2, "Disabling profiling lines")
+        elif sys.argv[0] in ["-K", "--no-kcache"]:
+            convert2kcache = False
+            displaykcachegrinder = False
+            verbose(2, "Disabling conversion to kcache")
+        else:
+            verbose(0, "UNKNOWN parameter %s. Exiting" % sys.argv[0])
+            print usage
+            sys.exit(1)
+        sys.argv.pop(0)
+
+    cmdname = sys.argv[0]
+    dirname = path.dirname(cmdname)
+    (root, ext) = path.splitext(path.basename(cmdname))
+
+    verbose(2, "Adding '%s' to sys.path " % dirname)
+    sys.path.append(dirname)
+
+    verbose(3, "sys.path is %s " % `sys.path`)
+
+    # now do profiling
+    import hotshot
+
+    if pfilename is None:
+        pfilename = cmdname + ".prof"
+
+    if run:
+        verbose(1, "Importing %s " % root)
+        exec "import %s as runnable" % root
+
+        if not runnable.__dict__.has_key('main'):
+            verbose(0, "OOPS: file/module %s has no function main defined" \
+                       % cmdname)
+            sys.exit(1)
+
+        verbose(2, "Creating profiler instance")
+        prof = hotshot.Profile(pfilename, lineevents=profilelines)
+
+        try:
+            # actually return values are never setup
+            # since unittest.main sys.exit's
+            verbose(1, "Calling main() with a profiler")
+            results = prof.runcall( runnable.main )
+            verbose(4, "Results of profiler call are %s" % `results`)
+        except SystemExit:
+            pass
+
+        verbose(1, "Saving profile data into %s" % pfilename)
+        prof.close()
+
+        verbose(2, "Closed profiler")
+
+    if printstats:
+        import hotshot.stats
+        verbose(1, "Loading profile file to print statistics")
+        stats = hotshot.stats.load(pfilename)
+        stats.strip_dirs()
+        stats.sort_stats('time', 'calls')
+        stats.print_stats(profilelevel)
+
+    kfilename = pfilename + ".kcache"
+    if convert2kcache:
+        cmd = "hotshot2calltree -o %s %s" % (kfilename, pfilename)
+        verbose(1, "Converting to kcache")
+        verbose(3, "Calling '%s'" % cmd)
+        if os.system(cmd):
+            verbose(0, "!!! Make sure to install kcachegrind-converters ;-)")
+            sys.exit(1)
+
+    if displaykcachegrinder:
+        verbose(1, "Running kcachegrind")
+        if os.system('kcachegrind %s' % kfilename):
+            verbose(0, "!!! Make sure to install kcachegrind ;-)")
+            sys.exit(1)
+
+else:
+    print "Go away -- nothing to look here for as a module"
