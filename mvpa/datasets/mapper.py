@@ -76,8 +76,8 @@ class Mapper(object):
         raise NotImplementedError
 
 
-    def discardOut(self, ids):
-        """ Remove some elements in 'out'/feature space and adjust """
+    def selectOut(self, ids):
+        """ Remove some elements and leave only ids in 'out'/feature space"""
         raise NotImplementedError
 
 

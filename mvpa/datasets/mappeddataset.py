@@ -15,33 +15,36 @@ from mvpa.datasets.dataset import Dataset
 class MappedDataset(Dataset):
     """
     """
-    def __init__(self, unmapped_samples=None, mapper=None, dsattr={}, **kwargs):
+    def __init__(self, samples=None, mapper=None, dsattr={}, **kwargs):
         """A `Dataset` that uses a mapper to transform samples from their
         original dataspace into the feature space.kwargs are passed to
         `Dataset`.
         """
         # there are basically two mode for the constructor:
         # 1. internal mode - only data and dsattr dict
-        # 2. user mode - unmapped_samples and mapper != None
+        # 2. user mode - samples != None # and mapper != None
 
         # if a mapper was passed, store it in dsattr dict that gets passed
         # to base Dataset
         if not mapper is None:
+            # TODO: check mapper for compliance with dimensionality within _data
+            #       may be only within __debug__
             dsattr['mapper'] = mapper
 
         # if the samples are passed to the special arg, use the mapper to
         # transform them.
-        if not unmapped_samples is None:
+        if not samples is None:
             if dsattr['mapper'] is None:
                 raise ValueError,
                       "Constructor of MappedDataset requires a mapper " \
                       "if unmapped samples are provided."
             Dataset.__init__(self,
-                             samples=mapper.forward(unmapped_samples),
+                             samples=mapper.forward(samples),
                              dsattr=dsattr,
                              **(kwargs))
         else:
             Dataset.__init__(self, dsattr=dsattr, **(kwargs))
+
 
 
     def mapForward(self, data):
@@ -56,20 +59,21 @@ class MappedDataset(Dataset):
         return self.mapper.reverse(data)
 
 
-    def selectFeatures(self, ids):
+    def selectFeatures(self, ids, plain=False):
         """
         """
         # has to be reimplemented because the mapper has to be adjusted when
         # the features space is modified
 
         # call base method to get selected feature subset
-        sdata = Dataset.selectFeatures(self, ids)
-
-        raise NotImplementedError
-
-        sdata._dsattr['mapper'] = self._dsattr['mapper'].WHAT_IS_YOUR_NAME?
-
-        return sdata
+        if plain:
+            sdata = Dataset(self._data, self._dsattr, copy=False,
+                            copy_data=False, copy_dsattr=False)
+            return sdata.selectFeatures(self, ids)
+        else:
+            sdata = Dataset.selectFeatures(self, ids)
+            sdata._dsattr['mapper'] = self._dsattr['mapper'].selectOut(ids)
+            return sdata
 
 
     # read-only class properties
