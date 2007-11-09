@@ -8,28 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset container"""
 
-import numpy as N
+__docformat = 'restructuredtext'
+
 import operator
 import random
+import copy
 
-# TODO? yoh: There is too much in common between chunks and labels....
-#   michael: they might be two instances of some label that is attached to
-#            a data sample. In some cases 'chunks' is not necessary. There also
-#            might be cases where more than labels+chunks is necessary. Maybe
-#            we should move towards something like 'sample_properties', where
-#            you can have any number of them in each dataset. And maybe we
-#            should put them in a dict so we can access them by name and just
-#            make a policy that labels should be 'labels' and chunks should be
-#            'chunks'. But addtionally there might be more of them and 3rd party
-#            algorithms might use them. To summarize:
-#
-#            sample_properties = \
-#               {'name': <1d container with len() == samples.shape[0], ... }
-#
-#            This would also allow for non-numerical properties. But we might
-#            want to enforce ndarray for 'labels', not sure though.
-#            Thinking again, selectSamples() really relies on the slicing
-#            capabilities of ndarray....
+import numpy as N
+
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
@@ -37,45 +23,84 @@ class Dataset(object):
     associated with these patterns. Additionally samples can be grouped into
     chunks.
     """
-
-    # Common parameters for all subclasses. To don't replicate, __init__.__doc__
-    # has to be extended with them after it is defined
-    # TODO: discard such way or accept and introduce to derived methods...
-    __initparams__ = \
+    def __init__(self, data={}, dsattr={}, dtype=None, \
+                 samples=None, labels=None, chunks=None, check_data=True,
+                 copy_samples=False, copy_data=True, copy_dsattr=True):
         """
-        `samples` -
-        `labels`  -
-        `chunks`  -
-        `dtype`   - if None -- do not change data type if samples
-                  is an ndarray. Otherwise convert samples to dtype"""
-
-    def __init__(self, samples, sattr=None, dsattr=None, dtype=None, \
-                 labels=None, chunks=None, check_sattr=True):
-        """
-        - `samples`: 2d array (samples x features).
-        - `sattr`: Dict with an arbitrary number of entries. To value for
-                   each key in the dict has to be a 1d ndarray with the
-                   same length as the number of rows in the samples array.
-                   Each value in those 1d arrays is assigned to the
-                   corresponding sample.
-        - `ds_attr`: Dictionary of dataset attributes. An arbitrary number of
-                     arbitrarily named and typed objects can be stored here.
+        - `data`: Dict with an arbitrary number of entries. The value for
+                  each key in the dict has to be an ndarray with the
+                  same length as the number of rows in the samples array.
+                  A special entry in theis dictionary is 'samples', a 2d array
+                  (samples x features). A shallow copy is stored in the object.
+        - `dsattr`: Dictionary of dataset attributes. An arbitrary number of
+                    arbitrarily named and typed objects can be stored here. A
+                    shallow copy of the dictionary is stored in the object.
         - `dtype`: If None -- do not change data type if samples
                    is an ndarray. Otherwise convert samples to dtype.
+
+        Each of the following arguments overwrites with is/might be already in
+        the `data` container.
+        - `samples`: a 2d array (samples x features)
         - `labels`: array or scalar value
         - `chunks`: array or scalar value
-                   """
-        # initialize containers
-        self.__samples = None
-        """Samples array."""
-        self.__sattr = {}
-        """Sample attributes."""
-        self.__dsattr = {}
+        """
+        # initialize containers; default values are empty dicts
+        # always make a shallow copy of what comes in, otherwise total chaos
+        # is likely to happen soon
+        if copy_data:
+            # deep copy (cannot use copy.deepcopy, because samples is an
+            # exception
+            # but shallow copy first to get a shared version of the data in
+            # any case
+            lcl_data = data.copy()
+            for k, v in data.iteritems():
+                # skip copying samples if requested
+                if k == 'samples' and not copy_samples:
+                    continue
+                lcl_data[k] = v.copy()
+        else:
+            # shallow copy
+            lcl_data = data.copy()
+
+        if copy_dsattr:
+            # deep copy
+            lcl_dsattr = copy.deepcopy(dsattr)
+        else:
+            # shallow copy
+            lcl_data = copy.copy(dsattr)
+
+        self.__data = lcl_data
+        """What make a dataset."""
+        self.__dsattr = lcl_dsattr
         """Dataset attriibutes."""
 
-        if not dsattr == None:
-            self.__dsattr = dsattr
+        # store samples (and possibly transform/reshape/retype them)
+        if not samples == None:
+            self.__data['samples'] = self._shapeSamples(samples, dtype)
 
+        if not labels == None:
+            self.__data['labels'] = \
+                self._expandSampleAttribute(labels, 'labels')
+        if chunks == None and not self.__data.has_key('chunks'):
+            # if no chunk information is given assume that every pattern
+            # is its own chunk
+            self.__data['chunks'] = N.arange(self.nsamples)
+        if not chunks == None:
+            self.__data['chunks'] = \
+                self._expandSampleAttribute(chunks, 'chunks')
+
+        if check_data:
+            self._checkData()
+
+        # XXX make those two go away
+        self.__uniqueLabels = None
+        self.__uniqueChunks = None
+
+
+    def _shapeSamples(self, samples, dtype):
+        """Handle all possible input value for 'samples' and tranform them into
+        a 2d (samples x feature) representation.
+        """
         # put samples array into correct shape
         # 1d arrays or simple sequences are assumed to be a single pattern
         if (not isinstance(samples, N.ndarray)):
@@ -93,45 +118,19 @@ class Dataset(object):
                             + "are supported. Consider MappedDataset if " \
                             + "applicable."
 
-        # done -> store
-        self.__samples = samples
-
-        # if there is no ready sample attributes dict try using some keyword
-        # arguments to initialize one
-        if sattr == None:
-            if not labels == None:
-                self.__sattr['labels'] = \
-                    self._expandSampleAttribute(labels, 'labels')
-            if chunks == None:
-                # if no chunk information is given assume that every pattern
-                # is its own chunk
-                self.__sattr['chunks'] = N.arange(len(self.__samples))
-            else:
-                self.__sattr['chunks'] = \
-                    self._expandSampleAttribute(chunks, 'chunks')
-        elif isinstance(sattr, dict):
-            # if there is one, use provided attributes dict
-            self.__sattr = sattr
-        else:
-            raise ValueError, "Don't mess with 'sattr'!!!"
-
-        if check_sattr:
-            self._checkSampleAttributes
-
-        # XXX make those two go away
-        self.__uniqueLabels = None
-        self.__uniqueChunks = None
+        return samples
 
 
-    def _checkSampleAttributes(self):
-        """Checks all elements in the sample attributes dictionary whether
-        their length matches the number of samples in the dataset.
+    def _checkData(self):
+        """Checks all elements in the data dictionary whether
+        their length is consistent with the number of samples in the dataset.
         """
-        for k, v in self.__sattr.iteritems():
-            if not len(v) == len(self.__samples):
+        for k, v in self.__data.iteritems():
+            if not len(v) == self.nsamples:
                 raise ValueError, \
-                      "Length of sample attribute '%s' does not " \
-                      "match the number of samples in the dataset." % k
+                      "Length of sample attribute '%s' [%i] does not " \
+                      "match the number of samples in the dataset [%i]." \
+                      % (k, len(v), self.nsamples)
 
 
     def _expandSampleAttribute(self, attr, attr_name):
@@ -139,19 +138,19 @@ class Dataset(object):
         length matching the number of samples in the dataset.
         """
         try:
-            if len(attr) != len(self.__samples):
+            if len(attr) != self.nsamples:
                 raise ValueError, \
                       "Length of sample attribute '%s' [%d]" \
                       % (attr_name, len(attr)) \
                       + " has to match the number of samples" \
-                      + " [%d]." % len(self.__samples)
+                      + " [%d]." % self.nsamples
             # store the sequence as array
             return N.array(attr)
 
         except TypeError:
             # make sequence of identical value matching the number of
             # samples
-            return N.repeat( attr, len( self.samples ) )
+            return N.repeat(attr, self.nsamples)
 
 
     def __repr__(self):
@@ -165,22 +164,15 @@ class Dataset(object):
     def __iadd__( self, other ):
         """ Merge the samples of one Dataset object to another (in-place).
 
-        Please note that the samples, labels and chunks are simply
-        concatenated to create a Dataset object that contains the patterns of
-        both objects. No further processing is done. In particular the chunk
-        values are not modified: Samples with the same origin from both
-        Datasets will still share the same chunk.
+        No dataset attributes will be merged!
         """
         if not self.nfeatures == other.nfeatures:
             raise ValueError, "Cannot add Dataset, because the number of " \
                               "feature do not match."
 
-        self.__samples = \
-            N.concatenate( ( self.samples, other.samples ), axis=0)
-
         # concatenate all sample attributes
-        for k, v in self.__sattr.iteritems():
-            self.__sattr[k] = N.concatenate((v, other.__sattr[k]), axis=0)
+        for k, v in self.__data.iteritems():
+            self.__data[k] = N.concatenate((v, other.__data[k]), axis=0)
 
         return self
 
@@ -188,55 +180,59 @@ class Dataset(object):
     def __add__( self, other ):
         """ Merge the samples two Dataset objects.
 
-        Please note that the samples, labels and chunks are simply
-        concatenated to create a Dataset object that contains the patterns of
-        both objects. No further processing is done. In particular the chunk
-        values are not modified: Samples with the same origin from both
-        Datasets will still share the same chunk.
+        All data of both datasets is copied, concatenated and a new Dataset is
+        returned.
+
+        NOTE: This can be a costly operation (both memory and time). If
+        performance is important consider the '+=' operator.
         """
         # create a new object of the same type it is now and NOT onyl Dataset
         out = super(Dataset, self).__new__(self.__class__)
 
-        # XXX need to make copy of sample attributes otherwise
-        # it will result in modified attributes in 'self', because of the
-        # behaviour of __iadd__
-        # maybe reimplment this whole thing!!
-        sattr = {}
-        for k, v in self.__sattr.iteritems():
-            sattr[k] = v.copy()
-
         # now init it: to make it work all Dataset contructors have to accept
-        # Class(ndarray, sattr=Dict, dsattr=Dict)
-        out.__init__(self.__samples,
-                     sattr=sattr,
-                     dsattr=self.__dsattr)
+        # Class(data=Dict, dsattr=Dict)
+        out.__init__(data=self.__data,
+                     dsattr=self.__dsattr,
+                     copy_samples=True,
+                     copy_data=True,
+                     copy_dsattr=True)
 
         out += other
 
         return out
 
 
-    def selectFeatures( self, ids ):
+    def selectFeatures(self, ids):
         """ Select a number of features from the current set.
 
-        'ids' is a list of feature IDs
+        `ids` is a list of feature IDs
 
         Returns a new Dataset object with a view of the original samples
         array (no copying is performed).
+
+        ATTENTION: The order of ids determines the order of features in the
+        returned dataset. This might be useful sometimes, but can also cause
+        major headaches!
         """
+        # shallow-copy all stuff from current data dict
+        new_data = self.__data.copy()
+
+        # assign the selected features -- data is still shared with
+        # current dataset
+        new_data['samples'] = self.__data['samples'][:, ids]
+
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
-        # Class(ndarray, sattr=Dict, dsattr=Dict)
-        dataset.__init__(self.__samples[:, ids],
-                         sattr=self.__sattr,
+        # Class(data=Dict, dsattr=Dict)
+        dataset.__init__(data=new_data,
                          dsattr=self.__dsattr)
 
         return dataset
 
 
-    def selectSamples( self, mask ):
+    def selectSamples(self, mask):
         """ Choose a subset of samples.
 
         Returns a new dataset object containing the selected sample
@@ -248,17 +244,16 @@ class Dataset(object):
             mask = [mask]
 
         # mask all sample attributes
-        sattr = {}
-        for k, v in self.__sattr.iteritems():
-            sattr[k] = v[mask,]
+        data = {}
+        for k, v in self.__data.iteritems():
+            data[k] = v[mask,]
 
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
-        # Class(ndarray, sattr=Dict, dsattr=Dict)
-        dataset.__init__(self.__samples[mask,],
-                         sattr=sattr,
+        # Class(data=Dict, dsattr=Dict)
+        dataset.__init__(data=data,
                          dsattr=self.__dsattr)
 
         return dataset
@@ -276,7 +271,7 @@ class Dataset(object):
         sel = N.array([], dtype=N.int16)
         for label in labels:
             sel = N.concatenate((
-                        sel, N.where(self.__sattr['labels']==label)[0]))
+                        sel, N.where(self.__data['labels']==label)[0]))
 
         # place samples in the right order
         sel.sort()
@@ -299,27 +294,27 @@ class Dataset(object):
         """
         if not status:
             # restore originals
-            if self.__sattr['origlabels'] == None:
+            if self.__data['origlabels'] == None:
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'randomizedRegressors() has never been ' \
                                     'called with status == True.'
-            self._setLabels(self.__sattr['origlabels'])
-            self.__sattr['origlabels'] = None
+            self._setLabels(self.__data['origlabels'])
+            self.__data['origlabels'] = None
         else:
             # permute labels per origin
 
             # make a backup of the original labels
-            self.__sattr['origlabels'] = self.__sattr['labels'].copy()
+            self.__data['origlabels'] = self.__data['labels'].copy()
 
             # now scramble the rest
             if perchunk:
                 for o in self.uniquechunks:
-                    self.__sattr['labels'][self.chunks == o ] = \
+                    self.__data['labels'][self.chunks == o ] = \
                         N.random.permutation( self.labels[ self.chunks == o ] )
                 # to recompute uniquelabels
-                self._setLabels(self.__sattr['labels'])
+                self._setLabels(self.__data['labels'])
             else:
-                self._setLabels(N.random.permutation(self.__sattr['labels']))
+                self._setLabels(N.random.permutation(self.__data['labels']))
 
 
     def getRandomSamples( self, nperlabel ):
@@ -354,39 +349,39 @@ class Dataset(object):
     def _setLabels(self, labels):
         """ Sets labels and recomputes uniquelabels
         """
-        self.__sattr['labels'] = labels
+        self.__data['labels'] = labels
         self.__uniqueLabels = None # None!since we might not need them
 
 
     def _setChunks(self, chunks):
         """ Sets chunks and recomputes uniquechunks
         """
-        self.__sattr['chunks'] = chunks
+        self.__data['chunks'] = chunks
         self.__uniqueChunks = None # None!since we might not need them
 
 
     def getNSamples( self ):
         """ Currently available number of patterns.
         """
-        return self.samples.shape[0]
+        return self.__data['samples'].shape[0]
 
 
     def getNFeatures( self ):
         """ Number of features per pattern.
         """
-        return self.samples.shape[1]
+        return self.__data['samples'].shape[1]
 
 
     def getSamples( self ):
         """ Returns the sample matrix.
         """
-        return self.__samples
+        return self.__data['samples']
 
 
     def getLabels( self ):
         """ Returns the label vector.
         """
-        return self.__sattr['labels']
+        return self.__data['labels']
 
 
     def getChunks( self ):
@@ -394,7 +389,7 @@ class Dataset(object):
 
         Each unique value in this vector defines a group of samples.
         """
-        return self.__sattr['chunks']
+        return self.__data['chunks']
 
 
     def getUniqueLabels(self):
@@ -436,8 +431,8 @@ class Dataset(object):
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
         """
-        if self.__samples.dtype != dtype:
-            self.__samples = self.__samples.astype(dtype)
+        if self.__data['samples'].dtype != dtype:
+            self.__data['samples'] = self.__data['samples'].astype(dtype)
 
 
     # read-only class properties
