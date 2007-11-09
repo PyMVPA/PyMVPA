@@ -70,20 +70,6 @@ class MaskedDataset(MappedDataset):
                                 dtype )
 
 
-    def __add__( self, other ):
-        """
-        When adding two MaskedDatasets the mask of the dataset left of the
-        operator is used for the merged dataset.
-        """
-        out = MaskedDataset( self.samples,
-                             self.labels,
-                             self.chunks,
-                             self.mapper )
-
-        out += other
-
-        return out
-
 
     def selectFeatures(self, ids, plain=False):
         """ Select a number of features from the current set.
@@ -143,22 +129,4 @@ class MaskedDataset(MappedDataset):
                                   self.labels,
                                   self.chunks,
                                   mask = MaskMapper( comb_mask ) )
-
-
-    def selectSamples( self, mask ):
-        """ Choose a subset of samples.
-
-        Returns a new MaskedDataset object containing the selected sample
-        subset.
-        """
-        # without having a sequence a index the masked sample array would
-        # loose its 2d layout
-        if not operator.isSequenceType( mask ):
-            mask = [mask]
-
-        return MaskedDataset( self.samples[mask, ],
-                              self.labels[mask, ],
-                              self.chunks[mask, ],
-                              self.mapper )
-
 
