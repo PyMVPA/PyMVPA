@@ -18,8 +18,6 @@ Option name should be camelbacked version of .dest for the option.
 # TODO? all options (opt*) might migrate to respective module? discuss
 from optparse import Option
 
-from mvpa.misc import verbose
-
 #
 # Verbosity options
 #
@@ -46,13 +44,15 @@ if __debug__:
         """
         if value == "list":
             print "Registered debug IDs:"
-            print debug.registered
+            for v in debug.registered.items():
+                print "%7s: %s" %  v
+            print "Use ALL: to enable all of the debug IDs listed above"
             raise SystemExit, 0
 
         optstr = optstr                     # pylint shut up
-        entries = value.split(",")
-        if entries != "":
-            debug.active = entries
+        debug.setActiveFromString(value)
+
+
         setattr(parser.values, option.dest, value)
 
 
