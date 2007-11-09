@@ -130,17 +130,25 @@ class Dataset(object):
         # lazy computation of unique members
         #self._resetallunique('_dsattr', self._dsattr)
         if not labels is None or not chunks is None:
+            # for a speed up to don't go through all uniqueattributes
+            # when no need
+            self._dsattr['__uniquereseted'] = False
             self._resetallunique()
 
 
     def _resetallunique(self):
         """Set to None all unique* attributes of corresponding dictionary
         """
+
+        if self._dsattr['__uniquereseted']:
+            return
+
         # I guess we better checked if dictname is known  but...
         for k in self._uniqueattributes:
             if __debug__:
                 debug("DS", "Reset attribute %s" % k)
             self._dsattr[k] = None
+        self._dsattr['__uniquereseted'] = True
 
 
     def _getuniqueattr(self, attrib, dict_):
@@ -157,9 +165,23 @@ class Dataset(object):
             # attribute name
             self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
             assert(not self._dsattr[attrib] is None)
+            self._dsattr['__uniquereseted'] = False
 
         return self._dsattr[attrib]
 
+
+    def _getNSamplesPerAttr( self, attrib='labels' ):
+        """ Returns the number of samples per unique label.
+        """
+        # XXX hardcoded dict_=self._data.... might be in self._dsattr
+        uniqueattr = self._getuniqueattr(attrib="unique" + attrib,
+                                         dict_=self._data)
+
+        # TODO what if attribute is not a number???
+        result = [ 0 ] * len(uniqueattr)
+        for l in self._data[attrib]:
+            result[l] += 1
+        return result
 
     def _shapeSamples(self, samples, dtype, copy):
         """Adapt different kinds of samples
@@ -256,28 +278,36 @@ class Dataset(object):
                  (cls.__name__, key, getter, setter)
 
             if hasunique:
-                key = "unique%s" % key
-                getter = '_get%s' % key
+                uniquekey = "unique%s" % key
+                getter = '_get%s' % uniquekey
                 if classdict.has_key(getter):
                     getter = '%s.%s' % (cls.__name__, getter)
                 else:
                     getter = "lambda x: x._getuniqueattr" + \
-                            "(attrib='%s', dict_=x.%s)" % (key, dictname)
+                            "(attrib='%s', dict_=x.%s)" % (uniquekey, dictname)
 
                 if __debug__:
                     debug("DS", "Registering new property %s.%s" %
-                          (cls.__name__, key))
+                          (cls.__name__, uniquekey))
 
                 exec "%s.%s = property(fget=%s)" % \
-                     (cls.__name__, key, getter)
+                     (cls.__name__, uniquekey, getter)
 
-                cls._uniqueattributes.append(key)
+                # create samplesper<ATTR> properties
+                sampleskey = "samplesper%s" % key[:-1] # remove ending 's' XXX
+                if __debug__:
+                    debug("DS", "Registering new property %s.%s" %
+                          (cls.__name__, sampleskey))
+
+                exec "%s.%s = property(fget=%s)" % \
+                     (cls.__name__, sampleskey,
+                      "lambda x: x._getNSamplesPerAttr(attrib='%s')" % key)
+
+                cls._uniqueattributes.append(uniquekey)
 
         elif __debug__:
             debug('DS', 'Trying to reregister attribute `%s`. For now ' +
                   'such facility is not active')
-
-
 
 
     def __repr__(self, full=True):
@@ -393,25 +423,27 @@ class Dataset(object):
         return dataset
 
 
-    def getSampleIdsByLabels(self, labels):
-        """ Return indecies of samples given a list of labels
+    def getSampleIdsByAttr(self, values, attrib="labels"):
+        """ Return indecies of samples given a list of attributes
         """
 
-        if not operator.isSequenceType(labels):
-            labels = [ labels ]
+        if not operator.isSequenceType(values):
+            values = [ values ]
 
         # TODO: compare to plain for loop through the labels
         #       on a real data example
         sel = N.array([], dtype=N.int16)
-        for label in labels:
+        for value in values:
             sel = N.concatenate((
-                        sel, N.where(self._data['labels']==label)[0]))
+                sel, N.where(self._data[attrib]==value)[0]))
 
         # place samples in the right order
         sel.sort()
 
         return sel
 
+    # shortcut... can be removed I guess ;-)
+    getSampleIdsByLabels = lambda self, x:self.getSampleIdsByAttr(x, "labels")
 
     def permutedRegressors( self, status, perchunk = True ):
         """ Permute the labels.
@@ -508,19 +540,6 @@ class Dataset(object):
         return self._data['samples'].shape[1]
 
 
-    def getNSamplesPerLabel( self ):
-        """ Returns the number of samples per unique label.
-        """
-        return [ len(self.samples[self.labels == l]) \
-                    for l in self.uniquelabels ]
-
-
-    def getNSamplesPerChunk( self ):
-        """ Returns the number of samples per unique chunk value.
-        """
-        return [ len(self.samples[self.chunks == c]) \
-                    for c in self.uniquechunks ]
-
 
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
@@ -532,8 +551,6 @@ class Dataset(object):
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
-    samplesperlabel = property( fget=getNSamplesPerLabel )
-    samplesperchunk = property( fget=getNSamplesPerChunk )
 
 
 # Following attributes adherent to the basic dataset
