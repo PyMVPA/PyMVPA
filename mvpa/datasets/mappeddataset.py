@@ -35,7 +35,7 @@ class MappedDataset(Dataset):
         # transform them.
         if not samples is None:
             if dsattr['mapper'] is None:
-                raise ValueError,
+                raise ValueError, \
                       "Constructor of MappedDataset requires a mapper " \
                       "if unmapped samples are provided."
             Dataset.__init__(self,
