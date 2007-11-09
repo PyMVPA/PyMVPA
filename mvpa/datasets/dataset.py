@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset container"""
 
-__docformat = 'restructuredtext'
+__docformat__ = 'restructuredtext'
 
 import operator
 import random
@@ -60,6 +60,8 @@ class Dataset(object):
                 lcl_data[k] = v.copy()
         else:
             # shallow copy
+            # XXX? yoh: it might be better speed wise just assign dictionary
+            #      without any shallow .copy
             lcl_data = data.copy()
 
         if copy_dsattr:
@@ -67,6 +69,7 @@ class Dataset(object):
             lcl_dsattr = copy.deepcopy(dsattr)
         else:
             # shallow copy
+            # XXX? same here
             lcl_data = copy.copy(dsattr)
 
         self.__data = lcl_data
@@ -76,7 +79,14 @@ class Dataset(object):
 
         # store samples (and possibly transform/reshape/retype them)
         if not samples == None:
-            self.__data['samples'] = self._shapeSamples(samples, dtype)
+            if __debug__:
+                if self.__data.has_key('samples'):
+                    debug('DS',
+                          "`Data` dict has `samples` (%s) but there is also" +
+                          " __init__ parameter `samples` which overrides " +
+                          " stored in `data`" % (`self.__data['samples'].shape`))
+            self.__data['samples'] = self._shapeSamples(samples, dtype,
+                                                        copy_samples)
 
         if not labels == None:
             self.__data['labels'] = \
@@ -97,20 +107,26 @@ class Dataset(object):
         self.__uniqueChunks = None
 
 
-    def _shapeSamples(self, samples, dtype):
-        """Handle all possible input value for 'samples' and tranform them into
-        a 2d (samples x feature) representation.
+    def _shapeSamples(self, samples, dtype, copy):
+        """Adapt different kinds of samples
+
+        Handle all possible input value for 'samples' and tranform
+        them into a 2d (samples x feature) representation.
         """
         # put samples array into correct shape
         # 1d arrays or simple sequences are assumed to be a single pattern
         if (not isinstance(samples, N.ndarray)):
-            samples = N.array(samples, ndmin=2)
+            # it is safe to provide dtype which defaults to None,
+            # when N would choose appropriate dtype automagically
+            samples = N.array(samples, ndmin=2, dtype=dtype, copy=copy)
         else:
             if samples.ndim < 2 \
                    or (not dtype is None and dtype != samples.dtype):
                 if dtype is None:
                     dtype = samples.dtype
-                samples = N.array(samples, ndmin=2, dtype=dtype)
+                samples = N.array(samples, ndmin=2, dtype=dtype, copy=copy)
+            elif copy:
+                samples = samples.copy()
 
         # only samples x features matrices are supported
         if len(samples.shape) > 2:

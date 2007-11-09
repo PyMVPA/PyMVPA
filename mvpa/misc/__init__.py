@@ -23,7 +23,7 @@ errors = LevelLogger(handlers=[stderr])
 # Levels for verbose
 # 0 -- nothing besides errors
 # 1 -- high level stuff -- top level operation or file operations
-# 2 -- 
+# 2 -- cmdline handling
 # 3 --
 # 4 -- computation/algorithm relevant thingies
 
@@ -40,4 +40,5 @@ if __debug__:
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('PLF',  "PLF call")
     debug.register('SLC',  "Searchlight call")
+    debug.register('DS',   "*Dataset debugging")
 
