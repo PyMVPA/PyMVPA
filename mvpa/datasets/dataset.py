@@ -16,6 +16,7 @@ import copy
 
 import numpy as N
 
+from mvpa.misc import debug
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
@@ -23,6 +24,13 @@ class Dataset(object):
     associated with these patterns. Additionally samples can be grouped into
     chunks.
     """
+
+    # static definition to track which unique attributes
+    # have to be reset/recomputed whenever anything relevant
+    # changes
+    _uniqueattributes = {'_data': [], '__dsattr': [] }
+
+
     def __init__(self, data={}, dsattr={}, dtype=None, \
                  samples=None, labels=None, chunks=None, check_data=True,
                  copy_samples=False, copy_data=True, copy_dsattr=True):
@@ -72,7 +80,10 @@ class Dataset(object):
             # XXX? same here
             lcl_data = copy.copy(dsattr)
 
-        self.__data = lcl_data
+        # has to be not private since otherwise derived methods
+        # would have problem accessing it and _registerAttribute
+        # would fail on lambda getters
+        self._data = lcl_data
         """What make a dataset."""
         self.__dsattr = lcl_dsattr
         """Dataset attriibutes."""
@@ -80,31 +91,67 @@ class Dataset(object):
         # store samples (and possibly transform/reshape/retype them)
         if not samples == None:
             if __debug__:
-                if self.__data.has_key('samples'):
+                if self._data.has_key('samples'):
                     debug('DS',
                           "`Data` dict has `samples` (%s) but there is also" +
                           " __init__ parameter `samples` which overrides " +
-                          " stored in `data`" % (`self.__data['samples'].shape`))
-            self.__data['samples'] = self._shapeSamples(samples, dtype,
+                          " stored in `data`" % (`self._data['samples'].shape`))
+            self._data['samples'] = self._shapeSamples(samples, dtype,
                                                         copy_samples)
 
+        # TODO? we might want to have the same logic for chunks and labels
+        #       ie if no labels present -- assign arange
+        # labels
         if not labels == None:
-            self.__data['labels'] = \
+            if __debug__:
+                if self._data.has_key('labels'):
+                    debug('DS',
+                          "`Data` dict has `labels` (%s) but there is also" +
+                          " __init__ parameter `labels` which overrides " +
+                          " stored in `data`" % (`self._data['labels']`))
+            self._data['labels'] = \
                 self._expandSampleAttribute(labels, 'labels')
-        if chunks == None and not self.__data.has_key('chunks'):
+
+        # chunks
+        if not chunks == None:
+            self._data['chunks'] = \
+                self._expandSampleAttribute(chunks, 'chunks')
+        elif not self._data.has_key('chunks'):
             # if no chunk information is given assume that every pattern
             # is its own chunk
-            self.__data['chunks'] = N.arange(self.nsamples)
-        if not chunks == None:
-            self.__data['chunks'] = \
-                self._expandSampleAttribute(chunks, 'chunks')
+            self._data['chunks'] = N.arange(self.nsamples)
 
         if check_data:
             self._checkData()
 
-        # XXX make those two go away
-        self.__uniqueLabels = None
-        self.__uniqueChunks = None
+        # lazy computation of unique members
+        #self._undefineallunique('__dsattr', self.__dsattr)
+        if not labels is None or not chunks is None:
+            self._undefineallunique('__dsattr', self._data)
+
+
+    def _undefineallunique(self, dictname, dict_):
+        """Set to None all unique* attributes of corresponding dictionary
+        """
+        # I guess we better checked if dictname is known  but...
+        for k in self._uniqueattributes[dictname]:
+            dict_[k] = None
+
+
+    def _getuniqueattr(self, attrib, dict_):
+        """
+        Provide common facility to return unique attributes
+        """
+        if not dict_.has_key(attrib) or dict_[attrib] is None:
+            if __debug__:
+                debug("DS", "Recomputing unique set for attrib %s within %s" %
+                      (attrib, self.__repr__(False)))
+            # uff... might come up with better strategy to keep relevant
+            # attribute name
+            dict_[attrib] = N.unique( dict_[attrib[6:]] )
+            assert(not dict_[attrib] is None)
+
+        return dict_[attrib]
 
 
     def _shapeSamples(self, samples, dtype, copy):
@@ -138,10 +185,9 @@ class Dataset(object):
 
 
     def _checkData(self):
-        """Checks all elements in the data dictionary whether
-        their length is consistent with the number of samples in the dataset.
+        """Checks `_data` members to have the same # of samples.
         """
-        for k, v in self.__data.iteritems():
+        for k, v in self._data.iteritems():
             if not len(v) == self.nsamples:
                 raise ValueError, \
                       "Length of sample attribute '%s' [%i] does not " \
@@ -168,13 +214,70 @@ class Dataset(object):
             # samples
             return N.repeat(attr, self.nsamples)
 
+    @classmethod
+    def _registerAttribute(cls, key, dictname="_data", hasunique=False):
+        """Register an attribute for *Dataset class.
 
-    def __repr__(self):
+        Creates property assigning getters/setters depending on the
+        availability of corresponding _get, _set functions.
+        """
+        #import pydb
+        #pydb.debugger()
+        classdict = cls.__dict__
+        if not classdict.has_key(key):
+            # define get function and use corresponding
+            # _getATTR if such defined
+            getter = '_get%s' % key
+            if classdict.has_key(getter):
+                getter =  '%s.%s' % (cls.__name__, getter)
+            else:
+                getter="lambda x: x.%s['%s']" % (dictname, key)
+
+            # define set function and use corresponding
+            # _setATTR if such defined
+            setter = '_set%s' % key
+            if classdict.has_key(setter):
+                setter =  '%s.%s' % (cls.__name__, setter)
+            else:
+                setter = None
+
+            if __debug__:
+                debug("DS", "Registering new property %s.%s" % (cls.__name__, key))
+            exec "%s.%s = property(fget=%s,fset=%s)" %\
+                 (cls.__name__, key, getter, setter)
+
+            if hasunique:
+                key = "unique%s" % key
+                getter = '_get%s' % key
+                if classdict.has_key(getter):
+                    getter = '%s.%s' % (cls.__name__, getter)
+                else:
+                    getter="lambda x: x._getuniqueattr(attrib='%s', dict_=x.%s)"\
+                            % (key, "__dsattr")
+
+                if __debug__:
+                    debug("DS", "Registering new property %s.%s" % (cls.__name__, key))
+
+                exec "%s.%s = property(fget=%s)" %\
+                     (cls.__name__, key, getter)
+
+        elif __debug__:
+            debug('DS', 'Trying to reregister attribute `%s`. For now ' +
+                  'such facility is not active')
+
+
+
+
+    def __repr__(self, full=True):
         """ String summary over the object
         """
-        return """Dataset / %s %d x %d, %d uniq labels, %d uniq chunks""" % \
-               (self.samples.dtype, self.nsamples, self.nfeatures,
-                len(self.uniquelabels), len(self.uniquechunks))
+        if full:
+            return """Dataset / %s %d x %d, %d uniq labels, %d uniq chunks""" % \
+                   (self.samples.dtype, self.nsamples, self.nfeatures,
+                    len(self.uniquelabels), len(self.uniquechunks))
+        else:
+            return """Dataset / %s %d x %d""" % \
+                   (self.samples.dtype, self.nsamples, self.nfeatures)
 
 
     def __iadd__( self, other ):
@@ -187,8 +290,8 @@ class Dataset(object):
                               "feature do not match."
 
         # concatenate all sample attributes
-        for k, v in self.__data.iteritems():
-            self.__data[k] = N.concatenate((v, other.__data[k]), axis=0)
+        for k, v in self._data.iteritems():
+            self._data[k] = N.concatenate((v, other._data[k]), axis=0)
 
         return self
 
@@ -207,7 +310,7 @@ class Dataset(object):
 
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
-        out.__init__(data=self.__data,
+        out.__init__(data=self._data,
                      dsattr=self.__dsattr,
                      copy_samples=True,
                      copy_data=True,
@@ -231,11 +334,11 @@ class Dataset(object):
         major headaches!
         """
         # shallow-copy all stuff from current data dict
-        new_data = self.__data.copy()
+        new_data = self._data.copy()
 
         # assign the selected features -- data is still shared with
         # current dataset
-        new_data['samples'] = self.__data['samples'][:, ids]
+        new_data['samples'] = self._data['samples'][:, ids]
 
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
@@ -261,7 +364,7 @@ class Dataset(object):
 
         # mask all sample attributes
         data = {}
-        for k, v in self.__data.iteritems():
+        for k, v in self._data.iteritems():
             data[k] = v[mask,]
 
         # create a new object of the same type it is now and NOT onyl Dataset
@@ -287,7 +390,7 @@ class Dataset(object):
         sel = N.array([], dtype=N.int16)
         for label in labels:
             sel = N.concatenate((
-                        sel, N.where(self.__data['labels']==label)[0]))
+                        sel, N.where(self._data['labels']==label)[0]))
 
         # place samples in the right order
         sel.sort()
@@ -310,27 +413,27 @@ class Dataset(object):
         """
         if not status:
             # restore originals
-            if self.__data['origlabels'] == None:
+            if self._data['origlabels'] == None:
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'randomizedRegressors() has never been ' \
                                     'called with status == True.'
-            self._setLabels(self.__data['origlabels'])
-            self.__data['origlabels'] = None
+            self._setLabels(self._data['origlabels'])
+            self._data['origlabels'] = None
         else:
             # permute labels per origin
 
             # make a backup of the original labels
-            self.__data['origlabels'] = self.__data['labels'].copy()
+            self._data['origlabels'] = self._data['labels'].copy()
 
             # now scramble the rest
             if perchunk:
                 for o in self.uniquechunks:
-                    self.__data['labels'][self.chunks == o ] = \
+                    self._data['labels'][self.chunks == o ] = \
                         N.random.permutation( self.labels[ self.chunks == o ] )
                 # to recompute uniquelabels
-                self._setLabels(self.__data['labels'])
+                self._setLabels(self._data['labels'])
             else:
-                self._setLabels(N.random.permutation(self.__data['labels']))
+                self._setLabels(N.random.permutation(self._data['labels']))
 
 
     def getRandomSamples( self, nperlabel ):
@@ -362,72 +465,32 @@ class Dataset(object):
         return self.selectSamples( sample )
 
 
+    # TODO? Following 2 setters might be gone as well after appropriate
+    # modification of _registerAttribute
     def _setLabels(self, labels):
         """ Sets labels and recomputes uniquelabels
         """
-        self.__data['labels'] = labels
-        self.__uniqueLabels = None # None!since we might not need them
+        self._data['labels'] = labels
+        self._data['uniquelabels'] = None # None!since we might not need them
 
 
     def _setChunks(self, chunks):
         """ Sets chunks and recomputes uniquechunks
         """
-        self.__data['chunks'] = chunks
-        self.__uniqueChunks = None # None!since we might not need them
+        self._data['chunks'] = chunks
+        self._data['uniquechunks'] = None # None!since we might not need them
 
 
     def getNSamples( self ):
         """ Currently available number of patterns.
         """
-        return self.__data['samples'].shape[0]
+        return self._data['samples'].shape[0]
 
 
     def getNFeatures( self ):
         """ Number of features per pattern.
         """
-        return self.__data['samples'].shape[1]
-
-
-    def getSamples( self ):
-        """ Returns the sample matrix.
-        """
-        return self.__data['samples']
-
-
-    def getLabels( self ):
-        """ Returns the label vector.
-        """
-        return self.__data['labels']
-
-
-    def getChunks( self ):
-        """ Returns the sample chunking vector.
-
-        Each unique value in this vector defines a group of samples.
-        """
-        return self.__data['chunks']
-
-
-    def getUniqueLabels(self):
-        """ Returns an array with all unique class labels in the labels vector.
-
-        Late evaluation for speedup in cases when uniquelabels is not needed
-        """
-        if self.__uniqueLabels is None:
-            self.__uniqueLabels = N.unique( self.labels )
-            assert(not self.__uniqueLabels is None)
-        return self.__uniqueLabels
-
-
-    def getUniqueChunks( self ):
-        """ Returns an array with all unique labels in the chunk vector.
-
-        Late evaluation for speedup in cases when uniquechunks is not needed
-        """
-        if self.__uniqueChunks is None:
-            self.__uniqueChunks = N.unique( self.chunks )
-            assert(not self.__uniqueChunks is None)
-        return self.__uniqueChunks
+        return self._data['samples'].shape[1]
 
 
     def getNSamplesPerLabel( self ):
@@ -447,17 +510,18 @@ class Dataset(object):
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
         """
-        if self.__data['samples'].dtype != dtype:
-            self.__data['samples'] = self.__data['samples'].astype(dtype)
+        if self._data['samples'].dtype != dtype:
+            self._data['samples'] = self._data['samples'].astype(dtype)
 
 
     # read-only class properties
-    samples         = property( fget=getSamples )
-    labels          = property( fget=getLabels )
-    chunks          = property( fget=getChunks )
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
-    uniquelabels    = property( fget=getUniqueLabels )
-    uniquechunks    = property( fget=getUniqueChunks )
     samplesperlabel = property( fget=getNSamplesPerLabel )
     samplesperchunk = property( fget=getNSamplesPerChunk )
+
+
+# Following attributes adherent to the basic dataset
+Dataset._registerAttribute("samples", "_data", hasunique=False)
+Dataset._registerAttribute("labels",  "_data", hasunique=True)
+Dataset._registerAttribute("chunks",  "_data", hasunique=True)

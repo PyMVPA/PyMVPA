@@ -10,6 +10,8 @@
 
 from sys import stdout, stderr
 
+from os import environ
+
 from verbosity import LevelLogger
 
 #
@@ -27,6 +29,10 @@ errors = LevelLogger(handlers=[stderr])
 # 3 --
 # 4 -- computation/algorithm relevant thingies
 
+# Lets check if environment can tell us smth
+if environ.has_key('MVPA_VERBOSE'):
+    verbose.level = int(environ['MVPA_VERBOSE'])
+
 if __debug__:
     from verbosity import DebugLogger
     # NOTE: all calls to debug must be preconditioned with
@@ -42,3 +48,6 @@ if __debug__:
     debug.register('SLC',  "Searchlight call")
     debug.register('DS',   "*Dataset debugging")
 
+    # Lets check if environment can tell us smth
+    if environ.has_key('MVPA_DEBUG'):
+        debug.setActiveFromString(environ['MVPA_DEBUG'])
