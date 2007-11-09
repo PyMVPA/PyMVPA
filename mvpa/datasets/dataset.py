@@ -28,7 +28,9 @@ class Dataset(object):
     # static definition to track which unique attributes
     # have to be reset/recomputed whenever anything relevant
     # changes
-    _uniqueattributes = {'_data': [], '__dsattr': [] }
+
+    # unique{labels,chunks} become a part of dsattr
+    _uniqueattributes = []
 
 
     def __init__(self, data={}, dsattr={}, dtype=None, \
@@ -84,8 +86,9 @@ class Dataset(object):
         # would have problem accessing it and _registerAttribute
         # would fail on lambda getters
         self._data = lcl_data
-        """What make a dataset."""
-        self.__dsattr = lcl_dsattr
+        """What makes a dataset."""
+
+        self._dsattr = lcl_dsattr
         """Dataset attriibutes."""
 
         # store samples (and possibly transform/reshape/retype them)
@@ -125,33 +128,37 @@ class Dataset(object):
             self._checkData()
 
         # lazy computation of unique members
-        #self._undefineallunique('__dsattr', self.__dsattr)
+        #self._resetallunique('_dsattr', self._dsattr)
         if not labels is None or not chunks is None:
-            self._undefineallunique('__dsattr', self._data)
+            self._resetallunique()
 
 
-    def _undefineallunique(self, dictname, dict_):
+    def _resetallunique(self):
         """Set to None all unique* attributes of corresponding dictionary
         """
         # I guess we better checked if dictname is known  but...
-        for k in self._uniqueattributes[dictname]:
-            dict_[k] = None
+        for k in self._uniqueattributes:
+            if __debug__:
+                debug("DS", "Reset attribute %s" % k)
+            self._dsattr[k] = None
 
 
     def _getuniqueattr(self, attrib, dict_):
         """
         Provide common facility to return unique attributes
+
+        XXX dict_ can be simply replaced now with self._dsattr
         """
-        if not dict_.has_key(attrib) or dict_[attrib] is None:
+        if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
             if __debug__:
                 debug("DS", "Recomputing unique set for attrib %s within %s" %
                       (attrib, self.__repr__(False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
-            dict_[attrib] = N.unique( dict_[attrib[6:]] )
-            assert(not dict_[attrib] is None)
+            self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
+            assert(not self._dsattr[attrib] is None)
 
-        return dict_[attrib]
+        return self._dsattr[attrib]
 
 
     def _shapeSamples(self, samples, dtype, copy):
@@ -214,6 +221,7 @@ class Dataset(object):
             # samples
             return N.repeat(attr, self.nsamples)
 
+
     @classmethod
     def _registerAttribute(cls, key, dictname="_data", hasunique=False):
         """Register an attribute for *Dataset class.
@@ -231,7 +239,7 @@ class Dataset(object):
             if classdict.has_key(getter):
                 getter =  '%s.%s' % (cls.__name__, getter)
             else:
-                getter="lambda x: x.%s['%s']" % (dictname, key)
+                getter = "lambda x: x.%s['%s']" % (dictname, key)
 
             # define set function and use corresponding
             # _setATTR if such defined
@@ -242,8 +250,9 @@ class Dataset(object):
                 setter = None
 
             if __debug__:
-                debug("DS", "Registering new property %s.%s" % (cls.__name__, key))
-            exec "%s.%s = property(fget=%s,fset=%s)" %\
+                debug("DS", "Registering new property %s.%s" %
+                      (cls.__name__, key))
+            exec "%s.%s = property(fget=%s,fset=%s)"  % \
                  (cls.__name__, key, getter, setter)
 
             if hasunique:
@@ -252,14 +261,17 @@ class Dataset(object):
                 if classdict.has_key(getter):
                     getter = '%s.%s' % (cls.__name__, getter)
                 else:
-                    getter="lambda x: x._getuniqueattr(attrib='%s', dict_=x.%s)"\
-                            % (key, "__dsattr")
+                    getter = "lambda x: x._getuniqueattr" + \
+                            "(attrib='%s', dict_=x.%s)" % (key, dictname)
 
                 if __debug__:
-                    debug("DS", "Registering new property %s.%s" % (cls.__name__, key))
+                    debug("DS", "Registering new property %s.%s" %
+                          (cls.__name__, key))
 
-                exec "%s.%s = property(fget=%s)" %\
+                exec "%s.%s = property(fget=%s)" % \
                      (cls.__name__, key, getter)
+
+                cls._uniqueattributes.append(key)
 
         elif __debug__:
             debug('DS', 'Trying to reregister attribute `%s`. For now ' +
@@ -272,7 +284,7 @@ class Dataset(object):
         """ String summary over the object
         """
         if full:
-            return """Dataset / %s %d x %d, %d uniq labels, %d uniq chunks""" % \
+            return """Dataset / %s %d x %d, uniq: %d labels, %d chunks""" % \
                    (self.samples.dtype, self.nsamples, self.nfeatures,
                     len(self.uniquelabels), len(self.uniquechunks))
         else:
@@ -293,6 +305,9 @@ class Dataset(object):
         for k, v in self._data.iteritems():
             self._data[k] = N.concatenate((v, other._data[k]), axis=0)
 
+        # might be more sophisticated but for now just reset -- it is safer ;)
+        self._resetallunique()
+
         return self
 
 
@@ -311,7 +326,7 @@ class Dataset(object):
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         out.__init__(data=self._data,
-                     dsattr=self.__dsattr,
+                     dsattr=self._dsattr,
                      copy_samples=True,
                      copy_data=True,
                      copy_dsattr=True)
@@ -346,7 +361,7 @@ class Dataset(object):
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self.__dsattr)
+                         dsattr=self._dsattr)
 
         return dataset
 
@@ -365,7 +380,7 @@ class Dataset(object):
         # mask all sample attributes
         data = {}
         for k, v in self._data.iteritems():
-            data[k] = v[mask,]
+            data[k] = v[mask, ]
 
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
@@ -373,7 +388,7 @@ class Dataset(object):
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=data,
-                         dsattr=self.__dsattr)
+                         dsattr=self._dsattr)
 
         return dataset
 

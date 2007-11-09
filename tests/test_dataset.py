@@ -18,6 +18,9 @@ class DatasetTests(unittest.TestCase):
 
     def testAddPatterns(self):
         data = Dataset(samples=range(5), labels=1, chunks=1)
+
+        # just to check if uniquelabels get correctly recomputed
+        data.uniquelabels
         # simple sequence has to be a single pattern
         self.failUnlessEqual( data.nsamples, 1)
         # check correct pattern layout (1x5)
@@ -40,7 +43,6 @@ class DatasetTests(unittest.TestCase):
         self.failUnlessEqual( data.nfeatures, 5 )
         self.failUnless( (data.labels == N.array([1,2,2]) ).all() )
         self.failUnless( (data.chunks == N.array([1,2,2]) ).all() )
-
 
         # test automatic origins
         data += Dataset(samples=N.random.standard_normal((2,5)), labels=3)
