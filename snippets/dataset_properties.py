@@ -14,6 +14,7 @@ if not __debug__:
     try:
         import psyco
         psyco.profile()
+        print "Psyco online compilation is on"
     except:
         if __name__ == '__main__':
             print "Psyco online compilation is not available"
@@ -226,7 +227,7 @@ if __name__ == "__main__":
 
 
     print "Working with list of length %d" % len(l)
-    print "All numbers are # of seconds for %d runs" % N
+    print "All numbers are # of seconds for %d runs, %d computations each" % (K, N)
     print "---------------------------------------------"
     types = ["Plain", "PlainDerived", "PropertyLambda",  "CreatedPropertyLambda",
              "PropertyFunc",
