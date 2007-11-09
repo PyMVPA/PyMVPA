@@ -202,6 +202,22 @@ class SetLogger(Logger):
         self.__registered[setid] = description
 
 
+    def setActiveFromString(self, value):
+        """Given a string listing registered(?) setids, make then active
+        """
+        # somewhat evil but works since verbose must be initiated
+        # by now
+        from mvpa.misc import verbose
+        entries = value.split(",")
+        if entries != "":
+            if 'ALL' in entries or 'all' in entries:
+                verbose(2, "Enabling all registered debug handlers")
+                entries = self.registered.keys()
+
+            verbose(2, "Enabled debug handlers: %s" % `entries`)
+            self.active = entries
+
+
     printsetid = property(fget=lambda self: self.__printsetid, \
                           fset=_setPrintsetid)
     active = property(fget=lambda self: self.__active, fset=_setActive)
