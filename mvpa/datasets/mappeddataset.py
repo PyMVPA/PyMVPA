@@ -77,4 +77,4 @@ class MappedDataset(Dataset):
 
 
     # read-only class properties
-    mapper = property(fget=lambda self: self._data['mapper'])
+    mapper = property(fget=lambda self: self._dsattr['mapper'])
