@@ -151,13 +151,13 @@ class MaskedDatasetTests(unittest.TestCase):
         sel = data.selectFeatures([0,37,119])
         self.failUnless(sel.nfeatures == 3)
 
-#        # check size of the masked patterns
-#        self.failUnless( sel.samples.shape == (10,3) )
-#
-#        # check that the right features are selected
-#        self.failUnless( (unmasked[:,[0,37,119]]==sel.samples).all() )
-#
-#
+        # check size of the masked patterns
+        self.failUnless( sel.samples.shape == (10,3) )
+
+        # check that the right features are selected
+        self.failUnless( (unmasked[:,[0,37,119]]==sel.samples).all() )
+
+
     def testPatternSelection(self):
         origdata = N.random.standard_normal((10,2,4,3,5))
         data = MaskedDataset(samples=origdata, labels=2, chunks=2)
@@ -178,30 +178,30 @@ class MaskedDatasetTests(unittest.TestCase):
 
         self.failUnless( sel.samples.shape == (2,120) )
 
-#    def testCombinedPatternAndFeatureMasking(self):
-#        data = MaskedDataset(
-#            N.arange( 20 ).reshape( (4,5) ), 1, 1 )
-#
-#        self.failUnless( data.nsamples == 4 )
-#        self.failUnless( data.nfeatures == 5 )
-#        fsel = data.selectFeatures([1,2])
-#        fpsel = fsel.selectSamples([0,3])
-#        self.failUnless( fpsel.nsamples == 2 )
-#        self.failUnless( fpsel.nfeatures == 2 )
-#
-#        self.failUnless( (fpsel.samples == [[1,2],[16,17]]).all() )
+    def testCombinedPatternAndFeatureMasking(self):
+        data = MaskedDataset(
+            samples=N.arange( 20 ).reshape( (4,5) ), labels=1, chunks=1 )
+
+        self.failUnless( data.nsamples == 4 )
+        self.failUnless( data.nfeatures == 5 )
+        fsel = data.selectFeatures([1,2])
+        fpsel = fsel.selectSamples([0,3])
+        self.failUnless( fpsel.nsamples == 2 )
+        self.failUnless( fpsel.nfeatures == 2 )
+
+        self.failUnless( (fpsel.samples == [[1,2],[16,17]]).all() )
 
 
-#    def testOrigMaskExtraction(self):
-#        origdata = N.random.standard_normal((10,2,4,3))
-#        data = MaskedDataset(samples=origdata, labels=2, chunks=2)
-#
-#        # check with custom mask
-#        sel = data.selectFeatures([5])
-#        self.failUnless( sel.samples.shape[1] == 1 )
-#        origmask = sel.mapper.getMask()
-#        self.failUnless( origmask[0,1,2] == True )
-#        self.failUnless( origmask.shape == data.mapper.dsshape == (2,4,3) )
+    def testOrigMaskExtraction(self):
+        origdata = N.random.standard_normal((10,2,4,3))
+        data = MaskedDataset(samples=origdata, labels=2, chunks=2)
+
+        # check with custom mask
+        sel = data.selectFeatures([5])
+        self.failUnless( sel.samples.shape[1] == 1 )
+        origmask = sel.mapper.getMask()
+        self.failUnless( origmask[0,1,2] == True )
+        self.failUnless( origmask.shape == data.mapper.dsshape == (2,4,3) )
 
 
 
@@ -264,27 +264,28 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failIf( (data2.labels == origlabels).all() )
 
 
-#    def testFeatureMasking(self):
-#        mask = N.zeros((5,3),dtype='bool')
-#        mask[2,1] = True; mask[4,0] = True
-#        data = MaskedDataset(
-#            N.arange( 60 ).reshape( (4,5,3) ), 1, 1, mask=mask )
-#
-#        # check simple masking
-#        self.failUnless( data.nfeatures == 2 )
-#        self.failUnless( data.mapper.getOutId( (2,1) ) == 0 
-#                     and data.mapper.getOutId( (4,0) ) == 1 )
-#        self.failUnlessRaises( ValueError, data.mapper.getOutId, (2,3) )
-#        self.failUnless( data.mapper.getMask().shape == (5,3) )
-#        self.failUnless( tuple(data.mapper.getInId( 1 )) == (4,0) )
-#
-#        # selection should be idempotent
-#        self.failUnless(data.selectFeaturesByMask( mask ).nfeatures == data.nfeatures )
-#        # check that correct feature get selected
-#        self.failUnless( (data.selectFeatures([1]).samples[:,0] \
-#                          == N.array([12, 27, 42, 57]) ).all() )
-#        self.failUnless(tuple( data.selectFeatures([1]).mapper.getInId(0) ) == (4,0) )
-#        self.failUnless( data.selectFeatures([1]).mapper.getMask().sum() == 1 )
+    def testFeatureMasking(self):
+        mask = N.zeros((5,3),dtype='bool')
+        mask[2,1] = True; mask[4,0] = True
+        data = MaskedDataset(
+            samples=N.arange( 60 ).reshape( (4,5,3) ), labels=1, chunks=1,
+            mask=mask)
+
+        # check simple masking
+        self.failUnless( data.nfeatures == 2 )
+        self.failUnless( data.mapper.getOutId( (2,1) ) == 0 
+                     and data.mapper.getOutId( (4,0) ) == 1 )
+        self.failUnlessRaises( ValueError, data.mapper.getOutId, (2,3) )
+        self.failUnless( data.mapper.getMask().shape == (5,3) )
+        self.failUnless( tuple(data.mapper.getInId( 1 )) == (4,0) )
+
+        # selection should be idempotent
+        self.failUnless(data.selectFeaturesByMask( mask ).nfeatures == data.nfeatures )
+        # check that correct feature get selected
+        self.failUnless( (data.selectFeatures([1]).samples[:,0] \
+                          == N.array([12, 27, 42, 57]) ).all() )
+        self.failUnless(tuple( data.selectFeatures([1]).mapper.getInId(0) ) == (4,0) )
+        self.failUnless( data.selectFeatures([1]).mapper.getMask().sum() == 1 )
 
 
 #    def testROIMasking(self):

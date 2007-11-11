@@ -41,6 +41,13 @@ class MaskMapper(MetricMapper):
         self._initMask(mask)
 
 
+    def __deepcopy__(self, memo={}):
+        from copy import deepcopy
+        # XXX might be necessary to deepcopy 'self.metric' as well
+        result = self.__class__(self.__mask.copy(), self.metric)
+        return result
+
+
     def _initMask(self, mask):
         """Initialize internal state with mask-derived information
 
