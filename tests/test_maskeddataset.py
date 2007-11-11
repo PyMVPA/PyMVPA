@@ -217,47 +217,48 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failUnless((data1.chunks == [ 1,1,1,1,1,1,1,1]).all())
 
 
-#    def testRegressorRandomizationAndSampling(self):
-#        data = MaskedDataset( N.ones((5,1)), range(5), 1 )
-#        data += MaskedDataset( N.ones((5,1))+1, range(5), 2 )
-#        data += MaskedDataset( N.ones((5,1))+2, range(5), 3 )
-#        data += MaskedDataset( N.ones((5,1))+3, range(5), 4 )
-#        data += MaskedDataset( N.ones((5,1))+4, range(5), 5 )
-#
-#        self.failUnless( data.samplesperlabel == [ 5,5,5,5,5 ] )
-#
-#        sample = data.getRandomSamples( 2 )
-#
-#        self.failUnless( sample.samplesperlabel == [ 2,2,2,2,2 ] )
-#
-#        self.failUnless( (data.uniquechunks == range(1,6)).all() )
-#
-#        # store the old labels
-#        origlabels = data.labels.copy()
-#
-#        data.permutedRegressors(True)
-#
-#        self.failIf( (data.labels == origlabels).all() )
-#
-#        data.permutedRegressors(False)
-#
-#        self.failUnless( (data.labels == origlabels).all() )
-#
-#        # now try another object with the same data
-#        data2 = MaskedDataset( data.samples, data.labels, data.chunks )
-#
-#        # labels are the same as the originals
-#        self.failUnless( (data2.labels == origlabels).all() )
-#
-#        # now permute in the new object
-#        data2.permutedRegressors( True )
-#
-#        # must not affect the old one
-#        self.failUnless( (data.labels == origlabels).all() )
-#        # but only the new one
-#        self.failIf( (data2.labels == origlabels).all() )
-#
-#
+    def testRegressorRandomizationAndSampling(self):
+        data = MaskedDataset(samples=N.ones((5,1)), labels=range(5), chunks=1)
+        data += MaskedDataset(samples=N.ones((5,1))+1, labels=range(5), chunks=2)
+        data += MaskedDataset(samples=N.ones((5,1))+2, labels=range(5), chunks=3)
+        data += MaskedDataset(samples=N.ones((5,1))+3, labels=range(5), chunks=4)
+        data += MaskedDataset(samples=N.ones((5,1))+4, labels=range(5), chunks=5)
+
+        self.failUnless( data.samplesperlabel == [ 5,5,5,5,5 ] )
+
+        sample = data.getRandomSamples( 2 )
+
+        self.failUnless( sample.samplesperlabel == [ 2,2,2,2,2 ] )
+
+        self.failUnless( (data.uniquechunks == range(1,6)).all() )
+
+        # store the old labels
+        origlabels = data.labels.copy()
+
+        data.permutedRegressors(True)
+
+        self.failIf( (data.labels == origlabels).all() )
+
+        data.permutedRegressors(False)
+
+        self.failUnless( (data.labels == origlabels).all() )
+
+        # now try another object with the same data
+        data2 = MaskedDataset(samples=data.samples, labels=data.labels,
+                              chunks=data.chunks )
+
+        # labels are the same as the originals
+        self.failUnless( (data2.labels == origlabels).all() )
+
+        # now permute in the new object
+        data2.permutedRegressors( True )
+
+        # must not affect the old one
+        self.failUnless( (data.labels == origlabels).all() )
+        # but only the new one
+        self.failIf( (data2.labels == origlabels).all() )
+
+
 #    def testFeatureMasking(self):
 #        mask = N.zeros((5,3),dtype='bool')
 #        mask[2,1] = True; mask[4,0] = True
