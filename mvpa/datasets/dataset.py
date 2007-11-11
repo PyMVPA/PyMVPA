@@ -76,9 +76,15 @@ class Dataset(object):
 
         if copy_dsattr:
             # deep copy
-            if __debug__:
-                debug('DS', "Deep copying dsattr %s" % `dsattr`)
-            lcl_dsattr = copy.deepcopy(dsattr)
+            # XXX using deep copy doesn't work properly. There seems to be the
+            # need for a custom __deepcopy__() implementation. See docs for
+            # 'copy' module. But as long as I don't know how that works, do
+            # workaround
+#            if __debug__:
+#                debug('DS', "Deep copying dsattr %s" % `dsattr`)
+#            lcl_dsattr = copy.deepcopy(dsattr)
+            lcl_dsattr = copy.copy(dsattr)
+
         else:
             # shallow copy
             lcl_dsattr = copy.copy(dsattr)
