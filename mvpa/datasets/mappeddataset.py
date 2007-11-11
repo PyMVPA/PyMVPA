@@ -72,7 +72,7 @@ class MappedDataset(Dataset):
             return sdata.selectFeatures(self, ids)
         else:
             sdata = Dataset.selectFeatures(self, ids)
-            sdata._dsattr['mapper'] = self._dsattr['mapper'].selectOut(ids)
+            sdata._dsattr['mapper'].selectOut(ids)
             return sdata
 
 

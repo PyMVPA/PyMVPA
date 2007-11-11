@@ -105,4 +105,4 @@ class MaskedDataset(MappedDataset):
         # transform mask into feature space
         fmask = self.mapper.forward( comb_mask != 0 )
 
-        return self.selectFeatures(fmask)
+        return self.selectFeatures(fmask, plain=plain)
