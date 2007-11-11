@@ -48,17 +48,10 @@ class MaskedDataset(MappedDataset):
             MappedDataset.__init__(self,
                                    samples=samples,
                                    mapper=MaskMapper(mask),
-                                   copy_samples=False,
-                                   copy_data=False,
-                                   copy_dsattr=False,
                                    **(kwargs))
 
         else:
-            MappedDataset.__init__(self,
-                                   copy_samples=False,
-                                   copy_data=False,
-                                   copy_dsattr=False,
-                                   **(kwargs))
+            MappedDataset.__init__(self, **(kwargs))
 
 
 
