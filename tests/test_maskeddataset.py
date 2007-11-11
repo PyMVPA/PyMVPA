@@ -120,32 +120,37 @@ class MaskedDatasetTests(unittest.TestCase):
             self.failUnless((orig == pat).all())
 
 
-#    def testFeatureSelection(self):
-#        origdata = N.random.standard_normal((10,2,4,3,5))
-#        data = MaskedDataset( origdata, 2, 2 )
-#
-#        unmasked = data.samples.copy()
-#
-#        # default must be no mask
-#        self.failUnless( data.nfeatures == 120 )
-#
-#        # check that full mask uses all features
-#        sel = data.selectFeaturesByMask( N.ones((2,4,3,5)) )
-#        self.failUnless( sel.nfeatures == data.samples.shape[1] )
-#        self.failUnless( data.nfeatures == 120 )
-#
-#        # check partial array mask
-#        partial_mask = N.zeros((2,4,3,5), dtype='uint')
-#        partial_mask[0,0,2,2] = 1
-#        partial_mask[1,2,2,0] = 1
-#        sel = data.selectFeaturesByMask( partial_mask )
-#        self.failUnless( sel.nfeatures == 2 )
-#        self.failUnless( sel.mapper.getMask().shape == (2,4,3,5))
-#
-#        # check selection with feature list
-#        sel = data.selectFeatures( [0,37,119] )
-#        self.failUnless(sel.nfeatures == 3)
-#
+    def testFeatureSelection(self):
+        origdata = N.random.standard_normal((10,2,4,3,5))
+        data = MaskedDataset(samples=origdata, labels=2, chunks=2)
+
+        unmasked = data.samples.copy()
+
+        # default must be no mask
+        self.failUnless( data.nfeatures == 120 )
+        self.failUnless(data.mapper.getOutSize() == 120)
+
+        # check that full mask uses all features
+        sel = data.selectFeaturesByMask( N.ones((2,4,3,5)) )
+        self.failUnless( sel.nfeatures == data.samples.shape[1] )
+        self.failUnless( data.nfeatures == 120 )
+
+        # check partial array mask
+        partial_mask = N.zeros((2,4,3,5), dtype='uint')
+        partial_mask[0,0,2,2] = 1
+        partial_mask[1,2,2,0] = 1
+        sel = data.selectFeaturesByMask( partial_mask )
+        self.failUnless( sel.nfeatures == 2 )
+        self.failUnless( sel.mapper.getMask().shape == (2,4,3,5))
+
+        # check that feature selection does not change source data
+        self.failUnless(data.nfeatures == 120)
+        self.failUnless(data.mapper.getOutSize() == 120)
+
+        # check selection with feature list
+        sel = data.selectFeatures([0,37,119])
+        self.failUnless(sel.nfeatures == 3)
+
 #        # check size of the masked patterns
 #        self.failUnless( sel.samples.shape == (10,3) )
 #
