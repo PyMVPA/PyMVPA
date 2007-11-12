@@ -23,7 +23,54 @@
   maskmapper -- profile selectOut and see if alternative
    implementation will be faster. Also add removeOut  
 
-  
+  maskmapper -- selectFeatures
+
+Further PLAN:
+-------------
+  a bit of profiling to gain at least on searchlight example
+
+  RFE   -- more concrete/unified and more talking
+
+  Features work:
+   Algorithms:
+   -- CrossValidation (provide 0-hypothesis testing)
+   -- RFE
+
+   Sensitivities:
+   -- Linear SVM sensitivity
+   -- Searchlight
+   ? Anova? GLM?
+
+   Classifiers:
+   -- Linear and Non-linear SVM
+   -- kNN
+   -- RFE-based classifier (takes arbitrary classifier and
+   sensitivityAnalyzer and deduces the subset of features with max
+   generalization to spit out the classifier)
+   -- BoostedClassifier (takes arbitrary subsets of features to
+   combine by voting/whatever multiple classifiers)
+
+  and finally release 0.1.0 version! ;-)
+  --------------------------------------
+  WORK ON PAPER! If we get far and informative -- enough, if not --
+   proceed further:
+
+  0-hypothesis testing to get better generalization estimate via MC
+   bootstraps of the data?
+
+  GenericSensitivityAnalyzers (AKA NoisePertubation) -- just computes
+   sensitivity by altering features for any classifier.
+
+  Non-linear SVM RFE
+
+  ParameterOptimizer
+   (might be also OptimizedClassifier which uses parameterOptimizer
+    internally but as the result there is a classifier which
+    automatically optimizes its parameters. It is close in idea to
+    classifier based on RFE)
+
+  World domination! 0.2.0 version
+  --------------------------------------
 
 * For anyone (possible useful ideas):
 
