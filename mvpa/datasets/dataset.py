@@ -179,11 +179,17 @@ class Dataset(object):
         uniqueattr = self._getuniqueattr(attrib="unique" + attrib,
                                          dict_=self._data)
 
-        # TODO what if attribute is not a number???
-        result = [ 0 ] * len(uniqueattr)
+        # use dictionary to cope with arbitrary labels
+        result = dict(zip(uniqueattr, [ 0 ] * len(uniqueattr)))
         for l in self._data[attrib]:
             result[l] += 1
-        return result
+
+        # XXX only return values to mimic the old interface but we might want
+        # to return the full dict instead
+        # return result
+        return result.values()
+
+
 
 
     def _getSampleIdsByAttr(self, values, attrib="labels"):
