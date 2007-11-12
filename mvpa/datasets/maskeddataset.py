@@ -38,7 +38,7 @@ class MaskedDataset(MappedDataset):
                 raise ValueError, \
                       "Constructor of MaskedDataset requires both a samples " \
                       "array and a mask if one of both is provided."
-             # check for compatibility
+            # check for compatibility
             if not samples.shape[1:] == mask.shape:
                 raise ValueError, "The mask dataspace shape [%s] is not " \
                                   "compatible with the shape of the provided " \

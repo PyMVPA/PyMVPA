@@ -222,7 +222,7 @@ class MaskMapper(MetricMapper):
             # self.__mask
             # self.__masknonzero
             # self.__masknonzerosize
-            # In efficient implementation we should not redo the whole mask
+            # TODO: In efficient implementation we should not redo the whole mask
             # but for now lets just:
             newmask = self.buildMaskFromFeatureIds(outIds)
             self._initMask(newmask)
