@@ -59,7 +59,7 @@ class MappedDataset(Dataset):
         return self.mapper.reverse(data)
 
 
-    def selectFeatures(self, ids, plain=False):
+    def selectFeatures(self, ids, plain=False, bymask=False):
         """
 
         XXX: for now it sorts ids in numerical orders. This should be
@@ -69,7 +69,8 @@ class MappedDataset(Dataset):
         """
         # TODO :has to be reimplemented because the mapper has to be
         # adjusted when the features space is modified
-        ids = sort(ids)
+        if bymask == False:
+            ids = sorted(ids)
 
         # call base method to get selected feature subset
         if plain:
