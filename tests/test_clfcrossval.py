@@ -47,7 +47,7 @@ def pureMultivariateSignal(nsamples, chunk, signal2noise = 1.5):
              + [0 for i in xrange(nsamples)]
     labels = N.array(labels)
 
-    return Dataset(data, labels, chunk)
+    return Dataset(samples=data, labels=labels, chunks=chunk)
 
 
 class CrossValidationTests(unittest.TestCase):

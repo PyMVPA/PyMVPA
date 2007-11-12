@@ -25,7 +25,7 @@ def dumbFeatureSignal():
          + [2 for i in range(8)] \
          + [3 for i in range(8)]
 
-    return Dataset(data, regs, None)
+    return Dataset(samples=data, labels=regs)
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):
@@ -58,7 +58,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
         + [0 for i in xrange(patterns)]
     regs = N.array(regs)
 
-    return Dataset(data, regs, None)
+    return Dataset(samples=data, labels=regs)
 
 
 class SVMTests(unittest.TestCase):

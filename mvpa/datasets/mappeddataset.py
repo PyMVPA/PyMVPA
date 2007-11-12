@@ -67,9 +67,9 @@ class MappedDataset(Dataset):
 
         # call base method to get selected feature subset
         if plain:
-            sdata = Dataset(self._data, self._dsattr, copy=False,
+            sdata = Dataset(self._data, self._dsattr, copy_samples=False,
                             copy_data=False, copy_dsattr=False)
-            return sdata.selectFeatures(self, ids)
+            return sdata.selectFeatures(ids)
         else:
             sdata = Dataset.selectFeatures(self, ids)
             sdata._dsattr['mapper'].selectOut(ids)
