@@ -19,45 +19,56 @@ from mvpa.datasets.maskmapper import MaskMapper
 class NiftiDataset(MaskedDataset):
     """
     """
-    def __init__(self, filename, labels, chunks, mask=None, dtype=None):
+    def __init__(self, samples=None, mask=None, dsattr={}, **kwargs):
         """
+        - `samples`: Filename of a NIfTI image or a `NiftiImage` object.
         """
         # we have to handle the nifti elementsize at the end if
         # mask is not already a MaskMapper
         set_elementsize = False
-        if not isinstance(mask, MaskMapper):
+        if not dsattr.has_key('mapper'):
             set_elementsize = True
 
         # default way to use the constructor: with NIfTI image filename
-        if isinstance(filename, str):
-            # open the nifti file
-            self.__nifti = NiftiImage(filename)
-            samples = self.__nifti.data
+        if not samples is None:
+            if isinstance(samples, str):
+                # open the nifti file
+                nifti = NiftiImage(samples)
+            elif isinstance(samples, NiftiImage):
+                # nothing special
+                nifti = samples
+            else:
+                raise ValueError, \
+                      "NiftiDataset constructor takes the filename of a " \
+                      "NIfTI image or a NiftiImage object as 'samples' " \
+                      "argument."
 
-        # internal mode for copyconstructors: tuple(NiftiImage, samples_matrix)
-        elif isinstance(filename, tuple):
-            self.__nifti = filename[0]
-            samples = filename[1]
+            samples = nifti.data
+            # do not put the whole NiftiImage in the dict as this will most
+            # likely be deepcopy'ed at some point and ensuring data integrity
+            # of the complex Python-C-Swig hybrid might be a tricky task.
+            # Only storing the header dict should achieve the same and is more
+            # memory efficient and even simpler
+            dsattr['niftihdr'] = nifti.header
 
-        else:
-            raise ValueError, "Unrecognized value in 'filename' argument."
-
-        if isinstance(mask, str):
-            # if mask is also a nifti file open, it and take the image array
-            # use a copy of the mask data as otherwise segfault will embarass
-            # you, once the 'mask' NiftiImage get deleted
-            mask = NiftiImage(mask).asarray()
+            if isinstance(mask, str):
+                # if mask is also a nifti file open, it and take the image array
+                # use a copy of the mask data as otherwise segfault will
+                # embarass you, once the 'mask' NiftiImage get deleted
+                mask = NiftiImage(mask).asarray()
+            elif isinstance(mask, NiftiImage):
+                # just use data array as masl
+                mask = mask.asarray()
 
         # by default init the dataset now
         # if mask is a MaskMapper already, this is a cheap init. This is
         # important as this is the default mode for the copy constructor
         # and might be called really often!!
         MaskedDataset.__init__(self,
-                               samples,
-                               labels,
-                               chunks,
-                               mask,
-                               dtype)
+                               samples=samples,
+                               mask=mask,
+                               dsattr=dsattr,
+                               **(kwargs))
 
 
         if set_elementsize:
@@ -69,84 +80,10 @@ class NiftiDataset(MaskedDataset):
             # distance and element size from the NIfTI header 
 
             # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-            elementsize = [i for i in reversed(self.__nifti.voxdim)]
+            elementsize = [i for i in reversed(nifti.voxdim)]
             self.mapper.setMetric(
                         DescreteMetric(elementsize=elementsize,
                                        distance_function=cartesianDistance))
-
-
-    @staticmethod
-    def _fromMaskedDataset(md, nifti):
-        """Init a NiftiDataset from a MaskedDataset.
-
-        This is an internal utility function -- not meant to be used by
-        outsiders!
-
-        It merges a separate NiftiImage object with a MaskedDataset by calling
-        the NiftiDataset constructor with the right arguments. No checks are
-        perform -- use with care!
-        """
-        return NiftiDataset((nifti, md.samples),
-                            md.labels,
-                            md.chunks,
-                            md.mapper)
-
-
-    def __add__(self, other):
-        """Adds to NiftiDatasets.
-
-        When adding the mask and NIfTI header information of the dataset left
-        of the operator are used for the merged dataset.
-        """
-        merged = MaskedDataset.__add__(self, other)
-        return NiftiDataset._fromMaskedDataset(merged, self.__nifti)
-
-
-    def selectFeatures(self, ids, plain=False):
-        """ Select a number of features from the current set.
-
-        @ids is a list of feature IDs
-        @plain=True directs to return a simple Dataset
-        if @plain=False -- returns a new NiftiDataset object
-
-        Return object is a view of the original data
-        (no copying is performed).
-        """
-        if plain:
-            return Dataset.selectFeatures(self, ids)
-
-        sub = MaskedDataset.selectFeatures(self, ids)
-        return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
-
-
-    def selectFeaturesByMask(self, mask, plain=False):
-        """ Use a mask array to select features from the current set.
-
-        The final selection mask only contains features that are present in the
-        current feature mask AND the selection mask passed to this method.
-
-        @ids is a list of feature IDs
-        @plain=True directs to return a simple Dataset
-        if @plain=False -- returns a new NiftiDataset object
-
-        Return object is a view of the original data (no copying is
-        performed).
-        """
-        if plain:
-            raise NotImplementedError #return Dataset.selectFeatures(self, ids)
-
-        sub = MaskedDataset.selectFeaturesByMask(self, mask)
-        return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
-
-
-    def selectSamples( self, mask ):
-        """ Choose a subset of samples.
-
-        Returns a new NiftiDataset object containing the selected sample
-        subset.
-        """
-        sub = MaskedDataset.selectSamples(self, mask)
-        return NiftiDataset._fromMaskedDataset(sub, self.__nifti)
 
 
     def map2Nifti(self, data):
@@ -158,6 +95,6 @@ class NiftiDataset(MaskedDataset):
         return NiftiImage(dsarray, self.niftihdr)
 
 
-    niftihdr = property(fget=lambda self: self.__nifti.header,
+    niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
                         doc='Access to the NIfTI header dictionary.')
 

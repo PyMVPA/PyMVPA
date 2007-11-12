@@ -17,7 +17,8 @@ from mvpa.datasets.niftidataset import *
 class NiftiDatasetTests(unittest.TestCase):
 
     def testNiftiDataset(self):
-        data = NiftiDataset(os.path.join('data','example4d'), [1,2], None)
+        data = NiftiDataset(samples=os.path.join('data','example4d'),
+                            labels=[1,2])
         self.failUnless(data.nfeatures == 294912)
         self.failUnless(data.nsamples == 2)
         self.failUnless(data.mapper.dsshape == (24,96,128))
@@ -48,7 +49,8 @@ class NiftiDatasetTests(unittest.TestCase):
 
 
     def testNiftiMapper(self):
-        data = NiftiDataset(os.path.join('data','example4d'), [1,2], None)
+        data = NiftiDataset(samples=os.path.join('data','example4d'),
+                            labels=[1,2])
 
 
         vol = data.map2Nifti(N.ones((294912,), dtype='int16'))
