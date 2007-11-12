@@ -4,11 +4,6 @@
   SVM.
 * (features selected on all folds)/(features selected on any fold)
 
-* each module should start with a docstring describing the module
-   (which is not inside the hashed-comment of each file)
-  look at mapper or neighbor for tentative organization if copyright/license
-  has to be present in each file.
-
 * Regression tests: for instance using sample dataset which we have
    already, run doc/examples/searchlight.py and store output to
    validate against. Probably the best would be to create a regression
@@ -17,6 +12,23 @@
    obtained (and dumped to the disk)
 
 * confirm with Michael and refactor:
+
+* for yarik: 
+
+  verify on 'bad' searchlight that we get the same 'wrong' results and
+   compare the performance time-wise
+
+  refactor code so getNSamplesPerAttr returns a dictionary (not just numbers)
+
+  maskmapper -- profile selectOut and see if alternative
+   implementation will be faster. Also add removeOut  
+
+  
+
+* For anyone (possible useful ideas):
+
+  provide for Dataset -- Dataset.__featattr which has attributes for
+   features similar to __dsattr way.
 
  maskmapper:
   dsshape -> inShape

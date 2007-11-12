@@ -61,9 +61,15 @@ class MappedDataset(Dataset):
 
     def selectFeatures(self, ids, plain=False):
         """
+
+        XXX: for now it sorts ids in numerical orders. This should be
+        replaced with properly working mapper's selectFeatures which
+        would take care about changed order of ids
+
         """
-        # has to be reimplemented because the mapper has to be adjusted when
-        # the features space is modified
+        # TODO :has to be reimplemented because the mapper has to be
+        # adjusted when the features space is modified
+        ids = sort(ids)
 
         # call base method to get selected feature subset
         if plain:

@@ -8,6 +8,18 @@
    to separate methods within class, and 2 empty lines between classes
   BUT we do 2 empty between methods, 3 empty between classes
 
+ - each module should start with a docstring describing the module
+   (which is not inside the hashed-comment of each file)
+  look at mapper or neighbor for tentative organization if copyright/license
+  has to be present in each file.
+
+
+TESTs:
+* Every more or less "interesting" bugfix should be accompanied by a
+  unittest which might help to prevent it in the future refactoring
+
+* Every new feature should have a unittest
+
 * Commits:
  BF: bug fix
  RF: refactoring
