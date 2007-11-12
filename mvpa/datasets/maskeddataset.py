@@ -22,9 +22,10 @@ class MaskedDataset(MappedDataset):
     """
     def __init__(self, samples=None, mask=None, **kwargs):
         """
-        `mask` is usually an ndarray where to chosen features equal the
-        non-zero mask elements. A special value for `mask` is recognized: If
-        `mask` is set to 'full' a mask covering the whole dataspace is created.
+        Parameters
+        ----------
+        - `mask`: an ndarray where the chosen features equal the non-zero mask
+                  elements.
         """
         # need if clause here as N.array(None) != None
         if not samples is None:
