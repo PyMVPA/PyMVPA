@@ -34,7 +34,7 @@ method-rgx=([a-z_]|__)[a-zA-Z0-9]*(__)?$
 argument-rgx=[a-z][a-zA-Z0-9]*$
 
 # Regular expression which should only match correct variable names
-variable-rgx=[a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?$
+variable-rgx=([a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?||(__.*__))$
 
 # Regular expression which should only match correct module level names
 # Default: (([A-Z_][A-Z1-9_]*)|(__.*__))$

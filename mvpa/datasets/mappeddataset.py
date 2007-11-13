@@ -6,94 +6,82 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Mapped Dataset"""
+"""Mapped dataset"""
 
-import operator
 
 from mvpa.datasets.dataset import Dataset
+
 
 class MappedDataset(Dataset):
     """
     """
-    def __init__(self, samples, labels, chunks, mapper, dtype=None ):
+    def __init__(self, samples=None, mapper=None, dsattr={}, **kwargs):
+        """A `Dataset` that uses a mapper to transform samples from their
+        original dataspace into the feature space.kwargs are passed to
+        `Dataset`.
         """
-        """
-        # store the mapper and put the rest into the baseclass
-        Dataset.__init__(self, samples, labels, chunks, dtype)
+        # there are basically two mode for the constructor:
+        # 1. internal mode - only data and dsattr dict
+        # 2. user mode - samples != None # and mapper != None
 
-        if not self.nfeatures == mapper.nfeatures:
-            raise ValueError, "The mapper [%i] doesn't match the number of " \
-                              "features in the samples array [%i]." \
-                              % (mapper.nfeatures, self.nfeatures)
-        self.__mapper = mapper
+        # if a mapper was passed, store it in dsattr dict that gets passed
+        # to base Dataset
+        if not mapper is None:
+            # TODO: check mapper for compliance with dimensionality within _data
+            #       may be only within __debug__
+            dsattr['mapper'] = mapper
 
-
-    def __iadd__(self, other):
-        """
-        Warning: the current mapper is kept!
-        """
-        # call base class method to merge the samples
-        Dataset.__iadd__(self, other)
-
-        return self
-
-
-    def __add__(self, other):
-        """
-        When adding two MappedDatasets the mapper of the dataset left of the
-        operator is used for the merged dataset.
-        """
-        out = MappedDataset(self.samples,
-                            self.labels,
-                            self.chunks,
-                            self.mapper)
-
-        out += other
-
-        return out
+        # if the samples are passed to the special arg, use the mapper to
+        # transform them.
+        if not samples is None:
+            if dsattr['mapper'] is None:
+                raise ValueError, \
+                      "Constructor of MappedDataset requires a mapper " \
+                      "if unmapped samples are provided."
+            Dataset.__init__(self,
+                             samples=mapper.forward(samples),
+                             dsattr=dsattr,
+                             **(kwargs))
+        else:
+            Dataset.__init__(self, dsattr=dsattr, **(kwargs))
 
 
-    def setMapper(self, mapper):
-        """
-        """
-        # if the new mapper operates on a different number of features
-        # this class does not know howto handle that
-        if not self.mapper.nfeatures == mapper.nfeatures:
-            raise ValueError, 'New mapper has to operate on the same number ' \
-                              'of features as the old one.'
 
-        self.__mapper = mapper
-
-
-    def forward(self, data):
+    def mapForward(self, data):
         """ Map data from the original dataspace into featurespace.
         """
-        return self.__mapper.forward(data)
+        return self.mapper.forward(data)
 
 
-    def reverse(self, data):
+    def mapReverse(self, data):
         """ Reverse map data from featurespace into the original dataspace.
         """
-        return self.__mapper.reverse(data)
+        return self.mapper.reverse(data)
 
 
-    def selectSamples(self, samplesmask):
-        """ Choose a subset of samples.
-
-        Returns a new MappedDataset object containing the selected sample
-        subset.
+    def selectFeatures(self, ids, plain=False, bymask=False):
         """
-        # without having a sequence a index the masked sample array would
-        # loose its 2d layout
-        if not operator.isSequenceType(samplesmask):
-            samplesmask = [samplesmask]
 
-        # XXX should be generic...
-        return MappedDataset(self.samples[samplesmask, ],
-                             self.labels[samplesmask, ],
-                             self.chunks[samplesmask, ],
-                             self.mapper)
+        XXX: for now it sorts ids in numerical orders. This should be
+        replaced with properly working mapper's selectFeatures which
+        would take care about changed order of ids
+
+        """
+        # TODO :has to be reimplemented because the mapper has to be
+        # adjusted when the features space is modified
+        if bymask == False:
+            ids = sorted(ids)
+
+        # call base method to get selected feature subset
+        if plain:
+            sdata = Dataset(self._data, self._dsattr, copy_samples=False,
+                            copy_data=False, copy_dsattr=False)
+            return sdata.selectFeatures(ids)
+        else:
+            sdata = Dataset.selectFeatures(self, ids)
+            sdata._dsattr['mapper'].selectOut(ids)
+            return sdata
 
 
     # read-only class properties
-    mapper = property(fget=lambda self: self.__mapper)
+    mapper = property(fget=lambda self: self._dsattr['mapper'])

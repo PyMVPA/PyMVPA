@@ -29,7 +29,7 @@ class MaskMapper(MetricMapper):
         distance of 1 along all axes.
         """
         if metric == None:
-            metric = DescreteMetric(elementsize=[1 for i in mask.shape],
+            metric = DescreteMetric(elementsize=[1]*len(mask.shape),
                                      distance_function=cartesianDistance)
 
         MetricMapper.__init__(self, metric)
@@ -39,6 +39,13 @@ class MaskMapper(MetricMapper):
                       self.__masknonzerosize = self.__forwardmap = \
                       self.__masknonzero = None # to make pylint happy
         self._initMask(mask)
+
+
+    def __deepcopy__(self, memo={}):
+        from copy import deepcopy
+        # XXX might be necessary to deepcopy 'self.metric' as well
+        result = self.__class__(self.__mask.copy(), self.metric)
+        return result
 
 
     def _initMask(self, mask):
@@ -201,12 +208,37 @@ class MaskMapper(MetricMapper):
             return outId - 1
 
 
-    def buildMaskFromFeatureIds(self, ids):
+    def selectOut(self, outIds):
+        """Only listed outIds would remain
+
+        theoretically outIds can be mask (ie boolean mask over which
+        features to preserve)
+        """
+        try:
+            # removing some outIds reenumerates outIds in respect to
+            # self.__forwardmap
+            # Following beasties should be adjusted
+            # self.__forwardmap = self
+            # self.__mask
+            # self.__masknonzero
+            # self.__masknonzerosize
+            # TODO: In efficient implementation we should not redo the whole mask
+            # but for now lets just:
+            newmask = self.buildMaskFromFeatureIds(outIds)
+            self._initMask(newmask)
+            # If there is much penalty on real use cases -- rethink
+        except:
+            raise NotImplementedError
+
+
+    def buildMaskFromFeatureIds(self, outIds):
         """ Returns a mask with all features in ids selected from the
         current feature set.
+
+        XXX should be buildInMaskFromFeatureIds
         """
         fmask = N.repeat(False, self.nfeatures)
-        fmask[ids] = True
+        fmask[outIds] = True
         return self.reverse(fmask)
 
 
