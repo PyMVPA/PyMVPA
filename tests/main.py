@@ -11,21 +11,25 @@
 import unittest
 
 # list all test modules (without .py extension)
-tests = [ 'test_dataset',
-          'test_maskmapper',
-          'test_neighbor',
-          'test_maskeddataset',
-          'test_nfoldsplitter',
-          'test_knn',
-          'test_svm',
-          'test_clfcrossval',
-          'test_searchlight',
-          'test_stats',
-          'test_support',
-          'test_niftidataset',
-          'test_verbosity',
-          'test_iohelpers'
-          ]
+tests = [
+    # Basic data structures/manipulators
+    'test_dataset',
+    'test_maskmapper',
+    'test_neighbor',
+    'test_maskeddataset',
+    'test_niftidataset',
+    'test_nfoldsplitter',
+    # Misc supporting utilities
+    'test_stats',
+    'test_support',
+    'test_verbosity',
+    'test_iohelpers',
+    # Classifiers (longer tests)
+    'test_knn',
+    'test_svm',
+    'test_clfcrossval',
+    'test_searchlight',
+    ]
 #          'test_plf',
 #          'test_ifs',
 #          'test_rfe',
