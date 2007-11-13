@@ -80,7 +80,7 @@ class kNN:
             # patterns in the training data
             dists = N.sqrt(
                         N.sum(
-                            N.abs( self.__data.samples - p )**2, axis=1
+                            (self.__data.samples - p )**2, axis=1
                             )
                         )
             # get the k nearest neighbours from the sorted list of distances
