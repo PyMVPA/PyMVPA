@@ -15,6 +15,7 @@ from math import floor, ceil
 from mvpa.misc.support import buildConfusionMatrix
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.vproperty import VProperty
+from mvpa.misc.state import State
 
 class FeatureSelection(object):
     """ Base class for any feature selection
@@ -84,7 +85,6 @@ class StopNBackHistoryCriterion(StoppingCriterion):
                   "Number of steps (got %d) should be non-negative" % steps
         self.__steps = steps
         self.__func = func
-
 
     def __call__(self, errors):
         isbest = False
@@ -193,7 +193,7 @@ class XPercentFeatureSelector(FeatureSelector):
 # FeatureSelector to convert sensitivities to abs values before calling
 # actual selector, or a decorator around SensitivityEstimators
 
-class RFE(FeatureSelection):
+class RFE(FeatureSelection, State):
     """ Recursive feature elimination.
     """
 
@@ -219,20 +219,53 @@ class RFE(FeatureSelection):
 
         self.__error_oracle = error_oracle
 
+        # register some
+        self._register("errors")
 
-    def __call__(self, dataset, callables=[]):
+
+"""
+current:
+testdata -> independent (split done outside RFE)
+dataset -> whole working dataset
+
+need:
+test <- outer/final generalization test (never touched till the very end)#
+working <- dataset to compute the sensitivity map
+itest <- inner test dataset to compute the intermediate generalization error
+         determines when to stop RFE
+
+    error_oracle = lamda x:errofx(clf.predict(
+        x.mapper(testdata.mapper.reverse(testdata))))
+
+    clf = SVM()
+    sensitivity_analyzer = linearSVMSensitivity(clf)
+    error_oracle = lambda x,y:errorfx(clf.predict(y))
+    ClassifierBasedSensitivity(Classifier, SensitivityAnalyzer)
+
+    error_oracle = lambda x,y: classifierBasedSensitivity.predict_error(y)
+    sensitivity_analyzer = classifierBasedSensitivity
+
+    sensitivity_analyzer = GLMSensitivity(...)
+    def train_and_predict_error(clf)
+    error_oracle = 
+    rfe = RFE(..., error_oracle, sensitivity_analyzer)
+"""
+
+
+    def __call__(self, dataset, testdataset=None, callables=[]):
         """Proceed and select the features recursively eliminating less
         important ones.
         """
         errors = []
         go = True
         result = None
+        newtestdataset = None
 
         while dataset.nfeatures>0:
             # Compute
             sensitivity = self.__sensitivity_analyzer(dataset)
             # Record the error
-            errors.append(error_oracle(dataset))
+            errors.append(error_oracle(dataset, testdataset))
             # Check if it is time to stop and if we got
             # the best result
             (go, isthebest) = self.__stopping_criterion(errors)
@@ -251,12 +284,18 @@ class RFE(FeatureSelection):
             # Create a dataset only with selected features
             newdataset = dataset.selectFeatures(selected_ids)
 
+            if not testdataset is None:
+                newtestdataset = testdataset.selectFeatures(selected_ids)
+
             for callable_ in callables:
                 callable_(locals())
 
             # reassign, so in callables we got both older and new
             # datasets
             dataset = newdataset
+            if not newtestdataset is None:
+                testdataset = dataset
 
+        self["errors"] = errors
         return result
 
