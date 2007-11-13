@@ -187,7 +187,7 @@ class Dataset(object):
         # XXX only return values to mimic the old interface but we might want
         # to return the full dict instead
         # return result
-        return result.values()
+        return result
 
 
 
