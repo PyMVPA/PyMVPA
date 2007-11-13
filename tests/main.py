@@ -23,7 +23,8 @@ tests = [ 'test_dataset',
           'test_stats',
           'test_support',
           'test_niftidataset',
-          'test_verbosity'
+          'test_verbosity',
+          'test_iohelpers'
           ]
 #          'test_plf',
 #          'test_ifs',
