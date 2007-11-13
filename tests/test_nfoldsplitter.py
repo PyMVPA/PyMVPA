@@ -19,9 +19,9 @@ class NFoldSplitterTests(unittest.TestCase):
     def setUp(self):
         self.data = \
             mvpa.datasets.maskeddataset.MaskedDataset(
-            N.random.normal(size=(100,10)),
-            [ i%4 for i in range(100) ],
-            [ i/10 for i in range(100) ] )
+            samples=N.random.normal(size=(100,10)),
+            labels=[ i%4 for i in range(100) ],
+            chunks=[ i/10 for i in range(100) ] )
 
 
 

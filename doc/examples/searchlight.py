@@ -71,11 +71,21 @@ def main():
     #       common formats
     verbose(2, "Reading conditions from file %s" % cfile)
     cfile = open(cfile, 'r')
-    conds = N.fromfile(cfile, sep=' ', dtype=int).reshape(2, -1)
+    conds = N.fromfile(cfile, sep=' ', dtype=int).reshape(-1, 2).T
     cfile.close()
 
     verbose(2, "Loading volume file %s" % dfile)
-    data = NiftiDataset(dfile, conds[0], conds[1], mfile, dtype=N.float32)
+    data = NiftiDataset(samples=dfile,
+                        labels=conds[0],
+                        chunks=conds[1],
+                        mask=mfile,
+                        dtype=N.float32)
+
+    # do not try to classify baseline condition
+    # XXX this is only valid for our haxby8 example dataset and should
+    # probably be turned into a proper --baselinelabel option that can
+    # be used for zscoring as well.
+    data = data.selectSamples(data.labels != 0)
 
     if options.zscore:
         verbose(1, "Zscoring data samples")

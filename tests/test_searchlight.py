@@ -30,7 +30,8 @@ class SearchlightTests(unittest.TestCase):
         mask = N.ones( (3, 6, 6) )
         mask[0,0,0] = 0
         mask[1,3,2] = 0
-        self.dataset = MaskedDataset(data, labels, chunks, mask)
+        self.dataset = MaskedDataset(samples=data, labels=labels,
+                                     chunks=chunks, mask=mask)
 
 
     def testSearchlight(self):

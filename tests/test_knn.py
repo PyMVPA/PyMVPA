@@ -45,7 +45,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5):
              + [0 for i in xrange(patterns)]
     labels = N.array(labels)
 
-    return Dataset(data, labels, None)
+    return Dataset(samples=data, labels=labels)
 
 
 class KNNTests(unittest.TestCase):
