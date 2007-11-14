@@ -16,7 +16,8 @@ import copy
 
 import numpy as N
 
-from mvpa.misc import debug
+if __debug__:
+    from mvpa.misc import debug
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
@@ -433,7 +434,12 @@ class Dataset(object):
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self._dsattr)
+                         dsattr=self._dsattr,
+                         check_data=False,
+                         copy_samples=False,
+                         copy_data=False,
+                         copy_dsattr=False
+                         )
 
         return dataset
 
@@ -460,7 +466,11 @@ class Dataset(object):
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=data,
-                         dsattr=self._dsattr)
+                         dsattr=self._dsattr,
+                         check_data=False,
+                         copy_samples=False,
+                         copy_data=False,
+                         copy_dsattr=False)
 
         return dataset
 
@@ -490,8 +500,10 @@ class Dataset(object):
         else:
             # permute labels per origin
 
-            # make a backup of the original labels
-            self._data['origlabels'] = self._data['labels'].copy()
+            # rebind old labels to origlabels
+            self._data['origlabels'] = self._data['labels']
+            # assign a copy so modifications do not impact original data
+            self._data['labels'] = self._data['labels'].copy()
 
             # now scramble the rest
             if perchunk:
