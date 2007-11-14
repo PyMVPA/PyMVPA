@@ -44,8 +44,18 @@ class MaskMapper(MetricMapper):
     def __deepcopy__(self, memo={}):
         from copy import deepcopy
         # XXX might be necessary to deepcopy 'self.metric' as well
-        result = self.__class__(self.__mask.copy(), self.metric)
-        return result
+        # to some degree reimplement the constructor to prevent calling the
+        # expensive _initMask() again
+        out = MaskMapper.__new__(MaskMapper)
+        MetricMapper.__init__(out, self.metric)
+        out.__mask = self.__mask.copy()
+        out.__maskdim = self.__maskdim
+        out.__masksize = self.__masksize
+        out.__masknonzero = deepcopy(self.__masknonzero)
+        out.__masknonzerosize = self.__masknonzerosize
+        out.__forwardmap = self.__forwardmap.copy()
+
+        return out
 
 
     def _initMask(self, mask):
@@ -55,6 +65,9 @@ class MaskMapper(MetricMapper):
         and reverse lookup to don't impose performance hit on any
         future operation
         """
+        # NOTE: If any new class member are added here __deepcopy__() has to
+        #       be adjusted accordingly!
+
         self.__mask = mask
         self.__maskdim = len(mask.shape)
         self.__masksize = N.prod(mask.shape)
