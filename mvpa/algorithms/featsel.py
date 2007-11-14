@@ -10,6 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
+from math import floor
+
+from mvpa.misc.vproperty import VProperty
+from mvpa.misc.exceptions import UnknownStateError
 
 
 class FeatureSelection(object):

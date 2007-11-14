@@ -12,7 +12,8 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.clf.rfe import RFE, \
+from mvpa.algorithms.rfe import RFE
+from mvpa.algorithms.featsel import \
      StopNBackHistoryCriterion, XPercentFeatureSelector
 #from mvpa.clf.svm import SVM
 
