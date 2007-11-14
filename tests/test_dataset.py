@@ -157,12 +157,11 @@ class DatasetTests(unittest.TestCase):
         data += Dataset(samples=N.ones((5,1))+2, labels=range(5), chunks=3 )
         data += Dataset(samples=N.ones((5,1))+3, labels=range(5), chunks=4 )
         data += Dataset(samples=N.ones((5,1))+4, labels=range(5), chunks=5 )
+        self.failUnless( data.samplesperlabel == {0:5, 1:5, 2:5, 3:5, 4:5} )
 
-        self.failUnless( data.samplesperlabel == [ 5,5,5,5,5 ] )
 
         sample = data.getRandomSamples( 2 )
-
-        self.failUnless( sample.samplesperlabel == [ 2,2,2,2,2 ] )
+        self.failUnless( sample.samplesperlabel.values() == [ 2,2,2,2,2 ] )
 
         self.failUnless( (data.uniquechunks == range(1,6)).all() )
 

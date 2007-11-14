@@ -39,10 +39,10 @@ class VerboseOutputTest(unittest.TestCase):
 
         # set verbose to 4th level
         verbose.handlers = [self.sout]
-        debug.handlers = [self.sout]
-
         verbose.level = 4
-        debug.active = [1, 2, 'SLC']
+        if __debug__:
+            debug.handlers = [self.sout]
+            debug.active = [1, 2, 'SLC']
 
     def tearDown(self):
         self.sout.close()
