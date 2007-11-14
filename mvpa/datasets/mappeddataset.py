@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Mapped dataset"""
 
+import copy
 
 from mvpa.datasets.dataset import Dataset
 
@@ -81,6 +82,8 @@ class MappedDataset(Dataset):
             return sdata.selectFeatures(ids)
         else:
             sdata = Dataset.selectFeatures(self, ids)
+            # since we have new DataSet we better have a new mapper
+            sdata._dsattr['mapper'] = copy.copy(sdata._dsattr['mapper'])
             sdata._dsattr['mapper'].selectOut(ids)
             return sdata
 
