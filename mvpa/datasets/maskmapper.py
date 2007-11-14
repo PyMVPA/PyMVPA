@@ -68,7 +68,7 @@ class MaskMapper(MetricMapper):
         # NOTE: If any new class member are added here __deepcopy__() has to
         #       be adjusted accordingly!
 
-        self.__mask = mask
+        self.__mask = (mask != 0)
         self.__maskdim = len(mask.shape)
         self.__masksize = N.prod(mask.shape)
 
@@ -106,9 +106,9 @@ class MaskMapper(MetricMapper):
                   "To be mapped data does not match the mapper mask."
 
         if self.__maskdim == datadim:
-            return data[ self.__mask != 0 ]
+            return data[ self.__mask ]
         elif self.__maskdim+1 == datadim:
-            return data[ :, self.__mask != 0 ]
+            return data[ :, self.__mask ]
         else:
             raise ValueError, \
                   "Shape of the to be mapped data, does not match the " \
@@ -126,11 +126,11 @@ class MaskMapper(MetricMapper):
 
         if datadim == 1:
             mapped = N.zeros(self.__mask.shape, dtype=data.dtype)
-            mapped[self.__mask != 0] = data
+            mapped[self.__mask] = data
         elif datadim == 2:
             mapped = N.zeros(data.shape[:1] + self.__mask.shape,
                              dtype=data.dtype)
-            mapped[:, self.__mask != 0] = data
+            mapped[:, self.__mask] = data
 
         return mapped
 
