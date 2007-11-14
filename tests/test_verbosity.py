@@ -38,13 +38,20 @@ class VerboseOutputTest(unittest.TestCase):
         self.sout = StringIO()
 
         # set verbose to 4th level
+        self.__oldverbosehandlers = verbose.handlers
         verbose.handlers = [self.sout]
         verbose.level = 4
         if __debug__:
+            self.__olddebughandlers = debug.handlers
+            self.__olddebugactive = debug.active
             debug.handlers = [self.sout]
             debug.active = [1, 2, 'SLC']
 
     def tearDown(self):
+        verbose.handlers = self.__oldverbosehandlers
+        if __debug__:
+            debug.active = self.__olddebugactive
+            debug.handlers = self.__olddebughandlers
         self.sout.close()
 
     def testVerboseAbove(self):
