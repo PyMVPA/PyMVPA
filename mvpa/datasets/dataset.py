@@ -438,7 +438,7 @@ class Dataset(object):
                          check_data=False,
                          copy_samples=False,
                          copy_data=False,
-                         copy_dsattr=False
+                         copy_dsattr=True
                          )
 
         return dataset
