@@ -237,8 +237,9 @@ class Dataset(object):
         # only samples x features matrices are supported
         if len(samples.shape) > 2:
             raise ValueError, "Only (samples x features) -> 2d sample " \
-                            + "are supported. Consider MappedDataset if " \
-                            + "applicable."
+                            + "are supported (got %s shape of samples)." \
+                            % (`samples.shape`) \
+                            +" Consider MappedDataset if applicable."
 
         return samples
 
