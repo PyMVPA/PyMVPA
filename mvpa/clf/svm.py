@@ -186,7 +186,8 @@ class LinearSVM(SVMBase):
                          eps=eps, p=p, probability=probability,
                          shrinking=shrinking, weight_label=weight_label,
                          weight=weight)
-        self.__model = None
+        #yoh: XXX I bet we don't need to keep specific linearSVM model
+        #self.__model = None
 
 
 
