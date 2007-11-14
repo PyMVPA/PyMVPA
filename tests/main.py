@@ -27,12 +27,14 @@ tests = [
     # Classifiers (longer tests)
     'test_knn',
     'test_svm',
+    # Various algorithms
     'test_clfcrossval',
     'test_searchlight',
+    'test_rfe',
     ]
 #          'test_plf',
 #          'test_ifs',
-#          'test_rfe',
+
 
 
 # import all test modules

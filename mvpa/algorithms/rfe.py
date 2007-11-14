@@ -13,13 +13,13 @@ import numpy as N
 from math import floor, ceil
 
 from mvpa.algorithms.featsel import FeatureSelection, \
-                                    StopNBackHistoryCriterion,
+                                    StopNBackHistoryCriterion, \
                                     XPercentFeatureSelector
 from mvpa.misc.support import buildConfusionMatrix
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.state import State
-
+from mvpa.misc import debug
 
 # TODO: Abs value of sensitivity should be able to rule RFE
 # Often it is what abs value of the sensitivity is what matters.
@@ -57,7 +57,7 @@ class RFE(FeatureSelection, State):
         self._register("errors")
 
 
-"""
+        """
 current:
 testdata -> independent (split done outside RFE)
 dataset -> whole working dataset
@@ -81,10 +81,9 @@ itest <- inner test dataset to compute the intermediate generalization error
 
     sensitivity_analyzer = GLMSensitivity(...)
     def train_and_predict_error(clf)
-    error_oracle = 
+    error_oracle =
     rfe = RFE(..., error_oracle, sensitivity_analyzer)
-"""
-
+    """
 
     def __call__(self, dataset, testdataset=None, callables=[]):
         """Proceed and select the features recursively eliminating less
@@ -94,7 +93,7 @@ itest <- inner test dataset to compute the intermediate generalization error
         go = True
         result = None
         newtestdataset = None
-
+        step = 0
         while dataset.nfeatures>0:
             # Compute
             sensitivity = self.__sensitivity_analyzer(dataset)
@@ -103,6 +102,11 @@ itest <- inner test dataset to compute the intermediate generalization error
             # Check if it is time to stop and if we got
             # the best result
             (go, isthebest) = self.__stopping_criterion(errors)
+
+            if __debug__:
+                debug('RFEC',
+                      "Step %d: nfeatures=%d error=%.4f best/go=%d/%d" %
+                      (step, dataset.nfeatures, errors[-1], isthebest, go))
 
             # store result
             if isthebest:
@@ -130,6 +134,7 @@ itest <- inner test dataset to compute the intermediate generalization error
             if not newtestdataset is None:
                 testdataset = dataset
 
+            step += 1
         self["errors"] = errors
         return result
 
