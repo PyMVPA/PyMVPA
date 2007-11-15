@@ -54,7 +54,7 @@ class RFE(FeatureSelection, State):
         self.__error_oracle = error_oracle
 
         # register some
-        self._register("errors")
+        self._registerState("errors")
 
 
         """
