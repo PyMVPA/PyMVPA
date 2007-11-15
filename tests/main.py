@@ -31,6 +31,7 @@ tests = [
     'test_clfcrossval',
     'test_searchlight',
     'test_rfe',
+    'test_splitsensana'
     ]
 #          'test_plf',
 #          'test_ifs',
