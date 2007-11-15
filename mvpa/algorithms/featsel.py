@@ -137,7 +137,7 @@ class TailFeatureSelector(FeatureSelector):
         """
         FeatureSelector.__init__(self)  # init State before registering anything
 
-        self._register('ndiscarded')    # state variable
+        self._registerState('ndiscarded')    # state variable
         """Store number of discarded since we might remove less than requested
         if not enough features left
         """

@@ -31,6 +31,11 @@ class State(dict):
         dict.__setitem__(self, index, *args, **kwargs)
 
     def __getitem__(self, index):
+        # XXX Maybe unnecessary to check dict twice for matching member
+        # if it is not registered the will be no key like this in the
+        # dict, but if registered there need not be a key anyway.
+        # Therefore it should be sufficient to check for key in dict.
+        # Or do first test only in __debug__
         self.__checkIndex(index)
         if not self.has_key(index):
             raise UnknownStateError("Unknown yet value for '%s'" % index)
@@ -41,5 +46,8 @@ class State(dict):
     # XXX think about it -- may be it is worth making whole State
     # handling via static methods to remove any possible overhead of
     # registering the same keys in each constructor
-    def _register(self, key):
+    # Michael: Depends on what kind of objects we want to have a state.
+    #          Anyway as we will inherent this class I think the method name
+    #          should be a bit more distinctive. What about:
+    def _registerState(self, key):
         self.__registered.append(key)
