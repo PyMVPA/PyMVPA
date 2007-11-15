@@ -30,14 +30,14 @@ class LinearSVMWeights(SensitivityAnalyzer):
         """
         if not isinstance(clf, LinearSVM):
             raise ValueError, "Classifier has to be a LinearSVM, but is [%s]" \
-                              % `type(clf)
+                              % `type(clf)`
 
         self.__clf = clf
         """Classifier that will be trained on datasets and where weights will be
         extracted from."""
 
 
-    def __call(self, dataset, callables=[]):
+    def __call__(self, dataset, callables=[]):
         """Train linear SVM on `dataset` and extract weights from classifier.
         """
         self.__clf.train(dataset)
