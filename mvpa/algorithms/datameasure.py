@@ -45,6 +45,11 @@ class SensitivityAnalyzer(DataMeasure):
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.
     """
+    def __init__(self):
+        """Does nothing."""
+        pass
+
+
     def __call__(self, dataset, callbacks=[]):
         """Perform sensitivity analysis on a given `Dataset`.
 
