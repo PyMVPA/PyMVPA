@@ -15,6 +15,7 @@ import numpy as N
 from math import floor
 
 from mvpa.misc.vproperty import VProperty
+from mvpa.misc.state import State
 from mvpa.misc.exceptions import UnknownStateError
 
 
@@ -108,46 +109,56 @@ class StopNBackHistoryCriterion(StoppingCriterion):
     steps = property(fget=lambda x:x.__steps)
 
 
-class FeatureSelector(object):
+
+
+class FeatureSelector(State):
     """Base class to implement functors to select the set of properties
     """
-    pass
+    def __init__(self):
+        State.__init__(self)
 
 
-class XPercentFeatureSelector(FeatureSelector):
-    """Given a sensitivity map, provide Ids given a percentage of features
-
-    Since silly Yarik could not recall alternative to "proportion" to select
-    in units like 0.05 for 5%, now this selector does take values in percents
-    TODO: Should be DiscardSelector on top of it... __repr__, ndiscarded should
-          belong to it.
+class TailFeatureSelector(FeatureSelector):
+    """Remove features in the tail of the distribution.
     """
 
-    def __init__(self, perc_discard=5.0, removeminimal=True):
-        """XXX???
+    def __init__(self, removeminimal=True, exactnumber=False):
         """
-        self.__perc_discard = None      # pylint should smile
-        self.perc_discard = perc_discard
+        Initialize TailFeatureSelector
+        `removeminimal`: Bool, False signals to remove maximal elements
+        `exactnumber`: Bool, TODO!!: given a number of features to remove,
+                      when `exactnumber`==`False` (default now) selector might
+                      remove slightly more features if there are multiple
+                      features with the same minimal/maximal value.
+                      Implementation of `exactnumber`==True needs sorting
+                      to return indecies of the sorted array, so either zipping
+                      of values with indicies has to be done first or may be
+                      there is a better way
+        """
+        FeatureSelector.__init__(self)  # init State before registering anything
+
+        self._register('ndiscarded')    # state variable
+        """Store number of discarded since we might remove less than requested
+        if not enough features left
+        """
         self.__removeminimal = removeminimal
-        self.__ndiscarded = None
-        """Store number of discarded since for a given value we might
-        remove more than 1 if they are all equal -- it would be unfair
-        to leave some features in while another with the same value
-        got discarded
+        """Know which tail to remove
         """
 
 
     def __repr__(self):
-        s = "%s: perc=%f minimal=%s" % (
-            self.__name__, self.__perc_discard, self.__removeminimal)
-        if not self.__ndiscarded is None:
-            s += " discarded: %d" % self.ndiscarded
+        s = "%s: remove-minimal=%d" % (self.__name__, self.__removeminimal)
+        if not self['ndiscarded'] is None:
+            s += " {discarded: %d}" % self['ndiscarded']
+        return s
 
 
     def __call__(self, sensitivity):
+        """Call function returns Ids to be kept
+        """
         nfeatures = len(sensitivity)
         # how many to discard
-        nremove = int(floor(self.__perc_discard * nfeatures * 1.0 / 100.0))
+        nremove = min(self._getNumberToDiscard(nfeatures), nfeatures)
         sensmap = N.array(sensitivity)  # assure that it is ndarray
         sensmap2 = sensmap.copy()       # make a copy to sort
         sensmap2.sort()                 # sort inplace
@@ -157,19 +168,71 @@ class XPercentFeatureSelector(FeatureSelector):
             # remove maximal elements
             good_ids = sensmap[sensmap<sensmap2[-nremove]]
         # compute actual number of discarded elements
-        self.__ndiscarded = nfeatures - len(good_ids)
+        self['ndiscarded'] = nfeatures - len(good_ids)
         return good_ids
 
 
-    def _getNDiscarded(self):
-        """Return number of discarded elements
+class FixedNumberFeatureSelector(TailFeatureSelector):
+    """Given a sensitivity map, provide Ids given a number features to remove
 
-        Raises an UnknownStateError exception if the instance wasn't
-        called yet
+    TODO: Should be DiscardSelector on top of it... __repr__, ndiscarded should
+          belong to it.
+
+    TODO: Should API would be unified with XPercentFeatureSelector so they both
+          simple have .discard property and corresponding constructor parameter
+    """
+
+    def __init__(self, number_discard=1, *args, **kwargs):
         """
-        if self.__ndiscarded == None:
-            raise UnknownStateError
-        return self.__ndiscarded
+        """
+        TailFeatureSelector.__init__(self, *args, **kwargs)
+        self.__number_discard = number_discard      # pylint should smile
+
+
+    def __repr__(self):
+        return "%s number=%f" % (
+            TailFeatureSelector.__repr__(self), self.__number_discard)
+
+
+    def _getNumberToDiscard(self, nfeatures):
+        return min(nfeatures, self.__number_discard)
+
+
+    def _setNumberDiscard(self, number_discard):
+        self.__number_discard = number_discard
+
+
+    number_discard = property(fget=lambda x:x.__number_discard,
+                              fset=_setNumberDiscard)
+
+
+
+class XPercentFeatureSelector(TailFeatureSelector):
+    """Given a sensitivity map, provide Ids given a percentage of features
+
+    Since silly Yarik could not recall alternative to "proportion" to select
+    in units like 0.05 for 5%, now this selector does take values in percents
+    TODO: Should be DiscardSelector on top of it... __repr__, ndiscarded should
+          belong to it.
+    """
+
+    def __init__(self, perc_discard=5.0, **kargs):
+        """XXX???
+        """
+        self.__perc_discard = None      # pylint should smile
+        self.perc_discard = perc_discard
+        TailFeatureSelector.__init__(self, **kargs)
+
+
+    def __repr__(self):
+        return "%s perc=%f" % (
+            TailFeatureSelector.__repr__(self), self.__perc_discard)
+
+
+    def _getNumberToDiscard(self, nfeatures):
+        num = int(floor(self.__perc_discard * nfeatures * 1.0 / 100.0))
+        num = max(1, num)               # remove at least 1
+        return min(num, nfeatures)
 
 
     def _setPercDiscard(self, perc_discard):
@@ -181,7 +244,6 @@ class XPercentFeatureSelector(FeatureSelector):
         self.__perc_discard = perc_discard
 
 
-    ndiscarded = property(fget=_getNDiscarded)
     perc_discard = property(fget=lambda x:x.__perc_discard,
                             fset=_setPercDiscard)
 
