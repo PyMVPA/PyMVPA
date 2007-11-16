@@ -227,21 +227,31 @@ class MaskMapper(MetricMapper):
         theoretically outIds can be mask (ie boolean mask over which
         features to preserve)
         """
-        try:
-            # removing some outIds reenumerates outIds in respect to
-            # self.__forwardmap
-            # Following beasties should be adjusted
-            # self.__forwardmap = self
-            # self.__mask
-            # self.__masknonzero
-            # self.__masknonzerosize
-            # TODO: In efficient implementation we should not redo the whole mask
-            # but for now lets just:
-            newmask = self.buildMaskFromFeatureIds(outIds)
-            self._initMask(newmask)
-            # If there is much penalty on real use cases -- rethink
-        except:
-            raise NotImplementedError
+        # removing some outIds reenumerates outIds in respect to
+        # self.__forwardmap
+        # Following beasties should be adjusted
+        # self.__forwardmap = self
+        # self.__mask
+        # self.__masknonzero
+        # self.__masknonzerosize
+        # TODO: In efficient implementation we should not redo the whole mask
+        # but for now lets just:
+        #newmask = self.buildMaskFromFeatureIds(outIds)
+        #self._initMask(newmask)
+
+        # adjust mask and forwardmap
+        excluded = N.array([ True ] * self.nfeatures)
+        excluded[outIds] = False    # create a map of excluded Ids
+        excludedin = tuple(self.getInId(excluded))
+        self.__mask[excludedin] = False
+        self.__forwardmap[excludedin] = 0
+
+        self.__masknonzerosize = len(outIds)
+        self.__masknonzero = [ x[outIds] for x in self.__masknonzero ]
+
+        # adjust/remap not excluded in forwardmap
+        self.__forwardmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
+        # If there is much penalty on real use cases -- rethink
 
 
     def buildMaskFromFeatureIds(self, outIds):
