@@ -16,6 +16,8 @@ from mvpa.datasets.mappeddataset import MappedDataset
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.dataset import Dataset
 
+if __debug__:
+    from mvpa.misc import debug
 
 class MaskedDataset(MappedDataset):
     """
@@ -102,7 +104,9 @@ class MaskedDataset(MappedDataset):
         # AND new and old mask to get the common features
         comb_mask = N.logical_and(mask != 0,
                                   self.mapper.getMask(copy=False) != 0)
-
+        if __debug__:
+            debug('DS', "VERY SUBOPTIMAL - do not rely on performance")
         # transform mask into feature space
         fmask = self.mapper.forward( comb_mask != 0 )
-        return self.selectFeatures(fmask, plain=plain, bymask=True)
+        #TODO all this will be gone soon anyway -- need proper selectIn within a mapper
+        return self.selectFeatures(fmask.nonzero()[0], plain=plain, bymask=True)
