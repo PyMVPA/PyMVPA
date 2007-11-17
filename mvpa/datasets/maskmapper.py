@@ -91,10 +91,7 @@ class MaskMapper(MetricMapper):
         # under assumption that we +1 values in forwardmap so that
         # 0 can be used to signal outside of mask
 
-        # XXX this loop takes forever!!!!
-        for voxelIndex in xrange(self.__masknonzerosize):
-            coordIn = self.getInId(voxelIndex)
-            self.__forwardmap[tuple(coordIn)] = voxelIndex + 1
+        self.__forwardmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
 
 
     def forward(self, data):
@@ -204,7 +201,11 @@ class MaskMapper(MetricMapper):
         # the end -- we need to check coordinates explicitely. Otherwise
         # we would get warping effect
         try:
-            outId = self.__forwardmap[tuple(coord)]
+            tcoord = tuple(coord)
+            if self.__mask[tcoord] == 0:
+                raise ValueError, \
+                      "The point %s didn't belong to the mask" % (`coord`)
+            return self.__forwardmap[tcoord]
         except TypeError:
             raise ValueError, \
                   "Coordinates %s are of incorrect dimension. " % `coord` + \
@@ -213,12 +214,6 @@ class MaskMapper(MetricMapper):
             raise ValueError, \
                   "Coordinates %s are out of mask boundary. " % `coord` + \
                   "The mask is of %s shape." % `self.__mask.shape`
-
-        if not outId:
-            raise ValueError, \
-                  "The point %s didn't belong to the mask" % (`coord`)
-        else:
-            return outId - 1
 
 
     def selectOut(self, outIds):
