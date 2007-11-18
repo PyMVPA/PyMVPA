@@ -23,7 +23,7 @@ from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.datasets.misc import zscore
 from mvpa.algorithms.searchlight import Searchlight
 
-from mvpa.misc.iohelpers import ColumnDataFromFile
+from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \
      optsCommon, optClf, optsSVM, optRadius, optKNearestDegree, \
@@ -71,12 +71,12 @@ def main():
     # TODO: We need some generic helper to read conditions stored in some
     #       common formats
     verbose(2, "Reading conditions from file %s" % cfile)
-    conds = ColumnDataFromFile(cfile, header=True, dtype=int)
+    attrs = SampleAttributes(cfile)
 
     verbose(2, "Loading volume file %s" % dfile)
     data = NiftiDataset(samples=dfile,
-                        labels=conds['labels'],
-                        chunks=conds['chunks'],
+                        labels=attrs.labels,
+                        chunks=attrs.chunks,
                         mask=mfile,
                         dtype=N.float32)
 
