@@ -18,6 +18,6 @@ class UnknownStateError(Exception):
     def __init__(self, msg=""):
         self.__msg = msg
 
-    def __repr__(self):
+    def __str__(self):
         return "Exception: " + self.__msg
 

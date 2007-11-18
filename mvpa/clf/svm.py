@@ -186,7 +186,6 @@ class LinearSVM(SVMBase):
                          eps=eps, p=p, probability=probability,
                          shrinking=shrinking, weight_label=weight_label,
                          weight=weight)
-        self.__model = None
 
 
 

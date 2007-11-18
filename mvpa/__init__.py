@@ -14,6 +14,7 @@ if not __debug__:
         import psyco
         psyco.profile()
     except:
+        from mvpa.misc import verbose
         verbose(5, "Psyco online compilation is not enabled in knn")
 
 #from mvpa.dataset import *

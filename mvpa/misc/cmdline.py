@@ -18,6 +18,9 @@ Option name should be camelbacked version of .dest for the option.
 # TODO? all options (opt*) might migrate to respective module? discuss
 from optparse import Option
 
+# needed for verboseCallback
+from mvpa.misc import verbose
+
 #
 # Verbosity options
 #
