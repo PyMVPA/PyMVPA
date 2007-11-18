@@ -38,9 +38,12 @@ class ColumnDataFromFile(dict):
         Parameters
         ----------
          - `filename`: Indeed!
-         - `header`: Boolean that indicates whether the column names should be
-                     read from the first line. If False unique column names
-                     will be generated (see class docs).
+         - `header`: Indicates whether the column names should be read from the
+                     first line (`header=True`). If `header=False` unique column
+                     names will be generated (see class docs). If `header` is
+                     a python list, it's content is used as column header names
+                     and its length has to match the number of columns in the
+                     file.
          - `sep`: Separator string. The actual meaning depends on the output
                   format (see class docs).
          - `otype`: Output format: `ndarray` or `list`.
@@ -49,9 +52,11 @@ class ColumnDataFromFile(dict):
         file = open(filename, 'r')
 
         # make column names, either take header or generate
-        if header:
+        if header == True:
             # read first line and split by 'sep'
             hdr = file.readline().split(sep)
+        elif isinstance(header, list):
+            hdr = header
         else:
             hdr = [ str(i) for i in xrange(len(file.readline().split(sep))) ]
             # reset file to not miss the first line
@@ -100,3 +105,45 @@ class ColumnDataFromFile(dict):
         for i,v in enumerate(hdr):
             self[v] = tbl[i]
 
+
+
+class FslEV3(ColumnDataFromFile):
+    """IO helper to read FSL's EV3 files.
+
+    This is a three-column textfile format that is used to specify stimulation
+    protocols for fMRI data analysis in FSL's FEAT module.
+
+    Data is always read as `float`.
+    """
+    def __init__(self, filename, otype=list):
+        """Read EV3 file from disk.
+
+        Parameter
+        ---------
+
+        - `filename`: hmm, what can I say....
+        - `otype`: Output format: `ndarray` or `list`.
+        """
+        # init data from known format
+        ColumnDataFromFile.__init__(self, filename,
+                                    header=['onset', 'duration', 'intensity'],
+                                    sep=None, otype=otype, dtype=float)
+
+
+    def getNEVs(self):
+        """Returns the number of EVs in the file.
+        """
+        return len(self['onset'])
+
+
+    def getEV(self, id):
+        """Returns a tuple of (onset time, simulus duration, intensity) for a
+        certain EV.
+        """
+        return (self['onset'][id], self['duration'][id], self['intensity'][id])
+
+
+    onset = property(fget=lambda self: self['onset'])
+    duration = property(fget=lambda self: self['duration'])
+    intensity = property(fget=lambda self: self['intensity'])
+    nevs = property(fget=getNEVs)
