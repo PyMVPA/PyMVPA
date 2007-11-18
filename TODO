@@ -11,14 +11,20 @@
    various algorithms on it a verify the results against previousely
    obtained (and dumped to the disk)
 
+* Implement a better __deepcopy__ for maskmapper that does not call
+  _initMask(), but copies the whole state. This has to be done because
+  shallow copies of the mapping mask will results in modifications of the
+  source mapper.
+
 * confirm with Michael and refactor:
 
 * for yarik: 
 
-  verify on 'bad' searchlight that we get the same 'wrong' results and
-   compare the performance time-wise
+  DONE: verify on 'bad' searchlight that we get the same 'wrong' results and
+   compare the performance time-wise. results stay the same. to get to
+   the same speed had to disable all deepcopying within select{Features,Samples}
 
-  refactor code so getNSamplesPerAttr returns a dictionary (not just numbers)
+  DONE: refactor code so getNSamplesPerAttr returns a dictionary (not just numbers)
 
   maskmapper -- profile selectOut and see if alternative
    implementation will be faster. Also add removeOut  

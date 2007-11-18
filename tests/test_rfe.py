@@ -12,11 +12,13 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.clf.rfe import RFE, \
-     StopNBackHistoryCriterion, XPercentFeatureSelector
+from mvpa.algorithms.rfe import RFE
+from mvpa.algorithms.featsel import \
+     StopNBackHistoryCriterion, XPercentFeatureSelector, \
+     FixedNumberFeatureSelector
 #from mvpa.clf.svm import SVM
 
-from mvpa.misc.exceptions import UnknownStateError
+from mvpa.misc.state import UnknownStateError
 
 class RFETests(unittest.TestCase):
 
@@ -51,12 +53,24 @@ class RFETests(unittest.TestCase):
         target10 = N.array([3.5, 10, 7, 5, 0, 0, 2, 10, 9])
         target20 = N.array([3.5, 10, 7, 5, 2, 10, 9])
 
-        self.failUnlessRaises(UnknownStateError, selector._getNDiscarded)
+        self.failUnlessRaises(UnknownStateError, selector.__getitem__, 'ndiscarded')
         self.failUnless((selector(dataset) == target10).all())
         selector.perc_discard = 20      # discard 20%
                                         # but since there are 2 0s
         self.failUnless((selector(dataset) == target20).all())
-        self.failUnless(selector.ndiscarded == 3) # se 3 were discarded
+        self.failUnless(selector['ndiscarded'] == 3) # se 3 were discarded
+
+        selector = FixedNumberFeatureSelector(1)
+        dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
+        dataset1 = selector(dataset)
+        self.failUnless((dataset1 == target10).all())
+        self.failUnless((selector(dataset1) == target20).all())
+        self.failUnless(selector['ndiscarded'] == 2)
+
+        # Lets remove with 0s explicitely specified
+        selector.number_discard = 3
+        self.failUnless((selector(dataset) == target20).all())
+        self.failUnless(selector['ndiscarded'] == 3)
 
         # XXX more needed
 

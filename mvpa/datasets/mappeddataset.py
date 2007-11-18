@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Mapped dataset"""
 
+import copy
 
 from mvpa.datasets.dataset import Dataset
 
@@ -72,13 +73,17 @@ class MappedDataset(Dataset):
         if bymask == False:
             ids = sorted(ids)
 
+
         # call base method to get selected feature subset
         if plain:
-            sdata = Dataset(self._data, self._dsattr, copy_samples=False,
-                            copy_data=False, copy_dsattr=False)
+            sdata = Dataset(self._data, self._dsattr, check_data=False,
+                            copy_samples=False, copy_data=False,
+                            copy_dsattr=False)
             return sdata.selectFeatures(ids)
         else:
             sdata = Dataset.selectFeatures(self, ids)
+            # since we have new DataSet we better have a new mapper
+            sdata._dsattr['mapper'] = copy.copy(sdata._dsattr['mapper'])
             sdata._dsattr['mapper'].selectOut(ids)
             return sdata
 
