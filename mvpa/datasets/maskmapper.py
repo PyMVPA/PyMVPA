@@ -91,10 +91,7 @@ class MaskMapper(MetricMapper):
         # under assumption that we +1 values in forwardmap so that
         # 0 can be used to signal outside of mask
 
-        # XXX this loop takes forever!!!!
-        for voxelIndex in xrange(self.__masknonzerosize):
-            coordIn = self.getInId(voxelIndex)
-            self.__forwardmap[tuple(coordIn)] = voxelIndex + 1
+        self.__forwardmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
 
 
     def forward(self, data):
@@ -106,8 +103,14 @@ class MaskMapper(MetricMapper):
                   "To be mapped data does not match the mapper mask."
 
         if self.__maskdim == datadim:
+            # we had to select by __masknonzero if we didn't sort
+            # Ids and wanted to preserve the order
+            #return data[ self.__masknonzero ]
             return data[ self.__mask ]
         elif self.__maskdim+1 == datadim:
+            # XXX XXX XXX below line should be accomodated also
+            # to make use of self.__masknonzero instead of
+            # plain mask if we want to preserve the (re)order
             return data[ :, self.__mask ]
         else:
             raise ValueError, \
@@ -204,7 +207,11 @@ class MaskMapper(MetricMapper):
         # the end -- we need to check coordinates explicitely. Otherwise
         # we would get warping effect
         try:
-            outId = self.__forwardmap[tuple(coord)]
+            tcoord = tuple(coord)
+            if self.__mask[tcoord] == 0:
+                raise ValueError, \
+                      "The point %s didn't belong to the mask" % (`coord`)
+            return self.__forwardmap[tcoord]
         except TypeError:
             raise ValueError, \
                   "Coordinates %s are of incorrect dimension. " % `coord` + \
@@ -214,35 +221,72 @@ class MaskMapper(MetricMapper):
                   "Coordinates %s are out of mask boundary. " % `coord` + \
                   "The mask is of %s shape." % `self.__mask.shape`
 
-        if not outId:
-            raise ValueError, \
-                  "The point %s didn't belong to the mask" % (`coord`)
-        else:
-            return outId - 1
 
+    def selectOut(self, outIds, sort=False):
+        """Only listed outIds would remain. Order matters!
 
-    def selectOut(self, outIds):
-        """Only listed outIds would remain
+        TODO: Decide either "Feature/Bug?"
+        1. Order will be taken into account -- ie items will be
+        remapped if order was changed... need to check if neighboring
+        still works... no -- it doesn't. For the data without samples
+        .forward can be easily adjusted by using masknonzero instead of
+        plain mask, but for data with samplesI don't see a clean way...
+        see forward() above... there is no testcase for order preservation
+        for DIM+1 case
 
+        see testSelectOrder for basic testing
+
+        2. Negative outIds would not raise exception - just would be
+        treated 'from the tail'
+
+        XXX? might not be true any more:
         theoretically outIds can be mask (ie boolean mask over which
         features to preserve)
         """
-        try:
-            # removing some outIds reenumerates outIds in respect to
-            # self.__forwardmap
-            # Following beasties should be adjusted
-            # self.__forwardmap = self
-            # self.__mask
-            # self.__masknonzero
-            # self.__masknonzerosize
-            # TODO: In efficient implementation we should not redo the whole mask
-            # but for now lets just:
-            newmask = self.buildMaskFromFeatureIds(outIds)
-            self._initMask(newmask)
-            # If there is much penalty on real use cases -- rethink
-        except:
-            raise NotImplementedError
+        if sort:
+            outIds.sort()
 
+        # adjust mask and forwardmap
+        excluded = N.array([ True ] * self.nfeatures)
+        excluded[outIds] = False    # create a map of excluded Ids
+        excludedin = tuple(self.getInId(excluded))
+        self.__mask[excludedin] = False
+
+        self.__masknonzerosize = len(outIds)
+        self.__masknonzero = [ x[outIds] for x in self.__masknonzero ]
+
+        # adjust/remap not excluded in forwardmap
+        # since we merged _tent/maskmapper-init-noloop it is not necessary
+        # to zero-out excluded entries since we anyway would check with mask
+        # in getOutId(s)
+        self.__forwardmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
+
+
+    def excludeOut(self, outIds):
+        """Listed outIds would be excluded
+
+        """
+
+        # adjust mask and forwardmap
+        excludedin = tuple(self.getInId(outIds))
+        self.__mask[excludedin] = False
+        # since we merged _tent/maskmapper-init-noloop it is not necessary
+        # to zero-out excluded entries since we anyway would check with mask
+        # in getOutId(s)
+        # self.__forwardmap[excludedin] = 0
+
+        self.__masknonzerosize -= len(outIds)
+        self.__masknonzero = [ N.delete(x, outIds)
+                               for x in self.__masknonzero ]
+
+        # adjust/remap not excluded in forwardmap
+        self.__forwardmap[self.__masknonzero] = \
+                                              N.arange(self.__masknonzerosize)
+
+        # OPT: we can adjust __forwardmap only for ids which are higher than
+        # the smallest outId among excluded. Similar strategy could be done
+        # for selectOut but such index has to be figured out first there
+        #      ....
 
     def buildMaskFromFeatureIds(self, outIds):
         """ Returns a mask with all features in ids selected from the
