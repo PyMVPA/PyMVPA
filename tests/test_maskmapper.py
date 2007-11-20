@@ -131,6 +131,65 @@ class MaskMapperTests(unittest.TestCase):
                         and mm.getOutId((2,1,0)) == 2)
 
 
+    def testSelects(self):
+        mask = N.ones((3,2))
+        mask[1,1] = 0
+        mask0 = mask.copy()
+        data = N.arange(6).reshape(mask.shape)
+        map_ = MaskMapper(mask)
+
+        # check if any exception is thrown if we get
+        # out of the outIds
+        self.failUnlessRaises(IndexError, map_.selectOut, [0,1,2,6])
+
+        # remove 1,2
+        map_.selectOut([0,3,4])
+        self.failUnless((map_.forward(data)==[0, 4, 5]).all())
+        # remove 1 more
+        map_.selectOut([0,2])
+        self.failUnless((map_.forward(data)==[0, 5]).all())
+
+        # check if original mask wasn't perturbed
+        self.failUnless((mask == mask0).all())
+
+        # do the same but using excludeOut
+        map_ = MaskMapper(mask)
+        map_.excludeOut([1,2])
+        self.failUnless((map_.forward(data)==[0, 4, 5]).all())
+        map_.excludeOut([1])
+        self.failUnless((map_.forward(data)==[0, 5]).all())
+
+        # check if original mask wasn't perturbed
+        self.failUnless((mask == mask0).all())
+
+
+    def testSelectOrder(self):
+        """
+        Test if changing the order by doing selectOut
+        preserves neighborhood information
+        """
+        mask = N.ones((3,3))
+        mask[1,1] = 0
+
+        data = N.arange(9).reshape(mask.shape)
+        map_ = MaskMapper(mask)
+        oldneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
+
+        # just do place changes
+        # by default - we don't sort/check order so it would screw things
+        # up
+        map_.selectOut([7, 1, 2, 3, 4, 5, 6, 0])
+        # we check if an item new outId==7 still has proper neighbors
+        newneighbors = map_.forward(data)[map_.getNeighbors(7, radius=2)]
+        self.failUnless( (oldneighbors != newneighbors ).any())
+
+        map_ = MaskMapper(mask)
+        map_.selectOut([7, 1, 2, 3, 4, 5, 6, 0], sort=True)
+        # we check if an item new outId==0 still has proper neighbors
+        newneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
+        self.failUnless( (oldneighbors == newneighbors ).all())
+
+
 def suite():
     return unittest.makeSuite(MaskMapperTests)
 

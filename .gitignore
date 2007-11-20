@@ -11,3 +11,5 @@ build
 data
 build-arch*
 svmc_wrap.cpp
+doc/examples/dump.*
+*.bak
