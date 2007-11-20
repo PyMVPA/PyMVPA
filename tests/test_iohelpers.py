@@ -13,7 +13,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from mvpa.misc.iohelpers import ColumnData, FslEV3
+from mvpa.misc.iohelpers import ColumnData, FslEV3, SampleAttributes
 
 
 class IOHelperTests(unittest.TestCase):
@@ -93,6 +93,14 @@ class IOHelperTests(unittest.TestCase):
         os.remove(fpath)
 
 
+    def testFslEV(self):
+        attr = SampleAttributes(os.path.join('data', 'smpl_attr.txt'))
+
+        # check header (sort because order in dict is unpredictable)
+        self.failUnless(sorted(attr.keys()) == \
+            ['chunks','labels'])
+
+        self.failUnless(attr.nsamples == 3)
 
 
 def suite():
