@@ -62,4 +62,6 @@ class SensitivityAnalyzer(DataMeasure):
         should indicate higher sensitivity (or signal to noise ratio or
         amount of available information or the like).
         """
+        # XXX should we allow to return multiple maps (as a sequence) as
+        # currently (illegally) done by SplittingSensitivityAnalyzer?
         raise NotImplementedError
