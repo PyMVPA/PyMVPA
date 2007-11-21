@@ -11,7 +11,10 @@
 import unittest
 from StringIO import StringIO
 
+from mvpa.misc.verbosity import OnceLogger
+
 from mvpa.misc import verbose
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -37,6 +40,8 @@ class VerboseOutputTest(unittest.TestCase):
         # output stream
         self.sout = StringIO()
 
+        self.once = OnceLogger(handlers=[self.sout])
+
         # set verbose to 4th level
         self.__oldverbosehandlers = verbose.handlers
         verbose.handlers = [self.sout]
@@ -54,10 +59,12 @@ class VerboseOutputTest(unittest.TestCase):
             debug.handlers = self.__olddebughandlers
         self.sout.close()
 
+
     def testVerboseAbove(self):
         """Test if it doesn't output at higher levels"""
         verbose(5, self.msg)
         self.failUnlessEqual(self.sout.getvalue(), "")
+
 
     def testVerboseBelow(self):
         """Test if outputs at lower levels and indents
@@ -100,6 +107,17 @@ class VerboseOutputTest(unittest.TestCase):
         self.failUnlessEqual(self.sout.getvalue(),
                              '  %s\r              \rrewrite' % self.msg +\
                              '\r       \rrewrite 2 add finish\n')
+
+    def testOnceLogger(self):
+        """Test once logger"""
+        self.once("X", self.msg)
+        self.once("X", self.msg)
+        self.failUnlessEqual(self.sout.getvalue(), self.msg+"\n")
+
+        self.once("Y", "XXX", 2)
+        self.once("Y", "XXX", 2)
+        self.once("Y", "XXX", 2)
+        self.failUnlessEqual(self.sout.getvalue(), self.msg+"\nXXX\nXXX\n")
 
 
     if __debug__:
