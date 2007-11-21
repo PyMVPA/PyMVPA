@@ -101,15 +101,15 @@ class ColumnData(dict):
         for line in file:
             # get rid of leading and trailing whitespace
             line = line.strip()
-            # ignore empty lines
-            if not line:
+            # ignore empty lines and comment lines
+            if not line or line.startswith('#'):
                 continue
             l = line.split(sep)
 
             if not len(l) == len(hdr):
                 raise RuntimeError, \
-                      "Number of entries in line does not match number " \
-                      "of columns in header."
+                      "Number of entries in line [%i] does not match number " \
+                      "of columns in header [%i]." % (len(l), len(hdr))
 
             for i, v in enumerate(l):
                 tbl[i].append(dtype(v))
@@ -150,7 +150,7 @@ class ColumnData(dict):
         return len(self.keys())
 
 
-    def tofile(self, filename, header=True, sep=' '):
+    def tofile(self, filename, header=True, header_order=None, sep=' '):
         """Write column data to a text file.
 
         Parameter
@@ -158,30 +158,32 @@ class ColumnData(dict):
 
         - `filename`: Think about it!
         - `header`: If `True` a column header is written, using the column
-                    keys. If `False` no header is written. Finally, if it is
-                    a list of string, they will be used instead of simply
-                    asking for the dictionary keys. However these strings must
-                    match the dictionary keys in number and identity. This
-                    argument type can be used to determine the order of the
-                    columns in the output file.
+                    keys. If `False` no header is written.
+        - `header_order`: If it is a list of strings, they will be used instead
+                          of simply asking for the dictionary keys. However
+                          these strings must match the dictionary keys in number
+                          and identity. This argument type can be used to
+                          determine the order of the columns in the output file.
+                          The default value is `None`. In this case the columns
+                          will be in an arbitrary order.
         - `sep`: String that is written as a separator between to data columns.
         """
         # XXX do the try: except: dance
         file = open(filename, 'w')
 
         # write header
-        if header == True:
+        if header_order == None:
             col_hdr = self.keys()
-        if isinstance(header, list):
-            if not len(header) == self.getNColumns():
-                raise ValueError, 'Header list does not matcg number of ' \
+        else:
+            if not len(header_order) == self.getNColumns():
+                raise ValueError, 'Header list does not match number of ' \
                                   'columns.'
-            for k in header:
+            for k in header_order:
                 if not self.has_key(k):
                     raise ValueError, 'Unknown key [%s]' % `k`
-            col_hdr = header
+            col_hdr = header_order
 
-        if not header == False:
+        if header == True:
             file.write(sep.join(col_hdr) + '\n')
 
         # for all rows
@@ -247,7 +249,8 @@ class FslEV3(ColumnData):
         """Write data to a FSL EV3 file.
         """
         ColumnData.tofile(self, filename,
-                          header=['onsets', 'durations', 'intensities'],
+                          header=False,
+                          header_order=['onsets', 'durations', 'intensities'],
                           sep=' ')
 
 
@@ -279,7 +282,8 @@ class SampleAttributes(ColumnData):
         """Write sample attributes to a text file.
         """
         ColumnData.tofile(self, filename,
-                          header=['labels', 'chunks'],
+                          header=False,
+                          header_order=['labels', 'chunks'],
                           sep=' ')
 
 

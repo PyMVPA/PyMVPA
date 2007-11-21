@@ -108,3 +108,44 @@ optZScore = \
     Option("--zscore",
            action="store_true", dest="zscore", default=0,
            help="Enable zscoring of dataset samples. Default: Off")
+
+# preprocess options
+
+optTr = \
+    Option("--tr",
+           action="store", dest="tr", default=2.0, type='float',
+           help="fMRI volume repetition time. Default: 2.0")
+
+optDetrend = \
+    Option("--detrend",
+           action="store_true", dest="detrend", default=0,
+           help="Do linear detrending. Default: Off")
+
+optBoxLength = \
+    Option("--boxlength",
+           action="store", dest="boxlength", default=1, type='int',
+           help="Length of the box in volumes (integer). Default: 1")
+
+optBoxOffset = \
+    Option("--boxoffset",
+           action="store", dest="boxoffset", default=0, type='int',
+           help="Offset of the box from the event onset in volumes. Default: 0")
+
+optsBox = [optBoxLength, optBoxOffset]
+
+
+# sample attributes
+
+optChunk = \
+    Option("--chunk",
+           action="store", dest="chunk", default='0',
+           help="Id of the data chunk. Default: 0")
+
+optChunkLimits = \
+    Option("--chunklimits",
+           action="store", dest="chunklimits", default=None,
+           help="Limit processing to a certain chunk of data given by start " \
+                "and end volume number (including lower, excluding upper " \
+                "limit). Numbering starts with zero.")
+
+optsChunk = [optChunk, optChunkLimits]
