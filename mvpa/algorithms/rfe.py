@@ -19,7 +19,9 @@ from mvpa.misc.support import buildConfusionMatrix
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.state import State
-from mvpa.misc import debug
+
+if __debug__:
+    from mvpa.misc import debug
 
 # TODO: Abs value of sensitivity should be able to rule RFE
 # Often it is what abs value of the sensitivity is what matters.
