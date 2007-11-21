@@ -12,7 +12,7 @@ from sys import stdout, stderr
 
 from os import environ
 
-from verbosity import LevelLogger
+from verbosity import LevelLogger, OnceLogger
 
 #
 # Setup verbose and debug outputs
@@ -32,6 +32,38 @@ errors = LevelLogger(handlers=[stderr])
 # Lets check if environment can tell us smth
 if environ.has_key('MVPA_VERBOSE'):
     verbose.level = int(environ['MVPA_VERBOSE'])
+
+
+# Define Warning class so it is printed just once per each message
+class WarningLog(OnceLogger):
+
+    def __init__(self, btlevels=4, *args, **kwargs):
+        """Define Warning logger.
+
+        It is defined by
+          `btlevels`, int: how many levels of backtrack to print to
+                           give a hint on WTF
+        """
+        OnceLogger.__init__(self, *args, **kwargs)
+        self.__btlevels = btlevels
+
+    def __call__(self, msg):
+        import traceback, sys
+        tb = traceback.extract_stack(limit=2)
+        msgid = `tb[-2]`                # take parent as the source of ID
+        fullmsg = "WARNING: %s.\n\t(Please note: this warning is " % msg + \
+                  "printed only once, but underlying problem might " + \
+                  "occur many times.\n"
+        if self.__btlevels > 0:
+            fullmsg += "Top-most backtrace:\n"
+            fullmsg += reduce(lambda x,y: x+"\t%s:%d in %s where '%s'\n" %y,
+                              traceback.extract_stack(limit=self.__btlevels),
+                              "")
+
+        OnceLogger.__call__(self, msgid, fullmsg)
+
+warning = WarningLog(handlers=[stdout])
+
 
 if __debug__:
     from verbosity import DebugLogger
