@@ -16,6 +16,11 @@ distclean:
 manual:
 	cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
 
+apidoc:
+	epydoc --config doc/api/epydoc.conf
+
+pylint:
+	pylint --rcfile doc/misc/pylintrc mvpa
 
 orig-src: distclean 
 	# clean existing dist dir first to have a single source tarball to process
