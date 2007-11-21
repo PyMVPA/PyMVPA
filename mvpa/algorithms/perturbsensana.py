@@ -87,7 +87,7 @@ class PerturbationSensitivityAnalyzer(SensitivityAnalyzer):
             wdata = deepcopy(dataset)
 
             # add noise to current feature
-            wdata.samples[:,feature] += self.__noise(size=wdata.nsamples)
+            wdata.samples[:, feature] += self.__noise(size=wdata.nsamples)
 
             # compute the datameasure on the perturbed dataset
             perturbed_measure = self.__datameasure(wdata)

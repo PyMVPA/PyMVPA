@@ -8,13 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset with applied mask"""
 
-import operator
-
 import numpy as N
 
 from mvpa.datasets.mappeddataset import MappedDataset
 from mvpa.datasets.maskmapper import MaskMapper
-from mvpa.datasets.dataset import Dataset
 
 if __debug__:
     from mvpa.misc import debug
@@ -108,5 +105,8 @@ class MaskedDataset(MappedDataset):
             debug('DS', "VERY SUBOPTIMAL - do not rely on performance")
         # transform mask into feature space
         fmask = self.mapper.forward( comb_mask != 0 )
-        #TODO all this will be gone soon anyway -- need proper selectIn within a mapper
-        return self.selectFeatures(fmask.nonzero()[0], plain=plain, bymask=True)
+        #TODO all this will be gone soon anyway -- need proper selectIn within
+        # a mapper
+        return self.selectFeatures(fmask.nonzero()[0], plain=plain,
+                                   bymask=True)
+
