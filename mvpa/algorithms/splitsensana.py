@@ -20,6 +20,11 @@ from mvpa.misc.state import State
 
 
 class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
+    # XXX current behavior of __call__() is illegal according to base class
+    # docs. Should only return a single 1d map (or change this restriction).
+    # if base class requirement should be kept a workaround would be to
+    # change the current default postproc to store all maps and let call return
+    # the mean instead.
     """This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
     and runs it multiple times on differents splits of a `Dataset`.
 
