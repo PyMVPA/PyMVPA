@@ -163,10 +163,10 @@ class MaskMapperTests(unittest.TestCase):
         self.failUnless((mask == mask0).all())
 
 
-    def testSelectOrder(self):
+    def _testSelectReOrder(self):
         """
-        Test if changing the order by doing selectOut
-        preserves neighborhood information
+        Test is desabled for now since if order is incorrect in
+        __debug__ we just spit out a warning - no exception
         """
         mask = N.ones((3,3))
         mask[1,1] = 0
@@ -182,6 +182,20 @@ class MaskMapperTests(unittest.TestCase):
         # we check if an item new outId==7 still has proper neighbors
         newneighbors = map_.forward(data)[map_.getNeighbors(7, radius=2)]
         self.failUnless( (oldneighbors != newneighbors ).any())
+
+
+    def testSelectOrder(self):
+        """
+        Test if changing the order by doing selectOut preserves
+        neighborhood information -- but also apply sort in difference
+        to testSelectReOrder
+        """
+        mask = N.ones((3,3))
+        mask[1,1] = 0
+
+        data = N.arange(9).reshape(mask.shape)
+        map_ = MaskMapper(mask)
+        oldneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
 
         map_ = MaskMapper(mask)
         map_.selectOut([7, 1, 2, 3, 4, 5, 6, 0], sort=True)
