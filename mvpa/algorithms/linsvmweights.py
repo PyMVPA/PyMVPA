@@ -32,6 +32,9 @@ class LinearSVMWeights(SensitivityAnalyzer):
             raise ValueError, "Classifier has to be a LinearSVM, but is [%s]" \
                               % `type(clf)`
 
+        # init base classes first
+        SensitivityAnalyzer.__init__(self)
+
         self.__clf = clf
         """Classifier that will be trained on datasets and where weights will be
         extracted from."""

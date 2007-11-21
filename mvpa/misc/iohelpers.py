@@ -11,8 +11,6 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-
 
 class ColumnData(dict):
     """Read data that is stored in columns of text files.
@@ -48,6 +46,9 @@ class ColumnData(dict):
                   format (see class docs).
          - `dtype`: Desired datatype.
         """
+        # init base class
+        dict.__init__(self)
+
         if isinstance(source, str):
             self._fromFile(source, header=header, sep=sep, dtype=dtype)
 
@@ -81,24 +82,24 @@ class ColumnData(dict):
         # make a clean table
         self.clear()
 
-        file = open(filename, 'r')
+        file_ = open(filename, 'r')
 
         # make column names, either take header or generate
         if header == True:
             # read first line and split by 'sep'
-            hdr = file.readline().split(sep)
+            hdr = file_.readline().split(sep)
         elif isinstance(header, list):
             hdr = header
         else:
-            hdr = [ str(i) for i in xrange(len(file.readline().split(sep))) ]
+            hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
             # reset file to not miss the first line
-            file.seek(0)
+            file_.seek(0)
 
         # string in lists: one per column
         tbl = [ [] for i in xrange(len(hdr)) ]
 
         # parse line by line and feed into the lists
-        for line in file:
+        for line in file_:
             # get rid of leading and trailing whitespace
             line = line.strip()
             # ignore empty lines and comment lines
@@ -120,7 +121,7 @@ class ColumnData(dict):
                                 "match the number of header entries."
 
         # fill dict
-        for i,v in enumerate(hdr):
+        for i, v in enumerate(hdr):
             self[v] = tbl[i]
 
 
@@ -169,7 +170,7 @@ class ColumnData(dict):
         - `sep`: String that is written as a separator between to data columns.
         """
         # XXX do the try: except: dance
-        file = open(filename, 'w')
+        file_ = open(filename, 'w')
 
         # write header
         if header_order == None:
@@ -184,16 +185,16 @@ class ColumnData(dict):
             col_hdr = header_order
 
         if header == True:
-            file.write(sep.join(col_hdr) + '\n')
+            file_.write(sep.join(col_hdr) + '\n')
 
         # for all rows
         for r in xrange(self.getNRows()):
             # get attributes for all keys
             l = [str(self[k][r]) for k in col_hdr]
             # write to file with proper separator
-            file.write(sep.join(l) + '\n')
+            file_.write(sep.join(l) + '\n')
 
-        file.close()
+        file_.close()
 
 
     def getNRows(self):
@@ -236,13 +237,13 @@ class FslEV3(ColumnData):
         return self.getNRows()
 
 
-    def getEV(self, id):
+    def getEV(self, evid):
         """Returns a tuple of (onset time, simulus duration, intensity) for a
         certain EV.
         """
-        return (self['onsets'][id],
-                self['durations'][id],
-                self['intensities'][id])
+        return (self['onsets'][evid],
+                self['durations'][evid],
+                self['intensities'][evid])
 
 
     def tofile(self, filename):

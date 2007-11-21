@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Implementation of the Searchlight algorithm"""
 
-import sys
-
 import numpy as N
 
 if __debug__:
