@@ -17,6 +17,7 @@ from mvpa.algorithms.searchlight import Searchlight
 from mvpa.clf.knn import kNN
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
+from mvpa.clf.transerror import TransferError
 
 
 class SearchlightTests(unittest.TestCase):
@@ -36,8 +37,9 @@ class SearchlightTests(unittest.TestCase):
 
     def testSearchlight(self):
         # compute N-1 cross-validation for each sphere
+        transerror = TransferError(kNN(k=5))
         cv = ClfCrossValidation(
-                kNN(k=5),
+                transerror,
                 NFoldSplitter(cvtype=1))
         # contruct radius 1 searchlight
         sl = Searchlight( cv, radius=1.0 )

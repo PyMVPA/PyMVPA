@@ -26,43 +26,42 @@ class ClfCrossValidation(DataMeasure):
     cross-validation folds.
     """
     def __init__(self,
-                 clf,
+                 transerror,
                  splitter=NoneSplitter,
-                 errorfx=MeanMatchErrorFx(),
                  combinerfx=N.mean):
         """
         Cheap initialization.
 
-        Parameters:
-            clf        - classifier instance
-            splitter   - splitter instance used to split the dataset for
-                         cross-validation folds. By convention the first dataset
-                         in the tuple returned by the splitter is used to train
-                         the provided classifier. If the first element is 'None'
-                         no training is performed. The second dataset is used to
-                         generate predictions with the (trained) classifier.
-            errorfx    - function that computes a scalar error value from the
-                         vectors of desired and predicted values (subclass of
-                         ErrorFx)
-            combinerfx - function that is used to aggregate the error values of
-                         all cross-validation folds
+        Parameters
+        ----------
+        
+        - `transerror`: `TransferError` instance with this classifier used for
+                        cross-validation.
+        - `splitter`: Splitter instance used to split the dataset for
+                      cross-validation folds. By convention the first dataset
+                      in the tuple returned by the splitter is used to train
+                      the provided classifier. If the first element is 'None'
+                      no training is performed. The second dataset is used to
+                      generate predictions with the (trained) classifier.
+        - `combinerfx`: Functor that is used to aggregate the error values of
+                        all cross-validation folds.
         """
         DataMeasure.__init__(self)
 
         self.__splitter = splitter
-        self.__clf = clf
-        self.__errorfx = errorfx
+        self.__transerror = transerror
         self.__combinerfx = combinerfx
 
-    def __repr__(self):
-        """ String summary over the object
-        """
-        return """ClfCrossValidation /
- splitter: %s
- classifier: %s
- errorfx: %s
- combinerfx: %s""" % (indentDoc(self.__splitter), indentDoc(self.__clf),
-                      indentDoc(self.__errorfx), indentDoc(self.__combinerfx))
+# TODO: put back in ASAP
+#    def __repr__(self):
+#        """ String summary over the object
+#        """
+#        return """ClfCrossValidation /
+# splitter: %s
+# classifier: %s
+# errorfx: %s
+# combinerfx: %s""" % (indentDoc(self.__splitter), indentDoc(self.__clf),
+#                      indentDoc(self.__errorfx), indentDoc(self.__combinerfx))
 
 
     def __call__(self, dataset, callbacks=[]):
@@ -77,14 +76,8 @@ class ClfCrossValidation(DataMeasure):
         # splitter
         for split in self.__splitter(dataset):
             # only train classifier if splitter provides something in first
-            # element of tuple
-            if not split[0] == None:
-                self.__clf.train( split[0] )
-
-            # compute error from desired and predicted values
-            error = self.__errorfx(self.__clf.predict(split[1].samples),
-                                   split[1].labels)
-            results.append(error)
+            # element of tuple -- the is the behavior of TransferError
+            results.append(self.__transerror(split[1], split[0]))
 
             # XXX add callbacks
 
