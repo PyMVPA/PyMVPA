@@ -46,6 +46,7 @@ if __debug__:
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('PLF',  "PLF call")
     debug.register('SLC',  "Searchlight call")
+    debug.register('PSA',  "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('DS',   "*Dataset debugging")
 
