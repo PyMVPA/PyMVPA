@@ -15,7 +15,8 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.clf.knn import kNN
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
-from mvpa.misc.errorfx import MeanMatchErrorFx
+from mvpa.clf.transerror import TransferError
+
 
 
 def pureMultivariateSignal(nsamples, chunk, signal2noise = 1.5):
@@ -76,10 +77,9 @@ class CrossValidationTests(unittest.TestCase):
             (data.chunks == \
                 [ k for k in range(1,7) for i in range(20) ] ).all() )
 
-
-        cv = ClfCrossValidation(
-                kNN(),
-                NFoldSplitter(cvtype=1))
+        transerror = TransferError(kNN())
+        cv = ClfCrossValidation(transerror,
+                                NFoldSplitter(cvtype=1))
 
         results = cv(data)
         self.failUnless( results > 0.8 and results <= 1.0 )
@@ -90,7 +90,8 @@ class CrossValidationTests(unittest.TestCase):
         data = self.getMVPattern(10)
 
         # do crossval with default errorfx and 'mean' combiner
-        cv = ClfCrossValidation(kNN(), NFoldSplitter(cvtype=1)) 
+        transerror = TransferError(kNN())
+        cv = ClfCrossValidation(transerror, NFoldSplitter(cvtype=1)) 
 
         # must return a scalar value
         result = cv(data)
@@ -99,8 +100,7 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( result > 0.95 )
 
         # do crossval with permuted regressors
-        cv = ClfCrossValidation(
-                  kNN(),
+        cv = ClfCrossValidation(transerror,
                   NFoldSplitter(cvtype=1, permute=True, nrunsperfold=10) )
         results = cv(data)
 
