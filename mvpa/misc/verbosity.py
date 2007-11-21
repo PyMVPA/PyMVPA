@@ -108,8 +108,8 @@ class LevelLogger(Logger):
         """Define level logger.
 
         It is defined by
-          @level up to which messages are reported
-          @indent symbol used to indent
+          `level`, int: to which messages are reported
+          `indent`, string: symbol used to indent
         """
         Logger.__init__(self, *args, **kwargs)
         self.__level = level            # damn pylint ;-)
@@ -148,6 +148,33 @@ class LevelLogger(Logger):
 
     level = property(fget=lambda self: self.__level, fset=_setLevel)
     indent = property(fget=lambda self: self.__indent, fset=_setIndent)
+
+
+class OnceLogger(Logger):
+    """
+    Logger which prints a message for a given ID just once.
+
+    It could be used for one-time warning to don't overfill the output
+    with useless repeatative messages
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Define once logger.
+        """
+        Logger.__init__(self, *args, **kwargs)
+        self._known = {}
+
+
+    def __call__(self, id, msg, count=1, *args, **kwargs):
+        """
+        Write `msg` if `id` occured less than `count` times by now.
+        """
+        if not self._known.has_key(id):
+            self._known[id] = 0
+
+        if self._known[id] < count:
+            self._known[id] += 1
+            Logger.__call__(self, msg, *args, **kwargs)
 
 
 class SetLogger(Logger):
