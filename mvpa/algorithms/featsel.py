@@ -63,7 +63,7 @@ class StoppingCriterion(object):
     def __call__(self, errors):
         """Instruct when to stop
 
-        Returns tuple (`go`, `isthebest`)
+        Returns tuple (`stop`, `isthebest`)
         """
         raise NotImplementedError
 

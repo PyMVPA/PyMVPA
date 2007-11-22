@@ -16,11 +16,26 @@ from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      StopNBackHistoryCriterion, XPercentFeatureSelector, \
      FixedNumberFeatureSelector
-#from mvpa.clf.svm import SVM
+from mvpa.algorithms.linsvmweights import LinearSVMWeights
+from mvpa.clf.svm import LinearNuSVMC
+from mvpa.clf.transerror import TransferError
 
 from mvpa.misc.state import UnknownStateError
 
 class RFETests(unittest.TestCase):
+
+    def getData(self):
+        data = N.random.standard_normal(( 100, 3, 6, 6 ))
+        labels = N.concatenate( ( N.repeat( 0, 50 ),
+                                  N.repeat( 1, 50 ) ) )
+        chunks = N.repeat( range(5), 10 )
+        chunks = N.concatenate( (chunks, chunks) )
+        mask = N.ones( (3, 6, 6) )
+        mask[0,0,0] = 0
+        mask[1,3,2] = 0
+        return MaskedDataset(samples=data, labels=labels,
+                             chunks=chunks, mask=mask)
+
 
     def testStopCriterion(self):
         """Test stopping criterions"""
@@ -73,6 +88,26 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector['ndiscarded'] == 3)
 
         # XXX more needed
+
+
+    def testRFE(self):
+        svm = LinearNuSVMC()
+
+        # sensitivity analyser and transfer error quantifier use the SAME clf!
+        sens_ana = LinearSVMWeights(svm)
+        trans_error = TransferError(svm)
+        rfe = RFE(sens_ana,
+                  trans_error,
+                  train_clf=False)
+
+        wdata = self.getData()
+        tdata = self.getData()
+
+        sdata = rfe(wdata, tdata)
+
+        print sdata.nfeatures
+
+
 
 def suite():
     return unittest.makeSuite(RFETests)
