@@ -82,7 +82,7 @@ class CrossValidationTests(unittest.TestCase):
                                 NFoldSplitter(cvtype=1))
 
         results = cv(data)
-        self.failUnless( results > 0.8 and results <= 1.0 )
+        self.failUnless( results < 0.2 and results >= 0.0 )
 
 
     def testNoiseClassification(self):
@@ -97,7 +97,7 @@ class CrossValidationTests(unittest.TestCase):
         result = cv(data)
 
         # must be perfect
-        self.failUnless( result > 0.95 )
+        self.failUnless( result < 0.05 )
 
         # do crossval with permuted regressors
         cv = ClfCrossValidation(transerror,
