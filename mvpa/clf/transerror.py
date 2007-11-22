@@ -15,7 +15,7 @@ from mvpa.misc.errorfx import MeanMatchErrorFx
 
 
 class TransferError(object):
-    """Compute the transfer error of a (training) classifier on a dataset.
+    """Compute the transfer error of a (trained) classifier on a dataset.
 
     The actual error value is computed using a customizable error function.
     Optionally the classifier can be training by passing an additional

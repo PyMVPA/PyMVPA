@@ -35,41 +35,54 @@ class RFE(FeatureSelection, State):
 
     def __init__(self,
                  sensitivity_analyzer,
+                 transfer_error,
                  feature_selector=XPercentFeatureSelector(),
                  stopping_criterion=StopNBackHistoryCriterion(),
-                 error_oracle=None
+                 train_clf=True
                  ):
-        """ Initialize recurse feature elimination
-        `sensitivity_analyzer`: `SensitivityAnalyzer`
-        `feature_selector`: functor
-        `stopping_criterion`: functor
+        """ Initialize recursive feature elimination
+
+        Parameter
+        ---------
+
+        - `sensitivity_analyzer`: `SensitivityAnalyzer`
+        - `transfer_error`: `TransferError` instance used to compute the
+                transfer error of a classifier based on a certain feature set
+                on test dataset.
+        - `feature_selector`: Functor. Given a sensitivity map it has to return
+                the ids of those features that should be kept.
+        - `stopping_criterion`: Functor. Given a list of error values it has
+                to return a tuple of two booleans. First values must indicate
+                whether the criterion is fulfilled and the second value signals
+                whether the latest error values is the total minimum.
+        - `train_clf`: Flag whether the classifier in `transfer_error` should
+                be trained before computing the error. In general this is
+                required, but if the `sensitivity_analyzer` and
+                `transfer_error` share and make use of the same classifier and
+                can be switched off to save CPU cycles.
         """
+        # base init first
+        State.__init__(self)
 
         self.__sensitivity_analyzer = sensitivity_analyzer
-        """Sensitivity analyzer used to call at each step"""
+        """Sensitivity analyzer used to call at each step."""
+
+        self.__transfer_error = transfer_error
+        """Compute transfer error for each feature set."""
 
         self.__feature_selector = feature_selector
-        """Functor which takes care about removing some features"""
+        """Functor which takes care about removing some features."""
 
         self.__stopping_criterion = stopping_criterion
 
-        self.__error_oracle = error_oracle
+        self.__train_clf = train_clf
+        """Flag whether training classifier is required."""
 
         # register some
         self._registerState("errors")
 
 
         """
-current:
-testdata -> independent (split done outside RFE)
-dataset -> whole working dataset
-
-need:
-test <- outer/final generalization test (never touched till the very end)#
-working <- dataset to compute the sensitivity map
-itest <- inner test dataset to compute the intermediate generalization error
-         determines when to stop RFE
-
     error_oracle = lamda x:errofx(clf.predict(
         x.mapper(testdata.mapper.reverse(testdata))))
 
@@ -87,41 +100,66 @@ itest <- inner test dataset to compute the intermediate generalization error
     rfe = RFE(..., error_oracle, sensitivity_analyzer)
     """
 
-    def __call__(self, dataset, testdataset=None, callables=[]):
+    def __call__(self, dataset, testdataset, callables=[]):
         """Proceed and select the features recursively eliminating less
         important ones.
         """
         errors = []
-        go = True
+        stop = False
         result = None
         newtestdataset = None
         step = 0
         while dataset.nfeatures>0:
             # Compute
             sensitivity = self.__sensitivity_analyzer(dataset)
+
+            # do not retrain clf if not necessary
+            if self.__train_clf:
+                error = self.__transfer_error(testdataset, dataset)
+            else:
+                error = self.__transfer_error(testdataset, None)
+
             # Record the error
-            errors.append(error_oracle(dataset, testdataset))
+            errors.append(error)
+
             # Check if it is time to stop and if we got
             # the best result
-            (go, isthebest) = self.__stopping_criterion(errors)
+            (stop, isthebest) = self.__stopping_criterion(errors)
 
             if __debug__:
                 debug('RFEC',
-                      "Step %d: nfeatures=%d error=%.4f best/go=%d/%d" %
-                      (step, dataset.nfeatures, errors[-1], isthebest, go))
+                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d" %
+                      (step, dataset.nfeatures, errors[-1], isthebest, stop))
 
             # store result
             if isthebest:
                 result = dataset
-
             # stop if it is time to finish
-            if dataset.nfeatures == 1 or not go:
+            if dataset.nfeatures == 1 or stop:
                 break
 
             # Select features to preserve
             selected_ids = self.__feature_selector(sensitivity)
 
             # Create a dataset only with selected features
+
+# XXX Sometimes does:
+#======================================================================
+#ERROR: testRFE (__main__.RFETests)
+#----------------------------------------------------------------------
+#Traceback (most recent call last):
+#  File "test_rfe.py", line 106, in testRFE
+#    sdata = rfe(wdata, tdata)
+#  File "/home/hanke/hacking/pymvpa/mvpa/algorithms/rfe.py", line 145, in __call__
+#    newdataset = dataset.selectFeatures(selected_ids)
+#  File "/home/hanke/hacking/pymvpa/mvpa/datasets/mappeddataset.py", line 84, in selectFeatures
+#    sdata = Dataset.selectFeatures(self, ids)
+#  File "/home/hanke/hacking/pymvpa/mvpa/datasets/dataset.py", line 430, in selectFeatures
+#    new_data['samples'] = self._data['samples'][:, ids]
+#IndexError: index (2) out of range (0<=index<=1) in dimension 1
+
+
+
             newdataset = dataset.selectFeatures(selected_ids)
 
             if not testdataset is None:
