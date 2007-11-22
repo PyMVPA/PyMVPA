@@ -159,16 +159,21 @@ class TailFeatureSelector(FeatureSelector):
         nfeatures = len(sensitivity)
         # how many to discard
         nremove = min(self._getNumberToDiscard(nfeatures), nfeatures)
-        sensmap = N.array(sensitivity)  # assure that it is ndarray
-        sensmap2 = sensmap.copy()       # make a copy to sort
-        sensmap2.sort()                 # sort inplace
+        # make sure that data is ndarray and compute a sensitivity rank matrix
+        # lowest value is first
+        sensrank = N.array(sensitivity).argsort()
         if self.__removeminimal:
-            good_ids = sensmap[sensmap>sensmap2[nremove-1]]
+            good_ids = sensrank[nremove:]
         else:
             # remove maximal elements
-            good_ids = sensmap[sensmap<sensmap2[-nremove]]
-        # compute actual number of discarded elements
-        self['ndiscarded'] = nfeatures - len(good_ids)
+            good_ids = sensrank[:-1*nremove]
+        # store actual number of discarded elements
+        self['ndiscarded'] = nremove
+
+        # sort ids to keep order
+        # XXX should we do here are leave to other place
+        good_ids.sort()
+
         return good_ids
 
 

@@ -140,26 +140,7 @@ class RFE(FeatureSelection, State):
 
             # Select features to preserve
             selected_ids = self.__feature_selector(sensitivity)
-
             # Create a dataset only with selected features
-
-# XXX Sometimes does:
-#======================================================================
-#ERROR: testRFE (__main__.RFETests)
-#----------------------------------------------------------------------
-#Traceback (most recent call last):
-#  File "test_rfe.py", line 106, in testRFE
-#    sdata = rfe(wdata, tdata)
-#  File "/home/hanke/hacking/pymvpa/mvpa/algorithms/rfe.py", line 145, in __call__
-#    newdataset = dataset.selectFeatures(selected_ids)
-#  File "/home/hanke/hacking/pymvpa/mvpa/datasets/mappeddataset.py", line 84, in selectFeatures
-#    sdata = Dataset.selectFeatures(self, ids)
-#  File "/home/hanke/hacking/pymvpa/mvpa/datasets/dataset.py", line 430, in selectFeatures
-#    new_data['samples'] = self._data['samples'][:, ids]
-#IndexError: index (2) out of range (0<=index<=1) in dimension 1
-
-
-
             newdataset = dataset.selectFeatures(selected_ids)
 
             if not testdataset is None:
