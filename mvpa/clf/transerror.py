@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 
-from mvpa.misc.errorfx import MeanMatchErrorFx
+from mvpa.misc.errorfx import MeanMismatchErrorFx
 
 
 class TransferError(object):
@@ -21,7 +21,7 @@ class TransferError(object):
     Optionally the classifier can be training by passing an additional
     training dataset to the __call__() method.
     """
-    def __init__(self, clf, errorfx=MeanMatchErrorFx()):
+    def __init__(self, clf, errorfx=MeanMismatchErrorFx()):
         """Cheap initialization.
 
         Parameters

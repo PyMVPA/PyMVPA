@@ -47,15 +47,15 @@ class RMSErrorFx(ErrorFunction):
 
 
 
-class MeanMatchErrorFx(ErrorFunction):
-    """ Computes the percentage of matches between some desired and some
+class MeanMismatchErrorFx(ErrorFunction):
+    """ Computes the percentage of mismatches between some desired and some
     predicted values.
     """
     def __call__(self, predicted, desired):
         """ Both 'predicted' and 'desired' can be either scalars or sequences,
         but have to be of the same length.
         """
-        return N.mean( predicted == desired )
+        return 1 - N.mean( predicted == desired )
 
 
 
