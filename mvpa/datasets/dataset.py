@@ -27,7 +27,7 @@ class Dataset(object):
     chunks.
     
     :group Creators: `__init__`, `selectFeatures`, `selectSamples`
-    :group Mutators: `permutedRegressors`
+    :group Mutators: `permuteRegressors`
     """
 
     # static definition to track which unique attributes
@@ -507,7 +507,7 @@ class Dataset(object):
 
 
 
-    def permutedRegressors( self, status, perchunk = True ):
+    def permuteRegressors( self, status, perchunk = True ):
         """ Permute the labels.
 
         Calling this method with 'status' set to True, the labels are
