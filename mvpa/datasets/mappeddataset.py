@@ -60,31 +60,28 @@ class MappedDataset(Dataset):
         return self.mapper.reverse(data)
 
 
-    def selectFeatures(self, ids, plain=False, bymask=False):
+    def selectFeatures(self, ids, plain=False, sort=False):
+        """ Select features given their ids.
+
+        :Parameters:
+            `ids`: iterable container to select ids
+            `plain`: `bool`, if to return MappedDataset (or just Dataset)
+            `sort`: `bool`, if to sort Ids. Order matters and selectFeatures
+                    assumes incremental order. If not such, in non-optimized
+                    code selectFeatures would verify the order and sort
         """
-
-        XXX: for now it sorts ids in numerical orders. This should be
-        replaced with properly working mapper's selectFeatures which
-        would take care about changed order of ids
-
-        """
-        # TODO :has to be reimplemented because the mapper has to be
-        # adjusted when the features space is modified
-        if bymask == False:
-            ids = sorted(ids)
-
 
         # call base method to get selected feature subset
         if plain:
             sdata = Dataset(self._data, self._dsattr, check_data=False,
                             copy_samples=False, copy_data=False,
                             copy_dsattr=False)
-            return sdata.selectFeatures(ids)
+            return sdata.selectFeatures(ids, sort)
         else:
             sdata = Dataset.selectFeatures(self, ids)
             # since we have new DataSet we better have a new mapper
             sdata._dsattr['mapper'] = copy.copy(sdata._dsattr['mapper'])
-            sdata._dsattr['mapper'].selectOut(ids)
+            sdata._dsattr['mapper'].selectOut(ids, sort)
             return sdata
 
 

@@ -17,7 +17,8 @@ import copy
 import numpy as N
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.misc import debug, warning
+    from mvpa.misc.support import isSorted
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
@@ -410,7 +411,7 @@ class Dataset(object):
         return out
 
 
-    def selectFeatures(self, ids):
+    def selectFeatures(self, ids, sort=False):
         """ Select a number of features from the current set.
 
         `ids` is a list of feature IDs
@@ -420,8 +421,17 @@ class Dataset(object):
 
         ATTENTION: The order of ids determines the order of features in the
         returned dataset. This might be useful sometimes, but can also cause
-        major headaches!
+        major headaches! Order would is verified when running in non-optimized
+        code (if __debug__)
         """
+
+        if sort:
+            ids.sort()
+        elif __debug__:
+            if not isSorted(ids):
+                warning("IDs for selectFeatures must be provided " +
+                        "in sorted order, otherwise major headache might occur")
+
         # shallow-copy all stuff from current data dict
         new_data = self._data.copy()
 

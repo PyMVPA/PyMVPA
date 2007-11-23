@@ -11,6 +11,8 @@
 import numpy as N
 import re
 
+from copy import deepcopy
+
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """ This function transforms a dataset by calculating the mean of a set of
     patterns. Such a pattern set is defined by a starting point and the size
@@ -133,3 +135,20 @@ def indentDoc(v):
     `v` - arbitrary
     """
     return re.sub('\n', '\n  ', `v`)
+
+
+def isSorted(items):
+    """Check if listed items are in sorted order.
+
+    :Parameters:
+        `items`: iterable container
+
+    :return: `True` if were sorted. Otherwise `False` + Warning
+    """
+    itemsOld = deepcopy(items)
+    items.sort()
+    equality = itemsOld == items
+    # XXX yarik forgotten analog to isiterable
+    if hasattr(equality, '__iter__'):
+        equality = N.all(equality)
+    return equality
