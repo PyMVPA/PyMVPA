@@ -20,6 +20,10 @@ class MappedDataset(Dataset):
         """A `Dataset` that uses a mapper to transform samples from their
         original dataspace into the feature space.kwargs are passed to
         `Dataset`.
+
+        :Parameters:
+          mapper : Mapper
+            `Mapper` used to map input data
         """
         # there are basically two mode for the constructor:
         # 1. internal mode - only data and dsattr dict
