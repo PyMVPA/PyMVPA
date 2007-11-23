@@ -6,19 +6,13 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Recursive feature elimination"""
+"""Recursive feature elimination."""
 
-import numpy as N
 
-from math import floor, ceil
-
+from mvpa.misc.state import State
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
                                     XPercentFeatureSelector
-from mvpa.misc.support import buildConfusionMatrix
-from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.vproperty import VProperty
-from mvpa.misc.state import State
 
 if __debug__:
     from mvpa.misc import debug
@@ -31,6 +25,12 @@ if __debug__:
 
 class RFE(FeatureSelection, State):
     """ Recursive feature elimination.
+
+    A `SensitivityAnalyzer` is used to compute sensitivity maps given a certain
+    dataset. These sensitivity maps are in turn used to discard unimportant
+    features. For each feature selection the transfer error on some testdatset
+    is computed. This procedure is repeated until a given `StoppingCriterion` is
+    reached.
     """
 
     def __init__(self,
@@ -42,8 +42,8 @@ class RFE(FeatureSelection, State):
                  ):
         """ Initialize recursive feature elimination
 
-        Parameter
-        ---------
+        Parameters
+        ----------
 
         - `sensitivity_analyzer`: `SensitivityAnalyzer`
         - `transfer_error`: `TransferError` instance used to compute the
@@ -78,39 +78,46 @@ class RFE(FeatureSelection, State):
         self.__train_clf = train_clf
         """Flag whether training classifier is required."""
 
-        # register some
+        # register the state members
         self._registerState("errors")
 
-
-        """
-    error_oracle = lamda x:errofx(clf.predict(
-        x.mapper(testdata.mapper.reverse(testdata))))
-
-    clf = SVM()
-    sensitivity_analyzer = linearSVMSensitivity(clf)
-    error_oracle = lambda x,y:errorfx(clf.predict(y))
-    ClassifierBasedSensitivity(Classifier, SensitivityAnalyzer)
-
-    error_oracle = lambda x,y: classifierBasedSensitivity.predict_error(y)
-    sensitivity_analyzer = classifierBasedSensitivity
-
-    sensitivity_analyzer = GLMSensitivity(...)
-    def train_and_predict_error(clf)
-    error_oracle =
-    rfe = RFE(..., error_oracle, sensitivity_analyzer)
-    """
 
     def __call__(self, dataset, testdataset, callables=[]):
         """Proceed and select the features recursively eliminating less
         important ones.
+
+        Parameters
+        ----------
+        - `dataset`: `Dataset` used to compute sensitivity maps and train a
+                classifier to determine the transfer error.
+        - `testdataset`: `Dataset` used to test the trained classifer to
+                determine the transfer error.
+
+        Returns a new dataset with the feature subset of `dataset` that had the
+        lowest transfer error of all tested sets until the stopping criterion
+        was reached.
         """
         errors = []
+        """Computed error for each tested features set."""
+
         stop = False
+        """Flag when RFE should be stopped."""
+
         result = None
+        """Will hold the best feature set ever."""
+
         newtestdataset = None
+        """Same feature selection has to be performs on test dataset as well.
+        This will hold the current testdataset."""
+
         step = 0
+        """Counter how many selection step where done."""
+
         while dataset.nfeatures>0:
-            # Compute
+            # Compute sensitivity map
+            # TODO add option to do RFE on a sensitivity map that is computed
+            # a single time at the beginning of the process. This options
+            # should then overwrite train_clf to always be True
             sensitivity = self.__sensitivity_analyzer(dataset)
 
             # do not retrain clf if not necessary
@@ -143,9 +150,11 @@ class RFE(FeatureSelection, State):
             # Create a dataset only with selected features
             newdataset = dataset.selectFeatures(selected_ids)
 
+            # need to update the test dataset as well
             if not testdataset is None:
                 newtestdataset = testdataset.selectFeatures(selected_ids)
 
+            # provide evil access to internals :)
             for callable_ in callables:
                 callable_(locals())
 
@@ -156,6 +165,10 @@ class RFE(FeatureSelection, State):
                 testdataset = dataset
 
             step += 1
+
+        # charge state variable
         self["errors"] = errors
+
+        # best dataset ever is returned
         return result
 
