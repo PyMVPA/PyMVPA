@@ -87,18 +87,33 @@ class RFETests(unittest.TestCase):
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = LinearSVMWeights(svm)
         trans_error = TransferError(svm)
+        # because the clf is already trained when computing the sensitivity
+        # map, prevent retraining for transfer error calculation
         rfe = RFE(sens_ana,
                   trans_error,
                   feature_selector=FixedNumberFeatureSelector(1),
-                  train_clf=False,
-                  )
+                  train_clf=False)
 
         wdata = self.getData()
+        wdata_nfeatures = wdata.nfeatures
         tdata = self.getData()
+        tdata_nfeatures = tdata.nfeatures
 
         sdata = rfe(wdata, tdata)
 
-        print sdata.nfeatures
+        # fail if orig datasets are changed
+        self.failUnless(wdata.nfeatures == wdata_nfeatures)
+        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+
+        # check that the features set with the least error is selected
+        if len(rfe['errors']):
+            e = N.array(rfe['errors'])
+            self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
+        else:
+            self.failUnless(sdata.nfeatures == wdata_nfeatures)
+
+        # XXX add a test where sensitivity analyser and transfer error do not
+        # use the same classifier
 
 
 
