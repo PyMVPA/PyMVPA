@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Recursive feature elimination"""
 
+__docformat__ = 'restructuredtext'
+
 import numpy as N
 
 from math import floor, ceil

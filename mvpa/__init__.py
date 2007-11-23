@@ -17,6 +17,8 @@ The epydoc package contains the following subpackages and modules:
    :style: UML
 
 :group Basic Data Structures: datasets
+:group Classifiers: clf
+:group Algorithms: algorithms
 :group Miscellaneous: misc
 
 :author: `Michael Hanke <michael.hanke@gmail.com>`__
