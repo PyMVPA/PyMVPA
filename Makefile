@@ -1,3 +1,5 @@
+PROFILE_FILE=tests/main.pstats
+
 all:
 
 distclean:
@@ -5,7 +7,7 @@ distclean:
 	-@rm -f mvpa/clf/libsvm/*.{c,so} \
 		mvpa/clf/libsvm/svmc.py \
 		mvpa/clf/libsvm/svmc_wrap.cpp \
-		tests/*.{prof,kcache}
+		tests/*.{prof,pstats,kcache} $(PROFILE_FILE)
 	@find . -name '*.pyc' -o -iname '*~' -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
@@ -16,8 +18,11 @@ distclean:
 manual:
 	cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
 
-apidoc:
+apidoc: $(PROFILE_FILE)
 	epydoc --config doc/api/epydoc.conf
+
+$(PROFILE_FILE): tests/main.py
+	@cd tests && ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
 pylint:
 	pylint --rcfile doc/misc/pylintrc mvpa
