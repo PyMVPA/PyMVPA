@@ -44,8 +44,7 @@ for t in tests:
     exec 'import ' + t
 
 
-if __name__ == '__main__':
-
+def main():
     # load all tests suites
     suites = [ eval(t + '.suite()') for t in tests ]
 
@@ -54,4 +53,7 @@ if __name__ == '__main__':
 
     # finally run it
     unittest.TextTestRunner().run( ts )
+
+if __name__ == '__main__':
+    main()
 

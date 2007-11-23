@@ -30,6 +30,7 @@ if __name__ == "__main__":
     displaykcachegrinder = True
     printstats = False
     pfilename = None
+    pstatsfilename = None
     profilelines = True
     profilelevel = 10                   # how many most hungry to list in stats
     run = True                          # either to run profiling at all
@@ -56,6 +57,9 @@ if __name__ == "__main__":
             sys.argv.pop(0)
         elif sys.argv[0] in ["-o", "--output-file"]:
             pfilename = sys.argv[1]
+            sys.argv.pop(0)
+        elif sys.argv[0] in ["-O", "--output-statsfile"]:
+            pstatsfilename = sys.argv[1]
             sys.argv.pop(0)
         elif sys.argv[0] in ["-s", "--stats"]:
             printstats = True
@@ -120,13 +124,16 @@ if __name__ == "__main__":
 
         verbose(2, "Closed profiler")
 
-    if printstats:
+    if printstats or pstatsfilename:
         import hotshot.stats
         verbose(1, "Loading profile file to print statistics")
         stats = hotshot.stats.load(pfilename)
-        stats.strip_dirs()
-        stats.sort_stats('time', 'calls')
-        stats.print_stats(profilelevel)
+        if printstats:
+            stats.strip_dirs()
+            stats.sort_stats('time', 'calls')
+            stats.print_stats(profilelevel)
+        if pstatsfilename:
+            stats.dump_stats(pstatsfilename)
 
     kfilename = pfilename + ".kcache"
     if convert2kcache:
