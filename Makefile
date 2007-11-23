@@ -11,7 +11,7 @@ distclean:
 	@find . -name '*.pyc' -o -iname '*~' -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm -rf doc/api/html
+	-@rm -rf doc/api/html doc/*.html
 	-@cd doc/manual && rm -f *.log *.aux *.pdf *.backup *.out *.toc
 
 
@@ -23,6 +23,9 @@ apidoc: $(PROFILE_FILE)
 
 $(PROFILE_FILE): tests/main.py
 	@cd tests && ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
+
+doc: apidoc
+	@rst2html doc/NOTES.coding doc/NOTES.coding.html
 
 pylint:
 	pylint --rcfile doc/misc/pylintrc mvpa
@@ -46,3 +49,4 @@ orig-src: distclean
 fetch-data:
 	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
 
+.PHONY: fetch-data orig-src pylint apidoc doc manual
