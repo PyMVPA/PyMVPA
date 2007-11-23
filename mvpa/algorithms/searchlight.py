@@ -38,6 +38,15 @@ class Searchlight(SensitivityAnalyzer):
 
         The results of the datameasures of all spheres are passed to 'combinefx'
         and the output of that call is returned.
+
+        ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
+        make sure that the specified `DataMeasure` returns large (absolute)
+        values for high sensitivities and small (absolute) values for low
+        sensitivities. Especially when using error functions usually low values
+        imply high performance and therefore high sensitivity. This would in
+        turn result in sensitivity maps that have low (absolute) values
+        indicating high sensitivites and this conflicts with the intended#
+        behavior of a `SensitivityAnalyzer`.
         """
         SensitivityAnalyzer.__init__(self)
 
