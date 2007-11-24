@@ -123,17 +123,20 @@ class TailFeatureSelector(FeatureSelector):
     """
 
     def __init__(self, removeminimal=True, exactnumber=False):
-        """
-        Initialize TailFeatureSelector
-        `removeminimal`: Bool, False signals to remove maximal elements
-        `exactnumber`: Bool, TODO!!: given a number of features to remove,
-                      when `exactnumber`==`False` (default now) selector might
-                      remove slightly more features if there are multiple
-                      features with the same minimal/maximal value.
-                      Implementation of `exactnumber`==True needs sorting
-                      to return indecies of the sorted array, so either zipping
-                      of values with indicies has to be done first or may be
-                      there is a better way
+        """ Initialize TailFeatureSelector
+
+        :Parameters:
+          `removeminimal` : Bool
+            False signals to remove maximal elements
+          `exactnumber` : Bool
+            TODO!!: given a number of features to remove, when
+            `exactnumber`==`False` (default now) selector might remove
+            slightly more features if there are multiple features with
+            the same minimal/maximal value.  Implementation of
+            `exactnumber`==True needs sorting to return indecies of
+            the sorted array, so either zipping of values with
+            indicies has to be done first or may be there is a better
+            way
         """
         FeatureSelector.__init__(self)  # init State before registering anything
 

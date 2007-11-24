@@ -219,8 +219,8 @@ class NFoldSplitter(Splitter):
             for run in xrange( self.__runsperfold ):
                 # permute the labels in training and test dataset
                 if self.__permute:
-                    wset.permutedRegressors( True, perchunk=True )
-                    sset.permutedRegressors( True, perchunk=True )
+                    wset.permuteRegressors( True, perchunk=True )
+                    sset.permuteRegressors( True, perchunk=True )
 
                 # choose a training pattern sample
                 wset_samples = NFoldSplitter.selectSampleSubset(

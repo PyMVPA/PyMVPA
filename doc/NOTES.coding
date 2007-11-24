@@ -1,35 +1,63 @@
-* conventions:
-   should be confromant with pylint driven by config
-   doc/misc/pylintrc.
-   It assumes camelback notation and indentation using 4 spaces (ie no tabs)
-   Variables are low-case and can have up to 2 _s.
+.. -*- mode: rst -*-
 
-  According to original python style guidelines: single empty line
-   to separate methods within class, and 2 empty lines between classes
-  BUT we do 2 empty between methods, 3 empty between classes
+PyMVPA CONVENTIONS
+==================
 
- - each module should start with a docstring describing the module
-   (which is not inside the hashed-comment of each file)
-  look at mapper or neighbor for tentative organization if copyright/license
-  has to be present in each file.
+Documentation
+-------------
+Documentation of the code and supplementary material (such as this
+file) should be done in reST_ (reStructuredText) light markup
+language.  See `Demo
+<http://docutils.sourceforge.net/docs/user/rst/cheatsheet.txt>`__ or a
+`Cheatsheet
+<http://docutils.sourceforge.net/docs/user/rst/demo.txt>`__ for a
+quick demo.
+
+Code Documentation
+__________________
+Code must be documented in accordance to `epydoc + reST usage
+guidelines <http://epydoc.sourceforge.net/manual-othermarkup.html>`__
 
 
-TESTs:
-* Every more or less "interesting" bugfix should be accompanied by a
-  unittest which might help to prevent it in the future refactoring
+Code Formatting
+---------------
+pylint
+   Code should be confromant with Pylint_ driven by config located at
+   `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback
+   notation (classes start with capitals, functions with lowercase)
+   and indentation using 4 spaces (ie no tabs) Variables are low-case
+   and can have up to 2 _s.
+2 empty lines
+   According to original python style guidelines: single empty line to
+   separate methods within class, and 2 empty lines between classes
+   BUT we do 2 empty between methods, 3 empty between classes
+module docstring
+   Each module should start with a docstring describing the module
+   (which is not inside the hashed-comment of each file) look at
+   mapper or neighbor for tentative organization if copyright/license
+   has to be present in each file.
+header
+   Each file should contain a header from `doc/misc/header.py <misc/header.py>`__.
 
-* Every new feature should have a unittest
-
-* Commits:
- BF: bug fix
- RF: refactoring
- NF: new feature
- OPT: optimization
- BK: breaks something and/or tests fail
-
-* header: each file should contain a header from doc/misc/header.py
-
-* __repr__
+Coding Conventions
+------------------
+__repr__
   most of the classes should provide meaningful and concise summary
   over their identity (name + parameters + some summary over results
   if any)
+
+Tests
+-----
+* Every more or less "interesting" bugfix should be accompanied by a
+  unittest which might help to prevent it in the future refactoring
+* Every new feature should have a unittest
+* Commits
+   - *BF* : bug fix
+   - *RF* : refactoring
+   - *NF* : new feature
+   - *OPT* : optimization
+   - *BK* : breaks something and/or tests fail
+
+.. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
+.. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
+.. _Pylint: http://packages.debian.org/unstable/python/pylint

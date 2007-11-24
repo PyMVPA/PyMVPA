@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Recursive feature elimination."""
 
+__docformat__ = 'restructuredtext'
 
 from mvpa.misc.state import State
 from mvpa.algorithms.featsel import FeatureSelection, \
