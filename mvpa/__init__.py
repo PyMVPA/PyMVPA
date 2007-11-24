@@ -11,7 +11,7 @@
 
 Package Organization
 ====================
-The epydoc package contains the following subpackages and modules:
+The mvpa package contains the following subpackages and modules:
 
 .. packagetree::
    :style: UML
