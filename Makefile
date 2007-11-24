@@ -22,7 +22,7 @@ apidoc: $(PROFILE_FILE)
 	epydoc --config doc/api/epydoc.conf
 
 $(PROFILE_FILE): tests/main.py
-	@cd tests && ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
+	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
 doc: apidoc
 	@rst2html doc/NOTES.coding doc/NOTES.coding.html

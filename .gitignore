@@ -14,3 +14,5 @@ doc/examples/dump.*
 *.bak
 *.swp
 /data
+*.pstats
+
