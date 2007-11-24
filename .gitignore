@@ -13,3 +13,4 @@ svmc_wrap.cpp
 doc/examples/dump.*
 *.bak
 *.swp
+/data

@@ -9,7 +9,6 @@
 """Feature selcetion by weight magnitude"""
 
 import numpy as N
-import support
 
 
 class MagnitudeFeatureSelection( object ):
