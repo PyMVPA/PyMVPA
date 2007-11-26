@@ -54,6 +54,7 @@ class FeatureSelection(object):
     mask = VProperty(fget=getMask)
 
 
+
 class StoppingCriterion(object):
     """Base class for all functors to decide when to stop RFE (or may
     be general optimization... so it probably will be moved out into
@@ -66,6 +67,7 @@ class StoppingCriterion(object):
         Returns tuple (`stop`, `isthebest`)
         """
         raise NotImplementedError
+
 
 
 class StopNBackHistoryCriterion(StoppingCriterion):
@@ -110,148 +112,194 @@ class StopNBackHistoryCriterion(StoppingCriterion):
 
 
 
-
-class FeatureSelector(State):
-    """Base class to implement functors to select the set of properties
+class ElementSelector(State):
+    """Base class to implement functors to select some elements based on a
+    sequence of values.
     """
     def __init__(self):
+        """Cheap initialization.
+        """
         State.__init__(self)
 
 
-class TailFeatureSelector(FeatureSelector):
-    """Remove features in the tail of the distribution.
+    def __call__(self, seq):
+        """Implementations in derived classed have to return a list of selected
+        element IDs based on the given sequence.
+        """
+        raise NotImplementedError
+
+
+
+class TailSelector(ElementSelector):
+    """Select elements from a tail of a distribution.
+
+    The default behaviour is to discard the lower tail of a given distribution.
     """
 
-    def __init__(self, removeminimal=True, exactnumber=False):
-        """ Initialize TailFeatureSelector
+    def __init__(self, tail='lower', mode='discard', sort=True):
+        """Initialize TailFeatureSelector
 
         :Parameters:
-          `removeminimal` : Bool
-            False signals to remove maximal elements
-          `exactnumber` : Bool
-            TODO!!: given a number of features to remove, when
-            `exactnumber`==`False` (default now) selector might remove
-            slightly more features if there are multiple features with
-            the same minimal/maximal value.  Implementation of
-            `exactnumber`==True needs sorting to return indecies of
-            the sorted array, so either zipping of values with
-            indicies has to be done first or may be there is a better
-            way
+            `tail` : ['lower', 'upper']
+                Choose the tail to be processed.
+                otherwise.
+            `mode` : ['discard', 'select']
+                decides whether to `select` or to `discard` features.
+            `sort` : Bool
+                Flag whether selected IDs will be sorted. Disable if not
+                necessary to save some CPU cycles.
         """
-        FeatureSelector.__init__(self)  # init State before registering anything
+        ElementSelector.__init__(self)  # init State before registering anything
 
         self._registerState('ndiscarded')    # state variable
-        """Store number of discarded since we might remove less than requested
-        if not enough features left
-        """
-        self.__removeminimal = removeminimal
-        """Know which tail to remove
+        """Store number of discarded elements.
         """
 
+        self._setTail(tail)
+        """Know which tail to select."""
 
-    def __repr__(self):
-        s = "%s: remove-minimal=%d" % (self.__name__, self.__removeminimal)
-        if not self['ndiscarded'] is None:
-            s += " {discarded: %d}" % self['ndiscarded']
-        return s
+        self._setMode(mode)
+        """Flag whether to select or to discard elements."""
+
+        self.__sort = sort
 
 
-    def __call__(self, sensitivity):
-        """Call function returns Ids to be kept
+    def _setTail(self, tail):
+        """Set the tail to be processed."""
+        if not tail in ['lower', 'upper']:
+            raise ValueError, "Unkown tail argument [%s]. Can only be one " \
+                              "of 'lower' or 'upper'." % tail
+
+        self.__tail = tail
+
+
+    def _setMode(self, mode):
+        """Choose `select` or `discard` mode."""
+
+        if not mode in ['discard', 'select']:
+            raise ValueError, "Unkown selection mode [%s]. Can only be one " \
+                              "of 'select' or 'discard'." % mode
+
+        self.__mode = mode
+
+
+    def _getNElements(self, seq):
+        """In derived classes has to return the number of elements to be
+        processed given a sequence values forming the distribution.
         """
-        nfeatures = len(sensitivity)
-        # how many to discard
-        nremove = min(self._getNumberToDiscard(nfeatures), nfeatures)
-        # make sure that data is ndarray and compute a sensitivity rank matrix
+        raise NotImplementedError
+
+
+    def __call__(self, seq):
+        """Returns selected IDs.
+        """
+        len_seq = len(seq)
+        # how many to select (cannot select more than available)
+        nelements = min(self._getNElements(seq), len_seq)
+
+        # make sure that data is ndarray and compute a sequence rank matrix
         # lowest value is first
-        sensrank = N.array(sensitivity).argsort()
-        if self.__removeminimal:
-            good_ids = sensrank[nremove:]
-        else:
-            # remove maximal elements
-            good_ids = sensrank[:-1*nremove]
-        # store actual number of discarded elements
-        self['ndiscarded'] = nremove
+        seqrank = N.array(seq).argsort()
+
+        if self.__mode == 'discard' and self.__tail == 'upper':
+            good_ids = seqrank[:-1*nelements]
+            self['ndiscarded'] = nelements
+        elif self.__mode == 'discard' and self.__tail == 'lower':
+            good_ids = seqrank[nelements:]
+            self['ndiscarded'] = nelements
+        elif self.__mode == 'select' and self.__tail == 'upper':
+            good_ids = seqrank[-1*nelements:]
+            self['ndiscarded'] = len_seq - nelements
+        else: # select lower tail
+            good_ids = seqrank[:nelements]
+            self['ndiscarded'] = len_seq - nelements
 
         # sort ids to keep order
         # XXX should we do here are leave to other place
-        good_ids.sort()
+        if self.__sort:
+            good_ids.sort()
 
         return good_ids
 
 
-class FixedNumberFeatureSelector(TailFeatureSelector):
-    """Given a sensitivity map, provide Ids given a number features to remove
 
-    TODO: Should be DiscardSelector on top of it... __repr__, ndiscarded should
-          belong to it.
-
-    TODO: Should API would be unified with XPercentFeatureSelector so they both
-          simple have .discard property and corresponding constructor parameter
+class FixedNElementTailSelector(TailSelector):
+    """Given a sequence, provide set of IDs for a fixed number of to be selected
+    elements.
     """
 
-    def __init__(self, number_discard=1, *args, **kwargs):
+    def __init__(self, nelements, *args, **kwargs):
+        """Cheap initialization.
+
+        :Parameter:
+            `nselect`: Int
+                Number of elements to select/discard.
         """
-        """
-        TailFeatureSelector.__init__(self, *args, **kwargs)
-        self.__number_discard = number_discard      # pylint should smile
+        TailSelector.__init__(self, *args, **kwargs)
+        self._setNElements(nelements)
 
 
     def __repr__(self):
         return "%s number=%f" % (
-            TailFeatureSelector.__repr__(self), self.__number_discard)
+            TailSelector.__repr__(self), self.__nselect)
 
 
-    def _getNumberToDiscard(self, nfeatures):
-        return min(nfeatures, self.__number_discard)
+    def _getNElements(self, seq):
+        return self.__nelements
 
 
-    def _setNumberDiscard(self, number_discard):
-        self.__number_discard = number_discard
+    def _setNElements(self, nelements):
+        if __debug__:
+            if nelements <= 0:
+                raise ValueError, "Number of elements less or equal to zero " \
+                                  "does not make sense."
+
+        self.__nelements = nelements
 
 
-    number_discard = property(fget=lambda x:x.__number_discard,
-                              fset=_setNumberDiscard)
+    nelements = property(fget=lambda x:x.__nelements,
+                         fset=_setNElements)
 
 
 
-class XPercentFeatureSelector(TailFeatureSelector):
-    """Given a sensitivity map, provide Ids given a percentage of features
-
-    Since silly Yarik could not recall alternative to "proportion" to select
-    in units like 0.05 for 5%, now this selector does take values in percents
-    TODO: Should be DiscardSelector on top of it... __repr__, ndiscarded should
-          belong to it.
+class XPercentTailSelector(TailSelector):
+    """Given a sequence, provide Ids for a percentage of elements
     """
 
-    def __init__(self, perc_discard=5.0, **kargs):
-        """XXX???
+    def __init__(self, felements, **kargs):
+        """Cheap initialization.
+
+        :Parameter:
+            `felements`: Float (0,1.0]
+                Fraction of elements to select/discard.
         """
-        self.__perc_discard = None      # pylint should smile
-        self.perc_discard = perc_discard
-        TailFeatureSelector.__init__(self, **kargs)
+        TailSelector.__init__(self, **kargs)
+        self._setFElements(felements)
 
 
     def __repr__(self):
-        return "%s perc=%f" % (
-            TailFeatureSelector.__repr__(self), self.__perc_discard)
+        return "%s fraction=%f" % (
+            TailFeatureSelector.__repr__(self), self.__felements)
 
 
-    def _getNumberToDiscard(self, nfeatures):
-        num = int(floor(self.__perc_discard * nfeatures * 1.0 / 100.0))
+    def _getNElements(self, seq):
+        num = int(floor(self.__felements * len(seq)))
         num = max(1, num)               # remove at least 1
-        return min(num, nfeatures)
+        # no need for checks as base class will do anyway
+        #return min(num, nselect)
+        return num
 
 
-    def _setPercDiscard(self, perc_discard):
+    def _setFElements(self, felements):
         """How many percent to discard"""
-        if perc_discard>100 or perc_discard<0:
+        if felements > 1.0 or felements < 0.0:
             raise ValueError, \
-                  "Percentage (%f) cannot be outside of [0,100]" \
-                  % perc_discard
-        self.__perc_discard = perc_discard
+                  "Fraction (%f) cannot be outside of [0.0,1.0]" \
+                  % felements
+
+        self.__felements = felements
 
 
-    perc_discard = property(fget=lambda x:x.__perc_discard,
-                            fset=_setPercDiscard)
+    felements = property(fget=lambda x:x.__felements,
+                         fset=_setFElements)
 

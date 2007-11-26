@@ -14,11 +14,12 @@ import numpy as N
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
-     StopNBackHistoryCriterion, XPercentFeatureSelector, \
-     FixedNumberFeatureSelector
+     StopNBackHistoryCriterion, XPercentTailSelector, \
+     FixedNElementTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clf.svm import LinearNuSVMC
 from mvpa.clf.transerror import TransferError
+from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
 
@@ -59,7 +60,7 @@ class RFETests(unittest.TestCase):
     def testFeatureSelector(self):
         """Test feature selector"""
         # remove 10% weekest
-        selector = XPercentFeatureSelector(10)
+        selector = XPercentTailSelector(0.1)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         # == rank [4, 5, 6, 7, 0, 3, 2, 9, 1, 8]
         target10 = N.array([0, 1, 2, 3, 5, 6, 7, 8, 9])
@@ -68,15 +69,17 @@ class RFETests(unittest.TestCase):
         self.failUnlessRaises(UnknownStateError,
                               selector.__getitem__, 'ndiscarded')
         self.failUnless((selector(dataset) == target10).all())
-        selector.perc_discard = 30      # discard 30%
+        selector.felements = 0.30      # discard 30%
+        self.failUnless(selector.felements == 0.3)
         self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3) # se 3 were discarded
 
-        selector = FixedNumberFeatureSelector(1)
+        selector = FixedNElementTailSelector(1)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         self.failUnless((selector(dataset) == target10).all())
 
-        selector.number_discard = 3
+        selector.nelements = 3
+        self.failUnless(selector.nelements == 3)
         self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3)
 
@@ -89,9 +92,10 @@ class RFETests(unittest.TestCase):
         trans_error = TransferError(svm)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
-        rfe = RFE(sens_ana,
+        # Use absolute of the svm weights as sensitivity
+        rfe = RFE(Absolute(sens_ana),
                   trans_error,
-                  feature_selector=FixedNumberFeatureSelector(1),
+                  feature_selector=FixedNElementTailSelector(1),
                   train_clf=False)
 
         wdata = self.getData()
