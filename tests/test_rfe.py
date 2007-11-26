@@ -60,7 +60,7 @@ class RFETests(unittest.TestCase):
     def testFeatureSelector(self):
         """Test feature selector"""
         # remove 10% weekest
-        selector = XPercentTailSelector(10)
+        selector = XPercentTailSelector(0.1)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         # == rank [4, 5, 6, 7, 0, 3, 2, 9, 1, 8]
         target10 = N.array([0, 1, 2, 3, 5, 6, 7, 8, 9])
@@ -69,7 +69,8 @@ class RFETests(unittest.TestCase):
         self.failUnlessRaises(UnknownStateError,
                               selector.__getitem__, 'ndiscarded')
         self.failUnless((selector(dataset) == target10).all())
-        selector.perc_discard = 30      # discard 30%
+        selector.felements = 0.30      # discard 30%
+        self.failUnless(selector.felements == 0.3)
         self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3) # se 3 were discarded
 
@@ -77,7 +78,8 @@ class RFETests(unittest.TestCase):
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         self.failUnless((selector(dataset) == target10).all())
 
-        selector.nselect = 3
+        selector.nelements = 3
+        self.failUnless(selector.nelements == 3)
         self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3)
 

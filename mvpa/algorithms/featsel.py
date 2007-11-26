@@ -132,10 +132,12 @@ class ElementSelector(State):
 
 class TailSelector(ElementSelector):
     """Select elements from a tail of a distribution.
+
+    The default behaviour is to discard the lower tail of a given distribution.
     """
 
     def __init__(self, tail='lower', mode='discard', sort=True):
-        """ Initialize TailFeatureSelector
+        """Initialize TailFeatureSelector
 
         :Parameters:
             `tail` : ['lower', 'upper']
@@ -144,7 +146,8 @@ class TailSelector(ElementSelector):
             `mode` : ['discard', 'select']
                 decides whether to `select` or to `discard` features.
             `sort` : Bool
-                Flag whether selected IDs will be sorted.
+                Flag whether selected IDs will be sorted. Disable if not
+                necessary to save some CPU cycles.
         """
         ElementSelector.__init__(self)  # init State before registering anything
 
@@ -180,10 +183,9 @@ class TailSelector(ElementSelector):
         self.__mode = mode
 
 
-    def _getNElements(self, max):
+    def _getNElements(self, seq):
         """In derived classes has to return the number of elements to be
-        processed given a maximum number of elements. The meaning of this
-        number depends on the semantics in the derived implementation.
+        processed given a sequence values forming the distribution.
         """
         raise NotImplementedError
 
@@ -193,8 +195,7 @@ class TailSelector(ElementSelector):
         """
         len_seq = len(seq)
         # how many to select (cannot select more than available)
-        # in fact use 'nremove', because removals are easier to handle
-        nelements = min(self._getNElements(len_seq), len_seq)
+        nelements = min(self._getNElements(seq), len_seq)
 
         # make sure that data is ndarray and compute a sequence rank matrix
         # lowest value is first
@@ -227,11 +228,15 @@ class FixedNElementTailSelector(TailSelector):
     elements.
     """
 
-    def __init__(self, nselect=1, *args, **kwargs):
-        """
+    def __init__(self, nelements, *args, **kwargs):
+        """Cheap initialization.
+
+        :Parameter:
+            `nselect`: Int
+                Number of elements to select/discard.
         """
         TailSelector.__init__(self, *args, **kwargs)
-        self.__nselect = nselect      # pylint should smile
+        self._setNElements(nelements)
 
 
     def __repr__(self):
@@ -239,58 +244,62 @@ class FixedNElementTailSelector(TailSelector):
             TailSelector.__repr__(self), self.__nselect)
 
 
-    def _getNElements(self, nselect):
-        # no need for checks as base class will do anyway
-        #return min(nfeatures, self.__number_discard)
-        return self.__nselect
+    def _getNElements(self, seq):
+        return self.__nelements
 
 
-    def _setNToSelect(self, nselect):
-        self.__nselect = nselect
+    def _setNElements(self, nelements):
+        if __debug__:
+            if nelements <= 0:
+                raise ValueError, "Number of elements less or equal to zero " \
+                                  "does not make sense."
+
+        self.__nelements = nelements
 
 
-    nselect = property(fget=lambda x:x.__nselect,
-                       fset=_setNToSelect)
+    nelements = property(fget=lambda x:x.__nelements,
+                         fset=_setNElements)
 
 
 
 class XPercentTailSelector(TailSelector):
-    """Given a sensitivity map, provide Ids given a percentage of features
-
-    Since silly Yarik could not recall alternative to "proportion" to select
-    in units like 0.05 for 5%, now this selector does take values in percents
-    TODO: Should be DiscardSelector on top of it... __repr__, ndiscarded should
-          belong to it.
+    """Given a sequence, provide Ids for a percentage of elements
     """
 
-    def __init__(self, perc_discard=5.0, **kargs):
-        """XXX???
+    def __init__(self, felements, **kargs):
+        """Cheap initialization.
+
+        :Parameter:
+            `felements`: Float (0,1.0]
+                Fraction of elements to select/discard.
         """
-        self.__perc_discard = None      # pylint should smile
-        self.perc_discard = perc_discard
         TailSelector.__init__(self, **kargs)
+        self._setFElements(felements)
 
 
     def __repr__(self):
-        return "%s perc=%f" % (
-            TailFeatureSelector.__repr__(self), self.__perc_discard)
+        return "%s fraction=%f" % (
+            TailFeatureSelector.__repr__(self), self.__felements)
 
 
-    def _getNElements(self, nselect):
-        num = int(floor(self.__perc_discard * nselect * 1.0 / 100.0))
+    def _getNElements(self, seq):
+        num = int(floor(self.__felements * len(seq)))
         num = max(1, num)               # remove at least 1
-        return min(num, nselect)
+        # no need for checks as base class will do anyway
+        #return min(num, nselect)
+        return num
 
 
-    def _setPercDiscard(self, perc_discard):
+    def _setFElements(self, felements):
         """How many percent to discard"""
-        if perc_discard>100 or perc_discard<0:
+        if felements > 1.0 or felements < 0.0:
             raise ValueError, \
-                  "Percentage (%f) cannot be outside of [0,100]" \
-                  % perc_discard
-        self.__perc_discard = perc_discard
+                  "Fraction (%f) cannot be outside of [0.0,1.0]" \
+                  % felements
+
+        self.__felements = felements
 
 
-    perc_discard = property(fget=lambda x:x.__perc_discard,
-                            fset=_setPercDiscard)
+    felements = property(fget=lambda x:x.__felements,
+                         fset=_setFElements)
 
