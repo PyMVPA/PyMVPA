@@ -425,7 +425,7 @@ class Dataset(object):
         return out
 
 
-    def selectFeatures(self, ids, sort=False):
+    def selectFeatures(self, ids, sort=True):
         """ Select a number of features from the current set.
 
         :Parameters:
@@ -444,13 +444,14 @@ class Dataset(object):
         also cause major headaches! Order would is verified when
         running in non-optimized code (if __debug__)
         """
-
+        # XXX set sort default to True, now sorting has to be explicitely
+        # disabled and warning is not necessary anymore
         if sort:
             ids.sort()
-        elif __debug__:
-            if not isSorted(ids):
-                warning("IDs for selectFeatures must be provided " +
-                        "in sorted order, otherwise major headache might occur")
+#        elif __debug__:
+#            if not isSorted(ids):
+#                warning("IDs for selectFeatures must be provided " +
+#                       "in sorted order, otherwise major headache might occur")
 
         # shallow-copy all stuff from current data dict
         new_data = self._data.copy()

@@ -80,6 +80,7 @@ if __debug__:
     debug.register('SLC',  "Searchlight call")
     debug.register('PSA',  "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
+    debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset debugging")
 
     # Lets check if environment can tell us smth

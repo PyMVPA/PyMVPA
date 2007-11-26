@@ -32,11 +32,11 @@ tests = [
     'test_clfcrossval',
     'test_searchlight',
     'test_rfe',
+    'test_ifs',
     'test_perturbsensana',
     'test_splitsensana'
     ]
 #          'test_plf',
-#          'test_ifs',
 
 
 
