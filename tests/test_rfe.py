@@ -19,6 +19,7 @@ from mvpa.algorithms.featsel import \
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clf.svm import LinearNuSVMC
 from mvpa.clf.transerror import TransferError
+from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
 
@@ -89,7 +90,8 @@ class RFETests(unittest.TestCase):
         trans_error = TransferError(svm)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
-        rfe = RFE(sens_ana,
+        # Use absolute of the svm weights as sensitivity
+        rfe = RFE(Absolute(sens_ana),
                   trans_error,
                   feature_selector=FixedNElementTailSelector(1),
                   train_clf=False)
