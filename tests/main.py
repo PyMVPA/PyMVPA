@@ -28,6 +28,7 @@ tests = [
     'test_knn',
     'test_svm',
     # Various algorithms
+    'test_transformers',
     'test_clfcrossval',
     'test_searchlight',
     'test_rfe',
