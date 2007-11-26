@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.misc.state import State
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
-                                    XPercentFeatureSelector
+                                    XPercentTailSelector
 
 if __debug__:
     from mvpa.misc import debug
@@ -37,7 +37,7 @@ class RFE(FeatureSelection, State):
     def __init__(self,
                  sensitivity_analyzer,
                  transfer_error,
-                 feature_selector=XPercentFeatureSelector(),
+                 feature_selector=XPercentTailSelector(0.05),
                  stopping_criterion=StopNBackHistoryCriterion(),
                  train_clf=True
                  ):
