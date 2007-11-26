@@ -37,7 +37,7 @@ class RFE(FeatureSelection, State):
     def __init__(self,
                  sensitivity_analyzer,
                  transfer_error,
-                 feature_selector=XPercentTailSelector(),
+                 feature_selector=XPercentTailSelector(0.05),
                  stopping_criterion=StopNBackHistoryCriterion(),
                  train_clf=True
                  ):
