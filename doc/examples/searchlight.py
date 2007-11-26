@@ -22,7 +22,7 @@ from mvpa.clf.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.datasets.misc import zscore
 from mvpa.algorithms.searchlight import Searchlight
-
+from mvpa.clf.transerror import TransferError
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \
@@ -104,7 +104,7 @@ def main():
 
     verbose(3, "Assigning a measure to be CrossValidation")
     # compute N-1 cross-validation with the selected classifier in each sphere
-    cv = ClfCrossValidation(clf,
+    cv = ClfCrossValidation(TransferError(clf),
                             NFoldSplitter(cvtype=options.crossfolddegree))
 
     verbose(3, "Generating Searchlight instance")

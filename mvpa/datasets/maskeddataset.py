@@ -8,13 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset with applied mask"""
 
-import operator
-
 import numpy as N
 
 from mvpa.datasets.mappeddataset import MappedDataset
 from mvpa.datasets.maskmapper import MaskMapper
-from mvpa.datasets.dataset import Dataset
 
 if __debug__:
     from mvpa.misc import debug
@@ -57,49 +54,17 @@ class MaskedDataset(MappedDataset):
             MappedDataset.__init__(self, **(kwargs))
 
 
-
-#    def selectFeatures(self, ids, plain=False):
-#        """ Select a number of features from the current set.
-#
-#        `ids` is a list of feature IDs
-#        `plain`=`True` directs to return a simple Dataset
-#        if `plain`==False -- returns a new MaskedDataset object
-#
-#        Return object is a view of the original data (no copying is
-#        performed).
-#        """
-#
-#        if plain:
-#            return Dataset.selectFeatures(self, ids)
-#
-#        # HEY, ATTENTION: the list of selected features needs to be sorted
-#        # otherwise the feature mask will become inconsistent with the
-#        # dataset and you need 2 days to discover the bug
-#        ids = sorted( ids )
-#
-#        # create feature mask of the new subset to create a new mapper out
-#        # of it
-#        mask =  self.mapper.buildMaskFromFeatureIds( ids )
-#
-#        return MaskedDataset( self.samples[:, ids],
-#                              self.labels,
-#                              self.chunks,
-#                              mask = MaskMapper( mask ) )
-#
-
     def selectFeaturesByMask(self, mask, plain=False):
         """ Use a mask array to select features from the current set.
 
-        The final selection mask only contains features that are present in the
-        current feature mask AND the selection mask passed to this method.
+        `mask`, `ndarray`?: input mask
+        `plain`, `bool`: `True` directs to return a simple Dataset
+                         `False` -- a new MaskedDataset object
 
-        @mask       selects features
-        @plain=True directs to return a simple Dataset
-        if @plain=False -- returns a new MaskedDataset object
-
-        if @plain=True return
         Returns a new MaskedDataset object with a view of the original pattern
         array (no copying is performed).
+        The final selection mask only contains features that are present in the
+        current feature mask AND the selection mask passed to this method.
         """
         # AND new and old mask to get the common features
         comb_mask = N.logical_and(mask != 0,
@@ -108,5 +73,8 @@ class MaskedDataset(MappedDataset):
             debug('DS', "VERY SUBOPTIMAL - do not rely on performance")
         # transform mask into feature space
         fmask = self.mapper.forward( comb_mask != 0 )
-        #TODO all this will be gone soon anyway -- need proper selectIn within a mapper
-        return self.selectFeatures(fmask.nonzero()[0], plain=plain, bymask=True)
+        #TODO all this will be gone soon anyway -- need proper selectIn within
+        # a mapper
+        return self.selectFeatures(fmask.nonzero()[0], plain=plain)
+
+

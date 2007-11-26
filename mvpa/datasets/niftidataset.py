@@ -10,10 +10,8 @@
 
 from nifti import NiftiImage
 
-from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
-from mvpa.datasets.maskmapper import MaskMapper
 
 
 class NiftiDataset(MaskedDataset):

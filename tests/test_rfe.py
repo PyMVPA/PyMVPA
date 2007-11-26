@@ -16,11 +16,22 @@ from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      StopNBackHistoryCriterion, XPercentFeatureSelector, \
      FixedNumberFeatureSelector
-#from mvpa.clf.svm import SVM
+from mvpa.algorithms.linsvmweights import LinearSVMWeights
+from mvpa.clf.svm import LinearNuSVMC
+from mvpa.clf.transerror import TransferError
 
 from mvpa.misc.state import UnknownStateError
 
 class RFETests(unittest.TestCase):
+
+    def getData(self):
+        data = N.random.standard_normal(( 100, 3, 2, 4 ))
+        labels = N.concatenate( ( N.repeat( 0, 50 ),
+                                  N.repeat( 1, 50 ) ) )
+        chunks = N.repeat( range(5), 10 )
+        chunks = N.concatenate( (chunks, chunks) )
+        return MaskedDataset(samples=data, labels=labels, chunks=chunks)
+
 
     def testStopCriterion(self):
         """Test stopping criterions"""
@@ -50,29 +61,61 @@ class RFETests(unittest.TestCase):
         # remove 10% weekest
         selector = XPercentFeatureSelector(10)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
-        target10 = N.array([3.5, 10, 7, 5, 0, 0, 2, 10, 9])
-        target20 = N.array([3.5, 10, 7, 5, 2, 10, 9])
+        # == rank [4, 5, 6, 7, 0, 3, 2, 9, 1, 8]
+        target10 = N.array([0, 1, 2, 3, 5, 6, 7, 8, 9])
+        target30 = N.array([0, 1, 2, 3, 7, 8, 9])
 
-        self.failUnlessRaises(UnknownStateError, selector.__getitem__, 'ndiscarded')
+        self.failUnlessRaises(UnknownStateError,
+                              selector.__getitem__, 'ndiscarded')
         self.failUnless((selector(dataset) == target10).all())
-        selector.perc_discard = 20      # discard 20%
-                                        # but since there are 2 0s
-        self.failUnless((selector(dataset) == target20).all())
+        selector.perc_discard = 30      # discard 30%
+        self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3) # se 3 were discarded
 
         selector = FixedNumberFeatureSelector(1)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
-        dataset1 = selector(dataset)
-        self.failUnless((dataset1 == target10).all())
-        self.failUnless((selector(dataset1) == target20).all())
-        self.failUnless(selector['ndiscarded'] == 2)
+        self.failUnless((selector(dataset) == target10).all())
 
-        # Lets remove with 0s explicitely specified
         selector.number_discard = 3
-        self.failUnless((selector(dataset) == target20).all())
+        self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3)
 
-        # XXX more needed
+
+    def testRFE(self):
+        svm = LinearNuSVMC()
+
+        # sensitivity analyser and transfer error quantifier use the SAME clf!
+        sens_ana = LinearSVMWeights(svm)
+        trans_error = TransferError(svm)
+        # because the clf is already trained when computing the sensitivity
+        # map, prevent retraining for transfer error calculation
+        rfe = RFE(sens_ana,
+                  trans_error,
+                  feature_selector=FixedNumberFeatureSelector(1),
+                  train_clf=False)
+
+        wdata = self.getData()
+        wdata_nfeatures = wdata.nfeatures
+        tdata = self.getData()
+        tdata_nfeatures = tdata.nfeatures
+
+        sdata = rfe(wdata, tdata)
+
+        # fail if orig datasets are changed
+        self.failUnless(wdata.nfeatures == wdata_nfeatures)
+        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+
+        # check that the features set with the least error is selected
+        if len(rfe['errors']):
+            e = N.array(rfe['errors'])
+            self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
+        else:
+            self.failUnless(sdata.nfeatures == wdata_nfeatures)
+
+        # XXX add a test where sensitivity analyser and transfer error do not
+        # use the same classifier
+
+
 
 def suite():
     return unittest.makeSuite(RFETests)

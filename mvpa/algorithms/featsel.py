@@ -63,7 +63,7 @@ class StoppingCriterion(object):
     def __call__(self, errors):
         """Instruct when to stop
 
-        Returns tuple (`go`, `isthebest`)
+        Returns tuple (`stop`, `isthebest`)
         """
         raise NotImplementedError
 
@@ -123,17 +123,20 @@ class TailFeatureSelector(FeatureSelector):
     """
 
     def __init__(self, removeminimal=True, exactnumber=False):
-        """
-        Initialize TailFeatureSelector
-        `removeminimal`: Bool, False signals to remove maximal elements
-        `exactnumber`: Bool, TODO!!: given a number of features to remove,
-                      when `exactnumber`==`False` (default now) selector might
-                      remove slightly more features if there are multiple
-                      features with the same minimal/maximal value.
-                      Implementation of `exactnumber`==True needs sorting
-                      to return indecies of the sorted array, so either zipping
-                      of values with indicies has to be done first or may be
-                      there is a better way
+        """ Initialize TailFeatureSelector
+
+        :Parameters:
+          `removeminimal` : Bool
+            False signals to remove maximal elements
+          `exactnumber` : Bool
+            TODO!!: given a number of features to remove, when
+            `exactnumber`==`False` (default now) selector might remove
+            slightly more features if there are multiple features with
+            the same minimal/maximal value.  Implementation of
+            `exactnumber`==True needs sorting to return indecies of
+            the sorted array, so either zipping of values with
+            indicies has to be done first or may be there is a better
+            way
         """
         FeatureSelector.__init__(self)  # init State before registering anything
 
@@ -159,16 +162,21 @@ class TailFeatureSelector(FeatureSelector):
         nfeatures = len(sensitivity)
         # how many to discard
         nremove = min(self._getNumberToDiscard(nfeatures), nfeatures)
-        sensmap = N.array(sensitivity)  # assure that it is ndarray
-        sensmap2 = sensmap.copy()       # make a copy to sort
-        sensmap2.sort()                 # sort inplace
+        # make sure that data is ndarray and compute a sensitivity rank matrix
+        # lowest value is first
+        sensrank = N.array(sensitivity).argsort()
         if self.__removeminimal:
-            good_ids = sensmap[sensmap>sensmap2[nremove-1]]
+            good_ids = sensrank[nremove:]
         else:
             # remove maximal elements
-            good_ids = sensmap[sensmap<sensmap2[-nremove]]
-        # compute actual number of discarded elements
-        self['ndiscarded'] = nfeatures - len(good_ids)
+            good_ids = sensrank[:-1*nremove]
+        # store actual number of discarded elements
+        self['ndiscarded'] = nremove
+
+        # sort ids to keep order
+        # XXX should we do here are leave to other place
+        good_ids.sort()
+
         return good_ids
 
 
