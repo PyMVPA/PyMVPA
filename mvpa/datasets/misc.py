@@ -10,7 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import operator
 import numpy as N
 from sets import Set
 
@@ -37,6 +36,7 @@ def zscore(dataset, mean = None, std = None,
         dataset.setSamplesDType(targetdtype)
 
     def doit(samples, mean, std, statsamples=None):
+        """Internal method."""
 
         if statsamples is None:
             # if nothing provided  -- mean/std on all samples
@@ -52,7 +52,7 @@ def zscore(dataset, mean = None, std = None,
 
         # do the z-scoring
         samples -= mean
-        samples[:,std!=0] /= std[std!=0]
+        samples[:, std!=0] /= std[std!=0]
 
         return samples
 

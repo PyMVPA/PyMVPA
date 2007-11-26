@@ -168,11 +168,11 @@ class DatasetTests(unittest.TestCase):
         # store the old labels
         origlabels = data.labels.copy()
 
-        data.permutedRegressors(True)
+        data.permuteRegressors(True)
 
         self.failIf( (data.labels == origlabels).all() )
 
-        data.permutedRegressors(False)
+        data.permuteRegressors(False)
 
         self.failUnless( (data.labels == origlabels).all() )
 
@@ -185,7 +185,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data2.labels == origlabels).all() )
 
         # now permute in the new object
-        data2.permutedRegressors( True )
+        data2.permuteRegressors( True )
 
         # must not affect the old one
         self.failUnless( (data.labels == origlabels).all() )

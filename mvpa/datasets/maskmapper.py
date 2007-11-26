@@ -15,8 +15,8 @@ from mvpa.datasets.mapper import MetricMapper
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 
 if __debug__:
-    from copy import deepcopy
     from mvpa.misc import warning
+    from mvpa.misc.support import isSorted
 
 class MaskMapper(MetricMapper):
     """Mapper which uses a binary mask to select "Features" """
@@ -267,13 +267,7 @@ class MaskMapper(MetricMapper):
             # it. Thus -- warn user is outIds are not in sorted order
             # and no sorting was requested may be due to performance
             # considerations
-            outIdsOld = deepcopy(outIds)
-            outIds.sort()
-            equality = outIdsOld == outIds
-            # XXX yarik forgotten analog to isiterable
-            if hasattr(equality, '__iter__'):
-                equality = N.all(equality)
-            if not equality:
+            if not isSorted(outIds):
                 warning("IDs for selectOut must be provided " +
                         "in sorted order, otherwise .forward() would fail"+
                         " on the data with multiple samples")

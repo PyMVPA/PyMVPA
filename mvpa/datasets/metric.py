@@ -64,12 +64,6 @@ class Metric(object):
         for neighbor in self.getNeighbors(*args, **kwargs):
             yield neighbor
 
-# XXX Disabled by Michael as it doesn't seem to be required and conflicts
-# with Mapper interface when doing multiple inheritance.
-#    def __call__(self, *args, **kwargs):
-#        """ Sugar -- call implements the generator """
-#        return self.getNeighbor(*args, **kwargs)
-
 
 
 class DescreteMetric(Metric):

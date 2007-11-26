@@ -17,13 +17,17 @@ import copy
 import numpy as N
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.misc import debug, warning
+    from mvpa.misc.support import isSorted
 
 class Dataset(object):
     """ This class provides a container to store all necessary data to perform
     MVPA analyses. These are the data samples, as well as the labels
     associated with these patterns. Additionally samples can be grouped into
     chunks.
+    
+    :group Creators: `__init__`, `selectFeatures`, `selectSamples`
+    :group Mutators: `permuteRegressors`
     """
 
     # static definition to track which unique attributes
@@ -37,23 +41,34 @@ class Dataset(object):
     def __init__(self, data={}, dsattr={}, dtype=None, \
                  samples=None, labels=None, chunks=None, check_data=True,
                  copy_samples=False, copy_data=True, copy_dsattr=True):
-        """
-        - `data`: Dict with an arbitrary number of entries. The value for
-                  each key in the dict has to be an ndarray with the
-                  same length as the number of rows in the samples array.
-                  A special entry in theis dictionary is 'samples', a 2d array
-                  (samples x features). A shallow copy is stored in the object.
-        - `dsattr`: Dictionary of dataset attributes. An arbitrary number of
-                    arbitrarily named and typed objects can be stored here. A
-                    shallow copy of the dictionary is stored in the object.
-        - `dtype`: If None -- do not change data type if samples
-                   is an ndarray. Otherwise convert samples to dtype.
+        """Initialize dataset instance
 
-        Each of the following arguments overwrites with is/might be already in
-        the `data` container.
-        - `samples`: a 2d array (samples x features)
-        - `labels`: array or scalar value
-        - `chunks`: array or scalar value
+        :Parameters:
+          data : dict
+            Dictionary with an arbitrary number of entries. The value for
+            each key in the dict has to be an ndarray with the
+            same length as the number of rows in the samples array.
+            A special entry in theis dictionary is 'samples', a 2d array
+            (samples x features). A shallow copy is stored in the object.
+          dsattr : dict
+            Dictionary of dataset attributes. An arbitrary number of
+            arbitrarily named and typed objects can be stored here. A
+            shallow copy of the dictionary is stored in the object.
+          dtype
+            If None -- do not change data type if samples
+            is an ndarray. Otherwise convert samples to dtype.
+
+        :Keywords:
+          samples : ndarray
+            a 2d array (samples x features)
+          labels
+            array or scalar value defining labels for each samples
+          chunks
+            array or scalar value defining chunks for each sample
+
+        Each of the Keywords arguments overwrites with is/might be
+        already in the `data` container.
+
         """
         # initialize containers; default values are empty dicts
         # always make a shallow copy of what comes in, otherwise total chaos
@@ -410,18 +425,33 @@ class Dataset(object):
         return out
 
 
-    def selectFeatures(self, ids):
+    def selectFeatures(self, ids, sort=False):
         """ Select a number of features from the current set.
 
-        `ids` is a list of feature IDs
+        :Parameters:
+          ids
+            iterable container to select ids
+          sort : bool
+            if to sort Ids. Order matters and `selectFeatures` assumes
+            incremental order. If not such, in non-optimized code
+            selectFeatures would verify the order and sort
 
-        Returns a new Dataset object with a view of the original samples
-        array (no copying is performed).
+        Returns a new Dataset object with a view of the original
+        samples array (no copying is performed).
 
-        ATTENTION: The order of ids determines the order of features in the
-        returned dataset. This might be useful sometimes, but can also cause
-        major headaches!
+        WARNING: The order of ids determines the order of features in
+        the returned dataset. This might be useful sometimes, but can
+        also cause major headaches! Order would is verified when
+        running in non-optimized code (if __debug__)
         """
+
+        if sort:
+            ids.sort()
+        elif __debug__:
+            if not isSorted(ids):
+                warning("IDs for selectFeatures must be provided " +
+                        "in sorted order, otherwise major headache might occur")
+
         # shallow-copy all stuff from current data dict
         new_data = self._data.copy()
 
@@ -477,7 +507,7 @@ class Dataset(object):
 
 
 
-    def permutedRegressors( self, status, perchunk = True ):
+    def permuteRegressors( self, status, perchunk = True ):
         """ Permute the labels.
 
         Calling this method with 'status' set to True, the labels are

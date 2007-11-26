@@ -6,62 +6,55 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA searchlight algorithm"""
+"""Unit tests for PyMVPA perturbation sensitivity analyzer."""
 
 import unittest
 
 import numpy as N
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.searchlight import Searchlight
+from mvpa.algorithms.perturbsensana import PerturbationSensitivityAnalyzer
 from mvpa.clf.knn import kNN
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.transerror import TransferError
 
 
-class SearchlightTests(unittest.TestCase):
+class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
 
     def setUp(self):
-        data = N.random.standard_normal(( 100, 3, 6, 6 ))
+        data = N.random.standard_normal(( 100, 3, 4, 2 ))
         labels = N.concatenate( ( N.repeat( 0, 50 ),
                                   N.repeat( 1, 50 ) ) )
         chunks = N.repeat( range(5), 10 )
         chunks = N.concatenate( (chunks, chunks) )
-        mask = N.ones( (3, 6, 6) )
+        mask = N.ones( (3, 4, 2) )
         mask[0,0,0] = 0
-        mask[1,3,2] = 0
+        mask[1,3,1] = 0
         self.dataset = MaskedDataset(samples=data, labels=labels,
                                      chunks=chunks, mask=mask)
 
 
-    def testSearchlight(self):
-        # compute N-1 cross-validation for each sphere
-        transerror = TransferError(kNN(k=5))
+    def testPerturbationSensitivityAnalyzer(self):
+        # compute N-1 cross-validation as datameasure
         cv = ClfCrossValidation(
-                transerror,
+                TransferError(kNN(k=5)),
                 NFoldSplitter(cvtype=1))
-        # contruct radius 1 searchlight
-        sl = Searchlight( cv, radius=1.0 )
+        # do perturbation analysis using gaussian noise
+        pa = PerturbationSensitivityAnalyzer(cv, noise=N.random.normal)
 
-        # run searchlight
-        results = sl(self.dataset)
+        # run analysis
+        map = pa(self.dataset)
 
-        # check for correct number of spheres
-        self.failUnless(len(results) == 106)
+        # check for correct size of map
+        self.failUnless(len(map) == 22)
 
-        # check for chance-level performance across all spheres
-        self.failUnless(0.4 < results.mean() < 0.6)
-
-        # check resonable sphere sizes
-        self.failUnless(len(sl.spheresizes) == 106)
-        self.failUnless(max(sl.spheresizes) == 7)
-        self.failUnless(min(sl.spheresizes) == 4)
-
+        # dataset is noise -> mean sensitivity should be zero
+        self.failUnless(-0.2 < map.mean() < 0.2)
 
 
 def suite():
-    return unittest.makeSuite(SearchlightTests)
+    return unittest.makeSuite(PerturbationSensitivityAnalyzerTests)
 
 
 if __name__ == '__main__':
