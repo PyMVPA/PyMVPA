@@ -14,7 +14,7 @@ import numpy as N
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
-     StopNBackHistoryCriterion, XPercentTailSelector, \
+     StopNBackHistoryCriterion, FractionTailSelector, \
      FixedNElementTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clf.svm import LinearNuSVMC
@@ -60,7 +60,7 @@ class RFETests(unittest.TestCase):
     def testFeatureSelector(self):
         """Test feature selector"""
         # remove 10% weekest
-        selector = XPercentTailSelector(0.1)
+        selector = FractionTailSelector(0.1)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         # == rank [4, 5, 6, 7, 0, 3, 2, 9, 1, 8]
         target10 = N.array([0, 1, 2, 3, 5, 6, 7, 8, 9])

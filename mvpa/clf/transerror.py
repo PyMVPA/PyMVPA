@@ -12,9 +12,9 @@ __docformat__ = 'restructuredtext'
 
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
+from mvpa.misc.state import State
 
-
-class TransferError(object):
+class TransferError(State):
     """Compute the transfer error of a (trained) classifier on a dataset.
 
     The actual error value is computed using a customizable error function.
@@ -32,9 +32,14 @@ class TransferError(object):
                      vectors of desired and predicted values (e.g. subclass
                      of ErrorFx)
         """
+        State.__init__(self)
         self.__clf = clf
         self.__errorfx = errorfx
 
+        self._registerState('confusion')
+        """TODO Think that labels might be also symbolic thus can't directly
+                be indicies of the array
+        """
 
     def __call__(self, testdata, trainingdata=None):
         """Compute the transfer error for a certain test dataset.
@@ -49,8 +54,14 @@ class TransferError(object):
         if not trainingdata == None:
             self.__clf.train(trainingdata)
 
+        predictions = self.__clf.predict(testdata.samples)
+
+        # compute confusion matrix
+        # self['confusion'] = ....
+        # TODO
+
         # compute error from desired and predicted values
-        error = self.__errorfx(self.__clf.predict(testdata.samples),
+        error = self.__errorfx(predictions,
                                testdata.labels)
 
         return error

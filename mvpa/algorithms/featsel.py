@@ -19,13 +19,15 @@ from mvpa.misc.state import State
 from mvpa.misc.exceptions import UnknownStateError
 
 
-class FeatureSelection(object):
+class FeatureSelection(State):
     """ Base class for any feature selection
 
     TODO...
     """
 
     def __init__(self):
+        # base init first
+        State.__init__(self)
         self.__mask = None
         """Binary mask defining the voxels which were selected"""
 
@@ -136,6 +138,7 @@ class TailSelector(ElementSelector):
     The default behaviour is to discard the lower tail of a given distribution.
     """
 
+    # TODO: 'both' to select from both tails
     def __init__(self, tail='lower', mode='discard', sort=True):
         """Initialize TailFeatureSelector
 
@@ -193,6 +196,8 @@ class TailSelector(ElementSelector):
     def __call__(self, seq):
         """Returns selected IDs.
         """
+        # TODO: Think about selecting features which have equal values but
+        #       some are selected and some are not
         len_seq = len(seq)
         # how many to select (cannot select more than available)
         nelements = min(self._getNElements(seq), len_seq)
@@ -262,8 +267,8 @@ class FixedNElementTailSelector(TailSelector):
 
 
 
-class XPercentTailSelector(TailSelector):
-    """Given a sequence, provide Ids for a percentage of elements
+class FractionTailSelector(TailSelector):
+    """Given a sequence, provide Ids for a fraction of elements
     """
 
     def __init__(self, felements, **kargs):
@@ -291,7 +296,7 @@ class XPercentTailSelector(TailSelector):
 
 
     def _setFElements(self, felements):
-        """How many percent to discard"""
+        """What fraction to discard"""
         if felements > 1.0 or felements < 0.0:
             raise ValueError, \
                   "Fraction (%f) cannot be outside of [0.0,1.0]" \
