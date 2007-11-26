@@ -48,3 +48,10 @@ class Classifier(object):
         """
         raise NotImplementedError
 
+
+
+# MultiClass
+# One-vs-One   One-vs-All  TreeClassifier
+
+# BoostedClassifier
+# 

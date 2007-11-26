@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.misc.state import State
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
-                                    XPercentTailSelector
+                                    FractionTailSelector
 
 if __debug__:
     from mvpa.misc import debug
@@ -24,7 +24,7 @@ if __debug__:
 # FeatureSelector to convert sensitivities to abs values before calling
 # actual selector, or a decorator around SensitivityEstimators
 
-class RFE(FeatureSelection, State):
+class RFE(FeatureSelection):
     """ Recursive feature elimination.
 
     A `SensitivityAnalyzer` is used to compute sensitivity maps given a certain
@@ -37,7 +37,7 @@ class RFE(FeatureSelection, State):
     def __init__(self,
                  sensitivity_analyzer,
                  transfer_error,
-                 feature_selector=XPercentTailSelector(0.05),
+                 feature_selector=FractionTailSelector(0.05),
                  stopping_criterion=StopNBackHistoryCriterion(),
                  train_clf=True
                  ):
@@ -62,8 +62,9 @@ class RFE(FeatureSelection, State):
                 `transfer_error` share and make use of the same classifier and
                 can be switched off to save CPU cycles.
         """
+
         # base init first
-        State.__init__(self)
+        FeatureSelection.__init__(self)
 
         self.__sensitivity_analyzer = sensitivity_analyzer
         """Sensitivity analyzer used to call at each step."""
@@ -81,6 +82,8 @@ class RFE(FeatureSelection, State):
 
         # register the state members
         self._registerState("errors")
+        self._registerState("nfeatures")
+        self._registerState("history")
 
 
     def __call__(self, dataset, testdataset, callables=[]):
@@ -101,6 +104,14 @@ class RFE(FeatureSelection, State):
         errors = []
         """Computed error for each tested features set."""
 
+        self["nfeatures"] = []
+        """Number of features at each step. Since it is not used by the
+        algorithm it is stored directly in the state variable"""
+
+        self["history"] = [None] * dataset.nfeatures
+        """
+        """
+
         stop = False
         """Flag when RFE should be stopped."""
 
@@ -113,6 +124,9 @@ class RFE(FeatureSelection, State):
 
         step = 0
         """Counter how many selection step where done."""
+
+        orig_feature_ids = range(dataset.nfeatures)
+        """List of feature Ids as per original dataset"""
 
         while dataset.nfeatures>0:
             # Compute sensitivity map
@@ -134,10 +148,13 @@ class RFE(FeatureSelection, State):
             # the best result
             (stop, isthebest) = self.__stopping_criterion(errors)
 
+
+            self["nfeatures"].append(dataset.nfeatures)
+
             if __debug__:
                 debug('RFEC',
                       "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d" %
-                      (step, dataset.nfeatures, errors[-1], isthebest, stop))
+                      (step, self["nfeatures"][-1], errors[-1], isthebest, stop))
 
             # store result
             if isthebest:
@@ -164,6 +181,13 @@ class RFE(FeatureSelection, State):
             dataset = newdataset
             if not newtestdataset is None:
                 testdataset = dataset
+
+            # # TODO: do it smarter way
+            # # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
+            # selected_ids.sort()
+            # for selected_id in selected_ids[::-1]:
+            #     self["history"][orig_feature_ids[selected_id]] = step
+            #     del orig_feature_ids[selected_id]
 
             step += 1
 

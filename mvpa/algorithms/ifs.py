@@ -26,7 +26,7 @@ if __debug__:
     from mvpa.misc import debug
 
 
-class IFS(FeatureSelection, State):
+class IFS(FeatureSelection):
     """ Incremental feature search.
 
     A `DataMeasure` is computed multiple times on variations of a certain
@@ -68,7 +68,6 @@ class IFS(FeatureSelection, State):
         """
         # bases init first
         FeatureSelection.__init__(self)
-        State.__init__(self)
 
         self.__data_measure = data_measure
         self.__transfer_error = transfer_error
