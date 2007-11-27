@@ -18,16 +18,15 @@ from mvpa.misc.vproperty import VProperty
 from mvpa.misc.state import State
 from mvpa.misc.exceptions import UnknownStateError
 
-
 class FeatureSelection(State):
     """ Base class for any feature selection
 
     TODO...
     """
 
-    def __init__(self):
+    def __init__(self, **kargs):
         # base init first
-        State.__init__(self)
+        State.__init__(self, **kargs)
         self.__mask = None
         """Binary mask defining the voxels which were selected"""
 

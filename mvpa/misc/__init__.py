@@ -82,6 +82,7 @@ if __debug__:
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset debugging")
+    debug.register('ST',   "State debugging")
 
     # Lets check if environment can tell us smth
     if environ.has_key('MVPA_DEBUG'):
