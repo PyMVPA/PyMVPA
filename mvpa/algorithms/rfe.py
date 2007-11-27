@@ -10,7 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.misc.state import State
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
                                     FractionTailSelector
@@ -35,12 +34,17 @@ class RFE(FeatureSelection):
     reached.
     """
 
+    _register_states = {'errors':True,
+                        'nfeatures':True,
+                        'history':True}
+
     def __init__(self,
                  sensitivity_analyzer,
                  transfer_error,
                  feature_selector=FractionTailSelector(0.05),
                  stopping_criterion=StopNBackHistoryCriterion(),
-                 train_clf=True
+                 train_clf=True,
+                 **kargs
                  ):
         # XXX Allow for multiple stopping criterions, e.g. error not decreasing
         # anymore OR number of features less than threshold
@@ -67,7 +71,7 @@ class RFE(FeatureSelection):
         """
 
         # base init first
-        FeatureSelection.__init__(self)
+        FeatureSelection.__init__(self, **kargs)
 
         self.__sensitivity_analyzer = sensitivity_analyzer
         """Sensitivity analyzer used to call at each step."""
@@ -84,9 +88,9 @@ class RFE(FeatureSelection):
         """Flag whether training classifier is required."""
 
         # register the state members
-        self._registerState("errors")
-        self._registerState("nfeatures")
-        self._registerState("history")
+        #self._registerState("errors")
+        #self._registerState("nfeatures")
+        #self._registerState("history")
 
 
     def __call__(self, dataset, testdataset, callables=[]):

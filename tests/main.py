@@ -19,6 +19,7 @@ tests = [
     'test_maskeddataset',
     'test_niftidataset',
     'test_nfoldsplitter',
+    'test_state',
     # Misc supporting utilities
     'test_stats',
     'test_support',
