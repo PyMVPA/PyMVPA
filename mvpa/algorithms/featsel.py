@@ -140,7 +140,7 @@ class TailSelector(ElementSelector):
 
     # TODO: 'both' to select from both tails
     def __init__(self, tail='lower', mode='discard', sort=True):
-        """Initialize TailFeatureSelector
+        """Initialize TailSelector
 
         :Parameters:
             `tail` : ['lower', 'upper']
@@ -284,7 +284,7 @@ class FractionTailSelector(TailSelector):
 
     def __repr__(self):
         return "%s fraction=%f" % (
-            TailFeatureSelector.__repr__(self), self.__felements)
+            TailSelector.__repr__(self), self.__felements)
 
 
     def _getNElements(self, seq):
