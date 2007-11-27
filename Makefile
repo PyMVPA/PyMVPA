@@ -8,7 +8,10 @@ distclean:
 		mvpa/clf/libsvm/svmc.py \
 		mvpa/clf/libsvm/svmc_wrap.cpp \
 		tests/*.{prof,pstats,kcache} $(PROFILE_FILE)
-	@find . -name '*.pyc' -o -iname '*~' -o -iname '#*#' | xargs -l10 rm -f
+	@find . -name '*.pyo' \
+		 -o -name '*.pyc' \
+		 -o -iname '*~' \
+		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
 	-@rm -rf doc/api/html doc/*.html
