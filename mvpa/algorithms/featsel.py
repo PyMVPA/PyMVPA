@@ -64,6 +64,9 @@ class StoppingCriterion(object):
     """
 
     def __call__(self, errors):
+        # XXX Michael thinks that this method should also get the history
+        # of the number of features, e.g. I'd like to have: If error is equal
+        # but nfeatures is smaller -> isthebest == True
         """Instruct when to stop
 
         Returns tuple (`stop`, `isthebest`)
