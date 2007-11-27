@@ -21,8 +21,8 @@
   * Agree on how to describe parameters to functions. Describe in
    NOTES.coding. 
 
-  * feature_selector
-
+  * feature_selector -- may be we should return a tuple
+    (selected_ids, discarded_ids)?
 
   exclude -> discard
 

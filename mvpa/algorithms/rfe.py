@@ -14,6 +14,7 @@ from mvpa.misc.state import State
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
                                     FractionTailSelector
+from numpy import arange
 
 if __debug__:
     from mvpa.misc import debug
@@ -108,8 +109,8 @@ class RFE(FeatureSelection):
         """Number of features at each step. Since it is not used by the
         algorithm it is stored directly in the state variable"""
 
-        self["history"] = [None] * dataset.nfeatures
-        """
+        self["history"] = arange(dataset.nfeatures)
+        """Store the last step # when the feature was still present
         """
 
         stop = False
@@ -125,10 +126,16 @@ class RFE(FeatureSelection):
         step = 0
         """Counter how many selection step where done."""
 
-        orig_feature_ids = range(dataset.nfeatures)
-        """List of feature Ids as per original dataset"""
+        orig_feature_ids = arange(dataset.nfeatures)
+        """List of feature Ids as per original dataset remaining at any given
+        step"""
 
         while dataset.nfeatures>0:
+            # mark the features which are present at this step
+            # if it brings anyb mentionable computational burden in the future,
+            # only mark on removed features at each step
+            self["history"][orig_feature_ids] = step
+
             # Compute sensitivity map
             # TODO add option to do RFE on a sensitivity map that is computed
             # a single time at the beginning of the process. This options
@@ -182,14 +189,12 @@ class RFE(FeatureSelection):
             if not newtestdataset is None:
                 testdataset = dataset
 
-            # # TODO: do it smarter way
-            # # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
-            # selected_ids.sort()
-            # for selected_id in selected_ids[::-1]:
-            #     self["history"][orig_feature_ids[selected_id]] = step
-            #     del orig_feature_ids[selected_id]
-
             step += 1
+
+            # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
+            selected_ids.sort()
+            orig_feature_ids = orig_feature_ids[selected_ids]
+
 
         # charge state variable
         self["errors"] = errors
