@@ -26,7 +26,7 @@ class ClfCrossValidation(DataMeasure):
     """
     def __init__(self,
                  transerror,
-                 splitter=NoneSplitter,
+                 splitter=NoneSplitter(),
                  combinerfx=N.mean):
         """
         Cheap initialization.
