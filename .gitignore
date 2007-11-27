@@ -18,4 +18,5 @@ doc/examples/dump.*
 debian/python-mvpa/*
 debian/*.debhelper
 debian/*.substvars
+debian/files
 *-stamp
