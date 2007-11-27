@@ -15,4 +15,7 @@ doc/examples/dump.*
 *.swp
 /data
 *.pstats
-
+debian/python-mvpa/*
+debian/*.debhelper
+debian/*.substvars
+*-stamp
