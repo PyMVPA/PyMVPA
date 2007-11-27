@@ -42,6 +42,8 @@ class RFE(FeatureSelection):
                  stopping_criterion=StopNBackHistoryCriterion(),
                  train_clf=True
                  ):
+        # XXX Allow for multiple stopping criterions, e.g. error not decreasing
+        # anymore OR number of features less than threshold
         """ Initialize recursive feature elimination
 
         Parameters
@@ -119,7 +121,10 @@ class RFE(FeatureSelection):
         result = None
         """Will hold the best feature set ever."""
 
-        newtestdataset = None
+        wdataset = dataset
+        """Operate on working dataset initially identical."""
+
+        wtestdataset = testdataset
         """Same feature selection has to be performs on test dataset as well.
         This will hold the current testdataset."""
 
@@ -130,7 +135,7 @@ class RFE(FeatureSelection):
         """List of feature Ids as per original dataset remaining at any given
         step"""
 
-        while dataset.nfeatures>0:
+        while wdataset.nfeatures>0:
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
             # only mark on removed features at each step
@@ -140,13 +145,13 @@ class RFE(FeatureSelection):
             # TODO add option to do RFE on a sensitivity map that is computed
             # a single time at the beginning of the process. This options
             # should then overwrite train_clf to always be True
-            sensitivity = self.__sensitivity_analyzer(dataset)
+            sensitivity = self.__sensitivity_analyzer(wdataset)
 
             # do not retrain clf if not necessary
             if self.__train_clf:
-                error = self.__transfer_error(testdataset, dataset)
+                error = self.__transfer_error(wtestdataset, wdataset)
             else:
-                error = self.__transfer_error(testdataset, None)
+                error = self.__transfer_error(wtestdataset, None)
 
             # Record the error
             errors.append(error)
@@ -156,7 +161,7 @@ class RFE(FeatureSelection):
             (stop, isthebest) = self.__stopping_criterion(errors)
 
 
-            self["nfeatures"].append(dataset.nfeatures)
+            self["nfeatures"].append(wdataset.nfeatures)
 
             if __debug__:
                 debug('RFEC',
@@ -165,29 +170,24 @@ class RFE(FeatureSelection):
 
             # store result
             if isthebest:
-                result = dataset
+                result = wdataset
             # stop if it is time to finish
-            if dataset.nfeatures == 1 or stop:
+            if wdataset.nfeatures == 1 or stop:
                 break
 
             # Select features to preserve
             selected_ids = self.__feature_selector(sensitivity)
             # Create a dataset only with selected features
-            newdataset = dataset.selectFeatures(selected_ids)
+            wdataset = wdataset.selectFeatures(selected_ids)
 
             # need to update the test dataset as well
-            if not testdataset is None:
-                newtestdataset = testdataset.selectFeatures(selected_ids)
+            # XXX why should it ever become None?
+            #if not testdataset is None:
+            wtestdataset = wtestdataset.selectFeatures(selected_ids)
 
             # provide evil access to internals :)
             for callable_ in callables:
                 callable_(locals())
-
-            # reassign, so in callables we got both older and new
-            # datasets
-            dataset = newdataset
-            if not newtestdataset is None:
-                testdataset = dataset
 
             step += 1
 
