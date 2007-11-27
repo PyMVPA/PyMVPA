@@ -34,7 +34,8 @@ tests = [
     'test_rfe',
     'test_ifs',
     'test_perturbsensana',
-    'test_splitsensana'
+    'test_splitsensana',
+    'test_anova'
     ]
 #          'test_plf',
 
