@@ -94,6 +94,7 @@ class RFE(FeatureSelection):
         self._registerState("errors")
         self._registerState("nfeatures")
         self._registerState("history")
+        self._registerState("sensitivities", enabled=False)
 
 
     def __call__(self, dataset, testdataset, callables=[]):
@@ -123,6 +124,9 @@ class RFE(FeatureSelection):
             self["history"] = arange(dataset.nfeatures)
             """Store the last step # when the feature was still present
             """
+
+        if self.isStateEnabled("sensitivities"):
+            self["sensitivities"] = []
 
         stop = False
         """Flag when RFE should be stopped."""
@@ -156,6 +160,9 @@ class RFE(FeatureSelection):
             # a single time at the beginning of the process. This options
             # should then overwrite train_clf to always be True
             sensitivity = self.__sensitivity_analyzer(wdataset)
+
+            if self.isStateEnabled("sensitivities"):
+                self["sensitivities"].append(sensitivity)
 
             # do not retrain clf if not necessary
             if self.__train_clf:
