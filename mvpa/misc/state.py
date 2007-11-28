@@ -40,13 +40,21 @@ class State(dict):
         dict.__init__(self, *args, **kwargs)
 
         register_states = {}
-
         # if class defined default states to register -- use them
+
+        # XXX Yarik's attempt to overcome the problem that derived
+        # child class would override parent's list of register_states.
+        # Left as a comment for history
+        # register_states_fields = \
+        #   filter(lambda x: x.startswith('_register_states'),
+        #          self.__class__.__dict__.keys())
         if self.__class__.__dict__.has_key('_register_states'):
             register_states = self.__class__._register_states
-        elif __debug__:
-            debug('ST', 'Class %s is a child of State class but has no states' %
-                  (self.__class__.__name__))
+        # no need to compain actually since this method doesn't work
+        # nicely (see above)
+        #elif __debug__:
+        #    debug('ST', 'Class %s is a child of State class but has no states' %
+        #          (self.__class__.__name__))
 
         for key,enabled in register_states.iteritems():
             if (not enable_states is None):
@@ -65,10 +73,6 @@ class State(dict):
                           ' among explicitely disabled ones for %s' %
                           (self.__class__.__name__))
                 enabled = False
-            if __debug__:
-                debug('ST', 'Registering %s state %s for %s' %
-                      ({True:'enabled', False:'disabled'}[enabled],
-                       key, self.__class__.__name__))
 
             self._registerState(key, enabled)
 
@@ -128,6 +132,10 @@ class State(dict):
           `enabled` : Bool
             either the state should be enabled
         """
+        if __debug__:
+            debug('ST', 'Registering %s state %s for %s' %
+                  ({True:'enabled', False:'disabled'}[enabled],
+                   index, self.__class__.__name__))
         self.__registered[index] = enabled
 
 
@@ -145,6 +153,7 @@ class State(dict):
         self.__checkIndex(index)
         return self.__registered[index]
 
+    # Properties
     registeredStates = property(fget=lambda x:x.__registered.keys())
     enabledStates = property(fget=lambda x:filter(
         lambda y:x.__registered[y], x.__registered.keys()))

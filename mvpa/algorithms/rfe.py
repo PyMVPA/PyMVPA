@@ -34,9 +34,12 @@ class RFE(FeatureSelection):
     reached.
     """
 
-    _register_states = {'errors':True,
-                        'nfeatures':True,
-                        'history':True}
+    # TODO: remove
+    # doesn't work nicely -- if FeatureSelection defines its states via
+    #                        _register_states, they would simply be ignored
+    #_register_states = {'errors':True,
+    #                    'nfeatures':True,
+    #                    'history':True}
 
     def __init__(self,
                  sensitivity_analyzer,
@@ -88,9 +91,9 @@ class RFE(FeatureSelection):
         """Flag whether training classifier is required."""
 
         # register the state members
-        #self._registerState("errors")
-        #self._registerState("nfeatures")
-        #self._registerState("history")
+        self._registerState("errors")
+        self._registerState("nfeatures")
+        self._registerState("history")
 
 
     def __call__(self, dataset, testdataset, callables=[]):
@@ -111,13 +114,15 @@ class RFE(FeatureSelection):
         errors = []
         """Computed error for each tested features set."""
 
-        self["nfeatures"] = []
-        """Number of features at each step. Since it is not used by the
-        algorithm it is stored directly in the state variable"""
+        if self.isStateEnabled("nfeatures"):
+            self["nfeatures"] = []
+            """Number of features at each step. Since it is not used by the
+            algorithm it is stored directly in the state variable"""
 
-        self["history"] = arange(dataset.nfeatures)
-        """Store the last step # when the feature was still present
-        """
+        if self.isStateEnabled("history"):
+            self["history"] = arange(dataset.nfeatures)
+            """Store the last step # when the feature was still present
+            """
 
         stop = False
         """Flag when RFE should be stopped."""
@@ -140,10 +145,11 @@ class RFE(FeatureSelection):
         step"""
 
         while wdataset.nfeatures>0:
-            # mark the features which are present at this step
-            # if it brings anyb mentionable computational burden in the future,
-            # only mark on removed features at each step
-            self["history"][orig_feature_ids] = step
+            if self.isStateEnabled("history"):
+                # mark the features which are present at this step
+                # if it brings anyb mentionable computational burden in the future,
+                # only mark on removed features at each step
+                self["history"][orig_feature_ids] = step
 
             # Compute sensitivity map
             # TODO add option to do RFE on a sensitivity map that is computed
@@ -164,19 +170,21 @@ class RFE(FeatureSelection):
             # the best result
             (stop, isthebest) = self.__stopping_criterion(errors)
 
+            nfeatures = wdataset.nfeatures
 
-            self["nfeatures"].append(wdataset.nfeatures)
+            if self.isStateEnabled("nfeatures"):
+                self["nfeatures"].append(wdataset.nfeatures)
 
             if __debug__:
                 debug('RFEC',
                       "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d" %
-                      (step, self["nfeatures"][-1], errors[-1], isthebest, stop))
+                      (step, nfeatures, error, isthebest, stop))
 
             # store result
             if isthebest:
                 result = wdataset
             # stop if it is time to finish
-            if wdataset.nfeatures == 1 or stop:
+            if nfeatures == 1 or stop:
                 break
 
             # Select features to preserve
@@ -186,8 +194,12 @@ class RFE(FeatureSelection):
 
             # need to update the test dataset as well
             # XXX why should it ever become None?
-            #if not testdataset is None:
-            wtestdataset = wtestdataset.selectFeatures(selected_ids)
+            # yoh: because we can have __transfer_error computed
+            #      using wdataset. See xia-generalization estimate
+            #      in lightsvm. Or for god's sake leave-one-out
+            #      on a wdataset
+            if not testdataset is None:
+                wtestdataset = wtestdataset.selectFeatures(selected_ids)
 
             # provide evil access to internals :)
             for callable_ in callables:
@@ -197,11 +209,13 @@ class RFE(FeatureSelection):
 
             # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
             selected_ids.sort()
-            orig_feature_ids = orig_feature_ids[selected_ids]
+            if self.isStateEnabled("history"):
+                orig_feature_ids = orig_feature_ids[selected_ids]
 
 
         # charge state variable
-        self["errors"] = errors
+        if self.isStateEnabled("errors"):
+            self["errors"] = errors
 
         # best dataset ever is returned
         return result

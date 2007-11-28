@@ -156,7 +156,7 @@ class TailSelector(ElementSelector):
         """
         ElementSelector.__init__(self)  # init State before registering anything
 
-        self._registerState('ndiscarded')    # state variable
+        self._registerState('ndiscarded', True)    # state variable
         """Store number of discarded elements.
         """
 

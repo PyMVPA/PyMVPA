@@ -28,6 +28,13 @@ class TestClassProper(State):
         State.__init__(self, **kargs)
 
 
+class TestClassProperChild(TestClassProper):
+
+    _register_states = { 'state4': False }
+
+    def __init__(self, **kargs):
+        TestClassProper.__init__(self, **kargs)
+
 class StateTests(unittest.TestCase):
 
     def testBlankState(self):
@@ -75,6 +82,17 @@ class StateTests(unittest.TestCase):
         proper2.disableState('state3')
         self.failUnless(Set(proper2.enabledStates) == Set(['state1']))
 
+
+    def _testProperStateChild(self):
+        """
+        Actually it would fail which makes it no sense to use
+        _register_states class variables
+        """
+        proper = TestClassProperChild()
+        print proper.registeredStates
+        self.failUnless(Set(proper.registeredStates) ==
+                            Set(TestClassProperChild._register_states).union(
+                                                Set(TestClassProper._register_states)))
 
 def suite():
     return unittest.makeSuite(StateTests)
