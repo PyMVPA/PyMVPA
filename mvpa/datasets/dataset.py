@@ -27,7 +27,7 @@ class Dataset(object):
     chunks.
     
     :group Creators: `__init__`, `selectFeatures`, `selectSamples`
-    :group Mutators: `permuteRegressors`
+    :group Mutators: `permuteLabels`
     """
 
     # static definition to track which unique attributes
@@ -508,7 +508,7 @@ class Dataset(object):
 
 
 
-    def permuteRegressors( self, status, perchunk = True ):
+    def permuteLabels( self, status, perchunk = True ):
         """ Permute the labels.
 
         Calling this method with 'status' set to True, the labels are
@@ -525,7 +525,7 @@ class Dataset(object):
             # restore originals
             if self._data['origlabels'] == None:
                 raise RuntimeError, 'Cannot restore labels. ' \
-                                    'randomizedRegressors() has never been ' \
+                                    'permuteLabels() has never been ' \
                                     'called with status == True.'
             self._setLabels(self._data['origlabels'])
             self._data['origlabels'] = None
