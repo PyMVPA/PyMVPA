@@ -19,6 +19,7 @@ tests = [
     'test_maskeddataset',
     'test_niftidataset',
     'test_nfoldsplitter',
+    'test_state',
     # Misc supporting utilities
     'test_stats',
     'test_support',
@@ -32,11 +33,13 @@ tests = [
     'test_clfcrossval',
     'test_searchlight',
     'test_rfe',
+    'test_ifs',
     'test_perturbsensana',
-    'test_splitsensana'
+    'test_splitsensana',
+    'test_anova',
+    'test_nullhyptest'
     ]
 #          'test_plf',
-#          'test_ifs',
 
 
 

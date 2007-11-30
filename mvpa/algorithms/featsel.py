@@ -18,14 +18,15 @@ from mvpa.misc.vproperty import VProperty
 from mvpa.misc.state import State
 from mvpa.misc.exceptions import UnknownStateError
 
-
-class FeatureSelection(object):
+class FeatureSelection(State):
     """ Base class for any feature selection
 
     TODO...
     """
 
-    def __init__(self):
+    def __init__(self, **kargs):
+        # base init first
+        State.__init__(self, **kargs)
         self.__mask = None
         """Binary mask defining the voxels which were selected"""
 
@@ -62,6 +63,9 @@ class StoppingCriterion(object):
     """
 
     def __call__(self, errors):
+        # XXX Michael thinks that this method should also get the history
+        # of the number of features, e.g. I'd like to have: If error is equal
+        # but nfeatures is smaller -> isthebest == True
         """Instruct when to stop
 
         Returns tuple (`stop`, `isthebest`)
@@ -136,8 +140,9 @@ class TailSelector(ElementSelector):
     The default behaviour is to discard the lower tail of a given distribution.
     """
 
+    # TODO: 'both' to select from both tails
     def __init__(self, tail='lower', mode='discard', sort=True):
-        """Initialize TailFeatureSelector
+        """Initialize TailSelector
 
         :Parameters:
             `tail` : ['lower', 'upper']
@@ -151,7 +156,7 @@ class TailSelector(ElementSelector):
         """
         ElementSelector.__init__(self)  # init State before registering anything
 
-        self._registerState('ndiscarded')    # state variable
+        self._registerState('ndiscarded', True)    # state variable
         """Store number of discarded elements.
         """
 
@@ -193,6 +198,8 @@ class TailSelector(ElementSelector):
     def __call__(self, seq):
         """Returns selected IDs.
         """
+        # TODO: Think about selecting features which have equal values but
+        #       some are selected and some are not
         len_seq = len(seq)
         # how many to select (cannot select more than available)
         nelements = min(self._getNElements(seq), len_seq)
@@ -262,8 +269,8 @@ class FixedNElementTailSelector(TailSelector):
 
 
 
-class XPercentTailSelector(TailSelector):
-    """Given a sequence, provide Ids for a percentage of elements
+class FractionTailSelector(TailSelector):
+    """Given a sequence, provide Ids for a fraction of elements
     """
 
     def __init__(self, felements, **kargs):
@@ -279,7 +286,7 @@ class XPercentTailSelector(TailSelector):
 
     def __repr__(self):
         return "%s fraction=%f" % (
-            TailFeatureSelector.__repr__(self), self.__felements)
+            TailSelector.__repr__(self), self.__felements)
 
 
     def _getNElements(self, seq):
@@ -291,7 +298,7 @@ class XPercentTailSelector(TailSelector):
 
 
     def _setFElements(self, felements):
-        """How many percent to discard"""
+        """What fraction to discard"""
         if felements > 1.0 or felements < 0.0:
             raise ValueError, \
                   "Fraction (%f) cannot be outside of [0.0,1.0]" \

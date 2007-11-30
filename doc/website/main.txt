@@ -1,0 +1,109 @@
+==================================================
+ PyMVPA - Multivariate Pattern Analysis in Python
+==================================================
+
+..
+	Some comment that is not shown on the webpage, but embedded in the HTML
+	code
+
+Menu or News or some other mouth-watering stuff
+...............................................
+
+Maybe some abstract or a menu list or nothing. A menu might be handy as every
+section that is generated below automatically gets an anchor.
+
+Might be a menu
+
+* `Installation`_
+* `Examples`_
+
+
+License
+=======
+
+Download
+========
+
+Source code
+-----------
+
+Version control
+~~~~~~~~~~~~~~~
+Deepest supported hierarchy structure.
+
+Tarballs
+~~~~~~~~
+
+
+Binary packages
+---------------
+Put some external link to Debian_.
+
+.. _Debian: http://www.debian.org
+
+Installation
+============
+
+line blocks
+
+| Lend us a couple of bob till Thursday.
+| I'm absolutely skint.
+| But I'm expecting a postal order and I can pay you back
+  as soon as it comes.
+| Love, Ewan.
+
+Requirements
+============
+
+Table demo with full-blown acsii art
+
++------------------------+------------+----------+----------+
+| Header row, column 1   | Header 2   | Header 3 | Header 4 |
+| (header rows optional) |            |          |          |
++========================+============+==========+==========+
+| body row 1, column 1   | column 2   | column 3 | column 4 |
++------------------------+------------+----------+----------+
+| body row 2             | Cells may span columns.          |
++------------------------+------------+---------------------+
+| body row 3             | Cells may  | - Table cells       |
++------------------------+ span rows. | - contain           |
+| body row 4             |            | - body elements.    |
++------------------------+------------+---------------------+
+
+or much simpler
+
+=====  =====  ======
+   Inputs     Output
+------------  ------
+  A      B    A or B
+=====  =====  ======
+False  False  False
+True   False  True
+False  True   True
+True   True   True
+=====  =====  ======
+
+Table with 'row-headers'
+
+:field1: row1
+:field2: row2
+:field2: row3
+
+
+Examples
+========
+Might need to put some code example::
+
+  sample = []
+  # for each available class
+  for i, r in enumerate(self.uniquelabels):
+      # get the list of pattern ids for this class
+      sample += random.sample( (self.labels == r).nonzero()[0],
+                               nperlabel[i] )
+
+Actually the following 'doctest' syntax might be much better to automatically
+determine whether the examples are up-to-date and working.
+
+>>> print 'this is a Doctest block'
+this is a Doctest block text
+

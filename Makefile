@@ -8,12 +8,26 @@ distclean:
 		mvpa/clf/libsvm/svmc.py \
 		mvpa/clf/libsvm/svmc_wrap.cpp \
 		tests/*.{prof,pstats,kcache} $(PROFILE_FILE)
-	@find . -name '*.pyc' -o -iname '*~' -o -iname '#*#' | xargs -l10 rm -f
+	@find . -name '*.pyo' \
+		 -o -name '*.pyc' \
+		 -o -iname '*~' \
+		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
 	-@rm -rf doc/api/html doc/*.html
 	-@cd doc/manual && rm -f *.log *.aux *.pdf *.backup *.out *.toc
+	-@rm -rf doc/website/html
 
+website:
+	if [ ! -d doc/website/html ]; then mkdir -p doc/website/html; fi
+	cd doc/website && \
+		rst2html --date --strict --stylesheet=pymvpa.css --embed-stylesheet \
+			main.txt html/index.html
+# as long as the CSS code is embedded by rst2html there is no need to copy the
+# CSS file(s, but maybe it is better to not embed but link the file, because
+# we then can have multiply ones (e.g. an additional printer-friendly one)
+#	cp doc/website/*.css doc/website/html
+	cp -r doc/website/pics doc/website/html
 
 manual:
 	cd doc/manual && pdflatex manual.tex && pdflatex manual.tex

@@ -222,7 +222,7 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failUnless((data1.chunks == [ 1,1,1,1,1,1,1,1]).all())
 
 
-    def testRegressorRandomizationAndSampling(self):
+    def testLabelRandomizationAndSampling(self):
         data = MaskedDataset(samples=N.ones((5,1)), labels=range(5), chunks=1)
         data += MaskedDataset(samples=N.ones((5,1))+1, labels=range(5), chunks=2)
         data += MaskedDataset(samples=N.ones((5,1))+2, labels=range(5), chunks=3)
@@ -238,11 +238,11 @@ class MaskedDatasetTests(unittest.TestCase):
         # store the old labels
         origlabels = data.labels.copy()
 
-        data.permuteRegressors(True)
+        data.permuteLabels(True)
 
         self.failIf( (data.labels == origlabels).all() )
 
-        data.permuteRegressors(False)
+        data.permuteLabels(False)
 
         self.failUnless( (data.labels == origlabels).all() )
 
@@ -254,7 +254,7 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failUnless( (data2.labels == origlabels).all() )
 
         # now permute in the new object
-        data2.permuteRegressors( True )
+        data2.permuteLabels( True )
 
         # must not affect the old one
         self.failUnless( (data.labels == origlabels).all() )

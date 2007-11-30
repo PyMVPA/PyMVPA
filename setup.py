@@ -20,11 +20,10 @@ os.environ['CC'] = 'g++'
 numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
 # Notes on the setup
-# Version scheme is:
-# 0.<4-digit-year><2-digit-month><2-digit-day>.<ever-increasing-integer>
+# Version scheme is: major.minor.patch<suffix>
 
 setup(name       = 'pymvpa',
-    version      = '0.20070829.1',
+    version      = '0.1.0pre1',
     author       = 'Michael Hanke',
     author_email = 'michael.hanke@gmail.com',
     license      = 'MIT License',

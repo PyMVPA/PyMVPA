@@ -36,6 +36,7 @@ build-arch-stamp: $(PYVERS:%=build-arch-python%)
 build-arch-python%:
 	# FIRST build swig extension (otherwise the swig wrapper scripts will not
 	# be installed correctly)
+	python$* setup.py config --noisy
 	python$* setup.py build_ext
 	python$* setup.py build_py
 	touch $@
@@ -43,6 +44,9 @@ build-arch-python%:
 
 build-indep: build-indep-stamp
 build-indep-stamp:
+	# TODO: compile API docs here
+	# a little tricky, because it need a temporary symlink to the libsvm
+	# extension to work properly
 	touch $@
 
 

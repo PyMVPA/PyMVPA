@@ -19,12 +19,11 @@
 * confirm with Michael and refactor:
 
   * Agree on how to describe parameters to functions. Describe in
-   NOTES.coding. 
+   NOTES.coding.
 
-  * feature_selector
+  * feature_selector -- may be we should return a tuple
+    (selected_ids, discarded_ids)?
 
-
-* for yarik:
 
 Further PLAN:
 -------------
@@ -88,5 +87,5 @@ Further PLAN:
   nfeatures -> outSize
 
  in  --> data         -> dataShape
- out --> features     -> 
+ out --> features     ->
 
