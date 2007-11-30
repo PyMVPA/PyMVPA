@@ -10,11 +10,12 @@
 
 import unittest
 import numpy as N
+from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
-     StopNBackHistoryCriterion, XPercentTailSelector, \
+     StopNBackHistoryCriterion, FractionTailSelector, \
      FixedNElementTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clf.svm import LinearNuSVMC
@@ -60,7 +61,7 @@ class RFETests(unittest.TestCase):
     def testFeatureSelector(self):
         """Test feature selector"""
         # remove 10% weekest
-        selector = XPercentTailSelector(0.1)
+        selector = FractionTailSelector(0.1)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         # == rank [4, 5, 6, 7, 0, 3, 2, 9, 1, 8]
         target10 = N.array([0, 1, 2, 3, 5, 6, 7, 8, 9])
@@ -115,6 +116,22 @@ class RFETests(unittest.TestCase):
             self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
         else:
             self.failUnless(sdata.nfeatures == wdata_nfeatures)
+
+        # silly check if nfeatures is in decreasing order
+        nfeatures = N.array(rfe['nfeatures']).copy()
+        nfeatures.sort()
+        self.failUnless( (nfeatures[::-1] == rfe['nfeatures']).all() )
+
+        # check if history has elements for every step
+        self.failUnless(Set(rfe['history'])
+                        == Set(range(len(N.array(rfe['errors'])))))
+
+        # Last (the largest number) can be present multiple times even
+        # if we remove 1 feature at a time -- just need to stop well
+        # in advance when we have more than 1 feature left ;)
+        self.failUnless(rfe['nfeatures'][-1]
+                        == len(N.where(rfe['history']
+                                       ==max(rfe['history']))[0]))
 
         # XXX add a test where sensitivity analyser and transfer error do not
         # use the same classifier

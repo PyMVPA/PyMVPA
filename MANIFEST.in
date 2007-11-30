@@ -1,2 +1,3 @@
 include AUTHOR COPYING MANIFEST.in
 include Changelog TODO
+include tests/data/*

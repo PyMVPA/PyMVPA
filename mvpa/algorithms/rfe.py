@@ -10,10 +10,10 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.misc.state import State
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
-                                    XPercentTailSelector
+                                    FractionTailSelector
+from numpy import arange
 
 if __debug__:
     from mvpa.misc import debug
@@ -24,7 +24,7 @@ if __debug__:
 # FeatureSelector to convert sensitivities to abs values before calling
 # actual selector, or a decorator around SensitivityEstimators
 
-class RFE(FeatureSelection, State):
+class RFE(FeatureSelection):
     """ Recursive feature elimination.
 
     A `SensitivityAnalyzer` is used to compute sensitivity maps given a certain
@@ -34,13 +34,23 @@ class RFE(FeatureSelection, State):
     reached.
     """
 
+    # TODO: remove
+    # doesn't work nicely -- if FeatureSelection defines its states via
+    #                        _register_states, they would simply be ignored
+    #_register_states = {'errors':True,
+    #                    'nfeatures':True,
+    #                    'history':True}
+
     def __init__(self,
                  sensitivity_analyzer,
                  transfer_error,
-                 feature_selector=XPercentTailSelector(0.05),
+                 feature_selector=FractionTailSelector(0.05),
                  stopping_criterion=StopNBackHistoryCriterion(),
-                 train_clf=True
+                 train_clf=True,
+                 **kargs
                  ):
+        # XXX Allow for multiple stopping criterions, e.g. error not decreasing
+        # anymore OR number of features less than threshold
         """ Initialize recursive feature elimination
 
         Parameters
@@ -62,8 +72,9 @@ class RFE(FeatureSelection, State):
                 `transfer_error` share and make use of the same classifier and
                 can be switched off to save CPU cycles.
         """
+
         # base init first
-        State.__init__(self)
+        FeatureSelection.__init__(self, **kargs)
 
         self.__sensitivity_analyzer = sensitivity_analyzer
         """Sensitivity analyzer used to call at each step."""
@@ -81,6 +92,9 @@ class RFE(FeatureSelection, State):
 
         # register the state members
         self._registerState("errors")
+        self._registerState("nfeatures")
+        self._registerState("history")
+        self._registerState("sensitivities", enabled=False)
 
 
     def __call__(self, dataset, testdataset, callables=[]):
@@ -101,31 +115,60 @@ class RFE(FeatureSelection, State):
         errors = []
         """Computed error for each tested features set."""
 
+        if self.isStateEnabled("nfeatures"):
+            self["nfeatures"] = []
+            """Number of features at each step. Since it is not used by the
+            algorithm it is stored directly in the state variable"""
+
+        if self.isStateEnabled("history"):
+            self["history"] = arange(dataset.nfeatures)
+            """Store the last step # when the feature was still present
+            """
+
+        if self.isStateEnabled("sensitivities"):
+            self["sensitivities"] = []
+
         stop = False
         """Flag when RFE should be stopped."""
 
         result = None
         """Will hold the best feature set ever."""
 
-        newtestdataset = None
+        wdataset = dataset
+        """Operate on working dataset initially identical."""
+
+        wtestdataset = testdataset
         """Same feature selection has to be performs on test dataset as well.
         This will hold the current testdataset."""
 
         step = 0
         """Counter how many selection step where done."""
 
-        while dataset.nfeatures>0:
+        orig_feature_ids = arange(dataset.nfeatures)
+        """List of feature Ids as per original dataset remaining at any given
+        step"""
+
+        while wdataset.nfeatures>0:
+            if self.isStateEnabled("history"):
+                # mark the features which are present at this step
+                # if it brings anyb mentionable computational burden in the future,
+                # only mark on removed features at each step
+                self["history"][orig_feature_ids] = step
+
             # Compute sensitivity map
             # TODO add option to do RFE on a sensitivity map that is computed
             # a single time at the beginning of the process. This options
             # should then overwrite train_clf to always be True
-            sensitivity = self.__sensitivity_analyzer(dataset)
+            sensitivity = self.__sensitivity_analyzer(wdataset)
+
+            if self.isStateEnabled("sensitivities"):
+                self["sensitivities"].append(sensitivity)
 
             # do not retrain clf if not necessary
             if self.__train_clf:
-                error = self.__transfer_error(testdataset, dataset)
+                error = self.__transfer_error(wtestdataset, wdataset)
             else:
-                error = self.__transfer_error(testdataset, None)
+                error = self.__transfer_error(wtestdataset, None)
 
             # Record the error
             errors.append(error)
@@ -134,41 +177,52 @@ class RFE(FeatureSelection, State):
             # the best result
             (stop, isthebest) = self.__stopping_criterion(errors)
 
+            nfeatures = wdataset.nfeatures
+
+            if self.isStateEnabled("nfeatures"):
+                self["nfeatures"].append(wdataset.nfeatures)
+
             if __debug__:
                 debug('RFEC',
                       "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d" %
-                      (step, dataset.nfeatures, errors[-1], isthebest, stop))
+                      (step, nfeatures, error, isthebest, stop))
 
             # store result
             if isthebest:
-                result = dataset
+                result = wdataset
             # stop if it is time to finish
-            if dataset.nfeatures == 1 or stop:
+            if nfeatures == 1 or stop:
                 break
 
             # Select features to preserve
             selected_ids = self.__feature_selector(sensitivity)
             # Create a dataset only with selected features
-            newdataset = dataset.selectFeatures(selected_ids)
+            wdataset = wdataset.selectFeatures(selected_ids)
 
             # need to update the test dataset as well
+            # XXX why should it ever become None?
+            # yoh: because we can have __transfer_error computed
+            #      using wdataset. See xia-generalization estimate
+            #      in lightsvm. Or for god's sake leave-one-out
+            #      on a wdataset
             if not testdataset is None:
-                newtestdataset = testdataset.selectFeatures(selected_ids)
+                wtestdataset = wtestdataset.selectFeatures(selected_ids)
 
             # provide evil access to internals :)
             for callable_ in callables:
                 callable_(locals())
 
-            # reassign, so in callables we got both older and new
-            # datasets
-            dataset = newdataset
-            if not newtestdataset is None:
-                testdataset = dataset
-
             step += 1
 
+            # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
+            selected_ids.sort()
+            if self.isStateEnabled("history"):
+                orig_feature_ids = orig_feature_ids[selected_ids]
+
+
         # charge state variable
-        self["errors"] = errors
+        if self.isStateEnabled("errors"):
+            self["errors"] = errors
 
         # best dataset ever is returned
         return result

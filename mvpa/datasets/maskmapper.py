@@ -273,44 +273,44 @@ class MaskMapper(MetricMapper):
                         " on the data with multiple samples")
 
         # adjust mask and forwardmap
-        excluded = N.array([ True ] * self.nfeatures)
-        excluded[outIds] = False    # create a map of excluded Ids
-        excludedin = tuple(self.getInId(excluded))
-        self.__mask[excludedin] = False
+        discarded = N.array([ True ] * self.nfeatures)
+        discarded[outIds] = False    # create a map of discarded Ids
+        discardedin = tuple(self.getInId(discarded))
+        self.__mask[discardedin] = False
 
         self.__masknonzerosize = len(outIds)
         self.__masknonzero = [ x[outIds] for x in self.__masknonzero ]
 
-        # adjust/remap not excluded in forwardmap
+        # adjust/remap not discarded in forwardmap
         # since we merged _tent/maskmapper-init-noloop it is not necessary
-        # to zero-out excluded entries since we anyway would check with mask
+        # to zero-out discarded entries since we anyway would check with mask
         # in getOutId(s)
         self.__forwardmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
 
 
-    def excludeOut(self, outIds):
-        """Listed outIds would be excluded
+    def discardOut(self, outIds):
+        """Listed outIds would be discarded
 
         """
 
         # adjust mask and forwardmap
-        excludedin = tuple(self.getInId(outIds))
-        self.__mask[excludedin] = False
+        discardedin = tuple(self.getInId(outIds))
+        self.__mask[discardedin] = False
         # since we merged _tent/maskmapper-init-noloop it is not necessary
-        # to zero-out excluded entries since we anyway would check with mask
+        # to zero-out discarded entries since we anyway would check with mask
         # in getOutId(s)
-        # self.__forwardmap[excludedin] = 0
+        # self.__forwardmap[discardedin] = 0
 
         self.__masknonzerosize -= len(outIds)
         self.__masknonzero = [ N.delete(x, outIds)
                                for x in self.__masknonzero ]
 
-        # adjust/remap not excluded in forwardmap
+        # adjust/remap not discarded in forwardmap
         self.__forwardmap[self.__masknonzero] = \
                                               N.arange(self.__masknonzerosize)
 
         # OPT: we can adjust __forwardmap only for ids which are higher than
-        # the smallest outId among excluded. Similar strategy could be done
+        # the smallest outId among discarded. Similar strategy could be done
         # for selectOut but such index has to be figured out first there
         #      ....
 

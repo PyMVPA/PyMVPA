@@ -27,7 +27,7 @@ class Dataset(object):
     chunks.
     
     :group Creators: `__init__`, `selectFeatures`, `selectSamples`
-    :group Mutators: `permuteRegressors`
+    :group Mutators: `permuteLabels`
     """
 
     # static definition to track which unique attributes
@@ -425,7 +425,7 @@ class Dataset(object):
         return out
 
 
-    def selectFeatures(self, ids, sort=False):
+    def selectFeatures(self, ids, sort=True):
         """ Select a number of features from the current set.
 
         :Parameters:
@@ -444,13 +444,14 @@ class Dataset(object):
         also cause major headaches! Order would is verified when
         running in non-optimized code (if __debug__)
         """
-
+        # XXX set sort default to True, now sorting has to be explicitely
+        # disabled and warning is not necessary anymore
         if sort:
             ids.sort()
-        elif __debug__:
-            if not isSorted(ids):
-                warning("IDs for selectFeatures must be provided " +
-                        "in sorted order, otherwise major headache might occur")
+#        elif __debug__:
+#            if not isSorted(ids):
+#                warning("IDs for selectFeatures must be provided " +
+#                       "in sorted order, otherwise major headache might occur")
 
         # shallow-copy all stuff from current data dict
         new_data = self._data.copy()
@@ -507,7 +508,7 @@ class Dataset(object):
 
 
 
-    def permuteRegressors( self, status, perchunk = True ):
+    def permuteLabels( self, status, perchunk = True ):
         """ Permute the labels.
 
         Calling this method with 'status' set to True, the labels are
@@ -524,17 +525,19 @@ class Dataset(object):
             # restore originals
             if self._data['origlabels'] == None:
                 raise RuntimeError, 'Cannot restore labels. ' \
-                                    'randomizedRegressors() has never been ' \
+                                    'permuteLabels() has never been ' \
                                     'called with status == True.'
             self._setLabels(self._data['origlabels'])
             self._data['origlabels'] = None
         else:
-            # permute labels per origin
-
-            # rebind old labels to origlabels
-            self._data['origlabels'] = self._data['labels']
-            # assign a copy so modifications do not impact original data
-            self._data['labels'] = self._data['labels'].copy()
+            # store orig labels, but only if not yet done, otherwise multiple
+            # calls with status == True will destroy the original labels
+            if not self._data.has_key('origlabels') \
+                or self._data['origlabels'] == None:
+                # rebind old labels to origlabels
+                self._data['origlabels'] = self._data['labels']
+                # assign a copy so modifications do not impact original data
+                self._data['labels'] = self._data['labels'].copy()
 
             # now scramble the rest
             if perchunk:

@@ -152,11 +152,11 @@ class MaskMapperTests(unittest.TestCase):
         # check if original mask wasn't perturbed
         self.failUnless((mask == mask0).all())
 
-        # do the same but using excludeOut
+        # do the same but using discardOut
         map_ = MaskMapper(mask)
-        map_.excludeOut([1,2])
+        map_.discardOut([1,2])
         self.failUnless((map_.forward(data)==[0, 4, 5]).all())
-        map_.excludeOut([1])
+        map_.discardOut([1])
         self.failUnless((map_.forward(data)==[0, 5]).all())
 
         # check if original mask wasn't perturbed

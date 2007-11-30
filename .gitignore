@@ -4,6 +4,7 @@
 *.pyc
 *.pyo
 /doc/api/html
+/doc/website/html
 build
 *.prof
 *.kcache
@@ -15,4 +16,8 @@ doc/examples/dump.*
 *.swp
 /data
 *.pstats
-
+debian/python-mvpa/*
+debian/*.debhelper
+debian/*.substvars
+debian/files
+*-stamp
