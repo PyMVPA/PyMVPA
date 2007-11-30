@@ -530,12 +530,14 @@ class Dataset(object):
             self._setLabels(self._data['origlabels'])
             self._data['origlabels'] = None
         else:
-            # permute labels per origin
-
-            # rebind old labels to origlabels
-            self._data['origlabels'] = self._data['labels']
-            # assign a copy so modifications do not impact original data
-            self._data['labels'] = self._data['labels'].copy()
+            # store orig labels, but only if not yet done, otherwise multiple
+            # calls with status == True will destroy the original labels
+            if not self._data.has_key('origlabels') \
+                or self._data['origlabels'] == None:
+                # rebind old labels to origlabels
+                self._data['origlabels'] = self._data['labels']
+                # assign a copy so modifications do not impact original data
+                self._data['labels'] = self._data['labels'].copy()
 
             # now scramble the rest
             if perchunk:
