@@ -4,6 +4,7 @@
 *.pyc
 *.pyo
 /doc/api/html
+/doc/website/html
 build
 *.prof
 *.kcache
