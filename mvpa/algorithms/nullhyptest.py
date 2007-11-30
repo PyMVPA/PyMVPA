@@ -89,6 +89,11 @@ class NullHypothesisTest(State):
         for p in xrange(self.__permutations):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
+            # TODO this really needs to be more clever! If data samples are
+            # shuffled within a class it really makes no difference for the
+            # classifier, hence the number of permutations to estimate the
+            # null-distribution of transfer errors can be reduced dramatically
+            # when the *right* permutations (the ones that matter) are done.
             data.permuteLabels(True, perchunk=False)
 
             # compute and store the training error of this permutation
