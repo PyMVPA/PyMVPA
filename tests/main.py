@@ -36,7 +36,8 @@ tests = [
     'test_ifs',
     'test_perturbsensana',
     'test_splitsensana',
-    'test_anova'
+    'test_anova',
+    'test_nullhyptest'
     ]
 #          'test_plf',
 
