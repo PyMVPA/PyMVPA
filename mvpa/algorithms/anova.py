@@ -46,7 +46,19 @@ class OneWayAnova(SensitivityAnalyzer):
             means.append(ul_samples.mean(axis=0))
             vars.append(ul_samples.var(axis=0))
 
-        # compute featurewise f = var(group_means) / mean(within_group_vars)
-        f = N.array(means).var(axis=0) / N.array(vars).mean(axis=0)
+        # mean of within group variances
+        mvw = N.array(vars).mean(axis=0)
+        # variance of group means
+        vgm = N.array(means).var(axis=0)
 
-        return f
+        # compute f-scores (in-place to save some cycles)
+        # XXX may cause problems when there are features with no variance in
+        # some groups. One could deal with them here and possibly assign a
+        # zero f-score to throw them out, but at least theoretically zero
+        # variance is possible. Another possiblilty could be to apply
+        # N.nan_to_num(), but this might hide the problem.
+        # Michael therefore thinks that it is best to let the user deal with
+        # it prior to any analysis.
+        vgm /= mvw
+
+        return vgm
