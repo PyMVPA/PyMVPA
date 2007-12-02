@@ -103,7 +103,8 @@ class PLF(Classifier):
             w += dw
             k += 1
             if k>self.__maxiter:
-                raise IterationError, "More than 20 Iterations without convergence"
+                raise IterationError, "More than %d Iterations without convergence" %\
+                      (self.__criterion)
 
         if __debug__:
             debug("PLF",\
