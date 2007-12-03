@@ -1,7 +1,13 @@
 .. -*- mode: rst -*-
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-PyMVPA CONVENTIONS
-==================
+PyMVPA Developer Guidelines
+===========================
 
 Documentation
 -------------
@@ -12,6 +18,7 @@ language.  See `Demo
 `Cheatsheet
 <http://docutils.sourceforge.net/docs/user/rst/demo.txt>`__ for a
 quick demo.
+
 
 Code Documentation
 __________________
@@ -39,6 +46,7 @@ module docstring
 header
    Each file should contain a header from `doc/misc/header.py <misc/header.py>`__.
 
+
 Coding Conventions
 ------------------
 __repr__
@@ -46,17 +54,20 @@ __repr__
   over their identity (name + parameters + some summary over results
   if any)
 
+
 Tests
 -----
 * Every more or less "interesting" bugfix should be accompanied by a
   unittest which might help to prevent it in the future refactoring
 * Every new feature should have a unittest
-* Commits
-   - *BF* : bug fix
-   - *RF* : refactoring
-   - *NF* : new feature
-   - *OPT* : optimization
-   - *BK* : breaks something and/or tests fail
+
+Commits
+-------
+* *BF* : bug fix
+* *RF* : refactoring
+* *NF* : new feature
+* *OPT* : optimization
+* *BK* : breaks something and/or tests fail
 
 .. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 .. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
