@@ -24,7 +24,7 @@ numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
 setup(name       = 'pymvpa',
     version      = '0.1.0pre1',
-    author       = 'Michael Hanke',
+    author       = 'Michael Hanke, Yaroslav Halchenko',
     author_email = 'michael.hanke@gmail.com',
     license      = 'MIT License',
     url          = 'http://pkg-exppsy.alioth.debian.org/pymvpa',
