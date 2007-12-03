@@ -21,13 +21,13 @@ distclean:
 website:
 	if [ ! -d doc/website/html ]; then mkdir -p doc/website/html; fi
 	cd doc/website && \
-		rst2html --date --strict --stylesheet=pymvpa.css --embed-stylesheet \
+		rst2html --date --strict --stylesheet=pymvpa.css --link-stylesheet \
 			main.txt html/index.html
-# as long as the CSS code is embedded by rst2html there is no need to copy the
-# CSS file(s, but maybe it is better to not embed but link the file, because
-# we then can have multiply ones (e.g. an additional printer-friendly one)
-#	cp doc/website/*.css doc/website/html
+	cp doc/website/*.css doc/website/html
 	cp -r doc/website/pics doc/website/html
+
+upload-website: website
+	scp -r doc/website/html/* alioth:/home/groups/pkg-exppsy/htdocs/pymvpa
 
 manual:
 	cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
