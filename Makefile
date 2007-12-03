@@ -14,18 +14,29 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm -rf doc/api/html doc/*.html
-	-@cd doc/manual && rm -f *.log *.aux *.pdf *.backup *.out *.toc
-	-@rm -rf doc/website/html
+	-@rm -rf doc/*.html
+# remove all generated HTML stuff
+	@find doc -mindepth 2 -maxdepth 2 -type d -name 'html' -print -exec rm -rf {} \;
 
-website:
-	if [ ! -d doc/website/html ]; then mkdir -p doc/website/html; fi
-	cd doc/website && \
+# convert rsT documentation in doc/* to HTML. In the corresponding directory
+# below doc/ a subdir html/ is created that contains the converted output.
+rst2html-%:
+	if [ ! -d doc/$*/html ]; then mkdir -p doc/$*/html; fi
+	cd doc/$* && \
 		for f in *.txt; do rst2html --date --strict --stylesheet=pymvpa.css \
 		    --link-stylesheet $${f} html/$${f%%.txt}.html; \
 		done
-	cp doc/website/*.css doc/website/html
-	cp -r doc/website/pics doc/website/html
+	cp doc/misc/*.css doc/$*/html
+	# copy common images
+	cp -r doc/misc/pics doc/$*/html
+	# copy local images, but ignore if there are none
+	-cp -r doc/$*/pics doc/$*/html
+
+website: rst2html-website rst2html-devguide
+	# put everything in one directory. Might be undesired if there are
+	# filename clashes. But given the website will be/should be simply, it
+	# might 'just work'.
+	cp -r doc/devguide/html/* doc/website/html/
 
 upload-website: website
 	scp -r doc/website/html/* alioth:/home/groups/pkg-exppsy/htdocs/pymvpa

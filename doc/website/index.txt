@@ -89,6 +89,12 @@ Table with 'row-headers'
 :field2: row2
 :field2: row3
 
+Documentation
+=============
+
+`Developer Guidelines`_
+
+.. _Developer Guidelines: devguide.html
 
 Examples
 ========
