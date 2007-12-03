@@ -21,3 +21,10 @@ class UnknownStateError(Exception):
     def __str__(self):
         return "Exception: " + self.__msg
 
+
+class ConvergenceError(Exception):
+    """Thrown if some algorithm does not converge to a solution.
+    """
+    pass
+
+
