@@ -6,36 +6,36 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Wrap the python libsvm package into a very simple class interface."""
+"""Penalized logistic regression classifier."""
 
-from classifier import *
-
-import sys
 import numpy as N
+
+from mvpa.misc.exceptions import ConvergenceError
+from classifier import Classifier
 
 if __debug__:
     from mvpa.misc import debug
 
-class IterationError(Exception):
-    pass
 
 class PLF(Classifier):
-    def __init__(self,lm=1,criterion=1,reduce=False,maxiter=20):
+    """I am a penalized logistic regression classifier.
+    """
+    def __init__(self, lm=1, criterion=1, reduce=False, maxiter=20):
         """
         Initialize a penalized logistic regression analysis
 
         Input:
         =====
 
-        lm     the penalty term lambda
-        criterion is the criterion applied to judge convergence
-        if reduce is not False, the rank of the data is reduced before
+        `lm`: The penalty term lambda.
+        `criterion`: is the criterion applied to judge convergence.
+        `reduce`: if not False, the rank of the data is reduced before
                performing the calculations. In that case, reduce is taken as
                the fraction of the first singular value, at which a dimension
                is not considered significant anymore. A reasonable criterion
                is reduce=0.01
-        maxiter maximum number of iterations. If no convergence occurs after
-               this number of iterations, an exception is raised
+        `maxiter`: maximum number of iterations. If no convergence occurs
+               after this number of iterations, an exception is raised.
         """
         self.__lm   = lm
         self.__criterion = criterion
@@ -53,15 +53,15 @@ class PLF(Classifier):
  maxiter: %d""" % (self.__lm, self.__criterion, self.__reduce, self.__maxiter)
 
 
-    def train(self,data):
-        """
-        data   is a MVPApattern object containing the data
+    def train(self, data):
+        """Train the classifier using `data` (`Dataset`).
         """
         # Set up the environment for fitting the data
         X = data.samples.T
         d = data.labels
-        if not list(set(d))==[0,1]:
-            raise ValueError, "Regressors for logistic regression should be [0,1]"
+        if not list(set(d)) == [0,1]:
+            raise ValueError, \
+                  "Regressors for logistic regression should be [0,1]"
 
         if self.__reduce:
             # Data have reduced rank
@@ -71,50 +71,52 @@ class PLF(Classifier):
             # Select only the n largest eigenvectors
             U,S,V = svd(X.T)
             S /= S[0]
-            V = N.matrix(V[:,:N.max(N.where(S>self.__reduce))+1])
-            X = (X.T*V).T # Map Data to the subspace spanned by the eigenvectors
+            V = N.matrix(V[:, :N.max(N.where(S > self.__reduce)) + 1])
+            # Map Data to the subspace spanned by the eigenvectors
+            X = (X.T * V).T
 
         nfeatures,npatterns = X.shape
 
         # Weighting vector
-        w  = N.matrix(N.zeros( (nfeatures+1,1),'d'))
+        w  = N.matrix(N.zeros( (nfeatures+1, 1), 'd'))
         # Error for convergence criterion
-        dw = N.matrix(N.ones(  (nfeatures+1,1),'d'))
+        dw = N.matrix(N.ones(  (nfeatures+1, 1), 'd'))
         # Patterns of interest in the columns
-        X = N.matrix(\
-                N.concatenate((X,N.ones((1,npatterns),'d')),0)\
+        X = N.matrix( \
+                N.concatenate((X, N.ones((1, npatterns), 'd')), 0) \
                 )
-        p = N.matrix(N.zeros((1,npatterns),'d'))
+        p = N.matrix(N.zeros((1, npatterns), 'd'))
         # Matrix implementation of penalty term
-        Lambda = self.__lm * N.identity(nfeatures+1,'d')
-        Lambda[nfeatures,nfeatures] = 0
+        Lambda = self.__lm * N.identity(nfeatures + 1, 'd')
+        Lambda[nfeatures, nfeatures] = 0
         # Gradient
-        g = N.matrix(N.zeros((nfeatures+1,1),'d'))
+        g = N.matrix(N.zeros((nfeatures + 1, 1), 'd'))
         # Fisher information matrix
-        H = N.matrix(N.identity(nfeatures+1,'d'))
+        H = N.matrix(N.identity(nfeatures + 1, 'd'))
 
         # Optimize
         k = 0
-        while N.sum(N.ravel(dw.A**2))>self.__criterion:
-            p[:,:] = self.__f(w.T * X)
-            g[:,:] = X * (d-p).T - Lambda * w
-            H[:,:] = X * N.diag(p.A1 * (1-p.A1)) * X.T + Lambda
-            dw[:,:] = H.I * g
+        while N.sum(N.ravel(dw.A ** 2)) > self.__criterion:
+            p[:, :] = self.__f(w.T * X)
+            g[:, :] = X * (d - p).T - Lambda * w
+            H[:, :] = X * N.diag(p.A1 * (1 - p.A1)) * X.T + Lambda
+            dw[:, :] = H.I * g
             w += dw
             k += 1
-            if k>self.__maxiter:
-                raise IterationError, "More than %d Iterations without convergence" %\
+            if k > self.__maxiter:
+                raise ConvergenceError, \
+                      "More than %d Iterations without convergence" % \
                       (self.__criterion)
 
         if __debug__:
             debug("PLF",\
                   "PLF converged after %d steps. Error: %g" %\
-                  (k,N.sum(N.ravel(dw.A**2))))
+                  (k, N.sum(N.ravel(dw.A ** 2))))
 
         if self.__reduce:
             # We have computed in rank reduced space ->
             # Project to original space
-            self.w = V*w[:-1]
+            self.w = V * w[:-1]
             self.offset = w[-1]
         else:
             self.w = w[:-1]
@@ -124,7 +126,7 @@ class PLF(Classifier):
     def __f(self,y):
         """This is the logistic function f, that is used for determination of
         the vector w"""
-        return 1./(1+N.exp(-y))
+        return 1. / (1 + N.exp(-y))
 
 
     def predict(self,data):
@@ -134,5 +136,5 @@ class PLF(Classifier):
         Returns a list of class labels
         """
         data = N.matrix(N.array(data))
-        return N.ravel(self.__f(self.offset+data*self.w) > 0.5)
+        return N.ravel(self.__f(self.offset + data * self.w) > 0.5)
 
