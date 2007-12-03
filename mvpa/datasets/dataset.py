@@ -481,6 +481,9 @@ class Dataset(object):
 
         Returns a new dataset object containing the selected sample
         subset.
+        TODO yoh: we might need to sort the mask if the mask is a list
+                  of ids and is not ordered. Clarify with Michael what is
+                  our intent here!
         """
         # without having a sequence a index the masked sample array would
         # loose its 2d layout
