@@ -10,7 +10,7 @@
 
 from mvpa.misc.state import State
 
-class Classifier(object):
+class Classifier(State):
     """
     Required behavior:
 
@@ -22,6 +22,25 @@ class Classifier(object):
 
     It must be possible to specify all classifier parameters as keyword
     arguments to the constructor.
+
+    Recommended behavior:
+
+    Derived classifiers should provide access to *decision_values* -- i.e. that
+    information that is finally used to determine the predicted class label.
+
+    Michael: Maybe it works well if each classifier provides a 'decision_value'
+             state member. This variable is a list as long as and in same order
+             as Dataset.uniquelabels (training data). Each item in the list
+             corresponds to the likelyhood of a sample to belong to the
+             respective class. However the sematics might differ between
+             classifiers, e.g. kNN would probably store distances to class-
+             neighbours, where PLF would store the raw function value of the
+             logistic function. So in the case of kNN low is predictive and for
+             PLF high is predictive. Don't know if there is the need to unify
+             that.
+
+             As the storage and/or computation of this information might be
+             demanding its collection should be switchable and off be default.
     """
     # Dict that contains the parameters of a classifier.
     # This shall provide an interface to plug generic parameter optimizer
@@ -34,8 +53,9 @@ class Classifier(object):
     params = {}
 
     def __init__(self):
+        """Cheap initialization.
         """
-        """
+        State.__init__(self)
 
 
     def train(self, data):
