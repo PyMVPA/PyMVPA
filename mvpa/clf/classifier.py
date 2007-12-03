@@ -10,6 +10,8 @@
 
 from mvpa.misc.state import State
 
+from copy import copy
+
 class Classifier(State):
     """
     Required behavior:
@@ -25,10 +27,10 @@ class Classifier(State):
 
     Recommended behavior:
 
-    Derived classifiers should provide access to *decision_values* -- i.e. that
+    Derived classifiers should provide access to *values* -- i.e. that
     information that is finally used to determine the predicted class label.
 
-    Michael: Maybe it works well if each classifier provides a 'decision_value'
+    Michael: Maybe it works well if each classifier provides a 'values'
              state member. This variable is a list as long as and in same order
              as Dataset.uniquelabels (training data). Each item in the list
              corresponds to the likelyhood of a sample to belong to the
@@ -41,6 +43,13 @@ class Classifier(State):
 
              As the storage and/or computation of this information might be
              demanding its collection should be switchable and off be default.
+
+    Nomenclature
+     * predictions  : corresponds to the quantized labels if classifier spits out
+                   labels by .predict()
+     * values : might be different from predictions if a classifier's predict()
+                   makes a decision based on some internal value such as
+                   probability or a distance.
     """
     # Dict that contains the parameters of a classifier.
     # This shall provide an interface to plug generic parameter optimizer
@@ -56,6 +65,9 @@ class Classifier(State):
         """Cheap initialization.
         """
         State.__init__(self)
+
+        self._registerState('values', enabled=False)
+        self._registerState('predictions', enabled=False)
 
 
     def train(self, data):
@@ -94,7 +106,7 @@ MultiClass.train() would simply call BoostedClassifier
 The aspect to keep in mind is the resultant sensitivities
 """
 
-class BoostedClassifier(Classifier, State):
+class BoostedClassifier(Classifier):
     """
 
     """
@@ -111,13 +123,18 @@ class BoostedClassifier(Classifier, State):
           **kargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
+
+        NB: `combiner` might need to operate not on 'predict' descrete
+            labels but rather on raw 'class' values classifiers
+            estimate (which is pretty much what is stored under
+            `decision_values`
         """
         Classifier.__init__(self)
-        State.__init__(self, **kargs)
-        self.__clss = clss
-        """Classifiers to use"""
 
-        self._registerState("predictions", enabled=True)
+        self._setClassifiers(clss)
+
+        # should not be needed if we have prediction_values upstairs
+        # self._registerState("predictions", enabled=True)
 
 
     def train(self, data):
@@ -132,15 +149,29 @@ class BoostedClassifier(Classifier, State):
         """
         predictions = [ cls.predict(data) for cls in self.__clss ]
 
-        if self.isStateEnabled("predictions"):
-            self["predictions"] = predictions
+        if self.isStateEnabled("prediction_values"):
+            self["prediction_values"] = predictions
 
         return self.__combiner(predictions)
 
-    classifiers = property(lambda x:x.__clss, doc="Used classifiers")
+
+    def _setClassifiers(self, clss):
+        """Set the classifiers used by the boosted classifier
+
+        We have to allow to set list of classifiers after the object
+        was actually created. It will be used by
+        BoostedMulticlassClassifier
+        """
+        self.__clss = clss
+        """Classifiers to use"""
+
+    classifiers = property(fget=lambda x:x.__clss,
+                           fset=_setClassifiers,
+                           doc="Used classifiers")
 
 
-class MulticlassClassifier(Classifier):
+
+class BoostedMulticlassClassifier(Classifier):
     """ Classifier to perform multiclass classification using a set of simple classifiers
 
     such as 1-vs-1 or 1-vs-all
