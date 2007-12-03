@@ -28,6 +28,7 @@ tests = [
     # Classifiers (longer tests)
     'test_knn',
     'test_svm',
+    'test_plf',
     # Various algorithms
     'test_transformers',
     'test_clfcrossval',
@@ -39,7 +40,6 @@ tests = [
     'test_anova',
     'test_nullhyptest'
     ]
-#          'test_plf',
 
 
 
