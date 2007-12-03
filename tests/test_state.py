@@ -75,7 +75,16 @@ class StateTests(unittest.TestCase):
         self.failUnless(Set(proper2.enabledStates) == Set(['state1']))
 
         self.failUnlessRaises(KeyError, proper.__getitem__, 'state12')
-        proper2._registerState('state3')
+        proper2._registerState('state3', doc="State3 Doc")
+
+        # if documentary on the state is appropriate
+        self.failUnless(proper2.listStates() == \
+                        ['state1: None', 'state2: None', 'state3: State3 Doc'])
+
+        # if __repr__ lists correct number of states
+        repr_ = `proper2`
+        self.failUnless(repr_.startswith('3 '))
+
         # check default enabled
         self.failUnless(Set(proper2.enabledStates) == Set(['state1', 'state3']))
         # check if disable works
