@@ -5,11 +5,12 @@ It was downloaded from:
 
     http://pkg-exppsy.alioth.debian.org/pymvpa
 
-Upstream Author: 
+Upstream Authors:
 
     Michael Hanke <michael.hanke@gmail.com>
+    Yaroslav Halchenko <debian@onerussian.com>
 
-Copyright (C) 2006-2007 Michael Hanke
+Copyright (C) 2006-2007 Michael Hanke, Yaroslav Halchenko
 
 
 License:
@@ -38,7 +39,7 @@ THE SOFTWARE.
 
 
 
-The Debian packaging is (C) 2006-2007, Michael Hanke <michael.hanke@gmail.com> 
+The Debian packaging is (C) 2006-2007, Michael Hanke <michael.hanke@gmail.com>
 and is also covered by the MIT license (see above).
 
 
