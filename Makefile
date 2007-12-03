@@ -21,8 +21,9 @@ distclean:
 website:
 	if [ ! -d doc/website/html ]; then mkdir -p doc/website/html; fi
 	cd doc/website && \
-		rst2html --date --strict --stylesheet=pymvpa.css --link-stylesheet \
-			main.txt html/index.html
+		for f in *.txt; do rst2html --date --strict --stylesheet=pymvpa.css \
+		    --link-stylesheet $${f} html/$${f%%.txt}.html; \
+		done
 	cp doc/website/*.css doc/website/html
 	cp -r doc/website/pics doc/website/html
 
