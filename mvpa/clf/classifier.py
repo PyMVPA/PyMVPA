@@ -8,9 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Abstract base class for all classifiers."""
 
-from mvpa.misc.state import State
-
 from copy import copy
+from sets import Set
+
+from mvpa.misc.state import State
+if __debug__:
+    from mvpa.misc import debug
 
 class Classifier(State):
     """
@@ -66,8 +69,10 @@ class Classifier(State):
         """
         State.__init__(self)
 
-        self._registerState('values', enabled=False)
-        self._registerState('predictions', enabled=False)
+        self._registerState('values', enabled=False,
+                            doc="Internal values seen by the classifier")
+        self._registerState('predictions', enabled=False,
+                            doc="Reported predicted values")
 
 
     def train(self, data):
@@ -170,11 +175,62 @@ class BoostedClassifier(Classifier):
                            doc="Used classifiers")
 
 
+class BinaryClassifierDecorator(Classifier):
+    """Binary classifier given sets of labels to be treated as +1 and -1
+    """
+
+    def __init__(self, cls, poslabels, neglabels):
+        """
+        :Parameters:
+          `cls` : `Classifier`
+            classifier to use
+          `poslabels` : list
+            list of labels which are treated as +1 category
+          `neglabels` : list
+            list of labels which are treated as -1 category
+        """
+        Classifier.__init__(self)
+        self.__cls = cls
+
+        # Handle labels
+        sposlabels = Set(poslabels) # so to remove duplicates
+        sneglabels = Set(neglabels) # so to remove duplicates
+
+        # check if there is no overlap
+        overlap = sposlabels.intersection(sneglabels)
+        if len(overlap)>0:
+            raise ValueError("Sets of positive and negative labels for " +
+                "BinaryClassifierDecorator must not overlap. Got overlap " %
+                overlap)
+
+        self.__poslabels = list(sposlabels)
+        self.__neglabels = list(sneglabels)
+
+
+    def train(self, data):
+        ids = data.idsbylabels(self.__poslabels + self.__neglabels)
+        # XXX we have to sort ids since at the moment Dataset.selectSamples
+        #     doesn't take care about order
+        ids.sort()
+        if __debug__:
+            debug('CLS', "Selecting %d samples out of %d samples for binary " %
+                  (len(ids), data.nsamples) +
+                  " classification among labels %s/+1 and %s/-1" %
+                  (self.__poslabels, self.__neglabels))
+        dataselected = data.selectSamples(ids)
+        self.__cls.train(dataselected)
+
+
+    def predict(self, data):
+        """Predicted labels are taken"""
+        predictions = self.__cls.predict(data)
+        # XXXXXXXXXXXXX continue here
 
 class BoostedMulticlassClassifier(Classifier):
-    """ Classifier to perform multiclass classification using a set of simple classifiers
+    """ Classifier to perform multiclass using a set of binary classifiers
 
-    such as 1-vs-1 or 1-vs-all
+    such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
+    is yet to think about)
     """
 
     def __init__(self, cls, bcls):
@@ -189,6 +245,15 @@ class BoostedMulticlassClassifier(Classifier):
           """
         Classifier.__init__(self)
         self.__bcls = bcls
+
+        # generate simpler classifiers
+        #
+        # create a mapping between original labels and labels in
+        # simpler classifiers
+        #
+        # clss= ...
+
+        self.__bcls.classifiers = clss
 
 
     def train(self, data):
