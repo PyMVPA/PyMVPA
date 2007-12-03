@@ -22,6 +22,7 @@ The mvpa package contains the following subpackages and modules:
 :group Miscellaneous: misc
 
 :author: `Michael Hanke <michael.hanke@gmail.com>`__
+         `Yaroslav Halchenko <debian@onerussian.com>`__
 :requires: Python 2.4+
 :version: XXX
 :see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
@@ -31,7 +32,7 @@ The mvpa package contains the following subpackages and modules:
 :copyright: |copy| 2006-2007 Michael Hanke <michael.hanke@gmail.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
-:contributor: `Yaroslav Halchenko  <mailto:debian@onerussian.com>`__
+:contributor: `Per B. Sederberg <persed@princeton.edu>`__
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
