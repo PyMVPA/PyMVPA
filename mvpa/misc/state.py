@@ -77,6 +77,15 @@ class State(dict):
             self._registerState(key, enabled)
 
 
+    def __repr__(self):
+        num = len(self.__registered)
+        res = "%d state variables registered:" % num
+        for i in xrange(min(num, 4)):
+            res += " %s" % self.__registered.keys()[i]
+        if len(self.__registered)>=4:
+            res += "..."
+        return res
+
     def __checkIndex(self, index):
         """Verify that given `index` is a known/registered state.
 
@@ -123,7 +132,7 @@ class State(dict):
     # Michael: Depends on what kind of objects we want to have a state.
     #          Anyway as we will inherent this class I think the method name
     #          should be a bit more distinctive. What about:
-    def _registerState(self, index, enabled=True):
+    def _registerState(self, index, enabled=True, doc=None):
         """Register a new state
 
         :Parameters:
@@ -131,29 +140,40 @@ class State(dict):
             the index
           `enabled` : Bool
             either the state should be enabled
+          `doc` : string
+            description for the state
         """
         if __debug__:
             debug('ST', 'Registering %s state %s for %s' %
                   ({True:'enabled', False:'disabled'}[enabled],
                    index, self.__class__.__name__))
-        self.__registered[index] = enabled
+        self.__registered[index] = {'enabled' : enabled,
+                                    'doc' : doc}
 
 
     def enableState(self, index):
         self.__checkIndex(index)
-        self.__registered[index] = True
+        self.__registered[index]['enabled'] = True
 
 
     def disableState(self, index):
         self.__checkIndex(index)
-        self.__registered[index] = False
+        self.__registered[index]['enabled'] = False
 
 
     def isStateEnabled(self, index):
         self.__checkIndex(index)
-        return self.__registered[index]
+        return self.__registered[index]['enabled']
+
+    def listStates(self):
+        """Return a list of registered states along with the documentation"""
+
+        # lets assure consistent litsting order
+        items = self.__registered.items()
+        items.sort()
+        return map(lambda x: "%s: %s" % (x[0], x[1]['doc']), items)
 
     # Properties
     registeredStates = property(fget=lambda x:x.__registered.keys())
     enabledStates = property(fget=lambda x:filter(
-        lambda y:x.__registered[y], x.__registered.keys()))
+        lambda y:x.__registered[y]['enabled'], x.__registered.keys()))
