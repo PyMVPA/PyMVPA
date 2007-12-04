@@ -56,6 +56,12 @@ class StateTests(unittest.TestCase):
 
         # assign value now
         blank['state1'] = 123
+        # should have no effect since the state variable wasn't enabled
+        self.failUnlessRaises(UnknownStateError, blank.__getitem__, 'state1')
+
+        # lets enable and assign
+        blank.enableState('state1')
+        blank['state1'] = 123
         self.failUnless(blank['state1'] == 123)
 
         # we should not share states across instances at the moment, so an arbitrary
