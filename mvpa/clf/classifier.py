@@ -64,10 +64,10 @@ class Classifier(State):
     # also be a dict or we should use mvpa.misc.param.Parameter'...
     params = {}
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Cheap initialization.
         """
-        State.__init__(self)
+        State.__init__(self, **kwargs)
 
         self._registerState('values', enabled=False,
                             doc="Internal values seen by the classifier")
@@ -154,8 +154,7 @@ class BoostedClassifier(Classifier):
         """
         predictions = [ cls.predict(data) for cls in self.__clss ]
 
-        if self.isStateEnabled("prediction_values"):
-            self["prediction_values"] = predictions
+        self["prediction_values"] = predictions
 
         return self.__combiner(predictions)
 
@@ -179,7 +178,7 @@ class BinaryClassifierDecorator(Classifier):
     """Binary classifier given sets of labels to be treated as +1 and -1
     """
 
-    def __init__(self, cls, poslabels, neglabels):
+    def __init__(self, cls, poslabels, neglabels, storetraindata=False):
         """
         :Parameters:
           `cls` : `Classifier`
@@ -206,25 +205,61 @@ class BinaryClassifierDecorator(Classifier):
         self.__poslabels = list(sposlabels)
         self.__neglabels = list(sneglabels)
 
+        # define what values will be returned by predict: if there is
+        # a single label - return just it alone, otherwise - whole
+        # list
+        # Such approach might come useful if we use some classifiers
+        # over different subsets of data with some voting later on
+        # (1-vs-therest?)
+
+        if len(self.__poslabels)>1:
+            self.__predictpos = self.__poslabels
+        else:
+            self.__predictpos = self.__poslabels[0]
+
+        if len(self.__neglabels)>1:
+            self.__predictneg = self.__neglabels
+        else:
+            self.__predictneg = self.__neglabels[0]
+
 
     def train(self, data):
         ids = data.idsbylabels(self.__poslabels + self.__neglabels)
+
+        idlabels = zip(ids, [+1]*len(self.__poslabels) + [-1]*len(self.__neglabels))
         # XXX we have to sort ids since at the moment Dataset.selectSamples
         #     doesn't take care about order
-        ids.sort()
+        idlabels.sort()
         if __debug__:
             debug('CLS', "Selecting %d samples out of %d samples for binary " %
                   (len(ids), data.nsamples) +
                   " classification among labels %s/+1 and %s/-1" %
                   (self.__poslabels, self.__neglabels))
-        dataselected = data.selectSamples(ids)
+        # select the samples
+        dataselected = data.selectSamples([ x[0] for x in idlabels ])
+        # adjust the labels
+        dataselected.labels = [ x[1] for x in idlabels ]
+        # now we got a dataset with only 2 labels
+        if __debug__:
+            assert(dataselected.uniquelabels == [-1, 1])
         self.__cls.train(dataselected)
 
 
     def predict(self, data):
-        """Predicted labels are taken"""
-        predictions = self.__cls.predict(data)
-        # XXXXXXXXXXXXX continue here
+        """Predict the labels for a given `data`
+
+        Predicts using binary classifier and spits out list (for each sample)
+        where with either poslabels or neglabels as the "label" for the sample.
+        If there was just a single label within pos or neg labels then it would
+        return not a list but just that single label.
+        """
+        values = self.__cls.predict(data)
+        self['values'] = values
+        predictions = map(lambda x: {-1: self.__predictneg,
+                                     +1: self.__predictpos}[x], values)
+        self['predictions'] = predictions
+        return predictions
+
 
 class BoostedMulticlassClassifier(Classifier):
     """ Classifier to perform multiclass using a set of binary classifiers
