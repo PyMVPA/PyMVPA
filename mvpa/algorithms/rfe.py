@@ -115,18 +115,15 @@ class RFE(FeatureSelection):
         errors = []
         """Computed error for each tested features set."""
 
-        if self.isStateEnabled("nfeatures"):
-            self["nfeatures"] = []
-            """Number of features at each step. Since it is not used by the
-            algorithm it is stored directly in the state variable"""
+        self["nfeatures"] = []
+        """Number of features at each step. Since it is not used by the
+        algorithm it is stored directly in the state variable"""
 
-        if self.isStateEnabled("history"):
-            self["history"] = arange(dataset.nfeatures)
-            """Store the last step # when the feature was still present
-            """
+        self["history"] = arange(dataset.nfeatures)
+        """Store the last step # when the feature was still present
+        """
 
-        if self.isStateEnabled("sensitivities"):
-            self["sensitivities"] = []
+        self["sensitivities"] = []
 
         stop = False
         """Flag when RFE should be stopped."""
@@ -149,11 +146,10 @@ class RFE(FeatureSelection):
         step"""
 
         while wdataset.nfeatures>0:
-            if self.isStateEnabled("history"):
-                # mark the features which are present at this step
-                # if it brings anyb mentionable computational burden in the future,
-                # only mark on removed features at each step
-                self["history"][orig_feature_ids] = step
+            # mark the features which are present at this step
+            # if it brings anyb mentionable computational burden in the future,
+            # only mark on removed features at each step
+            self["history"][orig_feature_ids] = step
 
             # Compute sensitivity map
             # TODO add option to do RFE on a sensitivity map that is computed
@@ -221,8 +217,7 @@ class RFE(FeatureSelection):
 
 
         # charge state variable
-        if self.isStateEnabled("errors"):
-            self["errors"] = errors
+        self["errors"] = errors
 
         # best dataset ever is returned
         return result

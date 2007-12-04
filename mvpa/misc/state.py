@@ -102,7 +102,8 @@ class State(dict):
         """Set value for the `index`.
         """
         self.__checkIndex(index)
-        dict.__setitem__(self, index, *args, **kwargs)
+        if self.__registered[index]['enabled']:
+            dict.__setitem__(self, index, *args, **kwargs)
 
 
     def __getitem__(self, index):
