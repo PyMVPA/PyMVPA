@@ -19,6 +19,8 @@ PyMVPA Manual
 .. Please add yourself to the list of authors if you contribute something
    to this manual.
 
+.. contents::
+.. sectnum::
 
 Introduction
 ------------
@@ -26,16 +28,6 @@ Introduction
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 * Note how to cite it.
-
-Table of Contents
------------------
-
-	1. `A Bit of History`_
-	2. Overview_
-	3. `Data Handling`_
-	4. Classifiers_
-	5. Algorithms_
-	6. Installation_
 
 
 A Bit of History
