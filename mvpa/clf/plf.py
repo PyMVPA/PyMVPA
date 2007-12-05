@@ -37,6 +37,9 @@ class PLF(Classifier):
         `maxiter`: maximum number of iterations. If no convergence occurs
                after this number of iterations, an exception is raised.
         """
+        # init base class first
+        Classifier.__init__(self)
+
         self.__lm   = lm
         self.__criterion = criterion
         self.__reduce = reduce
@@ -135,6 +138,17 @@ class PLF(Classifier):
 
         Returns a list of class labels
         """
+        # make sure the data are in matrix form
         data = N.matrix(N.array(data))
-        return N.ravel(self.__f(self.offset + data * self.w) > 0.5)
+
+        # get the values and then predictions
+        values = N.ravel(self.__f(self.offset + data * self.w))
+        predictions = values > 0.5
+
+        # save the state if desired, relying on State._setitem_ to
+        # decide if we will actually save the values
+        self['predictions'] = predictions
+        self['values'] = values
+
+        return predictions
 
