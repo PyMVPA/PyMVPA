@@ -1,0 +1,174 @@
+.. -*- mode: rst -*-
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+PyMVPA Manual
+=============
+
+:Author: Michael Hanke <michael.hanke@gmail.com>
+.. Please add yourself to the list of authors if you contribute something
+   to this manual.
+
+
+Introduction
+------------
+
+PyMVPA stands for *Multivariate Pattern Analysis* in *Python*.
+
+* Note how to cite it.
+* Contact, mailing list, website.
+
+Table of Contents
+-----------------
+
+	1. `A Bit of History`_
+	2. Overview_
+	3. `Data Handling`_
+	4. Classifiers_
+	5. Algorithms_
+	6. Installation_
+
+
+A Bit of History
+----------------
+
+The roots of PyMVPA date back to early 2005. At that time it was a C++ library
+(no Python yet) developed by Michael Hanke and Sebastian Krüger with the
+purpose to easily apply artificial neural networks to pattern recognition
+problems.
+
+During a visit to Princeton University in spring 2005 Michael Hanke was
+introduced to the `MVPA toolbox`_ for Matlab. This toolbox was and is mainly
+developed by `Greg Detre`_ and had several advantages over a C++ library. Most
+importantly it was easier to use. While a user of a C++ library is forced to
+write a significant amount of front-end code, users of the MVPA toolbox could
+simply load their data and start analyzing it. Besides that the MVPA toolbox
+offered a number of algorithms that were not implmented in the C++ library.
+
+.. _MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
+.. _Greg Detre: http://www.gregdetre.co.uk
+
+However, writing a Matlab toolbox implies some disadvantages that also
+apply to the MVPA toolbox. While users in general benefit from the powers
+of Matlab, they are at the same time bound to the goodwill of a commercial
+company. That this is indeed a problem becomes obvious when one consideres the
+time when the vendor of Matlab was not willing to support the Mac platform.
+Therefore even if the MVPA toolbox is `GPL-licensed`_ it cannot fully benefit
+from the enourmous advantages of the free-software development model
+environment (free as in free speech, not only free beer).
+
+.. _GPL-licensed: http://www.gnu.org/copyleft/gpl.html
+
+Under this impression Michael thought that a successor of the C++ library
+should remain truely free-software, remain fully object-oriented (in contrast
+to the MVPA toolbox), but should be at least as easy to use and extensible
+as the MVPA toolbox.
+
+After evaluating some possibilities Michael decided that `Python`_ is the
+most promissing candidate that was fully capable to fulfil the intended
+development goal. Python is a very powerful language that magically combines
+the possibility to write really fast code and a simplicity that allows to
+learn the basic concepts within a few days.
+
+.. _Python: http://www.python.org
+
+One of the major advantages of Python is the availablity of a huge amount of
+so called *modules*. Modules can include extensions written in a hard-core
+language like C and therefore allow to incorporate high-performance code
+without having to leave the Python environment. Additionally some Python
+modules even provide links to other toolkits. For example `RPy`_ allows to use
+the full functionality of R_ from inside Python. Even Matlab can be used via
+some Python modules (`example`_).
+
+.. _RPy: http://rpy.sourceforge.net/
+.. _R: http://www.r-project.org
+.. _example: http://code.google.com/p/pymatlab/
+
+After the decision for Python was made, Michael started development with a
+simple k-Nearest-Neighbour classifier and a cross-validation class. Using
+the mighty NumPy_ package made it easy to support data of any dimensionality.
+Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
+with EEG data (3d) or even non-neuroimaging datasets.
+
+.. _NumPy: http://numpy.scipy.org/
+
+By September 2007 PyMVPA included support for reading and writing datasets
+from and to the `NIfTI format`_, kNN and Support Vector Machine classifiers,
+as well as several analysis algorithms (e.g. searchlight and incremental
+feature search).
+
+.. _NIfTI format: http://nifti.nimh.nih.gov/
+
+During another visit in Princeton in October 2007 Michael met with `Yaroslav
+Halchenko`_ and `Per B. Sederberg`_. That incident and the following
+discussions and hacking sessions of Michael and Yaroslav lead to a major
+refactoring of the PyMVPA codebase, making it much more flexible/extensible,
+faster and easier as it has ever been before.
+
+.. _Yaroslav Halchenko: http://www.onerussian.com/
+.. _Per B. Sederberg: http://www.princeton.edu/~persed/
+
+Overview
+--------
+
+Notes on the general organization of the `mvpa` module.
+
+
+Data Handling
+-------------
+
+Explain features of `Dataset` and the idea of a `Mapper`. Finally show
+examples using implemented special-case datasets like `NiftiDataset`.
+
+
+Classifiers
+-----------
+
+First generic interface of all classifiers in PyMVPA. Point to the special
+case of multi-class classification and how to deal with it. Finally describe
+features of all available classifiers.
+
+k-Nearest-Neighbour
+~~~~~~~~~~~~~~~~~~~
+
+Support Vector Machines
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Logistic Regression
+~~~~~~~~~~~~~~~~~~~
+
+
+Algorithms
+----------
+
+Again general overview first. What is a `SensitivityAnalyzer`, what is the
+difference between a `FeatureSelection` and an `ElementSelector`.
+
+Finally more detailed note and references for each larger algorithm.
+
+
+Searchlight
+~~~~~~~~~~~
+
+Recursive Feature Elimination
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Incremental Feature Search
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Installation
+------------
+
+Point to source and binary distribution. Preach idea of free software.
+Step by step guide to install it on difficult systems like Windows.
+
+
+License
+-------
+
+Has to be.
