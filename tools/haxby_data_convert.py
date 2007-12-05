@@ -49,8 +49,12 @@ parser.add_option("-c", "--categories",
                   help="Comma separated list of categories")
 
 parser.add_option("-l", "--just-labels",
-                  action="store_true",  dest="just_labels",
+                  action="store_true",  dest="just_labels", default=False,
                   help="If just to process labels and do not bother about files")
+
+parser.add_option("-n", "--dry-run",
+                  action="store_true",  dest="dry_run", default=False,
+                  help="If just to print commands to run")
 
 
 (options, files) = parser.parse_args()
@@ -60,6 +64,14 @@ if len(files)!=2:
 
 basedir, outprefix = files
 
+verbose(1, "Basedir: '%s' outprefix: '%s'" % (basedir, outprefix))
+#create  directory if outprefix ends with /
+if outprefix.endswith("/"):
+    try:
+        os.mkdir(outprefix)
+        verbose(1, "Created directory %s" % outprefix)
+    except:
+        pass
 
 filenames = glob.glob("%s/Rrun*.img" % basedir)
 
@@ -79,6 +91,18 @@ def sample_offset (chunk, sample):
         raise ValueError, "Yarik go to sleep -- wrong chunk %d" % chunk
     return chunk*nvolumesinchunk + sample
 
+def fileExists(filename, warn=True):
+    res = len(glob.glob(filename)) > 0
+    if res and warn:
+        verbose(2, "File %s exists already" % filename)
+    return res
+
+def ossystem(cmd):
+    if options.dry_run:
+        print "RUN: ", cmd
+        return 0
+    else:
+        return os.system(cmd)
 
 cats = options.categories.split(",")
 
@@ -102,7 +126,7 @@ for cat in cats:
     files = [ x.strip() for x in files ]
     prevsample = 0
     for fname in files:
-        verbose(2, "File: %s\t" % fname, lf=False) 
+        verbose(3, "File: %s\t" % fname, lf=False) 
         run, sample = parse_name(fname)
         # I am still smart ass... why why why
         if run*1000+sample - 1 != prevsample:
@@ -110,7 +134,7 @@ for cat in cats:
             #verbose(3, "Detected beginning of the block")
             for o in range(options.resurrect): # 
                 index = sample_offset(run, sample-o-1)
-                verbose(3, "resurrected at offset %d category %s " %
+                verbose(4, "resurrected at offset %d category %s " %
                         (index, cat))
                 labels[index] = cat
 
@@ -121,16 +145,17 @@ for cat in cats:
         for o in range(options.resurrectafter+1):
             labels[index+o] = cat
 
-
-fout = open('%slabels.txt' % outprefix, 'w')
-print >>fout, "labels chunks"
-for i in xrange(len(labels)):
-    print >>fout, labels[i], chunks[i]
-fout.close()
+labelsfile = '%slabels.txt' % outprefix
+if not fileExists(labelsfile):
+    fout = open(labelsfile, 'w')
+    print >>fout, "labels chunks"
+    for i in xrange(len(labels)):
+        print >>fout, labels[i], chunks[i]
+    fout.close()
 
 if options.just_labels:
     verbose(1, 'done')
-
+    sys.exit(0)
 # now we have to go through the files and suck them up into a single volume.
 # and since we are at it -- correct everything which needs to be corrected
 
@@ -143,11 +168,43 @@ for filename in filenames:
     sorted_fnames.append( (chunk*1000+volume, fname) )
 sorted_fnames.sort()
 flist = reduce(lambda x,y: x+ " " + y[1], sorted_fnames, "")
-verbose(1, "Merging all volumes into a single chunk")
-verbose(10, "Merging volumes %s" % `flist`)
-os.system("cd %s; avwmerge -t %sbold-preswap.nii.gz %s" % (basedir, outprefix, flist))
-verbose(2, "Swapping dimensions of the volumes")
-os.system("avwswapdim %sbold-preswap.nii.gz z y -x %sbold.nii.gz" % (outprefix, outprefix))
-verbose(2, "Coppying anatomical")
-os.system("avwchfiletype NIFTI_GZ %s/anat.img %sanat-preswap.nii.gz" % ( basedir, outprefix) )
-os.system("avwswapdim %sanat-preswap.nii.gz z y -x %sanat.nii.gz" % (outprefix, outprefix))
+
+if not fileExists("%sbold.nii.gz" % outprefix):
+    verbose(1, "Merging all volumes into a single chunk")
+    verbose(5, "Merging volumes in the following order: %s" % `flist`)
+    ossystem("cd %s; avwmerge -t %sbold-preswap.nii.gz %s" % (basedir, outprefix, flist))
+    verbose(2, "Swapping dimensions of the volumes")
+    ossystem("avwswapdim %sbold-preswap.nii.gz z y -x %sbold.nii.gz" % (outprefix, outprefix))
+    # obtained bold is flipped in comparison to michael's
+
+if not fileExists("%sanat.nii.gz" % outprefix):
+    verbose(2, "Copying anatomical")
+    ossystem("avwchfiletype NIFTI_GZ %s/anat.img %sanat-preswap.nii.gz" % ( basedir, outprefix) )
+    ossystem("avwswapdim %sanat-preswap.nii.gz z -x -y %sanat.nii.gz" % (outprefix, outprefix))
+
+if not fileExists("%smask4_vt.nii.gz" % outprefix):
+    verbose(2, "Copying masks, reorienting them the same way as bolds")
+    for fnamefull in glob.glob("%s/../../masks/mask*+orig_0000.img" % basedir):
+        fname = os.path.basename(fnamefull)
+        fnamebase = os.path.splitext(fname)[0]
+        fnameout = fnamebase.replace('+orig_0000', '')
+        ossystem("avwchfiletype NIFTI_GZ %s %s%s-preswap.nii.gz" % ( fnamefull, outprefix, fnameout) )
+        ossystem("avwswapdim %s%s-preswap.nii.gz z y -x %s%s.nii.gz" % (outprefix, fnameout, outprefix, fnameout))
+
+verbose(2, "Removing preswap files")
+ossystem("rm -f %s/*preswap.nii.gz" % outprefix)
+
+if not fileExists("%sbold_mcf.nii.gz" % outprefix):
+    verbose(2, "Doing motion correction")
+    try:
+        os.mkdir("%smc" % outprefix)
+        verbose(1, "Created directory %smc" % outprefix)
+    except:
+        pass
+
+    ossystem("mcflirt -in %s/bold.nii.gz -out %smc/bold_mcf -mats -plots -rmsrel -rmsabs" %
+              (outprefix, outprefix))
+
+
+    verbose(2, "Moving bold_mcf upstairs")
+    ossystem("mv %smc/bold_mcf.nii.gz %sbold_mcf.nii.gz" % (outprefix, outprefix))
