@@ -48,8 +48,8 @@ class Classifier(State):
              demanding its collection should be switchable and off be default.
 
     Nomenclature
-     * predictions  : corresponds to the quantized labels if classifier spits out
-                   labels by .predict()
+     * predictions  : corresponds to the quantized labels if classifier spits
+                      out labels by .predict()
      * values : might be different from predictions if a classifier's predict()
                    makes a decision based on some internal value such as
                    probability or a distance.
