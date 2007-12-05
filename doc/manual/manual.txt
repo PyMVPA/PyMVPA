@@ -9,7 +9,13 @@
 PyMVPA Manual
 =============
 
-:Author: Michael Hanke <michael.hanke@gmail.com>
+:Authors:
+  Michael Hanke <michael.hanke@gmail.com>;
+  Yaroslav O. Halchenko <debian@onerussian.com>
+:Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
+:Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
+:Revision: 0.0.1
+
 .. Please add yourself to the list of authors if you contribute something
    to this manual.
 
@@ -17,10 +23,9 @@ PyMVPA Manual
 Introduction
 ------------
 
-PyMVPA stands for *Multivariate Pattern Analysis* in *Python*.
+PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 * Note how to cite it.
-* Contact, mailing list, website.
 
 Table of Contents
 -----------------
@@ -37,18 +42,21 @@ A Bit of History
 ----------------
 
 The roots of PyMVPA date back to early 2005. At that time it was a C++ library
-(no Python yet) developed by Michael Hanke and Sebastian Krüger with the
+(no Python_ yet) developed by Michael Hanke and Sebastian Krüger with the
 purpose to easily apply artificial neural networks to pattern recognition
 problems.
 
-During a visit to Princeton University in spring 2005 Michael Hanke was
-introduced to the `MVPA toolbox`_ for Matlab. This toolbox was and is mainly
-developed by `Greg Detre`_ and had several advantages over a C++ library. Most
-importantly it was easier to use. While a user of a C++ library is forced to
-write a significant amount of front-end code, users of the MVPA toolbox could
-simply load their data and start analyzing it. Besides that the MVPA toolbox
-offered a number of algorithms that were not implmented in the C++ library.
+During a visit to `Princeton University`_ in spring 2005 Michael Hanke
+was introduced to the `MVPA toolbox`_ for `Matlab
+<http://buchholz.hs-bremen.de/aes/aes_matlab.gif>`_. This toolbox was
+and is mainly developed by `Greg Detre`_ and had several advantages
+over a C++ library. Most importantly it was easier to use. While a
+user of a C++ library is forced to write a significant amount of
+front-end code, users of the MVPA toolbox could simply load their data
+and start analyzing it. Besides that the MVPA toolbox offered a number
+of algorithms that were not implmented in the C++ library.
 
+.. _Princeton University: http://www.princeton.edu
 .. _MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
 .. _Greg Detre: http://www.gregdetre.co.uk
 
