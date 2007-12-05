@@ -1,6 +1,16 @@
 PROFILE_FILE=tests/main.pstats
 
+PYVER := $(shell pyversions -vd)
+ARCH := $(shell uname -m)
+
 all:
+
+build:
+# reuse is better than duplication (yoh)
+	debian/rules build
+
+# to overcome the issue of not-installed svmc.so
+	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so mvpa/clf/libsvm/
 
 distclean:
 	-@rm -f MANIFEST Changelog
@@ -14,9 +24,15 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm -rf doc/*.html
+	-@rm -rf doc/{,devguide/}*.html
 # remove all generated HTML stuff
 	@find doc -mindepth 2 -maxdepth 2 -type d -name 'html' -print -exec rm -rf {} \;
+# remove stamps for builds since state is not really built any longer
+	-fakeroot debian/rules clean
+
+#
+# Misc pattern rules
+#
 
 # convert rsT documentation in doc/* to HTML. In the corresponding directory
 # below doc/ a subdir html/ is created that contains the converted output.
@@ -32,6 +48,10 @@ rst2html-%:
 	# copy local images, but ignore if there are none
 	-cp -r doc/$*/pics doc/$*/html
 
+#
+# Website
+#
+
 website: rst2html-website rst2html-devguide
 	# put everything in one directory. Might be undesired if there are
 	# filename clashes. But given the website will be/should be simply, it
@@ -41,17 +61,24 @@ website: rst2html-website rst2html-devguide
 upload-website: website
 	scp -r doc/website/html/* alioth:/home/groups/pkg-exppsy/htdocs/pymvpa
 
+#
+# Documentation
+#
+
+doc: apidoc rst2html-devguide rst2html-manual
+
 manual:
 	cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
 
 apidoc: $(PROFILE_FILE)
 	epydoc --config doc/api/epydoc.conf
 
-$(PROFILE_FILE): tests/main.py
+$(PROFILE_FILE): build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
-doc: apidoc
-	@rst2html doc/NOTES.coding doc/NOTES.coding.html
+#
+# Sources
+#
 
 pylint:
 	pylint --rcfile doc/misc/pylintrc mvpa
@@ -72,7 +99,15 @@ orig-src: distclean
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
 
+#
+# Data
+#
+
 fetch-data:
 	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual
+#
+# Trailer
+#
+
+.PHONY: fetch-data orig-src pylint apidoc doc manual build
