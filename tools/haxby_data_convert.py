@@ -16,7 +16,7 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as N
-import re, glob
+import re, glob, os
 
 from nifti import NiftiImage
 from optparse import OptionParser
@@ -122,7 +122,7 @@ for cat in cats:
             labels[index+o] = cat
 
 
-fout = open('%s-labels.txt' % outprefix, 'w')
+fout = open('%slabels.txt' % outprefix, 'w')
 print >>fout, "labels chunks"
 for i in xrange(len(labels)):
     print >>fout, labels[i], chunks[i]
@@ -134,3 +134,20 @@ if options.just_labels:
 # now we have to go through the files and suck them up into a single volume.
 # and since we are at it -- correct everything which needs to be corrected
 
+# too late at night, so lets just assure the right order and feed it into
+# avwmerge with consecutive avwswapdim
+sorted_fnames = []
+for filename in filenames:
+    fname = os.path.basename(filename)
+    chunk, volume = parse_name(fname)
+    sorted_fnames.append( (chunk*1000+volume, fname) )
+sorted_fnames.sort()
+flist = reduce(lambda x,y: x+ " " + y[1], sorted_fnames, "")
+verbose(1, "Merging all volumes into a single chunk")
+verbose(10, "Merging volumes %s" % `flist`)
+os.system("cd %s; avwmerge -t %sbold-preswap.nii.gz %s" % (basedir, outprefix, flist))
+verbose(2, "Swapping dimensions of the volumes")
+os.system("avwswapdim %sbold-preswap.nii.gz z y -x %sbold.nii.gz" % (outprefix, outprefix))
+verbose(2, "Coppying anatomical")
+os.system("avwchfiletype NIFTI_GZ %s/anat.img %sanat-preswap.nii.gz" % ( basedir, outprefix) )
+os.system("avwswapdim %sanat-preswap.nii.gz z y -x %sanat.nii.gz" % (outprefix, outprefix))
