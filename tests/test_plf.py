@@ -34,6 +34,21 @@ class PLFTests(unittest.TestCase):
         # prediction has to be perfect
         self.failUnless((clf.predict(data.samples) == data.labels).all())
 
+    def testPLFState(self):
+        data = dumbFeatureSignal()
+
+        clf = PLF()
+
+        clf.train(data)
+
+        clf.enableState('values')
+        clf.enableState('predictions')
+
+        p = clf.predict(data.samples)
+
+        self.failUnless((p == clf['predictions']).all())
+        self.failUnless(N.array(clf['values']).shape == N.array(p).shape)
+
 
 def suite():
     return unittest.makeSuite(PLFTests)

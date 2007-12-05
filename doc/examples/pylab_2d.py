@@ -41,6 +41,11 @@ patterns = patternsPos+patternsNeg
 
 # set up the classifier
 logReg = PLF(criterion=0.00001)
+
+# enable saving of the values used for the prediction
+logReg.enableState('values')
+
+# train with the known points
 logReg.train(patterns)
 
 # set up the testing features
@@ -49,23 +54,11 @@ x2=N.linspace(-10,10, 100)
 x,y=N.meshgrid(x1,x2);
 feat_test=N.array((N.ravel(x), N.ravel(y)))
 
-# this is need b/c I can't access the __f function in PLF
-def logistic(y):
-    return 1./(1+N.exp(-y))
+# run the predictions on the test values
+pre = logReg.predict(feat_test.T)
 
-# do the regression prediction (this would be ideally part of the
-# classifier)
-# Michael: maybe something like this would do it (given that Classifier
-# starts to inherit 'State' as well.
-#
-# logReg.predict(feat_test) # ignore the returned predictions
-# res = logReg['decision_value'] 
-#
-# Yarik will come up with a better name ;-) but basically every classifier
-# should be able to provide the bit of information that is used to finally
-# choose a class label. Actually, for a SVM regression the class label is
-# identical to the prediction so in some cases this might be a duplicate.
-res = N.ravel(logistic(logReg.offset+feat_test.T*logReg.w))
+# get out the values used for the prediction
+res = logReg['values']
 
 # reshape the results
 z = N.asarray(res).reshape((100,100))
