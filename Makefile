@@ -27,6 +27,8 @@ distclean:
 	-@rm -rf doc/{,devguide/}*.html
 # remove all generated HTML stuff
 	@find doc -mindepth 2 -maxdepth 2 -type d -name 'html' -print -exec rm -rf {} \;
+
+clean:
 # remove stamps for builds since state is not really built any longer
 	-fakeroot debian/rules clean
 
