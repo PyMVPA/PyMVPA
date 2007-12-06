@@ -25,9 +25,11 @@ class Dataset(object):
     MVPA analyses. These are the data samples, as well as the labels
     associated with these patterns. Additionally samples can be grouped into
     chunks.
-    
-    :group Creators: `__init__`, `selectFeatures`, `selectSamples`
-    :group Mutators: `permuteLabels`
+
+    :Groups:
+      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`
+      - `Mutators`: `permuteLabels`
+
     """
 
     # static definition to track which unique attributes
@@ -173,7 +175,7 @@ class Dataset(object):
         """
         Provide common facility to return unique attributes
 
-        XXX dict_ can be simply replaced now with self._dsattr
+        XXX `dict_` can be simply replaced now with self._dsattr
         """
         if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
             if __debug__:
@@ -292,7 +294,7 @@ class Dataset(object):
 
     @classmethod
     def _registerAttribute(cls, key, dictname="_data", hasunique=False):
-        """Register an attribute for *Dataset class.
+        """Register an attribute for any Dataset class.
 
         Creates property assigning getters/setters depending on the
         availability of corresponding _get, _set functions.
@@ -481,9 +483,10 @@ class Dataset(object):
 
         Returns a new dataset object containing the selected sample
         subset.
-        TODO yoh: we might need to sort the mask if the mask is a list
-                  of ids and is not ordered. Clarify with Michael what is
-                  our intent here!
+
+        TODO: yoh, we might need to sort the mask if the mask is a
+        list of ids and is not ordered. Clarify with Michael what is
+        our intent here!
         """
         # without having a sequence a index the masked sample array would
         # loose its 2d layout
