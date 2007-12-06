@@ -112,4 +112,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual build
+.PHONY: fetch-data orig-src pylint apidoc doc manual
