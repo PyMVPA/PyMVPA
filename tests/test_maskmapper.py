@@ -95,6 +95,16 @@ class MaskMapperTests(unittest.TestCase):
         result = map_.getNeighbors(0, 2.1)
         self.failUnless( result == target )
 
+        map__ = MaskMapper(mask, elementsize=[0.5, 2])
+        self.failUnless( map__.getNeighbors(0, 2.1) == target,
+                         msg="MaskMapper must accept elementsize parameter and set" +
+                         " DescreteMetric accordingly")
+
+        self.failUnlessRaises(ValueError, MaskMapper, mask, elementsize=[0.5]*3)
+        """MaskMapper must raise exception when not appropriatly sized
+        elementsize was provided"""
+
+
 
     def testMapperAliases(self):
         mm=MaskMapper(N.ones((3,4,2)))
