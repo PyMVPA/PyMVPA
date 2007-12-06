@@ -52,7 +52,7 @@ def zscore(dataset, mean = None, std = None,
 
         # do the z-scoring
         samples -= mean
-        samples[:, std!=0] /= std[std!=0]
+        samples[:, std != 0] /= std[std != 0]
 
         return samples
 

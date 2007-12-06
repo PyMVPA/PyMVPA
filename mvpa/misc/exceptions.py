@@ -16,6 +16,7 @@ class UnknownStateError(Exception):
     """
 
     def __init__(self, msg=""):
+        Exception.__init__(self)
         self.__msg = msg
 
     def __str__(self):
@@ -25,6 +26,6 @@ class UnknownStateError(Exception):
 class ConvergenceError(Exception):
     """Thrown if some algorithm does not converge to a solution.
     """
-    pass
-
+    def __init__(self):
+        Exception.__init__(self)
 

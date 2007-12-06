@@ -145,7 +145,7 @@ class RFE(FeatureSelection):
         """List of feature Ids as per original dataset remaining at any given
         step"""
 
-        while wdataset.nfeatures>0:
+        while wdataset.nfeatures > 0:
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
             # only mark on removed features at each step

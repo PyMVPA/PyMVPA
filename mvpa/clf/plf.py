@@ -11,7 +11,7 @@
 import numpy as N
 
 from mvpa.misc.exceptions import ConvergenceError
-from classifier import Classifier
+from mvpa.clf.classifier import Classifier
 
 if __debug__:
     from mvpa.misc import debug
@@ -20,7 +20,7 @@ if __debug__:
 class PLF(Classifier):
     """I am a penalized logistic regression classifier.
     """
-    def __init__(self, lm=1, criterion=1, reduce=False, maxiter=20):
+    def __init__(self, lm=1, criterion=1, reduced=False, maxiter=20):
         """
         Initialize a penalized logistic regression analysis
 
@@ -29,11 +29,11 @@ class PLF(Classifier):
 
         `lm`: The penalty term lambda.
         `criterion`: is the criterion applied to judge convergence.
-        `reduce`: if not False, the rank of the data is reduced before
+        `reduced`: if not False, the rank of the data is reduced before
                performing the calculations. In that case, reduce is taken as
                the fraction of the first singular value, at which a dimension
                is not considered significant anymore. A reasonable criterion
-               is reduce=0.01
+               is reduced=0.01
         `maxiter`: maximum number of iterations. If no convergence occurs
                after this number of iterations, an exception is raised.
         """
@@ -42,7 +42,7 @@ class PLF(Classifier):
 
         self.__lm   = lm
         self.__criterion = criterion
-        self.__reduce = reduce
+        self.__reduced = reduced
         self.__maxiter = maxiter
 
 
@@ -52,8 +52,8 @@ class PLF(Classifier):
         return """PLF:
  lm: %f
  criterion: %d
- reduce: %s
- maxiter: %d""" % (self.__lm, self.__criterion, self.__reduce, self.__maxiter)
+ reduced: %s
+ maxiter: %d""" % (self.__lm, self.__criterion, self.__reduced, self.__maxiter)
 
 
     def train(self, data):
@@ -62,28 +62,28 @@ class PLF(Classifier):
         # Set up the environment for fitting the data
         X = data.samples.T
         d = data.labels
-        if not list(set(d)) == [0,1]:
+        if not list(set(d)) == [0, 1]:
             raise ValueError, \
                   "Regressors for logistic regression should be [0,1]"
 
-        if self.__reduce:
+        if self.__reduced:
             # Data have reduced rank
             from scipy.linalg import svd
 
             # Compensate for reduced rank:
             # Select only the n largest eigenvectors
-            U,S,V = svd(X.T)
+            U, S, V = svd(X.T)
             S /= S[0]
-            V = N.matrix(V[:, :N.max(N.where(S > self.__reduce)) + 1])
+            V = N.matrix(V[:, :N.max(N.where(S > self.__reduced)) + 1])
             # Map Data to the subspace spanned by the eigenvectors
             X = (X.T * V).T
 
-        nfeatures,npatterns = X.shape
+        nfeatures, npatterns = X.shape
 
         # Weighting vector
-        w  = N.matrix(N.zeros( (nfeatures+1, 1), 'd'))
+        w  = N.matrix(N.zeros( (nfeatures + 1, 1), 'd'))
         # Error for convergence criterion
-        dw = N.matrix(N.ones(  (nfeatures+1, 1), 'd'))
+        dw = N.matrix(N.ones(  (nfeatures + 1, 1), 'd'))
         # Patterns of interest in the columns
         X = N.matrix( \
                 N.concatenate((X, N.ones((1, npatterns), 'd')), 0) \
@@ -113,10 +113,10 @@ class PLF(Classifier):
 
         if __debug__:
             debug("PLF",\
-                  "PLF converged after %d steps. Error: %g" %\
+                  "PLF converged after %d steps. Error: %g" % \
                   (k, N.sum(N.ravel(dw.A ** 2))))
 
-        if self.__reduce:
+        if self.__reduced:
             # We have computed in rank reduced space ->
             # Project to original space
             self.w = V * w[:-1]
@@ -126,7 +126,7 @@ class PLF(Classifier):
             self.offset = w[-1]
 
 
-    def __f(self,y):
+    def __f(self, y):
         """This is the logistic function f, that is used for determination of
         the vector w"""
         return 1. / (1 + N.exp(-y))

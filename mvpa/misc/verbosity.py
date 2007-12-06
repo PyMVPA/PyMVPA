@@ -13,7 +13,7 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 """
 
-from sys import stdout, stderr
+from sys import stdout
 
 # GOALS
 #  any logger should be able
@@ -67,7 +67,7 @@ class Logger(object):
         """
         if cr:
             msg_ = ""
-            if self.__crprev>0:
+            if self.__crprev > 0:
                 # wipe out older line to make sure to see no ghosts
                 msg_ = "\r%s\r" % (" "*self.__crprev)
             msg_ += msg
@@ -165,15 +165,15 @@ class OnceLogger(Logger):
         self._known = {}
 
 
-    def __call__(self, id, msg, count=1, *args, **kwargs):
+    def __call__(self, ident, msg, count=1, *args, **kwargs):
         """
-        Write `msg` if `id` occured less than `count` times by now.
+        Write `msg` if `ident` occured less than `count` times by now.
         """
-        if not self._known.has_key(id):
-            self._known[id] = 0
+        if not self._known.has_key(ident):
+            self._known[ident] = 0
 
-        if self._known[id] < count:
-            self._known[id] += 1
+        if self._known[ident] < count:
+            self._known[ident] += 1
             Logger.__call__(self, msg, *args, **kwargs)
 
 
@@ -224,7 +224,7 @@ class SetLogger(Logger):
 
         if self.__registered.has_key(setid):
             raise ValueError, \
-                  "Setid %s is already known with description '%s'" %\
+                  "Setid %s is already known with description '%s'" % \
                   ( `setid`, self.__registered[setid] )
         self.__registered[setid] = description
 
@@ -301,7 +301,7 @@ if __debug__:
                     func = DebugLogger._known_metrics[func]
                 else:
                     raise ValueError, \
-                          "Unknown name %s for metric in DebugLogger" %\
+                          "Unknown name %s for metric in DebugLogger" % \
                           func + " Known metrics are " + \
                           `DebugLogger._known_metrics.keys()`
             self.__metrics.append(func)

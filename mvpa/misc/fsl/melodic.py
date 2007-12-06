@@ -48,5 +48,5 @@ class MelodicResults( object ):
     tmodes   = property( fget=lambda self: self.__tmodes )
     smodes   = property( fget=lambda self: self.__smodes )
     icastats = property( fget=lambda self: self.__icstats )
-    relvar_per_ic  = property( fget=lambda self: self.__icstats[:,0] )
-    truevar_per_ic = property( fget=lambda self: self.__icstats[:,1] )
+    relvar_per_ic  = property( fget=lambda self: self.__icstats[:, 0] )
+    truevar_per_ic = property( fget=lambda self: self.__icstats[:, 1] )
