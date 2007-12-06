@@ -194,7 +194,8 @@ if not fileExists("%smask4_vt.nii.gz" % outprefix):
 verbose(2, "Removing preswap files")
 ossystem("rm -f %s/*preswap.nii.gz" % outprefix)
 
-if not fileExists("%sbold_mcf.nii.gz" % outprefix):
+# for now do not do MC at all
+if False: # not fileExists("%sbold_mcf.nii.gz" % outprefix):
     verbose(2, "Doing motion correction")
     try:
         os.mkdir("%smc" % outprefix)
