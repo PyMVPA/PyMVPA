@@ -38,16 +38,16 @@ class OneWayAnova(SensitivityAnalyzer):
         # group means
         means = []
         # with group variance
-        vars = []
+        vars_ = []
 
         # split by groups -> [groups x [samples x features]]
         for ul in dataset.uniquelabels:
             ul_samples = dataset.samples[dataset.labels == ul]
             means.append(ul_samples.mean(axis=0))
-            vars.append(ul_samples.var(axis=0))
+            vars_.append(ul_samples.var(axis=0))
 
         # mean of within group variances
-        mvw = N.array(vars).mean(axis=0)
+        mvw = N.array(vars_).mean(axis=0)
         # variance of group means
         vgm = N.array(means).var(axis=0)
 

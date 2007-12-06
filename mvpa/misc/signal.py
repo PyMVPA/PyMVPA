@@ -12,9 +12,8 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
-
 from scipy import signal
+
 
 def detrend(data, perchunk=False):
     """
@@ -34,7 +33,7 @@ def detrend(data, perchunk=False):
     if perchunk:
         for chunk in data.uniquechunks:
             ids = data.idsbychunks(chunk)
-            detrended = signal.detrend(data.samples[ids,:], axis=0)
-            data.samples[ids,:] = detrended[:]
+            detrended = signal.detrend(data.samples[ids, :], axis=0)
+            data.samples[ids, :] = detrended[:]
     else:
         data.samples[:] = signal.detrend(data.samples, axis=0)

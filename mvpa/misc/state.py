@@ -17,13 +17,18 @@ if __debug__:
 
 
 class State(dict):
+    """Base class for stateful objects.
+    """
 
     # _register_states = {'statevariable': Bool}
     #
-    # children classes can compactly describe state variables as a static members
-    # instead of explicit calling _registerState
+    # children classes can compactly describe state variables as a static
+    # members instead of explicit calling _registerState
 
-    def __init__(self, enable_states=None, disable_states=None, *args, **kwargs):
+    def __init__(self,
+                 enable_states=None,
+                 disable_states=None,
+                 *args, **kwargs):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -53,14 +58,15 @@ class State(dict):
         # no need to compain actually since this method doesn't work
         # nicely (see above)
         #elif __debug__:
-        #    debug('ST', 'Class %s is a child of State class but has no states' %
+        #   debug('ST', 'Class %s is a child of State class but has no states' %
         #          (self.__class__.__name__))
 
-        for key,enabled in register_states.iteritems():
+        for key, enabled in register_states.iteritems():
             if (not enable_states is None):
                 if (not key in enable_states):
                     if __debug__:
-                        debug('ST', 'Disabling state %s since it is not listed' % key +
+                        debug('ST', 'Disabling state %s since it is not' \
+                              'listed' % key + \
                               ' among explicitely enabled ones for %s' %
                               (self.__class__.__name__))
                     enabled = False

@@ -14,7 +14,7 @@ import shutil
 import numpy as N
 import math
 
-def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershoot_amp=0.3, 
+def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3, 
               nsamples=1, resolution=0.05, nsecs=-1, nbasisfns=2):
     """ Wrapper around the FSL tool halfcosbasis.
 
@@ -30,13 +30,13 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershoot_amp=0.3,
      |     /         \\
      |    /           \\
     -----/             \\     /-----  |
-                        \\--/         |  undershoot_amp
+                        \\--/         |  undershootamp
     |    |      |     |        |
     |    |      |     |        |
 
      pre   rise  fall  undershoot
 
-    Parameters 'pre', 'rise', 'fall', 'undershoot' and 'undershoot_amp'
+    Parameters 'pre', 'rise', 'fall', 'undershoot' and 'undershootamp'
     can be specified as 2-tuples (min-max range for sampling) and single 
     value (setting exact values -- no sampling).
 
@@ -48,9 +48,9 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershoot_amp=0.3,
     All parameters except for 'nsamples' and 'nbasisfns' are in seconds.
     """
     # create tempdir and temporary parameter file
-    pfile, pfilename =tempfile.mkstemp('pyflobs')
-    wdir=tempfile.mkdtemp('pyflobs')
-   
+    pfile, pfilename = tempfile.mkstemp('pyflobs')
+    wdir = tempfile.mkdtemp('pyflobs')
+
     # halfcosbasis can only handle >1 samples
     # so we simply compute two and later ignore the other
     if nsamples < 2:
@@ -60,15 +60,15 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershoot_amp=0.3,
 
     # make range tuples if not supplied
     if not isinstance(pre, tuple):
-        pre = (pre,pre)
+        pre = (pre, pre)
     if not isinstance(rise, tuple):
-        rise = (rise,rise)
+        rise = (rise, rise)
     if not isinstance(fall, tuple):
-        fall = (fall,fall)
+        fall = (fall, fall)
     if not isinstance(undershoot, tuple):
-        undershoot = (undershoot,undershoot)
-    if not isinstance(undershoot_amp, tuple):
-        undershoot_amp = (undershoot_amp,undershoot_amp)
+        undershoot = (undershoot, undershoot)
+    if not isinstance(undershootamp, tuple):
+        undershootamp = (undershootamp, undershootamp)
 
     # calc minimum length of hrf if not specified
     # looks like it has to be an integer
@@ -79,7 +79,7 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershoot_amp=0.3,
                                 + undershoot[1] \
                                 + resolution ) )
     else:
-        nsec = ceil(nsec)
+        nsecs = math.ceil(nsecs)
 
     # write parameter file
     pfile = os.fdopen( pfile, 'w' )
@@ -89,7 +89,7 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershoot_amp=0.3,
     pfile.write(str(fall[0]) + ' ' + str(fall[1]) + '\n')
     pfile.write(str(undershoot[0]) + ' ' + str(undershoot[1]) + '\n')
     pfile.write('0 0\n0 0\n')
-    pfile.write(str(undershoot_amp[0]) + ' ' + str(undershoot_amp[1]) + '\n')
+    pfile.write(str(undershootamp[0]) + ' ' + str(undershootamp[1]) + '\n')
     pfile.write('0 0\n')
 
     pfile.close()

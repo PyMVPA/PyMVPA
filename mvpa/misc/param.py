@@ -38,7 +38,7 @@ class Parameter(object):
 
         self.val = value
 
-        for k,v in kwargs.iteritems():
+        for k, v in kwargs.iteritems():
             self.__setattr__(k, v)
 
 

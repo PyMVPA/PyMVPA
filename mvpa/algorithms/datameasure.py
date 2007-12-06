@@ -46,8 +46,8 @@ class SensitivityAnalyzer(DataMeasure):
     all features in a dataset.
     """
     def __init__(self):
-        """Does nothing."""
-        pass
+        """Does nothing special."""
+        DataMeasure.__init__(self)
 
 
     def __call__(self, dataset, callbacks=[]):

@@ -8,5 +8,5 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Import helper for PySVM"""
 
-from mvpa.clf.libsvm import svmc
+import svmc
 from mvpa.clf.libsvm.svm import *

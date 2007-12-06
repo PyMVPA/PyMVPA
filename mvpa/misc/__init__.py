@@ -48,7 +48,7 @@ class WarningLog(OnceLogger):
         self.__btlevels = btlevels
 
     def __call__(self, msg):
-        import traceback, sys
+        import traceback
         tb = traceback.extract_stack(limit=2)
         msgid = `tb[-2]`                # take parent as the source of ID
         fullmsg = "WARNING: %s.\n\t(Please note: this warning is " % msg + \
@@ -56,7 +56,8 @@ class WarningLog(OnceLogger):
                   "occur many times.\n"
         if self.__btlevels > 0:
             fullmsg += "Top-most backtrace:\n"
-            fullmsg += reduce(lambda x,y: x+"\t%s:%d in %s where '%s'\n" %y,
+            fullmsg += reduce(lambda x, y: x + "\t%s:%d in %s where '%s'\n" % \
+                              y,
                               traceback.extract_stack(limit=self.__btlevels),
                               "")
 

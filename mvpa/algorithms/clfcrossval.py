@@ -11,7 +11,6 @@
 import numpy as N
 
 from mvpa.algorithms.datameasure import DataMeasure
-from mvpa.misc.support import indentDoc
 from mvpa.datasets.splitter import NoneSplitter
 
 
