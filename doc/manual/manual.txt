@@ -82,11 +82,11 @@ language like C and therefore allow to incorporate high-performance code
 without having to leave the Python environment. Additionally some Python
 modules even provide links to other toolkits. For example `RPy`_ allows to use
 the full functionality of R_ from inside Python. Even Matlab can be used via
-some Python modules (`example`_).
+some Python modules (see PyMatlab_ for an example).
 
 .. _RPy: http://rpy.sourceforge.net/
 .. _R: http://www.r-project.org
-.. _example: http://code.google.com/p/pymatlab/
+.. _PyMatlab: http://code.google.com/p/pymatlab/
 
 After the decision for Python was made, Michael started development with a
 simple k-Nearest-Neighbour classifier and a cross-validation class. Using
@@ -171,4 +171,30 @@ Step by step guide to install it on difficult systems like Windows.
 License
 -------
 
-Has to be.
+The PyMVPA package, including all examples, code snippets and attached
+documentation is covered by the MIT license.
+
+::
+
+  The MIT License
+
+  Copyright (c) 2006-2007 Michael Hanke
+                     2007 Yaroslav Halchenko
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
