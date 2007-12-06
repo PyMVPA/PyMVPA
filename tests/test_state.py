@@ -98,6 +98,22 @@ class StateTests(unittest.TestCase):
         self.failUnless(Set(proper2.enabledStates) == Set(['state1']))
 
 
+    def testGetSaveEnabled(self):
+        """Check if we can store/restore set of enabled states"""
+
+        proper  = TestClassProper()
+        enabled_states = proper.enabledStates
+        proper.enableState('state1')
+
+        self.failUnless(enabled_states != proper.enabledStates,
+                        msg="New enabled states should differ from previous")
+        self.failUnless(Set(proper.enabledStates) == Set(['state1', 'state2']),
+                        msg="Making sure that we enabled all states of interest")
+        proper.enabledStates = enabled_states
+        self.failUnless(enabled_states == proper.enabledStates,
+                        msg="List of enabled states should return to original one")
+
+
     def _testProperStateChild(self):
         """
         Actually it would fail which makes it no sense to use
