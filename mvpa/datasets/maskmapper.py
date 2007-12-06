@@ -11,6 +11,8 @@
 
 import numpy as N
 
+from operator import isSequenceType
+
 from mvpa.datasets.mapper import MetricMapper
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 
@@ -21,19 +23,45 @@ if __debug__:
 class MaskMapper(MetricMapper):
     """Mapper which uses a binary mask to select "Features" """
 
-    def __init__(self, mask, metric=None):
-        """ 'mask' has to be an array in the original dataspace and its nonzero
-        elements are used to define the features.
+    def __init__(self, mask, metric=None,
+                 distance_function=cartesianDistance, elementsize=None):
+        """ Initialize MaskMapper
 
-        'metric' can be any instance of a 'Metric' object, no attempt is made
-        to determine whether a certain metric is reasonable for this mapper. If
-        'metric' is None as default 'DiscreteMetric' is constructed that
-        assumes an equal spacing of all mask elements with a cartesian
-        distance of 1 along all axes.
+        :Parameters:
+          `mask` : array
+             an array in the original dataspace and its nonzero elements are
+             used to define the features included in the dataset
+          `metric` : `Metric`
+             Corresponding metric for the space. No attempt is made to
+             determine whether a certain metric is reasonable for this
+             mapper. If `metric` is None -- `DescreteMetric`
+             is constructed that assumes an equal (1) spacing of all mask
+             elements with a `distance_function` given as a parameter listed
+             below.
+          `distance_function` : functor
+             Distance function to use as the parameter to
+             `DescreteMetric` if `metric` is not specified,
+          `elementsize` : list or scalar
+             Determines spacing within `DescreteMetric`. If it is given as a
+             scalar, corresponding value is assigned to all dimensions, which
+             are found within `mask`
+        :Note: parameters `elementsize` and `distance_function` are relevant
+               only if `metric` is None
         """
         if metric == None:
+            if elementsize is None:
+                elementsize = [1]*len(mask.shape)
+            else:
+                if isSequenceType(elementsize):
+                    if len(elementsize) != len(mask.shape):
+                        raise ValueError, \
+                              "Number of elements in elementsize [%d]" % \
+                              len(elementsize) + " doesn't match shape " + \
+                              "of the mask [%s]" % (`mask.shape`)
+                else:
+                    elementsize = [ elementsize ] * len(mask.shape)
             metric = DescreteMetric(elementsize=[1]*len(mask.shape),
-                                     distance_function=cartesianDistance)
+                                     distance_function=distance_function)
 
         MetricMapper.__init__(self, metric)
 

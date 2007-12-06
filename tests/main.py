@@ -25,6 +25,7 @@ tests = [
     'test_support',
     'test_verbosity',
     'test_iohelpers',
+    'test_signal',
     # Classifiers (longer tests)
     'test_clf',
     'test_knn',
