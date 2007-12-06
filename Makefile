@@ -12,7 +12,7 @@ build:
 # to overcome the issue of not-installed svmc.so
 	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so mvpa/clf/libsvm/
 
-distclean:
+distclean: clean
 	-@rm -f MANIFEST Changelog
 	-@rm -f mvpa/clf/libsvm/*.{c,so} \
 		mvpa/clf/libsvm/svmc.py \
