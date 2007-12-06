@@ -32,6 +32,81 @@ def manhattenDistance(a, b):
     """
     return sum(abs(a-b))
 
+def mahalanobisDistance(x,y=None,w=None):
+    """
+    Caclulcate Mahalanobis distance of the pairs of points. Rows are
+    observations, columns are dimensions.
+    
+    Inverse covariance matrix can be calculated with the following:
+    w = N.linalg.solve(N.cov(x.T),N.identity(x.shape[1]))
+    or
+    w = N.linalg.inv(N.cov(x.T))
+    """
+    # see if pairwise between two matrices or just within a single matrix
+    if y is None:
+        # pairwise distances of single matrix
+        # calculate the inverse correlation matrix if necessary
+        if w is None:
+            w = N.linalg.inv(N.cov(x.T))
+
+        # get some shapes of the data
+        mx,nx = x.shape
+        #mw,nw = w.shape
+
+        # allocate for the matrix to fill
+        d = N.zeros((mx,mx),dtype=N.float32)
+        for i in range(mx-1):
+            # get the current row to compare
+            xi = x[i,:]
+            # replicate the row
+            xi = xi[N.newaxis,:].repeat(mx-i-1,axis=0)
+            # take the distance between all the matrices
+            dc = x[i+1:mx,:] - xi
+            # scale the distance by the correlation
+            d[i+1:mx,i] = N.real(N.sum((N.inner(dc,w)*N.conj(dc)),1))
+            # fill the other direction of the matrix
+            d[i,i+1:mx] = d[i+1:mx,i].T
+    else:
+        # is between two matrixes
+        # calculate the inverse correlation matrix if necessary
+        if w is None:
+            # calculate over all points
+            w = N.linalg.inv(N.cov(N.concatenate((x,y)).T))
+
+        # get some shapes of the data
+        mx,nx = x.shape
+        my,ny = y.shape
+
+        # allocate for the matrix to fill
+        d = N.zeros((mx,my),dtype=N.float32)
+
+        # loop over shorter of two dimensions
+        if mx <= my:
+            # loop over the x patterns
+            for i in range(mx):
+                # get the current row to compare
+                xi = x[i,:]
+                # replicate the row
+                xi = xi[N.newaxis,:].repeat(my,axis=0)
+                # take the distance between all the matrices
+                dc = xi - y
+                # scale the distance by the correlation
+                d[i,:] = N.real(N.sum((N.inner(dc,w)*N.conj(dc)),1))
+        else:
+            # loop over the y patterns
+            for j in range(my):
+                # get the current row to compare
+                yj = y[j,:]
+                # replicate the row
+                yj = yj[N.newaxis,:].repeat(mx,axis=0)
+                # take the distance between all the matrices
+                dc = x - yj
+                # scale the distance by the correlation
+                d[:,j] = N.real(N.sum((N.inner(dc,w)*N.conj(dc)),1))
+
+    # return the dist
+    return N.sqrt(d)
+
 
 class Metric(object):
     """ Abstract class for any finder.
