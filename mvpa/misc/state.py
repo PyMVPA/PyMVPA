@@ -18,12 +18,23 @@ if __debug__:
 
 class State(dict):
     """Base class for stateful objects.
+
+    Classes inherited from this class gaining ability to provide state
+    variables, accessed via __getitem__ method (currently implemented
+    by inherining `dict` class).
+
+    :Groups:
+     - `Access Functions`: `isStateEnabled`, `listStates`, `_getEnabledStates`
+     - `Mutators`: `__init__`, `enableState`, `enableStates`,
+       `disableState`, `disableStates`, `_setEnabledStates`
     """
 
-    # _register_states = {'statevariable': Bool}
+    _register_states = {}
     #
     # children classes can compactly describe state variables as a static
     # members instead of explicit calling _registerState
+    # should not be used at the moment since deeper child simpler overrides
+    # defined in some parent class
 
     def __init__(self,
                  enable_states=None,
@@ -118,15 +129,6 @@ class State(dict):
         :Raise `KeyError`: if given `index` is not known
         :Raise `UnknownStateError`: if no value yet was assigned to `index`
         """
-        # XXX Maybe unnecessary to check dict twice for matching member
-        # if it is not registered the will be no key like this in the
-        # dict, but if registered there need not be a key anyway.
-        # Therefore it should be sufficient to check for key in dict.
-        # Or do first test only in __debug__
-        # XXX yoh: No! registered doesn't imply assigned already value.
-        #          That is why it raises UnknownStateError.
-        #     otherwise there is an ambiguity -- either it wasn't
-        #     registered or it wasn't set in the code
         self.__checkIndex(index)
         if not self.has_key(index):
             raise UnknownStateError("Unknown yet value for '%s'" % index)
@@ -159,18 +161,39 @@ class State(dict):
 
 
     def enableState(self, index):
+        """Enable state variable defined by `index` id"""
+
         self.__checkIndex(index)
         self.__registered[index]['enabled'] = True
 
 
     def disableState(self, index):
+        """Disable state variable defined by `index` id"""
+
         self.__checkIndex(index)
         self.__registered[index]['enabled'] = False
 
 
+    def enableStates(self, indexlist):
+        """Enable all states listed in `indexlist`"""
+
+        for index in indexlist:
+            self.enableState(index)
+
+
+    def disableStates(self, indexlist):
+        """Disable all states listed in `indexlist`"""
+
+        for index in indexlist:
+            self.disableState(index)
+
+
     def isStateEnabled(self, index):
+        """Returns `True` if state `index` is enabled"""
+
         self.__checkIndex(index)
         return self.__registered[index]['enabled']
+
 
     def listStates(self):
         """Return a list of registered states along with the documentation"""
@@ -178,9 +201,38 @@ class State(dict):
         # lets assure consistent litsting order
         items = self.__registered.items()
         items.sort()
-        return map(lambda x: "%s: %s" % (x[0], x[1]['doc']), items)
+        return [ "%s: %s" % (x[0], x[1]['doc']) for x in items ]
+
+
+    def _getEnabledStates(self):
+        """Return list of enabled states"""
+
+        return filter(lambda y:
+                      self.__registered[y]['enabled'],
+                      self.__registered.keys())
+
+
+    def _setEnabledStates(self, indexlist):
+        """Given `indexlist` make only those in the list enabled
+
+        It might be handy to store set of enabled states and then to restore
+        it later on. It can be easily accomplished now::
+
+        >>> states_enabled = stateful.enabledStates
+        >>> stateful.enabledState('blah')
+        >>> stateful.enabledStates = states_enabled
+
+        """
+        for state in self.__registered.items():
+            state[1]['enabled'] = state[0] in indexlist
+
+
+    def _getRegisteredStates(self):
+        """Return ids for all registered state variables"""
+        
+        return self.__registered.keys()
+
 
     # Properties
-    registeredStates = property(fget=lambda x:x.__registered.keys())
-    enabledStates = property(fget=lambda x:filter(
-        lambda y:x.__registered[y]['enabled'], x.__registered.keys()))
+    registeredStates = property(fget=_getRegisteredStates)
+    enabledStates = property(fget=_getEnabledStates, fset=_setEnabledStates)
