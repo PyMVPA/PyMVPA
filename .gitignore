@@ -1,10 +1,10 @@
 *~
-\#*#
-\.\#*#
+\#*
+\.\#*
 *.pyc
 *.pyo
-/doc/api/html
-/doc/website/html
+*/html
+/html
 build
 *.prof
 *.kcache
@@ -21,3 +21,8 @@ debian/*.debhelper
 debian/*.substvars
 debian/files
 *-stamp
+*.html
+*.dot
+*.ps
+profile.out
+*.gz
