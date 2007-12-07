@@ -19,8 +19,10 @@ class DatasetTests(unittest.TestCase):
     def testAddPatterns(self):
         data = Dataset(samples=range(5), labels=1, chunks=1)
 
-        # just to check if uniquelabels get correctly recomputed
-        data.uniquelabels
+        self.failUnlessEqual(
+            data.uniquelabels, [1],
+            msg="uniquelabels must be correctly recomputed")
+
         # simple sequence has to be a single pattern
         self.failUnlessEqual( data.nsamples, 1)
         # check correct pattern layout (1x5)
@@ -191,6 +193,22 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data.labels == origlabels).all() )
         # but only the new one
         self.failIf( (data2.labels == origlabels).all() )
+
+
+    def testAtrributes(self):
+        data = Dataset(samples=range(5), labels=1, chunks=1)
+        try:
+            data.blobs
+            self.fail(msg="Dataset.blobs should fail since .blobs wasn't yet registered")
+        except AttributeError, e:
+            self.failIf(not isinstance(e,AttributeError),
+                        msg="Dataset.blobs should fail since .blobs wasn't yet registered")
+
+        #register new attribute but it would alter only new instances
+        Dataset._registerAttribute("blobs", "_data", hasunique=True)
+        data2 = Dataset(samples=range(5), labels=1, chunks=1)
+        self.failUnless(not data2.blobs != [ 0 ],
+                        msg="By default new attributes supposed to get 0 as the value")
 
 
     def testZScoring(self):
