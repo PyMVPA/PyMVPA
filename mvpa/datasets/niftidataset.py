@@ -14,7 +14,7 @@ from nifti import NiftiImage
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
-
+from mvpa.misc import verbose
 
 class NiftiDataset(MaskedDataset):
     """Dataset based on NiftiImage provided by pynifti.
@@ -43,7 +43,11 @@ class NiftiDataset(MaskedDataset):
         if not samples is None:
             if isinstance(samples, str):
                 # open the nifti file
-                nifti = NiftiImage(samples)
+                try:
+                    nifti = NiftiImage(samples)
+                except RuntimeError, e:
+                    verbose(0, "ERROR: NiftiDatasets: Cannot open samples file %s" % samples) # should we make also error?
+                    raise e
             elif isinstance(samples, NiftiImage):
                 # nothing special
                 nifti = samples
@@ -63,7 +67,12 @@ class NiftiDataset(MaskedDataset):
                 # if mask is also a nifti file open, it and take the image array
                 # use a copy of the mask data as otherwise segfault will
                 # embarass you, once the 'mask' NiftiImage get deleted
-                mask = NiftiImage(mask).asarray()
+                try:
+                    mask = NiftiImage(mask).asarray()
+                except RuntimeError, e:
+                    verbose(0, "ERROR: NiftiDatasets: Cannot open mask file %s" % mask)
+                    raise e
+
             elif isinstance(mask, NiftiImage):
                 # just use data array as masl
                 mask = mask.asarray()
