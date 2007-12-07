@@ -374,13 +374,22 @@ class Dataset(object):
     def __repr__(self, full=True):
         """ String summary over the object
         """
-        if full:
-            return """Dataset / %s %d x %d, uniq: %d labels, %d chunks""" % \
-                   (self.samples.dtype, self.nsamples, self.nfeatures,
-                    len(self.uniquelabels), len(self.uniquechunks))
-        else:
-            return """Dataset / %s %d x %d""" % \
+        s = """Dataset / %s %d x %d""" % \
                    (self.samples.dtype, self.nsamples, self.nfeatures)
+
+        if not full:
+            return s                    # enough is enough
+
+        s +=  " uniq:"
+        for attr in [ 'labels', 'chunks' ]:
+            uattr = 'unique%s' % attr
+            try:
+                value = self._getuniqueattr(attrib=uattr,
+                                            dict_=self._data)
+                s += " %d %s" % (len(value), attr)
+            except:
+                pass
+        return s
 
 
     def __iadd__( self, other ):
