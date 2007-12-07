@@ -23,7 +23,7 @@ if __debug__:
     from mvpa.misc.support import isSorted
 
 class Dataset(object):
-    """ This class provides a container to store all necessary data to perform
+    """This class provides a container to store all necessary data to perform
     MVPA analyses. These are the data samples, as well as the labels
     associated with these patterns. Additionally samples can be grouped into
     chunks.
@@ -32,6 +32,13 @@ class Dataset(object):
       - `Creators`: `__init__`, `selectFeatures`, `selectSamples`
       - `Mutators`: `permuteLabels`
 
+    Important: labels assumed to be immutable, ie noone should modify
+    them externally by accessing indexed items, ie something like
+    ``dataset.labels[1] += "_bad"`` should not be used. If a label has
+    to be modified, full copy of labels should be obtained, operated
+    on, and assigned back to the dataset, otherwise
+    dataset.uniquelabels would not work.  The same applies to any
+    other attribute which has corresponding unique* access property.
     """
 
     # static definition to track which unique attributes
