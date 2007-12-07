@@ -3,16 +3,8 @@ PROFILE_FILE=tests/main.pstats
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
 
-all:
 
-build:
-# reuse is better than duplication (yoh)
-	debian/rules build
-
-# to overcome the issue of not-installed svmc.so
-	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so mvpa/clf/libsvm/
-
-distclean: clean
+distclean:
 	-@rm -f MANIFEST Changelog
 	-@rm -f mvpa/clf/libsvm/*.{c,so} \
 		mvpa/clf/libsvm/svmc.py \
@@ -28,7 +20,14 @@ distclean: clean
 # remove all generated HTML stuff
 	@find doc -mindepth 2 -maxdepth 2 -type d -name 'html' -print -exec rm -rf {} \;
 
-clean:
+debian-build:
+# reuse is better than duplication (yoh)
+	debian/rules build
+# to overcome the issue of not-installed svmc.so
+	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so \
+		mvpa/clf/libsvm/
+
+debian-clean:
 # remove stamps for builds since state is not really built any longer
 	-fakeroot debian/rules clean
 
@@ -85,7 +84,11 @@ $(PROFILE_FILE): build tests/main.py
 pylint:
 	pylint --rcfile doc/misc/pylintrc mvpa
 
-orig-src: distclean 
+#
+# Generate new source distribution
+# (not to be run by users, depends on debian environment)
+
+orig-src: distclean debian-clean 
 	# clean existing dist dir first to have a single source tarball to process
 	-rm -rf dist
 	# the debian changelog is also the upstream changelog
