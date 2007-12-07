@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset with applied mask"""
 
+__docformat__ = 'restructuredtext'
+
 import numpy as N
 
 from mvpa.datasets.mappeddataset import MappedDataset
@@ -17,14 +19,20 @@ if __debug__:
     from mvpa.misc import debug
 
 class MaskedDataset(MappedDataset):
+    """Helper class which is `MappedDataset` with using `MaskMapper`.
+
+    TODO: since what it does is simply some checkes/data_mangling in the
+    constructor, it might be absorbed inside generic `MappedDataset`
+
     """
-    """
+
     def __init__(self, samples=None, mask=None, **kwargs):
-        """
-        Parameters
-        ----------
-        - `mask`: an ndarray where the chosen features equal the non-zero mask
-                  elements.
+        """Initialize `MaskedDataset` instance
+
+        :Parameters:
+          - `mask`: an ndarray where the chosen features equal the non-zero
+            mask elements.
+
         """
         # need if clause here as N.array(None) != None
         if not samples is None:
@@ -55,11 +63,14 @@ class MaskedDataset(MappedDataset):
 
 
     def selectFeaturesByMask(self, mask, plain=False):
-        """ Use a mask array to select features from the current set.
+        """Use a mask array to select features from the current set.
 
-        `mask`, `ndarray`?: input mask
-        `plain`, `bool`: `True` directs to return a simple Dataset
-                         `False` -- a new MaskedDataset object
+        :Parameters:
+          mask : ndarray
+            input mask
+          plain : bool
+            `True` directs to return a simple `Dataset`,
+            `False` -- a new `MaskedDataset` object
 
         Returns a new MaskedDataset object with a view of the original pattern
         array (no copying is performed).

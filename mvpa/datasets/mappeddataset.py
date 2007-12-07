@@ -8,22 +8,28 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Mapped dataset"""
 
+__docformat__ = 'restructuredtext'
+
 import copy
 
 from mvpa.datasets.dataset import Dataset
 
 
 class MappedDataset(Dataset):
+    """A `Dataset` which is created by applying a `Mapper` to the data.
+
+    It uses a mapper to transform samples from their original
+    dataspace into the feature space. Various mappers can be used. The
+    "easiest" one is `MaskMapper` which allows to select the features
+    (voxels) to be used in the analysis: see `MaskedDataset`
     """
-    """
+
     def __init__(self, samples=None, mapper=None, dsattr={}, **kwargs):
-        """A `Dataset` that uses a mapper to transform samples from their
-        original dataspace into the feature space.kwargs are passed to
-        `Dataset`.
+        """Initialize `MaskedDataset`
 
         :Parameters:
-          mapper : Mapper
-            `Mapper` used to map input data
+          - `mapper`: Instance of `Mapper` used to map input data
+
         """
         # there are basically two mode for the constructor:
         # 1. internal mode - only data and dsattr dict
@@ -68,11 +74,11 @@ class MappedDataset(Dataset):
         """ Select features given their ids.
 
         :Parameters:
-            `ids`: iterable container to select ids
-            `plain`: `bool`, if to return MappedDataset (or just Dataset)
-            `sort`: `bool`, if to sort Ids. Order matters and selectFeatures
-                    assumes incremental order. If not such, in non-optimized
-                    code selectFeatures would verify the order and sort
+          - `ids`: iterable container to select ids
+          - `plain`: `bool`, if to return MappedDataset (or just Dataset)
+          - `sort`: `bool`, if to sort Ids. Order matters and selectFeatures
+            assumes incremental order. If not such, in non-optimized
+            code selectFeatures would verify the order and sort
         """
 
         # call base method to get selected feature subset
