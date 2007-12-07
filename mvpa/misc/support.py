@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support function -- little helpers in everyday life"""
 
+__docformat__ = 'restructuredtext'
+
 import numpy as N
 import re
 

@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Base class of all dataset splitter"""
 
+__docformat__ = 'restructuredtext'
+
 class Splitter(object):
     """Base class of a data splitter.
 

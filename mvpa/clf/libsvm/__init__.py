@@ -8,5 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Import helper for PySVM"""
 
+__docformat__ = 'restructuredtext'
+
 import svmc
 from mvpa.clf.libsvm.svm import *

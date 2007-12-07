@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Common functions and options definitions for command line
 
+__docformat__ = 'restructuredtext'
+
 Conventions:
 Every option (instance of optparse.Option) has prefix "opt". Lists of options
 has prefix opts (e.g. optsCommon).

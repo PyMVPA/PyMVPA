@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Error functions"""
 
+__docformat__ = 'restructuredtext'
+
 
 from cmath import sqrt
 import numpy as N

@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrapper around FSLs halfcosbasis to generate HRF kernels"""
 
+__docformat__ = 'restructuredtext'
+
 import os
 import tempfile
 import shutil

@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Import helper for PyMVPA misc modules"""
 
+__docformat__ = 'restructuredtext'
+
 from sys import stdout, stderr
 
 from os import environ

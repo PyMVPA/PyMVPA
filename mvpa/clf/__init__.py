@@ -8,4 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Import helper for PyMVPA classifiers"""
 
+__docformat__ = 'restructuredtext'
+
 

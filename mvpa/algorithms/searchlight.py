@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Implementation of the Searchlight algorithm"""
 
+__docformat__ = 'restructuredtext'
+
 import numpy as N
 
 if __debug__:
