@@ -14,7 +14,7 @@ import re
 from copy import deepcopy
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
-    """ This function transforms a dataset by calculating the mean of a set of
+    """This function transforms a dataset by calculating the mean of a set of
     patterns. Such a pattern set is defined by a starting point and the size
     of the window along the first axis of the data ('boxlength').
 
@@ -53,7 +53,7 @@ def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
 
 
 def buildConfusionMatrix( labels, targets, predictions ):
-    """ Create a (N x N) confusion matrix.
+    """Create a (N x N) confusion matrix.
 
     'N' is the number of labels in the matrix. The labels itself have to be
     given in the 'labels' argument. 'targets' and 'predictions' are two

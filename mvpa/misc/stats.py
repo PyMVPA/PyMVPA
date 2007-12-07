@@ -12,7 +12,7 @@ import scipy.stats as stats
 import numpy as N
 
 def chisquare(obs, exp=None):
-    """ Compute the chisquare value of a contingency table with arbitrary
+    """Compute the chisquare value of a contingency table with arbitrary
     dimensions.
 
     If no expected frequencies are supplied, the total N is assumed to be

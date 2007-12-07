@@ -9,7 +9,7 @@
 """Exception classes which might get thrown"""
 
 class UnknownStateError(Exception):
-    """ Thrown if the internal state of the class is not yet defined.
+    """Thrown if the internal state of the class is not yet defined.
 
     Classifiers and Algorithms classes might have properties, which
     are not defined prior to training or invocation has happened.
@@ -23,7 +23,7 @@ class UnknownStateError(Exception):
         return "Exception: " + self.__msg
 
 class DatasetError(Exception):
-    """ Thrown if there is an internal problem with a Dataset.
+    """Thrown if there is an internal problem with a Dataset.
 
     ValueError exception is too generic to be used for any needed case,
     thus this one is created

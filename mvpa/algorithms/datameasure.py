@@ -40,7 +40,7 @@ class DataMeasure(object):
 
 
 class SensitivityAnalyzer(DataMeasure):
-    """ Base class of all sensitivity analysers.
+    """Base class of all sensitivity analysers.
 
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.

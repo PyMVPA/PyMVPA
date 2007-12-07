@@ -160,7 +160,7 @@ class SVMParameter:
 
 
 def convert2SVMNode(x):
-    """ convert a sequence or mapping to an SVMNode array """
+    """convert a sequence or mapping to an SVMNode array"""
     import operator
 
     # Find non zero elements
@@ -384,7 +384,7 @@ class SVMModel:
 
 
     def getSV(self):
-        """ Returns an array with the all support vectors.
+        """Returns an array with the all support vectors.
 
         array( nSV x <nFeatures>)
         """

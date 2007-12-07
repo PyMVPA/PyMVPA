@@ -33,7 +33,7 @@ class Logger(object):
     """
 
     def __init__(self, handlers=[stdout]):
-        """ Initialize the logger with a set of handlers to use for output
+        """Initialize the logger with a set of handlers to use for output
 
         Each hanlder must have write() method implemented
         """

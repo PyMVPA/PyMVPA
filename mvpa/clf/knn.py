@@ -19,7 +19,7 @@ from mvpa.clf.classifier import Classifier
 
 
 class kNN(Classifier):
-    """ k-nearest-neighbour classifier.
+    """k-nearest-neighbour classifier.
 
     If enabled it stores the votes per class in the 'values' state after
     calling predict().
@@ -42,7 +42,7 @@ class kNN(Classifier):
 
 
     def __repr__(self):
-        """ String summary over the object
+        """String summary over the object
         """
         return """kNN / k=%d
  votingfx: TODO
@@ -50,7 +50,7 @@ class kNN(Classifier):
 
 
     def train( self, data ):
-        """ Train the classifier.
+        """Train the classifier.
 
         For kNN it is degenerate -- just stores the data.
         """
@@ -73,7 +73,7 @@ class kNN(Classifier):
 
 
     def predict(self, data):
-        """ Predict the class labels for the provided data.
+        """Predict the class labels for the provided data.
 
         Returns a list of class labels (one for each data sample).
         """

@@ -22,11 +22,11 @@ class ErrorFunctionBase(object):
 
 
 class ErrorFunction(ErrorFunctionBase):
-    """ Common error function interface, computing the difference between
+    """Common error function interface, computing the difference between
     some desired and some predicted values.
     """
     def __call__(self, predicted, desired):
-        """ Compute some error value from the given desired and predicted
+        """Compute some error value from the given desired and predicted
         values (both sequences).
         """
         raise NotImplemented
@@ -34,11 +34,11 @@ class ErrorFunction(ErrorFunctionBase):
 
 
 class RMSErrorFx(ErrorFunction):
-    """ Computes the root mean squared error of some desired and some
+    """Computes the root mean squared error of some desired and some
     predicted values.
     """
     def __call__(self, predicted, desired):
-        """ Both 'predicted' and 'desired' can be either scalars or sequences,
+        """Both 'predicted' and 'desired' can be either scalars or sequences,
         but have to be of the same length.
         """
         difference = N.subtract(predicted, desired)
@@ -48,11 +48,11 @@ class RMSErrorFx(ErrorFunction):
 
 
 class MeanMismatchErrorFx(ErrorFunction):
-    """ Computes the percentage of mismatches between some desired and some
+    """Computes the percentage of mismatches between some desired and some
     predicted values.
     """
     def __call__(self, predicted, desired):
-        """ Both 'predicted' and 'desired' can be either scalars or sequences,
+        """Both 'predicted' and 'desired' can be either scalars or sequences,
         but have to be of the same length.
         """
         return 1 - N.mean( predicted == desired )

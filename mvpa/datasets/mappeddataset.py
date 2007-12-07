@@ -59,19 +59,19 @@ class MappedDataset(Dataset):
 
 
     def mapForward(self, data):
-        """ Map data from the original dataspace into featurespace.
+        """Map data from the original dataspace into featurespace.
         """
         return self.mapper.forward(data)
 
 
     def mapReverse(self, data):
-        """ Reverse map data from featurespace into the original dataspace.
+        """Reverse map data from featurespace into the original dataspace.
         """
         return self.mapper.reverse(data)
 
 
     def selectFeatures(self, ids, plain=False, sort=False):
-        """ Select features given their ids.
+        """Select features given their ids.
 
         :Parameters:
           - `ids`: iterable container to select ids

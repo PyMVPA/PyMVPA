@@ -16,7 +16,7 @@ import math
 
 def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3, 
               nsamples=1, resolution=0.05, nsecs=-1, nbasisfns=2):
-    """ Wrapper around the FSL tool halfcosbasis.
+    """Wrapper around the FSL tool halfcosbasis.
 
     This function uses halfcosbasis to generate samples of HRF kernels.
     Kernel parameters can be modified analogous to the Make_flobs GUI

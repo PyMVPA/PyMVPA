@@ -9,7 +9,7 @@
 """Base class of all dataset splitter"""
 
 class Splitter(object):
-    """ Base class of a data splitter.
+    """Base class of a data splitter.
 
     Each splitter should be initialized with all its necessary parameters. The
     final splitting is done running the splitter object on a certain Dataset
@@ -31,11 +31,11 @@ class Splitter(object):
 
 
 class NoneSplitter(Splitter):
-    """ This is a dataset splitter that does NOT split. It simply returns the
+    """This is a dataset splitter that does NOT split. It simply returns the
     full dataset that it is called with.
     """
     def __call__(self, dataset):
-        """ This splitter returns the passed dataset as the second element of
+        """This splitter returns the passed dataset as the second element of
         a 2-tuple. The first element of that tuple will always be 'None'.
         """
         return (None, dataset)
