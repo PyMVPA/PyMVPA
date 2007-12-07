@@ -27,12 +27,12 @@ class SignalTests(unittest.TestCase):
         target_all = N.array( [[-1.0, 0, 1, 1, 0, -1],
                                [2, 0, -2, -2, 0, 2]], ndmin=2 ).T
 
-        ds = Dataset(samples=samples, chunks=chunks, copy_samples=True)
+        ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
         detrend(ds, perchunk=False)
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                         msg="Detrend should have detrended all the samples at once")
 
-        ds = Dataset(samples=samples, chunks=chunks, copy_samples=True)
+        ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
         detrend(ds, perchunk=True)
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have detrended each chunk separately")

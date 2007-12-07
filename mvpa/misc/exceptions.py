@@ -22,6 +22,20 @@ class UnknownStateError(Exception):
     def __str__(self):
         return "Exception: " + self.__msg
 
+class DatasetError(Exception):
+    """ Thrown if there is an internal problem with a Dataset.
+
+    ValueError exception is too generic to be used for any needed case,
+    thus this one is created
+    """
+
+    def __init__(self, msg=""):
+        Exception.__init__(self)
+        self.__msg = msg
+
+    def __str__(self):
+        return "Dataset handling exception: " + self.__msg
+
 
 class ConvergenceError(Exception):
     """Thrown if some algorithm does not converge to a solution.
