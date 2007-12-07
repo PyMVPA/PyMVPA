@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Python interface to the SWIG-wrapped libsvm"""
 
+__docformat__ = 'restructuredtext'
+
 
 from math import exp, fabs
 import re

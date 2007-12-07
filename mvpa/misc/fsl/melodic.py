@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wrapper around the output of MELODIC (part of FSL)"""
 
+__docformat__ = 'restructuredtext'
+
 import numpy as N
 import nifti
 import os

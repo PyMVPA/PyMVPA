@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Parameter representation"""
 
+__docformat__ = 'restructuredtext'
+
 
 class Parameter(object):
     """This class shall serve as a representation of a parameter.

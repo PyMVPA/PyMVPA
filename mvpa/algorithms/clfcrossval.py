@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Cross-validate a classifier on a dataset"""
 
+__docformat__ = 'restructuredtext'
+
 import numpy as N
 
 from mvpa.algorithms.datameasure import DataMeasure

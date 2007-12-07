@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Little statistics helper"""
 
+__docformat__ = 'restructuredtext'
+
 import scipy.stats as stats
 import numpy as N
 

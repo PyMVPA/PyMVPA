@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Exception classes which might get thrown"""
 
+__docformat__ = 'restructuredtext'
+
 class UnknownStateError(Exception):
     """Thrown if the internal state of the class is not yet defined.
 

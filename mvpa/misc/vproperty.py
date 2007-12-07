@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """C++-like virtual properties"""
 
+__docformat__ = 'restructuredtext'
+
 
 class VProperty(object):
     """Provides "virtual" property: uses derived class's method

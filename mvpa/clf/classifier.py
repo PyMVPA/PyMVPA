@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Abstract base class for all classifiers."""
 
+__docformat__ = 'restructuredtext'
+
 from copy import copy
 from sets import Set
 
