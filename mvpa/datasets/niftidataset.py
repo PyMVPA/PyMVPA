@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Dataset that gets its samples from a NIfTI file"""
 
+__docformat__ = 'restructuredtext'
+
 from nifti import NiftiImage
 
 from mvpa.datasets.maskeddataset import MaskedDataset
@@ -15,11 +17,21 @@ from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 
 
 class NiftiDataset(MaskedDataset):
+    """Dataset based on NiftiImage provided by pynifti.
+
+    See http://niftilib.sourceforge.net/pynifti/ for more information
+    about pynifti
     """
-    """
+
     def __init__(self, samples=None, mask=None, dsattr={}, **kwargs):
-        """
-        - `samples`: Filename of a NIfTI image or a `NiftiImage` object.
+        """Initialize NiftiDataset.
+
+        :Parameters:
+          - `samples`: Filename (string) of a NIfTI image or a `NiftiImage`
+            object
+          - `mask`: Filename (string) of a NIfTI image or a `NiftiImage`
+            object
+
         """
         # we have to handle the nifti elementsize at the end if
         # mask is not already a MaskMapper

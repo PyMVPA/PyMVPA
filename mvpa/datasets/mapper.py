@@ -8,20 +8,22 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Abstract base class of all data mappers"""
 
+__docformat__ = 'restructuredtext'
+
 from mvpa.datasets.metric import Metric
 
 class Mapper(object):
-    """
-    Interface to provide mapping between two spaces: in and out.
+    """Interface to provide mapping between two spaces: in and out.
     Methods are prefixed correspondingly. forward/reverse operate
-    on the entire dataset. get(In|Out)Id[s] operate per element.
-          forward
-    in   ---------> out
-         <--------/
-           reverse
+    on the entire dataset. get(In|Out)Id[s] operate per element::
+
+              forward
+        in   ---------> out
+             <--------/
+               reverse
 
     Subclasses should define 'dsshape' and 'nfeatures' properties that point to
-    getInShape() and getOutSize() respectively. This cannot be
+    `getInShape` and `getOutSize` respectively. This cannot be
     done in the baseclass as standard Python properties would still point to
     the baseclass methods.
 

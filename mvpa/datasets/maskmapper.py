@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Mapper using a mask array to map dataspace to featurespace"""
 
+__docformat__ = 'restructuredtext'
 
 import numpy as N
 
@@ -25,26 +26,27 @@ class MaskMapper(MetricMapper):
 
     def __init__(self, mask, metric=None,
                  distance_function=cartesianDistance, elementsize=None):
-        """ Initialize MaskMapper
+        """Initialize MaskMapper
 
         :Parameters:
-          `mask` : array
-             an array in the original dataspace and its nonzero elements are
-             used to define the features included in the dataset
-          `metric` : `Metric`
-             Corresponding metric for the space. No attempt is made to
-             determine whether a certain metric is reasonable for this
-             mapper. If `metric` is None -- `DescreteMetric`
-             is constructed that assumes an equal (1) spacing of all mask
-             elements with a `distance_function` given as a parameter listed
-             below.
-          `distance_function` : functor
-             Distance function to use as the parameter to
-             `DescreteMetric` if `metric` is not specified,
-          `elementsize` : list or scalar
-             Determines spacing within `DescreteMetric`. If it is given as a
-             scalar, corresponding value is assigned to all dimensions, which
-             are found within `mask`
+          mask : array
+            an array in the original dataspace and its nonzero elements are
+            used to define the features included in the dataset
+          metric : Metric
+            Corresponding metric for the space. No attempt is made to
+            determine whether a certain metric is reasonable for this
+            mapper. If `metric` is None -- `DescreteMetric`
+            is constructed that assumes an equal (1) spacing of all mask
+            elements with a `distance_function` given as a parameter listed
+            below.
+          distance_function : functor
+            Distance function to use as the parameter to
+            `DescreteMetric` if `metric` is not specified,
+          elementsize : list or scalar
+            Determines spacing within `DescreteMetric`. If it is given as a
+            scalar, corresponding value is assigned to all dimensions, which
+            are found within `mask`
+
         :Note: parameters `elementsize` and `distance_function` are relevant
                only if `metric` is None
         """
@@ -268,18 +270,15 @@ class MaskMapper(MetricMapper):
         internally (ie to allow Ids with mixed order) please contact
         developers of mvpa to discuss your use case.
 
-        See testSelectOrder for basic testing
+        See `tests.test_maskmapper.testSelectOrder` for basic testing
 
         Feature/Bug:
          * Negative outIds would not raise exception - just would be
-        treated 'from the tail'
+           treated 'from the tail'
 
-        """
-
-        """
         Older comments on 'order' - might be useful in future if
         reordering gets ressurrected
-        1. Order will be taken into account -- ie items will be
+        Order will be taken into account -- ie items will be
         remapped if order was changed... need to check if neighboring
         still works... no -- it doesn't. For the data without samples
         .forward can be easily adjusted by using masknonzero instead of
