@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Penalized logistic regression classifier."""
 
+__docformat__ = 'restructuredtext'
+
+
 import numpy as N
 
 from mvpa.misc.exceptions import ConvergenceError

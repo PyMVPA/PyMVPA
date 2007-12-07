@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """k-Nearest-Neighbour classifier."""
 
+__docformat__ = 'restructuredtext'
+
+
 import numpy as N
 
 from mvpa.misc import verbose
