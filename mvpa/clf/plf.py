@@ -50,7 +50,7 @@ class PLF(Classifier):
 
 
     def __repr__(self):
-        """ String summary over the object
+        """String summary over the object
         """
         return """PLF:
  lm: %f

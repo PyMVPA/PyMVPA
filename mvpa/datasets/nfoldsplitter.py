@@ -71,7 +71,7 @@ class NFoldSplitter(Splitter):
 
 
     def __repr__(self):
-        """ String summary over the object
+        """String summary over the object
         """
         return \
           "%d-fold splitter / work:%s runs-per-fold:%d spare:%s permute:%s " \
@@ -81,7 +81,7 @@ class NFoldSplitter(Splitter):
 
 
     def setNWorkingSetSamples(self, samplesize):
-        """ None is off, 'auto' sets sample size to highest possible number
+        """None is off, 'auto' sets sample size to highest possible number
         of patterns that can be provided by each class.
         """
         # check if automization is requested
@@ -93,7 +93,7 @@ class NFoldSplitter(Splitter):
 
 
     def setNSpareSetSamples(self, samplesize):
-        """ None is off, 'auto' sets sample size to highest possible number
+        """None is off, 'auto' sets sample size to highest possible number
         of patterns that can be provided by each class.
         """
         # check if automization is requested
@@ -105,13 +105,13 @@ class NFoldSplitter(Splitter):
 
 
     def setNRunsPerFold(self, runs):
-        """ Set the number of runs that are performed per fold.
+        """Set the number of runs that are performed per fold.
         """
         self.__runsperfold = runs
 
 
     def setCVType(self, cvtype):
-        """ Set the cross-validation type.
+        """Set the cross-validation type.
 
         (N-'type')-fold cross-validation.
         """
@@ -119,7 +119,7 @@ class NFoldSplitter(Splitter):
 
 
     def getNSamplesPerFold(self, dataset):
-        """ Returns a tuple of two arrays with the number of samples per
+        """Returns a tuple of two arrays with the number of samples per
         unique label value and fold. The first array lists the available
         working set samples and the second array the spare samples.
 
@@ -152,7 +152,7 @@ class NFoldSplitter(Splitter):
 
     @staticmethod
     def splitWorkingSpareDataset(dataset, sparechunks):
-        """ Split a dataset into a working and a spare set separating
+        """Split a dataset into a working and a spare set separating
         the samples of some chunks.
 
         :Parameters:
@@ -204,7 +204,7 @@ class NFoldSplitter(Splitter):
 
 
     def __call__(self, dataset):
-        """ Splits the dataset.
+        """Splits the dataset.
 
         This method behaves like a generator.
         """

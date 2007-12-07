@@ -19,7 +19,7 @@ from mvpa.misc.state import State
 from mvpa.misc.exceptions import UnknownStateError
 
 class FeatureSelection(State):
-    """ Base class for any feature selection
+    """Base class for any feature selection
 
     TODO...
     """
@@ -46,7 +46,7 @@ class FeatureSelection(State):
 
 
     def getMask(self):
-        """ Returns a mask computed during previous call()
+        """Returns a mask computed during previous call()
         """
         if self.__mask is None:
             raise UnknownStateError
@@ -75,7 +75,7 @@ class StoppingCriterion(object):
 
 
 class StopNBackHistoryCriterion(StoppingCriterion):
-    """ Stop computation if for a number of steps error was increasing
+    """Stop computation if for a number of steps error was increasing
     """
 
     def __init__(self, steps=10, func=min):

@@ -15,7 +15,7 @@ from mvpa.datasets.splitter import NoneSplitter
 
 
 class ClfCrossValidation(DataMeasure):
-    """ Cross validate a classifier on datasets generate by a splitter from a
+    """Cross validate a classifier on datasets generate by a splitter from a
     source dataset.
 
     Arbitrary performance/error values can be computed by specifying and error
@@ -52,7 +52,7 @@ class ClfCrossValidation(DataMeasure):
 
 # TODO: put back in ASAP
 #    def __repr__(self):
-#        """ String summary over the object
+#        """String summary over the object
 #        """
 #        return """ClfCrossValidation /
 # splitter: %s
@@ -63,7 +63,7 @@ class ClfCrossValidation(DataMeasure):
 
 
     def __call__(self, dataset, callbacks=[]):
-        """ Perform cross-validation on a dataset.
+        """Perform cross-validation on a dataset.
 
         'dataset' is passed to the splitter instance and serves as the source
         dataset to generate split for the single cross-validation folds.

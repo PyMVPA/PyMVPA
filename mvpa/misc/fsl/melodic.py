@@ -13,13 +13,13 @@ import nifti
 import os
 
 class MelodicResults( object ):
-    """ Easy access to MELODIC output.
+    """Easy access to MELODIC output.
 
     Only important information is available (important as judged by the
     author).
     """
     def __init__( self, path ):
-        """ Reads all information from the given MELODIC output path.
+        """Reads all information from the given MELODIC output path.
         """
         self.__outputpath = path
         self.__icapath = os.path.join( path, 'filtered_func_data.ica' )

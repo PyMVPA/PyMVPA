@@ -16,7 +16,7 @@ from mvpa.clf.libsvm import svm
 
 
 class SVMBase(Classifier):
-    """ Support Vector Machine Classifier.
+    """Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
     """
@@ -125,7 +125,7 @@ class SVMBase(Classifier):
 
 
     def __repr__(self):
-        """ String summary over the object
+        """String summary over the object
         """
         return """SVM:
          params: %s """ % (self.param)
@@ -190,7 +190,7 @@ class LinearSVM(SVMBase):
 
 
 class LinearNuSVMC(LinearSVM):
-    """ Classifier for linear Nu-SVM classification.
+    """Classifier for linear Nu-SVM classification.
     """
     params = LinearSVM.params.copy()
     params['nu'] = Parameter(0.5,
@@ -223,7 +223,7 @@ class LinearNuSVMC(LinearSVM):
 
 
 class LinearCSVMC(LinearSVM):
-    """ Classifier for linear C-SVM classification.
+    """Classifier for linear C-SVM classification.
     """
     params = LinearSVM.params.copy()
     params['C'] = Parameter(1.0,

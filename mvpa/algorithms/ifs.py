@@ -26,7 +26,7 @@ if __debug__:
 
 
 class IFS(FeatureSelection):
-    """ Incremental feature search.
+    """Incremental feature search.
 
     A `DataMeasure` is computed multiple times on variations of a certain
     dataset. These measures are in turn used to incrementally select important
@@ -51,7 +51,7 @@ class IFS(FeatureSelection):
                                                             mode='select'),
                  stopping_criterion=StopNBackHistoryCriterion()
                  ):
-        """ Initialize incremental feature search
+        """Initialize incremental feature search
 
         :Parameter:
             `data_measure`: `DataMeasure`

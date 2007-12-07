@@ -128,7 +128,7 @@ class MaskMapper(MetricMapper):
 
 
     def forward(self, data):
-        """ Map data from the original dataspace into featurespace.
+        """Map data from the original dataspace into featurespace.
         """
         datadim = len(data.shape)
         if not data.shape[(-1)*self.__maskdim:] == self.__mask.shape:
@@ -153,7 +153,7 @@ class MaskMapper(MetricMapper):
 
 
     def reverse(self, data):
-        """ Reverse map data from featurespace into the original dataspace.
+        """Reverse map data from featurespace into the original dataspace.
         """
         datadim = len(data.shape)
         if not datadim in [1, 2]:
@@ -209,7 +209,7 @@ class MaskMapper(MetricMapper):
 
 
     def getInId(self, outId):
-        """ Returns a features coordinate in the original data space
+        """Returns a features coordinate in the original data space
         for a given feature id.
 
         If this method is called with a list of feature ids it returns a
@@ -227,14 +227,14 @@ class MaskMapper(MetricMapper):
 
 
     def getInIds(self):
-        """ Returns a 2d array where each row contains the coordinate of the
+        """Returns a 2d array where each row contains the coordinate of the
         feature with the corresponding id.
         """
         return N.transpose(self.__masknonzero)
 
 
     def getOutId(self, coord):
-        """ Translate a feature mask coordinate into a feature ID.
+        """Translate a feature mask coordinate into a feature ID.
         """
         # FIXME Since lists/arrays accept negative indexes to go from
         # the end -- we need to check coordinates explicitely. Otherwise
@@ -342,7 +342,7 @@ class MaskMapper(MetricMapper):
         #      ....
 
     def buildMaskFromFeatureIds(self, outIds):
-        """ Returns a mask with all features in ids selected from the
+        """Returns a mask with all features in ids selected from the
         current feature set.
 
         XXX should be buildInMaskFromFeatureIds
@@ -353,7 +353,7 @@ class MaskMapper(MetricMapper):
 
 
     def getNeighborIn(self, inId, radius=0):
-        """ Return the list of coordinates for the neighbors.
+        """Return the list of coordinates for the neighbors.
         XXX See TODO below: what to return -- list of arrays or list of tuples?
         """
         mask = self.mask
@@ -367,7 +367,7 @@ class MaskMapper(MetricMapper):
 
 
     def getNeighbor(self, outId, radius=0):
-        """ Return the list of Ids for the neighbors.
+        """Return the list of Ids for the neighbors.
 
         Returns a list of outIds
         """

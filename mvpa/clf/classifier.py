@@ -262,7 +262,7 @@ class BinaryClassifierDecorator(Classifier):
 
 
 class BoostedMulticlassClassifier(Classifier):
-    """ Classifier to perform multiclass using a set of binary classifiers
+    """Classifier to perform multiclass using a set of binary classifiers
 
     such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
     is yet to think about)

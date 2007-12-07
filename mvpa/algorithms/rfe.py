@@ -25,7 +25,7 @@ if __debug__:
 # actual selector, or a decorator around SensitivityEstimators
 
 class RFE(FeatureSelection):
-    """ Recursive feature elimination.
+    """Recursive feature elimination.
 
     A `SensitivityAnalyzer` is used to compute sensitivity maps given a certain
     dataset. These sensitivity maps are in turn used to discard unimportant
@@ -51,7 +51,7 @@ class RFE(FeatureSelection):
                  ):
         # XXX Allow for multiple stopping criterions, e.g. error not decreasing
         # anymore OR number of features less than threshold
-        """ Initialize recursive feature elimination
+        """Initialize recursive feature elimination
 
         Parameters
         ----------

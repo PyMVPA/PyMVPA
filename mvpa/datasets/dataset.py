@@ -223,7 +223,7 @@ class Dataset(object):
 
 
     def _getNSamplesPerAttr( self, attrib='labels' ):
-        """ Returns the number of samples per unique label.
+        """Returns the number of samples per unique label.
         """
         # XXX hardcoded dict_=self._data.... might be in self._dsattr
         uniqueattr = self._getuniqueattr(attrib="unique" + attrib,
@@ -243,7 +243,7 @@ class Dataset(object):
 
 
     def _getSampleIdsByAttr(self, values, attrib="labels"):
-        """ Return indecies of samples given a list of attributes
+        """Return indecies of samples given a list of attributes
         """
 
         if not operator.isSequenceType(values):
@@ -405,7 +405,7 @@ class Dataset(object):
 
 
     def __repr__(self, full=True):
-        """ String summary over the object
+        """String summary over the object
         """
         s = """Dataset / %s %d x %d""" % \
                    (self.samples.dtype, self.nsamples, self.nfeatures)
@@ -428,7 +428,7 @@ class Dataset(object):
 
 
     def __iadd__( self, other ):
-        """ Merge the samples of one Dataset object to another (in-place).
+        """Merge the samples of one Dataset object to another (in-place).
 
         No dataset attributes will be merged!
         """
@@ -447,7 +447,7 @@ class Dataset(object):
 
 
     def __add__( self, other ):
-        """ Merge the samples two Dataset objects.
+        """Merge the samples two Dataset objects.
 
         All data of both datasets is copied, concatenated and a new Dataset is
         returned.
@@ -472,7 +472,7 @@ class Dataset(object):
 
 
     def selectFeatures(self, ids, sort=True):
-        """ Select a number of features from the current set.
+        """Select a number of features from the current set.
 
         :Parameters:
           ids
@@ -523,7 +523,7 @@ class Dataset(object):
 
 
     def selectSamples(self, mask):
-        """ Choose a subset of samples.
+        """Choose a subset of samples.
 
         Returns a new dataset object containing the selected sample
         subset.
@@ -559,7 +559,7 @@ class Dataset(object):
 
 
     def permuteLabels( self, status, perchunk = True ):
-        """ Permute the labels.
+        """Permute the labels.
 
         Calling this method with 'status' set to True, the labels are
         permuted among all samples.
@@ -601,7 +601,7 @@ class Dataset(object):
 
 
     def getRandomSamples( self, nperlabel ):
-        """ Select a random set of samples.
+        """Select a random set of samples.
 
         If 'nperlabel' is an integer value, the specified number of samples is
         randomly choosen from the group of samples sharing a unique label
@@ -632,27 +632,27 @@ class Dataset(object):
     # TODO? Following 2 setters might be gone as well after appropriate
     # modification of _registerAttribute
     def _setLabels(self, labels):
-        """ Sets labels and recomputes uniquelabels
+        """Sets labels and recomputes uniquelabels
         """
         self._data['labels'] = labels
         self._data['uniquelabels'] = None # None!since we might not need them
 
 
     def _setChunks(self, chunks):
-        """ Sets chunks and recomputes uniquechunks
+        """Sets chunks and recomputes uniquechunks
         """
         self._data['chunks'] = chunks
         self._data['uniquechunks'] = None # None!since we might not need them
 
 
     def getNSamples( self ):
-        """ Currently available number of patterns.
+        """Currently available number of patterns.
         """
         return self._data['samples'].shape[0]
 
 
     def getNFeatures( self ):
-        """ Number of features per pattern.
+        """Number of features per pattern.
         """
         return self._data['samples'].shape[1]
 

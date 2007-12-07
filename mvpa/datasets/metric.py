@@ -16,12 +16,12 @@ import numpy as N
 # Distance functions.
 #
 def cartesianDistance(a, b):
-    """ Return Cartesian distance between a and b
+    """Return Cartesian distance between a and b
     """
     return N.linalg.norm(a-b)
 
 def absminDistance(a, b):
-    """ Returns dinstance max(\|a-b\|)
+    """Returns dinstance max(\|a-b\|)
     XXX There must be better name!
 
     Useful to select a whole cube of a given "radius"
@@ -29,7 +29,7 @@ def absminDistance(a, b):
     return max(abs(a-b))
 
 def manhattenDistance(a, b):
-    """ Return Manhatten distance between a and b
+    """Return Manhatten distance between a and b
     """
     return sum(abs(a-b))
 
@@ -121,7 +121,7 @@ def mahalanobisDistance(x, y=None, w=None):
 
 
 class Metric(object):
-    """ Abstract class for any finder.
+    """Abstract class for any finder.
 
     Classes subclasses from this class show know about structure of
     the data and thus be able to provide information about the
@@ -133,7 +133,7 @@ class Metric(object):
     """
 
     def getNeighbors(self, *args, **kwargs):
-        """ Return the list of coordinates for the neighbors.
+        """Return the list of coordinates for the neighbors.
 
         By default it simply constracts the list based on
         the generator getNeighbor
@@ -142,7 +142,7 @@ class Metric(object):
 
 
     def getNeighbor(self, *args, **kwargs):
-        """ Generator to return coordinate of the neighbor.
+        """Generator to return coordinate of the neighbor.
 
         Base class contains the simplest implementation, assuming that
         getNeighbors returns iterative structure to spit out neighbors
@@ -154,7 +154,7 @@ class Metric(object):
 
 
 class DescreteMetric(Metric):
-    """ Find neighboring points in descretized space
+    """Find neighboring points in descretized space
 
     If input space is descretized and all points fill in
     N-dimensional cube, this finder returns list of neighboring
@@ -210,7 +210,7 @@ class DescreteMetric(Metric):
 
 
     def getNeighbors(self, origin, radius=0):
-        """ Returns coordinates of the neighbors which are within
+        """Returns coordinates of the neighbors which are within
         distance from coord
 
         XXX radius might need to be not a scalar but a vector of
@@ -232,13 +232,13 @@ class DescreteMetric(Metric):
 
 
     def _setFilter(self, filter_coord):
-        """ Lets allow to specify some custom filter to use
+        """Lets allow to specify some custom filter to use
         """
         self.__filter_coord = filter_coord
 
 
     def _getFilter(self):
-        """ Lets allow to specify some custom filter to use
+        """Lets allow to specify some custom filter to use
         """
         return self.__filter_coord
 
@@ -248,7 +248,7 @@ class DescreteMetric(Metric):
 # Template for future classes
 #
 # class MeshMetric(Metric):
-#     """ Return list of neighboring points on a mesh
+#     """Return list of neighboring points on a mesh
 #     """
 #     def getNeighbors(self, origin, distance=0):
 #         """Return neighbors"""
