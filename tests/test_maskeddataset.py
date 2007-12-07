@@ -9,6 +9,8 @@
 """Unit tests for PyMVPA pattern handling"""
 
 from mvpa.datasets.maskeddataset import *
+from mvpa.misc.exceptions import DatasetError
+
 import unittest
 import numpy as N
 import random
@@ -29,7 +31,7 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failUnless( (data.chunks == N.array([1])).all() )
 
         # now try adding pattern with wrong shape
-        self.failUnlessRaises(ValueError,
+        self.failUnlessRaises(DatasetError,
                               data.__iadd__,
                               MaskedDataset(samples=N.ones((2,3)), labels=1,
                                             chunks=1))
@@ -48,14 +50,14 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failUnless( (data.uniquelabels == N.array([1,2,3]) ).all() )
 
         # test wrong label length
-        self.failUnlessRaises(ValueError,
+        self.failUnlessRaises(DatasetError,
                               MaskedDataset,
                               samples=N.random.standard_normal((4,2,3,4)),
                               labels=[1, 2, 3],
                               chunks=2)
 
         # test wrong origin length
-        self.failUnlessRaises( ValueError,
+        self.failUnlessRaises( DatasetError,
                                MaskedDataset,
                                samples=N.random.standard_normal((4,2,3,4)),
                                labels=[1, 2, 3, 4],

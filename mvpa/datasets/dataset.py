@@ -16,6 +16,8 @@ import copy
 
 import numpy as N
 
+from mvpa.misc.exceptions import DatasetError
+
 if __debug__:
     from mvpa.misc import debug, warning
     from mvpa.misc.support import isSorted
@@ -42,6 +44,11 @@ class Dataset(object):
 
     _registeredattributes = []
     """Registered attributes (stored in _data)"""
+
+    _requiredattributes=['samples', 'labels']
+    """Attributes which have to be provided to __init__, or otherwise
+    no default values would be assumed and construction of the
+    instance would fail"""
 
     def __init__(self, data={}, dsattr={}, dtype=None, \
                  samples=None, labels=None, chunks=None, check_data=True,
@@ -135,8 +142,16 @@ class Dataset(object):
                           "`Data` dict has `labels` (%s) but there is also" +
                           " __init__ parameter `labels` which overrides " +
                           " stored in `data`" % (`self._data['labels']`))
-            self._data['labels'] = \
-                self._expandSampleAttribute(labels, 'labels')
+            if self._data.has_key('samples'):
+                self._data['labels'] = \
+                                     self._expandSampleAttribute(labels, 'labels')
+
+        # check if we got all required attributes
+        for attr in self._requiredattributes:
+            if not self._data.has_key(attr):
+                raise DatasetError, \
+                      "Attribute %s is required to initialize dataset" % \
+                      attr
 
         # chunks
         if not chunks == None:
@@ -263,7 +278,7 @@ class Dataset(object):
 
         # only samples x features matrices are supported
         if len(samples.shape) > 2:
-            raise ValueError, "Only (samples x features) -> 2d sample " \
+            raise DatasetError, "Only (samples x features) -> 2d sample " \
                             + "are supported (got %s shape of samples)." \
                             % (`samples.shape`) \
                             +" Consider MappedDataset if applicable."
@@ -276,7 +291,7 @@ class Dataset(object):
         """
         for k, v in self._data.iteritems():
             if not len(v) == self.nsamples:
-                raise ValueError, \
+                raise DatasetError, \
                       "Length of sample attribute '%s' [%i] does not " \
                       "match the number of samples in the dataset [%i]." \
                       % (k, len(v), self.nsamples)
@@ -288,7 +303,7 @@ class Dataset(object):
         """
         try:
             if len(attr) != self.nsamples:
-                raise ValueError, \
+                raise DatasetError, \
                       "Length of sample attribute '%s' [%d]" \
                       % (attr_name, len(attr)) \
                       + " has to match the number of samples" \
@@ -411,8 +426,8 @@ class Dataset(object):
         No dataset attributes will be merged!
         """
         if not self.nfeatures == other.nfeatures:
-            raise ValueError, "Cannot add Dataset, because the number of " \
-                              "feature do not match."
+            raise DatasetError, "Cannot add Dataset, because the number of " \
+                                "feature do not match."
 
         # concatenate all sample attributes
         for k, v in self._data.iteritems():

@@ -13,6 +13,7 @@ import random
 import numpy as N
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.misc import zscore
+from mvpa.misc.exceptions import DatasetError
 
 class DatasetTests(unittest.TestCase):
 
@@ -34,7 +35,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data.chunks == N.array([1])).all() )
 
         # now try adding pattern with wrong shape
-        self.failUnlessRaises( ValueError,
+        self.failUnlessRaises( DatasetError,
                                data.__iadd__, Dataset(samples=N.ones((2,3)),
                                                       labels=1,
                                                       chunks=1))
@@ -54,14 +55,14 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (data.uniquelabels == N.array([1,2,3]) ).all() )
 
         # test wrong label length
-        self.failUnlessRaises( ValueError,
+        self.failUnlessRaises( DatasetError,
                                Dataset,
                                samples=N.random.standard_normal((4,5)),
                                labels=[ 1, 2, 3 ],
                                chunks=2 )
 
         # test wrong origin length
-        self.failUnlessRaises( ValueError,
+        self.failUnlessRaises( DatasetError,
                                Dataset,
                                samples=N.random.standard_normal((4,5)),
                                labels=[ 1, 2, 3, 4 ],
@@ -210,6 +211,14 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(not data2.blobs != [ 0 ],
                         msg="By default new attributes supposed to get 0 as the value")
 
+    def testRequiredAtrributes(self):
+        self.failUnlessRaises(DatasetError, Dataset)
+        self.failUnlessRaises(DatasetError, Dataset, samples=[1])
+        self.failUnlessRaises(DatasetError, Dataset, labels=[1])
+        try:
+            ds = Dataset(samples=[1], labels=[1])
+        except:
+            self.fail(msg="samples and labels are 2 required parameters")
 
     def testZScoring(self):
         # dataset: mean=2, std=1
