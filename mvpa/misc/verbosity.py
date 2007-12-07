@@ -13,6 +13,8 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 """
 
+__docformat__ = 'restructuredtext'
+
 from sys import stdout
 
 # GOALS
@@ -254,6 +256,7 @@ class SetLogger(Logger):
 if __debug__:
 
     import os, re
+    import traceback
 
     def parseStatus(field='VmSize'):
         """Return stat information on current process.
@@ -283,9 +286,10 @@ if __debug__:
             }
 
 
-        def __init__(self, metrics=[], *args, **kwargs):
+        def __init__(self, metrics=[], offsetbydepth=True, *args, **kwargs):
             SetLogger.__init__(self, *args, **kwargs)
             self.__metrics = []
+            self._offsetbydepth = offsetbydepth
             for metric in metrics:
                 self._registerMetric(metric)
 
@@ -316,6 +320,19 @@ if __debug__:
             if len(msg_)>0:
                 msg_ = "{%s}" % msg_
 
-            SetLogger.__call__(self, setid, "DEBUG%s: %s" % (msg_, msg),
+            # determine blank offset using backstacktrace
+            if self._offsetbydepth:
+                level = len(traceback.extract_stack())-2
+            else:
+                level = 1
+
+            SetLogger.__call__(self, setid, "DEBUG%s:%s%s" %
+                               (msg_, " "*level, msg),
                                *args, **kwargs)
 
+
+        def _setOffsetByDepth(self, b):
+            self._offsetbydepth = b
+
+        offsetbydepth = property(fget=lambda x:self._offsetbydepth,
+                                 fset=_setOffsetByDepth)
