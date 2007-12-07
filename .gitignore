@@ -3,7 +3,9 @@
 \.\#*
 *.pyc
 *.pyo
+/html
 */html
+*/*/html
 /html
 build
 *.prof
