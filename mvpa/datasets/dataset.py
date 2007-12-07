@@ -38,7 +38,10 @@ class Dataset(object):
 
     # unique{labels,chunks} become a part of dsattr
     _uniqueattributes = []
+    """Unique attributes associated with the data"""
 
+    _registeredattributes = []
+    """Registered attributes (stored in _data)"""
 
     def __init__(self, data={}, dsattr={}, dtype=None, \
                  samples=None, labels=None, chunks=None, check_data=True,
@@ -143,6 +146,13 @@ class Dataset(object):
             # if no chunk information is given assume that every pattern
             # is its own chunk
             self._data['chunks'] = N.arange(self.nsamples)
+
+        # Initialize attributes which are registered but were not setup
+        for attr in self._registeredattributes:
+            if not self._data.has_key(attr):
+                if __debug__:
+                    debug("DS", "Initializing attribute %s" % attr)
+                self._data[attr] = N.zeros(self.nsamples)
 
         if check_data:
             self._checkData()
@@ -303,6 +313,8 @@ class Dataset(object):
         #pydb.debugger()
         classdict = cls.__dict__
         if not classdict.has_key(key):
+            if __debug__:
+                debug("DS", "Registering new attribute %s" % key)
             # define get function and use corresponding
             # _getATTR if such defined
             getter = '_get%s' % key
@@ -364,11 +376,10 @@ class Dataset(object):
 
                 cls._uniqueattributes.append(uniquekey)
 
-
-
+            cls._registeredattributes.append(key)
         elif __debug__:
-            debug('DS', 'Trying to reregister attribute `%s`. For now ' +
-                  'such facility is not active')
+            warning('Trying to reregister attribute `%s`. For now ' % key +
+                    'such capability is not present')
 
 
     def __repr__(self, full=True):
@@ -381,8 +392,10 @@ class Dataset(object):
             return s                    # enough is enough
 
         s +=  " uniq:"
-        for attr in [ 'labels', 'chunks' ]:
-            uattr = 'unique%s' % attr
+        for uattr in self._dsattr.keys():
+            if not uattr.startswith("unique"):
+                continue
+            attr = uattr[6:]
             try:
                 value = self._getuniqueattr(attrib=uattr,
                                             dict_=self._data)
