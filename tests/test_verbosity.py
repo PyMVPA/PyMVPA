@@ -123,9 +123,13 @@ class VerboseOutputTest(unittest.TestCase):
     if __debug__:
         def testDebug(self):
             debug.active = [1, 2, 'SLC']
+            # do not offset for this test
+            debug.offsetbydepth = False
             debug('SLC', self.msg, lf=False)
             self.failUnlessEqual(self.sout.getvalue(),
                                  "[SLC] DEBUG: %s" % self.msg)
+
+            debug.offsetbydepth = True
 
         # TODO: More tests needed for debug output testing
 
