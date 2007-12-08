@@ -27,6 +27,12 @@ Introduction
 
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
+Conventions
+~~~~~~~~~~~
+NumPy package will by used as N throughout this manual.
+
+  >>> import numpy as N
+
 * Note how to cite it.
 
 
@@ -115,22 +121,101 @@ faster and easier as it has ever been before.
 Overview
 --------
 
-Notes on the general organization of the `mvpa` module.
+The PyMVPA package consists of three major parts: `Data handling`_,
+Classifiers_ and Algorithms_ operating on datasets and classifiers.
+In the following sections the basic concept of all three parts will be
+described and examples using certain parts of the PyMVPA package will be
+given.
 
 
 Data Handling
 -------------
 
-Explain features of `Dataset` and the idea of a `Mapper`. Finally show
-examples using implemented special-case datasets like `NiftiDataset`.
+The foundation of PyMVPA's data handling is the `Dataset` class. Basically,
+this class stores data samples, sample attributes and dataset attributes, where
+sample attributes assign a value to each data sample and dataset attributes are
+additional information or functionality that apply to the whole dataset.
 
+Most likely the `Dataset` class will not be used directly, but through one
+of the derived classes. However, it is perfectly possible to use it directly.
+In the simplest case a dataset can be constructed by specifying some
+data samples and the corresponding class labels.
+
+  >>> from mvpa.datasets.dataset import Dataset
+  >>> data = Dataset(samples=N.random.normal(size=(10,5)), labels=1)
+  >>> data
+  Dataset / float64 10 x 5, uniq: 1 labels, 10 chunks
+
+The above example creates a dataset with 10 samples and 5 features each. The
+values of all features a normally distributed random noise. The class label '1'
+is assigned to all samples. Instead of a single scalar value `labels` can also
+be a sequence with individual labels for each data sample. In this case the
+length of this sequence has to match the number of samples.
+
+Interestingly the dataset object tells us about 10 `chunks`. In PyMVPA chunks
+are used to group subsets of data samples. However, if no grouping information
+is provided all data samples are assumed to be in their own group, hence no
+sample grouping is performed.
+
+Both `labels` and `chunks` are so called *sample attributes*. All sample
+attributes are stored in sequence-type containers consisting of one value per
+sample. These containers can be accessed by properties with the same as the
+attribute:
+
+  >>> data.labels
+  array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+  >>> data.chunks
+  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+*Data samples* are stored as a two-dimensional matrix where each row vector
+is a `sample` and each column vector contains the values of a `feature` across
+all `samples`. The `Dataset` class provides access to the samples matrix via
+the `samples` property.
+
+  >>> data.samples.shape
+  (10,5)
+
+The `Dataset` class itself can only deal with 2d sample matrices. However,
+PyMVPA provides a very easy way to deal with data where each data sample is
+more than a 1d vector: `Data Mapping`_
+
+
+Data Mapping
+~~~~~~~~~~~~
+It was already mentioned that the `Dataset` class cannot deal with data samples
+that are more than simple vectors. This could be a problem in cases where the
+data has a higher dimensionality, e.g. functional brain-imaging data where
+each data sample is typically a three-dimensional volume.
+
+One approach to deal with this situation would be to concatenate the whole
+volume into a 1d vector. While this would work in certain cases there is
+definitely information lost. Especially for brain-imaging data one would most
+likely want keep information about neighbourhood and distances between data
+sample elements.
+
+In PyMVPA this is done by mappers that transform data samples from their
+original *dataspace* into the so-called *features space*. I the above example
+the *dataspace* is three-dimensional and the *feature space* always refers to
+the 2d `samples x features` representation that is required by the `Dataset`
+class. In the context of mappers the dataspace is sometimes also refered to as *in-space* while the feature space is labeled as *out-space*.
+
+The task of a mapper besides transforming samples into 1d vectors is to retain
+as much information of the dataspace as possible. Some mappers provide
+information about dataspace metrics and feature neibourhood, but all mappers
+are able to do reverse mapping from feature space into the original dataspace.
+
+Usually one does not have to deal with mappers directly. PyMVPA provides some
+convenience subclasses of `Dataset` the automatically perform the necessary
+mapping operations internally.
+
+Explain `MaskedDataset`.
 
 Classifiers
 -----------
 
-First generic interface of all classifiers in PyMVPA. Point to the special
-case of multi-class classification and how to deal with it. Finally describe
-features of all available classifiers.
+.. First generic interface of all classifiers in PyMVPA. Point to the special
+   case of multi-class classification and how to deal with it. Finally describe
+   features of all available classifiers.
 
 k-Nearest-Neighbour
 ~~~~~~~~~~~~~~~~~~~
@@ -145,10 +230,9 @@ Logistic Regression
 Algorithms
 ----------
 
-Again general overview first. What is a `SensitivityAnalyzer`, what is the
-difference between a `FeatureSelection` and an `ElementSelector`.
-
-Finally more detailed note and references for each larger algorithm.
+.. Again general overview first. What is a `SensitivityAnalyzer`, what is the
+   difference between a `FeatureSelection` and an `ElementSelector`.
+   Finally more detailed note and references for each larger algorithm.
 
 
 Searchlight
@@ -164,8 +248,8 @@ Incremental Feature Search
 Installation
 ------------
 
-Point to source and binary distribution. Preach idea of free software.
-Step by step guide to install it on difficult systems like Windows.
+.. Point to source and binary distribution. Preach idea of free software.
+   Step by step guide to install it on difficult systems like Windows.
 
 
 License
