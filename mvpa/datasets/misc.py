@@ -17,6 +17,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 from sets import Set
+from mvpa.datasets.dataset import Dataset
+
 
 def zscore(dataset, mean = None, std = None,
            perchunk=True, baselinelabels=None, targetdtype='float64'):
@@ -85,3 +87,17 @@ def zscore(dataset, mean = None, std = None,
         doit(dataset.samples, mean, std, dataset.samples)
     else:
         doit(dataset.samples, mean, std, dataset.samples[list(statids)])
+
+
+
+def aggregateFeatures(dataset, fx):
+    """Apply a function to each row of the samples matrix of a dataset.
+
+    The functor given as `fx` has to honour an `axis` keyword argument in the
+    way that NumPy used it (e.g. NumPy.mean, var).
+
+    Returns a new `Dataset` object with the aggregated feature(s).
+    """
+    agg = fx(dataset.samples, axis=0)
+
+    return Dataset(samples=agg, labels=dataset.labels, chunks=dataset.chunks)
