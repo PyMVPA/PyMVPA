@@ -79,6 +79,17 @@ class SupportFxTests(unittest.TestCase):
                         range(4), 3 ), [[0, 1, 2], [0, 1, 3], [0, 2, 3]] )
 
 
+    def testBreakPoints(self):
+        items_cont = [0, 0, 0, 1, 1, 1, 3, 3, 2]
+        items_noncont = [0, 0, 1, 1, 0, 3, 2]
+        self.failUnlessRaises(ValueError, getBreakPoints, items_noncont)
+        self.failUnlessEqual(getBreakPoints(items_noncont, contiguous=False),
+                             [0, 2, 4, 5, 6])
+        self.failUnlessEqual(getBreakPoints(items_cont), [0, 3, 6, 8])
+        self.failUnlessEqual(getBreakPoints(items_cont, contiguous=False),
+                             [0, 3, 6, 8])
+
+
 def suite():
     return unittest.makeSuite(SupportFxTests)
 
