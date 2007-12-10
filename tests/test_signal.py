@@ -22,6 +22,7 @@ class SignalTests(unittest.TestCase):
         thr = 1e-10;                    # threshold for comparison
         samples = N.array( [[1.0, 2, 3, 3, 2, 1],
                             [-2.0, -4, -6, -6, -4, -2]], ndmin=2 ).T
+
         chunks = [0, 0, 0, 1, 1, 1]
 
         target_all = N.array( [[-1.0, 0, 1, 1, 0, -1],
@@ -29,6 +30,7 @@ class SignalTests(unittest.TestCase):
 
         ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
         detrend(ds, perchunk=False)
+
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                         msg="Detrend should have detrended all the samples at once")
 
@@ -40,6 +42,13 @@ class SignalTests(unittest.TestCase):
         self.failUnless(ds.samples.shape == samples.shape,
                         msg="Detrend must preserve the size of dataset")
 
+
+        # small additional test for break points
+        ds = Dataset(samples=N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
+                     labels=chunks, chunks=chunks, copy_samples=True)
+        detrend(ds, perchunk=True)
+        self.failUnless(linalg.norm(ds.samples) < thr,
+                        msg="Detrend should have removed all the signal")
 
 def suite():
     return unittest.makeSuite(SignalTests)
