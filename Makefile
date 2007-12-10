@@ -3,6 +3,35 @@ PROFILE_FILE=tests/main.pstats
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
 
+#
+# Building
+#
+
+all: build doc
+
+debian-build:
+# reuse is better than duplication (yoh)
+	debian/rules build
+
+
+build:
+	python setup.py config --noisy
+	python setup.py build_ext
+	python setup.py build_py
+# to overcome the issue of not-installed svmc.so
+	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so \
+		mvpa/clf/libsvm/
+
+#
+# Cleaning
+#
+
+# Full clean
+clean:
+# if we are on debian system - we might have left-overs from build
+	-@$(MAKE) debian-clean
+# if not on debian -- just distclean
+	-@$(MAKE) distclean
 
 distclean:
 	-@rm -f MANIFEST Changelog
@@ -20,12 +49,6 @@ distclean:
 # remove all generated HTML stuff
 	@find doc -mindepth 2 -maxdepth 2 -type d -name 'html' -print -exec rm -rf {} \;
 
-debian-build:
-# reuse is better than duplication (yoh)
-	debian/rules build
-# to overcome the issue of not-installed svmc.so
-	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so \
-		mvpa/clf/libsvm/
 
 debian-clean:
 # remove stamps for builds since state is not really built any longer
