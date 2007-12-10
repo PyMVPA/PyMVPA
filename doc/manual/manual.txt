@@ -22,10 +22,21 @@ PyMVPA Manual
 .. contents::
 .. sectnum::
 
+
+
 Introduction
 ------------
 
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
+
+Prerequisites
+~~~~~~~~~~~~~
+ * Basic Python experiences (if not easy to get with Python tutorials).
+ * For efficiency:
+
+   - prior experience with NumPy and/or SciPy.
+   - basic understanding of the concepts(s) of machine learning.
+
 
 Conventions
 ~~~~~~~~~~~
@@ -37,7 +48,7 @@ NumPy package will by used as N throughout this manual.
 
 
 A Bit of History
-----------------
+~~~~~~~~~~~~~~~~
 
 The roots of PyMVPA date back to early 2005. At that time it was a C++ library
 (no Python_ yet) developed by Michael Hanke and Sebastian Krüger with the
@@ -118,6 +129,15 @@ faster and easier as it has ever been before.
 .. _Yaroslav Halchenko: http://www.onerussian.com/
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
 
+
+Credits
+~~~~~~~
+
+.. Please add some notes when you think that you should give credits to someone
+   that enables or motivates you to work on PyMVPA ;-)
+
+
+
 Overview
 --------
 
@@ -128,13 +148,14 @@ described and examples using certain parts of the PyMVPA package will be
 given.
 
 
+
 Data Handling
 -------------
 
 The foundation of PyMVPA's data handling is the `Dataset` class. Basically,
 this class stores data samples, sample attributes and dataset attributes, where
 sample attributes assign a value to each data sample and dataset attributes are
-additional information or functionality that apply to the whole dataset.
+additional information or functionality that applies to the whole dataset.
 
 Most likely the `Dataset` class will not be used directly, but through one
 of the derived classes. However, it is perfectly possible to use it directly.
@@ -147,10 +168,10 @@ data samples and the corresponding class labels.
   Dataset / float64 10 x 5, uniq: 1 labels, 10 chunks
 
 The above example creates a dataset with 10 samples and 5 features each. The
-values of all features a normally distributed random noise. The class label '1'
-is assigned to all samples. Instead of a single scalar value `labels` can also
-be a sequence with individual labels for each data sample. In this case the
-length of this sequence has to match the number of samples.
+values of all features stem from normally distributed random noise. The class
+label '1' is assigned to all samples. Instead of a single scalar value `labels`
+can also be a sequence with individual labels for each data sample. In this
+case the length of this sequence has to match the number of samples.
 
 Interestingly the dataset object tells us about 10 `chunks`. In PyMVPA chunks
 are used to group subsets of data samples. However, if no grouping information
@@ -167,10 +188,10 @@ attribute:
   >>> data.chunks
   array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-*Data samples* are stored as a two-dimensional matrix where each row vector
-is a `sample` and each column vector contains the values of a `feature` across
-all `samples`. The `Dataset` class provides access to the samples matrix via
-the `samples` property.
+The *data samples* itself are stored as a two-dimensional matrix where each
+row vector is a `sample` and each column vector contains the values of a
+`feature` across all `samples`. The `Dataset` class provides access to the
+samples matrix via the `samples` property.
 
   >>> data.samples.shape
   (10,5)
@@ -194,21 +215,28 @@ likely want keep information about neighbourhood and distances between data
 sample elements.
 
 In PyMVPA this is done by mappers that transform data samples from their
-original *dataspace* into the so-called *features space*. I the above example
-the *dataspace* is three-dimensional and the *feature space* always refers to
-the 2d `samples x features` representation that is required by the `Dataset`
-class. In the context of mappers the dataspace is sometimes also refered to as *in-space* while the feature space is labeled as *out-space*.
+original *dataspace* into the so-called *features space*. In the above
+neuro-imaging example the *dataspace* is three-dimensional and the
+*feature space* always refers to the 2d `samples x features` representation
+that is required by the `Dataset` class. In the context of mappers the
+dataspace is sometimes also refered to as *in-space* while the feature space
+is labeled as *out-space*.
 
 The task of a mapper besides transforming samples into 1d vectors is to retain
 as much information of the dataspace as possible. Some mappers provide
-information about dataspace metrics and feature neibourhood, but all mappers
+information about dataspace metrics and feature neighbourhood, but all mappers
 are able to do reverse mapping from feature space into the original dataspace.
 
 Usually one does not have to deal with mappers directly. PyMVPA provides some
 convenience subclasses of `Dataset` the automatically perform the necessary
-mapping operations internally.
+mapping operations internally. 
 
-Explain `MaskedDataset`.
+.. Explain `MaskedDataset` -- or better think about it again as Yarik doesn't
+   like it and he might remove it when Michael is not watching ;-)
+   But serious, what is best to put that early in the manual? Maybe starting
+   with NiftiDataset is even better and later explain the concept of
+   `MappedDataset` -- comments?
+
 
 Classifiers
 -----------
@@ -217,11 +245,14 @@ Classifiers
    case of multi-class classification and how to deal with it. Finally describe
    features of all available classifiers.
 
+
 k-Nearest-Neighbour
 ~~~~~~~~~~~~~~~~~~~
 
+
 Support Vector Machines
 ~~~~~~~~~~~~~~~~~~~~~~~
+
 
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
@@ -234,15 +265,30 @@ Algorithms
    difference between a `FeatureSelection` and an `ElementSelector`.
    Finally more detailed note and references for each larger algorithm.
 
+.. Explain the concept of having algorithm object instances that configure with
+   parameters upon creation and can be used multiple times by calling them with
+   datasets. Also attache explaination of PyMVPA object `states` at that point.
+
+.. Point to the difference of `DataMeasure` and `SensitivityAnalyzer`. The
+   former computes some value given a dataset (might be scalar or something
+   else), whereas that latter computes a 1d map (sensitivity -> features),
+   where each value assigns a quantification of the amount of available
+   information in that feature.
+
 
 Searchlight
 ~~~~~~~~~~~
+.. Mention the fact that it also is a special `SensitivityAnalyzer`
+
 
 Recursive Feature Elimination
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 Incremental Feature Search
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. What are the practical differences (besides speed) between RFE and IFS?
 
 
 Installation
@@ -250,6 +296,17 @@ Installation
 
 .. Point to source and binary distribution. Preach idea of free software.
    Step by step guide to install it on difficult systems like Windows.
+
+.. Don't forget to mention that the only reasonable way is to use this piece
+   of software (like every other piece) is under Debian! Also mention that
+   Ubuntu is no excuse ;-)
+
+
+Frequently Asked Questions
+--------------------------
+
+.. We probably need them once we have more than two users.
+
 
 
 License
