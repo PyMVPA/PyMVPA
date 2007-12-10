@@ -16,7 +16,7 @@ if __debug__:
     from mvpa.misc import debug
 
 
-class State(dict):
+class State(object):
     """Base class for stateful objects.
 
     Classes inherited from this class gaining ability to provide state
@@ -38,8 +38,7 @@ class State(dict):
 
     def __init__(self,
                  enable_states=None,
-                 disable_states=None,
-                 *args, **kwargs):
+                 disable_states=None):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -53,8 +52,9 @@ class State(dict):
         """Dictionary to contain registered states as keys and
         values signal either they are enabled
         """
-        dict.__init__(self, *args, **kwargs)
-
+        self.__dict = {}
+        """Actual storage to use for state variables"""
+        
         register_states = {}
         # if class defined default states to register -- use them
 
@@ -115,12 +115,12 @@ class State(dict):
 
 
     # actually we have to provide some simple way to set the State
-    def __setitem__(self, index, *args, **kwargs):
+    def __setitem__(self, index, value):
         """Set value for the `index`.
         """
         self.__checkIndex(index)
         if self.__registered[index]['enabled']:
-            dict.__setitem__(self, index, *args, **kwargs)
+            self.__dict[index] = value
 
 
     def __getitem__(self, index):
@@ -130,9 +130,9 @@ class State(dict):
         :Raise `UnknownStateError`: if no value yet was assigned to `index`
         """
         self.__checkIndex(index)
-        if not self.has_key(index):
+        if not self.__dict.has_key(index):
             raise UnknownStateError("Unknown yet value for '%s'" % index)
-        return dict.__getitem__(self, index)
+        return self.__dict[index]
 
 
     # XXX think about it -- may be it is worth making whole State
@@ -158,6 +158,13 @@ class State(dict):
                    index, self.__class__.__name__))
         self.__registered[index] = {'enabled' : enabled,
                                     'doc' : doc}
+
+    def hasState(self, index):
+        """Checks if there is a state for `index`
+
+        Simple a wrapper around self.__dict.has_key
+        """
+        return self.__dict.has_key(index)
 
 
     def enableState(self, index):

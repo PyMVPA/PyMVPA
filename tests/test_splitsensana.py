@@ -41,7 +41,7 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         maps = sana(self.dataset)
 
         self.failUnless(len(maps) == 5)
-        self.failUnless(sana.has_key('mean'))
+        self.failUnless(sana.hasState('mean'))
         self.failUnless(N.array(maps)[:,0].mean() == sana['mean'][0])
         self.failUnless(N.array(maps).shape == (5,4))
 
