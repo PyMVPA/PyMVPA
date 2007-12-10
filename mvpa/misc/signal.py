@@ -14,10 +14,11 @@ __docformat__ = 'restructuredtext'
 
 from scipy import signal
 
+from mvpa.misc.support import getBreakPoints
 
-def detrend(data, perchunk=False):
+def detrend(data, perchunk=False, type='linear'):
     """
-    Given a dataset, detrend the data either entirely or per each chunk
+    Given a dataset, detrend the data inplace either entirely or per each chunk
 
     :Parameters:
       `data` : `Dataset`
@@ -25,15 +26,15 @@ def detrend(data, perchunk=False):
       `perchunk` : bool
         either to operate on whole dataset at once or on each chunk
         separately
-    :TODO:
-     * make possible to detrend providing chunk boundaries as breakpoints
-       for detrend
+      `type`
+        type accepted by scipy.signal.detrend. Currently only
+        'linear' or 'constant' (which is just demeaning)
+
     """
 
+    bp = 0                              # no break points by default
+
     if perchunk:
-        for chunk in data.uniquechunks:
-            ids = data.idsbychunks(chunk)
-            detrended = signal.detrend(data.samples[ids, :], axis=0)
-            data.samples[ids, :] = detrended[:]
-    else:
-        data.samples[:] = signal.detrend(data.samples, axis=0)
+        bp = getBreakPoints(data.chunks)
+
+    data.samples[:] = signal.detrend(data.samples, axis=0, type=type, bp=bp)

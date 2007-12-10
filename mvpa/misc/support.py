@@ -154,3 +154,39 @@ def isSorted(items):
     if hasattr(equality, '__iter__'):
         equality = N.all(equality)
     return equality
+
+
+def getBreakPoints(items, contiguous=True):
+    """Return a list of break points.
+
+    :Parameters:
+      items : iterable
+        list of items, such as chunks
+      contiguous : bool
+        if `True` (default) then raise Value Error if items are not
+        contiguous, i.e. a label occur in multiple contiguous sets
+
+    :raises: ValueError
+
+    :return: list of indexes for every new set of items
+    """
+
+    known = []
+    """List of items which was already seen"""
+    result = []
+    """Resultant list"""
+    for index in xrange(len(items)):
+        item = items[index]
+        if item in known:
+            if index>0:
+                if prev != item:            # breakpoint
+                    if contiguous:
+                        raise ValueError, \
+                        "Item %s was already seen before" % `item`
+                    else:
+                        result.append(index)
+        else:
+            known.append(item)
+            result.append(index)
+        prev = item
+    return result
