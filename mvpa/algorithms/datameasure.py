@@ -19,13 +19,22 @@ iterable container.
 
 __docformat__ = 'restructuredtext'
 
-class DataMeasure(object):
+from mvpa.misc.state import State
+
+class DataMeasure(State):
     """A measure computed from a `Dataset` (base class).
 
     All subclasses shall get all necessary parameters via their constructor,
     so it is possible to get the same type of measure for multiple datasets
     by passing them to the __call__() method successively.
     """
+
+    def __init__(self, **kwargs):
+        """
+        """
+        State.__init__(self, **kwargs)
+
+
     def __call__(self, dataset, callbacks=[]):
         """Compute measure on a given `Dataset`.
 

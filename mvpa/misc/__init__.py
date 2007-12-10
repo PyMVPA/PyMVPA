@@ -88,7 +88,12 @@ if __debug__:
     debug.register('ST',   "State debugging")
     debug.register('CLS',  "Base Classifiers debugging")
     debug.register('IOH',  "IO Helpers debugging")
+    debug.register('CROSS',"Cross-validation call")
 
     # Lets check if environment can tell us smth
     if environ.has_key('MVPA_DEBUG'):
         debug.setActiveFromString(environ['MVPA_DEBUG'])
+
+    # Lets check if environment can tell us smth
+    if environ.has_key('MVPA_DEBUG_METRICS'):
+        debug.registerMetric(environ['MVPA_DEBUG_METRICS'].split(","))
