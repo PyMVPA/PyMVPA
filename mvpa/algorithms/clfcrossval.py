@@ -15,6 +15,8 @@ import numpy as N
 from mvpa.algorithms.datameasure import DataMeasure
 from mvpa.datasets.splitter import NoneSplitter
 
+if __debug__:
+    from mvpa.misc import debug
 
 class ClfCrossValidation(DataMeasure):
     """Cross validate a classifier on datasets generate by a splitter from a
@@ -28,13 +30,14 @@ class ClfCrossValidation(DataMeasure):
     def __init__(self,
                  transerror,
                  splitter=NoneSplitter(),
-                 combinerfx=N.mean):
+                 combinerfx=N.mean,
+                 **kwargs):
         """
         Cheap initialization.
 
         Parameters
         ----------
-        
+
         - `transerror`: `TransferError` instance with this classifier used for
                         cross-validation.
         - `splitter`: Splitter instance used to split the dataset for
@@ -46,11 +49,18 @@ class ClfCrossValidation(DataMeasure):
         - `combinerfx`: Functor that is used to aggregate the error values of
                         all cross-validation folds.
         """
-        DataMeasure.__init__(self)
+        DataMeasure.__init__(self, **kwargs)
 
         self.__splitter = splitter
         self.__transerror = transerror
         self.__combinerfx = combinerfx
+
+        # register the state members
+        self._registerState("results", enabled=False)
+        """Store individual results in the state"""
+        self._registerState("splits", enabled=False)
+        """Store the actual splits of the data. Can be memory expensive"""
+
 
 # TODO: put back in ASAP
 #    def __repr__(self):
@@ -73,12 +83,28 @@ class ClfCrossValidation(DataMeasure):
         # store the results of the splitprocessor
         results = []
 
+        self["splits"] = []
+
         # splitter
         for split in self.__splitter(dataset):
             # only train classifier if splitter provides something in first
             # element of tuple -- the is the behavior of TransferError
-            results.append(self.__transerror(split[1], split[0]))
+            if self.isStateEnabled("splits"):
+                self["splits"].append(split)
+
+            result = self.__transerror(split[1], split[0])
+            if __debug__:
+                debug("CROSS", "Split #%d: result %s" % (len(results), `result`))
+            results.append(result)
 
             # XXX add callbacks
 
+        self["results"] = results
+        """Store state variable if it is enabled"""
+
         return self.__combinerfx(results)
+
+
+    splitter = property(fget=lambda self:self.__splitter)
+    transerror = property(fget=lambda self:self.__transerror)
+    combinerfx = property(fget=lambda self:self.__combinerfx)

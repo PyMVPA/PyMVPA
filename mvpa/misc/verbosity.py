@@ -257,6 +257,7 @@ if __debug__:
 
     import os, re
     import traceback
+    import time
 
     def parseStatus(field='VmSize'):
         """Return stat information on current process.
@@ -282,7 +283,8 @@ if __debug__:
 
         _known_metrics = {
             'vmem' : lambda : parseStatus(field='VmSize'),
-            'pid' : lambda : parseStatus(field='Pid')
+            'pid' : lambda : parseStatus(field='Pid'),
+            'asctime' : time.asctime
             }
 
 
@@ -300,6 +302,11 @@ if __debug__:
             func can be either a function call or a string which should
             correspond to known metrics
             """
+
+            if isinstance(func, basestring):
+                if func in ['all', 'ALL']:
+                    func = self._known_metrics.keys()
+
             if isinstance(func, basestring):
                 if DebugLogger._known_metrics.has_key(func):
                     func = DebugLogger._known_metrics[func]
@@ -308,6 +315,11 @@ if __debug__:
                           "Unknown name %s for metric in DebugLogger" % \
                           func + " Known metrics are " + \
                           `DebugLogger._known_metrics.keys()`
+            elif isinstance(func, list):
+                for item in func:
+                    self.registerMetric(item)
+                return
+
             self.__metrics.append(func)
 
 

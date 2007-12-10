@@ -42,10 +42,13 @@ class State(object):
         """Initialize the state variables of a derived class
 
         :Parameters:
-          `enable_states` : list
-             list of states to enable
-          `disable_states` : list
-             list of states to disable
+          enable_states : list
+            list of states to enable
+          disable_states : list
+            list of states to disable
+          args : list
+            as well as `kwargs` is passed to dict.__init__
+
         """
 
         self.__registered = {}
