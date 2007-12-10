@@ -11,6 +11,10 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.misc import warning
+
+if __debug__:
+    from mvpa.misc import debug
 
 class ColumnData(dict):
     """Read data that is stored in columns of text files.
@@ -62,6 +66,40 @@ class ColumnData(dict):
             raise ValueError, 'Unkown source for ColumnData [%s]' \
                               % `type(source)`
 
+        # generate missing properties for each item in the header
+        classdict = self.__class__.__dict__
+        for k in self.keys():
+            if not classdict.has_key(k):
+                getter = "lambda self: self._getAttrib('%s')" % (k)
+                if __debug__:
+                    debug("IOH", "Registering property %s for ColumnData" % `k`)
+                exec "%s.%s = property(fget=%s)"  % \
+                     (self.__class__.__name__, k, getter)
+
+
+    def _getAttrib(self, key):
+        """Return corresponding value if given key is known to current instance
+
+        Is used for automatically added properties to the class.
+
+        :raises: ValueError, if `key` is not known to given instance
+
+        :return: value if `key` is known
+        """
+        if self.has_key(key):
+            return self[key]
+        else:
+            raise ValueError, "Instance %s has no data about %s" % (`self`, `key`)
+
+
+    def __str__(self):
+        s = self.__class__.__name__
+        if len(self.keys())>0:
+            s += " %d rows, %d columns [" % \
+                 (self.getNRows(), self.getNColumns())
+            s += reduce(lambda x,y: x+" %s" % y, self.keys())
+            s += "]"
+        return s
 
     def _check(self):
         """Performs some checks for data integrity.
@@ -113,7 +151,13 @@ class ColumnData(dict):
                       "of columns in header [%i]." % (len(l), len(hdr))
 
             for i, v in enumerate(l):
-                tbl[i].append(dtype(v))
+                if not dtype is None:
+                    try:
+                        v = dtype(v)
+                    except ValueError:
+                        warning("Can't convert %s to desired datatype %s." %
+                                (`v`, `dtype`) + " Leaving original type")
+                tbl[i].append(v)
 
         # check
         if not len(tbl) == len(hdr):
@@ -294,7 +338,5 @@ class SampleAttributes(ColumnData):
         return self.getNRows()
 
 
-    labels = property(fget=lambda self: self['labels'])
-    chunks = property(fget=lambda self: self['chunks'])
     nsamples = property(fget=getNSamples)
 
