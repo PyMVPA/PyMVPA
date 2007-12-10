@@ -87,6 +87,7 @@ if __debug__:
     debug.register('DS',   "*Dataset debugging")
     debug.register('ST',   "State debugging")
     debug.register('CLS',  "Base Classifiers debugging")
+    debug.register('IOH',  "IO Helpers debugging")
 
     # Lets check if environment can tell us smth
     if environ.has_key('MVPA_DEBUG'):
