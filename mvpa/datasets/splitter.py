@@ -23,7 +23,7 @@ class Splitter(object):
     to declare tuple element as 'None'. 
 
     Please note, that even if there is only one Dataset returned it has to be
-    an element in a tupleand not just the Dataset object!
+    an element in a tuple and not just the Dataset object!
     """
     def __call__(self, dataset):
         """

@@ -147,6 +147,16 @@ In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
 given.
 
+Before starting with describing PyMVPA's dataset handling it is useful to
+point to a very common design pattern in the PyMVPA package: *processing
+objects*. These classes or objects are instanciated by passing all relevant
+parameters to the constructor. Most of these objects can then be called
+multiple times with different datasets to perform their algorithm on the
+respective dataset. This design applies to virtually every piece of PyMVPA
+that is described in the Algorithms_ section, but also the many other parts.
+Examples to illustrate this behavior will be given in the relevant parts of
+this manual.
+
 
 
 Data Handling
@@ -237,6 +247,31 @@ mapping operations internally.
    with NiftiDataset is even better and later explain the concept of
    `MappedDataset` -- comments?
 
+
+Data Splitting
+~~~~~~~~~~~~~~
+
+In many cases some algorithm should not run on a complete dataset, but just
+some parts of it. One well-known example is leave-one-out cross-validation,
+where a dataset is typically split into a number of training and validation
+datasets. A classifier is trained on the training set and it's generalization
+performance is tested using the validation set.
+
+It is important to strictly separate training and validation datasets as
+otherwise no valid statement can be made whether a classifier really generated
+an appropriate model of the training data. If this requirement is violated
+the results are usually very good generalization performances. However, they
+provide no relevant information as they are based on cheating or peeking and
+do not describe signal similarities between training and validation datasets.
+
+PyMVPA makes dataset splitting easy by providing an explicite interface for it:
+the `Splitter` class. All dataset splitters in PyMVPA are implemented as Python
+generators, meaning that when called with a dataset once, they return one
+dataset split per iteration and an approriate Exception when they are done.
+This is exactly the same behavior as of e.g. the Python `xrange()` function.
+
+.. Next give NFoldSplitter example and then describe general Splitter
+   interface.
 
 Classifiers
 -----------
