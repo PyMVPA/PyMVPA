@@ -181,11 +181,15 @@ class Dataset(object):
 
         # lazy computation of unique members
         #self._resetallunique('_dsattr', self._dsattr)
-        if not labels is None or not chunks is None:
+
+        # Michael: we cannot do this conditional here. When selectSamples()
+        # removes a whole data chunk the uniquechunks values will be invalid.
+        # Same applies to labels of course.
+        #if not labels is None or not chunks is None:
             # for a speed up to don't go through all uniqueattributes
             # when no need
-            self._dsattr['__uniquereseted'] = False
-            self._resetallunique()
+        self._dsattr['__uniquereseted'] = False
+        self._resetallunique()
 
 
     def _resetallunique(self):
