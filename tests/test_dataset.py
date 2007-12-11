@@ -12,7 +12,7 @@ import unittest
 import random
 import numpy as N
 from mvpa.datasets.dataset import Dataset
-from mvpa.datasets.misc import zscore
+from mvpa.datasets.misc import zscore, aggregateFeatures
 from mvpa.misc.exceptions import DatasetError
 
 class DatasetTests(unittest.TestCase):
@@ -246,6 +246,18 @@ class DatasetTests(unittest.TestCase):
                        chunks=[0]*16)
         zscore(data, baselinelabels=[0, 1])
         self.failUnless((samples == data.samples+1.0).all())
+
+
+    def testAggregation(self):
+        data = Dataset(samples=N.arange( 20 ).reshape( (4,5) ),
+                       labels=1,
+                       chunks=1)
+
+        ag_data = aggregateFeatures(data, N.mean)
+
+        self.failUnless(ag_data.nsamples == 4)
+        self.failUnless(ag_data.nfeatures == 1)
+        self.failUnless((ag_data.samples[:,0] == [2, 7, 12, 17]).all())
 
 
 def suite():

@@ -98,6 +98,8 @@ def aggregateFeatures(dataset, fx):
 
     Returns a new `Dataset` object with the aggregated feature(s).
     """
-    agg = fx(dataset.samples, axis=0)
+    agg = fx(dataset.samples, axis=1)
 
-    return Dataset(samples=agg, labels=dataset.labels, chunks=dataset.chunks)
+    return Dataset(samples=N.array(agg, ndmin=2).T,
+                   labels=dataset.labels,
+                   chunks=dataset.chunks)
