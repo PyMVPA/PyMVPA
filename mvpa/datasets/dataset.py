@@ -109,7 +109,7 @@ class Dataset(object):
             #      without any shallow .copy
             lcl_data = data.copy()
 
-        if copy_dsattr:
+        if copy_dsattr and len(dsattr)>0:
             # deep copy
             if __debug__:
                 debug('DS', "Deep copying dsattr %s" % `dsattr`)
@@ -185,18 +185,18 @@ class Dataset(object):
         # Michael: we cannot do this conditional here. When selectSamples()
         # removes a whole data chunk the uniquechunks values will be invalid.
         # Same applies to labels of course.
-        #if not labels is None or not chunks is None:
+        if not labels is None or not chunks is None:
             # for a speed up to don't go through all uniqueattributes
             # when no need
-        self._dsattr['__uniquereseted'] = False
-        self._resetallunique()
+            self._dsattr['__uniquereseted'] = False
+            self._resetallunique(force=True)
 
 
-    def _resetallunique(self):
+    def _resetallunique(self, force=False):
         """Set to None all unique* attributes of corresponding dictionary
         """
 
-        if self._dsattr['__uniquereseted']:
+        if not force and self._dsattr['__uniquereseted']:
             return
 
         # I guess we better checked if dictname is known  but...
@@ -558,6 +558,7 @@ class Dataset(object):
                          copy_data=False,
                          copy_dsattr=False)
 
+        dataset._resetallunique(force=True)
         return dataset
 
 

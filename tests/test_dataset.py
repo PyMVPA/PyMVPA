@@ -11,6 +11,7 @@
 import unittest
 import random
 import numpy as N
+from sets import Set
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.misc import zscore, aggregateFeatures
 from mvpa.misc.exceptions import DatasetError
@@ -120,6 +121,14 @@ class DatasetTests(unittest.TestCase):
                        chunks=2)
         self.failUnless( (data.idsbylabels([2, 3]) == \
                           [ 3.,  4.,  5.,  7.]).all() )
+
+        # lets cause it to compute unique labels
+        self.failUnless( (data.uniquelabels == [2, 3, 4, 8, 9]).all() );
+
+
+        # select some samples removing some labels completely
+        sel = data.selectSamples(data.idsbylabels([3, 4, 8, 9]))
+        self.failUnlessEqual(Set(sel.uniquelabels), Set([3, 4, 8, 9]))
 
 
     def testCombinedPatternAndFeatureMasking(self):
