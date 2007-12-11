@@ -104,7 +104,7 @@ class RFETests(unittest.TestCase):
         tdata = self.getData()
         tdata_nfeatures = tdata.nfeatures
 
-        sdata = rfe(wdata, tdata)
+        sdata, stdata = rfe(wdata, tdata)
 
         # fail if orig datasets are changed
         self.failUnless(wdata.nfeatures == wdata_nfeatures)

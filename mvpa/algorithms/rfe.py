@@ -108,9 +108,11 @@ class RFE(FeatureSelection):
         - `testdataset`: `Dataset` used to test the trained classifer to
                 determine the transfer error.
 
-        Returns a new dataset with the feature subset of `dataset` that had the
-        lowest transfer error of all tested sets until the stopping criterion
-        was reached.
+        Returns a tuple of two new datasets with the feature subset of
+        `dataset` that had the lowest transfer error of all tested sets until
+        the stopping criterion was reached. The first dataset is the feature
+        subset of the training data and the second the selection of the test
+        dataset.
         """
         errors = []
         """Computed error for each tested features set."""
@@ -128,7 +130,7 @@ class RFE(FeatureSelection):
         stop = False
         """Flag when RFE should be stopped."""
 
-        result = None
+        results = None
         """Will hold the best feature set ever."""
 
         wdataset = dataset
@@ -185,7 +187,7 @@ class RFE(FeatureSelection):
 
             # store result
             if isthebest:
-                result = wdataset
+                results = (wdataset, wtestdataset)
             # stop if it is time to finish
             if nfeatures == 1 or stop:
                 break
@@ -201,6 +203,7 @@ class RFE(FeatureSelection):
             #      using wdataset. See xia-generalization estimate
             #      in lightsvm. Or for god's sake leave-one-out
             #      on a wdataset
+            # TODO: document these cases in this class
             if not testdataset is None:
                 wtestdataset = wtestdataset.selectFeatures(selected_ids)
 
@@ -220,5 +223,5 @@ class RFE(FeatureSelection):
         self["errors"] = errors
 
         # best dataset ever is returned
-        return result
+        return results
 

@@ -64,7 +64,7 @@ class IFSTests(unittest.TestCase):
         tdata = self.getData()
         tdata_nfeatures = tdata.nfeatures
 
-        sdata = ifs(wdata, tdata)
+        sdata, stdata = ifs(wdata, tdata)
 
         # fail if orig datasets are changed
         self.failUnless(wdata.nfeatures == wdata_nfeatures)
@@ -78,7 +78,7 @@ class IFSTests(unittest.TestCase):
 
         # repeat with dataset where selection order is known
         signal = dumbFeatureSignal()
-        sdata = ifs(signal, signal)
+        sdata, stdata = ifs(signal, signal)
         self.failUnless((sdata.samples[:,0] == signal.samples[:,1]).all())
 
 

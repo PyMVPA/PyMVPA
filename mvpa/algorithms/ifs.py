@@ -89,9 +89,10 @@ class IFS(FeatureSelection):
                 used to test the trained classifer on a certain feature set
                 to determine the transfer error.
 
-        Returns a new dataset with the feature subset of `dataset` that had the
-        lowest transfer error of all tested sets until the stopping criterion
-        was reached.
+        Returns a tuple with the dataset containing the feature subset of
+        `dataset` that had the lowest transfer error of all tested sets until
+        the stopping criterion was reached. The tuple also contains a dataset
+        with the corrsponding features from the `testdataset`.
         """
         errors = []
         """Computed error for each tested features set."""
@@ -167,4 +168,5 @@ class IFS(FeatureSelection):
         self['errors'] = errors
 
         # best dataset ever is returned
-        return dataset.selectFeatures(results)
+        return dataset.selectFeatures(results), \
+               testdataset.selectFeatures(results)

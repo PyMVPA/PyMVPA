@@ -31,16 +31,21 @@ class FeatureSelection(State):
         """Binary mask defining the voxels which were selected"""
 
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset, testdataset=None, callables=[]):
         """Invocation of the feature selection
 
-        - `dataset`: actually dataset.
-        - `callables`: a list of functors to be called with locals()
+        dataset: Dataset
+            dataset used to select features
+        testdataset: Dataset
+            dataset the might be used to compute a stopping criterion
+        callables: sequence
+            a list of functors to be called with locals()
 
-        Returns a dataset with selected features.  Derived classes
-        must provide interface to access other relevant to the feature
-        selection process information (e.g. mask, elimination step
-        (in RFE), etc)
+        Returns a tuple with the dataset containing the selected features.
+        If present the tuple also contains the selected features of the
+        test dataset. Derived classes must provide interface to access other
+        relevant to the feature selection process information (e.g. mask,
+        elimination step (in RFE), etc)
         """
         raise NotImplementedError
 
