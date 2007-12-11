@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from copy import copy
+from copy import deepcopy
 from sets import Set
 
 from mvpa.misc.state import State
@@ -118,7 +118,7 @@ class BoostedClassifier(Classifier):
 
     """
 
-    def __init__(self, clss, combiner, **kargs):
+    def __init__(self, clss, combiner, **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -136,7 +136,7 @@ class BoostedClassifier(Classifier):
             estimate (which is pretty much what is stored under
             `decision_values`
         """
-        Classifier.__init__(self)
+        Classifier.__init__(self, **kwargs)
 
         self._setClassifiers(clss)
 
@@ -180,17 +180,17 @@ class BinaryClassifierDecorator(Classifier):
     """Binary classifier given sets of labels to be treated as +1 and -1
     """
 
-    def __init__(self, cls, poslabels, neglabels, storetraindata=False):
+    def __init__(self, cls, poslabels, neglabels, **kwargs):
         """
         :Parameters:
-          `cls` : `Classifier`
+          cls : Classifier
             classifier to use
-          `poslabels` : list
+          poslabels : list
             list of labels which are treated as +1 category
-          `neglabels` : list
+          neglabels : list
             list of labels which are treated as -1 category
         """
-        Classifier.__init__(self)
+        Classifier.__init__(self, **kwargs)
         self.__cls = cls
 
         # Handle labels
@@ -223,6 +223,11 @@ class BinaryClassifierDecorator(Classifier):
             self.__predictneg = self.__neglabels
         else:
             self.__predictneg = self.__neglabels[0]
+
+
+        def __str__(self):
+            return "BinaryClassifier +1: %s -1: %s" % (
+                `self.__poslabels`, `self.__neglabels`)
 
 
     def train(self, data):
@@ -270,18 +275,24 @@ class BoostedMulticlassClassifier(Classifier):
     is yet to think about)
     """
 
-    def __init__(self, cls, bcls):
+    def __init__(self, cls, bcls, bcls_type="1-vs-1", **kwargs):
         """Initialize the instance
 
         :Parameters:
-          `clf` : `Classifier`
+          clf : Classifier
             classifier based on which multiple classifiers are created
             for multiclass
-          `boostedcls` : `BoostedClassifier`
+          boostedcls : BoostedClassifier
             classifier used to aggregate "pairClassifier"s
+          bcls_type
+            "1-vs-1" or "1-vs-all", determines the way to generate binary
+            classifiers
           """
-        Classifier.__init__(self)
+        Classifier.__init__(self, **kwargs)
+        self.__cls = cls
+        """Store sample instance of basic classifier"""
         self.__bcls = bcls
+        """Store sample instance of boosted classifier to construct based on cls's"""
 
         # generate simpler classifiers
         #
@@ -290,12 +301,44 @@ class BoostedMulticlassClassifier(Classifier):
         #
         # clss= ...
 
-        self.__bcls.classifiers = clss
+        # XXX such logic below might go under train....
+        if bcls_type == "1-vs-1":
+            pass
+        elif bcls_type == "1-vs-all":
+            raise NotImplementedError
+        else:
+            raise ValueError, \
+                  "Unknown type of classifier %s for " % bcls_type + \
+                  "BoostedMulticlassClassifier"
+        self.__bcls_type = bcls_type
+
 
 
     def train(self, data):
         """
         """
+        # construct binary classifiers
+        ulabels = data.uniquelabels
+
+        if self.__bcls_type == "1-vs-1":
+            # generate pairs and corresponding classifiers
+            biclss = []
+            for i in xrange(len(ulabels)):
+                for j in xrange(i+1, len(ulables)):
+                    cls = deepcopy(self.__cls)
+                    bicls.append(
+                        BinaryClassifierDecorator(
+                        cls,
+                        poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
+            if __debug__:
+                debug("CLS", "Created %d binary classifiers for %d labels" %
+                      (len(bicls), len(ulabels)))
+
+            self.__bcls.classifiers = biclss
+
+        elif self.__bcls_type == "1-vs-all":
+            raise NotImplementedError
+
         self.__bcls.train(data)
 
 
@@ -304,4 +347,4 @@ class BoostedMulticlassClassifier(Classifier):
         """
         return self.__bcls.predict(data)
 
-    classifiers = property(lambda x:x.__bcls.__clss, doc="Used classifiers")
+    classifiers = property(lambda x:x.__bcls.classifiers, doc="Used classifiers")
