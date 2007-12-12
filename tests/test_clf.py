@@ -37,9 +37,9 @@ class DummyClassifier(Classifier):
 class ClassifiersTests(unittest.TestCase):
 
     def testDummy(self):
-        cls = DummyClassifier()
-        cls.train(None)
-        self.failUnless(cls.predict([[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]])
+        clf = DummyClassifier()
+        clf.train(None)
+        self.failUnless(clf.predict([[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]])
                         == [1, 1, 1, -1, -1])
 
     def testBoosted(self):
@@ -52,13 +52,13 @@ class ClassifiersTests(unittest.TestCase):
         testdata = [ [0,0], [10,10], [-10, -1], [0.1, -0.1], [-0.2, 0.2] ]
         # labels [s]ame/[d]ifferent (sign), and [p]ositive/[n]egative first element
 
-        cls = DummyClassifier()
+        clf = DummyClassifier()
         # lets create classifier to descriminate only between same/different,
         # which is a primary task of DummyClassifier
-        bcls1 = BinaryClassifierDecorator(cls=cls,
+        bclf1 = BinaryClassifierDecorator(clf=clf,
                                           poslabels=['sp', 'sn'],
                                           neglabels=['dp', 'dn'])
-        self.failUnless(bcls1.predict(testdata) ==
+        self.failUnless(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
                          ['dn', 'dp'], ['dn', 'dp']])
 
