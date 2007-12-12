@@ -14,14 +14,15 @@ debian-build:
 	debian/rules build
 
 
-build:
+build: build-stamp
+build-stamp:
 	python setup.py config --noisy
 	python setup.py build_ext
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so \
 		mvpa/clf/libsvm/
-
+	touch $@
 #
 # Cleaning
 #
@@ -45,9 +46,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm -rf doc/{,devguide/}*.html
-# remove all generated HTML stuff
-	@find doc -mindepth 2 -maxdepth 2 -type d -name 'html' -print -exec rm -rf {} \;
+	-@rm build-stamp apidoc-stamp
 
 
 debian-clean:
@@ -58,32 +57,46 @@ debian-clean:
 # Misc pattern rules
 #
 
-# convert rsT documentation in doc/* to HTML. In the corresponding directory
-# below doc/ a subdir html/ is created that contains the converted output.
+# convert rsT documentation in doc/* to HTML.
 rst2html-%:
-	if [ ! -d doc/$*/html ]; then mkdir -p doc/$*/html; fi
-	cd doc/$* && \
-		for f in *.txt; do rst2html --date --strict --stylesheet=pymvpa.css \
-		    --link-stylesheet $${f} html/$${f%%.txt}.html; \
-		done
-	cp doc/misc/*.css doc/$*/html
+	if [ ! -d build/html ]; then mkdir -p build/html; fi
+	for f in doc/$*/*.txt; do rst2html --date --strict --stylesheet=pymvpa.css \
+		--link-stylesheet $${f} build/html/$$(basename $${f%%.txt}.html); \
+	done
+	cp doc/misc/*.css build/html
 	# copy common images
-	cp -r doc/misc/pics doc/$*/html
+	cp -r doc/misc/pics build/html
 	# copy local images, but ignore if there are none
-	-cp -r doc/$*/pics doc/$*/html
+	-cp -r doc/$*/pics build/html
+
+# convert rsT documentation in doc/* to PDF.
+rst2pdf-%:
+	if [ ! -d build/pdf ]; then mkdir -p build/pdf; fi
+	for f in doc/$*/*.txt; do \
+		rst2latex --documentclass=scrartcl \
+		          --use-latex-citations \
+				  --strict \
+				  --use-latex-footnotes \
+				  --stylesheet ../../doc/misc/style.tex \
+				  $${f} build/pdf/$$(basename $${f%%.txt}.tex); \
+		done
+	cd build/pdf && for f in *.tex; do pdflatex $${f}; done
+# need to clean tex files or the will be rebuild again
+	cd build/pdf && rm *.tex
+
 
 #
 # Website
 #
+# put everything in one directory. Might be undesired if there are
+# filename clashes. But given the website will be/should be simply, it
+# might 'just work'.
+website: rst2html-website rst2html-devguide rst2html-manual apidoc
 
-website: rst2html-website rst2html-devguide
-	# put everything in one directory. Might be undesired if there are
-	# filename clashes. But given the website will be/should be simply, it
-	# might 'just work'.
-	cp -r doc/devguide/html/* doc/website/html/
+printables: rst2pdf-manual
 
 upload-website: website
-	scp -r doc/website/html/* alioth:/home/groups/pkg-exppsy/htdocs/pymvpa
+	scp -r build/html/* alioth:/home/groups/pkg-exppsy/htdocs/pymvpa
 
 #
 # Documentation
@@ -94,8 +107,10 @@ doc: apidoc rst2html-devguide rst2html-manual
 manual:
 	cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
 
-apidoc: $(PROFILE_FILE)
+apidoc: apidoc-stamp
+apidoc-stamp: $(PROFILE_FILE)
 	epydoc --config doc/api/epydoc.conf
+	touch $@
 
 $(PROFILE_FILE): build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
