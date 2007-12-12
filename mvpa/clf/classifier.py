@@ -73,7 +73,7 @@ class Classifier(State):
 
         self._registerState('values', enabled=False,
                             doc="Internal values seen by the classifier")
-        self._registerState('predictions', enabled=False,
+        self._registerState('predictions', enabled=True,
                             doc="Reported predicted values")
 
 
@@ -113,12 +113,103 @@ MultiClass.train() would simply call BoostedClassifier
 The aspect to keep in mind is the resultant sensitivities
 """
 
+#
+# Various combiners
+#
+
+class Combiner(State):
+    """Base class for combining decisions of multiple classifiers"""
+
+    def call(self, clfs):
+        """Call function
+
+        :Parameters:
+          clfs : list of Classifier
+            List of classifiers to combine. Has to be classifiers (not
+            pure predictions), since combiner might use some other
+            state variables (value's) instead of pure prediction's
+        """
+        raise NotImplementedError
+
+
+class MaximalVote(Combiner):
+    """Provides a decision using maximal vote rule"""
+
+    def __init__(self):
+        """XXX Might get a parameter to use raw decision values if
+        voting is not unambigous (ie two classes have equal number of
+        votes
+        """
+        Combiner.__init__(self)
+
+        self._registerState("predictions", enabled=True,
+                            doc="Voted predictions")
+        self._registerState("all_label_counts", enabled=False,
+                            doc="Counts across classifiers for each label/sample")
+
+
+    def call(self, clfs):
+        """
+        Extended functionality which might not be needed actually:
+        Since `BinaryClassifierDecorator` might return a list of possible
+        predictions (not just a single one), we should consider all of those
+        """
+        if len(clfs)==0:
+            return []                   # to don't even bother
+
+        all_label_counts = None
+        for clf in clfs:
+            # Lets check first if necessary state variable is enabled
+            if not clf.isStateEnabled("predictions"):
+                raise ValueError, "MaximalVote needs classifiers (such as " + \
+                      "%s) with state 'predictions' enabled" % clf
+            predictions = clf["predictions"]
+            if all_label_counts is None:
+                all_label_counts = [ {} for i in xrange(len(predictions)) ]
+
+            # for every sample
+            for i in xrange(len(predictions)):
+                for label in predictions[i]: # for every label
+                    # we might have multiple labels assigned XXX
+                    # but might not -- don't remember now
+                    if not all_label_counts[i].has_label(label):
+                        all_label_counts[i][label] = 0
+                    all_label_counts[i][label] += 1
+
+        predictions = []
+        # select maximal vote now for each sample
+        for i in xrange(len(all_label_counts)):
+            label_counts = all_label_counts[i]
+            # lets do explicit search for max so we know
+            # if it is unique
+            maxk = []                   # labels of elements with max vote
+            maxv = -1
+            for k,v in label_counts.iteritems():
+                if v>maxv:
+                    maxk = [k]
+                    maxv = v
+                elif v==maxv:
+                    maxk.append(k)
+
+            assert len(maxk)>=1, \
+                   "We should have obtained at least a single key of max label"
+
+            if len(maxk)>1:
+                warning("We got multiple labels %s which have the " % maxk +
+                        "same maximal vote %d. XXX disambiguate" % maxv)
+            predictions.append(maxk[0])
+
+        self["all_label_counts"] = all_label_counts
+        self["predictions"] = predictions
+        return predictions
+
+
 class BoostedClassifier(Classifier):
     """
 
     """
 
-    def __init__(self, clfs, combiner, **kwargs):
+    def __init__(self, clfs, combiner=MaximalVote, **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -154,11 +245,25 @@ class BoostedClassifier(Classifier):
     def predict(self, data):
         """
         """
-        predictions = [ clf.predict(data) for clf in self.__clfs ]
+        raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
+        if clf.isStateEnabled("values") and self.isStateEnabled("values"):
+            values = [ clf["values"] for clf in self.__clfs ]
+            self["raw_values"] = values
 
-        self["prediction_values"] = predictions
+        self["raw_predictions"] = raw_predictions
 
-        return self.__combiner(predictions)
+        predictions = self.__combiner(self.__clfs)
+        self["predictions"] = predictions
+
+        if self.isStateEnabled("values"):
+            if self.__combiner.isStateEnabled("values"):
+                # XXX or may be we could leave simply up to accessing .combiner?
+                self["values"] = self.__combiner["values"]
+            else:
+                if __debug__:
+                    warning("Boosted classifier %s has 'values' state" % self +
+                            " enabled, but combiner has it disabled, thus no" +
+                            " values could be provided")
 
 
     def _setClassifiers(self, clfs):
@@ -174,6 +279,9 @@ class BoostedClassifier(Classifier):
     classifiers = property(fget=lambda x:x.__clfs,
                            fset=_setClassifiers,
                            doc="Used classifiers")
+
+    combiner = property(fget=lambda x:x.__combiner,
+                        doc="Used combiner to derive a single result")
 
 
 
@@ -347,6 +455,7 @@ class BoostedMulticlassClassifier(Classifier):
     def predict(self, data):
         """
         """
+        # XXX might need to copy states off bclf
         return self.__bclf.predict(data)
 
     classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")

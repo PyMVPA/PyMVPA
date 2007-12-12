@@ -17,7 +17,7 @@ from mvpa.clf.classifier import Classifier, BoostedClassifier, \
      BinaryClassifierDecorator, BoostedMulticlassClassifier
 
 
-class DummyClassifier(Classifier):
+class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
@@ -34,16 +34,29 @@ class DummyClassifier(Classifier):
         return values
 
 
+class Less1Classifier(SameSignClassifier):
+    """Dummy classifier which reports +1 class if abs value of max less than 1"""
+    def predict(self, data):
+        datalen = len(data)
+        values = []
+        for d in data:
+            values.append(2*int(max(d)<=1)-1)
+        return values
+
+
 class ClassifiersTests(unittest.TestCase):
 
     def testDummy(self):
-        clf = DummyClassifier()
+        clf = SameSignClassifier()
         clf.train(None)
         self.failUnless(clf.predict([[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]])
                         == [1, 1, 1, -1, -1])
 
     def testBoosted(self):
         # XXXXXXX
+        clf_sign = SameSignClassifier()
+        clf_less1 = Less1Classifier()
+        bclf1 = BoostedClassifier(clfs=[clf_sign])
         pass
 
     def testBinaryDecorator(self):
@@ -52,9 +65,9 @@ class ClassifiersTests(unittest.TestCase):
         testdata = [ [0,0], [10,10], [-10, -1], [0.1, -0.1], [-0.2, 0.2] ]
         # labels [s]ame/[d]ifferent (sign), and [p]ositive/[n]egative first element
 
-        clf = DummyClassifier()
+        clf = SameSignClassifier()
         # lets create classifier to descriminate only between same/different,
-        # which is a primary task of DummyClassifier
+        # which is a primary task of SameSignClassifier
         bclf1 = BinaryClassifierDecorator(clf=clf,
                                           poslabels=['sp', 'sn'],
                                           neglabels=['dp', 'dn'])
