@@ -10,10 +10,13 @@
 
 __docformat__ = 'restructuredtext'
 
+import operator
+
 from copy import deepcopy
 from sets import Set
 
 from mvpa.misc.state import State
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -148,7 +151,7 @@ class MaximalVote(Combiner):
                             doc="Counts across classifiers for each label/sample")
 
 
-    def call(self, clfs):
+    def __call__(self, clfs):
         """
         Extended functionality which might not be needed actually:
         Since `BinaryClassifierDecorator` might return a list of possible
@@ -169,10 +172,13 @@ class MaximalVote(Combiner):
 
             # for every sample
             for i in xrange(len(predictions)):
-                for label in predictions[i]: # for every label
+                prediction = predictions[i]
+                if not operator.isSequenceType(prediction):
+                    prediction = (prediction,)
+                for label in prediction: # for every label
                     # we might have multiple labels assigned XXX
                     # but might not -- don't remember now
-                    if not all_label_counts[i].has_label(label):
+                    if not all_label_counts[i].has_key(label):
                         all_label_counts[i][label] = 0
                     all_label_counts[i][label] += 1
 
@@ -209,7 +215,7 @@ class BoostedClassifier(Classifier):
 
     """
 
-    def __init__(self, clfs, combiner=MaximalVote, **kwargs):
+    def __init__(self, clfs, combiner=MaximalVote(), **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -230,9 +236,14 @@ class BoostedClassifier(Classifier):
         Classifier.__init__(self, **kwargs)
 
         self._setClassifiers(clfs)
+        """Store the list of classifiers"""
+
+        self.__combiner = combiner
+        """Functor destined to combine results of multiple classifiers"""
 
         # should not be needed if we have prediction_values upstairs
-        # self._registerState("predictions", enabled=True)
+        self._registerState("raw_predictions", enabled=False,
+                            doc="Predictions obtained from each classifier")
 
 
     def train(self, data):
@@ -263,7 +274,9 @@ class BoostedClassifier(Classifier):
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state" % self +
                             " enabled, but combiner has it disabled, thus no" +
+
                             " values could be provided")
+        return predictions
 
 
     def _setClassifiers(self, clfs):

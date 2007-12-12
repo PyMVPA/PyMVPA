@@ -16,6 +16,7 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.clf.classifier import Classifier, BoostedClassifier, \
      BinaryClassifierDecorator, BoostedMulticlassClassifier
 
+from copy import deepcopy
 
 class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
@@ -31,6 +32,7 @@ class SameSignClassifier(Classifier):
         values = []
         for d in data:
             values.append(2*int(d[0]*d[1]>=0)-1)
+        self["predictions"] = values
         return values
 
 
@@ -41,23 +43,37 @@ class Less1Classifier(SameSignClassifier):
         values = []
         for d in data:
             values.append(2*int(max(d)<=1)-1)
+        self["predictions"] = values
         return values
 
 
 class ClassifiersTests(unittest.TestCase):
 
+    def setUp(self):
+        self.clf_sign = SameSignClassifier()
+        self.clf_less1 = Less1Classifier()
+
+        # simple binary dataset
+        self.data_bin_1 = ([[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
+                           [1, 1, 1, -1, -1])
+
     def testDummy(self):
         clf = SameSignClassifier()
         clf.train(None)
-        self.failUnless(clf.predict([[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]])
-                        == [1, 1, 1, -1, -1])
+        self.failUnless(clf.predict(self.data_bin_1[0]) == self.data_bin_1[1])
 
     def testBoosted(self):
         # XXXXXXX
-        clf_sign = SameSignClassifier()
-        clf_less1 = Less1Classifier()
-        bclf1 = BoostedClassifier(clfs=[clf_sign])
-        pass
+        # silly test if we get the same result with boosted as with a single one
+        bclf = BoostedClassifier(clfs=[deepcopy(self.clf_sign),
+                                       deepcopy(self.clf_sign)])
+        self.failUnlessEqual(bclf.predict(self.data_bin_1[0]),
+                             self.data_bin_1[1],
+                             msg="Boosted classifier should work")
+        self.failUnlessEqual(bclf.predict(self.data_bin_1[0]),
+                             self.clf_sign.predict(self.data_bin_1[0]),
+                             msg="Boosted classifier should have the same as regular")
+
 
     def testBinaryDecorator(self):
         ds = Dataset(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
