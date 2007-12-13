@@ -45,7 +45,17 @@ class SplitterTests(unittest.TestCase):
 
         splits = [ (train, test) for (train, test) in oes(self.data) ]
 
-        print splits
+        self.failUnless(len(splits) == 2)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 2 )
+            self.failUnless( p[0].nsamples == 50 )
+            self.failUnless( p[1].nsamples == 50 )
+
+        self.failUnless((splits[0][0].uniquechunks == [1, 3, 5, 7, 9]).all())
+        self.failUnless((splits[0][1].uniquechunks == [0, 2, 4, 6, 8]).all())
+        self.failUnless((splits[1][1].uniquechunks == [1, 3, 5, 7, 9]).all())
+        self.failUnless((splits[1][0].uniquechunks == [0, 2, 4, 6, 8]).all())
 
 
 
