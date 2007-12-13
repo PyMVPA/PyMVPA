@@ -57,7 +57,7 @@ class State(object):
         """
         self.__dict = {}
         """Actual storage to use for state variables"""
-        
+
         register_states = {}
         # if class defined default states to register -- use them
 
@@ -203,6 +203,12 @@ class State(object):
 
         self.__checkIndex(index)
         return self.__registered[index]['enabled']
+
+
+    def isStateActive(self, index):
+        """Returns `True` if state `index` is known and is enabled"""
+        return self.__registered.has_key(index) and \
+               self.__registered[index]['enabled']
 
 
     def listStates(self):
