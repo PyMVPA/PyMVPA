@@ -14,7 +14,6 @@ import numpy as N
 
 from mvpa.misc.support import *
 
-
 class SupportFxTests(unittest.TestCase):
 
     def testTransformWithBoxcar(self):
@@ -51,27 +50,6 @@ class SupportFxTests(unittest.TestCase):
         sp = [ 2, 4, 3, 5 ]
         trans = transformWithBoxcar( data, sp, 4)
         self.failUnless( trans.shape == (4,3,4,2) )
-
-
-    def testConfusionMatrix(self):
-        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
-        reg = N.array([1,1,1,2,2,2,3,3,3])
-
-        tbl = buildConfusionMatrix( N.unique(reg), reg, N.array([1,2,1,2,2,2,3,2,1]) )
-
-        # should be square matrix (len(reglabels) x len(reglabels)
-        self.failUnless( tbl.shape == (3,3) )
-
-        # check table content
-        self.failUnless( (tbl == [[2,1,0],[0,3,0],[1,1,1]]).all() )
-
-        # check pretty print
-        matrix = N.array( [ [100,900,1], [10,100,2], [1,0,0] ] )
-        labels = ["s", "looong","nah"]
-        s=pprintConfusionMatrix(labels=labels, matrix=matrix)
-
-        # just a silly test to make sure that printing works
-        self.failUnless(len(s)>100)
 
 
     def testMofNCombinations(self):
