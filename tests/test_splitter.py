@@ -8,26 +8,25 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA pattern handling"""
 
-import mvpa.datasets.maskeddataset
-import mvpa.datasets.splitter as nfoldsplitter
+from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 import unittest
 import numpy as N
 
 
-class NFoldSplitterTests(unittest.TestCase):
+class SplitterTests(unittest.TestCase):
 
     def setUp(self):
         self.data = \
-            mvpa.datasets.maskeddataset.MaskedDataset(
-            samples=N.random.normal(size=(100,10)),
-            labels=[ i%4 for i in range(100) ],
-            chunks=[ i/10 for i in range(100) ] )
+            MaskedDataset(samples=N.random.normal(size=(100,10)),
+                           labels=[ i%4 for i in range(100) ],
+                            chunks=[ i/10 for i in range(100)])
 
 
 
     def testSimplestCVPatGen(self):
         # create the generator
-        nfs = nfoldsplitter.NFoldSplitter(cvtype=1)
+        nfs = NFoldSplitter(cvtype=1)
 
         # now get the xval pattern sets One-Fold CV)
         xvpat = [ (train, test) for (train,test) in nfs(self.data) ]
@@ -41,8 +40,17 @@ class NFoldSplitterTests(unittest.TestCase):
             self.failUnless( p[1].chunks[0] == i )
 
 
+    def testOddEvenSplit(self):
+        oes = OddEvenSplitter()
+
+        splits = [ (train, test) for (train, test) in oes(self.data) ]
+
+        print splits
+
+
+
 def suite():
-    return unittest.makeSuite(NFoldSplitterTests)
+    return unittest.makeSuite(SplitterTests)
 
 
 if __name__ == '__main__':
