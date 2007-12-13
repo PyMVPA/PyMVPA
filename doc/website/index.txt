@@ -53,8 +53,19 @@ line blocks
   as soon as it comes.
 | Love, Ewan.
 
-Requirements
-============
+Documentation
+=============
+
+Manual_
+`API Documentation`_
+`Developer Guidelines`_
+
+.. _Manual: manual.html
+.. _API Documentation: api/index.html
+.. _Developer Guidelines: devguide.html
+
+Whatever
+========
 
 Table demo with full-blown acsii art
 
@@ -90,27 +101,4 @@ Table with 'row-headers'
 :field2: row2
 :field2: row3
 
-Documentation
-=============
-
-`Developer Guidelines`_
-
-.. _Developer Guidelines: devguide.html
-
-Examples
-========
-Might need to put some code example::
-
-  sample = []
-  # for each available class
-  for i, r in enumerate(self.uniquelabels):
-      # get the list of pattern ids for this class
-      sample += random.sample( (self.labels == r).nonzero()[0],
-                               nperlabel[i] )
-
-Actually the following 'doctest' syntax might be much better to automatically
-determine whether the examples are up-to-date and working.
-
->>> print 'this is a Doctest block'
-this is a Doctest block text
 

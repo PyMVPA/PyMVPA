@@ -86,7 +86,7 @@ if __debug__:
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
     debug.register('ST',   "State")
-    debug.register('CLS',  "Base Classifiers")
+    debug.register('CLF',  "Base Classifiers")
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('CROSSC',"Cross-validation call")
