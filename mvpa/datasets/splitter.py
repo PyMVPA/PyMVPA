@@ -30,6 +30,12 @@ class Splitter(object):
     Please note, that even if there is only one Dataset returned it has to be
     an element in a tuple and not just the Dataset object!
     """
+    def __init__(self):
+        """Does nothing.
+        """
+        pass
+
+
     def __call__(self, dataset):
         """
         """
@@ -99,6 +105,31 @@ class NoneSplitter(Splitter):
         a 2-tuple. The first element of that tuple will always be 'None'.
         """
         return (None, dataset)
+
+
+
+class OddEvenSplitter(Splitter):
+    """Split a dataset into odd and even chunks.
+
+    The splitter yields to splits: first (odd, even) and second (even, odd).
+    """
+    def __init__(self):
+        """Cheap init -- nothing special
+        """
+        Splitter.__init__(self)
+
+
+    def __call__(self, dataset):
+        """Splits the dataset.
+
+        This method behaves like a generator and returns two iterations: first
+        (odd,even) then (even,odd).
+        """
+        odd_chunks = dataset.uniquechunks[(dataset.uniquechunks % 2) == True]
+        even_chunks = dataset.uniquechunks[(dataset.uniquechunks % 2) == False]
+
+        yield Splitter.splitWorkingSpareDataset(dataset, even_chunks)
+        yield Splitter.splitWorkingSpareDataset(dataset, odd_chunks)
 
 
 

@@ -18,7 +18,7 @@ tests = [
     'test_neighbor',
     'test_maskeddataset',
     'test_niftidataset',
-    'test_nfoldsplitter',
+    'test_splitter',
     'test_state',
     # Misc supporting utilities
     'test_stats',
