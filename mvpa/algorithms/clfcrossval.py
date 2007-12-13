@@ -60,6 +60,8 @@ class ClfCrossValidation(DataMeasure):
         """Store individual results in the state"""
         self._registerState("splits", enabled=False)
         """Store the actual splits of the data. Can be memory expensive"""
+        self._registerState("confusions", enabled=False)
+        """Store actual confusion matrices (if available)"""
 
 
 # TODO: put back in ASAP
@@ -84,6 +86,7 @@ class ClfCrossValidation(DataMeasure):
         results = []
 
         self["splits"] = []
+        self["confusions"] = []
 
         # splitter
         for split in self.__splitter(dataset):
@@ -93,6 +96,16 @@ class ClfCrossValidation(DataMeasure):
                 self["splits"].append(split)
 
             result = self.__transerror(split[1], split[0])
+            if self.isStateEnabled('confusions'):
+                if self.__transerror.isStateActive('confusion'):
+                    self.confusions.append(self.__transerror["confusion"])
+                else:
+                    warning("Crossvalidator %s can't store confusions state " %
+                            self +
+                            "since transfer error %s doesn't have confusion " %
+                            self.__transerror +
+                            "doesn't have it enabled to registered")
+
             if __debug__:
                 debug("CROSS", "Split #%d: result %s" % (len(results), `result`))
             results.append(result)
