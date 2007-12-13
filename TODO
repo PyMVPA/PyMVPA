@@ -1,5 +1,6 @@
-* Add support for topology support for stuff other than dense mask matrices,
-  e.g. meshes.
+* unify naming of working/testing 
+    transerror.py for instance uses testdata/trainingdata
+    rfe.py dataset, testdataset
 * Hide libsvm interface from user and provide a unique classifier for linear
   SVM.
 * (features selected on all folds)/(features selected on any fold)
