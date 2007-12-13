@@ -65,6 +65,14 @@ class SupportFxTests(unittest.TestCase):
         # check table content
         self.failUnless( (tbl == [[2,1,0],[0,3,0],[1,1,1]]).all() )
 
+        # check pretty print
+        matrix = N.array( [ [100,900,1], [10,100,2], [1,0,0] ] )
+        labels = ["s", "looong","nah"]
+        s=pprintConfusionMatrix(labels=labels, matrix=matrix)
+
+        # just a silly test to make sure that printing works
+        self.failUnless(len(s)>100)
+
 
     def testMofNCombinations(self):
         self.failUnlessEqual(
@@ -88,6 +96,7 @@ class SupportFxTests(unittest.TestCase):
         self.failUnlessEqual(getBreakPoints(items_cont), [0, 3, 6, 8])
         self.failUnlessEqual(getBreakPoints(items_cont, contiguous=False),
                              [0, 3, 6, 8])
+
 
 
 def suite():
