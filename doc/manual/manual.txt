@@ -375,9 +375,9 @@ arbitrary N-M splits, where N is the number of different chunks in a dataset
 and M is any non-negative integer smaller than N. Doing a leave-one-out split
 of our example dataset looks like this:
 
-.. _NFoldSplitter: api/mvpa.datasets.nfoldsplitter.NFoldSplitter-class.html
+.. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
 
-  >>> from mvpa.datasets.nfoldsplitter import NFoldSplitter
+  >>> from mvpa.datasets.splitter import NFoldSplitter
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
   >>> for wdata, vdata in splitter(data):
           # do something

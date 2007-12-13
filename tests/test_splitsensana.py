@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.datasets.dataset import Dataset
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clf.svm import LinearNuSVMC
-from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer
 
 

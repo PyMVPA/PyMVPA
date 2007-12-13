@@ -115,6 +115,9 @@ apidoc-stamp: $(PROFILE_FILE)
 $(PROFILE_FILE): build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
+test: build
+	@cd tests && PYTHONPATH=.. python main.py
+
 #
 # Sources
 #

@@ -13,7 +13,7 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.clf.knn import kNN
-from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.transerror import TransferError
 
