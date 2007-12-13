@@ -1,7 +1,11 @@
 PROFILE_FILE=tests/main.pstats
 
+HTML_DIR=build/html
+PDF_DIR=build/pdf
+
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
+
 
 #
 # Building
@@ -59,30 +63,30 @@ debian-clean:
 
 # convert rsT documentation in doc/* to HTML.
 rst2html-%:
-	if [ ! -d build/html ]; then mkdir -p build/html; fi
+	if [ ! -d $(HTML_DIR) ]; then mkdir -p $(HTML_DIR); fi
 	for f in doc/$*/*.txt; do rst2html --date --strict --stylesheet=pymvpa.css \
-		--link-stylesheet $${f} build/html/$$(basename $${f%%.txt}.html); \
+		--link-stylesheet $${f} $(HTML_DIR)/$$(basename $${f%%.txt}.html); \
 	done
-	cp doc/misc/*.css build/html
+	cp doc/misc/*.css $(HTML_DIR)
 	# copy common images
-	cp -r doc/misc/pics build/html
+	cp -r doc/misc/pics $(HTML_DIR)
 	# copy local images, but ignore if there are none
-	-cp -r doc/$*/pics build/html
+	-cp -r doc/$*/pics $(HTML_DIR)
 
 # convert rsT documentation in doc/* to PDF.
 rst2pdf-%:
-	if [ ! -d build/pdf ]; then mkdir -p build/pdf; fi
+	if [ ! -d $(PDF_DIR) ]; then mkdir -p $(PDF_DIR); fi
 	for f in doc/$*/*.txt; do \
 		rst2latex --documentclass=scrartcl \
 		          --use-latex-citations \
 				  --strict \
 				  --use-latex-footnotes \
 				  --stylesheet ../../doc/misc/style.tex \
-				  $${f} build/pdf/$$(basename $${f%%.txt}.tex); \
+				  $${f} $(PDF_DIR)/$$(basename $${f%%.txt}.tex); \
 		done
-	cd build/pdf && for f in *.tex; do pdflatex $${f}; done
+	cd $(PDF_DIR) && for f in *.tex; do pdflatex $${f}; done
 # need to clean tex files or the will be rebuild again
-	cd build/pdf && rm *.tex
+	cd $(PDF_DIR) && rm *.tex
 
 
 #
@@ -96,7 +100,7 @@ website: rst2html-website rst2html-devguide rst2html-manual apidoc
 printables: rst2pdf-manual
 
 upload-website: website
-	scp -r build/html/* alioth:/home/groups/pkg-exppsy/htdocs/pymvpa
+	rsync --delete -r --chmod=g+w --verbose -r $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
 
 #
 # Documentation
@@ -109,6 +113,7 @@ manual:
 
 apidoc: apidoc-stamp
 apidoc-stamp: $(PROFILE_FILE)
+	mkdir -p $(HTML_DIR)/api
 	epydoc --config doc/api/epydoc.conf
 	touch $@
 
