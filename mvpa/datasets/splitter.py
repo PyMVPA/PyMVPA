@@ -128,6 +128,9 @@ class OddEvenSplitter(Splitter):
         odd_chunks = dataset.uniquechunks[(dataset.uniquechunks % 2) == True]
         even_chunks = dataset.uniquechunks[(dataset.uniquechunks % 2) == False]
 
+        # TODO: All splitters need refactoring. multiple runs and random
+        #       sample subsets should be a feature of all splitters, not
+        #       just nfoldsplitter.
         yield Splitter.splitWorkingSpareDataset(dataset, even_chunks)
         yield Splitter.splitWorkingSpareDataset(dataset, odd_chunks)
 
