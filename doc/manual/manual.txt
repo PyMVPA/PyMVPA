@@ -29,22 +29,57 @@ Introduction
 
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
+.. _Python: http://www.python.org
+
+.. should become an abstract
+
+
+How to cite PyMVPA
+~~~~~~~~~~~~~~~~~~
+.. come up with something
+
+
 Prerequisites
 ~~~~~~~~~~~~~
- * Basic Python experiences (if not easy to get with Python tutorials).
- * For efficiency:
+.. * Basic Python experiences (if not easy to get with Python tutorials).
+.. * For efficiency:
+..   - prior experience with NumPy and/or SciPy.
+..   - basic understanding of the concepts(s) of machine learning.
 
-   - prior experience with NumPy and/or SciPy.
-   - basic understanding of the concepts(s) of machine learning.
+If you want to use PyMVPA interactively it is strongly recommend to use
+IPython_. If you think: *"Oh no, not another one, I already have to learn about
+PyMVPA."* please invest a few minutes to watch `some screencasts`_, so at
+least you know what you are missing.
+
+.. _IPython: http://ipython.scipy.org
+.. _some screencasts: http://showmedo.com/videos/series?name=CnluURUTV
+
+
+Obtaining PyMVPA
+~~~~~~~~~~~~~~~~
+
+Binary packages
+'''''''''''''''
+
+Source code
+'''''''''''
+
+Installation
+~~~~~~~~~~~~
+.. Point to source and binary distribution. Preach idea of free software.
+   Step by step guide to install it on difficult systems like Windows.
+
+.. Don't forget to mention that the only reasonable way is to use this piece
+   of software (like every other piece) is under Debian! Also mention that
+   Ubuntu is no excuse ;-)
 
 
 Conventions
 ~~~~~~~~~~~
-NumPy package will by used as N throughout this manual.
+In all examples the NumPy package is assumed to be imported using the alias `N`
+throughout this manual.
 
   >>> import numpy as N
-
-* Note how to cite it.
 
 
 A Bit of History
@@ -90,8 +125,6 @@ most promissing candidate that was fully capable to fulfil the intended
 development goal. Python is a very powerful language that magically combines
 the possibility to write really fast code and a simplicity that allows to
 learn the basic concepts within a few days.
-
-.. _Python: http://www.python.org
 
 One of the major advantages of Python is the availablity of a huge amount of
 so called *modules*. Modules can include extensions written in a hard-core
@@ -151,7 +184,6 @@ documentation, which is a comprehensive and up-to-date description of the
 whole package. More examples and usage patterns extending the ones described
 here can be taken from the unit test battery, that is part of the source
 distribution (in the `tests/` directory).
-
 
 
 
@@ -425,19 +457,24 @@ Incremental Feature Search
 .. What are the practical differences (besides speed) between RFE and IFS?
 
 
-Installation
-------------
+Statistical Testing
+~~~~~~~~~~~~~~~~~~~
 
-.. Point to source and binary distribution. Preach idea of free software.
-   Step by step guide to install it on difficult systems like Windows.
-
-.. Don't forget to mention that the only reasonable way is to use this piece
-   of software (like every other piece) is under Debian! Also mention that
-   Ubuntu is no excuse ;-)
+.. Point to the problem of an unknown H0 distribution, which is a problem
+   for a lot of statistical tests.
 
 
 Frequently Asked Questions
 --------------------------
+
+I feel like I want to contribute something, do you mind?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Not at all! If you think there is something that is not well explained in
+  the documentation, send us an improvement. If you implemented a new algorithm
+  using PyMVPA that you want to share, please share. If you have an idea for
+  some other improvement (e.g. speed, functionality), but you have no
+  time/cannot/do not want to implement it yourselve, please post your idea to
+  the PyMVPA mailing list.
 
 .. We probably need them once we have more than two users.
 
@@ -473,3 +510,15 @@ documentation is covered by the MIT license.
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
+
+
+
+
+
+.. The following should only be considered when running rst2latex, but Michael
+   doesn't know how to do that. If it would work we would get printed
+   references to all external link targets. Otherwise we have nice links in the
+   PDF, but when they are printed nobody knows where a link points to
+   .. raw:: latex
+     \theendnotes
+   .. target-notes::
