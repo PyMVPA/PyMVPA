@@ -26,7 +26,7 @@
 
 
 from mvpa.maskeddataset import MaskedDataset
-from mvpa.nfoldsplitter import NFoldSplitter
+from mvpa.splitter import NFoldSplitter
 from mvpa.crossval import CrossValidation
 from mvpa import libsvm
 from mvpa.svm import SVM

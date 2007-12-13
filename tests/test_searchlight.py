@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.searchlight import Searchlight
 from mvpa.clf.knn import kNN
-from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.transerror import TransferError
 

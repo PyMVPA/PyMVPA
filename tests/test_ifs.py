@@ -17,7 +17,7 @@ from mvpa.algorithms.ifs import IFS
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.svm import LinearNuSVMC
 from mvpa.clf.transerror import TransferError
-from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.featsel import FixedNElementTailSelector
 
 

@@ -19,7 +19,7 @@ from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clf.knn import kNN
 from mvpa.clf.svm import LinearNuSVMC, RbfNuSVMC
-from mvpa.datasets.nfoldsplitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.datasets.misc import zscore
 from mvpa.algorithms.searchlight import Searchlight
 from mvpa.clf.transerror import TransferError
