@@ -190,12 +190,14 @@ distribution (in the `tests/` directory).
 Data Handling
 -------------
 
-The foundation of PyMVPA's data handling is the `Dataset` class. Basically,
+The foundation of PyMVPA's data handling is the Dataset_ class. Basically,
 this class stores data samples, sample attributes and dataset attributes, where
 sample attributes assign a value to each data sample and dataset attributes are
 additional information or functionality that applies to the whole dataset.
 
-Most likely the `Dataset` class will not be used directly, but through one
+.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+
+Most likely the Dataset_ class will not be used directly, but through one
 of the derived classes. However, it is perfectly possible to use it directly.
 In the simplest case a dataset can be constructed by specifying some
 data samples and the corresponding class labels.
@@ -228,20 +230,20 @@ attribute:
 
 The *data samples* itself are stored as a two-dimensional matrix where each
 row vector is a `sample` and each column vector contains the values of a
-`feature` across all `samples`. The `Dataset` class provides access to the
+`feature` across all `samples`. The Dataset_ class provides access to the
 samples matrix via the `samples` property.
 
   >>> data.samples.shape
   (10,5)
 
-The `Dataset` class itself can only deal with 2d sample matrices. However,
+The Dataset_ class itself can only deal with 2d sample matrices. However,
 PyMVPA provides a very easy way to deal with data where each data sample is
 more than a 1d vector: `Data Mapping`_
 
 
 Data Mapping
 ~~~~~~~~~~~~
-It was already mentioned that the `Dataset` class cannot deal with data samples
+It was already mentioned that the Dataset_ class cannot deal with data samples
 that are more than simple vectors. This could be a problem in cases where the
 data has a higher dimensionality, e.g. functional brain-imaging data where
 each data sample is typically a three-dimensional volume.
@@ -256,7 +258,7 @@ In PyMVPA this is done by mappers that transform data samples from their
 original *dataspace* into the so-called *features space*. In the above
 neuro-imaging example the *dataspace* is three-dimensional and the
 *feature space* always refers to the 2d `samples x features` representation
-that is required by the `Dataset` class. In the context of mappers the
+that is required by the Dataset_ class. In the context of mappers the
 dataspace is sometimes also refered to as *in-space* while the feature space
 is labeled as *out-space*.
 
@@ -266,14 +268,16 @@ information about dataspace metrics and feature neighbourhood, but all mappers
 are able to do reverse mapping from feature space into the original dataspace.
 
 Usually one does not have to deal with mappers directly. PyMVPA provides some
-convenience subclasses of `Dataset` the automatically perform the necessary
+convenience subclasses of Dataset_ the automatically perform the necessary
 mapping operations internally. 
 
 For an introduction into to concept of a dataset with mapping capabilities
-we can take a look at the `MaskedDataset` class. This dataset class works
-almost exactly like the basic `Dataset` class, except that it provides some
+we can take a look at the MaskedDataset_ class. This dataset class works
+almost exactly like the basic Dataset_ class, except that it provides some
 additional method and is more flexible with respect to the format of the sample
 data. A masked dataset can be created just like a normal dataset.
+
+.. _MaskedDataset: api/mvpa.datasets.maskeddataset.MaskedDataset-class.html
 
   >>> from mvpa.datasets.maskeddataset import MaskedDataset
   >>> mdata = MaskedDataset(samples=N.random.normal(size=(5,2,3,4)),
@@ -281,7 +285,7 @@ data. A masked dataset can be created just like a normal dataset.
   >>> mdata
   Dataset / float64 5 x 24 uniq: 5 labels 5 chunks
 
-However, unlike `Dataset` the `MaskedDataset` class can deal with sample
+However, unlike Dataset_ the MaskedDataset_ class can deal with sample
 data arrays with more than two dimensions. More precisely it handles arrays of
 any dimensionality. The only assumption that is made is that the first axis
 of a sample array separates the sample data points. In the above example we
@@ -290,9 +294,9 @@ therefore have 5 samples, where each sample is a 2x3x4 volume.
 If we look at the self-description of the created dataset we can see, that it
 doesn't tell us about 2x3x4 volumes, but simply 24 features. That is because
 internally the sample array is automatically reshaped into the aforementioned
-2d matrix representation of the `Dataset` class. However, the information about
+2d matrix representation of the Dataset_ class. However, the information about
 the original dataspace is not lost, but kept inside the mapper used by
-`MaskedDataset`. Two useful methods of `MaskedDataset` make use of the mapper:
+MaskedDataset_. Two useful methods of MaskedDataset_ make use of the mapper:
 `mapForward()` and `mapReverse()`. The former can be used to transform
 additional data from dataspace into the feature space and the latter performs
 the same in the opposite direction.
@@ -366,10 +370,12 @@ an appropriate Exception when they are done. This is exactly the same behavior
 as of e.g. the Python `xrange()` function.
 
 To perform data splitting for the already mentioned cross-validation, PyMVPA
-provides the `NFoldSplitter` class. It implements a method to generate
+provides the NFoldSplitter_ class. It implements a method to generate
 arbitrary N-M splits, where N is the number of different chunks in a dataset
 and M is any non-negative integer smaller than N. Doing a leave-one-out split
 of our example dataset looks like this:
+
+.. _NFoldSplitter: api/mvpa.datasets.nfoldsplitter.NFoldSplitter-class.html
 
   >>> from mvpa.datasets.nfoldsplitter import NFoldSplitter
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
