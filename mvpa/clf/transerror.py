@@ -10,9 +10,11 @@
 
 __docformat__ = 'restructuredtext'
 
+from sets import Set
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc.state import State
+from mvpa.misc.support import buildConfusionMatrix
 
 class TransferError(State):
     """Compute the transfer error of a (trained) classifier on a dataset.
@@ -21,7 +23,7 @@ class TransferError(State):
     Optionally the classifier can be training by passing an additional
     training dataset to the __call__() method.
     """
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx()):
+    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None):
         """Cheap initialization.
 
         Parameters
@@ -31,11 +33,13 @@ class TransferError(State):
         - `errorfx`: Functor that computes a scalar error value from the
                      vectors of desired and predicted values (e.g. subclass
                      of ErrorFx)
+        - `labels`: if provided, should be a set of labels to add on top of
+                    the ones present in testdata
         """
         State.__init__(self)
         self.__clf = clf
         self.__errorfx = errorfx
-
+        self.__labels = labels
         self._registerState('confusion')
         """TODO Think that labels might be also symbolic thus can't directly
                 be indicies of the array
@@ -57,7 +61,15 @@ class TransferError(State):
         predictions = self.__clf.predict(testdata.samples)
 
         # compute confusion matrix
-        # self['confusion'] = ....
+        if self.isStateEnabled('confusion'):
+            labels = list(Set(self.__labels).union(Set(testdata.labels)))
+            matrix = buildConfusionMatrix(
+                                      labels=labels,
+                                      targets=testdata.labels,
+                                      predictions=predictions)
+
+            self['confusion'] = { 'labels' : labels,
+                                  'matrix' : matrix}
         # TODO
 
         # compute error from desired and predicted values
