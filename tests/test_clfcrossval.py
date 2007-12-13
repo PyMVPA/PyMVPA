@@ -15,7 +15,7 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.clf.knn import kNN
 from mvpa.datasets.nfoldsplitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
-from mvpa.clf.transerror import TransferError
+from mvpa.clf.transerror import TransferError, ConfusionMatrix
 
 
 
@@ -107,6 +107,38 @@ class CrossValidationTests(unittest.TestCase):
         # must be at chance level
         pmean = N.array(results).mean()
         self.failUnless( pmean < 0.58 and pmean > 0.42 )
+
+
+    def testConfusionMatrix(self):
+        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        reg = N.array([1,1,1,2,2,2,3,3,3])
+
+        cm = ConfusionMatrix()
+        cm.add(reg, N.array([1,2,1,2,2,2,3,2,1]))
+
+        # should be square matrix (len(reglabels) x len(reglabels)
+        self.failUnless(cm.matrix.shape == (3,3))
+
+        self.failUnlessRaises(ValueError, cm.add, reg, N.array([1]))
+        """ConfusionMatrix must complaint if number of samples different"""
+
+        # check table content
+        self.failUnless((cm.matrix == [[2,1,0],[0,3,0],[1,1,1]]).all())
+
+        # lets add with new labels (not yet known)
+        cm.add(reg, N.array([1,4,1,2,2,2,4,2,1]))
+
+        self.failUnlessEqual(cm.labels, [1,2,3,4],
+                             msg="We should have gotten 4th label")
+
+        # check pretty print
+        # just a silly test to make sure that printing works
+        self.failUnless(len(str(cm))>100)
+        # and that it knows some parameters for printing
+        self.failUnless(len(cm.__str__(summary=True, percents=True,
+                                       header=False,
+                                       print_empty=True))>100)
+
 
 
 def suite():
