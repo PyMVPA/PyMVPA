@@ -98,7 +98,7 @@ class ClfCrossValidation(DataMeasure):
             result = self.__transerror(split[1], split[0])
             if self.isStateEnabled('confusions'):
                 if self.__transerror.isStateActive('confusion'):
-                    self.confusions.append(self.__transerror["confusion"])
+                    self["confusions"].append(self.__transerror["confusion"])
                 else:
                     warning("Crossvalidator %s can't store confusions state " %
                             self +
@@ -107,7 +107,7 @@ class ClfCrossValidation(DataMeasure):
                             "doesn't have it enabled to registered")
 
             if __debug__:
-                debug("CROSS", "Split #%d: result %s" % (len(results), `result`))
+                debug("CROSSC", "Split #%d: result %s" % (len(results), `result`))
             results.append(result)
 
             # XXX add callbacks
