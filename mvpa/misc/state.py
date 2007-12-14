@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import operator
+
 from mvpa.misc.exceptions import UnknownStateError
 
 if __debug__:
@@ -43,7 +45,8 @@ class State(object):
 
         :Parameters:
           enable_states : list
-            list of states to enable
+            list of states to enable. If it contains 'all' (in any casing),
+            then all states (besides the ones in disable_states) will be enabled
           disable_states : list
             list of states to disable
           args : list
@@ -78,9 +81,22 @@ class State(object):
         # store states to enable later on
         self.__enable_states = enable_states
 
+        if isinstance(enable_states, basestring):
+            self.__enable_all = enable_states.upper() == "ALL"
+        elif operator.isSequenceType(enable_states):
+            self.__enable_all = "ALL" in [x.upper() for x in enable_states]
+        else:
+            self.__enable_all = False
+
+        if self.__enable_all:
+            if __debug__:
+                debug('ST',
+                      'All states (besides explicitely disabled ' + \
+                      'via disable_states) will be enabled')
+
         for key, enabled in register_states.iteritems():
             if (not enable_states is None):
-                if (not key in enable_states):
+                if not self.__enable_all and (not key in enable_states):
                     if __debug__:
                         debug('ST', 'Disabling state %s since it is not' \
                               'listed' % key + \
@@ -160,8 +176,9 @@ class State(object):
             description for the state
         """
         # retrospectively enable state
-        if (not self.__enable_states is None) and \
-               (index in self.__enable_states):
+        if self.__enable_all or \
+               ((not self.__enable_states is None) and \
+                (index in self.__enable_states)):
             if enabled == False:
                 enabled = True
                 if __debug__:
@@ -183,18 +200,26 @@ class State(object):
         return self.__dict.has_key(index)
 
 
+    def __enabledisableall(self, index, value):
+        if index.upper == 'ALL':
+            for index in self.states:
+                self.__registered[index]['enabled'] = value
+            return True
+        else:
+            return False
+
     def enableState(self, index):
         """Enable state variable defined by `index` id"""
-
-        self.__checkIndex(index)
-        self.__registered[index]['enabled'] = True
+        if not self.__enabledisableall(index, True):
+            self.__checkIndex(index)
+            self.__registered[index]['enabled'] = True
 
 
     def disableState(self, index):
         """Disable state variable defined by `index` id"""
-
-        self.__checkIndex(index)
-        self.__registered[index]['enabled'] = False
+        if not self.__enabledisableall(index, False):
+            self.__checkIndex(index)
+            self.__registered[index]['enabled'] = False
 
 
     def enableStates(self, indexlist):
@@ -230,7 +255,10 @@ class State(object):
         # lets assure consistent litsting order
         items = self.__registered.items()
         items.sort()
-        return [ "%s: %s" % (x[0], x[1]['doc']) for x in items ]
+        return [ "%s%s: %s" % (x[0],
+                               {True:"[enabled]",
+                                False:""}[x[1]['enabled']],
+                               x[1]['doc']) for x in items ]
 
 
     def _getEnabledStates(self):
