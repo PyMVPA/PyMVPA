@@ -114,6 +114,9 @@ class CrossValidationTests(unittest.TestCase):
         reg = N.array([1,1,1,2,2,2,3,3,3])
 
         cm = ConfusionMatrix()
+        self.failUnlessRaises(ZeroDivisionError, lambda x:x.percentCorrect, cm)
+        """No samples -- raise exception"""
+
         cm.add(reg, N.array([1,2,1,2,2,2,3,2,1]))
 
         # should be square matrix (len(reglabels) x len(reglabels)
