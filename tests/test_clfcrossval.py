@@ -146,6 +146,15 @@ class CrossValidationTests(unittest.TestCase):
                                        header=False,
                                        print_empty=True))>100)
 
+        # lets check iadd -- just itself to itself
+        cm += cm
+        self.failUnlessEqual(len(cm.matrices), 4, msg="Must be 4 sets now")
+
+        # lets check add -- just itself to itself
+        cm2 = cm + cm
+        self.failUnlessEqual(len(cm2.matrices), 8, msg="Must be 8 sets now")
+        self.failUnlessEqual(cm2.percentCorrect, cm.percentCorrect,
+                             msg="Percent of corrrect should remain the same ;-)")
 
 
 def suite():
