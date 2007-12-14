@@ -131,6 +131,8 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(proper.isStateEnabled("newstate2"), False)
 
 
+    # TODO: make test for _copy_states_ or whatever comes as an alternative
+
     def _testProperStateChild(self):
         """
         Actually it would fail which makes it no sense to use

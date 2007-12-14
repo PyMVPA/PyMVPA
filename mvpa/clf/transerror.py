@@ -228,6 +228,13 @@ class TransferError(State):
                 be indicies of the array
         """
 
+    def __copy__(self):
+        out = TransferError.__new__(TransferError)
+        TransferError.__init__(out, self.clf, self.errorfx, self.__labels)
+        out._copy_states_(self)
+        return out
+
+
     def __call__(self, testdata, trainingdata=None):
         """Compute the transfer error for a certain test dataset.
 
@@ -256,3 +263,9 @@ class TransferError(State):
                                testdata.labels)
 
         return error
+
+    @property
+    def clf(self): return self.__clf
+
+    @property
+    def errorfx(self): return self.__errorfx

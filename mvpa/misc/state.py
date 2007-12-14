@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import operator
+import operator, copy
 
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -124,6 +124,33 @@ class State(object):
         if len(self.__registered)>=4:
             res += "..."
         return res
+
+    #
+    # XXX TODO: figure out if there is a way to define proper
+    #           __copy__'s for a hierarchy of classes. Probably we had
+    #           to define __getinitargs__, etc... read more...
+    #
+    #def __copy__(self):
+
+    def _copy_states_(self, fromstate, deep=False):
+        """Copy states from `fromstate` object into current object
+
+        Crafted to overcome a problem mentioned above in the comment
+        and is to be called from __copy__ of derived classes
+        """
+        if fromstate.__class__ != self.__class__:
+            raise ValueError, \
+                  "Different class got into %s._copy_states_: %s" % \
+                  (self.__class__, into.__class__)
+
+        operation = { True: copy.deepcopy,
+                      False: copy.copy }[deep]
+
+        self.enabledStates = operation(fromstate.enabledStates)
+        self.__dict = operation(fromstate.__dict)
+        self.__registered = operation(fromstate.__registered)
+        self.__enable_states = operation(fromstate.__enable_states)
+        self.__enable_all = operation(fromstate.__enable_all)
 
 
     def __checkIndex(self, index):
