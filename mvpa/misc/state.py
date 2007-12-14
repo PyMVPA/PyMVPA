@@ -75,6 +75,9 @@ class State(object):
         #   debug('ST', 'Class %s is a child of State class but has no states' %
         #          (self.__class__.__name__))
 
+        # store states to enable later on
+        self.__enable_states = enable_states
+
         for key, enabled in register_states.iteritems():
             if (not enable_states is None):
                 if (not key in enable_states):
@@ -97,7 +100,7 @@ class State(object):
             self._registerState(key, enabled)
 
 
-    def __repr__(self):
+    def __str__(self):
         num = len(self.__registered)
         res = "%d state variables registered:" % num
         for i in xrange(min(num, 4)):
@@ -105,6 +108,7 @@ class State(object):
         if len(self.__registered)>=4:
             res += "..."
         return res
+
 
     def __checkIndex(self, index):
         """Verify that given `index` is a known/registered state.
@@ -155,6 +159,15 @@ class State(object):
           `doc` : string
             description for the state
         """
+        # retrospectively enable state
+        if (not self.__enable_states is None) and \
+               (index in self.__enable_states):
+            if enabled == False:
+                enabled = True
+                if __debug__:
+                    debug("ST",
+                          "State %s will be registered enabled" % index +
+                          " since it was mentioned in enable_states")
         if __debug__:
             debug('ST', 'Registering %s state %s for %s' %
                   ({True:'enabled', False:'disabled'}[enabled],

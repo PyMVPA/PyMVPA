@@ -87,9 +87,9 @@ class StateTests(unittest.TestCase):
         self.failUnless(proper2.listStates() == \
                         ['state1: None', 'state2: None', 'state3: State3 Doc'])
 
-        # if __repr__ lists correct number of states
-        repr_ = `proper2`
-        self.failUnless(repr_.startswith('3 '))
+        # if __str__ lists correct number of states
+        str_ = str(proper2)
+        self.failUnless(str_.startswith('3 '))
 
         # check default enabled
         self.failUnless(Set(proper2.enabledStates) == Set(['state1', 'state3']))
@@ -112,6 +112,21 @@ class StateTests(unittest.TestCase):
         proper.enabledStates = enabled_states
         self.failUnless(enabled_states == proper.enabledStates,
                         msg="List of enabled states should return to original one")
+
+
+    def testStoredEnableStates(self):
+        """Check if the states mentioned in enable_states
+        are retroactively enabled while being registered"""
+        proper  = TestClassProper(enable_states=['newstate'])
+        # state is not yet registered thus shouldn't be known
+        self.failUnlessRaises(KeyError, proper.__getitem__, 'newstate')
+
+        proper._registerState("newstate", enabled=False)
+        self.failUnlessEqual(proper.isStateEnabled("newstate"), True)
+
+        # check if not mentioned in enable_states doesn't get enabled
+        proper._registerState("newstate2", enabled=False)
+        self.failUnlessEqual(proper.isStateEnabled("newstate2"), False)
 
 
     def _testProperStateChild(self):
