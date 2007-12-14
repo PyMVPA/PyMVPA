@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import copy
+
 import numpy as N
 
 from sets import Set
@@ -113,7 +115,8 @@ class ConfusionMatrix(object):
         # we might do something more sophisticated later on, and this setup
         # should easily allow it
         self.__matrix = N.sum(mat_all, axis=0)
-
+        self.__Nsamples = N.sum(self.__matrix, axis=1)
+        self.__Ncorrect = sum(N.diag(self.__matrix))
         self.__computed = True
 
 
@@ -128,7 +131,7 @@ class ConfusionMatrix(object):
         out = StringIO()
         # numbers of different entries
         Nlabels = len(labels)
-        Nsamples = N.sum(matrix, axis=1)
+        Nsamples = self.__Nsamples
         Ndigitsmax = int(ceil(log10(max(Nsamples))))
         Nlabelsmax = max( [len(str(x)) for x in labels] )
 
@@ -156,7 +159,6 @@ class ConfusionMatrix(object):
             raise ValueError, "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (Nlabels, matrix.shape)
 
-        correct = 0
         for i in xrange(Nlabels):
             # print the label
             if Nsamples[i] == 0:
@@ -166,7 +168,6 @@ class ConfusionMatrix(object):
                 out.write(" %%%dd" % L % matrix[i, j])
             if percents:
                 out.write(' [%6.2f%%]' % (matrix[i, i] * 100.0 / Nsamples[i]))
-            correct += matrix[i, i]
             out.write("\n")
 
         if summary:
@@ -176,12 +177,32 @@ class ConfusionMatrix(object):
 
             out.write("%%-%ds[%%6.2f%%%%]\n"
                       % (prefixlen + (L+1)*Nlabels)
-                      % ("Total Correct {%d out of %d}" % (correct, sum(Nsamples)),
-                         100.0*correct/sum(Nsamples) ))
+                      % ("Total Correct {%d out of %d}" % (self.__Ncorrect, sum(Nsamples)),
+                         self.percentCorrect ))
 
 
         result = out.getvalue()
         out.close()
+        return result
+
+
+    def __iadd__(self, other):
+        """Add the sets from `other`s ConfusionMatrix to current on
+        """
+        #print "adding ", other, " to ", self
+        # need to do shallow copy, or otherwise smth like "cm += cm"
+        # would loop forever and exhaust memory eventually
+        othersets = copy.copy(other.__sets)
+        for set in othersets:
+            self.add(set[0], set[1])
+        return self
+
+
+    def __add__(self, other):
+        """Add the sets from `other`s ConfusionMatrix to current on
+        """
+        result = copy.copy(self)
+        result += other
         return result
 
 
@@ -204,6 +225,10 @@ class ConfusionMatrix(object):
         self._compute()
         return self.__matrix
 
+    @property
+    def percentCorrect(self):
+        self._compute()
+        return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
 
 class TransferError(State):
