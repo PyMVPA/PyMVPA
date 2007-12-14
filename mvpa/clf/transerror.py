@@ -67,6 +67,7 @@ class ConfusionMatrix(object):
         self.__sets.append( (targets, predictions) )
         self.__computed = False
 
+
     def _compute(self):
         """Actually compute the confusion matrix based on all the sets"""
         if self.__computed:
@@ -132,6 +133,10 @@ class ConfusionMatrix(object):
         # numbers of different entries
         Nlabels = len(labels)
         Nsamples = self.__Nsamples
+
+        if len(self.__sets) == 0:
+            return "Empty confusion matrix"
+
         Ndigitsmax = int(ceil(log10(max(Nsamples))))
         Nlabelsmax = max( [len(str(x)) for x in labels] )
 
