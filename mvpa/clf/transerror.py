@@ -65,7 +65,6 @@ class ConfusionMatrix(object):
         self.__sets.append( (targets, predictions) )
         self.__computed = False
 
-
     def _compute(self):
         """Actually compute the confusion matrix based on all the sets"""
         if self.__computed:
@@ -184,6 +183,14 @@ class ConfusionMatrix(object):
         result = out.getvalue()
         out.close()
         return result
+
+
+    @property
+    def matrices(self):
+        """Return a list of separate confusion matrix per each stored set"""
+        return [ self.__class__(labels=self.labels,
+                                targets=x[0],
+                                predictions=x[1]) for x in self.__sets]
 
 
     @property

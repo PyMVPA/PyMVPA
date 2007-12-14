@@ -131,6 +131,13 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnlessEqual(cm.labels, [1,2,3,4],
                              msg="We should have gotten 4th label")
 
+        matrices = cm.matrices          # separate CM per each given set
+        self.failUnlessEqual(len(matrices), 2,
+                             msg="Have gotten two splits")
+
+        self.failUnless((matrices[0].matrix + matrices[1].matrix == cm.matrix).all(),
+                        msg="Total votes should match the sum across split CMs")
+
         # check pretty print
         # just a silly test to make sure that printing works
         self.failUnless(len(str(cm))>100)
