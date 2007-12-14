@@ -41,14 +41,14 @@ class StateTests(unittest.TestCase):
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
 
-        self.failUnless(blank.registeredStates == [])
+        self.failUnless(blank.states == [])
         self.failUnless(blank.enabledStates == [])
         self.failUnlessRaises(KeyError, blank.__getitem__, 'dummy')
         self.failUnlessRaises(KeyError, blank.__getitem__, '')
 
         # add some state variable
         blank._registerState('state1', False)
-        self.failUnless(blank.registeredStates == ['state1'])
+        self.failUnless(blank.states == ['state1'])
 
         self.failUnless(blank.isStateEnabled('state1') == False)
         self.failUnless(blank.enabledStates == [])
@@ -66,7 +66,7 @@ class StateTests(unittest.TestCase):
 
         # we should not share states across instances at the moment, so an arbitrary
         # object could carry some custom states
-        self.failUnless(blank2.registeredStates == [])
+        self.failUnless(blank2.states == [])
         self.failUnlessRaises(KeyError, blank2.__getitem__, 'state1')
 
 
@@ -74,10 +74,10 @@ class StateTests(unittest.TestCase):
         proper   = TestClassProper()
         proper2  = TestClassProper(enable_states=['state1'])
 
-        self.failUnless(Set(proper.registeredStates) == Set(proper._register_states.keys()))
+        self.failUnless(Set(proper.states) == Set(proper._register_states.keys()))
         self.failUnless(proper.enabledStates == ['state2'])
 
-        self.failUnless(Set(proper2.registeredStates) == Set(proper._register_states.keys()))
+        self.failUnless(Set(proper2.states) == Set(proper._register_states.keys()))
         self.failUnless(Set(proper2.enabledStates) == Set(['state1']))
 
         self.failUnlessRaises(KeyError, proper.__getitem__, 'state12')
@@ -135,10 +135,10 @@ class StateTests(unittest.TestCase):
         _register_states class variables
         """
         proper = TestClassProperChild()
-        print proper.registeredStates
-        self.failUnless(Set(proper.registeredStates) ==
-                            Set(TestClassProperChild._register_states).union(
-                                                Set(TestClassProper._register_states)))
+        print proper.states
+        self.failUnless(Set(proper.states) ==
+            Set(TestClassProperChild._register_states).union(
+            Set(TestClassProper._register_states)))
 
 def suite():
     return unittest.makeSuite(StateTests)

@@ -263,5 +263,5 @@ class State(object):
 
 
     # Properties
-    registeredStates = property(fget=_getRegisteredStates)
+    states = property(fget=_getRegisteredStates)
     enabledStates = property(fget=_getEnabledStates, fset=_setEnabledStates)
