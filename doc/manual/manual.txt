@@ -14,12 +14,25 @@ PyMVPA Manual
   Yaroslav O. Halchenko <debian@onerussian.com>
 :Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
 :Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
-:Revision: 0.0.1
+:Revision: unreleased
 
 .. Please add yourself to the list of authors if you contribute something
    to this manual.
 
-.. contents::
+The latest version of this manual is avialable from the `PyMVPA project
+website`_:
+
+  * HTML: http://pkg-exppsy.alioth.debian.org/pymvpa/manual.html
+  * PDF: http://pkg-exppsy.alioth.debian.org/pymvpa/files/manual.pdf
+
+.. _PyMVPA project website: http://pkg-exppsy.alioth.debian.org/pymvpa/
+
+
+.. meta::
+   :description: The PyMVPA manual
+   :keywords: python, machine learning, multivariate, neuroimaging
+
+.. contents:: Table of Contents
 .. sectnum::
 
 
@@ -61,8 +74,30 @@ Obtaining PyMVPA
 Binary packages
 '''''''''''''''
 
+Binary packages are not available yet, but will be when the first release of
+PyMVPA has happened. And there will be a Debian package of course.
+
+
 Source code
 '''''''''''
+
+Source code tarballs of PyMVPA releases are available from the `PyMVPA
+project website`_. To get access to both the full PyMVPA history and the latest
+development code the PyMVPA Git_ repository is publicly available. To view the
+repository, please point your webbrowser to gitweb:
+http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+
+To clone (aka checkout) the PyMVPA repository simply do:
+
+::
+
+  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+
+After a short while you will have a `pymvpa` directory below your current
+working directory, that contains the PyMVPA repository.
+
+.. _Git: http://git.or.cz/
+
 
 Installation
 ~~~~~~~~~~~~
