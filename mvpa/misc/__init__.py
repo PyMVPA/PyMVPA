@@ -84,10 +84,11 @@ if __debug__:
     debug.register('PSA',  "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('IFSC', "Incremental Feature Search call")
-    debug.register('DS',   "*Dataset debugging")
-    debug.register('ST',   "State debugging")
-    debug.register('CLF',  "Base Classifiers debugging")
-    debug.register('IOH',  "IO Helpers debugging")
+    debug.register('DS',   "*Dataset")
+    debug.register('ST',   "State")
+    debug.register('CLF',  "Base Classifiers")
+    debug.register('IOH',  "IO Helpers")
+    debug.register('CM',   "Confusion matrix computation")
     debug.register('CROSSC',"Cross-validation call")
 
     # Lets check if environment can tell us smth

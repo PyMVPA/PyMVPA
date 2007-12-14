@@ -13,9 +13,10 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re
 
-from StringIO import StringIO
 from copy import deepcopy
-from math import log10, ceil
+
+if __debug__:
+    from mvpa.misc import debug
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """This function transforms a dataset by calculating the mean of a set of
@@ -56,95 +57,7 @@ def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     return N.array( selected )
 
 
-def buildConfusionMatrix( labels, targets, predictions ):
-    """Create a (N x N) confusion matrix.
 
-    'N' is the number of labels in the matrix. The labels itself have to be
-    given in the 'labels' argument. 'targets' and 'predictions' are two
-    length-n vectors, one containing the classification targets and the other
-    the corresponding predictions. The confusion matrix has to following
-    layout:
-
-                  predictions
-                  1  2  .  .  N
-                1
-                2
-      targets   .
-                .     (i,j)
-                N
-
-    where cell (i,j) contains the absolute number of predictions j where
-    the target would have been i.
-    """
-    # needs to be an array
-    pred = N.array(predictions)
-
-    # create the contingency table template
-    mat = N.zeros( (len(labels), len(labels)), dtype = 'uint' )
-
-    for t, tl in enumerate( labels ):
-        for p, pl in enumerate( labels ):
-            mat[t, p] = N.sum( pred[targets==tl] == pl )
-
-    return mat
-
-
-# XXX we have to refactor those two functions -- probably into some class
-def pprintConfusionMatrix(labels, matrix,
-                          header=True, percents=True, summary=True):
-    """Returns a string with nicely formatted matrix"""
-    out = StringIO()
-    Nlabels = len(labels)
-    Nsamples = N.sum(matrix, axis=1)
-    Ndigitsmax = int(ceil(log10(max(Nsamples))))
-    Nlabelsmax = max( [len(x) for x in labels] )
-    L = max(Ndigitsmax, Nlabelsmax)     # length of a single label/value
-    res = ""
-
-    prefixlen = Nlabelsmax+2+Ndigitsmax+2
-    pref = ' '*(prefixlen) # empty prefix
-    if header:
-        # print out the header
-        out.write(pref)
-        for label in labels:
-            # center damn label
-            Nspaces = int(ceil((L-len(label))/2.0))
-            out.write(" %%%ds%%s%%%ds"
-                      % (Nspaces, L-Nspaces-len(label))
-                      % ('', label, ''))
-        out.write("\n")
-
-        # underscores
-        out.write("%s%s\n" % (pref, (" %s" % ("-" * L)) * Nlabels))
-
-    if matrix.shape != (Nlabels, Nlabels):
-        raise ValueError, "Number of labels %d doesn't correspond the size" + \
-              " of a confusion matrix %s" % (Nlabels, matrix.shape)
-
-    correct = 0
-    for i in xrange(Nlabels):
-        # print the label
-        out.write("%%%ds {%%%dd}" % (Nlabelsmax, Ndigitsmax) % (labels[i], Nsamples[i])),
-        for j in xrange(Nlabels):
-            out.write(" %%%dd" % L % matrix[i, j])
-        if percents:
-            out.write(' [%5.2f%%]' % (matrix[i, i] * 100.0 / Nsamples[i]))
-        correct += matrix[i, i]
-        out.write("\n")
-
-    if summary:
-        out.write("%%-%ds%%s\n"
-                  % prefixlen
-                  % ("", "-"*((L+1)*Nlabels)))
-
-        out.write("%%-%ds[%%5.2f%%%%]\n"
-                  % (prefixlen + (L+1)*Nlabels)
-                  % ("Total Correct {%d}" % correct, 100.0*correct/sum(Nsamples) ))
-
-
-    result = out.getvalue()
-    out.close()
-    return result
 def getUniqueLengthNCombinations(data, n):
     """Generates a list of lists containing all combinations of
     elements of data of length 'n' without repetitions.
