@@ -85,7 +85,9 @@ class StateTests(unittest.TestCase):
 
         # if documentary on the state is appropriate
         self.failUnless(proper2.listStates() == \
-                        ['state1: None', 'state2: None', 'state3: State3 Doc'])
+                        ['state1[enabled]: None',
+                         'state2: None',
+                         'state3[enabled]: State3 Doc'])
 
         # if __str__ lists correct number of states
         str_ = str(proper2)
