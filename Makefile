@@ -95,12 +95,15 @@ rst2pdf-%:
 # put everything in one directory. Might be undesired if there are
 # filename clashes. But given the website will be/should be simply, it
 # might 'just work'.
-website: rst2html-website rst2html-devguide rst2html-manual apidoc
+website: rst2html-website rst2html-devguide rst2html-manual apidoc \
+         rst2pdf-manual
+	-@mkdir $(HTML_DIR)/files
+	cp $(PDF_DIR)/*.pdf $(HTML_DIR)/files
 
 printables: rst2pdf-manual
 
 upload-website: website
-	rsync --delete -r --chmod=g+w --verbose -r $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
 
 #
 # Documentation
