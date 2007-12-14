@@ -12,6 +12,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from copy import copy
+
 from mvpa.algorithms.datameasure import DataMeasure
 from mvpa.datasets.splitter import NoneSplitter
 
@@ -60,6 +62,8 @@ class ClfCrossValidation(DataMeasure):
         """Store individual results in the state"""
         self._registerState("splits", enabled=False)
         """Store the actual splits of the data. Can be memory expensive"""
+        self._registerState("transerrors", enabled=False)
+        """Store copies of transerrors at each step"""
         self._registerState("confusions", enabled=False)
         """Store actual confusion matrices (if available)"""
 
@@ -87,6 +91,7 @@ class ClfCrossValidation(DataMeasure):
 
         self["splits"] = []
         self["confusions"] = []
+        self["transerrors"] = []
 
         # splitter
         for split in self.__splitter(dataset):
@@ -96,6 +101,10 @@ class ClfCrossValidation(DataMeasure):
                 self["splits"].append(split)
 
             result = self.__transerror(split[1], split[0])
+
+            if self.isStateEnabled("transerrors"):
+                self["transerrors"].append(copy(self.__transerror))
+
             if self.isStateEnabled('confusions'):
                 if self.__transerror.isStateActive('confusion'):
                     self["confusions"].append(self.__transerror["confusion"])
