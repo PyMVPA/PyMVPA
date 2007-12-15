@@ -91,7 +91,7 @@ class StateTests(unittest.TestCase):
 
         # if __str__ lists correct number of states
         str_ = str(proper2)
-        self.failUnless(str_.startswith('3 '))
+        self.failUnless(str_.find(': 3 state') != -1)
 
         # check default enabled
         self.failUnless(Set(proper2.enabledStates) == Set(['state1', 'state3']))
