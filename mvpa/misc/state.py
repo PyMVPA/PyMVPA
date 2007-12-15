@@ -118,10 +118,11 @@ class State(object):
 
     def __str__(self):
         num = len(self.__registered)
-        res = "%d state variables registered:" % num
+        res = "%s: %d state variables registered:" % (self.__class__.__name__,
+                                                      num)
         for i in xrange(min(num, 4)):
             res += " %s" % self.__registered.keys()[i]
-        if len(self.__registered)>=4:
+        if len(self.__registered) > 4:
             res += "..."
         return res
 

@@ -260,7 +260,7 @@ class TransferError(State):
         self.__clf = clf
         self.__errorfx = errorfx
         self.__labels = labels
-        self._registerState('confusion')
+        self._registerState('confusion', enabled=False)
         """TODO Think that labels might be also symbolic thus can't directly
                 be indicies of the array
         """
