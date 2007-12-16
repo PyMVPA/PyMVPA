@@ -43,9 +43,9 @@ distclean:
 	-@rm -f mvpa/clf/libsvm/*.{c,so} \
 		mvpa/clf/libsvm/svmc.py \
 		mvpa/clf/libsvm/svmc_wrap.cpp \
-		tests/*.{prof,pstats,kcache} $(PROFILE_FILE)
-	@find . -name '*.pyo' \
-		 -o -name '*.pyc' \
+		tests/*.{prof,pstats,kcache,coverage} $(PROFILE_FILE)
+	@find . -name '*.py[co]' \
+		 -o -name '*,cover' \
 		 -o -iname '*~' \
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
@@ -128,6 +128,14 @@ test-%: build
 
 test: build
 	@cd tests && PYTHONPATH=.. python main.py
+
+coverage: build
+	@cd tests && { \
+	  export PYTHONPATH=..; \
+	  python-coverage -x main.py; \
+	  python-coverage -r -o /usr | grep -v '100%$$'; \
+	  python-coverage -a -o /usr; }
+
 
 #
 # Sources
