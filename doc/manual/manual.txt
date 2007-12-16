@@ -111,7 +111,7 @@ Installation
 
 Conventions
 ~~~~~~~~~~~
-In all examples the NumPy package is assumed to be imported using the alias `N`
+In all examples the NumPy package is assumed to be imported using the alias N
 throughout this manual.
 
   >>> import numpy as N
@@ -451,6 +451,9 @@ Classifiers
 .. First generic interface of all classifiers in PyMVPA. Point to the special
    case of multi-class classification and how to deal with it. Finally describe
    features of all available classifiers.
+
+.. Check with Yarik whether multiclass interface will influcence basic
+   classifiers.
 
 
 k-Nearest-Neighbour
