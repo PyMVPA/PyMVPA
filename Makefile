@@ -129,12 +129,13 @@ test-%: build
 test: build
 	@cd tests && PYTHONPATH=.. python main.py
 
+
 coverage: build
 	@cd tests && { \
 	  export PYTHONPATH=..; \
 	  python-coverage -x main.py; \
-	  python-coverage -r -o /usr | grep -v '100%$$'; \
-	  python-coverage -a -o /usr; }
+	  python-coverage -r -i -o /usr | grep -v '100%$$'; \
+	  python-coverage -a -i -o /usr; }
 
 
 #
