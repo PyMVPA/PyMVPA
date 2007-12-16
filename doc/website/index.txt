@@ -55,7 +55,7 @@ the source distribution (including this website).
 Please see the `appendix of the manual`_ for the copyright statement and the
 full text of the license.
 
-.. _MIT License: http:// MISSING
+.. _MIT License: http://www.opensource.org/licenses/mit-license.php
 .. _appendix of the manual: manual.html#license
 
 
