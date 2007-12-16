@@ -1,8 +1,9 @@
 *~
+*,cover
+.coverage
 \#*
 \.\#*
-*.pyc
-*.pyo
+*.py[co]
 /html
 */html
 */*/html
