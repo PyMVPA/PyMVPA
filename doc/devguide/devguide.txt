@@ -25,6 +25,9 @@ __________________
 Code must be documented in accordance to `epydoc + reST usage
 guidelines <http://epydoc.sourceforge.net/manual-othermarkup.html>`__
 
+Parameter lists should be written as definition lists and not bulleted lists.
+For an example how to do it right, please see mvpa/datasets/dataset.py
+
 
 Code Formatting
 ---------------
