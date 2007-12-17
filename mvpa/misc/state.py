@@ -121,7 +121,13 @@ class State(object):
         res = "%s: %d state variables registered:" % (self.__class__.__name__,
                                                       num)
         for i in xrange(min(num, 4)):
-            res += " %s" % self.__registered.keys()[i]
+            index = self.__registered.keys()[i]
+            res += " %s" % index
+            if self.hasState(index):
+                res += '*'              # so we have the value already
+            elif self.isStateEnabled:
+                res += '+'              # it is enabled but no value is assigned yet
+
         if len(self.__registered) > 4:
             res += "..."
         return res
