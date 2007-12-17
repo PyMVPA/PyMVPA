@@ -85,7 +85,7 @@ class Dataset(object):
           chunks
             array or scalar value defining chunks for each sample
 
-        Each of the Keywords arguments overwrites with is/might be
+        Each of the Keywords arguments overwrites what is/might be
         already in the `data` container.
 
         """
