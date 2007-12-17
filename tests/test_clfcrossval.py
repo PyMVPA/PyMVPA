@@ -101,7 +101,7 @@ class CrossValidationTests(unittest.TestCase):
 
         # do crossval with permuted regressors
         cv = ClfCrossValidation(transerror,
-                  NFoldSplitter(cvtype=1, permute=True, nrunsperfold=10) )
+                  NFoldSplitter(cvtype=1, permute=True, nrunspersplit=10) )
         results = cv(data)
 
         # must be at chance level

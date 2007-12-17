@@ -9,7 +9,8 @@
 """Unit tests for PyMVPA pattern handling"""
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
+from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter, \
+                                   NoneSplitter
 import unittest
 import numpy as N
 
@@ -52,11 +53,31 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[0].nsamples == 50 )
             self.failUnless( p[1].nsamples == 50 )
 
-        self.failUnless((splits[0][0].uniquechunks == [1, 3, 5, 7, 9]).all())
-        self.failUnless((splits[0][1].uniquechunks == [0, 2, 4, 6, 8]).all())
-        self.failUnless((splits[1][1].uniquechunks == [1, 3, 5, 7, 9]).all())
-        self.failUnless((splits[1][0].uniquechunks == [0, 2, 4, 6, 8]).all())
+        self.failUnless((splits[0][1].uniquechunks == [1, 3, 5, 7, 9]).all())
+        self.failUnless((splits[0][0].uniquechunks == [0, 2, 4, 6, 8]).all())
+        self.failUnless((splits[1][0].uniquechunks == [1, 3, 5, 7, 9]).all())
+        self.failUnless((splits[1][1].uniquechunks == [0, 2, 4, 6, 8]).all())
 
+
+    def testNoneSplitter(self):
+        nos = NoneSplitter()
+
+        splits = [ (train, test) for (train, test) in nos(self.data) ]
+
+        self.failUnless(len(splits) == 1)
+        self.failUnless(splits[0][0] == None)
+        self.failUnless(splits[0][1].nsamples == 100)
+
+        # test sampling tools
+        nos = NoneSplitter(nrunspersplit=3,
+                           nvalidationsamples=10)
+        splits = [ (train, test) for (train, test) in nos(self.data) ]
+
+        self.failUnless(len(splits) == 3)
+        for split in splits:
+            self.failUnless(split[0] == None)
+            self.failUnless(split[1].nsamples == 40)
+            self.failUnless(split[1].samplesperlabel.values() == [10,10,10,10])
 
 
 def suite():
