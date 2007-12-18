@@ -11,4 +11,4 @@
 __docformat__ = 'restructuredtext'
 
 import svmc
-from mvpa.clf.libsvm.svm import *
+from mvpa.clfs.libsvm.svm import *

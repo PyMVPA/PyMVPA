@@ -12,10 +12,10 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.knn import kNN
+from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
-from mvpa.clf.transerror import TransferError, ConfusionMatrix
+from mvpa.clfs.transerror import TransferError, ConfusionMatrix
 
 
 

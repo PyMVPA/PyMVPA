@@ -12,8 +12,8 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
-from mvpa.clf.classifier import Classifier
-from mvpa.clf.libsvm import svm
+from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.libsvm import svm
 
 
 class SVMBase(Classifier):

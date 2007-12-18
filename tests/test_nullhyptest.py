@@ -13,10 +13,10 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.svm import LinearNuSVMC
-from mvpa.clf.knn import kNN
+from mvpa.clfs.svm import LinearNuSVMC
+from mvpa.clfs.knn import kNN
 from mvpa.algorithms.nullhyptest import NullHypothesisTest
-from mvpa.clf.transerror import TransferError
+from mvpa.clfs.transerror import TransferError
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):

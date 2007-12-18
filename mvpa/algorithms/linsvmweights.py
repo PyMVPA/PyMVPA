@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
-from mvpa.clf.svm import LinearSVM
+from mvpa.clfs.svm import LinearSVM
 
 
 class LinearSVMWeights(SensitivityAnalyzer):
