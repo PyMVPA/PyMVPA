@@ -40,85 +40,18 @@ website`_:
 Introduction
 ------------
 
+PyMVPA is a Python_ module intended to ease pattern classification
+analyses of large datasets. It provides high-level abstraction of typical
+processing steps and a number of implementations of some popular algorithms.
+While it is not limited to neuroimaging data it is eminently suited for such
+datasets. PyMVPA is truely free software (in every respect) and additonally
+requires nothing but free-software to run. Theoretically PyMVPA should run
+on anything that can run a Python_ interpreter, although the proof is yet to
+come.
+
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
-
-.. should become an abstract
-
-
-How to cite PyMVPA
-~~~~~~~~~~~~~~~~~~
-.. come up with something
-
-
-Prerequisites
-~~~~~~~~~~~~~
-.. * Basic Python experiences (if not easy to get with Python tutorials).
-.. * For efficiency:
-..   - prior experience with NumPy and/or SciPy.
-..   - basic understanding of the concepts(s) of machine learning.
-
-If you want to use PyMVPA interactively it is strongly recommend to use
-IPython_. If you think: *"Oh no, not another one, I already have to learn about
-PyMVPA."* please invest a few minutes to watch `some screencasts`_, so at
-least you know what you are missing.
-
-.. _IPython: http://ipython.scipy.org
-.. _some screencasts: http://showmedo.com/videos/series?name=CnluURUTV
-
-
-Obtaining PyMVPA
-~~~~~~~~~~~~~~~~
-
-Binary packages
-'''''''''''''''
-
-Binary packages are not available yet, but will be when the first release of
-PyMVPA has happened. And there will be a Debian package of course.
-
-
-Source code
-'''''''''''
-
-Source code tarballs of PyMVPA releases are available from the `PyMVPA
-project website`_. To get access to both the full PyMVPA history and the latest
-development code the PyMVPA Git_ repository is publicly available. To view the
-repository, please point your webbrowser to gitweb:
-http://git.debian.org/?p=pkg-exppsy/pymvpa.git
-
-To clone (aka checkout) the PyMVPA repository simply do:
-
-::
-
-  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
-
-After a short while you will have a `pymvpa` directory below your current
-working directory, that contains the PyMVPA repository.
-
-.. _Git: http://git.or.cz/
-
-
-Installation
-~~~~~~~~~~~~
-.. Point to source and binary distribution. Preach idea of free software.
-   Step by step guide to install it on difficult systems like Windows.
-
-.. Don't forget to mention that the only reasonable way is to use this piece
-   of software (like every other piece) is under Debian! Also mention that
-   Ubuntu is no excuse ;-)
-
-
-Conventions
-~~~~~~~~~~~
-In all examples the NumPy package is assumed to be imported using the alias N
-throughout this manual.
-
-  >>> import numpy as N
-
-
-A Bit of History
-~~~~~~~~~~~~~~~~
 
 The roots of PyMVPA date back to early 2005. At that time it was a C++ library
 (no Python_ yet) developed by Michael Hanke and Sebastian Krüger with the
@@ -179,8 +112,6 @@ the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
 with EEG data (3d) or even non-neuroimaging datasets.
 
-.. _NumPy: http://numpy.scipy.org/
-
 By September 2007 PyMVPA included support for reading and writing datasets
 from and to the `NIfTI format`_, kNN and Support Vector Machine classifiers,
 as well as several analysis algorithms (e.g. searchlight and incremental
@@ -198,11 +129,148 @@ faster and easier as it has ever been before.
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
 
 
+Prerequisites
+~~~~~~~~~~~~~
+
+Like every other Python module PyMVPA requires at least a basic knowledge of
+the Python language. However, if one has no prior experience with Python one
+can benefit from the simplicity of the Python language and acquire this
+knowledge within a few days by studying some of the many tutorials available
+on the web.
+
+.. links to good tutorials
+
+As PyMVPA is about pattern recognition a basic understanding about machine
+learning principles is necessary to correctly apply methods with PyMVPA to
+ensure interpretablity of the results.
+
+
+Dependencies
+''''''''''''
+
+The following software packages are required or PyMVPA will not work at all.
+
+  Python_ 2.4 (or later)
+	With some modifications PyMVPA could probably work with Python 2.3, but as
+	it is quite old already and Python 2.4 is widely available there should be
+	no need to do this.
+  NumPy_
+	PyMVPA makes extensive use of NumPy to store and handle data. There is no
+	way around it.
+
+.. _NumPy: http://numpy.scipy.org/
+
+
+Strong Recommendations
+''''''''''''''''''''''
+
+While most parts of PyMVPA will work without any additonal software, some
+functionality makes use of additonal software packages. It is strongly
+recommend to install these packages as well.
+
+  SciPy_: linear algebra, standard distributions
+	Mainly code for statistical testing and the logistic regression classifier
+	make use of SciPy_. However, in the long run SciPy might be used a lot
+	more and could become a required dependency of PyMVPA.
+  libsvm_: fast SVM classifier
+	Only the C library is required and none of the Python bindings available
+	on the upstream website. PyMVPA provides its own Python wrapper for libsvm
+	which is a fork based on the one included in the libsvm package.
+  PyNIfTI_: access to NIfTI files
+	PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
+	format. If you don't need that, PyNIfTI is not necessary, but otherwise
+	it makes it really easy to read from and write to NIfTI images.
+
+.. _SciPy: http://www.scipy.org/
+.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _PyNIfTI: http://niftilib.sourceforge.net/pynifti/
+
+
+Suggestions
+''''''''''''
+
+The following list of software is not required by PyMVPA, but it might make
+life a lot easier and lead to more efficiency when using PyMVPA.
+
+  IPython_: frontend
+	If you want to use PyMVPA interactively it is strongly recommend to use
+	IPython_. If you think: *"Oh no, not another one, I already have to learn
+	about PyMVPA."* please invest a tiny bit of time to watch the `Five Minutes
+	with IPython`_ screencasts at showmedo.com_, so at least you know what you
+	are missing.
+  FSL_: preprocessing and analysis of (f)MRI data
+	PyMVPA provides some simple bindings to FSL output and filetypes (e.g. EV
+	files and MELODIC output directories). This makes it fairly easy to e.g.
+	use FSL's implementation of ICA for data reduction and proceed with
+	analyzing the estimated ICs in PyMVPA.
+
+.. _IPython: http://ipython.scipy.org
+.. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
+.. _showmedo.com: http://showmedo.com
+.. _FSL: http://www.fmrib.ox.ac.uk/fsl/
+
+
+Obtaining PyMVPA
+~~~~~~~~~~~~~~~~
+
+Binary packages
+'''''''''''''''
+
+Binary packages are not available yet, but will be when the first release of
+PyMVPA has happened. And there will be a Debian package of course.
+
+
+Building from Source
+''''''''''''''''''''
+
+Source code tarballs of PyMVPA releases are available from the `PyMVPA
+project website`_. To get access to both the full PyMVPA history and the latest
+development code the PyMVPA Git_ repository is publicly available. To view the
+repository, please point your webbrowser to gitweb:
+http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+
+To clone (aka checkout) the PyMVPA repository simply do:
+
+::
+
+  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+
+After a short while you will have a `pymvpa` directory below your current
+working directory, that contains the PyMVPA repository.
+
+.. _Git: http://git.or.cz/
+
+
+Installation
+~~~~~~~~~~~~
+.. Point to source and binary distribution. Preach idea of free software.
+   Step by step guide to install it on difficult systems like Windows.
+
+.. Don't forget to mention that the only reasonable way is to use this piece
+   of software (like every other piece) is under Debian! Also mention that
+   Ubuntu is no excuse ;-)
+
+
+How to cite PyMVPA
+~~~~~~~~~~~~~~~~~~
+.. come up with something
+
+
+
 Credits
 ~~~~~~~
 
 .. Please add some notes when you think that you should give credits to someone
    that enables or motivates you to work on PyMVPA ;-)
+
+
+Manual Conventions
+~~~~~~~~~~~~~~~~~~
+
+In all examples the NumPy package is assumed to be imported using the alias N
+throughout this manual.
+
+  >>> import numpy as N
 
 
 
@@ -467,6 +535,8 @@ Support Vector Machines
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
 
+Boosted and Multi-class Classifiers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Algorithms
 ----------
