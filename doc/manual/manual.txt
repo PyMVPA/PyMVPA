@@ -566,6 +566,10 @@ with most algorithms in PyMVPA (please see the Algorithms_ section for
 details). This makes it very easy to test different classifiers on some
 dataset.
 
+
+Stateful objects
+~~~~~~~~~~~~~~~~
+
 Before looking at the different classifiers in more detail, it is important to
 mention another feature common to all of them. While their interface is simple,
 classifiers are in no way limited to report nothing but predictions. All
@@ -616,6 +620,8 @@ Support Vector Machines
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
 
+
+
 Algorithms
 ----------
 
@@ -627,11 +633,30 @@ Algorithms
    parameters upon creation and can be used multiple times by calling them with
    datasets. Also attache explaination of PyMVPA object `states` at that point.
 
+
+Error Calculation
+~~~~~~~~~~~~~~~~~
+
+Sensitivity Analyzers
+~~~~~~~~~~~~~~~~~~~~~
 .. Point to the difference of `DataMeasure` and `SensitivityAnalyzer`. The
    former computes some value given a dataset (might be scalar or something
    else), whereas that latter computes a 1d map (sensitivity -> features),
    where each value assigns a quantification of the amount of available
    information in that feature.
+
+Noise Perturbation
+''''''''''''''''''
+
+ANOVA
+'''''
+
+Linear SVM Weights
+''''''''''''''''''
+
+Splitting Sensitivity Analyzer
+''''''''''''''''''''''''''''''
+
 
 
 Searchlight
@@ -654,6 +679,15 @@ Statistical Testing
 
 .. Point to the problem of an unknown H0 distribution, which is a problem
    for a lot of statistical tests.
+
+
+Additional Little Helpers
+------------------------
+
+.. put information about IO helpers, external bindings, etc here
+
+FSL Bindings
+~~~~~~~~~~~~
 
 
 Frequently Asked Questions
