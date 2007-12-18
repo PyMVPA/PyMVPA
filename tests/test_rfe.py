@@ -57,6 +57,12 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == (False, False))
         self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == (True, False))
 
+        # test to detect earliest and latest minimum
+        stopcrit = StopNBackHistoryCriterion(lateminimum=True)
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (False, True))
+        stopcrit = StopNBackHistoryCriterion(steps=4)
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (True, False))
+
 
     def testFeatureSelector(self):
         """Test feature selector"""
