@@ -13,7 +13,7 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.knn import kNN
+from mvpa.clfs.knn import kNN
 
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5):

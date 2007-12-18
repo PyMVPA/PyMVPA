@@ -24,8 +24,8 @@ build-stamp:
 	python setup.py build_ext
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
-	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clf/libsvm/svmc.so \
-		mvpa/clf/libsvm/
+	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/libsvm/svmc.so \
+		mvpa/clfs/libsvm/
 	touch $@
 #
 # Cleaning
@@ -40,9 +40,9 @@ clean:
 
 distclean:
 	-@rm -f MANIFEST Changelog
-	-@rm -f mvpa/clf/libsvm/*.{c,so} \
-		mvpa/clf/libsvm/svmc.py \
-		mvpa/clf/libsvm/svmc_wrap.cpp \
+	-@rm -f mvpa/clfs/libsvm/*.{c,so} \
+		mvpa/clfs/libsvm/svmc.py \
+		mvpa/clfs/libsvm/svmc_wrap.cpp \
 		tests/*.{prof,pstats,kcache,coverage} $(PROFILE_FILE)
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \

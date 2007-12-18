@@ -14,7 +14,7 @@ import pylab
 
 # local imports
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.plf import PLF
+from mvpa.clfs.plf import PLF
 
 # set up the labeled data
 # two skewed  2-D distributions

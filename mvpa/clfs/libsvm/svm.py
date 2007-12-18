@@ -16,10 +16,10 @@ import re
 
 import numpy as N
 
-from mvpa.clf.libsvm import svmc
-from mvpa.clf.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
-                                 NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
-                                 PRECOMPUTED
+from mvpa.clfs.libsvm import svmc
+from mvpa.clfs.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
+                                  NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
+                                  PRECOMPUTED
 
 
 def intArray(seq):
