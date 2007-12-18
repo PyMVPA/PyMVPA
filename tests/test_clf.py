@@ -13,7 +13,7 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.classifier import Classifier, BoostedClassifier, \
+from mvpa.clfs.classifier import Classifier, BoostedClassifier, \
      BinaryClassifierDecorator, BoostedMulticlassClassifier
 
 from copy import deepcopy

@@ -13,8 +13,8 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.svm import RbfNuSVMC,LinearNuSVMC
-from mvpa.clf.libsvm import svmc
+from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
+from mvpa.clfs.libsvm import svmc
 
 
 def dumbFeatureSignal():

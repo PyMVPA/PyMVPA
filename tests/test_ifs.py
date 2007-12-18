@@ -15,8 +15,8 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.ifs import IFS
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
-from mvpa.clf.svm import LinearNuSVMC
-from mvpa.clf.transerror import TransferError
+from mvpa.clfs.svm import LinearNuSVMC
+from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.featsel import FixedNElementTailSelector
 

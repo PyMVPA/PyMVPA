@@ -10,7 +10,7 @@
 
 import unittest
 from mvpa.datasets.dataset import Dataset
-from mvpa.clf.plf import PLF
+from mvpa.clfs.plf import PLF
 import numpy as N
 
 def dumbFeatureSignal():
