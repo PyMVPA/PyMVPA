@@ -17,12 +17,12 @@ from optparse import OptionParser
 
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
-from mvpa.clf.knn import kNN
-from mvpa.clf.svm import LinearNuSVMC, RbfNuSVMC
+from mvpa.clfs.knn import kNN
+from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.datasets.misc import zscore
 from mvpa.algorithms.searchlight import Searchlight
-from mvpa.clf.transerror import TransferError
+from mvpa.clfs.transerror import TransferError
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \

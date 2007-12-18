@@ -16,7 +16,7 @@ from copy import copy
 
 from mvpa.algorithms.datameasure import DataMeasure
 from mvpa.datasets.splitter import NoneSplitter
-from mvpa.clf.transerror import ConfusionMatrix
+from mvpa.clfs.transerror import ConfusionMatrix
 from mvpa.misc import warning
 
 if __debug__:

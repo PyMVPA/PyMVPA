@@ -18,8 +18,8 @@ from mvpa.algorithms.featsel import \
      StopNBackHistoryCriterion, FractionTailSelector, \
      FixedNElementTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
-from mvpa.clf.svm import LinearNuSVMC
-from mvpa.clf.transerror import TransferError
+from mvpa.clfs.svm import LinearNuSVMC
+from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError

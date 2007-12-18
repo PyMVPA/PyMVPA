@@ -14,10 +14,10 @@ import numpy as N
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.perturbsensana import PerturbationSensitivityAnalyzer
-from mvpa.clf.knn import kNN
+from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
-from mvpa.clf.transerror import TransferError
+from mvpa.clfs.transerror import TransferError
 
 
 class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
