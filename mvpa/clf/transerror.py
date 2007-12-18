@@ -20,6 +20,7 @@ from math import log10, ceil
 from sets import Set
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
+from mvpa.misc import warning
 from mvpa.misc.state import State
 
 if __debug__:
@@ -64,6 +65,16 @@ class ConfusionMatrix(object):
                   "Targets[%d] and predictions[%d]" % (len(targets),
                                                        len(predictions)) + \
                   " have different number of samples"
+
+        # enforce labels in predictions to be of the same datatype as in targets,
+        # since otherwise we are getting doubles for unknown at a given moment labels
+        for i in xrange(len(targets)):
+            t1, t2 = type(targets[i]), type(predictions[i])
+            if t1 != t2:
+                #warning("Obtained target %s and prediction %s are of " %
+                #       (t1, t2) + "different datatypes.")
+                predictions[i] = t1(predictions[i])
+
         self.__sets.append( (targets, predictions) )
         self.__computed = False
 
@@ -243,7 +254,7 @@ class TransferError(State):
     Optionally the classifier can be training by passing an additional
     training dataset to the __call__() method.
     """
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None):
+    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None, **kwargs):
         """Cheap initialization.
 
         Parameters
@@ -256,7 +267,7 @@ class TransferError(State):
         - `labels`: if provided, should be a set of labels to add on top of
                     the ones present in testdata
         """
-        State.__init__(self)
+        State.__init__(self, **kwargs)
         self.__clf = clf
         self.__errorfx = errorfx
         self.__labels = labels
