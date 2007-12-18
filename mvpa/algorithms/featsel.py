@@ -83,10 +83,17 @@ class StopNBackHistoryCriterion(StoppingCriterion):
     """Stop computation if for a number of steps error was increasing
     """
 
-    def __init__(self, steps=10, func=min):
+    def __init__(self, steps=10, func=min, lateminimum=False):
         """Initialize with number of steps
-        `steps`: int, for how many steps to check after optimal value
-        `fun`: functor, to select the best results. Defaults to min
+
+        :Parameters:
+            steps : int
+                How many steps to check after optimal value.
+            fun : functor
+                Functor to select the best results. Defaults to min
+            lateminimum : bool
+                Toggle whether the latest or the earliest minimum is used as
+                optimal value to determine the stopping criterion.
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
@@ -94,6 +101,7 @@ class StopNBackHistoryCriterion(StoppingCriterion):
                   "Number of steps (got %d) should be non-negative" % steps
         self.__steps = steps
         self.__func = func
+        self.__lateminimum = lateminimum
 
 
     def __call__(self, errors):
@@ -105,7 +113,15 @@ class StopNBackHistoryCriterion(StoppingCriterion):
             return (isbest, stop)
 
         minerror = self.__func(errors)
-        minindex = errors.index(minerror)
+
+        if self.__lateminimum:
+            # make sure it is an array
+            errors = N.array(errors)
+            # to find out the location of the minimum but starting from the
+            # end!
+            minindex = N.array((errors == minerror).nonzero()).max()
+        else:
+            minindex = errors.index(minerror)
 
         # if minimal is the last one reported -- it is the best
         if minindex == len(errors)-1:
