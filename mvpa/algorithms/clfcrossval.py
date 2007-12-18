@@ -16,6 +16,8 @@ from copy import copy
 
 from mvpa.algorithms.datameasure import DataMeasure
 from mvpa.datasets.splitter import NoneSplitter
+from mvpa.clf.transerror import ConfusionMatrix
+from mvpa.misc import warning
 
 if __debug__:
     from mvpa.misc import debug
@@ -66,6 +68,8 @@ class ClfCrossValidation(DataMeasure):
         """Store copies of transerrors at each step"""
         self._registerState("confusions", enabled=False)
         """Store actual confusion matrices (if available)"""
+        self._registerState("confusion", enabled=False)
+        """Store total confusion matrix (if available)"""
 
 
 # TODO: put back in ASAP
@@ -90,6 +94,7 @@ class ClfCrossValidation(DataMeasure):
         results = []
 
         self["splits"] = []
+        self["confusion"] = ConfusionMatrix()
         self["confusions"] = []
         self["transerrors"] = []
 
@@ -111,9 +116,20 @@ class ClfCrossValidation(DataMeasure):
                 else:
                     warning("Crossvalidator %s can't store confusions state " %
                             self +
-                            "since transfer error %s doesn't have confusion " %
+                            "since transfer error %s " %
                             self.__transerror +
-                            "doesn't have it enabled to registered")
+                            "doesn't have confusion enabled to registered")
+
+            if self.isStateEnabled('confusion'):
+                if self.__transerror.isStateActive('confusion'):
+                    self["confusion"] += self.__transerror["confusion"]
+                else:
+                    warning("Crossvalidator %s can't store confusion state " %
+                            self +
+                            "since transfer error %s " %
+                            self.__transerror +
+                            "doesn't have confusion enabled to registered")
+
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" % (len(results), `result`))
