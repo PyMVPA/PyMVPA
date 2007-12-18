@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.misc.param import Parameter
+from mvpa.misc import warning
 from mvpa.clf.classifier import Classifier
 from mvpa.clf.libsvm import svm
 
@@ -153,7 +154,17 @@ class SVMBase(Classifier):
             src = data
         else:
             src = data.astype('double')
-        return [ self.model.predict( p ) for p in src ]
+
+        predictions = [ self.model.predict( p ) for p in src ]
+        self["predictions"] = predictions
+        if self.isStateEnabled("values"):
+            try:
+                values = [ self.model.predictProbability( p ) for p in src ]
+                self["values"] = values
+            except TypeError:
+                warning("Current SVM doesn't support probability estimation," +
+                        " thus no 'values' state")
+        return predictions
 
 
     model = property(fget=lambda self: self.__model)
