@@ -215,7 +215,7 @@ class BoostedClassifier(Classifier):
 
     """
 
-    def __init__(self, clfs, combiner=MaximalVote(), **kwargs):
+    def __init__(self, clfs=[], combiner=MaximalVote(), **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -398,7 +398,8 @@ class BoostedMulticlassClassifier(Classifier):
     is yet to think about)
     """
 
-    def __init__(self, clf, bclf, bclf_type="1-vs-1", **kwargs):
+    def __init__(self, clf, bclf=BoostedClassifier(),
+                 bclf_type="1-vs-1", **kwargs):
         """Initialize the instance
 
         :Parameters:
@@ -447,7 +448,7 @@ class BoostedMulticlassClassifier(Classifier):
             # generate pairs and corresponding classifiers
             biclfs = []
             for i in xrange(len(ulabels)):
-                for j in xrange(i+1, len(ulables)):
+                for j in xrange(i+1, len(ulabels)):
                     clf = deepcopy(self.__clf)
                     biclf.append(
                         BinaryClassifierDecorator(
