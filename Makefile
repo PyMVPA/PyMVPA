@@ -47,6 +47,7 @@ distclean:
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
 		 -o -iname '*~' \
+		 -o -iname '*.kcache' \
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
