@@ -516,12 +516,93 @@ but also the many other parts.
 Classifiers
 -----------
 
-.. First generic interface of all classifiers in PyMVPA. Point to the special
-   case of multi-class classification and how to deal with it. Finally describe
-   features of all available classifiers.
+PyMVPA includes a number of ready-to-use classifiers, which are described in
+the following sections. All classifiers implement the same, very simple
+interface. Each classifier object takes all relevant parameters as arguments
+to it's constructor. Once instanciated, the object's `train()` method can be
+called with some dataset. This trains the classifier using *all* samples
+in the respective dataset.
 
-.. Check with Yarik whether multiclass interface will influcence basic
-   classifiers.
+The major task for a classifier is to make predictions. Predictions are made
+by calling the classifier's `predict()` method with one or multiple data
+samples. `predict()` operates on pure sample data and not datasets, as in
+some cases the true label for a sample might be totally unknown.
+
+This examples demonstrates the typical daily life of a classifier. 
+
+  >>> from mvpa.clfs.knn import kNN
+  >>> from mvpa.datasets.dataset import Dataset
+  >>> training = Dataset(samples=N.array(N.arange(100),ndmin=2).T,
+                         labels=[0] * 50 + [1] * 50)
+  >>> rand100 = N.random.rand(10)*100
+  >>> validation = Dataset(samples=N.array(rand100, ndmin=2).T,
+                           labels=[ int(i>50) for i in rand100 ])
+  >>> clf = kNN(k=10)
+  >>> clf.train(training)
+  >>> N.mean(clf.predict(training.samples) == training.labels)
+  1.0
+  >>> N.mean(clf.predict(validation.samples) == validation.labels)
+  1.0
+
+Two datasets with 100 and 10 samples each are generated. Both datasets only
+have one feature and the associated label is 0 if the feature value is below
+50 or 1 otherwise. The larger dataset contains all integers in the intervall
+(0,100) and is used to train the classifier. The smaller is used as a
+validation dataset, to check whether the classifier learned something that
+generalizes well across samples not included in the training dataset. In this
+case the validation dataset consists of 10 random floating point values in the
+interval (0,100).
+
+The classifier in this example is a k-Nearest-Neighbour_ classifier that makes
+use of the 10 nearest neighbours of a data sample to make it's predictions
+(k=10). One can see that after the training the classifier performs optimal on
+the training dataset as well as on the validation data samples.
+
+The choice of the classifier in the above example is more or less arbitrary.
+Any classifier in PyMVPA can replace the choosen kNN object. This demonstrates
+another useful feature of PyMVPA's classifiers. Due to the high-level
+abstraction and the simple interface, almost all classifiers can be combined
+with most algorithms in PyMVPA (please see the Algorithms_ section for
+details). This makes it very easy to test different classifiers on some
+dataset.
+
+Before looking at the different classifiers in more detail, it is important to
+mention another feature common to all of them. While their interface is simple,
+classifiers are in no way limited to report nothing but predictions. All
+classifiers implemenent an additional interface: the so called `State`.
+This means basically, that a classifier object can be treated similar to a
+Python dictionary. This dictionary contains additional classifier-specific
+information.
+
+To continue the last example, each classifier, or more precisely every objects
+that implements the `State` interface can be asked to report existing
+state-related information:
+
+  >>> clf.states
+  ['values', 'predictions']
+
+By default all classifiers provide two state variables `values` and
+`predictions`. The latter is simply the set of predictions that was returned
+by the last call to the objects `predict()` method. The former is heavily
+classifier-specific. By convention the `values` key provides access to the
+raw values that a classifier prediction is based on. Depending on the
+classifier this information might required significant ressources when stored.
+Therefore all states can be disabled or enabled (`disableState()`,
+`enableState()`) and their current status can be queried like this:
+
+  >>> clf.isStateActive('predictions')
+  True
+  >>> clf.isStateActive('values')
+  False
+  >>> clf.enabledStates
+  ['predictions']
+
+
+Boosted and Multi-class Classifiers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. Point to the special case of multi-class classification and how to deal with
+   it. Finally describe features of all available classifiers.
 
 
 k-Nearest-Neighbour
@@ -534,9 +615,6 @@ Support Vector Machines
 
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
-
-Boosted and Multi-class Classifiers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Algorithms
 ----------
