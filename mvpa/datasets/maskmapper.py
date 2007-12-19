@@ -113,7 +113,7 @@ class MaskMapper(MetricMapper):
         #from IPython.Shell import IPShellEmbed
         #ipshell = IPShellEmbed()
         #ipshell()
-
+        #import pydb; pydb.debugger()
         # Store forward mapping (ie from coord into outId)
         # TODO to save space might take appropriate int type
         #     depending on masknonzerosize
@@ -131,9 +131,11 @@ class MaskMapper(MetricMapper):
         """Map data from the original dataspace into featurespace.
         """
         datadim = len(data.shape)
-        if not data.shape[(-1)*self.__maskdim:] == self.__mask.shape:
+        datashape = data.shape[(-1)*self.__maskdim:]
+        if not datashape == self.__mask.shape:
             raise ValueError, \
-                  "To be mapped data does not match the mapper mask."
+                  "The shape of data to be mapped %s " % `datashape` \
+                  + " does not match the mapper's mask shape %s" % `self.__mask.shape`
 
         if self.__maskdim == datadim:
             # we had to select by __masknonzero if we didn't sort
