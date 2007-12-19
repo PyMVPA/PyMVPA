@@ -15,6 +15,7 @@ import operator
 from copy import deepcopy
 from sets import Set
 
+from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import State
 
 if __debug__:
@@ -450,13 +451,13 @@ class BoostedMulticlassClassifier(Classifier):
             for i in xrange(len(ulabels)):
                 for j in xrange(i+1, len(ulabels)):
                     clf = deepcopy(self.__clf)
-                    biclf.append(
+                    biclfs.append(
                         BinaryClassifierDecorator(
                         clf,
                         poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
             if __debug__:
                 debug("CLF", "Created %d binary classifiers for %d labels" %
-                      (len(biclf), len(ulabels)))
+                      (len(biclfs), len(ulabels)))
 
             self.__bclf.classifiers = biclfs
 
@@ -473,3 +474,117 @@ class BoostedMulticlassClassifier(Classifier):
         return self.__bclf.predict(data)
 
     classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")
+
+
+class BoostedSplitClassifier(Classifier):
+    """Classifier to perform multiclass using a set of binary classifiers
+
+    such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
+    is yet to think about)
+
+    TODO: BoostedSplitClassifier and BoostedMulticlassClassifier have too much
+          in common -- need to refactor: just need a splitter which would split
+          dataset in pairs of class labels
+    """
+
+    def __init__(self, clf, bclf=BoostedClassifier(),
+                 splitter=NoneSplitter(), **kwargs):
+        """Initialize the instance
+
+        :Parameters:
+          clf : Classifier
+            classifier based on which multiple classifiers are created
+            for multiclass
+          boostedclf : BoostedClassifier
+            classifier used to aggregate "pairClassifier"s
+          splitter : Splitter
+            `Splitter` to use to split the dataset prior training
+          """
+        Classifier.__init__(self, **kwargs)
+        self.__clf = clf
+        """Store sample instance of basic classifier"""
+        self.__bclf = bclf
+        """Store sample instance of boosted classifier to construct based on clf's"""
+        self.__splitter = splitter
+
+        self.__classifiers = None
+
+
+    def train(self, data):
+        """
+        """
+        # generate pairs and corresponding classifiers
+        bclfs = []
+        i = 0
+        for split in self.__splitter(data):
+            clf = deepcopy(self.__clf)
+            clf.train(split)
+            bclfs.append(clf)
+            if __debug__:
+                debug("CLF", "Created and trained classifier for split %d" % (i))
+            i += 1
+
+        self.__bclf.classifiers = bclfs
+
+
+    def predict(self, data):
+        """
+        """
+        # XXX might need to copy states off bclf
+        return self.__bclf.predict(data)
+
+    classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")
+
+
+
+class MappedClassifier(Classifier):
+    """Decorator Classifier which would use some mapper prior training/testing.
+
+    For instance MaskMapper can be used just a subset of features to
+    train/classify.
+    Having such classifier we can easily create a set of classifiers
+    for BoostedClassifier, where each classifier operates on some set
+    of features, e.g. set of best spheres from SearchLight, set of
+    ROIs selected elsewhere. It would be different from simply
+    applying whole mask over the dataset, since here initial decision
+    is made by each classifier and then later on they vote for the
+    final decision across the set of classifiers.
+    """
+
+    def __init__(self, clf, mapper, **kwargs):
+        """Initialize the instance
+
+        :Parameters:
+          clf : Classifier
+            classifier based on which mask classifiers is created
+          mapper
+            whatever `Mapper` comes handy
+          """
+        Classifier.__init__(self, **kwargs)
+        self.__clf = deepcopy(clf)
+        """Store copy of the classifier"""
+
+        self.__mapper = mapper
+        """mapper to help us our with prepping data to training/classification"""
+
+
+    def train(self, data):
+        """
+        """
+        self.__clf.train(self.__mapper.forward(data))
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+
+
+    def predict(self, data):
+        """
+        """
+        result = self.__clf.predict(self.__mapper.forward(data))
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+        return result
+
+
+    clf = property(lambda x:x.__clf, doc="Used classifier")
+    mapper = property(lambda x:x.__mapper, doc="Used mapper")
+
