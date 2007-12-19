@@ -47,30 +47,36 @@ class RFE(FeatureSelection):
                  feature_selector=FractionTailSelector(0.05),
                  stopping_criterion=StopNBackHistoryCriterion(),
                  train_clf=True,
+                 update_sensitivity=True,
                  **kargs
                  ):
         # XXX Allow for multiple stopping criterions, e.g. error not decreasing
         # anymore OR number of features less than threshold
         """Initialize recursive feature elimination
 
-        Parameters
-        ----------
-
-        - `sensitivity_analyzer`: `SensitivityAnalyzer`
-        - `transfer_error`: `TransferError` instance used to compute the
-                transfer error of a classifier based on a certain feature set
-                on test dataset.
-        - `feature_selector`: Functor. Given a sensitivity map it has to return
-                the ids of those features that should be kept.
-        - `stopping_criterion`: Functor. Given a list of error values it has
-                to return a tuple of two booleans. First values must indicate
-                whether the criterion is fulfilled and the second value signals
-                whether the latest error values is the total minimum.
-        - `train_clf`: Flag whether the classifier in `transfer_error` should
-                be trained before computing the error. In general this is
+        :Parameters:
+            sensitivity_analyzer : SensitivityAnalyzer object
+            transfer_error : TransferError object
+                used to compute the transfer error of a classifier based on a
+                certain feature set on the test dataset.
+            feature_selector : Functor
+                Given a sensitivity map it has to return the ids of those
+                features that should be kept.
+            stopping_criterion : Functor
+                Given a list of error values it has to return a tuple of two
+                booleans. First values must indicate whether the criterion is
+                fulfilled and the second value signals whether the latest
+                error values is the total minimum.
+            train_clf : bool
+                Flag whether the classifier in `transfer_error` should be
+                trained before computing the error. In general this is
                 required, but if the `sensitivity_analyzer` and
-                `transfer_error` share and make use of the same classifier and
+                `transfer_error` share and make use of the same classifier it
                 can be switched off to save CPU cycles.
+            update_sensitivity : bool
+                If False the sensitivity map is only computed once and reused
+                for each iteration. Otherwise the senstitivities are
+                recomputed at each selection step.
         """
 
         # base init first
@@ -89,6 +95,14 @@ class RFE(FeatureSelection):
 
         self.__train_clf = train_clf
         """Flag whether training classifier is required."""
+
+        self.__update_sensitivity = update_sensitivity
+        """Flag whether sensitivity map is recomputed for each step."""
+
+        # force clf training when sensitivities are not updated as otherwise
+        # shared classifiers are not retrained
+        if not self.__update_sensitivity:
+            self.__train_clf = True
 
         # register the state members
         self._registerState("errors")
@@ -147,6 +161,9 @@ class RFE(FeatureSelection):
         """List of feature Ids as per original dataset remaining at any given
         step"""
 
+        sensitivity = None
+        """Contains the latest sensitivity map."""
+
         while wdataset.nfeatures > 0:
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
@@ -154,10 +171,8 @@ class RFE(FeatureSelection):
             self["history"][orig_feature_ids] = step
 
             # Compute sensitivity map
-            # TODO add option to do RFE on a sensitivity map that is computed
-            # a single time at the beginning of the process. This options
-            # should then overwrite train_clf to always be True
-            sensitivity = self.__sensitivity_analyzer(wdataset)
+            if self.__update_sensitivity or sensitivity == None:
+                sensitivity = self.__sensitivity_analyzer(wdataset)
 
             if self.isStateEnabled("sensitivities"):
                 self["sensitivities"].append(sensitivity)
@@ -196,6 +211,11 @@ class RFE(FeatureSelection):
             selected_ids = self.__feature_selector(sensitivity)
             # Create a dataset only with selected features
             wdataset = wdataset.selectFeatures(selected_ids)
+
+            # select corresponding sensitivity values if they are not
+            # recomputed
+            if not self.__update_sensitivity:
+                sensitivity = sensitivity[selected_ids]
 
             # need to update the test dataset as well
             # XXX why should it ever become None?
