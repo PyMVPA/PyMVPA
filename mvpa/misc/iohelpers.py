@@ -77,6 +77,13 @@ class ColumnData(dict):
                     debug("IOH", "Registering property %s for ColumnData" % `k`)
                 exec "%s.%s = property(fget=%s)"  % \
                      (self.__class__.__name__, k, getter)
+                # TODO!!! Check if it is safe actually here to rely on value of
+                #         k in lambda. May be it is treated as continuation and some
+                #         local space would override it????
+                #setattr(self.__class__,
+                #        k,
+                #        property(fget=lambda x: x._getAttrib("%s" % k)))
+                # it seems to be error-prone due to continuation...
 
 
     def _getAttrib(self, key):
