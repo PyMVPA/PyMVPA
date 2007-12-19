@@ -34,16 +34,17 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         svm = LinearNuSVMC()
         svm_weigths = LinearSVMWeights(svm)
 
-        # intentionally using default postproc
-        sana = SplittingSensitivityAnalyzer(svm_weigths,
-                                            NFoldSplitter(cvtype=1))
+        sana = SplittingSensitivityAnalyzer(
+                    svm_weigths,
+                    NFoldSplitter(cvtype=1),
+                    postproc={'full': N.array})
 
         maps = sana(self.dataset)
 
-        self.failUnless(len(maps) == 5)
-        self.failUnless(sana.hasState('mean'))
-        self.failUnless(N.array(maps)[:,0].mean() == sana['mean'][0])
-        self.failUnless(N.array(maps).shape == (5,4))
+        self.failUnless(len(maps) == 4)
+        self.failUnless(sana.hasState('full'))
+        self.failUnless(sana['full'][:,0].mean() == maps[0])
+        self.failUnless(sana['full'].shape == (5,4))
 
 
 def suite():
