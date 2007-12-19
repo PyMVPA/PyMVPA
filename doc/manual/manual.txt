@@ -243,6 +243,9 @@ working directory, that contains the PyMVPA repository.
 
 Installation
 ~~~~~~~~~~~~
+
+(to be written)
+
 .. Point to source and binary distribution. Preach idea of free software.
    Step by step guide to install it on difficult systems like Windows.
 
@@ -253,12 +256,17 @@ Installation
 
 How to cite PyMVPA
 ~~~~~~~~~~~~~~~~~~
+
+(to be written)
+
 .. come up with something
 
 
 
 Credits
 ~~~~~~~
+
+(to be written)
 
 .. Please add some notes when you think that you should give credits to someone
    that enables or motivates you to work on PyMVPA ;-)
@@ -602,8 +610,20 @@ Therefore all states can be disabled or enabled (`disableState()`,
   ['predictions']
 
 
+Error Calculation
+~~~~~~~~~~~~~~~~~
+
+TransferError_
+
+(to be written)
+
+.. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
+
+
 Boosted and Multi-class Classifiers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(to be written)
 
 .. Point to the special case of multi-class classification and how to deal with
    it. Finally describe features of all available classifiers.
@@ -612,18 +632,44 @@ Boosted and Multi-class Classifiers
 k-Nearest-Neighbour
 ~~~~~~~~~~~~~~~~~~~
 
+kNN_
+
+(to be written)
+
+.. _kNN: api/mvpa.clfs.knn.kNN-class.html
+
 
 Support Vector Machines
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+LinearCSVMC_
+LinearNuSVMC_
+RbfNuSVMC_
+RbfCSVMC_
+SVMBase_
+
+(to be written)
+
+.. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
+.. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
+.. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
+.. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuCSVMC-class.html
+.. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
 
+PLF_ (why is this called PLF not PLR?)
+
+(to be written)
+
+.. _PLF: api/mvpa.clfs.plf.PLF-class.html
 
 
 Algorithms
 ----------
+
+(to be written)
 
 .. Again general overview first. What is a `SensitivityAnalyzer`, what is the
    difference between a `FeatureSelection` and an `ElementSelector`.
@@ -634,11 +680,15 @@ Algorithms
    datasets. Also attache explaination of PyMVPA object `states` at that point.
 
 
-Error Calculation
-~~~~~~~~~~~~~~~~~
-
 Sensitivity Analyzers
 ~~~~~~~~~~~~~~~~~~~~~
+
+SensitivityAnalyzer_
+
+(to be written)
+
+.. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
+
 .. Point to the difference of `DataMeasure` and `SensitivityAnalyzer`. The
    former computes some value given a dataset (might be scalar or something
    else), whereas that latter computes a 1d map (sensitivity -> features),
@@ -648,28 +698,82 @@ Sensitivity Analyzers
 Noise Perturbation
 ''''''''''''''''''
 
+PerturbationSensitivityAnalyzer_
+
+(to be written)
+
+.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+
 ANOVA
 '''''
+
+OneWayAnova_
+
+(to be written)
+
+.. _OneWayAnova: api/mvpa.algorithms.anova.OneWayAnova-class.html
+
 
 Linear SVM Weights
 ''''''''''''''''''
 
+LinearSVMWeights_
+
+(to be written)
+
+.. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
+
+
 Splitting Sensitivity Analyzer
 ''''''''''''''''''''''''''''''
 
+SplittingSensitivityAnalyzer_
+
+(to be written)
+
+.. _SplittingSensitivityAnalyzer: api/mvpa.algorithms.splitsensana.SplittingSensitivityAnalyzer-class.html
+
+
+Classifier Cross-Validation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ClfCrossValidation_
+
+(to be written)
+
+.. _ClfCrossValidation: api/mvpa.algorithms.clfcrossval.ClfCrossValidation-class.html
 
 
 Searchlight
 ~~~~~~~~~~~
+
+Searchlight_
+
+(to be written)
+
+.. _Searchlight: api/mvpa.algorithms.searchlight.Searchlight-class.html
+
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
 
 
 Recursive Feature Elimination
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+RFE_
+
+(to be written)
+
+.. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
+
 
 Incremental Feature Search
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+IFS_
+
+(to be written)
+
+.. _IFS: api/mvpa.algorithms.ifs.IFS-class.html
 
 .. What are the practical differences (besides speed) between RFE and IFS?
 
@@ -677,17 +781,27 @@ Incremental Feature Search
 Statistical Testing
 ~~~~~~~~~~~~~~~~~~~
 
+NullHypothesisTest_
+
+(to be written)
+
+.. _NullHypothesisTest: api/mvpa.algorithms.nullhyptest.NullHypothesisTest-class.html
+
 .. Point to the problem of an unknown H0 distribution, which is a problem
    for a lot of statistical tests.
 
 
 Additional Little Helpers
-------------------------
+-------------------------
+
+(to be written)
 
 .. put information about IO helpers, external bindings, etc here
 
 FSL Bindings
 ~~~~~~~~~~~~
+
+(to be written)
 
 
 Frequently Asked Questions
@@ -699,7 +813,7 @@ I feel like I want to contribute something, do you mind?
   the documentation, send us an improvement. If you implemented a new algorithm
   using PyMVPA that you want to share, please share. If you have an idea for
   some other improvement (e.g. speed, functionality), but you have no
-  time/cannot/do not want to implement it yourselve, please post your idea to
+  time/cannot/do not want to implement it yourself, please post your idea to
   the PyMVPA mailing list.
 
 .. We probably need them once we have more than two users.
