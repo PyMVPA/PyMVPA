@@ -53,6 +53,31 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
 
+
+What this Manual is NOT
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This manual does not make an attempt to be a comprehensive introduction into
+machine learning theory or pattern recognition techniques. There is a wealth
+of high-quality text books about this field available. A very good example is:
+`Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
+
+.. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
+.. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
+
+This manual does not describe every bit and piece of the PyMVPA package. For
+more information, please have a look at the API documentation, which is a
+comprehensive and up-to-date description of the whole package.
+More examples and usage patterns extending the ones described here can be taken
+from the examples shipped with the PyMVPA source distribution (`doc/examples/`)
+or even the unit test battery, also part of the source distribution
+(in the `tests/` directory).
+
+
+
+A bit of History
+~~~~~~~~~~~~~~~~
+
 The roots of PyMVPA date back to early 2005. At that time it was a C++ library
 (no Python_ yet) developed by Michael Hanke and Sebastian Krüger with the
 purpose to easily apply artificial neural networks to pattern recognition
@@ -289,14 +314,7 @@ The PyMVPA package consists of three major parts: `Data handling`_,
 Classifiers_ and Algorithms_ operating on datasets and classifiers.
 In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
-given. However, this manual does not describe every bit and piece of the
-PyMVPA package. For more information, please have a look at the API
-documentation, which is a comprehensive and up-to-date description of the
-whole package. More examples and usage patterns extending the ones described
-here can be taken from the unit test battery, that is part of the source
-distribution (in the `tests/` directory).
-
-
+given. 
 
 Data Handling
 -------------
@@ -653,7 +671,7 @@ SVMBase_
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
 .. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
-.. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuCSVMC-class.html
+.. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 .. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
 Logistic Regression
@@ -669,15 +687,30 @@ PLF_ (why is this called PLF not PLR?)
 Algorithms
 ----------
 
-(to be written)
+PyMVPA provides a number of useful algorithms. The vast majority of them is
+dedicated to feature selection. To increase the flexiblity of analyses PyMVPA
+distinguished two different parts of a feature selection procedure. First,
+the impact of each individual feature on a classification has to be determined.
+The resulting map reflects the sensitivities of all features with respect to
+a certain decision, therefore algorithms generating these maps are called
+`Sensitivity Analyzers`_ in PyMVPA.
+
+When the feature sensitivities are known they can be used as a criterion for
+feature selection. However, possible selection strategies range from very
+simply *Go with the 10% best features* to more complicated algorithms like
+*Recursive feature selection* (RFE_). Because `Sensitivity Analyzers`_ and
+selections strategies can be arbitrarily combined, PyMVPA offers a quite
+flexible framework for feature selection.
+
+Similar to dataset splitters all PyMVPA algorithms are implemented and
+behave like *processing objects*. To recap, this means that they are
+instanciated by passing all relevant arguments to the constructor. Once
+created, they can be used multiple times by calling them with different
+datasets.
 
 .. Again general overview first. What is a `SensitivityAnalyzer`, what is the
    difference between a `FeatureSelection` and an `ElementSelector`.
    Finally more detailed note and references for each larger algorithm.
-
-.. Explain the concept of having algorithm object instances that configure with
-   parameters upon creation and can be used multiple times by calling them with
-   datasets. Also attache explaination of PyMVPA object `states` at that point.
 
 
 Sensitivity Analyzers
@@ -734,6 +767,31 @@ SplittingSensitivityAnalyzer_
 .. _SplittingSensitivityAnalyzer: api/mvpa.algorithms.splitsensana.SplittingSensitivityAnalyzer-class.html
 
 
+Feature Selection Strategies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Recursive Feature Elimination
+'''''''''''''''''''''''''''''
+
+RFE_
+
+(to be written)
+
+.. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
+
+
+Incremental Feature Search
+''''''''''''''''''''''''''
+
+IFS_
+
+(to be written)
+
+.. _IFS: api/mvpa.algorithms.ifs.IFS-class.html
+
+.. What are the practical differences (besides speed) between RFE and IFS?
+
+
 Classifier Cross-Validation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -755,27 +813,6 @@ Searchlight_
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
 
-
-Recursive Feature Elimination
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-RFE_
-
-(to be written)
-
-.. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
-
-
-Incremental Feature Search
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-IFS_
-
-(to be written)
-
-.. _IFS: api/mvpa.algorithms.ifs.IFS-class.html
-
-.. What are the practical differences (besides speed) between RFE and IFS?
 
 
 Statistical Testing
