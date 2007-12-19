@@ -13,8 +13,11 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
+from mvpa.datasets.maskmapper import MaskMapper
+
 from mvpa.clfs.classifier import Classifier, BoostedClassifier, \
-     BinaryClassifierDecorator, BoostedMulticlassClassifier
+     BinaryClassifierDecorator, BoostedMulticlassClassifier, \
+     MappedClassifier
 
 from copy import deepcopy
 
@@ -31,7 +34,7 @@ class SameSignClassifier(Classifier):
         datalen = len(data)
         values = []
         for d in data:
-            values.append(2*int(d[0]*d[1]>=0)-1)
+            values.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
         self["predictions"] = values
         return values
 
@@ -60,7 +63,7 @@ class ClassifiersTests(unittest.TestCase):
     def testDummy(self):
         clf = SameSignClassifier()
         clf.train(None)
-        self.failUnless(clf.predict(self.data_bin_1[0]) == self.data_bin_1[1])
+        self.failUnlessEqual(clf.predict(self.data_bin_1[0]), self.data_bin_1[1])
 
     def testBoosted(self):
         # XXXXXXX
@@ -94,10 +97,23 @@ class ClassifiersTests(unittest.TestCase):
         # check by selecting just 
         #self. fail
 
+    def testMappedDecorator(self):
+        testdata3 = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
+        res110 = [1, 1, 1, -1, -1]
+        res101 = [-1, 1, -1, -1, 1]
+        res011 = [-1, 1, -1, 1, -1]
+
+        clf110 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([1,1,0])))
+        clf101 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([1,0,1])))
+        clf011 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([0,1,1])))
+
+        self.failUnlessEqual(clf110.predict(testdata3), res110)
+        self.failUnlessEqual(clf101.predict(testdata3), res101)
+        self.failUnlessEqual(clf011.predict(testdata3), res011)
+
 def suite():
     return unittest.makeSuite(ClassifiersTests)
 
 
 if __name__ == '__main__':
     import test_runner
-
