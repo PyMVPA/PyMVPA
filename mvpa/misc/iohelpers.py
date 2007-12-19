@@ -11,6 +11,8 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
+import copy
+
 from mvpa.misc import warning
 
 if __debug__:
@@ -187,6 +189,17 @@ class ColumnData(dict):
         self._check()
 
         return self
+
+
+    def selectSamples(self, selection):
+        """Return new ColumnData with selected samples"""
+
+        data = copy.deepcopy(self)
+        for k, v in data.iteritems():
+            data[k] = [v[x] for x in selection]
+
+        data._check()
+        return data
 
 
     def getNColumns(self):

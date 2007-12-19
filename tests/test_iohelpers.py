@@ -54,13 +54,20 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless(sorted(d.keys()) == ['drei','eins','zwei'])
 
         # but more data
-        self.failUnless(d['eins'] == [0, 3, 0, 3])
-        self.failUnless(d['zwei'] == [1, 4, 1, 4])
-        self.failUnless(d['drei'] == [2, 5, 2, 5])
+        self.failUnlessEqual(d['eins'], [0, 3, 0, 3])
+        self.failUnlessEqual(d['zwei'], [1, 4, 1, 4])
+        self.failUnlessEqual(d['drei'], [2, 5, 2, 5])
 
         # test file write
         # TODO: check if correct
         d.tofile(fpath)
+
+        # test sample selection
+        dsel = d.selectSamples([0, 2])
+        self.failUnlessEqual(dsel['eins'], [0, 0])
+        self.failUnlessEqual(dsel['zwei'], [1, 1])
+        self.failUnlessEqual(dsel['drei'], [2, 2])
+
 
         # cleanup
         os.remove(fpath)
