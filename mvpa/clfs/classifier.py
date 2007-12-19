@@ -473,3 +473,56 @@ class BoostedMulticlassClassifier(Classifier):
         return self.__bclf.predict(data)
 
     classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")
+
+
+class MappedClassifier(Classifier):
+    """Decorator Classifier which would use some mapper prior training/testing.
+
+    For instance MaskMapper can be used just a subset of features to
+    train/classify.
+    Having such classifier we can easily create a set of classifiers
+    for BoostedClassifier, where each classifier operates on some set
+    of features, e.g. set of best spheres from SearchLight, set of
+    ROIs selected elsewhere. It would be different from simply
+    applying whole mask over the dataset, since here initial decision
+    is made by each classifier and then later on they vote for the
+    final decision across the set of classifiers.
+    """
+
+    def __init__(self, clf, mapper, **kwargs):
+        """Initialize the instance
+
+        :Parameters:
+          clf : Classifier
+            classifier based on which mask classifiers is created
+          mapper
+            whatever `Mapper` comes handy
+          """
+        Classifier.__init__(self, **kwargs)
+        self.__clf = deepcopy(clf)
+        """Store copy of the classifier"""
+
+        self.__mapper = mapper
+        """mapper to help us our with prepping data to training/classification"""
+
+
+    def train(self, data):
+        """
+        """
+        self.__clf.train(self.__mapper.forward(data))
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+
+
+    def predict(self, data):
+        """
+        """
+        result = self.__clf.predict(self.__mapper.forward(data))
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+        return result
+
+
+    clf = property(lambda x:x.__clf, doc="Used classifier")
+    mapper = property(lambda x:x.__mapper, doc="Used mapper")
+
