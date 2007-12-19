@@ -78,6 +78,7 @@ if __debug__:
     # debug.registerMetric('vmem')
 
     # List agreed sets for debug
+    debug.register('DBG',  "Debug output itself")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('PLF',  "PLF call")
     debug.register('SLC',  "Searchlight call")
