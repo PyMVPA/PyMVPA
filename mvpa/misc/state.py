@@ -145,10 +145,11 @@ class State(object):
         Crafted to overcome a problem mentioned above in the comment
         and is to be called from __copy__ of derived classes
         """
-        if fromstate.__class__ != self.__class__:
+        if issubclass(self.__class__, fromstate.__class__):
             raise ValueError, \
-                  "Different class got into %s._copy_states_: %s" % \
-                  (self.__class__, into.__class__)
+                  "Class  %s is not subclass of %s, " % \
+                  (self.__class__, into.__class__) + \
+                  "thus not eligible for _copy_states_"
 
         operation = { True: copy.deepcopy,
                       False: copy.copy }[deep]
