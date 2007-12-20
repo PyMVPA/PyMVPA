@@ -70,7 +70,7 @@ class SplitterTests(unittest.TestCase):
 
         # test sampling tools
         nos = NoneSplitter(nrunspersplit=3,
-                           nvalidationsamples=10)
+                           nsecondsamples=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)

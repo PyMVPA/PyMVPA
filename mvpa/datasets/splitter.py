@@ -31,44 +31,44 @@ class Splitter(object):
     an element in a tuple and not just the Dataset object!
     """
     def __init__(self,
-                 nworkingsamples=None,
-                 nvalidationsamples=None,
+                 nfirstsamples=None,
+                 nsecondsamples=None,
                  nrunspersplit=1,
                  permute=False):
         """Initialize base splitter.
 
         :Parameters:
-          nworkingsamples : int, str or None
-            Number of working set samples to be included in each
-            split. Please see the setNWorkingSetSamples() method for
+          nfirstsamples : int, str or None
+            Number of first dataset samples to be included in each
+            split. Please see the setNFirstSetSamples() method for
             special arguments.
-          nvalidationsamples : int, str or None
-            Number of validation set samples to be included in each
-            split. Please see the setNSpareSetSamples() method for
+          nsecondsamples : int, str or None
+            Number of second dataset samples to be included in each
+            split. Please see the setNSecondSetSamples() method for
             special arguments.
           nrunspersplit: int
             Number of times samples for each split are chosen. This
             is mostly useful if a subset of the available samples
             is used in each split and the subset is randomly
-            selected for each run (see the `nworkingsamples`
-            and `nvalidationsamples` arguments).
+            selected for each run (see the `nfirstsamples`
+            and `nsecondsamples` arguments).
           permute : bool
             If set to `True`, the labels of each generated dataset
             will be permuted on a per-chunk basis.
 
         """
         # pylint happyness block
-        self.__working_samplesize = None
+        self.__first_samplesize = None
+        self.__second_samplesize = None
         self.__runspersplit = nrunspersplit
-        self.__validation_samplesize = None
         self.__permute = permute
 
         # pattern sampling status vars
-        self.setNWorkingSetSamples(nworkingsamples)
-        self.setNValidationSetSamples(nvalidationsamples)
+        self.setNFirstSetSamples(nfirstsamples)
+        self.setNSecondSetSamples(nsecondsamples)
 
 
-    def setNWorkingSetSamples(self, samplesize):
+    def setNFirstSetSamples(self, samplesize):
         """None is off, 'auto' sets sample size to highest possible number
         of patterns that can be provided by each class.
         """
@@ -77,10 +77,10 @@ class Splitter(object):
             if not samplesize == 'auto':
                 raise ValueError, "Only 'auto' is a valid string argument."
 
-        self.__working_samplesize = samplesize
+        self.__first_samplesize = samplesize
 
 
-    def setNValidationSetSamples(self, samplesize):
+    def setNSecondSetSamples(self, samplesize):
         """None is off, 'auto' sets sample size to highest possible number
         of patterns that can be provided by each class.
         """
@@ -89,13 +89,13 @@ class Splitter(object):
             if not samplesize == 'auto':
                 raise ValueError, "Only 'auto' is a valid string argument."
 
-        self.__validation_samplesize = samplesize
+        self.__second_samplesize = samplesize
 
 
     def _getSplitConfig(self, uniquechunks):
         """Each subclass has to implement this method. It gets a sequence with
         the unique chunk ids of a dataset and has to return a list of lists
-        containing chunk ids to split into the validation set.
+        containing chunk ids to split into the second dataset.
         """
         raise NotImplementedError
 
@@ -109,8 +109,7 @@ class Splitter(object):
 
         # do cross-validation
         for split in splitcfg:
-            wset, vset = \
-                Splitter.splitDataset(dataset, split)
+            wset, vset = self.splitDataset(dataset, split)
 
             # do the sampling for this split
             for run in xrange(self.__runspersplit):
@@ -121,29 +120,29 @@ class Splitter(object):
 
                 # choose samples
                 wset_samples = \
-                    Splitter.selectSamples(wset, self.__working_samplesize)
+                    Splitter.selectSamples(wset, self.__first_samplesize)
                 vset_samples = \
-                    Splitter.selectSamples(vset,  self.__validation_samplesize)
+                    Splitter.selectSamples(vset,  self.__second_samplesize)
 
                 yield wset_samples, vset_samples
 
 
-    @staticmethod
-    def splitDataset(dataset, splitchunks):
-        """Split a dataset by separating the samples of some chunks.
+    def splitDataset(self, dataset, splitids):
+        """Split a dataset by separating the samples where the configured
+        sample attribute matches an element of `splitids`.
 
         :Parameters:
           dataset : Dataset
             This is this source dataset.
-          splitchunks : list or other sequence
-            Contains ids of chunks that shall be split into the validation
-            dataset.
+          splitids : list or other sequence
+            Contains ids of a sample attribute that shall be split into the
+            another dataset.
 
-        :Returns: Tuple of Datasets (working, validation).
+        :Returns: Tuple of splitted datasets.
         """
         # build a boolean selector vector to choose select samples
         split_filter =  \
-            N.array([ i in splitchunks for i in dataset.chunks ])
+            N.array([ i in splitids for i in dataset.chunks ])
         wset_filter = N.logical_not(split_filter)
 
         # split data: return None if no samples are left
@@ -196,8 +195,8 @@ class Splitter(object):
         """
         return \
           "SplitterConfig: work:%s runs-per-split:%d validate:%s permute:%s" \
-          % (self.__working_samplesize, self.__runspersplit,
-             self.__validation_samplesize, self.__permute)
+          % (self.__first_samplesize, self.__runspersplit,
+             self.__second_samplesize, self.__permute)
 
 
 
@@ -215,7 +214,7 @@ class NoneSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniquechunks):
-        """Return just one full split: no working set.
+        """Return just one full split: no first dataset.
         """
         return [uniquechunks]
 
@@ -256,10 +255,6 @@ class OddEvenSplitter(Splitter):
 
 class NFoldSplitter(Splitter):
     """Generic N-fold data splitter.
-
-    Terminology:
-      - working set
-      - spare set
     """
     def __init__(self,
                  cvtype = 1,
