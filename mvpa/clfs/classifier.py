@@ -212,8 +212,11 @@ class MaximalVote(Combiner):
 
 
 class BoostedClassifier(Classifier):
-    """
+    """Classifier making decision using the farm of other classifiers
 
+    TODO: Think about making some base class which
+          would be common interface for all classifiers which use multiple
+          classifiers: `BoostedMulticlassClassifier`, `BoostedSplitClassifier`
     """
 
     def __init__(self, clfs=[], combiner=MaximalVote(), **kwargs):
