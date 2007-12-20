@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.algorithms.featsel import FeatureSelection, \
+                                    BestDetector, \
                                     StopNBackHistoryCriterion, \
                                     FractionTailSelector
 from numpy import arange
@@ -45,7 +46,8 @@ class RFE(FeatureSelection):
                  sensitivity_analyzer,
                  transfer_error,
                  feature_selector=FractionTailSelector(0.05),
-                 stopping_criterion=StopNBackHistoryCriterion(),
+                 bestdetector=BestDetector(),
+                 stopping_criterion=StopNBackHistoryCriterion(BestDetector()),
                  train_clf=True,
                  update_sensitivity=True,
                  **kargs
@@ -62,11 +64,12 @@ class RFE(FeatureSelection):
             feature_selector : Functor
                 Given a sensitivity map it has to return the ids of those
                 features that should be kept.
+            bestdetector : Functor
+                Given a list of error values it has to return a boolean that
+                signals whether the latest error value is the total minimum.
             stopping_criterion : Functor
-                Given a list of error values it has to return a tuple of two
-                booleans. First values must indicate whether the criterion is
-                fulfilled and the second value signals whether the latest
-                error values is the total minimum.
+                Given a list of error values it has to return whether the
+                criterion is fulfilled.
             train_clf : bool
                 Flag whether the classifier in `transfer_error` should be
                 trained before computing the error. In general this is
@@ -92,6 +95,8 @@ class RFE(FeatureSelection):
         """Functor which takes care about removing some features."""
 
         self.__stopping_criterion = stopping_criterion
+
+        self.__bestdetector = bestdetector
 
         self.__train_clf = train_clf
         """Flag whether training classifier is required."""
@@ -188,7 +193,8 @@ class RFE(FeatureSelection):
 
             # Check if it is time to stop and if we got
             # the best result
-            (stop, isthebest) = self.__stopping_criterion(errors)
+            stop = self.__stopping_criterion(errors)
+            isthebest = self.__bestdetector(errors)
 
             nfeatures = wdataset.nfeatures
 
