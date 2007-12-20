@@ -119,8 +119,10 @@ class CrossValidationTests(unittest.TestCase):
 
         cm.add(reg, N.array([1,2,1,2,2,2,3,2,1]))
 
-        # should be square matrix (len(reglabels) x len(reglabels)
-        self.failUnless(cm.matrix.shape == (3,3))
+        self.failUnlessEqual(len(cm.sets), 1,
+            msg="Should have a single set so far")
+        self.failUnlessEqual(cm.matrix.shape, (3,3),
+            msg="should be square matrix (len(reglabels) x len(reglabels)")
 
         self.failUnlessRaises(ValueError, cm.add, reg, N.array([1]))
         """ConfusionMatrix must complaint if number of samples different"""
