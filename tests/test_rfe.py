@@ -15,6 +15,7 @@ from sets import Set
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
+     SensitivityBasedFeatureSelection, \
      StopNBackHistoryCriterion, FractionTailSelector, \
      FixedNElementTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
@@ -89,6 +90,48 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.nelements == 3)
         self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3)
+
+
+    def testSensitivityBasedFeatureSelection(self):
+        svm = LinearNuSVMC()
+
+        # sensitivity analyser and transfer error quantifier use the SAME clf!
+        sens_ana = LinearSVMWeights(svm)
+
+        # of features to remove
+        Nremove = 2
+
+        # because the clf is already trained when computing the sensitivity
+        # map, prevent retraining for transfer error calculation
+        # Use absolute of the svm weights as sensitivity
+        fe = SensitivityBasedFeatureSelection(Absolute(sens_ana),
+                feature_selector=FixedNElementTailSelector(2),
+                enable_states=["sensitivity", "selected_ids"])
+
+        wdata = self.getData()
+        wdata_nfeatures = wdata.nfeatures
+        tdata = self.getData()
+        tdata_nfeatures = tdata.nfeatures
+
+        sdata, stdata = fe(wdata, tdata)
+
+        # fail if orig datasets are changed
+        self.failUnless(wdata.nfeatures == wdata_nfeatures)
+        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+
+        # silly check if nfeatures got a single one removed
+        self.failUnlessEqual(wdata.nfeatures, sdata.nfeatures+Nremove,
+            msg="We had to remove just a single feature")
+
+        self.failUnlessEqual(tdata.nfeatures, stdata.nfeatures+Nremove,
+            msg="We had to remove just a single feature in testing as well")
+
+        self.failUnlessEqual(len(fe["sensitivity"]), wdata_nfeatures,
+            msg="Sensitivity have to have # of features equal to original")
+
+        self.failUnlessEqual(len(fe["selected_ids"]), sdata.nfeatures,
+            msg="# of selected features must be equal the one in the result dataset")
+
 
 
     def testRFE(self):
