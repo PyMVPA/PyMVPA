@@ -61,6 +61,58 @@ class FeatureSelection(State):
 
 
 
+class BestDetector(object):
+    """Determine whether the last value in a sequence is the best one given
+    some criterion.
+    """
+    def __init__(self, func=min, lastminimum=False):
+        """Initialize with number of steps
+
+        :Parameters:
+            fun : functor
+                Functor to select the best results. Defaults to min
+            lastminimum : bool
+                Toggle whether the latest or the earliest minimum is used as
+                optimal value to determine the stopping criterion.
+        """
+        self.__func = func
+        self.__lastminimum = lastminimum
+        self.__bestindex = None
+        """Stores the index of the last detected best value."""
+
+
+    def __call__(self, errors):
+        """Returns True if the last value in `errors` is the best or False
+        otherwise.
+        """
+        isbest = False
+
+        # just to prevent ValueError
+        if len(errors)==0:
+            return isbest
+
+        minerror = self.__func(errors)
+
+        if self.__lastminimum:
+            # make sure it is an array
+            errors = N.array(errors)
+            # to find out the location of the minimum but starting from the
+            # end!
+            minindex = N.array((errors == minerror).nonzero()).max()
+        else:
+            minindex = errors.index(minerror)
+
+        # if minimal is the last one reported -- it is the best
+        if minindex == len(errors)-1:
+            isbest = True
+            self.__bestindex = minindex
+
+        return isbest
+
+    bestindex = property(fget=lambda self:self.__bestindex)
+
+
+
 class StoppingCriterion(object):
     """Base class for all functors to decide when to stop RFE (or may
     be general optimization... so it probably will be moved out into

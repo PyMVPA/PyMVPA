@@ -16,7 +16,7 @@ from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      StopNBackHistoryCriterion, FractionTailSelector, \
-     FixedNElementTailSelector
+     FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
@@ -33,6 +33,29 @@ class RFETests(unittest.TestCase):
         chunks = N.repeat( range(5), 10 )
         chunks = N.concatenate( (chunks, chunks) )
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
+
+
+    def testBestDetector(self):
+        bd = BestDetector()
+
+        # for empty history -- no best
+        self.failUnless(bd([]) == False)
+        # we got the best if we have just 1
+        self.failUnless(bd([1]) == True)
+        # we got the best if we have the last minimal
+        self.failUnless(bd([1, 0.9, 0.8]) == True)
+
+        # test for alternative func
+        bd = BestDetector(func=max)
+        self.failUnless(bd([0.8, 0.9, 1.0]) == True)
+        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*10) == False)
+
+        # test to detect earliest and latest minimum
+        bd = BestDetector(lastminimum=True)
+        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == True)
+        bd = BestDetector()
+        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == False)
 
 
     def testStopCriterion(self):
