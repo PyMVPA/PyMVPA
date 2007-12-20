@@ -38,8 +38,10 @@ optVerbose = \
            action="callback", callback=verboseCallback, nargs=1,
            type="int", dest="verbose", default=0,
            help="Verbosity level of output")
+"""Pre-cooked `optparse`'s option to specify verbose level"""
 
 optsCommon = [optVerbose]
+"""Often used common options"""
 
 if __debug__:
     from mvpa.misc import debug

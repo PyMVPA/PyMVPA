@@ -828,12 +828,100 @@ NullHypothesisTest_
    for a lot of statistical tests.
 
 
+Progress Tracking
+-----------------
+.. some parts should migrate into developer reference I guess
+
+There are 3 types of messages PyMVPA can produce:
+
+ verbose_
+   regular informative messages about generic actions being performed
+ debug_
+   messages about the progress of computation, manipulation on data
+   structures
+ warning_
+    messages which are reported by mvpa if something goes a little
+    unexpected but not critical
+
+.. _verbose: api/mvpa.misc-module.html#verbose
+.. _debug: api/mvpa.misc-module.html#debug
+.. _warning: api/mvpa.misc-module.html#warning
+
+
+Verbose Messages
+~~~~~~~~~~~~~~~~
+
+Primarily for a user of PyMVPA to provide information about the
+progress of their scripts. Such messages are printed out if their
+level specified as the first parameter to verbose_ function call is
+less than specified. There are two easy ways to specify verbosity
+level:
+
+* command line: you can use optVerbose_ for precrafted command
+  line option for to give facility to change it from your script (see
+  examples)
+* environment variable ``MVPA_VERBOSE``
+* code: verbose.level property
+
+
+Warning Messages
+~~~~~~~~~~~~~~~~
+
+Reported by PyMVPA if something goes a little unexpected but not
+critical. They are printed just once per occasion, i.e. once per piece
+of code where it is called.
+
+
+Debug Messages
+~~~~~~~~~~~~~~
+
+Debug messages are used to track progress of any computation inside
+PyMVPA while the code run by python without optimization (i.e. without
+``-O`` switch to python). They are specified not by the level but by
+some id usually specific for a particular PyMVPA routine. For example
+``RFEC`` id causes debugging information about `Recursive Feature
+Elimination call`_ to be printed (See `misc module sources`_ for the
+list of all ids, or print ``debug.registered`` property).
+
+Analogous to verbosity level there are two easy ways to specify set of
+ids to be enabled (reported):
+
+* command line: you can use optDebug_ for precrafted command line
+  option to provide it from your script (see examples). If in command
+  line if optDebug_ is used, ``-d list`` is given, PyMVPA will print
+  out list of known ids.
+* environment: variable ``MVPA_DEBUG`` can contain comma-separated
+  list of ids.
+* code: debug.active property (e.g. ``debug.active = [ 'RFEC', 'CLF' ]``)
+
+Besides printing debug messages, it is also possible to print some
+metric. You can define new metrics or select predefined ones (vmem,
+asctime, pid). To enable list of metrics you can use
+``MVPA_DEBUG_METRICS`` environment variable to list desired metric
+names comma-separated.
+
+As it was mentioned earlier, debug messages are printed only in
+non-optimized python invocation. That was done to eliminate any
+slowdown introduced by such 'debugging' output, which might appear at
+some computational bottleneck places in the code. 
+
+.. TODO: Unify loggers behind verbose and debug. imho debug should have
+   also way to specify the level for the message so we could provide
+   more debugging information if desired.
+
+.. _optVerbose: api/mvpa.misc.cmdline-module.html#optVerbose
+.. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
+.. _misc module sources: api/mvpa.misc-pysrc.html
+.. _Recursive Feature Elimination call: api/mvpa.algorithms.rfe.RFE-class.html#__call__
+
+
 Additional Little Helpers
 -------------------------
 
 (to be written)
 
 .. put information about IO helpers, external bindings, etc here
+
 
 FSL Bindings
 ~~~~~~~~~~~~
