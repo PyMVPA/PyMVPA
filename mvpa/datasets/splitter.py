@@ -34,7 +34,8 @@ class Splitter(object):
                  nfirstsamples=None,
                  nsecondsamples=None,
                  nrunspersplit=1,
-                 permute=False):
+                 permute=False,
+                 attr='chunks'):
         """Initialize base splitter.
 
         :Parameters:
@@ -55,13 +56,15 @@ class Splitter(object):
           permute : bool
             If set to `True`, the labels of each generated dataset
             will be permuted on a per-chunk basis.
-
+          attr : str
+            Sample attribute used to determine splits.
         """
         # pylint happyness block
         self.__first_samplesize = None
         self.__second_samplesize = None
         self.__runspersplit = nrunspersplit
         self.__permute = permute
+        self.__splitattr = attr
 
         # pattern sampling status vars
         self.setNFirstSetSamples(nfirstsamples)
@@ -92,10 +95,10 @@ class Splitter(object):
         self.__second_samplesize = samplesize
 
 
-    def _getSplitConfig(self, uniquechunks):
+    def _getSplitConfig(self, uniqueattr):
         """Each subclass has to implement this method. It gets a sequence with
-        the unique chunk ids of a dataset and has to return a list of lists
-        containing chunk ids to split into the second dataset.
+        the unique attribte ids of a dataset and has to return a list of lists
+        containing attribute ids to split into the second dataset.
         """
         raise NotImplementedError
 
@@ -105,7 +108,8 @@ class Splitter(object):
 
         This method behaves like a generator.
         """
-        splitcfg = self._getSplitConfig(dataset.uniquechunks)
+        splitcfg = \
+            self._getSplitConfig(eval('dataset.unique' + self.__splitattr))
 
         # do cross-validation
         for split in splitcfg:
@@ -142,7 +146,8 @@ class Splitter(object):
         """
         # build a boolean selector vector to choose select samples
         split_filter =  \
-            N.array([ i in splitids for i in dataset.chunks ])
+            N.array([ i in splitids \
+                for i in eval('dataset.' + self.__splitattr)])
         wset_filter = N.logical_not(split_filter)
 
         # split data: return None if no samples are left
@@ -213,10 +218,10 @@ class NoneSplitter(Splitter):
         Splitter.__init__(self, **(kwargs))
 
 
-    def _getSplitConfig(self, uniquechunks):
+    def _getSplitConfig(self, uniqueattrs):
         """Return just one full split: no first dataset.
         """
-        return [uniquechunks]
+        return [uniqueattrs]
 
 
     def __str__(self):
@@ -228,7 +233,7 @@ class NoneSplitter(Splitter):
 
 
 class OddEvenSplitter(Splitter):
-    """Split a dataset into odd and even chunks.
+    """Split a dataset into odd and even values of the sample attribute.
 
     The splitter yields to splits: first (odd, even) and second (even, odd).
     """
@@ -238,11 +243,11 @@ class OddEvenSplitter(Splitter):
         Splitter.__init__(self, **(kwargs))
 
 
-    def _getSplitConfig(self, uniquechunks):
+    def _getSplitConfig(self, uniqueattrs):
         """Huka chaka!
         """
-        return [uniquechunks[(uniquechunks % 2) == True],
-                uniquechunks[(uniquechunks % 2) == False]]
+        return [uniqueattrs[(uniqueattrs % 2) == True],
+                uniqueattrs[(uniqueattrs % 2) == False]]
 
 
     def __str__(self):
@@ -280,8 +285,8 @@ class NFoldSplitter(Splitter):
           "N-%d-FoldSplitter / " % self.__cvtype + Splitter.__str__(self)
 
 
-    def _getSplitConfig(self, uniquechunks):
+    def _getSplitConfig(self, uniqueattrs):
         """Returns proper split configuration for N-M fold split.
         """
-        return support.getUniqueLengthNCombinations(uniquechunks,
+        return support.getUniqueLengthNCombinations(uniqueattrs,
                                                     self.__cvtype)
