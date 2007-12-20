@@ -102,10 +102,11 @@ class BestDetector(object):
         else:
             minindex = errors.index(minerror)
 
+        self.__bestindex = minindex
+
         # if minimal is the last one reported -- it is the best
         if minindex == len(errors)-1:
             isbest = True
-            self.__bestindex = minindex
 
         return isbest
 
@@ -135,55 +136,38 @@ class StopNBackHistoryCriterion(StoppingCriterion):
     """Stop computation if for a number of steps error was increasing
     """
 
-    def __init__(self, steps=10, func=min, lateminimum=False):
+    def __init__(self, bestdetector=BestDetector(), steps=10):
         """Initialize with number of steps
 
         :Parameters:
+            bestdetector : BestDetector instance
+                used to determine where the best error is located.
             steps : int
                 How many steps to check after optimal value.
-            fun : functor
-                Functor to select the best results. Defaults to min
-            lateminimum : bool
-                Toggle whether the latest or the earliest minimum is used as
-                optimal value to determine the stopping criterion.
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
             raise ValueError, \
                   "Number of steps (got %d) should be non-negative" % steps
+        self.__bestdetector = bestdetector
         self.__steps = steps
-        self.__func = func
-        self.__lateminimum = lateminimum
 
 
     def __call__(self, errors):
-        isbest = False
         stop = False
 
         # just to prevent ValueError
         if len(errors)==0:
-            return (isbest, stop)
+            return stop
 
-        minerror = self.__func(errors)
-
-        if self.__lateminimum:
-            # make sure it is an array
-            errors = N.array(errors)
-            # to find out the location of the minimum but starting from the
-            # end!
-            minindex = N.array((errors == minerror).nonzero()).max()
-        else:
-            minindex = errors.index(minerror)
-
-        # if minimal is the last one reported -- it is the best
-        if minindex == len(errors)-1:
-            isbest = True
+        # charge best detector
+        self.__bestdetector(errors)
 
         # if number of elements after the min >= len -- stop
-        if len(errors) - minindex > self.__steps:
+        if len(errors) - self.__bestdetector.bestindex > self.__steps:
             stop = True
 
-        return (stop, isbest)
+        return stop
 
     steps = property(fget=lambda x:x.__steps)
 

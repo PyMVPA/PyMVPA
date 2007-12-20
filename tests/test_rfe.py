@@ -62,29 +62,24 @@ class RFETests(unittest.TestCase):
         """Test stopping criterions"""
         stopcrit = StopNBackHistoryCriterion()
         # for empty history -- no best but just go
-        self.failUnless(stopcrit([]) == (False, False))
-        # we got the best if we have just 1
-        self.failUnless(stopcrit([1]) == (False, True))
-        # we got the best if we have the last minimal
-        self.failUnless(stopcrit([1, 0.9, 0.8]) == (False, True))
+        self.failUnless(stopcrit([]) == False)
         # should not stop if we got 10 more after minimal
         self.failUnless(stopcrit(
-            [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == (False, False))
+            [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == False)
         # should stop if we got 10 more after minimal
         self.failUnless(stopcrit(
-            [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == (True, False))
+            [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == True)
 
         # test for alternative func
-        stopcrit = StopNBackHistoryCriterion(func=max)
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]) == (False, True))
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == (False, False))
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == (True, False))
+        stopcrit = StopNBackHistoryCriterion(BestDetector(func=max))
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == True)
 
         # test to detect earliest and latest minimum
-        stopcrit = StopNBackHistoryCriterion(lateminimum=True)
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (False, True))
+        stopcrit = StopNBackHistoryCriterion(BestDetector(lastminimum=True))
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == False)
         stopcrit = StopNBackHistoryCriterion(steps=4)
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (True, False))
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
 
 
     def testFeatureSelector(self):
