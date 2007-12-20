@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.algorithms.featsel import FeatureSelection, \
+                                    BestDetector, \
                                     StopNBackHistoryCriterion, \
                                     FractionTailSelector
 from numpy import arange
@@ -46,7 +47,8 @@ class RFE(FeatureSelection):
                  sensitivity_analyzer,
                  transfer_error,
                  feature_selector=FractionTailSelector(0.05),
-                 stopping_criterion=StopNBackHistoryCriterion(),
+                 bestdetector=BestDetector(),
+                 stopping_criterion=StopNBackHistoryCriterion(BestDetector()),
                  train_clf=True,
                  update_sensitivity=True,
                  **kargs
@@ -56,30 +58,29 @@ class RFE(FeatureSelection):
         """Initialize recursive feature elimination
 
         :Parameters:
-          sensitivity_analyzer : SensitivityAnalyzer
-            sensitivity analyzer to come up with sensitivity
-          transfer_error : TransferError
-            used to compute the transfer error of a classifier based on a
-            certain feature set on the test dataset.
-          feature_selector : Functor
-            Given a sensitivity map it has to return the ids of those
-            features that should be kept.
-          stopping_criterion : Functor
-            Given a list of error values it has to return a tuple of two
-            booleans. First values must indicate whether the criterion is
-            fulfilled and the second value signals whether the latest
-            error values is the total minimum.
-          train_clf : bool
-            Flag whether the classifier in `transfer_error` should be
-            trained before computing the error. In general this is
-            required, but if the `sensitivity_analyzer` and
-            `transfer_error` share and make use of the same classifier it
-            can be switched off to save CPU cycles.
-          update_sensitivity : bool
-            If False the sensitivity map is only computed once and reused
-            for each iteration. Otherwise the senstitivities are
-            recomputed at each selection step.
-
+            sensitivity_analyzer : SensitivityAnalyzer object
+            transfer_error : TransferError object
+                used to compute the transfer error of a classifier based on a
+                certain feature set on the test dataset.
+            feature_selector : Functor
+                Given a sensitivity map it has to return the ids of those
+                features that should be kept.
+            bestdetector : Functor
+                Given a list of error values it has to return a boolean that
+                signals whether the latest error value is the total minimum.
+            stopping_criterion : Functor
+                Given a list of error values it has to return whether the
+                criterion is fulfilled.
+            train_clf : bool
+                Flag whether the classifier in `transfer_error` should be
+                trained before computing the error. In general this is
+                required, but if the `sensitivity_analyzer` and
+                `transfer_error` share and make use of the same classifier it
+                can be switched off to save CPU cycles.
+            update_sensitivity : bool
+                If False the sensitivity map is only computed once and reused
+                for each iteration. Otherwise the senstitivities are
+                recomputed at each selection step.
         """
 
         # base init first
@@ -95,6 +96,8 @@ class RFE(FeatureSelection):
         """Functor which takes care about removing some features."""
 
         self.__stopping_criterion = stopping_criterion
+
+        self.__bestdetector = bestdetector
 
         self.__train_clf = train_clf
         """Flag whether training classifier is required."""
@@ -195,7 +198,8 @@ class RFE(FeatureSelection):
 
             # Check if it is time to stop and if we got
             # the best result
-            (stop, isthebest) = self.__stopping_criterion(errors)
+            stop = self.__stopping_criterion(errors)
+            isthebest = self.__bestdetector(errors)
 
             nfeatures = wdataset.nfeatures
 
