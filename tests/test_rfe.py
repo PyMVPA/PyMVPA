@@ -17,7 +17,7 @@ from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
      StopNBackHistoryCriterion, FractionTailSelector, \
-     FixedNElementTailSelector
+     FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
@@ -36,33 +36,51 @@ class RFETests(unittest.TestCase):
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
 
 
+    def testBestDetector(self):
+        bd = BestDetector()
+
+        # for empty history -- no best
+        self.failUnless(bd([]) == False)
+        # we got the best if we have just 1
+        self.failUnless(bd([1]) == True)
+        # we got the best if we have the last minimal
+        self.failUnless(bd([1, 0.9, 0.8]) == True)
+
+        # test for alternative func
+        bd = BestDetector(func=max)
+        self.failUnless(bd([0.8, 0.9, 1.0]) == True)
+        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*10) == False)
+
+        # test to detect earliest and latest minimum
+        bd = BestDetector(lastminimum=True)
+        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == True)
+        bd = BestDetector()
+        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == False)
+
+
     def testStopCriterion(self):
         """Test stopping criterions"""
         stopcrit = StopNBackHistoryCriterion()
         # for empty history -- no best but just go
-        self.failUnless(stopcrit([]) == (False, False))
-        # we got the best if we have just 1
-        self.failUnless(stopcrit([1]) == (False, True))
-        # we got the best if we have the last minimal
-        self.failUnless(stopcrit([1, 0.9, 0.8]) == (False, True))
+        self.failUnless(stopcrit([]) == False)
         # should not stop if we got 10 more after minimal
         self.failUnless(stopcrit(
-            [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == (False, False))
+            [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == False)
         # should stop if we got 10 more after minimal
         self.failUnless(stopcrit(
-            [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == (True, False))
+            [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == True)
 
         # test for alternative func
-        stopcrit = StopNBackHistoryCriterion(func=max)
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]) == (False, True))
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == (False, False))
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == (True, False))
+        stopcrit = StopNBackHistoryCriterion(BestDetector(func=max))
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == True)
 
         # test to detect earliest and latest minimum
-        stopcrit = StopNBackHistoryCriterion(lateminimum=True)
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (False, True))
+        stopcrit = StopNBackHistoryCriterion(BestDetector(lastminimum=True))
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == False)
         stopcrit = StopNBackHistoryCriterion(steps=4)
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (True, False))
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
 
 
     def testFeatureSelector(self):
