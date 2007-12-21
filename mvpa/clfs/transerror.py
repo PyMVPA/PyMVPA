@@ -246,6 +246,7 @@ class ConfusionMatrix(object):
         self._compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
+    sets = property(lambda self:self.__sets)
 
 class TransferError(State):
     """Compute the transfer error of a (trained) classifier on a dataset.
