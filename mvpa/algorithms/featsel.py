@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from math import floor
+from numpy import arange
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.state import State
@@ -21,24 +22,26 @@ from mvpa.misc.exceptions import UnknownStateError
 class FeatureSelection(State):
     """Base class for any feature selection
 
-    TODO...
+    Base class for Functors which implement feature selection on the
+    datasets.
     """
 
     def __init__(self, **kargs):
         # base init first
         State.__init__(self, **kargs)
-        self.__mask = None
-        """Binary mask defining the voxels which were selected"""
+        self._registerState("selected_ids", enabled=False)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
         """Invocation of the feature selection
 
-        dataset: Dataset
+        Parameters
+        ----------
+          dataset: Dataset
             dataset used to select features
-        testdataset: Dataset
+          testdataset: Dataset
             dataset the might be used to compute a stopping criterion
-        callables: sequence
+          callables: sequence
             a list of functors to be called with locals()
 
         Returns a tuple with the dataset containing the selected features.
@@ -50,14 +53,61 @@ class FeatureSelection(State):
         raise NotImplementedError
 
 
-    def getMask(self):
-        """Returns a mask computed during previous call()
-        """
-        if self.__mask is None:
-            raise UnknownStateError
-        return self.__mask
 
-    mask = VProperty(fget=getMask)
+#
+# Functors to be used for FeatureSelection
+#
+
+class BestDetector(object):
+    """Determine whether the last value in a sequence is the best one given
+    some criterion.
+    """
+    def __init__(self, func=min, lastminimum=False):
+        """Initialize with number of steps
+
+        :Parameters:
+            fun : functor
+                Functor to select the best results. Defaults to min
+            lastminimum : bool
+                Toggle whether the latest or the earliest minimum is used as
+                optimal value to determine the stopping criterion.
+        """
+        self.__func = func
+        self.__lastminimum = lastminimum
+        self.__bestindex = None
+        """Stores the index of the last detected best value."""
+
+
+    def __call__(self, errors):
+        """Returns True if the last value in `errors` is the best or False
+        otherwise.
+        """
+        isbest = False
+
+        # just to prevent ValueError
+        if len(errors)==0:
+            return isbest
+
+        minerror = self.__func(errors)
+
+        if self.__lastminimum:
+            # make sure it is an array
+            errors = N.array(errors)
+            # to find out the location of the minimum but starting from the
+            # end!
+            minindex = N.array((errors == minerror).nonzero()).max()
+        else:
+            minindex = errors.index(minerror)
+
+        self.__bestindex = minindex
+
+        # if minimal is the last one reported -- it is the best
+        if minindex == len(errors)-1:
+            isbest = True
+
+        return isbest
+
+    bestindex = property(fget=lambda self:self.__bestindex)
 
 
 
@@ -83,55 +133,38 @@ class StopNBackHistoryCriterion(StoppingCriterion):
     """Stop computation if for a number of steps error was increasing
     """
 
-    def __init__(self, steps=10, func=min, lateminimum=False):
+    def __init__(self, bestdetector=BestDetector(), steps=10):
         """Initialize with number of steps
 
         :Parameters:
+            bestdetector : BestDetector instance
+                used to determine where the best error is located.
             steps : int
                 How many steps to check after optimal value.
-            fun : functor
-                Functor to select the best results. Defaults to min
-            lateminimum : bool
-                Toggle whether the latest or the earliest minimum is used as
-                optimal value to determine the stopping criterion.
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
             raise ValueError, \
                   "Number of steps (got %d) should be non-negative" % steps
+        self.__bestdetector = bestdetector
         self.__steps = steps
-        self.__func = func
-        self.__lateminimum = lateminimum
 
 
     def __call__(self, errors):
-        isbest = False
         stop = False
 
         # just to prevent ValueError
         if len(errors)==0:
-            return (isbest, stop)
+            return stop
 
-        minerror = self.__func(errors)
-
-        if self.__lateminimum:
-            # make sure it is an array
-            errors = N.array(errors)
-            # to find out the location of the minimum but starting from the
-            # end!
-            minindex = N.array((errors == minerror).nonzero()).max()
-        else:
-            minindex = errors.index(minerror)
-
-        # if minimal is the last one reported -- it is the best
-        if minindex == len(errors)-1:
-            isbest = True
+        # charge best detector
+        self.__bestdetector(errors)
 
         # if number of elements after the min >= len -- stop
-        if len(errors) - minindex > self.__steps:
+        if len(errors) - self.__bestdetector.bestindex > self.__steps:
             stop = True
 
-        return (stop, isbest)
+        return stop
 
     steps = property(fget=lambda x:x.__steps)
 
@@ -166,14 +199,14 @@ class TailSelector(ElementSelector):
         """Initialize TailSelector
 
         :Parameters:
-            `tail` : ['lower', 'upper']
-                Choose the tail to be processed.
-                otherwise.
-            `mode` : ['discard', 'select']
-                decides whether to `select` or to `discard` features.
-            `sort` : Bool
-                Flag whether selected IDs will be sorted. Disable if not
-                necessary to save some CPU cycles.
+           tail : ['lower', 'upper']
+              Choose the tail to be processed.
+           mode : ['discard', 'select']
+              Decides whether to `select` or to `discard` features.
+           sort : bool
+              Flag whether selected IDs will be sorted. Disable if not
+              necessary to save some CPU cycles.
+
         """
         ElementSelector.__init__(self)  # init State before registering anything
 
@@ -259,9 +292,9 @@ class FixedNElementTailSelector(TailSelector):
     def __init__(self, nelements, *args, **kwargs):
         """Cheap initialization.
 
-        :Parameter:
-            `nselect`: Int
-                Number of elements to select/discard.
+        :Parameters:
+          nselect : int
+            Number of elements to select/discard.
         """
         TailSelector.__init__(self, *args, **kwargs)
         self._setNElements(nelements)
@@ -297,9 +330,9 @@ class FractionTailSelector(TailSelector):
     def __init__(self, felements, **kargs):
         """Cheap initialization.
 
-        :Parameter:
-            `felements`: Float (0,1.0]
-                Fraction of elements to select/discard.
+        :Parameters:
+           felements : float (0,1.0]
+              Fraction of elements to select/discard.
         """
         TailSelector.__init__(self, **kargs)
         self._setFElements(felements)
@@ -330,4 +363,92 @@ class FractionTailSelector(TailSelector):
 
     felements = property(fget=lambda x:x.__felements,
                          fset=_setFElements)
+
+
+#
+# Particular implementations of FeatureSelection
+#
+# RFE  lives in a separate file rfe.py for now ;-)
+#
+class SensitivityBasedFeatureSelection(FeatureSelection):
+    """Feature elimination.
+
+    A `SensitivityAnalyzer` is used to compute sensitivity maps given a certain
+    dataset. These sensitivity maps are in turn used to discard unimportant
+    features.
+    """
+
+    def __init__(self,
+                 sensitivity_analyzer,
+                 feature_selector=FractionTailSelector(0.05),
+                 **kargs
+                 ):
+        """Initialize feature selection
+
+        :Parameters:
+          sensitivity_analyzer : SensitivityAnalyzer
+            sensitivity analyzer to come up with sensitivity
+          feature_selector : Functor
+            Given a sensitivity map it has to return the ids of those
+            features that should be kept.
+
+        """
+
+        # base init first
+        FeatureSelection.__init__(self, **kargs)
+
+        self.__sensitivity_analyzer = sensitivity_analyzer
+        """Sensitivity analyzer to use once"""
+
+        self.__feature_selector = feature_selector
+        """Functor which takes care about removing some features."""
+
+        # register the state members
+        self._registerState("sensitivity", enabled=False)
+
+
+    def __call__(self, dataset, testdataset, callables=[]):
+        """Select the most important features
+
+        :Parameters:
+          dataset : Dataset
+            used to compute sensitivity maps
+          testdataset: Dataset
+            optional dataset to select features on
+
+        Returns a tuple of two new datasets with selected feature
+        subset of `dataset`.
+        """
+
+        orig_feature_ids = arange(dataset.nfeatures)
+        """List of feature Ids as per original dataset remaining at any given
+        step"""
+
+        sensitivity = self.__sensitivity_analyzer(dataset)
+        """Compute the sensitivity map."""
+
+        self["sensitivity"] = sensitivity
+
+        # Select features to preserve
+        selected_ids = self.__feature_selector(sensitivity)
+
+        # Create a dataset only with selected features
+        wdataset = dataset.selectFeatures(selected_ids)
+
+        if not testdataset is None:
+            wtestdataset = testdataset.selectFeatures(selected_ids)
+
+        # Differ from the order in RFE when actually error reported is for
+        results = (wdataset, wtestdataset)
+
+        # provide evil access to internals :)
+        for callable_ in callables:
+            callable_(locals())
+
+        # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
+        selected_ids.sort()
+        self["selected_ids"] = selected_ids
+
+        # dataset with selected features is returned
+        return results
 

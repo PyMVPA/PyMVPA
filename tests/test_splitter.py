@@ -70,7 +70,7 @@ class SplitterTests(unittest.TestCase):
 
         # test sampling tools
         nos = NoneSplitter(nrunspersplit=3,
-                           nvalidationsamples=10)
+                           nsecondsamples=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)
@@ -78,6 +78,18 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 40)
             self.failUnless(split[1].samplesperlabel.values() == [10,10,10,10])
+
+
+    def testLabelSplitter(self):
+        oes = OddEvenSplitter(attr='labels')
+
+        splits = [ (first, second) for (first, second) in oes(self.data) ]
+
+        self.failUnless((splits[0][0].uniquelabels == [0,2]).all())
+        self.failUnless((splits[0][1].uniquelabels == [1,3]).all())
+        self.failUnless((splits[1][0].uniquelabels == [1,3]).all())
+        self.failUnless((splits[1][1].uniquelabels == [0,2]).all())
+
 
 
 def suite():
