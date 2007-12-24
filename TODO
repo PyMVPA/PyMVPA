@@ -1,3 +1,6 @@
+* selected_ids -> implement via MaskMapper? 
+  yoh: it might be preferable to manipulate/expose MaskMapper instead
+   of plain list of selected_ids within FeatureSelection classes
 * unify naming of working/testing 
     transerror.py for instance uses testdata/trainingdata
     rfe.py dataset, testdataset
