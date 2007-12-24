@@ -30,7 +30,7 @@ class TestClassProper(State):
 
 class TestClassProperChild(TestClassProper):
 
-    _register_states = { 'state4': False }
+    _register_states = { 'state4': False }.update(TestClassProper._register_states)
 
     def __init__(self, **kargs):
         TestClassProper.__init__(self, **kargs)
@@ -72,8 +72,11 @@ class StateTests(unittest.TestCase):
 
     def testProperState(self):
         proper   = TestClassProper()
-        proper2  = TestClassProper(enable_states=['state1'])
+        proper2  = TestClassProper(enable_states=['state1'], disable_states=['state2'])
 
+        # can't enable disable all at the same time
+        self.failUnlessRaises(ValueError, TestClassProper,
+                              enable_states=['all'], disable_states='all')
         self.failUnless(Set(proper.states) == Set(proper._register_states.keys()))
         self.failUnless(proper.enabledStates == ['state2'])
 
@@ -99,6 +102,12 @@ class StateTests(unittest.TestCase):
         proper2.disableState('state3')
         self.failUnless(Set(proper2.enabledStates) == Set(['state1']))
 
+        proper2.disableState("all")
+        self.failUnlessEqual(Set(proper2.enabledStates), Set())
+
+        proper2.enableState("all")
+        self.failUnlessEqual(len(proper2.enabledStates), 3)
+
 
     def testGetSaveEnabled(self):
         """Check if we can store/restore set of enabled states"""
@@ -109,6 +118,7 @@ class StateTests(unittest.TestCase):
 
         self.failUnless(enabled_states != proper.enabledStates,
                         msg="New enabled states should differ from previous")
+
         self.failUnless(Set(proper.enabledStates) == Set(['state1', 'state2']),
                         msg="Making sure that we enabled all states of interest")
         proper.enabledStates = enabled_states
