@@ -494,23 +494,9 @@ class FeatureSelectionPipeline(FeatureSelection):
         """Number of features at each step (before running selection)"""
 
         for fs in self.__feature_selections:
-            stored_states = None
-            # Lets check if we should enable some states
-            # TODO: this functionality should be placed into some
-            #       method inside State
-            for state in ["selected_ids"]:
-                if self.isStateEnabled(state) and \
-                   not fs.isStateEnabled(state):
-                    if stored_states is None:
-                        stored_states = fs.enabledStates
-                    # probably no need to alarm people here
-                    # warning("State %s was enabled for FeatureSelectionPipeline"\
-                    #         % (state) \
-                    #     + " but underlying %s didn't have it enabled. " \
-                    #         % `fs` \
-                    #     + " Enabling now (will be disabled afterwards)")
-                    fs.enableState(state)
 
+            # enable selected_ids state if it was requested from this class
+            fs._enableStatesTemporarily(["selected_ids"], self)
             if self.isStateEnabled("nfeatures"):
                 self["nfeatures"].append(wdataset.nfeatures)
 
@@ -522,8 +508,7 @@ class FeatureSelectionPipeline(FeatureSelection):
                 else:
                     self["selected_ids"] = self["selected_ids"][fs["selected_ids"]]
 
-            if not stored_states is None:
-                fs.enabledStates = stored_states
+            fs._resetEnabledTemporarily()
 
         return (wdataset, wtestdataset)
 

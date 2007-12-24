@@ -30,7 +30,9 @@ class TestClassProper(State):
 
 class TestClassProperChild(TestClassProper):
 
-    _register_states = { 'state4': False }.update(TestClassProper._register_states)
+    _register_states = { 'state4': False }
+    # propagate states from the parent
+    _register_states.update(TestClassProper._register_states)
 
     def __init__(self, **kargs):
         TestClassProper.__init__(self, **kargs)
@@ -143,13 +145,31 @@ class StateTests(unittest.TestCase):
 
     # TODO: make test for _copy_states_ or whatever comes as an alternative
 
-    def _testProperStateChild(self):
+    def testStoredTemporarily(self):
+        proper   = TestClassProper()
+        properch = TestClassProperChild(enable_states=["state1"])
+
+        self.failUnlessEqual(proper.enabledStates, ["state2"])
+        proper._enableStatesTemporarily(["state1"], properch)
+        self.failUnlessEqual(Set(proper.enabledStates),
+                             Set(["state1", "state2"]))
+        proper._resetEnabledTemporarily()
+        self.failUnlessEqual(proper.enabledStates, ["state2"])
+
+        # allow to enable disable without other instance
+        proper._enableStatesTemporarily(["state1", "state2"])
+        self.failUnlessEqual(Set(proper.enabledStates),
+                             Set(["state1", "state2"]))
+        proper._resetEnabledTemporarily()
+        self.failUnlessEqual(proper.enabledStates, ["state2"])
+
+
+    def testProperStateChild(self):
         """
         Actually it would fail which makes it no sense to use
         _register_states class variables
         """
         proper = TestClassProperChild()
-        print proper.states
         self.failUnless(Set(proper.states) ==
             Set(TestClassProperChild._register_states).union(
             Set(TestClassProper._register_states)))

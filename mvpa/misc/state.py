@@ -111,6 +111,8 @@ class State(object):
         for key, enabled in register_states.iteritems():
             self._registerState(key, enabled)
 
+        self.__storedTemporarily = []
+        """List to contain sets of enabled states which were enabled temporarily"""
 
     def __str__(self):
         num = len(self.__registered)
@@ -121,7 +123,7 @@ class State(object):
             res += " %s" % index
             if self.hasState(index):
                 res += '*'              # so we have the value already
-            elif self.isStateEnabled:
+            elif self.isStateEnabled(index):
                 res += '+'              # it is enabled but no value is assigned yet
 
         if len(self.__registered) > 4:
@@ -161,6 +163,7 @@ class State(object):
         self.__disable_states = operation(fromstate.__disable_states)
         self.__enable_all = operation(fromstate.__enable_all)
         self.__disable_all = operation(fromstate.__disable_all)
+        self.__storedTemporarily = operation(fromstate.__storedTemporarily)
 
 
     def __checkIndex(self, index):
@@ -298,6 +301,32 @@ class State(object):
         """Returns `True` if state `index` is known and is enabled"""
         return self.__registered.has_key(index) and \
                self.__registered[index]['enabled']
+
+
+    def _enableStatesTemporarily(self, enable_states, other=None):
+        """Temporarily enable needed states for computation
+
+        Enable states which are enabled in `other` and listed in
+        `enable _states`. Use `resetEnabledTemporarily` to reset
+        to previous state of enabled.
+        """
+        self.__storedTemporarily.append(self.enabledStates)
+        for state in enable_states:
+            if not self.isStateEnabled(state) and \
+               ((other is None) or other.isStateEnabled(state)):
+                if __debug__:
+                    debug("ST", "Temporarily enabling state %s" % state)
+                self.enableState(state)
+
+
+    def _resetEnabledTemporarily(self):
+        """Reset to previousely stored set of enabled states"""
+        if __debug__:
+            debug("ST", "Resetting to previous set of enabled states")
+        if len(self.enabledStates)>0:
+            self.enabledStates = self.__storedTemporarily.pop()
+        else:
+            raise ValueError("Trying to restore not-stored list of enabled states")
 
 
     def listStates(self):
