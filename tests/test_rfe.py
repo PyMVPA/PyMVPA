@@ -13,9 +13,11 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
+     FeatureSelectionPipeline, \
      StopNBackHistoryCriterion, FractionTailSelector, \
      FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
@@ -24,6 +26,16 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
+
+class SillySensitivityAnalyzer(SensitivityAnalyzer):
+    """Simple one which just returns xrange[-N/2, N/2], where N is the
+    number of features
+    """
+    def __call__(self, dataset, callables=[]):
+        """Train linear SVM on `dataset` and extract weights from classifier.
+        """
+        return( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) )
+
 
 class RFETests(unittest.TestCase):
 
@@ -150,6 +162,44 @@ class RFETests(unittest.TestCase):
         self.failUnlessEqual(len(fe["selected_ids"]), sdata.nfeatures,
             msg="# of selected features must be equal the one in the result dataset")
 
+
+    def testFeatureSelectionPipeline(self):
+        sens_ana = SillySensitivityAnalyzer()
+
+        wdata = self.getData()
+        wdata_nfeatures = wdata.nfeatures
+        tdata = self.getData()
+        tdata_nfeatures = tdata.nfeatures
+
+        # test silly one first ;-)
+        self.failUnlessEqual(sens_ana(wdata)[0], -int(wdata_nfeatures/2))
+
+        # first remove 25% == 6, and then 4, total removing 10
+        feature_selections = [SensitivityBasedFeatureSelection(
+                                sens_ana,
+                                FractionTailSelector(0.25)),
+                              SensitivityBasedFeatureSelection(
+                                sens_ana,
+                                FixedNElementTailSelector(4))
+                              ]
+
+        # create a FeatureSelection pipeline
+        feat_sel_pipeline = FeatureSelectionPipeline(
+            feature_selections=feature_selections,
+            enable_states=['nfeatures', 'selected_ids'])
+
+        sdata, stdata = feat_sel_pipeline(wdata, tdata)
+
+        self.failUnlessEqual(len(feat_sel_pipeline.feature_selections),
+                             len(feature_selections),
+                             msg="Test the property feature_selections")
+
+        self.failUnlessEqual(feat_sel_pipeline["nfeatures"],
+                             [wdata_nfeatures, wdata_nfeatures-6],
+                             msg="Test if nfeatures get assigned properly")
+
+        self.failUnlessEqual(list(feat_sel_pipeline["selected_ids"]),
+                             list(range(10, wdata_nfeatures)))
 
 
     def testRFE(self):
