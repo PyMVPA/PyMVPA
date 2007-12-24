@@ -574,7 +574,7 @@ class MappedClassifier(Classifier):
             whatever `Mapper` comes handy
           """
         Classifier.__init__(self, **kwargs)
-        self.__clf = deepcopy(clf)
+        self.__clf = clf
         """Store copy of the classifier"""
 
         self.__mapper = mapper
@@ -624,10 +624,10 @@ class FeatureSelectionClassifier(Classifier):
           """
         Classifier.__init__(self, **kwargs)
 
-        self.__baseclf = deepcopy(clf)
+        self.__baseclf = clf
         """Store copy of the classifier to initialize MappedClassifier later on"""
 
-        self.__clf = deepcopy(clf)
+        self.__clf = clf
         """Store copy of the classifier. Should become MappedClassifier later on.
         Probably it better be a state variable but... TODO"""
 
