@@ -74,6 +74,14 @@ class Classifier(State):
         """
         State.__init__(self, **kwargs)
 
+        # TODO: It is often as important to know how well we fit the
+        # training data, thus we should enabled states below, and
+        # provide proper assignment in the derived classes. Also think if we need
+        # "training_error" or such...
+        self._registerState('trained_values', enabled=False,
+                            doc="Internal values for the trained values seen by the classifier")
+        self._registerState('trained_predictions', enabled=False,
+                            doc="Internal values for the trained predictions seen by the classifier")
         self._registerState('values', enabled=False,
                             doc="Internal values seen by the classifier")
         self._registerState('predictions', enabled=True,
