@@ -31,10 +31,15 @@ class SillySensitivityAnalyzer(SensitivityAnalyzer):
     """Simple one which just returns xrange[-N/2, N/2], where N is the
     number of features
     """
+
+    def __init__(self, mult=1, **kwargs):
+        SensitivityAnalyzer.__init__(self, **kwargs)
+        self.__mult = mult
+
     def __call__(self, dataset, callables=[]):
         """Train linear SVM on `dataset` and extract weights from classifier.
         """
-        return( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) )
+        return( self.__mult *( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) ))
 
 
 class RFETests(unittest.TestCase):

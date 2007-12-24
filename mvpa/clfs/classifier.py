@@ -11,10 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 import operator
+import numpy as N
 
 from copy import deepcopy
 from sets import Set
 
+from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import State
 
@@ -582,7 +584,7 @@ class MappedClassifier(Classifier):
     def train(self, data):
         """
         """
-        self.__clf.train(self.__mapper.forward(data))
+        self.__clf.train(self.__mapper.forward(data.samples))
         # for the ease of access
         self._copy_states_(self.__clf, deep=False)
 
@@ -590,7 +592,7 @@ class MappedClassifier(Classifier):
     def predict(self, data):
         """
         """
-        result = self.__clf.predict(self.__mapper.forward(data))
+        result = self.__clf.predict(self.__mapper.forward(data.samples))
         # for the ease of access
         self._copy_states_(self.__clf, deep=False)
         return result
@@ -598,4 +600,77 @@ class MappedClassifier(Classifier):
 
     clf = property(lambda x:x.__clf, doc="Used classifier")
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
+
+
+
+class FeatureSelectionClassifier(Classifier):
+    """Decorator Classifier which would use some FeatureSelection prior training.
+
+    FeatureSelection is used first to select features for the classifier to use
+    for prediction. Internally it would rely on MappedClassifier which would use
+    created MaskMapper.
+    TODO: think about removing overhead of retraining the same classifier if
+          feature selection was carried out with the same classifier already
+    """
+
+    def __init__(self, clf, feature_selection, **kwargs):
+        """Initialize the instance
+
+        :Parameters:
+          clf : Classifier
+            classifier based on which mask classifiers is created
+          feature_selection
+            whatever `FeatureSelection` comes handy
+          """
+        Classifier.__init__(self, **kwargs)
+
+        self.__baseclf = deepcopy(clf)
+        """Store copy of the classifier to initialize MappedClassifier later on"""
+
+        self.__clf = deepcopy(clf)
+        """Store copy of the classifier. Should become MappedClassifier later on.
+        Probably it better be a state variable but... TODO"""
+
+        self.__feature_selection = feature_selection
+        """FeatureSelection to select the features prior training"""
+
+
+    def train(self, data):
+        """
+        """
+        # TODO -- enable selected_ids properly!!!!
+        self.__feature_selection.enableState("selected_ids")
+
+        (wdata, tdata) = self.__feature_selection(data)
+        if __debug__:
+            debug("CLF", "FeatureSelectionClassifier: {%s} selected %d out of %d features" %
+                  (self.__feature_selection, data.nfeatures, wdata.nfeatures))
+
+        # create a mask to devise a mapper
+        # TODO -- think about making selected_ids a MaskMapper
+        mappermask = N.zeros(data.nfeatures)
+        mappermask[self.__feature_selection["selected_ids"]] = 1
+        mapper = MaskMapper(mappermask)
+
+        # create and assign `MappedClassifier`
+        self.__clf = MappedClassifier(self.__baseclf, mapper)
+        # we could have called self.__clf.train(data), but it would
+        # cause unnecessary masking
+        self.__clf.clf.train(wdata)
+
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+
+
+    def predict(self, data):
+        """
+        """
+        result = self.__clf.predict(data)
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+        return result
+
+
+    clf = property(lambda x:x.__clf, doc="Used `MappedClassifier`")
+    feature_selection = property(lambda x:x.__feature_selection, doc="Used `FeatureSelection`")
 
