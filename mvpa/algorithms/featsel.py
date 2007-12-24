@@ -407,7 +407,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         self._registerState("sensitivity", enabled=False)
 
 
-    def __call__(self, dataset, testdataset, callables=[]):
+    def __call__(self, dataset, testdataset=None, callables=[]):
         """Select the most important features
 
         :Parameters:
@@ -433,6 +433,8 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         if not testdataset is None:
             wtestdataset = testdataset.selectFeatures(selected_ids)
+        else:
+            wtestdataset = None
 
         # Differ from the order in RFE when actually error reported is for
         results = (wdataset, wtestdataset)
