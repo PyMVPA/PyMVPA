@@ -53,6 +53,31 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
 
+
+What this Manual is NOT
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This manual does not make an attempt to be a comprehensive introduction into
+machine learning theory or pattern recognition techniques. There is a wealth
+of high-quality text books about this field available. A very good example is:
+`Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
+
+.. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
+.. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
+
+This manual does not describe every bit and piece of the PyMVPA package. For
+more information, please have a look at the API documentation, which is a
+comprehensive and up-to-date description of the whole package.
+More examples and usage patterns extending the ones described here can be taken
+from the examples shipped with the PyMVPA source distribution (`doc/examples/`)
+or even the unit test battery, also part of the source distribution
+(in the `tests/` directory).
+
+
+
+A bit of History
+~~~~~~~~~~~~~~~~
+
 The roots of PyMVPA date back to early 2005. At that time it was a C++ library
 (no Python_ yet) developed by Michael Hanke and Sebastian Krüger with the
 purpose to easily apply artificial neural networks to pattern recognition
@@ -243,6 +268,9 @@ working directory, that contains the PyMVPA repository.
 
 Installation
 ~~~~~~~~~~~~
+
+(to be written)
+
 .. Point to source and binary distribution. Preach idea of free software.
    Step by step guide to install it on difficult systems like Windows.
 
@@ -253,12 +281,17 @@ Installation
 
 How to cite PyMVPA
 ~~~~~~~~~~~~~~~~~~
+
+(to be written)
+
 .. come up with something
 
 
 
 Credits
 ~~~~~~~
+
+(to be written)
 
 .. Please add some notes when you think that you should give credits to someone
    that enables or motivates you to work on PyMVPA ;-)
@@ -281,14 +314,7 @@ The PyMVPA package consists of three major parts: `Data handling`_,
 Classifiers_ and Algorithms_ operating on datasets and classifiers.
 In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
-given. However, this manual does not describe every bit and piece of the
-PyMVPA package. For more information, please have a look at the API
-documentation, which is a comprehensive and up-to-date description of the
-whole package. More examples and usage patterns extending the ones described
-here can be taken from the unit test battery, that is part of the source
-distribution (in the `tests/` directory).
-
-
+given. 
 
 Data Handling
 -------------
@@ -566,6 +592,10 @@ with most algorithms in PyMVPA (please see the Algorithms_ section for
 details). This makes it very easy to test different classifiers on some
 dataset.
 
+
+Stateful objects
+~~~~~~~~~~~~~~~~
+
 Before looking at the different classifiers in more detail, it is important to
 mention another feature common to all of them. While their interface is simple,
 classifiers are in no way limited to report nothing but predictions. All
@@ -598,8 +628,20 @@ Therefore all states can be disabled or enabled (`disableState()`,
   ['predictions']
 
 
+Error Calculation
+~~~~~~~~~~~~~~~~~
+
+TransferError_
+
+(to be written)
+
+.. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
+
+
 Boosted and Multi-class Classifiers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(to be written)
 
 .. Point to the special case of multi-class classification and how to deal with
    it. Finally describe features of all available classifiers.
@@ -608,24 +650,77 @@ Boosted and Multi-class Classifiers
 k-Nearest-Neighbour
 ~~~~~~~~~~~~~~~~~~~
 
+kNN_
+
+(to be written)
+
+.. _kNN: api/mvpa.clfs.knn.kNN-class.html
+
 
 Support Vector Machines
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+LinearCSVMC_
+LinearNuSVMC_
+RbfNuSVMC_
+RbfCSVMC_
+SVMBase_
+
+(to be written)
+
+.. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
+.. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
+.. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
+.. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
+.. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
 
+PLF_ (why is this called PLF not PLR?)
+
+(to be written)
+
+.. _PLF: api/mvpa.clfs.plf.PLF-class.html
+
+
 Algorithms
 ----------
+
+PyMVPA provides a number of useful algorithms. The vast majority of them is
+dedicated to feature selection. To increase the flexiblity of analyses PyMVPA
+distinguished two different parts of a feature selection procedure. First,
+the impact of each individual feature on a classification has to be determined.
+The resulting map reflects the sensitivities of all features with respect to
+a certain decision, therefore algorithms generating these maps are called
+`Sensitivity Analyzers`_ in PyMVPA.
+
+When the feature sensitivities are known they can be used as a criterion for
+feature selection. However, possible selection strategies range from very
+simply *Go with the 10% best features* to more complicated algorithms like
+*Recursive feature selection* (RFE_). Because `Sensitivity Analyzers`_ and
+selections strategies can be arbitrarily combined, PyMVPA offers a quite
+flexible framework for feature selection.
+
+Similar to dataset splitters all PyMVPA algorithms are implemented and
+behave like *processing objects*. To recap, this means that they are
+instanciated by passing all relevant arguments to the constructor. Once
+created, they can be used multiple times by calling them with different
+datasets.
 
 .. Again general overview first. What is a `SensitivityAnalyzer`, what is the
    difference between a `FeatureSelection` and an `ElementSelector`.
    Finally more detailed note and references for each larger algorithm.
 
-.. Explain the concept of having algorithm object instances that configure with
-   parameters upon creation and can be used multiple times by calling them with
-   datasets. Also attache explaination of PyMVPA object `states` at that point.
+
+Sensitivity Analyzers
+~~~~~~~~~~~~~~~~~~~~~
+
+SensitivityAnalyzer_
+
+(to be written)
+
+.. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
 
 .. Point to the difference of `DataMeasure` and `SensitivityAnalyzer`. The
    former computes some value given a dataset (might be scalar or something
@@ -633,27 +728,205 @@ Algorithms
    where each value assigns a quantification of the amount of available
    information in that feature.
 
+Noise Perturbation
+''''''''''''''''''
 
-Searchlight
-~~~~~~~~~~~
-.. Mention the fact that it also is a special `SensitivityAnalyzer`
+PerturbationSensitivityAnalyzer_
 
+(to be written)
+
+.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+
+ANOVA
+'''''
+
+OneWayAnova_
+
+(to be written)
+
+.. _OneWayAnova: api/mvpa.algorithms.anova.OneWayAnova-class.html
+
+
+Linear SVM Weights
+''''''''''''''''''
+
+LinearSVMWeights_
+
+(to be written)
+
+.. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
+
+
+Splitting Sensitivity Analyzer
+''''''''''''''''''''''''''''''
+
+SplittingSensitivityAnalyzer_
+
+(to be written)
+
+.. _SplittingSensitivityAnalyzer: api/mvpa.algorithms.splitsensana.SplittingSensitivityAnalyzer-class.html
+
+
+Feature Selection Strategies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Recursive Feature Elimination
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'''''''''''''''''''''''''''''
+
+RFE_
+
+(to be written)
+
+.. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
 
 
 Incremental Feature Search
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+''''''''''''''''''''''''''
+
+IFS_
+
+(to be written)
+
+.. _IFS: api/mvpa.algorithms.ifs.IFS-class.html
 
 .. What are the practical differences (besides speed) between RFE and IFS?
+
+
+Classifier Cross-Validation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ClfCrossValidation_
+
+(to be written)
+
+.. _ClfCrossValidation: api/mvpa.algorithms.clfcrossval.ClfCrossValidation-class.html
+
+
+Searchlight
+~~~~~~~~~~~
+
+Searchlight_
+
+(to be written)
+
+.. _Searchlight: api/mvpa.algorithms.searchlight.Searchlight-class.html
+
+.. Mention the fact that it also is a special `SensitivityAnalyzer`
+
 
 
 Statistical Testing
 ~~~~~~~~~~~~~~~~~~~
 
+NullHypothesisTest_
+
+(to be written)
+
+.. _NullHypothesisTest: api/mvpa.algorithms.nullhyptest.NullHypothesisTest-class.html
+
 .. Point to the problem of an unknown H0 distribution, which is a problem
    for a lot of statistical tests.
+
+
+Progress Tracking
+-----------------
+.. some parts should migrate into developer reference I guess
+
+There are 3 types of messages PyMVPA can produce:
+
+ verbose_
+   regular informative messages about generic actions being performed
+ debug_
+   messages about the progress of computation, manipulation on data
+   structures
+ warning_
+    messages which are reported by mvpa if something goes a little
+    unexpected but not critical
+
+.. _verbose: api/mvpa.misc-module.html#verbose
+.. _debug: api/mvpa.misc-module.html#debug
+.. _warning: api/mvpa.misc-module.html#warning
+
+
+Verbose Messages
+~~~~~~~~~~~~~~~~
+
+Primarily for a user of PyMVPA to provide information about the
+progress of their scripts. Such messages are printed out if their
+level specified as the first parameter to verbose_ function call is
+less than specified. There are two easy ways to specify verbosity
+level:
+
+* command line: you can use optVerbose_ for precrafted command
+  line option for to give facility to change it from your script (see
+  examples)
+* environment variable ``MVPA_VERBOSE``
+* code: verbose.level property
+
+
+Warning Messages
+~~~~~~~~~~~~~~~~
+
+Reported by PyMVPA if something goes a little unexpected but not
+critical. They are printed just once per occasion, i.e. once per piece
+of code where it is called.
+
+
+Debug Messages
+~~~~~~~~~~~~~~
+
+Debug messages are used to track progress of any computation inside
+PyMVPA while the code run by python without optimization (i.e. without
+``-O`` switch to python). They are specified not by the level but by
+some id usually specific for a particular PyMVPA routine. For example
+``RFEC`` id causes debugging information about `Recursive Feature
+Elimination call`_ to be printed (See `misc module sources`_ for the
+list of all ids, or print ``debug.registered`` property).
+
+Analogous to verbosity level there are two easy ways to specify set of
+ids to be enabled (reported):
+
+* command line: you can use optDebug_ for precrafted command line
+  option to provide it from your script (see examples). If in command
+  line if optDebug_ is used, ``-d list`` is given, PyMVPA will print
+  out list of known ids.
+* environment: variable ``MVPA_DEBUG`` can contain comma-separated
+  list of ids.
+* code: debug.active property (e.g. ``debug.active = [ 'RFEC', 'CLF' ]``)
+
+Besides printing debug messages, it is also possible to print some
+metric. You can define new metrics or select predefined ones (vmem,
+asctime, pid). To enable list of metrics you can use
+``MVPA_DEBUG_METRICS`` environment variable to list desired metric
+names comma-separated.
+
+As it was mentioned earlier, debug messages are printed only in
+non-optimized python invocation. That was done to eliminate any
+slowdown introduced by such 'debugging' output, which might appear at
+some computational bottleneck places in the code. 
+
+.. TODO: Unify loggers behind verbose and debug. imho debug should have
+   also way to specify the level for the message so we could provide
+   more debugging information if desired.
+
+.. _optVerbose: api/mvpa.misc.cmdline-module.html#optVerbose
+.. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
+.. _misc module sources: api/mvpa.misc-pysrc.html
+.. _Recursive Feature Elimination call: api/mvpa.algorithms.rfe.RFE-class.html#__call__
+
+
+Additional Little Helpers
+-------------------------
+
+(to be written)
+
+.. put information about IO helpers, external bindings, etc here
+
+
+FSL Bindings
+~~~~~~~~~~~~
+
+(to be written)
 
 
 Frequently Asked Questions
@@ -665,7 +938,7 @@ I feel like I want to contribute something, do you mind?
   the documentation, send us an improvement. If you implemented a new algorithm
   using PyMVPA that you want to share, please share. If you have an idea for
   some other improvement (e.g. speed, functionality), but you have no
-  time/cannot/do not want to implement it yourselve, please post your idea to
+  time/cannot/do not want to implement it yourself, please post your idea to
   the PyMVPA mailing list.
 
 .. We probably need them once we have more than two users.

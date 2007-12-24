@@ -19,7 +19,8 @@ from copy import copy
 
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
-                                    FixedNElementTailSelector
+                                    FixedNElementTailSelector, \
+                                    BestDetector
 
 if __debug__:
     from mvpa.misc import debug
@@ -46,31 +47,34 @@ class IFS(FeatureSelection):
     def __init__(self,
                  data_measure,
                  transfer_error,
+                 bestdetector=BestDetector(),
+                 stopping_criterion=StopNBackHistoryCriterion(BestDetector()),
                  feature_selector=FixedNElementTailSelector(1,
                                                             tail='upper',
                                                             mode='select'),
-                 stopping_criterion=StopNBackHistoryCriterion()
                  ):
         """Initialize incremental feature search
 
         :Parameter:
-            `data_measure`: `DataMeasure`
+            data_measure : DataMeasure
                 Computed for each candidate feature selection.
-            `transfer_error`: `TransferError`
+            transfer_error : TransferError
                 Compute against a test dataset for each incremental feature
                 set.
-            `stopping_criterion`: Functor.
-                Given a list of error values it has to return a tuple of two
-                booleans. First values must indicate whether the criterion is
-                fulfilled and the second value signals whether the latest error
-                values is the total minimum.
-        """
+            bestdetector : Functor
+                Given a list of error values it has to return a boolean that
+                signals whether the latest error value is the total minimum.
+            stopping_criterion : Functor
+                Given a list of error values it has to return whether the
+                criterion is fulfilled.
+         """
         # bases init first
         FeatureSelection.__init__(self)
 
         self.__data_measure = data_measure
         self.__transfer_error = transfer_error
         self.__feature_selector = feature_selector
+        self.__bestdetector = bestdetector
         self.__stopping_criterion = stopping_criterion
 
         # register the state members
@@ -147,7 +151,8 @@ class IFS(FeatureSelection):
 
             # Check if it is time to stop and if we got
             # the best result
-            (stop, isthebest) = self.__stopping_criterion(errors)
+            stop = self.__stopping_criterion(errors)
+            isthebest = self.__bestdetector(errors)
 
             if __debug__:
                 debug('IFSC',

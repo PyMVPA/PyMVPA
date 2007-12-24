@@ -20,16 +20,11 @@ from mvpa.misc.state import State
 
 
 class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
-    # XXX current behavior of __call__() is illegal according to base class
-    # docs. Should only return a single 1d map (or change this restriction).
-    # if base class requirement should be kept a workaround would be to
-    # change the current default postproc to store all maps and let call return
-    # the mean instead.
     """This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
     and runs it multiple times on differents splits of a `Dataset`.
 
-    When called with a `Dataset` it returns a sequence of the sensitivity maps
-    of all data splits.
+    When called with a `Dataset` it returns the mean sensitivity maps of all
+    data splits.
 
     Additonally this class supports the `State` interface. Several
     postprocessing functions can be specififed to the constructor. The results
@@ -38,21 +33,22 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
     """
     def __init__(self, sensana,
                  splitter=NoneSplitter,
-                 postproc={'mean': lambda a: N.mean(a, axis=0)}):
+                 postproc={}):
         """Cheap initialization.
 
-        Parameters
-        ----------
-        - `sensana`: `SensitivityAnalyzer` that shall be run on the `Dataset`
-                      splits.
-        - `splitter`: `Splitter` used to split the `Dataset`. By convention the
-                      first dataset in the tuple returned by the splitter on
-                      each iteration is used to compute the sensitivity map.
-        - `postproc`: Dictionary of post-processing functors. Each functor will
-                      be called with the sequence of sensitivity maps. The
-                      resulting value is then made available via the object's
-                      `State` interface using the respective key from `postproc`
-                      dictionary.
+        :Parameters:
+            sensana : SensitivityAnalyzer
+                that shall be run on the `Dataset` splits.
+            splitter : Splitter
+                used to split the `Dataset`. By convention the first dataset
+                in the tuple returned by the splitter on each iteration is used
+                to compute the sensitivity map.
+            postproc : dict
+                Dictionary of post-processing functors. Each functor will be
+                called with the sequence of sensitivity maps. The resulting
+                value is then made available via the object's `State` interface
+                using the respective key from `postproc` dictionary.
+                Example: postproc={'full': N.array}
         """
         # init base classes first
         SensitivityAnalyzer.__init__(self)
@@ -97,5 +93,5 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
             self[k] = v(maps)
 
         # return all maps
-        return maps
+        return N.mean(maps, axis=0)
 

@@ -15,8 +15,9 @@ from sets import Set
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
+     SensitivityBasedFeatureSelection, \
      StopNBackHistoryCriterion, FractionTailSelector, \
-     FixedNElementTailSelector
+     FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
@@ -35,33 +36,51 @@ class RFETests(unittest.TestCase):
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
 
 
+    def testBestDetector(self):
+        bd = BestDetector()
+
+        # for empty history -- no best
+        self.failUnless(bd([]) == False)
+        # we got the best if we have just 1
+        self.failUnless(bd([1]) == True)
+        # we got the best if we have the last minimal
+        self.failUnless(bd([1, 0.9, 0.8]) == True)
+
+        # test for alternative func
+        bd = BestDetector(func=max)
+        self.failUnless(bd([0.8, 0.9, 1.0]) == True)
+        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*10) == False)
+
+        # test to detect earliest and latest minimum
+        bd = BestDetector(lastminimum=True)
+        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == True)
+        bd = BestDetector()
+        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == False)
+
+
     def testStopCriterion(self):
         """Test stopping criterions"""
         stopcrit = StopNBackHistoryCriterion()
         # for empty history -- no best but just go
-        self.failUnless(stopcrit([]) == (False, False))
-        # we got the best if we have just 1
-        self.failUnless(stopcrit([1]) == (False, True))
-        # we got the best if we have the last minimal
-        self.failUnless(stopcrit([1, 0.9, 0.8]) == (False, True))
+        self.failUnless(stopcrit([]) == False)
         # should not stop if we got 10 more after minimal
         self.failUnless(stopcrit(
-            [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == (False, False))
+            [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == False)
         # should stop if we got 10 more after minimal
         self.failUnless(stopcrit(
-            [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == (True, False))
+            [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == True)
 
         # test for alternative func
-        stopcrit = StopNBackHistoryCriterion(func=max)
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]) == (False, True))
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == (False, False))
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == (True, False))
+        stopcrit = StopNBackHistoryCriterion(BestDetector(func=max))
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == True)
 
         # test to detect earliest and latest minimum
-        stopcrit = StopNBackHistoryCriterion(lateminimum=True)
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (False, True))
+        stopcrit = StopNBackHistoryCriterion(BestDetector(lastminimum=True))
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == False)
         stopcrit = StopNBackHistoryCriterion(steps=4)
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == (True, False))
+        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
 
 
     def testFeatureSelector(self):
@@ -89,6 +108,48 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.nelements == 3)
         self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector['ndiscarded'] == 3)
+
+
+    def testSensitivityBasedFeatureSelection(self):
+        svm = LinearNuSVMC()
+
+        # sensitivity analyser and transfer error quantifier use the SAME clf!
+        sens_ana = LinearSVMWeights(svm)
+
+        # of features to remove
+        Nremove = 2
+
+        # because the clf is already trained when computing the sensitivity
+        # map, prevent retraining for transfer error calculation
+        # Use absolute of the svm weights as sensitivity
+        fe = SensitivityBasedFeatureSelection(Absolute(sens_ana),
+                feature_selector=FixedNElementTailSelector(2),
+                enable_states=["sensitivity", "selected_ids"])
+
+        wdata = self.getData()
+        wdata_nfeatures = wdata.nfeatures
+        tdata = self.getData()
+        tdata_nfeatures = tdata.nfeatures
+
+        sdata, stdata = fe(wdata, tdata)
+
+        # fail if orig datasets are changed
+        self.failUnless(wdata.nfeatures == wdata_nfeatures)
+        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+
+        # silly check if nfeatures got a single one removed
+        self.failUnlessEqual(wdata.nfeatures, sdata.nfeatures+Nremove,
+            msg="We had to remove just a single feature")
+
+        self.failUnlessEqual(tdata.nfeatures, stdata.nfeatures+Nremove,
+            msg="We had to remove just a single feature in testing as well")
+
+        self.failUnlessEqual(len(fe["sensitivity"]), wdata_nfeatures,
+            msg="Sensitivity have to have # of features equal to original")
+
+        self.failUnlessEqual(len(fe["selected_ids"]), sdata.nfeatures,
+            msg="# of selected features must be equal the one in the result dataset")
+
 
 
     def testRFE(self):

@@ -14,10 +14,11 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskmapper import MaskMapper
+from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.clfs.classifier import Classifier, BoostedClassifier, \
      BinaryClassifierDecorator, BoostedMulticlassClassifier, \
-     MappedClassifier
+     BoostedSplitClassifier, MappedClassifier
 
 from copy import deepcopy
 
@@ -58,7 +59,8 @@ class ClassifiersTests(unittest.TestCase):
 
         # simple binary dataset
         self.data_bin_1 = ([[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
-                           [1, 1, 1, -1, -1])
+                           [1, 1, 1, -1, -1], # labels
+                           [0, 1, 2,  2, 3])  # chunks
 
     def testDummy(self):
         clf = SameSignClassifier()
@@ -96,6 +98,22 @@ class ClassifiersTests(unittest.TestCase):
 
         # check by selecting just 
         #self. fail
+
+
+    def testBoostedSplitClassifier(self):
+        ds = Dataset(samples=self.data_bin_1[0],
+                     labels=self.data_bin_1[1],
+                     chunks=self.data_bin_1[2])
+        clf = BoostedSplitClassifier(clf=SameSignClassifier(),
+                                     splitter=NFoldSplitter(1))
+
+        clf.train(ds)                   # train the beast
+
+        self.failUnlessEqual(len(clf.classifiers), len(ds.uniquechunks),
+                             msg="Should have number of classifiers equal # of epochs")
+        self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
+                             msg="Should classify correctly")
+
 
     def testMappedDecorator(self):
         testdata3 = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
