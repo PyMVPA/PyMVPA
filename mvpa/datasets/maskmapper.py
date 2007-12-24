@@ -74,6 +74,10 @@ class MaskMapper(MetricMapper):
         self._initMask(mask)
 
 
+    def __str__(self):
+        return "MaskMapper: %d -> %d" % (self.__masksize, self.__masknonzerosize)
+
+
     def __deepcopy__(self, memo={}):
         from copy import deepcopy
         # XXX might be necessary to deepcopy 'self.metric' as well
