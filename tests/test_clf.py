@@ -109,7 +109,7 @@ class ClassifiersTests(unittest.TestCase):
 
         clf.train(ds)                   # train the beast
 
-        self.failUnlessEqual(len(clf.classifiers), len(ds.uniquechunks),
+        self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")

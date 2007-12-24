@@ -303,9 +303,9 @@ class BoostedClassifier(Classifier):
         self.__clfs = clfs
         """Classifiers to use"""
 
-    classifiers = property(fget=lambda x:x.__clfs,
-                           fset=_setClassifiers,
-                           doc="Used classifiers")
+    clfs = property(fget=lambda x:x.__clfs,
+                    fset=_setClassifiers,
+                    doc="Used classifiers")
 
     combiner = property(fget=lambda x:x.__combiner,
                         doc="Used combiner to derive a single result")
@@ -472,7 +472,7 @@ class BoostedMulticlassClassifier(Classifier):
                 debug("CLF", "Created %d binary classifiers for %d labels" %
                       (len(biclfs), len(ulabels)))
 
-            self.__bclf.classifiers = biclfs
+            self.__bclf.clfs = biclfs
 
         elif self.__bclf_type == "1-vs-all":
             raise NotImplementedError
@@ -486,7 +486,7 @@ class BoostedMulticlassClassifier(Classifier):
         # XXX might need to copy states off bclf
         return self.__bclf.predict(data)
 
-    classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")
+    clfs = property(lambda x:x.__bclf.clfs, doc="Used classifiers")
 
 
 class BoostedSplitClassifier(Classifier):
@@ -520,7 +520,7 @@ class BoostedSplitClassifier(Classifier):
         """Store sample instance of boosted classifier to construct based on clf's"""
         self.__splitter = splitter
 
-        self.__classifiers = None
+        self.__clfs = None
 
 
     def train(self, data):
@@ -537,7 +537,7 @@ class BoostedSplitClassifier(Classifier):
                 debug("CLF", "Created and trained classifier for split %d" % (i))
             i += 1
 
-        self.__bclf.classifiers = bclfs
+        self.__bclf.clfs = bclfs
 
 
     def predict(self, data):
@@ -546,7 +546,7 @@ class BoostedSplitClassifier(Classifier):
         # XXX might need to copy states off bclf
         return self.__bclf.predict(data)
 
-    classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")
+    clfs = property(lambda x:x.__bclf.clfs, doc="Used classifiers")
 
 
 
