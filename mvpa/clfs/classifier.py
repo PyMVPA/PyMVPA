@@ -638,8 +638,8 @@ class FeatureSelectionClassifier(Classifier):
     def train(self, data):
         """
         """
-        # TODO -- enable selected_ids properly!!!!
-        self.__feature_selection.enableState("selected_ids")
+        # temporarily enable selected_ids
+        self.__feature_selection._enableStatesTemporarily(["selected_ids"])
 
         (wdata, tdata) = self.__feature_selection(data)
         if __debug__:
@@ -651,6 +651,8 @@ class FeatureSelectionClassifier(Classifier):
         mappermask = N.zeros(data.nfeatures)
         mappermask[self.__feature_selection["selected_ids"]] = 1
         mapper = MaskMapper(mappermask)
+
+        self.__feature_selection._resetEnabledTemporarily()
 
         # create and assign `MappedClassifier`
         self.__clf = MappedClassifier(self.__baseclf, mapper)
