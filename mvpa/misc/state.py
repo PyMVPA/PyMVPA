@@ -39,8 +39,8 @@ class State(object):
     # defined in some parent class
 
     def __init__(self,
-                 enable_states=None,
-                 disable_states=None):
+                 enable_states=[],
+                 disable_states=[]):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -80,13 +80,22 @@ class State(object):
 
         # store states to enable later on
         self.__enable_states = enable_states
+        self.__disable_states = disable_states
 
         if isinstance(enable_states, basestring):
-            self.__enable_all = enable_states.upper() == "ALL"
-        elif operator.isSequenceType(enable_states):
-            self.__enable_all = "ALL" in [x.upper() for x in enable_states]
-        else:
-            self.__enable_all = False
+            enable_states = [ enable_states ]
+        if isinstance(disable_states, basestring):
+            disable_states = [ disable_states ]
+
+        assert(operator.isSequenceType(enable_states))
+
+        self.__enable_all = "ALL" in [x.upper() for x in enable_states]
+        self.__disable_all = "ALL" in [x.upper() for x in disable_states]
+
+        if self.__enable_all and self.__disable_all:
+            raise ValueError,\
+                  "Cannot enable and disable all states at the same time " + \
+                  " in %s" % `self`
 
         if self.__enable_all:
             if __debug__:
@@ -94,25 +103,12 @@ class State(object):
                       'All states (besides explicitely disabled ' + \
                       'via disable_states) will be enabled')
 
+        if self.__disable_all:
+            if __debug__:
+                debug('ST',
+                      'All states will be disabled')
+
         for key, enabled in register_states.iteritems():
-            if (not enable_states is None):
-                if not self.__enable_all and (not key in enable_states):
-                    if __debug__:
-                        debug('ST', 'Disabling state %s since it is not' \
-                              'listed' % key + \
-                              ' among explicitely enabled ones for %s' %
-                              (self.__class__.__name__))
-                    enabled = False
-                else:
-                    enabled = True
-
-            if (not disable_states is None) and (key in disable_states):
-                if __debug__:
-                    debug('ST', 'Disabling state %s since it is listed' % key +
-                          ' among explicitely disabled ones for %s' %
-                          (self.__class__.__name__))
-                enabled = False
-
             self._registerState(key, enabled)
 
 
@@ -162,7 +158,9 @@ class State(object):
         self.__dict = operation(fromstate.__dict)
         self.__registered = operation(fromstate.__registered)
         self.__enable_states = operation(fromstate.__enable_states)
+        self.__disable_states = operation(fromstate.__disable_states)
         self.__enable_all = operation(fromstate.__enable_all)
+        self.__disable_all = operation(fromstate.__disable_all)
 
 
     def __checkIndex(self, index):
@@ -215,17 +213,25 @@ class State(object):
             description for the state
         """
         # retrospectively enable state
-        if self.__enable_all or \
-               ((not self.__enable_states is None) and \
-                (index in self.__enable_states)):
-            if enabled == False:
-                enabled = True
+        if not enabled:
+            if self.__enable_all or (index in self.__enable_states):
+                if not (index in self.__disable_states) and \
+                       not self.__disable_all:
+                    enabled = True
+                    if __debug__:
+                        debug("ST",
+                              "State '%s' will be registered enabled" % index +
+                              " since it was mentioned in enable_states")
+        else:
+            if (index in self.__disable_states) or (self.__disable_all):
+                enabled = False
                 if __debug__:
                     debug("ST",
-                          "State %s will be registered enabled" % index +
-                          " since it was mentioned in enable_states")
+                          "State '%s' will be registered disabled" % index +
+                          " since it was mentioned in disable_states")
+
         if __debug__:
-            debug('ST', 'Registering %s state %s for %s' %
+            debug('ST', "Registering %s state '%s' for %s" %
                   ({True:'enabled', False:'disabled'}[enabled],
                    index, self.__class__.__name__))
         self.__registered[index] = {'enabled' : enabled,
@@ -240,7 +246,13 @@ class State(object):
 
 
     def __enabledisableall(self, index, value):
-        if index.upper == 'ALL':
+        if index.upper() == 'ALL':
+            if value:
+                self.__enable_all = True
+                self.__disable_all = False
+            else:
+                self.__disable_all = True
+                self.__enable_all = False
             for index in self.states:
                 self.__registered[index]['enabled'] = value
             return True
