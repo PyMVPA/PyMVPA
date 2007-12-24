@@ -337,7 +337,7 @@ class State(object):
 
     def _getRegisteredStates(self):
         """Return ids for all registered state variables"""
-        
+
         return self.__registered.keys()
 
 

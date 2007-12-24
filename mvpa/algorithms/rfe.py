@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.algorithms.featsel import FeatureSelection, \
+                                    BestDetector, \
                                     StopNBackHistoryCriterion, \
                                     FractionTailSelector
 from numpy import arange
@@ -23,6 +24,7 @@ if __debug__:
 # So we should either provide a simple decorator around arbitrary
 # FeatureSelector to convert sensitivities to abs values before calling
 # actual selector, or a decorator around SensitivityEstimators
+
 
 class RFE(FeatureSelection):
     """Recursive feature elimination.
@@ -45,32 +47,40 @@ class RFE(FeatureSelection):
                  sensitivity_analyzer,
                  transfer_error,
                  feature_selector=FractionTailSelector(0.05),
-                 stopping_criterion=StopNBackHistoryCriterion(),
+                 bestdetector=BestDetector(),
+                 stopping_criterion=StopNBackHistoryCriterion(BestDetector()),
                  train_clf=True,
+                 update_sensitivity=True,
                  **kargs
                  ):
         # XXX Allow for multiple stopping criterions, e.g. error not decreasing
         # anymore OR number of features less than threshold
         """Initialize recursive feature elimination
 
-        Parameters
-        ----------
-
-        - `sensitivity_analyzer`: `SensitivityAnalyzer`
-        - `transfer_error`: `TransferError` instance used to compute the
-                transfer error of a classifier based on a certain feature set
-                on test dataset.
-        - `feature_selector`: Functor. Given a sensitivity map it has to return
-                the ids of those features that should be kept.
-        - `stopping_criterion`: Functor. Given a list of error values it has
-                to return a tuple of two booleans. First values must indicate
-                whether the criterion is fulfilled and the second value signals
-                whether the latest error values is the total minimum.
-        - `train_clf`: Flag whether the classifier in `transfer_error` should
-                be trained before computing the error. In general this is
+        :Parameters:
+            sensitivity_analyzer : SensitivityAnalyzer object
+            transfer_error : TransferError object
+                used to compute the transfer error of a classifier based on a
+                certain feature set on the test dataset.
+            feature_selector : Functor
+                Given a sensitivity map it has to return the ids of those
+                features that should be kept.
+            bestdetector : Functor
+                Given a list of error values it has to return a boolean that
+                signals whether the latest error value is the total minimum.
+            stopping_criterion : Functor
+                Given a list of error values it has to return whether the
+                criterion is fulfilled.
+            train_clf : bool
+                Flag whether the classifier in `transfer_error` should be
+                trained before computing the error. In general this is
                 required, but if the `sensitivity_analyzer` and
-                `transfer_error` share and make use of the same classifier and
+                `transfer_error` share and make use of the same classifier it
                 can be switched off to save CPU cycles.
+            update_sensitivity : bool
+                If False the sensitivity map is only computed once and reused
+                for each iteration. Otherwise the senstitivities are
+                recomputed at each selection step.
         """
 
         # base init first
@@ -87,8 +97,21 @@ class RFE(FeatureSelection):
 
         self.__stopping_criterion = stopping_criterion
 
+        self.__bestdetector = bestdetector
+
         self.__train_clf = train_clf
         """Flag whether training classifier is required."""
+
+        self.__update_sensitivity = update_sensitivity
+        """Flag whether sensitivity map is recomputed for each step."""
+
+        # force clf training when sensitivities are not updated as otherwise
+        # shared classifiers are not retrained
+        if not self.__update_sensitivity and not self.__train_clf:
+            if __debug__:
+                debug("RFEC", "Forcing training of classifier since " +
+                      "sensitivities aren't updated at each step")
+            self.__train_clf = True
 
         # register the state members
         self._registerState("errors")
@@ -101,18 +124,19 @@ class RFE(FeatureSelection):
         """Proceed and select the features recursively eliminating less
         important ones.
 
-        Parameters
-        ----------
-        - `dataset`: `Dataset` used to compute sensitivity maps and train a
-                classifier to determine the transfer error.
-        - `testdataset`: `Dataset` used to test the trained classifer to
-                determine the transfer error.
+        :Parameters:
+          dataset : Dataset
+            used to compute sensitivity maps and train a classifier
+            to determine the transfer error
+          testdataset : Dataset
+            used to test the trained classifer to determine the
+            transfer error
 
         Returns a tuple of two new datasets with the feature subset of
-        `dataset` that had the lowest transfer error of all tested sets until
-        the stopping criterion was reached. The first dataset is the feature
-        subset of the training data and the second the selection of the test
-        dataset.
+        `dataset` that had the lowest transfer error of all tested
+        sets until the stopping criterion was reached. The first
+        dataset is the feature subset of the training data and the
+        second the selection of the test dataset.
         """
         errors = []
         """Computed error for each tested features set."""
@@ -147,6 +171,9 @@ class RFE(FeatureSelection):
         """List of feature Ids as per original dataset remaining at any given
         step"""
 
+        sensitivity = None
+        """Contains the latest sensitivity map."""
+
         while wdataset.nfeatures > 0:
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
@@ -154,10 +181,8 @@ class RFE(FeatureSelection):
             self["history"][orig_feature_ids] = step
 
             # Compute sensitivity map
-            # TODO add option to do RFE on a sensitivity map that is computed
-            # a single time at the beginning of the process. This options
-            # should then overwrite train_clf to always be True
-            sensitivity = self.__sensitivity_analyzer(wdataset)
+            if self.__update_sensitivity or sensitivity == None:
+                sensitivity = self.__sensitivity_analyzer(wdataset)
 
             if self.isStateEnabled("sensitivities"):
                 self["sensitivities"].append(sensitivity)
@@ -173,7 +198,8 @@ class RFE(FeatureSelection):
 
             # Check if it is time to stop and if we got
             # the best result
-            (stop, isthebest) = self.__stopping_criterion(errors)
+            stop = self.__stopping_criterion(errors)
+            isthebest = self.__bestdetector(errors)
 
             nfeatures = wdataset.nfeatures
 
@@ -197,6 +223,11 @@ class RFE(FeatureSelection):
             # Create a dataset only with selected features
             wdataset = wdataset.selectFeatures(selected_ids)
 
+            # select corresponding sensitivity values if they are not
+            # recomputed
+            if not self.__update_sensitivity:
+                sensitivity = sensitivity[selected_ids]
+
             # need to update the test dataset as well
             # XXX why should it ever become None?
             # yoh: because we can have __transfer_error computed
@@ -219,8 +250,9 @@ class RFE(FeatureSelection):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
 
-        # charge state variable
+        # charge state variables
         self["errors"] = errors
+        self["selected_ids"] = selected_ids
 
         # best dataset ever is returned
         return results

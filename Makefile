@@ -112,8 +112,8 @@ upload-website: website
 
 doc: apidoc rst2html-devguide rst2html-manual
 
-manual:
-	cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
+manual: rst2html-manual
+	#cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
 
 apidoc: apidoc-stamp
 apidoc-stamp: $(PROFILE_FILE)
