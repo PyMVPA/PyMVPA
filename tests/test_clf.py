@@ -18,7 +18,7 @@ from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.clfs.classifier import Classifier, BoostedClassifier, \
      BinaryClassifierDecorator, BoostedMulticlassClassifier, \
-     BoostedSplitClassifier, MappedClassifier
+     BoostedSplitClassifier, MappedClassifier, FeatureSelectionClassifier
 
 from copy import deepcopy
 
@@ -43,9 +43,9 @@ class SameSignClassifier(Classifier):
 class Less1Classifier(SameSignClassifier):
     """Dummy classifier which reports +1 class if abs value of max less than 1"""
     def predict(self, data):
-        datalen = len(data)
+        datalen = data.nsamples
         values = []
-        for d in data:
+        for d in data.samples:
             values.append(2*int(max(d)<=1)-1)
         self["predictions"] = values
         return values
@@ -109,14 +109,15 @@ class ClassifiersTests(unittest.TestCase):
 
         clf.train(ds)                   # train the beast
 
-        self.failUnlessEqual(len(clf.classifiers), len(ds.uniquechunks),
+        self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
 
 
     def testMappedDecorator(self):
-        testdata3 = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
+        samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
+        testdata3 = Dataset(samples=samples, labels=1)
         res110 = [1, 1, 1, -1, -1]
         res101 = [-1, 1, -1, -1, 1]
         res011 = [-1, 1, -1, 1, -1]
@@ -128,6 +129,46 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf110.predict(testdata3), res110)
         self.failUnlessEqual(clf101.predict(testdata3), res101)
         self.failUnlessEqual(clf011.predict(testdata3), res011)
+
+
+    def testFeatureSelectionClassifier(self):
+        from test_rfe import SillySensitivityAnalyzer
+        from mvpa.algorithms.featsel import \
+             SensitivityBasedFeatureSelection, \
+             FixedNElementTailSelector
+
+        # should give lowest weight to the feature with lowest index
+        sens_ana = SillySensitivityAnalyzer()
+        # should give lowest weight to the feature with highest index
+        sens_ana_rev = SillySensitivityAnalyzer(mult=-1)
+
+        # corresponding feature selections
+        feat_sel = SensitivityBasedFeatureSelection(sens_ana,
+            FixedNElementTailSelector(1))
+
+        feat_sel_rev = SensitivityBasedFeatureSelection(sens_ana_rev,
+            FixedNElementTailSelector(1))
+
+        samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
+
+        testdata3 = Dataset(samples=samples, labels=1)
+        # dummy train data so proper mapper gets created
+        traindata = Dataset(samples=N.array([ [0, 0,-1], [1,0,1] ]), labels=[1,2])
+
+        # targets
+        res110 = [1, 1, 1, -1, -1]
+        res011 = [-1, 1, -1, 1, -1]
+
+        # first classifier -- 0th feature should be discarded
+        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel)
+        clf011.train(traindata)
+        self.failUnlessEqual(clf011.predict(testdata3), res011)
+
+        # first classifier -- last feature should be discarded
+        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel_rev)
+        clf011.train(traindata)
+        self.failUnlessEqual(clf011.predict(testdata3), res110)
+
 
 def suite():
     return unittest.makeSuite(ClassifiersTests)

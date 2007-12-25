@@ -11,6 +11,8 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
+import copy
+
 from mvpa.misc import warning
 
 if __debug__:
@@ -75,6 +77,13 @@ class ColumnData(dict):
                     debug("IOH", "Registering property %s for ColumnData" % `k`)
                 exec "%s.%s = property(fget=%s)"  % \
                      (self.__class__.__name__, k, getter)
+                # TODO!!! Check if it is safe actually here to rely on value of
+                #         k in lambda. May be it is treated as continuation and some
+                #         local space would override it????
+                #setattr(self.__class__,
+                #        k,
+                #        property(fget=lambda x: x._getAttrib("%s" % k)))
+                # it seems to be error-prone due to continuation...
 
 
     def _getAttrib(self, key):
@@ -187,6 +196,17 @@ class ColumnData(dict):
         self._check()
 
         return self
+
+
+    def selectSamples(self, selection):
+        """Return new ColumnData with selected samples"""
+
+        data = copy.deepcopy(self)
+        for k, v in data.iteritems():
+            data[k] = [v[x] for x in selection]
+
+        data._check()
+        return data
 
 
     def getNColumns(self):

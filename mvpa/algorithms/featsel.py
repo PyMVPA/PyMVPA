@@ -16,6 +16,7 @@ from math import floor
 from numpy import arange
 
 from mvpa.misc.vproperty import VProperty
+from mvpa.misc import warning
 from mvpa.misc.state import State
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -35,8 +36,7 @@ class FeatureSelection(State):
     def __call__(self, dataset, testdataset=None, callables=[]):
         """Invocation of the feature selection
 
-        Parameters
-        ----------
+        :Parameters:
           dataset: Dataset
             dataset used to select features
           testdataset: Dataset
@@ -407,7 +407,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         self._registerState("sensitivity", enabled=False)
 
 
-    def __call__(self, dataset, testdataset, callables=[]):
+    def __call__(self, dataset, testdataset=None, callables=[]):
         """Select the most important features
 
         :Parameters:
@@ -419,10 +419,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         Returns a tuple of two new datasets with selected feature
         subset of `dataset`.
         """
-
-        orig_feature_ids = arange(dataset.nfeatures)
-        """List of feature Ids as per original dataset remaining at any given
-        step"""
 
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
@@ -437,6 +433,8 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         if not testdataset is None:
             wtestdataset = testdataset.selectFeatures(selected_ids)
+        else:
+            wtestdataset = None
 
         # Differ from the order in RFE when actually error reported is for
         results = (wdataset, wtestdataset)
@@ -452,3 +450,67 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         # dataset with selected features is returned
         return results
 
+
+
+class FeatureSelectionPipeline(FeatureSelection):
+    """Feature elimination through the list of FeatureSelection's.
+
+    Given as list of FeatureSelections it applies them in turn.
+    """
+
+    def __init__(self,
+                 feature_selections,
+                 **kargs
+                 ):
+        """Initialize feature selection pipeline
+
+        :Parameters:
+          feature_selections : lisf of FeatureSelection
+            selections which to use. Order matters
+        """
+        # base init first
+        FeatureSelection.__init__(self, **kargs)
+
+        self.__feature_selections = feature_selections
+        """Selectors to use in turn"""
+
+        self._registerState("nfeatures",
+                            doc="Number of features before each step in pipeline")
+        # TODO: may be we should also append resultant number of features?
+
+
+    def __call__(self, dataset, testdataset=None, **kwargs):
+        """Invocation of the feature selection
+
+        TODO: not clear what was to do with callables -- pass inside
+              or process locally. For now just pass inside
+        """
+        wdataset = dataset
+        wtestdataset = testdataset
+
+        self["selected_ids"] = None
+
+        self["nfeatures"] = []
+        """Number of features at each step (before running selection)"""
+
+        for fs in self.__feature_selections:
+
+            # enable selected_ids state if it was requested from this class
+            fs._enableStatesTemporarily(["selected_ids"], self)
+            if self.isStateEnabled("nfeatures"):
+                self["nfeatures"].append(wdataset.nfeatures)
+
+            wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
+
+            if self.isStateEnabled("selected_ids"):
+                if self["selected_ids"] == None:
+                    self["selected_ids"] = fs["selected_ids"]
+                else:
+                    self["selected_ids"] = self["selected_ids"][fs["selected_ids"]]
+
+            fs._resetEnabledTemporarily()
+
+        return (wdataset, wtestdataset)
+
+    feature_selections = property(fget=lambda self:self.__feature_selections,
+                                  doc="List of `FeatureSelections`")

@@ -11,10 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 import operator
+import numpy as N
 
 from copy import deepcopy
 from sets import Set
 
+from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import State
 
@@ -75,6 +77,14 @@ class Classifier(State):
         """
         State.__init__(self, **kwargs)
 
+        # TODO: It is often as important to know how well we fit the
+        # training data, thus we should enabled states below, and
+        # provide proper assignment in the derived classes. Also think if we need
+        # "training_error" or such...
+        self._registerState('trained_values', enabled=False,
+                            doc="Internal values for the trained values seen by the classifier")
+        self._registerState('trained_predictions', enabled=False,
+                            doc="Internal values for the trained predictions seen by the classifier")
         self._registerState('values', enabled=False,
                             doc="Internal values seen by the classifier")
         self._registerState('predictions', enabled=True,
@@ -293,9 +303,9 @@ class BoostedClassifier(Classifier):
         self.__clfs = clfs
         """Classifiers to use"""
 
-    classifiers = property(fget=lambda x:x.__clfs,
-                           fset=_setClassifiers,
-                           doc="Used classifiers")
+    clfs = property(fget=lambda x:x.__clfs,
+                    fset=_setClassifiers,
+                    doc="Used classifiers")
 
     combiner = property(fget=lambda x:x.__combiner,
                         doc="Used combiner to derive a single result")
@@ -462,7 +472,7 @@ class BoostedMulticlassClassifier(Classifier):
                 debug("CLF", "Created %d binary classifiers for %d labels" %
                       (len(biclfs), len(ulabels)))
 
-            self.__bclf.classifiers = biclfs
+            self.__bclf.clfs = biclfs
 
         elif self.__bclf_type == "1-vs-all":
             raise NotImplementedError
@@ -476,7 +486,7 @@ class BoostedMulticlassClassifier(Classifier):
         # XXX might need to copy states off bclf
         return self.__bclf.predict(data)
 
-    classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")
+    clfs = property(lambda x:x.__bclf.clfs, doc="Used classifiers")
 
 
 class BoostedSplitClassifier(Classifier):
@@ -510,7 +520,7 @@ class BoostedSplitClassifier(Classifier):
         """Store sample instance of boosted classifier to construct based on clf's"""
         self.__splitter = splitter
 
-        self.__classifiers = None
+        self.__clfs = None
 
 
     def train(self, data):
@@ -527,7 +537,7 @@ class BoostedSplitClassifier(Classifier):
                 debug("CLF", "Created and trained classifier for split %d" % (i))
             i += 1
 
-        self.__bclf.classifiers = bclfs
+        self.__bclf.clfs = bclfs
 
 
     def predict(self, data):
@@ -536,7 +546,7 @@ class BoostedSplitClassifier(Classifier):
         # XXX might need to copy states off bclf
         return self.__bclf.predict(data)
 
-    classifiers = property(lambda x:x.__bclf.classifiers, doc="Used classifiers")
+    clfs = property(lambda x:x.__bclf.clfs, doc="Used classifiers")
 
 
 
@@ -564,7 +574,7 @@ class MappedClassifier(Classifier):
             whatever `Mapper` comes handy
           """
         Classifier.__init__(self, **kwargs)
-        self.__clf = deepcopy(clf)
+        self.__clf = clf
         """Store copy of the classifier"""
 
         self.__mapper = mapper
@@ -574,7 +584,7 @@ class MappedClassifier(Classifier):
     def train(self, data):
         """
         """
-        self.__clf.train(self.__mapper.forward(data))
+        self.__clf.train(self.__mapper.forward(data.samples))
         # for the ease of access
         self._copy_states_(self.__clf, deep=False)
 
@@ -582,7 +592,7 @@ class MappedClassifier(Classifier):
     def predict(self, data):
         """
         """
-        result = self.__clf.predict(self.__mapper.forward(data))
+        result = self.__clf.predict(self.__mapper.forward(data.samples))
         # for the ease of access
         self._copy_states_(self.__clf, deep=False)
         return result
@@ -590,4 +600,79 @@ class MappedClassifier(Classifier):
 
     clf = property(lambda x:x.__clf, doc="Used classifier")
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
+
+
+
+class FeatureSelectionClassifier(Classifier):
+    """Decorator Classifier which would use some FeatureSelection prior training.
+
+    FeatureSelection is used first to select features for the classifier to use
+    for prediction. Internally it would rely on MappedClassifier which would use
+    created MaskMapper.
+    TODO: think about removing overhead of retraining the same classifier if
+          feature selection was carried out with the same classifier already
+    """
+
+    def __init__(self, clf, feature_selection, **kwargs):
+        """Initialize the instance
+
+        :Parameters:
+          clf : Classifier
+            classifier based on which mask classifiers is created
+          feature_selection
+            whatever `FeatureSelection` comes handy
+          """
+        Classifier.__init__(self, **kwargs)
+
+        self.__baseclf = clf
+        """Store copy of the classifier to initialize MappedClassifier later on"""
+
+        self.__clf = clf
+        """Store copy of the classifier. Should become MappedClassifier later on.
+        Probably it better be a state variable but... TODO"""
+
+        self.__feature_selection = feature_selection
+        """FeatureSelection to select the features prior training"""
+
+
+    def train(self, data):
+        """
+        """
+        # temporarily enable selected_ids
+        self.__feature_selection._enableStatesTemporarily(["selected_ids"])
+
+        (wdata, tdata) = self.__feature_selection(data)
+        if __debug__:
+            debug("CLF", "FeatureSelectionClassifier: {%s} selected %d out of %d features" %
+                  (self.__feature_selection, data.nfeatures, wdata.nfeatures))
+
+        # create a mask to devise a mapper
+        # TODO -- think about making selected_ids a MaskMapper
+        mappermask = N.zeros(data.nfeatures)
+        mappermask[self.__feature_selection["selected_ids"]] = 1
+        mapper = MaskMapper(mappermask)
+
+        self.__feature_selection._resetEnabledTemporarily()
+
+        # create and assign `MappedClassifier`
+        self.__clf = MappedClassifier(self.__baseclf, mapper)
+        # we could have called self.__clf.train(data), but it would
+        # cause unnecessary masking
+        self.__clf.clf.train(wdata)
+
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+
+
+    def predict(self, data):
+        """
+        """
+        result = self.__clf.predict(data)
+        # for the ease of access
+        self._copy_states_(self.__clf, deep=False)
+        return result
+
+
+    clf = property(lambda x:x.__clf, doc="Used `MappedClassifier`")
+    feature_selection = property(lambda x:x.__feature_selection, doc="Used `FeatureSelection`")
 
