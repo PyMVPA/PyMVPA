@@ -16,7 +16,7 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 __docformat__ = 'restructuredtext'
 
 from sys import stdout
-
+from sets import Set
 # GOALS
 #  any logger should be able
 #   to log into a file or stdout/stderr
@@ -186,7 +186,7 @@ class SetLogger(Logger):
 
     def __init__(self, active=[], printsetid=True, *args, **kwargs):
         Logger.__init__(self, *args, **kwargs)
-        self.__active = active    # sets which to output
+        self._setActive(active)    # sets which to output
         self.__printsetid = printsetid
         self.__registered = {}      # all "registered" sets descriptions
         self._setActive(active)
@@ -196,7 +196,9 @@ class SetLogger(Logger):
     def _setActive(self, active):
         """Set active logging set
         """
-        self.__active = active
+         # just unique entries... we could have simply stored Set I guess,
+         # but then smth like debug.active += ["BLAH"] would not work
+        self.__active = list(Set(active))
 
 
     def _setPrintsetid(self, printsetid):
@@ -320,7 +322,13 @@ if __debug__:
                     self.registerMetric(item)
                 return
 
-            self.__metrics.append(func)
+            if not func in self.__metrics:
+                try:
+                    from mvpa.misc import debug
+                    debug("DBG", "Registering metric %s" % func)
+                    self.__metrics.append(func)
+                except:
+                    pass
 
 
         def __call__(self, setid, msg, *args, **kwargs):

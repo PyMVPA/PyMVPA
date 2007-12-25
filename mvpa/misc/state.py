@@ -39,8 +39,8 @@ class State(object):
     # defined in some parent class
 
     def __init__(self,
-                 enable_states=None,
-                 disable_states=None):
+                 enable_states=[],
+                 disable_states=[]):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -80,13 +80,22 @@ class State(object):
 
         # store states to enable later on
         self.__enable_states = enable_states
+        self.__disable_states = disable_states
 
         if isinstance(enable_states, basestring):
-            self.__enable_all = enable_states.upper() == "ALL"
-        elif operator.isSequenceType(enable_states):
-            self.__enable_all = "ALL" in [x.upper() for x in enable_states]
-        else:
-            self.__enable_all = False
+            enable_states = [ enable_states ]
+        if isinstance(disable_states, basestring):
+            disable_states = [ disable_states ]
+
+        assert(operator.isSequenceType(enable_states))
+
+        self.__enable_all = "ALL" in [x.upper() for x in enable_states]
+        self.__disable_all = "ALL" in [x.upper() for x in disable_states]
+
+        if self.__enable_all and self.__disable_all:
+            raise ValueError,\
+                  "Cannot enable and disable all states at the same time " + \
+                  " in %s" % `self`
 
         if self.__enable_all:
             if __debug__:
@@ -94,27 +103,16 @@ class State(object):
                       'All states (besides explicitely disabled ' + \
                       'via disable_states) will be enabled')
 
+        if self.__disable_all:
+            if __debug__:
+                debug('ST',
+                      'All states will be disabled')
+
         for key, enabled in register_states.iteritems():
-            if (not enable_states is None):
-                if not self.__enable_all and (not key in enable_states):
-                    if __debug__:
-                        debug('ST', 'Disabling state %s since it is not' \
-                              'listed' % key + \
-                              ' among explicitely enabled ones for %s' %
-                              (self.__class__.__name__))
-                    enabled = False
-                else:
-                    enabled = True
-
-            if (not disable_states is None) and (key in disable_states):
-                if __debug__:
-                    debug('ST', 'Disabling state %s since it is listed' % key +
-                          ' among explicitely disabled ones for %s' %
-                          (self.__class__.__name__))
-                enabled = False
-
             self._registerState(key, enabled)
 
+        self.__storedTemporarily = []
+        """List to contain sets of enabled states which were enabled temporarily"""
 
     def __str__(self):
         num = len(self.__registered)
@@ -125,7 +123,7 @@ class State(object):
             res += " %s" % index
             if self.hasState(index):
                 res += '*'              # so we have the value already
-            elif self.isStateEnabled:
+            elif self.isStateEnabled(index):
                 res += '+'              # it is enabled but no value is assigned yet
 
         if len(self.__registered) > 4:
@@ -144,13 +142,17 @@ class State(object):
 
         Crafted to overcome a problem mentioned above in the comment
         and is to be called from __copy__ of derived classes
-        """
-        if issubclass(self.__class__, fromstate.__class__):
-            raise ValueError, \
-                  "Class  %s is not subclass of %s, " % \
-                  (self.__class__, into.__class__) + \
-                  "thus not eligible for _copy_states_"
 
+        Probably sooner than later will get proper __getstate__,
+        __setstate__
+        """
+        # Bad check... doesn't generalize well...
+        # if not issubclass(fromstate.__class__, self.__class__):
+        #     raise ValueError, \
+        #           "Class  %s is not subclass of %s, " % \
+        #           (fromstate.__class__, self.__class__) + \
+        #           "thus not eligible for _copy_states_"
+        # TODO: FOR NOW NO TEST! But this beast needs to be fixed...
         operation = { True: copy.deepcopy,
                       False: copy.copy }[deep]
 
@@ -158,7 +160,10 @@ class State(object):
         self.__dict = operation(fromstate.__dict)
         self.__registered = operation(fromstate.__registered)
         self.__enable_states = operation(fromstate.__enable_states)
+        self.__disable_states = operation(fromstate.__disable_states)
         self.__enable_all = operation(fromstate.__enable_all)
+        self.__disable_all = operation(fromstate.__disable_all)
+        self.__storedTemporarily = operation(fromstate.__storedTemporarily)
 
 
     def __checkIndex(self, index):
@@ -211,17 +216,25 @@ class State(object):
             description for the state
         """
         # retrospectively enable state
-        if self.__enable_all or \
-               ((not self.__enable_states is None) and \
-                (index in self.__enable_states)):
-            if enabled == False:
-                enabled = True
+        if not enabled:
+            if self.__enable_all or (index in self.__enable_states):
+                if not (index in self.__disable_states) and \
+                       not self.__disable_all:
+                    enabled = True
+                    if __debug__:
+                        debug("ST",
+                              "State '%s' will be registered enabled" % index +
+                              " since it was mentioned in enable_states")
+        else:
+            if (index in self.__disable_states) or (self.__disable_all):
+                enabled = False
                 if __debug__:
                     debug("ST",
-                          "State %s will be registered enabled" % index +
-                          " since it was mentioned in enable_states")
+                          "State '%s' will be registered disabled" % index +
+                          " since it was mentioned in disable_states")
+
         if __debug__:
-            debug('ST', 'Registering %s state %s for %s' %
+            debug('ST', "Registering %s state '%s' for %s" %
                   ({True:'enabled', False:'disabled'}[enabled],
                    index, self.__class__.__name__))
         self.__registered[index] = {'enabled' : enabled,
@@ -236,7 +249,13 @@ class State(object):
 
 
     def __enabledisableall(self, index, value):
-        if index.upper == 'ALL':
+        if index.upper() == 'ALL':
+            if value:
+                self.__enable_all = True
+                self.__disable_all = False
+            else:
+                self.__disable_all = True
+                self.__enable_all = False
             for index in self.states:
                 self.__registered[index]['enabled'] = value
             return True
@@ -282,6 +301,32 @@ class State(object):
         """Returns `True` if state `index` is known and is enabled"""
         return self.__registered.has_key(index) and \
                self.__registered[index]['enabled']
+
+
+    def _enableStatesTemporarily(self, enable_states, other=None):
+        """Temporarily enable needed states for computation
+
+        Enable states which are enabled in `other` and listed in
+        `enable _states`. Use `resetEnabledTemporarily` to reset
+        to previous state of enabled.
+        """
+        self.__storedTemporarily.append(self.enabledStates)
+        for state in enable_states:
+            if not self.isStateEnabled(state) and \
+               ((other is None) or other.isStateEnabled(state)):
+                if __debug__:
+                    debug("ST", "Temporarily enabling state %s" % state)
+                self.enableState(state)
+
+
+    def _resetEnabledTemporarily(self):
+        """Reset to previousely stored set of enabled states"""
+        if __debug__:
+            debug("ST", "Resetting to previous set of enabled states")
+        if len(self.enabledStates)>0:
+            self.enabledStates = self.__storedTemporarily.pop()
+        else:
+            raise ValueError("Trying to restore not-stored list of enabled states")
 
 
     def listStates(self):
