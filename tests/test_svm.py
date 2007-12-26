@@ -11,6 +11,7 @@
 import unittest
 
 import numpy as N
+from sets import Set
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
@@ -70,7 +71,29 @@ class SVMTests(unittest.TestCase):
         uv_perf = []
 
         nl_clf = RbfNuSVMC()
+        orig_keys = nl_clf.param._params.keys()
+        nl_param_orig = nl_clf.param._params.copy()
+
         l_clf = LinearNuSVMC()
+
+        # for some reason order is not preserved thus dictionaries are not
+        # the same any longer -- lets compare values
+        self.failUnlessEqual([nl_clf.param._params[k] for k in orig_keys],
+                             [nl_param_orig[k] for k in orig_keys],
+           msg="New instance mustn't override values in previously created")
+        # and keys separately
+        self.failUnlessEqual(Set(nl_clf.param._params.keys()),
+                             Set(orig_keys),
+           msg="New instance doesn't change set of parameters in original")
+
+        # We must be able to deepcopy not yet trained SVMs now
+        import copy
+        nl_clf_copy = copy.deepcopy(nl_clf)
+
+        try:
+            nl_clf_copy = copy.deepcopy(nl_clf)
+        except:
+            self.fail(msg="Failed to deepcopy not-yet trained SVM")
 
         for i in xrange(20):
             train = pureMultivariateSignal( 20, 3 )
