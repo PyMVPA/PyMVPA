@@ -145,7 +145,7 @@ class SVMBase(Classifier):
         return res
 
 
-    def train(self, data):
+    def _train(self, data):
         """Train SVM
         """
         # libsvm needs doubles

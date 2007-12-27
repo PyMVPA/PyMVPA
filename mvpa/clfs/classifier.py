@@ -29,6 +29,8 @@ from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import State
 
+from transerror import ConfusionMatrix
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -87,27 +89,52 @@ class Classifier(State):
         """
         State.__init__(self, **kwargs)
 
-        # TODO: It is often as important to know how well we fit the
-        # training data, thus we should enabled states below, and
-        # provide proper assignment in the derived classes. Also think if we need
-        # "training_error" or such...
-        self._registerState('trained_values', enabled=False,
-                            doc="Internal values for the trained values seen by the classifier")
-        self._registerState('trained_predictions', enabled=False,
-                            doc="Internal values for the trained predictions seen by the classifier")
-        self._registerState('values', enabled=False,
-                            doc="Internal values seen by the classifier")
+        self._registerState('trained_confusion', enabled=True,
+            doc="Result of learning: `ConfusionMatrix` (and corresponding learning error")
         self._registerState('predictions', enabled=True,
-                            doc="Reported predicted values")
+            doc="Reported predicted values")
+        self._registerState('values', enabled=False,
+            doc="Internal values seen by the classifier")
 
 
     def __str__(self):
         return "%s\n %s" % (`self`, State.__str__(self))
 
-    def train(self, data):
+
+    def _pretrain(self, data):
+        """Common functionality prior to training
         """
+        pass
+
+
+    def _posttrain(self, data):
+        """Common functionality post training
+
+        For instance -- computing confusion matrix
+        """
+        if self.isStateEnabled('trained_confusion'):
+            predictions = self.predict(data.samples)
+            self['trained_confusion'] = ConfusionMatrix(
+                labels=data.uniquelabels, targets=data.labels,
+                predictions=predictions)
+
+
+    def _train(self, data):
+        """Function to be actually overriden in derived classes
         """
         raise NotImplementedError
+
+
+    def train(self, data):
+        """Train classifier on data
+
+        Shouldn't be overriden in subclasses unless explicitely needed
+        to do so
+        """
+        self._pretrain(data)
+        result = self._train(data)
+        self._posttrain(data)
+        return result
 
 
     def predict(self, data):
@@ -150,7 +177,7 @@ class BoostedClassifier(Classifier):
                % (self.__class__, len(self.clfs))
 
 
-    def train(self, data):
+    def _train(self, data):
         """
         """
         for clf in self.__clfs:
@@ -212,7 +239,7 @@ class ProxyClassifier(Classifier):
         """Store the classifier to use."""
 
 
-    def train(self, data):
+    def _train(self, data):
         """
         """
         # base class nothing much -- just proxies requests to underlying classifier
@@ -440,7 +467,7 @@ class BinaryClassifier(ProxyClassifier):
                 `self.__poslabels`, `self.__neglabels`)
 
 
-    def train(self, data):
+    def _train(self, data):
         ids = data.idsbylabels(self.__poslabels + self.__neglabels)
 
         idlabels = zip(ids, [+1]*len(self.__poslabels) + [-1]*len(self.__neglabels))
@@ -525,7 +552,7 @@ class MulticlassClassifier(BoostedClassifier):
 
 
 
-    def train(self, data):
+    def _train(self, data):
         """
         """
         # construct binary classifiers
@@ -565,9 +592,11 @@ class MulticlassClassifier(BoostedClassifier):
 class SplitClassifier(BoostedClassifier):
     """`BoostedClassifier` to work on splits of the data
 
-    TODO: SplitClassifier and MulticlassClassifier have too much
-          in common -- need to refactor: just need a splitter which would split
-          dataset in pairs of class labels
+    TODO: SplitClassifier and MulticlassClassifier have too much in
+          common -- need to refactor: just need a splitter which would
+          split dataset in pairs of class labels. MulticlassClassifier
+          does just a tiny bit more which might be not necessary at
+          all: map sets of labels into 2 categories...
     """
 
     def __init__(self, clf, bclf=CombinedClassifier(),
@@ -590,18 +619,24 @@ class SplitClassifier(BoostedClassifier):
         """Store sample instance of boosted classifier to construct based on clf's"""
         self.__splitter = splitter
 
-        self.__clfs = None
+        self._registerState("trained_confusions", enabled=True,
+            doc="Resultant confusion matrices whenever classifier trained on each " +
+                "was tested on 2nd part of the split")
 
 
-    def train(self, data):
+    def _train(self, data):
         """
         """
         # generate pairs and corresponding classifiers
         bclfs = []
         i = 0
+        self["trained_confusions"] = ConfusionMatrix(labels=data.uniquelabels)
         for split in self.__splitter(data):
             clf = deepcopy(self.__clf)
-            clf.train(split)
+            clf.train(split[0])
+            if self.isStateEnabled("trained_confusions"):
+                predictions = clf.predict(split[1].samples)
+                self["trained_confusions"].add(split[1].labels, predictions)
             bclfs.append(clf)
             if __debug__:
                 debug("CLF", "Created and trained classifier for split %d" % (i))
@@ -648,7 +683,7 @@ class MappedClassifier(ProxyClassifier):
         """mapper to help us our with prepping data to training/classification"""
 
 
-    def train(self, data):
+    def _train(self, data):
         """
         """
         ProxyClassifier.train(self, self.__mapper.forward(data.samples))
@@ -657,7 +692,7 @@ class MappedClassifier(ProxyClassifier):
     def predict(self, data):
         """
         """
-        return ProxyClassifier.predict(self, self.__mapper.forward(data.samples))
+        return ProxyClassifier.predict(self, self.__mapper.forward(data))
 
 
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
@@ -694,7 +729,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """FeatureSelection to select the features prior training"""
 
 
-    def train(self, data):
+    def _train(self, data):
         """
         """
         # temporarily enable selected_ids
