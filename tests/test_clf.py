@@ -107,7 +107,6 @@ class ClassifiersTests(unittest.TestCase):
 
     def testSplitClassifier(self):
         ds = self.data_bin_1
-        print ds
         clf = SplitClassifier(clf=SameSignClassifier(),
                               splitter=NFoldSplitter(1))
         clf.train(ds)                   # train the beast

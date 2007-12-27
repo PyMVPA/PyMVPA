@@ -12,41 +12,35 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.algorithms.datameasure import SensitivityAnalyzer
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.clfs.svm import LinearSVM
 
 
-class LinearSVMWeights(SensitivityAnalyzer):
+class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     """`SensitivityAnalyzer` that reports the weights of a linear SVM trained
     on a given `Dataset`.
     """
-    def __init__(self, clf):
+    def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
-        Parameters
-        ----------
-        - `clf`: Classifier instance. Only classifiers sub-classed from
-                 `LinearSVM` may be used.
+        :Parameters:
+          clf : LinearSVM
+            classifier to use. Only classifiers sub-classed from
+            `LinearSVM` may be used.
         """
         if not isinstance(clf, LinearSVM):
             raise ValueError, "Classifier has to be a LinearSVM, but is [%s]" \
                               % `type(clf)`
 
         # init base classes first
-        SensitivityAnalyzer.__init__(self)
-
-        self.__clf = clf
-        """Classifier that will be trained on datasets and where weights will be
-        extracted from."""
+        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
 
-    def __call__(self, dataset, callables=[]):
-        """Train linear SVM on `dataset` and extract weights from classifier.
+    def _call(self, dataset, callables=[]):
+        """Extract weights from Linear SVM classifier.
         """
-        self.__clf.train(dataset)
-
         # first multiply SV coefficients with the actuall SVs to get weighted
         # impact of SVs on decision, then for each feature take absolute mean
         # across SVs to get a single weight value per feature
-        return N.abs((N.matrix(self.__clf.model.getSVCoef())
-                      * N.matrix(self.__clf.model.getSV())).mean(axis=0).A1)
+        return N.abs((N.matrix(self.clf.model.getSVCoef())
+                      * N.matrix(self.clf.model.getSV())).mean(axis=0).A1)
