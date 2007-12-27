@@ -16,8 +16,8 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
-from mvpa.clfs.classifier import Classifier, CombinedBoostedClassifier, \
-     BinaryClassifierDecorator, MulticlassClassifier, \
+from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
+     BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
 
 from copy import deepcopy
@@ -70,8 +70,8 @@ class ClassifiersTests(unittest.TestCase):
     def testBoosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
-        bclf = CombinedBoostedClassifier(clfs=[deepcopy(self.clf_sign),
-                                               deepcopy(self.clf_sign)])
+        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)])
         self.failUnlessEqual(bclf.predict(self.data_bin_1[0]),
                              self.data_bin_1[1],
                              msg="Boosted classifier should work")
@@ -89,9 +89,9 @@ class ClassifiersTests(unittest.TestCase):
         clf = SameSignClassifier()
         # lets create classifier to descriminate only between same/different,
         # which is a primary task of SameSignClassifier
-        bclf1 = BinaryClassifierDecorator(clf=clf,
-                                          poslabels=['sp', 'sn'],
-                                          neglabels=['dp', 'dn'])
+        bclf1 = BinaryClassifier(clf=clf,
+                                 poslabels=['sp', 'sn'],
+                                 neglabels=['dp', 'dn'])
         self.failUnless(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
                          ['dn', 'dp'], ['dn', 'dp']])
