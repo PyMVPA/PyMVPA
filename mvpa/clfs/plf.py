@@ -21,27 +21,31 @@ if __debug__:
 
 
 class PLF(Classifier):
-    """I am a penalized logistic regression classifier.
+    """Penalized logistic regression `Classifier`.
     """
-    def __init__(self, lm=1, criterion=1, reduced=False, maxiter=20):
+
+    def __init__(self, lm=1, criterion=1, reduced=False, maxiter=20, **kwargs):
         """
         Initialize a penalized logistic regression analysis
 
-        Input:
-        =====
+        :Parameters:
+          lm : int
+            the penalty term lambda.
+          criterion : int
+            the criterion applied to judge convergence.
+          reduced : Bool
+            if not False, the rank of the data is reduced before
+            performing the calculations. In that case, reduce is taken
+            as the fraction of the first singular value, at which a
+            dimension is not considered significant anymore. A
+            reasonable criterion is reduced=0.01
+          maxiter : int
+            maximum number of iterations. If no convergence occurs
+            after this number of iterations, an exception is raised.
 
-        `lm`: The penalty term lambda.
-        `criterion`: is the criterion applied to judge convergence.
-        `reduced`: if not False, the rank of the data is reduced before
-               performing the calculations. In that case, reduce is taken as
-               the fraction of the first singular value, at which a dimension
-               is not considered significant anymore. A reasonable criterion
-               is reduced=0.01
-        `maxiter`: maximum number of iterations. If no convergence occurs
-               after this number of iterations, an exception is raised.
         """
         # init base class first
-        Classifier.__init__(self)
+        Classifier.__init__(self, **kwargs)
 
         self.__lm   = lm
         self.__criterion = criterion
@@ -52,11 +56,9 @@ class PLF(Classifier):
     def __repr__(self):
         """String summary over the object
         """
-        return """PLF:
- lm: %f
- criterion: %d
- reduced: %s
- maxiter: %d""" % (self.__lm, self.__criterion, self.__reduced, self.__maxiter)
+        return """PLF(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_states=%s)""" %\
+               (self.__lm, self.__criterion, self.__reduced, self.__maxiter,
+                str(self.enabledStates))
 
 
     def train(self, data):

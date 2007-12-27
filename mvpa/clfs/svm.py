@@ -13,7 +13,13 @@ __docformat__ = 'restructuredtext'
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.clfs.classifier import Classifier
-from mvpa.clfs.libsvm import svm
+from libsvm import svm
+
+# we better expose those since they are mentioned in docstrings
+from libsvm.svmc import \
+     C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
+     NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
+     PRECOMPUTED
 
 
 class SVMBase(Classifier):
@@ -66,10 +72,10 @@ class SVMBase(Classifier):
 
         kernel_type can be one of LINEAR, POLY, RBF, SIGMOID.
 
-        - `LINEAR`: u'*v
-        - `POLY`: (gamma*u'*v + coef0)^degree
-        - `RBF`: exp(-gamma*|u-v|^2)
-        - `SIGMOID`: tanh(gamma*u'*v + coef0)
+        - `LINEAR`: ``u'*v``
+        - `POLY`: ``(gamma*u'*v + coef0)^degree``
+        - `RBF`: ``exp(-gamma*|u-v|^2)``
+        - `SIGMOID`: ``tanh(gamma*u'*v + coef0)``
         - `PRECOMPUTED`: kernel values in training_set_file
 
         cache_size is the size of the kernel cache, specified in megabytes.

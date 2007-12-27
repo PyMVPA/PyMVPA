@@ -15,15 +15,14 @@ mvpa.clfs module contains various classifiers
 .. packagetree::
    :style: UML
 
-Classifiers can be grouped according to their function as
-:group Basic: kNN svm
-:group BoostedClassifiers -- use set of other classifier: BoostedClassifier CombinedClassifier MulticlassClassifier SplitClassifier
-:group ProxyClassifiers -- use other classifier while altering input data: BinaryClassifier MappedClassifier FeatureSelectionClassifier
-:group Combiners -- functors to group results for CombinedClassifier: Combiner MaximalVote
+:group Basic: classifier
+:group Specific Implementations: knn svm plf
+:group Internal Implementations: libsvm
+:group Utilities: transerror
 """
 
 __docformat__ = 'restructuredtext'
 
 from classifier import *
-from knn import *
-from svm import *
+from knn import kNN
+from svm import SVMBase, LinearSVM, LinearNuSVMC, LinearCSVMC, RbfNuSVMC, RbfCSVMC

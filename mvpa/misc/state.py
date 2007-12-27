@@ -49,9 +49,6 @@ class State(object):
             then all states (besides the ones in disable_states) will be enabled
           disable_states : list
             list of states to disable
-          args : list
-            as well as `kwargs` is passed to dict.__init__
-
         """
 
         self.__registered = {}

@@ -6,7 +6,16 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base classes for all classifiers."""
+"""Base classes for all classifiers.
+
+Base Classifiers can be grouped according to their function as
+
+:group Basic Classifiers: Classifier BoostedClassifier ProxyClassifier
+:group BoostedClassifiers: CombinedClassifier MulticlassClassifier SplitClassifier
+:group ProxyClassifiers: BinaryClassifier MappedClassifier FeatureSelectionClassifier
+:group Combiners for CombinedClassifier: Combiner MaximalVote
+
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -122,7 +131,7 @@ class BoostedClassifier(Classifier):
         :Parameters:
           `clfs` : list
             list of classifier instances to use
-          **kargs : dict
+          kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
         """
@@ -180,11 +189,14 @@ class ProxyClassifier(Classifier):
     """Classifier which decorates another classifier
 
     Possible uses:
-      modify data somehow prior training/testing:
-       normalization
-       feature selection
-       modification
-      optimized classifier? 
+
+     - modify data somehow prior training/testing:
+       * normalization
+       * feature selection
+       * modification
+
+     - optimized classifier?
+
     """
 
     def __init__(self, clf, **kwargs):
@@ -326,19 +338,19 @@ class CombinedClassifier(BoostedClassifier):
         """Initialize the instance.
 
         :Parameters:
-          `clfs` : list
+          clfs : list of Classifier
             list of classifier instances to use
-          `combiner`
+          combiner : Combiner
             callable which takes care about combining multiple
             results into a single one (e.g. maximal vote)
-          **kargs : dict
+          kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
 
-        NB: `combiner` might need to operate not on 'predict' descrete
+        NB: `combiner` might need to operate not on 'predictions' descrete
             labels but rather on raw 'class' values classifiers
             estimate (which is pretty much what is stored under
-            `decision_values`
+            `values`
         """
         BoostedClassifier.__init__(self, clfs, **kwargs)
 
@@ -467,7 +479,7 @@ class BinaryClassifier(ProxyClassifier):
 
 
 class MulticlassClassifier(BoostedClassifier):
-    """BoostedClassifier to perform multiclass using a set of `BinaryClassifier`s
+    """`BoostedClassifier` to perform multiclass using a set of `BinaryClassifier`
 
     such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
     is yet to think about)
@@ -481,7 +493,7 @@ class MulticlassClassifier(BoostedClassifier):
           clf : Classifier
             classifier based on which multiple classifiers are created
             for multiclass
-          boostedclf : BoostedClassifier
+          bclf : BoostedClassifier
             classifier used to aggregate "pairClassifier"s
           bclf_type
             "1-vs-1" or "1-vs-all", determines the way to generate binary
@@ -566,7 +578,7 @@ class SplitClassifier(BoostedClassifier):
           clf : Classifier
             classifier based on which multiple classifiers are created
             for multiclass
-          boostedclf : BoostedClassifier
+          bclf : BoostedClassifier
             classifier used to aggregate "pairClassifier"s
           splitter : Splitter
             `Splitter` to use to split the dataset prior training
@@ -658,8 +670,9 @@ class FeatureSelectionClassifier(ProxyClassifier):
     `FeatureSelection` is used first to select features for the classifier to use
     for prediction. Internally it would rely on MappedClassifier which would use
     created MaskMapper.
+
     TODO: think about removing overhead of retraining the same classifier if
-          feature selection was carried out with the same classifier already
+    feature selection was carried out with the same classifier already
     """
 
     def __init__(self, clf, feature_selection, **kwargs):
