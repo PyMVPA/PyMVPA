@@ -12,44 +12,12 @@ import unittest
 
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.knn import kNN
 from mvpa.algorithms.nullhyptest import NullHypothesisTest
 from mvpa.clfs.transerror import TransferError
 
-
-def pureMultivariateSignal(patterns, signal2noise = 1.5):
-    """ Create a 2d dataset with a clear multivariate signal, but no
-    univariate information.
-
-    %%%%%%%%%
-    % O % X %
-    %%%%%%%%%
-    % X % O %
-    %%%%%%%%%
-    """
-
-    # start with noise
-    data=N.random.normal(size=(4*patterns,2))
-
-    # add signal
-    data[:2*patterns,1] += signal2noise
-    data[2*patterns:4*patterns,1] -= signal2noise
-    data[:patterns,0] -= signal2noise
-    data[2*patterns:3*patterns,0] -= signal2noise
-    data[patterns:2+patterns,0] += signal2noise
-    data[3*patterns:4*patterns,0] += signal2noise
-
-    # two conditions
-    labels = [0 for i in xrange(patterns)] \
-             + [1 for i in xrange(patterns)] \
-             + [1 for i in xrange(patterns)] \
-             + [0 for i in xrange(patterns)]
-    labels = N.array(labels)
-
-    return Dataset(samples=data, labels=labels)
-
+from tests_warehouse import pureMultivariateSignal
 
 class NullHypothesisTests(unittest.TestCase):
 
