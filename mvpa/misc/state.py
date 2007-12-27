@@ -116,8 +116,8 @@ class State(object):
 
     def __str__(self):
         num = len(self.__registered)
-        res = "%s: %d state variables registered:" % (self.__class__.__name__,
-                                                      num)
+        #res = "%s: %d states:" % (self.__class__.__name__,
+        res = "%d states:" % (num)
         for i in xrange(min(num, 4)):
             index = self.__registered.keys()[i]
             res += " %s" % index
