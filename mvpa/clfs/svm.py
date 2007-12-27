@@ -42,7 +42,8 @@ class SVMBase(Classifier):
                  shrinking=1,
                  weight_label=[],
                  weight=[],
-                 cache_size=100):
+                 cache_size=100,
+                 **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
         # already done for: nr_weight
@@ -92,7 +93,7 @@ class SVMBase(Classifier):
         just set nr_weight to 0.
         """
         # init base class
-        Classifier.__init__(self)
+        Classifier.__init__(self, **kwargs)
 
         # check if there is a libsvm version with configurable
         # noise reduction ;)
@@ -126,10 +127,16 @@ class SVMBase(Classifier):
 
 
     def __repr__(self):
-        """String summary over the object
+        """Definition of the object summary over the object
         """
-        return """SVM:
-         params: %s """ % (self.param)
+        res = "SVMBase("
+        sep = ""
+        for k,v in self.param._params.iteritems():
+            res += "%s%s=%s" % (sep, k, str(v))
+            sep = ', '
+        res += sep + "enable_states=%s" % (str(self.enabledStates))
+        res += ")"
+        return res
 
 
     def train(self, data):
@@ -187,7 +194,8 @@ class LinearSVM(SVMBase):
                  shrinking=1,
                  weight_label=[],
                  weight=[],
-                 cache_size=100):
+                 cache_size=100,
+                 **kwargs):
         """The constructor arguments are virtually identical to the ones of
         the SVMBase class, except that 'kernel_type' is set to LINEAR.
         """
@@ -196,7 +204,7 @@ class LinearSVM(SVMBase):
                          svm_type=svm_type, C=C, nu=nu, cache_size=cache_size,
                          eps=eps, p=p, probability=probability,
                          shrinking=shrinking, weight_label=weight_label,
-                         weight=weight)
+                         weight=weight, **kwargs)
 
 
 
@@ -222,14 +230,15 @@ class LinearNuSVMC(LinearSVM):
                  shrinking=1,
                  weight_label=[],
                  weight=[],
-                 cache_size=100):
+                 cache_size=100,
+                 **kwargs):
         """
         """
         # init base class
         LinearSVM.__init__(self, svm_type=svm.svmc.NU_SVC,
                            nu=nu, eps=eps, probability=probability,
                            shrinking=shrinking, weight_label=weight_label,
-                           weight=weight, cache_size=cache_size)
+                           weight=weight, cache_size=cache_size, **kwargs)
 
 
 
@@ -249,14 +258,15 @@ class LinearCSVMC(LinearSVM):
                  shrinking=1,
                  weight_label=[],
                  weight=[],
-                 cache_size=100):
+                 cache_size=100,
+                 **kwargs):
         """
         """
         # init base class
         LinearSVM.__init__(self, svm_type=svm.svmc.C_SVC,
                            C=C, eps=eps, probability=probability,
                            shrinking=shrinking, weight_label=weight_label,
-                           weight=weight, cache_size=cache_size)
+                           weight=weight, cache_size=cache_size, **kwargs)
 
 
 
@@ -286,7 +296,8 @@ class RbfNuSVMC(SVMBase):
                  shrinking=1,
                  weight_label=[],
                  weight=[],
-                 cache_size=100):
+                 cache_size=100,
+                 **kwargs):
         """
         """
         # init base class
@@ -294,7 +305,7 @@ class RbfNuSVMC(SVMBase):
                          svm_type=svm.svmc.NU_SVC, nu=nu, gamma=gamma,
                          cache_size=cache_size, eps=eps,
                          probability=probability, shrinking=shrinking,
-                         weight_label=weight_label, weight=weight)
+                         weight_label=weight_label, weight=weight, **kwargs)
 
 
 
@@ -318,7 +329,8 @@ class RbfCSVMC(SVMBase):
                  shrinking=1,
                  weight_label=[],
                  weight=[],
-                 cache_size=100):
+                 cache_size=100,
+                 **kwargs):
         """
         """
         # init base class
@@ -326,5 +338,5 @@ class RbfCSVMC(SVMBase):
                          svm_type=svm.svmc.C_SVC, C=C, gamma=gamma,
                          cache_size=cache_size, eps=eps,
                          probability=probability, shrinking=shrinking,
-                         weight_label=weight_label, weight=weight)
+                         weight_label=weight_label, weight=weight, **kwargs)
 

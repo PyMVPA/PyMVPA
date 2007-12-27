@@ -16,9 +16,9 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
-from mvpa.clfs.classifier import Classifier, BoostedClassifier, \
-     BinaryClassifierDecorator, BoostedMulticlassClassifier, \
-     BoostedSplitClassifier, MappedClassifier, FeatureSelectionClassifier
+from mvpa.clfs.classifier import Classifier, CombinedBoostedClassifier, \
+     BinaryClassifierDecorator, MulticlassClassifier, \
+     SplitClassifier, MappedClassifier, FeatureSelectionClassifier
 
 from copy import deepcopy
 
@@ -70,8 +70,8 @@ class ClassifiersTests(unittest.TestCase):
     def testBoosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
-        bclf = BoostedClassifier(clfs=[deepcopy(self.clf_sign),
-                                       deepcopy(self.clf_sign)])
+        bclf = CombinedBoostedClassifier(clfs=[deepcopy(self.clf_sign),
+                                               deepcopy(self.clf_sign)])
         self.failUnlessEqual(bclf.predict(self.data_bin_1[0]),
                              self.data_bin_1[1],
                              msg="Boosted classifier should work")
@@ -100,15 +100,14 @@ class ClassifiersTests(unittest.TestCase):
         #self. fail
 
 
-    def testBoostedSplitClassifier(self):
+    def testSplitClassifier(self):
         ds = Dataset(samples=self.data_bin_1[0],
                      labels=self.data_bin_1[1],
                      chunks=self.data_bin_1[2])
-        clf = BoostedSplitClassifier(clf=SameSignClassifier(),
+        clf = SplitClassifier(clf=SameSignClassifier(),
                                      splitter=NFoldSplitter(1))
 
         clf.train(ds)                   # train the beast
-
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),

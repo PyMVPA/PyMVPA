@@ -27,13 +27,13 @@ class kNN(Classifier):
 
     __warned = False
 
-    def __init__(self, k=2):
+    def __init__(self, k=2, **kwargs):
         """
         Parameters:
           k:       number of nearest neighbours to be used for voting
         """
         # init base class first
-        Classifier.__init__(self)
+        Classifier.__init__(self, **kwargs)
 
         self.__k = k
         # XXX So is the voting function fixed forever?
@@ -42,12 +42,12 @@ class kNN(Classifier):
 
 
     def __repr__(self):
-        """String summary over the object
+        """Representation of the object
         """
-        return """kNN / k=%d
- votingfx: TODO
- data: %s""" % (self.__k, indentDoc(self.__data))
+        return "kNN(k=%d, enable_states=%s)" % (self.__k, str(self.enabledStates))
 
+    def __str__(self):
+        return "%s\n data: %s" % (Classifier.__str__(self), indentDoc(self.__data))
 
     def train( self, data ):
         """Train the classifier.

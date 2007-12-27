@@ -91,6 +91,9 @@ class Classifier(State):
                             doc="Reported predicted values")
 
 
+    def __str__(self):
+        return "%s\n %s" % (`self`, State.__str__(self))
+
     def train(self, data):
         """
         """
@@ -222,11 +225,74 @@ class MaximalVote(Combiner):
 
 
 class BoostedClassifier(Classifier):
-    """Classifier making decision using the farm of other classifiers
+    """Classifier containing the farm of other classifiers.
 
-    TODO: Think about making some base class which
-          would be common interface for all classifiers which use multiple
-          classifiers: `BoostedMulticlassClassifier`, `BoostedSplitClassifier`
+    Should rarely be used directly. Use one of its childs instead
+    """
+
+    def __init__(self, clfs=[], **kwargs):
+        """Initialize the instance.
+
+        :Parameters:
+          `clfs` : list
+            list of classifier instances to use
+          **kargs : dict
+            dict of keyworded arguments which might get used
+            by State or Classifier
+        """
+        Classifier.__init__(self, **kwargs)
+
+        self._setClassifiers(clfs)
+        """Store the list of classifiers"""
+
+        # should not be needed if we have prediction_values upstairs
+        self._registerState("raw_predictions", enabled=False,
+                            doc="Predictions obtained from each classifier")
+
+
+    def __repr__(self):
+        return "<%s with %d classifiers>" \
+               % (self.__class__, len(self.clfs))
+
+
+    def train(self, data):
+        """
+        """
+        for clf in self.__clfs:
+            clf.train(data)
+
+
+    def predict(self, data):
+        """
+        """
+        raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
+        if clf.isStateEnabled("values") and self.isStateEnabled("values"):
+            values = [ clf["values"] for clf in self.__clfs ]
+            self["raw_values"] = values
+
+        self["raw_predictions"] = raw_predictions
+
+        return raw_predictions
+
+
+    def _setClassifiers(self, clfs):
+        """Set the classifiers used by the boosted classifier
+
+        We have to allow to set list of classifiers after the object
+        was actually created. It will be used by
+        BoostedMulticlassClassifier
+        """
+        self.__clfs = clfs
+        """Classifiers to use"""
+
+    clfs = property(fget=lambda x:x.__clfs,
+                    fset=_setClassifiers,
+                    doc="Used classifiers")
+
+
+class CombinedBoostedClassifier(BoostedClassifier):
+    """`BoostedClassifier` which combines predictions using some combine functor
+
     """
 
     def __init__(self, clfs=[], combiner=MaximalVote(), **kwargs):
@@ -247,37 +313,22 @@ class BoostedClassifier(Classifier):
             estimate (which is pretty much what is stored under
             `decision_values`
         """
-        Classifier.__init__(self, **kwargs)
-
-        self._setClassifiers(clfs)
-        """Store the list of classifiers"""
+        BoostedClassifier.__init__(self, clfs, **kwargs)
 
         self.__combiner = combiner
         """Functor destined to combine results of multiple classifiers"""
 
-        # should not be needed if we have prediction_values upstairs
-        self._registerState("raw_predictions", enabled=False,
-                            doc="Predictions obtained from each classifier")
 
-
-    def train(self, data):
-        """
-        """
-        for clf in self.__clfs:
-            clf.train(data)
+    def __repr__(self):
+        return "<%s with %d classifiers and combiner %s>" \
+               % (self.__class__.__name_, len(self.__clfs), `combiner`)
 
 
     def predict(self, data):
         """
         """
-        raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
-        if clf.isStateEnabled("values") and self.isStateEnabled("values"):
-            values = [ clf["values"] for clf in self.__clfs ]
-            self["raw_values"] = values
-
-        self["raw_predictions"] = raw_predictions
-
-        predictions = self.__combiner(self.__clfs)
+        raw_predictions = super(CombinedBoostedClassifier, self).predict(data)
+        predictions = self.__combiner(self.clfs)
         self["predictions"] = predictions
 
         if self.isStateEnabled("values"):
@@ -293,23 +344,8 @@ class BoostedClassifier(Classifier):
         return predictions
 
 
-    def _setClassifiers(self, clfs):
-        """Set the classifiers used by the boosted classifier
-
-        We have to allow to set list of classifiers after the object
-        was actually created. It will be used by
-        BoostedMulticlassClassifier
-        """
-        self.__clfs = clfs
-        """Classifiers to use"""
-
-    clfs = property(fget=lambda x:x.__clfs,
-                    fset=_setClassifiers,
-                    doc="Used classifiers")
-
     combiner = property(fget=lambda x:x.__combiner,
                         doc="Used combiner to derive a single result")
-
 
 
 class BinaryClassifierDecorator(Classifier):
@@ -404,8 +440,7 @@ class BinaryClassifierDecorator(Classifier):
         return predictions
 
 
-
-class BoostedMulticlassClassifier(Classifier):
+class MulticlassClassifier(BoostedClassifier):
     """Classifier to perform multiclass using a set of binary classifiers
 
     such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
@@ -489,18 +524,18 @@ class BoostedMulticlassClassifier(Classifier):
     clfs = property(lambda x:x.__bclf.clfs, doc="Used classifiers")
 
 
-class BoostedSplitClassifier(Classifier):
+class SplitClassifier(BoostedClassifier):
     """Classifier to perform multiclass using a set of binary classifiers
 
     such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
     is yet to think about)
 
-    TODO: BoostedSplitClassifier and BoostedMulticlassClassifier have too much
+    TODO: SplitClassifier and MulticlassClassifier have too much
           in common -- need to refactor: just need a splitter which would split
           dataset in pairs of class labels
     """
 
-    def __init__(self, clf, bclf=BoostedClassifier(),
+    def __init__(self, clf, bclf=CombinedBoostedClassifier(),
                  splitter=NoneSplitter(), **kwargs):
         """Initialize the instance
 
