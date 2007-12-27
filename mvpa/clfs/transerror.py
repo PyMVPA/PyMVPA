@@ -39,6 +39,12 @@ class ConfusionMatrix(object):
         """Initialize ConfusionMatrix with optional list of `labels`
 
         :Parameters:
+         labels : list
+           Optional set of labels to include in the matrix
+         targets
+           Optional set of targets
+         predictions
+           Optional set of predictions
         """
 
         self.__labels = labels
@@ -203,7 +209,7 @@ class ConfusionMatrix(object):
 
 
     def __iadd__(self, other):
-        """Add the sets from `other`s ConfusionMatrix to current on
+        """Add the sets from `other` s `ConfusionMatrix` to current one
         """
         #print "adding ", other, " to ", self
         # need to do shallow copy, or otherwise smth like "cm += cm"
@@ -215,7 +221,7 @@ class ConfusionMatrix(object):
 
 
     def __add__(self, other):
-        """Add the sets from `other`s ConfusionMatrix to current on
+        """Add two `ConfusionMatrix`
         """
         result = copy.copy(self)
         result += other
