@@ -49,7 +49,7 @@ class kNN(Classifier):
     def __str__(self):
         return "%s\n data: %s" % (Classifier.__str__(self), indentDoc(self.__data))
 
-    def train( self, data ):
+    def _train(self, data):
         """Train the classifier.
 
         For kNN it is degenerate -- just stores the data.
