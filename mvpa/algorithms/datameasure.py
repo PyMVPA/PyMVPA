@@ -19,6 +19,8 @@ iterable container.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
 from mvpa.misc.state import State
 
 if __debug__:
@@ -129,4 +131,115 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
         """Actually the function which does the computation"""
         raise NotImplementedError
 
-    clf = property(fget=lambda self:self.__clf)
+
+    def _setClassifier(self, clf):
+        self.__clf = clf
+
+    clf = property(fget=lambda self:self.__clf,
+                   fset=_setClassifier)
+
+
+def selectAnalyzer(clf):
+    """Factory method which knows few classifiers and their sensitivity analyzers
+
+    This function is just to assign default values. For
+    advanced/controlled computation assign them explicitely
+    """
+    if   isinstance(clf, LinearSVM):
+        from linsvmweights import LinearSVMWeights
+        return LinearSVMWeights(clf)
+    elif isinstance(clf, BoostedClassifier):
+        return BoostedClassifierSensitivityAnalyzer(clf)
+    else:
+        return None
+
+
+class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
+    """Set sensitivity analyzers to be merged into a single output"""
+
+    def __init__(self, analyzers=[],
+                 combiner=lambda x:N.mean(x, axis=0),
+                 **kwargs):
+        SensitivityAnalyzer.__init__(self, **kwargs)
+        self.__analyzers = analyzers
+        """List of analyzers to use"""
+
+        self.__combiner = combiner
+        """Which functor to use to combine all sensitivities"""
+
+        self._registerState('sensitivities', enabled=False,
+            doc="Sensitivities produced by each classifier")
+
+
+    def __call__(self, dataset, callables=[]):
+        sensitivities = N.empty( (len(self.__analyzers), dataset.nfeatures) )
+        ind = 0
+        for analyzer in self.__analyzers:
+            if __debug__:
+                debug("SA", "Computing sensitivity for SA#%d:%s" %
+                      (ind, analyzer))
+            sensitivity = analyzer(dataset, callables)
+            sensitivities[ind, ... ] = sensitivity[:]
+            ind += 1
+        self["sensitivities"] = sensitivities
+        result = self.__combiner(sensitivities)
+        return result
+
+
+    def _setAnalyzers(self, analyzers):
+        """Set the analyzers
+        """
+        self.__analyzers = analyzers
+        """Analyzers to use"""
+
+    analyzers = property(fget=lambda x:x.__analyzers,
+                         fset=_setAnalyzers,
+                         doc="Used analyzers")
+
+
+
+class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
+    """Set sensitivity analyzers to be merged into a single output"""
+
+    def __init__(self,
+                 clf,
+                 analyzer=None,
+                 combined_analyzer=CombinedSensitivityAnalyzer(),
+                 **kwargs):
+        """Initialize Sensitivity Analyzer for `BoostedClassifier`
+        """
+        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+
+        self.__combined_analyzer = combined_analyzer
+        """Combined analyzer to use"""
+
+        self.__analyzer = None
+        """Analyzer to use for basic classifiers within boosted classifier"""
+
+
+    def _call(self, dataset, callables=[]):
+        # create analyzers
+        for clf in clf.clfs:
+            if self.__analyzer is None:
+                analyzer = selectAnalyzer(clf)
+                if analyzer is None:
+                    raise ValueError, \
+                          "Wasn't able to figure basic analyzer for clf %s" %\
+                          `clf`
+                if __debug__:
+                    debug("SA", "Selected analyzer %s for clf %s" %
+                          (`analyzer`, `clf`))
+            else:
+                analyzer = self.__analyzer
+
+            # shallow copy should be enough...
+            analyzer = copy.copy(self.__analyzer)
+            # assign corresponding classifier
+            analyzer.clf = clf
+            analyzers.append(analyzer)
+
+        self.__combined_analyzer.analyzers = analyzers
+
+        return self.__combined_analyzer(dataset, callables)
+
+    combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
