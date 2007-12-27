@@ -21,6 +21,9 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.misc.state import State
 
+if __debug__:
+    from mvpa.misc import debug
+
 class DataMeasure(State):
     """A measure computed from a `Dataset` (base class).
 
@@ -54,9 +57,9 @@ class SensitivityAnalyzer(DataMeasure):
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Does nothing special."""
-        DataMeasure.__init__(self)
+        DataMeasure.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, callbacks=[]):
@@ -74,3 +77,56 @@ class SensitivityAnalyzer(DataMeasure):
         # XXX should we allow to return multiple maps (as a sequence) as
         # currently (illegally) done by SplittingSensitivityAnalyzer?
         raise NotImplementedError
+
+
+#
+# Flavored implementations of SensitivityAnalyzers
+
+class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
+
+    def __init__(self, clf, force_training=True, **kwargs):
+        """Initialize the analyzer with the classifier it shall use.
+
+        :Parameters:
+          clf : Classifier
+            classifier to use. Only classifiers sub-classed from
+            `LinearSVM` may be used.
+          force_training : Bool
+            if classifier was already trained -- do not retrain
+        """
+
+        """Does nothing special."""
+        SensitivityAnalyzer.__init__(self, **kwargs)
+
+        self.__clf = clf
+        """Classifier used to computed sensitivity"""
+
+        self._force_training = force_training
+        """Either to force it to train"""
+
+
+    def __repr__(self):
+        return "<ClassifierBasedSensitivityAnalyzer on %s. force_training=%s" % \
+               (`self.__clf`, str(force_training))
+
+
+    def __call__(self, dataset, callables=[]):
+        """Train linear SVM on `dataset` and extract weights from classifier.
+        """
+        if not self.clf.trained or self._force_training:
+            if __debug__:
+                debug("SA", "Training classifier %s %s" %
+                      (`self.clf`,
+                       {False: "since it wasn't yet trained",
+                        True:  "although it was trained previousely"}
+                       [self.clf.trained]))
+            self.clf.train(dataset)
+
+        return self._call(dataset, callables)
+
+
+    def _call(self, dataset, callables=[]):
+        """Actually the function which does the computation"""
+        raise NotImplementedError
+
+    clf = property(fget=lambda self:self.__clf)

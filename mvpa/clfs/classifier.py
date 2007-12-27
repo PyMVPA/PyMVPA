@@ -89,6 +89,8 @@ class Classifier(State):
         """
         State.__init__(self, **kwargs)
 
+        self.__trained = False
+        """Boolean variable to say either classifier was trained already"""
         self._registerState('trained_confusion', enabled=True,
             doc="Result of learning: `ConfusionMatrix` (and corresponding learning error")
         self._registerState('predictions', enabled=True,
@@ -131,9 +133,12 @@ class Classifier(State):
         Shouldn't be overriden in subclasses unless explicitely needed
         to do so
         """
+        if __debug__:
+            debug("CLF", "Training classifier %s on data %s" % (`self`, `data`))
         self._pretrain(data)
         result = self._train(data)
         self._posttrain(data)
+        self.__trained = True
         return result
 
 
@@ -141,6 +146,12 @@ class Classifier(State):
         """
         """
         raise NotImplementedError
+
+
+    @property
+    def trained(self):
+        return self.__trained
+
 
 #
 # Base classifiers of various kinds
