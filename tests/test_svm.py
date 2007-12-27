@@ -13,54 +13,10 @@ import unittest
 import numpy as N
 from sets import Set
 
-from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
+from mvpa.clfs.svm import RbfNuSVMC, LinearNuSVMC
 from mvpa.clfs.libsvm import svmc
 
-
-def dumbFeatureSignal():
-    data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
-            [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
-            [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
-    regs = [1 for i in range(8)] \
-         + [2 for i in range(8)] \
-         + [3 for i in range(8)]
-
-    return Dataset(samples=data, labels=regs)
-
-
-def pureMultivariateSignal(patterns, signal2noise = 1.5):
-    """ Create a 2d dataset with a clear multivariate signal, but no
-    univariate information.
-
-    %%%%%%%%%
-    % O % X %
-    %%%%%%%%%
-    % X % O %
-    %%%%%%%%%
-    """
-
-    # start with noise
-    data=N.random.normal(size=(4*patterns,2))
-
-    # add signal
-    data[:2*patterns,1] += signal2noise
-
-    data[2*patterns:4*patterns,1] -= signal2noise
-    data[:patterns,0] -= signal2noise
-    data[2*patterns:3*patterns,0] -= signal2noise
-    data[patterns:2*patterns,0] += signal2noise
-    data[3*patterns:4*patterns,0] += signal2noise
-
-    # two conditions
-    regs = [0 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [0 for i in xrange(patterns)]
-    regs = N.array(regs)
-
-    return Dataset(samples=data, labels=regs)
-
+from tests_warehouse import dumbFeatureSignal, pureMultivariateSignal
 
 class SVMTests(unittest.TestCase):
 
