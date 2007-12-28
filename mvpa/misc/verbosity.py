@@ -207,7 +207,7 @@ class SetLogger(Logger):
                 if item.upper() == "ALL":
                     verbose(2, "Enabling all registered debug handlers")
                     self.__active = registered_keys
-                    return
+                    break
                 # try to match item as it is regexp
                 regexp = re.compile("^%s$" % item)
                 matching_keys = filter(regexp.match, registered_keys)
@@ -216,8 +216,10 @@ class SetLogger(Logger):
                 self.__active.append(item)
 
         self.__active = list(Set(self.__active)) # select just unique ones
+        self.__maxstrlength = max([len(str(x)) for x in self.__active] + [0])
         if len(self.__active):
             verbose(2, "Enabling debug handlers: %s" % `self.__active`)
+
 
     def _setPrintsetid(self, printsetid):
         """Either to print set Id at each line"""
@@ -236,7 +238,7 @@ class SetLogger(Logger):
 
         if setid in self.__active:
             if self.__printsetid:
-                msg = "[%s] " % (setid) + msg
+                msg = "[%%-%ds] " % self.__maxstrlength % (setid) + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
 
@@ -356,7 +358,7 @@ if __debug__:
             else:
                 level = 1
 
-            SetLogger.__call__(self, setid, "DEBUG%s:%s%s" %
+            SetLogger.__call__(self, setid, "DBG%s:%s%s" %
                                (msg_, " "*level, msg),
                                *args, **kwargs)
 
