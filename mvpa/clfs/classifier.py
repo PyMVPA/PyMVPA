@@ -341,7 +341,20 @@ class ProxyClassifier(Classifier):
 class Combiner(State):
     """Base class for combining decisions of multiple classifiers"""
 
-    def call(self, clfs):
+    def train(self, clfs, data):
+        """Combiner might need to be trained
+
+        :Parameters:
+          clfs : list of Classifier
+            List of classifiers to combine. Has to be classifiers (not
+            pure predictions), since combiner might use some other
+            state variables (value's) instead of pure prediction's
+          data : Dataset
+            training data in this case
+        """
+        pass
+
+    def call(self, clfs, data):
         """Call function
 
         :Parameters:
@@ -369,11 +382,13 @@ class MaximalVote(Combiner):
                             doc="Counts across classifiers for each label/sample")
 
 
-    def __call__(self, clfs):
+    def __call__(self, clfs, data):
         """
         Extended functionality which might not be needed actually:
         Since `BinaryClassifier` might return a list of possible
         predictions (not just a single one), we should consider all of those
+
+        MaximalVote doesn't care about data itself
         """
         if len(clfs)==0:
             return []                   # to don't even bother
@@ -428,9 +443,8 @@ class MaximalVote(Combiner):
         return predictions
 
 
-
 class CombinedClassifier(BoostedClassifier):
-    """`BoostedClassifier` which combines predictions using some combine functor
+    """`BoostedClassifier` which combines predictions using some `Combiner` functor
 
     """
 
@@ -463,11 +477,17 @@ class CombinedClassifier(BoostedClassifier):
                % (self.__class__.__name__, len(self.clfs), `self.__combiner`)
 
 
+    def _train(self, data):
+        BoostedClassifier._train(self, data)
+        # combiner might need to train as well
+        self.__combiner.train(self.clfs, data)
+
+
     def _predict(self, data):
         """
         """
-        raw_predictions = super(CombinedClassifier, self)._predict(data)
-        predictions = self.__combiner(self.clfs)
+        raw_predictions = BoostedClassifier._predict(self, data)
+        predictions = self.__combiner(self.clfs, data)
         self["predictions"] = predictions
 
         if self.isStateEnabled("values"):
@@ -478,7 +498,6 @@ class CombinedClassifier(BoostedClassifier):
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state" % self +
                             " enabled, but combiner has it disabled, thus no" +
-
                             " values could be provided")
         return predictions
 
@@ -578,39 +597,27 @@ class BinaryClassifier(ProxyClassifier):
         return predictions
 
 
-class MulticlassClassifier(BoostedClassifier):
-    """`BoostedClassifier` to perform multiclass using a set of `BinaryClassifier`
+class MulticlassClassifier(CombinedClassifier):
+    """`CombinedClassifier` to perform multiclass using a list of `BinaryClassifier`
 
     such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
     is yet to think about)
     """
 
-    def __init__(self, clf, bclf=BoostedClassifier(),
-                 bclf_type="1-vs-1", **kwargs):
+    def __init__(self, clf, bclf_type="1-vs-1", **kwargs):
         """Initialize the instance
 
         :Parameters:
           clf : Classifier
             classifier based on which multiple classifiers are created
             for multiclass
-          bclf : BoostedClassifier
-            classifier used to aggregate "pairClassifier"s
           bclf_type
             "1-vs-1" or "1-vs-all", determines the way to generate binary
             classifiers
           """
-        Classifier.__init__(self, **kwargs)
+        CombinedClassifier.__init__(self, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
-        self.__bclf = bclf
-        """Store sample instance of boosted classifier to construct based on clf's"""
-
-        # generate simpler classifiers
-        #
-        # create a mapping between original labels and labels in
-        # simpler classifiers
-        #
-        # clfs= ...
 
         # XXX such logic below might go under train....
         if bclf_type == "1-vs-1":
@@ -622,7 +629,6 @@ class MulticlassClassifier(BoostedClassifier):
                   "Unknown type of classifier %s for " % bclf_type + \
                   "BoostedMulticlassClassifier"
         self.__bclf_type = bclf_type
-
 
 
     def _train(self, data):
@@ -645,24 +651,15 @@ class MulticlassClassifier(BoostedClassifier):
                 debug("CLFMC", "Created %d binary classifiers for %d labels" %
                       (len(biclfs), len(ulabels)))
 
-            self.__bclf.clfs = biclfs
+            self.clfs = biclfs
 
         elif self.__bclf_type == "1-vs-all":
             raise NotImplementedError
-
-        self.__bclf.train(data)
-
-
-    def _predict(self, data):
-        """
-        """
-        # XXX might need to copy states off bclf
-        return self.__bclf.predict(data)
-
-    clfs = property(lambda x:x.__bclf.clfs, doc="Used classifiers")
+        # perform actual training
+        CombinedClassifier._train(self, data)
 
 
-class SplitClassifier(BoostedClassifier):
+class SplitClassifier(CombinedClassifier):
     """`BoostedClassifier` to work on splits of the data
 
     TODO: SplitClassifier and MulticlassClassifier have too much in
@@ -672,24 +669,19 @@ class SplitClassifier(BoostedClassifier):
           all: map sets of labels into 2 categories...
     """
 
-    def __init__(self, clf, bclf=CombinedClassifier(),
-                 splitter=NFoldSplitter(cvtype=1), **kwargs):
+    def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
 
         :Parameters:
           clf : Classifier
             classifier based on which multiple classifiers are created
             for multiclass
-          bclf : BoostedClassifier
-            classifier used to aggregate "pairClassifier"s
           splitter : Splitter
             `Splitter` to use to split the dataset prior training
           """
-        Classifier.__init__(self, **kwargs)
+        CombinedClassifier.__init__(self, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
-        self.__bclf = bclf
-        """Store sample instance of boosted classifier to construct based on clf's"""
         self.__splitter = splitter
 
         self._registerState("trained_confusions", enabled=True,
@@ -708,28 +700,18 @@ class SplitClassifier(BoostedClassifier):
         for split in self.__splitter(data):
             clf = deepcopy(self.__clf)
             bclfs.append(clf)
-        self.__bclf.clfs = bclfs
+        self.clfs = bclfs
 
         i = 0
         for split in self.__splitter(data):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
-            clf = self.__bclf.clfs[i]
+            clf = self.clfs[i]
             clf.train(split[0])
             if self.isStateEnabled("trained_confusions"):
                 predictions = clf.predict(split[1].samples)
                 self["trained_confusions"].add(split[1].labels, predictions)
             i += 1
-        self.__bclf._setTrain2predict(False) # it doesn't have to be trained directly
-
-
-    def _predict(self, data):
-        """
-        """
-        # XXX might need to copy states off bclf
-        return self.__bclf.predict(data)
-
-    clfs = property(lambda x:x.__bclf.clfs, doc="Used classifiers")
 
 
 class MappedClassifier(ProxyClassifier):
