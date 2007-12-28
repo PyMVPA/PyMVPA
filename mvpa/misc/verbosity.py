@@ -184,22 +184,40 @@ class SetLogger(Logger):
     Logger which prints based on defined sets identified by Id.
     """
 
-    def __init__(self, active=[], printsetid=True, *args, **kwargs):
+    def __init__(self, register={}, active=[], printsetid=True, *args, **kwargs):
         Logger.__init__(self, *args, **kwargs)
-        self._setActive(active)    # sets which to output
         self.__printsetid = printsetid
-        self.__registered = {}      # all "registered" sets descriptions
-        self._setActive(active)
+        self.__registered = register    # all "registered" sets descriptions
+        self._setActive(active)         # which to output... pointless since __registered
         self._setPrintsetid(printsetid)
 
 
     def _setActive(self, active):
         """Set active logging set
         """
-         # just unique entries... we could have simply stored Set I guess,
-         # but then smth like debug.active += ["BLAH"] would not work
-        self.__active = list(Set(active))
+        # just unique entries... we could have simply stored Set I guess,
+        # but then smth like debug.active += ["BLAH"] would not work
+        from mvpa.misc import verbose
+        self.__active = []
+        registered_keys = self.__registered.keys()
+        for item in list(Set(active)):
+            if item == '':
+                continue
+            if isinstance(item, basestring):
+                if item.upper() == "ALL":
+                    verbose(2, "Enabling all registered debug handlers")
+                    self.__active = registered_keys
+                    return
+                # try to match item as it is regexp
+                regexp = re.compile("^%s$" % item)
+                matching_keys = filter(regexp.match, registered_keys)
+                self.__active += matching_keys
+            else:
+                self.__active.append(item)
 
+        self.__active = list(Set(self.__active)) # select just unique ones
+        if len(self.__active):
+            verbose(2, "Enabling debug handlers: %s" % `self.__active`)
 
     def _setPrintsetid(self, printsetid):
         """Either to print set Id at each line"""
@@ -238,15 +256,7 @@ class SetLogger(Logger):
         """
         # somewhat evil but works since verbose must be initiated
         # by now
-        from mvpa.misc import verbose
-        entries = value.split(",")
-        if entries != "":
-            if 'ALL' in entries or 'all' in entries:
-                verbose(2, "Enabling all registered debug handlers")
-                entries = self.registered.keys()
-
-            verbose(2, "Enabled debug handlers: %s" % `entries`)
-            self.active = entries
+        self.active = value.split(",")
 
 
     printsetid = property(fget=lambda self: self.__printsetid, \
