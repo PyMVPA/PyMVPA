@@ -142,7 +142,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                    fset=_setClassifier)
 
 
-def selectAnalyzer(clf):
+def selectAnalyzer(clf, **kwargs):
     """Factory method which knows few classifiers and their sensitivity analyzers
 
     This function is just to assign default values. For
@@ -150,9 +150,9 @@ def selectAnalyzer(clf):
     """
     if   isinstance(clf, LinearSVM):
         from linsvmweights import LinearSVMWeights
-        return LinearSVMWeights(clf)
+        return LinearSVMWeights(clf, **kwargs)
     elif isinstance(clf, BoostedClassifier):
-        return BoostedClassifierSensitivityAnalyzer(clf)
+        return BoostedClassifierSensitivityAnalyzer(clf, **kwargs)
     else:
         return None
 
@@ -175,15 +175,16 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
     def __call__(self, dataset, callables=[]):
-        sensitivities = N.empty( (len(self.__analyzers), dataset.nfeatures) )
+        sensitivities = []
         ind = 0
         for analyzer in self.__analyzers:
             if __debug__:
                 debug("SA", "Computing sensitivity for SA#%d:%s" %
                       (ind, analyzer))
             sensitivity = analyzer(dataset, callables)
-            sensitivities[ind, ... ] = sensitivity[:]
+            sensitivities.append(sensitivity)
             ind += 1
+
         self["sensitivities"] = sensitivities
         result = self.__combiner(sensitivities)
         return result
@@ -207,12 +208,13 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
     def __init__(self,
                  clf,
                  analyzer=None,
-                 combined_analyzer=CombinedSensitivityAnalyzer(),
+                 combined_analyzer=None,
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
         """
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
-
+        if combined_analyzer is None:
+            combined_analyzer = CombinedSensitivityAnalyzer(**kwargs)
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 
