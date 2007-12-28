@@ -26,7 +26,7 @@ from copy import deepcopy
 from sets import Set
 
 from mvpa.datasets.maskmapper import MaskMapper
-from mvpa.datasets.splitter import NoneSplitter
+from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import State
 
 from transerror import ConfusionMatrix
@@ -118,7 +118,6 @@ class Classifier(State):
         """
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = data.nfeatures
-
         if self.isStateEnabled('trained_confusion'):
             predictions = self.predict(data.samples)
             self['trained_confusion'] = ConfusionMatrix(
@@ -273,10 +272,13 @@ class BoostedClassifier(Classifier):
         self.__clfs = clfs
         """Classifiers to use"""
 
+        train2predicts = [clf.train2predict for clf in self.__clfs]
+        train2predict = reduce(lambda x,y: x or y, train2predicts, False)
+        if __debug__:
+            debug("CLFBST", "Setting train2predict=%s for classifiers %s with %s" %
+                  (str(train2predict), self.__clfs, str(train2predicts)))
         # set flag if it needs to be trained before predicting
-        self._setTrain2predict(
-            reduce(lambda x,y: x or y,
-                   [clf.train2predict for clf in self.__clfs], False))
+        self._setTrain2predict(train2predict)
 
     clfs = property(fget=lambda x:x.__clfs,
                     fset=_setClassifiers,
@@ -546,7 +548,7 @@ class BinaryClassifier(ProxyClassifier):
         #     doesn't take care about order
         idlabels.sort()
         if __debug__:
-            debug('CLF', "Selecting %d samples out of %d samples for binary " %
+            debug('CLFBIN', "Selecting %d samples out of %d samples for binary " %
                   (len(ids), data.nsamples) +
                   " classification among labels %s/+1 and %s/-1" %
                   (self.__poslabels, self.__neglabels))
@@ -640,7 +642,7 @@ class MulticlassClassifier(BoostedClassifier):
                         copy.deepcopy(clf),
                         poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
             if __debug__:
-                debug("CLF", "Created %d binary classifiers for %d labels" %
+                debug("CLFMC", "Created %d binary classifiers for %d labels" %
                       (len(biclfs), len(ulabels)))
 
             self.__bclf.clfs = biclfs
@@ -671,7 +673,7 @@ class SplitClassifier(BoostedClassifier):
     """
 
     def __init__(self, clf, bclf=CombinedClassifier(),
-                 splitter=NoneSplitter(), **kwargs):
+                 splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
 
         :Parameters:
@@ -700,20 +702,25 @@ class SplitClassifier(BoostedClassifier):
         """
         # generate pairs and corresponding classifiers
         bclfs = []
-        i = 0
         self["trained_confusions"] = ConfusionMatrix(labels=data.uniquelabels)
+
+        # for proper and easier debugging - first define classifiers and then train them
         for split in self.__splitter(data):
             clf = deepcopy(self.__clf)
+            bclfs.append(clf)
+        self.__bclf.clfs = bclfs
+
+        i = 0
+        for split in self.__splitter(data):
+            if __debug__:
+                debug("CLFSPL", "Training classifier for split %d" % (i))
+            clf = self.__bclf.clfs[i]
             clf.train(split[0])
             if self.isStateEnabled("trained_confusions"):
                 predictions = clf.predict(split[1].samples)
                 self["trained_confusions"].add(split[1].labels, predictions)
-            bclfs.append(clf)
-            if __debug__:
-                debug("CLF", "Created and trained classifier for split %d" % (i))
             i += 1
-
-        self.__bclf.clfs = bclfs
+        self.__bclf._setTrain2predict(False) # it doesn't have to be trained directly
 
 
     def _predict(self, data):
@@ -808,7 +815,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         (wdata, tdata) = self.__feature_selection(data)
         if __debug__:
-            debug("CLF", "FeatureSelectionClassifier: {%s} selected %d out of %d features" %
+            debug("CLFFS", "{%s} selected %d out of %d features" %
                   (self.__feature_selection, data.nfeatures, wdata.nfeatures))
 
         # create a mask to devise a mapper
