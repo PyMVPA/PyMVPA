@@ -15,7 +15,7 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.algorithms.anova import OneWayAnova
 
 
-def dumbFeatureSignal():
+def dumbFeatureDataset():
     data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
             [0,5],[1,5],[0,6],[1,6],[0,7],[1,7],[0,8],[1,8],
             [0,9],[1,9],[0,10],[1,10],[0,11],[1,11],[0,12],[1,12]]
@@ -28,7 +28,7 @@ def dumbFeatureSignal():
 class ANOVATests(unittest.TestCase):
 
     def testANOVA(self):
-        data = dumbFeatureSignal()
+        data = dumbFeatureDataset()
         aov = OneWayAnova()
 
         # compute f-scores
