@@ -37,6 +37,7 @@ tests = [
     'test_searchlight',
     'test_rfe',
     'test_ifs',
+    'test_datameasure',
     'test_perturbsensana',
     'test_splitsensana',
     'test_anova',

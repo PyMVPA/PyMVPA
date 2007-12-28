@@ -20,8 +20,11 @@ iterable container.
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+import copy
 
 from mvpa.misc.state import State
+from mvpa.clfs.classifier import BoostedClassifier
+from mvpa.clfs.svm import LinearSVM
 
 if __debug__:
     from mvpa.misc import debug
@@ -109,7 +112,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
 
     def __repr__(self):
         return "<ClassifierBasedSensitivityAnalyzer on %s. force_training=%s" % \
-               (`self.__clf`, str(force_training))
+               (`self.__clf`, str(self._force_training))
 
 
     def __call__(self, dataset, callables=[]):
@@ -218,8 +221,9 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
 
 
     def _call(self, dataset, callables=[]):
+        analyzers = []
         # create analyzers
-        for clf in clf.clfs:
+        for clf in self.clf.clfs:
             if self.__analyzer is None:
                 analyzer = selectAnalyzer(clf)
                 if analyzer is None:
@@ -230,12 +234,14 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
                     debug("SA", "Selected analyzer %s for clf %s" %
                           (`analyzer`, `clf`))
             else:
-                analyzer = self.__analyzer
+                # shallow copy should be enough...
+                analyzer = copy.copy(self.__analyzer)
 
-            # shallow copy should be enough...
-            analyzer = copy.copy(self.__analyzer)
             # assign corresponding classifier
             analyzer.clf = clf
+            # if clf was trained already - don't train again
+            if clf.trained:
+                analyzer._force_training = False
             analyzers.append(analyzer)
 
         self.__combined_analyzer.analyzers = analyzers
