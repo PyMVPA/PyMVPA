@@ -42,16 +42,29 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #svm_weigths = LinearSVMWeights(svm)
 
         # assumming many defaults it is as simple as
-        sana = selectAnalyzer( SplitClassifier(clf=svm) )
+        sana = selectAnalyzer( SplitClassifier(clf=svm),
+                               enable_states=["sensitivities"] ) # and lets look at all sensitivities
+
         # and we get sensitivity analyzer which works on splits and uses
         # linear svm sensitivity
         map_ = sana(self.dataset)
         self.failUnless(len(map_) == self.dataset.nfeatures)
-        self.failUnless(sana.clf["trained_confusion"].percentCorrect>90,
-                        msg="We must have trained more or less correctly")
-        self.failUnlessEqual(list(FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map_)),
-                             list(self.nonbogus),
-                             msg="At the end we should have selected the right features")
+
+        for conf_matrix in [sana.clf["trained_confusion"]] + sana.clf["trained_confusions"].matrices:
+            self.failUnless(conf_matrix.percentCorrect>85,
+                            msg="We must have trained on each one more or less correctly")
+
+        errors = [x.percentCorrect for x in sana.clf["trained_confusions"].matrices]
+
+        self.failUnless(N.min(errors) != N.max(errors),
+                        msg="Splits should have slightly but different generalization")
+
+        # lets go through all sensitivities and see if we selected the right features
+        for map__ in [map_] + sana.combined_analyzer["sensitivities"]:
+            self.failUnlessEqual(
+                list(FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)),
+                list(self.nonbogus),
+                msg="At the end we should have selected the right features")
 
 
 def suite():
