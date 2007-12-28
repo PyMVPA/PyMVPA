@@ -133,7 +133,7 @@ class VerboseOutputTest(unittest.TestCase):
             # do not offset for this test
             debug('SLC', self.msg, lf=False)
             self.failUnlessEqual(self.sout.getvalue(),
-                                 "[SLC] DEBUG: %s" % self.msg)
+                                 "[SLC] DBG: %s" % self.msg)
 
         def testDebugRgexp(self):
             verbose.handlers = []           # so debug doesn't spoil it

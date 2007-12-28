@@ -21,7 +21,7 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.featsel import FixedNElementTailSelector
 
 
-def dumbFeatureSignal():
+def dumbFeatureDataset():
     data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
             [0,5],[1,5],[0,6],[1,6],[0,7],[1,7],[0,8],[1,8],
             [0,9],[1,9],[0,10],[1,10],[0,11],[1,11],[0,12],[1,12]]
@@ -77,7 +77,7 @@ class IFSTests(unittest.TestCase):
 
 
         # repeat with dataset where selection order is known
-        signal = dumbFeatureSignal()
+        signal = dumbFeatureDataset()
         sdata, stdata = ifs(signal, signal)
         self.failUnless((sdata.samples[:,0] == signal.samples[:,1]).all())
 

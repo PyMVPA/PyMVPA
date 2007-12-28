@@ -16,7 +16,7 @@ from sets import Set
 from mvpa.clfs.svm import RbfNuSVMC, LinearNuSVMC
 from mvpa.clfs.libsvm import svmc
 
-from tests_warehouse import dumbFeatureSignal, pureMultivariateSignal
+from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal
 
 class SVMTests(unittest.TestCase):
 
@@ -83,7 +83,7 @@ class SVMTests(unittest.TestCase):
 
 
 #    def testFeatureBenchmark(self):
-#        pat = dumbFeatureSignal()
+#        pat = dumbFeatureDataset()
 #        clf = SVM()
 #        clf.train(pat)
 #        rank = clf.getFeatureBenchmark()

@@ -18,16 +18,12 @@ from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer
 
+from tests_warehouse import *
 
 class SplitSensitivityAnalyserTests(unittest.TestCase):
 
     def setUp(self):
-        data = N.random.standard_normal((100, 4))
-        labels = N.concatenate((N.repeat(0, 50),
-                                N.repeat(1, 50)))
-        chunks = N.repeat(range(5), 10)
-        chunks = N.concatenate((chunks, chunks) )
-        self.dataset = Dataset(samples=data, labels=labels, chunks=chunks)
+        self.dataset = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4)
 
 
     def testAnalyzer(self):

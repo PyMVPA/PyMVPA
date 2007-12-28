@@ -14,7 +14,7 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 
-def dumbFeatureSignal():
+def dumbFeatureDataset():
     data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
             [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
             [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
@@ -24,6 +24,24 @@ def dumbFeatureSignal():
 
     return Dataset(samples=data, labels=regs)
 
+def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
+                         means=None, snr=1.0):
+    """Generate a dataset where each label is some normally
+    distributed beastie around specified mean (0 if None).
+
+    snr is assuming that signal has std 1.0 so we just divide noise by snr
+
+    Probably it is a generalization of pureMultivariateSignal where
+    means=[ [0,1], [1,0] ]
+    """
+
+    data = N.random.standard_normal((perlabel*nlabels, nfeatures))/snr
+    if not means is None:
+        # add mean
+        data += N.repeat(N.array(means, ndmin=2), perlabel, axis=0)
+    labels = N.concatenate([N.repeat(i, perlabel) for i in range(nlabels)])
+    chunks = N.concatenate([N.repeat(range(nchunks), perlabel/nchunks) for i in range(nlabels)])
+    return Dataset(samples=data, labels=labels, chunks=chunks)
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     """ Create a 2d dataset with a clear multivariate signal, but no
