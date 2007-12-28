@@ -159,7 +159,7 @@ class SVMBase(Classifier):
         self.__model = svm.SVMModel( svmprob, self.param)
 
 
-    def predict(self, data):
+    def _predict(self, data):
         """Predict values for the data
         """
         # libsvm needs doubles

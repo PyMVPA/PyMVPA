@@ -33,7 +33,7 @@ class kNN(Classifier):
           k:       number of nearest neighbours to be used for voting
         """
         # init base class first
-        Classifier.__init__(self, **kwargs)
+        Classifier.__init__(self, train2predict=False, **kwargs)
 
         self.__k = k
         # XXX So is the voting function fixed forever?
@@ -68,11 +68,11 @@ class kNN(Classifier):
 
         # create dictionary with an item for each condition
         uniquelabels = data.uniquelabels
-        self.__votes_init = dict(zip(uniquelabels, 
+        self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
 
-    def predict(self, data):
+    def _predict(self, data):
         """Predict the class labels for the provided data.
 
         Returns a list of class labels (one for each data sample).
