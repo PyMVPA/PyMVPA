@@ -27,11 +27,11 @@ class SameSignClassifier(Classifier):
     the same sign, -1 otherwise"""
 
     def __init__(self):
-        Classifier.__init__(self)
+        Classifier.__init__(self, train2predict=False)
     def _train(self, data):
         # we don't need that ;-)
         pass
-    def predict(self, data):
+    def _predict(self, data):
         datalen = len(data)
         values = []
         for d in data:
@@ -42,7 +42,7 @@ class SameSignClassifier(Classifier):
 
 class Less1Classifier(SameSignClassifier):
     """Dummy classifier which reports +1 class if abs value of max less than 1"""
-    def predict(self, data):
+    def _predict(self, data):
         datalen = len(data)
         values = []
         for d in data:

@@ -61,7 +61,7 @@ class PLF(Classifier):
                 str(self.enabledStates))
 
 
-    def train(self, data):
+    def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
         # Set up the environment for fitting the data
@@ -137,7 +137,7 @@ class PLF(Classifier):
         return 1. / (1 + N.exp(-y))
 
 
-    def predict(self,data):
+    def _predict(self, data):
         """
         Predict the class labels for the provided data
 

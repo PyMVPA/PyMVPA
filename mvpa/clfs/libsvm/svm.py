@@ -133,7 +133,6 @@ class SVMParameter(object):
         out._params = copy.deepcopy(self._params)
         return out
 
-
     def _clear_svmc_params(self):
         if not self.__svmc_params is None:
             del self.__svmc_params
