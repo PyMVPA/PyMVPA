@@ -46,7 +46,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # and we get sensitivity analyzer which works on splits and uses
         # linear svm sensitivity
         map_ = sana(self.dataset)
-        print `sana`
         self.failUnless(len(map_) == self.dataset.nfeatures)
         self.failUnless(sana.clf["trained_confusion"].percentCorrect>90,
                         msg="We must have trained more or less correctly")
