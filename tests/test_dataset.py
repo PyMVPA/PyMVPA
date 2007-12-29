@@ -206,19 +206,34 @@ class DatasetTests(unittest.TestCase):
 
 
     def testAtrributes(self):
-        data = Dataset(samples=range(5), labels=1, chunks=1)
-        try:
-            data.blobs
-            self.fail(msg="Dataset.blobs should fail since .blobs wasn't yet registered")
-        except AttributeError, e:
-            self.failIf(not isinstance(e,AttributeError),
-                        msg="Dataset.blobs should fail since .blobs wasn't yet registered")
+        #class BlobbyDataset(Dataset):
+        #    pass
+        # TODO: we can't assign attributes to those for now...
+        ds = Dataset(samples=range(5), labels=1, chunks=1)
+        self.failUnlessRaises(AttributeError, lambda x:x.blobs, ds)
+        """Dataset.blobs should fail since .blobs wasn't yet registered"""
 
         #register new attribute but it would alter only new instances
         Dataset._registerAttribute("blobs", "_data", hasunique=True)
-        data2 = Dataset(samples=range(5), labels=1, chunks=1)
-        self.failUnless(not data2.blobs != [ 0 ],
+        ds = Dataset(samples=range(5), labels=1, chunks=1)
+        self.failUnless(not ds.blobs != [ 0 ],
                         msg="By default new attributes supposed to get 0 as the value")
+
+        try:
+            ds.blobs = [1,2]
+            self.fail(msg="Dataset.blobs=[1,2] should fail since there is 5 samples")
+        except ValueError, e:
+            pass
+
+        try:
+            ds.blobs = [1]
+        except  e:
+            self.fail(msg="We must be able to assign the attribute")
+
+        # Dataset still shouldn't have blobs... just BlobbyDataset
+        #self.failUnlessRaises(AttributeError, lambda x:x.blobs,
+        #                      Dataset(samples=range(5), labels=1, chunks=1))
+
 
     def testRequiredAtrributes(self):
         self.failUnlessRaises(DatasetError, Dataset)
