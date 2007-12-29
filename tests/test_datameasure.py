@@ -27,13 +27,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
     def setUp(self):
         self.nonbogus = [1, 3]          # informative features
         self.nfeatures = 5              # total features
-        means = N.zeros((2,self.nfeatures))
-        # pure multivariate -- single bit per feature
-        for i in xrange(len(self.nonbogus)):
-            means[i, self.nonbogus[i]] = 1.0
-        self.dataset = normalFeatureDataset(perlabel=50, nlabels=2,
+        self.dataset = normalFeatureDataset(perlabel=200, nlabels=2,
                                             nfeatures=self.nfeatures,
-                                            means=means, snr=3.0)
+                                            nonbogus_features=self.nonbogus,
+                                            snr=6)
 
 
     def testBIG(self):
