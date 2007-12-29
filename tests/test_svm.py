@@ -11,55 +11,12 @@
 import unittest
 
 import numpy as N
+from sets import Set
 
-from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
+from mvpa.clfs.svm import RbfNuSVMC, LinearNuSVMC
 from mvpa.clfs.libsvm import svmc
 
-
-def dumbFeatureSignal():
-    data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
-            [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
-            [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
-    regs = [1 for i in range(8)] \
-         + [2 for i in range(8)] \
-         + [3 for i in range(8)]
-
-    return Dataset(samples=data, labels=regs)
-
-
-def pureMultivariateSignal(patterns, signal2noise = 1.5):
-    """ Create a 2d dataset with a clear multivariate signal, but no
-    univariate information.
-
-    %%%%%%%%%
-    % O % X %
-    %%%%%%%%%
-    % X % O %
-    %%%%%%%%%
-    """
-
-    # start with noise
-    data=N.random.normal(size=(4*patterns,2))
-
-    # add signal
-    data[:2*patterns,1] += signal2noise
-
-    data[2*patterns:4*patterns,1] -= signal2noise
-    data[:patterns,0] -= signal2noise
-    data[2*patterns:3*patterns,0] -= signal2noise
-    data[patterns:2*patterns,0] += signal2noise
-    data[3*patterns:4*patterns,0] += signal2noise
-
-    # two conditions
-    regs = [0 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [0 for i in xrange(patterns)]
-    regs = N.array(regs)
-
-    return Dataset(samples=data, labels=regs)
-
+from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal
 
 class SVMTests(unittest.TestCase):
 
@@ -70,7 +27,29 @@ class SVMTests(unittest.TestCase):
         uv_perf = []
 
         nl_clf = RbfNuSVMC()
+        orig_keys = nl_clf.param._params.keys()
+        nl_param_orig = nl_clf.param._params.copy()
+
         l_clf = LinearNuSVMC()
+
+        # for some reason order is not preserved thus dictionaries are not
+        # the same any longer -- lets compare values
+        self.failUnlessEqual([nl_clf.param._params[k] for k in orig_keys],
+                             [nl_param_orig[k] for k in orig_keys],
+           msg="New instance mustn't override values in previously created")
+        # and keys separately
+        self.failUnlessEqual(Set(nl_clf.param._params.keys()),
+                             Set(orig_keys),
+           msg="New instance doesn't change set of parameters in original")
+
+        # We must be able to deepcopy not yet trained SVMs now
+        import copy
+        nl_clf_copy = copy.deepcopy(nl_clf)
+
+        try:
+            nl_clf_copy = copy.deepcopy(nl_clf)
+        except:
+            self.fail(msg="Failed to deepcopy not-yet trained SVM")
 
         for i in xrange(20):
             train = pureMultivariateSignal( 20, 3 )
@@ -104,7 +83,7 @@ class SVMTests(unittest.TestCase):
 
 
 #    def testFeatureBenchmark(self):
-#        pat = dumbFeatureSignal()
+#        pat = dumbFeatureDataset()
 #        clf = SVM()
 #        clf.train(pat)
 #        rank = clf.getFeatureBenchmark()

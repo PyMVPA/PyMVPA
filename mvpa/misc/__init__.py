@@ -19,10 +19,26 @@ from verbosity import LevelLogger, OnceLogger
 #
 # Setup verbose and debug outputs
 #
+class _SingletonType(type):
+    """Simple singleton implementation adjusted from
+    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/412551
+    """
+    def __init__(self, *args):
+        type.__init__(self, *args)
+        self._instances = {}
 
-# TODO: check if they are actually singletons...
-verbose = LevelLogger(handlers=[stdout])
-errors = LevelLogger(handlers=[stderr])
+    def __call__(self, sid, instance, *args):
+        if not sid in self._instances:
+            self._instances[sid] = instance
+        return self._instances[sid]
+
+class __Singleton:
+    __metaclass__=_SingletonType
+    def __init__(self, *args): pass
+
+
+verbose = __Singleton("verbose", LevelLogger(handlers=[stdout]))
+errors = __Singleton("errors", LevelLogger(handlers=[stderr]))
 
 # Levels for verbose
 # 0 -- nothing besides errors
@@ -72,7 +88,7 @@ if __debug__:
     from verbosity import DebugLogger
     # NOTE: all calls to debug must be preconditioned with
     # if __debug__:
-    debug = DebugLogger(handlers=[stderr])
+    debug = __Singleton("debug", DebugLogger(handlers=[stderr]))
 
     # set some debugging matricses to report
     # debug.registerMetric('vmem')
@@ -82,12 +98,20 @@ if __debug__:
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('PLF',  "PLF call")
     debug.register('SLC',  "Searchlight call")
+    debug.register('SA',   "Sensitivity analyzers call")
     debug.register('PSA',  "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
     debug.register('ST',   "State")
+
     debug.register('CLF',  "Base Classifiers")
+    debug.register('CLFBST', "BoostClassifier")
+    debug.register('CLFBIN', "BinaryClassifier")
+    debug.register('CLFMC', "MulticlassClassifier")
+    debug.register('CLFSPL', "SplitClassifier")
+    debug.register('CLFFS', "FeatureSelectionClassifier")
+
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('CROSSC',"Cross-validation call")

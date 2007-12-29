@@ -108,11 +108,9 @@ class Splitter(object):
 
         This method behaves like a generator.
         """
-        splitcfg = \
-            self._getSplitConfig(eval('dataset.unique' + self.__splitattr))
 
         # do cross-validation
-        for split in splitcfg:
+        for split in self.splitcfg(dataset):
             wset, vset = self.splitDataset(dataset, split)
 
             # do the sampling for this split
@@ -202,6 +200,11 @@ class Splitter(object):
           "SplitterConfig: work:%s runs-per-split:%d validate:%s permute:%s" \
           % (self.__first_samplesize, self.__runspersplit,
              self.__second_samplesize, self.__permute)
+
+
+    def splitcfg(self, dataset):
+        """Return splitcfg for a given dataset"""
+        return self._getSplitConfig(eval('dataset.unique' + self.__splitattr))
 
 
 

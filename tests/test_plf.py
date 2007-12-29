@@ -13,7 +13,7 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.plf import PLF
 import numpy as N
 
-def dumbFeatureSignal():
+def dumbFeatureDataset():
     data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
             [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
             [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
@@ -25,7 +25,7 @@ def dumbFeatureSignal():
 class PLFTests(unittest.TestCase):
 
     def testPLF(self):
-        data = dumbFeatureSignal()
+        data = dumbFeatureDataset()
 
         clf = PLF()
 
@@ -35,7 +35,7 @@ class PLFTests(unittest.TestCase):
         self.failUnless((clf.predict(data.samples) == data.labels).all())
 
     def testPLFState(self):
-        data = dumbFeatureSignal()
+        data = dumbFeatureDataset()
 
         clf = PLF()
 

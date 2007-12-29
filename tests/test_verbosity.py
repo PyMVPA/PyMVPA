@@ -17,6 +17,7 @@ from mvpa.misc import verbose
 
 if __debug__:
     from mvpa.misc import debug
+    from sets import Set
 
 ## XXX There must be smth analogous in python... don't know it yet
 # And it is StringIO
@@ -44,19 +45,24 @@ class VerboseOutputTest(unittest.TestCase):
 
         # set verbose to 4th level
         self.__oldverbosehandlers = verbose.handlers
-        verbose.handlers = [self.sout]
+        verbose.handlers = []           # so debug doesn't spoil it
         verbose.level = 4
         if __debug__:
             self.__olddebughandlers = debug.handlers
             self.__olddebugactive = debug.active
-            debug.handlers = [self.sout]
             debug.active = [1, 2, 'SLC']
+            debug.handlers = [self.sout]
+            debug.offsetbydepth = False
+
+        verbose.handlers = [self.sout]
 
     def tearDown(self):
         verbose.handlers = self.__oldverbosehandlers
         if __debug__:
             debug.active = self.__olddebugactive
             debug.handlers = self.__olddebughandlers
+            debug.offsetbydepth = True
+
         self.sout.close()
 
 
@@ -122,14 +128,28 @@ class VerboseOutputTest(unittest.TestCase):
 
     if __debug__:
         def testDebug(self):
+            verbose.handlers = []           # so debug doesn't spoil it
             debug.active = [1, 2, 'SLC']
             # do not offset for this test
-            debug.offsetbydepth = False
             debug('SLC', self.msg, lf=False)
             self.failUnlessEqual(self.sout.getvalue(),
-                                 "[SLC] DEBUG: %s" % self.msg)
+                                 "[SLC] DBG: %s" % self.msg)
+
+        def testDebugRgexp(self):
+            verbose.handlers = []           # so debug doesn't spoil it
+            debug.active = ['.*']
+            # we should have enabled all of them
+            self.failUnlessEqual(Set(debug.active), Set(debug.registered.keys()))
+            debug.active = ['S.*', 'CLF']
+            self.failUnlessEqual(Set(debug.active),
+                                 Set(filter(lambda x:x.startswith('S'),
+                                            debug.registered.keys())+['CLF']))
+            debug.active = ['S*', 'CLF']
+            self.failUnlessEqual(Set(debug.active), Set(['CLF']),
+                                 msg="debug should do full line matching")
 
             debug.offsetbydepth = True
+
 
         # TODO: More tests needed for debug output testing
 
