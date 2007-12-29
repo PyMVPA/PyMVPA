@@ -50,6 +50,9 @@ tests = [
 for t in tests:
     exec 'import ' + t
 
+# no warnings during whole testsuite
+from mvpa.misc import warning
+warning.handlers = []
 
 def main():
     # load all tests suites
