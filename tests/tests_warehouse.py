@@ -25,7 +25,7 @@ def dumbFeatureDataset():
     return Dataset(samples=data, labels=regs)
 
 def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
-                         means=None, snr=1.0):
+                         means=None, nonbogus_features=None, snr=1.0):
     """Generate a dataset where each label is some normally
     distributed beastie around specified mean (0 if None).
 
@@ -33,9 +33,20 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
 
     Probably it is a generalization of pureMultivariateSignal where
     means=[ [0,1], [1,0] ]
+
+    Specify either means or nonbogus_features so means get assigned
+    accordingly
     """
 
-    data = N.random.standard_normal((perlabel*nlabels, nfeatures))/snr
+    data = N.random.standard_normal((perlabel*nlabels, nfeatures))/N.sqrt(snr)
+    if (means is None) and (not nonbogus_features is None):
+        if len(nonbogus_features) > nlabels:
+            raise ValueError, "Can't assign simply a feature to a " + \
+                  "class: more nonbogus_features than labels"
+        means = N.zeros((len(nonbogus_features), nfeatures))
+        # pure multivariate -- single bit per feature
+        for i in xrange(len(nonbogus_features)):
+            means[i, nonbogus_features[i]] = 1.0
     if not means is None:
         # add mean
         data += N.repeat(N.array(means, ndmin=2), perlabel, axis=0)
