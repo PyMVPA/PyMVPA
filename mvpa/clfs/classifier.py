@@ -31,6 +31,8 @@ from mvpa.misc.state import State
 
 from transerror import ConfusionMatrix
 
+from mvpa.misc import warning
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -434,7 +436,7 @@ class MaximalVote(Combiner):
                    "We should have obtained at least a single key of max label"
 
             if len(maxk)>1:
-                warning("We got multiple labels %s which have the " % maxk +
+                warning("We got multiple labels %s which have the " % `maxk` +
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
@@ -560,25 +562,25 @@ class BinaryClassifier(ProxyClassifier):
 
 
     def _train(self, data):
-        ids = data.idsbylabels(self.__poslabels + self.__neglabels)
-
-        idlabels = zip(ids, [+1]*len(self.__poslabels) + [-1]*len(self.__neglabels))
+        idlabels = [(x, +1) for x in data.idsbylabels(self.__poslabels)] + \
+                    [(x, -1) for x in data.idsbylabels(self.__neglabels)]
         # XXX we have to sort ids since at the moment Dataset.selectSamples
         #     doesn't take care about order
         idlabels.sort()
-        if __debug__:
-            debug('CLFBIN', "Selecting %d samples out of %d samples for binary " %
-                  (len(ids), data.nsamples) +
-                  " classification among labels %s/+1 and %s/-1" %
-                  (self.__poslabels, self.__neglabels))
         # select the samples
         dataselected = data.selectSamples([ x[0] for x in idlabels ])
+        if __debug__:
+            debug('CLFBIN', "Selecting %d samples out of %d samples for binary " %
+                  (len(idlabels), data.nsamples) +
+                  " classification among labels %s/+1 and %s/-1" %
+                  (self.__poslabels, self.__neglabels) +
+                  ". Selected %s" % dataselected)
         # adjust the labels
         dataselected.labels = [ x[1] for x in idlabels ]
         # now we got a dataset with only 2 labels
         if __debug__:
-            assert(dataselected.uniquelabels == [-1, 1])
-        self.__clf.train(dataselected)
+            assert((dataselected.uniquelabels == [-1, 1]).all())
+        self.clf.train(dataselected)
 
 
     def _predict(self, data):
@@ -645,8 +647,8 @@ class MulticlassClassifier(CombinedClassifier):
                     clf = deepcopy(self.__clf)
                     biclfs.append(
                         BinaryClassifier(
-                        copy.deepcopy(clf),
-                        poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
+                            deepcopy(clf),
+                            poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
             if __debug__:
                 debug("CLFMC", "Created %d binary classifiers for %d labels" %
                       (len(biclfs), len(ulabels)))
@@ -655,6 +657,7 @@ class MulticlassClassifier(CombinedClassifier):
 
         elif self.__bclf_type == "1-vs-all":
             raise NotImplementedError
+
         # perform actual training
         CombinedClassifier._train(self, data)
 

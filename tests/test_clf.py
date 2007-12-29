@@ -9,8 +9,9 @@
 """Unit tests for PyMVPA basic Classifiers"""
 
 import unittest
-
 import numpy as N
+
+from copy import deepcopy
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskmapper import MaskMapper
@@ -19,8 +20,9 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
+from mvpa.clfs.svm import LinearNuSVMC
 
-from copy import deepcopy
+from tests_warehouse import *
 
 class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
@@ -175,6 +177,27 @@ class ClassifiersTests(unittest.TestCase):
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel_rev)
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
+
+    def testMulticlassClassifier(self):
+        svm = LinearNuSVMC()
+        svm2 = LinearNuSVMC()
+        clf = MulticlassClassifier(clf=svm)
+        nfeatures = 6
+        nonbogus = [1, 3, 4]
+        dstrain = normalFeatureDataset(perlabel=50, nlabels=3,
+                                       nfeatures=nfeatures,
+                                       nonbogus_features=nonbogus,
+                                       snr=3.0)
+
+        dstest = normalFeatureDataset(perlabel=50, nlabels=3,
+                                      nfeatures=nfeatures,
+                                      nonbogus_features=nonbogus,
+                                      snr=3.0)
+        svm2.train(dstrain)
+        clf.train(dstrain)
+        self.failUnlessEqual(str(clf["trained_confusion"]),
+                             str(svm2["trained_confusion"]),
+            msg="Multiclass clf should provide same results as built-in libsvm's")
 
 
 def suite():
