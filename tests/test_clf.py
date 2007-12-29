@@ -9,29 +9,31 @@
 """Unit tests for PyMVPA basic Classifiers"""
 
 import unittest
-
 import numpy as N
+
+from copy import deepcopy
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
-from mvpa.clfs.classifier import Classifier, BoostedClassifier, \
-     BinaryClassifierDecorator, BoostedMulticlassClassifier, \
-     BoostedSplitClassifier, MappedClassifier, FeatureSelectionClassifier
+from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
+     BinaryClassifier, MulticlassClassifier, \
+     SplitClassifier, MappedClassifier, FeatureSelectionClassifier
+from mvpa.clfs.svm import LinearNuSVMC
 
-from copy import deepcopy
+from tests_warehouse import *
 
 class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
     def __init__(self):
-        Classifier.__init__(self)
-    def train(self, data):
+        Classifier.__init__(self, train2predict=False)
+    def _train(self, data):
         # we don't need that ;-)
         pass
-    def predict(self, data):
+    def _predict(self, data):
         datalen = len(data)
         values = []
         for d in data:
@@ -42,10 +44,10 @@ class SameSignClassifier(Classifier):
 
 class Less1Classifier(SameSignClassifier):
     """Dummy classifier which reports +1 class if abs value of max less than 1"""
-    def predict(self, data):
-        datalen = data.nsamples
+    def _predict(self, data):
+        datalen = len(data)
         values = []
-        for d in data.samples:
+        for d in data:
             values.append(2*int(max(d)<=1)-1)
         self["predictions"] = values
         return values
@@ -58,25 +60,30 @@ class ClassifiersTests(unittest.TestCase):
         self.clf_less1 = Less1Classifier()
 
         # simple binary dataset
-        self.data_bin_1 = ([[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
-                           [1, 1, 1, -1, -1], # labels
-                           [0, 1, 2,  2, 3])  # chunks
+        self.data_bin_1 = Dataset(
+            samples=[[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
+            labels=[1, 1, 1, -1, -1], # labels
+            chunks=[0, 1, 2,  2, 3])  # chunks
 
     def testDummy(self):
         clf = SameSignClassifier()
-        clf.train(None)
-        self.failUnlessEqual(clf.predict(self.data_bin_1[0]), self.data_bin_1[1])
+        clf.train(self.data_bin_1)
+        self.failUnlessEqual(clf["trained_confusion"].percentCorrect,
+                             100,
+                             msg="Dummy clf should train perfectly")
+        self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
+                             list(self.data_bin_1.labels))
 
     def testBoosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
-        bclf = BoostedClassifier(clfs=[deepcopy(self.clf_sign),
-                                       deepcopy(self.clf_sign)])
-        self.failUnlessEqual(bclf.predict(self.data_bin_1[0]),
-                             self.data_bin_1[1],
+        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)])
+        self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
+                             list(self.data_bin_1.labels),
                              msg="Boosted classifier should work")
-        self.failUnlessEqual(bclf.predict(self.data_bin_1[0]),
-                             self.clf_sign.predict(self.data_bin_1[0]),
+        self.failUnlessEqual(bclf.predict(self.data_bin_1.samples),
+                             self.clf_sign.predict(self.data_bin_1.samples),
                              msg="Boosted classifier should have the same as regular")
 
 
@@ -89,9 +96,9 @@ class ClassifiersTests(unittest.TestCase):
         clf = SameSignClassifier()
         # lets create classifier to descriminate only between same/different,
         # which is a primary task of SameSignClassifier
-        bclf1 = BinaryClassifierDecorator(clf=clf,
-                                          poslabels=['sp', 'sn'],
-                                          neglabels=['dp', 'dn'])
+        bclf1 = BinaryClassifier(clf=clf,
+                                 poslabels=['sp', 'sn'],
+                                 neglabels=['dp', 'dn'])
         self.failUnless(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
                          ['dn', 'dp'], ['dn', 'dp']])
@@ -100,22 +107,24 @@ class ClassifiersTests(unittest.TestCase):
         #self. fail
 
 
-    def testBoostedSplitClassifier(self):
-        ds = Dataset(samples=self.data_bin_1[0],
-                     labels=self.data_bin_1[1],
-                     chunks=self.data_bin_1[2])
-        clf = BoostedSplitClassifier(clf=SameSignClassifier(),
-                                     splitter=NFoldSplitter(1))
-
+    def testSplitClassifier(self):
+        ds = self.data_bin_1
+        clf = SplitClassifier(clf=SameSignClassifier(),
+                              splitter=NFoldSplitter(1))
         clf.train(ds)                   # train the beast
-
+        self.failUnlessEqual(clf["trained_confusions"].percentCorrect,
+                             100,
+                             msg="Dummy clf should train perfectly")
+        self.failUnlessEqual(len(clf["trained_confusions"].sets),
+                             len(ds.uniquechunks),
+                             msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
 
 
-    def testMappedDecorator(self):
+    def testMappedClassifier(self):
         samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
         testdata3 = Dataset(samples=samples, labels=1)
         res110 = [1, 1, 1, -1, -1]
@@ -126,9 +135,9 @@ class ClassifiersTests(unittest.TestCase):
         clf101 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([1,0,1])))
         clf011 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([0,1,1])))
 
-        self.failUnlessEqual(clf110.predict(testdata3), res110)
-        self.failUnlessEqual(clf101.predict(testdata3), res101)
-        self.failUnlessEqual(clf011.predict(testdata3), res011)
+        self.failUnlessEqual(clf110.predict(samples), res110)
+        self.failUnlessEqual(clf101.predict(samples), res101)
+        self.failUnlessEqual(clf011.predict(samples), res011)
 
 
     def testFeatureSelectionClassifier(self):
@@ -162,12 +171,33 @@ class ClassifiersTests(unittest.TestCase):
         # first classifier -- 0th feature should be discarded
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel)
         clf011.train(traindata)
-        self.failUnlessEqual(clf011.predict(testdata3), res011)
+        self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
 
         # first classifier -- last feature should be discarded
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel_rev)
         clf011.train(traindata)
-        self.failUnlessEqual(clf011.predict(testdata3), res110)
+        self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
+
+    def testMulticlassClassifier(self):
+        svm = LinearNuSVMC()
+        svm2 = LinearNuSVMC()
+        clf = MulticlassClassifier(clf=svm)
+        nfeatures = 6
+        nonbogus = [1, 3, 4]
+        dstrain = normalFeatureDataset(perlabel=50, nlabels=3,
+                                       nfeatures=nfeatures,
+                                       nonbogus_features=nonbogus,
+                                       snr=3.0)
+
+        dstest = normalFeatureDataset(perlabel=50, nlabels=3,
+                                      nfeatures=nfeatures,
+                                      nonbogus_features=nonbogus,
+                                      snr=3.0)
+        svm2.train(dstrain)
+        clf.train(dstrain)
+        self.failUnlessEqual(str(clf["trained_confusion"]),
+                             str(svm2["trained_confusion"]),
+            msg="Multiclass clf should provide same results as built-in libsvm's")
 
 
 def suite():

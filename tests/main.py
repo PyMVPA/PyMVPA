@@ -37,6 +37,7 @@ tests = [
     'test_searchlight',
     'test_rfe',
     'test_ifs',
+    'test_datameasure',
     'test_perturbsensana',
     'test_splitsensana',
     'test_anova',
@@ -49,6 +50,9 @@ tests = [
 for t in tests:
     exec 'import ' + t
 
+# no warnings during whole testsuite
+from mvpa.misc import warning
+warning.handlers = []
 
 def main():
     # load all tests suites

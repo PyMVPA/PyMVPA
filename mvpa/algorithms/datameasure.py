@@ -19,7 +19,15 @@ iterable container.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+import copy
+
 from mvpa.misc.state import State
+from mvpa.clfs.classifier import BoostedClassifier
+from mvpa.clfs.svm import LinearSVM
+
+if __debug__:
+    from mvpa.misc import debug
 
 class DataMeasure(State):
     """A measure computed from a `Dataset` (base class).
@@ -54,9 +62,9 @@ class SensitivityAnalyzer(DataMeasure):
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Does nothing special."""
-        DataMeasure.__init__(self)
+        DataMeasure.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, callbacks=[]):
@@ -74,3 +82,172 @@ class SensitivityAnalyzer(DataMeasure):
         # XXX should we allow to return multiple maps (as a sequence) as
         # currently (illegally) done by SplittingSensitivityAnalyzer?
         raise NotImplementedError
+
+
+#
+# Flavored implementations of SensitivityAnalyzers
+
+class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
+
+    def __init__(self, clf, force_training=True, **kwargs):
+        """Initialize the analyzer with the classifier it shall use.
+
+        :Parameters:
+          clf : Classifier
+            classifier to use. Only classifiers sub-classed from
+            `LinearSVM` may be used.
+          force_training : Bool
+            if classifier was already trained -- do not retrain
+        """
+
+        """Does nothing special."""
+        SensitivityAnalyzer.__init__(self, **kwargs)
+
+        self.__clf = clf
+        """Classifier used to computed sensitivity"""
+
+        self._force_training = force_training
+        """Either to force it to train"""
+
+
+    def __repr__(self):
+        return "<ClassifierBasedSensitivityAnalyzer on %s. force_training=%s" % \
+               (`self.__clf`, str(self._force_training))
+
+
+    def __call__(self, dataset, callables=[]):
+        """Train linear SVM on `dataset` and extract weights from classifier.
+        """
+        if not self.clf.trained or self._force_training:
+            if __debug__:
+                debug("SA", "Training classifier %s %s" %
+                      (`self.clf`,
+                       {False: "since it wasn't yet trained",
+                        True:  "although it was trained previousely"}
+                       [self.clf.trained]))
+            self.clf.train(dataset)
+
+        return self._call(dataset, callables)
+
+
+    def _call(self, dataset, callables=[]):
+        """Actually the function which does the computation"""
+        raise NotImplementedError
+
+
+    def _setClassifier(self, clf):
+        self.__clf = clf
+
+    clf = property(fget=lambda self:self.__clf,
+                   fset=_setClassifier)
+
+
+def selectAnalyzer(clf, **kwargs):
+    """Factory method which knows few classifiers and their sensitivity analyzers
+
+    This function is just to assign default values. For
+    advanced/controlled computation assign them explicitely
+    """
+    if   isinstance(clf, LinearSVM):
+        from linsvmweights import LinearSVMWeights
+        return LinearSVMWeights(clf, **kwargs)
+    elif isinstance(clf, BoostedClassifier):
+        return BoostedClassifierSensitivityAnalyzer(clf, **kwargs)
+    else:
+        return None
+
+
+class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
+    """Set sensitivity analyzers to be merged into a single output"""
+
+    def __init__(self, analyzers=[],
+                 combiner=lambda x:N.mean(x, axis=0),
+                 **kwargs):
+        SensitivityAnalyzer.__init__(self, **kwargs)
+        self.__analyzers = analyzers
+        """List of analyzers to use"""
+
+        self.__combiner = combiner
+        """Which functor to use to combine all sensitivities"""
+
+        self._registerState('sensitivities', enabled=False,
+            doc="Sensitivities produced by each classifier")
+
+
+    def __call__(self, dataset, callables=[]):
+        sensitivities = []
+        ind = 0
+        for analyzer in self.__analyzers:
+            if __debug__:
+                debug("SA", "Computing sensitivity for SA#%d:%s" %
+                      (ind, analyzer))
+            sensitivity = analyzer(dataset, callables)
+            sensitivities.append(sensitivity)
+            ind += 1
+
+        self["sensitivities"] = sensitivities
+        result = self.__combiner(sensitivities)
+        return result
+
+
+    def _setAnalyzers(self, analyzers):
+        """Set the analyzers
+        """
+        self.__analyzers = analyzers
+        """Analyzers to use"""
+
+    analyzers = property(fget=lambda x:x.__analyzers,
+                         fset=_setAnalyzers,
+                         doc="Used analyzers")
+
+
+
+class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
+    """Set sensitivity analyzers to be merged into a single output"""
+
+    def __init__(self,
+                 clf,
+                 analyzer=None,
+                 combined_analyzer=None,
+                 **kwargs):
+        """Initialize Sensitivity Analyzer for `BoostedClassifier`
+        """
+        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+        if combined_analyzer is None:
+            combined_analyzer = CombinedSensitivityAnalyzer(**kwargs)
+        self.__combined_analyzer = combined_analyzer
+        """Combined analyzer to use"""
+
+        self.__analyzer = None
+        """Analyzer to use for basic classifiers within boosted classifier"""
+
+
+    def _call(self, dataset, callables=[]):
+        analyzers = []
+        # create analyzers
+        for clf in self.clf.clfs:
+            if self.__analyzer is None:
+                analyzer = selectAnalyzer(clf)
+                if analyzer is None:
+                    raise ValueError, \
+                          "Wasn't able to figure basic analyzer for clf %s" %\
+                          `clf`
+                if __debug__:
+                    debug("SA", "Selected analyzer %s for clf %s" %
+                          (`analyzer`, `clf`))
+            else:
+                # shallow copy should be enough...
+                analyzer = copy.copy(self.__analyzer)
+
+            # assign corresponding classifier
+            analyzer.clf = clf
+            # if clf was trained already - don't train again
+            if clf.trained:
+                analyzer._force_training = False
+            analyzers.append(analyzer)
+
+        self.__combined_analyzer.analyzers = analyzers
+
+        return self.__combined_analyzer(dataset, callables)
+
+    combined_analyzer = property(fget=lambda x:x.__combined_analyzer)

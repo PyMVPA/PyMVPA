@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 
 from math import exp, fabs
-import re
+import re, copy
 
 import numpy as N
 
@@ -60,9 +60,10 @@ def doubleArray2List(x, n):
     return map(svmc.double_getitem, [x]*n, range(n))
 
 
-
-class SVMParameter:
-
+class SVMParameter(object):
+    """
+    SVMParameter class safe to be deepcopied.
+    """
     # default values
     default_parameters = {
     'svm_type' : C_SVC,
@@ -82,84 +83,88 @@ class SVMParameter:
     'probability' : 0
     }
 
+    class _SVMCParameter(object):
+        """Internal class to to avoid memory leaks returning away svmc's params"""
+
+        def __init__(self, params):
+            self.param = svmc.new_svm_parameter()
+            for attr, val in params.items():
+                # adjust val if necessary
+                if attr == 'weight_label':
+                    #self.__weight_label_len = len(val)
+                    val = intArray(val)
+                    # no need?
+                    #freeIntArray(self.weight_label)
+                elif attr == 'weight':
+                    #self.__weight_len = len(val)
+                    val = doubleArray(val)
+                    # no need?
+                    # freeDoubleArray(self.weight)
+                # set the parameter through corresponding call
+                set_func = getattr(svmc, 'svm_parameter_%s_set' % (attr))
+                set_func(self.param, val)
+
+        def __del__(self):
+            freeIntArray(svmc.svm_parameter_weight_label_get(self.param))
+            freeDoubleArray(svmc.svm_parameter_weight_get(self.param))
+            svmc.delete_svm_parameter(self.param)
+
 
     def __init__(self, **kw):
-        self.__dict__['param'] = svmc.new_svm_parameter()
-
-        # yoh: unfortunately do not know cleaner way to overload here
-        if len(kw)==1 and kw.items()[0][0]=="svmc_parameter" and \
-               re.match("^<Swig Object of type 'struct svm_parameter \*'",
-                        kw.items()[0][1].__repr__()):
-            rval = kw.items()[0][1]
-            # following doesn't work nicely. Need to figure things out. XXX
-            # self.__dict__['param'] = kw.items()[0][1]
-            # so lets create a copy and fill it up. So it will be a
-            # copy constructor kinda ;-)
-            for attr, val in self.default_parameters.items():
-                get_func = getattr(svmc, 'svm_parameter_%s_get' % (attr))
-                copy_val = get_func(rval)
-                if attr == 'weight_label':
-                    # yoh -- causes memleak. that is why I had to 
-                    # -DSWIG_PYTHON_SILENT_MEMLEAK as a quick solution. 
-                    # So - XXX
-                    copy_val = intArray2List(copy_val,
-                                    svmc.svm_parameter_nr_weight_get(rval))
-                elif attr == 'weight':
-                    copy_val = doubleArray2List(copy_val,
-                                    svmc.svm_parameter_nr_weight_get(rval))
-                print "Setting %s to be %s whenever default is %s" \
-                        % (attr, copy_val, val )
-                setattr(self, attr, copy_val)
-        else:
-            for attr, val in self.default_parameters.items():
-                setattr(self, attr, val)
-            for attr, val in kw.items():
-                setattr(self, attr, val)
-
-
-    def __getattr__(self, attr):
-        get_func = getattr(svmc, 'svm_parameter_%s_get' % (attr))
-        return get_func(self.param)
-
-
-    def __setattr__(self, attr, val):
-
-        if attr == 'weight_label':
-            self.__dict__['weight_label_len'] = len(val)
-            val = intArray(val)
-            freeIntArray(self.weight_label)
-        elif attr == 'weight':
-            self.__dict__['weight_len'] = len(val)
-            val = doubleArray(val)
-            freeDoubleArray(self.weight)
-
-        set_func = getattr(svmc, 'svm_parameter_%s_set' % (attr))
-        set_func(self.param, val)
-
+        self._params = {}
+        self._params.update(self.default_parameters) # kinda copy.copy ;-)
+        self._params.update(**kw)       # update with new values
+        self.__svmc_params = None       # none is computed 
+        self.__svmc_recompute = False   # thus none to recompute
 
     def __repr__(self):
-        ret = '<svm_parameter:'
-        for name in dir(svmc):
-            if name[:len('svm_parameter_')] == 'svm_parameter_' \
-               and name[-len('_set'):] == '_set':
-                attr = name[len('svm_parameter_'):-len('_set')]
-                if attr == 'weight_label':
-                    ret = ret+' weight_label = %s, ' \
-                            % intArray2List(self.weight_label,
-                                                 self.weight_label_len)
-                elif attr == 'weight':
-                    ret = ret+' weight = %s, ' \
-                            % doubleArray2List(self.weight,
-                                                    self.weight_len)
-                else:
-                    ret = ret+' %s = %s, ' % (attr, getattr(self, attr))
-        return ret+'>'
+        return self._params
+
+    def __str__(self):
+        return "SVMParameter: %s" % `self._params`
+
+    def __copy__(self):
+        out = SVMParameter()
+        out._params = copy.copy(self._params)
+        return out
+
+    def __deepcopy__(self, memo):
+        out = SVMParameter()
+        out._params = copy.deepcopy(self._params)
+        return out
+
+    def _clear_svmc_params(self):
+        if not self.__svmc_params is None:
+            del self.__svmc_params
+        self.__svmc_params = None
+
+    @property
+    def param(self):
+        if self.__svmc_recompute:
+            self._clear_svmc_params()
+        if self.__svmc_params is None:
+            self.__svmc_params = SVMParameter._SVMCParameter(self._params)
+            self.__svmc_recompute = False
+        return self.__svmc_params.param
 
     def __del__(self):
-        freeIntArray(self.weight_label)
-        freeDoubleArray(self.weight)
-        svmc.delete_svm_parameter(self.param)
+        self._clear_svmc_params()
 
+    def _setParameter(self, key, value):
+        """Not exactly proper one -- if lists are svmc_recompute, would fail anyways"""
+        self.__svmc_recompute = True
+        self._params[key] = value
+
+    @classmethod
+    def _register_properties(cls):
+        for key in cls.default_parameters.keys():
+            exec "%s.%s = property(fget=%s, fset=%s)"  % \
+                 (cls.__name__, key,
+                  "lambda self:self._params['%s']" % key,
+                  "lambda self,val:self._setParameter('%s', val)" % key)
+
+
+SVMParameter._register_properties()
 
 def convert2SVMNode(x):
     """convert a sequence or mapping to an SVMNode array"""
@@ -292,9 +297,9 @@ class SVMModel:
         return self.labels
 
 
-    def getParam(self):
-        return SVMParameter(
-                    svmc_parameter=svmc.svm_model_param_get(self.model))
+    #def getParam(self):
+    #    return SVMParameter(
+    #                svmc_parameter=svmc.svm_model_param_get(self.model))
 
 
     def predictValuesRaw(self, x):

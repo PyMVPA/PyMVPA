@@ -208,8 +208,7 @@ class Dataset(object):
 
 
     def _getuniqueattr(self, attrib, dict_):
-        """
-        Provide common facility to return unique attributes
+        """Provide common facility to return unique attributes
 
         XXX `dict_` can be simply replaced now with self._dsattr
         """
@@ -224,6 +223,21 @@ class Dataset(object):
             self._dsattr['__uniquereseted'] = False
 
         return self._dsattr[attrib]
+
+
+    def _setdataattr(self, attrib, value):
+        """Provide common facility to set attributes
+
+        """
+        if len(value) != self.nsamples:
+            raise ValueError, \
+                  "Provided %ss have %d entries while there is %d samples" %\
+                  (attrib, len(value), self.nsamples)
+        self._data['labels'] = N.array(value)
+        uniqueattr = "unique"+attrib
+
+        if self._dsattr.has_key(uniqueattr):
+            self._dsattr[uniqueattr] = None
 
 
     def _getNSamplesPerAttr( self, attrib='labels' ):
@@ -329,7 +343,8 @@ class Dataset(object):
 
 
     @classmethod
-    def _registerAttribute(cls, key, dictname="_data", hasunique=False):
+    def _registerAttribute(cls, key, dictname="_data", hasunique=False,
+                           default_setter=True):
         """Register an attribute for any Dataset class.
 
         Creates property assigning getters/setters depending on the
@@ -354,13 +369,16 @@ class Dataset(object):
             setter = '_set%s' % key
             if classdict.has_key(setter):
                 setter =  '%s.%s' % (cls.__name__, setter)
+            elif default_setter and dictname=="_data":
+                setter = "lambda self,x: self._setdataattr" + \
+                         "(attrib='%s', value=x)" % (key)
             else:
                 setter = None
 
             if __debug__:
                 debug("DS", "Registering new property %s.%s" %
                       (cls.__name__, key))
-            exec "%s.%s = property(fget=%s,fset=%s)"  % \
+            exec "%s.%s = property(fget=%s, fset=%s)"  % \
                  (cls.__name__, key, getter, setter)
 
             if hasunique:
@@ -582,7 +600,7 @@ class Dataset(object):
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'permuteLabels() has never been ' \
                                     'called with status == True.'
-            self._setLabels(self._data['origlabels'])
+            self.labels = self._data['origlabels']
             self._data['origlabels'] = None
         else:
             # store orig labels, but only if not yet done, otherwise multiple
@@ -600,9 +618,9 @@ class Dataset(object):
                     self._data['labels'][self.chunks == o ] = \
                         N.random.permutation( self.labels[ self.chunks == o ] )
                 # to recompute uniquelabels
-                self._setLabels(self._data['labels'])
+                self.labels = self._data['labels']
             else:
-                self._setLabels(N.random.permutation(self._data['labels']))
+                self.labels = N.random.permutation(self._data['labels'])
 
 
     def getRandomSamples( self, nperlabel ):
@@ -634,20 +652,11 @@ class Dataset(object):
         return self.selectSamples( sample )
 
 
-    # TODO? Following 2 setters might be gone as well after appropriate
-    # modification of _registerAttribute
-    def _setLabels(self, labels):
-        """Sets labels and recomputes uniquelabels
-        """
-        self._data['labels'] = labels
-        self._data['uniquelabels'] = None # None!since we might not need them
-
-
-    def _setChunks(self, chunks):
-        """Sets chunks and recomputes uniquechunks
-        """
-        self._data['chunks'] = chunks
-        self._data['uniquechunks'] = None # None!since we might not need them
+#    def _setchunks(self, chunks):
+#        """Sets chunks and recomputes uniquechunks
+#        """
+#        self._data['chunks'] = N.array(chunks)
+#        self._dsattr['uniquechunks'] = None # None!since we might not need them
 
 
     def getNSamples( self ):

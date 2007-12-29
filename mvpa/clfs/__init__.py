@@ -6,8 +6,23 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Import helper for PyMVPA classifiers"""
+"""Import helper for PyMVPA classifiers
+
+Module Organization
+===================
+mvpa.clfs module contains various classifiers
+
+.. packagetree::
+   :style: UML
+
+:group Basic: classifier
+:group Specific Implementations: knn svm plf
+:group Internal Implementations: libsvm
+:group Utilities: transerror
+"""
 
 __docformat__ = 'restructuredtext'
 
-
+from classifier import *
+from knn import kNN
+from svm import SVMBase, LinearSVM, LinearNuSVMC, LinearCSVMC, RbfNuSVMC, RbfCSVMC

@@ -206,11 +206,6 @@ class RFE(FeatureSelection):
             if self.isStateEnabled("nfeatures"):
                 self["nfeatures"].append(wdataset.nfeatures)
 
-            if __debug__:
-                debug('RFEC',
-                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d" %
-                      (step, nfeatures, error, isthebest, stop))
-
             # store result
             if isthebest:
                 results = (wdataset, wtestdataset)
@@ -220,6 +215,13 @@ class RFE(FeatureSelection):
 
             # Select features to preserve
             selected_ids = self.__feature_selector(sensitivity)
+
+            if __debug__:
+                debug('RFEC',
+                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d nfeatures_selected=%d" %
+                      (step, nfeatures, error, isthebest, stop, len(selected_ids)))
+
+
             # Create a dataset only with selected features
             wdataset = wdataset.selectFeatures(selected_ids)
 

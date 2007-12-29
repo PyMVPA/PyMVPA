@@ -17,57 +17,13 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clfs.transerror import TransferError, ConfusionMatrix
 
-
-
-def pureMultivariateSignal(nsamples, chunk, signal2noise = 1.5):
-    """ Create a 2d dataset with a clear multivariate signal, but no
-    univariate information.
-
-    %%%%%%%%%
-    % O % X %
-    %%%%%%%%%
-    % X % O %
-    %%%%%%%%%
-    """
-
-    # start with noise
-    data=N.random.normal(size=(4*nsamples,2))
-
-    # add signal
-    data[:2*nsamples,1] += signal2noise
-    data[2*nsamples:4*nsamples,1] -= signal2noise
-    data[:nsamples,0] -= signal2noise
-    data[2*nsamples:3*nsamples,0] -= signal2noise
-    data[nsamples:2+nsamples,0] += signal2noise
-    data[3*nsamples:4*nsamples,0] += signal2noise
-
-    # two conditions
-    labels = [0 for i in xrange(nsamples)] \
-             + [1 for i in xrange(nsamples)] \
-             + [1 for i in xrange(nsamples)] \
-             + [0 for i in xrange(nsamples)]
-    labels = N.array(labels)
-
-    return Dataset(samples=data, labels=labels, chunks=chunk)
-
+from tests_warehouse import pureMultivariateSignal, getMVPattern
 
 class CrossValidationTests(unittest.TestCase):
 
-    def getMVPattern(self, s2n):
-        run1 = pureMultivariateSignal(5, 1, s2n)
-        run2 = pureMultivariateSignal(5, 2, s2n)
-        run3 = pureMultivariateSignal(5, 3, s2n)
-        run4 = pureMultivariateSignal(5, 4, s2n)
-        run5 = pureMultivariateSignal(5, 5, s2n)
-        run6 = pureMultivariateSignal(5, 6, s2n)
-
-        data = run1 + run2 + run3 + run4 + run5 + run6
-
-        return data
-
 
     def testSimpleNMinusOneCV(self):
-        data = self.getMVPattern(3)
+        data = getMVPattern(3)
 
         self.failUnless( data.nsamples == 120 )
         self.failUnless( data.nfeatures == 2 )
@@ -87,7 +43,7 @@ class CrossValidationTests(unittest.TestCase):
 
     def testNoiseClassification(self):
         # get a dataset with a very high SNR
-        data = self.getMVPattern(10)
+        data = getMVPattern(10)
 
         # do crossval with default errorfx and 'mean' combiner
         transerror = TransferError(kNN())
