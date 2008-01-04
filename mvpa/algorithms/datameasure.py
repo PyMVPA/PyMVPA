@@ -142,19 +142,33 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                    fset=_setClassifier)
 
 
-def selectAnalyzer(clf, **kwargs):
+def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
     """Factory method which knows few classifiers and their sensitivity analyzers
+
+    :Parameters:
+      clf : Classifier
+        the one for which to select analyzer
+      basic_analyzer : SensitivityAnalyzer
+        in case if `clf` is a classifier which uses other classifiers
+        specify which basic_analyzer to use when constructing combined analyzer
 
     This function is just to assign default values. For
     advanced/controlled computation assign them explicitely
     """
-    if   isinstance(clf, LinearSVM):
+    banalyzer = None
+    if isinstance(clf, LinearSVM):
         from linsvmweights import LinearSVMWeights
-        return LinearSVMWeights(clf, **kwargs)
+        banalyzer = LinearSVMWeights(clf, **kwargs)
     elif isinstance(clf, BoostedClassifier):
-        return BoostedClassifierSensitivityAnalyzer(clf, **kwargs)
-    else:
-        return None
+        if basic_analyzer is None and len(clf.clfs) > 0:
+            basic_analyzer = selectAnalyzer(clf.clfs[0], **kwargs)
+            if __debug__:
+                debug("SA", "Selected basic analyzer %s for classifier %s " +
+                      "based on 0th classifier in it being %s" %
+                      (analyzer, clf, clf.clfs[0] ))
+        banalyzer = BoostedClassifierSensitivityAnalyzer(clf,
+                            analyzer=basic_analyzer, **kwargs)
+    return banalyzer
 
 
 class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
