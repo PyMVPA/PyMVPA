@@ -252,42 +252,59 @@ class ConfusionMatrix(object):
         self._compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
+    @property
+    def error(self):
+        self._compute()
+        return 1.0-self.__Ncorrect*1.0/sum(self.__Nsamples)
+
     sets = property(lambda self:self.__sets)
 
-class TransferError(State):
-    """Compute the transfer error of a (trained) classifier on a dataset.
 
-    The actual error value is computed using a customizable error function.
-    Optionally the classifier can be training by passing an additional
-    training dataset to the __call__() method.
+class ClassifierError(State):
+    """Compute the some error of a (trained) classifier on a dataset.
     """
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None, **kwargs):
-        """Cheap initialization.
 
-        Parameters
-        ----------
-        - `clf`: Classifier instance.
-                 Either trained or untrained.
-        - `errorfx`: Functor that computes a scalar error value from the
-                     vectors of desired and predicted values (e.g. subclass
-                     of ErrorFx)
-        - `labels`: if provided, should be a set of labels to add on top of
-                    the ones present in testdata
+    def __init__(self, clf, labels=None, **kwargs):
+        """Initialization.
+
+        :Parameters:
+          clf : Classifier
+            Either trained or untrained classifier
+          labels : list
+            if provided, should be a set of labels to add on top of the
+            ones present in testdata
         """
         State.__init__(self, **kwargs)
         self.__clf = clf
-        self.__errorfx = errorfx
+
         self.__labels = labels
+        """Labels to add on top to existing in testing data"""
+
         self._registerState('confusion', enabled=False)
         """TODO Think that labels might be also symbolic thus can't directly
                 be indicies of the array
         """
 
     def __copy__(self):
-        out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, self.clf, self.errorfx, self.__labels)
+        """TODO: think... may be we need to copy self.clf"""
+        out = ClassifierError.__new__(TransferError)
+        ClassifierError.__init__(out, self.clf)
         out._copy_states_(self)
         return out
+
+    def _precall(self, testdata, trainingdata=None):
+        """Generic part which trains the classifier if necessary
+        """
+        if not trainingdata == None:
+            self.__clf.train(trainingdata)
+
+
+    def _call(self, testdata, trainingdata=None):
+        raise NotImplementedError
+
+
+    def _postcall(self, testdata, trainingdata=None, error=None):
+        pass
 
 
     def __call__(self, testdata, trainingdata=None):
@@ -300,15 +317,69 @@ class TransferError(State):
 
         Returns a scalar value of the transfer error.
         """
-        if not trainingdata == None:
-            self.__clf.train(trainingdata)
+        self._precall(testdata, trainingdata)
+        error = self._call(testdata, trainingdata)
+        self._postcall(testdata, trainingdata, error)
+        return error
 
-        predictions = self.__clf.predict(testdata.samples)
+    @property
+    def clf(self): return self.__clf
+
+    @property
+    def labels(self): return self.__labels
+
+
+class TransferError(ClassifierError):
+    """Compute the transfer error of a (trained) classifier on a dataset.
+
+    The actual error value is computed using a customizable error function.
+    Optionally the classifier can be training by passing an additional
+    training dataset to the __call__() method.
+    """
+    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None, **kwargs):
+        """Initialization.
+
+        :Parameters:
+          clf : Classifier
+            Either trained or untrained classifier
+          errorfx
+            Functor that computes a scalar error value from the vectors of
+            desired and predicted values (e.g. subclass of `ErrorFunction`)
+          labels : list
+            if provided, should be a set of labels to add on top of the
+            ones present in testdata
+        """
+        ClassifierError.__init__(self, clf, labels, **kwargs)
+        self.__errorfx = errorfx
+
+
+    def __copy__(self):
+        """TODO: think... may be we need to copy self.clf"""
+        # TODO TODO -- use ClassifierError.__copy__
+        out = TransferError.__new__(TransferError)
+        TransferError.__init__(out, self.clf, self.errorfx, self.__labels)
+        out._copy_states_(self)
+        return out
+
+
+    def _call(self, testdata, trainingdata=None):
+        """Compute the transfer error for a certain test dataset.
+
+        If `trainingdata` is not `None` the classifier is trained using the
+        provided dataset before computing the transfer error. Otherwise the
+        classifier is used in it's current state to make the predictions on
+        the test dataset.
+
+        Returns a scalar value of the transfer error.
+        """
+
+        predictions = self.clf.predict(testdata.samples)
 
         # compute confusion matrix
+        # TODO should migrate into ClassifierError.__postcall?
         if self.isStateEnabled('confusion'):
             self['confusion'] = ConfusionMatrix(
-                labels=self.__labels, targets=testdata.labels,
+                labels=self.labels, targets=testdata.labels,
                 predictions=predictions)
 
         # TODO
@@ -320,7 +391,53 @@ class TransferError(State):
         return error
 
     @property
-    def clf(self): return self.__clf
-
-    @property
     def errorfx(self): return self.__errorfx
+
+
+class ConfusionBasedError(ClassifierError):
+    """For a given classifier report an error based on internally
+    computed error measure (given by some `ConfusionMatrix` stored in
+    some state variable of `Classifier`).
+
+    This way we can perform feature selection taking as the error
+    criterion either learning error, or transfer to splits error in
+    the case of SplitClassifier
+
+    TODO: Derive it from some common class with `TransferError`
+    """
+
+    def __init__(self, clf, labels, confusion_state="trained_confusion", **kwargs):
+        """Initialization.
+
+        :Parameters:
+          clf : Classifier
+            Either trained or untrained classifier
+          confusion_state
+            Id of the state variable which stores `ConfusionMatrix`
+          labels : list
+            if provided, should be a set of labels to add on top of the
+            ones present in testdata
+        """
+        ClassifierError.__init__(self, clf, labels, **kwargs)
+
+        self.__confusion_state = confusion_state
+        """What state to extract from"""
+
+        if not clf.hasState(confusion_state):
+            raise ValueError, \
+                  "State variable %s is not defined for classifier %s" % \
+                  (confusion_state, `clf`)
+        if not clf.isStateEnabled(confusion_state):
+            if __debug__:
+                debug('CERR', "Forcing state %s to be enabled for %s" %
+                      (confusion_state, `clf`))
+            clf.enableState(confusion_state)
+
+
+    def _call(self, testdata, trainingdata=None):
+        """Extract transfer error. Nor testdata, neither trainingdata is used
+
+        TODO: may be we should train here the same way as TransferError does?
+        """
+        self["confusion"] = self.clf[self.__confusion_state]
+        return self.clf[self.__confusion_state].error
