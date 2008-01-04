@@ -238,6 +238,9 @@ class BoostedClassifier(Classifier):
         self._registerState("raw_predictions", enabled=False,
                             doc="Predictions obtained from each classifier")
 
+        self._registerState("raw_values", enabled=False,
+                            doc="Values obtained from each classifier")
+
 
     def __repr__(self):
         return "<%s with %d classifiers>" \
@@ -493,14 +496,14 @@ class CombinedClassifier(BoostedClassifier):
         self["predictions"] = predictions
 
         if self.isStateEnabled("values"):
-            if self.__combiner.isStateEnabled("values"):
+            if self.__combiner.isStateActive("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
                 self["values"] = self.__combiner["values"]
             else:
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state" % self +
-                            " enabled, but combiner has it disabled, thus no" +
-                            " values could be provided")
+                            " enabled, but combiner has it active, thus no" +
+                            " values could be provided directly, access .clfs")
         return predictions
 
 
