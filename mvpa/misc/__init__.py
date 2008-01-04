@@ -115,6 +115,7 @@ if __debug__:
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('CROSSC',"Cross-validation call")
+    debug.register('CERR', "Various ClassifierErrors")
 
     # Lets check if environment can tell us smth
     if environ.has_key('MVPA_DEBUG'):
