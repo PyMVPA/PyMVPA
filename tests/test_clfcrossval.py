@@ -117,6 +117,9 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnlessEqual(cm2.percentCorrect, cm.percentCorrect,
                              msg="Percent of corrrect should remain the same ;-)")
 
+        self.failUnlessEqual(cm2.error, 1.0-cm.percentCorrect/100.0,
+                             msg="Test if we get proper error value")
+
 
 def suite():
     return unittest.makeSuite(CrossValidationTests)
