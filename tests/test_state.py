@@ -174,6 +174,40 @@ class StateTests(unittest.TestCase):
             Set(TestClassProperChild._register_states).union(
             Set(TestClassProper._register_states)))
 
+
+    def testStateVariables(self):
+        """To test new states"""
+
+        from mvpa.misc.state import StateVariable, StateVariable2
+
+        class S(object):
+            values = StateVariable2(enabled=True)
+            i = int(1)
+            def __init__(self):
+                pass
+                #self.values = None
+
+        s = S()
+        print "Created s"
+        s2 = S()
+        print "Created s2"
+        s.values = 122
+        print type(s.values)
+        print s.values.setEnable
+        return
+        StateVariable._setEnable(s2.__class__.values, s2, False)
+        s.values = 12
+        s2.values = 100
+        try:
+            s2.values
+            self.fail("Should have puked since values were not enabled yet")
+        except:
+            pass
+        StateVariable._setEnable(s2.__class__.values, s2, True)
+        s2.values = 1000
+        print s.values, s2.values
+
+
 def suite():
     return unittest.makeSuite(StateTests)
 
