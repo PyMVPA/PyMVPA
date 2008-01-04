@@ -18,6 +18,91 @@ if __debug__:
     from mvpa.misc import debug
 
 
+class StateVariable(object):
+    """Descriptor intended to conditionally store the value
+
+    Unfortunately manipulation of enable is not straightforward and
+    has to be done via class object, e.g.
+
+      StateVariable._setEnable(self.__class__.values, self, False)
+
+      if self is an instance of the class which has
+    """
+    def __init__(self, enabled=False):
+        if __debug__:
+            debug("ST",
+                  "New state being registered")
+
+        self._values = {}
+        self._isenabled_default = enabled
+        self._isenabled = {}
+        print "initialized ", self, " and now ", object.__getattribute__(self, '__dict__')
+
+    def _get(self, obj, objtype=None):
+        # if accessing from class - simply return the object so we could
+        # invoke its methods
+        print "! I am in get for ", obj
+        if obj is None:
+            return self
+        if not self._values.has_key(obj):
+            raise UnknownStateError("Unknown yet value for '%s'" % `obj`)
+        return self._values[obj]
+
+    def _set(self, obj, val):
+        print "! I am in set"
+        if (self._isenabled.has_key(obj) and self._isenabled[obj]) or \
+           (not self._isenabled.has_key(obj) and self._isenabled_default):
+            self._values[obj] = val
+
+
+    def _getEnable(self, obj, val):
+        return self._isenabled[obj]
+    def __getEnable(self, obj, val):
+        return self._isenabled[obj]
+
+    def setEnable(self, obj, val):
+        self._isenabled[obj] = val
+
+    def _setEnable(self, obj, val):
+        self._isenabled[obj] = val
+
+    def enable(self, obj):
+        self._setEnable(obj, True)
+
+    def disable(self, obj):
+        self._setEnable(obj, False)
+
+    def __delete__(self, obj):
+        raise AttributeError
+
+
+class StateVariable2(object):
+
+    def __init__(self, *args, **kwargs):
+        self._sv = StateVariable(*args, **kwargs)
+        print "Initialized here too in ", self
+
+    def __getattribute__(self, attr):
+        print "I am in getattr for ", self, attr
+        cls = StateVariable2
+        selfdict = object.__getattribute__(self, "__dict__")
+        print attr, self, cls, selfdict.keys()
+        if attr in selfdict:
+            x = object.__getattribute__(self, attr)
+            print "Returning for %s from selfdict " % attr, x
+            return x
+        elif attr in cls.__dict__:
+            x = cls.__dict__[attr]
+            if hasattr(x, "__get__"):
+                x = x.__get__(self.__obj__)
+                print "Returning __get__'s value", x
+            else:
+                print "Returning cls.__dict__'s value", x
+            return x
+
+        raise AttributeError, attr
+
+
 class State(object):
     """Base class for stateful objects.
 
