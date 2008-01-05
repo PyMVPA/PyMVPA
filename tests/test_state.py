@@ -39,7 +39,7 @@ class TestClassProperChild(TestClassProper):
 
 class StateTests(unittest.TestCase):
 
-    def testBlankState(self):
+    def _testBlankState(self):
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
 
@@ -72,7 +72,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessRaises(KeyError, blank2.__getitem__, 'state1')
 
 
-    def testProperState(self):
+    def _testProperState(self):
         proper   = TestClassProper()
         proper2  = TestClassProper(enable_states=['state1'], disable_states=['state2'])
 
@@ -111,7 +111,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(len(proper2.enabledStates), 3)
 
 
-    def testGetSaveEnabled(self):
+    def _testGetSaveEnabled(self):
         """Check if we can store/restore set of enabled states"""
 
         proper  = TestClassProper()
@@ -128,7 +128,7 @@ class StateTests(unittest.TestCase):
                         msg="List of enabled states should return to original one")
 
 
-    def testStoredEnableStates(self):
+    def _testStoredEnableStates(self):
         """Check if the states mentioned in enable_states
         are retroactively enabled while being registered"""
         proper  = TestClassProper(enable_states=['newstate'])
@@ -145,7 +145,7 @@ class StateTests(unittest.TestCase):
 
     # TODO: make test for _copy_states_ or whatever comes as an alternative
 
-    def testStoredTemporarily(self):
+    def _testStoredTemporarily(self):
         proper   = TestClassProper()
         properch = TestClassProperChild(enable_states=["state1"])
 
@@ -164,7 +164,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(proper.enabledStates, ["state2"])
 
 
-    def testProperStateChild(self):
+    def _testProperStateChild(self):
         """
         Actually it would fail which makes it no sense to use
         _register_states class variables
@@ -178,34 +178,38 @@ class StateTests(unittest.TestCase):
     def testStateVariables(self):
         """To test new states"""
 
-        from mvpa.misc.state import StateVariable, StateVariable2
+        from mvpa.misc.state import StateVariable, NewState
 
-        class S(object):
-            values = StateVariable2(enabled=True)
-            i = int(1)
-            def __init__(self):
-                pass
-                #self.values = None
+        class S1(NewState):
+            v1 = StateVariable(enabled=True, doc="values1 is ...")
+            v1XXX = StateVariable(enabled=False, doc="values1 is ...")
 
-        s = S()
-        print "Created s"
-        s2 = S()
-        print "Created s2"
-        s.values = 122
-        print type(s.values)
-        print s.values.setEnable
-        return
-        StateVariable._setEnable(s2.__class__.values, s2, False)
-        s.values = 12
-        s2.values = 100
+
+        class S2(NewState):
+            v2 = StateVariable(enabled=True, doc="values12 is ...")
+
+        class S1_(S1):
+            pass
+
+        class S1__(S1_):
+            v1__ = StateVariable(enabled=False)
+
+        class S12(S1__, S2):
+            v12 = StateVariable()
+
+        s1, s2, s1_, s1__, s12 = S1(), S2(), S1_(), S1__(), S12()
+
+        self.failUnlessEqual(s1.states.isStateEnabled("v1"), True)
+        s1.v1 = 12
+        s12.v1 = 120
+        s2.v2 = 100
+
+        self.failUnlessEqual(s1.v1, 12)
         try:
-            s2.values
+            print s1__.v1__
             self.fail("Should have puked since values were not enabled yet")
         except:
             pass
-        StateVariable._setEnable(s2.__class__.values, s2, True)
-        s2.values = 1000
-        print s.values, s2.values
 
 
 def suite():
