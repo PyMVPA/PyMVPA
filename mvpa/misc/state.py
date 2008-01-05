@@ -24,84 +24,325 @@ class StateVariable(object):
     Unfortunately manipulation of enable is not straightforward and
     has to be done via class object, e.g.
 
-      StateVariable._setEnable(self.__class__.values, self, False)
+      StateVariable.enable(self.__class__.values, self, False)
 
       if self is an instance of the class which has
     """
-    def __init__(self, enabled=False):
-        if __debug__:
-            debug("ST",
-                  "New state being registered")
 
+    def __init__(self, name=None, enabled=False, doc="State variable"):
         self._values = {}
         self._isenabled_default = enabled
         self._isenabled = {}
-        print "initialized ", self, " and now ", object.__getattribute__(self, '__dict__')
+        self.__doc__ = doc
+        self.name = name
+        if __debug__:
+            debug("STV",
+                  "Initialized new state variable " + `self`)
 
-    def _get(self, obj, objtype=None):
-        # if accessing from class - simply return the object so we could
-        # invoke its methods
-        print "! I am in get for ", obj
+    def __get__(self, obj, objtype=None):
         if obj is None:
             return self
         if not self._values.has_key(obj):
             raise UnknownStateError("Unknown yet value for '%s'" % `obj`)
         return self._values[obj]
 
-    def _set(self, obj, val):
-        print "! I am in set"
-        if (self._isenabled.has_key(obj) and self._isenabled[obj]) or \
-           (not self._isenabled.has_key(obj) and self._isenabled_default):
+    def __set__(self, obj, val):
+        # print "! I am in set"
+         if self.isEnabled(obj):
             self._values[obj] = val
 
+    def isEnabled(self, obj):
+        return (self._isenabled.has_key(obj) and self._isenabled[obj]) or \
+                   (not self._isenabled.has_key(obj) and self._isenabled_default)
 
-    def _getEnable(self, obj, val):
         return self._isenabled[obj]
-    def __getEnable(self, obj, val):
-        return self._isenabled[obj]
 
-    def setEnable(self, obj, val):
+    def enable(self, obj, val=False):
         self._isenabled[obj] = val
-
-    def _setEnable(self, obj, val):
-        self._isenabled[obj] = val
-
-    def enable(self, obj):
-        self._setEnable(obj, True)
-
-    def disable(self, obj):
-        self._setEnable(obj, False)
 
     def __delete__(self, obj):
-        raise AttributeError
+        try:
+            del self._values[key]
+        except:
+            raise AttributeError
 
 
-class StateVariable2(object):
+class statecollector(type):
+    """Intended to collect and compose StateCollection for any child
+    class of this metaclass
+    """
 
-    def __init__(self, *args, **kwargs):
-        self._sv = StateVariable(*args, **kwargs)
-        print "Initialized here too in ", self
+    def __init__(cls, name, bases, dict):
+        if __debug__:
+            debug("STCOL", "Collector call for %s.%s, where bases=%s, dict=%s " %
+                  (cls, name, bases, dict))
+        super(statecollector, cls).__init__(name, bases, dict)
+        registered = {}
+        for name, value in dict.iteritems():
+            if isinstance(value, StateVariable):
+                registered[name] = value
 
-    def __getattribute__(self, attr):
-        print "I am in getattr for ", self, attr
-        cls = StateVariable2
-        selfdict = object.__getattribute__(self, "__dict__")
-        print attr, self, cls, selfdict.keys()
-        if attr in selfdict:
-            x = object.__getattribute__(self, attr)
-            print "Returning for %s from selfdict " % attr, x
-            return x
-        elif attr in cls.__dict__:
-            x = cls.__dict__[attr]
-            if hasattr(x, "__get__"):
-                x = x.__get__(self.__obj__)
-                print "Returning __get__'s value", x
+        for base in bases:
+            if hasattr(base, "_states"):
+                # TODO take care about overriding one from super class
+                # for state in base.states:
+                #    if state[0] = 
+                registered.update(base._statecollection.registered)
+        statecollection = StateCollection(cls, registered)
+        setattr(cls, "_statecollection", statecollection)
+
+
+class StateCollection(object):
+    """Container of states class for stateful object.
+
+    Classes inherited from this class gain ability to provide state
+    variables, accessed via __getitem__ method (currently implemented
+    by inherining `dict` class).
+    XXX
+
+    :Groups:
+     - `Access Functions`: `isStateEnabled`, `listStates`, `_getEnabledStates`
+     - `Mutators`: `__init__`, `enableState`, `enableStates`,
+       `disableState`, `disableStates`, `_setEnabledStates`
+    """
+
+    def __init__(self, ownercls, registered = {}):
+                 #enable_states=[],
+                 #disable_states=[]):
+        """Initialize the state variables of a derived class
+
+        :Parameters:
+          states : dict
+            dictionary of states
+          enable_states : list
+            list of states to enable. If it contains 'all' (in any casing),
+            then all states (besides the ones in disable_states) will be enabled
+          disable_states : list
+            list of states to disable
+        """
+
+        self.__ownercls = ownercls
+
+        self.__registered = registered
+        """Dictionary to contain registered states as keys and
+        values signal either they are enabled
+        """
+
+        self.__storedTemporarily = []
+        """List to contain sets of enabled states which were enabled temporarily"""
+
+    def __str__(self):
+        num = len(self.__registered)
+        res = "%d states:" % (num)
+        for i in xrange(min(num, 4)):
+            index = self.__registered.keys()[i]
+            res += " %s" % index
+            if self.hasState(index):
+                res += '*'              # so we have the value already
+            elif self.isStateEnabled(index):
+                res += '+'              # it is enabled but no value is assigned yet
+
+        if len(self.__registered) > 4:
+            res += "..."
+        return res
+
+    #
+    # XXX TODO: figure out if there is a way to define proper
+    #           __copy__'s for a hierarchy of classes. Probably we had
+    #           to define __getinitargs__, etc... read more...
+    #
+    #def __copy__(self):
+
+    def _copy_states_(self, fromstate, deep=False):
+        """Copy states from `fromstate` object into current object
+
+        Crafted to overcome a problem mentioned above in the comment
+        and is to be called from __copy__ of derived classes
+
+        Probably sooner than later will get proper __getstate__,
+        __setstate__
+        """
+        # Bad check... doesn't generalize well...
+        # if not issubclass(fromstate.__class__, self.__class__):
+        #     raise ValueError, \
+        #           "Class  %s is not subclass of %s, " % \
+        #           (fromstate.__class__, self.__class__) + \
+        #           "thus not eligible for _copy_states_"
+        # TODO: FOR NOW NO TEST! But this beast needs to be fixed...
+        operation = { True: copy.deepcopy,
+                      False: copy.copy }[deep]
+
+        self.enabledStates = operation(fromstate.enabledStates)
+        self.__dict = operation(fromstate.__dict)
+        self.__registered = operation(fromstate.__registered)
+        self.__enable_states = operation(fromstate.__enable_states)
+        self.__disable_states = operation(fromstate.__disable_states)
+        self.__enable_all = operation(fromstate.__enable_all)
+        self.__disable_all = operation(fromstate.__disable_all)
+        self.__storedTemporarily = operation(fromstate.__storedTemporarily)
+
+
+    def __checkIndex(self, index):
+        """Verify that given `index` is a known/registered state.
+
+        :Raise `KeyError`: if given `index` is not known
+        """
+        if not self.__registered.has_key(index):
+            raise KeyError, \
+                  "State of %s has no key '%s' registered" \
+                  % (self.__class__.__name__, index)
+
+
+    def hasState(self, index):
+        """Checks if there is a state for `index`
+
+        Simple a wrapper around self.__dict.has_key
+        """
+        return self.__dict.has_key(index)
+
+
+    def __enabledisableall(self, index, value):
+        if index.upper() == 'ALL':
+            if value:
+                self.__enable_all = True
+                self.__disable_all = False
             else:
-                print "Returning cls.__dict__'s value", x
-            return x
+                self.__disable_all = True
+                self.__enable_all = False
+            for index in self.__registered:
+                self.__registered[index]['enabled'] = value
+            return True
+        else:
+            return False
 
-        raise AttributeError, attr
+    def enable(self, index, value=True):
+        if index.upper() == 'ALL':
+            for index_ in self.__registered:
+                self.enable(index_, value)
+        else:
+            self.__checkIndex(index)
+            StateVariable.enable(self.__registered[index], self.__ownercls, value)
 
+    def enableState(self, index):
+        """Enable state variable defined by `index` id"""
+        # TODO... remove?
+        self.enable(index, True)
+
+    def disableState(self, index):
+        """Disable state variable defined by `index` id"""
+        # TODO... remove?
+        self.enable(index, False)
+
+    def enableStates(self, indexlist):
+        """Enable all states listed in `indexlist`"""
+        for index in indexlist:
+            self.enableState(index)
+
+    def disableStates(self, indexlist):
+        """Disable all states listed in `indexlist`"""
+
+        for index in indexlist:
+            self.disableState(index)
+
+    def isStateEnabled(self, index):
+        """Returns `True` if state `index` is enabled"""
+        self.__checkIndex(index)
+        return StateVariable.isEnabled(self.__registered[index], self.__ownercls)
+
+    def isStateActive(self, index):
+        """Returns `True` if state `index` is known and is enabled"""
+        return self.__registered.has_key(index) and \
+               self.isStateEnabled(index)
+
+
+    def _enableStatesTemporarily(self, enable_states, other=None):
+        """Temporarily enable needed states for computation
+
+        Enable states which are enabled in `other` and listed in
+        `enable _states`. Use `resetEnabledTemporarily` to reset
+        to previous state of enabled.
+        """
+        self.__storedTemporarily.append(self.enabledStates)
+        for state in enable_states:
+            if not self.isStateEnabled(state) and \
+               ((other is None) or other.isStateEnabled(state)):
+                if __debug__:
+                    debug("ST", "Temporarily enabling state %s" % state)
+                self.enableState(state)
+
+
+    def _resetEnabledTemporarily(self):
+        """Reset to previousely stored set of enabled states"""
+        if __debug__:
+            debug("ST", "Resetting to previous set of enabled states")
+        if len(self.enabledStates)>0:
+            self.enabledStates = self.__storedTemporarily.pop()
+        else:
+            raise ValueError("Trying to restore not-stored list of enabled states")
+
+
+    def listStates(self):
+        """Return a list of registered states along with the documentation"""
+
+        # lets assure consistent litsting order
+        items = self.__registered.items()
+        items.sort()
+        return [ "%s%s: %s" % (x[0],
+                               {True:"[enabled]",
+                                False:""}[self.enabled(x[0])],
+                               x[1].__doc__) for x in items ]
+
+
+    def _getEnabledStates(self):
+        """Return list of enabled states"""
+
+        return filter(lambda y:
+                      self.enabled(y),
+                      self.__registered.keys())
+
+
+    def _setEnabledStates(self, indexlist):
+        """Given `indexlist` make only those in the list enabled
+
+        It might be handy to store set of enabled states and then to restore
+        it later on. It can be easily accomplished now::
+
+        >>> states_enabled = stateful.enabledStates
+        >>> stateful.enabledState('blah')
+        >>> stateful.enabledStates = states_enabled
+
+        """
+        for state in self.__registered.keys():
+            self.enable(state[0], state[0] in indexlist)
+
+
+    def _getRegisteredStates(self):
+        """Return ids for all registered state variables"""
+
+        return self.__registered.keys()
+
+
+    def enable_disable_states(self, enable_states=[], disable_states=[]):
+        if len(enable_states)+len(disable_states)>0:
+            print "TODO: trying to enable by lists"
+
+    # Properties
+    states = property(fget=_getRegisteredStates)
+    enabledStates = property(fget=_getEnabledStates, fset=_setEnabledStates)
+
+
+class NewState(object):
+
+    __metaclass__ = statecollector
+
+    def __init__(self,
+                 enable_states=[],
+                 disable_states=[]):
+        self._statecollection.enable_disable_states(enable_states, disable_states)
+
+    @property
+    def states(self):
+        return self._statecollection
 
 class State(object):
     """Base class for stateful objects.
@@ -255,7 +496,7 @@ class State(object):
         """
         if not self.__registered.has_key(index):
             raise KeyError, \
-                  "State of %s has no key %s registered" \
+                  "State of %s has no key '%s' registered" \
                   % (self.__class__.__name__, index)
 
 
