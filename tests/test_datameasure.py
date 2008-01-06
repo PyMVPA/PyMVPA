@@ -13,7 +13,7 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.algorithms.featsel import FixedNElementTailSelector
+from mvpa.algorithms.featsel import FixedNElementTailSelector, FeatureSelectionPipeline, FractionTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs import *
 from mvpa.clfs.svm import LinearNuSVMC
@@ -33,7 +33,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
-    def testBIG(self):
+    def testAnalyzerWithSplitClassifier(self):
         svm = LinearNuSVMC()
 
         #svm_weigths = LinearSVMWeights(svm)
@@ -62,6 +62,33 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 list(FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)),
                 list(self.nonbogus),
                 msg="At the end we should have selected the right features")
+
+
+    def __testFSPipelineWithAnalyzerWithSplitClassifier(self):
+        basic_clf = LinearNuSVMC()
+        multi_clf = MulticlassClassifier(clf=basic_clf)
+        #svm_weigths = LinearSVMWeights(svm)
+
+        # Proper RFE: aggregate sensitivities across multiple splits,
+        # but also due to multi class those need to be aggregated
+        # somehow. Transfer error here should be 'leave-1-out' error
+        # of split classifier itself
+        rfe = RFE(sensitivity_analyzer=Absolute(
+                      selectAnalyzer(SplitClassifier(clf=svm),
+                                     enable_states=["sensitivities"])),
+                  transfer_error=trans_error,
+                  feature_selector=FeatureSelectionPipeline(
+                      [FractionTailSelector(0.5),
+                       FixedNElementTailSelector(1)]),
+                  train_clf=True)
+
+        # assumming many defaults it is as simple as
+        sana = selectAnalyzer( SplitClassifier(clf=svm),
+                               enable_states=["sensitivities"] ) # and lets look at all sensitivities
+
+        # and we get sensitivity analyzer which works on splits and uses
+        # linear svm sensitivity
+        selected_features = rfe(self.dataset)
 
 
 def suite():
