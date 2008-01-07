@@ -1,0 +1,42 @@
+#!/bin/bash
+
+sed -i \
+ -e 's/(State)/(Statefull)/g' \
+ -e 's/State\.__init/Statefull\.__init/g' \
+ -e 's/\.enableState/\.states\.enable/g' \
+ -e 's/\.enableStates/\.states\.enable/g' \
+ -e 's/\.enabledStates/\.states\.enabled/g' \
+ -e 's/\.disableStates/\.states\.disable/g' \
+ -e 's/\.listStates/\.states\.listing/g' \
+ -e 's/\.hasState/\.states\.isKnown/g' \
+ -e 's/\.isStateEnabled/\.states\.isEnabled/g' \
+ -e 's/\.isStateActive/\.states\.isActive/g' \
+ -e "s/[[]\([\"']\)\(all_label_counts\|confusion\|confusions\|emp_error\|errors\|history\|ndiscarded\|nfeatures\|null_errors\|predictions\|raw_predictions\|raw_values\|results\|selected_ids\|sensitivities\|sensitivity\|splits\|state[123]\|trained_confusion\|trained_confusions\|transerrors\|values\)\1[]]/\1/g" \
+ $@
+
+exit 0
+
+obtained list of all state variables ever known by
+grep '_registerState(' *py `find ../mvpa -iname \*.py` 2>/dev/null| \
+grep -v 'def _reg' |  sed -e "s/.*(\([\"']\)\([^ ,]*\)\1.*/\2/g"  | \
+grep -v mvpa | sort | uniq | tr '\n' '\|'; echo
+
+(State) Statefull
+
+enableState  enable
+enabledStates  enabled
+listStates listing
+states items
+_enableStatesTemporarily _enableTemporarily
+_getRegisteredStates _getNames
+
+hasState isKnown
+isStateEnabled isEnabled
+isStateActive isActive
+
+listStates _getListing
+
+GONE:
+enableStates
+disableStates
+__enabledisableall
