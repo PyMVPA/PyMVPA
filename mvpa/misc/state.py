@@ -14,6 +14,8 @@ import operator, copy
 
 from mvpa.misc.exceptions import UnknownStateError
 
+from mvpa.misc import warning
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -37,7 +39,7 @@ class StateVariable(object):
         self.name = name
         if __debug__:
             debug("STV",
-                  "Initialized new state variable " + `self`)
+                  "Initialized new state variable %s " % name + `self`)
 
     def __get__(self, obj, objtype=None):
         if obj is None:
@@ -58,6 +60,9 @@ class StateVariable(object):
         return self._isenabled[obj]
 
     def enable(self, obj, val=False):
+        if __debug__:
+            debug("STV", "%s variable %s for %s" %
+                  ({True: 'Enabling', False: 'Disabling'}[val], self.name, `obj`))
         self._isenabled[obj] = val
 
     def __delete__(self, obj):
@@ -65,7 +70,6 @@ class StateVariable(object):
             del self._values[key]
         except:
             raise AttributeError
-
 
 
 class StateCollection(object):
@@ -115,10 +119,10 @@ class StateCollection(object):
         for i in xrange(min(num, 4)):
             index = self.__items.keys()[i]
             res += " %s" % index
+            if self.isEnabled(index):
+                res += '+'              # it is enabled but no value is assigned yet
             if self.isKnown(index):
                 res += '*'              # so we have the value already
-            elif self.isEnabled(index):
-                res += '+'              # it is enabled but no value is assigned yet
 
         if len(self.__items) > 4:
             res += "..."
@@ -178,7 +182,7 @@ class StateCollection(object):
     def isEnabled(self, index):
         """Returns `True` if state `index` is enabled"""
         self.__checkIndex(index)
-        return StateVariable.isEnabled(self.__items[index], self.__ownercls)
+        return StateVariable.isEnabled(self.__items[index], self)
 
     def isActive(self, index):
         """Returns `True` if state `index` is known and is enabled"""
@@ -192,7 +196,7 @@ class StateCollection(object):
                     self.enable(index_, value)
             else:
                 self.__checkIndex(index)
-                StateVariable.enable(self.__items[index], self.__ownercls, value)
+                StateVariable.enable(self.__items[index], self, value)
         elif operator.isSequenceType(index):
             for item in index:
                 self.enable(item, value)
@@ -260,8 +264,8 @@ class StateCollection(object):
         >>> stateful.enabled = states_enabled
 
         """
-        for state in self.__items.keys():
-            self.enable(state[0], state[0] in indexlist)
+        for index in self.__items.keys():
+            self.enable(index, index in indexlist)
 
 
     def _getNames(self):
@@ -293,6 +297,9 @@ class statecollector(type):
         for name, value in dict.iteritems():
             if isinstance(value, StateVariable):
                 items[name] = value
+                # and assign name if not yet was set
+                if value.name is None:
+                    value.name = name
 
         for base in bases:
             if hasattr(base, "__metaclass__") and \
@@ -336,12 +343,18 @@ class Statefull(object):
         if __debug__:
             debug("ST", "Statefull.__init__ for %s" % self)
         self._states.enable(enable_states)
-        self._states.enable(disable_states)
+        self._states.disable(disable_states)
 
     @property
     def states(self):
         return self._states
 
+
+    # TODO remove _registerState
+    def _registerState(self, index, enabled=True, doc=None):
+        if not hasattr(self.__class__, index):
+            warning("!!!! deprecated: call to _registerState for %s" % index)
+            setattr(self.__class__, index, StateVariable(enabled=enabled, doc=doc))
 
 
 class OldState(object):
