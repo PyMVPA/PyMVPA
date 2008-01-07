@@ -4,6 +4,14 @@ known_states="\(all_label_counts\|confusion\|confusions\|emp_error\|errors\|hist
 sed -i \
  -e 's/(State)/(Statefull)/g' \
  -e 's/import State/import StateVariable, Statefull/g' \
+ -e "s/self\._registerState(\([\"']\)$known_states\1\,* */\2 = StateVariable(/g" \
+ $@
+
+exit 0
+
+sed -i \
+ -e 's/(State)/(Statefull)/g' \
+ -e 's/import State/import StateVariable, Statefull/g' \
  -e 's/State\.__init/Statefull\.__init/g' \
  -e 's/\.enableState/\.states\.enable/g' \
  -e 's/\.enableStates/\.states\.enable/g' \

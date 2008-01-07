@@ -22,6 +22,8 @@ from mvpa.algorithms.featsel import FeatureSelection, \
                                     FixedNElementTailSelector, \
                                     BestDetector
 
+from mvpa.misc.state import StateVariable
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -78,7 +80,7 @@ class IFS(FeatureSelection):
         self.__stopping_criterion = stopping_criterion
 
         # register the state members
-        self._registerState("errors")
+        errors = StateVariable()
 
 
     def __call__(self, dataset, testdataset, callables=[]):

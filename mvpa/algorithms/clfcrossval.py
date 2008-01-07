@@ -18,6 +18,7 @@ from mvpa.algorithms.datameasure import DataMeasure
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.clfs.transerror import ConfusionMatrix
 from mvpa.misc import warning
+from mvpa.misc.state import StateVariable
 
 if __debug__:
     from mvpa.misc import debug
@@ -60,15 +61,15 @@ class ClfCrossValidation(DataMeasure):
         self.__combinerfx = combinerfx
 
         # register the state members
-        self._registerState("results", enabled=False)
+        results = StateVariable(enabled=False)
         """Store individual results in the state"""
-        self._registerState("splits", enabled=False)
+        splits = StateVariable(enabled=False)
         """Store the actual splits of the data. Can be memory expensive"""
-        self._registerState("transerrors", enabled=False)
+        transerrors = StateVariable(enabled=False)
         """Store copies of transerrors at each step"""
-        self._registerState("confusions", enabled=False)
+        confusions = StateVariable(enabled=False)
         """Store actual confusion matrices (if available)"""
-        self._registerState("confusion", enabled=False)
+        confusion = StateVariable(enabled=False)
         """Store total confusion matrix (if available)"""
 
 

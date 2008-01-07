@@ -27,7 +27,7 @@ from sets import Set
 
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 from transerror import ConfusionMatrix
 
@@ -36,7 +36,7 @@ from mvpa.misc import warning
 if __debug__:
     from mvpa.misc import debug
 
-class Classifier(State):
+class Classifier(Statefull):
     """Abstract classifier class to be inherited by all classifiers
 
     Required behavior:
@@ -96,11 +96,11 @@ class Classifier(State):
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
-        self._registerState('trained_confusion', enabled=True,
+        trained_confusion = StateVariable(enabled=True,
             doc="Result of learning: `ConfusionMatrix` (and corresponding learning error")
-        self._registerState('predictions', enabled=True,
+        predictions = StateVariable(enabled=True,
             doc="Reported predicted values")
-        self._registerState('values', enabled=False,
+        values = StateVariable(enabled=False,
             doc="Internal values seen by the classifier")
 
 
@@ -235,10 +235,10 @@ class BoostedClassifier(Classifier):
         """Store the list of classifiers"""
 
         # should not be needed if we have prediction_values upstairs
-        self._registerState("raw_predictions", enabled=False,
+        raw_predictions = StateVariable(enabled=False,
                             doc="Predictions obtained from each classifier")
 
-        self._registerState("raw_values", enabled=False,
+        raw_values = StateVariable(enabled=False,
                             doc="Values obtained from each classifier")
 
 
@@ -343,7 +343,7 @@ class ProxyClassifier(Classifier):
 # Various combiners for CombinedClassifier
 #
 
-class Combiner(State):
+class Combiner(Statefull):
     """Base class for combining decisions of multiple classifiers"""
 
     def train(self, clfs, data):
@@ -381,9 +381,9 @@ class MaximalVote(Combiner):
         """
         Combiner.__init__(self)
 
-        self._registerState("predictions", enabled=True,
+        predictions = StateVariable(enabled=True,
                             doc="Voted predictions")
-        self._registerState("all_label_counts", enabled=False,
+        all_label_counts = StateVariable(enabled=False,
                             doc="Counts across classifiers for each label/sample")
 
 
@@ -690,7 +690,7 @@ class SplitClassifier(CombinedClassifier):
         """Store sample instance of basic classifier"""
         self.__splitter = splitter
 
-        self._registerState("trained_confusions", enabled=True,
+        trained_confusions = StateVariable(enabled=True,
             doc="Resultant confusion matrices whenever classifier trained on each " +
                 "was tested on 2nd part of the split")
 

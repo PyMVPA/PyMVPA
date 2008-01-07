@@ -372,11 +372,3 @@ class Statefull(object):
     def __str__(self):
         return str(self.states)
 
-
-    # TODO remove _registerState
-    def _registerState(self, index, enabled=True, doc=None):
-        if not hasattr(self.__class__, index):
-            warning("!!!! deprecated: call to _registerState for %s" % index)
-            setattr(self.__class__, index, StateVariable(enabled=enabled, doc=doc))
-
-

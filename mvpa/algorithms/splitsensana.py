@@ -16,7 +16,7 @@ import numpy as N
 
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.datasets.splitter import NoneSplitter
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 
 class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
@@ -65,9 +65,13 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
         available via the object's `State` interface using the key stored
         in the `postproc` member.
         """
-        # let the state engine know what we are going to store later
-        for k in self.__postproc.keys():
-            self._registerState(k)
+
+        # XXX Was deprecated -- since now state variables are
+        # per-class, not per-instance, just access them through
+        # postproc's
+        #XXX # let the state engine know what we are going to store later
+        #XXX for k in self.__postproc.keys():
+        #XXX     self._registerState(k)
 
 
     def __call__(self, dataset, callables=[]):

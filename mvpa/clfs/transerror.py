@@ -21,7 +21,7 @@ from sets import Set
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 if __debug__:
     from mvpa.misc import debug
@@ -260,7 +260,7 @@ class ConfusionMatrix(object):
     sets = property(lambda self:self.__sets)
 
 
-class ClassifierError(State):
+class ClassifierError(Statefull):
     """Compute the some error of a (trained) classifier on a dataset.
     """
 
@@ -280,7 +280,7 @@ class ClassifierError(State):
         self.__labels = labels
         """Labels to add on top to existing in testing data"""
 
-        self._registerState('confusion', enabled=False)
+        confusion = StateVariable(enabled=False)
         """TODO Think that labels might be also symbolic thus can't directly
                 be indicies of the array
         """
