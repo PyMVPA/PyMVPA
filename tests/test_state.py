@@ -55,14 +55,14 @@ class StateTests(unittest.TestCase):
         self.failUnlessRaises(UnknownStateError, blank.__getattribute__, 'state1')
 
         # assign value now
-        blank['state1'] = 123
+        blank.state1 = 123
         # should have no effect since the state variable wasn't enabled
         self.failUnlessRaises(UnknownStateError, blank.__getitem__, 'state1')
 
         # lets enable and assign
         blank.states.enable('state1')
-        blank['state1'] = 123
-        self.failUnless(blank['state1'] == 123)
+        blank.state1 = 123
+        self.failUnless(blank.state1 == 123)
 
         # we should not share states across instances at the moment, so an arbitrary
         # object could carry some custom states
@@ -79,13 +79,13 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(len(proper3.states.enabled), 0,
             msg="disable_states should override anything in enable_states")
 
-        proper['state2'] = 1000
-        value = proper['state2']
+        proper.state2 = 1000
+        value = proper.state2
         self.failUnlessEqual(value, 1000, msg="Simple assignment/retrieval")
 
         proper.states.disable('state2')
-        proper['state2'] = 10000
-        value = proper['state2']
+        proper.state2 = 10000
+        value = proper.state2
         self.failUnlessEqual(value, 1000, msg="Simple assignment after being disabled")
 
         self.failUnlessEqual(Set(proper.states.names), Set(['state1', 'state2']))
