@@ -115,7 +115,7 @@ class RFETests(unittest.TestCase):
         selector.felements = 0.30      # discard 30%
         self.failUnless(selector.felements == 0.3)
         self.failUnless((selector(dataset) == target30).all())
-        self.failUnless(selector['ndiscarded'] == 3) # se 3 were discarded
+        self.failUnless(selector.ndiscarded == 3) # se 3 were discarded
 
         selector = FixedNElementTailSelector(1)
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
@@ -124,7 +124,7 @@ class RFETests(unittest.TestCase):
         selector.nelements = 3
         self.failUnless(selector.nelements == 3)
         self.failUnless((selector(dataset) == target30).all())
-        self.failUnless(selector['ndiscarded'] == 3)
+        self.failUnless(selector.ndiscarded == 3)
 
 
     def testSensitivityBasedFeatureSelection(self):
@@ -161,10 +161,10 @@ class RFETests(unittest.TestCase):
         self.failUnlessEqual(tdata.nfeatures, stdata.nfeatures+Nremove,
             msg="We had to remove just a single feature in testing as well")
 
-        self.failUnlessEqual(len(fe["sensitivity"]), wdata_nfeatures,
+        self.failUnlessEqual(len(fe.sensitivity), wdata_nfeatures,
             msg="Sensitivity have to have # of features equal to original")
 
-        self.failUnlessEqual(len(fe["selected_ids"]), sdata.nfeatures,
+        self.failUnlessEqual(len(fe.selected_ids), sdata.nfeatures,
             msg="# of selected features must be equal the one in the result dataset")
 
 
@@ -199,11 +199,11 @@ class RFETests(unittest.TestCase):
                              len(feature_selections),
                              msg="Test the property feature_selections")
 
-        self.failUnlessEqual(feat_sel_pipeline["nfeatures"],
+        self.failUnlessEqual(feat_sel_pipeline.nfeatures,
                              [wdata_nfeatures, wdata_nfeatures-6],
                              msg="Test if nfeatures get assigned properly")
 
-        self.failUnlessEqual(list(feat_sel_pipeline["selected_ids"]),
+        self.failUnlessEqual(list(feat_sel_pipeline.selected_ids),
                              list(range(10, wdata_nfeatures)))
 
 
@@ -233,27 +233,27 @@ class RFETests(unittest.TestCase):
         self.failUnless(tdata.nfeatures == tdata_nfeatures)
 
         # check that the features set with the least error is selected
-        if len(rfe['errors']):
-            e = N.array(rfe['errors'])
+        if len(rfe.errors):
+            e = N.array(rfe.errors)
             self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
         else:
             self.failUnless(sdata.nfeatures == wdata_nfeatures)
 
         # silly check if nfeatures is in decreasing order
-        nfeatures = N.array(rfe['nfeatures']).copy()
+        nfeatures = N.array(rfe.nfeatures).copy()
         nfeatures.sort()
-        self.failUnless( (nfeatures[::-1] == rfe['nfeatures']).all() )
+        self.failUnless( (nfeatures[::-1] == rfe.nfeatures).all() )
 
         # check if history has elements for every step
-        self.failUnless(Set(rfe['history'])
-                        == Set(range(len(N.array(rfe['errors'])))))
+        self.failUnless(Set(rfe.history)
+                        == Set(range(len(N.array(rfe.errors)))))
 
         # Last (the largest number) can be present multiple times even
         # if we remove 1 feature at a time -- just need to stop well
         # in advance when we have more than 1 feature left ;)
-        self.failUnless(rfe['nfeatures'][-1]
-                        == len(N.where(rfe['history']
-                                       ==max(rfe['history']))[0]))
+        self.failUnless(rfe.nfeatures[-1]
+                        == len(N.where(rfe.history
+                                       ==max(rfe.history))[0]))
 
         # XXX add a test where sensitivity analyser and transfer error do not
         # use the same classifier

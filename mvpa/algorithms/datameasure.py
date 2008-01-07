@@ -40,7 +40,7 @@ class DataMeasure(Statefull):
     def __init__(self, **kwargs):
         """
         """
-        State.__init__(self, **kwargs)
+        Statefull.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, callbacks=[]):
@@ -200,7 +200,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
             sensitivities.append(sensitivity)
             ind += 1
 
-        self["sensitivities"] = sensitivities
+        self.sensitivities = sensitivities
         result = self.__combiner(sensitivities)
         return result
 

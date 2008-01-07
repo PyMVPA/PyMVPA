@@ -31,7 +31,7 @@ class FeatureSelection(Statefull):
 
     def __init__(self, **kargs):
         # base init first
-        State.__init__(self, **kargs)
+        Statefull.__init__(self, **kargs)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -178,7 +178,7 @@ class ElementSelector(Statefull):
     def __init__(self):
         """Cheap initialization.
         """
-        State.__init__(self)
+        Statefull.__init__(self)
 
 
     def __call__(self, seq):
@@ -196,7 +196,7 @@ class TailSelector(ElementSelector):
     """
 
     ndiscarded = StateVariable(True,
-        doc="Store number of discarded elements."
+        doc="Store number of discarded elements.")
 
 
     # TODO: 'both' to select from both tails
@@ -265,16 +265,16 @@ class TailSelector(ElementSelector):
 
         if self.__mode == 'discard' and self.__tail == 'upper':
             good_ids = seqrank[:-1*nelements]
-            self['ndiscarded'] = nelements
+            self.ndiscarded = nelements
         elif self.__mode == 'discard' and self.__tail == 'lower':
             good_ids = seqrank[nelements:]
-            self['ndiscarded'] = nelements
+            self.ndiscarded = nelements
         elif self.__mode == 'select' and self.__tail == 'upper':
             good_ids = seqrank[-1*nelements:]
-            self['ndiscarded'] = len_seq - nelements
+            self.ndiscarded = len_seq - nelements
         else: # select lower tail
             good_ids = seqrank[:nelements]
-            self['ndiscarded'] = len_seq - nelements
+            self.ndiscarded = len_seq - nelements
 
         # sort ids to keep order
         # XXX should we do here are leave to other place
@@ -424,7 +424,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
-        self["sensitivity"] = sensitivity
+        self.sensitivity = sensitivity
 
         # Select features to preserve
         selected_ids = self.__feature_selector(sensitivity)
@@ -446,7 +446,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
         selected_ids.sort()
-        self["selected_ids"] = selected_ids
+        self.selected_ids = selected_ids
 
         # dataset with selected features is returned
         return results
@@ -489,25 +489,25 @@ class FeatureSelectionPipeline(FeatureSelection):
         wdataset = dataset
         wtestdataset = testdataset
 
-        self["selected_ids"] = None
+        self.selected_ids = None
 
-        self["nfeatures"] = []
+        self.nfeatures = []
         """Number of features at each step (before running selection)"""
 
         for fs in self.__feature_selections:
 
             # enable selected_ids state if it was requested from this class
-            fs._enableStatesTemporarily(["selected_ids"], self)
-            if self.isStateEnabled("nfeatures"):
-                self["nfeatures"].append(wdataset.nfeatures)
+            fs.states._enableTemporarily(["selected_ids"], self)
+            if self.states.isEnabled("nfeatures"):
+                self.nfeatures.append(wdataset.nfeatures)
 
             wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
 
-            if self.isStateEnabled("selected_ids"):
-                if self["selected_ids"] == None:
-                    self["selected_ids"] = fs["selected_ids"]
+            if self.states.isEnabled("selected_ids"):
+                if self.selected_ids == None:
+                    self.selected_ids = fs.selected_ids
                 else:
-                    self["selected_ids"] = self["selected_ids"][fs["selected_ids"]]
+                    self.selected_ids = self.selected_ids[fs.selected_ids]
 
             fs._resetEnabledTemporarily()
 

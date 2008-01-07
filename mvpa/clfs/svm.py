@@ -140,7 +140,7 @@ class SVMBase(Classifier):
         for k,v in self.param._params.iteritems():
             res += "%s%s=%s" % (sep, k, str(v))
             sep = ', '
-        res += sep + "enable_states=%s" % (str(self.enabledStates))
+        res += sep + "enable_states=%s" % (str(self.states.enabled))
         res += ")"
         return res
 
@@ -169,11 +169,11 @@ class SVMBase(Classifier):
             src = data.astype('double')
 
         predictions = [ self.model.predict( p ) for p in src ]
-        self["predictions"] = predictions
-        if self.isStateEnabled("values"):
+        self.predictions = predictions
+        if self.states.isEnabled("values"):
             try:
                 values = [ self.model.predictProbability( p ) for p in src ]
-                self["values"] = values
+                self.values = values
             except TypeError:
                 warning("Current SVM doesn't support probability estimation," +
                         " thus no 'values' state")
