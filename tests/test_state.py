@@ -32,7 +32,7 @@ class TestClassProperChild(TestClassProper):
 
 class StateTests(unittest.TestCase):
 
-    def _testBlankState(self):
+    def testBlankState(self):
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
 
@@ -65,7 +65,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessRaises(KeyError, blank2.__getitem__, 'state1')
 
 
-    def _testProperState(self):
+    def testProperState(self):
         proper   = TestClassProper()
         proper2  = TestClassProper(enable_states=['state1'], disable_states=['state2'])
 
@@ -104,7 +104,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(len(proper2.enabledStates), 3)
 
 
-    def _testGetSaveEnabled(self):
+    def testGetSaveEnabled(self):
         """Check if we can store/restore set of enabled states"""
 
         proper  = TestClassProper()
@@ -121,7 +121,7 @@ class StateTests(unittest.TestCase):
                         msg="List of enabled states should return to original one")
 
 
-    def _testStoredEnableStates(self):
+    def testStoredEnableStates(self):
         """Check if the states mentioned in enable_states
         are retroactively enabled while being registered"""
         proper  = TestClassProper(enable_states=['newstate'])
@@ -138,7 +138,7 @@ class StateTests(unittest.TestCase):
 
     # TODO: make test for _copy_states_ or whatever comes as an alternative
 
-    def _testStoredTemporarily(self):
+    def testStoredTemporarily(self):
         proper   = TestClassProper()
         properch = TestClassProperChild(enable_states=["state1"])
 
@@ -157,7 +157,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(proper.enabledStates, ["state2"])
 
 
-    def _testProperStateChild(self):
+    def testProperStateChild(self):
         """
         Actually it would fail which makes it no sense to use
         _register_states class variables
