@@ -50,7 +50,8 @@ class StateVariable(object):
 
     def __set__(self, obj, val):
         # print "! I am in set"
-         if self.isEnabled(obj):
+        # print "Object ", obj, " and it is ", self.isEnabled(obj), ' all are ', self._isenabled
+        if self.isEnabled(obj):
             self._values[obj] = val
 
     def isEnabled(self, obj):
@@ -88,7 +89,7 @@ class StateCollection(object):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, ownercls, items = {}):
+    def __init__(self, items = {}, owner = None):
                  #enable_states=[],
                  #disable_states=[]):
         """Initialize the state variables of a derived class
@@ -103,7 +104,7 @@ class StateCollection(object):
             list of states to disable
         """
 
-        self.__ownercls = ownercls
+        self.__owner = owner
 
         self.__items = items
         """Dictionary to contain registered states as keys and
@@ -182,7 +183,7 @@ class StateCollection(object):
     def isEnabled(self, index):
         """Returns `True` if state `index` is enabled"""
         self.__checkIndex(index)
-        return StateVariable.isEnabled(self.__items[index], self)
+        return StateVariable.isEnabled(self.__items[index], self.__owner)
 
     def isActive(self, index):
         """Returns `True` if state `index` is known and is enabled"""
@@ -196,7 +197,7 @@ class StateCollection(object):
                     self.enable(index_, value)
             else:
                 self.__checkIndex(index)
-                StateVariable.enable(self.__items[index], self, value)
+                StateVariable.enable(self.__items[index], self.__owner, value)
         elif operator.isSequenceType(index):
             for item in index:
                 self.enable(item, value)
@@ -215,8 +216,14 @@ class StateCollection(object):
         Enable states which are enabled in `other` and listed in
         `enable _states`. Use `resetEnabledTemporarily` to reset
         to previous state of enabled.
+
+        `other` can be a Statefull object or StateCollection
         """
         self.__storedTemporarily.append(self.enabled)
+
+        if isinstance(other, Statefull):
+            other = other.states
+
         # Lets go one by one enabling only disabled once... but could be as simple as
         # self.enable(enable_states)
         for state in enable_states:
@@ -224,7 +231,7 @@ class StateCollection(object):
                ((other is None) or other.isEnabled(state)):
                 if __debug__:
                     debug("ST", "Temporarily enabling state %s" % state)
-                self.enableState(state)
+                self.enable(state)
 
     def _resetEnabledTemporarily(self):
         """Reset to previousely stored set of enabled states"""
@@ -273,11 +280,22 @@ class StateCollection(object):
         return self.__items.keys()
 
 
+    def _getOwner(self):
+        return self.__owner
+
+    def _setOwner(self, owner):
+        if not isinstance(owner, Statefull):
+            raise ValueError, \
+                  "Owner of the StateCollection must be Statefull object"
+        self.__owner = owner
+    
+
     # Properties
     listing = property(fget=_getListing)
     names = property(fget=_getNames)
     items = property(fget=lambda x:x.__items)
     enabled = property(fget=_getEnabled, fset=_setEnabled)
+    owner = property(fget=_getOwner, fset=_setOwner)
 
 
 class statecollector(type):
@@ -307,7 +325,7 @@ class statecollector(type):
                 # TODO take care about overriding one from super class
                 # for state in base.states:
                 #    if state[0] =
-                newitems = base._states.items
+                newitems = base._states_template.items
                 if len(newitems) == 0:
                     continue
                 if __debug__:
@@ -318,10 +336,10 @@ class statecollector(type):
 
         if __debug__:
             debug("STCOL",
-                  "Creating StateCollection %s" % cls)
+                  "Creating StateCollection template %s" % cls)
 
-        statecollection = StateCollection(cls, items)
-        setattr(cls, "_states", statecollection)
+        statecollection = StateCollection(items, cls) # and give it ownwership of class
+        setattr(cls, "_states_template", statecollection)
 
 
 class Statefull(object):
@@ -340,14 +358,19 @@ class Statefull(object):
     def __init__(self,
                  enable_states=[],
                  disable_states=[]):
-        if __debug__:
-            debug("ST", "Statefull.__init__ for %s" % self)
+        self._states = copy.copy(self._states_template)
+        self._states.owner = self
         self._states.enable(enable_states)
         self._states.disable(disable_states)
+        if __debug__:
+            debug("ST", "Statefull.__init__ done for %s" % self)
 
     @property
     def states(self):
         return self._states
+
+    def __str__(self):
+        return str(self.states)
 
 
     # TODO remove _registerState
