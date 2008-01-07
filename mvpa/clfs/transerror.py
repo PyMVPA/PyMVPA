@@ -264,6 +264,11 @@ class ClassifierError(Statefull):
     """Compute the some error of a (trained) classifier on a dataset.
     """
 
+    confusion = StateVariable(enabled=False)
+    """TODO Think that labels might be also symbolic thus can't directly
+       be indicies of the array
+    """
+
     def __init__(self, clf, labels=None, **kwargs):
         """Initialization.
 
@@ -279,11 +284,6 @@ class ClassifierError(Statefull):
 
         self.__labels = labels
         """Labels to add on top to existing in testing data"""
-
-        confusion = StateVariable(enabled=False)
-        """TODO Think that labels might be also symbolic thus can't directly
-                be indicies of the array
-        """
 
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""

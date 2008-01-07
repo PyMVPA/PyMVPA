@@ -174,6 +174,9 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
 class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
     """Set sensitivity analyzers to be merged into a single output"""
 
+    sensitivities = StateVariable(enabled=False,
+        doc="Sensitivities produced by each classifier")
+
     def __init__(self, analyzers=[],
                  combiner=lambda x:N.mean(x, axis=0),
                  **kwargs):
@@ -184,8 +187,6 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
         self.__combiner = combiner
         """Which functor to use to combine all sensitivities"""
 
-        sensitivities = StateVariable(enabled=False,
-            doc="Sensitivities produced by each classifier")
 
 
     def __call__(self, dataset, callables=[]):
