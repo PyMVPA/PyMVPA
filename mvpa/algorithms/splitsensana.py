@@ -19,7 +19,7 @@ from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import StateVariable, Statefull
 
 
-class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
+class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
     """This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
     and runs it multiple times on differents splits of a `Dataset`.
 
@@ -31,6 +31,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer, State):
     of the functions specified in the `postproc` dictionary will be available
     via their respective keywords.
     """
+
     def __init__(self, sensana,
                  splitter=NoneSplitter,
                  postproc={}):
