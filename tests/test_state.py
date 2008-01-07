@@ -192,10 +192,12 @@ class StateTests(unittest.TestCase):
 
         s1, s2, s1_, s1__, s12 = S1(), S2(), S1_(), S1__(), S12()
 
-        self.failUnlessEqual(s1.states.isStateEnabled("v1"), True)
+        self.failUnlessEqual(s1.states.isEnabled("v1"), True)
         s1.v1 = 12
         s12.v1 = 120
         s2.v2 = 100
+
+        self.failUnlessEqual(len(s2.states.listing), 1)
 
         self.failUnlessEqual(s1.v1, 12)
         try:
