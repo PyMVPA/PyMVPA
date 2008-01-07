@@ -84,6 +84,14 @@ class Classifier(Statefull):
     # necessary in some situations (e.g. reasonably predefined parameter range,
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa.misc.param.Parameter'...
+
+    trained_confusion = StateVariable(enabled=True,
+        doc="Result of learning: `ConfusionMatrix` (and corresponding learning error")
+    predictions = StateVariable(enabled=True,
+        doc="Reported predicted values")
+    values = StateVariable(enabled=False,
+        doc="Internal values seen by the classifier")
+
     params = {}
 
     def __init__(self, train2predict=True, **kwargs):
@@ -96,12 +104,6 @@ class Classifier(Statefull):
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
-        trained_confusion = StateVariable(enabled=True,
-            doc="Result of learning: `ConfusionMatrix` (and corresponding learning error")
-        predictions = StateVariable(enabled=True,
-            doc="Reported predicted values")
-        values = StateVariable(enabled=False,
-            doc="Internal values seen by the classifier")
 
 
     def __str__(self):
@@ -219,6 +221,14 @@ class BoostedClassifier(Classifier):
     Should rarely be used directly. Use one of its childs instead
     """
 
+    # should not be needed if we have prediction_values upstairs
+    raw_predictions = StateVariable(enabled=False,
+        doc="Predictions obtained from each classifier")
+
+    raw_values = StateVariable(enabled=False,
+        doc="Values obtained from each classifier")
+
+
     def __init__(self, clfs=[], **kwargs):
         """Initialize the instance.
 
@@ -233,13 +243,6 @@ class BoostedClassifier(Classifier):
 
         self._setClassifiers(clfs)
         """Store the list of classifiers"""
-
-        # should not be needed if we have prediction_values upstairs
-        raw_predictions = StateVariable(enabled=False,
-                            doc="Predictions obtained from each classifier")
-
-        raw_values = StateVariable(enabled=False,
-                            doc="Values obtained from each classifier")
 
 
     def __repr__(self):
@@ -374,17 +377,17 @@ class Combiner(Statefull):
 class MaximalVote(Combiner):
     """Provides a decision using maximal vote rule"""
 
+    predictions = StateVariable(enabled=True,
+        doc="Voted predictions")
+    all_label_counts = StateVariable(enabled=False,
+        doc="Counts across classifiers for each label/sample")
+
     def __init__(self):
         """XXX Might get a parameter to use raw decision values if
         voting is not unambigous (ie two classes have equal number of
         votes
         """
         Combiner.__init__(self)
-
-        predictions = StateVariable(enabled=True,
-                            doc="Voted predictions")
-        all_label_counts = StateVariable(enabled=False,
-                            doc="Counts across classifiers for each label/sample")
 
 
     def __call__(self, clfs, data):
@@ -675,6 +678,10 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
+    trained_confusions = StateVariable(enabled=True,
+        doc="Resultant confusion matrices whenever classifier trained on each " +
+            "was tested on 2nd part of the split")
+
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
 
@@ -689,10 +696,6 @@ class SplitClassifier(CombinedClassifier):
         self.__clf = clf
         """Store sample instance of basic classifier"""
         self.__splitter = splitter
-
-        trained_confusions = StateVariable(enabled=True,
-            doc="Resultant confusion matrices whenever classifier trained on each " +
-                "was tested on 2nd part of the split")
 
 
     def _train(self, data):

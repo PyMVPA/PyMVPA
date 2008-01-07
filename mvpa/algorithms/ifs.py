@@ -46,6 +46,9 @@ class IFS(FeatureSelection):
     is reached.
     """
 
+
+    errors = StateVariable()
+
     def __init__(self,
                  data_measure,
                  transfer_error,
@@ -79,9 +82,7 @@ class IFS(FeatureSelection):
         self.__bestdetector = bestdetector
         self.__stopping_criterion = stopping_criterion
 
-        # register the state members
-        errors = StateVariable()
-
+ 
 
     def __call__(self, dataset, testdataset, callables=[]):
         """Proceed and select the features recursively eliminating less

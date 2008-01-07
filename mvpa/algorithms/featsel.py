@@ -27,10 +27,11 @@ class FeatureSelection(Statefull):
     datasets.
     """
 
+    selected_ids = StateVariable(enabled=False)
+
     def __init__(self, **kargs):
         # base init first
         State.__init__(self, **kargs)
-        selected_ids = StateVariable(enabled=False)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -194,6 +195,10 @@ class TailSelector(ElementSelector):
     The default behaviour is to discard the lower tail of a given distribution.
     """
 
+    ndiscarded = StateVariable(True,
+        doc="Store number of discarded elements."
+
+
     # TODO: 'both' to select from both tails
     def __init__(self, tail='lower', mode='discard', sort=True):
         """Initialize TailSelector
@@ -209,10 +214,6 @@ class TailSelector(ElementSelector):
 
         """
         ElementSelector.__init__(self)  # init State before registering anything
-
-        ndiscarded = StateVariable(True)    # state variable
-        """Store number of discarded elements.
-        """
 
         self._setTail(tail)
         """Know which tail to select."""
@@ -378,6 +379,8 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     features.
     """
 
+    sensitivity = StateVariable(enabled=False)
+
     def __init__(self,
                  sensitivity_analyzer,
                  feature_selector=FractionTailSelector(0.05),
@@ -403,8 +406,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         self.__feature_selector = feature_selector
         """Functor which takes care about removing some features."""
 
-        # register the state members
-        sensitivity = StateVariable(enabled=False)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -458,6 +459,10 @@ class FeatureSelectionPipeline(FeatureSelection):
     Given as list of FeatureSelections it applies them in turn.
     """
 
+    nfeatures = StateVariable(
+        doc="Number of features before each step in pipeline")
+    # TODO: may be we should also append resultant number of features?
+
     def __init__(self,
                  feature_selections,
                  **kargs
@@ -473,10 +478,6 @@ class FeatureSelectionPipeline(FeatureSelection):
 
         self.__feature_selections = feature_selections
         """Selectors to use in turn"""
-
-        nfeatures = StateVariable(
-                            doc="Number of features before each step in pipeline")
-        # TODO: may be we should also append resultant number of features?
 
 
     def __call__(self, dataset, testdataset=None, **kwargs):

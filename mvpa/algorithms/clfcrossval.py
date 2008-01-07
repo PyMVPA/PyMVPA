@@ -32,6 +32,18 @@ class ClfCrossValidation(DataMeasure):
     and a combiner function that aggregates all computed error values across
     cross-validation folds.
     """
+
+    results = StateVariable(enabled=False, doc=
+       """Store individual results in the state""")
+    splits = StateVariable(enabled=False, doc=
+       """Store the actual splits of the data. Can be memory expensive"""
+    transerrors = StateVariable(enabled=False, doc=
+       """Store copies of transerrors at each step"""
+    confusions = StateVariable(enabled=False, doc=
+       """Store actual confusion matrices (if available)"""
+    confusion = StateVariable(enabled=False, doc=
+       """Store total confusion matrix (if available)"""
+
     def __init__(self,
                  transerror,
                  splitter=NoneSplitter(),
@@ -60,17 +72,6 @@ class ClfCrossValidation(DataMeasure):
         self.__transerror = transerror
         self.__combinerfx = combinerfx
 
-        # register the state members
-        results = StateVariable(enabled=False)
-        """Store individual results in the state"""
-        splits = StateVariable(enabled=False)
-        """Store the actual splits of the data. Can be memory expensive"""
-        transerrors = StateVariable(enabled=False)
-        """Store copies of transerrors at each step"""
-        confusions = StateVariable(enabled=False)
-        """Store actual confusion matrices (if available)"""
-        confusion = StateVariable(enabled=False)
-        """Store total confusion matrix (if available)"""
 
 
 # TODO: put back in ASAP

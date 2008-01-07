@@ -40,6 +40,11 @@ class NullHypothesisTest(Statefull):
     probability to achieve a transfer error as low or lower as the ETE, when
     the data samples contain *no* signal.
     """
+
+    # register state members
+    null_errors = StateVariable()
+    emp_error = StateVariable()
+
     def __init__(self,
                  transerror,
                  permutations=1000
@@ -61,10 +66,6 @@ class NullHypothesisTest(Statefull):
         self.__permutations = permutations
         """Number of permutations to compute the estimate the null
         distribution."""
-
-        # register state members
-        null_errors = StateVariable()
-        emp_error = StateVariable()
 
 
     def __call__(self, data, testdata):

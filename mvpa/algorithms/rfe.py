@@ -44,6 +44,11 @@ class RFE(FeatureSelection):
     #                    'nfeatures':True,
     #                    'history':True}
 
+    errors = StateVariable()
+    nfeatures = StateVariable()
+    history = StateVariable()
+    sensitivities = StateVariable(enabled=False)
+
     def __init__(self,
                  sensitivity_analyzer,
                  transfer_error,
@@ -113,12 +118,6 @@ class RFE(FeatureSelection):
                 debug("RFEC", "Forcing training of classifier since " +
                       "sensitivities aren't updated at each step")
             self.__train_clf = True
-
-        # register the state members
-        errors = StateVariable()
-        nfeatures = StateVariable()
-        history = StateVariable()
-        sensitivities = StateVariable(enabled=False)
 
 
     def __call__(self, dataset, testdataset, callables=[]):
