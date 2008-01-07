@@ -13,29 +13,22 @@ import unittest
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import State
+from mvpa.misc.state import Statefull, StateVariable
 from mvpa.misc.exceptions import UnknownStateError
 
-class TestClassBlank(State):
-    def __init__(self):
-        State.__init__(self)
+class TestClassBlank(Statefull):
+    pass
 
-class TestClassProper(State):
+class TestClassProper(Statefull):
 
-    _register_states = { 'state1': False, 'state2': True }
-
-    def __init__(self, **kargs):
-        State.__init__(self, **kargs)
+    state1 = StateVariable(enabled=False, doc="state1 doc")
+    state2 = StateVariable(enabled=True, doc="state2 doc")
 
 
 class TestClassProperChild(TestClassProper):
 
-    _register_states = { 'state4': False }
-    # propagate states from the parent
-    _register_states.update(TestClassProper._register_states)
+    state4 = StateVariable(enabled=False, doc="state4 doc")
 
-    def __init__(self, **kargs):
-        TestClassProper.__init__(self, **kargs)
 
 class StateTests(unittest.TestCase):
 
@@ -178,14 +171,14 @@ class StateTests(unittest.TestCase):
     def testStateVariables(self):
         """To test new states"""
 
-        from mvpa.misc.state import StateVariable, NewState
+        from mvpa.misc.state import StateVariable, Statefull
 
-        class S1(NewState):
+        class S1(Statefull):
             v1 = StateVariable(enabled=True, doc="values1 is ...")
             v1XXX = StateVariable(enabled=False, doc="values1 is ...")
 
 
-        class S2(NewState):
+        class S2(Statefull):
             v2 = StateVariable(enabled=True, doc="values12 is ...")
 
         class S1_(S1):
