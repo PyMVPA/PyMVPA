@@ -17,10 +17,10 @@ from numpy import arange
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc import warning
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 from mvpa.misc.exceptions import UnknownStateError
 
-class FeatureSelection(State):
+class FeatureSelection(Statefull):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
@@ -30,7 +30,7 @@ class FeatureSelection(State):
     def __init__(self, **kargs):
         # base init first
         State.__init__(self, **kargs)
-        self._registerState("selected_ids", enabled=False)
+        selected_ids = StateVariable(enabled=False)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -170,7 +170,7 @@ class StopNBackHistoryCriterion(StoppingCriterion):
 
 
 
-class ElementSelector(State):
+class ElementSelector(Statefull):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
@@ -210,7 +210,7 @@ class TailSelector(ElementSelector):
         """
         ElementSelector.__init__(self)  # init State before registering anything
 
-        self._registerState('ndiscarded', True)    # state variable
+        ndiscarded = StateVariable(True)    # state variable
         """Store number of discarded elements.
         """
 
@@ -404,7 +404,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         """Functor which takes care about removing some features."""
 
         # register the state members
-        self._registerState("sensitivity", enabled=False)
+        sensitivity = StateVariable(enabled=False)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -474,7 +474,7 @@ class FeatureSelectionPipeline(FeatureSelection):
         self.__feature_selections = feature_selections
         """Selectors to use in turn"""
 
-        self._registerState("nfeatures",
+        nfeatures = StateVariable(
                             doc="Number of features before each step in pipeline")
         # TODO: may be we should also append resultant number of features?
 

@@ -15,6 +15,7 @@ from mvpa.algorithms.featsel import FeatureSelection, \
                                     StopNBackHistoryCriterion, \
                                     FractionTailSelector
 from numpy import arange
+from mvpa.misc.state import StateVariable
 
 if __debug__:
     from mvpa.misc import debug
@@ -114,10 +115,10 @@ class RFE(FeatureSelection):
             self.__train_clf = True
 
         # register the state members
-        self._registerState("errors")
-        self._registerState("nfeatures")
-        self._registerState("history")
-        self._registerState("sensitivities", enabled=False)
+        errors = StateVariable()
+        nfeatures = StateVariable()
+        history = StateVariable()
+        sensitivities = StateVariable(enabled=False)
 
 
     def __call__(self, dataset, testdataset, callables=[]):

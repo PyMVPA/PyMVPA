@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 
-class NullHypothesisTest(State):
+class NullHypothesisTest(Statefull):
     # XXX this should be the baseclass of a bunch of tests with more
     # sophisticated tests, perhaps making more assumptions about the data
     # TODO find a nicer name for it
@@ -63,8 +63,8 @@ class NullHypothesisTest(State):
         distribution."""
 
         # register state members
-        self._registerState('null_errors')
-        self._registerState('emp_error')
+        null_errors = StateVariable()
+        emp_error = StateVariable()
 
 
     def __call__(self, data, testdata):

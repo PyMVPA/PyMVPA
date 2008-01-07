@@ -22,14 +22,14 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import copy
 
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 from mvpa.clfs.classifier import BoostedClassifier
 from mvpa.clfs.svm import LinearSVM
 
 if __debug__:
     from mvpa.misc import debug
 
-class DataMeasure(State):
+class DataMeasure(Statefull):
     """A measure computed from a `Dataset` (base class).
 
     All subclasses shall get all necessary parameters via their constructor,
@@ -184,7 +184,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
         self.__combiner = combiner
         """Which functor to use to combine all sensitivities"""
 
-        self._registerState('sensitivities', enabled=False,
+        sensitivities = StateVariable(enabled=False,
             doc="Sensitivities produced by each classifier")
 
 
