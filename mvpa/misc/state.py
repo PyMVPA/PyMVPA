@@ -331,20 +331,21 @@ class StateCollection(object):
     enabledStates = property(fget=_getEnabledStates, fset=_setEnabledStates)
 
 
-class NewState(object):
+class Statefull(object):
 
     __metaclass__ = statecollector
 
     def __init__(self,
                  enable_states=[],
                  disable_states=[]):
-        self._statecollection.enable_disable_states(enable_states, disable_states)
+        self._statecollection.enable_disable_states(enable_states,
+                                                    disable_states)
 
     @property
     def states(self):
         return self._statecollection
 
-class State(object):
+class OldState(object):
     """Base class for stateful objects.
 
     Classes inherited from this class gaining ability to provide state
