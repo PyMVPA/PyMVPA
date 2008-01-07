@@ -6,10 +6,12 @@ sed -i \
  -e 's/\.enableState/\.states\.enable/g' \
  -e 's/\.enableStates/\.states\.enable/g' \
  -e 's/\.enabledStates/\.states\.enabled/g' \
+ -e 's/\.disableState/\.states\.disable/g' \
  -e 's/\.disableStates/\.states\.disable/g' \
  -e 's/\.listStates/\.states\.listing/g' \
  -e 's/\.hasState/\.states\.isKnown/g' \
  -e 's/\.isStateEnabled/\.states\.isEnabled/g' \
+ -e 's/\._enableStatesTemporarily/\.states\._enableTemporarily/g' \
  -e 's/\.isStateActive/\.states\.isActive/g' \
  -e "s/\(\w\)[[]\([\"']\)\(all_label_counts\|confusion\|confusions\|emp_error\|errors\|history\|ndiscarded\|nfeatures\|null_errors\|predictions\|raw_predictions\|raw_values\|results\|selected_ids\|sensitivities\|sensitivity\|splits\|state[123]\|trained_confusion\|trained_confusions\|transerrors\|values\)\2[]]/\1\.\3/g" \
  $@
