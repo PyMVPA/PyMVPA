@@ -53,7 +53,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """
         # init base classes first
         SensitivityAnalyzer.__init__(self)
-        State.__init__(self)
+        Statefull.__init__(self)
 
         self.__sensana = sensana
         """Sensitivity analyzer used to compute the sensitivity maps.

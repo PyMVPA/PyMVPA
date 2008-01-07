@@ -97,7 +97,7 @@ class Classifier(Statefull):
     def __init__(self, train2predict=True, **kwargs):
         """Cheap initialization.
         """
-        State.__init__(self, **kwargs)
+        Statefull.__init__(self, **kwargs)
 
         self._setTrain2predict(train2predict)
         """Some classifiers might not need to be trained to predict"""
@@ -107,7 +107,7 @@ class Classifier(Statefull):
 
 
     def __str__(self):
-        return "%s\n %s" % (`self`, State.__str__(self))
+        return "%s\n %s" % (`self`, Statefull.__str__(self))
 
 
     def _pretrain(self, data):
@@ -122,9 +122,9 @@ class Classifier(Statefull):
         """
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = data.nfeatures
-        if self.isStateEnabled('trained_confusion'):
+        if self.states.isEnabled('trained_confusion'):
             predictions = self.predict(data.samples)
-            self['trained_confusion'] = ConfusionMatrix(
+            self.trained_confusion = ConfusionMatrix(
                 labels=data.uniquelabels, targets=data.labels,
                 predictions=predictions)
 
@@ -261,11 +261,11 @@ class BoostedClassifier(Classifier):
         """
         """
         raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
-        if clf.isStateEnabled("values") and self.isStateEnabled("values"):
-            values = [ clf["values"] for clf in self.__clfs ]
-            self["raw_values"] = values
+        if clf.states.isEnabled("values") and self.states.isEnabled("values"):
+            values = [ clf.values for clf in self.__clfs ]
+            self.raw_values = values
 
-        self["raw_predictions"] = raw_predictions
+        self.raw_predictions = raw_predictions
 
         return raw_predictions
 
@@ -404,10 +404,10 @@ class MaximalVote(Combiner):
         all_label_counts = None
         for clf in clfs:
             # Lets check first if necessary state variable is enabled
-            if not clf.isStateEnabled("predictions"):
+            if not clf.states.isEnabled("predictions"):
                 raise ValueError, "MaximalVote needs classifiers (such as " + \
                       "%s) with state 'predictions' enabled" % clf
-            predictions = clf["predictions"]
+            predictions = clf.predictions
             if all_label_counts is None:
                 all_label_counts = [ {} for i in xrange(len(predictions)) ]
 
@@ -446,8 +446,8 @@ class MaximalVote(Combiner):
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
-        self["all_label_counts"] = all_label_counts
-        self["predictions"] = predictions
+        self.all_label_counts = all_label_counts
+        self.predictions = predictions
         return predictions
 
 
@@ -496,12 +496,12 @@ class CombinedClassifier(BoostedClassifier):
         """
         raw_predictions = BoostedClassifier._predict(self, data)
         predictions = self.__combiner(self.clfs, data)
-        self["predictions"] = predictions
+        self.predictions = predictions
 
-        if self.isStateEnabled("values"):
-            if self.__combiner.isStateActive("values"):
+        if self.states.isEnabled("values"):
+            if self.__combiner.states.isActive("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
-                self["values"] = self.__combiner["values"]
+                self.values = self.__combiner.values
             else:
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state" % self +
@@ -598,10 +598,10 @@ class BinaryClassifier(ProxyClassifier):
         return not a list but just that single label.
         """
         binary_predictions = ProxyClassifier._predict(self, data)
-        self['values'] = binary_predictions
+        self.values = binary_predictions
         predictions = map(lambda x: {-1: self.__predictneg,
                                      +1: self.__predictpos}[x], binary_predictions)
-        self['predictions'] = predictions
+        self.predictions = predictions
         return predictions
 
 
@@ -703,7 +703,7 @@ class SplitClassifier(CombinedClassifier):
         """
         # generate pairs and corresponding classifiers
         bclfs = []
-        self["trained_confusions"] = ConfusionMatrix(labels=data.uniquelabels)
+        self.trained_confusions = ConfusionMatrix(labels=data.uniquelabels)
 
         # for proper and easier debugging - first define classifiers and then train them
         for split in self.__splitter(data):
@@ -717,9 +717,9 @@ class SplitClassifier(CombinedClassifier):
                 debug("CLFSPL", "Training classifier for split %d" % (i))
             clf = self.clfs[i]
             clf.train(split[0])
-            if self.isStateEnabled("trained_confusions"):
+            if self.states.isEnabled("trained_confusions"):
                 predictions = clf.predict(split[1].samples)
-                self["trained_confusions"].add(split[1].labels, predictions)
+                self.trained_confusions.add(split[1].labels, predictions)
             i += 1
 
 
@@ -802,7 +802,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         """
         # temporarily enable selected_ids
-        self.__feature_selection._enableStatesTemporarily(["selected_ids"])
+        self.__feature_selection.states._enableTemporarily(["selected_ids"])
 
         (wdata, tdata) = self.__feature_selection(data)
         if __debug__:
@@ -812,7 +812,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
         mappermask = N.zeros(data.nfeatures)
-        mappermask[self.__feature_selection["selected_ids"]] = 1
+        mappermask[self.__feature_selection.selected_ids] = 1
         mapper = MaskMapper(mappermask)
 
         self.__feature_selection._resetEnabledTemporarily()

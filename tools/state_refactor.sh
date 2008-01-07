@@ -2,17 +2,9 @@
 known_states="\(all_label_counts\|confusion\|confusions\|emp_error\|errors\|history\|ndiscarded\|nfeatures\|null_errors\|predictions\|raw_predictions\|raw_values\|results\|selected_ids\|sensitivities\|sensitivity\|splits\|state[123]\|trained_confusion\|trained_confusions\|transerrors\|values\)"
 
 sed -i \
- -e 's/(State)/(Statefull)/g' \
- -e 's/import State/import StateVariable, Statefull/g' \
- -e "s/self\._registerState(\([\"']\)$known_states\1\,* */\2 = StateVariable(/g" \
- $@
-
-exit 0
-
-sed -i \
- -e 's/(State)/(Statefull)/g' \
- -e 's/import State/import StateVariable, Statefull/g' \
+ -e 's/\(\W\)State\.)/\1Statefull\./g' \
  -e 's/State\.__init/Statefull\.__init/g' \
+ -e 's/State\.__str/Statefull\.__str/g' \
  -e 's/\.enableState/\.states\.enable/g' \
  -e 's/\.enableStates/\.states\.enable/g' \
  -e 's/\.enabledStates/\.states\.enabled/g' \
@@ -28,6 +20,15 @@ sed -i \
  $@
 
 exit 0
+
+sed -i \
+ -e 's/(State)/(Statefull)/g' \
+ -e 's/import State/import StateVariable, Statefull/g' \
+ -e "s/self\._registerState(\([\"']\)$known_states\1\,* */\2 = StateVariable(/g" \
+ $@
+
+exit 0
+
 
 obtained list of all state variables ever known by
 grep '_registerState(' *py `find ../mvpa -iname \*.py` 2>/dev/null| \

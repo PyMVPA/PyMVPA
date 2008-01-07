@@ -58,7 +58,7 @@ class NullHypothesisTest(Statefull):
                 will be performed to determine the distribution under the null
                 hypothesis.
         """
-        State.__init__(self)
+        Statefull.__init__(self)
 
         self.__trans_error = transerror
         """`TransferError` instance used to compute all errors."""
@@ -108,7 +108,7 @@ class NullHypothesisTest(Statefull):
         # restore original labels
         data.permuteLabels(False, perchunk=False)
 
-        self['emp_error'] = emp_error
-        self['null_errors'] = null_errors
+        self.emp_error = emp_error
+        self.null_errors = null_errors
 
         return prob
