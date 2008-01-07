@@ -72,14 +72,21 @@ class StateTests(unittest.TestCase):
 
     def testProperState(self):
         proper   = TestClassProper()
-        print proper.states.enabled
         proper2  = TestClassProper(enable_states=['state1'], disable_states=['state2'])
-        print proper.states.enabled
         # disable_states should override anything in enable_states
         proper3 = TestClassProper(enable_states=['all'], disable_states='all')
-        print proper3.states.enabled
+
         self.failUnlessEqual(len(proper3.states.enabled), 0,
             msg="disable_states should override anything in enable_states")
+
+        proper['state2'] = 1000
+        value = proper['state2']
+        self.failUnlessEqual(value, 1000, msg="Simple assignment/retrieval")
+
+        proper.states.disable('state2')
+        proper['state2'] = 10000
+        value = proper['state2']
+        self.failUnlessEqual(value, 1000, msg="Simple assignment after being disabled")
 
         self.failUnlessEqual(Set(proper.states.names), Set(['state1', 'state2']))
         print proper.states.enabled
