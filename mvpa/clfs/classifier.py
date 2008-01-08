@@ -804,7 +804,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         (wdata, tdata) = self.__feature_selection(data)
         if __debug__:
             debug("CLFFS", "{%s} selected %d out of %d features" %
-                  (self.__feature_selection, data.nfeatures, wdata.nfeatures))
+                  (self.__feature_selection, wdata.nfeatures, data.nfeatures))
 
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
