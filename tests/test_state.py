@@ -8,34 +8,27 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA State parent class"""
 
-import unittest
+import unittest, copy
 
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import State
+from mvpa.misc.state import Statefull, StateVariable
 from mvpa.misc.exceptions import UnknownStateError
 
-class TestClassBlank(State):
-    def __init__(self):
-        State.__init__(self)
+class TestClassBlank(Statefull):
+    pass
 
-class TestClassProper(State):
+class TestClassProper(Statefull):
 
-    _register_states = { 'state1': False, 'state2': True }
-
-    def __init__(self, **kargs):
-        State.__init__(self, **kargs)
+    state1 = StateVariable(enabled=False, doc="state1 doc")
+    state2 = StateVariable(enabled=True, doc="state2 doc")
 
 
 class TestClassProperChild(TestClassProper):
 
-    _register_states = { 'state4': False }
-    # propagate states from the parent
-    _register_states.update(TestClassProper._register_states)
+    state4 = StateVariable(enabled=False, doc="state4 doc")
 
-    def __init__(self, **kargs):
-        TestClassProper.__init__(self, **kargs)
 
 class StateTests(unittest.TestCase):
 
@@ -43,104 +36,119 @@ class StateTests(unittest.TestCase):
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
 
-        self.failUnless(blank.states == [])
-        self.failUnless(blank.enabledStates == [])
-        self.failUnlessRaises(KeyError, blank.__getitem__, 'dummy')
-        self.failUnlessRaises(KeyError, blank.__getitem__, '')
+        self.failUnlessEqual(blank.states.items, {})
+        self.failUnless(blank.states.enabled == [])
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, 'dummy')
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
+
+        # we shouldn't use _registerState now since metaclass statecollector wouldn't
+        # update the states... may be will be implemented in the future if necessity comes
+        return
 
         # add some state variable
         blank._registerState('state1', False)
         self.failUnless(blank.states == ['state1'])
 
-        self.failUnless(blank.isStateEnabled('state1') == False)
-        self.failUnless(blank.enabledStates == [])
-        self.failUnlessRaises(UnknownStateError, blank.__getitem__, 'state1')
+        self.failUnless(blank.states.isEnabled('state1') == False)
+        self.failUnless(blank.states.enabled == [])
+        self.failUnlessRaises(UnknownStateError, blank.__getattribute__, 'state1')
 
         # assign value now
-        blank['state1'] = 123
+        blank.state1 = 123
         # should have no effect since the state variable wasn't enabled
-        self.failUnlessRaises(UnknownStateError, blank.__getitem__, 'state1')
+        self.failUnlessRaises(UnknownStateError, blank.__getattribute__, 'state1')
 
         # lets enable and assign
-        blank.enableState('state1')
-        blank['state1'] = 123
-        self.failUnless(blank['state1'] == 123)
+        blank.states.enable('state1')
+        blank.state1 = 123
+        self.failUnless(blank.state1 == 123)
 
         # we should not share states across instances at the moment, so an arbitrary
         # object could carry some custom states
         self.failUnless(blank2.states == [])
-        self.failUnlessRaises(KeyError, blank2.__getitem__, 'state1')
+        self.failUnlessRaises(AttributeError, blank2.__getattribute__, 'state1')
 
 
     def testProperState(self):
         proper   = TestClassProper()
         proper2  = TestClassProper(enable_states=['state1'], disable_states=['state2'])
 
-        # can't enable disable all at the same time
-        self.failUnlessRaises(ValueError, TestClassProper,
-                              enable_states=['all'], disable_states='all')
-        self.failUnless(Set(proper.states) == Set(proper._register_states.keys()))
-        self.failUnless(proper.enabledStates == ['state2'])
+        # disable_states should override anything in enable_states
+        proper3 = TestClassProper(enable_states=['all'], disable_states='all')
 
-        self.failUnless(Set(proper2.states) == Set(proper._register_states.keys()))
-        self.failUnless(Set(proper2.enabledStates) == Set(['state1']))
+        self.failUnlessEqual(len(proper3.states.enabled), 0,
+            msg="disable_states should override anything in enable_states")
 
-        self.failUnlessRaises(KeyError, proper.__getitem__, 'state12')
-        proper2._registerState('state3', doc="State3 Doc")
+        proper.state2 = 1000
+        value = proper.state2
+        self.failUnlessEqual(proper.state2, 1000, msg="Simple assignment/retrieval")
+
+        proper.states.disable('state2')
+        proper.state2 = 10000
+        self.failUnlessEqual(proper.state2, 1000, msg="Simple assignment after being disabled")
+
+        proper4 = copy.deepcopy(proper)
+
+        proper.states.reset('state2')
+        self.failUnlessRaises(UnknownStateError, proper.__getattribute__, 'state2')
+        """Must be blank after being reset"""
+
+        self.failUnlessEqual(proper4.state2, 1000,
+            msg="Simple assignment after being reset in original instance")
+
+
+        proper.states.enable(['state2'])
+        self.failUnlessEqual(Set(proper.states.names), Set(['state1', 'state2']))
+        self.failUnless(proper.states.enabled == ['state2'])
+
+        self.failUnless(Set(proper2.states.enabled) == Set(['state1']))
+
+        self.failUnlessRaises(AttributeError, proper.__getattribute__, 'state12')
 
         # if documentary on the state is appropriate
-        self.failUnless(proper2.listStates() == \
-                        ['state1[enabled]: None',
-                         'state2: None',
-                         'state3[enabled]: State3 Doc'])
+        self.failUnlessEqual(proper2.states.listing,
+                             ['state1[enabled]: state1 doc',
+                              'state2: state2 doc'])
 
         # if __str__ lists correct number of states
         str_ = str(proper2)
-        self.failUnless(str_.find('3 states:') != -1)
+        self.failUnless(str_.find('2 states:') != -1)
 
-        # check default enabled
-        self.failUnless(Set(proper2.enabledStates) == Set(['state1', 'state3']))
         # check if disable works
-        proper2.disableState('state3')
-        self.failUnless(Set(proper2.enabledStates) == Set(['state1']))
+        self.failUnless(Set(proper2.states.enabled), Set(['state1']))
 
-        proper2.disableState("all")
-        self.failUnlessEqual(Set(proper2.enabledStates), Set())
+        proper2.states.disable("all")
+        self.failUnlessEqual(Set(proper2.states.enabled), Set())
 
-        proper2.enableState("all")
-        self.failUnlessEqual(len(proper2.enabledStates), 3)
+        proper2.states.enable("all")
+        self.failUnlessEqual(len(proper2.states.enabled), 2)
+
+        proper2.state1, proper2.state2 = 1,2
+        self.failUnlessEqual(proper2.state1, 1)
+        self.failUnlessEqual(proper2.state2, 2)
+
+        # now reset them
+        proper2.states.reset('all')
+        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state1')
+        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state2')
 
 
     def testGetSaveEnabled(self):
         """Check if we can store/restore set of enabled states"""
 
         proper  = TestClassProper()
-        enabled_states = proper.enabledStates
-        proper.enableState('state1')
+        enabled_states = proper.states.enabled
+        proper.states.enable('state1')
 
-        self.failUnless(enabled_states != proper.enabledStates,
+        self.failUnless(enabled_states != proper.states.enabled,
                         msg="New enabled states should differ from previous")
 
-        self.failUnless(Set(proper.enabledStates) == Set(['state1', 'state2']),
+        self.failUnless(Set(proper.states.enabled) == Set(['state1', 'state2']),
                         msg="Making sure that we enabled all states of interest")
-        proper.enabledStates = enabled_states
-        self.failUnless(enabled_states == proper.enabledStates,
+
+        proper.states.enabled = enabled_states
+        self.failUnless(enabled_states == proper.states.enabled,
                         msg="List of enabled states should return to original one")
-
-
-    def testStoredEnableStates(self):
-        """Check if the states mentioned in enable_states
-        are retroactively enabled while being registered"""
-        proper  = TestClassProper(enable_states=['newstate'])
-        # state is not yet registered thus shouldn't be known
-        self.failUnlessRaises(KeyError, proper.__getitem__, 'newstate')
-
-        proper._registerState("newstate", enabled=False)
-        self.failUnlessEqual(proper.isStateEnabled("newstate"), True)
-
-        # check if not mentioned in enable_states doesn't get enabled
-        proper._registerState("newstate2", enabled=False)
-        self.failUnlessEqual(proper.isStateEnabled("newstate2"), False)
 
 
     # TODO: make test for _copy_states_ or whatever comes as an alternative
@@ -149,30 +157,68 @@ class StateTests(unittest.TestCase):
         proper   = TestClassProper()
         properch = TestClassProperChild(enable_states=["state1"])
 
-        self.failUnlessEqual(proper.enabledStates, ["state2"])
-        proper._enableStatesTemporarily(["state1"], properch)
-        self.failUnlessEqual(Set(proper.enabledStates),
+        self.failUnlessEqual(proper.states.enabled, ["state2"])
+        proper.states._enableTemporarily(["state1"], properch)
+        self.failUnlessEqual(Set(proper.states.enabled),
                              Set(["state1", "state2"]))
-        proper._resetEnabledTemporarily()
-        self.failUnlessEqual(proper.enabledStates, ["state2"])
+        proper.states._resetEnabledTemporarily()
+        self.failUnlessEqual(proper.states.enabled, ["state2"])
 
         # allow to enable disable without other instance
-        proper._enableStatesTemporarily(["state1", "state2"])
-        self.failUnlessEqual(Set(proper.enabledStates),
+        proper.states._enableTemporarily(["state1", "state2"])
+        self.failUnlessEqual(Set(proper.states.enabled),
                              Set(["state1", "state2"]))
-        proper._resetEnabledTemporarily()
-        self.failUnlessEqual(proper.enabledStates, ["state2"])
+        proper.states._resetEnabledTemporarily()
+        self.failUnlessEqual(proper.states.enabled, ["state2"])
 
 
     def testProperStateChild(self):
         """
-        Actually it would fail which makes it no sense to use
-        _register_states class variables
+        Simple test if child gets state variables from the parent as well
         """
         proper = TestClassProperChild()
-        self.failUnless(Set(proper.states) ==
-            Set(TestClassProperChild._register_states).union(
-            Set(TestClassProper._register_states)))
+        self.failUnlessEqual(Set(proper.states.names),
+                             Set(['state1', 'state2', 'state4']))
+
+
+    def testStateVariables(self):
+        """To test new states"""
+
+        from mvpa.misc.state import StateVariable, Statefull
+
+        class S1(Statefull):
+            v1 = StateVariable(enabled=True, doc="values1 is ...")
+            v1XXX = StateVariable(enabled=False, doc="values1 is ...")
+
+
+        class S2(Statefull):
+            v2 = StateVariable(enabled=True, doc="values12 is ...")
+
+        class S1_(S1):
+            pass
+
+        class S1__(S1_):
+            v1__ = StateVariable(enabled=False)
+
+        class S12(S1__, S2):
+            v12 = StateVariable()
+
+        s1, s2, s1_, s1__, s12 = S1(), S2(), S1_(), S1__(), S12()
+
+        self.failUnlessEqual(s1.states.isEnabled("v1"), True)
+        s1.v1 = 12
+        s12.v1 = 120
+        s2.v2 = 100
+
+        self.failUnlessEqual(len(s2.states.listing), 1)
+
+        self.failUnlessEqual(s1.v1, 12)
+        try:
+            tempvalue = s1__.v1__
+            self.fail("Should have puked since values were not enabled yet")
+        except:
+            pass
+
 
 def suite():
     return unittest.makeSuite(StateTests)

@@ -38,9 +38,10 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         maps = sana(self.dataset)
 
         self.failUnless(len(maps) == 4)
-        self.failUnless(sana.hasState('full'))
-        self.failUnless(sana['full'][:,0].mean() == maps[0])
-        self.failUnless(sana['full'].shape == (5,4))
+        self.failUnless(sana.states.isKnown('post'))
+        self.failUnless(sana.post.has_key('full'))
+        self.failUnless(sana.post['full'][:,0].mean() == maps[0])
+        self.failUnless(sana.post['full'].shape == (5,4))
 
 
 def suite():

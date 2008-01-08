@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 
-class NullHypothesisTest(State):
+class NullHypothesisTest(Statefull):
     # XXX this should be the baseclass of a bunch of tests with more
     # sophisticated tests, perhaps making more assumptions about the data
     # TODO find a nicer name for it
@@ -40,6 +40,11 @@ class NullHypothesisTest(State):
     probability to achieve a transfer error as low or lower as the ETE, when
     the data samples contain *no* signal.
     """
+
+    # register state members
+    null_errors = StateVariable()
+    emp_error = StateVariable()
+
     def __init__(self,
                  transerror,
                  permutations=1000
@@ -53,7 +58,7 @@ class NullHypothesisTest(State):
                 will be performed to determine the distribution under the null
                 hypothesis.
         """
-        State.__init__(self)
+        Statefull.__init__(self)
 
         self.__trans_error = transerror
         """`TransferError` instance used to compute all errors."""
@@ -61,10 +66,6 @@ class NullHypothesisTest(State):
         self.__permutations = permutations
         """Number of permutations to compute the estimate the null
         distribution."""
-
-        # register state members
-        self._registerState('null_errors')
-        self._registerState('emp_error')
 
 
     def __call__(self, data, testdata):
@@ -107,7 +108,7 @@ class NullHypothesisTest(State):
         # restore original labels
         data.permuteLabels(False, perchunk=False)
 
-        self['emp_error'] = emp_error
-        self['null_errors'] = null_errors
+        self.emp_error = emp_error
+        self.null_errors = null_errors
 
         return prob

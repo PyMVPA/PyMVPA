@@ -18,6 +18,7 @@ from mvpa.algorithms.datameasure import DataMeasure
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.clfs.transerror import ConfusionMatrix
 from mvpa.misc import warning
+from mvpa.misc.state import StateVariable
 
 if __debug__:
     from mvpa.misc import debug
@@ -31,6 +32,18 @@ class ClfCrossValidation(DataMeasure):
     and a combiner function that aggregates all computed error values across
     cross-validation folds.
     """
+
+    results = StateVariable(enabled=False, doc=
+       """Store individual results in the state""")
+    splits = StateVariable(enabled=False, doc=
+       """Store the actual splits of the data. Can be memory expensive""")
+    transerrors = StateVariable(enabled=False, doc=
+       """Store copies of transerrors at each step""")
+    confusions = StateVariable(enabled=False, doc=
+       """Store actual confusion matrices (if available)""")
+    confusion = StateVariable(enabled=False, doc=
+       """Store total confusion matrix (if available)""")
+
     def __init__(self,
                  transerror,
                  splitter=NoneSplitter(),
@@ -59,17 +72,6 @@ class ClfCrossValidation(DataMeasure):
         self.__transerror = transerror
         self.__combinerfx = combinerfx
 
-        # register the state members
-        self._registerState("results", enabled=False)
-        """Store individual results in the state"""
-        self._registerState("splits", enabled=False)
-        """Store the actual splits of the data. Can be memory expensive"""
-        self._registerState("transerrors", enabled=False)
-        """Store copies of transerrors at each step"""
-        self._registerState("confusions", enabled=False)
-        """Store actual confusion matrices (if available)"""
-        self._registerState("confusion", enabled=False)
-        """Store total confusion matrix (if available)"""
 
 
 # TODO: put back in ASAP
@@ -93,26 +95,26 @@ class ClfCrossValidation(DataMeasure):
         # store the results of the splitprocessor
         results = []
 
-        self["splits"] = []
-        self["confusion"] = ConfusionMatrix()
-        self["confusions"] = []
-        self["transerrors"] = []
+        self.splits = []
+        self.confusion = ConfusionMatrix()
+        self.confusions = []
+        self.transerrors = []
 
         # splitter
         for split in self.__splitter(dataset):
             # only train classifier if splitter provides something in first
             # element of tuple -- the is the behavior of TransferError
-            if self.isStateEnabled("splits"):
-                self["splits"].append(split)
+            if self.states.isEnabled("splits"):
+                self.splits.append(split)
 
             result = self.__transerror(split[1], split[0])
 
-            if self.isStateEnabled("transerrors"):
-                self["transerrors"].append(copy(self.__transerror))
+            if self.states.isEnabled("transerrors"):
+                self.transerrors.append(copy(self.__transerror))
 
-            if self.isStateEnabled('confusions'):
-                if self.__transerror.isStateActive('confusion'):
-                    self["confusions"].append(self.__transerror["confusion"])
+            if self.states.isEnabled('confusions'):
+                if self.__transerror.states.isActive('confusion'):
+                    self.confusions.append(self.__transerror.confusion)
                 else:
                     warning("Crossvalidator %s can't store confusions state " %
                             self +
@@ -120,9 +122,9 @@ class ClfCrossValidation(DataMeasure):
                             self.__transerror +
                             "doesn't have confusion enabled to registered")
 
-            if self.isStateEnabled('confusion'):
-                if self.__transerror.isStateActive('confusion'):
-                    self["confusion"] += self.__transerror["confusion"]
+            if self.states.isEnabled('confusion'):
+                if self.__transerror.states.isActive('confusion'):
+                    self.confusion += self.__transerror.confusion
                 else:
                     warning("Crossvalidator %s can't store confusion state " %
                             self +
@@ -138,7 +140,7 @@ class ClfCrossValidation(DataMeasure):
 
             # XXX add callbacks
 
-        self["results"] = results
+        self.results = results
         """Store state variable if it is enabled"""
 
         return self.__combinerfx(results)

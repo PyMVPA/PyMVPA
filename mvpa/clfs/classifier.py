@@ -27,7 +27,7 @@ from sets import Set
 
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 from transerror import ConfusionMatrix
 
@@ -36,7 +36,9 @@ from mvpa.misc import warning
 if __debug__:
     from mvpa.misc import debug
 
-class Classifier(State):
+
+
+class Classifier(Statefull):
     """Abstract classifier class to be inherited by all classifiers
 
     Required behavior:
@@ -84,34 +86,38 @@ class Classifier(State):
     # necessary in some situations (e.g. reasonably predefined parameter range,
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa.misc.param.Parameter'...
+
+    trained_confusion = StateVariable(enabled=True,
+        doc="Result of learning: `ConfusionMatrix` " \
+            "(and corresponding learning error)")
+    predictions = StateVariable(enabled=True,
+        doc="Reported predicted values")
+    values = StateVariable(enabled=False,
+        doc="Internal values seen by the classifier")
+
     params = {}
 
     def __init__(self, train2predict=True, **kwargs):
         """Cheap initialization.
         """
-        State.__init__(self, **kwargs)
+        Statefull.__init__(self, **kwargs)
 
         self._setTrain2predict(train2predict)
         """Some classifiers might not need to be trained to predict"""
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
-        self._registerState('trained_confusion', enabled=True,
-            doc="Result of learning: `ConfusionMatrix` (and corresponding learning error")
-        self._registerState('predictions', enabled=True,
-            doc="Reported predicted values")
-        self._registerState('values', enabled=False,
-            doc="Internal values seen by the classifier")
 
 
     def __str__(self):
-        return "%s\n %s" % (`self`, State.__str__(self))
+        return "%s\n %s" % (`self`, Statefull.__str__(self))
 
 
     def _pretrain(self, data):
         """Functionality prior to training
         """
         pass
+
 
     def _posttrain(self, data, result):
         """Functionality post training
@@ -120,16 +126,18 @@ class Classifier(State):
         """
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = data.nfeatures
-        if self.isStateEnabled('trained_confusion'):
+        if self.states.isEnabled('trained_confusion'):
             predictions = self.predict(data.samples)
-            self['trained_confusion'] = ConfusionMatrix(
+            self.trained_confusion = ConfusionMatrix(
                 labels=data.uniquelabels, targets=data.labels,
                 predictions=predictions)
+
 
     def _train(self, data):
         """Function to be actually overriden in derived classes
         """
         raise NotImplementedError
+
 
     def train(self, data):
         """Train classifier on data
@@ -152,8 +160,8 @@ class Classifier(State):
             # check if classifier was trained if that is needed
             if not self.trained:
                 raise ValueError, \
-                      "Classifier %s wasn't yet trained, therefor can't predict" % \
-                      `self`
+                      "Classifier %s wasn't yet trained, therefore can't " \
+                      "predict" % `self`
             nfeatures = data.shape[1]
             # check if number of features is the same as in the data
             # it was trained on
@@ -163,10 +171,12 @@ class Classifier(State):
                       (`self`, self.__trainednfeatures) + \
                       "thus can't predict for %d features" % nfeatures
 
+
     def _postpredict(self, data, result):
         """Functionality after prediction is computed
         """
         pass
+
 
     def _predict(self, data):
         """Actual prediction
@@ -184,7 +194,8 @@ class Classifier(State):
         """
         data = N.array(data)
         if __debug__:
-            debug("CLF", "Predicting classifier %s on data %s" % (`self`, `data.shape`))
+            debug("CLF", "Predicting classifier %s on data %s" \
+                % (`self`, `data.shape`))
         self._prepredict(data)
         result = self._predict(data)
         self._postpredict(data, result)
@@ -196,6 +207,7 @@ class Classifier(State):
         """Either classifier was already trained"""
         return not self.__trainednfeatures is None
 
+
     def _setTrain2predict(self, v):
         """Set the flag for necessary training prior doing prediction
 
@@ -203,10 +215,12 @@ class Classifier(State):
         derived classes"""
         self.__train2predict = v
 
+
     @property
     def train2predict(self):
         """Either classifier has to be trained to predict"""
         return self.__train2predict
+
 
 
 #
@@ -218,6 +232,14 @@ class BoostedClassifier(Classifier):
 
     Should rarely be used directly. Use one of its childs instead
     """
+
+    # should not be needed if we have prediction_values upstairs
+    raw_predictions = StateVariable(enabled=False,
+        doc="Predictions obtained from each classifier")
+
+    raw_values = StateVariable(enabled=False,
+        doc="Values obtained from each classifier")
+
 
     def __init__(self, clfs=[], **kwargs):
         """Initialize the instance.
@@ -233,13 +255,6 @@ class BoostedClassifier(Classifier):
 
         self._setClassifiers(clfs)
         """Store the list of classifiers"""
-
-        # should not be needed if we have prediction_values upstairs
-        self._registerState("raw_predictions", enabled=False,
-                            doc="Predictions obtained from each classifier")
-
-        self._registerState("raw_values", enabled=False,
-                            doc="Values obtained from each classifier")
 
 
     def __repr__(self):
@@ -258,11 +273,11 @@ class BoostedClassifier(Classifier):
         """
         """
         raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
-        if clf.isStateEnabled("values") and self.isStateEnabled("values"):
-            values = [ clf["values"] for clf in self.__clfs ]
-            self["raw_values"] = values
+        if clf.states.isEnabled("values") and self.states.isEnabled("values"):
+            values = [ clf.values for clf in self.__clfs ]
+            self.raw_values = values
 
-        self["raw_predictions"] = raw_predictions
+        self.raw_predictions = raw_predictions
 
         return raw_predictions
 
@@ -280,14 +295,16 @@ class BoostedClassifier(Classifier):
         train2predicts = [clf.train2predict for clf in self.__clfs]
         train2predict = reduce(lambda x,y: x or y, train2predicts, False)
         if __debug__:
-            debug("CLFBST", "Setting train2predict=%s for classifiers %s with %s" %
-                  (str(train2predict), self.__clfs, str(train2predicts)))
+            debug("CLFBST", "Setting train2predict=%s for classifiers " \
+                   "%s with %s" \
+                   % (str(train2predict), self.__clfs, str(train2predicts)))
         # set flag if it needs to be trained before predicting
         self._setTrain2predict(train2predict)
 
     clfs = property(fget=lambda x:x.__clfs,
                     fset=_setClassifiers,
                     doc="Used classifiers")
+
 
 
 class ProxyClassifier(Classifier):
@@ -320,11 +337,12 @@ class ProxyClassifier(Classifier):
     def _train(self, data):
         """
         """
-        # base class nothing much -- just proxies requests to underlying classifier
+        # base class nothing much -- just proxies requests to underlying
+        # classifier
         self.__clf.train(wdata)
 
         # for the ease of access
-        self._copy_states_(self.__clf, deep=False)
+        self.states._copy_states_(self.__clf, deep=False)
 
 
     def _predict(self, data):
@@ -332,7 +350,7 @@ class ProxyClassifier(Classifier):
         """
         result = self.__clf.predict(data)
         # for the ease of access
-        self._copy_states_(self.__clf, deep=False)
+        self.states._copy_states_(self.__clf, deep=False)
         return result
 
     clf = property(lambda x:x.__clf, doc="Used `Classifier`")
@@ -343,7 +361,7 @@ class ProxyClassifier(Classifier):
 # Various combiners for CombinedClassifier
 #
 
-class Combiner(State):
+class Combiner(Statefull):
     """Base class for combining decisions of multiple classifiers"""
 
     def train(self, clfs, data):
@@ -359,6 +377,7 @@ class Combiner(State):
         """
         pass
 
+
     def call(self, clfs, data):
         """Call function
 
@@ -371,8 +390,14 @@ class Combiner(State):
         raise NotImplementedError
 
 
+
 class MaximalVote(Combiner):
     """Provides a decision using maximal vote rule"""
+
+    predictions = StateVariable(enabled=True,
+        doc="Voted predictions")
+    all_label_counts = StateVariable(enabled=False,
+        doc="Counts across classifiers for each label/sample")
 
     def __init__(self):
         """XXX Might get a parameter to use raw decision values if
@@ -380,11 +405,6 @@ class MaximalVote(Combiner):
         votes
         """
         Combiner.__init__(self)
-
-        self._registerState("predictions", enabled=True,
-                            doc="Voted predictions")
-        self._registerState("all_label_counts", enabled=False,
-                            doc="Counts across classifiers for each label/sample")
 
 
     def __call__(self, clfs, data):
@@ -401,10 +421,10 @@ class MaximalVote(Combiner):
         all_label_counts = None
         for clf in clfs:
             # Lets check first if necessary state variable is enabled
-            if not clf.isStateEnabled("predictions"):
+            if not clf.states.isEnabled("predictions"):
                 raise ValueError, "MaximalVote needs classifiers (such as " + \
                       "%s) with state 'predictions' enabled" % clf
-            predictions = clf["predictions"]
+            predictions = clf.predictions
             if all_label_counts is None:
                 all_label_counts = [ {} for i in xrange(len(predictions)) ]
 
@@ -443,14 +463,15 @@ class MaximalVote(Combiner):
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
-        self["all_label_counts"] = all_label_counts
-        self["predictions"] = predictions
+        self.all_label_counts = all_label_counts
+        self.predictions = predictions
         return predictions
 
 
-class CombinedClassifier(BoostedClassifier):
-    """`BoostedClassifier` which combines predictions using some `Combiner` functor
 
+class CombinedClassifier(BoostedClassifier):
+    """`BoostedClassifier` which combines predictions using some `Combiner`
+    functor.
     """
 
     def __init__(self, clfs=[], combiner=MaximalVote(), **kwargs):
@@ -493,12 +514,12 @@ class CombinedClassifier(BoostedClassifier):
         """
         raw_predictions = BoostedClassifier._predict(self, data)
         predictions = self.__combiner(self.clfs, data)
-        self["predictions"] = predictions
+        self.predictions = predictions
 
-        if self.isStateEnabled("values"):
-            if self.__combiner.isStateActive("values"):
+        if self.states.isEnabled("values"):
+            if self.__combiner.states.isActive("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
-                self["values"] = self.__combiner["values"]
+                self.values = self.__combiner.values
             else:
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state" % self +
@@ -509,6 +530,7 @@ class CombinedClassifier(BoostedClassifier):
 
     combiner = property(fget=lambda x:x.__combiner,
                         doc="Used combiner to derive a single result")
+
 
 
 class BinaryClassifier(ProxyClassifier):
@@ -573,7 +595,8 @@ class BinaryClassifier(ProxyClassifier):
         # select the samples
         dataselected = data.selectSamples([ x[0] for x in idlabels ])
         if __debug__:
-            debug('CLFBIN', "Selecting %d samples out of %d samples for binary " %
+            debug('CLFBIN',
+                  "Selecting %d samples out of %d samples for binary " %
                   (len(idlabels), data.nsamples) +
                   " classification among labels %s/+1 and %s/-1" %
                   (self.__poslabels, self.__neglabels) +
@@ -595,15 +618,18 @@ class BinaryClassifier(ProxyClassifier):
         return not a list but just that single label.
         """
         binary_predictions = ProxyClassifier._predict(self, data)
-        self['values'] = binary_predictions
+        self.values = binary_predictions
         predictions = map(lambda x: {-1: self.__predictneg,
-                                     +1: self.__predictpos}[x], binary_predictions)
-        self['predictions'] = predictions
+                                     +1: self.__predictpos}[x],
+                          binary_predictions)
+        self.predictions = predictions
         return predictions
 
 
+
 class MulticlassClassifier(CombinedClassifier):
-    """`CombinedClassifier` to perform multiclass using a list of `BinaryClassifier`
+    """`CombinedClassifier` to perform multiclass using a list of
+    `BinaryClassifier`.
 
     such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
     is yet to think about)
@@ -665,6 +691,7 @@ class MulticlassClassifier(CombinedClassifier):
         CombinedClassifier._train(self, data)
 
 
+
 class SplitClassifier(CombinedClassifier):
     """`BoostedClassifier` to work on splits of the data
 
@@ -674,6 +701,10 @@ class SplitClassifier(CombinedClassifier):
           does just a tiny bit more which might be not necessary at
           all: map sets of labels into 2 categories...
     """
+
+    trained_confusions = StateVariable(enabled=True,
+        doc="Resultant confusion matrices whenever classifier trained " +
+            "on each was tested on 2nd part of the split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
@@ -690,20 +721,20 @@ class SplitClassifier(CombinedClassifier):
         """Store sample instance of basic classifier"""
         self.__splitter = splitter
 
-        self._registerState("trained_confusions", enabled=True,
-            doc="Resultant confusion matrices whenever classifier trained on each " +
-                "was tested on 2nd part of the split")
-
 
     def _train(self, data):
         """
         """
         # generate pairs and corresponding classifiers
         bclfs = []
-        self["trained_confusions"] = ConfusionMatrix(labels=data.uniquelabels)
+        self.trained_confusions = ConfusionMatrix(labels=data.uniquelabels)
 
-        # for proper and easier debugging - first define classifiers and then train them
+        # for proper and easier debugging - first define classifiers and then
+        # train them
         for split in self.__splitter(data):
+            if __debug__:
+                debug("CLFSPL",
+                      "Deepcopying %s for %s" % (`self.__clf`, self))
             clf = deepcopy(self.__clf)
             bclfs.append(clf)
         self.clfs = bclfs
@@ -714,10 +745,11 @@ class SplitClassifier(CombinedClassifier):
                 debug("CLFSPL", "Training classifier for split %d" % (i))
             clf = self.clfs[i]
             clf.train(split[0])
-            if self.isStateEnabled("trained_confusions"):
+            if self.states.isEnabled("trained_confusions"):
                 predictions = clf.predict(split[1].samples)
-                self["trained_confusions"].add(split[1].labels, predictions)
+                self.trained_confusions.add(split[1].labels, predictions)
             i += 1
+
 
 
 class MappedClassifier(ProxyClassifier):
@@ -746,7 +778,8 @@ class MappedClassifier(ProxyClassifier):
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         self.__mapper = mapper
-        """mapper to help us our with prepping data to training/classification"""
+        """mapper to help us our with prepping data to
+        training/classification"""
 
 
     def _train(self, data):
@@ -768,9 +801,9 @@ class MappedClassifier(ProxyClassifier):
 class FeatureSelectionClassifier(ProxyClassifier):
     """`ProxyClassifier` which uses some `FeatureSelection` prior training.
 
-    `FeatureSelection` is used first to select features for the classifier to use
-    for prediction. Internally it would rely on MappedClassifier which would use
-    created MaskMapper.
+    `FeatureSelection` is used first to select features for the classifier to
+    use for prediction. Internally it would rely on MappedClassifier which
+    would use created MaskMapper.
 
     TODO: think about removing overhead of retraining the same classifier if
     feature selection was carried out with the same classifier already
@@ -799,7 +832,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         """
         # temporarily enable selected_ids
-        self.__feature_selection._enableStatesTemporarily(["selected_ids"])
+        self.__feature_selection.states._enableTemporarily(["selected_ids"])
 
         (wdata, tdata) = self.__feature_selection(data)
         if __debug__:
@@ -809,10 +842,10 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
         mappermask = N.zeros(data.nfeatures)
-        mappermask[self.__feature_selection["selected_ids"]] = 1
+        mappermask[self.__feature_selection.selected_ids] = 1
         mapper = MaskMapper(mappermask)
 
-        self.__feature_selection._resetEnabledTemporarily()
+        self.__feature_selection.states._resetEnabledTemporarily()
 
         # create and assign `MappedClassifier`
         self.__maskclf = MappedClassifier(self.clf, mapper)
@@ -821,7 +854,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.__maskclf.clf.train(wdata)
 
         # for the ease of access
-        self._copy_states_(self.__maskclf, deep=False)
+        self.states._copy_states_(self.__maskclf, deep=False)
 
 
     def _predict(self, data):
@@ -829,10 +862,11 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         result = self.__maskclf._predict(data)
         # for the ease of access
-        self._copy_states_(self.__maskclf, deep=False)
+        self.states._copy_states_(self.__maskclf, deep=False)
         return result
 
 
     maskclf = property(lambda x:x.__maskclf, doc="Used `MappedClassifier`")
-    feature_selection = property(lambda x:x.__feature_selection, doc="Used `FeatureSelection`")
+    feature_selection = property(lambda x:x.__feature_selection,
+                                 doc="Used `FeatureSelection`")
 
