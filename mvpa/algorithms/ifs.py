@@ -46,7 +46,6 @@ class IFS(FeatureSelection):
     is reached.
     """
 
-
     errors = StateVariable()
 
     def __init__(self,
@@ -57,6 +56,7 @@ class IFS(FeatureSelection):
                  feature_selector=FixedNElementTailSelector(1,
                                                             tail='upper',
                                                             mode='select'),
+                 **kwargs
                  ):
         """Initialize incremental feature search
 
@@ -74,7 +74,7 @@ class IFS(FeatureSelection):
                 criterion is fulfilled.
          """
         # bases init first
-        FeatureSelection.__init__(self)
+        FeatureSelection.__init__(self, **kwargs)
 
         self.__data_measure = data_measure
         self.__transfer_error = transfer_error
@@ -82,7 +82,6 @@ class IFS(FeatureSelection):
         self.__bestdetector = bestdetector
         self.__stopping_criterion = stopping_criterion
 
- 
 
     def __call__(self, dataset, testdataset, callables=[]):
         """Proceed and select the features recursively eliminating less
