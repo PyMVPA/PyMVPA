@@ -17,20 +17,21 @@ from numpy import arange
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc import warning
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 from mvpa.misc.exceptions import UnknownStateError
 
-class FeatureSelection(State):
+class FeatureSelection(Statefull):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
     datasets.
     """
 
+    selected_ids = StateVariable(enabled=False)
+
     def __init__(self, **kargs):
         # base init first
-        State.__init__(self, **kargs)
-        self._registerState("selected_ids", enabled=False)
+        Statefull.__init__(self, **kargs)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -170,14 +171,14 @@ class StopNBackHistoryCriterion(StoppingCriterion):
 
 
 
-class ElementSelector(State):
+class ElementSelector(Statefull):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
     def __init__(self):
         """Cheap initialization.
         """
-        State.__init__(self)
+        Statefull.__init__(self)
 
 
     def __call__(self, seq):
@@ -194,6 +195,10 @@ class TailSelector(ElementSelector):
     The default behaviour is to discard the lower tail of a given distribution.
     """
 
+    ndiscarded = StateVariable(True,
+        doc="Store number of discarded elements.")
+
+
     # TODO: 'both' to select from both tails
     def __init__(self, tail='lower', mode='discard', sort=True):
         """Initialize TailSelector
@@ -209,10 +214,6 @@ class TailSelector(ElementSelector):
 
         """
         ElementSelector.__init__(self)  # init State before registering anything
-
-        self._registerState('ndiscarded', True)    # state variable
-        """Store number of discarded elements.
-        """
 
         self._setTail(tail)
         """Know which tail to select."""
@@ -264,16 +265,16 @@ class TailSelector(ElementSelector):
 
         if self.__mode == 'discard' and self.__tail == 'upper':
             good_ids = seqrank[:-1*nelements]
-            self['ndiscarded'] = nelements
+            self.ndiscarded = nelements
         elif self.__mode == 'discard' and self.__tail == 'lower':
             good_ids = seqrank[nelements:]
-            self['ndiscarded'] = nelements
+            self.ndiscarded = nelements
         elif self.__mode == 'select' and self.__tail == 'upper':
             good_ids = seqrank[-1*nelements:]
-            self['ndiscarded'] = len_seq - nelements
+            self.ndiscarded = len_seq - nelements
         else: # select lower tail
             good_ids = seqrank[:nelements]
-            self['ndiscarded'] = len_seq - nelements
+            self.ndiscarded = len_seq - nelements
 
         # sort ids to keep order
         # XXX should we do here are leave to other place
@@ -378,6 +379,8 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     features.
     """
 
+    sensitivity = StateVariable(enabled=False)
+
     def __init__(self,
                  sensitivity_analyzer,
                  feature_selector=FractionTailSelector(0.05),
@@ -403,8 +406,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         self.__feature_selector = feature_selector
         """Functor which takes care about removing some features."""
 
-        # register the state members
-        self._registerState("sensitivity", enabled=False)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -423,7 +424,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
-        self["sensitivity"] = sensitivity
+        self.sensitivity = sensitivity
 
         # Select features to preserve
         selected_ids = self.__feature_selector(sensitivity)
@@ -445,7 +446,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
         selected_ids.sort()
-        self["selected_ids"] = selected_ids
+        self.selected_ids = selected_ids
 
         # dataset with selected features is returned
         return results
@@ -457,6 +458,10 @@ class FeatureSelectionPipeline(FeatureSelection):
 
     Given as list of FeatureSelections it applies them in turn.
     """
+
+    nfeatures = StateVariable(
+        doc="Number of features before each step in pipeline")
+    # TODO: may be we should also append resultant number of features?
 
     def __init__(self,
                  feature_selections,
@@ -474,10 +479,6 @@ class FeatureSelectionPipeline(FeatureSelection):
         self.__feature_selections = feature_selections
         """Selectors to use in turn"""
 
-        self._registerState("nfeatures",
-                            doc="Number of features before each step in pipeline")
-        # TODO: may be we should also append resultant number of features?
-
 
     def __call__(self, dataset, testdataset=None, **kwargs):
         """Invocation of the feature selection
@@ -488,27 +489,27 @@ class FeatureSelectionPipeline(FeatureSelection):
         wdataset = dataset
         wtestdataset = testdataset
 
-        self["selected_ids"] = None
+        self.selected_ids = None
 
-        self["nfeatures"] = []
+        self.nfeatures = []
         """Number of features at each step (before running selection)"""
 
         for fs in self.__feature_selections:
 
             # enable selected_ids state if it was requested from this class
-            fs._enableStatesTemporarily(["selected_ids"], self)
-            if self.isStateEnabled("nfeatures"):
-                self["nfeatures"].append(wdataset.nfeatures)
+            fs.states._enableTemporarily(["selected_ids"], self)
+            if self.states.isEnabled("nfeatures"):
+                self.nfeatures.append(wdataset.nfeatures)
 
             wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
 
-            if self.isStateEnabled("selected_ids"):
-                if self["selected_ids"] == None:
-                    self["selected_ids"] = fs["selected_ids"]
+            if self.states.isEnabled("selected_ids"):
+                if self.selected_ids == None:
+                    self.selected_ids = fs.selected_ids
                 else:
-                    self["selected_ids"] = self["selected_ids"][fs["selected_ids"]]
+                    self.selected_ids = self.selected_ids[fs.selected_ids]
 
-            fs._resetEnabledTemporarily()
+            fs.states._resetEnabledTemporarily()
 
         return (wdataset, wtestdataset)
 

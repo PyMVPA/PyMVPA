@@ -30,15 +30,17 @@ class SameSignClassifier(Classifier):
 
     def __init__(self):
         Classifier.__init__(self, train2predict=False)
+
     def _train(self, data):
         # we don't need that ;-)
         pass
+
     def _predict(self, data):
         datalen = len(data)
         values = []
         for d in data:
             values.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
-        self["predictions"] = values
+        self.predictions = values
         return values
 
 
@@ -49,7 +51,7 @@ class Less1Classifier(SameSignClassifier):
         values = []
         for d in data:
             values.append(2*int(max(d)<=1)-1)
-        self["predictions"] = values
+        self.predictions = values
         return values
 
 
@@ -68,7 +70,7 @@ class ClassifiersTests(unittest.TestCase):
     def testDummy(self):
         clf = SameSignClassifier()
         clf.train(self.data_bin_1)
-        self.failUnlessEqual(clf["trained_confusion"].percentCorrect,
+        self.failUnlessEqual(clf.trained_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
@@ -112,10 +114,10 @@ class ClassifiersTests(unittest.TestCase):
         clf = SplitClassifier(clf=SameSignClassifier(),
                               splitter=NFoldSplitter(1))
         clf.train(ds)                   # train the beast
-        self.failUnlessEqual(clf["trained_confusions"].percentCorrect,
+        self.failUnlessEqual(clf.trained_confusions.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf["trained_confusions"].sets),
+        self.failUnlessEqual(len(clf.trained_confusions.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -182,6 +184,7 @@ class ClassifiersTests(unittest.TestCase):
         svm = LinearNuSVMC()
         svm2 = LinearNuSVMC()
         clf = MulticlassClassifier(clf=svm)
+
         nfeatures = 6
         nonbogus = [1, 3, 4]
         dstrain = normalFeatureDataset(perlabel=50, nlabels=3,
@@ -194,9 +197,10 @@ class ClassifiersTests(unittest.TestCase):
                                       nonbogus_features=nonbogus,
                                       snr=3.0)
         svm2.train(dstrain)
+
         clf.train(dstrain)
-        self.failUnlessEqual(str(clf["trained_confusion"]),
-                             str(svm2["trained_confusion"]),
+        self.failUnlessEqual(str(clf.trained_confusion),
+                             str(svm2.trained_confusion),
             msg="Multiclass clf should provide same results as built-in libsvm's")
 
 

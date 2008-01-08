@@ -44,7 +44,7 @@ class kNN(Classifier):
     def __repr__(self):
         """Representation of the object
         """
-        return "kNN(k=%d, enable_states=%s)" % (self.__k, str(self.enabledStates))
+        return "kNN(k=%d, enable_states=%s)" % (self.__k, str(self.states.enabled))
 
     def __str__(self):
         return "%s\n data: %s" % (Classifier.__str__(self), indentDoc(self.__data))
@@ -110,8 +110,8 @@ class kNN(Classifier):
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
-        self['predictions'] = predicted
-        self['values'] = votes
+        self.predictions = predicted
+        self.values = votes
 
         return predicted
 

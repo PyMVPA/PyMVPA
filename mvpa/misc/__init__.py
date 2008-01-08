@@ -104,6 +104,8 @@ if __debug__:
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
     debug.register('ST',   "State")
+    debug.register('STV',  "State Variable")
+    debug.register('STCOL', "State Collector")
 
     debug.register('CLF',  "Base Classifiers")
     debug.register('CLFBST', "BoostClassifier")

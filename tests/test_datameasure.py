@@ -47,17 +47,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
         map_ = sana(self.dataset)
         self.failUnless(len(map_) == self.dataset.nfeatures)
 
-        for conf_matrix in [sana.clf["trained_confusion"]] + sana.clf["trained_confusions"].matrices:
+        for conf_matrix in [sana.clf.trained_confusion] + sana.clf.trained_confusions.matrices:
             self.failUnless(conf_matrix.percentCorrect>85,
                             msg="We must have trained on each one more or less correctly")
 
-        errors = [x.percentCorrect for x in sana.clf["trained_confusions"].matrices]
+        errors = [x.percentCorrect for x in sana.clf.trained_confusions.matrices]
 
         self.failUnless(N.min(errors) != N.max(errors),
                         msg="Splits should have slightly but different generalization")
 
         # lets go through all sensitivities and see if we selected the right features
-        for map__ in [map_] + sana.combined_analyzer["sensitivities"]:
+        for map__ in [map_] + sana.combined_analyzer.sensitivities:
             self.failUnlessEqual(
                 list(FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)),
                 list(self.nonbogus),

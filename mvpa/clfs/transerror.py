@@ -21,10 +21,11 @@ from sets import Set
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 if __debug__:
     from mvpa.misc import debug
+
 
 class ConfusionMatrix(object):
     """Simple class for confusion matrix computation / display.
@@ -33,8 +34,11 @@ class ConfusionMatrix(object):
     computation of confusion matrix untill all data is acquired (to
     figure out complete set of labels. If testing data doesn't have a
     complete set of labels, but you like to include all labels,
-    provide them as a parameter to constructor"""
-
+    provide them as a parameter to constructor.
+    """
+    # XXX Michael: - How do multiple sets work and what are they there for?
+    #              - This class does not work with regular Python sequences
+    #                when passed to the constructor as targets and predictions.
     def __init__(self, labels=[], targets=None, predictions=None):
         """Initialize ConfusionMatrix with optional list of `labels`
 
@@ -72,8 +76,9 @@ class ConfusionMatrix(object):
                                                        len(predictions)) + \
                   " have different number of samples"
 
-        # enforce labels in predictions to be of the same datatype as in targets,
-        # since otherwise we are getting doubles for unknown at a given moment labels
+        # enforce labels in predictions to be of the same datatype as in
+        # targets, since otherwise we are getting doubles for unknown at a
+        # given moment labels
         for i in xrange(len(targets)):
             t1, t2 = type(targets[i]), type(predictions[i])
             if t1 != t2:
@@ -138,7 +143,8 @@ class ConfusionMatrix(object):
         self.__computed = True
 
 
-    def __str__(self, header=True, percents=True, summary=True, print_empty=False):
+    def __str__(self, header=True, percents=True, summary=True,
+                print_empty=False):
         """'Pretty print' the matrix"""
         self._compute()
 
@@ -178,14 +184,16 @@ class ConfusionMatrix(object):
             out.write("%s%s\n" % (pref, (" %s" % ("-" * L)) * Nlabels))
 
         if matrix.shape != (Nlabels, Nlabels):
-            raise ValueError, "Number of labels %d doesn't correspond the size" + \
+            raise ValueError, \
+                  "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (Nlabels, matrix.shape)
 
         for i in xrange(Nlabels):
             # print the label
             if Nsamples[i] == 0:
                 continue
-            out.write("%%%ds {%%%dd}" % (Nlabelsmax, Ndigitsmax) % (labels[i], Nsamples[i])),
+            out.write("%%%ds {%%%dd}" \
+                % (Nlabelsmax, Ndigitsmax) % (labels[i], Nsamples[i])),
             for j in xrange(Nlabels):
                 out.write(" %%%dd" % L % matrix[i, j])
             if percents:
@@ -199,7 +207,8 @@ class ConfusionMatrix(object):
 
             out.write("%%-%ds[%%6.2f%%%%]\n"
                       % (prefixlen + (L+1)*Nlabels)
-                      % ("Total Correct {%d out of %d}" % (self.__Ncorrect, sum(Nsamples)),
+                      % ("Total Correct {%d out of %d}" \
+                        % (self.__Ncorrect, sum(Nsamples)),
                          self.percentCorrect ))
 
 
@@ -260,8 +269,14 @@ class ConfusionMatrix(object):
     sets = property(lambda self:self.__sets)
 
 
-class ClassifierError(State):
+
+class ClassifierError(Statefull):
     """Compute the some error of a (trained) classifier on a dataset.
+    """
+
+    confusion = StateVariable(enabled=False)
+    """TODO Think that labels might be also symbolic thus can't directly
+       be indicies of the array
     """
 
     def __init__(self, clf, labels=None, **kwargs):
@@ -274,16 +289,11 @@ class ClassifierError(State):
             if provided, should be a set of labels to add on top of the
             ones present in testdata
         """
-        State.__init__(self, **kwargs)
+        Statefull.__init__(self, **kwargs)
         self.__clf = clf
 
         self.__labels = labels
         """Labels to add on top to existing in testing data"""
-
-        self._registerState('confusion', enabled=False)
-        """TODO Think that labels might be also symbolic thus can't directly
-                be indicies of the array
-        """
 
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""
@@ -329,6 +339,7 @@ class ClassifierError(State):
     def labels(self): return self.__labels
 
 
+
 class TransferError(ClassifierError):
     """Compute the transfer error of a (trained) classifier on a dataset.
 
@@ -336,7 +347,8 @@ class TransferError(ClassifierError):
     Optionally the classifier can be training by passing an additional
     training dataset to the __call__() method.
     """
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None, **kwargs):
+    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
+                 **kwargs):
         """Initialization.
 
         :Parameters:
@@ -377,8 +389,8 @@ class TransferError(ClassifierError):
 
         # compute confusion matrix
         # TODO should migrate into ClassifierError.__postcall?
-        if self.isStateEnabled('confusion'):
-            self['confusion'] = ConfusionMatrix(
+        if self.states.isEnabled('confusion'):
+            self.confusion = ConfusionMatrix(
                 labels=self.labels, targets=testdata.labels,
                 predictions=predictions)
 
@@ -394,6 +406,7 @@ class TransferError(ClassifierError):
     def errorfx(self): return self.__errorfx
 
 
+
 class ConfusionBasedError(ClassifierError):
     """For a given classifier report an error based on internally
     computed error measure (given by some `ConfusionMatrix` stored in
@@ -406,7 +419,8 @@ class ConfusionBasedError(ClassifierError):
     TODO: Derive it from some common class with `TransferError`
     """
 
-    def __init__(self, clf, labels, confusion_state="trained_confusion", **kwargs):
+    def __init__(self, clf, labels, confusion_state="trained_confusion",
+                 **kwargs):
         """Initialization.
 
         :Parameters:
@@ -423,15 +437,15 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.hasState(confusion_state):
+        if not clf.states.isKnown(confusion_state):
             raise ValueError, \
                   "State variable %s is not defined for classifier %s" % \
                   (confusion_state, `clf`)
-        if not clf.isStateEnabled(confusion_state):
+        if not clf.states.isEnabled(confusion_state):
             if __debug__:
                 debug('CERR', "Forcing state %s to be enabled for %s" %
                       (confusion_state, `clf`))
-            clf.enableState(confusion_state)
+            clf.states.enable(confusion_state)
 
 
     def _call(self, testdata, trainingdata=None):
@@ -439,5 +453,5 @@ class ConfusionBasedError(ClassifierError):
 
         TODO: may be we should train here the same way as TransferError does?
         """
-        self["confusion"] = self.clf[self.__confusion_state]
+        self.confusion = self.clf[self.__confusion_state]
         return self.clf[self.__confusion_state].error
