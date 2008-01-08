@@ -179,6 +179,9 @@ class SVMBase(Classifier):
                         " thus no 'values' state")
         return predictions
 
+    def untrain(self):
+        super(SVMBase, self).untrain()
+        self.__model = None
 
     model = property(fget=lambda self: self.__model)
     """Access to the SVM model."""
