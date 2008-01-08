@@ -30,9 +30,11 @@ class SameSignClassifier(Classifier):
 
     def __init__(self):
         Classifier.__init__(self, train2predict=False)
+
     def _train(self, data):
         # we don't need that ;-)
         pass
+
     def _predict(self, data):
         datalen = len(data)
         values = []
@@ -182,6 +184,7 @@ class ClassifiersTests(unittest.TestCase):
         svm = LinearNuSVMC()
         svm2 = LinearNuSVMC()
         clf = MulticlassClassifier(clf=svm)
+
         nfeatures = 6
         nonbogus = [1, 3, 4]
         dstrain = normalFeatureDataset(perlabel=50, nlabels=3,
@@ -194,6 +197,7 @@ class ClassifiersTests(unittest.TestCase):
                                       nonbogus_features=nonbogus,
                                       snr=3.0)
         svm2.train(dstrain)
+
         clf.train(dstrain)
         self.failUnlessEqual(str(clf.trained_confusion),
                              str(svm2.trained_confusion),

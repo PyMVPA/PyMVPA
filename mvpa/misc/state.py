@@ -21,7 +21,7 @@ if __debug__:
 
 
 class StateVariable(object):
-    """Descriptor intended to conditionally store the value
+    """Simple container intended to conditionally store the value
 
     Unfortunately manipulation of enable is not straightforward and
     has to be done via class object, e.g.
@@ -32,50 +32,55 @@ class StateVariable(object):
     """
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
-        self._values = {}
-        self._isenabled_default = enabled
-        self._isenabled = {}
+        self._value = None
+        self._isset = False
+        self._isenabled = enabled
         self.__doc__ = doc
         self.name = name
         if __debug__:
             debug("STV",
                   "Initialized new state variable %s " % name + `self`)
 
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-        if not self.isSet(obj):
-            raise UnknownStateError("Unknown yet value of %s for '%s'" % (self.name, `obj`))
-        return self._values[obj]
+    def _get(self):
+        if not self.isSet:
+            raise UnknownStateError("Unknown yet value of %s" % (self.name))
+        return self._value
 
-    def __set__(self, obj, val):
-        # print "! I am in set"
-        # print "Object ", obj, " and it is ", self.isEnabled(obj), ' all are ', self._isenabled
-        if self.isEnabled(obj):
-            self._values[obj] = val
-
-    def isSet(self, obj):
-        return self._values.has_key(obj)
-
-    def isEnabled(self, obj):
-        return (self._isenabled.has_key(obj) and self._isenabled[obj]) or \
-                   (not self._isenabled.has_key(obj) and self._isenabled_default)
-
-        return self._isenabled[obj]
-
-    def enable(self, obj, val=False):
+    def _set(self, val):
         if __debug__:
-            debug("STV", "%s variable %s for %s" %
-                  ({True: 'Enabling', False: 'Disabling'}[val], self.name, `obj`))
-        self._isenabled[obj] = val
+            debug("STV",
+                  "Setting %s to %s " % (str(self), val))
+
+        if self.isEnabled:
+            self._isset = True
+            self._value = val
+
+    @property
+    def isSet(self):
+        return self._isset
+
+    @property
+    def isEnabled(self):
+        return self._isenabled
+
+    def enable(self, val=False):
+        if __debug__:
+            debug("STV", "%s %s" %
+                  ({True: 'Enabling', False: 'Disabling'}[val], str(self)))
+        self._isenabled = val
 
     def __delete__(self, obj):
         try:
-            del self._values[key]
+            del self._value
         except:
-            raise AttributeError
+            pass
 
+    def __str__(self):
+        return "%s variable %s id %d" % \
+            ({True: 'Enabled', False: 'Disabled'}[self.isEnabled], self.name, id(self))
 
+    value = property(_get, _set)
+    
 class StateCollection(object):
     """Container of states class for stateful object.
 
@@ -183,24 +188,24 @@ class StateCollection(object):
     def isEnabled(self, index):
         """Returns `True` if state `index` is enabled"""
         self.__checkIndex(index)
-        return StateVariable.isEnabled(self.__items[index], self.__owner)
+        return self.__items[index].isEnabled
 
 
     def isSet(self, index):
         """Returns `True` if state `index` has value set"""
         self.__checkIndex(index)
-        return StateVariable.isSet(self.__items[index], self.__owner)
+        return self.__items[index].isSet
 
 
     def get(self, index):
         """Returns the value by index"""
         self.__checkIndex(index)
-        return StateVariable.__get__(self.__items[index], self.__owner)
+        return self.__items[index].value
 
     def set(self, index, value):
         """Sets the value by index"""
         self.__checkIndex(index)
-        return StateVariable.__set__(self.__items[index], self.__owner, value)
+        self.__items[index].value = value
 
 
     def isActive(self, index):
@@ -216,7 +221,7 @@ class StateCollection(object):
             else:
                 try:
                     self.__checkIndex(index)
-                    StateVariable.enable(self.__items[index], self.__owner, value)
+                    self.__items[index].enable(value)
                 except:
                     if missingok:
                         return
@@ -383,7 +388,10 @@ class Statefull(object):
     def __init__(self,
                  enable_states=[],
                  disable_states=[]):
-        self._states = copy.copy(self._states_template)
+
+        object.__setattr__(self, '_states',
+                           copy.deepcopy(object.__getattribute__(self, '_states_template')))
+
         self._states.owner = self
         self._states.enable(enable_states, missingok=True)
         self._states.disable(disable_states)
@@ -395,48 +403,27 @@ class Statefull(object):
         if __debug__:
             debug("ST", "Statefull.__init__ was done for %s id %s" % (self.__class__, id(self)))
 
-#    def ____deepcopy__(self, memo=None):
-#        #out = super(Statefull, self).__new__(self.__class__)
-#        #Statefull.__init__(out)
-#        out = deepcopy(self, memo)
-#        # copy entries
-#        for state in self._states.names:
-#            out._states.items[state] = self._states.items[state]
-#        return out
 
-    # we want to have __init__ called on copied/pickled objects,
-    # so _states.owner is set correctly
-    def __getinitargs__(self):
-        return {}
+    def __getattribute__(self, index):
+        # return all private ones first since smth like __dict__ might be
+        # queried by copy before instance is __init__ed
+        if index.startswith('__'):
+            return object.__getattribute__(self, index)
+        states = object.__getattribute__(self, '_states')
+        if index in ["states", "_states"]:
+            return states
+        if states.items.has_key(index):
+            return states.get(index)
+        else:
+            return object.__getattribute__(self, index)
 
-    def __getstate__(self):
+    def __setattr__(self, index, value):
+        states = object.__getattribute__(self, '_states')
+        if states.items.has_key(index):
+            states.set(index, value)
+        else:
+            object.__setattr__(self, index, value)
 
-        out = {}
-        for state in self.states.names:
-            value = None
-            set = self.states.isSet(state)
-            if set:
-                value = self.states.get(state)
-            enabled = self.states.isEnabled(state)
-            if self.states.isSet(state):
-                out[state] = (set, value, enabled)
-
-        if __debug__:
-            debug("ST", "__getstate__ for %s id %s with values %s" % (self.__class__, id(self), out))
-        import pydb
-        pydb.debugger()
-        return out
-
-    def __setstate__(self, values):
-        if __debug__:
-            debug("ST", "__setstate__ for %s id %s with values %s" % (self.__class__, id(self), values))
-
-        Statefull.__init__(self)
-        for state in values.keys():
-            (set, value, enabled) = values[state]
-            if set:
-                self.states.set(state, value)
-            self.states.enable(state, enabled)
 
     @property
     def states(self):
