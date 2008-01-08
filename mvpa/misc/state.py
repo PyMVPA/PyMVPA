@@ -11,9 +11,9 @@
 __docformat__ = 'restructuredtext'
 
 import operator, copy
+from copy import deepcopy
 
 from mvpa.misc.exceptions import UnknownStateError
-
 from mvpa.misc import warning
 
 if __debug__:
@@ -44,7 +44,7 @@ class StateVariable(object):
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
-        if not self._values.has_key(obj):
+        if not self.isSet(obj):
             raise UnknownStateError("Unknown yet value of %s for '%s'" % (self.name, `obj`))
         return self._values[obj]
 
@@ -53,6 +53,9 @@ class StateVariable(object):
         # print "Object ", obj, " and it is ", self.isEnabled(obj), ' all are ', self._isenabled
         if self.isEnabled(obj):
             self._values[obj] = val
+
+    def isSet(self, obj):
+        return self._values.has_key(obj)
 
     def isEnabled(self, obj):
         return (self._isenabled.has_key(obj) and self._isenabled[obj]) or \
@@ -120,7 +123,7 @@ class StateCollection(object):
             res += " %s" % index
             if self.isEnabled(index):
                 res += '+'              # it is enabled but no value is assigned yet
-            if self.isKnown(index):
+            if self.isSet(index):
                 res += '*'              # so we have the value already
 
         if len(self.__items) > 4:
@@ -174,13 +177,31 @@ class StateCollection(object):
 
 
     def isKnown(self, index):
-        """Returns `True` if state `index` is enabled"""
+        """Returns `True` if state `index` is known at all"""
         return self.__items.has_key(index)
 
     def isEnabled(self, index):
         """Returns `True` if state `index` is enabled"""
         self.__checkIndex(index)
         return StateVariable.isEnabled(self.__items[index], self.__owner)
+
+
+    def isSet(self, index):
+        """Returns `True` if state `index` has value set"""
+        self.__checkIndex(index)
+        return StateVariable.isSet(self.__items[index], self.__owner)
+
+
+    def get(self, index):
+        """Returns the value by index"""
+        self.__checkIndex(index)
+        return StateVariable.__get__(self.__items[index], self.__owner)
+
+    def set(self, index, value):
+        """Sets the value by index"""
+        self.__checkIndex(index)
+        return StateVariable.__set__(self.__items[index], self.__owner, value)
+
 
     def isActive(self, index):
         """Returns `True` if state `index` is known and is enabled"""
@@ -371,10 +392,59 @@ class Statefull(object):
         #if __debug__:
         #    debug("ST", "Statefull.__init__ done for %s" % self)
 
+        if __debug__:
+            debug("ST", "Statefull.__init__ was done for %s id %s" % (self.__class__, id(self)))
+
+#    def ____deepcopy__(self, memo=None):
+#        #out = super(Statefull, self).__new__(self.__class__)
+#        #Statefull.__init__(out)
+#        out = deepcopy(self, memo)
+#        # copy entries
+#        for state in self._states.names:
+#            out._states.items[state] = self._states.items[state]
+#        return out
+
+    # we want to have __init__ called on copied/pickled objects,
+    # so _states.owner is set correctly
+    def __getinitargs__(self):
+        return {}
+
+    def __getstate__(self):
+
+        out = {}
+        for state in self.states.names:
+            value = None
+            set = self.states.isSet(state)
+            if set:
+                value = self.states.get(state)
+            enabled = self.states.isEnabled(state)
+            if self.states.isSet(state):
+                out[state] = (set, value, enabled)
+
+        if __debug__:
+            debug("ST", "__getstate__ for %s id %s with values %s" % (self.__class__, id(self), out))
+        import pydb
+        pydb.debugger()
+        return out
+
+    def __setstate__(self, values):
+        if __debug__:
+            debug("ST", "__setstate__ for %s id %s with values %s" % (self.__class__, id(self), values))
+
+        Statefull.__init__(self)
+        for state in values.keys():
+            (set, value, enabled) = values[state]
+            if set:
+                self.states.set(state, value)
+            self.states.enable(state, enabled)
+
     @property
     def states(self):
         return self._states
 
     def __str__(self):
-        return str(self.states)
+        return "%s with %s" % (self.__class__.__name__, str(self.states))
+
+    def __repr__(self):
+        return "<%s>" % Statefull.__str__(self)
 
