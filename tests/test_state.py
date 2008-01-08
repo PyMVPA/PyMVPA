@@ -35,7 +35,7 @@ class StateTests(unittest.TestCase):
     def testBlankState(self):
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
-        print blank.states
+
         self.failUnlessEqual(blank.states.items, {})
         self.failUnless(blank.states.enabled == [])
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'dummy')
@@ -47,7 +47,6 @@ class StateTests(unittest.TestCase):
 
         # add some state variable
         blank._registerState('state1', False)
-        print blank.states.items
         self.failUnless(blank.states == ['state1'])
 
         self.failUnless(blank.states.isEnabled('state1') == False)
@@ -196,7 +195,7 @@ class StateTests(unittest.TestCase):
 
         self.failUnlessEqual(s1.v1, 12)
         try:
-            print s1__.v1__
+            tempvalue = s1__.v1__
             self.fail("Should have puked since values were not enabled yet")
         except:
             pass
