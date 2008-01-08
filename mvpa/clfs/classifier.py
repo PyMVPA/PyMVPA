@@ -36,6 +36,8 @@ from mvpa.misc import warning
 if __debug__:
     from mvpa.misc import debug
 
+
+
 class Classifier(State):
     """Abstract classifier class to be inherited by all classifiers
 
@@ -97,7 +99,8 @@ class Classifier(State):
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
         self._registerState('trained_confusion', enabled=True,
-            doc="Result of learning: `ConfusionMatrix` (and corresponding learning error")
+            doc="Result of learning: `ConfusionMatrix` " \
+                "(and corresponding learning error)")
         self._registerState('predictions', enabled=True,
             doc="Reported predicted values")
         self._registerState('values', enabled=False,
@@ -113,6 +116,7 @@ class Classifier(State):
         """
         pass
 
+
     def _posttrain(self, data, result):
         """Functionality post training
 
@@ -126,10 +130,12 @@ class Classifier(State):
                 labels=data.uniquelabels, targets=data.labels,
                 predictions=predictions)
 
+
     def _train(self, data):
         """Function to be actually overriden in derived classes
         """
         raise NotImplementedError
+
 
     def train(self, data):
         """Train classifier on data
@@ -152,8 +158,8 @@ class Classifier(State):
             # check if classifier was trained if that is needed
             if not self.trained:
                 raise ValueError, \
-                      "Classifier %s wasn't yet trained, therefor can't predict" % \
-                      `self`
+                      "Classifier %s wasn't yet trained, therefore can't " \
+                      "predict" % `self`
             nfeatures = data.shape[1]
             # check if number of features is the same as in the data
             # it was trained on
@@ -163,10 +169,12 @@ class Classifier(State):
                       (`self`, self.__trainednfeatures) + \
                       "thus can't predict for %d features" % nfeatures
 
+
     def _postpredict(self, data, result):
         """Functionality after prediction is computed
         """
         pass
+
 
     def _predict(self, data):
         """Actual prediction
@@ -184,7 +192,8 @@ class Classifier(State):
         """
         data = N.array(data)
         if __debug__:
-            debug("CLF", "Predicting classifier %s on data %s" % (`self`, `data.shape`))
+            debug("CLF", "Predicting classifier %s on data %s" \
+                % (`self`, `data.shape`))
         self._prepredict(data)
         result = self._predict(data)
         self._postpredict(data, result)
@@ -196,6 +205,7 @@ class Classifier(State):
         """Either classifier was already trained"""
         return not self.__trainednfeatures is None
 
+
     def _setTrain2predict(self, v):
         """Set the flag for necessary training prior doing prediction
 
@@ -203,10 +213,12 @@ class Classifier(State):
         derived classes"""
         self.__train2predict = v
 
+
     @property
     def train2predict(self):
         """Either classifier has to be trained to predict"""
         return self.__train2predict
+
 
 
 #
@@ -280,14 +292,16 @@ class BoostedClassifier(Classifier):
         train2predicts = [clf.train2predict for clf in self.__clfs]
         train2predict = reduce(lambda x,y: x or y, train2predicts, False)
         if __debug__:
-            debug("CLFBST", "Setting train2predict=%s for classifiers %s with %s" %
-                  (str(train2predict), self.__clfs, str(train2predicts)))
+            debug("CLFBST", "Setting train2predict=%s for classifiers " \
+                   "%s with %s" \
+                   % (str(train2predict), self.__clfs, str(train2predicts)))
         # set flag if it needs to be trained before predicting
         self._setTrain2predict(train2predict)
 
     clfs = property(fget=lambda x:x.__clfs,
                     fset=_setClassifiers,
                     doc="Used classifiers")
+
 
 
 class ProxyClassifier(Classifier):
@@ -320,7 +334,8 @@ class ProxyClassifier(Classifier):
     def _train(self, data):
         """
         """
-        # base class nothing much -- just proxies requests to underlying classifier
+        # base class nothing much -- just proxies requests to underlying
+        # classifier
         self.__clf.train(wdata)
 
         # for the ease of access
@@ -359,6 +374,7 @@ class Combiner(State):
         """
         pass
 
+
     def call(self, clfs, data):
         """Call function
 
@@ -369,6 +385,7 @@ class Combiner(State):
             state variables (value's) instead of pure prediction's
         """
         raise NotImplementedError
+
 
 
 class MaximalVote(Combiner):
@@ -384,7 +401,8 @@ class MaximalVote(Combiner):
         self._registerState("predictions", enabled=True,
                             doc="Voted predictions")
         self._registerState("all_label_counts", enabled=False,
-                            doc="Counts across classifiers for each label/sample")
+                            doc="Counts across classifiers for each " \
+                                "label/sample")
 
 
     def __call__(self, clfs, data):
@@ -448,9 +466,10 @@ class MaximalVote(Combiner):
         return predictions
 
 
-class CombinedClassifier(BoostedClassifier):
-    """`BoostedClassifier` which combines predictions using some `Combiner` functor
 
+class CombinedClassifier(BoostedClassifier):
+    """`BoostedClassifier` which combines predictions using some `Combiner`
+    functor.
     """
 
     def __init__(self, clfs=[], combiner=MaximalVote(), **kwargs):
@@ -509,6 +528,7 @@ class CombinedClassifier(BoostedClassifier):
 
     combiner = property(fget=lambda x:x.__combiner,
                         doc="Used combiner to derive a single result")
+
 
 
 class BinaryClassifier(ProxyClassifier):
@@ -573,7 +593,8 @@ class BinaryClassifier(ProxyClassifier):
         # select the samples
         dataselected = data.selectSamples([ x[0] for x in idlabels ])
         if __debug__:
-            debug('CLFBIN', "Selecting %d samples out of %d samples for binary " %
+            debug('CLFBIN',
+                  "Selecting %d samples out of %d samples for binary " %
                   (len(idlabels), data.nsamples) +
                   " classification among labels %s/+1 and %s/-1" %
                   (self.__poslabels, self.__neglabels) +
@@ -597,13 +618,16 @@ class BinaryClassifier(ProxyClassifier):
         binary_predictions = ProxyClassifier._predict(self, data)
         self['values'] = binary_predictions
         predictions = map(lambda x: {-1: self.__predictneg,
-                                     +1: self.__predictpos}[x], binary_predictions)
+                                     +1: self.__predictpos}[x], \
+                                         binary_predictions)
         self['predictions'] = predictions
         return predictions
 
 
+
 class MulticlassClassifier(CombinedClassifier):
-    """`CombinedClassifier` to perform multiclass using a list of `BinaryClassifier`
+    """`CombinedClassifier` to perform multiclass using a list of
+    `BinaryClassifier`.
 
     such as 1-vs-1 (ie in pairs like libsvm doesn) or 1-vs-all (which
     is yet to think about)
@@ -665,6 +689,7 @@ class MulticlassClassifier(CombinedClassifier):
         CombinedClassifier._train(self, data)
 
 
+
 class SplitClassifier(CombinedClassifier):
     """`BoostedClassifier` to work on splits of the data
 
@@ -691,8 +716,8 @@ class SplitClassifier(CombinedClassifier):
         self.__splitter = splitter
 
         self._registerState("trained_confusions", enabled=True,
-            doc="Resultant confusion matrices whenever classifier trained on each " +
-                "was tested on 2nd part of the split")
+            doc="Resultant confusion matrices whenever classifier trained " \
+                "on each was tested on 2nd part of the split")
 
 
     def _train(self, data):
@@ -702,7 +727,8 @@ class SplitClassifier(CombinedClassifier):
         bclfs = []
         self["trained_confusions"] = ConfusionMatrix(labels=data.uniquelabels)
 
-        # for proper and easier debugging - first define classifiers and then train them
+        # for proper and easier debugging - first define classifiers and then
+        # train them
         for split in self.__splitter(data):
             clf = deepcopy(self.__clf)
             bclfs.append(clf)
@@ -718,6 +744,7 @@ class SplitClassifier(CombinedClassifier):
                 predictions = clf.predict(split[1].samples)
                 self["trained_confusions"].add(split[1].labels, predictions)
             i += 1
+
 
 
 class MappedClassifier(ProxyClassifier):
@@ -746,7 +773,8 @@ class MappedClassifier(ProxyClassifier):
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         self.__mapper = mapper
-        """mapper to help us our with prepping data to training/classification"""
+        """mapper to help us our with prepping data to
+        training/classification"""
 
 
     def _train(self, data):
@@ -768,9 +796,9 @@ class MappedClassifier(ProxyClassifier):
 class FeatureSelectionClassifier(ProxyClassifier):
     """`ProxyClassifier` which uses some `FeatureSelection` prior training.
 
-    `FeatureSelection` is used first to select features for the classifier to use
-    for prediction. Internally it would rely on MappedClassifier which would use
-    created MaskMapper.
+    `FeatureSelection` is used first to select features for the classifier to
+    use for prediction. Internally it would rely on MappedClassifier which
+    would use created MaskMapper.
 
     TODO: think about removing overhead of retraining the same classifier if
     feature selection was carried out with the same classifier already
@@ -834,5 +862,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
 
     maskclf = property(lambda x:x.__maskclf, doc="Used `MappedClassifier`")
-    feature_selection = property(lambda x:x.__feature_selection, doc="Used `FeatureSelection`")
+    feature_selection = property(lambda x:x.__feature_selection,
+                                 doc="Used `FeatureSelection`")
 
