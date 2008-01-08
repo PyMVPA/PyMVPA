@@ -26,6 +26,7 @@ from mvpa.misc.state import State
 if __debug__:
     from mvpa.misc import debug
 
+
 class ConfusionMatrix(object):
     """Simple class for confusion matrix computation / display.
 
@@ -33,8 +34,11 @@ class ConfusionMatrix(object):
     computation of confusion matrix untill all data is acquired (to
     figure out complete set of labels. If testing data doesn't have a
     complete set of labels, but you like to include all labels,
-    provide them as a parameter to constructor"""
-
+    provide them as a parameter to constructor.
+    """
+    # XXX Michael: - How do multiple sets work and what are they there for?
+    #              - This class does not work with regular Python sequences
+    #                when passed to the constructor as targets and predictions.
     def __init__(self, labels=[], targets=None, predictions=None):
         """Initialize ConfusionMatrix with optional list of `labels`
 
@@ -72,8 +76,9 @@ class ConfusionMatrix(object):
                                                        len(predictions)) + \
                   " have different number of samples"
 
-        # enforce labels in predictions to be of the same datatype as in targets,
-        # since otherwise we are getting doubles for unknown at a given moment labels
+        # enforce labels in predictions to be of the same datatype as in
+        # targets, since otherwise we are getting doubles for unknown at a
+        # given moment labels
         for i in xrange(len(targets)):
             t1, t2 = type(targets[i]), type(predictions[i])
             if t1 != t2:
@@ -138,7 +143,8 @@ class ConfusionMatrix(object):
         self.__computed = True
 
 
-    def __str__(self, header=True, percents=True, summary=True, print_empty=False):
+    def __str__(self, header=True, percents=True, summary=True,
+                print_empty=False):
         """'Pretty print' the matrix"""
         self._compute()
 
@@ -178,14 +184,16 @@ class ConfusionMatrix(object):
             out.write("%s%s\n" % (pref, (" %s" % ("-" * L)) * Nlabels))
 
         if matrix.shape != (Nlabels, Nlabels):
-            raise ValueError, "Number of labels %d doesn't correspond the size" + \
+            raise ValueError, \
+                  "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (Nlabels, matrix.shape)
 
         for i in xrange(Nlabels):
             # print the label
             if Nsamples[i] == 0:
                 continue
-            out.write("%%%ds {%%%dd}" % (Nlabelsmax, Ndigitsmax) % (labels[i], Nsamples[i])),
+            out.write("%%%ds {%%%dd}" \
+                % (Nlabelsmax, Ndigitsmax) % (labels[i], Nsamples[i])),
             for j in xrange(Nlabels):
                 out.write(" %%%dd" % L % matrix[i, j])
             if percents:
@@ -199,7 +207,8 @@ class ConfusionMatrix(object):
 
             out.write("%%-%ds[%%6.2f%%%%]\n"
                       % (prefixlen + (L+1)*Nlabels)
-                      % ("Total Correct {%d out of %d}" % (self.__Ncorrect, sum(Nsamples)),
+                      % ("Total Correct {%d out of %d}" \
+                        % (self.__Ncorrect, sum(Nsamples)),
                          self.percentCorrect ))
 
 
@@ -258,6 +267,7 @@ class ConfusionMatrix(object):
         return 1.0-self.__Ncorrect*1.0/sum(self.__Nsamples)
 
     sets = property(lambda self:self.__sets)
+
 
 
 class ClassifierError(State):
@@ -329,6 +339,7 @@ class ClassifierError(State):
     def labels(self): return self.__labels
 
 
+
 class TransferError(ClassifierError):
     """Compute the transfer error of a (trained) classifier on a dataset.
 
@@ -336,7 +347,8 @@ class TransferError(ClassifierError):
     Optionally the classifier can be training by passing an additional
     training dataset to the __call__() method.
     """
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None, **kwargs):
+    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
+                 **kwargs):
         """Initialization.
 
         :Parameters:
@@ -394,6 +406,7 @@ class TransferError(ClassifierError):
     def errorfx(self): return self.__errorfx
 
 
+
 class ConfusionBasedError(ClassifierError):
     """For a given classifier report an error based on internally
     computed error measure (given by some `ConfusionMatrix` stored in
@@ -406,7 +419,8 @@ class ConfusionBasedError(ClassifierError):
     TODO: Derive it from some common class with `TransferError`
     """
 
-    def __init__(self, clf, labels, confusion_state="trained_confusion", **kwargs):
+    def __init__(self, clf, labels, confusion_state="trained_confusion",
+                 **kwargs):
         """Initialization.
 
         :Parameters:
