@@ -6,7 +6,10 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Class to control and store state information"""
+"""Classes to control and store state information.
+
+It was devised to provide conditional storage 
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -69,18 +72,19 @@ class StateVariable(object):
                   ({True: 'Enabling', False: 'Disabling'}[val], str(self)))
         self._isenabled = val
 
-    def __delete__(self, obj):
-        try:
-            del self._value
-        except:
-            pass
+
+    def reset(self):
+        """Simply detach the value, and reset the flag"""
+        self._value = None
+        self._isset = False
 
     def __str__(self):
         return "%s variable %s id %d" % \
             ({True: 'Enabled', False: 'Disabled'}[self.isEnabled], self.name, id(self))
 
     value = property(_get, _set)
-    
+
+
 class StateCollection(object):
     """Container of states class for stateful object.
 
@@ -169,6 +173,9 @@ class StateCollection(object):
             if fromstate.isKnown(name):
                 self.__items[name] = operation(fromstate.__items[name])
 
+    def isKnown(self, index):
+        """Returns `True` if state `index` is known at all"""
+        return self.__items.has_key(index)
 
     def __checkIndex(self, index):
         """Verify that given `index` is a known/registered state.
@@ -181,15 +188,10 @@ class StateCollection(object):
                   % (self.__class__.__name__, index)
 
 
-    def isKnown(self, index):
-        """Returns `True` if state `index` is known at all"""
-        return self.__items.has_key(index)
-
     def isEnabled(self, index):
         """Returns `True` if state `index` is enabled"""
         self.__checkIndex(index)
         return self.__items[index].isEnabled
-
 
     def isSet(self, index):
         """Returns `True` if state `index` has value set"""
@@ -206,6 +208,11 @@ class StateCollection(object):
         """Sets the value by index"""
         self.__checkIndex(index)
         self.__items[index].value = value
+
+    def reset(self, index):
+        """Reset the value by index"""
+        self.__checkIndex(index)
+        self.__items[index].reset()
 
 
     def isActive(self, index):
@@ -316,7 +323,7 @@ class StateCollection(object):
             raise ValueError, \
                   "Owner of the StateCollection must be Statefull object"
         self.__owner = owner
-    
+
 
     # Properties
     listing = property(fget=_getListing)

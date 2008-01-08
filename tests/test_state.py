@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA State parent class"""
 
-import unittest
+import unittest, copy
 
 import numpy as N
 from sets import Set
@@ -86,6 +86,16 @@ class StateTests(unittest.TestCase):
         proper.states.disable('state2')
         proper.state2 = 10000
         self.failUnlessEqual(proper.state2, 1000, msg="Simple assignment after being disabled")
+
+        proper4 = copy.deepcopy(proper)
+
+        proper.states.reset('state2')
+        self.failUnlessRaises(UnknownStateError, proper.__getattribute__, 'state2')
+        """Must be blank after being reset"""
+
+        self.failUnlessEqual(proper4.state2, 1000,
+            msg="Simple assignment after being reset in original instance")
+
 
         proper.states.enable(['state2'])
         self.failUnlessEqual(Set(proper.states.names), Set(['state1', 'state2']))
