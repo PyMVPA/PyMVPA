@@ -16,7 +16,7 @@ import numpy as N
 
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.datasets.splitter import NoneSplitter
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable
 
 
 class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
@@ -32,9 +32,12 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
     via their respective keywords.
     """
 
+    post = StateVariable(doc="To store results of postprocessing calls")
+
     def __init__(self, sensana,
                  splitter=NoneSplitter,
-                 postproc={}):
+                 postproc={},
+                 **kwargs):
         """Cheap initialization.
 
         :Parameters:
@@ -47,13 +50,15 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
             postproc : dict
                 Dictionary of post-processing functors. Each functor will be
                 called with the sequence of sensitivity maps. The resulting
-                value is then made available via the object's `State` interface
-                using the respective key from `postproc` dictionary.
-                Example: postproc={'full': N.array}
+                value is then made available via the object's `StateVariable`
+                .post, which is a dict, using the respective key from
+                `postproc` dictionary.
+                Example:
+                  postproc={'full': N.array}
+                  intermediate = splitana.post['full']
         """
         # init base classes first
-        SensitivityAnalyzer.__init__(self)
-        Statefull.__init__(self)
+        SensitivityAnalyzer.__init__(self, **kwargs)
 
         self.__sensana = sensana
         """Sensitivity analyzer used to compute the sensitivity maps.
@@ -67,12 +72,8 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         in the `postproc` member.
         """
 
-        # XXX Was deprecated -- since now state variables are
-        # per-class, not per-instance, just access them through
-        # postproc's
-        #XXX # let the state engine know what we are going to store later
-        #XXX for k in self.__postproc.keys():
-        #XXX     self._registerState(k)
+        self.post = {}
+        """Results of postprocessing"""
 
 
     def __call__(self, dataset, callables=[]):
@@ -95,7 +96,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
 
         # do all postprocessing on the sensitivity maps
         for k, v in self.__postproc.iteritems():
-            self[k] = v(maps)
+            self.post[k] = v(maps)
 
         # return all maps
         return N.mean(maps, axis=0)
