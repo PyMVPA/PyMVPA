@@ -707,6 +707,9 @@ class SplitClassifier(CombinedClassifier):
 
         # for proper and easier debugging - first define classifiers and then train them
         for split in self.__splitter(data):
+            if __debug__:
+                debug("CLFSPL",
+                      "Deepcopying %s for %s" % (`self.__clf`, self))
             clf = deepcopy(self.__clf)
             bclfs.append(clf)
         self.clfs = bclfs
