@@ -509,7 +509,7 @@ class FeatureSelectionPipeline(FeatureSelection):
                 else:
                     self.selected_ids = self.selected_ids[fs.selected_ids]
 
-            fs._resetEnabledTemporarily()
+            fs.states._resetEnabledTemporarily()
 
         return (wdataset, wtestdataset)
 

@@ -110,7 +110,7 @@ class RFETests(unittest.TestCase):
         target30 = N.array([0, 1, 2, 3, 7, 8, 9])
 
         self.failUnlessRaises(UnknownStateError,
-                              selector.__getitem__, 'ndiscarded')
+                              selector.__getattribute__, 'ndiscarded')
         self.failUnless((selector(dataset) == target10).all())
         selector.felements = 0.30      # discard 30%
         self.failUnless(selector.felements == 0.3)

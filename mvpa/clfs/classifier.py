@@ -327,7 +327,7 @@ class ProxyClassifier(Classifier):
         self.__clf.train(wdata)
 
         # for the ease of access
-        self._copy_states_(self.__clf, deep=False)
+        self.states._copy_states_(self.__clf, deep=False)
 
 
     def _predict(self, data):
@@ -335,7 +335,7 @@ class ProxyClassifier(Classifier):
         """
         result = self.__clf.predict(data)
         # for the ease of access
-        self._copy_states_(self.__clf, deep=False)
+        self.states._copy_states_(self.__clf, deep=False)
         return result
 
     clf = property(lambda x:x.__clf, doc="Used `Classifier`")
@@ -815,7 +815,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         mappermask[self.__feature_selection.selected_ids] = 1
         mapper = MaskMapper(mappermask)
 
-        self.__feature_selection._resetEnabledTemporarily()
+        self.__feature_selection.states._resetEnabledTemporarily()
 
         # create and assign `MappedClassifier`
         self.__maskclf = MappedClassifier(self.clf, mapper)
@@ -824,7 +824,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.__maskclf.clf.train(wdata)
 
         # for the ease of access
-        self._copy_states_(self.__maskclf, deep=False)
+        self.states._copy_states_(self.__maskclf, deep=False)
 
 
     def _predict(self, data):
@@ -832,7 +832,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         result = self.__maskclf._predict(data)
         # for the ease of access
-        self._copy_states_(self.__maskclf, deep=False)
+        self.states._copy_states_(self.__maskclf, deep=False)
         return result
 
 

@@ -31,7 +31,7 @@ class StateVariable(object):
       if self is an instance of the class which has
     """
 
-    def __init__(self, name=None, enabled=False, doc="State variable"):
+    def __init__(self, name=None, enabled=True, doc="State variable"):
         self._values = {}
         self._isenabled_default = enabled
         self._isenabled = {}
@@ -45,7 +45,7 @@ class StateVariable(object):
         if obj is None:
             return self
         if not self._values.has_key(obj):
-            raise UnknownStateError("Unknown yet value for '%s'" % `obj`)
+            raise UnknownStateError("Unknown yet value of %s for '%s'" % (self.name, `obj`))
         return self._values[obj]
 
     def __set__(self, obj, val):
@@ -90,8 +90,6 @@ class StateCollection(object):
     """
 
     def __init__(self, items = {}, owner = None):
-                 #enable_states=[],
-                 #disable_states=[]):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -137,7 +135,7 @@ class StateCollection(object):
     #def __copy__(self):
 
     def _copy_states_(self, fromstate, deep=False):
-        """Copy states from `fromstate` object into current object
+        """Copy known here states from `fromstate` object into current object
 
         Crafted to overcome a problem mentioned above in the comment
         and is to be called from __copy__ of derived classes
@@ -154,15 +152,14 @@ class StateCollection(object):
         # TODO: FOR NOW NO TEST! But this beast needs to be fixed...
         operation = { True: copy.deepcopy,
                       False: copy.copy }[deep]
-        raise NotImplementedError
-        self.enabled = operation(fromstate.enabled)
-        self.__dict = operation(fromstate.__dict)
-        self.__items = operation(fromstate.__items)
-        self.__enable_states = operation(fromstate.__enable_states)
-        self.__disable_states = operation(fromstate.__disable_states)
-        self.__enable_all = operation(fromstate.__enable_all)
-        self.__disable_all = operation(fromstate.__disable_all)
-        self.__storedTemporarily = operation(fromstate.__storedTemporarily)
+
+        if isinstance(fromstate, Statefull):
+            fromstate = fromstate.states
+
+        self.enabled = fromstate.enabled
+        for name in self.names:
+            if fromstate.isKnown(name):
+                self.__items[name] = operation(fromstate.__items[name])
 
 
     def __checkIndex(self, index):
@@ -190,17 +187,22 @@ class StateCollection(object):
         return self.isKnown(index) and self.isEnabled(index)
 
 
-    def enable(self, index, value=True):
+    def enable(self, index, value=True, missingok=False):
         if isinstance(index, basestring):
             if index.upper() == 'ALL':
                 for index_ in self.__items:
-                    self.enable(index_, value)
+                    self.enable(index_, value, missingok=missingok)
             else:
-                self.__checkIndex(index)
-                StateVariable.enable(self.__items[index], self.__owner, value)
+                try:
+                    self.__checkIndex(index)
+                    StateVariable.enable(self.__items[index], self.__owner, value)
+                except:
+                    if missingok:
+                        return
+                    raise
         elif operator.isSequenceType(index):
             for item in index:
-                self.enable(item, value)
+                self.enable(item, value, missingok=missingok)
         else:
             raise ValueError, \
                   "Don't know how to handle state variable given by %s" % index
@@ -298,6 +300,7 @@ class StateCollection(object):
     owner = property(fget=_getOwner, fset=_setOwner)
 
 
+
 class statecollector(type):
     """Intended to collect and compose StateCollection for any child
     class of this metaclass
@@ -342,6 +345,7 @@ class statecollector(type):
         setattr(cls, "_states_template", statecollection)
 
 
+
 class Statefull(object):
     """Base class for stateful objects.
 
@@ -360,10 +364,12 @@ class Statefull(object):
                  disable_states=[]):
         self._states = copy.copy(self._states_template)
         self._states.owner = self
-        self._states.enable(enable_states)
+        self._states.enable(enable_states, missingok=True)
         self._states.disable(disable_states)
-        if __debug__:
-            debug("ST", "Statefull.__init__ done for %s" % self)
+        # bad to have str(self) here since it is a base class and
+        # some attributes most probably are not yet set in the original child's __str__
+        #if __debug__:
+        #    debug("ST", "Statefull.__init__ done for %s" % self)
 
     @property
     def states(self):
