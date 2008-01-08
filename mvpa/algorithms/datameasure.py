@@ -37,12 +37,6 @@ class DataMeasure(Statefull):
     by passing them to the __call__() method successively.
     """
 
-    def __init__(self, **kwargs):
-        """
-        """
-        Statefull.__init__(self, **kwargs)
-
-
     def __call__(self, dataset, callbacks=[]):
         """Compute measure on a given `Dataset`.
 
@@ -62,11 +56,6 @@ class SensitivityAnalyzer(DataMeasure):
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.
     """
-    def __init__(self, **kwargs):
-        """Does nothing special."""
-        DataMeasure.__init__(self, **kwargs)
-
-
     def __call__(self, dataset, callbacks=[]):
         """Perform sensitivity analysis on a given `Dataset`.
 
