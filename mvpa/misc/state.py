@@ -66,11 +66,11 @@ class StateVariable(object):
     def isEnabled(self):
         return self._isenabled
 
-    def enable(self, val=False):
+    def enable(self, value=False):
         if __debug__:
             debug("STV", "%s %s" %
-                  ({True: 'Enabling', False: 'Disabling'}[val], str(self)))
-        self._isenabled = val
+                  ({True: 'Enabling', False: 'Disabling'}[value], str(self)))
+        self._isenabled = value
 
 
     def reset(self):
@@ -209,40 +209,53 @@ class StateCollection(object):
         self.__checkIndex(index)
         self.__items[index].value = value
 
-    def reset(self, index):
-        """Reset the value by index"""
-        self.__checkIndex(index)
-        self.__items[index].reset()
-
 
     def isActive(self, index):
         """Returns `True` if state `index` is known and is enabled"""
         return self.isKnown(index) and self.isEnabled(index)
 
 
-    def enable(self, index, value=True, missingok=False):
+    def _action(self, index, func, missingok=False, **kwargs):
+        """Run specific func either on a single item or on all of them
+
+        :Parameters:
+          index : basestr
+            Name of the state variable
+          func
+            Function (not bound) to call given an item, and **kwargs
+          missingok : bool
+            If True - do not complain about wrong index
+        """
         if isinstance(index, basestring):
             if index.upper() == 'ALL':
                 for index_ in self.__items:
-                    self.enable(index_, value, missingok=missingok)
+                    self._action(index_, func, missingok=missingok, **kwargs)
             else:
                 try:
                     self.__checkIndex(index)
-                    self.__items[index].enable(value)
+                    func(self.__items[index], **kwargs)
                 except:
                     if missingok:
                         return
                     raise
         elif operator.isSequenceType(index):
             for item in index:
-                self.enable(item, value, missingok=missingok)
+                self._action(item, func, missingok=missingok, **kwargs)
         else:
             raise ValueError, \
                   "Don't know how to handle state variable given by %s" % index
 
+    def enable(self, index, value=True, missingok=False):
+        """Enable  state variable given in `index`"""
+        self._action(index, StateVariable.enable, missingok=missingok, value=value)
+
     def disable(self, index):
         """Disable state variable defined by `index` id"""
-        self.enable(index, False)
+        self._action(index, StateVariable.enable, missingok=False, value=False)
+
+    def reset(self, index):
+        """Reset the state variable defined by `index`"""
+        self._action(index, StateVariable.reset, missingok=False)
 
 
     def _enableTemporarily(self, enable_states, other=None):

@@ -123,6 +123,15 @@ class StateTests(unittest.TestCase):
         proper2.states.enable("all")
         self.failUnlessEqual(len(proper2.states.enabled), 2)
 
+        proper2.state1, proper2.state2 = 1,2
+        self.failUnlessEqual(proper2.state1, 1)
+        self.failUnlessEqual(proper2.state2, 2)
+
+        # now reset them
+        proper2.states.reset('all')
+        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state1')
+        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state2')
+
 
     def testGetSaveEnabled(self):
         """Check if we can store/restore set of enabled states"""
