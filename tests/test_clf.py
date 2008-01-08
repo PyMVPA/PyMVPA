@@ -203,6 +203,25 @@ class ClassifiersTests(unittest.TestCase):
                              str(svm2.trained_confusion),
             msg="Multiclass clf should provide same results as built-in libsvm's")
 
+        self.failUnless(not svm2.model is None,
+            msg="Trained SVM should have a model accessible")
+
+        svm2.untrain()
+
+        self.failUnless(svm2.model is None,
+            msg="Un-Trained SVM should have no model")
+
+        self.failUnless(N.array([x.trained for x in clf.clfs]).all(),
+            msg="Trained Boosted classifier should have all primary classifiers trained")
+        self.failUnless(clf.trained,
+            msg="Trained Boosted classifier should be marked as trained")
+
+        clf.untrain()
+
+        self.failUnless(not clf.trained, msg="UnTrained Boosted classifier should not be trained")
+        self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
+            msg="UnTrained Boosted classifier should have no primary classifiers trained")
+
 
 def suite():
     return unittest.makeSuite(ClassifiersTests)

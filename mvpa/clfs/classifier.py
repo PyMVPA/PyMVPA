@@ -208,6 +208,11 @@ class Classifier(Statefull):
         return not self.__trainednfeatures is None
 
 
+    def untrain(self):
+        """Reset trained state"""
+        self.__trainednfeatures = None
+
+
     def _setTrain2predict(self, v):
         """Set the flag for necessary training prior doing prediction
 
@@ -301,6 +306,13 @@ class BoostedClassifier(Classifier):
         # set flag if it needs to be trained before predicting
         self._setTrain2predict(train2predict)
 
+    def untrain(self):
+        if not self.trained:
+            return
+        for clf in self.clfs:
+            clf.untrain()
+        super(BoostedClassifier, self).untrain()
+
     clfs = property(fget=lambda x:x.__clfs,
                     fset=_setClassifiers,
                     doc="Used classifiers")
@@ -352,6 +364,12 @@ class ProxyClassifier(Classifier):
         # for the ease of access
         self.states._copy_states_(self.__clf, deep=False)
         return result
+
+
+    def untrain(self):
+        self.clf.untrain()
+        super(ProxyClassifier, self).untrain()
+
 
     clf = property(lambda x:x.__clf, doc="Used `Classifier`")
 
