@@ -15,6 +15,9 @@ from mvpa.misc import warning
 from mvpa.clfs.classifier import Classifier
 from libsvm import svm
 
+if __debug__:
+    from mvpa.misc import debug
+
 # we better expose those since they are mentioned in docstrings
 from libsvm.svmc import \
      C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
@@ -101,11 +104,6 @@ class SVMBase(Classifier):
         # init base class
         Classifier.__init__(self, **kwargs)
 
-        # check if there is a libsvm version with configurable
-        # noise reduction ;)
-        if hasattr(svm.svmc, 'svm_set_verbosity'):
-            svm.svmc.svm_set_verbosity( 0 )
-
         if not len(weight_label) == len(weight):
             raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
                               "is not equal."
@@ -180,7 +178,10 @@ class SVMBase(Classifier):
         return predictions
 
     def untrain(self):
+        if __debug__:
+            debug("SVM", "Untraining %s and destroying libsvm model" % self)
         super(SVMBase, self).untrain()
+        del self.__model
         self.__model = None
 
     model = property(fget=lambda self: self.__model)
@@ -349,3 +350,12 @@ class RbfCSVMC(SVMBase):
                          probability=probability, shrinking=shrinking,
                          weight_label=weight_label, weight=weight, **kwargs)
 
+
+# check if there is a libsvm version with configurable
+# noise reduction ;)
+if hasattr(svm.svmc, 'svm_set_verbosity'):
+    if __debug__ and "SVMLIB" in debug.active:
+        debug("SVM", "Setting verbosity for libsvm to 255")
+        svm.svmc.svm_set_verbosity(255)
+    else:
+        svm.svmc.svm_set_verbosity(0)
