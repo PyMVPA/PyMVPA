@@ -158,14 +158,16 @@ class StateTests(unittest.TestCase):
         properch = TestClassProperChild(enable_states=["state1"])
 
         self.failUnlessEqual(proper.states.enabled, ["state2"])
-        proper.states._enableTemporarily(["state1"], properch)
+        proper.states._changeTemporarily(
+            enable_states=["state1"], other=properch)
         self.failUnlessEqual(Set(proper.states.enabled),
                              Set(["state1", "state2"]))
         proper.states._resetEnabledTemporarily()
         self.failUnlessEqual(proper.states.enabled, ["state2"])
 
         # allow to enable disable without other instance
-        proper.states._enableTemporarily(["state1", "state2"])
+        proper.states._changeTemporarily(
+            enable_states=["state1", "state2"])
         self.failUnlessEqual(Set(proper.states.enabled),
                              Set(["state1", "state2"]))
         proper.states._resetEnabledTemporarily()

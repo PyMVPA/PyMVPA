@@ -17,6 +17,8 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
+from mvpa.misc.exceptions import UnknownStateError
+
 from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
@@ -70,11 +72,18 @@ class ClassifiersTests(unittest.TestCase):
     def testDummy(self):
         clf = SameSignClassifier()
         clf.train(self.data_bin_1)
+        self.failUnlessRaises(UnknownStateError, clf.states.get,
+                              "predictions")
+        """Should have no predictions after training. Predictions
+        state should be explicitely disabled"""
         self.failUnlessEqual(clf.trained_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
                              list(self.data_bin_1.labels))
+
+        self.failUnlessEqual(len(clf.predictions), self.data_bin_1.nsamples,
+            msg="Trained classifier stores predictions by default")
 
     def testBoosted(self):
         # XXXXXXX
