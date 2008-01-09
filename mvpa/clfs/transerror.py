@@ -419,7 +419,7 @@ class ConfusionBasedError(ClassifierError):
     TODO: Derive it from some common class with `TransferError`
     """
 
-    def __init__(self, clf, labels, confusion_state="trained_confusion",
+    def __init__(self, clf, labels=None, confusion_state="trained_confusion",
                  **kwargs):
         """Initialization.
 
@@ -453,5 +453,6 @@ class ConfusionBasedError(ClassifierError):
 
         TODO: may be we should train here the same way as TransferError does?
         """
-        self.confusion = self.clf[self.__confusion_state]
-        return self.clf[self.__confusion_state].error
+        confusion = self.clf.states.get(self.__confusion_state)
+        self.confusion = confusion
+        return confusion.error
