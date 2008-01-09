@@ -135,9 +135,9 @@ $(COVERAGE_REPORT): build
 	@cd tests && { \
 	  export PYTHONPATH=..; \
 	  python-coverage -x main.py; \
-	  python-coverage -r -o /usr >| ../$(COVERAGE_REPORT); \
+	  python-coverage -r -i -o /usr >| ../$(COVERAGE_REPORT); \
 	  grep -v '100%$$' ../$(COVERAGE_REPORT); \
-	  python-coverage -a -o /usr; }
+	  python-coverage -a -i -o /usr; }
 
 
 #
