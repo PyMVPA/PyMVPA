@@ -38,11 +38,11 @@ class FeatureSelection(Statefull):
         """Invocation of the feature selection
 
         :Parameters:
-          dataset: Dataset
+          dataset : Dataset
             dataset used to select features
-          testdataset: Dataset
+          testdataset : Dataset
             dataset the might be used to compute a stopping criterion
-          callables: sequence
+          callables : sequence
             a list of functors to be called with locals()
 
         Returns a tuple with the dataset containing the selected features.
