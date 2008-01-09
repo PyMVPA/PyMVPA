@@ -287,6 +287,22 @@ if __debug__:
         return filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
 
 
+    class RelativeTime(object):
+        """Simple helper class to provide relative  time it took from previous invocation"""
+
+        def __init__(self, format="%3.3f sec"):
+            self.__prev = None
+            self.__format = format
+
+        def __call__(self):
+            dt = 0.0
+            ct = time.time()
+            if not self.__prev is None:
+                dt = ct - self.__prev
+            self.__prev = ct
+            return self.__format % dt
+
+
     class DebugLogger(SetLogger):
         """
         Logger for debugging purposes.
@@ -306,6 +322,9 @@ if __debug__:
             SetLogger.__init__(self, *args, **kwargs)
             self.__metrics = []
             self._offsetbydepth = offsetbydepth
+            self._reltimer = RelativeTime()
+            self._known_metrics = DebugLogger._known_metrics
+            self._known_metrics['reltime'] = self._reltimer
             for metric in metrics:
                 self._registerMetric(metric)
 
