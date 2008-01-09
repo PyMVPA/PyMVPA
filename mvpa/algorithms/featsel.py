@@ -497,7 +497,8 @@ class FeatureSelectionPipeline(FeatureSelection):
         for fs in self.__feature_selections:
 
             # enable selected_ids state if it was requested from this class
-            fs.states._enableTemporarily(["selected_ids"], self)
+            fs.states._changeTemporarily(
+                enable_states=["selected_ids"], other=self)
             if self.states.isEnabled("nfeatures"):
                 self.nfeatures.append(wdataset.nfeatures)
 

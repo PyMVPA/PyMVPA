@@ -127,7 +127,12 @@ class Classifier(Statefull):
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
         if self.states.isEnabled('trained_confusion'):
+            # we should not store predictions for training data,
+            # it is confusing imho (yoh)
+            self.states._changeTemporarily(
+                disable_states=["predictions"])
             predictions = self.predict(dataset.samples)
+            self.states._resetEnabledTemporarily()
             self.trained_confusion = ConfusionMatrix(
                 labels=dataset.uniquelabels, targets=dataset.labels,
                 predictions=predictions)
@@ -827,14 +832,16 @@ class FeatureSelectionClassifier(ProxyClassifier):
     feature selection was carried out with the same classifier already
     """
 
-    def __init__(self, clf, feature_selection, **kwargs):
+    def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance
 
         :Parameters:
           clf : Classifier
             classifier based on which mask classifiers is created
-          feature_selection
+          feature_selection : FeatureSelection
             whatever `FeatureSelection` comes handy
+          testdataset : Dataset
+            optional dataset which would be given on call to feature_selection
           """
         ProxyClassifier.__init__(self, clf, **kwargs)
 
@@ -845,14 +852,18 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.__feature_selection = feature_selection
         """FeatureSelection to select the features prior training"""
 
+        self.__testdataset = testdataset
+        """FeatureSelection might like to use testdataset"""
+
 
     def _train(self, dataset):
         """
         """
         # temporarily enable selected_ids
-        self.__feature_selection.states._enableTemporarily(["selected_ids"])
+        self.__feature_selection.states._changeTemporarily(
+            enable_states=["selected_ids"])
 
-        (wdataset, tdataset) = self.__feature_selection(dataset)
+        (wdataset, tdataset) = self.__feature_selection(dataset, self.__testdataset)
         if __debug__:
             debug("CLFFS", "{%s} selected %d out of %d features" %
                   (self.__feature_selection, wdataset.nfeatures, dataset.nfeatures))

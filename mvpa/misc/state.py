@@ -15,6 +15,7 @@ __docformat__ = 'restructuredtext'
 
 import operator, copy
 from copy import deepcopy
+from sets import Set
 
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc import warning
@@ -67,6 +68,9 @@ class StateVariable(object):
         return self._isenabled
 
     def enable(self, value=False):
+        if self._isenabled == value:
+            # Do nothing since it is already in proper state
+            return
         if __debug__:
             debug("STV", "%s %s" %
                   ({True: 'Enabling', False: 'Disabling'}[value], str(self)))
@@ -258,28 +262,39 @@ class StateCollection(object):
         self._action(index, StateVariable.reset, missingok=False)
 
 
-    def _enableTemporarily(self, enable_states, other=None):
-        """Temporarily enable needed states for computation
+    def _changeTemporarily(self, enable_states=[],
+                           disable_states=[], other=None):
+        """Temporarily enable/disable needed states for computation
 
-        Enable states which are enabled in `other` and listed in
+        Enable or disable states which are enabled in `other` and listed in
         `enable _states`. Use `resetEnabledTemporarily` to reset
         to previous state of enabled.
 
         `other` can be a Statefull object or StateCollection
         """
         self.__storedTemporarily.append(self.enabled)
-
+        other_ = other
         if isinstance(other, Statefull):
             other = other.states
 
-        # Lets go one by one enabling only disabled once... but could be as simple as
-        # self.enable(enable_states)
-        for state in enable_states:
-            if not self.isEnabled(state) and \
-               ((other is None) or other.isEnabled(state)):
+        if not other is None:
+            # lets take states which are enabled in other but not in
+            # self
+            add_enable_states = list(Set(other.enabled).difference(
+                 Set(enable_states)).intersection(self.names))
+            if len(add_enable_states)>0:
                 if __debug__:
-                    debug("ST", "Temporarily enabling state %s" % state)
-                self.enable(state)
+                    debug("ST",
+                          "Adding states %s from %s to be enabled temporarily" %
+                          (add_enable_states, other_) +
+                          " since they are not enabled in %s" %
+                          (self))
+                enable_states += add_enable_states
+
+        # Lets go one by one enabling only disabled once... but could be as simple as
+        self.enable(enable_states)
+        self.disable(disable_states)
+
 
     def _resetEnabledTemporarily(self):
         """Reset to previousely stored set of enabled states"""
