@@ -43,9 +43,10 @@ distclean:
 	-@rm -f mvpa/clfs/libsvm/*.{c,so} \
 		mvpa/clfs/libsvm/svmc.py \
 		mvpa/clfs/libsvm/svmc_wrap.cpp \
-		tests/*.{prof,pstats,kcache,coverage} $(PROFILE_FILE) $(COVERAGE_REPORT)
+		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
+		 -o -name '.coverage' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '#*#' | xargs -l10 rm -f
