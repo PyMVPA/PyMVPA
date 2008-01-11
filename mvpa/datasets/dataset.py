@@ -246,7 +246,7 @@ class Dataset(object):
             raise ValueError, \
                   "Provided %ss have %d entries while there is %d samples" %\
                   (attrib, len(value), self.nsamples)
-        self._data['labels'] = N.array(value)
+        self._data[attrib] = N.array(value)
         uniqueattr = "unique"+attrib
 
         if self._dsattr.has_key(uniqueattr):
@@ -442,7 +442,7 @@ class Dataset(object):
     def __repr__(self, full=True):
         """String summary over the object
         """
-        s = """Dataset / %s %d x %d""" % \
+        s = """<Dataset / %s %d x %d""" % \
                    (self.samples.dtype, self.nsamples, self.nfeatures)
 
         if not full:
@@ -459,7 +459,7 @@ class Dataset(object):
                 s += " %d %s" % (len(value), attr)
             except:
                 pass
-        return s
+        return s + '>'
 
 
     def __iadd__( self, other ):
