@@ -20,6 +20,9 @@ from mvpa.misc import warning
 from mvpa.misc.state import StateVariable, Statefull
 from mvpa.misc.exceptions import UnknownStateError
 
+if __debug__:
+    from mvpa.misc import debug
+
 class FeatureSelection(Statefull):
     """Base class for any feature selection
 
@@ -502,6 +505,9 @@ class FeatureSelectionPipeline(FeatureSelection):
             if self.states.isEnabled("nfeatures"):
                 self.nfeatures.append(wdataset.nfeatures)
 
+            if __debug__:
+                debug('FSPL', 'Invoking %s on (%s, %s)' %
+                      (fs, wdataset, wtestdataset))
             wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
 
             if self.states.isEnabled("selected_ids"):
