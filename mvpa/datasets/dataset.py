@@ -191,6 +191,19 @@ class Dataset(object):
             self._dsattr['__uniquereseted'] = False
             self._resetallunique(force=True)
 
+    @property
+    def _id(self):
+        """To verify if dataset is in the same state as when smth else was done
+
+        Like if classifier was trained on the same dataset as in question"""
+
+        res = id(self._data)
+        for attr, val in self._data.iteritems():
+            res += id(val)
+            if isinstance(val, N.ndarray):
+                res += hash(buffer(val))
+        return res
+
 
     def _resetallunique(self, force=False):
         """Set to None all unique* attributes of corresponding dictionary
@@ -626,7 +639,7 @@ class Dataset(object):
 
 
 
-    def permuteLabels( self, status, perchunk = True ):
+    def permuteLabels(self, status, perchunk = True):
         """Permute the labels.
 
         Calling this method with 'status' set to True, the labels are
