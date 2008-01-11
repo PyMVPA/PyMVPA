@@ -108,11 +108,14 @@ if __debug__:
     debug.register('STCOL', "State Collector")
 
     debug.register('CLF',    "Base Classifiers")
+    debug.register('CLF_TB', "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
     debug.register('CLFFS',  "FeatureSelectionClassifier")
+
+    debug.register('FSPL',  "FeatureSelectionPipeline")
 
     debug.register('SVM',    "SVM")
     debug.register('SVMLIB', "Internal libsvm verbose output")

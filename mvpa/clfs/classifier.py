@@ -34,6 +34,7 @@ from transerror import ConfusionMatrix
 from mvpa.misc import warning
 
 if __debug__:
+    import traceback
     from mvpa.misc import debug
 
 
@@ -107,6 +108,9 @@ class Classifier(Statefull):
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
+        self.__trainedid = None
+        """Stores id of the dataset on which it was trained to signal
+        in trained() if it was trained already on the same dataset"""
 
 
     def __str__(self):
@@ -126,6 +130,7 @@ class Classifier(Statefull):
         """
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
+        self.__trainedid = dataset._id
         if self.states.isEnabled('trained_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
@@ -152,6 +157,9 @@ class Classifier(Statefull):
         """
         if __debug__:
             debug("CLF", "Training classifier %s on dataset %s" % (`self`, `dataset`))
+            tb = traceback.extract_stack(limit=5)
+            debug("CLF_TB", "Traceback: %s" % tb)
+
         self._pretrain(dataset)
         result = self._train(dataset)
         self._posttrain(dataset, result)
@@ -201,16 +209,27 @@ class Classifier(Statefull):
         if __debug__:
             debug("CLF", "Predicting classifier %s on data %s" \
                 % (`self`, `data.shape`))
+            tb = traceback.extract_stack(limit=5)
+            debug("CLF_TB", "Traceback: %s" % tb)
+
         self._prepredict(data)
         result = self._predict(data)
         self._postpredict(data, result)
         return result
 
+    def isTrained(self, dataset=None):
+        """Either classifier was already trained. MUST BE USED WITH CARE IF EVER"""
+        if dataset is None:
+            # simply return if it was trained on anything
+            return not self.__trainednfeatures is None
+        else:
+            return (self.__trainednfeatures == dataset.nfeatures) \
+                   and (self.__trainedid == dataset._id)
 
     @property
     def trained(self):
         """Either classifier was already trained"""
-        return not self.__trainednfeatures is None
+        return self.isTrained()
 
 
     def untrain(self):
@@ -766,6 +785,7 @@ class SplitClassifier(CombinedClassifier):
         for split in self.__splitter(dataset):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
+
             clf = self.clfs[i]
             clf.train(split[0])
             if self.states.isEnabled("trained_confusions"):
@@ -808,8 +828,9 @@ class MappedClassifier(ProxyClassifier):
     def _train(self, dataset):
         """
         """
-        ProxyClassifier.train(self, self.__mapper.forward(dataset.samples))
-
+        # for train() we have to provide dataset -- not just samples to train!
+        wdataset = dataset.applyMapper(featuresmapper = self.__mapper)
+        ProxyClassifier.train(self, wdataset)
 
     def _predict(self, data):
         """
