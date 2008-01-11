@@ -279,7 +279,7 @@ class ClassifierError(Statefull):
        be indicies of the array
     """
 
-    def __init__(self, clf, labels=None, **kwargs):
+    def __init__(self, clf, labels=None, train=True, **kwargs):
         """Initialization.
 
         :Parameters:
@@ -288,12 +288,18 @@ class ClassifierError(Statefull):
           labels : list
             if provided, should be a set of labels to add on top of the
             ones present in testdata
+          train : bool
+            unless train=False, classifier gets trained if
+            trainingdata provided to __call__
         """
         Statefull.__init__(self, **kwargs)
         self.__clf = clf
 
         self.__labels = labels
         """Labels to add on top to existing in testing data"""
+
+        self.__train = train
+        """Either to train classifier if trainingdata is provided"""
 
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""
@@ -302,11 +308,25 @@ class ClassifierError(Statefull):
         out._copy_states_(self)
         return out
 
+
     def _precall(self, testdata, trainingdata=None):
         """Generic part which trains the classifier if necessary
         """
         if not trainingdata == None:
-            self.__clf.train(trainingdata)
+            if self.__train:
+                if self.__clf.isTrained(trainingdata):
+                    warning('It seems that classifier %s was already trained' %
+                            self.__clf + ' on dataset %s. Please inspect' % trainingdata)
+                self.__clf.train(trainingdata)
+        ### Here checking for if it was trained... might be a cause of trouble
+        # XXX disabled since it is unreliable.. just rely on explicit
+        # self.__train
+        #    if  not self.__clf.isTrained(trainingdata):
+        #        self.__clf.train(trainingdata)
+        #    elif __debug__:
+        #        debug('CERR',
+        #              'Not training classifier %s since it was ' % `self.__clf`
+        #              + ' already trained on data %s' % `trainingdata`)
 
 
     def _call(self, testdata, trainingdata=None):
