@@ -429,7 +429,7 @@ class Dataset(object):
     def __repr__(self, full=True):
         """String summary over the object
         """
-        s = """Dataset / %s %d x %d""" % \
+        s = """<Dataset / %s %d x %d""" % \
                    (self.samples.dtype, self.nsamples, self.nfeatures)
 
         if not full:
@@ -446,7 +446,7 @@ class Dataset(object):
                 s += " %d %s" % (len(value), attr)
             except:
                 pass
-        return s
+        return s + '>'
 
 
     def __iadd__( self, other ):
