@@ -33,6 +33,7 @@ tests = [
     'test_plf',
     # Various algorithms
     'test_transformers',
+    'test_transerror',
     'test_clfcrossval',
     'test_searchlight',
     'test_rfe',

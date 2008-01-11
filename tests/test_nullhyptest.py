@@ -34,7 +34,7 @@ class NullHypothesisTests(unittest.TestCase):
         lin_p = null(wdata, tdata)
 
         # null distribution must have mean 0.5
-        self.failUnless(N.abs(null['null_errors']-0.5).mean() < 0.15)
+        self.failUnless(N.abs(null.null_errors-0.5).mean() < 0.15)
 
         # must not alter orig labels
         self.failUnless((wdata.labels == orig_labels).all())
@@ -46,7 +46,7 @@ class NullHypothesisTests(unittest.TestCase):
         nlin_p = null(wdata, tdata)
 
         # null distribution must have mean 0.5
-        self.failUnless(N.abs(null['null_errors']-0.5).mean() < 0.15)
+        self.failUnless(N.abs(null.null_errors-0.5).mean() < 0.15)
 
         # non-linear must perform better than linear
         # Michael: disabled as not deterministic

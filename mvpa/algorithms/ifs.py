@@ -22,6 +22,8 @@ from mvpa.algorithms.featsel import FeatureSelection, \
                                     FixedNElementTailSelector, \
                                     BestDetector
 
+from mvpa.misc.state import StateVariable
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -44,6 +46,8 @@ class IFS(FeatureSelection):
     is reached.
     """
 
+    errors = StateVariable()
+
     def __init__(self,
                  data_measure,
                  transfer_error,
@@ -52,6 +56,7 @@ class IFS(FeatureSelection):
                  feature_selector=FixedNElementTailSelector(1,
                                                             tail='upper',
                                                             mode='select'),
+                 **kwargs
                  ):
         """Initialize incremental feature search
 
@@ -69,16 +74,13 @@ class IFS(FeatureSelection):
                 criterion is fulfilled.
          """
         # bases init first
-        FeatureSelection.__init__(self)
+        FeatureSelection.__init__(self, **kwargs)
 
         self.__data_measure = data_measure
         self.__transfer_error = transfer_error
         self.__feature_selector = feature_selector
         self.__bestdetector = bestdetector
         self.__stopping_criterion = stopping_criterion
-
-        # register the state members
-        self._registerState("errors")
 
 
     def __call__(self, dataset, testdataset, callables=[]):
@@ -170,7 +172,7 @@ class IFS(FeatureSelection):
                 break
 
         # charge state
-        self['errors'] = errors
+        self.errors = errors
 
         # best dataset ever is returned
         return dataset.selectFeatures(results), \

@@ -58,7 +58,7 @@ class PLF(Classifier):
         """
         return """PLF(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_states=%s)""" %\
                (self.__lm, self.__criterion, self.__reduced, self.__maxiter,
-                str(self.enabledStates))
+                str(self.states.enabled))
 
 
     def _train(self, data):
@@ -152,8 +152,8 @@ class PLF(Classifier):
 
         # save the state if desired, relying on State._setitem_ to
         # decide if we will actually save the values
-        self['predictions'] = predictions
-        self['values'] = values
+        self.predictions = predictions
+        self.values = values
 
         return predictions
 

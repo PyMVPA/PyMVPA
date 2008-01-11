@@ -57,6 +57,35 @@ __repr__
   over their identity (name + parameters + some summary over results
   if any)
 
+Naming Conventions
+------------------
+
+Function Arguments
+__________________
+
+dataset vs data
+  Ones which are supposed to be derived from Dataset_ class should
+  have suffix (or whole name) ``dataset``. In contrast, if argument is
+  expected to be simply a NumPy_ array, suffix should be ``data``. For
+  example::
+
+    class Classifier(Statefull):
+       ...
+       def train(self, dataset):
+	   ...
+       def predict(self, data):
+
+    class FeatureSelection(Statefull):
+	   ...
+       def __call__(self, dataset, testdataset, callables=[]):
+
+
+  Such convention should be enforced in all ``*train``,
+  ``*predict`` functions of classifiers.
+
+.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+.. _NumPy: http://numpy.scipy.org/
+
 
 Tests
 -----

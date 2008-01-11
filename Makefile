@@ -1,5 +1,5 @@
 PROFILE_FILE=tests/main.pstats
-
+COVERAGE_REPORT=coverage
 HTML_DIR=build/html
 PDF_DIR=build/pdf
 
@@ -43,9 +43,10 @@ distclean:
 	-@rm -f mvpa/clfs/libsvm/*.{c,so} \
 		mvpa/clfs/libsvm/svmc.py \
 		mvpa/clfs/libsvm/svmc_wrap.cpp \
-		tests/*.{prof,pstats,kcache,coverage} $(PROFILE_FILE)
+		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
+		 -o -name '.coverage' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '#*#' | xargs -l10 rm -f
@@ -131,11 +132,12 @@ test: build
 	@cd tests && PYTHONPATH=.. python main.py
 
 
-coverage: build
+$(COVERAGE_REPORT): build
 	@cd tests && { \
 	  export PYTHONPATH=..; \
 	  python-coverage -x main.py; \
-	  python-coverage -r -i -o /usr | grep -v '100%$$'; \
+	  python-coverage -r -i -o /usr >| ../$(COVERAGE_REPORT); \
+	  grep -v '100%$$' ../$(COVERAGE_REPORT); \
 	  python-coverage -a -i -o /usr; }
 
 

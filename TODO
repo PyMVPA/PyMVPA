@@ -4,6 +4,11 @@
 * unify naming of working/testing 
     transerror.py for instance uses testdata/trainingdata
     rfe.py dataset, testdataset
+* ConfusionBasedError -> InternalError ?
+
+* Renaming of the modules
+  transerror.py -> errors.py
+
 * Hide libsvm interface from user and provide a unique classifier for linear
   SVM.
 * (features selected on all folds)/(features selected on any fold)
