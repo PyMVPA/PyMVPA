@@ -14,6 +14,7 @@ import numpy as N
 from sets import Set
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.misc import zscore, aggregateFeatures
+from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.misc.exceptions import DatasetError
 
 class DatasetTests(unittest.TestCase):
@@ -283,6 +284,19 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(ag_data.nfeatures == 1)
         self.failUnless((ag_data.samples[:,0] == [2, 7, 12, 17]).all())
 
+    def testApplyMapper(self):
+        """Test creation of new dataset by applying a mapper"""
+        mapper = MaskMapper(N.array([1,0,1]))
+        dataset = Dataset(samples=N.arange(12).reshape( (4,3) ),
+                          labels=1,
+                          chunks=1)
+        seldataset = dataset.applyMapper(featuresmapper=mapper)
+        self.failUnless( (dataset.selectFeatures([0, 2]).samples
+                          == seldataset.samples).all() )
+        self.failUnlessRaises(NotImplementedError,
+                              dataset.applyMapper, None, [1])
+        """We don't yet have implementation for samplesmapper --
+        if we get one -- remove this check and place a test"""
 
 def suite():
     return unittest.makeSuite(DatasetTests)
