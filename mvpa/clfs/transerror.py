@@ -21,7 +21,7 @@ from sets import Set
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 
 if __debug__:
     from mvpa.misc import debug
@@ -270,8 +270,13 @@ class ConfusionMatrix(object):
 
 
 
-class ClassifierError(State):
+class ClassifierError(Statefull):
     """Compute the some error of a (trained) classifier on a dataset.
+    """
+
+    confusion = StateVariable(enabled=False)
+    """TODO Think that labels might be also symbolic thus can't directly
+       be indicies of the array
     """
 
     def __init__(self, clf, labels=None, **kwargs):
@@ -284,16 +289,11 @@ class ClassifierError(State):
             if provided, should be a set of labels to add on top of the
             ones present in testdata
         """
-        State.__init__(self, **kwargs)
+        Statefull.__init__(self, **kwargs)
         self.__clf = clf
 
         self.__labels = labels
         """Labels to add on top to existing in testing data"""
-
-        self._registerState('confusion', enabled=False)
-        """TODO Think that labels might be also symbolic thus can't directly
-                be indicies of the array
-        """
 
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""
@@ -389,8 +389,8 @@ class TransferError(ClassifierError):
 
         # compute confusion matrix
         # TODO should migrate into ClassifierError.__postcall?
-        if self.isStateEnabled('confusion'):
-            self['confusion'] = ConfusionMatrix(
+        if self.states.isEnabled('confusion'):
+            self.confusion = ConfusionMatrix(
                 labels=self.labels, targets=testdata.labels,
                 predictions=predictions)
 
@@ -419,7 +419,7 @@ class ConfusionBasedError(ClassifierError):
     TODO: Derive it from some common class with `TransferError`
     """
 
-    def __init__(self, clf, labels, confusion_state="trained_confusion",
+    def __init__(self, clf, labels=None, confusion_state="trained_confusion",
                  **kwargs):
         """Initialization.
 
@@ -437,15 +437,15 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.hasState(confusion_state):
+        if not clf.states.isKnown(confusion_state):
             raise ValueError, \
                   "State variable %s is not defined for classifier %s" % \
                   (confusion_state, `clf`)
-        if not clf.isStateEnabled(confusion_state):
+        if not clf.states.isEnabled(confusion_state):
             if __debug__:
                 debug('CERR', "Forcing state %s to be enabled for %s" %
                       (confusion_state, `clf`))
-            clf.enableState(confusion_state)
+            clf.states.enable(confusion_state)
 
 
     def _call(self, testdata, trainingdata=None):
@@ -453,5 +453,6 @@ class ConfusionBasedError(ClassifierError):
 
         TODO: may be we should train here the same way as TransferError does?
         """
-        self["confusion"] = self.clf[self.__confusion_state]
-        return self.clf[self.__confusion_state].error
+        confusion = self.clf.states.get(self.__confusion_state)
+        self.confusion = confusion
+        return confusion.error

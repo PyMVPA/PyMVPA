@@ -22,26 +22,20 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import copy
 
-from mvpa.misc.state import State
+from mvpa.misc.state import StateVariable, Statefull
 from mvpa.clfs.classifier import BoostedClassifier
 from mvpa.clfs.svm import LinearSVM
 
 if __debug__:
     from mvpa.misc import debug
 
-class DataMeasure(State):
+class DataMeasure(Statefull):
     """A measure computed from a `Dataset` (base class).
 
     All subclasses shall get all necessary parameters via their constructor,
     so it is possible to get the same type of measure for multiple datasets
     by passing them to the __call__() method successively.
     """
-
-    def __init__(self, **kwargs):
-        """
-        """
-        State.__init__(self, **kwargs)
-
 
     def __call__(self, dataset, callbacks=[]):
         """Compute measure on a given `Dataset`.
@@ -62,11 +56,6 @@ class SensitivityAnalyzer(DataMeasure):
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.
     """
-    def __init__(self, **kwargs):
-        """Does nothing special."""
-        DataMeasure.__init__(self, **kwargs)
-
-
     def __call__(self, dataset, callbacks=[]):
         """Perform sensitivity analysis on a given `Dataset`.
 
@@ -174,6 +163,9 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
 class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
     """Set sensitivity analyzers to be merged into a single output"""
 
+    sensitivities = StateVariable(enabled=False,
+        doc="Sensitivities produced by each classifier")
+
     def __init__(self, analyzers=[],
                  combiner=lambda x:N.mean(x, axis=0),
                  **kwargs):
@@ -184,8 +176,6 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
         self.__combiner = combiner
         """Which functor to use to combine all sensitivities"""
 
-        self._registerState('sensitivities', enabled=False,
-            doc="Sensitivities produced by each classifier")
 
 
     def __call__(self, dataset, callables=[]):
@@ -199,7 +189,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
             sensitivities.append(sensitivity)
             ind += 1
 
-        self["sensitivities"] = sensitivities
+        self.sensitivities = sensitivities
         result = self.__combiner(sensitivities)
         return result
 

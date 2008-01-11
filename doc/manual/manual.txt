@@ -14,6 +14,7 @@ PyMVPA Manual
   Yaroslav O. Halchenko <debian@onerussian.com>
 :Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
 :Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
+:IRC: #exppsy on OTFC/Freenode
 :Revision: unreleased
 
 .. Please add yourself to the list of authors if you contribute something
