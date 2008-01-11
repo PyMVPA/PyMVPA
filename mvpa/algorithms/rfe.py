@@ -68,6 +68,10 @@ class RFE(FeatureSelection):
             transfer_error : TransferError object
                 used to compute the transfer error of a classifier based on a
                 certain feature set on the test dataset.
+                NOTE: If sensitivity analyzer is based on the same
+                classifier as transfer_error is using, make sure you
+                initialize transfer_error with train=False, otherwise
+                it would train classifier twice without any necessity.
             feature_selector : Functor
                 Given a sensitivity map it has to return the ids of those
                 features that should be kept.
@@ -174,6 +178,12 @@ class RFE(FeatureSelection):
         sensitivity = None
         """Contains the latest sensitivity map."""
 
+        result_selected_ids = orig_feature_ids
+        """Resultant ids of selected features. Since the best is not
+        necessarily is the last - we better keep this one around. By
+        default -- all features are there"""
+        selected_ids = result_selected_ids
+        
         while wdataset.nfeatures > 0:
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
@@ -209,6 +219,8 @@ class RFE(FeatureSelection):
             # store result
             if isthebest:
                 results = (wdataset, wtestdataset)
+                result_selected_ids = selected_ids
+
             # stop if it is time to finish
             if nfeatures == 1 or stop:
                 break
@@ -252,9 +264,11 @@ class RFE(FeatureSelection):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
 
+            if hasattr(self.__transfer_error, "clf"):
+                self.__transfer_error.clf.untrain()
         # charge state variables
         self.errors = errors
-        self.selected_ids = selected_ids
+        self.selected_ids = result_selected_ids
 
         # best dataset ever is returned
         return results
