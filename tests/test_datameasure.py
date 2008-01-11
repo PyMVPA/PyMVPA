@@ -19,6 +19,7 @@ from mvpa.clfs import *
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
+from mvpa.algorithms.rfe import RFE
 
 from tests_warehouse import *
 
@@ -26,10 +27,29 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     def setUp(self):
         self.nonbogus = [1, 3]          # informative features
-        self.nfeatures = 5              # total features
+        self.nfeatures = 6              # total features
         self.dataset = normalFeatureDataset(perlabel=200, nlabels=2,
                                             nfeatures=self.nfeatures,
                                             nonbogus_features=self.nonbogus,
+                                            snr=6)
+        self.datasetsmall = normalFeatureDataset(perlabel=2, nlabels=2,
+                                            nfeatures=3, nchunks=1,
+                                            snr=6)
+        self.dataset3 = normalFeatureDataset(perlabel=200, nlabels=3,
+                                            nfeatures=self.nfeatures,
+                                            nonbogus_features=[0,1,3],
+                                            snr=6)
+        self.dataset3small = normalFeatureDataset(perlabel=2, nlabels=3,
+                                            nfeatures=4, nchunks=1,
+                                            snr=6)
+
+        self.dataset4 = normalFeatureDataset(perlabel=200, nlabels=4,
+                                            nfeatures=self.nfeatures,
+                                            nonbogus_features=[0,1,3,5],
+                                            snr=6)
+
+        self.dataset4small = normalFeatureDataset(perlabel=2, nlabels=4,
+                                            nfeatures=5, nchunks=1,
                                             snr=6)
 
 
@@ -63,6 +83,16 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 list(self.nonbogus),
                 msg="At the end we should have selected the right features")
 
+
+    def testLinearSVMWeights(self):
+        # first Yarik needs to figure out what the heck is happening ;-)
+        svm = LinearCSVMC()
+
+        # assumming many defaults it is as simple as
+        sana = selectAnalyzer( clf=svm,
+                               enable_states=["sensitivities"] ) # and lets look at all sensitivities
+        dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
+        map_ = sana(dataset)
 
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self):
         basic_clf = LinearNuSVMC()

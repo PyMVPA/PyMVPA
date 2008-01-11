@@ -363,6 +363,11 @@ if __debug__:
 
 
         def __call__(self, setid, msg, *args, **kwargs):
+            if not setid in self.active:
+                # don't even compute the metrics, since they might
+                # be statefull as RelativeTime
+                return
+
             msg_ = ""
 
             for metric in self.__metrics:
