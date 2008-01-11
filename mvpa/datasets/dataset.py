@@ -29,7 +29,7 @@ class Dataset(object):
     chunks.
 
     :Groups:
-      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`
+      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`, `applyMapper`
       - `Mutators`: `permuteLabels`
 
     Important: labels assumed to be immutable, ie noone should modify
@@ -527,6 +527,51 @@ class Dataset(object):
         # assign the selected features -- data is still shared with
         # current dataset
         new_data['samples'] = self._data['samples'][:, ids]
+
+        # create a new object of the same type it is now and NOT onyl Dataset
+        dataset = super(Dataset, self).__new__(self.__class__)
+
+        # now init it: to make it work all Dataset contructors have to accept
+        # Class(data=Dict, dsattr=Dict)
+        dataset.__init__(data=new_data,
+                         dsattr=self._dsattr,
+                         check_data=False,
+                         copy_samples=False,
+                         copy_data=False,
+                         copy_dsattr=False
+                         )
+
+        return dataset
+
+
+    def applyMapper(self, featuresmapper=None, samplesmapper=None):
+        """Obtain new dataset by applying mappers over features and/or samples.
+
+        :Parameters:
+          featuresmapper : Mapper
+            `Mapper` to somehow transform each sample's features
+          samplesmapper : Mapper
+            `Mapper` to transform each feature across samples
+
+        WARNING: At the moment, handling of samplesmapper is not yet
+        implemented since there were no real use case.
+
+        TODO: selectFeatures is pretty much applyMapper(featuresmapper=MaskMapper(...))
+        """
+
+        # shallow-copy all stuff from current data dict
+        new_data = self._data.copy()
+
+        # apply mappers
+
+        if samplesmapper:
+            raise NotImplementedError
+
+        if featuresmapper:
+            if __debug__:
+                debug("DS", "Applying featuresmapper %s to samples of dataset %s" %
+                      (featuresmapper, self))
+            new_data['samples'] = featuresmapper.forward(self._data['samples'])
 
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
