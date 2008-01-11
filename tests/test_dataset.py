@@ -298,6 +298,45 @@ class DatasetTests(unittest.TestCase):
         """We don't yet have implementation for samplesmapper --
         if we get one -- remove this check and place a test"""
 
+    def testId(self):
+        """Test Dataset._id() if it gets changed if any of the labels/chunks changes"""
+
+        dataset = Dataset(samples=N.arange(12).reshape( (4,3) ),
+                          labels=1,
+                          chunks=1)
+        origid = dataset._id
+        dataset.labels = [3, 1, 2, 3]           # change all labels
+        self.failUnless(origid != dataset._id,
+                        msg="Changing all labels should alter dataset's _id")
+
+        origid = dataset._id
+
+        z = dataset.labels[1]
+        self.failUnlessEqual(origid, dataset._id,
+                             msg="Accessing shouldn't change _id")
+        z = dataset.chunks
+        self.failUnlessEqual(origid, dataset._id,
+                             msg="Accessing shouldn't change _id")
+        z[2] = 333
+        self.failUnless(origid != dataset._id,
+                        msg="Changing value in attribute should change _id")
+
+        origid = dataset._id
+        dataset.samples[1,1] = 1000
+        self.failUnless(origid != dataset._id,
+                        msg="Changing value in data should change _id")
+
+
+        origid = dataset._id
+        dataset.permuteLabels(True)
+        self.failUnless(origid != dataset._id,
+                        msg="Permutation also changes _id")
+
+        dataset.permuteLabels(False)
+        self.failUnless(origid != dataset._id,
+                        msg="Permutation also changes _id even on restore")
+
+
 def suite():
     return unittest.makeSuite(DatasetTests)
 
