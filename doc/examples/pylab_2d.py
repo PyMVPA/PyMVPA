@@ -58,7 +58,7 @@ feat_test=N.array((N.ravel(x), N.ravel(y)))
 pre = logReg.predict(feat_test.T)
 
 # get out the values used for the prediction
-res = logReg.states.get('values')
+res = logReg.values
 
 # reshape the results
 z = N.asarray(res).reshape((100,100))
