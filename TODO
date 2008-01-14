@@ -9,6 +9,10 @@
 * Renaming of the modules
   transerror.py -> errors.py
 
+* SVM: getSV and getSVCoef return very 'packed' presentation
+   whenever classifier is multiclass. Thus they have to be unpacked
+   before proper use (unless it is simply a binary classifier).
+
 * Hide libsvm interface from user and provide a unique classifier for linear
   SVM.
 * (features selected on all folds)/(features selected on any fold)
