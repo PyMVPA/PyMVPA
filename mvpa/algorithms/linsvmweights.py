@@ -14,7 +14,9 @@ import numpy as N
 
 from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.clfs.svm import LinearSVM
+from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
+
 
 if __debug__:
     from mvpa.misc import debug
@@ -36,8 +38,9 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
             `LinearSVM` may be used.
         """
         if not isinstance(clf, LinearSVM):
-            raise ValueError, "Classifier has to be a LinearSVM, but is [%s]" \
-                              % `type(clf)`
+            raise ValueError, \
+                  "Classifier %s has to be a LinearSVM, but is [%s]" \
+                              % (`clf`, `type(clf)`)
 
         # init base classes first
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
@@ -46,6 +49,10 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     def _call(self, dataset, callables=[]):
         """Extract weights from Linear SVM classifier.
         """
+        if self.clf.model.nr_class != 2:
+            warning("You are estimating sensitivity for SVM %s trained on %d" %
+                    (`self.clf`, self.clf.model.nr_class) +
+                    " classes. Make sure that it is what you intended to do" )
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
         rhos = N.array(self.clf.model.getRho())
