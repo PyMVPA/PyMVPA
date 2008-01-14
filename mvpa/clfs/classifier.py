@@ -420,7 +420,7 @@ class Combiner(Statefull):
         pass
 
 
-    def call(self, clfs, dataset):
+    def __call__(self, clfs, dataset):
         """Call function
 
         :Parameters:
