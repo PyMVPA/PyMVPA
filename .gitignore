@@ -1,6 +1,8 @@
 *~
 *,cover
 .coverage
+/coverage
+/trash
 \#*
 \.\#*
 *.py[co]
