@@ -364,7 +364,7 @@ class TransferError(ClassifierError):
     """Compute the transfer error of a (trained) classifier on a dataset.
 
     The actual error value is computed using a customizable error function.
-    Optionally the classifier can be training by passing an additional
+    Optionally the classifier can be trained by passing an additional
     training dataset to the __call__() method.
     """
     def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
