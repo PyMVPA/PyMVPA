@@ -43,7 +43,7 @@ patterns = patternsPos+patternsNeg
 logReg = PLF(criterion=0.00001)
 
 # enable saving of the values used for the prediction
-logReg.enableState('values')
+logReg.states.enable('values')
 
 # train with the known points
 logReg.train(patterns)
@@ -58,7 +58,7 @@ feat_test=N.array((N.ravel(x), N.ravel(y)))
 pre = logReg.predict(feat_test.T)
 
 # get out the values used for the prediction
-res = logReg['values']
+res = logReg.values
 
 # reshape the results
 z = N.asarray(res).reshape((100,100))

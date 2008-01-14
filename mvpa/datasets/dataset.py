@@ -29,7 +29,7 @@ class Dataset(object):
     chunks.
 
     :Groups:
-      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`
+      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`, `applyMapper`
       - `Mutators`: `permuteLabels`
 
     Important: labels assumed to be immutable, ie noone should modify
@@ -190,6 +190,19 @@ class Dataset(object):
             # when no need
             self._dsattr['__uniquereseted'] = False
             self._resetallunique(force=True)
+
+    @property
+    def _id(self):
+        """To verify if dataset is in the same state as when smth else was done
+
+        Like if classifier was trained on the same dataset as in question"""
+
+        res = id(self._data)
+        for attr, val in self._data.iteritems():
+            res += id(val)
+            if isinstance(val, N.ndarray):
+                res += hash(buffer(val))
+        return res
 
 
     def _resetallunique(self, force=False):
@@ -544,6 +557,51 @@ class Dataset(object):
         return dataset
 
 
+    def applyMapper(self, featuresmapper=None, samplesmapper=None):
+        """Obtain new dataset by applying mappers over features and/or samples.
+
+        :Parameters:
+          featuresmapper : Mapper
+            `Mapper` to somehow transform each sample's features
+          samplesmapper : Mapper
+            `Mapper` to transform each feature across samples
+
+        WARNING: At the moment, handling of samplesmapper is not yet
+        implemented since there were no real use case.
+
+        TODO: selectFeatures is pretty much applyMapper(featuresmapper=MaskMapper(...))
+        """
+
+        # shallow-copy all stuff from current data dict
+        new_data = self._data.copy()
+
+        # apply mappers
+
+        if samplesmapper:
+            raise NotImplementedError
+
+        if featuresmapper:
+            if __debug__:
+                debug("DS", "Applying featuresmapper %s to samples of dataset %s" %
+                      (featuresmapper, self))
+            new_data['samples'] = featuresmapper.forward(self._data['samples'])
+
+        # create a new object of the same type it is now and NOT onyl Dataset
+        dataset = super(Dataset, self).__new__(self.__class__)
+
+        # now init it: to make it work all Dataset contructors have to accept
+        # Class(data=Dict, dsattr=Dict)
+        dataset.__init__(data=new_data,
+                         dsattr=self._dsattr,
+                         check_data=False,
+                         copy_samples=False,
+                         copy_data=False,
+                         copy_dsattr=False
+                         )
+
+        return dataset
+
+
     def selectSamples(self, mask):
         """Choose a subset of samples.
 
@@ -581,7 +639,7 @@ class Dataset(object):
 
 
 
-    def permuteLabels( self, status, perchunk = True ):
+    def permuteLabels(self, status, perchunk = True):
         """Permute the labels.
 
         Calling this method with 'status' set to True, the labels are
