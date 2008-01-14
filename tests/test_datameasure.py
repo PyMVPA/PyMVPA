@@ -94,6 +94,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
         dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
         map_ = sana(dataset)
 
+        # for now we can do only linear SVM, so lets check if we raise
+        # a concern
+        svmnl = RbfNuSVMC()
+        self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
+
+
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self):
         basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)
