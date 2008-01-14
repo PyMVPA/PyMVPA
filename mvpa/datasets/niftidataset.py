@@ -20,9 +20,10 @@ class NiftiDataset(MaskedDataset):
     """Dataset based on NiftiImage provided by pynifti.
 
     See http://niftilib.sourceforge.net/pynifti/ for more information
-    about pynifti
+    about pynifti.
     """
-
+    # XXX: Every dataset should really have an example of howto instanciate
+    #      it (necessary parameters).
     def __init__(self, samples=None, mask=None, dsattr={}, **kwargs):
         """Initialize NiftiDataset.
 
