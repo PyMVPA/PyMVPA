@@ -88,7 +88,7 @@ class Classifier(Statefull):
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
-    trained_confusion = StateVariable(enabled=True,
+    training_confusion = StateVariable(enabled=True,
         doc="Result of learning: `ConfusionMatrix` " \
             "(and corresponding learning error)")
     predictions = StateVariable(enabled=True,
@@ -131,14 +131,14 @@ class Classifier(Statefull):
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
         self.__trainedid = dataset._id
-        if self.states.isEnabled('trained_confusion'):
+        if self.states.isEnabled('training_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
             self.states._changeTemporarily(
                 disable_states=["predictions"])
             predictions = self.predict(dataset.samples)
             self.states._resetEnabledTemporarily()
-            self.trained_confusion = ConfusionMatrix(
+            self.training_confusion = ConfusionMatrix(
                 labels=dataset.uniquelabels, targets=dataset.labels,
                 predictions=predictions)
 
@@ -744,7 +744,7 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
-    trained_confusions = StateVariable(enabled=True,
+    training_confusions = StateVariable(enabled=True,
         doc="Resultant confusion matrices whenever classifier trained " +
             "on each was tested on 2nd part of the split")
 
@@ -769,7 +769,7 @@ class SplitClassifier(CombinedClassifier):
         """
         # generate pairs and corresponding classifiers
         bclfs = []
-        self.trained_confusions = ConfusionMatrix(labels=dataset.uniquelabels)
+        self.training_confusions = ConfusionMatrix(labels=dataset.uniquelabels)
 
         # for proper and easier debugging - first define classifiers and then
         # train them
@@ -788,9 +788,9 @@ class SplitClassifier(CombinedClassifier):
 
             clf = self.clfs[i]
             clf.train(split[0])
-            if self.states.isEnabled("trained_confusions"):
+            if self.states.isEnabled("training_confusions"):
                 predictions = clf.predict(split[1].samples)
-                self.trained_confusions.add(split[1].labels, predictions)
+                self.training_confusions.add(split[1].labels, predictions)
             i += 1
 
 

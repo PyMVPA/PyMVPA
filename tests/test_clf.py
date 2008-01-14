@@ -76,7 +76,7 @@ class ClassifiersTests(unittest.TestCase):
                               "predictions")
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
-        self.failUnlessEqual(clf.trained_confusion.percentCorrect,
+        self.failUnlessEqual(clf.training_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
@@ -123,10 +123,10 @@ class ClassifiersTests(unittest.TestCase):
         clf = SplitClassifier(clf=SameSignClassifier(),
                               splitter=NFoldSplitter(1))
         clf.train(ds)                   # train the beast
-        self.failUnlessEqual(clf.trained_confusions.percentCorrect,
+        self.failUnlessEqual(clf.training_confusions.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.trained_confusions.sets),
+        self.failUnlessEqual(len(clf.training_confusions.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -208,8 +208,8 @@ class ClassifiersTests(unittest.TestCase):
         svm2.train(dstrain)
 
         clf.train(dstrain)
-        self.failUnlessEqual(str(clf.trained_confusion),
-                             str(svm2.trained_confusion),
+        self.failUnlessEqual(str(clf.training_confusion),
+                             str(svm2.training_confusion),
             msg="Multiclass clf should provide same results as built-in libsvm's")
 
         self.failUnless(not svm2.model is None,
