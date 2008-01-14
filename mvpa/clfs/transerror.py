@@ -439,7 +439,7 @@ class ConfusionBasedError(ClassifierError):
     TODO: Derive it from some common class with `TransferError`
     """
 
-    def __init__(self, clf, labels=None, confusion_state="trained_confusion",
+    def __init__(self, clf, labels=None, confusion_state="training_confusion",
                  **kwargs):
         """Initialization.
 
