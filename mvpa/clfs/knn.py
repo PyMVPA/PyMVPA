@@ -44,10 +44,14 @@ class kNN(Classifier):
     def __repr__(self):
         """Representation of the object
         """
-        return "kNN(k=%d, enable_states=%s)" % (self.__k, str(self.states.enabled))
+        return "kNN(k=%d, enable_states=%s)" % \
+            (self.__k, str(self.states.enabled))
+
 
     def __str__(self):
-        return "%s\n data: %s" % (Classifier.__str__(self), indentDoc(self.__data))
+        return "%s\n data: %s" % \
+            (Classifier.__str__(self), indentDoc(self.__data))
+
 
     def _train(self, data):
         """Train the classifier.
@@ -175,3 +179,10 @@ class kNN(Classifier):
         # return votes as well to store them in the state
         return uniquelabels[N.array(votes).argmax()], \
                votes
+
+
+    def untrain(self):
+        """Reset trained state"""
+        self.__data = None
+        super(kNN, self).untrain()
+
