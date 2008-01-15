@@ -15,8 +15,8 @@ import numpy as N
 from mvpa.datasets.dataset import Dataset
 from mvpa.algorithms.featsel import FixedNElementTailSelector, FeatureSelectionPipeline, FractionTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
-from mvpa.clfs import *
-from mvpa.clfs.svm import LinearNuSVMC
+from mvpa.clfs.classifier import SplitClassifier
+from mvpa.clfs.svm import LinearNuSVMC, LinearCSVMC, RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
 from mvpa.algorithms.rfe import RFE
