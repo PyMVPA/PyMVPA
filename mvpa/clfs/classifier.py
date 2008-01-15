@@ -915,7 +915,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.states._copy_states_(self.__maskclf, deep=False)
         return result
 
-
+    # XXX Shouldn't that be mappedclf ?
     maskclf = property(lambda x:x.__maskclf, doc="Used `MappedClassifier`")
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
