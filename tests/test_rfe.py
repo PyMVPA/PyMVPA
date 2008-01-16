@@ -18,8 +18,8 @@ from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
      FeatureSelectionPipeline, \
-     NBackHistoryStopCrit, FractionTailSelector, \
-     FixedErrorThresholdStopCrit, \
+     NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
+     MultiStopCrit, \
      FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
@@ -110,6 +110,29 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([0.8, 0.9, 0.4]) == True)
         # only last error has to be below to stop
         self.failUnless(stopcrit([0.8, 0.4, 0.6]) == False)
+
+
+    def testMultiStopCrit(self):
+        """Test multiple stop criteria"""
+        stopcrit = MultiStopCrit([FixedErrorThresholdStopCrit(0.5),
+                                  NBackHistoryStopCrit(steps=4)])
+
+        # default 'or' mode
+        # nback triggers
+        self.failUnless(stopcrit([1, 0.9, 0.8]+[0.9]*4) == True)
+        # threshold triggers
+        self.failUnless(stopcrit([1, 0.9, 0.2]) == True)
+
+        # alternative 'and' mode
+        stopcrit = MultiStopCrit([FixedErrorThresholdStopCrit(0.5),
+                                  NBackHistoryStopCrit(steps=4)],
+                                 mode = 'and')
+        # nback triggers not
+        self.failUnless(stopcrit([1, 0.9, 0.8]+[0.9]*4) == False)
+        # threshold triggers not
+        self.failUnless(stopcrit([1, 0.9, 0.2]) == False)
+        # only both satisfy
+        self.failUnless(stopcrit([1, 0.9, 0.4]+[0.4]*4) == True)
 
 
     def testFeatureSelector(self):
