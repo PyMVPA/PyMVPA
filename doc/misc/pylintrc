@@ -40,9 +40,18 @@ variable-rgx=([a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?||(__.*__))$
 # Default: (([A-Z_][A-Z1-9_]*)|(__.*__))$
 const-rgx=([a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?|__.*__)$
 
+
 [FORMAT]
 indent-string='    '
 
+
+[DESIGN]
+
+# We are capable to follow that many, yes!
+max-branchs = 20
+
+# some base class constructors have quite a few arguments
+max-args = 12
 
 [MESSAGES CONTROL]
 # Disable the following PyLint messages:
@@ -51,7 +60,9 @@ indent-string='    '
 # W0105 - String statement has no effect # often used for after-line doc
 # W0142 - Used * or ** magic
 # W0232 - Class has no __init__ method
-disable-msg=R0903,W0142,W0102,W0105
+# W0212 - Access to a protected member ... of a client class
+# W0613 - Unused argument
+disable-msg=R0903,W0142,W0102,W0105,W0212,W0613
 
 [REPORTS]
 
@@ -64,3 +75,12 @@ include-ids=yes
 
 # Tells wether to display a full report or only the messages
 reports=no
+
+[MISCELLANEOUS]
+
+# List of note tags to take in consideration, separated by a comma.
+# FIXME -- something which needs fixing
+# TODO  -- future plan
+# XXX   -- some concern
+# YYY   -- comment/answer to above mentioned concern
+notes=FIXME,TODO,XXX,YYY
