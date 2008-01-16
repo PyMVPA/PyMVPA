@@ -133,6 +133,40 @@ class StoppingCriterion(object):
 
 
 
+class MultiStopCrit(StoppingCriterion):
+    """Stop computation if the latest error drops below a certain threshold.
+    """
+    def __init__(self, crits, mode='or'):
+        """
+        :Parameters:
+            crits : list of StoppingCriterion instances
+                For each call to MultiStopCrit all of these criterions will
+                be evaluated.
+            mode : any of ('and', 'or')
+                Logical function to determine the multi criterion from the set
+                of base criteria.
+        """
+        if not mode in ('and', 'or'):
+            raise ValueError, \
+                  "A mode '%s' is not supported." % `mode`
+
+        self.__mode = mode
+        self.__crits = crits
+
+
+    def __call__(self, errors):
+        """Evaluate all criteria to determine the value of the multi criterion.
+        """
+        # evaluate all crits
+        crits = [ c(errors) for c in self.__crits ]
+
+        if self.__mode == 'and':
+            return N.all(crits)
+        else:
+            return N.any(crits)
+
+
+
 class FixedErrorThresholdStopCrit(StoppingCriterion):
     """Stop computation if the latest error drops below a certain threshold.
     """
