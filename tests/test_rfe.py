@@ -19,7 +19,7 @@ from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
      FeatureSelectionPipeline, \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
-     MultiStopCrit, \
+     MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
@@ -111,6 +111,15 @@ class RFETests(unittest.TestCase):
         # only last error has to be below to stop
         self.failUnless(stopcrit([0.8, 0.4, 0.6]) == False)
 
+
+    def testNStepsStopCrit(self):
+        """Test stopping criterion"""
+        stopcrit = NStepsStopCrit(2)
+
+        self.failUnless(stopcrit([]) == False)
+        self.failUnless(stopcrit([0.8, 0.9]) == True)
+        self.failUnless(stopcrit([0.8]) == False)
+ 
 
     def testMultiStopCrit(self):
         """Test multiple stop criteria"""
