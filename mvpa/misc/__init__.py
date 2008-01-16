@@ -35,7 +35,8 @@ class _SingletonType(type):
 class __Singleton:
     __metaclass__=_SingletonType
     def __init__(self, *args): pass
-
+    # Provided __call__ just to make silly pylint happy
+    def __call__(self): raise NotImplementedError
 
 verbose = __Singleton("verbose", LevelLogger(handlers=[stdout]))
 errors = __Singleton("errors", LevelLogger(handlers=[stderr]))
