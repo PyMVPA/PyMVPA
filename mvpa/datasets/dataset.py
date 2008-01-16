@@ -20,7 +20,6 @@ from mvpa.misc.exceptions import DatasetError
 
 if __debug__:
     from mvpa.misc import debug, warning
-    from mvpa.misc.support import isSorted
 
 class Dataset(object):
     """This class provides a container to store all necessary data to perform
@@ -52,7 +51,7 @@ class Dataset(object):
     _registeredattributes = []
     """Registered attributes (stored in _data)"""
 
-    _requiredattributes=['samples', 'labels']
+    _requiredattributes = ['samples', 'labels']
     """Attributes which have to be provided to __init__, or otherwise
     no default values would be assumed and construction of the
     instance would fail"""
@@ -151,7 +150,7 @@ class Dataset(object):
                           " stored in `data`" % (`self._data['labels']`))
             if self._data.has_key('samples'):
                 self._data['labels'] = \
-                                     self._expandSampleAttribute(labels, 'labels')
+                    self._expandSampleAttribute(labels, 'labels')
 
         # check if we got all required attributes
         for attr in self._requiredattributes:
@@ -198,7 +197,7 @@ class Dataset(object):
         Like if classifier was trained on the same dataset as in question"""
 
         res = id(self._data)
-        for attr, val in self._data.iteritems():
+        for val in self._data.values():
             res += id(val)
             if isinstance(val, N.ndarray):
                 res += hash(buffer(val))
@@ -244,10 +243,10 @@ class Dataset(object):
         """
         if len(value) != self.nsamples:
             raise ValueError, \
-                  "Provided %ss have %d entries while there is %d samples" %\
+                  "Provided %ss have %d entries while there is %d samples" % \
                   (attrib, len(value), self.nsamples)
         self._data[attrib] = N.array(value)
-        uniqueattr = "unique"+attrib
+        uniqueattr = "unique" + attrib
 
         if self._dsattr.has_key(uniqueattr):
             self._dsattr[uniqueattr] = None
@@ -429,7 +428,8 @@ class Dataset(object):
                           (cls.__name__, sampleskey))
 
                 exec "%s.%s = %s" % (cls.__name__, sampleskey,
-                      "lambda self, x: self._getSampleIdsByAttr(x,attrib='%s')" % key)
+                      "lambda self, x: " +
+                      "self._getSampleIdsByAttr(x,attrib='%s')" % key)
 
                 cls._uniqueattributes.append(uniquekey)
 
@@ -530,6 +530,7 @@ class Dataset(object):
         if sort:
             ids.sort()
 #        elif __debug__:
+#            from mvpa.misc.support import isSorted
 #            if not isSorted(ids):
 #                warning("IDs for selectFeatures must be provided " +
 #                       "in sorted order, otherwise major headache might occur")
@@ -582,8 +583,8 @@ class Dataset(object):
 
         if featuresmapper:
             if __debug__:
-                debug("DS", "Applying featuresmapper %s to samples of dataset %s" %
-                      (featuresmapper, self))
+                debug("DS", "Applying featuresmapper %s" % `featuresmapper` +
+                      " to samples of dataset `%s`" % `self`)
             new_data['samples'] = featuresmapper.forward(self._data['samples'])
 
         # create a new object of the same type it is now and NOT onyl Dataset
