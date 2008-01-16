@@ -11,8 +11,10 @@
 Base Classifiers can be grouped according to their function as
 
 :group Basic Classifiers: Classifier BoostedClassifier ProxyClassifier
-:group BoostedClassifiers: CombinedClassifier MulticlassClassifier SplitClassifier
-:group ProxyClassifiers: BinaryClassifier MappedClassifier FeatureSelectionClassifier
+:group BoostedClassifiers: CombinedClassifier MulticlassClassifier
+  SplitClassifier
+:group ProxyClassifiers: BinaryClassifier MappedClassifier
+  FeatureSelectionClassifier
 :group Combiners for CombinedClassifier: Combiner MaximalVote
 
 """
@@ -103,11 +105,13 @@ class Classifier(Statefull):
         """
         Statefull.__init__(self, **kwargs)
 
-        self._setTrain2predict(train2predict)
+        self.__train2predict = train2predict
         """Some classifiers might not need to be trained to predict"""
+
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
+
         self.__trainedid = None
         """Stores id of the dataset on which it was trained to signal
         in trained() if it was trained already on the same dataset"""
@@ -156,7 +160,8 @@ class Classifier(Statefull):
         to do so
         """
         if __debug__:
-            debug("CLF", "Training classifier %s on dataset %s" % (`self`, `dataset`))
+            debug("CLF", "Training classifier %s on dataset %s" % \
+                  (`self`, `dataset`))
             tb = traceback.extract_stack(limit=5)
             debug("CLF_TB", "Traceback: %s" % tb)
 
@@ -218,7 +223,9 @@ class Classifier(Statefull):
         return result
 
     def isTrained(self, dataset=None):
-        """Either classifier was already trained. MUST BE USED WITH CARE IF EVER"""
+        """Either classifier was already trained.
+
+        MUST BE USED WITH CARE IF EVER"""
         if dataset is None:
             # simply return if it was trained on anything
             return not self.__trainednfeatures is None
@@ -282,6 +289,9 @@ class BoostedClassifier(Classifier):
         """
         Classifier.__init__(self, **kwargs)
 
+        self.__clfs = None
+        """Pylint friendly definition of __clfs"""
+
         self._setClassifiers(clfs)
         """Store the list of classifiers"""
 
@@ -292,21 +302,28 @@ class BoostedClassifier(Classifier):
 
 
     def _train(self, dataset):
-        """
+        """Train `BoostedClassifier`
         """
         for clf in self.__clfs:
             clf.train(dataset)
 
 
     def _predict(self, data):
-        """
+        """Predict using `BoostedClassifier`
         """
         raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
-        if clf.states.isEnabled("values") and self.states.isEnabled("values"):
-            values = [ clf.values for clf in self.__clfs ]
-            self.raw_values = values
-
         self.raw_predictions = raw_predictions
+        assert(len(self.__clfs)>0)
+        if self.states.isEnabled("values"):
+            # XXX pylint complains that numpy has no array member... weird
+            if N.array([x.states.isEnabled("values")
+                        for x in self.__clfs]).all():
+                values = [ clf.values for clf in self.__clfs ]
+                self.raw_values = values
+            else:
+                warning("One or more classifiers in %s has no 'values' state" %
+                        `self` + "enabled, thus BoostedClassifier can't have" +
+                        " 'raw_values' state variable defined")
 
         return raw_predictions
 
@@ -322,7 +339,7 @@ class BoostedClassifier(Classifier):
         """Classifiers to use"""
 
         train2predicts = [clf.train2predict for clf in self.__clfs]
-        train2predict = reduce(lambda x,y: x or y, train2predicts, False)
+        train2predict = reduce(lambda x, y: x or y, train2predicts, False)
         if __debug__:
             debug("CLFBST", "Setting train2predict=%s for classifiers " \
                    "%s with %s" \
@@ -331,6 +348,10 @@ class BoostedClassifier(Classifier):
         self._setTrain2predict(train2predict)
 
     def untrain(self):
+        """Untrain `BoostedClassifier`
+
+        Has to untrain any known classifier
+        """
         if not self.trained:
             return
         for clf in self.clfs:
@@ -371,7 +392,7 @@ class ProxyClassifier(Classifier):
 
 
     def _train(self, dataset):
-        """
+        """Train `ProxyClassifier`
         """
         # base class does nothing much -- just proxies requests to underlying
         # classifier
@@ -382,7 +403,7 @@ class ProxyClassifier(Classifier):
 
 
     def _predict(self, data):
-        """
+        """Predict using `ProxyClassifier`
         """
         result = self.__clf.predict(data)
         # for the ease of access
@@ -391,6 +412,8 @@ class ProxyClassifier(Classifier):
 
 
     def untrain(self):
+        """Untrain main classifier
+        """
         self.clf.untrain()
         super(ProxyClassifier, self).untrain()
 
@@ -450,7 +473,8 @@ class MaximalVote(Combiner):
 
 
     def __call__(self, clfs, dataset):
-        """
+        """Actuall callable - perform voting
+        
         Extended functionality which might not be needed actually:
         Since `BinaryClassifier` might return a list of possible
         predictions (not just a single one), we should consider all of those
@@ -490,22 +514,63 @@ class MaximalVote(Combiner):
             # if it is unique
             maxk = []                   # labels of elements with max vote
             maxv = -1
-            for k,v in label_counts.iteritems():
-                if v>maxv:
+            for k, v in label_counts.iteritems():
+                if v > maxv:
                     maxk = [k]
                     maxv = v
-                elif v==maxv:
+                elif v == maxv:
                     maxk.append(k)
 
-            assert len(maxk)>=1, \
+            assert len(maxk) >= 1, \
                    "We should have obtained at least a single key of max label"
 
-            if len(maxk)>1:
+            if len(maxk) > 1:
                 warning("We got multiple labels %s which have the " % `maxk` +
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
         self.all_label_counts = all_label_counts
+        self.predictions = predictions
+        return predictions
+
+
+
+class ClassifierCombiner(Combiner):
+    """Provides a decision using training a classifier on predictions/values
+
+    TODO
+    """
+
+    predictions = StateVariable(enabled=True,
+        doc="Trained predictions")
+
+
+    def __init__(self, clf, variables=['predictions']):
+        """Initialize `ClassifierCombiner`
+
+        :Parameters:
+          clf : Classifier
+            Classifier to train on the predictions
+          variables : list of basestring
+            List of state variables stored in 'combined' classifiers, which
+            to use as features for training this classifier
+        """
+        Combiner.__init__(self)
+
+        self.__clf = clf
+        """Classifier to train on `variables` states of provided classifiers"""
+
+        self.__variables = variables
+        """What state variables of the classifiers to use"""
+
+
+    def __call__(self, clfs, dataset):
+        """
+        """
+        if len(clfs)==0:
+            return []                   # to don't even bother
+
+        raise NotImplementedError
         self.predictions = predictions
         return predictions
 
@@ -546,15 +611,19 @@ class CombinedClassifier(BoostedClassifier):
 
 
     def _train(self, dataset):
+        """Train `CombinedClassifier`
+        """
         BoostedClassifier._train(self, dataset)
         # combiner might need to train as well
         self.__combiner.train(self.clfs, dataset)
 
 
     def _predict(self, data):
+        """Predict using `CombinedClassifier`
         """
-        """
-        raw_predictions = BoostedClassifier._predict(self, data)
+        BoostedClassifier._predict(self, data)
+        # combiner will make use of state variables instead of only predictions
+        # returned from _predict
         predictions = self.__combiner(self.clfs, data)
         self.predictions = predictions
 
@@ -623,12 +692,14 @@ class BinaryClassifier(ProxyClassifier):
             self.__predictneg = self.__neglabels[0]
 
 
-        def __str__(self):
-            return "BinaryClassifier +1: %s -1: %s" % (
-                `self.__poslabels`, `self.__neglabels`)
+    def __str__(self):
+        return "BinaryClassifier +1: %s -1: %s" % (
+            `self.__poslabels`, `self.__neglabels`)
 
 
     def _train(self, dataset):
+        """Train `BinaryClassifier`
+        """
         idlabels = [(x, +1) for x in dataset.idsbylabels(self.__poslabels)] + \
                     [(x, -1) for x in dataset.idsbylabels(self.__neglabels)]
         # XXX we have to sort ids since at the moment Dataset.selectSamples
@@ -661,9 +732,8 @@ class BinaryClassifier(ProxyClassifier):
         """
         binary_predictions = ProxyClassifier._predict(self, data)
         self.values = binary_predictions
-        predictions = map(lambda x: {-1: self.__predictneg,
-                                     +1: self.__predictpos}[x],
-                          binary_predictions)
+        predictions = [ {-1: self.__predictneg,
+                         +1: self.__predictpos}[x] for x in binary_predictions]
         self.predictions = predictions
         return predictions
 
@@ -705,7 +775,7 @@ class MulticlassClassifier(CombinedClassifier):
 
 
     def _train(self, dataset):
-        """
+        """Train classifier
         """
         # construct binary classifiers
         ulabels = dataset.uniquelabels
@@ -765,7 +835,7 @@ class SplitClassifier(CombinedClassifier):
 
 
     def _train(self, dataset):
-        """
+        """Train `SplitClassifier`
         """
         # generate pairs and corresponding classifiers
         bclfs = []
@@ -826,14 +896,14 @@ class MappedClassifier(ProxyClassifier):
 
 
     def _train(self, dataset):
-        """
+        """Train `MappedClassifier`
         """
         # for train() we have to provide dataset -- not just samples to train!
         wdataset = dataset.applyMapper(featuresmapper = self.__mapper)
         ProxyClassifier.train(self, wdataset)
 
     def _predict(self, data):
-        """
+        """Predict using `MappedClassifier`
         """
         return ProxyClassifier._predict(self, self.__mapper.forward(data))
 
@@ -850,7 +920,9 @@ class FeatureSelectionClassifier(ProxyClassifier):
     would use created MaskMapper.
 
     TODO: think about removing overhead of retraining the same classifier if
-    feature selection was carried out with the same classifier already
+    feature selection was carried out with the same classifier already. It
+    has been addressed by adding .trained property to classifier, but now
+    we should expclitely use isTrained here if we want... need to think more
     """
 
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
@@ -867,27 +939,28 @@ class FeatureSelectionClassifier(ProxyClassifier):
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         self.__maskclf = None
-        """Should become MappedClassifier later on.
-        May be it better be a state variable but... TODO"""
+        """Should become `MappedClassifier`(mapper=`MaskMapper`) later on."""
 
         self.__feature_selection = feature_selection
-        """FeatureSelection to select the features prior training"""
+        """`FeatureSelection` to select the features prior training"""
 
         self.__testdataset = testdataset
-        """FeatureSelection might like to use testdataset"""
+        """`FeatureSelection` might like to use testdataset"""
 
 
     def _train(self, dataset):
-        """
+        """Train `FeatureSelectionClassifier`
         """
         # temporarily enable selected_ids
         self.__feature_selection.states._changeTemporarily(
             enable_states=["selected_ids"])
 
-        (wdataset, tdataset) = self.__feature_selection(dataset, self.__testdataset)
+        (wdataset, tdataset) = self.__feature_selection(dataset,
+                                                        self.__testdataset)
         if __debug__:
             debug("CLFFS", "{%s} selected %d out of %d features" %
-                  (self.__feature_selection, wdataset.nfeatures, dataset.nfeatures))
+                  (self.__feature_selection, wdataset.nfeatures,
+                   dataset.nfeatures))
 
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
@@ -908,14 +981,16 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
 
     def _predict(self, data):
-        """
+        """Predict using `FeatureSelectionClassifier`
         """
         result = self.__maskclf._predict(data)
         # for the ease of access
         self.states._copy_states_(self.__maskclf, deep=False)
         return result
 
-
+    # XXX Shouldn't that be mappedclf ?
+    # YYY yoh: not sure... by nature it is mappedclf, by purpouse it
+    # is maskclf using MaskMapper
     maskclf = property(lambda x:x.__maskclf, doc="Used `MappedClassifier`")
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
