@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     BestDetector, \
-                                    StopNBackHistoryCriterion, \
+                                    NBackHistoryStopCrit, \
                                     FractionTailSelector
 from numpy import arange
 from mvpa.misc.state import StateVariable
@@ -54,7 +54,7 @@ class RFE(FeatureSelection):
                  transfer_error,
                  feature_selector=FractionTailSelector(0.05),
                  bestdetector=BestDetector(),
-                 stopping_criterion=StopNBackHistoryCriterion(BestDetector()),
+                 stopping_criterion=NBackHistoryStopCrit(BestDetector()),
                  train_clf=True,
                  update_sensitivity=True,
                  **kargs
