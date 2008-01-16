@@ -122,11 +122,46 @@ class StoppingCriterion(object):
     """
 
     def __call__(self, errors):
-        """Instruct when to stop
+        """Instruct when to stop.
+
+        Every implementation should return `False` when an empty list is
+        passed as argument.
 
         Returns tuple `stop`.
         """
         raise NotImplementedError
+
+
+
+class FixedErrorThresholdStopCrit(StoppingCriterion):
+    """Stop computation if the latest error drops below a certain threshold.
+    """
+    def __init__(self, threshold):
+        """Initialize with threshold.
+
+        :Parameters:
+            threshold : float [0,1]
+                Error threshold.
+        """
+        StoppingCriterion.__init__(self)
+        if threshold > 1.0 or threshold < 0.0:
+            raise ValueError, \
+                  "Threshold %f is out of a reasonable range [0,1]." \
+                    % `threshold`
+        self.__threshold = threshold
+
+
+    def __call__(self, errors):
+        """Nothing special."""
+        if len(errors)==0:
+            return False
+        if errors[-1] < self.__threshold:
+            return True
+        else:
+            return False
+
+
+    threshold = property(fget=lambda x:x.__threshold)
 
 
 

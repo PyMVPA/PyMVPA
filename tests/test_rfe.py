@@ -19,6 +19,7 @@ from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
      FeatureSelectionPipeline, \
      NBackHistoryStopCrit, FractionTailSelector, \
+     FixedErrorThresholdStopCrit, \
      FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
@@ -76,8 +77,8 @@ class RFETests(unittest.TestCase):
         self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == False)
 
 
-    def testStopCriterion(self):
-        """Test stopping criterions"""
+    def testNBackHistoryStopCrit(self):
+        """Test stopping criterion"""
         stopcrit = NBackHistoryStopCrit()
         # for empty history -- no best but just go
         self.failUnless(stopcrit([]) == False)
@@ -98,6 +99,17 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == False)
         stopcrit = NBackHistoryStopCrit(steps=4)
         self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
+
+
+    def testFixedErrorThresholdStopCrit(self):
+        """Test stopping criterion"""
+        stopcrit = FixedErrorThresholdStopCrit(0.5)
+
+        self.failUnless(stopcrit([]) == False)
+        self.failUnless(stopcrit([0.8, 0.9, 0.5]) == False)
+        self.failUnless(stopcrit([0.8, 0.9, 0.4]) == True)
+        # only last error has to be below to stop
+        self.failUnless(stopcrit([0.8, 0.4, 0.6]) == False)
 
 
     def testFeatureSelector(self):
