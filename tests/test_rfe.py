@@ -18,7 +18,7 @@ from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
      FeatureSelectionPipeline, \
-     StopNBackHistoryCriterion, FractionTailSelector, \
+     NBackHistoryStopCrit, FractionTailSelector, \
      FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
@@ -78,7 +78,7 @@ class RFETests(unittest.TestCase):
 
     def testStopCriterion(self):
         """Test stopping criterions"""
-        stopcrit = StopNBackHistoryCriterion()
+        stopcrit = NBackHistoryStopCrit()
         # for empty history -- no best but just go
         self.failUnless(stopcrit([]) == False)
         # should not stop if we got 10 more after minimal
@@ -89,14 +89,14 @@ class RFETests(unittest.TestCase):
             [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == True)
 
         # test for alternative func
-        stopcrit = StopNBackHistoryCriterion(BestDetector(func=max))
+        stopcrit = NBackHistoryStopCrit(BestDetector(func=max))
         self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == False)
         self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == True)
 
         # test to detect earliest and latest minimum
-        stopcrit = StopNBackHistoryCriterion(BestDetector(lastminimum=True))
+        stopcrit = NBackHistoryStopCrit(BestDetector(lastminimum=True))
         self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == False)
-        stopcrit = StopNBackHistoryCriterion(steps=4)
+        stopcrit = NBackHistoryStopCrit(steps=4)
         self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
 
 

@@ -18,7 +18,7 @@ __docformat__ = 'restructuredtext'
 from copy import copy
 
 from mvpa.algorithms.featsel import FeatureSelection, \
-                                    StopNBackHistoryCriterion, \
+                                    NBackHistoryStopCrit, \
                                     FixedNElementTailSelector, \
                                     BestDetector
 
@@ -52,7 +52,7 @@ class IFS(FeatureSelection):
                  data_measure,
                  transfer_error,
                  bestdetector=BestDetector(),
-                 stopping_criterion=StopNBackHistoryCriterion(BestDetector()),
+                 stopping_criterion=NBackHistoryStopCrit(BestDetector()),
                  feature_selector=FixedNElementTailSelector(1,
                                                             tail='upper',
                                                             mode='select'),
