@@ -61,13 +61,18 @@ class RidgeReg(Classifier):
         """
 
         # create matrices to solve with additional penalty term
+        # determine the lambda matrix
         if self.__lm is None:
             # Not specified, so calculate based on .05*nfeatures
             Lambda = .05*data.nfeatures*N.eye(data.nfeatures)
         else:
             # use the provided penalty
             Lambda = self.__lm*N.eye(data.nfeatures)
-        a = N.concatenate((data.samples,Lambda))
+
+        # add the penalty term
+        a = N.concatenate((N.concatenate((data.samples,N.ones((data.nsamples,1))),1),
+                           N.concatenate((Lambda,N.zeros((data.nfeatures,1))),1)))
+        #a = N.concatenate((data.samples,Lambda))
         b = N.concatenate((data.labels,N.zeros(data.nfeatures)))
 
         # perform the least sq regression and save the weights
@@ -79,7 +84,9 @@ class RidgeReg(Classifier):
         Predict the output for the provided data.
         """
         # predict using the trained weights
-        predictions = N.dot(data,self.w)
+        #predictions = N.dot(data,self.w)
+        predictions = N.dot(N.concatenate((data,N.ones((len(data),1))),1),
+                            self.w)
         
         # save the state if desired, relying on State._setitem_ to
         # decide if we will actually save the values
