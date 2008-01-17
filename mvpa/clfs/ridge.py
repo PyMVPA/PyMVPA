@@ -72,7 +72,6 @@ class RidgeReg(Classifier):
         # add the penalty term
         a = N.concatenate((N.concatenate((data.samples,N.ones((data.nsamples,1))),1),
                            N.concatenate((Lambda,N.zeros((data.nfeatures,1))),1)))
-        #a = N.concatenate((data.samples,Lambda))
         b = N.concatenate((data.labels,N.zeros(data.nfeatures)))
 
         # perform the least sq regression and save the weights
@@ -84,7 +83,6 @@ class RidgeReg(Classifier):
         Predict the output for the provided data.
         """
         # predict using the trained weights
-        #predictions = N.dot(data,self.w)
         predictions = N.dot(N.concatenate((data,N.ones((len(data),1))),1),
                             self.w)
         
