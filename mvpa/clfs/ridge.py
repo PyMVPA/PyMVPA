@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as N
+from scipy.linalg import lstsq
 
 from mvpa.clfs.classifier import Classifier
 
@@ -35,6 +36,10 @@ class RidgeReg(Classifier):
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
+
+        # It does not make sense to calculate a confusion matrix for a
+        # ridge regression
+        self.states.enable('training_confusion',False)
 
         # verify that they specified lambda
         self.__lm = lm
@@ -65,11 +70,9 @@ class RidgeReg(Classifier):
         a = N.concatenate((data.samples,Lambda))
         b = N.concatenate((data.labels,N.zeros(data.nfeatures)))
 
-        # perform the least sq regression
-        res = N.linalg.lstsq(a,b)
-
-        # save the weights
-        self.w = res[0]
+        # perform the least sq regression and save the weights
+        self.w = lstsq(a,b)[0]
+        
 
     def _predict(self, data):
         """
