@@ -78,8 +78,8 @@ class ColumnData(dict):
                 exec "%s.%s = property(fget=%s)"  % \
                      (self.__class__.__name__, k, getter)
                 # TODO!!! Check if it is safe actually here to rely on value of
-                #         k in lambda. May be it is treated as continuation and some
-                #         local space would override it????
+                #         k in lambda. May be it is treated as continuation and
+                #         some local space would override it????
                 #setattr(self.__class__,
                 #        k,
                 #        property(fget=lambda x: x._getAttrib("%s" % k)))
@@ -98,7 +98,8 @@ class ColumnData(dict):
         if self.has_key(key):
             return self[key]
         else:
-            raise ValueError, "Instance %s has no data about %s" % (`self`, `key`)
+            raise ValueError, "Instance %s has no data about %s" \
+                % (`self`, `key`)
 
 
     def __str__(self):
@@ -106,7 +107,7 @@ class ColumnData(dict):
         if len(self.keys())>0:
             s += " %d rows, %d columns [" % \
                  (self.getNRows(), self.getNColumns())
-            s += reduce(lambda x,y: x+" %s" % y, self.keys())
+            s += reduce(lambda x, y: x+" %s" % y, self.keys())
             s += "]"
         return s
 

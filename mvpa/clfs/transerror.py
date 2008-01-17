@@ -17,7 +17,6 @@ import numpy as N
 from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
-from sets import Set
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
@@ -100,7 +99,7 @@ class ConfusionMatrix(object):
                 debug("LAZY", "Have to recompute ConfusionMatrix %s" % `self`)
 
         # figure out what labels we have
-        labels = list(reduce(lambda x,y: x.union(Set(y[0]).union(Set(y[1]))),
+        labels = list(reduce(lambda x, y: x.union(Set(y[0]).union(Set(y[1]))),
                              self.__sets,
                              Set(self.__labels)))
         labels.sort()
@@ -316,7 +315,8 @@ class ClassifierError(Statefull):
             if self.__train:
                 if self.__clf.isTrained(trainingdata):
                     warning('It seems that classifier %s was already trained' %
-                            self.__clf + ' on dataset %s. Please inspect' % trainingdata)
+                            self.__clf + ' on dataset %s. Please inspect' \
+                                % trainingdata)
                 self.__clf.train(trainingdata)
         ### Here checking for if it was trained... might be a cause of trouble
         # XXX disabled since it is unreliable.. just rely on explicit
@@ -353,10 +353,12 @@ class ClassifierError(Statefull):
         return error
 
     @property
-    def clf(self): return self.__clf
+    def clf(self):
+        return self.__clf
 
     @property
-    def labels(self): return self.__labels
+    def labels(self):
+        return self.__labels
 
 
 

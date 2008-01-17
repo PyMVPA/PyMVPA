@@ -135,7 +135,7 @@ class SVMBase(Classifier):
         """
         res = "SVMBase("
         sep = ""
-        for k,v in self.param._params.iteritems():
+        for k, v in self.param._params.iteritems():
             res += "%s%s=%s" % (sep, k, str(v))
             sep = ', '
         res += sep + "enable_states=%s" % (str(self.states.enabled))

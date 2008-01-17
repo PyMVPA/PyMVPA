@@ -56,7 +56,7 @@ class PLF(Classifier):
     def __repr__(self):
         """String summary over the object
         """
-        return """PLF(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_states=%s)""" %\
+        return """PLF(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_states=%s)""" % \
                (self.__lm, self.__criterion, self.__reduced, self.__maxiter,
                 str(self.states.enabled))
 
@@ -117,7 +117,7 @@ class PLF(Classifier):
                       (self.__criterion)
 
         if __debug__:
-            debug("PLF",\
+            debug("PLF", \
                   "PLF converged after %d steps. Error: %g" % \
                   (k, N.sum(N.ravel(dw.A ** 2))))
 
