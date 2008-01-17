@@ -100,7 +100,8 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
     def __repr__(self):
-        return "<ClassifierBasedSensitivityAnalyzer on %s. force_training=%s" % \
+        return \
+            "<ClassifierBasedSensitivityAnalyzer on %s. force_training=%s" % \
                (`self.__clf`, str(self._force_training))
 
 
@@ -132,7 +133,8 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
 def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
-    """Factory method which knows few classifiers and their sensitivity analyzers
+    """Factory method which knows few classifiers and their sensitivity
+    analyzers.
 
     :Parameters:
       clf : Classifier
@@ -234,10 +236,10 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
                 analyzer = selectAnalyzer(clf)
                 if analyzer is None:
                     raise ValueError, \
-                          "Wasn't able to figure basic analyzer for clf %s" %\
+                          "Wasn't able to figure basic analyzer for clf %s" % \
                           `clf`
                 if __debug__:
-                    debug("SA", "Selected analyzer %s for clf %s" %
+                    debug("SA", "Selected analyzer %s for clf %s" % \
                           (`analyzer`, `clf`))
             else:
                 # shallow copy should be enough...

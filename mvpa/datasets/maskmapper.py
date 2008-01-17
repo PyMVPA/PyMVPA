@@ -75,7 +75,8 @@ class MaskMapper(MetricMapper):
 
 
     def __str__(self):
-        return "MaskMapper: %d -> %d" % (self.__masksize, self.__masknonzerosize)
+        return "MaskMapper: %d -> %d" \
+            % (self.__masksize, self.__masknonzerosize)
 
 
     def __deepcopy__(self, memo={}):
@@ -139,7 +140,8 @@ class MaskMapper(MetricMapper):
         if not datashape == self.__mask.shape:
             raise ValueError, \
                   "The shape of data to be mapped %s " % `datashape` \
-                  + " does not match the mapper's mask shape %s" % `self.__mask.shape`
+                  + " does not match the mapper's mask shape %s" \
+                    % `self.__mask.shape`
 
         if self.__maskdim == datadim:
             # we had to select by __masknonzero if we didn't sort

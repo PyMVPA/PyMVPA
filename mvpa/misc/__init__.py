@@ -109,7 +109,8 @@ if __debug__:
     debug.register('STCOL', "State Collector")
 
     debug.register('CLF',    "Base Classifiers")
-    debug.register('CLF_TB', "Report traceback in train/predict. Helps to resolve WTF calls it")
+    debug.register('CLF_TB',
+        "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
