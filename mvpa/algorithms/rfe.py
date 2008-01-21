@@ -183,7 +183,7 @@ class RFE(FeatureSelection):
         necessarily is the last - we better keep this one around. By
         default -- all features are there"""
         selected_ids = result_selected_ids
-        
+
         while wdataset.nfeatures > 0:
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
@@ -230,8 +230,10 @@ class RFE(FeatureSelection):
 
             if __debug__:
                 debug('RFEC',
-                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d nfeatures_selected=%d" %
-                      (step, nfeatures, error, isthebest, stop, len(selected_ids)))
+                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d " \
+                      "nfeatures_selected=%d" %
+                      (step, nfeatures, error, isthebest, stop,
+                       len(selected_ids)))
 
 
             # Create a dataset only with selected features

@@ -84,7 +84,8 @@ class StateVariable(object):
 
     def __str__(self):
         return "%s variable %s id %d" % \
-            ({True: 'Enabled', False: 'Disabled'}[self.isEnabled], self.name, id(self))
+            ({True: 'Enabled',
+              False: 'Disabled'}[self.isEnabled], self.name, id(self))
 
     value = property(_get, _set)
 
@@ -126,7 +127,9 @@ class StateCollection(object):
         """
 
         self.__storedTemporarily = []
-        """List to contain sets of enabled states which were enabled temporarily"""
+        """List to contain sets of enabled states which were enabled
+        temporarily.
+        """
 
     def __str__(self):
         num = len(self.__items)
@@ -135,9 +138,9 @@ class StateCollection(object):
             index = self.__items.keys()[i]
             res += " %s" % index
             if self.isEnabled(index):
-                res += '+'              # it is enabled but no value is assigned yet
+                res += '+'          # it is enabled but no value is assigned yet
             if self.isSet(index):
-                res += '*'              # so we have the value already
+                res += '*'          # so we have the value already
 
         if len(self.__items) > 4:
             res += "..."
@@ -251,7 +254,8 @@ class StateCollection(object):
 
     def enable(self, index, value=True, missingok=False):
         """Enable  state variable given in `index`"""
-        self._action(index, StateVariable.enable, missingok=missingok, value=value)
+        self._action(index, StateVariable.enable, missingok=missingok,
+                     value=value)
 
     def disable(self, index):
         """Disable state variable defined by `index` id"""
@@ -291,7 +295,8 @@ class StateCollection(object):
                           (self))
                 enable_states += add_enable_states
 
-        # Lets go one by one enabling only disabled once... but could be as simple as
+        # Lets go one by one enabling only disabled once... but could be as
+        # simple as
         self.enable(enable_states)
         self.disable(disable_states)
 
@@ -303,7 +308,8 @@ class StateCollection(object):
         if len(self.enabled)>0:
             self.enabled = self.__storedTemporarily.pop()
         else:
-            raise ValueError("Trying to restore not-stored list of enabled states")
+            raise ValueError("Trying to restore not-stored list of enabled " \
+                             "states")
 
 
     def _getListing(self):
@@ -370,8 +376,9 @@ class statecollector(type):
     def __init__(cls, name, bases, dict):
 
         if __debug__:
-            debug("STCOL", "Collector call for %s.%s, where bases=%s, dict=%s " %
-                  (cls, name, bases, dict))
+            debug("STCOL",
+                  "Collector call for %s.%s, where bases=%s, dict=%s " \
+                  % (cls, name, bases, dict))
 
         super(statecollector, cls).__init__(name, bases, dict)
 
@@ -402,7 +409,8 @@ class statecollector(type):
             debug("STCOL",
                   "Creating StateCollection template %s" % cls)
 
-        statecollection = StateCollection(items, cls) # and give it ownwership of class
+        # and give it ownwership of class
+        statecollection = StateCollection(items, cls)
         setattr(cls, "_states_template", statecollection)
 
 
@@ -425,18 +433,22 @@ class Statefull(object):
                  disable_states=[]):
 
         object.__setattr__(self, '_states',
-                           copy.deepcopy(object.__getattribute__(self, '_states_template')))
+                           copy.deepcopy( \
+                            object.__getattribute__(self,
+                                                    '_states_template')))
 
         self._states.owner = self
         self._states.enable(enable_states, missingok=True)
         self._states.disable(disable_states)
         # bad to have str(self) here since it is a base class and
-        # some attributes most probably are not yet set in the original child's __str__
+        # some attributes most probably are not yet set in the original
+        # child's __str__
         #if __debug__:
         #    debug("ST", "Statefull.__init__ done for %s" % self)
 
         if __debug__:
-            debug("ST", "Statefull.__init__ was done for %s id %s" % (self.__class__, id(self)))
+            debug("ST", "Statefull.__init__ was done for %s id %s" \
+                % (self.__class__, id(self)))
 
 
     def __getattribute__(self, index):

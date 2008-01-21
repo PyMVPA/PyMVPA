@@ -587,7 +587,7 @@ class Dataset(object):
                       " to samples of dataset `%s`" % `self`)
             new_data['samples'] = featuresmapper.forward(self._data['samples'])
 
-        # create a new object of the same type it is now and NOT onyl Dataset
+        # create a new object of the same type it is now and NOT only Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept

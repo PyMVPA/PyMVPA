@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as N
+from scipy.linalg import lstsq
 
 from mvpa.clfs.classifier import Classifier
 
@@ -31,10 +32,14 @@ class RidgeReg(Classifier):
           lm : float
             the penalty term lambda.  
             (Defaults to .05*nFeatures)
-            
+
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
+
+        # It does not make sense to calculate a confusion matrix for a
+        # ridge regression
+        self.states.enable('training_confusion', False)
 
         # verify that they specified lambda
         self.__lm = lm
@@ -44,10 +49,10 @@ class RidgeReg(Classifier):
         """String summary over the object
         """
         if self.__lm is None:
-            return """Ridge(lm=None, enabled_states=%s)""" %\
+            return """Ridge(lm=None, enabled_states=%s)""" % \
                 (str(self.states.enabled))
         else:
-            return """Ridge(lm=%f, enabled_states=%s)""" %\
+            return """Ridge(lm=%f, enabled_states=%s)""" % \
                 (self.__lm, str(self.states.enabled))
 
 
@@ -56,28 +61,32 @@ class RidgeReg(Classifier):
         """
 
         # create matrices to solve with additional penalty term
+        # determine the lambda matrix
         if self.__lm is None:
             # Not specified, so calculate based on .05*nfeatures
             Lambda = .05*data.nfeatures*N.eye(data.nfeatures)
         else:
             # use the provided penalty
             Lambda = self.__lm*N.eye(data.nfeatures)
-        a = N.concatenate((data.samples,Lambda))
-        b = N.concatenate((data.labels,N.zeros(data.nfeatures)))
 
-        # perform the least sq regression
-        res = N.linalg.lstsq(a,b)
+        # add the penalty term
+        a = N.concatenate( \
+            (N.concatenate((data.samples, N.ones((data.nsamples, 1))), 1),
+                N.concatenate((Lambda, N.zeros((data.nfeatures, 1))), 1)))
+        b = N.concatenate((data.labels, N.zeros(data.nfeatures)))
 
-        # save the weights
-        self.w = res[0]
+        # perform the least sq regression and save the weights
+        self.w = lstsq(a, b)[0]
+
 
     def _predict(self, data):
         """
         Predict the output for the provided data.
         """
         # predict using the trained weights
-        predictions = N.dot(data,self.w)
-        
+        predictions = N.dot(N.concatenate((data, N.ones((len(data), 1))), 1),
+                            self.w)
+
         # save the state if desired, relying on State._setitem_ to
         # decide if we will actually save the values
         self.predictions = predictions
