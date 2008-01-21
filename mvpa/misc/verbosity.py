@@ -184,11 +184,13 @@ class SetLogger(Logger):
     Logger which prints based on defined sets identified by Id.
     """
 
-    def __init__(self, register={}, active=[], printsetid=True, *args, **kwargs):
+    def __init__(self, register={}, active=[], printsetid=True,
+                 *args, **kwargs):
         Logger.__init__(self, *args, **kwargs)
         self.__printsetid = printsetid
         self.__registered = register    # all "registered" sets descriptions
-        self._setActive(active)         # which to output... pointless since __registered
+        # which to output... pointless since __registered
+        self._setActive(active)
         self._setPrintsetid(printsetid)
 
 
@@ -288,7 +290,8 @@ if __debug__:
 
 
     class RelativeTime(object):
-        """Simple helper class to provide relative  time it took from previous invocation"""
+        """Simple helper class to provide relative time it took from previous
+        invocation"""
 
         def __init__(self, format="%3.3f sec"):
             self.__prev = None

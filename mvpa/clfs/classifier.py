@@ -570,6 +570,7 @@ class ClassifierCombiner(Combiner):
         if len(clfs)==0:
             return []                   # to don't even bother
 
+        # XXX What is it, Exception or Return?
         raise NotImplementedError
         self.predictions = predictions
         return predictions

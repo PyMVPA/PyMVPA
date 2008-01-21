@@ -25,4 +25,5 @@ __docformat__ = 'restructuredtext'
 
 #from classifier import *
 #from knn import kNN
-#from svm import SVMBase, LinearSVM, LinearNuSVMC, LinearCSVMC, RbfNuSVMC, RbfCSVMC
+#from svm import SVMBase, LinearSVM, LinearNuSVMC, LinearCSVMC, RbfNuSVMC, \
+#                RbfCSVMC
