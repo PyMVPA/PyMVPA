@@ -244,7 +244,7 @@ class ClassifiersTests(unittest.TestCase):
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
             Dataset(samples=N.array([ [0, 0, 1.0],
-                                      [1, 0, 0] ]), labels=[-1, 1]),
+                                        [1, 0, 0] ]), labels=[-1, 1]),
             Dataset(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
 
@@ -258,6 +258,15 @@ class ClassifiersTests(unittest.TestCase):
                 self.failUnlessEqual(clf.training_confusion.percentCorrect, 100.0,
                     "Classifier %s must have 100%% correct learning on %s" %
                     (`clf`, traindata.samples))
+
+                # and we must be able to predict every original sample thus
+                for i in xrange(traindata.nsamples):
+                    sample = traindata.samples[i,:]
+                    predicted = clf.predict([sample])
+                    self.failUnlessEqual([predicted], traindata.labels[i],
+                        "We must be able to predict sample %s using " % sample +
+                        "classifier %s" % `clf`)
+
 
 def suite():
     return unittest.makeSuite(ClassifiersTests)
