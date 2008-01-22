@@ -33,10 +33,30 @@ known_kernels = { "linear": shogun.Kernel.LinearKernel,
 known_svm_impl = { "libsvm" :   shogun.Classifier.LibSVM,
                     "lightsvm" : shogun.Classifier.SVMLight }
 
+def _setdebug(obj, partname):
+    """Helper to set level of debugging output for SG
+    :Parameters:
+      obj
+        In SG debug output seems to be set per every object
+      partname : basestring
+        For what kind of object we are talking about... could be automated
+        later on (TODO)
+    """
+    debugname = "SG_%s" % partname.upper()
+    if __debug__ and debugname  in debug.active:
+        debug(debugname, "Setting verbosity for shogun.%s to M_INFO" %
+              partname)
+        obj.io.set_loglevel(shogun.Kernel.M_INFO)
+    else:
+        obj.io.set_loglevel(shogun.Kernel.M_ERROR)
+
 
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format"""
-    return shogun.Features.RealFeatures(data.T)
+
+    features = shogun.Features.RealFeatures(data.T)
+    _setdebug(features, 'Features')
+    return features
 
 
 class SVM_SG_Modular(Classifier):
@@ -121,6 +141,9 @@ class SVM_SG_Modular(Classifier):
     def _train(self, dataset):
         """Train SVM
         """
+
+        # although there are some multiclass SVMs already in shogun,
+        # for now just rely on our own :-P
         self.__mclf = None
         if len(dataset.uniquelabels) > 2:
             warning("XXX Using built-in MultiClass classifier for now")
@@ -134,16 +157,19 @@ class SVM_SG_Modular(Classifier):
 
         # create labels
         labels = shogun.Features.Labels(dataset.labels.astype('float'))
+        _setdebug(labels, 'Labels')
 
         # create kernel
+        # TODO: decide on how to handle kernel parameters more or less
+        # appropriately
         #if len(self.__kernel_params)==1:
         self.__kernel = self.__kernel_type(self.__traindata, self.__traindata,
                                            self.__kernel_params[0])
+        _setdebug(self.__kernel, 'Kernels')
 
         # create SVM
-        #import pydb
-        #pydb.debugger()
         self.__svm = self.__svm_impl(self.params['C'].val, self.__kernel, labels)
+        _setdebug(self.__svm, 'SVM')
 
         # train
         self.__svm.train()
@@ -167,9 +193,17 @@ class SVM_SG_Modular(Classifier):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
-        super(SVMBase, self).untrain()
-        del self.__model
-        self.__model = None
+        super(SVM_SG_Modular, self).untrain()
+
+        # XXX make it nice... now it is just stable ;-)
+        if not self.__mclf is None:
+            self.__mclf = None
+        else:
+            del self.__traindata
+            del self.__kernel
+            self.__traindata = None
+            self.__kernel = None
+
 
     model = property(fget=lambda self: self.__model)
     """Access to the SVM model."""
@@ -210,3 +244,11 @@ class RbfNuSVMC(RbfCSVMC):
     """
     pass
 
+#import shogun.Library
+#if __debug__ and "SG_"  in debug.active:
+#    debug(debugname, "Setting verbosity for base shogun to M_DEBUG")
+#    level = shogun.Kernel.M_DEBUG
+#else:
+#    level = shogun.Kernel.M_EMERGENCY
+#io = shogun.Library.IO()
+#io.set_loglevel(shogun.Kernel.M_EMERGENCY)
