@@ -112,9 +112,17 @@ class ClassifiersTests(unittest.TestCase):
         bclf1 = BinaryClassifier(clf=clf,
                                  poslabels=['sp', 'sn'],
                                  neglabels=['dp', 'dn'])
+
+        orig_labels = ds.labels[:]
+        bclf1.train(ds)
+
         self.failUnless(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
                          ['dn', 'dp'], ['dn', 'dp']])
+
+        self.failUnless((ds.labels == orig_labels).all(),
+                        msg="BinaryClassifier should not alter labels")
+
 
         # check by selecting just 
         #self. fail
