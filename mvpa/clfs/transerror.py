@@ -17,7 +17,6 @@ import numpy as N
 from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
-from sets import Set
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
@@ -103,7 +102,7 @@ class ConfusionMatrix(object):
         # need to handle it... for now just keep original labels
         try:
             # figure out what labels we have
-            labels = list(reduce(lambda x,y: x.union(Set(y[0]).union(Set(y[1]))),
+            labels = list(reduce(lambda x, y: x.union(Set(y[0]).union(Set(y[1]))),
                                  self.__sets,
                                  Set(self.__labels)))
         except:
@@ -322,7 +321,8 @@ class ClassifierError(Statefull):
             if self.__train:
                 if self.__clf.isTrained(trainingdata):
                     warning('It seems that classifier %s was already trained' %
-                            self.__clf + ' on dataset %s. Please inspect' % trainingdata)
+                            self.__clf + ' on dataset %s. Please inspect' \
+                                % trainingdata)
                 self.__clf.train(trainingdata)
         ### Here checking for if it was trained... might be a cause of trouble
         # XXX disabled since it is unreliable.. just rely on explicit
@@ -359,10 +359,12 @@ class ClassifierError(Statefull):
         return error
 
     @property
-    def clf(self): return self.__clf
+    def clf(self):
+        return self.__clf
 
     @property
-    def labels(self): return self.__labels
+    def labels(self):
+        return self.__labels
 
 
 
@@ -370,7 +372,7 @@ class TransferError(ClassifierError):
     """Compute the transfer error of a (trained) classifier on a dataset.
 
     The actual error value is computed using a customizable error function.
-    Optionally the classifier can be training by passing an additional
+    Optionally the classifier can be trained by passing an additional
     training dataset to the __call__() method.
     """
     def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
@@ -445,7 +447,7 @@ class ConfusionBasedError(ClassifierError):
     TODO: Derive it from some common class with `TransferError`
     """
 
-    def __init__(self, clf, labels=None, confusion_state="trained_confusion",
+    def __init__(self, clf, labels=None, confusion_state="training_confusion",
                  **kwargs):
         """Initialization.
 

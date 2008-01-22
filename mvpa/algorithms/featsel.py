@@ -122,18 +122,114 @@ class StoppingCriterion(object):
     """
 
     def __call__(self, errors):
-        # XXX Michael thinks that this method should also get the history
-        # of the number of features, e.g. I'd like to have: If error is equal
-        # but nfeatures is smaller -> isthebest == True
-        """Instruct when to stop
+        """Instruct when to stop.
 
-        Returns tuple (`stop`, `isthebest`)
+        Every implementation should return `False` when an empty list is
+        passed as argument.
+
+        Returns tuple `stop`.
         """
         raise NotImplementedError
 
 
 
-class StopNBackHistoryCriterion(StoppingCriterion):
+class MultiStopCrit(StoppingCriterion):
+    """Stop computation if the latest error drops below a certain threshold.
+    """
+    def __init__(self, crits, mode='or'):
+        """
+        :Parameters:
+            crits : list of StoppingCriterion instances
+                For each call to MultiStopCrit all of these criterions will
+                be evaluated.
+            mode : any of ('and', 'or')
+                Logical function to determine the multi criterion from the set
+                of base criteria.
+        """
+        if not mode in ('and', 'or'):
+            raise ValueError, \
+                  "A mode '%s' is not supported." % `mode`
+
+        self.__mode = mode
+        self.__crits = crits
+
+
+    def __call__(self, errors):
+        """Evaluate all criteria to determine the value of the multi criterion.
+        """
+        # evaluate all crits
+        crits = [ c(errors) for c in self.__crits ]
+
+        if self.__mode == 'and':
+            return N.all(crits)
+        else:
+            return N.any(crits)
+
+
+
+class FixedErrorThresholdStopCrit(StoppingCriterion):
+    """Stop computation if the latest error drops below a certain threshold.
+    """
+    def __init__(self, threshold):
+        """Initialize with threshold.
+
+        :Parameters:
+            threshold : float [0,1]
+                Error threshold.
+        """
+        StoppingCriterion.__init__(self)
+        if threshold > 1.0 or threshold < 0.0:
+            raise ValueError, \
+                  "Threshold %f is out of a reasonable range [0,1]." \
+                    % `threshold`
+        self.__threshold = threshold
+
+
+    def __call__(self, errors):
+        """Nothing special."""
+        if len(errors)==0:
+            return False
+        if errors[-1] < self.__threshold:
+            return True
+        else:
+            return False
+
+
+    threshold = property(fget=lambda x:x.__threshold)
+
+
+
+class NStepsStopCrit(StoppingCriterion):
+    """Stop computation after a certain number of steps.
+    """
+    def __init__(self, steps):
+        """Initialize with number of steps.
+
+        :Parameters:
+            steps : int
+                Number of steps after which to stop.
+        """
+        StoppingCriterion.__init__(self)
+        if steps < 0:
+            raise ValueError, \
+                  "Number of steps %i is out of a reasonable range." \
+                    % `steps`
+        self.__steps = steps
+
+
+    def __call__(self, errors):
+        """Nothing special."""
+        if len(errors) >= self.__steps:
+            return True
+        else:
+            return False
+
+
+    steps = property(fget=lambda x:x.__steps)
+
+
+
+class NBackHistoryStopCrit(StoppingCriterion):
     """Stop computation if for a number of steps error was increasing
     """
 

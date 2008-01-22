@@ -20,9 +20,10 @@ class NiftiDataset(MaskedDataset):
     """Dataset based on NiftiImage provided by pynifti.
 
     See http://niftilib.sourceforge.net/pynifti/ for more information
-    about pynifti
+    about pynifti.
     """
-
+    # XXX: Every dataset should really have an example of howto instanciate
+    #      it (necessary parameters).
     def __init__(self, samples=None, mask=None, dsattr={}, **kwargs):
         """Initialize NiftiDataset.
 
@@ -46,7 +47,9 @@ class NiftiDataset(MaskedDataset):
                 try:
                     nifti = NiftiImage(samples)
                 except RuntimeError, e:
-                    verbose(0, "ERROR: NiftiDatasets: Cannot open samples file %s" % samples) # should we make also error?
+                    verbose(0,
+                        "ERROR: NiftiDatasets: Cannot open samples file %s" \
+                            % samples) # should we make also error?
                     raise e
             elif isinstance(samples, NiftiImage):
                 # nothing special
@@ -70,7 +73,9 @@ class NiftiDataset(MaskedDataset):
                 try:
                     mask = NiftiImage(mask).asarray()
                 except RuntimeError, e:
-                    verbose(0, "ERROR: NiftiDatasets: Cannot open mask file %s" % mask)
+                    verbose(0,
+                            "ERROR: NiftiDatasets: Cannot open mask file %s" \
+                                % mask)
                     raise e
 
             elif isinstance(mask, NiftiImage):

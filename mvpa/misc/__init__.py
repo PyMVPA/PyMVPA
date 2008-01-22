@@ -14,7 +14,7 @@ from sys import stdout, stderr
 
 from os import environ
 
-from verbosity import LevelLogger, OnceLogger
+from mvpa.misc.verbosity import LevelLogger, OnceLogger
 
 #
 # Setup verbose and debug outputs
@@ -33,9 +33,12 @@ class _SingletonType(type):
         return self._instances[sid]
 
 class __Singleton:
-    __metaclass__=_SingletonType
-    def __init__(self, *args): pass
-
+    __metaclass__ = _SingletonType
+    def __init__(self, *args):
+        pass
+    # Provided __call__ just to make silly pylint happy
+    def __call__(self):
+        raise NotImplementedError
 
 verbose = __Singleton("verbose", LevelLogger(handlers=[stdout]))
 errors = __Singleton("errors", LevelLogger(handlers=[stderr]))
@@ -85,7 +88,7 @@ warning = WarningLog(handlers=[stdout])
 
 
 if __debug__:
-    from verbosity import DebugLogger
+    from mvpa.misc.verbosity import DebugLogger
     # NOTE: all calls to debug must be preconditioned with
     # if __debug__:
     debug = __Singleton("debug", DebugLogger(handlers=[stderr]))
@@ -108,7 +111,8 @@ if __debug__:
     debug.register('STCOL', "State Collector")
 
     debug.register('CLF',    "Base Classifiers")
-    debug.register('CLF_TB', "Report traceback in train/predict. Helps to resolve WTF calls it")
+    debug.register('CLF_TB',
+        "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")

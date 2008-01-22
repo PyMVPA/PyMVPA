@@ -48,6 +48,18 @@ module docstring
    has to be present in each file.
 header
    Each file should contain a header from `doc/misc/header.py <misc/header.py>`__.
+notes
+   Use following keywords will be caught by pylint to provide a
+   summary of what yet to be done in the given file
+
+   FIXME
+     something which needs fixing (sooner than later)
+   TODO
+     future plan (ie later than sooner)
+   XXX
+     some concern/question
+   YYY
+     comment/answer to above mentioned XXX concern
 
 
 Coding Conventions
@@ -100,6 +112,7 @@ Commits
 * *NF* : new feature
 * *OPT* : optimization
 * *BK* : breaks something and/or tests fail
+* *PL* : making pylint happier
 
 .. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 .. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html

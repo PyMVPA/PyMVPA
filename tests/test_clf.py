@@ -22,7 +22,9 @@ from mvpa.misc.exceptions import UnknownStateError
 from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
-from mvpa.clfs.svm import LinearNuSVMC
+
+from mvpa.clfs.svm import LinearNuSVMC, LinearCSVMC, RbfNuSVMC
+from mvpa.clfs.knn import kNN
 
 from tests_warehouse import *
 
@@ -76,7 +78,7 @@ class ClassifiersTests(unittest.TestCase):
                               "predictions")
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
-        self.failUnlessEqual(clf.trained_confusion.percentCorrect,
+        self.failUnlessEqual(clf.training_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
@@ -123,10 +125,10 @@ class ClassifiersTests(unittest.TestCase):
         clf = SplitClassifier(clf=SameSignClassifier(),
                               splitter=NFoldSplitter(1))
         clf.train(ds)                   # train the beast
-        self.failUnlessEqual(clf.trained_confusions.percentCorrect,
+        self.failUnlessEqual(clf.training_confusions.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.trained_confusions.sets),
+        self.failUnlessEqual(len(clf.training_confusions.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -208,8 +210,8 @@ class ClassifiersTests(unittest.TestCase):
         svm2.train(dstrain)
 
         clf.train(dstrain)
-        self.failUnlessEqual(str(clf.trained_confusion),
-                             str(svm2.trained_confusion),
+        self.failUnlessEqual(str(clf.training_confusion),
+                             str(svm2.training_confusion),
             msg="Multiclass clf should provide same results as built-in libsvm's")
 
         self.failUnless(not svm2.model is None,
@@ -230,6 +232,40 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(not clf.trained, msg="UnTrained Boosted classifier should not be trained")
         self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
+
+    def testCorrectDimensionsOrder(self):
+        """To check if known/present Classifiers are working properly
+        with samples being first dimension. Started to worry about
+        possible problems while looking at sg where samples are 2nd
+        dimension
+        """
+        # specially crafted dataset -- if dimensions are flipped over
+        # the same storage, problem becomes unseparable. Like in this case
+        # incorrect order of dimensions lead to equal samples [0, 1, 0]
+        traindatas = [
+            Dataset(samples=N.array([ [0, 0, 1.0],
+                                        [1, 0, 0] ]), labels=[-1, 1]),
+            Dataset(samples=N.array([ [0, 0.0],
+                                      [1, 1] ]), labels=[-1, 1])]
+
+        known_clfs = [LinearNuSVMC(), LinearCSVMC(),  RbfNuSVMC(),
+                      kNN(k=1)]
+
+        for clf in known_clfs:
+            clf.states.enable('training_confusion')
+            for traindata in traindatas:
+                clf.train(traindata)
+                self.failUnlessEqual(clf.training_confusion.percentCorrect, 100.0,
+                    "Classifier %s must have 100%% correct learning on %s" %
+                    (`clf`, traindata.samples))
+
+                # and we must be able to predict every original sample thus
+                for i in xrange(traindata.nsamples):
+                    sample = traindata.samples[i,:]
+                    predicted = clf.predict([sample])
+                    self.failUnlessEqual([predicted], traindata.labels[i],
+                        "We must be able to predict sample %s using " % sample +
+                        "classifier %s" % `clf`)
 
 
 def suite():

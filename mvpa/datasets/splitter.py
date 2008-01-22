@@ -263,6 +263,8 @@ class OddEvenSplitter(Splitter):
 
 class NFoldSplitter(Splitter):
     """Generic N-fold data splitter.
+
+    XXX: This docstring is a shame for such an important class!
     """
     def __init__(self,
                  cvtype = 1,
