@@ -58,6 +58,13 @@ class SplitterTests(unittest.TestCase):
         self.failUnless((splits[1][0].uniquechunks == [1, 3, 5, 7, 9]).all())
         self.failUnless((splits[1][1].uniquechunks == [0, 2, 4, 6, 8]).all())
 
+        # check if it works on pure odd and even chunk ids
+        moresplits = [ (train, test) for (train, test) in oes(splits[0][0])]
+
+        for split in moresplits:
+            self.failUnless(split[0] != None)
+            self.failUnless(split[1] != None)
+
 
     def testNoneSplitter(self):
         nos = NoneSplitter()
