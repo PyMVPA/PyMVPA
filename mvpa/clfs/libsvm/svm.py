@@ -396,13 +396,47 @@ class SVMModel:
         array( nSV x <nFeatures>)
         """
         return svmc.svm_node_matrix2numpy_array(
-                    svmc.svm_model_SV_get( self.model),
+                    svmc.svm_model_SV_get(self.model),
                     self.getTotalNSV(),
-                    self.prob.maxlen )
+                    self.prob.maxlen)
 
 
     def getSVCoef(self):
+        """Return coefficients for SVs... Needs to be used directly with caution!
+
+        Summary on what is happening in libsvm internals with sv_coef
+
+        svm_model's sv_coef (especially) are "cleverly" packed into a matrix
+        nr_class - 1 x #SVs_total which stores
+        coefficients for
+        nr_class x (nr_class-1) / 2
+        binary classifiers' SV coefficients.
+
+        For classifier i-vs-j
+        General packing rule can be described as:
+
+          i-th row contains sv_coefficients for SVs of class i it took
+          in all i-vs-j or j-vs-i classifiers.
+
+        Another useful excerpt from svm.cpp is
+
+                // classifier (i,j): coefficients with
+                // i are in sv_coef[j-1][nz_start[i]...],
+                // j are in sv_coef[i][nz_start[j]...]
+
+        It can also be described as j-th column lists coefficients for SV # j which
+        belongs to some class C, which it took (if it was an SV, ie != 0)
+        in classifiers i vs C (iff i<C), or C vs i+1 (iff i>C)
+
+        This way no byte of storage is wasted but imho such setup is quite convolved
+        """
         return svmc.doubleppcarray2numpy_array(
-                    svmc.svm_model_sv_coef_get( self.model ),
+                    svmc.svm_model_sv_coef_get(self.model),
                     self.nr_class - 1,
-                    self.getTotalNSV() )
+                    self.getTotalNSV())
+
+
+    def getRho(self):
+        """Return constant(s) in decision function(s) (if multi-class)"""
+        return doubleArray2List(svmc.svm_model_rho_get(self.model),
+                                self.nr_class * (self.nr_class-1)/2)

@@ -31,6 +31,7 @@ tests = [
     'test_knn',
     'test_svm',
     'test_plf',
+    'test_ridge',
     # Various algorithms
     'test_transformers',
     'test_transerror',

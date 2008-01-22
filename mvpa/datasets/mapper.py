@@ -127,7 +127,8 @@ class MetricMapper(Mapper, Metric):
 
         if not isinstance(metric, Metric):
             raise ValueError, "MetricMapper has to be initialized with an " \
-                              "instance of a 'Metric' object. Got %s" % `type(metric)`
+                              "instance of a 'Metric' object. Got %s" \
+                                % `type(metric)`
         self.__metric = metric
 
 
