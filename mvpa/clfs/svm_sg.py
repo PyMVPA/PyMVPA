@@ -18,6 +18,7 @@ import numpy as N
 import shogun.Features
 import shogun.Classifier
 import shogun.Kernel
+import shogun.Library
 
 
 from mvpa.misc.param import Parameter
@@ -33,6 +34,19 @@ known_kernels = { "linear": shogun.Kernel.LinearKernel,
 
 known_svm_impl = { "libsvm" :   shogun.Classifier.LibSVM,
                     "lightsvm" : shogun.Classifier.SVMLight }
+
+
+class __devnullclass(object):
+    """Just a little helper to redirect all SG output if necessary to dev/null"""
+
+    def __init__(self):
+        import types
+        self.f = shogun.Library.File('/dev/null', 'w', types.IntType)
+
+    def __del__(self):
+        self.f.close()
+
+__devnull = __devnullclass()
 
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG
@@ -50,12 +64,13 @@ def _setdebug(obj, partname):
         obj.io.set_loglevel(shogun.Kernel.M_INFO)
     else:
         obj.io.set_loglevel(shogun.Kernel.M_EMERGENCY)
+        obj.io.set_target(__devnull.f)
 
 
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format"""
 
-    features = shogun.Features.RealFeatures(data.T)
+    features = shogun.Features.RealFeatures(data.astype('double').T)
     _setdebug(features, 'Features')
     return features
 
