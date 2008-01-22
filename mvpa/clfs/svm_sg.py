@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+
 # Rely on SG
 # TODO: XXX dual-license under GPL for use of SG?
 import shogun.Features
@@ -48,7 +49,7 @@ def _setdebug(obj, partname):
               partname)
         obj.io.set_loglevel(shogun.Kernel.M_INFO)
     else:
-        obj.io.set_loglevel(shogun.Kernel.M_ERROR)
+        obj.io.set_loglevel(shogun.Kernel.M_EMERGENCY)
 
 
 def _tosg(data):
@@ -141,11 +142,13 @@ class SVM_SG_Modular(Classifier):
     def _train(self, dataset):
         """Train SVM
         """
-
         # although there are some multiclass SVMs already in shogun,
         # for now just rely on our own :-P
         self.__mclf = None
-        if len(dataset.uniquelabels) > 2:
+
+        ul = dataset.uniquelabels
+        ul.sort()
+        if len(ul) > 2 or (ul != [-1.0, 1.0]).any():
             warning("XXX Using built-in MultiClass classifier for now")
             mclf = MulticlassClassifier(self)
             mclf._train(dataset)
@@ -156,7 +159,14 @@ class SVM_SG_Modular(Classifier):
         self.__traindata = _tosg(dataset.samples)
 
         # create labels
-        labels = shogun.Features.Labels(dataset.labels.astype('float'))
+        #
+        ## We need to convert to -1,+1 labels
+        #ul = dataset.uniquelabels
+        #dict_ = {ul[0]:-1.0,
+        #         ul[1]:+1.0}
+        #labels_ = N.array([ dict_[x] for x in dataset.labels ], dtype='double')
+        #
+        labels = shogun.Features.Labels(dataset.labels.astype('double'))
         _setdebug(labels, 'Labels')
 
         # create kernel
@@ -172,6 +182,10 @@ class SVM_SG_Modular(Classifier):
         _setdebug(self.__svm, 'SVM')
 
         # train
+        if __debug__:
+            debug("SG", "Training SG_SVM %s on data with labels %s" %
+                  (self.__kernel_type, dataset.uniquelabels))
+
         self.__svm.train()
 
 
@@ -186,7 +200,7 @@ class SVM_SG_Modular(Classifier):
         values = self.__svm.classify().get_labels()
 
         self.values = values
-        predictions = 2*N.signbit(values)-1
+        predictions = 1.0-2*N.signbit(values)
         return predictions
 
 
@@ -219,10 +233,10 @@ class LinearSVM(SVM_SG_Modular):
         SVM_SG_Modular.__init__(self, kernel_type='Linear', **kwargs)
 
 
-class LinearCSVM(LinearSVM):
+class LinearCSVMC(LinearSVM):
     pass
 
-class LinearNuSVMC(LinearCSVM):
+class LinearNuSVMC(LinearCSVMC):
     """Classifier for linear Nu-SVM classification. XXX is gone ... not within SG
     Placeholder just to figure out this all works
     """
