@@ -707,21 +707,44 @@ class BinaryClassifier(ProxyClassifier):
         #     doesn't take care about order
         idlabels.sort()
         # select the samples
-        datasetselected = dataset.selectSamples([ x[0] for x in idlabels ])
-        if __debug__:
-            debug('CLFBIN',
-                  "Selected %d samples out of %d samples for binary " %
-                  (len(idlabels), dataset.nsamples) +
-                  " classification among labels %s/+1 and %s/-1" %
-                  (self.__poslabels, self.__neglabels) +
-                  ". Selected %s" % datasetselected)
+        orig_labels = None
+
+        # If we need all samples, why simply not perform on original
+        # data, an just store/restore labels. But it really should be done
+        # within Dataset.selectSamples
+        if len(idlabels) == dataset.nsamples \
+            and [x[0] for x in idlabels] == range(dataset.nsamples):
+            # the last condition is not even necessary... just overly
+            # cautious
+            datasetselected = dataset   # no selection is needed
+            orig_labels = dataset.labels # but we would need to restore labels
+            if __debug__:
+                debug('CLFBIN',
+                      "Assigned all %d samples for binary " %
+                      (dataset.nsamples) +
+                      " classification among labels %s/+1 and %s/-1" %
+                      (self.__poslabels, self.__neglabels))
+        else:
+            datasetselected = dataset.selectSamples([ x[0] for x in idlabels ])
+            if __debug__:
+                debug('CLFBIN',
+                      "Selected %d samples out of %d samples for binary " %
+                      (len(idlabels), dataset.nsamples) +
+                      " classification among labels %s/+1 and %s/-1" %
+                      (self.__poslabels, self.__neglabels) +
+                      ". Selected %s" % datasetselected)
+
         # adjust the labels
         datasetselected.labels = [ x[1] for x in idlabels ]
+
         # now we got a dataset with only 2 labels
         if __debug__:
             assert((datasetselected.uniquelabels == [-1, 1]).all())
+
         self.clf.train(datasetselected)
 
+        if not orig_labels is None:
+            dataset.labels = orig_labels
 
     def _predict(self, data):
         """Predict the labels for a given `data`
