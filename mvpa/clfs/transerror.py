@@ -99,10 +99,16 @@ class ConfusionMatrix(object):
             if not self.__matrix is None:
                 debug("LAZY", "Have to recompute ConfusionMatrix %s" % `self`)
 
-        # figure out what labels we have
-        labels = list(reduce(lambda x,y: x.union(Set(y[0]).union(Set(y[1]))),
-                             self.__sets,
-                             Set(self.__labels)))
+        # TODO: BinaryClassifier might spit out a list of predictions for each value
+        # need to handle it... for now just keep original labels
+        try:
+            # figure out what labels we have
+            labels = list(reduce(lambda x,y: x.union(Set(y[0]).union(Set(y[1]))),
+                                 self.__sets,
+                                 Set(self.__labels)))
+        except:
+            labels = self.__labels
+
         labels.sort()
         self.__labels = labels          # store the recomputed labels
 
