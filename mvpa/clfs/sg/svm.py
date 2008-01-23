@@ -104,8 +104,8 @@ class SVM_SG_Modular(Classifier):
         # init base class
         Classifier.__init__(self, **kwargs)
 
-        self.__model = None
-        """Holds the trained SVM."""
+        self.__svm = None
+        """Holds the trained svm."""
 
         # assign default params
         self.params = {}
@@ -158,6 +158,9 @@ class SVM_SG_Modular(Classifier):
             return
 
         # create training data
+        if __debug__:
+            debug("SG_", "Converting input data for shogun")
+
         self.__traindata = _tosg(dataset.samples)
 
         # create labels
@@ -168,6 +171,9 @@ class SVM_SG_Modular(Classifier):
         #         ul[1]:+1.0}
         #labels_ = N.array([ dict_[x] for x in dataset.labels ], dtype='double')
         #
+        if __debug__:
+            debug("SG_",
+                  "Creating labels instance")
         labels = shogun.Features.Labels(dataset.labels.astype('double'))
         _setdebug(labels, 'Labels')
 
@@ -175,11 +181,18 @@ class SVM_SG_Modular(Classifier):
         # TODO: decide on how to handle kernel parameters more or less
         # appropriately
         #if len(self.__kernel_params)==1:
+        if __debug__:
+            debug("SG_",
+                  "Creating kernel instance of %s" % `self.__kernel_type`)
+
         self.__kernel = self.__kernel_type(self.__traindata, self.__traindata,
                                            self.__kernel_params[0])
         _setdebug(self.__kernel, 'Kernels')
 
         # create SVM
+        if __debug__:
+            debug("SG_", "Creating SVM instance of %s" % `self.__svm_impl`)
+
         self.__svm = self.__svm_impl(self.params['C'].val, self.__kernel, labels)
         _setdebug(self.__svm, 'SVM')
 
@@ -197,8 +210,11 @@ class SVM_SG_Modular(Classifier):
 
         if not self.__mclf is None:
             return self.__mclf._predict(data)
-
+        if __debug__:
+            debug("SG_", "Initializing kernel with training/testing data")
         self.__kernel.init(self.__traindata, _tosg(data))
+        if __debug__:
+            debug("SG_", "Classifing testing data")
         values = self.__svm.classify().get_labels()
 
         self.values = values
@@ -221,7 +237,7 @@ class SVM_SG_Modular(Classifier):
             self.__kernel = None
 
 
-    model = property(fget=lambda self: self.__model)
+    svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
 
 
@@ -238,12 +254,6 @@ class LinearSVM(SVM_SG_Modular):
 class LinearCSVMC(LinearSVM):
     pass
 
-class LinearNuSVMC(LinearCSVMC):
-    """Classifier for linear Nu-SVM classification. XXX is gone ... not within SG
-    Placeholder just to figure out this all works
-    """
-    pass
-
 
 class RbfCSVMC(SVM_SG_Modular):
     """C-SVM classifier using a radial basis function kernel.
@@ -254,17 +264,3 @@ class RbfCSVMC(SVM_SG_Modular):
         # init base class
         SVM_SG_Modular.__init__(self, kernel_type='RBF', **kwargs)
 
-
-class RbfNuSVMC(RbfCSVMC):
-    """Nu-SVM classifier using a radial basis function kernel. XXX gone
-    """
-    pass
-
-#import shogun.Library
-#if __debug__ and "SG_"  in debug.active:
-#    debug(debugname, "Setting verbosity for base shogun to M_DEBUG")
-#    level = shogun.Kernel.M_DEBUG
-#else:
-#    level = shogun.Kernel.M_EMERGENCY
-#io = shogun.Library.IO()
-#io.set_loglevel(shogun.Kernel.M_EMERGENCY)

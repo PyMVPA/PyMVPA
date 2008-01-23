@@ -91,6 +91,27 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
 
     def __sg(self, dataset, callables=[]):
         raise NotImplementedError
+        from IPython.Shell import IPShellEmbed
+        ipshell = IPShellEmbed()
+        ipshell()
+        #12: self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_bias()
+        #19: alphas=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_alphas()
+        #20: svs=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_support_vectors()
+
+        # TODO: since multiclass is done internally - we need to check
+        # here if self.clf.__mclf is not an instance of some out
+        # Classifier and apply corresponding combiner of
+        # sensitivities... think about it more... damn
+
+        # XXX Hm... it might make sense to unify access functions
+        # naming across our swig libsvm wrapper and sg access
+        # functions for svm
+
+        bias = self.clf.svm.get_bias()
+        alphas = self.clf.svm.get_alphas()
+        svs = self.clf.svm.get_support_vectors()
+
+
 
     def _call(self, dataset, callables=[]):
         """Extract weights from Linear SVM classifier.
