@@ -314,48 +314,48 @@ class ClassifierError(Statefull):
         return out
 
 
-    def _precall(self, testdata, trainingdata=None):
+    def _precall(self, testdataset, trainingdataset=None):
         """Generic part which trains the classifier if necessary
         """
-        if not trainingdata == None:
+        if not trainingdataset == None:
             if self.__train:
-                if self.__clf.isTrained(trainingdata):
+                if self.__clf.isTrained(trainingdataset):
                     warning('It seems that classifier %s was already trained' %
                             self.__clf + ' on dataset %s. Please inspect' \
-                                % trainingdata)
-                self.__clf.train(trainingdata)
+                                % trainingdataset)
+                self.__clf.train(trainingdataset)
         ### Here checking for if it was trained... might be a cause of trouble
         # XXX disabled since it is unreliable.. just rely on explicit
         # self.__train
-        #    if  not self.__clf.isTrained(trainingdata):
-        #        self.__clf.train(trainingdata)
+        #    if  not self.__clf.isTrained(trainingdataset):
+        #        self.__clf.train(trainingdataset)
         #    elif __debug__:
         #        debug('CERR',
         #              'Not training classifier %s since it was ' % `self.__clf`
-        #              + ' already trained on data %s' % `trainingdata`)
+        #              + ' already trained on dataset %s' % `trainingdataset`)
 
 
-    def _call(self, testdata, trainingdata=None):
+    def _call(self, testdataset, trainingdataset=None):
         raise NotImplementedError
 
 
-    def _postcall(self, testdata, trainingdata=None, error=None):
+    def _postcall(self, testdataset, trainingdataset=None, error=None):
         pass
 
 
-    def __call__(self, testdata, trainingdata=None):
+    def __call__(self, testdataset, trainingdataset=None):
         """Compute the transfer error for a certain test dataset.
 
-        If `trainingdata` is not `None` the classifier is trained using the
+        If `trainingdataset` is not `None` the classifier is trained using the
         provided dataset before computing the transfer error. Otherwise the
         classifier is used in it's current state to make the predictions on
         the test dataset.
 
         Returns a scalar value of the transfer error.
         """
-        self._precall(testdata, trainingdata)
-        error = self._call(testdata, trainingdata)
-        self._postcall(testdata, trainingdata, error)
+        self._precall(testdataset, trainingdataset)
+        error = self._call(testdataset, trainingdataset)
+        self._postcall(testdataset, trainingdataset, error)
         return error
 
     @property
@@ -402,10 +402,10 @@ class TransferError(ClassifierError):
         return out
 
 
-    def _call(self, testdata, trainingdata=None):
+    def _call(self, testdataset, trainingdataset=None):
         """Compute the transfer error for a certain test dataset.
 
-        If `trainingdata` is not `None` the classifier is trained using the
+        If `trainingdataset` is not `None` the classifier is trained using the
         provided dataset before computing the transfer error. Otherwise the
         classifier is used in it's current state to make the predictions on
         the test dataset.
@@ -413,20 +413,20 @@ class TransferError(ClassifierError):
         Returns a scalar value of the transfer error.
         """
 
-        predictions = self.clf.predict(testdata.samples)
+        predictions = self.clf.predict(testdataset.samples)
 
         # compute confusion matrix
         # TODO should migrate into ClassifierError.__postcall?
         if self.states.isEnabled('confusion'):
             self.confusion = ConfusionMatrix(
-                labels=self.labels, targets=testdata.labels,
+                labels=self.labels, targets=testdataset.labels,
                 predictions=predictions)
 
         # TODO
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions,
-                               testdata.labels)
+                               testdataset.labels)
 
         return error
 
