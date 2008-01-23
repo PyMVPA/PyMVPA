@@ -11,8 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.misc import warning
+
+# If we want simply to import all SVMs from libsvm
+# from libsvm.svm import *
+
 try:
-    from svm_sg import *
+    from sg.svm import *
 except:
     warning("Cannot import shogun libraries. Reverting back to LibSVM wrappers")
-    from svm_libsvm import *
+    from libsvm.svm import *
