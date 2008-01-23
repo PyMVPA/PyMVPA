@@ -243,7 +243,7 @@ class Dataset(object):
         """
         if len(value) != self.nsamples:
             raise ValueError, \
-                  "Provided %ss have %d entries while there is %d samples" % \
+                  "Provided %s have %d entries while there is %d samples" % \
                   (attrib, len(value), self.nsamples)
         self._data[attrib] = N.array(value)
         uniqueattr = "unique" + attrib
@@ -587,7 +587,7 @@ class Dataset(object):
                       " to samples of dataset `%s`" % `self`)
             new_data['samples'] = featuresmapper.forward(self._data['samples'])
 
-        # create a new object of the same type it is now and NOT onyl Dataset
+        # create a new object of the same type it is now and NOT only Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
@@ -617,7 +617,23 @@ class Dataset(object):
         # loose its 2d layout
         if not operator.isSequenceType( mask ):
             mask = [mask]
-
+        # TODO: Reconsider crafting a slice if it can be done to don't copy
+        #       the data
+        #try:
+        #    minmask = min(mask)
+        #    maxmask = max(mask)
+        #except:
+        #    minmask = min(map(int,mask))
+        #    maxmask = max(map(int,mask))
+        # lets see if we could get it done with cheap view/slice
+        #(minmask, maxmask) != (0, 1) and \
+        #if len(mask) > 2 and \
+        #       N.array([N.arange(minmask, maxmask+1) == N.array(mask)]).all():
+        #    slice_ = slice(minmask, maxmask+1)
+        #    if __debug__:
+        #        debug("DS", "We can and do convert mask %s into splice %s" %
+        #              (mask, slice_))
+        #    mask = slice_
         # mask all sample attributes
         data = {}
         for k, v in self._data.iteritems():

@@ -100,7 +100,10 @@ if __name__ == "__main__":
 
     if run:
         verbose(1, "Importing %s " % root)
-        exec "import %s as runnable" % root
+        try:
+            exec "import %s as runnable" % root
+        except SystemExit:
+            pass
 
         if not runnable.__dict__.has_key('main'):
             verbose(0, "OOPS: file/module %s has no function main defined" \

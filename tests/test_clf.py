@@ -22,7 +22,9 @@ from mvpa.misc.exceptions import UnknownStateError
 from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
-from mvpa.clfs.svm import LinearNuSVMC
+
+from mvpa.clfs.svm import LinearNuSVMC, LinearCSVMC, RbfNuSVMC
+from mvpa.clfs.knn import kNN
 
 from tests_warehouse import *
 
@@ -110,9 +112,17 @@ class ClassifiersTests(unittest.TestCase):
         bclf1 = BinaryClassifier(clf=clf,
                                  poslabels=['sp', 'sn'],
                                  neglabels=['dp', 'dn'])
+
+        orig_labels = ds.labels[:]
+        bclf1.train(ds)
+
         self.failUnless(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
                          ['dn', 'dp'], ['dn', 'dp']])
+
+        self.failUnless((ds.labels == orig_labels).all(),
+                        msg="BinaryClassifier should not alter labels")
+
 
         # check by selecting just 
         #self. fail
@@ -227,6 +237,40 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(not clf.trained, msg="UnTrained Boosted classifier should not be trained")
         self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
+
+    def testCorrectDimensionsOrder(self):
+        """To check if known/present Classifiers are working properly
+        with samples being first dimension. Started to worry about
+        possible problems while looking at sg where samples are 2nd
+        dimension
+        """
+        # specially crafted dataset -- if dimensions are flipped over
+        # the same storage, problem becomes unseparable. Like in this case
+        # incorrect order of dimensions lead to equal samples [0, 1, 0]
+        traindatas = [
+            Dataset(samples=N.array([ [0, 0, 1.0],
+                                        [1, 0, 0] ]), labels=[-1, 1]),
+            Dataset(samples=N.array([ [0, 0.0],
+                                      [1, 1] ]), labels=[-1, 1])]
+
+        known_clfs = [LinearNuSVMC(), LinearCSVMC(),  RbfNuSVMC(),
+                      kNN(k=1)]
+
+        for clf in known_clfs:
+            clf.states.enable('training_confusion')
+            for traindata in traindatas:
+                clf.train(traindata)
+                self.failUnlessEqual(clf.training_confusion.percentCorrect, 100.0,
+                    "Classifier %s must have 100%% correct learning on %s" %
+                    (`clf`, traindata.samples))
+
+                # and we must be able to predict every original sample thus
+                for i in xrange(traindata.nsamples):
+                    sample = traindata.samples[i,:]
+                    predicted = clf.predict([sample])
+                    self.failUnlessEqual([predicted], traindata.labels[i],
+                        "We must be able to predict sample %s using " % sample +
+                        "classifier %s" % `clf`)
 
 
 def suite():
