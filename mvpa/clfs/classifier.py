@@ -297,8 +297,8 @@ class BoostedClassifier(Classifier):
 
 
     def __repr__(self):
-        return "<%s with %d classifiers>" \
-               % (self.__class__, len(self.clfs))
+        return "<%s(%d classifiers)>" \
+               % (self.__class__.__name__, len(self.clfs))
 
 
     def _train(self, dataset):
@@ -343,7 +343,7 @@ class BoostedClassifier(Classifier):
         if __debug__:
             debug("CLFBST", "Setting train2predict=%s for classifiers " \
                    "%s with %s" \
-                   % (str(train2predict), self.__clfs, str(train2predicts)))
+                   % (str(train2predict), `self.__clfs`, str(train2predicts)))
         # set flag if it needs to be trained before predicting
         self._setTrain2predict(train2predict)
 
@@ -607,7 +607,7 @@ class CombinedClassifier(BoostedClassifier):
 
 
     def __repr__(self):
-        return "<%s with %d classifiers and combiner %s>" \
+        return "<%s(%d classifiers, combiner %s)>" \
                % (self.__class__.__name__, len(self.clfs), `self.__combiner`)
 
 
@@ -634,7 +634,7 @@ class CombinedClassifier(BoostedClassifier):
                 self.values = self.__combiner.values
             else:
                 if __debug__:
-                    warning("Boosted classifier %s has 'values' state" % self +
+                    warning("Boosted classifier %s has 'values' state" % `self` +
                             " enabled, but combiner has it active, thus no" +
                             " values could be provided directly, access .clfs")
         return predictions
@@ -870,7 +870,7 @@ class SplitClassifier(CombinedClassifier):
         for split in self.__splitter(dataset):
             if __debug__:
                 debug("CLFSPL",
-                      "Deepcopying %s for %s" % (`self.__clf`, self))
+                      "Deepcopying %s for %s" % (`self.__clf`, `self`))
             clf = deepcopy(self.__clf)
             bclfs.append(clf)
         self.clfs = bclfs
@@ -983,7 +983,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
                                                         self.__testdataset)
         if __debug__:
             debug("CLFFS", "{%s} selected %d out of %d features" %
-                  (self.__feature_selection, wdataset.nfeatures,
+                  (`self.__feature_selection`, wdataset.nfeatures,
                    dataset.nfeatures))
 
         # create a mask to devise a mapper
