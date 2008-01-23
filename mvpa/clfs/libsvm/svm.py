@@ -130,7 +130,7 @@ class SVMBase(Classifier):
         """Holds the trained SVM."""
 
 
-    def __repr__(self):
+    def __str__(self):
         """Definition of the object summary over the object
         """
         res = "SVMBase("
