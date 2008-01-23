@@ -108,6 +108,11 @@ class SVM_SG_Modular(Classifier):
         self.__svm = None
         """Holds the trained svm."""
 
+        # although there are some multiclass SVMs already in shogun,
+        # we might rely on our own
+        self.__mclf = None
+        """Holds `multiclassClassifier` if such one is needed"""
+
         # assign default params
         self.params = {}
         self.params.update(SVM_SG_Modular.params)
@@ -126,6 +131,9 @@ class SVM_SG_Modular(Classifier):
 
         self.__kernel_params = kernel_params
 
+        # internal SG swig proxies
+        self.__traindata = None
+        self.__kernel = None
 
     def __str__(self):
         """Definition of the object summary over the object
@@ -145,8 +153,6 @@ class SVM_SG_Modular(Classifier):
     def _train(self, dataset):
         """Train SVM
         """
-        # although there are some multiclass SVMs already in shogun,
-        # we might rely on our own
         self.__mclf = None
         svm_impl_class = None
 
@@ -276,11 +282,14 @@ class SVM_SG_Modular(Classifier):
         # XXX make it nice... now it is just stable ;-)
         if not self.__mclf is None:
             self.__mclf = None
-        else:
-            del self.__traindata
-            del self.__kernel
-            self.__traindata = None
-            self.__kernel = None
+        elif not self.__traindata is None:
+            try:
+                del self.__traindata
+                self.__traindata = None
+                del self.__kernel
+                self.__kernel = None
+            except:
+                pass
 
 
     svm = property(fget=lambda self: self.__svm)
