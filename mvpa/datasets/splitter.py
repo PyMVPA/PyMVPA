@@ -240,17 +240,32 @@ class OddEvenSplitter(Splitter):
 
     The splitter yields to splits: first (odd, even) and second (even, odd).
     """
-    def __init__(self, **kwargs):
-        """Cheap init -- nothing special
+    def __init__(self, usevalues=False, **kwargs):
+        """Cheap init.
+
+        :Parameters:
+            usevalues: Boolean
+                If True the values of the attribute used for splitting will be
+                used to determine odd and even samples. If False odd and even
+                chunks are defined by the order of attribute values, i.e. first
+                unique attribute is odd, second is even, despite the
+                corresponding values might indicate the opposite (e.g. in case
+                of [2,3].
         """
         Splitter.__init__(self, **(kwargs))
+
+        self.__usevalues = usevalues
 
 
     def _getSplitConfig(self, uniqueattrs):
         """Huka chaka!
         """
-        return [uniqueattrs[(uniqueattrs % 2) == True],
-                uniqueattrs[(uniqueattrs % 2) == False]]
+        if self.__usevalues:
+            return [uniqueattrs[(uniqueattrs % 2) == True],
+                    uniqueattrs[(uniqueattrs % 2) == False]]
+        else:
+            return [uniqueattrs[N.arange(len(uniqueattrs)) %2 == True],
+                    uniqueattrs[N.arange(len(uniqueattrs)) %2 == False]]
 
 
     def __str__(self):
