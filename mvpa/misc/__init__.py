@@ -125,7 +125,7 @@ if __debug__:
     debug.register('SVMLIB', "Internal libsvm verbose output")
 
     debug.register('SG',  "PyMVPA SG wrapping")
-    debug.register('SG_', "Internal shogun debug output -- base definition I guess")
+    debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")

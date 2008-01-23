@@ -17,6 +17,9 @@ from mvpa.misc import warning
 
 try:
     from sg.svm import *
+    # Nu-SVMs are not provided by SG thus reverting to libsvm-wrappers
+    #from libsvm.svm import LinearNuSVMC, RbfNuSVMC
+    LinearNuSVMC = LinearCSVMC
 except:
     warning("Cannot import shogun libraries. Reverting back to LibSVM wrappers")
     from libsvm.svm import *
