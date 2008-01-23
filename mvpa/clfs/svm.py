@@ -10,4 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
-from svm_sg import *
+from mvpa.misc import warning
+try:
+    from svm_sg import *
+except:
+    warning("Cannot import shogun libraries. Reverting back to LibSVM wrappers")
+    from svm_libsvm import *
