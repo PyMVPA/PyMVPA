@@ -17,10 +17,10 @@ from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
 # Import libsvm SVM implementation
-import mvpa.clfs.svm_libsvm as svm_libsvm
+import mvpa.clfs.libsvm.svm as svm_libsvm
 
 try:
-    import mvpa.clfs.svm_sg as svm_sg
+    import mvpa.clfs.sg.svm as svm_sg
     __sg_present = True
 except ImportError:
     # no shogun library is available, thus no sensitivity could be even checked
@@ -55,7 +55,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         elif isinstance(clf, svm_sg.SVM_SG_Modular):
             self.__sens = self.__sg
         else:
-            raise ValueError, "Don't know how to compute LinearSVM " + \
+            raise ValueError, "Don't know how to compute Linear SVM " + \
                   "sensitivity for clf %s of type %s." % \
                   (`clf`, `type(clf)`)
 
