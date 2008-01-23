@@ -32,9 +32,10 @@ if __debug__:
 known_kernels = { "linear": shogun.Kernel.LinearKernel,
                   "rbf" :   shogun.Kernel.GaussianKernel }
 
-known_svm_impl = { "libsvm" :   shogun.Classifier.LibSVM,
-                    "lightsvm" : shogun.Classifier.SVMLight }
-
+known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
+                   "gmnp" : shogun.Classifier.GMNPSVM,
+                   "gnpp" : shogun.Classifier.GNPPSVM,
+                   "lightsvm" : shogun.Classifier.SVMLight }
 
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG
@@ -119,7 +120,7 @@ class SVM_SG_Modular(Classifier):
             raise ValueError, "Unknown kernel %s" % kernel_type
 
         if svm_impl.lower() in known_svm_impl:
-            self.__svm_impl = known_svm_impl[svm_impl.lower()]
+            self.__svm_impl = svm_impl.lower()
         else:
             raise ValueError, "Unknown SVM implementation %s" % svm_impl
 
@@ -145,17 +146,26 @@ class SVM_SG_Modular(Classifier):
         """Train SVM
         """
         # although there are some multiclass SVMs already in shogun,
-        # for now just rely on our own :-P
+        # we might rely on our own
         self.__mclf = None
-
+        svm_impl_class = None
+        #
         ul = dataset.uniquelabels
         ul.sort()
         if len(ul) > 2 or (ul != [-1.0, 1.0]).any():
-            warning("XXX Using built-in MultiClass classifier for now")
-            mclf = MulticlassClassifier(self)
-            mclf._train(dataset)
-            self.__mclf = mclf
-            return
+            if self.__svm_impl == 'libsvm':
+                svm_impl_class = shogun.Classifier.LibSVMMultiClass
+            elif self.__svm_impl == 'gmnp':
+                svm_impl_class = shogun.Classifier.GMNPSVM
+                # or just known_svm_impl[self.__svm_impl]
+            else:
+                warning("XXX Using built-in MultiClass classifier for now")
+                mclf = MulticlassClassifier(self)
+                mclf._train(dataset)
+                self.__mclf = mclf
+                return
+        else:
+            svm_impl_class = known_svm_impl[self.__svm_impl]
 
         # create training data
         if __debug__:
@@ -172,8 +182,7 @@ class SVM_SG_Modular(Classifier):
         #labels_ = N.array([ dict_[x] for x in dataset.labels ], dtype='double')
         #
         if __debug__:
-            debug("SG_",
-                  "Creating labels instance")
+            debug("SG_", "Creating labels instance")
         labels = shogun.Features.Labels(dataset.labels.astype('double'))
         _setdebug(labels, 'Labels')
 
@@ -191,9 +200,9 @@ class SVM_SG_Modular(Classifier):
 
         # create SVM
         if __debug__:
-            debug("SG_", "Creating SVM instance of %s" % `self.__svm_impl`)
+            debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
 
-        self.__svm = self.__svm_impl(self.params['C'].val, self.__kernel, labels)
+        self.__svm = svm_impl_class(self.params['C'].val, self.__kernel, labels)
         _setdebug(self.__svm, 'SVM')
 
         # train
