@@ -127,10 +127,10 @@ class SVM_SG_Modular(Classifier):
         self.__kernel_params = kernel_params
 
 
-    def __repr__(self):
+    def __str__(self):
         """Definition of the object summary over the object
         """
-        res = "<SVM_SG_Modular(...) #%d>" % id(self)
+        res = "<SVM_SG_Modular#%d>" % id(self)
         return res # XXX
 
         sep = ""
@@ -251,13 +251,13 @@ class SVM_SG_Modular(Classifier):
             predictions = 1.0-2*N.signbit(values)
         else:
             predictions = values
-            # assure that we have the same type
-            label_type = type(self._labels_dict.values()[0])
 
+        # assure that we have the same type
+        label_type = type(self._labels_dict.values()[0])
 
-        # remap labels back
-        for i in xrange(len(predictions)):
-            predictions[i] = self._labels_dict_rev[label_type(predictions[i])]
+        # remap labels back adjusting their type
+        predictions = [self._labels_dict_rev[label_type(x)]
+                       for x in predictions]
 
         if __debug__:
             debug("SG__", "Tuned predictions %s" % predictions)
