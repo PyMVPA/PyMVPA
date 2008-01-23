@@ -30,6 +30,7 @@ except ImportError:
 if __debug__:
     from mvpa.misc import debug
 
+
 class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     """`SensitivityAnalyzer` that reports the weights of a linear SVM trained
     on a given `Dataset`.
@@ -60,7 +61,6 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
                   (`clf`, `type(clf)`)
 
 
-
     def __libsvm(self, dataset, callables=[]):
         if self.clf.model.nr_class != 2:
             warning("You are estimating sensitivity for SVM %s trained on %d" %
@@ -87,13 +87,13 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # weighted impact of SVs on decision, then for each feature
         # take absolute mean across SVs to get a single weight value
         # per feature
-        return N.abs((svcoef * svs).mean(axis=0).A1)
+        return (svcoef * svs).mean(axis=0).A1
 
     def __sg(self, dataset, callables=[]):
         raise NotImplementedError
-        from IPython.Shell import IPShellEmbed
-        ipshell = IPShellEmbed()
-        ipshell()
+        #from IPython.Shell import IPShellEmbed
+        #ipshell = IPShellEmbed()
+        #ipshell()
         #12: self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_bias()
         #19: alphas=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_alphas()
         #20: svs=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_support_vectors()
@@ -107,10 +107,15 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # naming across our swig libsvm wrapper and sg access
         # functions for svm
 
-        bias = self.clf.svm.get_bias()
-        alphas = self.clf.svm.get_alphas()
+        self.offsets = self.clf.svm.get_bias()
+        svcoef = self.clf.svm.get_alphas()
         svs = self.clf.svm.get_support_vectors()
-
+        res = (svcoef * svs).mean(axis=0)
+        print res
+        from IPython.Shell import IPShellEmbed
+        ipshell = IPShellEmbed()
+        ipshell()
+        return (svcoef * svs).mean(axis=0)
 
 
     def _call(self, dataset, callables=[]):
