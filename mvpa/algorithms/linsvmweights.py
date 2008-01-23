@@ -13,10 +13,19 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
-from mvpa.clfs.svm import LinearSVM
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
+# Import libsvm SVM implementation
+import mvpa.clfs.svm_libsvm as svm_libsvm
+
+try:
+    import mvpa.clfs.svm_sg as svm_sg
+    __sg_present = True
+except ImportError:
+    # no shogun library is available, thus no sensitivity could be even checked
+    # for
+    __sg_present = False
 
 if __debug__:
     from mvpa.misc import debug
@@ -37,22 +46,27 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
             classifier to use. Only classifiers sub-classed from
             `LinearSVM` may be used.
         """
-        if not isinstance(clf, LinearSVM):
-            raise ValueError, \
-                  "Classifier %s has to be a LinearSVM, but is [%s]" \
-                              % (`clf`, `type(clf)`)
-
         # init base classes first
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
+        # poor man dispatch table
+        if isinstance(clf, svm_libsvm.LinearSVM):
+            self.__sens = self.__libsvm
+        elif isinstance(clf, svm_sg.SVM_SG_Modular):
+            self.__sens = self.__sg
+        else:
+            raise ValueError, "Don't know how to compute LinearSVM " + \
+                  "sensitivity for clf %s of type %s." % \
+                  (`clf`, `type(clf)`)
 
-    def _call(self, dataset, callables=[]):
-        """Extract weights from Linear SVM classifier.
-        """
+
+
+    def __libsvm(self, dataset, callables=[]):
         if self.clf.model.nr_class != 2:
             warning("You are estimating sensitivity for SVM %s trained on %d" %
                     (`self.clf`, self.clf.model.nr_class) +
                     " classes. Make sure that it is what you intended to do" )
+
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
         rhos = N.array(self.clf.model.getRho())
@@ -74,3 +88,11 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # take absolute mean across SVs to get a single weight value
         # per feature
         return N.abs((svcoef * svs).mean(axis=0).A1)
+
+    def __sg(self, dataset, callables=[]):
+        raise NotImplementedError
+
+    def _call(self, dataset, callables=[]):
+        """Extract weights from Linear SVM classifier.
+        """
+        return self.__sens(dataset, callables)
