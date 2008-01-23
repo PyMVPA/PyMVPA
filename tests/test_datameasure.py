@@ -17,6 +17,7 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector, FeatureSelectionP
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.classifier import SplitClassifier
 from mvpa.clfs.svm import LinearNuSVMC, LinearCSVMC, RbfNuSVMC
+from mvpa.clfs.libsvm.svm import LinearSVM
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
 from mvpa.algorithms.rfe import RFE
@@ -55,7 +56,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     def testAnalyzerWithSplitClassifier(self):
         svm = LinearNuSVMC()
-
+        print svm
+        print LinearSVM
+        print isinstance(svm, LinearSVM)
         #svm_weigths = LinearSVMWeights(svm)
 
         # assumming many defaults it is as simple as
