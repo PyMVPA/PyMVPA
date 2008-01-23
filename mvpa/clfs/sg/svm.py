@@ -149,10 +149,10 @@ class SVM_SG_Modular(Classifier):
         # we might rely on our own
         self.__mclf = None
         svm_impl_class = None
-        #
+
         ul = dataset.uniquelabels
         ul.sort()
-        if len(ul) > 2 or (ul != [-1.0, 1.0]).any():
+        if len(ul) > 2: # or (ul != [-1.0, 1.0]).any():
             if self.__svm_impl == 'libsvm':
                 svm_impl_class = shogun.Classifier.LibSVMMultiClass
             elif self.__svm_impl == 'gmnp':
@@ -175,15 +175,32 @@ class SVM_SG_Modular(Classifier):
 
         # create labels
         #
-        ## We need to convert to -1,+1 labels
-        #ul = dataset.uniquelabels
-        #dict_ = {ul[0]:-1.0,
-        #         ul[1]:+1.0}
-        #labels_ = N.array([ dict_[x] for x in dataset.labels ], dtype='double')
-        #
+
+        # OK -- we have to map labels since
+        #  binary ones expect -1/+1
+        #  Multiclass expect labels starting with 0, otherwise they puke
+        #   when ran from ipython... yikes
         if __debug__:
             debug("SG_", "Creating labels instance")
-        labels = shogun.Features.Labels(dataset.labels.astype('double'))
+
+        if len(ul) == 2:
+            # assure that we have -1/+1
+            self._labels_dict = {ul[0]:-1.0,
+                                 ul[1]:+1.0}
+        elif len(ul) < 2:
+            raise ValueError, "we do not have 1-class SVM brought into pymvpa yet"
+        else:
+            # can't use plain enumerate since we need them swapped
+            self._labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
+
+        # reverse labels dict for back mapping in _predict
+        self._labels_dict_rev = dict([(x[1], x[0])
+                                      for x in self._labels_dict.items()])
+
+        if __debug__:
+            debug("SG__", "Mapping labels using dict %s" % self._labels_dict)
+        labels_ = N.array([ self._labels_dict[x] for x in dataset.labels ], dtype='double')
+        labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
 
         # create kernel
@@ -224,10 +241,30 @@ class SVM_SG_Modular(Classifier):
         self.__kernel.init(self.__traindata, _tosg(data))
         if __debug__:
             debug("SG_", "Classifing testing data")
+
         values = self.__svm.classify().get_labels()
 
+        if __debug__:
+            debug("SG__", "Got values %s" % values)
+
+        if len(self._labels_dict) == 2:
+            predictions = 1.0-2*N.signbit(values)
+        else:
+            predictions = values
+            # assure that we have the same type
+            label_type = type(self._labels_dict.values()[0])
+
+
+        # remap labels back
+        for i in xrange(len(predictions)):
+            predictions[i] = self._labels_dict_rev[label_type(predictions[i])]
+
+        if __debug__:
+            debug("SG__", "Tuned predictions %s" % predictions)
+
+        # store state variable
         self.values = values
-        predictions = 1.0-2*N.signbit(values)
+
         return predictions
 
 
