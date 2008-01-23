@@ -199,6 +199,36 @@ class FixedErrorThresholdStopCrit(StoppingCriterion):
 
 
 
+class NStepsStopCrit(StoppingCriterion):
+    """Stop computation after a certain number of steps.
+    """
+    def __init__(self, steps):
+        """Initialize with number of steps.
+
+        :Parameters:
+            steps : int
+                Number of steps after which to stop.
+        """
+        StoppingCriterion.__init__(self)
+        if steps < 0:
+            raise ValueError, \
+                  "Number of steps %i is out of a reasonable range." \
+                    % `steps`
+        self.__steps = steps
+
+
+    def __call__(self, errors):
+        """Nothing special."""
+        if len(errors) >= self.__steps:
+            return True
+        else:
+            return False
+
+
+    steps = property(fget=lambda x:x.__steps)
+
+
+
 class NBackHistoryStopCrit(StoppingCriterion):
     """Stop computation if for a number of steps error was increasing
     """

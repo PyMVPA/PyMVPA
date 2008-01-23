@@ -149,7 +149,7 @@ def getBreakPoints(items, contiguous=True):
     for index in xrange(len(items)):
         item = items[index]
         if item in known:
-            if index>0:
+            if index > 0:
                 if prev != item:            # breakpoint
                     if contiguous:
                         raise ValueError, \
