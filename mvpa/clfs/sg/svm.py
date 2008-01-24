@@ -242,12 +242,13 @@ class SVM_SG_Modular(Classifier):
 
         if not self.__mclf is None:
             return self.__mclf._predict(data)
+
         if __debug__:
             debug("SG_", "Initializing kernel with training/testing data")
         self.__kernel.init(self.__traindata, _tosg(data))
+
         if __debug__:
             debug("SG_", "Classifing testing data")
-
         values = self.__svm.classify().get_labels()
 
         if __debug__:
