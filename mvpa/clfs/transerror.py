@@ -317,13 +317,23 @@ class ClassifierError(Statefull):
     def _precall(self, testdataset, trainingdataset=None):
         """Generic part which trains the classifier if necessary
         """
-        if not trainingdataset == None:
+        if not trainingdataset is None:
             if self.__train:
                 if self.__clf.isTrained(trainingdataset):
                     warning('It seems that classifier %s was already trained' %
                             self.__clf + ' on dataset %s. Please inspect' \
                                 % trainingdataset)
                 self.__clf.train(trainingdataset)
+
+        if self.__clf.states.isEnabled('trained_labels') and \
+               not testdataset is None:
+            newlabels = Set(testdataset.uniquelabels) - self.__clf.trained_labels
+            if len(newlabels)>0:
+                warning("Classifier %s wasn't trained to classify labels %s" %
+                        (`self.__clf`, `newlabels`) +
+                        " present in testing dataset. Make sure that you has" %
+                        " not mixed order/names of the arguments anywhere")
+
         ### Here checking for if it was trained... might be a cause of trouble
         # XXX disabled since it is unreliable.. just rely on explicit
         # self.__train
