@@ -90,13 +90,19 @@ class Classifier(Statefull):
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
+    trained_labels = StateVariable(enabled=True,
+        doc="What labels (unique) clf was trained on")
+
     training_confusion = StateVariable(enabled=True,
         doc="Result of learning: `ConfusionMatrix` " \
             "(and corresponding learning error)")
+
     predictions = StateVariable(enabled=True,
         doc="Reported predicted values")
+
     values = StateVariable(enabled=False,
         doc="Internal values seen by the classifier")
+
 
     params = {}
 
@@ -111,6 +117,7 @@ class Classifier(Statefull):
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
+
 
         self.__trainedid = None
         """Stores id of the dataset on which it was trained to signal
@@ -132,6 +139,8 @@ class Classifier(Statefull):
 
         For instance -- computing confusion matrix
         """
+        self.trained_labels = Set(dataset.uniquelabels)
+
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
         self.__trainedid = dataset._id
@@ -237,7 +246,6 @@ class Classifier(Statefull):
     def trained(self):
         """Either classifier was already trained"""
         return self.isTrained()
-
 
     def untrain(self):
         """Reset trained state"""
