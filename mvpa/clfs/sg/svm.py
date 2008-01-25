@@ -308,15 +308,19 @@ class LinearSVM(SVM_SG_Modular):
 
 
 class LinearCSVMC(LinearSVM):
-    pass
+    def __init__(self, C, **kwargs):
+        """
+        """
+        # init base class
+        LinearSVM.__init__(self, C=C, **kwargs)
 
 
 class RbfCSVMC(SVM_SG_Modular):
     """C-SVM classifier using a radial basis function kernel.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, C, gamma, **kwargs):
         """
         """
         # init base class
-        SVM_SG_Modular.__init__(self, kernel_type='RBF', **kwargs)
+        SVM_SG_Modular.__init__(self, C=C, kernel_type='RBF', kernel_params=[gamma], **kwargs)
 
