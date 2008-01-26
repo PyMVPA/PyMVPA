@@ -17,10 +17,12 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector, FeatureSelectionP
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.classifier import SplitClassifier
 from mvpa.clfs.svm import LinearNuSVMC, LinearCSVMC, RbfNuSVMC
-from mvpa.clfs.libsvm.svm import LinearSVM
+from mvpa.clfs import libsvm, sg
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
 from mvpa.algorithms.rfe import RFE
+
+from mvpa.misc.transformers import Absolute
 
 from tests_warehouse import *
 
@@ -54,12 +56,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
-    def testAnalyzerWithSplitClassifier(self):
-        svm = LinearNuSVMC()
-        print svm
-        print LinearSVM
-        print isinstance(svm, LinearSVM)
-        #svm_weigths = LinearSVMWeights(svm)
+    def __testAnalyzerWithSplitClassifier(self, svm):
 
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( SplitClassifier(clf=svm),
@@ -81,19 +78,19 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # lets go through all sensitivities and see if we selected the right features
         for map__ in [map_] + sana.combined_analyzer.sensitivities:
+            selected = FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)
             self.failUnlessEqual(
-                list(FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)),
+                list(selected),
                 list(self.nonbogus),
                 msg="At the end we should have selected the right features")
 
 
-    def testLinearSVMWeights(self):
-        # first Yarik needs to figure out what the heck is happening ;-)
-        svm = LinearCSVMC()
-
+    def __testLinearSVMWeights(self, svm):
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( clf=svm,
-                               enable_states=["sensitivities"] ) # and lets look at all sensitivities
+                               enable_states=["sensitivities"] )
+
+        # and lets look at all sensitivities
         dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
         map_ = sana(dataset)
 
@@ -101,6 +98,16 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # a concern
         svmnl = RbfNuSVMC()
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
+
+
+    def testLinearSVMWeights(self):
+        for clf in [ libsvm.svm.LinearNuSVMC(), libsvm.svm.LinearCSVMC(),
+                     sg.svm.LinearCSVMC()
+                     ]:
+            self.__testAnalyzerWithSplitClassifier(clf)
+            clf.untrain()
+            self.__testLinearSVMWeights(clf)
+
 
 
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self):

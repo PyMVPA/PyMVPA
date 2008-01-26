@@ -24,7 +24,8 @@ import copy
 
 from mvpa.misc.state import StateVariable, Statefull
 from mvpa.clfs.classifier import BoostedClassifier
-from mvpa.clfs.svm import LinearSVM
+from mvpa.clfs.sg.svm import LinearSVM as LinearSVM_sg
+from mvpa.clfs import sg, libsvm
 
 if __debug__:
     from mvpa.misc import debug
@@ -147,7 +148,7 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
     advanced/controlled computation assign them explicitely
     """
     banalyzer = None
-    if isinstance(clf, LinearSVM):
+    if isinstance(clf, libsvm.svm.LinearSVM) or isinstance(clf, sg.svm.LinearSVM):
         from linsvmweights import LinearSVMWeights
         banalyzer = LinearSVMWeights(clf, **kwargs)
     elif isinstance(clf, BoostedClassifier):
