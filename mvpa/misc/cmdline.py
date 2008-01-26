@@ -12,16 +12,29 @@ __docformat__ = 'restructuredtext'
 
 Conventions:
 Every option (instance of optparse.Option) has prefix "opt". Lists of options
-has prefix opts (e.g. optsCommon).
+has prefix opts (e.g. `optsCommon`).
 
 Option name should be camelbacked version of .dest for the option.
 """
 
 # TODO? all options (opt*) might migrate to respective module? discuss
-from optparse import Option
+from optparse import OptionParser, Option, OptionGroup
 
 # needed for verboseCallback
 from mvpa.misc import verbose
+
+
+# TODO: try to make groups definition somewhat lazy, since now
+# whenever a group is created, those parameters are already known by
+# parser, although might not be listed in the list of used and not by
+# --help. But their specification on cmdline doesn't lead to
+# error/help msg.
+#
+# Conflict hanlder to resolve situation that we have the same option added
+# to some group and also available 'freely'
+#
+parser = OptionParser(add_help_option=False,
+                      conflict_handler="resolve")
 
 #
 # Verbosity options
@@ -33,6 +46,11 @@ def verboseCallback(option, optstr, value, parser):
     optstr = optstr                     # pylint shut up
     setattr(parser.values, option.dest, value)
 
+optHelp = \
+    Option("-h", "--help", "--sos",
+           action="help",
+           help="Show this help message and exit")
+
 optVerbose = \
     Option("-v", "--verbose", "--verbosity",
            action="callback", callback=verboseCallback, nargs=1,
@@ -40,8 +58,12 @@ optVerbose = \
            help="Verbosity level of output")
 """Pre-cooked `optparse`'s option to specify verbose level"""
 
-optsCommon = [optVerbose]
-"""Often used common options"""
+optsCommon = OptionGroup(parser, title="Generic"
+#   , description="Options often used in a PyMVPA application"
+                         )
+
+optsCommon.add_options([optVerbose, optHelp])
+
 
 if __debug__:
     from mvpa.misc import debug
@@ -51,9 +73,13 @@ if __debug__:
         """
         if value == "list":
             print "Registered debug IDs:"
-            for v in debug.registered.items():
-                print "%7s: %s" %  v
-            print "Use ALL: to enable all of the debug IDs listed above"
+            keys = debug.registered.keys()
+            keys.sort()
+            for k in keys:
+                print "%-7s: %s" % (k, debug.registered[k])
+            print "Use ALL: to enable all of the debug IDs listed above."
+            print "Use python regular expressions to select group. CLF.* will" \
+              " enable all debug entries starting with CLF (e.g. CLFBIN, CLFMC)"
             raise SystemExit, 0
 
         optstr = optstr                     # pylint shut up
@@ -71,7 +97,7 @@ if __debug__:
                       "Run with '-d list' to get a list of " +
                       "registered entries")
 
-    optsCommon.append(optDebug)
+    optsCommon.add_option(optDebug)
 
 
 #
@@ -79,10 +105,9 @@ if __debug__:
 #
 optClf = \
     Option("--clf",
-           action="store", type="string", dest="clf",
-           default='knn',
-           help="Type of classifier to be used. Possible values are: 'knn', " \
-                "'lin_nu_svmc', 'rbf_nu_svmc'. Default: knn")
+           type="choice", dest="clf",
+           choices=['knn', 'svm', 'ridge'], default='svm',
+           help="Type of classifier to be used. Default: svm")
 
 optRadius = \
     Option("-r", "--radius",
@@ -90,30 +115,54 @@ optRadius = \
            default=5.0,
            help="Radius to be used (eg for the searchlight). Default: 5.0")
 
+
 optKNearestDegree = \
     Option("-k", "--k-nearest",
            action="store", type="int", dest="knearestdegree", default=3,
            help="Degree of k-nearest classifier. Default: 3")
 
+optsKNN = OptionGroup(parser, "Specification of kNN")
+optsKNN.add_option(optKNearestDegree)
+
+optSVMC = \
+    Option("-C", "--svm-C",
+           action="store", type="float", dest="svm_C", default=1.0,
+           help="C parameter for soft-margin C-SVM classification. " \
+                "Default: 1.0")
+
 optSVMNu = \
-    Option("--nu",
-           action="store", type="float", dest="nu", default=0.1,
+    Option("--nu", "--svm-nu",
+           action="store", type="float", dest="svm_nu", default=0.1,
            help="nu parameter for soft-margin nu-SVM classification. " \
                 "Default: 0.1")
 
-optsSVM = [optSVMNu]
+optSVMGamma = \
+    Option("--gamma", "--svm-gamma",
+           action="store", type="float", dest="svm_gamma", default=1.0,
+           help="gamma parameter for Gaussian kernel of RBF SVM. " \
+                "Default: 1.0")
+
+
+optsSVM = OptionGroup(parser, "SVM specification")
+optsSVM.add_options([optSVMNu, optSVMC, optSVMGamma])
+
+
+# Crossvalidation options
 
 optCrossfoldDegree = \
     Option("-c", "--crossfold",
            action="store", type="int", dest="crossfolddegree", default=1,
            help="Degree of N-fold crossfold. Default: 1")
 
+optsGener = OptionGroup(parser, "Generalization estimates")
+optsGener.add_options([optCrossfoldDegree])
+
+# preprocess options
+
 optZScore = \
     Option("--zscore",
            action="store_true", dest="zscore", default=0,
            help="Enable zscoring of dataset samples. Default: Off")
-
-# preprocess options
 
 optTr = \
     Option("--tr",
@@ -125,6 +174,11 @@ optDetrend = \
            action="store_true", dest="detrend", default=0,
            help="Do linear detrending. Default: Off")
 
+optsPreproc = OptionGroup(parser, "Preprocessing options")
+optsPreproc.add_options([optZScore, optTr, optDetrend])
+
+# Box options
+
 optBoxLength = \
     Option("--boxlength",
            action="store", dest="boxlength", default=1, type='int',
@@ -135,7 +189,8 @@ optBoxOffset = \
            action="store", dest="boxoffset", default=0, type='int',
            help="Offset of the box from the event onset in volumes. Default: 0")
 
-optsBox = [optBoxLength, optBoxOffset]
+optsBox = OptionGroup(parser, "Box options")
+optsBox.add_options([optBoxLength, optBoxOffset])
 
 
 # sample attributes
@@ -152,4 +207,8 @@ optChunkLimits = \
                 "and end volume number (including lower, excluding upper " \
                 "limit). Numbering starts with zero.")
 
-optsChunk = [optChunk, optChunkLimits]
+optsChunk = OptionGroup(parser, "Chunk options AKA Sample attributes XXX")
+optsChunk.add_options([optChunk, optChunkLimits])
+
+
+
