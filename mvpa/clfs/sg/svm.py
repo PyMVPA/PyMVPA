@@ -296,6 +296,8 @@ class SVM_SG_Modular(Classifier):
     svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
 
+    mclf = property(fget=lambda self: self.__mclf)
+    """Multiclass classifier if it was used"""
 
 
 class LinearSVM(SVM_SG_Modular):
@@ -308,7 +310,7 @@ class LinearSVM(SVM_SG_Modular):
 
 
 class LinearCSVMC(LinearSVM):
-    def __init__(self, C, **kwargs):
+    def __init__(self, C=1.0, **kwargs):
         """
         """
         # init base class
@@ -318,7 +320,7 @@ class LinearCSVMC(LinearSVM):
 class RbfCSVMC(SVM_SG_Modular):
     """C-SVM classifier using a radial basis function kernel.
     """
-    def __init__(self, C, gamma, **kwargs):
+    def __init__(self, C=1.0, gamma=1.0, **kwargs):
         """
         """
         # init base class
