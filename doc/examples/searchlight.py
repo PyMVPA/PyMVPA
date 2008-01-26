@@ -13,8 +13,6 @@ import sys
 
 import numpy as N
 
-from optparse import OptionParser
-
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.algorithms.clfcrossval import ClfCrossValidation
 from mvpa.clfs.knn import kNN
@@ -26,14 +24,15 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \
-     optsCommon, optClf, optsSVM, optRadius, optKNearestDegree, \
-     optCrossfoldDegree, optZScore
+     parser, \
+     optsCommon, optClf, optsSVM, optRadius, optsKNN, \
+     optsGener, optZScore
 
 def main():
     """ Wrapped into a function call for easy profiling later on
     """
 
-    usage = """\
+    parser.usage = """\
     %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
 
     where labels+blocks is a text file that lists the class label and the
@@ -41,11 +40,10 @@ def main():
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
 
+    parser.option_groups += [optsSVM, optsKNN, optsGener, optsCommon]
 
-    parser = OptionParser(usage=usage,
-                          option_list=optsCommon + \
-                          [optClf, optRadius, optKNearestDegree,
-                           optCrossfoldDegree, optZScore] + optsSVM)
+    parser.option_list += [optClf, optRadius, optZScore]
+
 
     (options, files) = parser.parse_args()
 

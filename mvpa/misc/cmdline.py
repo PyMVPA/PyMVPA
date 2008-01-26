@@ -12,16 +12,19 @@ __docformat__ = 'restructuredtext'
 
 Conventions:
 Every option (instance of optparse.Option) has prefix "opt". Lists of options
-has prefix opts (e.g. optsCommon).
+has prefix opts (e.g. `optsCommon`).
 
 Option name should be camelbacked version of .dest for the option.
 """
 
 # TODO? all options (opt*) might migrate to respective module? discuss
-from optparse import Option
+from optparse import OptionParser, Option, OptionGroup
 
 # needed for verboseCallback
 from mvpa.misc import verbose
+
+
+parser = OptionParser(add_help_option=False)
 
 #
 # Verbosity options
@@ -33,6 +36,11 @@ def verboseCallback(option, optstr, value, parser):
     optstr = optstr                     # pylint shut up
     setattr(parser.values, option.dest, value)
 
+optHelp = \
+    Option("-h", "--help", "--sos",
+           action="help",
+           help="Show this help message and exit")
+
 optVerbose = \
     Option("-v", "--verbose", "--verbosity",
            action="callback", callback=verboseCallback, nargs=1,
@@ -40,8 +48,12 @@ optVerbose = \
            help="Verbosity level of output")
 """Pre-cooked `optparse`'s option to specify verbose level"""
 
-optsCommon = [optVerbose]
-"""Often used common options"""
+optsCommon = OptionGroup(parser, title="Generic"
+#   , description="Options often used in a PyMVPA application"
+                         )
+
+optsCommon.add_options([optVerbose, optHelp])
+
 
 if __debug__:
     from mvpa.misc import debug
@@ -71,7 +83,7 @@ if __debug__:
                       "Run with '-d list' to get a list of " +
                       "registered entries")
 
-    optsCommon.append(optDebug)
+    optsCommon.add_option(optDebug)
 
 
 #
@@ -90,10 +102,14 @@ optRadius = \
            default=5.0,
            help="Radius to be used (eg for the searchlight). Default: 5.0")
 
+
 optKNearestDegree = \
     Option("-k", "--k-nearest",
            action="store", type="int", dest="knearestdegree", default=3,
            help="Degree of k-nearest classifier. Default: 3")
+
+optsKNN = OptionGroup(parser, "Specification of kNN")
+optsKNN.add_option(optKNearestDegree)
 
 optSVMNu = \
     Option("--nu",
@@ -101,19 +117,26 @@ optSVMNu = \
            help="nu parameter for soft-margin nu-SVM classification. " \
                 "Default: 0.1")
 
-optsSVM = [optSVMNu]
+optsSVM = OptionGroup(parser, "SVM specification")
+optsSVM.add_option(optSVMNu)
+
+
+# Crossvalidation options
 
 optCrossfoldDegree = \
     Option("-c", "--crossfold",
            action="store", type="int", dest="crossfolddegree", default=1,
            help="Degree of N-fold crossfold. Default: 1")
 
+optsGener = OptionGroup(parser, "Generalization estimates")
+optsGener.add_options([optCrossfoldDegree])
+
+# preprocess options
+
 optZScore = \
     Option("--zscore",
            action="store_true", dest="zscore", default=0,
            help="Enable zscoring of dataset samples. Default: Off")
-
-# preprocess options
 
 optTr = \
     Option("--tr",
@@ -125,6 +148,11 @@ optDetrend = \
            action="store_true", dest="detrend", default=0,
            help="Do linear detrending. Default: Off")
 
+optsPreproc = OptionGroup(parser, "Preprocessing options")
+optsPreproc.add_options([optZScore, optTr, optDetrend])
+
+# Box options
+
 optBoxLength = \
     Option("--boxlength",
            action="store", dest="boxlength", default=1, type='int',
@@ -135,7 +163,8 @@ optBoxOffset = \
            action="store", dest="boxoffset", default=0, type='int',
            help="Offset of the box from the event onset in volumes. Default: 0")
 
-optsBox = [optBoxLength, optBoxOffset]
+optsBox = OptionGroup(parser, "Box options")
+optsBox.add_options([optBoxLength, optBoxOffset])
 
 
 # sample attributes
@@ -152,4 +181,8 @@ optChunkLimits = \
                 "and end volume number (including lower, excluding upper " \
                 "limit). Numbering starts with zero.")
 
-optsChunk = [optChunk, optChunkLimits]
+optsChunk = OptionGroup(parser, "Chunk options AKA Sample attributes XXX")
+optsChunk.add_options([optChunk, optChunkLimits])
+
+
+

@@ -28,8 +28,6 @@ import sys
 
 import numpy as N
 
-from optparse import OptionParser
-
 from scipy.signal import detrend
 
 from nifti import NiftiImage
@@ -38,7 +36,7 @@ from nifti.utils import time2vol
 from mvpa.misc.support import transformWithBoxcar
 from mvpa.misc.iohelpers import SampleAttributes, FslEV3
 from mvpa.misc import verbose
-from mvpa.misc.cmdline import \
+from mvpa.misc.cmdline import parser, \
      optsCommon, optZScore, optTr, optsBox, optsChunk, optDetrend
 
 
@@ -46,15 +44,13 @@ def main():
     """ Wrapped into a function call for easy profiling later on
     """
 
-    usage = """\
+    parser.usage = """\
     %s [options] <NIfTI data> <output prefix> <EV file 1> [ <EV file 2> ... ]
     """ \
     % sys.argv[0]
 
-
-    parser = OptionParser(usage=usage,
-                          option_list=optsCommon + optsBox \
-                          + [optTr, optDetrend] + optsChunk)
+    parser.option_groups += [ optsCommon, optsBox, optsChunk]
+    parser.option_list += [optTr, optDetrend]
 
     (options, args) = parser.parse_args()
 
