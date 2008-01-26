@@ -40,9 +40,8 @@ def main():
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
 
-    parser.option_groups += [optsSVM, optsKNN, optsGener, optsCommon]
-
-    parser.option_list += [optClf, optRadius, optZScore]
+    parser.option_groups = [optsSVM, optsKNN, optsGener, optsCommon]
+    parser.options = [optClf, optRadius, optZScore]
 
 
     (options, files) = parser.parse_args()
@@ -91,9 +90,9 @@ def main():
     if options.clf == 'knn':
         clf = kNN(k=options.knearestdegree)
     elif options.clf == 'lin_nu_svmc':
-        clf = LinearNuSVMC(options.nu)
+        clf = LinearNuSVMC(options.svm_nu)
     elif options.clf == 'rbf_nu_svmc':
-        clf = RbfNuSVMC(options.nu)
+        clf = RbfNuSVMC(options.svm_nu)
     else:
         raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
     verbose(3, "Using '%s' classifier" % options.clf)

@@ -24,7 +24,17 @@ from optparse import OptionParser, Option, OptionGroup
 from mvpa.misc import verbose
 
 
-parser = OptionParser(add_help_option=False)
+# TODO: try to make groups definition somewhat lazy, since now
+# whenever a group is created, those parameters are already known by
+# parser, although might not be listed in the list of used and not by
+# --help. But their specification on cmdline doesn't lead to
+# error/help msg.
+#
+# Conflict hanlder to resolve situation that we have the same option added
+# to some group and also available 'freely'
+#
+parser = OptionParser(add_help_option=False,
+                      conflict_handler="resolve")
 
 #
 # Verbosity options
@@ -63,9 +73,13 @@ if __debug__:
         """
         if value == "list":
             print "Registered debug IDs:"
-            for v in debug.registered.items():
-                print "%7s: %s" %  v
-            print "Use ALL: to enable all of the debug IDs listed above"
+            keys = debug.registered.keys()
+            keys.sort()
+            for k in keys:
+                print "%-7s: %s" % (k, debug.registered[k])
+            print "Use ALL: to enable all of the debug IDs listed above."
+            print "Use python regular expressions to select group. CLF.* will" \
+              " enable all debug entries starting with CLF (e.g. CLFBIN, CLFMC)"
             raise SystemExit, 0
 
         optstr = optstr                     # pylint shut up
@@ -91,10 +105,9 @@ if __debug__:
 #
 optClf = \
     Option("--clf",
-           action="store", type="string", dest="clf",
-           default='knn',
-           help="Type of classifier to be used. Possible values are: 'knn', " \
-                "'lin_nu_svmc', 'rbf_nu_svmc'. Default: knn")
+           type="choice", dest="clf",
+           choices=['knn', 'svm', 'ridge'], default='svm',
+           help="Type of classifier to be used. Default: svm")
 
 optRadius = \
     Option("-r", "--radius",
@@ -111,14 +124,27 @@ optKNearestDegree = \
 optsKNN = OptionGroup(parser, "Specification of kNN")
 optsKNN.add_option(optKNearestDegree)
 
+optSVMC = \
+    Option("-C", "--svm-C",
+           action="store", type="float", dest="svm_C", default=1.0,
+           help="C parameter for soft-margin C-SVM classification. " \
+                "Default: 1.0")
+
 optSVMNu = \
-    Option("--nu",
-           action="store", type="float", dest="nu", default=0.1,
+    Option("--nu", "--svm-nu",
+           action="store", type="float", dest="svm_nu", default=0.1,
            help="nu parameter for soft-margin nu-SVM classification. " \
                 "Default: 0.1")
 
+optSVMGamma = \
+    Option("--gamma", "--svm-gamma",
+           action="store", type="float", dest="svm_gamma", default=1.0,
+           help="gamma parameter for Gaussian kernel of RBF SVM. " \
+                "Default: 1.0")
+
+
 optsSVM = OptionGroup(parser, "SVM specification")
-optsSVM.add_option(optSVMNu)
+optsSVM.add_options([optSVMNu, optSVMC, optSVMGamma])
 
 
 # Crossvalidation options
