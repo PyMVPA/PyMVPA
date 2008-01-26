@@ -87,10 +87,9 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # weighted impact of SVs on decision, then for each feature
         # take absolute mean across SVs to get a single weight value
         # per feature
-        return (svcoef * svs).mean(axis=0).A1
+        return N.abs((svcoef * svs).mean(axis=0).A1)
 
     def __sg(self, dataset, callables=[]):
-        raise NotImplementedError
         #from IPython.Shell import IPShellEmbed
         #ipshell = IPShellEmbed()
         #ipshell()
@@ -107,15 +106,22 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # naming across our swig libsvm wrapper and sg access
         # functions for svm
 
+        if not self.clf.mclf is None:
+            anal = selectAnalyzer(self.__mclf, basic_analyzer=self)
+            if __debug__:
+                debug('SVM',
+                      '! Delegating computing sensitivity to %s' % `anal`)
+            return anal(dataset, callables)
         self.offsets = self.clf.svm.get_bias()
         svcoef = self.clf.svm.get_alphas()
         svs = self.clf.svm.get_support_vectors()
         res = (svcoef * svs).mean(axis=0)
+        return N.abs((svcoef * svs).mean(axis=0))
         print res
         from IPython.Shell import IPShellEmbed
         ipshell = IPShellEmbed()
         ipshell()
-        return (svcoef * svs).mean(axis=0)
+
 
 
     def _call(self, dataset, callables=[]):
