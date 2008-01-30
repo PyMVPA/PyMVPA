@@ -131,6 +131,7 @@ if __debug__:
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")
     debug.register('SG_KERNELS', "Internal shogun debug output for kernels")
+    debug.register('SG_PROGRESS', "Internal shogun progress bar during computation")
 
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
