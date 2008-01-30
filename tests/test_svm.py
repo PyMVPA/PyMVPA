@@ -17,11 +17,12 @@ from mvpa.clfs.svm import RbfNuSVMC, LinearNuSVMC
 from mvpa.clfs.libsvm import svmc
 
 from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal
+from tests_warehouse_clfs import sweepclfs, clfs
 
 class SVMTests(unittest.TestCase):
 
-    def testMultivariate(self):
-
+    @sweepclfs(clfs['LinearSVMC'])
+    def testMultivariate(self, l_clf):
         mv_perf = []
         mv_lin_perf = []
         uv_perf = []
@@ -30,7 +31,7 @@ class SVMTests(unittest.TestCase):
         orig_keys = nl_clf.param._params.keys()
         nl_param_orig = nl_clf.param._params.copy()
 
-        l_clf = LinearNuSVMC()
+        # l_clf = LinearNuSVMC()
 
         # for some reason order is not preserved thus dictionaries are not
         # the same any longer -- lets compare values
