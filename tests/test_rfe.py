@@ -22,11 +22,12 @@ from mvpa.algorithms.featsel import \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
-from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
+
+from tests_warehouse_clfs import *
 
 class SillySensitivityAnalyzer(SensitivityAnalyzer):
     """Simple one which just returns xrange[-N/2, N/2], where N is the
@@ -171,8 +172,9 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.ndiscarded == 3)
 
 
-    def testSensitivityBasedFeatureSelection(self):
-        svm = LinearNuSVMC()
+    @sweepclfs(svm=clfs['LinearSVMC'])
+    def testSensitivityBasedFeatureSelection(self, svm):
+        #svm = LinearNuSVMC()
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = LinearSVMWeights(svm)
@@ -251,8 +253,10 @@ class RFETests(unittest.TestCase):
                              list(range(10, wdata_nfeatures)))
 
 
-    def testRFE(self):
-        svm = LinearNuSVMC()
+    # TODO: should later on work for any clfs_with_sens
+    @sweepclfs(svm=clfs['LinearSVMC'])
+    def testRFE(self, svm):
+        #svm = LinearNuSVMC()
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = LinearSVMWeights(svm)
