@@ -199,7 +199,7 @@ class ClassifiersTests(unittest.TestCase):
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
-    # TODO: come up with nice idea on how to bring sweepclfs here
+    # TODO: come up with nice idea on how to bring sweepargs here
     def testMulticlassClassifier(self):
         svm = LinearNuSVMC()
         svm2 = LinearNuSVMC()
@@ -240,7 +240,7 @@ class ClassifiersTests(unittest.TestCase):
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
 
-    @sweepclfs(clf=clfs['all'])
+    @sweepargs(clf=clfs['all'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about

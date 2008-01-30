@@ -58,7 +58,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
-    @sweepclfs(svm=clfs['clfs_with_sens'])
+    @sweepargs(svm=clfs['clfs_with_sens'])
     def testAnalyzerWithSplitClassifier(self, svm):
         #svm = LinearNuSVMC()
         #svm_weigths = LinearSVMWeights(svm)
@@ -90,7 +90,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 msg="At the end we should have selected the right features")
 
 
-    @sweepclfs(svm=clfs['LinearSVMC'])
+    @sweepargs(svm=clfs['LinearSVMC'])
     def testLinearSVMWeights(self, svm):
         # first Yarik needs to figure out what the heck is happening ;-)
         #svm = LinearCSVMC()
@@ -109,7 +109,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
 
 
-    @sweepclfs(basic_clf=clfs['LinearSVMC'])
+    @sweepargs(basic_clf=clfs['LinearSVMC'])
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self, basic_clf):
         #basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)

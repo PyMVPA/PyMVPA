@@ -28,7 +28,7 @@ clfs={'LinearSVMC' : [libsvm.svm.LinearCSVMC(), libsvm.svm.LinearNuSVMC(), sg.sv
 clfs['clfs_with_sens'] = clfs['LinearSVMC']
 clfs['all'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC'] + [ kNN(k=1), RidgeReg() ]
 
-def sweepclfs(**kwargs):
+def sweepargs(**kwargs):
     """Decorator function to sweep over a given set of classifiers
 
     :Parameters:

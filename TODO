@@ -6,6 +6,11 @@
     rfe.py dataset, testdataset
 * ConfusionBasedError -> InternalError ?
 
+* Think about how to deal with Transformers to serve them with
+   basic_analyzers... May be transformer can be a an argument for any
+   analyzer! Ha! Indeed... may be later
+
+
 * Renaming of the modules
   transerror.py -> errors.py
 
