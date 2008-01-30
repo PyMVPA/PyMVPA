@@ -89,6 +89,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # weighted impact of SVs on decision, then for each feature
         # take absolute mean across SVs to get a single weight value
         # per feature
+
         return N.abs((svcoef * svs).mean(axis=0).A1)
 
     def __sg(self, dataset, callables=[]):
@@ -118,17 +119,13 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         if isinstance(self.clf.svm, shogun.Classifier.MultiClassSVM):
             raise NotImplementedError
         else:
-            self.offsets = self.clf.svm.get_bias()
-            svcoef = self.clf.svm.get_alphas()
-            svs = self.clf.svm.get_support_vectors()
-            res = (svcoef * svs).mean(axis=0)
-            return N.abs((svcoef * svs).mean(axis=0))
-
-        print res
-        from IPython.Shell import IPShellEmbed
-        ipshell = IPShellEmbed()
-        ipshell()
-
+            svm = self.clf.svm
+            self.offsets = svm.get_bias()
+            svcoef = N.matrix(svm.get_alphas())
+            svnums = svm.get_support_vectors()
+            svs = self.clf.traindataset.samples[svnums,:]
+            res = (svcoef * svs).mean(axis=0).A1
+            return N.abs(res)
 
 
     def _call(self, dataset, callables=[]):

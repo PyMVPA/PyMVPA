@@ -67,6 +67,8 @@ def _setdebug(obj, partname):
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format"""
 
+    if __debug__:
+        debug("SG_", "Converting data for shogun into RealFeatures")
     features = shogun.Features.RealFeatures(data.astype('double').T)
     _setdebug(features, 'Features')
     return features
@@ -140,6 +142,10 @@ class SVM_SG_Modular(Classifier):
 
         self.__kernel_params = kernel_params
 
+        # Need to store original data...
+        # TODO: keep 1 of them -- just __traindata or __traindataset
+        self.__traindataset = None
+
         # internal SG swig proxies
         self.__traindata = None
         self.__kernel = None
@@ -186,6 +192,7 @@ class SVM_SG_Modular(Classifier):
         if __debug__:
             debug("SG_", "Converting input data for shogun")
 
+        self.__traindataset = dataset
         self.__traindata = _tosg(dataset.samples)
 
         # create labels
@@ -312,6 +319,11 @@ class SVM_SG_Modular(Classifier):
 
     mclf = property(fget=lambda self: self.__mclf)
     """Multiclass classifier if it was used"""
+
+    traindataset = property(fget=lambda self: self.__traindataset)
+    """Dataset which was used for training
+
+    TODO -- might better become state variable I guess"""
 
 
 class LinearSVM(SVM_SG_Modular):
