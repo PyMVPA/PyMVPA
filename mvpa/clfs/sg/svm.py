@@ -303,13 +303,18 @@ class SVM_SG_Modular(Classifier):
 
         # XXX make it nice... now it is just stable ;-)
         if not self.__mclf is None:
+            self.__mclf.untrain()
             self.__mclf = None
         elif not self.__traindata is None:
             try:
+                self.__traindataset = None
+                self.__traindata = None
                 del self.__traindata
                 self.__traindata = None
                 del self.__kernel
                 self.__kernel = None
+                del self.__svm
+                self.__svm = None
             except:
                 pass
 
