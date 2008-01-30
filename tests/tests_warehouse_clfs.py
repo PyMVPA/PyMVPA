@@ -15,11 +15,15 @@ from mvpa.misc.state import Statefull
 
 # Define sets of classifiers
 from mvpa.clfs.svm import *
+from mvpa.clfs.ridge import *
+from mvpa.clfs.knn import *
 
 clfs={'LinearSVMC' : [LinearCSVMC(), LinearNuSVMC()],
-      'NonLinearSVMC' : [RbfCSVMC(), RbfNuSVMC()]
+      'NonLinearSVMC' : [RbfCSVMC(), RbfNuSVMC()],
+      'clfs_with_sens' : [LinearCSVMC(), LinearNuSVMC()],
       }
 
+clfs['all'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC'] + [ kNN(k=1), RidgeReg() ]
 
 def sweepclfs(**kwargs):
     """Decorator function to sweep over a given set of classifiers
@@ -50,7 +54,7 @@ def sweepclfs(**kwargs):
                         method(*args_, **kwargs_)
                     except AssertionError, e:
                         # Adjust message making it more informative
-                        e.__init__("%s on classifier %s" % (str(e), `clf`))
+                        e.__init__("%s on %s = %s" % (str(e), argname, `argvalue`))
                         # Reraise bloody exception ;-)
                         raise
         return do_sweep
