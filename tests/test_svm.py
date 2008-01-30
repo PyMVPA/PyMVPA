@@ -21,7 +21,7 @@ from tests_warehouse_clfs import sweepclfs, clfs
 
 class SVMTests(unittest.TestCase):
 
-    @sweepclfs(clfs['LinearSVMC'])
+    @sweepclfs(l_clf=clfs['LinearSVMC'])
     def testMultivariate(self, l_clf):
         mv_perf = []
         mv_lin_perf = []

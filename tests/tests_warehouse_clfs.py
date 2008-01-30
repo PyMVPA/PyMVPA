@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.clfs.classifier import Classifier
 from mvpa.misc.state import Statefull
 
 # Define sets of classifiers
@@ -20,7 +21,7 @@ clfs={'LinearSVMC' : [LinearCSVMC(), LinearNuSVMC()],
       }
 
 
-def sweepclfs(clfs):
+def sweepclfs(**kwargs):
     """Decorator function to sweep over a given set of classifiers
 
     :Parameters:
@@ -31,20 +32,29 @@ def sweepclfs(clfs):
     So this decorator aims to do that
     """
     def unittest_method(method):
-        def do_sweep(self):
-            for clf in clfs:
-                # clear classifier before its use
-                clf.untrain()
-                if isinstance(clf, Statefull):
-                    clf.states.reset()
-                # do actual call
-                try:
-                    method(self, clf)
-                except AssertionError, e:
-                    # Adjust message making it more informative
-                    e.__init__("%s on classifier %s" % (str(e), `clf`))
-                    # Reraise bloody exception ;-)
-                    raise
+        def do_sweep(*args_, **kwargs_):
+            for argname in kwargs.keys():
+                for argvalue in kwargs[argname]:
+                    if isinstance(argvalue, Classifier):
+                        # clear classifier before its use
+                        argvalue.untrain()
+                    if isinstance(argvalue, Statefull):
+                        argvalue.states.reset()
+                    # update kwargs_
+                    kwargs_[argname] = argvalue
+                    # do actual call
+                    try:
+                        if __debug__:
+                            debug('TEST', 'Running %s on args=%s and kwargs=%s' %
+                                  (method.__name__, `args_`, `kwargs_`))
+                        method(*args_, **kwargs_)
+                    except AssertionError, e:
+                        # Adjust message making it more informative
+                        e.__init__("%s on classifier %s" % (str(e), `clf`))
+                        # Reraise bloody exception ;-)
+                        raise
         return do_sweep
+    if len(kwargs) > 1:
+        raise NotImplementedError
     return unittest_method
 
