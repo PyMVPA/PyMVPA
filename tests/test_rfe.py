@@ -27,6 +27,7 @@ from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
 
+from tests_warehouse import sweepargs
 from tests_warehouse_clfs import *
 
 class SillySensitivityAnalyzer(SensitivityAnalyzer):

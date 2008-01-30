@@ -40,6 +40,18 @@ if __debug__:
     from mvpa.misc import debug
 
 
+def _deepcopyclf(clf):
+    """Deepcopying of a classifier.
+
+    If deepcopy fails -- tries to untrain it first so that there is no
+    swig bindings attached
+    """
+    try:
+        return deepcopy(clf)
+    except:
+        clf.untrain()
+        return deepcopy(clf)
+
 
 class Classifier(Statefull):
     """Abstract classifier class to be inherited by all classifiers
@@ -202,7 +214,7 @@ class Classifier(Statefull):
     def _postpredict(self, data, result):
         """Functionality after prediction is computed
         """
-        pass
+        self.predictions = result
 
 
     def _predict(self, data):
@@ -817,10 +829,10 @@ class MulticlassClassifier(CombinedClassifier):
             biclfs = []
             for i in xrange(len(ulabels)):
                 for j in xrange(i+1, len(ulabels)):
-                    clf = deepcopy(self.__clf)
+                    clf = _deepcopyclf(self.__clf)
                     biclfs.append(
                         BinaryClassifier(
-                            deepcopy(clf),
+                            clf,
                             poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
             if __debug__:
                 debug("CLFMC", "Created %d binary classifiers for %d labels" %
@@ -879,7 +891,7 @@ class SplitClassifier(CombinedClassifier):
             if __debug__:
                 debug("CLFSPL",
                       "Deepcopying %s for %s" % (`self.__clf`, `self`))
-            clf = deepcopy(self.__clf)
+            clf = _deepcopyclf(self.__clf)
             bclfs.append(clf)
         self.clfs = bclfs
 

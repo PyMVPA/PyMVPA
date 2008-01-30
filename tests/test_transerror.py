@@ -18,7 +18,7 @@ from mvpa.clfs.transerror import \
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from tests_warehouse import normalFeatureDataset
+from tests_warehouse import normalFeatureDataset, sweepargs
 from tests_warehouse_clfs import *
 
 class ErrorsTests(unittest.TestCase):

@@ -16,8 +16,8 @@ from sets import Set
 from mvpa.clfs.svm import RbfNuSVMC, LinearNuSVMC
 from mvpa.clfs.libsvm import svmc
 
-from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal
-from tests_warehouse_clfs import sweepargs, clfs
+from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal, sweepargs
+from tests_warehouse_clfs import clfs
 
 class SVMTests(unittest.TestCase):
 
