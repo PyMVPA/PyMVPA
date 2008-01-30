@@ -488,5 +488,5 @@ class Statefull(object):
         return "%s with %s" % (self.__class__.__name__, str(self.states))
 
     def __repr__(self):
-        return "<%s#%d>" % (self.__class__.__name__, id(self))
+        return "<%s.%s#%d>" % (self.__class__.__module__, self.__class__.__name__, id(self))
 
