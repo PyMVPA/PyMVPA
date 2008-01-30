@@ -47,12 +47,21 @@ def _setdebug(obj, partname):
         later on (TODO)
     """
     debugname = "SG_%s" % partname.upper()
+
     if __debug__ and debugname  in debug.active:
-        debug(debugname, "Setting verbosity for shogun.%s to M_INFO" %
+        debug("SG_", "Setting verbosity for shogun.%s instance to M_DEBUG" %
               partname)
-        obj.io.set_loglevel(shogun.Kernel.M_INFO)
+        obj.io.set_loglevel(shogun.Kernel.M_DEBUG)
+        # progress is enabled by default so don't bother
     else:
+        debug("SG_", "Setting verbosity for shogun.%s instance to M_EMERGENCY" %
+              partname + " and disabling progress reports")
         obj.io.set_loglevel(shogun.Kernel.M_EMERGENCY)
+        try:
+            obj.io.disable_progress()
+        except:
+            warning("Shogun version installed has no way to disable progress" +
+                    " reports")
 
 
 def _tosg(data):
@@ -248,8 +257,10 @@ class SVM_SG_Modular(Classifier):
         self.__kernel.init(self.__traindata, _tosg(data))
 
         if __debug__:
-            debug("SG_", "Classifing testing data")
-        values = self.__svm.classify().get_labels()
+            debug("SG_", "Classifying testing data")
+
+        values_ = self.__svm.classify()
+        values = values_.get_labels()
 
         if __debug__:
             debug("SG__", "Got values %s" % values)
@@ -326,3 +337,12 @@ class RbfCSVMC(SVM_SG_Modular):
         # init base class
         SVM_SG_Modular.__init__(self, C=C, kernel_type='RBF', kernel_params=[gamma], **kwargs)
 
+
+#if __debug__:
+#    if 'SG_PROGRESS' in debug.active:
+#        debug('SG_PROGRESS', 'Allowing SG progress bars')
+#    else:
+#        if 
+#import shogun.Library
+#io = shogun.Library.IO()
+#io.disable_progress()
