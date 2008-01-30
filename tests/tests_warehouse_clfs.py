@@ -52,6 +52,9 @@ def sweepclfs(**kwargs):
                             debug('TEST', 'Running %s on args=%s and kwargs=%s' %
                                   (method.__name__, `args_`, `kwargs_`))
                         method(*args_, **kwargs_)
+                        if isinstance(argvalue, Classifier):
+                            # clear classifier after its use -- just to be sure ;-)
+                            argvalue.untrain()
                     except AssertionError, e:
                         # Adjust message making it more informative
                         e.__init__("%s on %s = %s" % (str(e), argname, `argvalue`))
