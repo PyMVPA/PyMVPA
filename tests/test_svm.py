@@ -17,11 +17,11 @@ from mvpa.clfs.svm import RbfNuSVMC, LinearNuSVMC
 from mvpa.clfs.libsvm import svmc
 
 from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal
-from tests_warehouse_clfs import sweepclfs, clfs
+from tests_warehouse_clfs import sweepargs, clfs
 
 class SVMTests(unittest.TestCase):
 
-    @sweepclfs(l_clf=clfs['LinearSVMC'])
+    @sweepargs(l_clf=clfs['LinearSVMC'])
     def testMultivariate(self, l_clf):
         mv_perf = []
         mv_lin_perf = []

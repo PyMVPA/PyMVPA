@@ -172,7 +172,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.ndiscarded == 3)
 
 
-    @sweepclfs(svm=clfs['LinearSVMC'])
+    @sweepargs(svm=clfs['LinearSVMC'])
     def testSensitivityBasedFeatureSelection(self, svm):
         #svm = LinearNuSVMC()
 
@@ -254,7 +254,7 @@ class RFETests(unittest.TestCase):
 
 
     # TODO: should later on work for any clfs_with_sens
-    @sweepclfs(svm=clfs['LinearSVMC'])
+    @sweepargs(svm=clfs['LinearSVMC'])
     def testRFE(self, svm):
         #svm = LinearNuSVMC()
 
