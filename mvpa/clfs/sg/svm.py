@@ -259,6 +259,9 @@ class SVM_SG_Modular(Classifier):
         if __debug__:
             debug("SG_", "Classifying testing data")
 
+        # doesn't do any good imho although on unittests helps tiny bit... hm
+        #self.__svm.init_kernel_optimization()
+
         values_ = self.__svm.classify()
         values = values_.get_labels()
 
