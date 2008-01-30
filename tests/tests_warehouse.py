@@ -13,6 +13,11 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
+from mvpa.clfs.classifier import Classifier
+from mvpa.misc.state import Statefull
+
+if __debug__:
+    from mvpa.misc import debug
 
 def dumbFeatureDataset():
     data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
@@ -97,4 +102,44 @@ def getMVPattern(s2n):
     data = run1 + run2 + run3 + run4 + run5 + run6
 
     return data
+
+def sweepargs(**kwargs):
+    """Decorator function to sweep over a given set of classifiers
+
+    :Parameters:
+      clfs : list of `Classifier`
+        List of classifiers to run method on
+
+    Often some unittest method can be ran on multiple classifiers.
+    So this decorator aims to do that
+    """
+    def unittest_method(method):
+        def do_sweep(*args_, **kwargs_):
+            for argname in kwargs.keys():
+                for argvalue in kwargs[argname]:
+                    if isinstance(argvalue, Classifier):
+                        # clear classifier before its use
+                        argvalue.untrain()
+                    if isinstance(argvalue, Statefull):
+                        argvalue.states.reset()
+                    # update kwargs_
+                    kwargs_[argname] = argvalue
+                    # do actual call
+                    try:
+                        if __debug__:
+                            debug('TEST', 'Running %s on args=%s and kwargs=%s' %
+                                  (method.__name__, `args_`, `kwargs_`))
+                        method(*args_, **kwargs_)
+                        if isinstance(argvalue, Classifier):
+                            # clear classifier after its use -- just to be sure ;-)
+                            argvalue.untrain()
+                    except Exception, e:
+                        # Adjust message making it more informative
+                        e.__init__("%s on %s = %s" % (str(e), argname, `argvalue`))
+                        # Reraise bloody exception ;-)
+                        raise
+        return do_sweep
+    if len(kwargs) > 1:
+        raise NotImplementedError
+    return unittest_method
 
