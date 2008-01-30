@@ -21,6 +21,8 @@ import mvpa.clfs.libsvm.svm as svm_libsvm
 
 try:
     import mvpa.clfs.sg.svm as svm_sg
+    import shogun.Classifier
+
     __sg_present = True
 except ImportError:
     # no shogun library is available, thus no sensitivity could be even checked
@@ -112,11 +114,16 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
                 debug('SVM',
                       '! Delegating computing sensitivity to %s' % `anal`)
             return anal(dataset, callables)
-        self.offsets = self.clf.svm.get_bias()
-        svcoef = self.clf.svm.get_alphas()
-        svs = self.clf.svm.get_support_vectors()
-        res = (svcoef * svs).mean(axis=0)
-        return N.abs((svcoef * svs).mean(axis=0))
+
+        if isinstance(self.clf.svm, shogun.Classifier.MultiClass):
+            raise NotImplementedError
+        else:
+            self.offsets = self.clf.svm.get_bias()
+            svcoef = self.clf.svm.get_alphas()
+            svs = self.clf.svm.get_support_vectors()
+            res = (svcoef * svs).mean(axis=0)
+            return N.abs((svcoef * svs).mean(axis=0))
+
         print res
         from IPython.Shell import IPShellEmbed
         ipshell = IPShellEmbed()
