@@ -261,9 +261,17 @@ class StateCollection(object):
         """Disable state variable defined by `index` id"""
         self._action(index, StateVariable.enable, missingok=False, value=False)
 
-    def reset(self, index):
+    def reset(self, index=None):
         """Reset the state variable defined by `index`"""
-        self._action(index, StateVariable.reset, missingok=False)
+        if not index is None:
+            indexes = [ index ]
+        else:
+            indexes = self.names
+
+        # do for all
+        for index in indexes:
+            self._action(index, StateVariable.reset, missingok=False)
+
 
 
     def _changeTemporarily(self, enable_states=[],

@@ -115,7 +115,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
                       '! Delegating computing sensitivity to %s' % `anal`)
             return anal(dataset, callables)
 
-        if isinstance(self.clf.svm, shogun.Classifier.MultiClass):
+        if isinstance(self.clf.svm, shogun.Classifier.MultiClassSVM):
             raise NotImplementedError
         else:
             self.offsets = self.clf.svm.get_bias()

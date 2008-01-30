@@ -19,6 +19,7 @@ from mvpa.clfs.transerror import \
 from mvpa.misc.exceptions import UnknownStateError
 
 from tests_warehouse import normalFeatureDataset
+from tests_warehouse_clfs import *
 
 class ErrorsTests(unittest.TestCase):
 
@@ -78,10 +79,11 @@ class ErrorsTests(unittest.TestCase):
                              msg="Test if we get proper error value")
 
 
-    def testConfusionBasedError(self):
+    @sweepclfs(l_clf=clfs['LinearSVMC'])
+    def testConfusionBasedError(self, l_clf):
         train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=2,
                                      nonbogus_features=[0,1], snr=3, nchunks=1)
-        l_clf = LinearNuSVMC()
+        #l_clf = LinearNuSVMC()
         err = ConfusionBasedError(clf=l_clf)
         terr = TransferError(clf=l_clf)
 
