@@ -15,9 +15,10 @@ import numpy as N
 from mvpa.datasets.dataset import Dataset
 from mvpa.algorithms.featsel import FixedNElementTailSelector, FeatureSelectionPipeline, FractionTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
-from mvpa.clfs.classifier import SplitClassifier
-from mvpa.clfs.svm import LinearNuSVMC, LinearCSVMC, RbfNuSVMC
-from mvpa.clfs import libsvm, sg
+
+from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
+
+from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
 from mvpa.algorithms.rfe import RFE
@@ -25,6 +26,7 @@ from mvpa.algorithms.rfe import RFE
 from mvpa.misc.transformers import Absolute
 
 from tests_warehouse import *
+from tests_warehouse_clfs import *
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -56,7 +58,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
-    def __testAnalyzerWithSplitClassifier(self, svm):
+    @sweepclfs(svm=clfs['clfs_with_sens'])
+    def testAnalyzerWithSplitClassifier(self, svm):
+        #svm = LinearNuSVMC()
+        #svm_weigths = LinearSVMWeights(svm)
 
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( SplitClassifier(clf=svm),
@@ -85,7 +90,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 msg="At the end we should have selected the right features")
 
 
-    def __testLinearSVMWeights(self, svm):
+    @sweepclfs(svm=clfs['LinearSVMC'])
+    def testLinearSVMWeights(self, svm):
+        # first Yarik needs to figure out what the heck is happening ;-)
+        #svm = LinearCSVMC()
+
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( clf=svm,
                                enable_states=["sensitivities"] )
@@ -100,18 +109,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
 
 
-    def testLinearSVMWeights(self):
-        for clf in [ libsvm.svm.LinearNuSVMC(), libsvm.svm.LinearCSVMC(),
-                     sg.svm.LinearCSVMC()
-                     ]:
-            self.__testAnalyzerWithSplitClassifier(clf)
-            clf.untrain()
-            self.__testLinearSVMWeights(clf)
-
-
-
-    def __testFSPipelineWithAnalyzerWithSplitClassifier(self):
-        basic_clf = LinearNuSVMC()
+    @sweepclfs(basic_clf=clfs['LinearSVMC'])
+    def __testFSPipelineWithAnalyzerWithSplitClassifier(self, basic_clf):
+        #basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)
         #svm_weigths = LinearSVMWeights(svm)
 
