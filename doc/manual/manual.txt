@@ -92,7 +92,7 @@ over a C++ library. Most importantly it was easier to use. While a
 user of a C++ library is forced to write a significant amount of
 front-end code, users of the MVPA toolbox could simply load their data
 and start analyzing it. Besides that the MVPA toolbox offered a number
-of algorithms that were not implmented in the C++ library.
+of algorithms that were not implemented in the C++ library.
 
 .. _Princeton University: http://www.princeton.edu
 .. _MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
@@ -216,7 +216,7 @@ Suggestions
 ''''''''''''
 
 The following list of software is not required by PyMVPA, but it might make
-life a lot easier and lead to more efficiency when using PyMVPA.
+life a lot easier and leads to more efficiency when using PyMVPA.
 
   IPython_: frontend
 	If you want to use PyMVPA interactively it is strongly recommend to use
@@ -446,8 +446,8 @@ set will be removed, but after feature selection one will most likely want
 to know where the selected (or removed) features are in the original dataspace.
 To make use of the neuro-imaging example again: The most convenient way to
 access this kind of information would be a map of the selected features that
-can be overlayed over some anatomy image. This is trivial with PyMVPA, because
-the mapping is automatically updated upon feature selection.
+can be overlayed over some anatomical image. This is trivial with PyMVPA,
+because the mapping is automatically updated upon feature selection.
 
   >>> mdata.mapReverse(N.arange(1,mdata.nfeatures+1))
   array([[[ 1,  2,  3,  4],
@@ -698,7 +698,7 @@ a certain decision, therefore algorithms generating these maps are called
 
 When the feature sensitivities are known they can be used as a criterion for
 feature selection. However, possible selection strategies range from very
-simply *Go with the 10% best features* to more complicated algorithms like
+simple *Go with the 10% best features* to more complicated algorithms like
 *Recursive feature selection* (RFE_). Because `Sensitivity Analyzers`_ and
 selections strategies can be arbitrarily combined, PyMVPA offers a quite
 flexible framework for feature selection.
