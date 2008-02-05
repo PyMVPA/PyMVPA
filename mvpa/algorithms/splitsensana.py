@@ -36,6 +36,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
 
     def __init__(self, sensana,
                  splitter=NoneSplitter,
+                 combiner=lambda x:N.mean(x, axis=0),
                  postproc={},
                  **kwargs):
         """Cheap initialization.
@@ -47,6 +48,10 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
                 used to split the `Dataset`. By convention the first dataset
                 in the tuple returned by the splitter on each iteration is used
                 to compute the sensitivity map.
+            combiner
+                This functor will be called on an array of sensitivity maps
+                and the result will be returned by __call__(). The result of
+                a combiner must be an 1d ndarray.
             postproc : dict
                 Dictionary of post-processing functors. Each functor will be
                 called with the sequence of sensitivity maps. The resulting
@@ -65,6 +70,10 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """
         self.__splitter = splitter
         """Splitter instance used to split the datasets."""
+        self.__combiner = combiner
+        """Function to combine sensitivities to serve a result of
+        __call__()"""
+
         self.__postproc = postproc
         """Post-processing functors. Each functor will be called with the
         sequence of sensitivity maps. The resulting value is then made
@@ -99,5 +108,6 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
             self.post[k] = v(maps)
 
         # return all maps
-        return N.mean(maps, axis=0)
+        return self.__combiner(maps)
+
 
