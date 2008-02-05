@@ -1,4 +1,4 @@
-.. -*- mode: rst -*-
+.. -*- mode: rst; fill-column: 78 -*-
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -598,35 +598,82 @@ Stateful objects
 ~~~~~~~~~~~~~~~~
 
 Before looking at the different classifiers in more detail, it is important to
-mention another feature common to all of them. While their interface is simple,
-classifiers are in no way limited to report nothing but predictions. All
-classifiers implemenent an additional interface: the so called `State`.
-This means basically, that a classifier object can be treated similar to a
-Python dictionary. This dictionary contains additional classifier-specific
-information.
+mention another feature common to all of them. While their interface is
+simple, classifiers are in no way limited to report nothing but
+predictions. All classifiers implemenent an additional interface: the so
+called `Statefull`.  Objects of any class which is derived from `Statefull`
+have attributes (we refer to such attributes as state variables), which are
+conditionally computed and stored by PyMVPA. Such conditional storage and
+access is handy if a variable of interest might consume a lot of memory or
+needs intensive computation, and not needed in most (or in some) of the use
+cases.
 
-To continue the last example, each classifier, or more precisely every objects
-that implements the `State` interface can be asked to report existing
-state-related information:
+For instance, `Classifier` class defines `trained_labels` state variable,
+which just stores the unique labels for which classifier was trained. Since
+`trained_labels` stores meaningful information only for a trained classifier,
+attempt to access 'clf.trained_labels' before training would result in raised
+`UnknownStateError` exception since the classifier have not seen the data yet,
+thus does not know the labels. In the other words, 'clf' is not yet in the
+state to know anything about the labels, hence the name `Statefull` for such
+class. We will refer to instances of classes derived from `Statefull` as
+'statefull'.
+Any state variable can be enabled or disabled on per instance basis at any
+time of the execution.
 
-  >>> clf.states
-  ['values', 'predictions']
+To continue the last example, each classifier, or more precisely every
+statefull object can be asked to report existing state-related attributes:
 
-By default all classifiers provide two state variables `values` and
+  >>> clf.states.listing
+  ['predictions[enabled]: Reported predicted values',
+   'trained_labels[enabled]: What labels (unique) clf was trained on',
+   'training_confusion[enabled]: Result of learning: `ConfusionMatrix` (and corresponding learning error)',
+   'values: Internal values seen by the classifier']
+
+'clf.states' is an instance of `StateCollection` class which is a container
+for all state variables of the given class. Although values can be inquired
+or set (if state is enabled) operating directly on the statefull object
+
+  >>> clf.trained_labels
+  Set([0, 1])
+
+any other operation on the state (e.g. enabling, disabling) has to be carried
+out through the `StateCollection` '.states'.
+
+  >>> print clf.states
+  4 states: training_confusion+* values predictions+* trained_labels+*
+  >>> clf.states.enable('values')
+  >>> print clf.states
+  4 states: training_confusion+* values+ predictions+* trained_labels+*
+  >>> clf.states.disable('values')
+
+String representation of state collection mentioned above lists all state
+variables present accompanied with 2 markers: '+' for enabled state variable,
+and '*' for the variable which stores some value (but might have been disabled
+already thus having no '+' and attempts to reassign it would result in no
+action).
+
+.. TODO: Refactor
+
+By default all classifiers provide state variables `values`,
 `predictions`. The latter is simply the set of predictions that was returned
 by the last call to the objects `predict()` method. The former is heavily
 classifier-specific. By convention the `values` key provides access to the
 raw values that a classifier prediction is based on. Depending on the
-classifier this information might required significant ressources when stored.
-Therefore all states can be disabled or enabled (`disableState()`,
-`enableState()`) and their current status can be queried like this:
+classifier this information might required significant resources when stored.
+Therefore all states can be disabled or enabled (`states.disable()`,
+`states.enable()`) and their current status can be queried like this:
 
-  >>> clf.isStateActive('predictions')
+  >>> clf.states.isActive('predictions')
   True
-  >>> clf.isStateActive('values')
+  >>> clf.states.isActive('values')
   False
   >>> clf.enabledStates
-  ['predictions']
+  ['training_confusion', 'predictions', 'trained_labels']
+
+States can be enabled or disabled during statefull object construction, if
+`enable_states` or `disable_states` (or both) arguments, which store the list
+of desired state variables names, passed to the object constructor. Keyword
+'all' can be used to select all known states for that statefull object.
 
 
 Error Calculation
