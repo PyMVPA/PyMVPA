@@ -41,12 +41,11 @@ __docformat__ = 'restructuredtext'
 
 
 if not __debug__:
-# TODO: psyco should be moved upstairs anyways
-# Michael: Is this still valid? Can it be more upstairs?
     try:
         import psyco
         psyco.profile()
     except:
         from mvpa.misc import verbose
-        # XXX: Why is this associated with knn?
-        verbose(5, "Psyco online compilation is not enabled in knn")
+        verbose(2, "Psyco online compilation is not enabled")
+
+#from mvpa.dataset import *
