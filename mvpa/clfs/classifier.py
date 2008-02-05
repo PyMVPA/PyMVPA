@@ -15,7 +15,7 @@ Base Classifiers can be grouped according to their function as
   SplitClassifier
 :group ProxyClassifiers: BinaryClassifier MappedClassifier
   FeatureSelectionClassifier
-:group Combiners for CombinedClassifier: Combiner MaximalVote
+:group PredictionsCombiners for CombinedClassifier: PredictionsCombiner MaximalVote
 
 """
 
@@ -446,11 +446,11 @@ class ProxyClassifier(Classifier):
 # Various combiners for CombinedClassifier
 #
 
-class Combiner(Statefull):
+class PredictionsCombiner(Statefull):
     """Base class for combining decisions of multiple classifiers"""
 
     def train(self, clfs, dataset):
-        """Combiner might need to be trained
+        """PredictionsCombiner might need to be trained
 
         :Parameters:
           clfs : list of Classifier
@@ -476,7 +476,7 @@ class Combiner(Statefull):
 
 
 
-class MaximalVote(Combiner):
+class MaximalVote(PredictionsCombiner):
     """Provides a decision using maximal vote rule"""
 
     predictions = StateVariable(enabled=True,
@@ -489,7 +489,7 @@ class MaximalVote(Combiner):
         voting is not unambigous (ie two classes have equal number of
         votes
         """
-        Combiner.__init__(self)
+        PredictionsCombiner.__init__(self)
 
 
     def __call__(self, clfs, dataset):
@@ -555,7 +555,7 @@ class MaximalVote(Combiner):
 
 
 
-class ClassifierCombiner(Combiner):
+class ClassifierCombiner(PredictionsCombiner):
     """Provides a decision using training a classifier on predictions/values
 
     TODO
@@ -575,7 +575,7 @@ class ClassifierCombiner(Combiner):
             List of state variables stored in 'combined' classifiers, which
             to use as features for training this classifier
         """
-        Combiner.__init__(self)
+        PredictionsCombiner.__init__(self)
 
         self.__clf = clf
         """Classifier to train on `variables` states of provided classifiers"""
@@ -598,7 +598,7 @@ class ClassifierCombiner(Combiner):
 
 
 class CombinedClassifier(BoostedClassifier):
-    """`BoostedClassifier` which combines predictions using some `Combiner`
+    """`BoostedClassifier` which combines predictions using some `PredictionsCombiner`
     functor.
     """
 
@@ -608,7 +608,7 @@ class CombinedClassifier(BoostedClassifier):
         :Parameters:
           clfs : list of Classifier
             list of classifier instances to use
-          combiner : Combiner
+          combiner : PredictionsCombiner
             callable which takes care about combining multiple
             results into a single one (e.g. maximal vote)
           kwargs : dict
