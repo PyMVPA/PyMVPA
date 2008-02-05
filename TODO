@@ -1,3 +1,6 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+
 * selected_ids -> implement via MaskMapper? 
   yoh: it might be preferable to manipulate/expose MaskMapper instead
    of plain list of selected_ids within FeatureSelection classes
@@ -18,10 +21,6 @@
    whenever classifier is multiclass. Thus they have to be unpacked
    before proper use (unless it is simply a binary classifier).
 
-* Hide libsvm interface from user and provide a unique classifier for linear
-  SVM.
-* (features selected on all folds)/(features selected on any fold)
-
 * Regression tests: for instance using sample dataset which we have
    already, run doc/examples/searchlight.py and store output to
    validate against. Probably the best would be to create a regression
@@ -29,81 +28,39 @@
    various algorithms on it a verify the results against previousely
    obtained (and dumped to the disk)
 
-* Implement a better __deepcopy__ for maskmapper that does not call
-  _initMask(), but copies the whole state. This has to be done because
-  shallow copies of the mapping mask will results in modifications of the
-  source mapper.
+* Agree on how to describe parameters to functions. Describe in
+ NOTES.coding.
 
-* confirm with Michael and refactor:
+* feature_selector -- may be we should return a tuple
+  (selected_ids, discarded_ids)?
+  Michael: Is there any use case for that? ElementSelector can 'select' and
+           'discard' already. DO we need both simultaneously?
 
-  * Agree on how to describe parameters to functions. Describe in
-   NOTES.coding.
-
-  * feature_selector -- may be we should return a tuple
-    (selected_ids, discarded_ids)?
-
-
-Further PLAN:
--------------
-  a bit of profiling to gain at least on searchlight example
-
-  RFE   -- more concrete/unified and more talking
-
-  Features work:
-   Algorithms:
-   -- CrossValidation (provide 0-hypothesis testing)
-   -- RFE
-
-   Sensitivities:
-   -- Linear SVM sensitivity
-   -- Searchlight
-   ? Anova? GLM?
-
-   Classifiers:
-   -- Linear and Non-linear SVM
-   -- kNN
-   -- RFE-based classifier (takes arbitrary classifier and
-   sensitivityAnalyzer and deduces the subset of features with max
-   generalization to spit out the classifier)
-   -- BoostedClassifier (takes arbitrary subsets of features to
-   combine by voting/whatever multiple classifiers)
-
-  Basic documentation:
-   * Generic API description
-   * Examples (more is better) describing various use cases
+* Basic documentation: Examples (more is better) describing various use cases
    (everything in the cncre should be done in examples)
 
-  and finally release 0.1.0 version! ;-)
-  --------------------------------------
-  WORK ON CNCRE! If we get far and informative -- enough, if not --
-   proceed further:
+*  Non-linear SVM RFE
 
-  0-hypothesis testing to get better generalization estimate via MC
-   bootstraps of the data?
-
-  GenericSensitivityAnalyzers (AKA NoisePertubation) -- just computes
-   sensitivity by altering features for any classifier.
-
-  Non-linear SVM RFE
-
-  ParameterOptimizer
+*  ParameterOptimizer
    (might be also OptimizedClassifier which uses parameterOptimizer
     internally but as the result there is a classifier which
     automatically optimizes its parameters. It is close in idea to
     classifier based on RFE)
 
-  World domination! 0.2.0 version
-  --------------------------------------
-
-* For anyone (possible useful ideas):
-
-  provide for Dataset -- Dataset.__featattr which has attributes for
+* provide for Dataset -- Dataset.__featattr which has attributes for
    features similar to __dsattr way.
-
- maskmapper:
-  dsshape -> inShape
-  nfeatures -> outSize
 
  in  --> data         -> dataShape
  out --> features     ->
 
+* Let's forget about the 'callables' interface of the various algorithms for
+  two reasons:
+
+  1) Hardly any object really implements it.
+  2) Whatever one wants to do with callables should be doable with state
+     variables. If some information is missing in the state, this is a bug on
+     its own. Only in rare cases where the amount of information to be stored
+     is really huge this has some disadvantages. But given the ugliness of
+     'callables' maybe it is worth risking it.
+
+  Comments?
