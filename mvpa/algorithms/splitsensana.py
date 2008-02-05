@@ -32,7 +32,8 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
     via their respective keywords.
     """
 
-    post = StateVariable(doc="To store results of postprocessing calls")
+    maps = StateVariable(enabled=False,
+                         doc="To store maps per each split")
 
     def __init__(self, sensana,
                  splitter=NoneSplitter,
@@ -74,16 +75,6 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """Function to combine sensitivities to serve a result of
         __call__()"""
 
-        self.__postproc = postproc
-        """Post-processing functors. Each functor will be called with the
-        sequence of sensitivity maps. The resulting value is then made
-        available via the object's `State` interface using the key stored
-        in the `postproc` member.
-        """
-
-        self.post = {}
-        """Results of postprocessing"""
-
 
     def __call__(self, dataset, callables=[]):
         """Compute sensitivity maps for all dataset splits and run the
@@ -92,6 +83,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         Returns a list of all computed sensitivity maps. Postprocessing results
         are available via the objects `State` interface.
         """
+
         maps = []
 
         # splitter
@@ -99,13 +91,11 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
             # compute sensitivity using first dataset in split
             sensitivity = self.__sensana(split[0])
 
-            # XXX add callbacks to do some magic with the analyzer
-
+            # TODO add callbacks to do some magic with the analyzer
             maps.append(sensitivity)
 
-        # do all postprocessing on the sensitivity maps
-        for k, v in self.__postproc.iteritems():
-            self.post[k] = v(maps)
+        self.maps = maps
+        """Store the maps across splits"""
 
         # return all maps
         return self.__combiner(maps)
