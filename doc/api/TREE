@@ -73,7 +73,7 @@ DatasetMeasure / DatasetFunctor
 | \ provides vprop 'information' or similar
 | \ __call__(dataset) # no further args
 | |
-| ClfCrossValidation(clf, splitter=NoneSplitter, errorfx=, combinerfx=MeanFx)
+| ClfCrossValidation(clf, splitter=NoneSplitter, errorfx=, combiner=MeanFx)
 |  \__call__(dataset, callables=[])
 |   does what CrossValidation does now, but without the splitprocessor bloat
 |   just computing a single performance value (e.g. mean generalization error)

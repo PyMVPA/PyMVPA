@@ -47,7 +47,7 @@ class ClfCrossValidation(DataMeasure):
     def __init__(self,
                  transerror,
                  splitter=NoneSplitter(),
-                 combinerfx=N.mean,
+                 combiner=N.mean,
                  **kwargs):
         """
         Cheap initialization.
@@ -62,7 +62,7 @@ class ClfCrossValidation(DataMeasure):
                 first element is 'None' no training is performed. The second
                 dataset is used to generate predictions with the (trained)
                 classifier.
-            combinerfx : Functor
+            combiner : Functor
                 Used to aggregate the error values of all cross-validation
                 folds.
         """
@@ -70,7 +70,7 @@ class ClfCrossValidation(DataMeasure):
 
         self.__splitter = splitter
         self.__transerror = transerror
-        self.__combinerfx = combinerfx
+        self.__combiner = combiner
 
 
 
@@ -82,8 +82,8 @@ class ClfCrossValidation(DataMeasure):
 # splitter: %s
 # classifier: %s
 # errorfx: %s
-# combinerfx: %s""" % (indentDoc(self.__splitter), indentDoc(self.__clf),
-#                      indentDoc(self.__errorfx), indentDoc(self.__combinerfx))
+# combiner: %s""" % (indentDoc(self.__splitter), indentDoc(self.__clf),
+#                      indentDoc(self.__errorfx), indentDoc(self.__combiner))
 
 
     def __call__(self, dataset, callbacks=[]):
@@ -143,9 +143,9 @@ class ClfCrossValidation(DataMeasure):
         self.results = results
         """Store state variable if it is enabled"""
 
-        return self.__combinerfx(results)
+        return self.__combiner(results)
 
 
     splitter = property(fget=lambda self:self.__splitter)
     transerror = property(fget=lambda self:self.__transerror)
-    combinerfx = property(fget=lambda self:self.__combinerfx)
+    combiner = property(fget=lambda self:self.__combiner)
