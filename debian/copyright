@@ -10,14 +10,12 @@ Upstream Authors:
     Michael Hanke <michael.hanke@gmail.com>
     Yaroslav Halchenko <debian@onerussian.com>
 
-Copyright (C) 2006-2007 Michael Hanke, Yaroslav Halchenko
-
-
 License:
 
 The MIT License
 
-Copyright (c) 2006-2007 Michael Hanke <michael.hanke@gmail.com>
+Copyright (c) 2006-2008 Michael Hanke <michael.hanke@gmail.com>
+          (c) 2007-2008 Yaroslav Halchenko <debian@onerussian.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +37,7 @@ THE SOFTWARE.
 
 
 
-The Debian packaging is (C) 2006-2007, Michael Hanke <michael.hanke@gmail.com>
+The Debian packaging is (C) 2006-2008, Michael Hanke <michael.hanke@gmail.com>
 and is also covered by the MIT license (see above).
 
 
