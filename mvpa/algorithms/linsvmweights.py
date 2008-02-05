@@ -92,6 +92,16 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
 
         return N.abs((svcoef * svs).mean(axis=0).A1)
 
+    def __sg_helper(self, svm):
+        """Helper function to compute sensitivity for a single given SVM"""
+        self.offsets = svm.get_bias()
+        svcoef = N.matrix(svm.get_alphas())
+        svnums = svm.get_support_vectors()
+        svs = self.clf.traindataset.samples[svnums,:]
+        res = (svcoef * svs).mean(axis=0).A1
+        return res
+
+
     def __sg(self, dataset, callables=[]):
         #from IPython.Shell import IPShellEmbed
         #ipshell = IPShellEmbed()
@@ -116,16 +126,14 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
                       '! Delegating computing sensitivity to %s' % `anal`)
             return anal(dataset, callables)
 
-        if isinstance(self.clf.svm, shogun.Classifier.MultiClassSVM):
-            raise NotImplementedError
+        svm = self.clf.svm
+        sens = 0
+        if isinstance(svm, shogun.Classifier.MultiClassSVM):
+            for i in xrange(svm.get_num_svms()):
+                sens += self.__sg_helper(svm.get_svm(i))
         else:
-            svm = self.clf.svm
-            self.offsets = svm.get_bias()
-            svcoef = N.matrix(svm.get_alphas())
-            svnums = svm.get_support_vectors()
-            svs = self.clf.traindataset.samples[svnums,:]
-            res = (svcoef * svs).mean(axis=0).A1
-            return N.abs(res)
+            sens = N.abs(self.__sg_helper(svm))
+        return N.abs(sens)
 
 
     def _call(self, dataset, callables=[]):
