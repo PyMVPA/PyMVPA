@@ -432,7 +432,8 @@ class FractionTailSelector(TailSelector):
 
         :Parameters:
            felements : float (0,1.0]
-              Fraction of elements to select/discard.
+              Fraction of elements to select/discard. Note: Even when 0.0 is
+              specified at least one element will be selected.
         """
         TailSelector.__init__(self, **kargs)
         self._setFElements(felements)
