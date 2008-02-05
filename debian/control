@@ -17,7 +17,7 @@ Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-scipy
 Suggests: python-profiler, python-coverage
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nifti
+Recommends: python-nifti, python-psyco
 Description: multivariate pattern recognition with Python
  This package provides a Python module to ease pattern classification
  analyses of large datasets. It provides high-level abstraction of typical

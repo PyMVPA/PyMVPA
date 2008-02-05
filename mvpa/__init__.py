@@ -24,12 +24,12 @@ The mvpa package contains the following subpackages and modules:
 :author: `Michael Hanke <michael.hanke@gmail.com>`__
          `Yaroslav Halchenko <debian@onerussian.com>`__
 :requires: Python 2.4+
-:version: XXX
+:version: unreleased
 :see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
 :license: The MIT License
-:copyright: |copy| 2006-2007 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2006-2008 Michael Hanke <michael.hanke@gmail.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Per B. Sederberg <persed@princeton.edu>`__
@@ -42,11 +42,11 @@ __docformat__ = 'restructuredtext'
 
 if not __debug__:
 # TODO: psyco should be moved upstairs anyways
+# Michael: Is this still valid? Can it be more upstairs?
     try:
         import psyco
         psyco.profile()
     except:
         from mvpa.misc import verbose
+        # XXX: Why is this associated with knn?
         verbose(5, "Psyco online compilation is not enabled in knn")
-
-#from mvpa.dataset import *
