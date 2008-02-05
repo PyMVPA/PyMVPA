@@ -754,6 +754,23 @@ class Dataset(object):
             self._data['samples'] = self._data['samples'].astype(dtype)
 
 
+    def convertFeatureIds2FeatureMask(self, ids):
+        """Returns a boolean mask with all features in `ids` selected.
+
+        :Parameters:
+            ids: list or 1d array
+                To be selected features ids.
+
+        :Returns:
+            ndarray: dtype='bool'
+                All selected features are set to True; False otherwise.
+        """
+        fmask = N.repeat(False, self.nfeatures)
+        fmask[ids] = True
+
+        return fmask
+
+
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
