@@ -33,15 +33,15 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         sana = SplittingSensitivityAnalyzer(
                     svm_weigths,
                     NFoldSplitter(cvtype=1),
-                    postproc={'full': N.array})
+                    enable_states=['maps'])
 
         maps = sana(self.dataset)
 
         self.failUnless(len(maps) == 4)
-        self.failUnless(sana.states.isKnown('post'))
-        self.failUnless(sana.post.has_key('full'))
-        self.failUnless(sana.post['full'][:,0].mean() == maps[0])
-        self.failUnless(sana.post['full'].shape == (5,4))
+        self.failUnless(sana.states.isKnown('maps'))
+        allmaps = N.array(sana.maps)
+        self.failUnless(allmaps[:,0].mean() == maps[0])
+        self.failUnless(allmaps.shape == (5,4))
 
 
 def suite():
