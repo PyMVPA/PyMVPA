@@ -150,6 +150,10 @@ distribution is necessary.
 .. yoh: iirc we can't have 'debian' and 'debian/etch' but only smth like
 .. 'debian_etch'. So I wonder if that might make sense to have debian/sid
 .. right away instead of pure debian?
+   mh: IMHO this is not a real issue. We would probably not maintain
+   debian/etch, but instead whatever version is in etch, e.g. if 0.1.0-4 is in
+   stable, we might have deb/0.1.0-4 branch. But we could do debian/release
+   instead of just debian. Not sure if that is necessary though.
 
 
 Commits
