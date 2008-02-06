@@ -37,10 +37,20 @@ Code Formatting
 ---------------
 pylint
    Code should be conformant with Pylint_ driven by config located at
-   `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback
-   notation (classes start with capitals, functions with lowercase)
-   and indentation using 4 spaces (ie no tabs) Variables are low-case
-   and can have up to 2 _s.
+   `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback notation
+   (classes start with capitals, functions with lowercase) and indentation
+   using 4 spaces (ie no tabs) Variables are low-case and can have up to 2
+   _s. To engage, use 1 of 3 methods:
+
+   - place it in *~/.pylintrc* for user-wide installation
+   - use within a call to pylint::
+
+	   pylint --rcfile=$PWD/doc/misc/pylintrc
+
+   - export environment variable from mvpa sources top directory::
+
+       export   PYLINTRC=$PWD/doc/misc/pylintrc
+
 2 empty lines
    According to original python style guidelines: single empty line to
    separate methods within class, and 2 empty lines between classes
