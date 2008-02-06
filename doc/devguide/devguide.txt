@@ -9,6 +9,10 @@
 PyMVPA Developer Guidelines
 ===========================
 
+.. contents:: Table of Contents
+.. sectnum::
+
+
 Documentation
 -------------
 Documentation of the code and supplementary material (such as this
@@ -21,7 +25,8 @@ quick demo.
 
 
 Code Documentation
-__________________
+~~~~~~~~~~~~~~~~~~
+
 Code must be documented in accordance to `epydoc + reST usage
 guidelines <http://epydoc.sourceforge.net/manual-othermarkup.html>`__
 
@@ -73,7 +78,7 @@ Naming Conventions
 ------------------
 
 Function Arguments
-__________________
+~~~~~~~~~~~~~~~~~~
 
 dataset vs data
   Ones which are supposed to be derived from Dataset_ class should
@@ -105,14 +110,56 @@ Tests
   unittest which might help to prevent it in the future refactoring
 * Every new feature should have a unittest
 
+
+Git Repository
+--------------
+
+Layout
+~~~~~~
+
+The repository is structured by a number of branches. Each developer should
+prefix his/her branches with a unique string plus '/' (maybe initials or
+similar). Currently there are:
+
+  :mh: Michael Hanke
+  :per: Per B. Sederberg
+  :yoh: Yaroslav Halchenko
+
+Each developer can have an infinite number of branches. If the number of
+branches causes gitk output to exceed a usual 19" screen, the respective
+developer has to spend some bugs on new screens for all others ;-)
+
+The main release branch ist called *master*. This is a merge-only branch.
+Features finished or updated by some developer are merge from the corresponding
+branch into *master*. At a certain point the current state of *master* is
+tagged -- a release is done.
+
+Only usable feature should end-up in *master*. Ideally *master* should be
+releasable at all times. Something must not be merged into master if *any* unit
+test fails.
+
+Additonally, there are packaging branches. They are labeled after the package
+target (e.g. *debian* for a Debian package). Releases are merged into the
+packaging branches, packaging get updated if necessary and the branch gets
+tagged when a package version is released. Packaging branches may have
+sub-branches, e.g. when a maintainance release for a package in some stable
+distribution is necessary.
+
+
 Commits
--------
-* *BF* : bug fix
-* *RF* : refactoring
-* *NF* : new feature
-* *OPT* : optimization
-* *BK* : breaks something and/or tests fail
-* *PL* : making pylint happier
+~~~~~~~
+
+Please prefix all commit summaries with one (or more) of the following labels.
+This should help others to easily classify the commits into meaningful
+categories:
+
+  * *BF* : bug fix
+  * *RF* : refactoring
+  * *NF* : new feature
+  * *OPT* : optimization
+  * *BK* : breaks something and/or tests fail
+  * *PL* : making pylint happier
+
 
 .. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 .. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
