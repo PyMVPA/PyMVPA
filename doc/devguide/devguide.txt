@@ -1,5 +1,5 @@
-.. -*- mode: rst; fill-column: 78 -*-
-
+.. -*- mode: rst; fill-column: 79 -*-
+.. ex: set tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -16,20 +16,18 @@ PyMVPA Developer Guidelines
 
 Documentation
 -------------
-Documentation of the code and supplementary material (such as this
-file) should be done in reST_ (reStructuredText) light markup
-language.  See `Demo
+Documentation of the code and supplementary material (such as this file)
+should be done in reST_ (reStructuredText) light markup language.  See `Demo
 <http://docutils.sourceforge.net/docs/user/rst/cheatsheet.txt>`__ or a
-`Cheatsheet
-<http://docutils.sourceforge.net/docs/user/rst/demo.txt>`__ for a
+`Cheatsheet <http://docutils.sourceforge.net/docs/user/rst/demo.txt>`__ for a
 quick demo.
 
 
 Code Documentation
 ~~~~~~~~~~~~~~~~~~
 
-Code must be documented in accordance to `epydoc + reST usage
-guidelines <http://epydoc.sourceforge.net/manual-othermarkup.html>`__
+Code must be documented in accordance to `epydoc + reST usage guidelines
+<http://epydoc.sourceforge.net/manual-othermarkup.html>`__
 
 Parameter lists should be written as definition lists and not bulleted lists.
 For an example how to do it right, please see mvpa/datasets/dataset.py
@@ -132,28 +130,20 @@ developer has to spend some bucks (or euries) on new screens for all others
 ;-)
 
 The main release branch is called *master*. This is a merge-only branch.
-Features finished or updated by some developer are merged from the corresponding
-branch into *master*. At a certain point the current state of *master* is
-tagged -- a release is done.
+Features finished or updated by some developer are merged from the
+corresponding branch into *master*. At a certain point the current state of
+*master* is tagged -- a release is done.
 
 Only usable feature should end-up in *master*. Ideally *master* should be
-releasable at all times. Something must not be merged into master if *any* unit
-test fails.
+releasable at all times. Something must not be merged into master if *any*
+unit test fails.
 
 Additionally, there are packaging branches. They are labeled after the package
 target (e.g. *debian* for a Debian package). Releases are merged into the
 packaging branches, packaging get updated if necessary and the branch gets
-tagged when a package version is released. Packaging branches may have
-sub-branches, e.g. when a maintenance release for a package in some stable
-distribution is necessary.
-
-.. yoh: iirc we can't have 'debian' and 'debian/etch' but only smth like
-.. 'debian_etch'. So I wonder if that might make sense to have debian/sid
-.. right away instead of pure debian?
-   mh: IMHO this is not a real issue. We would probably not maintain
-   debian/etch, but instead whatever version is in etch, e.g. if 0.1.0-4 is in
-   stable, we might have deb/0.1.0-4 branch. But we could do debian/release
-   instead of just debian. Not sure if that is necessary though.
+tagged when a package version is released. Maintenance (as well as backport)
+releases should be gone under *maint/codename.flavor* (e.g. *maint/lenny*,
+*maint/lenny.security*, *maint/sarge.bpo*).
 
 
 Commits
