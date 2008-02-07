@@ -174,3 +174,29 @@ categories:
 .. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 .. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
 .. _Pylint: http://packages.debian.org/unstable/python/pylint
+
+
+Changelog
+---------
+
+The PyMVPA changelog is located in the toplevel directory of the source tree
+in the `Changelog` file. The content of this file should be formated as
+restructured text to make it easy to put it into manual appendix and on the
+website.
+
+This changelog should neither replicate the VCS commit log nor the
+distribution packaging changelogs (e.g. debian/changelog). It should be
+focused on the user perspective and is intended to list rather macroscopic
+and/or important changes to the module, like feature additions or bugfixes in
+the algorithms with implications to the performance or validity of results.
+
+It may list references to 3rd party bugtrackers, in case the reported bugs
+match the criteria listed above.
+
+Changelog entries should be tagged with the name of the developer(s) (mainly)
+involved in the modification -- initials are sufficient for people
+contributing regularly.
+
+Changelog entries should be added whenever something is ready to be merged
+into the master branch, not necessarily with a release already approaching.
+
