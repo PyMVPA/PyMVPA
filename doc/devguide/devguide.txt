@@ -1,4 +1,5 @@
-.. -*- mode: rst -*-
+.. -*- mode: rst; fill-column: 79 -*-
+.. ex: set tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -15,20 +16,18 @@ PyMVPA Developer Guidelines
 
 Documentation
 -------------
-Documentation of the code and supplementary material (such as this
-file) should be done in reST_ (reStructuredText) light markup
-language.  See `Demo
+Documentation of the code and supplementary material (such as this file)
+should be done in reST_ (reStructuredText) light markup language.  See `Demo
 <http://docutils.sourceforge.net/docs/user/rst/cheatsheet.txt>`__ or a
-`Cheatsheet
-<http://docutils.sourceforge.net/docs/user/rst/demo.txt>`__ for a
+`Cheatsheet <http://docutils.sourceforge.net/docs/user/rst/demo.txt>`__ for a
 quick demo.
 
 
 Code Documentation
 ~~~~~~~~~~~~~~~~~~
 
-Code must be documented in accordance to `epydoc + reST usage
-guidelines <http://epydoc.sourceforge.net/manual-othermarkup.html>`__
+Code must be documented in accordance to `epydoc + reST usage guidelines
+<http://epydoc.sourceforge.net/manual-othermarkup.html>`__
 
 Parameter lists should be written as definition lists and not bulleted lists.
 For an example how to do it right, please see mvpa/datasets/dataset.py
@@ -37,11 +36,21 @@ For an example how to do it right, please see mvpa/datasets/dataset.py
 Code Formatting
 ---------------
 pylint
-   Code should be confromant with Pylint_ driven by config located at
-   `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback
-   notation (classes start with capitals, functions with lowercase)
-   and indentation using 4 spaces (ie no tabs) Variables are low-case
-   and can have up to 2 _s.
+   Code should be conformant with Pylint_ driven by config located at
+   `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback notation
+   (classes start with capitals, functions with lowercase) and indentation
+   using 4 spaces (ie no tabs) Variables are low-case and can have up to 2
+   _s. To engage, use 1 of 3 methods:
+
+   - place it in *~/.pylintrc* for user-wide installation
+   - use within a call to pylint::
+
+	   pylint --rcfile=$PWD/doc/misc/pylintrc
+
+   - export environment variable from mvpa sources top directory::
+
+       export   PYLINTRC=$PWD/doc/misc/pylintrc
+
 2 empty lines
    According to original python style guidelines: single empty line to
    separate methods within class, and 2 empty lines between classes
@@ -127,23 +136,24 @@ similar). Currently there are:
 
 Each developer can have an infinite number of branches. If the number of
 branches causes gitk output to exceed a usual 19" screen, the respective
-developer has to spend some bugs on new screens for all others ;-)
+developer has to spend some bucks (or euries) on new screens for all others
+;-)
 
-The main release branch ist called *master*. This is a merge-only branch.
-Features finished or updated by some developer are merge from the corresponding
-branch into *master*. At a certain point the current state of *master* is
-tagged -- a release is done.
+The main release branch is called *master*. This is a merge-only branch.
+Features finished or updated by some developer are merged from the
+corresponding branch into *master*. At a certain point the current state of
+*master* is tagged -- a release is done.
 
 Only usable feature should end-up in *master*. Ideally *master* should be
-releasable at all times. Something must not be merged into master if *any* unit
-test fails.
+releasable at all times. Something must not be merged into master if *any*
+unit test fails.
 
-Additonally, there are packaging branches. They are labeled after the package
+Additionally, there are packaging branches. They are labeled after the package
 target (e.g. *debian* for a Debian package). Releases are merged into the
 packaging branches, packaging get updated if necessary and the branch gets
-tagged when a package version is released. Packaging branches may have
-sub-branches, e.g. when a maintainance release for a package in some stable
-distribution is necessary.
+tagged when a package version is released. Maintenance (as well as backport)
+releases should be gone under *maint/codename.flavor* (e.g. *maint/lenny*,
+*maint/lenny.security*, *maint/sarge.bpo*).
 
 
 Commits
