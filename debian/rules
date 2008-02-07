@@ -9,4 +9,10 @@ include /usr/share/cdbs/1/class/python-distutils.mk
 clean::
 	$(MAKE) distclean
 
-#DEB_COMPRESS_EXCLUDE := .py
+build/python-mvpa-doc::
+	# should actually should be 'website', but takes to much ressources to
+	# build on my laptop :(
+	$(MAKE) manual
+	$(MAKE) printables
+
+DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt

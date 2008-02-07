@@ -28,5 +28,7 @@ Description: multivariate pattern recognition with Python
 Package: python-mvpa-doc
 Architecture: all
 Description: manual, API documentation and examples for PyMVPA
- This package contains the PyMVPA manual in HTML and PDF format, as well as
- the API documentation as Epydoc-generated HTML.
+ This package contains the PyMVPA documentation in HTML, TXT and PDF format,
+ as well as the API documentation as Epydoc-generated HTML.
+ .
+ Addtionally all example scripts shipped with the PyMVPA sources are included.

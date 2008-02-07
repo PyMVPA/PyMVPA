@@ -1,0 +1,4 @@
+build/html usr/share/doc/python-mvpa-doc/
+build/pdf/*.pdf usr/share/doc/python-mvpa-doc/pdf/
+doc/examples usr/share/doc/python-mvpa-doc/
+doc/{devguide,manual,website}/*.txt usr/share/doc/python-mvpa-doc/txt/
