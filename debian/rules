@@ -3,10 +3,10 @@
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 DEB_PYTHON_SYSTEM = pysupport
+DEB_PYTHON_MODULE_PACKAGE = python-mvpa
 include /usr/share/cdbs/1/class/python-distutils.mk
 
 clean::
 	$(MAKE) distclean
 
 #DEB_COMPRESS_EXCLUDE := .py
-#DEB_INSTALL_CHANGELOGS_ALL := CHANGELOG

@@ -23,3 +23,10 @@ Description: multivariate pattern recognition with Python
  .
  While it is not limited to neuroimaging data it is eminently suited for such
  datasets.
+
+
+Package: python-mvpa-doc
+Architecture: all
+Description: manual, API documentation and examples for PyMVPA
+ This package contains the PyMVPA manual in HTML and PDF format, as well as
+ the API documentation as Epydoc-generated HTML.
