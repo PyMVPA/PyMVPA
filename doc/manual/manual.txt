@@ -255,9 +255,7 @@ development code the PyMVPA Git_ repository is publicly available. To view the
 repository, please point your webbrowser to gitweb:
 http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 
-To clone (aka checkout) the PyMVPA repository simply do:
-
-::
+To clone (aka checkout) the PyMVPA repository simply do::
 
   git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
@@ -266,11 +264,35 @@ working directory, that contains the PyMVPA repository.
 
 .. _Git: http://git.or.cz/
 
+To build PyMVPA from source simply enter the root of the source tree (obtained
+by either extracting the source package or cloning the repository) and run::
+
+  python setup.py build_ext
+
+To be able to do this you need to have SWIG_ and the development files of
+libsvm_ (headers and library) installed on your system. Depending on where you
+installed them, it might be necessary to specify the full path to them with the
+`--include-dirs`, `--library-dirs` and `--swig` options.
+
+.. _SWIG: http://www.swig.org
+.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+
+.. Actually, AFAIK upstream libsvm does not easily allow for compiling a libsvm
+   static or shared lib. Or am I wrong?
+
+Now, you are ready to install the package. Do this by invoking::
+
+  python setup.py install
+
+Most likely you need superuser privileges for this step. If you want to install
+in a non-standard location, please take a look at the `--prefix` option. You
+also might want to consider `--optimize`.
+
+Now you should be ready to use PyMVPA on your system.
+
 
 Installation
 ~~~~~~~~~~~~
-
-(to be written)
 
 .. Point to source and binary distribution. Preach idea of free software.
    Step by step guide to install it on difficult systems like Windows.
@@ -278,6 +300,11 @@ Installation
 .. Don't forget to mention that the only reasonable way is to use this piece
    of software (like every other piece) is under Debian! Also mention that
    Ubuntu is no excuse ;-)
+
+If there are no binary packages for your operating system or platform yet, you
+need to build from source. Please refer to `Building from Source`_ for more
+information.
+
 
 
 How to cite PyMVPA
@@ -292,7 +319,12 @@ How to cite PyMVPA
 Credits
 ~~~~~~~
 
-(to be written)
+  * NumPy
+  * libsvm
+  * IPython
+  * Debian (for hosting, environment, ...)
+  * FOSS community
+  * Credits to individual labs if they officially donate time ;-)
 
 .. Please add some notes when you think that you should give credits to someone
    that enables or motivates you to work on PyMVPA ;-)
