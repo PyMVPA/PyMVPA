@@ -11,7 +11,8 @@ PyMVPA Manual
 
 :Authors:
   Michael Hanke <michael.hanke@gmail.com>;
-  Yaroslav O. Halchenko <debian@onerussian.com>
+  Yaroslav O. Halchenko <debian@onerussian.com>;
+  Per B. Sederberg <psederberg@gmail.com>
 :Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
 :Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
 :IRC: #exppsy on OTFC/Freenode
@@ -114,19 +115,20 @@ should remain truely free-software, remain fully object-oriented (in contrast
 to the MVPA toolbox), but should be at least as easy to use and extensible
 as the MVPA toolbox.
 
-After evaluating some possibilities Michael decided that `Python`_ is the
-most promissing candidate that was fully capable to fulfil the intended
-development goal. Python is a very powerful language that magically combines
-the possibility to write really fast code and a simplicity that allows to
-learn the basic concepts within a few days.
+After evaluating some possibilities Michael decided that `Python`_ is the most
+promising candidate that was fully capable to fulfill the intended development
+goal. Python is a very powerful language that magically combines the
+possibility to write really fast code and a simplicity that allows to learn
+the basic concepts within a few days.
 
 One of the major advantages of Python is the availablity of a huge amount of
 so called *modules*. Modules can include extensions written in a hard-core
-language like C and therefore allow to incorporate high-performance code
-without having to leave the Python environment. Additionally some Python
-modules even provide links to other toolkits. For example `RPy`_ allows to use
-the full functionality of R_ from inside Python. Even Matlab can be used via
-some Python modules (see PyMatlab_ for an example).
+language like C (or even FORTRAN) and therefore allow one to incorporate
+high-performance code without having to leave the Python
+environment. Additionally some Python modules even provide links to other
+toolkits. For example `RPy`_ allows to use the full functionality of R_ from
+inside Python. Even Matlab can be used via some Python modules (see PyMatlab_
+for an example).
 
 .. _RPy: http://rpy.sourceforge.net/
 .. _R: http://www.r-project.org
@@ -136,7 +138,7 @@ After the decision for Python was made, Michael started development with a
 simple k-Nearest-Neighbour classifier and a cross-validation class. Using
 the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
-with EEG data (3d) or even non-neuroimaging datasets.
+with EEG/MEG data (3d) or even non-neuroimaging datasets.
 
 By September 2007 PyMVPA included support for reading and writing datasets
 from and to the `NIfTI format`_, kNN and Support Vector Machine classifiers,
@@ -164,7 +166,7 @@ can benefit from the simplicity of the Python language and acquire this
 knowledge within a few days by studying some of the many tutorials available
 on the web.
 
-.. links to good tutorials
+.. links to good tutorials (numpy for matlab users, dive into python, ...)
 
 As PyMVPA is about pattern recognition a basic understanding about machine
 learning principles is necessary to correctly apply methods with PyMVPA to
@@ -229,11 +231,16 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 	files and MELODIC output directories). This makes it fairly easy to e.g.
 	use FSL's implementation of ICA for data reduction and proceed with
 	analyzing the estimated ICs in PyMVPA.
+  AFNI_: preprocessing and analysis of (f)MRI data
+        Similar to FSL, AFNI is a free package for processing (f)MRI data.
+	Though its primary data file format is BRIK files, it has the ability
+	to read and write NIFTI files, which easily integrate with PyMVPA.
 
 .. _IPython: http://ipython.scipy.org
 .. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
 .. _showmedo.com: http://showmedo.com
 .. _FSL: http://www.fmrib.ox.ac.uk/fsl/
+.. _AFNI: http://afni.nimh.nih.gov/afni/
 
 
 Obtaining PyMVPA
