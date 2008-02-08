@@ -39,7 +39,7 @@ clean:
 	-@$(MAKE) distclean
 
 distclean:
-	-@rm -f MANIFEST Changelog
+	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/libsvm/*.{c,so} \
 		mvpa/clfs/libsvm/svmc.py \
 		mvpa/clfs/libsvm/svmc_wrap.cpp \
@@ -155,8 +155,6 @@ pylint:
 orig-src: distclean debian-clean 
 	# clean existing dist dir first to have a single source tarball to process
 	-rm -rf dist
-	# the debian changelog is also the upstream changelog
-	cp debian/changelog Changelog
 
 	if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
 			printf "WARNING: Changelog version does not match tarball version!\n" ;\
