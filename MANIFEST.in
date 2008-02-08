@@ -1,6 +1,5 @@
 include AUTHOR COPYING MANIFEST.in
-include Changelog TODO
-include tests/data/*
+include Changelog TODO Makefile
 recursive-include doc *
 recursive-include tools *
-recursive-include snippets *
+recursive-include tests *
