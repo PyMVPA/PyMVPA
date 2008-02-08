@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 
 
-class NullHypothesisTest(Statefull):
+class NullHypothesisTest(Stateful):
     # XXX this should be the baseclass of a bunch of tests with more
     # sophisticated tests, perhaps making more assumptions about the data
     # TODO find a nicer name for it
@@ -58,7 +58,7 @@ class NullHypothesisTest(Statefull):
                 will be performed to determine the distribution under the null
                 hypothesis.
         """
-        Statefull.__init__(self)
+        Stateful.__init__(self)
 
         self.__trans_error = transerror
         """`TransferError` instance used to compute all errors."""

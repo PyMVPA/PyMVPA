@@ -6,8 +6,8 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""This is a `SensitivityAnalyzer` that uses a `DataMeasure` and selective
-noise perturbation to compute a sensitivity map.
+"""This is a `SensitivityAnalyzer` that uses a `ScalarDatasetMeasure` and
+selective noise perturbation to compute a sensitivity map.
 """
 
 __docformat__ = 'restructuredtext'
@@ -23,15 +23,15 @@ from mvpa.algorithms.datameasure import SensitivityAnalyzer
 
 
 class PerturbationSensitivityAnalyzer(SensitivityAnalyzer):
-    """This is a `SensitivityAnalyzer` that uses a `DataMeasure` and selective
-    noise perturbation to compute a sensitivity map.
+    """This is a `SensitivityAnalyzer` that uses a `ScalarDatasetMeasure` and
+    selective noise perturbation to compute a sensitivity map.
 
-    First the `DataMeasure` computed using the original dataset. Next the data
-    measure is computed multiple times each with a single feature in the dataset
-    perturbed by noise. The resulting difference in the `DataMeasure` is used
-    as the sensitivity for the respective perturbed feature. Large differences
-    are treated as an indicator of a feature having great impact on the
-    `DataMeasure`.
+    First the `ScalarDatasetMeasure` computed using the original dataset. Next
+    the data measure is computed multiple times each with a single feature in
+    the dataset perturbed by noise. The resulting difference in the
+    `ScalarDatasetMeasure` is used as the sensitivity for the respective
+    perturbed feature. Large differences are treated as an indicator of a
+    feature having great impact on the `ScalarDatasetMeasure`.
 
     The computed sensitivity map might have positive and negative values!
     """

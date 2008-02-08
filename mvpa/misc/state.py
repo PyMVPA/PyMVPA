@@ -172,7 +172,7 @@ class StateCollection(object):
         operation = { True: copy.deepcopy,
                       False: copy.copy }[deep]
 
-        if isinstance(fromstate, Statefull):
+        if isinstance(fromstate, Stateful):
             fromstate = fromstate.states
 
         self.enabled = fromstate.enabled
@@ -282,11 +282,11 @@ class StateCollection(object):
         `enable _states`. Use `resetEnabledTemporarily` to reset
         to previous state of enabled.
 
-        `other` can be a Statefull object or StateCollection
+        `other` can be a Stateful object or StateCollection
         """
         self.__storedTemporarily.append(self.enabled)
         other_ = other
-        if isinstance(other, Statefull):
+        if isinstance(other, Stateful):
             other = other.states
 
         if not other is None:
@@ -361,9 +361,9 @@ class StateCollection(object):
         return self.__owner
 
     def _setOwner(self, owner):
-        if not isinstance(owner, Statefull):
+        if not isinstance(owner, Stateful):
             raise ValueError, \
-                  "Owner of the StateCollection must be Statefull object"
+                  "Owner of the StateCollection must be Stateful object"
         self.__owner = owner
 
 
@@ -423,7 +423,7 @@ class statecollector(type):
 
 
 
-class Statefull(object):
+class Stateful(object):
     """Base class for stateful objects.
 
     Classes inherited from this class gain ability to provide state
@@ -452,10 +452,10 @@ class Statefull(object):
         # some attributes most probably are not yet set in the original
         # child's __str__
         #if __debug__:
-        #    debug("ST", "Statefull.__init__ done for %s" % self)
+        #    debug("ST", "Stateful.__init__ done for %s" % self)
 
         if __debug__:
-            debug("ST", "Statefull.__init__ was done for %s id %s" \
+            debug("ST", "Stateful.__init__ was done for %s id %s" \
                 % (self.__class__, id(self)))
 
 

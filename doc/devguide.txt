@@ -95,13 +95,13 @@ dataset vs data
   expected to be simply a NumPy_ array, suffix should be ``data``. For
   example::
 
-    class Classifier(Statefull):
+    class Classifier(Stateful):
        ...
        def train(self, dataset):
 	   ...
        def predict(self, data):
 
-    class FeatureSelection(Statefull):
+    class FeatureSelection(Stateful):
 	   ...
        def __call__(self, dataset, testdataset, callables=[]):
 
