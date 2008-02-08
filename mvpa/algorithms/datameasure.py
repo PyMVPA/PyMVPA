@@ -22,14 +22,14 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import copy
 
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier
 from mvpa.clfs.svm import LinearSVM
 
 if __debug__:
     from mvpa.misc import debug
 
-class DatasetMeasure(Statefull):
+class DatasetMeasure(Stateful):
     """A measure computed from a `Dataset` (base class).
 
     All subclasses shall get all necessary parameters via their constructor,
@@ -38,7 +38,7 @@ class DatasetMeasure(Statefull):
     """
     def __init__(self, *args, **kwargs):
         """Does nothing."""
-        Statefull.__init__(self, **kwargs)
+        Stateful.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, callbacks=[]):

@@ -20,7 +20,7 @@ from math import log10, ceil
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 
 if __debug__:
     from mvpa.misc import debug
@@ -275,7 +275,7 @@ class ConfusionMatrix(object):
 
 
 
-class ClassifierError(Statefull):
+class ClassifierError(Stateful):
     """Compute the some error of a (trained) classifier on a dataset.
     """
 
@@ -297,7 +297,7 @@ class ClassifierError(Statefull):
             unless train=False, classifier gets trained if
             trainingdata provided to __call__
         """
-        Statefull.__init__(self, **kwargs)
+        Stateful.__init__(self, **kwargs)
         self.__clf = clf
 
         self.__labels = labels
