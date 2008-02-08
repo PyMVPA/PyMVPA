@@ -1,0 +1,29 @@
+.. -*- mode: rst -*-
+
+PyMVPA Development Changelog
+-----------------------------
+
+This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
+changelog is available here:
+
+  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=shortlog;h=upstream
+
+'Closes' statement IDs refer to the Debian bug tracking system and can be
+queried by visiting the URL::
+
+  http://bugs.debian.org/<bug id>
+
+
+Unreleased changes
+  Changes described here are not yet released, but available from VCS
+  repository.
+
+  * nothing yet
+
+
+Releases
+~~~~~~~~
+
+* 0.1.0 (Wed, 20 Feb 2008)
+
+  * Initial release.
