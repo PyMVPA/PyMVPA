@@ -29,7 +29,7 @@ from sets import Set
 
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 
 from transerror import ConfusionMatrix
 
@@ -53,7 +53,7 @@ def _deepcopyclf(clf):
         return deepcopy(clf)
 
 
-class Classifier(Statefull):
+class Classifier(Stateful):
     """Abstract classifier class to be inherited by all classifiers
 
     Required behavior:
@@ -121,7 +121,7 @@ class Classifier(Statefull):
     def __init__(self, train2predict=True, **kwargs):
         """Cheap initialization.
         """
-        Statefull.__init__(self, **kwargs)
+        Stateful.__init__(self, **kwargs)
 
         self.__train2predict = train2predict
         """Some classifiers might not need to be trained to predict"""
@@ -137,7 +137,7 @@ class Classifier(Statefull):
 
 
     def __str__(self):
-        return "%s\n %s" % (`self`, Statefull.__str__(self))
+        return "%s\n %s" % (`self`, Stateful.__str__(self))
 
 
     def _pretrain(self, dataset):
@@ -446,7 +446,7 @@ class ProxyClassifier(Classifier):
 # Various combiners for CombinedClassifier
 #
 
-class PredictionsCombiner(Statefull):
+class PredictionsCombiner(Stateful):
     """Base class for combining decisions of multiple classifiers"""
 
     def train(self, clfs, dataset):

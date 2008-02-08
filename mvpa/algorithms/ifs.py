@@ -31,14 +31,14 @@ if __debug__:
 class IFS(FeatureSelection):
     """Incremental feature search.
 
-    A `DataMeasure` is computed multiple times on variations of a certain
-    dataset. These measures are in turn used to incrementally select important
-    features. Starting with an empty feature set the data measure is first
-    computed for each single feature. A number of features is selected based on
-    the resulting data measure map (using an `ElementSelector`).
+    A `ScalarDatasetMeasure` is computed multiple times on variations of a
+    certain dataset. These measures are in turn used to incrementally select
+    important features. Starting with an empty feature set the dataset measure
+    is first computed for each single feature. A number of features is selected
+    based on the resulting data measure map (using an `ElementSelector`).
 
-    Next the data measure is computed again using each feature in addition to
-    the already selected feature set. Again the `ElementSelector` is used to
+    Next the dataset measure is computed again using each feature in addition
+    to the already selected feature set. Again the `ElementSelector` is used to
     select more features.
 
     For each feature selection the transfer error on some testdatset is
@@ -61,7 +61,7 @@ class IFS(FeatureSelection):
         """Initialize incremental feature search
 
         :Parameter:
-            data_measure : DataMeasure
+            data_measure : ScalarDatasetMeasure
                 Computed for each candidate feature selection.
             transfer_error : TransferError
                 Compute against a test dataset for each incremental feature
