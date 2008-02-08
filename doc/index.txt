@@ -22,18 +22,21 @@ come.
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
 in **Py**\ thon.
 
-To learn how to use PyMVPA it is best to start with the manual_. It explains
+To learn how to use PyMVPA it is best to start with the manual_ (`manual as
+PDF`_). It explains
 the basic concepts of the module and shows examples of a typical workflow.
 The `API documentation`_  on the other hand provides comprehensive information
 about all functionality included in PyMVPA.
 
 If you want to contribute some code to PyMVPA you might also want to have a
-look at some (few) `developer guidelines`_ to make your code fit nicely into
-the PyMVPA codebase.
+look at some (few) `developer guidelines`_ (`devguide as PDF`_) to make your
+code fit nicely into the PyMVPA codebase.
 
-.. _Manual: manual.html
+.. _manual: manual.html
+.. _manual as PDF: manual.pdf
 .. _API Documentation: api/index.html
 .. _developer guidelines: devguide.html
+.. _devguide as PDF: devguide.pdf
 
 PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
 website, the source code repository and download services are hosted on 
@@ -43,6 +46,10 @@ Alioth_, which is kindly provided by the `Debian project`_.
 .. _Alioth: http://alioth.debian.org
 .. _Debian project: http://www.debian.org
 
+A development history including latest changes which are not yet released is
+available from the changelog_.
+
+.. _changelog: changelog.html
 
 
 Legal stuff
@@ -66,9 +73,10 @@ Download
 Source code
 ~~~~~~~~~~~
 
-Source code tarballs of PyMVPA releases are available from `download area`_.
+Source code tarballs of PyMVPA releases are available from the `file release
+system`_.
 
-.. _download area: files/
+.. _file release system: http://alioth.debian.org/frs/?group_id=30954
 
 To get access to both the full PyMVPA history and the latest
 development code the PyMVPA Git_ repository is publicly available. To view the
@@ -97,33 +105,14 @@ PyMVPA has happened. And there will be a Debian_ package of course.
 
 
 
-Installation
-------------
+Building & Installation
+-----------------------
 
-If you use a distribution-specific package, please install PyMVPA like any
-other package. For Debian simply do:
+Detailed instructions on how to `build PyMVPA from source`_ or `install binary
+packages`_ are provided in the manual.
 
-::
-
-  aptitude install python-mvpa
-
-
-If you install from source use the Python way: Extract the downloaded source
-distribution and enter the top-level folder. From there invoke:
-
-::
-
-  python setup.py install
-
-.. Confirm that it actually works like this ;-)
-
-.. Do we want to provide information on how to install on Windows? This
-   requires mingw32 to build SVM module, plus installed nifti and libsvm
-   libraries. It is unlikely that anyone already has them.
-   Do we want to the evil and provide static libs somewhere or better stick
-   to DevPaks for win32? Michael already made DevPak for libnifti -- maybe
-   do it again for PyMVPA?
-
+.. _build PyMVPA from source: manual.html#building-from-source
+.. _install binary packages: manual.html#installation
 
 
 Support
