@@ -13,13 +13,13 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import Statefull, StateVariable
+from mvpa.misc.state import Stateful, StateVariable
 from mvpa.misc.exceptions import UnknownStateError
 
-class TestClassBlank(Statefull):
+class TestClassBlank(Stateful):
     pass
 
-class TestClassProper(Statefull):
+class TestClassProper(Stateful):
 
     state1 = StateVariable(enabled=False, doc="state1 doc")
     state2 = StateVariable(enabled=True, doc="state2 doc")
@@ -186,14 +186,14 @@ class StateTests(unittest.TestCase):
     def testStateVariables(self):
         """To test new states"""
 
-        from mvpa.misc.state import StateVariable, Statefull
+        from mvpa.misc.state import StateVariable, Stateful
 
-        class S1(Statefull):
+        class S1(Stateful):
             v1 = StateVariable(enabled=True, doc="values1 is ...")
             v1XXX = StateVariable(enabled=False, doc="values1 is ...")
 
 
-        class S2(Statefull):
+        class S2(Stateful):
             v2 = StateVariable(enabled=True, doc="values12 is ...")
 
         class S1_(S1):

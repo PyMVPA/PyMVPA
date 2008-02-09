@@ -21,8 +21,8 @@ from mvpa.algorithms.datameasure import SensitivityAnalyzer
 
 
 class Searchlight(SensitivityAnalyzer):
-    """Runs a DataMeasure on all possible spheres of a certain size within a
-    dataset.
+    """Runs a `ScalarDatasetMeasure` on all possible spheres of a certain size
+    within a dataset.
 
     The idea to use a searchlight as a sensitivity analyser stems from this
     paper:
@@ -42,7 +42,7 @@ class Searchlight(SensitivityAnalyzer):
         and the output of that call is returned.
 
         ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
-        make sure that the specified `DataMeasure` returns large (absolute)
+        make sure that the specified `ScalarDatasetMeasure` returns large (absolute)
         values for high sensitivities and small (absolute) values for low
         sensitivities. Especially when using error functions usually low values
         imply high performance and therefore high sensitivity. This would in
