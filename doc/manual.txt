@@ -260,7 +260,8 @@ Source code tarballs of PyMVPA releases are available from the `PyMVPA
 project website`_. To get access to both the full PyMVPA history and the latest
 development code the PyMVPA Git_ repository is publicly available. To view the
 repository, please point your web browser to gitweb:
-http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+
+  http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 
 To clone (aka checkout) the PyMVPA repository simply do::
 
@@ -635,7 +636,16 @@ another useful feature of PyMVPA's classifiers. Due to the high-level
 abstraction and the simple interface, almost all classifiers can be combined
 with most algorithms in PyMVPA (please see the Algorithms_ section for
 details). This makes it very easy to test different classifiers on some
-dataset.
+dataset (see Fig. 1).
+
+.. figure:: pics/classifier_comparison_plot.png
+   :width: 18cm
+   :alt: Classifier comparison
+
+   A comparison of the behavior of four different classifiers (linear SVM,
+   logistic regression, ridge regression and SVM with radial basis function
+   kernel) on a simple classification problem. The code to generate these
+   figure can be found in the `pylab_2d.py` example.
 
 
 Stateful objects
@@ -670,7 +680,8 @@ statefull object, can be asked to report existing state-related attributes:
   >>> clf.states.listing
   ['predictions[enabled]: Reported predicted values',
    'trained_labels[enabled]: What labels (unique) clf was trained on',
-   'training_confusion[enabled]: Result of learning: `ConfusionMatrix` (and corresponding learning error)',
+   'training_confusion[enabled]: \\
+     Result of learning: `ConfusionMatrix` (and corresponding learning error)',
    'values: Internal values seen by the classifier']
 
 'clf.states' is an instance of `StateCollection` class which is a container
