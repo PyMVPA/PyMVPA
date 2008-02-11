@@ -9,11 +9,11 @@
 """Base class for data measures: algorithms that quantify properties of
 datasets.
 
-Besides the `DataMeasure` base class this module also provides the (abstract)
+Besides the `DatasetMeasure` base class this module also provides the (abstract)
 `SensitivityAnalyzer` class. The difference between a general measure and
 the output of the `SensitivityAnalyzer` is that the latter returns a 1d map
 (one value per feature in the dataset). In contrast there are no restrictions
-on the returned value of `DataMeasure` except for that it has to be in some
+on the returned value of `DatasetMeasure` except for that it has to be in some
 iterable container.
 """
 
@@ -22,20 +22,24 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import copy
 
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier
 from mvpa.clfs.svm import LinearSVM
 
 if __debug__:
     from mvpa.misc import debug
 
-class DataMeasure(Statefull):
+class DatasetMeasure(Stateful):
     """A measure computed from a `Dataset` (base class).
 
     All subclasses shall get all necessary parameters via their constructor,
     so it is possible to get the same type of measure for multiple datasets
     by passing them to the __call__() method successively.
     """
+    def __init__(self, *args, **kwargs):
+        """Does nothing."""
+        Stateful.__init__(self, **kwargs)
+
 
     def __call__(self, dataset, callbacks=[]):
         """Compute measure on a given `Dataset`.
@@ -50,12 +54,57 @@ class DataMeasure(Statefull):
 
 
 
-class SensitivityAnalyzer(DataMeasure):
+class ScalarDatasetMeasure(DatasetMeasure):
+    """A scalar measure computed from a `Dataset` (base class).
+
+    Should behave like a DatasetMeasure.
+    """
+    def __init__(self, *args, **kwargs):
+        """Does nothing."""
+        DatasetMeasure.__init__(self, *(args), **(kwargs))
+
+
+    def __call__(self, dataset, callbacks=[]):
+        """Computes a scalar measure on a given `Dataset`.
+
+        Behaves like a `DatasetMeasure`, but computes and returns a single
+        scalar value.
+        """
+        raise NotImplementedError
+
+
+
+class FeaturewiseDatasetMeasure(DatasetMeasure):
+    """A per-feature-measure computed from a `Dataset` (base class).
+
+    Should behave like a DatasetMeasure.
+    """
+    def __init__(self, *args, **kwargs):
+        """Does nothing."""
+        DatasetMeasure.__init__(self, *(args), **(kwargs))
+
+
+    def __call__(self, dataset, callbacks=[]):
+        """Computes a per-feature-measure on a given `Dataset`.
+
+        Behaves like a `DatasetMeasure`, but computes and returns a 1d ndarray
+        with one value per feature.
+        """
+        raise NotImplementedError
+
+
+
+class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
     """Base class of all sensitivity analysers.
 
     A sensitivity analyser is an algorithm that assigns a sensitivity value to
     all features in a dataset.
     """
+    def __init__(self, *args, **kwargs):
+        """Does nothing."""
+        FeaturewiseDatasetMeasure.__init__(self, *(args), **(kwargs))
+
+
     def __call__(self, dataset, callbacks=[]):
         """Perform sensitivity analysis on a given `Dataset`.
 

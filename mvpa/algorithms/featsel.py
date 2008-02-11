@@ -17,13 +17,13 @@ from numpy import arange
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc import warning
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.exceptions import UnknownStateError
 
 if __debug__:
     from mvpa.misc import debug
 
-class FeatureSelection(Statefull):
+class FeatureSelection(Stateful):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
@@ -34,7 +34,7 @@ class FeatureSelection(Statefull):
 
     def __init__(self, **kargs):
         # base init first
-        Statefull.__init__(self, **kargs)
+        Stateful.__init__(self, **kargs)
 
 
     def __call__(self, dataset, testdataset=None, callables=[]):
@@ -270,14 +270,14 @@ class NBackHistoryStopCrit(StoppingCriterion):
 
 
 
-class ElementSelector(Statefull):
+class ElementSelector(Stateful):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
     def __init__(self):
         """Cheap initialization.
         """
-        Statefull.__init__(self)
+        Stateful.__init__(self)
 
 
     def __call__(self, seq):
