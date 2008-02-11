@@ -16,17 +16,17 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer
+from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer, \
+                                         TScoredSensitivityAnalyzer
+from mvpa.misc.transformers import Absolute
 
 from tests_warehouse import *
 
 class SplitSensitivityAnalyserTests(unittest.TestCase):
 
-    def setUp(self):
-        self.dataset = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4)
-
-
     def testAnalyzer(self):
+        self.dataset = normalFeatureDataset(perlabel=50, nlabels=2,
+                                            nfeatures=4)
         svm = LinearNuSVMC()
         svm_weigths = LinearSVMWeights(svm)
 
@@ -42,6 +42,36 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         allmaps = N.array(sana.maps)
         self.failUnless(allmaps[:,0].mean() == maps[0])
         self.failUnless(allmaps.shape == (5,4))
+
+
+    def testTScoredAnalyzer(self):
+        self.dataset = normalFeatureDataset(perlabel=100,
+                                            nlabels=2,
+                                            nchunks=20,
+                                            nonbogus_features=[0,1],
+                                            nfeatures=4,
+                                            snr=10)
+        svm = LinearNuSVMC()
+        svm_weigths = LinearSVMWeights(svm)
+
+        sana = TScoredSensitivityAnalyzer(
+                    svm_weigths,
+                    NFoldSplitter(cvtype=1),
+                    enable_states=['maps'])
+
+        t = sana(self.dataset)
+
+        # correct size?
+        self.failUnlessEqual(t.shape, (4,))
+
+        # check reasonable sensitivities
+        t = Absolute(t)
+        self.failUnless(N.mean(t[:2]) > N.mean(t[2:]))
+
+        # check whether SplitSensitivityAnalyzer 'maps' state is accessible
+        self.failUnless(sana.states.isKnown('maps'))
+        self.failUnless(N.array(sana.maps).shape == (20,4))
+
 
 
 def suite():
