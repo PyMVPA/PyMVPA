@@ -99,3 +99,58 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
 
         # return all maps
         return self._transformer(self.__combiner(maps))
+
+
+
+class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
+    """`SplittingSensitivityAnalyzer` computing featurewise t-score of
+    sensitivities across splits.
+    """
+    def __init__(self, sensana, splitter, noise_level=0.0, **kwargs):
+        """Cheap initialization.
+
+        :Parameters:
+            sensana : SensitivityAnalyzer
+                that shall be run on the `Dataset` splits.
+            splitter : Splitter
+                used to split the `Dataset`. By convention the first dataset
+                in the tuple returned by the splitter on each iteration is used
+                to compute the sensitivity map.
+            noise_level: float
+                Theoretical output of the respective `SensitivityAnalyzer`
+                for a pure noise pattern. For most algorithms this is probably
+                zero, hence the default.
+        """
+        # init base classes first
+        #  - get full sensitivity maps from SplittingSensitivityAnalyzer
+        #  - no postprocessing
+        #  - leave States handling to base class
+        SplittingSensitivityAnalyzer.__init__(self,
+                                              sensana,
+                                              splitter,
+                                              combiner=N.array,
+                                              postproc={},
+                                              **kwargs)
+
+        self.__noise_level = noise_level
+        """Output of the sensitivity analyzer when there is no signal."""
+
+
+    def __call__(self, dataset, callables=[]):
+        """Compute sensitivity maps for all dataset splits and return the
+        featurewise t-score of them.
+        """
+        # let base class compute the sensitivity maps
+        maps = SplittingSensitivityAnalyzer.__call__(self, dataset)
+
+        # feature wise mean
+        m = N.mean(maps, axis=0)
+        # featurewise variance
+        v = N.var(maps, axis=0)
+        # degrees of freedom (n-1 for one-sample t-test)
+        df = maps.shape[0] - 1
+
+        # compute t-score
+        t = (m - self.__noise_level) / N.sqrt(v * (1.0 / maps.shape[0]))
+
+        return self._transformer(t)
