@@ -84,6 +84,8 @@ htmlchangelog: mkdir-HTML_DIR
 
 htmlmanual: mkdir-HTML_DIR
 	$(rst2html) doc/manual.txt $(HTML_DIR)/manual.html
+	# copy images and styles
+	cp -r doc/misc/{*.css,pics} $(HTML_DIR)
 
 htmldevguide: mkdir-HTML_DIR
 	$(rst2html) doc/devguide.txt $(HTML_DIR)/devguide.html
@@ -109,8 +111,6 @@ website: mkdir-WWW_DIR htmlmanual htmlchangelog htmldevguide printables apidoc
 	$(rst2html) doc/index.txt $(WWW_DIR)/index.html
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
-	# copy images and styles
-	cp -r doc/misc/{*.css,pics} $(WWW_DIR)
 
 upload-website: website
 	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
