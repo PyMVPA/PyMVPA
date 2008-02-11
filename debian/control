@@ -1,5 +1,5 @@
 Source: pymvpa
-Section: science
+Section: python
 Priority: optional
 Maintainer: Michael Hanke <michael.hanke@gmail.com>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>
@@ -27,6 +27,7 @@ Description: multivariate pattern recognition with Python
 
 Package: python-mvpa-doc
 Architecture: all
+Section: doc
 Description: manual, API documentation and examples for PyMVPA
  This package contains the PyMVPA documentation in HTML, TXT and PDF format,
  as well as the API documentation as Epydoc-generated HTML.
