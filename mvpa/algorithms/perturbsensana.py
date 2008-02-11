@@ -98,5 +98,5 @@ class PerturbationSensitivityAnalyzer(SensitivityAnalyzer):
         if __debug__:
             debug('PSA', '')
 
-        return N.array(sens_map)
+            return self._transformer(N.array(sens_map))
 

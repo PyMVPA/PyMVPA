@@ -178,7 +178,7 @@ class RFETests(unittest.TestCase):
         #svm = LinearNuSVMC()
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = LinearSVMWeights(svm)
+        sens_ana = LinearSVMWeights(svm, transformer=Absolute)
 
         # of features to remove
         Nremove = 2
@@ -186,7 +186,7 @@ class RFETests(unittest.TestCase):
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
-        fe = SensitivityBasedFeatureSelection(Absolute(sens_ana),
+        fe = SensitivityBasedFeatureSelection(sens_ana,
                 feature_selector=FixedNElementTailSelector(2),
                 enable_states=["sensitivity", "selected_ids"])
 
@@ -260,12 +260,12 @@ class RFETests(unittest.TestCase):
         #svm = LinearNuSVMC()
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = LinearSVMWeights(svm)
+        sens_ana = LinearSVMWeights(svm, transformer=Absolute)
         trans_error = TransferError(svm)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
-        rfe = RFE(Absolute(sens_ana),
+        rfe = RFE(sens_ana,
                   trans_error,
                   feature_selector=FixedNElementTailSelector(1),
                   train_clf=False)

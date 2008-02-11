@@ -143,7 +143,7 @@ class ClfCrossValidation(ScalarDatasetMeasure):
         self.results = results
         """Store state variable if it is enabled"""
 
-        return self.__combiner(results)
+        return self._transformer(self.__combiner(results))
 
 
     splitter = property(fget=lambda self:self.__splitter)
