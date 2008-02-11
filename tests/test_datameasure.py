@@ -18,7 +18,6 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector, \
                                     FractionTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
-from mvpa.misc.transformers import Absolute
 from mvpa.clfs.svm import RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
@@ -123,9 +122,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # but also due to multi class those need to be aggregated
         # somehow. Transfer error here should be 'leave-1-out' error
         # of split classifier itself
-        rfe = RFE(sensitivity_analyzer=Absolute(
+        rfe = RFE(sensitivity_analyzer=
                       selectAnalyzer(SplitClassifier(clf=svm),
-                                     enable_states=["sensitivities"])),
+                                     enable_states=["sensitivities"]),
                   transfer_error=trans_error,
                   feature_selector=FeatureSelectionPipeline(
                       [FractionTailSelector(0.5),

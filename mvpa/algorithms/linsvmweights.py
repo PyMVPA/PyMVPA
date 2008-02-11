@@ -33,7 +33,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         """Initialize the analyzer with the classifier it shall use.
 
         :Parameters:
-          clf : LinearSVM
+          clf: LinearSVM
             classifier to use. Only classifiers sub-classed from
             `LinearSVM` may be used.
         """
@@ -71,6 +71,9 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         #
         # First multiply SV coefficients with the actuall SVs to get
         # weighted impact of SVs on decision, then for each feature
-        # take absolute mean across SVs to get a single weight value
+        # take mean across SVs to get a single weight value
         # per feature
-        return N.abs((svcoef * svs).mean(axis=0).A1)
+        weights = (svcoef * svs).mean(axis=0).A1
+
+        return self._transformer(weights)
+
