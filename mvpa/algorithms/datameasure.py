@@ -42,12 +42,12 @@ class DatasetMeasure(Stateful):
 
         :Parameter:
             transformer: Functor
-                This functor should be called in all `return` statements in
-                subclassed `__call__()` methods.
+                This functor is called in `finalize()` to perform a final
+                processing step on the to be returned dataset measure.
         """
         Stateful.__init__(self, **kwargs)
 
-        self._transformer = transformer
+        self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
         methods."""
 
@@ -62,6 +62,13 @@ class DatasetMeasure(Stateful):
         Returns the computed measure in some iterable (list-like) container.
         """
         raise NotImplementedError
+
+
+    def finalize(self, return_value):
+        """This method should be called with the to be returned value by the
+        `__call__()` methods of all subclasses of `DatasetMeasure`.
+        """
+        return self.__transformer(return_value)
 
 
 
@@ -177,7 +184,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                        [self.clf.trained]))
             self.clf.train(dataset)
 
-        return self._transformer(self._call(dataset, callables))
+        return self.finalize(self._call(dataset, callables))
 
 
     def _call(self, dataset, callables=[]):
@@ -253,7 +260,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
 
         self.sensitivities = sensitivities
         result = self.__combiner(sensitivities)
-        return self._transformer(result)
+        return self.finalize(result)
 
 
     def _setAnalyzers(self, analyzers):
@@ -314,7 +321,7 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
 
         self.__combined_analyzer.analyzers = analyzers
 
-        # CombinedSensitivityAnalyzer already calls _transformer
+        # CombinedSensitivityAnalyzer already calls finalize()
         return self.__combined_analyzer(dataset, callables)
 
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
