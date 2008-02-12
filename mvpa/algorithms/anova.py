@@ -26,11 +26,11 @@ class OneWayAnova(SensitivityAnalyzer):
     sensitivity map. As usual F-scores have a range of [0,inf] with greater
     values indicating higher sensitivity.
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Nothing special to do here.
         """
         # init base classes first
-        SensitivityAnalyzer.__init__(self)
+        SensitivityAnalyzer.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, callables=[]):
