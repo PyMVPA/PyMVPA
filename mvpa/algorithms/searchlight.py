@@ -108,7 +108,7 @@ class Searchlight(SensitivityAnalyzer):
             debug('SLC', '')
 
         # transform the results with the user-supplied function and return
-        return self._transformer(self.__combinefx(results))
+        return self.finalize(self.__combinefx(results))
 
     spheresizes = property(fget=lambda self: self.__spheresizes)
 

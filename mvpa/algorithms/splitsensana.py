@@ -98,4 +98,4 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """Store the maps across splits"""
 
         # return all maps
-        return self._transformer(self.__combiner(maps))
+        return self.finalize(self.__combiner(maps))
