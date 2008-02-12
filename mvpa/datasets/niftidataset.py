@@ -24,7 +24,7 @@ class NiftiDataset(MaskedDataset):
     """
     # XXX: Every dataset should really have an example of howto instanciate
     #      it (necessary parameters).
-    def __init__(self, samples=None, mask=None, dsattr={}, **kwargs):
+    def __init__(self, samples=None, mask=None, dsattr=None, **kwargs):
         """Initialize NiftiDataset.
 
         :Parameters:
@@ -34,6 +34,10 @@ class NiftiDataset(MaskedDataset):
             object
 
         """
+        # if dsattr is none, set it to an empty dict
+        if dsattr is None:
+            dsattr = {}
+
         # we have to handle the nifti elementsize at the end if
         # mask is not already a MaskMapper
         set_elementsize = False
