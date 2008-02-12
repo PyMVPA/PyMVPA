@@ -19,7 +19,6 @@ svmc_wrap.cpp
 doc/examples/dump.*
 *.bak
 *.swp
-/data
 *.pstats
 debian/python-mvpa/*
 debian/*.debhelper
@@ -30,4 +29,3 @@ debian/files
 *.dot
 *.ps
 profile.out
-*.gz
