@@ -17,6 +17,7 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.plf import PLF
 from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
+from mvpa.clfs.knn import kNN
 
 # set up the labeled data
 # two skewed 2-D distributions
@@ -46,20 +47,21 @@ patterns = patternsPos + patternsNeg
 clfs = {'Ridge Regression': RidgeReg(),
         'Linear SVM': LinearNuSVMC(probability=1),
         'RBF SVM': RbfNuSVMC(probability=1),
-        'Logistic Regression': PLF(criterion=0.00001)}
+        'Logistic Regression': PLF(criterion=0.00001),
+        'k-Nearest-Neighbour': kNN(k=10)}
 
 # loop over classifiers and show how they do
 fig = 0
 
 # make a new figure
-P.figure()
+P.figure(figsize=(8,12))
 for c in clfs:
     # tell which one we are doing
     print "Running %s classifier..." % (c)
 
     # make a new subplot for each classifier
     fig += 1
-    P.subplot(2,2,fig)
+    P.subplot(3,2,fig)
 
     # plot the training points
     P.plot(feat_pos[0, :], feat_pos[1, :], "r.")
@@ -78,7 +80,7 @@ for c in clfs:
     pre = clf.predict(feat_test.T)
 
     # if ridge, use the prediction, otherwise use the values
-    if c == 'Ridge Regression':
+    if c == 'Ridge Regression' or c == 'k-Nearest-Neighbour':
         # use the prediction
         res = N.asarray(pre)
     elif c == 'Logistic Regression':

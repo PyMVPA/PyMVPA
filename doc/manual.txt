@@ -639,13 +639,13 @@ details). This makes it very easy to test different classifiers on some
 dataset (see Fig. 1).
 
 .. figure:: pics/classifier_comparison_plot.png
-   :width: 18cm
+   :width: 15cm
    :alt: Classifier comparison
 
-   A comparison of the behavior of four different classifiers (linear SVM,
-   logistic regression, ridge regression and SVM with radial basis function
-   kernel) on a simple classification problem. The code to generate these
-   figure can be found in the `pylab_2d.py` example.
+   A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
+   linear SVM, logistic regression, ridge regression and SVM with radial basis
+   function kernel) on a simple classification problem. The code to generate
+   these figure can be found in the `pylab_2d.py` example.
 
 
 Stateful objects
