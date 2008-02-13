@@ -802,7 +802,7 @@ Algorithms
 PyMVPA provides a number of useful algorithms. The vast majority of
 them are dedicated to feature selection. To increase analysis
 flexibility, PyMVPA distinguished two parts of a feature selection
-procedure. 
+procedure.
 
 First, the impact of each individual feature on a classification has
 to be determined.  The resulting map reflects the sensitivities of all
@@ -831,55 +831,81 @@ datasets.
 Sensitivity Analyzers
 ~~~~~~~~~~~~~~~~~~~~~
 
-SensitivityAnalyzer_
+It was already mentioned that a SensitivityAnalyzer_ computes a featurewise
+score that indicates how much interesting signal each feature contains
+-- hoping that this score somehow correlates with the impact of the features
+on a classifier's decision for a certain problem.
 
-(to be written)
+Every sensitivity analyzer object computes a one-dimensional array with the
+respective score for every feature, when called with a Dataset_. Due to this
+common behaviour all SensitivityAnalyzer_ types are interchangeable and can be
+combined with any other algorithm requiring a sensitivity analyzer.
+
+By convention higher sensitivity values indicate more interesting features.
+
+There are two types of sensitivity analyzers in PyMVPA. Basic sensitivity
+analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
+on the other hand utilize another sensitivity analyzer to compute their
+sensitivity maps.
 
 .. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
 
-.. Point to the difference of `DataMeasure` and `SensitivityAnalyzer`. The
-   former computes some value given a dataset (might be scalar or something
-   else), whereas that latter computes a 1d map (sensitivity -> features),
-   where each value assigns a quantification of the amount of available
-   information in that feature.
 
-Noise Perturbation
-''''''''''''''''''
-
-PerturbationSensitivityAnalyzer_
-
-(to be written)
-
-.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+Basic Sensitivity Analyzers
+'''''''''''''''''''''''''''
 
 ANOVA
-'''''
+^^^^^
 
-OneWayAnova_
+The OneWayAnova_ class provides a simple (and fast) univariate sensitivity
+measure. For each feature an individual F-score is computed as the fraction
+of between and within group variances. Groups are defined by samples with
+unique labels.
 
-(to be written)
+Higher F-scores indicate higher sensitivities, as with all other sensitivity
+analyzers.
+
 
 .. _OneWayAnova: api/mvpa.algorithms.anova.OneWayAnova-class.html
 
 
 Linear SVM Weights
-''''''''''''''''''
+^^^^^^^^^^^^^^^^^^
 
-LinearSVMWeights_
+The featurewise weights of a trained support vector machine are another
+possible sensitivity measure. The LinearSVMWeights_ can internally train all
+types of *linear* support vector machines and report those weights.
 
-(to be written)
+Please note, that this class cannot extract reasonable weights from non-linear
+SVMs (e.g. with RBF kernels).
 
 .. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
 
 
+Noise Perturbation
+^^^^^^^^^^^^^^^^^^
+
+Noise perturbation is a generic approach to determine feature sensitivity
+scores. PerturbationSensitivityAnalyzer_
+
+(to be written)
+
+.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+
+
+
+Meta Sensitivity Analyzer
+''''''''''''''''''''''''''
+
 Splitting Sensitivity Analyzer
-''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 SplittingSensitivityAnalyzer_
 
 (to be written)
 
 .. _SplittingSensitivityAnalyzer: api/mvpa.algorithms.splitsensana.SplittingSensitivityAnalyzer-class.html
+
 
 
 Feature Selection Strategies
