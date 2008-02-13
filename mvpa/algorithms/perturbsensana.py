@@ -55,7 +55,7 @@ class PerturbationSensitivityAnalyzer(SensitivityAnalyzer):
         self.__noise = noise
 
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         """Compute the sensitivity map.
 
         Returns a 1d array of sensitivities for all features in `dataset`.

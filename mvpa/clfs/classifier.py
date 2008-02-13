@@ -494,7 +494,7 @@ class MaximalVote(PredictionsCombiner):
 
     def __call__(self, clfs, dataset):
         """Actuall callable - perform voting
-        
+
         Extended functionality which might not be needed actually:
         Since `BinaryClassifier` might return a list of possible
         predictions (not just a single one), we should consider all of those

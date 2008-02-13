@@ -74,7 +74,7 @@ DatasetMeasure / DatasetFunctor
 | \ __call__(dataset) # no further args
 | |
 | ClfCrossValidation(clf, splitter=NoneSplitter, errorfx=, combiner=MeanFx)
-|  \__call__(dataset, callables=[])
+|  \__call__(dataset)
 |   does what CrossValidation does now, but without the splitprocessor bloat
 |   just computing a single performance value (e.g. mean generalization error)
 |   however more exposed information is most likely required
@@ -106,7 +106,7 @@ Searchlight(datasetmeasure, combinefx=None)
 # Searchlight is a SensitivityAnalyser that runs another SensAna
 #  with the 'DatasetMeasure'-interface
 # on all possible spheres in the dataset
- \ [values] <- __call__(dataset, callables=[])
+ \ [values] <- __call__(dataset)
  |   values = [None for i in dataset.Nfeatures]
  |   self->sizes = [0 for i in dataset.Nfeatures]
  |   foreach featireId do
