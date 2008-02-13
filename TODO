@@ -1,0 +1,16 @@
+.. -*- mode: rst; fill-column: 79 -*-
+.. ex: set tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+PyMVPA TODO for Mortals
+=======================
+
+* Implement bindings to other ML toolboxes (e.g. shogun)
+* More sensitivity analyzers and feature selectors
+* IPython mode
+* More documentation and examples
