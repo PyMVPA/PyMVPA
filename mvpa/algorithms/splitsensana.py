@@ -38,7 +38,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
     def __init__(self, sensana,
                  splitter=NoneSplitter,
                  combiner=lambda x:N.mean(x, axis=0),
-                 postproc={},
+                 postproc=None,
                  **kwargs):
         """Cheap initialization.
 
@@ -63,6 +63,11 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
                   postproc={'full': N.array}
                   intermediate = splitana.post['full']
         """
+        # check if postproc is None
+        # XXX this doesn't seem to be used
+        if postproc is None:
+            postproc = {}
+            
         # init base classes first
         SensitivityAnalyzer.__init__(self, **kwargs)
 
