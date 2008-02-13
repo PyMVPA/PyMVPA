@@ -91,7 +91,6 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
             # compute sensitivity using first dataset in split
             sensitivity = self.__sensana(split[0])
 
-            # TODO add callbacks to do some magic with the analyzer
             maps.append(sensitivity)
 
         self.maps = maps

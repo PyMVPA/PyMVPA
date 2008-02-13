@@ -86,7 +86,7 @@ class ClfCrossValidation(ScalarDatasetMeasure):
 #                      indentDoc(self.__errorfx), indentDoc(self.__combiner))
 
 
-    def __call__(self, dataset, callbacks=[]):
+    def __call__(self, dataset):
         """Perform cross-validation on a dataset.
 
         'dataset' is passed to the splitter instance and serves as the source
@@ -137,8 +137,6 @@ class ClfCrossValidation(ScalarDatasetMeasure):
                 debug("CROSSC", "Split #%d: result %s" \
                       % (len(results), `result`))
             results.append(result)
-
-            # XXX add callbacks
 
         self.results = results
         """Store state variable if it is enabled"""

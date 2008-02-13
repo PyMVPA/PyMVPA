@@ -38,7 +38,7 @@ class ConfusionMatrix(object):
     # XXX Michael: - How do multiple sets work and what are they there for?
     #              - This class does not work with regular Python sequences
     #                when passed to the constructor as targets and predictions.
-    def __init__(self, labels=[], targets=None, predictions=None):
+    def __init__(self, labels=None, targets=None, predictions=None):
         """Initialize ConfusionMatrix with optional list of `labels`
 
         :Parameters:
@@ -49,7 +49,8 @@ class ConfusionMatrix(object):
          predictions
            Optional set of predictions
         """
-
+        if labels == None:
+            labels = []
         self.__labels = labels
         """List of known labels"""
         self.__computed = False

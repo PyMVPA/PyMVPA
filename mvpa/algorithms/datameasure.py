@@ -52,7 +52,7 @@ class DatasetMeasure(Stateful):
         methods."""
 
 
-    def __call__(self, dataset, callbacks=[]):
+    def __call__(self, dataset):
         """Compute measure on a given `Dataset`.
 
         Each implementation has to handle a single arguments: the source
@@ -81,7 +81,7 @@ class ScalarDatasetMeasure(DatasetMeasure):
         DatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset, callbacks=[]):
+    def __call__(self, dataset):
         """Computes a scalar measure on a given `Dataset`.
 
         Behaves like a `DatasetMeasure`, but computes and returns a single
@@ -101,7 +101,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         DatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset, callbacks=[]):
+    def __call__(self, dataset):
         """Computes a per-feature-measure on a given `Dataset`.
 
         Behaves like a `DatasetMeasure`, but computes and returns a 1d ndarray
@@ -122,7 +122,7 @@ class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
         FeaturewiseDatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset, callbacks=[]):
+    def __call__(self, dataset):
         """Perform sensitivity analysis on a given `Dataset`.
 
         Each implementation has to handle a single arguments: the source
@@ -233,9 +233,12 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
     sensitivities = StateVariable(enabled=False,
         doc="Sensitivities produced by each classifier")
 
-    def __init__(self, analyzers=[],
+    def __init__(self, analyzers=None,
                  combiner=lambda x:N.mean(x, axis=0),
                  **kwargs):
+        if analyzers == None:
+            analyzers = []
+
         SensitivityAnalyzer.__init__(self, **kwargs)
         self.__analyzers = analyzers
         """List of analyzers to use"""

@@ -184,8 +184,12 @@ class SetLogger(Logger):
     Logger which prints based on defined sets identified by Id.
     """
 
-    def __init__(self, register={}, active=[], printsetid=True,
+    def __init__(self, register=None, active=None, printsetid=True,
                  *args, **kwargs):
+        if register == None:
+            register = {}
+        if active == None:
+            active = []
         Logger.__init__(self, *args, **kwargs)
         self.__printsetid = printsetid
         self.__registered = register    # all "registered" sets descriptions
@@ -321,7 +325,9 @@ if __debug__:
             }
 
 
-        def __init__(self, metrics=[], offsetbydepth=True, *args, **kwargs):
+        def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
+            if metrics == None:
+                metrics = []
             SetLogger.__init__(self, *args, **kwargs)
             self.__metrics = []
             self._offsetbydepth = offsetbydepth
