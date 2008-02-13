@@ -103,7 +103,7 @@ dataset vs data
 
     class FeatureSelection(Stateful):
 	   ...
-       def __call__(self, dataset, testdataset, callables=[]):
+       def __call__(self, dataset, testdataset):
 
 
   Such convention should be enforced in all ``*train``,

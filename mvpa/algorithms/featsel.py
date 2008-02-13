@@ -37,7 +37,7 @@ class FeatureSelection(Stateful):
         Stateful.__init__(self, **kargs)
 
 
-    def __call__(self, dataset, testdataset=None, callables=[]):
+    def __call__(self, dataset, testdataset=None):
         """Invocation of the feature selection
 
         :Parameters:
@@ -45,8 +45,6 @@ class FeatureSelection(Stateful):
             dataset used to select features
           testdataset : Dataset
             dataset the might be used to compute a stopping criterion
-          callables : sequence
-            a list of functors to be called with locals()
 
         Returns a tuple with the dataset containing the selected features.
         If present the tuple also contains the selected features of the
@@ -508,7 +506,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
 
 
-    def __call__(self, dataset, testdataset=None, callables=[]):
+    def __call__(self, dataset, testdataset=None):
         """Select the most important features
 
         :Parameters:
@@ -539,10 +537,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         # Differ from the order in RFE when actually error reported is for
         results = (wdataset, wtestdataset)
-
-        # provide evil access to internals :)
-        for callable_ in callables:
-            callable_(locals())
 
         # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
         selected_ids.sort()
@@ -582,9 +576,6 @@ class FeatureSelectionPipeline(FeatureSelection):
 
     def __call__(self, dataset, testdataset=None, **kwargs):
         """Invocation of the feature selection
-
-        TODO: not clear what was to do with callables -- pass inside
-              or process locally. For now just pass inside
         """
         wdataset = dataset
         wtestdataset = testdataset

@@ -55,9 +55,8 @@ class DatasetMeasure(Stateful):
     def __call__(self, dataset, callbacks=[]):
         """Compute measure on a given `Dataset`.
 
-        Each implementation has to handle two arguments. The first is the
-        source dataset and the second is a list of callables which have to be
-        called with the result of the computation.
+        Each implementation has to handle a single arguments: the source
+        dataset.
 
         Returns the computed measure in some iterable (list-like) container.
         """
@@ -126,9 +125,8 @@ class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
     def __call__(self, dataset, callbacks=[]):
         """Perform sensitivity analysis on a given `Dataset`.
 
-        Each implementation has to handle two arguments. The first is the
-        source dataset and the second is a list of callables which have to be
-        called with the result of the computation.
+        Each implementation has to handle a single arguments: the source
+        dataset.
 
         Returns the computed sensitivity measure in a 1D array which's length
         and order matches the features in the dataset. Higher sensitivity values
@@ -172,7 +170,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                (`self.__clf`, str(self._force_training))
 
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         """Train linear SVM on `dataset` and extract weights from classifier.
         """
         if not self.clf.trained or self._force_training:
@@ -184,10 +182,10 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                        [self.clf.trained]))
             self.clf.train(dataset)
 
-        return self.finalize(self._call(dataset, callables))
+        return self.finalize(self._call(dataset))
 
 
-    def _call(self, dataset, callables=[]):
+    def _call(self, dataset):
         """Actually the function which does the computation"""
         raise NotImplementedError
 
@@ -247,14 +245,14 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         sensitivities = []
         ind = 0
         for analyzer in self.__analyzers:
             if __debug__:
                 debug("SA", "Computing sensitivity for SA#%d:%s" %
                       (ind, analyzer))
-            sensitivity = analyzer(dataset, callables)
+            sensitivity = analyzer(dataset)
             sensitivities.append(sensitivity)
             ind += 1
 
@@ -295,7 +293,7 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
-    def _call(self, dataset, callables=[]):
+    def _call(self, dataset):
         analyzers = []
         # create analyzers
         for clf in self.clf.clfs:
@@ -322,6 +320,6 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
         self.__combined_analyzer.analyzers = analyzers
 
         # CombinedSensitivityAnalyzer already calls finalize()
-        return self.__combined_analyzer(dataset, callables)
+        return self.__combined_analyzer(dataset)
 
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)

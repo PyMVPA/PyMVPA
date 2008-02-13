@@ -52,15 +52,3 @@
 
  in  --> data         -> dataShape
  out --> features     ->
-
-* Let's forget about the 'callables' interface of the various algorithms for
-  two reasons:
-
-  1) Hardly any object really implements it.
-  2) Whatever one wants to do with callables should be doable with state
-     variables. If some information is missing in the state, this is a bug on
-     its own. Only in rare cases where the amount of information to be stored
-     is really huge this has some disadvantages. But given the ugliness of
-     'callables' maybe it is worth risking it.
-
-  Comments?

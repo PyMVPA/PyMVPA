@@ -76,7 +76,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         __call__()"""
 
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         """Compute sensitivity maps for all dataset splits and run the
         postprocessing functions afterward (if any).
 

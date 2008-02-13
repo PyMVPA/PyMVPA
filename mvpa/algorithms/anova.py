@@ -33,7 +33,7 @@ class OneWayAnova(SensitivityAnalyzer):
         SensitivityAnalyzer.__init__(self, **kwargs)
 
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         """Computes featurewise f-scores."""
         # group means
         means = []
