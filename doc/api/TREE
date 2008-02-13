@@ -79,8 +79,6 @@ DatasetMeasure / DatasetFunctor
 |   just computing a single performance value (e.g. mean generalization error)
 |   however more exposed information is most likely required
 |
-|	collables are provided with locals()
-|
 |   NoneSplitter -- doesn't split and returns just original dataset
 |   logic inside __call__ should not train a classifier if splitter
 |   has only 1 dataset spitted out   (,dataset)

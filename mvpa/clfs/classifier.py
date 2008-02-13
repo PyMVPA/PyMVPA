@@ -297,7 +297,7 @@ class BoostedClassifier(Classifier):
         doc="Values obtained from each classifier")
 
 
-    def __init__(self, clfs=[], **kwargs):
+    def __init__(self, clfs=None, **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -307,6 +307,9 @@ class BoostedClassifier(Classifier):
             dict of keyworded arguments which might get used
             by State or Classifier
         """
+        if clfs == None:
+            clfs = []
+
         Classifier.__init__(self, **kwargs)
 
         self.__clfs = None
@@ -602,7 +605,7 @@ class CombinedClassifier(BoostedClassifier):
     functor.
     """
 
-    def __init__(self, clfs=[], combiner=MaximalVote(), **kwargs):
+    def __init__(self, clfs=None, combiner=MaximalVote(), **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -620,6 +623,9 @@ class CombinedClassifier(BoostedClassifier):
             estimate (which is pretty much what is stored under
             `values`
         """
+        if clfs == None:
+            clfs = []
+
         BoostedClassifier.__init__(self, clfs, **kwargs)
 
         self.__combiner = combiner
