@@ -38,7 +38,6 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
     def __init__(self, sensana,
                  splitter=NoneSplitter,
                  combiner=lambda x:N.mean(x, axis=0),
-                 postproc=None,
                  **kwargs):
         """Cheap initialization.
 
@@ -53,21 +52,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
                 This functor will be called on an array of sensitivity maps
                 and the result will be returned by __call__(). The result of
                 a combiner must be an 1d ndarray.
-            postproc : dict
-                Dictionary of post-processing functors. Each functor will be
-                called with the sequence of sensitivity maps. The resulting
-                value is then made available via the object's `StateVariable`
-                .post, which is a dict, using the respective key from
-                `postproc` dictionary.
-                Example:
-                  postproc={'full': N.array}
-                  intermediate = splitana.post['full']
         """
-        # check if postproc is None
-        # XXX this doesn't seem to be used
-        if postproc is None:
-            postproc = {}
-            
         # init base classes first
         SensitivityAnalyzer.__init__(self, **kwargs)
 
