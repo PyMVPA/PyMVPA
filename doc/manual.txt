@@ -1004,6 +1004,14 @@ level:
 * environment variable ``MVPA_VERBOSE``
 * code: verbose.level property
 
+The following verbosity levels are supported:
+
+  :0: nothing besides errors
+  :1: high level stuff -- top level operation or file operations
+  :2: cmdline handling
+  :3: n.a.
+  :4: computation/algorithm relevant thing
+
 
 Warning Messages
 ~~~~~~~~~~~~~~~~
