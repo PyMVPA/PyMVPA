@@ -568,7 +568,7 @@ class ClassifierCombiner(PredictionsCombiner):
         doc="Trained predictions")
 
 
-    def __init__(self, clf, variables=['predictions']):
+    def __init__(self, clf, variables=None):
         """Initialize `ClassifierCombiner`
 
         :Parameters:
@@ -583,6 +583,8 @@ class ClassifierCombiner(PredictionsCombiner):
         self.__clf = clf
         """Classifier to train on `variables` states of provided classifiers"""
 
+        if variables == None:
+            variables = ['predictions']
         self.__variables = variables
         """What state variables of the classifiers to use"""
 

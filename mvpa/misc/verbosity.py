@@ -32,11 +32,13 @@ class Logger(object):
     Base class to provide logging
     """
 
-    def __init__(self, handlers=[stdout]):
+    def __init__(self, handlers=None):
         """Initialize the logger with a set of handlers to use for output
 
         Each hanlder must have write() method implemented
         """
+        if handlers == None:
+            handlers = [stdout]
         self._setHandlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
