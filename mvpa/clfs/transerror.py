@@ -320,10 +320,17 @@ class ClassifierError(Stateful):
         """
         if not trainingdataset is None:
             if self.__train:
-                if self.__clf.isTrained(trainingdataset):
-                    warning('It seems that classifier %s was already trained' %
-                            self.__clf + ' on dataset %s. Please inspect' \
-                                % trainingdataset)
+                # XXX can be pretty annoying if triggered inside an algorithm
+                # where it cannot be switched of, but retraining might be
+                # intended or at least not avoidable.
+                # Additonally isTrained docs say:
+                #   MUST BE USED WITH CARE IF EVER
+                #
+                # switching it off for now
+                #if self.__clf.isTrained(trainingdataset):
+                #    warning('It seems that classifier %s was already trained' %
+                #            self.__clf + ' on dataset %s. Please inspect' \
+                #                % trainingdataset)
                 self.__clf.train(trainingdataset)
 
         if self.__clf.states.isEnabled('trained_labels') and \
