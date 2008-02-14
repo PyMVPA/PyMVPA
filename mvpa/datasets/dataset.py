@@ -777,6 +777,21 @@ class Dataset(object):
         return fmask
 
 
+    def convertFeatureMask2FeatureIds(self, mask):
+        """Returns feature ids corresponding to non-zero elements in the mask.
+
+        :Parameters:
+            mask: 1d ndarray
+                Feature mask.
+
+        :Returns:
+            ndarray: integer
+                Ids of non-zero (non-False) mask elements.
+        """
+        return mask.nonzero()[0]
+
+
+
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
