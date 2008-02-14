@@ -106,7 +106,7 @@ class StateCollection(object):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, items = {}, owner = None):
+    def __init__(self, items=None, owner = None):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -121,6 +121,8 @@ class StateCollection(object):
 
         self.__owner = owner
 
+        if items == None:
+            items = {}
         self.__items = items
         """Dictionary to contain registered states as keys and
         values signal either they are enabled
