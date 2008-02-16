@@ -755,7 +755,9 @@ k-Nearest-Neighbour
 
 kNN_
 
-(to be written)
+This classifier makes predictions based on the labels of nearby samples.  It
+currently uses Euclidian distance to determine the nearest neighbours, but
+future enhancements may include support for other kernels.
 
 .. _kNN: api/mvpa.clfs.knn.kNN-class.html
 
@@ -769,7 +771,10 @@ RbfNuSVMC_
 RbfCSVMC_
 SVMBase_
 
-(to be written)
+The support vector machine classes provide a family of classifers by wrapping
+the libsvm_ library.  While the SVMBase_ class provides a complete interface,
+the other child classes make it easy to run standard classifiers, such as
+linear SVM, with a default set of parameters.
 
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
@@ -777,25 +782,29 @@ SVMBase_
 .. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 .. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
-Logistic Regression
-~~~~~~~~~~~~~~~~~~~
-
-PLR_ 
-
-Classifier that is trained to predict a binary outcome.  
-
-(to be written)
-
-.. _PLR: api/mvpa.clfs.plr.PLR-class.html
 
 Ridge Regression
 ~~~~~~~~~~~~~~~~
 
 Ridge_
 
-(to be written)
+The ridge regression classifier performs a simple linear regression with a
+penalty parameter to help avoid over-fitting.  The regression inserts an
+intercept term so that you do not have to center your data.
 
 .. _Ridge: api/mvpa.clfs.ridge.RidgeReg-class.html
+
+
+Logistic Regression
+~~~~~~~~~~~~~~~~~~~
+
+PLR_ 
+
+The penalized logistic regression is similar to the ridge in that it has a
+penalty term, however, it is trained to predict a binary outcome by means of
+the logistic function.
+
+.. _PLR: api/mvpa.clfs.plr.PLR-class.html
 
 
 Algorithms
