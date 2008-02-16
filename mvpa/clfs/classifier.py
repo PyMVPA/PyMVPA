@@ -78,9 +78,9 @@ class Classifier(Stateful):
              corresponds to the likelyhood of a sample to belong to the
              respective class. However the sematics might differ between
              classifiers, e.g. kNN would probably store distances to class-
-             neighbours, where PLF would store the raw function value of the
+             neighbours, where PLR would store the raw function value of the
              logistic function. So in the case of kNN low is predictive and for
-             PLF high is predictive. Don't know if there is the need to unify
+             PLR high is predictive. Don't know if there is the need to unify
              that.
 
              As the storage and/or computation of this information might be
