@@ -30,7 +30,7 @@ tests = [
     'test_clf',
     'test_knn',
     'test_svm',
-    'test_plf',
+    'test_plr',
     'test_ridge',
     # Various algorithms
     'test_transformers',

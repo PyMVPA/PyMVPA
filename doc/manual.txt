@@ -780,11 +780,13 @@ SVMBase_
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
 
-PLF_ (why is this called PLF not PLR?)
+PLR_ 
+
+Classifier that is trained to predict a binary outcome.  
 
 (to be written)
 
-.. _PLF: api/mvpa.clfs.plf.PLF-class.html
+.. _PLR: api/mvpa.clfs.plr.PLR-class.html
 
 Ridge Regression
 ~~~~~~~~~~~~~~~~
