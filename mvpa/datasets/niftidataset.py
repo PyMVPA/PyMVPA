@@ -22,7 +22,7 @@ class NiftiDataset(MaskedDataset):
     See http://niftilib.sourceforge.net/pynifti/ for more information
     about pynifti.
     """
-    # XXX: Every dataset should really have an example of howto instanciate
+    # XXX: Every dataset should really have an example of howto instantiate
     #      it (necessary parameters).
     def __init__(self, samples=None, mask=None, dsattr=None, **kwargs):
         """Initialize NiftiDataset.
@@ -112,11 +112,18 @@ class NiftiDataset(MaskedDataset):
                                        distance_function=cartesianDistance))
 
 
-    def map2Nifti(self, data):
+    def map2Nifti(self, data=None):
         """Maps a data vector into the dataspace and wraps it with a
         NiftiImage. The header data of this object is used to initialize
         the new NiftiImage.
+
+        :Parameters:
+          data : ndarray
+            The data to be wrapped into NiftiImage. If None (default), it
+            would wrap samples of the current dataset
         """
+        if data is None:
+            data = self.samples
         dsarray = self.mapper.reverse(data)
         return NiftiImage(dsarray, self.niftihdr)
 

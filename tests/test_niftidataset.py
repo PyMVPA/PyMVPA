@@ -59,6 +59,23 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnless((vol.data == 1).all())
 
 
+    def testNiftiSelfMapper(self):
+        example_path = os.path.join('data','example4d')
+        example = NiftiImage(example_path)
+        data = NiftiDataset(samples=example_path,
+                            labels=[1,2])
+
+        # Map read data to itself
+        vol = data.map2Nifti()
+
+        self.failUnless(vol.data.shape == example.data.shape)
+        self.failUnless((vol.data == example.data).all())
+
+        data.samples[:] = 1
+        vol = data.map2Nifti()
+        self.failUnless((vol.data == 1).all())
+
+
     def testMultipleCalls(self):
         # test if doing exactly the same operation twice yields the same
         # result
