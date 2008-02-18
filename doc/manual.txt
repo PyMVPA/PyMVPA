@@ -753,9 +753,7 @@ Boosted and Multi-class Classifiers
 k-Nearest-Neighbour
 ~~~~~~~~~~~~~~~~~~~
 
-kNN_
-
-This classifier makes predictions based on the labels of nearby samples.  It
+The kNN_ classifier makes predictions based on the labels of nearby samples.  It
 currently uses Euclidian distance to determine the nearest neighbours, but
 future enhancements may include support for other kernels.
 
@@ -765,16 +763,11 @@ future enhancements may include support for other kernels.
 Support Vector Machines
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-LinearCSVMC_
-LinearNuSVMC_
-RbfNuSVMC_
-RbfCSVMC_
-SVMBase_
-
 The support vector machine classes provide a family of classifers by wrapping
 the libsvm_ library.  While the SVMBase_ class provides a complete interface,
 the other child classes make it easy to run standard classifiers, such as
-linear SVM, with a default set of parameters.
+linear SVM, with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_,
+RbfNuSVMC_ and RbfCSVMC_).
 
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
@@ -786,23 +779,20 @@ linear SVM, with a default set of parameters.
 Ridge Regression
 ~~~~~~~~~~~~~~~~
 
-Ridge_
 
-The ridge regression classifier performs a simple linear regression with a
-penalty parameter to help avoid over-fitting.  The regression inserts an
+The ridge regression classifier (RidgeReg_) performs a simple linear regression
+with a penalty parameter to help avoid over-fitting.  The regression inserts an
 intercept term so that you do not have to center your data.
 
-.. _Ridge: api/mvpa.clfs.ridge.RidgeReg-class.html
+.. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
 
 
 Logistic Regression
 ~~~~~~~~~~~~~~~~~~~
 
-PLR_ 
-
-The penalized logistic regression is similar to the ridge in that it has a
-penalty term, however, it is trained to predict a binary outcome by means of
-the logistic function.
+The penalized logistic regression (PLR_) is similar to the ridge in that it
+has a penalty term, however, it is trained to predict a binary outcome by
+means of the logistic function.
 
 .. _PLR: api/mvpa.clfs.plr.PLR-class.html
 
@@ -884,15 +874,21 @@ Linear SVM Weights
 ^^^^^^^^^^^^^^^^^^
 
 The featurewise weights of a trained support vector machine are another
-possible sensitivity measure. The LinearSVMWeights_ can internally train all
-types of *linear* support vector machines and report those weights.
+possible sensitivity measure. The LinearSVMWeights_ class can internally train
+all types of *linear* support vector machines and report those weights.
 
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
-or negative, with both extremes indicating higher sensitivities. >>> Transformers
-Please note, that this class cannot extract reasonable weights from non-linear
+or negative, with both extremes indicating higher sensitivities. To deal with
+this property all subclasses of SensitivityAnalyzer_ support a `transformer`
+arguments in the contructor. A transformer is a functor that is finally called
+with the computed sensitivity map. PyMVPA already comes with some convenience
+functors which can be used for this purpose (see Transformers_).
+
+Please note, that this class *cannot* extract reasonable weights from non-linear
 SVMs (e.g. with RBF kernels).
 
 .. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
+.. _Transformers: api/mvpa.misc.transformers-module.html
 
 
 Noise Perturbation
@@ -1103,7 +1099,17 @@ I feel like I want to contribute something, do you mind?
   time/cannot/do not want to implement it yourself, please post your idea to
   the PyMVPA mailing list.
 
-.. We probably need them once we have more than three users.
+
+The manual is quite insufficient. When will you improve it?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Writing a manual can be a tricky task if you already know the details and
+  have to imagine what might be the most interesting information for someone
+  who is just starting. If you feel that something is missing which has cost
+  you some time to figure out, please drop us a note and we will add it as soon
+  as possible. If you have developed some code snippets to demonstrate some
+  feature or non-trivial behaviour, please consider sharing this snippet with
+  us and we will put it into the example collection or the manual. Thanks!
 
 
 
