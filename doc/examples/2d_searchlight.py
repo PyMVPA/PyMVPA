@@ -21,7 +21,7 @@ from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
-from mvpa.algorithms.clfcrossval import ClfCrossValidation
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.algorithms.searchlight import Searchlight
 from mvpa.misc import debug
 
@@ -65,8 +65,8 @@ clf = LinearNuSVMC()
 
 # setup measure to be computed by Searchlight
 # cross-validated mean transfer using an odd-even dataset splitter
-cv = ClfCrossValidation(TransferError(clf),
-                        NFoldSplitter())
+cv = CrossValidatedTransferError(TransferError(clf),
+                                 NFoldSplitter())
 
 # setup plotting
 fig = 0
