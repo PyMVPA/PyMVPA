@@ -14,7 +14,7 @@ import pylab as P
 
 # local imports
 from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.plf import PLF
+from mvpa.clfs.plr import PLR
 from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
 from mvpa.clfs.knn import kNN
@@ -47,7 +47,7 @@ patterns = patternsPos + patternsNeg
 clfs = {'Ridge Regression': RidgeReg(),
         'Linear SVM': LinearNuSVMC(probability=1),
         'RBF SVM': RbfNuSVMC(probability=1),
-        'Logistic Regression': PLF(criterion=0.00001),
+        'Logistic Regression': PLR(criterion=0.00001),
         'k-Nearest-Neighbour': kNN(k=10)}
 
 # loop over classifiers and show how they do
