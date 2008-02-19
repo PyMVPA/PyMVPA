@@ -152,7 +152,7 @@ During another visit in Princeton in October 2007 Michael met with `Yaroslav
 Halchenko`_ and `Per B. Sederberg`_. That incident and the following
 discussions and hacking sessions of Michael and Yaroslav lead to a major
 refactoring of the PyMVPA codebase, making it much more flexible/extensible,
-faster and easier as it has ever been before.
+faster and easier than it has ever been before.
 
 .. _Yaroslav Halchenko: http://www.onerussian.com/
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
