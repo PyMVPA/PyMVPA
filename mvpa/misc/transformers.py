@@ -22,3 +22,13 @@ def Absolute(x):
 def OneMinus(x):
     """Returns elementwise '1 - x' of any argument."""
     return 1 - x
+
+
+def Identity(x):
+    """Return whatever it was called with."""
+    return x
+
+
+def FirstAxisMean(x):
+    """Mean computed along the first axis."""
+    return N.mean(x, axis=0)
