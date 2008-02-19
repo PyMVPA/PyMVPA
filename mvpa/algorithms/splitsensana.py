@@ -17,7 +17,7 @@ import numpy as N
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import StateVariable
-
+from mvpa.misc.transformers import FirstAxisMean
 
 class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
     """This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
@@ -37,7 +37,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
 
     def __init__(self, sensana,
                  splitter=NoneSplitter,
-                 combiner=lambda x:N.mean(x, axis=0),
+                 combiner=FirstAxisMean,
                  **kwargs):
         """Cheap initialization.
 

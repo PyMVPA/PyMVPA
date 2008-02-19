@@ -25,7 +25,7 @@ import copy
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier
 from mvpa.clfs.svm import LinearSVM
-from mvpa.misc.transformers import Absolute
+from mvpa.misc.transformers import Absolute, Identity, FirstAxisMean
 
 if __debug__:
     from mvpa.misc import debug
@@ -37,7 +37,7 @@ class DatasetMeasure(Stateful):
     so it is possible to get the same type of measure for multiple datasets
     by passing them to the __call__() method successively.
     """
-    def __init__(self, transformer=lambda x: x, *args, **kwargs):
+    def __init__(self, transformer=Identity, *args, **kwargs):
         """Does nothing special.
 
         :Parameter:
@@ -234,7 +234,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
         doc="Sensitivities produced by each classifier")
 
     def __init__(self, analyzers=None,
-                 combiner=lambda x:N.mean(x, axis=0),
+                 combiner=FirstAxisMean,
                  **kwargs):
         if analyzers == None:
             analyzers = []
