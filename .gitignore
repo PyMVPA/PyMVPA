@@ -29,3 +29,4 @@ debian/files
 *.dot
 *.ps
 profile.out
+data/haxby8x6
