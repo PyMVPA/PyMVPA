@@ -1,5 +1,5 @@
 pymvpa (0.1.0-1) unstable; urgency=low
 
-  * Initial release.
+  * Initial release (Closes: #466556).
 
- -- Michael Hanke <michael.hanke@gmail.com>  Tue, 27 Nov 2007 10:55:19 +0100
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 19 Feb 2008 16:10:05 +0100
