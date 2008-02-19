@@ -79,6 +79,9 @@ debian-clean:
 #
 doc: website
 
+htmlindex: mkdir-HTML_DIR
+	$(rst2html) doc/index.txt $(HTML_DIR)/index.html
+
 htmlchangelog: mkdir-HTML_DIR
 	$(rst2html) Changelog $(HTML_DIR)/changelog.html
 
@@ -102,13 +105,19 @@ pdfdevguide: mkdir-PDF_DIR
 printables: pdfmanual pdfdevguide
 
 apidoc: apidoc-stamp
-apidoc-stamp: $(PROFILE_FILE)
+apidoc-stamp: build
+# Disabled profiling for now, it consumes huge amounts of memory, so I doubt
+# that all buildds can do it. In theory it would only be done on a single
+# developer machine, because it is only necessary for the arch-all package,
+# but e.g. dpkg-buildpackage runs the indep target anyway -- not sure about
+# the buildds, though.
+#apidoc-stamp: $(PROFILE_FILE)
 	mkdir -p $(HTML_DIR)/api
 	epydoc --config doc/api/epydoc.conf
 	touch $@
 
-website: mkdir-WWW_DIR htmlmanual htmlchangelog htmldevguide printables apidoc
-	$(rst2html) doc/index.txt $(WWW_DIR)/index.html
+website: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
+         htmldevguide printables apidoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
 

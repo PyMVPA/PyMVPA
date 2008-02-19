@@ -38,7 +38,7 @@ class ConfusionMatrix(object):
     # XXX Michael: - How do multiple sets work and what are they there for?
     #              - This class does not work with regular Python sequences
     #                when passed to the constructor as targets and predictions.
-    def __init__(self, labels=[], targets=None, predictions=None):
+    def __init__(self, labels=None, targets=None, predictions=None):
         """Initialize ConfusionMatrix with optional list of `labels`
 
         :Parameters:
@@ -49,7 +49,8 @@ class ConfusionMatrix(object):
          predictions
            Optional set of predictions
         """
-
+        if labels == None:
+            labels = []
         self.__labels = labels
         """List of known labels"""
         self.__computed = False
@@ -319,10 +320,17 @@ class ClassifierError(Stateful):
         """
         if not trainingdataset is None:
             if self.__train:
-                if self.__clf.isTrained(trainingdataset):
-                    warning('It seems that classifier %s was already trained' %
-                            self.__clf + ' on dataset %s. Please inspect' \
-                                % trainingdataset)
+                # XXX can be pretty annoying if triggered inside an algorithm
+                # where it cannot be switched of, but retraining might be
+                # intended or at least not avoidable.
+                # Additonally isTrained docs say:
+                #   MUST BE USED WITH CARE IF EVER
+                #
+                # switching it off for now
+                #if self.__clf.isTrained(trainingdataset):
+                #    warning('It seems that classifier %s was already trained' %
+                #            self.__clf + ' on dataset %s. Please inspect' \
+                #                % trainingdataset)
                 self.__clf.train(trainingdataset)
 
         if self.__clf.states.isEnabled('trained_labels') and \

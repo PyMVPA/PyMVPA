@@ -79,7 +79,10 @@ class MaskMapper(MetricMapper):
             % (self.__masksize, self.__masknonzerosize)
 
 
-    def __deepcopy__(self, memo={}):
+    def __deepcopy__(self, memo=None):
+        # XXX memo does not seem to be used
+        if memo is None:
+            memo = {}
         from copy import deepcopy
         # XXX might be necessary to deepcopy 'self.metric' as well
         # to some degree reimplement the constructor to prevent calling the

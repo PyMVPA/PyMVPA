@@ -16,7 +16,7 @@ PyMVPA Manual
 :Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
 :Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
 :IRC: #exppsy on OTFC/Freenode
-:Revision: unreleased
+:Revision: 0.1
 
 .. Please add yourself to the list of authors if you contribute something
    to this manual.
@@ -639,13 +639,13 @@ details). This makes it very easy to test different classifiers on some
 dataset (see Fig. 1).
 
 .. figure:: pics/classifier_comparison_plot.png
-   :width: 18cm
+   :width: 15cm
    :alt: Classifier comparison
 
-   A comparison of the behavior of four different classifiers (linear SVM,
-   logistic regression, ridge regression and SVM with radial basis function
-   kernel) on a simple classification problem. The code to generate these
-   figure can be found in the `pylab_2d.py` example.
+   A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
+   linear SVM, logistic regression, ridge regression and SVM with radial basis
+   function kernel) on a simple classification problem. The code to generate
+   these figure can be found in the `pylab_2d.py` example.
 
 
 Stateful objects
@@ -753,9 +753,9 @@ Boosted and Multi-class Classifiers
 k-Nearest-Neighbour
 ~~~~~~~~~~~~~~~~~~~
 
-kNN_
-
-(to be written)
+The kNN_ classifier makes predictions based on the labels of nearby samples.  It
+currently uses Euclidian distance to determine the nearest neighbours, but
+future enhancements may include support for other kernels.
 
 .. _kNN: api/mvpa.clfs.knn.kNN-class.html
 
@@ -763,13 +763,11 @@ kNN_
 Support Vector Machines
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-LinearCSVMC_
-LinearNuSVMC_
-RbfNuSVMC_
-RbfCSVMC_
-SVMBase_
-
-(to be written)
+The support vector machine classes provide a family of classifers by wrapping
+the libsvm_ library.  While the SVMBase_ class provides a complete interface,
+the other child classes make it easy to run standard classifiers, such as
+linear SVM, with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_,
+RbfNuSVMC_ and RbfCSVMC_).
 
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
@@ -777,23 +775,26 @@ SVMBase_
 .. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 .. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
-Logistic Regression
-~~~~~~~~~~~~~~~~~~~
-
-PLF_ (why is this called PLF not PLR?)
-
-(to be written)
-
-.. _PLF: api/mvpa.clfs.plf.PLF-class.html
 
 Ridge Regression
 ~~~~~~~~~~~~~~~~
 
-Ridge_
 
-(to be written)
+The ridge regression classifier (RidgeReg_) performs a simple linear regression
+with a penalty parameter to help avoid over-fitting.  The regression inserts an
+intercept term so that you do not have to center your data.
 
-.. _Ridge: api/mvpa.clfs.ridge.RidgeReg-class.html
+.. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
+
+
+Logistic Regression
+~~~~~~~~~~~~~~~~~~~
+
+The penalized logistic regression (PLR_) is similar to the ridge in that it
+has a penalty term, however, it is trained to predict a binary outcome by
+means of the logistic function.
+
+.. _PLR: api/mvpa.clfs.plr.PLR-class.html
 
 
 Algorithms
@@ -802,7 +803,7 @@ Algorithms
 PyMVPA provides a number of useful algorithms. The vast majority of
 them are dedicated to feature selection. To increase analysis
 flexibility, PyMVPA distinguished two parts of a feature selection
-procedure. 
+procedure.
 
 First, the impact of each individual feature on a classification has
 to be determined.  The resulting map reflects the sensitivities of all
@@ -831,55 +832,107 @@ datasets.
 Sensitivity Analyzers
 ~~~~~~~~~~~~~~~~~~~~~
 
-SensitivityAnalyzer_
+It was already mentioned that a SensitivityAnalyzer_ computes a featurewise
+score that indicates how much interesting signal each feature contains
+-- hoping that this score somehow correlates with the impact of the features
+on a classifier's decision for a certain problem.
 
-(to be written)
+Every sensitivity analyzer object computes a one-dimensional array with the
+respective score for every feature, when called with a Dataset_. Due to this
+common behaviour all SensitivityAnalyzer_ types are interchangeable and can be
+combined with any other algorithm requiring a sensitivity analyzer.
+
+By convention higher sensitivity values indicate more interesting features.
+
+There are two types of sensitivity analyzers in PyMVPA. Basic sensitivity
+analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
+on the other hand utilize another sensitivity analyzer to compute their
+sensitivity maps.
 
 .. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
 
-.. Point to the difference of `DataMeasure` and `SensitivityAnalyzer`. The
-   former computes some value given a dataset (might be scalar or something
-   else), whereas that latter computes a 1d map (sensitivity -> features),
-   where each value assigns a quantification of the amount of available
-   information in that feature.
 
-Noise Perturbation
-''''''''''''''''''
-
-PerturbationSensitivityAnalyzer_
-
-(to be written)
-
-.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+Basic Sensitivity Analyzers
+'''''''''''''''''''''''''''
 
 ANOVA
-'''''
+^^^^^
 
-OneWayAnova_
+The OneWayAnova_ class provides a simple (and fast) univariate sensitivity
+measure. For each feature an individual F-score is computed as the fraction
+of between and within group variances. Groups are defined by samples with
+unique labels.
 
-(to be written)
+Higher F-scores indicate higher sensitivities, as with all other sensitivity
+analyzers.
+
 
 .. _OneWayAnova: api/mvpa.algorithms.anova.OneWayAnova-class.html
 
 
 Linear SVM Weights
-''''''''''''''''''
+^^^^^^^^^^^^^^^^^^
 
-LinearSVMWeights_
+The featurewise weights of a trained support vector machine are another
+possible sensitivity measure. The LinearSVMWeights_ class can internally train
+all types of *linear* support vector machines and report those weights.
 
-(to be written)
+In contrast to the F-scores computed by an ANOVA, the weights can be positive
+or negative, with both extremes indicating higher sensitivities. To deal with
+this property all subclasses of SensitivityAnalyzer_ support a `transformer`
+arguments in the contructor. A transformer is a functor that is finally called
+with the computed sensitivity map. PyMVPA already comes with some convenience
+functors which can be used for this purpose (see Transformers_).
+
+Please note, that this class *cannot* extract reasonable weights from non-linear
+SVMs (e.g. with RBF kernels).
 
 .. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
+.. _Transformers: api/mvpa.misc.transformers-module.html
+
+
+Noise Perturbation
+^^^^^^^^^^^^^^^^^^
+
+Noise perturbation is a generic approach to determine feature sensitivity.
+The sensitivity analyzer (PerturbationSensitivityAnalyzer_) computes a
+ScalarDatasetMeasure_ using the original dataset. Afterwards, for each single
+feature a noise pattern is added to the respective feature and the dataset
+measure is recomputed. The sensitivity of each feature is the difference
+between the dataset measure of the orginal dataset and the one with added
+noise. The reasoning behind this algorithm is that adding to noise to
+*important* features will impair a dataset measure like cross-validated
+classifier transfer error. However, adding noise the a feature that already
+only contains noise, will not change such a measure.
+
+Depending on the used ScalarDatasetMeasure_ using the sensitivity analyzer
+might be really CPU-intensive! Also depending on the measure, it might be
+necessary to use appropriate Transformers_ (see `transformer` constructor
+arguments) to ensure that higher values represent higher sensitivities.
+
+.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+.. _ScalarDatasetMeasure: api/mvpa.algorithms.datameasure.ScalarDatasetMeasure-class.html
+
+
+Meta Sensitivity Analyzer
+''''''''''''''''''''''''''
+
+Meta Sensitivity Analyzers are SensitivityAnalyzer_ that internally use one
+of the `Basic Sensitivity Analyzers`_ to compute their sensitivity scores.
 
 
 Splitting Sensitivity Analyzer
-''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-SplittingSensitivityAnalyzer_
+The SplittingSensitivityAnalyzer_ uses a Splitter_ to generate dataset splits.
+A SensitivityAnalyzer_ is then used to compute sensitivity maps for all these
+dataset splits. At the end a `combiner` function is called with all sensitivity
+maps to produce the final sensitivity map. By default the mean sensitivity 
+maps across all splits is computed.
 
-(to be written)
-
+.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _SplittingSensitivityAnalyzer: api/mvpa.algorithms.splitsensana.SplittingSensitivityAnalyzer-class.html
+
 
 
 Feature Selection Strategies
@@ -910,11 +963,11 @@ IFS_
 Classifier Cross-Validation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ClfCrossValidation_
+CrossValidatedTransferError_
 
 (to be written)
 
-.. _ClfCrossValidation: api/mvpa.algorithms.clfcrossval.ClfCrossValidation-class.html
+.. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
 
 
 Searchlight
@@ -977,6 +1030,14 @@ level:
   examples)
 * environment variable ``MVPA_VERBOSE``
 * code: verbose.level property
+
+The following verbosity levels are supported:
+
+  :0: nothing besides errors
+  :1: high level stuff -- top level operation or file operations
+  :2: cmdline handling
+  :3: n.a.
+  :4: computation/algorithm relevant thing
 
 
 Warning Messages
@@ -1056,7 +1117,17 @@ I feel like I want to contribute something, do you mind?
   time/cannot/do not want to implement it yourself, please post your idea to
   the PyMVPA mailing list.
 
-.. We probably need them once we have more than three users.
+
+The manual is quite insufficient. When will you improve it?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Writing a manual can be a tricky task if you already know the details and
+  have to imagine what might be the most interesting information for someone
+  who is just starting. If you feel that something is missing which has cost
+  you some time to figure out, please drop us a note and we will add it as soon
+  as possible. If you have developed some code snippets to demonstrate some
+  feature or non-trivial behaviour, please consider sharing this snippet with
+  us and we will put it into the example collection or the manual. Thanks!
 
 
 

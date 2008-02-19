@@ -24,7 +24,7 @@ class MappedDataset(Dataset):
     (voxels) to be used in the analysis: see `MaskedDataset`
     """
 
-    def __init__(self, samples=None, mapper=None, dsattr={}, **kwargs):
+    def __init__(self, samples=None, mapper=None, dsattr=None, **kwargs):
         """Initialize `MaskedDataset`
 
         :Parameters:
@@ -34,6 +34,10 @@ class MappedDataset(Dataset):
         # there are basically two mode for the constructor:
         # 1. internal mode - only data and dsattr dict
         # 2. user mode - samples != None # and mapper != None
+
+        # see if dsattr is none, if so, set to empty dict
+        if dsattr is None:
+            dsattr = {}
 
         # if a mapper was passed, store it in dsattr dict that gets passed
         # to base Dataset
