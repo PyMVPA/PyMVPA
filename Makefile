@@ -96,7 +96,8 @@ htmldevguide: mkdir-HTML_DIR
 pdfmanual: mkdir-PDF_DIR
 	cat doc/manual.txt Changelog | $(rst2latex) > $(PDF_DIR)/manual.tex
 	-cp -r doc/misc/pics $(PDF_DIR)
-	cd $(PDF_DIR) && pdflatex manual.tex
+	# need to run twice to get cross-refs right
+	cd $(PDF_DIR) && pdflatex manual.tex && pdflatex manual.tex
 
 pdfdevguide: mkdir-PDF_DIR
 	$(rst2latex) doc/devguide.txt $(PDF_DIR)/devguide.tex

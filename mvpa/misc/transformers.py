@@ -32,3 +32,9 @@ def Identity(x):
 def FirstAxisMean(x):
     """Mean computed along the first axis."""
     return N.mean(x, axis=0)
+
+
+def GrandMean(x):
+    """Just what the name suggests."""
+    return N.mean(x)
+

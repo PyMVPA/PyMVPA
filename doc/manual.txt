@@ -152,7 +152,7 @@ During another visit in Princeton in October 2007 Michael met with `Yaroslav
 Halchenko`_ and `Per B. Sederberg`_. That incident and the following
 discussions and hacking sessions of Michael and Yaroslav lead to a major
 refactoring of the PyMVPA codebase, making it much more flexible/extensible,
-faster and easier as it has ever been before.
+faster and easier than it has ever been before.
 
 .. _Yaroslav Halchenko: http://www.onerussian.com/
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
@@ -735,11 +735,56 @@ of desired state variables names, passed to the object constructor. Keyword
 Error Calculation
 ~~~~~~~~~~~~~~~~~
 
-TransferError_
+The TransferError_ class provides a convenient way to determine the transfer
+error of a trained classifier on some validation dataset. A TransferError_
+object is instanciated by passing a classifier object to the constructor.
+Optionally a custom error function can be specified (see `errorfx` argument).
 
-(to be written)
+To compute the transfer error simply call the object with a validation dataset.
+The computed error value is returned. TransferError_ also supports a state
+variable `confusion` that contains the full confusion matrix of the predictions
+made on the validation dataset. The confusion matrix is disabled by default.
+
+If the TransferError_ object is called with an optional training dataset, the
+contained classifier is first training using this dataset before predictions
+on the validation dataset are made.
+
+  >>> from mvpa.clfs.transerror import TransferError
+  >>> clf = kNN(k=10)
+  >>> terr = TransferError(clf)
+  >>> terr(validation, training )
+  0.0
 
 .. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
+
+
+Cross-validated Transfer Error
+''''''''''''''''''''''''''''''
+
+Often one is not only interested in a single transfer error on one validation
+dataset, but on a cross-validated estimate of the transfer error. A popular
+method is the so-called leave-one-out cross-validation.
+
+The CrossValidatedTransferError_ class provides a simple way to compute such
+measure. It utilizes a TransferError_ object and a Splitter_. When called with
+a Dataset_ the splitter generates splits of the Dataset and the transfer error
+for all splits is computed by training on one of the splitted datasets and
+making predictions on the other. By default the mean of transfer errors is
+returned (but the actual `combiner` function is customizable).
+
+The following example shows the minimal code for a leave-one-out
+cross-validation reusing the transfer error object from the previous example
+and some Dataset_ `data`.
+
+  >>> from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> cvterr = CrossValidatedTransferError(terr,
+                                           NFoldSplitter(cvtype=1))
+  >>> cvterr(data)
+  0.21
+
+.. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
+
 
 
 Boosted and Multi-class Classifiers
@@ -961,26 +1006,27 @@ IFS_
 .. What are the practical differences (besides speed) between RFE and IFS?
 
 
-Classifier Cross-Validation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CrossValidatedTransferError_
-
-(to be written)
-
-.. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
-
-
 Searchlight
 ~~~~~~~~~~~
 
-Searchlight_
+The term Searchlight_ refers to an algorithm that runs a
+`ScalarDatasetMeasure` on all possible spheres of a certain size within a
+dataset. The measure typically computed is a cross-validated transfer error
+(see CrossValidatedTransferError_). The idea to use a searchlight as a
+sensitivity analyzer stems from a paper by Kriegeskorte and colleagues
+[KGB06]_.
 
-(to be written)
+An example of a typical application of this algorithm can be found in the file
+at `doc/examples/searchlight_2d.py` in the source distribution of PyMVPA.
 
 .. _Searchlight: api/mvpa.algorithms.searchlight.Searchlight-class.html
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
+
+.. [KGB06] Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
+           'Information-based functional brain mapping.' Proceedings of the
+           National Academy of Sciences of the United States of America 103,
+           3863-3868.
 
 
 
