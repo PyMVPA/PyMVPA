@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 79 -*-
-.. ex: set tw=79:
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -45,7 +45,7 @@ pylint
    - place it in *~/.pylintrc* for user-wide installation
    - use within a call to pylint::
 
-	   pylint --rcfile=$PWD/doc/misc/pylintrc
+       pylint --rcfile=$PWD/doc/misc/pylintrc
 
    - export environment variable from mvpa sources top directory::
 
@@ -98,11 +98,11 @@ dataset vs data
     class Classifier(Stateful):
        ...
        def train(self, dataset):
-	   ...
+       ...
        def predict(self, data):
 
     class FeatureSelection(Stateful):
-	   ...
+       ...
        def __call__(self, dataset, testdataset):
 
 
@@ -204,11 +204,15 @@ TODO
 ----
 
  * selected_ids -> implement via MaskMapper?
-   yoh: it might be preferable to manipulate/expose MaskMapper instead
-    of plain list of selected_ids within FeatureSelection classes
+
+   yoh:
+        it might be preferable to manipulate/expose MaskMapper instead
+        of plain list of selected_ids within FeatureSelection classes
  * unify naming of working/testing
-     transerror.py for instance uses testdata/trainingdata
-     rfe.py dataset, testdataset
+
+    * transerror.py for instance uses testdata/trainingdata
+    * rfe.py dataset, testdataset
+
  * ConfusionBasedError -> InternalError ?
 
  * Think about how to deal with Transformers to serve them with
@@ -230,12 +234,14 @@ TODO
     obtained (and dumped to the disk)
 
  * Agree on how to describe parameters to functions. Describe in
-  NOTES.coding.
+   NOTES.coding.
 
  * feature_selector -- may be we should return a tuple
    (selected_ids, discarded_ids)?
-   Michael: Is there any use case for that? ElementSelector can 'select' and
-            'discard' already. DO we need both simultaneously?
+
+   Michael:
+        Is there any use case for that? ElementSelector can 'select' and
+        'discard' already. DO we need both simultaneously?
 
  * Basic documentation: Examples (more is better) describing various use cases
     (everything in the cncre should be done in examples)
@@ -244,9 +250,9 @@ TODO
 
  *  ParameterOptimizer
     (might be also OptimizedClassifier which uses parameterOptimizer
-     internally but as the result there is a classifier which
-     automatically optimizes its parameters. It is close in idea to
-     classifier based on RFE)
+    internally but as the result there is a classifier which
+    automatically optimizes its parameters. It is close in idea to
+    classifier based on RFE)
 
  * provide for Dataset -- Dataset.__featattr which has attributes for
     features similar to __dsattr way.
