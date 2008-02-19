@@ -16,7 +16,7 @@ PyMVPA Manual
 :Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
 :Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
 :IRC: #exppsy on OTFC/Freenode
-:Revision: unreleased
+:Revision: 0.1
 
 .. Please add yourself to the list of authors if you contribute something
    to this manual.
