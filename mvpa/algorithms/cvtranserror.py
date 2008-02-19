@@ -19,6 +19,7 @@ from mvpa.datasets.splitter import NoneSplitter
 from mvpa.clfs.transerror import ConfusionMatrix
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
+from mvpa.misc.transformers import GrandMean
 
 if __debug__:
     from mvpa.misc import debug
@@ -47,7 +48,7 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
     def __init__(self,
                  transerror,
                  splitter=NoneSplitter(),
-                 combiner=N.mean,
+                 combiner=GrandMean,
                  **kwargs):
         """
         Cheap initialization.
