@@ -46,7 +46,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
 
-    def _call(self, dataset, callables=[]):
+    def _call(self, dataset):
         """Extract weights from Linear SVM classifier.
         """
         if self.clf.model.nr_class != 2:

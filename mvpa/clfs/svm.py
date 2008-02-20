@@ -49,8 +49,8 @@ class SVMBase(Classifier):
                  gamma=0.0,
                  probability=0,
                  shrinking=1,
-                 weight_label=[],
-                 weight=[],
+                 weight_label=None,
+                 weight=None,
                  cache_size=100,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
@@ -101,6 +101,11 @@ class SVMBase(Classifier):
         If you do not want to change penalty for any of the classes,
         just set nr_weight to 0.
         """
+        if weight_label == None:
+            weight_label = []
+        if weight == None:
+            weight = []
+
         # init base class
         Classifier.__init__(self, **kwargs)
 
@@ -202,13 +207,18 @@ class LinearSVM(SVMBase):
                  p=0.1,
                  probability=0,
                  shrinking=1,
-                 weight_label=[],
-                 weight=[],
+                 weight_label=None,
+                 weight=None,
                  cache_size=100,
                  **kwargs):
         """The constructor arguments are virtually identical to the ones of
         the SVMBase class, except that 'kernel_type' is set to LINEAR.
         """
+        if weight_label == None:
+            weight_label = []
+        if weight == None:
+            weight = []
+
         # init base class
         SVMBase.__init__(self, kernel_type=svm.svmc.LINEAR,
                          svm_type=svm_type, C=C, nu=nu, cache_size=cache_size,
@@ -238,12 +248,17 @@ class LinearNuSVMC(LinearSVM):
                  eps=0.001,
                  probability=0,
                  shrinking=1,
-                 weight_label=[],
-                 weight=[],
+                 weight_label=None,
+                 weight=None,
                  cache_size=100,
                  **kwargs):
         """
         """
+        if weight_label == None:
+            weight_label = []
+        if weight == None:
+            weight = []
+
         # init base class
         LinearSVM.__init__(self, svm_type=svm.svmc.NU_SVC,
                            nu=nu, eps=eps, probability=probability,
@@ -266,12 +281,17 @@ class LinearCSVMC(LinearSVM):
                  eps=0.00001,
                  probability=0,
                  shrinking=1,
-                 weight_label=[],
-                 weight=[],
+                 weight_label=None,
+                 weight=None,
                  cache_size=100,
                  **kwargs):
         """
         """
+        if weight_label == None:
+            weight_label = []
+        if weight == None:
+            weight = []
+
         # init base class
         LinearSVM.__init__(self, svm_type=svm.svmc.C_SVC,
                            C=C, eps=eps, probability=probability,
@@ -304,12 +324,17 @@ class RbfNuSVMC(SVMBase):
                  eps=0.001,
                  probability=0,
                  shrinking=1,
-                 weight_label=[],
-                 weight=[],
+                 weight_label=None,
+                 weight=None,
                  cache_size=100,
                  **kwargs):
         """
         """
+        if weight_label == None:
+            weight_label = []
+        if weight == None:
+            weight = []
+
         # init base class
         SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
                          svm_type=svm.svmc.NU_SVC, nu=nu, gamma=gamma,
@@ -337,12 +362,17 @@ class RbfCSVMC(SVMBase):
                  eps=0.00001,
                  probability=0,
                  shrinking=1,
-                 weight_label=[],
-                 weight=[],
+                 weight_label=None,
+                 weight=None,
                  cache_size=100,
                  **kwargs):
         """
         """
+        if weight_label == None:
+            weight_label = []
+        if weight == None:
+            weight = []
+
         # init base class
         SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
                          svm_type=svm.svmc.C_SVC, C=C, gamma=gamma,
