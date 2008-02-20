@@ -45,6 +45,10 @@ class MaskedDataset(MappedDataset):
                 raise ValueError, \
                       "Constructor of MaskedDataset requires both a samples " \
                       "array and a mask if one of both is provided."
+            # expand mask to span all dimensions but first one
+            # necessary e.g. if only one slice from timeseries of volumes is
+            # requested.
+            mask = N.array(mask, ndmin=len(samples.shape[1:]))
             # check for compatibility
             if not samples.shape[1:] == mask.shape:
                 raise ValueError, "The mask dataspace shape [%s] is not " \

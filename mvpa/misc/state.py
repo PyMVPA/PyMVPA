@@ -106,7 +106,7 @@ class StateCollection(object):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, items = {}, owner = None):
+    def __init__(self, items=None, owner = None):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -121,6 +121,8 @@ class StateCollection(object):
 
         self.__owner = owner
 
+        if items == None:
+            items = {}
         self.__items = items
         """Dictionary to contain registered states as keys and
         values signal either they are enabled
@@ -274,8 +276,8 @@ class StateCollection(object):
 
 
 
-    def _changeTemporarily(self, enable_states=[],
-                           disable_states=[], other=None):
+    def _changeTemporarily(self, enable_states=None,
+                           disable_states=None, other=None):
         """Temporarily enable/disable needed states for computation
 
         Enable or disable states which are enabled in `other` and listed in
@@ -284,6 +286,10 @@ class StateCollection(object):
 
         `other` can be a Stateful object or StateCollection
         """
+        if enable_states == None:
+            enable_states = []
+        if disable_states == None:
+            disable_states = []
         self.__storedTemporarily.append(self.enabled)
         other_ = other
         if isinstance(other, Stateful):
@@ -437,8 +443,13 @@ class Stateful(object):
     __metaclass__ = statecollector
 
     def __init__(self,
-                 enable_states=[],
-                 disable_states=[]):
+                 enable_states=None,
+                 disable_states=None):
+
+        if enable_states == None:
+            enable_states = []
+        if disable_states == None:
+            disable_states = []
 
         object.__setattr__(self, '_states',
                            copy.deepcopy( \

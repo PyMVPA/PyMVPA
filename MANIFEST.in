@@ -3,3 +3,4 @@ include Changelog TODO Makefile
 recursive-include doc *
 recursive-include tools *
 recursive-include tests *
+recursive-include data *
