@@ -88,7 +88,7 @@ htmlchangelog: mkdir-HTML_DIR
 htmlmanual: mkdir-HTML_DIR
 	$(rst2html) doc/manual.txt $(HTML_DIR)/manual.html
 	# copy images and styles
-	cp -r doc/misc/{*.css,pics} $(HTML_DIR)
+	cp -r -t $(HTML_DIR) doc/misc/*.css doc/misc/pics
 
 htmldevguide: mkdir-HTML_DIR
 	$(rst2html) doc/devguide.txt $(HTML_DIR)/devguide.html
