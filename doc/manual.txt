@@ -40,7 +40,7 @@ website`_:
 .. sectnum::
 
 
-.. [gjd] high-level comments
+.. <gjd> high-level comments
 
 .. incorporate a standalone section on file formats and
    interoperability. clearly, Nifti is one, but i'm still
@@ -94,7 +94,7 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
 
-.. [gjd] i would explicitly mention and link to the type of license
+.. <gjd> i would explicitly mention and link to the type of license
 
 
 What this Manual is NOT
@@ -108,7 +108,7 @@ of high-quality text books about this field available. A very good example is:
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
 
-.. [gjd] i would have thought that links to review papers on MVPA methods
+.. <gjd> i would have thought that links to review papers on MVPA methods
    (Norman et al (2006), Haynes & Rees (2006)) are important too - after all
    PyMVPA is primarily about fMRI/MVPA, rather than machine learning in general
 
@@ -120,7 +120,7 @@ from the examples shipped with the PyMVPA source distribution (`doc/examples/`)
 or even the unit test battery, also part of the source distribution
 (in the `tests/` directory).
 
-.. [gjd] provide links to the mailing list etc. in lots of places, since that's
+.. <gjd> provide links to the mailing list etc. in lots of places, since that's
    a key piece of information that frustrated users will want
 
 
@@ -302,7 +302,7 @@ PyMVPA developers have sworn a solemn oath to name their first-born child 'Debia
 Building from Source
 ''''''''''''''''''''
 
-.. [gjd] point out here to naive users that they *do not* need to build from
+.. <gjd> point out here to naive users that they *do not* need to build from
    source - point to the 'binaries' section below
 
 Source code tarballs of PyMVPA releases are available from the `PyMVPA
@@ -374,7 +374,8 @@ How to cite PyMVPA
 .. PBS: At some point we should write up a technical report or submit
    something to neuroimage methods.
 
-.. [gjd] i found that presenting posters at conferences (e.g. HBM) works well. you get to meet people, and it's less effort than a paper
+.. <gjd> i found that presenting posters at conferences (e.g. HBM) works well.
+   you get to meet people, and it's less effort than a paper
 
 
 Credits
@@ -422,9 +423,9 @@ functionality that applies to the whole dataset.
 
 .. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
 
-.. [gjd] i had a hard time making sense of the above
-.. paragraph on first reading. add an example to get
-.. first-time users thinking in the right direction
+.. <gjd> i had a hard time making sense of the above
+   paragraph on first reading. add an example to get
+   first-time users thinking in the right direction
 
 Most likely the Dataset_ class will not be used directly, but through one
 of the derived classes. However, it is perfectly possible to use it directly.
@@ -491,8 +492,8 @@ that is required by the Dataset_ class. In the context of mappers the
 dataspace is sometimes also referred to as *in-space* while the feature space
 is labeled as *out-space*.
 
-.. [gjd] is there any mnemonic i can use to try and remember why 'in' vs
-.. 'out' makes sense in this context?
+.. <gjd> is there any mnemonic i can use to try and remember why 'in' vs
+   'out' makes sense in this context?
 
 The task of a mapper, besides transforming samples into 1d vectors, is to
 retain as much information of the dataspace as possible. Some mappers provide
@@ -596,7 +597,7 @@ requirement spuriously elevates the classification performance, often termed
 information because they are based on cheating or peeking and do not
 describe signal similarities between training and validation datasets.
 
-.. [gjd] this point about 'peeking' is a critical one and
+.. <gjd> this point about 'peeking' is a critical one and
    maybe deserves emphasis. i was just looking at how we deal
    with it in our documentation, and we need to improve ours too!
 
@@ -895,7 +896,7 @@ intercept term so that you do not have to center your data.
 
 
 Penalized Logistic Regression
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The penalized logistic regression (PLR_) is similar to the ridge in that it
 has a penalty term, however, it is trained to predict a binary outcome by
