@@ -20,7 +20,7 @@ if __debug__:
     from mvpa.misc import debug
 
 
-class PLF(Classifier):
+class PLR(Classifier):
     """Penalized logistic regression `Classifier`.
     """
 
@@ -56,7 +56,7 @@ class PLF(Classifier):
     def __repr__(self):
         """String summary over the object
         """
-        return """PLF(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_states=%s)""" % \
+        return """PLR(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_states=%s)""" % \
                (self.__lm, self.__criterion, self.__reduced, self.__maxiter,
                 str(self.states.enabled))
 
@@ -117,8 +117,8 @@ class PLF(Classifier):
                       (self.__criterion)
 
         if __debug__:
-            debug("PLF", \
-                  "PLF converged after %d steps. Error: %g" % \
+            debug("PLR", \
+                  "PLR converged after %d steps. Error: %g" % \
                   (k, N.sum(N.ravel(dw.A ** 2))))
 
         if self.__reduced:

@@ -79,13 +79,16 @@ debian-clean:
 #
 doc: website
 
+htmlindex: mkdir-HTML_DIR
+	$(rst2html) doc/index.txt $(HTML_DIR)/index.html
+
 htmlchangelog: mkdir-HTML_DIR
 	$(rst2html) Changelog $(HTML_DIR)/changelog.html
 
 htmlmanual: mkdir-HTML_DIR
 	$(rst2html) doc/manual.txt $(HTML_DIR)/manual.html
 	# copy images and styles
-	cp -r doc/misc/{*.css,pics} $(HTML_DIR)
+	cp -r -t $(HTML_DIR) doc/misc/*.css doc/misc/pics
 
 htmldevguide: mkdir-HTML_DIR
 	$(rst2html) doc/devguide.txt $(HTML_DIR)/devguide.html
@@ -93,7 +96,8 @@ htmldevguide: mkdir-HTML_DIR
 pdfmanual: mkdir-PDF_DIR
 	cat doc/manual.txt Changelog | $(rst2latex) > $(PDF_DIR)/manual.tex
 	-cp -r doc/misc/pics $(PDF_DIR)
-	cd $(PDF_DIR) && pdflatex manual.tex
+	# need to run twice to get cross-refs right
+	cd $(PDF_DIR) && pdflatex manual.tex && pdflatex manual.tex
 
 pdfdevguide: mkdir-PDF_DIR
 	$(rst2latex) doc/devguide.txt $(PDF_DIR)/devguide.tex
@@ -102,13 +106,19 @@ pdfdevguide: mkdir-PDF_DIR
 printables: pdfmanual pdfdevguide
 
 apidoc: apidoc-stamp
-apidoc-stamp: $(PROFILE_FILE)
+apidoc-stamp: build
+# Disabled profiling for now, it consumes huge amounts of memory, so I doubt
+# that all buildds can do it. In theory it would only be done on a single
+# developer machine, because it is only necessary for the arch-all package,
+# but e.g. dpkg-buildpackage runs the indep target anyway -- not sure about
+# the buildds, though.
+#apidoc-stamp: $(PROFILE_FILE)
 	mkdir -p $(HTML_DIR)/api
 	epydoc --config doc/api/epydoc.conf
 	touch $@
 
-website: mkdir-WWW_DIR htmlmanual htmlchangelog htmldevguide printables apidoc
-	$(rst2html) doc/index.txt $(WWW_DIR)/index.html
+website: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
+         htmldevguide printables apidoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
 

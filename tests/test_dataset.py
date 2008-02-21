@@ -90,7 +90,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (unmasked[:,[0,20,79]]==sel.samples).all() )
 
 
-    def testPatternSelection(self):
+    def testSampleSelection(self):
         origdata = N.random.standard_normal((10,100))
         data = Dataset(samples=origdata, labels=2, chunks=2 )
 
@@ -206,7 +206,7 @@ class DatasetTests(unittest.TestCase):
         self.failIf( (data2.labels == origlabels).all() )
 
 
-    def testAtrributes(self):
+    def testAttributes(self):
         #class BlobbyDataset(Dataset):
         #    pass
         # TODO: we can't assign attributes to those for now...
@@ -335,6 +335,25 @@ class DatasetTests(unittest.TestCase):
         dataset.permuteLabels(False)
         self.failUnless(origid != dataset._id,
                         msg="Permutation also changes _id even on restore")
+
+
+    def testFeatureMaskConversion(self):
+        dataset = Dataset(samples=N.arange(12).reshape( (4,3) ),
+                          labels=1,
+                          chunks=1)
+
+        mask = dataset.convertFeatureIds2FeatureMask(range(dataset.nfeatures))
+        self.failUnless(len(mask) == dataset.nfeatures)
+        self.failUnless((mask == True).all())
+
+        self.failUnless(
+            (dataset.convertFeatureMask2FeatureIds(mask) == range(3)).all())
+
+        mask[1] = False
+
+        self.failUnless(
+            (dataset.convertFeatureMask2FeatureIds(mask) == [0, 2]).all())
+
 
 
 def suite():

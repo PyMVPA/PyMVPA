@@ -14,7 +14,7 @@ import sys
 import numpy as N
 
 from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.algorithms.clfcrossval import ClfCrossValidation
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
@@ -101,7 +101,7 @@ def main():
 
     verbose(3, "Assigning a measure to be CrossValidation")
     # compute N-1 cross-validation with the selected classifier in each sphere
-    cv = ClfCrossValidation(TransferError(clf),
+    cv = CrossValidatedTransferError(TransferError(clf),
                             NFoldSplitter(cvtype=options.crossfolddegree))
 
     verbose(3, "Generating Searchlight instance")
