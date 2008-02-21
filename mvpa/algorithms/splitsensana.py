@@ -17,7 +17,7 @@ import numpy as N
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import StateVariable
-
+from mvpa.misc.transformers import FirstAxisMean
 
 class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
     """This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
@@ -37,8 +37,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
 
     def __init__(self, sensana,
                  splitter=NoneSplitter,
-                 combiner=lambda x:N.mean(x, axis=0),
-                 postproc={},
+                 combiner=FirstAxisMean,
                  **kwargs):
         """Cheap initialization.
 
@@ -53,15 +52,6 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
                 This functor will be called on an array of sensitivity maps
                 and the result will be returned by __call__(). The result of
                 a combiner must be an 1d ndarray.
-            postproc : dict
-                Dictionary of post-processing functors. Each functor will be
-                called with the sequence of sensitivity maps. The resulting
-                value is then made available via the object's `StateVariable`
-                .post, which is a dict, using the respective key from
-                `postproc` dictionary.
-                Example:
-                  postproc={'full': N.array}
-                  intermediate = splitana.post['full']
         """
         # init base classes first
         SensitivityAnalyzer.__init__(self, **kwargs)
@@ -76,7 +66,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         __call__()"""
 
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         """Compute sensitivity maps for all dataset splits and run the
         postprocessing functions afterward (if any).
 
@@ -91,7 +81,6 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
             # compute sensitivity using first dataset in split
             sensitivity = self.__sensana(split[0])
 
-            # TODO add callbacks to do some magic with the analyzer
             maps.append(sensitivity)
 
         self.maps = maps

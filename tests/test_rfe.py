@@ -39,7 +39,7 @@ class SillySensitivityAnalyzer(SensitivityAnalyzer):
         SensitivityAnalyzer.__init__(self, **kwargs)
         self.__mult = mult
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         """Train linear SVM on `dataset` and extract weights from classifier.
         """
         return( self.__mult *( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) ))
