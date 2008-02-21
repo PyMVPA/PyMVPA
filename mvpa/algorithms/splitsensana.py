@@ -118,7 +118,6 @@ class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
                                               sensana,
                                               splitter,
                                               combiner=N.array,
-                                              postproc={},
                                               **kwargs)
 
         self.__noise_level = noise_level
@@ -142,4 +141,4 @@ class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
         # compute t-score
         t = (m - self.__noise_level) / N.sqrt(v * (1.0 / maps.shape[0]))
 
-        return self._transformer(t)
+        return self.finalize(t)
