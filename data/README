@@ -1,0 +1,19 @@
+PyMVPA Example Dataset
+----------------------
+
+Posterior half of a single axial slice.
+
+
+Numerical sample labels:
+
+  * 0 - rest
+  * 1 - face
+  * 2 - house
+  * 3 - shoe
+  * 4 - cat
+  * 5 - scissors
+  * 6 - scrambledpix
+  * 7 - bottle
+  * 8 - chair
+
+12 independent chunks of data samples.

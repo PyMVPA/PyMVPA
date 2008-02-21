@@ -32,11 +32,13 @@ class Logger(object):
     Base class to provide logging
     """
 
-    def __init__(self, handlers=[stdout]):
+    def __init__(self, handlers=None):
         """Initialize the logger with a set of handlers to use for output
 
         Each hanlder must have write() method implemented
         """
+        if handlers == None:
+            handlers = [stdout]
         self._setHandlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
@@ -184,8 +186,12 @@ class SetLogger(Logger):
     Logger which prints based on defined sets identified by Id.
     """
 
-    def __init__(self, register={}, active=[], printsetid=True,
+    def __init__(self, register=None, active=None, printsetid=True,
                  *args, **kwargs):
+        if register == None:
+            register = {}
+        if active == None:
+            active = []
         Logger.__init__(self, *args, **kwargs)
         self.__printsetid = printsetid
         self.__registered = register    # all "registered" sets descriptions
@@ -321,7 +327,9 @@ if __debug__:
             }
 
 
-        def __init__(self, metrics=[], offsetbydepth=True, *args, **kwargs):
+        def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
+            if metrics == None:
+                metrics = []
             SetLogger.__init__(self, *args, **kwargs)
             self.__metrics = []
             self._offsetbydepth = offsetbydepth

@@ -124,7 +124,7 @@ class RFE(FeatureSelection):
             self.__train_clf = True
 
 
-    def __call__(self, dataset, testdataset, callables=[]):
+    def __call__(self, dataset, testdataset):
         """Proceed and select the features recursively eliminating less
         important ones.
 
@@ -253,10 +253,6 @@ class RFE(FeatureSelection):
             # TODO: document these cases in this class
             if not testdataset is None:
                 wtestdataset = wtestdataset.selectFeatures(selected_ids)
-
-            # provide evil access to internals :)
-            for callable_ in callables:
-                callable_(locals())
 
             step += 1
 
