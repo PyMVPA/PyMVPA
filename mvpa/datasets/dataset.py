@@ -56,7 +56,7 @@ class Dataset(object):
     no default values would be assumed and construction of the
     instance would fail"""
 
-    def __init__(self, data={}, dsattr={}, dtype=None, \
+    def __init__(self, data=None, dsattr=None, dtype=None, \
                  samples=None, labels=None, chunks=None, check_data=True,
                  copy_samples=False, copy_data=True, copy_dsattr=True):
         """Initialize dataset instance
@@ -88,6 +88,12 @@ class Dataset(object):
         already in the `data` container.
 
         """
+        # see if data and dsattr are none, if so, make them empty dicts
+        if data is None:
+            data = {}
+        if dsattr is None:
+            dsattr = {}
+
         # initialize containers; default values are empty dicts
         # always make a shallow copy of what comes in, otherwise total chaos
         # is likely to happen soon
@@ -769,6 +775,21 @@ class Dataset(object):
         fmask[ids] = True
 
         return fmask
+
+
+    def convertFeatureMask2FeatureIds(self, mask):
+        """Returns feature ids corresponding to non-zero elements in the mask.
+
+        :Parameters:
+            mask: 1d ndarray
+                Feature mask.
+
+        :Returns:
+            ndarray: integer
+                Ids of non-zero (non-False) mask elements.
+        """
+        return mask.nonzero()[0]
+
 
 
     # read-only class properties

@@ -16,7 +16,7 @@ from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.perturbsensana import PerturbationSensitivityAnalyzer
 from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.clfcrossval import ClfCrossValidation
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
 
@@ -37,7 +37,7 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
 
     def testPerturbationSensitivityAnalyzer(self):
         # compute N-1 cross-validation as datameasure
-        cv = ClfCrossValidation(
+        cv = CrossValidatedTransferError(
                 TransferError(kNN(k=5)),
                 NFoldSplitter(cvtype=1))
         # do perturbation analysis using gaussian noise
