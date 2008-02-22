@@ -63,7 +63,7 @@ class Searchlight(SensitivityAnalyzer):
         self.__spheresizes = []
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Perform the spheresearch.
         """
         if not isinstance(dataset, MappedDataset) \
@@ -107,7 +107,7 @@ class Searchlight(SensitivityAnalyzer):
             debug('SLC', '')
 
         # transform the results with the user-supplied function and return
-        return self.finalize(self.__combinefx(results))
+        return self.__combinefx(results)
 
     spheresizes = property(fget=lambda self: self.__spheresizes)
 

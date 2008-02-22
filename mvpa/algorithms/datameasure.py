@@ -46,7 +46,7 @@ class DatasetMeasure(Stateful):
 
         :Parameter:
             transformer: Functor
-                This functor is called in `finalize()` to perform a final
+                This functor is called in `__call__()` to perform a final
                 processing step on the to be returned dataset measure. If None,
                 nothing is called
         """
@@ -66,7 +66,7 @@ class DatasetMeasure(Stateful):
         Returns the computed measure in some iterable (list-like)
         container applying transformer if such is defined
         """
-        result = self._call(return_value)
+        result = self._call(dataset)
         self.raw_result = result
         if not self.__transformer is None:
             result = self.__transformer(result)
@@ -184,8 +184,8 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                (`self.__clf`, str(self._force_training))
 
 
-    def _call(self, dataset):
-        """Train linear SVM on `dataset` and extract weights from classifier.
+    def __call__(self, dataset):
+        """Train classifier on `dataset` and then compute actual sensitivity.
         """
         if not self.clf.trained or self._force_training:
             if __debug__:
@@ -196,12 +196,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                        [self.clf.trained]))
             self.clf.train(dataset)
 
-        return self._call(dataset)
-
-
-    def _call(self, dataset):
-        """Actually the function which does the computation"""
-        raise NotImplementedError
+        return SensitivityAnalyzer.__call__(self, dataset)
 
 
     def _setClassifier(self, clf):

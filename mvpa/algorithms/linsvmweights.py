@@ -75,5 +75,5 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # per feature
         weights = (svcoef * svs).mean(axis=0).A1
 
-        return self.finalize(weights)
+        return weights
 
