@@ -66,7 +66,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         __call__()"""
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Compute sensitivity maps for all dataset splits and run the
         postprocessing functions afterward (if any).
 
@@ -87,4 +87,4 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """Store the maps across splits"""
 
         # return all maps
-        return self.finalize(self.__combiner(maps))
+        return self.__combiner(maps)

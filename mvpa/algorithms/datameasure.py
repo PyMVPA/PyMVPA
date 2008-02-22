@@ -37,13 +37,18 @@ class DatasetMeasure(Stateful):
     so it is possible to get the same type of measure for multiple datasets
     by passing them to the __call__() method successively.
     """
-    def __init__(self, transformer=Identity, *args, **kwargs):
+
+    raw_result = StateVariable(enabled=False,
+        doc="Result before applying transformer")
+
+    def __init__(self, transformer=None, *args, **kwargs):
         """Does nothing special.
 
         :Parameter:
             transformer: Functor
                 This functor is called in `finalize()` to perform a final
-                processing step on the to be returned dataset measure.
+                processing step on the to be returned dataset measure. If None,
+                nothing is called
         """
         Stateful.__init__(self, **kwargs)
 
@@ -58,16 +63,25 @@ class DatasetMeasure(Stateful):
         Each implementation has to handle a single arguments: the source
         dataset.
 
+        Returns the computed measure in some iterable (list-like)
+        container applying transformer if such is defined
+        """
+        result = self._call(return_value)
+        self.raw_result = result
+        if not self.__transformer is None:
+            result = self.__transformer(result)
+        return result
+
+
+    def _call(self, dataset):
+        """Actually compute measure on a given `Dataset`.
+
+        Each implementation has to handle a single arguments: the source
+        dataset.
+
         Returns the computed measure in some iterable (list-like) container.
         """
-        raise NotImplementedError
-
-
-    def finalize(self, return_value):
-        """This method should be called with the to be returned value by the
-        `__call__()` methods of all subclasses of `DatasetMeasure`.
-        """
-        return self.__transformer(return_value)
+        raise NotImplemented
 
 
 
@@ -81,7 +95,7 @@ class ScalarDatasetMeasure(DatasetMeasure):
         DatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Computes a scalar measure on a given `Dataset`.
 
         Behaves like a `DatasetMeasure`, but computes and returns a single
@@ -101,7 +115,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         DatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Computes a per-feature-measure on a given `Dataset`.
 
         Behaves like a `DatasetMeasure`, but computes and returns a 1d ndarray
@@ -122,7 +136,7 @@ class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
         FeaturewiseDatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Perform sensitivity analysis on a given `Dataset`.
 
         Each implementation has to handle a single arguments: the source
@@ -170,7 +184,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                (`self.__clf`, str(self._force_training))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Train linear SVM on `dataset` and extract weights from classifier.
         """
         if not self.clf.trained or self._force_training:
@@ -182,7 +196,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                        [self.clf.trained]))
             self.clf.train(dataset)
 
-        return self.finalize(self._call(dataset))
+        return self._call(dataset)
 
 
     def _call(self, dataset):
@@ -248,7 +262,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         sensitivities = []
         ind = 0
         for analyzer in self.__analyzers:
@@ -260,8 +274,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
             ind += 1
 
         self.sensitivities = sensitivities
-        result = self.__combiner(sensitivities)
-        return self.finalize(result)
+        return self.__combiner(sensitivities)
 
 
     def _setAnalyzers(self, analyzers):
@@ -322,7 +335,6 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
 
         self.__combined_analyzer.analyzers = analyzers
 
-        # CombinedSensitivityAnalyzer already calls finalize()
         return self.__combined_analyzer(dataset)
 
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
