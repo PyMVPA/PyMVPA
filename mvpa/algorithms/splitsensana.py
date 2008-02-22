@@ -129,7 +129,7 @@ class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
         featurewise t-score of them.
         """
         # let base class compute the sensitivity maps
-        maps = SplittingSensitivityAnalyzer.__call__(self, dataset)
+        maps = SplittingSensitivityAnalyzer._call(self, dataset)
 
         # feature wise mean
         m = N.mean(maps, axis=0)
