@@ -276,6 +276,33 @@ class OddEvenSplitter(Splitter):
 
 
 
+class HalfSplitter(Splitter):
+    """Split a dataset into two halves of the sample attribute.
+
+    The splitter yields to splits: first (1st half, 2nd half) and second
+    (2nd half, 1st half).
+    """
+    def __init__(self, **kwargs):
+        """Cheap init.
+        """
+        Splitter.__init__(self, **(kwargs))
+
+
+    def _getSplitConfig(self, uniqueattrs):
+        """Huka chaka!
+        """
+        return [uniqueattrs[:len(uniqueattrs)/2],
+                uniqueattrs[len(uniqueattrs)/2:]]
+
+
+    def __str__(self):
+        """String summary over the object
+        """
+        return \
+          "HalfSplitter / " + Splitter.__str__(self)
+
+
+
 class NFoldSplitter(Splitter):
     """Generic N-fold data splitter.
 

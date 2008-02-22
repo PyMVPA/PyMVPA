@@ -316,13 +316,18 @@ manage to build PyMVPA on Windows or OS X, we would be glad to hear from you.
 Building from Source
 ''''''''''''''''''''
 
-.. <gjd> point out here to naive users that they *do not* need to build from
-   source - point to the 'binaries' section below
+If a binary package for your platform and operating system is provided, you do
+not have to build the packages on your own -- use the corresponding pre-build
+packages instead. However, if there are no binary packages for your system you
+can easily build PyMVPA on your own. At first it is of course necessary to
+obtain the sources.
 
-Source code tarballs of PyMVPA releases are available from the `PyMVPA
-project website`_. To get access to both the full PyMVPA history and the latest
-development code the PyMVPA Git_ repository is publicly available. To view the
-repository, please point your web browser to gitweb:
+The source code tarballs of all PyMVPA releases are available from the `PyMVPA
+project website`_.
+
+If you want to have access to both, the full PyMVPA history and the latest
+development code, you can use the PyMVPA Git_ repository, which is publicly
+available. To view the repository, please point your web browser to gitweb:
 
   http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 

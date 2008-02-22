@@ -18,7 +18,7 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * nothing yet
+  * New Splitter class (HalfSplitter) to split into first and second half.
 
 
 Releases

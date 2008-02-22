@@ -66,7 +66,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         __call__()"""
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Compute sensitivity maps for all dataset splits and run the
         postprocessing functions afterward (if any).
 
@@ -87,7 +87,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """Store the maps across splits"""
 
         # return all maps
-        return self.finalize(self.__combiner(maps))
+        return self.__combiner(maps)
 
 
 
@@ -124,7 +124,7 @@ class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
         """Output of the sensitivity analyzer when there is no signal."""
 
 
-    def __call__(self, dataset, callables=[]):
+    def _call(self, dataset, callables=[]):
         """Compute sensitivity maps for all dataset splits and return the
         featurewise t-score of them.
         """
@@ -141,4 +141,4 @@ class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
         # compute t-score
         t = (m - self.__noise_level) / N.sqrt(v * (1.0 / maps.shape[0]))
 
-        return self.finalize(t)
+        return t
