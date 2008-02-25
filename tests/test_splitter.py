@@ -94,12 +94,17 @@ class SplitterTests(unittest.TestCase):
 
     def testNoneSplitter(self):
         nos = NoneSplitter()
-
         splits = [ (train, test) for (train, test) in nos(self.data) ]
-
         self.failUnless(len(splits) == 1)
         self.failUnless(splits[0][0] == None)
         self.failUnless(splits[0][1].nsamples == 100)
+
+        nos = NoneSplitter(mode='first')
+        splits = [ (train, test) for (train, test) in nos(self.data) ]
+        self.failUnless(len(splits) == 1)
+        self.failUnless(splits[0][1] == None)
+        self.failUnless(splits[0][0].nsamples == 100)
+
 
         # test sampling tools
         nos = NoneSplitter(nrunspersplit=3,
