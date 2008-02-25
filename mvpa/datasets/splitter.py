@@ -215,16 +215,31 @@ class NoneSplitter(Splitter):
     The passed dataset is returned as the second element of the 2-tuple.
     The first element of that tuple will always be 'None'.
     """
-    def __init__(self, **kwargs):
+
+    _known_modes = ['first', 'second']
+    
+    def __init__(self, mode='second', **kwargs):
         """Cheap init -- nothing special
+
+        :Parameters:
+          mode
+            Either 'first' or 'second' (default) -- which output dataset
+            would actually contain the samples
         """
         Splitter.__init__(self, **(kwargs))
 
+        if not mode in NoneSplitter._known_modes:
+            raise ValueError, "Unknown mode %s for NoneSplitter" % mode
+        self.__mode = mode
+
 
     def _getSplitConfig(self, uniqueattrs):
-        """Return just one full split: no first dataset.
+        """Return just one full split: no first or second dataset.
         """
-        return [uniqueattrs]
+        if self.__mode == 'second':
+            return [uniqueattrs]
+        else:
+            return [[]]
 
 
     def __str__(self):
