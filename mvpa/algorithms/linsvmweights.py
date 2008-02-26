@@ -56,12 +56,6 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
         rhos = N.array(self.clf.model.getRho())
-        if __debug__:
-            debug('SVM',
-                  "Extracting weigts for %d-class SVM: #SVs=%s, " %
-                  (self.clf.model.nr_class, `self.clf.model.getNSV()`) +
-                  " SVcoefshape=%s SVs.shape=%s Rhos=%s" %\
-                  (svcoef.shape, svs.shape, rhos))
 
         self.offsets = rhos
         # XXX yoh: .mean() is effectively
@@ -74,6 +68,13 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # take mean across SVs to get a single weight value
         # per feature
         weights = (svcoef * svs).mean(axis=0).A1
+
+        if __debug__:
+            debug('SVM',
+                  "Extracting weights for %d-class SVM: #SVs=%s, " %
+                  (self.clf.model.nr_class, `self.clf.model.getNSV()`) +
+                  " SVcoefshape=%s SVs.shape=%s Rhos=%s. Result: min=%f max=%f" %\
+                  (svcoef.shape, svs.shape, rhos, N.min(weights), N.max(weights)))
 
         return weights
 
