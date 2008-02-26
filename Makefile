@@ -1,17 +1,31 @@
 PROFILE_FILE=tests/main.pstats
 COVERAGE_REPORT=coverage
 HTML_DIR=build/html
+APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=build/pdf
+WWW_DIR=build/website
+
 
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
+
+rst2html = rst2html --date --strict --stylesheet=pymvpa.css --link-stylesheet
+rst2latex=rst2latex --documentclass=scrartcl \
+					--use-latex-citations \
+					--strict \
+					--use-latex-footnotes \
+					--stylesheet ../../doc/misc/style.tex
+
+
+mkdir-%:
+	if [ ! -d $($*) ]; then mkdir -p $($*); fi
 
 
 #
 # Building
 #
 
-all: build doc
+all: build
 
 debian-build:
 # reuse is better than duplication (yoh)
@@ -27,6 +41,7 @@ build-stamp:
 	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/libsvm/svmc.so \
 		mvpa/clfs/libsvm/
 	touch $@
+
 #
 # Cleaning
 #
@@ -60,68 +75,58 @@ debian-clean:
 	-fakeroot debian/rules clean
 
 #
-# Misc pattern rules
-#
-
-# convert rsT documentation in doc/* to HTML.
-rst2html-%:
-	if [ ! -d $(HTML_DIR) ]; then mkdir -p $(HTML_DIR); fi
-	for f in doc/$*/*.txt; do rst2html --date --strict --stylesheet=pymvpa.css \
-		--link-stylesheet $${f} $(HTML_DIR)/$$(basename $${f%%.txt}.html); \
-	done
-	cp doc/misc/*.css $(HTML_DIR)
-	# copy common images
-	cp -r doc/misc/pics $(HTML_DIR)
-	# copy local images, but ignore if there are none
-	-cp -r doc/$*/pics $(HTML_DIR)
-
-# convert rsT documentation in doc/* to PDF.
-rst2pdf-%:
-	if [ ! -d $(PDF_DIR) ]; then mkdir -p $(PDF_DIR); fi
-	for f in doc/$*/*.txt; do \
-		rst2latex --documentclass=scrartcl \
-		          --use-latex-citations \
-				  --strict \
-				  --use-latex-footnotes \
-				  --stylesheet ../../doc/misc/style.tex \
-				  $${f} $(PDF_DIR)/$$(basename $${f%%.txt}.tex); \
-		done
-	cd $(PDF_DIR) && for f in *.tex; do pdflatex $${f}; done
-# need to clean tex files or the will be rebuild again
-	cd $(PDF_DIR) && rm *.tex
-
-
-#
-# Website
-#
-# put everything in one directory. Might be undesired if there are
-# filename clashes. But given the website will be/should be simply, it
-# might 'just work'.
-website: rst2html-website rst2html-devguide rst2html-manual apidoc \
-         rst2pdf-manual
-	-@mkdir $(HTML_DIR)/files
-	cp $(PDF_DIR)/*.pdf $(HTML_DIR)/files
-
-printables: rst2pdf-manual
-
-upload-website: website
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
-
-#
 # Documentation
 #
+doc: website
 
-doc: apidoc rst2html-devguide rst2html-manual
+htmlindex: mkdir-HTML_DIR
+	$(rst2html) doc/index.txt $(HTML_DIR)/index.html
 
-manual: rst2html-manual
-	#cd doc/manual && pdflatex manual.tex && pdflatex manual.tex
+htmlchangelog: mkdir-HTML_DIR
+	$(rst2html) Changelog $(HTML_DIR)/changelog.html
+
+htmlmanual: mkdir-HTML_DIR
+	$(rst2html) doc/manual.txt $(HTML_DIR)/manual.html
+	# copy images and styles
+	cp -r -t $(HTML_DIR) doc/misc/*.css doc/misc/pics
+
+htmldevguide: mkdir-HTML_DIR
+	$(rst2html) doc/devguide.txt $(HTML_DIR)/devguide.html
+
+pdfmanual: mkdir-PDF_DIR
+	cat doc/manual.txt Changelog | $(rst2latex) > $(PDF_DIR)/manual.tex
+	-cp -r doc/misc/pics $(PDF_DIR)
+	# need to run twice to get cross-refs right
+	cd $(PDF_DIR) && pdflatex manual.tex && pdflatex manual.tex
+
+pdfdevguide: mkdir-PDF_DIR
+	$(rst2latex) doc/devguide.txt $(PDF_DIR)/devguide.tex
+	cd $(PDF_DIR) && pdflatex devguide.tex
+
+printables: pdfmanual pdfdevguide
 
 apidoc: apidoc-stamp
-apidoc-stamp: $(PROFILE_FILE)
+apidoc-stamp: build
+# Disabled profiling for now, it consumes huge amounts of memory, so I doubt
+# that all buildds can do it. In theory it would only be done on a single
+# developer machine, because it is only necessary for the arch-all package,
+# but e.g. dpkg-buildpackage runs the indep target anyway -- not sure about
+# the buildds, though.
+#apidoc-stamp: $(PROFILE_FILE)
 	mkdir -p $(HTML_DIR)/api
 	epydoc --config doc/api/epydoc.conf
 	touch $@
 
+website: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
+         htmldevguide printables apidoc
+	cp -r $(HTML_DIR)/* $(WWW_DIR)
+	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
+
+upload-website: website
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+
+
+# this takes some minutes !!
 $(PROFILE_FILE): build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 

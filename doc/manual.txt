@@ -1,4 +1,5 @@
 .. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -11,48 +12,92 @@ PyMVPA Manual
 
 :Authors:
   Michael Hanke <michael.hanke@gmail.com>;
-  Yaroslav O. Halchenko <debian@onerussian.com>
+  Yaroslav O. Halchenko <debian@onerussian.com>;
+  Per B. Sederberg <psederberg@gmail.com>;
+  Greg Detre <greg@gregdetre.co.uk>
 :Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
 :Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
 :IRC: #exppsy on OTFC/Freenode
-:Revision: unreleased
+:Revision: 0.1
 
 .. Please add yourself to the list of authors if you contribute something
    to this manual.
 
-The latest version of this manual is avialable from the `PyMVPA project
+The latest version of this manual is available from the `PyMVPA project
 website`_:
 
   * HTML: http://pkg-exppsy.alioth.debian.org/pymvpa/manual.html
   * PDF: http://pkg-exppsy.alioth.debian.org/pymvpa/files/manual.pdf
+
+*Important notice*: This software is work in progress. Do not blindly trust it
+and the results you are getting from it.
 
 .. _PyMVPA project website: http://pkg-exppsy.alioth.debian.org/pymvpa/
 
 
 .. meta::
    :description: The PyMVPA manual
-   :keywords: python, machine learning, multivariate, neuroimaging
+   :keywords: python, machine learning, multivariate, neuroimaging, classification, fmri, mvpa, brain-machine interface
 
 .. contents:: Table of Contents
 .. sectnum::
 
+
+.. <gjd> high-level comments
+
+.. incorporate a standalone section on file formats and
+   interoperability. clearly, Nifti is one, but i'm still
+   unclear about what else PyMVPA can/can't import
+
+.. for us (Matlab MVPA), the tutorial_easy quickstart was an enormous
+   success. i strongly recommend having some similar quick,
+   hands-on guide. feel free to borrow/steal/adapt anything from 
+   tutorial_easy for your needs if you like it (though you should probably 
+   check with jim before re-distributing the sample data).
+
+.. you dive straight into the nitty-gritty of the different
+   kinds of datasets, attributes and other data structures. having a high-level
+   summary of the most important points might make it easier for a new 
+   reader to get the big
+   picture, and makes it more likely that people who don't
+   like documentation will at least read the most important
+   points
+
+.. use more examples
+
+.. i know that i would personally benefit from a 'PyMVPA for
+   Matlab MVPA users' section. perhaps this is something that
+   per and i will end up hammering out over the next few months
+
+.. i'm a big fan of Howtos... it sounds like you're creating
+   a collection of snippets, but maybe consider embedding them
+   into the manual with a little description of what they're
+   doing, alternatives etc.
+
+.. maybe a glossary might help. i'm starting to see how
+   you're using 'samples' vs 'datasets' etc. but it would be
+   nice to have a quick reference
+
+.. this is a really, really good start for a 0.1 release. good job!
 
 
 Introduction
 ------------
 
 PyMVPA is a Python_ module intended to ease pattern classification
-analyses of large datasets. It provides high-level abstraction of typical
+analysis of large datasets. It provides high-level abstraction of typical
 processing steps and a number of implementations of some popular algorithms.
 While it is not limited to neuroimaging data it is eminently suited for such
-datasets. PyMVPA is truely free software (in every respect) and additonally
-requires nothing but free-software to run. Theoretically PyMVPA should run
+datasets. PyMVPA is truly free software (in every respect) and additionally
+requires nothing but free software to run. Theoretically PyMVPA should run
 on anything that can run a Python_ interpreter, although the proof is yet to
 come.
 
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
+
+.. <gjd> i would explicitly mention and link to the type of license
 
 
 What this Manual is NOT
@@ -63,70 +108,78 @@ machine learning theory or pattern recognition techniques. There is a wealth
 of high-quality text books about this field available. A very good example is:
 `Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
 
-.. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
-.. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
+A good starting point to learn about the application of machine learning
+algorithms to (f)MRI data are two recent reviews by Norman et al. [NPD06]_ and
+Haynes and Rees [HR07]_.
 
-This manual does not describe every bit and piece of the PyMVPA package. For
-more information, please have a look at the API documentation, which is a
+This manual also does not describe every bit and piece of the PyMVPA package.
+For more information, please have a look at the API documentation, which is a
 comprehensive and up-to-date description of the whole package.
+
 More examples and usage patterns extending the ones described here can be taken
 from the examples shipped with the PyMVPA source distribution (`doc/examples/`)
 or even the unit test battery, also part of the source distribution
 (in the `tests/` directory).
 
+.. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
+.. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
+.. [HR07] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
+          activity in humans. Nature Reviews Neuroscience, 7, 523–534.
+.. [NPD06] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
+           mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
+           Cognitive Science 10, 424–430.
 
 
 A bit of History
 ~~~~~~~~~~~~~~~~
 
 The roots of PyMVPA date back to early 2005. At that time it was a C++ library
-(no Python_ yet) developed by Michael Hanke and Sebastian Krüger with the
-purpose to easily apply artificial neural networks to pattern recognition
+(no Python_ yet) developed by Michael Hanke and Sebastian Krüger, intended to
+make it easy to apply artificial neural networks to pattern recognition
 problems.
 
-During a visit to `Princeton University`_ in spring 2005 Michael Hanke
+During a visit to `Princeton University`_ in spring 2005, Michael Hanke
 was introduced to the `MVPA toolbox`_ for `Matlab
-<http://buchholz.hs-bremen.de/aes/aes_matlab.gif>`_. This toolbox was
-and is mainly developed by `Greg Detre`_ and had several advantages
-over a C++ library. Most importantly it was easier to use. While a
-user of a C++ library is forced to write a significant amount of
-front-end code, users of the MVPA toolbox could simply load their data
-and start analyzing it. Besides that the MVPA toolbox offered a number
-of algorithms that were not implemented in the C++ library.
+<http://buchholz.hs-bremen.de/aes/aes_matlab.gif>`_, which has several
+advantages over a C++ library. Most importantly it was easier to use. While a
+user of a C++ library is forced to write a significant amount of front-end
+code, users of the MVPA toolbox could simply load their data and start
+analyzing it, providing a common interface to functions drawn from a variety
+of libraries.
 
 .. _Princeton University: http://www.princeton.edu
 .. _MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
-.. _Greg Detre: http://www.gregdetre.co.uk
 
-However, writing a Matlab toolbox implies some disadvantages that also
-apply to the MVPA toolbox. While users in general benefit from the powers
-of Matlab, they are at the same time bound to the goodwill of a commercial
-company. That this is indeed a problem becomes obvious when one consideres the
-time when the vendor of Matlab was not willing to support the Mac platform.
-Therefore even if the MVPA toolbox is `GPL-licensed`_ it cannot fully benefit
-from the enourmous advantages of the free-software development model
-environment (free as in free speech, not only free beer).
+However, there are some disadvantages to writing a toolbox in Matlab. While
+users in general benefit from the powers of Matlab, they are at the same time
+bound to the goodwill of a commercial company. That this is indeed a problem
+becomes obvious when one considers the time when the vendor of Matlab was not
+willing to support the Mac platform. Therefore even if the MVPA toolbox is
+`GPL-licensed`_ it cannot fully benefit from the enormous advantages of the
+free software development model environment (free as in free speech, not only
+free beer).
 
 .. _GPL-licensed: http://www.gnu.org/copyleft/gpl.html
 
-Under this impression Michael thought that a successor of the C++ library
-should remain truely free-software, remain fully object-oriented (in contrast
+For these reasons, Michael thought that a successor to the C++ library
+should remain truly free software, remain fully object-oriented (in contrast
 to the MVPA toolbox), but should be at least as easy to use and extensible
 as the MVPA toolbox.
 
-After evaluating some possibilities Michael decided that `Python`_ is the
-most promissing candidate that was fully capable to fulfil the intended
+After evaluating some possibilities Michael decided that `Python`_ is the most
+promising candidate that was fully capable of fulfilling the intended
 development goal. Python is a very powerful language that magically combines
-the possibility to write really fast code and a simplicity that allows to
+the possibility to write really fast code and a simplicity that allows one to
 learn the basic concepts within a few days.
 
-One of the major advantages of Python is the availablity of a huge amount of
-so called *modules*. Modules can include extensions written in a hard-core
-language like C and therefore allow to incorporate high-performance code
-without having to leave the Python environment. Additionally some Python
-modules even provide links to other toolkits. For example `RPy`_ allows to use
-the full functionality of R_ from inside Python. Even Matlab can be used via
-some Python modules (see PyMatlab_ for an example).
+One of the major advantages of Python is the availability of a huge amount of
+so called *modules*. Modules can include extensions written in a hardcore
+language like C (or even FORTRAN) and therefore allow one to incorporate
+high-performance code without having to leave the Python
+environment. Additionally some Python modules even provide links to other
+toolkits. For example `RPy`_ allows to use the full functionality of R_ from
+inside Python. Even Matlab can be used via some Python modules (see PyMatlab_
+for an example).
 
 .. _RPy: http://rpy.sourceforge.net/
 .. _R: http://www.r-project.org
@@ -136,7 +189,7 @@ After the decision for Python was made, Michael started development with a
 simple k-Nearest-Neighbour classifier and a cross-validation class. Using
 the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
-with EEG data (3d) or even non-neuroimaging datasets.
+with EEG/MEG data (3d) or even non-neuroimaging datasets.
 
 By September 2007 PyMVPA included support for reading and writing datasets
 from and to the `NIfTI format`_, kNN and Support Vector Machine classifiers,
@@ -149,7 +202,7 @@ During another visit in Princeton in October 2007 Michael met with `Yaroslav
 Halchenko`_ and `Per B. Sederberg`_. That incident and the following
 discussions and hacking sessions of Michael and Yaroslav lead to a major
 refactoring of the PyMVPA codebase, making it much more flexible/extensible,
-faster and easier as it has ever been before.
+faster and easier than it has ever been before.
 
 .. _Yaroslav Halchenko: http://www.onerussian.com/
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
@@ -164,11 +217,11 @@ can benefit from the simplicity of the Python language and acquire this
 knowledge within a few days by studying some of the many tutorials available
 on the web.
 
-.. links to good tutorials
+.. links to good tutorials (numpy for matlab users, dive into python, ...)
 
 As PyMVPA is about pattern recognition a basic understanding about machine
 learning principles is necessary to correctly apply methods with PyMVPA to
-ensure interpretablity of the results.
+ensure interpretability of the results.
 
 
 Dependencies
@@ -177,12 +230,12 @@ Dependencies
 The following software packages are required or PyMVPA will not work at all.
 
   Python_ 2.4 (or later)
-	With some modifications PyMVPA could probably work with Python 2.3, but as
-	it is quite old already and Python 2.4 is widely available there should be
-	no need to do this.
+    With some modifications PyMVPA could probably work with Python 2.3, but as
+    it is quite old already and Python 2.4 is widely available there should be
+    no need to do this.
   NumPy_
-	PyMVPA makes extensive use of NumPy to store and handle data. There is no
-	way around it.
+    PyMVPA makes extensive use of NumPy to store and handle data. There is no
+    way around it.
 
 .. _NumPy: http://numpy.scipy.org/
 
@@ -190,22 +243,22 @@ The following software packages are required or PyMVPA will not work at all.
 Strong Recommendations
 ''''''''''''''''''''''
 
-While most parts of PyMVPA will work without any additonal software, some
-functionality makes use of additonal software packages. It is strongly
+While most parts of PyMVPA will work without any additional software, some
+functionality makes use of additional software packages. It is strongly
 recommend to install these packages as well.
 
   SciPy_: linear algebra, standard distributions
-	Mainly code for statistical testing and the logistic regression classifier
-	make use of SciPy_. However, in the long run SciPy might be used a lot
-	more and could become a required dependency of PyMVPA.
+    SciPy_ is mainly used by the statistical testing and the logistic
+    regression classifier code. However, in the long run SciPy might be used a
+    lot more and could become a required dependency of PyMVPA.
   libsvm_: fast SVM classifier
-	Only the C library is required and none of the Python bindings available
-	on the upstream website. PyMVPA provides its own Python wrapper for libsvm
-	which is a fork based on the one included in the libsvm package.
+    Only the C library is required and none of the Python bindings are available
+    on the upstream website. PyMVPA provides its own Python wrapper for libsvm
+    which is a fork based on the one included in the libsvm package.
   PyNIfTI_: access to NIfTI files
-	PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
-	format. If you don't need that, PyNIfTI is not necessary, but otherwise
-	it makes it really easy to read from and write to NIfTI images.
+    PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
+    format. If you don't need that, PyNIfTI is not necessary, but otherwise
+    it makes it really easy to read from and write to NIfTI images.
 
 .. _SciPy: http://www.scipy.org/
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
@@ -219,21 +272,26 @@ The following list of software is not required by PyMVPA, but it might make
 life a lot easier and leads to more efficiency when using PyMVPA.
 
   IPython_: frontend
-	If you want to use PyMVPA interactively it is strongly recommend to use
-	IPython_. If you think: *"Oh no, not another one, I already have to learn
-	about PyMVPA."* please invest a tiny bit of time to watch the `Five Minutes
-	with IPython`_ screencasts at showmedo.com_, so at least you know what you
-	are missing.
+    If you want to use PyMVPA interactively it is strongly recommend to use
+    IPython_. If you think: *"Oh no, not another one, I already have to learn
+    about PyMVPA."* please invest a tiny bit of time to watch the `Five Minutes
+    with IPython`_ screencasts at showmedo.com_, so at least you know what you
+    are missing.
   FSL_: preprocessing and analysis of (f)MRI data
-	PyMVPA provides some simple bindings to FSL output and filetypes (e.g. EV
-	files and MELODIC output directories). This makes it fairly easy to e.g.
-	use FSL's implementation of ICA for data reduction and proceed with
-	analyzing the estimated ICs in PyMVPA.
+    PyMVPA provides some simple bindings to FSL output and filetypes (e.g. EV
+    files and MELODIC output directories). This makes it fairly easy to e.g.
+    use FSL's implementation of ICA for data reduction and proceed with
+    analyzing the estimated ICs in PyMVPA.
+  AFNI_: preprocessing and analysis of (f)MRI data
+    Similar to FSL, AFNI is a free package for processing (f)MRI data.
+    Though its primary data file format is BRIK files, it has the ability
+    to read and write NIFTI files, which easily integrate with PyMVPA.
 
 .. _IPython: http://ipython.scipy.org
 .. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
 .. _showmedo.com: http://showmedo.com
 .. _FSL: http://www.fmrib.ox.ac.uk/fsl/
+.. _AFNI: http://afni.nimh.nih.gov/afni/
 
 
 Obtaining PyMVPA
@@ -242,22 +300,38 @@ Obtaining PyMVPA
 Binary packages
 '''''''''''''''
 
-Binary packages are not available yet, but will be when the first release of
-PyMVPA has happened. And there will be a Debian package of course.
+Binary packages for Debian and some Ubuntu releases are available. Please read
+the `package repository instructions`_ to learn about how to obtain them. As
+soon as the package officially enters Debian this repository will be obsolete.
+
+.. All of the PyMVPA developers have sworn a solemn oath to name their
+   first-born child 'Debian'.
+
+Currently, there are no binary packages for other operating systems. If you
+manage to build PyMVPA on Windows or OS X, we would be glad to hear from you.
+
+.. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
 
 Building from Source
 ''''''''''''''''''''
 
-Source code tarballs of PyMVPA releases are available from the `PyMVPA
-project website`_. To get access to both the full PyMVPA history and the latest
-development code the PyMVPA Git_ repository is publicly available. To view the
-repository, please point your webbrowser to gitweb:
-http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+If a binary package for your platform and operating system is provided, you do
+not have to build the packages on your own -- use the corresponding pre-build
+packages instead. However, if there are no binary packages for your system you
+can easily build PyMVPA on your own. At first it is of course necessary to
+obtain the sources.
 
-To clone (aka checkout) the PyMVPA repository simply do:
+The source code tarballs of all PyMVPA releases are available from the `PyMVPA
+project website`_.
 
-::
+If you want to have access to both, the full PyMVPA history and the latest
+development code, you can use the PyMVPA Git_ repository, which is publicly
+available. To view the repository, please point your web browser to gitweb:
+
+  http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+
+To clone (aka checkout) the PyMVPA repository simply do::
 
   git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
@@ -266,18 +340,47 @@ working directory, that contains the PyMVPA repository.
 
 .. _Git: http://git.or.cz/
 
+To build PyMVPA from source simply enter the root of the source tree (obtained
+by either extracting the source package or cloning the repository) and run::
+
+  python setup.py build_ext
+
+To be able to do this you need to have SWIG_ and the development files of
+libsvm_ (headers and library) installed on your system. Depending on where you
+installed them, it might be necessary to specify the full path to them with the
+`--include-dirs`, `--library-dirs` and `--swig` options.
+
+.. _SWIG: http://www.swig.org
+.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+
+.. Actually, AFAIK upstream libsvm does not easily allow for compiling a libsvm
+   static or shared lib. Or am I wrong?
+
+Now, you are ready to install the package. Do this by invoking::
+
+  python setup.py install
+
+Most likely you need superuser privileges for this step. If you want to install
+in a non-standard location, please take a look at the `--prefix` option. You
+also might want to consider `--optimize`.
+
+Now you should be ready to use PyMVPA on your system.
+
 
 Installation
 ~~~~~~~~~~~~
 
-(to be written)
-
 .. Point to source and binary distribution. Preach idea of free software.
    Step by step guide to install it on difficult systems like Windows.
 
-.. Don't forget to mention that the only reasonable way is to use this piece
+.. Don't forget to mention that the only reasonable way to use this piece
    of software (like every other piece) is under Debian! Also mention that
    Ubuntu is no excuse ;-)
+
+If there are no binary packages for your operating system or platform yet, you
+need to build from source. Please refer to `Building from Source`_ for more
+information.
+
 
 
 How to cite PyMVPA
@@ -287,12 +390,22 @@ How to cite PyMVPA
 
 .. come up with something
 
+.. PBS: At some point we should write up a technical report or submit
+   something to neuroimage methods.
+
+.. <gjd> i found that presenting posters at conferences (e.g. HBM) works well.
+   you get to meet people, and it's less effort than a paper
 
 
 Credits
 ~~~~~~~
 
-(to be written)
+  * NumPy
+  * libsvm
+  * IPython
+  * Debian (for hosting, environment, ...)
+  * FOSS community
+  * Credits to individual labs if they officially donate time ;-)
 
 .. Please add some notes when you think that you should give credits to someone
    that enables or motivates you to work on PyMVPA ;-)
@@ -317,15 +430,21 @@ In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
 given. 
 
+
 Data Handling
 -------------
 
-The foundation of PyMVPA's data handling is the Dataset_ class. Basically,
-this class stores data samples, sample attributes and dataset attributes, where
-sample attributes assign a value to each data sample and dataset attributes are
-additional information or functionality that applies to the whole dataset.
+The foundation of PyMVPA's data handling is the Dataset_
+class. Basically, this class stores data samples, sample attributes
+and dataset attributes.  Sample attributes assign a value to each data
+sample and dataset attributes are additional information or
+functionality that applies to the whole dataset.
 
 .. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+
+.. <gjd> i had a hard time making sense of the above
+   paragraph on first reading. add an example to get
+   first-time users thinking in the right direction
 
 Most likely the Dataset_ class will not be used directly, but through one
 of the derived classes. However, it is perfectly possible to use it directly.
@@ -343,7 +462,7 @@ label '1' is assigned to all samples. Instead of a single scalar value `labels`
 can also be a sequence with individual labels for each data sample. In this
 case the length of this sequence has to match the number of samples.
 
-Interestingly the dataset object tells us about 10 `chunks`. In PyMVPA chunks
+Interestingly, the dataset object tells us about 10 `chunks`. In PyMVPA chunks
 are used to group subsets of data samples. However, if no grouping information
 is provided all data samples are assumed to be in their own group, hence no
 sample grouping is performed.
@@ -358,10 +477,10 @@ attribute:
   >>> data.chunks
   array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-The *data samples* itself are stored as a two-dimensional matrix where each
-row vector is a `sample` and each column vector contains the values of a
-`feature` across all `samples`. The Dataset_ class provides access to the
-samples matrix via the `samples` property.
+The *data samples* themselves are stored as a two-dimensional matrix
+where each row vector is a `sample` and each column vector contains
+the values of a `feature` across all `samples`. The Dataset_ class
+provides access to the samples matrix via the `samples` property.
 
   >>> data.samples.shape
   (10,5)
@@ -389,23 +508,26 @@ original *dataspace* into the so-called *features space*. In the above
 neuro-imaging example the *dataspace* is three-dimensional and the
 *feature space* always refers to the 2d `samples x features` representation
 that is required by the Dataset_ class. In the context of mappers the
-dataspace is sometimes also refered to as *in-space* while the feature space
+dataspace is sometimes also referred to as *in-space* while the feature space
 is labeled as *out-space*.
 
-The task of a mapper besides transforming samples into 1d vectors is to retain
-as much information of the dataspace as possible. Some mappers provide
+.. <gjd> is there any mnemonic i can use to try and remember why 'in' vs
+   'out' makes sense in this context?
+
+The task of a mapper, besides transforming samples into 1d vectors, is to
+retain as much information of the dataspace as possible. Some mappers provide
 information about dataspace metrics and feature neighbourhood, but all mappers
 are able to do reverse mapping from feature space into the original dataspace.
 
 Usually one does not have to deal with mappers directly. PyMVPA provides some
-convenience subclasses of Dataset_ the automatically perform the necessary
+convenience subclasses of Dataset_ that automatically perform the necessary
 mapping operations internally. 
 
 For an introduction into to concept of a dataset with mapping capabilities
 we can take a look at the MaskedDataset_ class. This dataset class works
 almost exactly like the basic Dataset_ class, except that it provides some
-additional method and is more flexible with respect to the format of the sample
-data. A masked dataset can be created just like a normal dataset.
+additional methods and is more flexible with respect to the format of the
+sample data. A masked dataset can be created just like a normal dataset.
 
 .. _MaskedDataset: api/mvpa.datasets.maskeddataset.MaskedDataset-class.html
 
@@ -421,7 +543,7 @@ any dimensionality. The only assumption that is made is that the first axis
 of a sample array separates the sample data points. In the above example we
 therefore have 5 samples, where each sample is a 2x3x4 volume.
 
-If we look at the self-description of the created dataset we can see, that it
+If we look at the self-description of the created dataset we can see that it
 doesn't tell us about 2x3x4 volumes, but simply 24 features. That is because
 internally the sample array is automatically reshaped into the aforementioned
 2d matrix representation of the Dataset_ class. However, the information about
@@ -467,7 +589,7 @@ because the mapping is automatically updated upon feature selection.
           [5, 0, 6, 0],
           [7, 8, 0, 9]]])
 
-The above example selects nine features from the set of the 24 orginal
+The above example selects nine features from the set of the 24 original
 ones, by passing their ids to the `selectFeatures()` method. The method
 returns a new dataset only containing the nine selected features. Both datasets
 share the sample data (using a NumPy array view). Using `selectFeatures()`
@@ -483,15 +605,20 @@ Data Splitting
 In many cases some algorithm should not run on a complete dataset, but just
 some parts of it. One well-known example is leave-one-out cross-validation,
 where a dataset is typically split into a number of training and validation
-datasets. A classifier is trained on the training set and it's generalization
+datasets. A classifier is trained on the training set and its generalization
 performance is tested using the validation set.
 
-It is important to strictly separate training and validation datasets as
-otherwise no valid statement can be made whether a classifier really generated
-an appropriate model of the training data. If this requirement is violated
-the results are usually very good generalization performances. However, they
-provide no relevant information as they are based on cheating or peeking and
-do not describe signal similarities between training and validation datasets.
+It is important to strictly separate training and validation datasets
+as otherwise no valid statement can be made whether a classifier
+really generated an appropriate model of the training data. Violating this 
+requirement spuriously elevates the classification performance, often termed 
+'peeking' in the literature. However, they provide no relevant
+information because they are based on cheating or peeking and do not
+describe signal similarities between training and validation datasets.
+
+.. <gjd> this point about 'peeking' is a critical one and
+   maybe deserves emphasis. i was just looking at how we deal
+   with it in our documentation, and we need to improve ours too!
 
 With the splitter classes, PyMVPA makes dataset splitting easy. All dataset
 splitters in PyMVPA are implemented as Python generators, meaning that when
@@ -532,7 +659,7 @@ dataset and the validation set contains the remaining chunk.
 The usage of the splitter, creating a splitter object and calling it with a
 dataset, is a very common design pattern in the PyMVPA package. Like splitters
 there are many more so called *processing objects*. These classes or objects
-are instanciated by passing all relevant parameters to the constructor. 
+are instantiated by passing all relevant parameters to the constructor. 
 Processing objects can then be called multiple times with different datasets
 to perform their algorithm on the respective dataset. This design applies to
 virtually every piece of PyMVPA that is described in the Algorithms_ section,
@@ -543,12 +670,13 @@ but also the many other parts.
 Classifiers
 -----------
 
-PyMVPA includes a number of ready-to-use classifiers, which are described in
-the following sections. All classifiers implement the same, very simple
-interface. Each classifier object takes all relevant parameters as arguments
-to it's constructor. Once instanciated, the object's `train()` method can be
-called with some dataset. This trains the classifier using *all* samples
-in the respective dataset.
+PyMVPA includes a number of ready-to-use classifiers, which are
+described in the following sections. All classifiers implement the
+same, very simple interface. Each classifier object takes all relevant
+parameters as arguments to its constructor. Once instantiated, the
+classifier object's `train()` method can be called with some
+dataset. This trains the classifier using *all* samples in the
+respective dataset.
 
 The major task for a classifier is to make predictions. Predictions are made
 by calling the classifier's `predict()` method with one or multiple data
@@ -573,7 +701,7 @@ This examples demonstrates the typical daily life of a classifier.
 
 Two datasets with 100 and 10 samples each are generated. Both datasets only
 have one feature and the associated label is 0 if the feature value is below
-50 or 1 otherwise. The larger dataset contains all integers in the intervall
+50 or 1 otherwise. The larger dataset contains all integers in the interval
 (0,100) and is used to train the classifier. The smaller is used as a
 validation dataset, to check whether the classifier learned something that
 generalizes well across samples not included in the training dataset. In this
@@ -581,56 +709,66 @@ case the validation dataset consists of 10 random floating point values in the
 interval (0,100).
 
 The classifier in this example is a k-Nearest-Neighbour_ classifier that makes
-use of the 10 nearest neighbours of a data sample to make it's predictions
-(k=10). One can see that after the training the classifier performs optimal on
-the training dataset as well as on the validation data samples.
+use of the 10 nearest neighbours of a data sample to make its predictions
+(k=10). One can see that after the training the classifier performs optimally
+on the training dataset as well as on the validation data samples.
 
 The choice of the classifier in the above example is more or less arbitrary.
-Any classifier in PyMVPA can replace the choosen kNN object. This demonstrates
+Any classifier in PyMVPA could be used in place of kNN. This demonstrates
 another useful feature of PyMVPA's classifiers. Due to the high-level
 abstraction and the simple interface, almost all classifiers can be combined
 with most algorithms in PyMVPA (please see the Algorithms_ section for
 details). This makes it very easy to test different classifiers on some
-dataset.
+dataset (see Fig. 1).
+
+.. figure:: pics/classifier_comparison_plot.png
+   :width: 15cm
+   :alt: Classifier comparison
+
+   A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
+   linear SVM, logistic regression, ridge regression and SVM with radial basis
+   function kernel) on a simple classification problem. The code to generate
+   these figure can be found in the `pylab_2d.py` example.
 
 
 Stateful objects
 ~~~~~~~~~~~~~~~~
 
-Before looking at the different classifiers in more detail, it is important to
-mention another feature common to all of them. While their interface is
-simple, classifiers are in no way limited to report nothing but
-predictions. All classifiers implemenent an additional interface: the so
-called `Statefull`.  Objects of any class which is derived from `Statefull`
-have attributes (we refer to such attributes as state variables), which are
-conditionally computed and stored by PyMVPA. Such conditional storage and
-access is handy if a variable of interest might consume a lot of memory or
-needs intensive computation, and not needed in most (or in some) of the use
-cases.
+Before looking at the different classifiers in more detail, it is
+important to mention another feature common to all of them. While
+their interface is simple, classifiers are in no way limited to report
+only predictions. All classifiers implement an additional interface:
+the so-called `Stateful` interface.  Objects of any class that is
+derived from `Stateful` have attributes (we refer to such attributes
+as state variables), which are conditionally computed and stored by
+PyMVPA. Such conditional storage and access is handy if a variable of
+interest might consume a lot of memory or needs intensive computation,
+and not needed in most (or in some) of the use cases.
 
-For instance, `Classifier` class defines `trained_labels` state variable,
-which just stores the unique labels for which classifier was trained. Since
-`trained_labels` stores meaningful information only for a trained classifier,
-attempt to access 'clf.trained_labels' before training would result in raised
-`UnknownStateError` exception since the classifier have not seen the data yet,
-thus does not know the labels. In the other words, 'clf' is not yet in the
-state to know anything about the labels, hence the name `Statefull` for such
-class. We will refer to instances of classes derived from `Statefull` as
-'statefull'.
-Any state variable can be enabled or disabled on per instance basis at any
-time of the execution.
+For instance, the `Classifier` class defines the `trained_labels`
+state variable, which just stores the unique labels for which the
+classifier was trained. Since `trained_labels` stores meaningful
+information only for a trained classifier, attempt to access
+'clf.trained_labels' before training would result in a raised
+`UnknownStateError` exception since the classifier has not seen the
+data yet and, thus, does not know the labels. In other words, 'clf' is
+not yet in the state to know anything about the labels, hence the name
+`Stateful`. We will refer to instances of classes derived from
+`Stateful` as 'statefull'.  Any state variable can be enabled or
+disabled on per instance basis at any time of the execution.
 
 To continue the last example, each classifier, or more precisely every
-statefull object can be asked to report existing state-related attributes:
+statefull object, can be asked to report existing state-related attributes:
 
   >>> clf.states.listing
   ['predictions[enabled]: Reported predicted values',
    'trained_labels[enabled]: What labels (unique) clf was trained on',
-   'training_confusion[enabled]: Result of learning: `ConfusionMatrix` (and corresponding learning error)',
+   'training_confusion[enabled]: \\
+     Result of learning: `ConfusionMatrix` (and corresponding learning error)',
    'values: Internal values seen by the classifier']
 
 'clf.states' is an instance of `StateCollection` class which is a container
-for all state variables of the given class. Although values can be inquired
+for all state variables of the given class. Although values can be queried
 or set (if state is enabled) operating directly on the statefull object
 
   >>> clf.trained_labels
@@ -646,11 +784,11 @@ out through the `StateCollection` '.states'.
   4 states: training_confusion+* values+ predictions+* trained_labels+*
   >>> clf.states.disable('values')
 
-String representation of state collection mentioned above lists all state
-variables present accompanied with 2 markers: '+' for enabled state variable,
-and '*' for the variable which stores some value (but might have been disabled
-already thus having no '+' and attempts to reassign it would result in no
-action).
+A string representation of the state collection mentioned above lists
+all state variables present accompanied with 2 markers: '+' for an
+enabled state variable, and '*' for a variable that stores some value
+(but might have been disabled already and, therefore, would have no
+'+' and attempts to reassign it would result in no action).
 
 .. TODO: Refactor
 
@@ -659,7 +797,7 @@ By default all classifiers provide state variables `values`,
 by the last call to the objects `predict()` method. The former is heavily
 classifier-specific. By convention the `values` key provides access to the
 raw values that a classifier prediction is based on. Depending on the
-classifier this information might required significant resources when stored.
+classifier, this information might required significant resources when stored.
 Therefore all states can be disabled or enabled (`states.disable()`,
 `states.enable()`) and their current status can be queried like this:
 
@@ -679,11 +817,56 @@ of desired state variables names, passed to the object constructor. Keyword
 Error Calculation
 ~~~~~~~~~~~~~~~~~
 
-TransferError_
+The TransferError_ class provides a convenient way to determine the transfer
+error of a trained classifier on some validation dataset. A TransferError_
+object is instanciated by passing a classifier object to the constructor.
+Optionally a custom error function can be specified (see `errorfx` argument).
 
-(to be written)
+To compute the transfer error simply call the object with a validation dataset.
+The computed error value is returned. TransferError_ also supports a state
+variable `confusion` that contains the full confusion matrix of the predictions
+made on the validation dataset. The confusion matrix is disabled by default.
+
+If the TransferError_ object is called with an optional training dataset, the
+contained classifier is first training using this dataset before predictions
+on the validation dataset are made.
+
+  >>> from mvpa.clfs.transerror import TransferError
+  >>> clf = kNN(k=10)
+  >>> terr = TransferError(clf)
+  >>> terr(validation, training )
+  0.0
 
 .. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
+
+
+Cross-validated Transfer Error
+''''''''''''''''''''''''''''''
+
+Often one is not only interested in a single transfer error on one validation
+dataset, but on a cross-validated estimate of the transfer error. A popular
+method is the so-called leave-one-out cross-validation.
+
+The CrossValidatedTransferError_ class provides a simple way to compute such
+measure. It utilizes a TransferError_ object and a Splitter_. When called with
+a Dataset_ the splitter generates splits of the Dataset and the transfer error
+for all splits is computed by training on one of the splitted datasets and
+making predictions on the other. By default the mean of transfer errors is
+returned (but the actual `combiner` function is customizable).
+
+The following example shows the minimal code for a leave-one-out
+cross-validation reusing the transfer error object from the previous example
+and some Dataset_ `data`.
+
+  >>> from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> cvterr = CrossValidatedTransferError(terr,
+                                           NFoldSplitter(cvtype=1))
+  >>> cvterr(data)
+  0.21
+
+.. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
+
 
 
 Boosted and Multi-class Classifiers
@@ -698,9 +881,9 @@ Boosted and Multi-class Classifiers
 k-Nearest-Neighbour
 ~~~~~~~~~~~~~~~~~~~
 
-kNN_
-
-(to be written)
+The kNN_ classifier makes predictions based on the labels of nearby samples.
+It currently uses Euclidian distance to determine the nearest neighbours, but
+future enhancements may include support for other kernels.
 
 .. _kNN: api/mvpa.clfs.knn.kNN-class.html
 
@@ -708,13 +891,11 @@ kNN_
 Support Vector Machines
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-LinearCSVMC_
-LinearNuSVMC_
-RbfNuSVMC_
-RbfCSVMC_
-SVMBase_
-
-(to be written)
+The support vector machine classes provide a family of classifers by wrapping
+the libsvm_ library.  While the SVMBase_ class provides a complete interface,
+the other child classes make it easy to run standard classifiers, such as
+linear SVM, with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_,
+RbfNuSVMC_ and RbfCSVMC_).
 
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
@@ -722,37 +903,51 @@ SVMBase_
 .. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 .. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
-Logistic Regression
-~~~~~~~~~~~~~~~~~~~
 
-PLF_ (why is this called PLF not PLR?)
+Ridge Regression
+~~~~~~~~~~~~~~~~
 
-(to be written)
+The ridge regression classifier (RidgeReg_) performs a simple linear regression
+with a penalty parameter to help avoid over-fitting.  The regression inserts an
+intercept term so that you do not have to center your data.
 
-.. _PLF: api/mvpa.clfs.plf.PLF-class.html
+.. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
+
+
+Penalized Logistic Regression
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The penalized logistic regression (PLR_) is similar to the ridge in that it
+has a penalty term, however, it is trained to predict a binary outcome by
+means of the logistic function.
+
+.. _PLR: api/mvpa.clfs.plr.PLR-class.html
 
 
 Algorithms
 ----------
 
-PyMVPA provides a number of useful algorithms. The vast majority of them is
-dedicated to feature selection. To increase the flexiblity of analyses PyMVPA
-distinguished two different parts of a feature selection procedure. First,
-the impact of each individual feature on a classification has to be determined.
-The resulting map reflects the sensitivities of all features with respect to
-a certain decision, therefore algorithms generating these maps are called
-`Sensitivity Analyzers`_ in PyMVPA.
+PyMVPA provides a number of useful algorithms. The vast majority of
+them are dedicated to feature selection. To increase analysis
+flexibility, PyMVPA distinguishes two parts of a feature selection
+procedure.
 
-When the feature sensitivities are known they can be used as a criterion for
-feature selection. However, possible selection strategies range from very
-simple *Go with the 10% best features* to more complicated algorithms like
-*Recursive feature selection* (RFE_). Because `Sensitivity Analyzers`_ and
-selections strategies can be arbitrarily combined, PyMVPA offers a quite
-flexible framework for feature selection.
+First, the impact of each individual feature on a classification has
+to be determined.  The resulting map reflects the sensitivities of all
+features with respect to a certain decision and, therefore, algorithms
+generating these maps are called `Sensitivity Analyzers`_ in PyMVPA.
 
-Similar to dataset splitters all PyMVPA algorithms are implemented and
+Second, once the feature sensitivities are known, they can be used as
+criteria for feature selection. However, possible selection strategies
+range from very simple *Go with the 10% best features* to more
+complicated algorithms like *Recursive feature selection*
+(RFE_). Because `Sensitivity Analyzers`_ and selections strategies can
+be arbitrarily combined, PyMVPA offers a quite flexible framework for
+feature selection.
+
+Similar to dataset splitters, all PyMVPA algorithms are implemented and
 behave like *processing objects*. To recap, this means that they are
-instanciated by passing all relevant arguments to the constructor. Once
+instantiated by passing all relevant arguments to the constructor. Once
 created, they can be used multiple times by calling them with different
 datasets.
 
@@ -764,55 +959,107 @@ datasets.
 Sensitivity Analyzers
 ~~~~~~~~~~~~~~~~~~~~~
 
-SensitivityAnalyzer_
+It was already mentioned that a SensitivityAnalyzer_ computes a featurewise
+score that indicates how much interesting signal each feature contains
+-- hoping that this score somehow correlates with the impact of the features
+on a classifier's decision for a certain problem.
 
-(to be written)
+Every sensitivity analyzer object computes a one-dimensional array with the
+respective score for every feature, when called with a Dataset_. Due to this
+common behaviour all SensitivityAnalyzer_ types are interchangeable and can be
+combined with any other algorithm requiring a sensitivity analyzer.
+
+By convention higher sensitivity values indicate more interesting features.
+
+There are two types of sensitivity analyzers in PyMVPA. Basic sensitivity
+analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
+on the other hand utilize another sensitivity analyzer to compute their
+sensitivity maps.
 
 .. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
 
-.. Point to the difference of `DataMeasure` and `SensitivityAnalyzer`. The
-   former computes some value given a dataset (might be scalar or something
-   else), whereas that latter computes a 1d map (sensitivity -> features),
-   where each value assigns a quantification of the amount of available
-   information in that feature.
 
-Noise Perturbation
-''''''''''''''''''
-
-PerturbationSensitivityAnalyzer_
-
-(to be written)
-
-.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+Basic Sensitivity Analyzers
+'''''''''''''''''''''''''''
 
 ANOVA
-'''''
+^^^^^
 
-OneWayAnova_
+The OneWayAnova_ class provides a simple (and fast) univariate sensitivity
+measure. For each feature an individual F-score is computed as the fraction
+of between and within group variances. Groups are defined by samples with
+unique labels.
 
-(to be written)
+Higher F-scores indicate higher sensitivities, as with all other sensitivity
+analyzers.
+
 
 .. _OneWayAnova: api/mvpa.algorithms.anova.OneWayAnova-class.html
 
 
 Linear SVM Weights
-''''''''''''''''''
+^^^^^^^^^^^^^^^^^^
 
-LinearSVMWeights_
+The featurewise weights of a trained support vector machine are another
+possible sensitivity measure. The LinearSVMWeights_ class can internally train
+all types of *linear* support vector machines and report those weights.
 
-(to be written)
+In contrast to the F-scores computed by an ANOVA, the weights can be positive
+or negative, with both extremes indicating higher sensitivities. To deal with
+this property all subclasses of SensitivityAnalyzer_ support a `transformer`
+arguments in the contructor. A transformer is a functor that is finally called
+with the computed sensitivity map. PyMVPA already comes with some convenience
+functors which can be used for this purpose (see Transformers_).
+
+Please note, that this class *cannot* extract reasonable weights from
+non-linear SVMs (e.g. with RBF kernels).
 
 .. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
+.. _Transformers: api/mvpa.misc.transformers-module.html
+
+
+Noise Perturbation
+^^^^^^^^^^^^^^^^^^
+
+Noise perturbation is a generic approach to determine feature sensitivity.
+The sensitivity analyzer (PerturbationSensitivityAnalyzer_) computes a
+ScalarDatasetMeasure_ using the original dataset. Afterwards, for each single
+feature a noise pattern is added to the respective feature and the dataset
+measure is recomputed. The sensitivity of each feature is the difference
+between the dataset measure of the orginal dataset and the one with added
+noise. The reasoning behind this algorithm is that adding to noise to
+*important* features will impair a dataset measure like cross-validated
+classifier transfer error. However, adding noise the a feature that already
+only contains noise, will not change such a measure.
+
+Depending on the used ScalarDatasetMeasure_ using the sensitivity analyzer
+might be really CPU-intensive! Also depending on the measure, it might be
+necessary to use appropriate Transformers_ (see `transformer` constructor
+arguments) to ensure that higher values represent higher sensitivities.
+
+.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
+.. _ScalarDatasetMeasure: api/mvpa.algorithms.datameasure.ScalarDatasetMeasure-class.html
+
+
+Meta Sensitivity Analyzer
+''''''''''''''''''''''''''
+
+Meta Sensitivity Analyzers are SensitivityAnalyzer_ that internally use one
+of the `Basic Sensitivity Analyzers`_ to compute their sensitivity scores.
 
 
 Splitting Sensitivity Analyzer
-''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-SplittingSensitivityAnalyzer_
+The SplittingSensitivityAnalyzer_ uses a Splitter_ to generate dataset splits.
+A SensitivityAnalyzer_ is then used to compute sensitivity maps for all these
+dataset splits. At the end a `combiner` function is called with all sensitivity
+maps to produce the final sensitivity map. By default the mean sensitivity 
+maps across all splits is computed.
 
-(to be written)
-
+.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _SplittingSensitivityAnalyzer: api/mvpa.algorithms.splitsensana.SplittingSensitivityAnalyzer-class.html
+
 
 
 Feature Selection Strategies
@@ -840,26 +1087,27 @@ IFS_
 .. What are the practical differences (besides speed) between RFE and IFS?
 
 
-Classifier Cross-Validation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-ClfCrossValidation_
-
-(to be written)
-
-.. _ClfCrossValidation: api/mvpa.algorithms.clfcrossval.ClfCrossValidation-class.html
-
-
 Searchlight
 ~~~~~~~~~~~
 
-Searchlight_
+The term Searchlight_ refers to an algorithm that runs a
+`ScalarDatasetMeasure` on all possible spheres of a certain size within a
+dataset. The measure typically computed is a cross-validated transfer error
+(see CrossValidatedTransferError_). The idea to use a searchlight as a
+sensitivity analyzer stems from a paper by Kriegeskorte and colleagues
+[KGB06]_.
 
-(to be written)
+An example of a typical application of this algorithm can be found in the file
+at `doc/examples/searchlight_2d.py` in the source distribution of PyMVPA.
 
 .. _Searchlight: api/mvpa.algorithms.searchlight.Searchlight-class.html
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
+
+.. [KGB06] Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
+           'Information-based functional brain mapping.' Proceedings of the
+           National Academy of Sciences of the United States of America 103,
+           3863-3868.
 
 
 
@@ -910,6 +1158,14 @@ level:
   examples)
 * environment variable ``MVPA_VERBOSE``
 * code: verbose.level property
+
+The following verbosity levels are supported:
+
+  :0: nothing besides errors
+  :1: high level stuff -- top level operation or file operations
+  :2: cmdline handling
+  :3: n.a.
+  :4: computation/algorithm relevant thing
 
 
 Warning Messages
@@ -977,6 +1233,27 @@ FSL Bindings
 (to be written)
 
 
+Data vs. Dataset: A Glossary
+----------------------------
+
+(to be written)
+
+..  dataset:
+		something
+	sample:
+		something else
+	label:
+		blurb
+
+
+PyMVPA for MVPA Toolbox Users
+-----------------------------
+
+(to be written)
+
+.. Greg? Per?
+
+
 Frequently Asked Questions
 --------------------------
 
@@ -989,7 +1266,17 @@ I feel like I want to contribute something, do you mind?
   time/cannot/do not want to implement it yourself, please post your idea to
   the PyMVPA mailing list.
 
-.. We probably need them once we have more than two users.
+
+The manual is quite insufficient. When will you improve it?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Writing a manual can be a tricky task if you already know the details and
+  have to imagine what might be the most interesting information for someone
+  who is just starting. If you feel that something is missing which has cost
+  you some time to figure out, please drop us a note and we will add it as soon
+  as possible. If you have developed some code snippets to demonstrate some
+  feature or non-trivial behaviour, please consider sharing this snippet with
+  us and we will put it into the example collection or the manual. Thanks!
 
 
 

@@ -10,7 +10,7 @@
 
 import unittest
 from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.plf import PLF
+from mvpa.clfs.plr import PLR
 import numpy as N
 
 def dumbFeatureDataset():
@@ -22,22 +22,22 @@ def dumbFeatureDataset():
 
     return Dataset(samples=data, labels=regs)
 
-class PLFTests(unittest.TestCase):
+class PLRTests(unittest.TestCase):
 
-    def testPLF(self):
+    def testPLR(self):
         data = dumbFeatureDataset()
 
-        clf = PLF()
+        clf = PLR()
 
         clf.train(data)
 
         # prediction has to be perfect
         self.failUnless((clf.predict(data.samples) == data.labels).all())
 
-    def testPLFState(self):
+    def testPLRState(self):
         data = dumbFeatureDataset()
 
-        clf = PLF()
+        clf = PLR()
 
         clf.train(data)
 
@@ -51,7 +51,7 @@ class PLFTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(PLFTests)
+    return unittest.makeSuite(PLRTests)
 
 
 if __name__ == '__main__':

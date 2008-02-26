@@ -14,7 +14,7 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.classifier import Classifier
-from mvpa.misc.state import Statefull
+from mvpa.misc.state import Stateful
 
 if __debug__:
     from mvpa.misc import debug
@@ -120,7 +120,7 @@ def sweepargs(**kwargs):
                     if isinstance(argvalue, Classifier):
                         # clear classifier before its use
                         argvalue.untrain()
-                    if isinstance(argvalue, Statefull):
+                    if isinstance(argvalue, Stateful):
                         argvalue.states.reset()
                     # update kwargs_
                     kwargs_[argname] = argvalue

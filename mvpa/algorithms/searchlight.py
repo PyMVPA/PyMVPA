@@ -21,8 +21,8 @@ from mvpa.algorithms.datameasure import SensitivityAnalyzer
 
 
 class Searchlight(SensitivityAnalyzer):
-    """Runs a DataMeasure on all possible spheres of a certain size within a
-    dataset.
+    """Runs a `ScalarDatasetMeasure` on all possible spheres of a certain size
+    within a dataset.
 
     The idea to use a searchlight as a sensitivity analyser stems from this
     paper:
@@ -42,13 +42,13 @@ class Searchlight(SensitivityAnalyzer):
         and the output of that call is returned.
 
         ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
-        make sure that the specified `DataMeasure` returns large (absolute)
-        values for high sensitivities and small (absolute) values for low
-        sensitivities. Especially when using error functions usually low values
-        imply high performance and therefore high sensitivity. This would in
-        turn result in sensitivity maps that have low (absolute) values
-        indicating high sensitivites and this conflicts with the intended#
-        behavior of a `SensitivityAnalyzer`.
+        make sure that the specified `ScalarDatasetMeasure` returns large
+        (absolute) values for high sensitivities and small (absolute) values
+        for low sensitivities. Especially when using error functions usually
+        low values imply high performance and therefore high sensitivity. This
+        would in turn result in sensitivity maps that have low (absolute)
+        values indicating high sensitivites and this conflicts with the
+        intended behavior of a `SensitivityAnalyzer`.
         """
         SensitivityAnalyzer.__init__(self)
 
@@ -63,7 +63,7 @@ class Searchlight(SensitivityAnalyzer):
         self.__spheresizes = []
 
 
-    def __call__(self, dataset, callables=[]):
+    def _call(self, dataset):
         """Perform the spheresearch.
         """
         if not isinstance(dataset, MappedDataset) \
@@ -89,7 +89,6 @@ class Searchlight(SensitivityAnalyzer):
                 plain=True)
 
             # compute the datameasure and store in results
-            # XXX implement callbacks!
             measure = self.__datameasure(sphere)
             results.append(measure)
 
