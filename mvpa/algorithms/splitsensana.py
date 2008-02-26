@@ -16,6 +16,7 @@ import numpy as N
 
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.datasets.splitter import NoneSplitter
+from mvpa.misc import debug
 from mvpa.misc.state import StateVariable
 from mvpa.misc.transformers import FirstAxisMean
 
@@ -133,6 +134,7 @@ class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
 
         # feature wise mean
         m = N.mean(maps, axis=0)
+        #m = N.min(maps, axis=0)
         # featurewise variance
         v = N.var(maps, axis=0)
         # degrees of freedom (n-1 for one-sample t-test)
@@ -140,5 +142,12 @@ class TScoredSensitivityAnalyzer(SplittingSensitivityAnalyzer):
 
         # compute t-score
         t = (m - self.__noise_level) / N.sqrt(v * (1.0 / maps.shape[0]))
+
+        if __debug__:
+            debug('SA', 'T-score sensitivities computed for %d maps ' %
+                  maps.shape[0] +
+                  'min=%f max=%f. mean(m)=%f mean(v)=%f  Result min=%f max=%f mean(abs)=%f' %
+                  (N.min(maps), N.max(maps), N.mean(m), N.mean(v), N.min(t),
+                   N.max(t), N.mean(N.abs(t))))
 
         return t
