@@ -1,3 +1,0 @@
-When calling the 'website' target of the toplevel Makefile, every
-'<whatever>.txt' file in this directory will be converted by rst2html into
-the corresponding html/<whatever>.html file.

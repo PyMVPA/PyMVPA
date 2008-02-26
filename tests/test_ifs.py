@@ -14,7 +14,7 @@ import numpy as N
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.ifs import IFS
-from mvpa.algorithms.clfcrossval import ClfCrossValidation
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
@@ -49,8 +49,8 @@ class IFSTests(unittest.TestCase):
 
         # data measure and transfer error quantifier use the SAME clf!
         trans_error = TransferError(svm)
-        data_measure = ClfCrossValidation(trans_error,
-                                          NFoldSplitter(1))
+        data_measure = CrossValidatedTransferError(trans_error,
+                                                   NFoldSplitter(1))
 
         ifs = IFS(data_measure,
                   trans_error,

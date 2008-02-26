@@ -16,7 +16,7 @@ mvpa.clfs module contains various classifiers
    :style: UML
 
 :group Basic: classifier
-:group Specific Implementations: knn svm plf
+:group Specific Implementations: knn svm plr ridge
 :group Internal Implementations: libsvm
 :group Utilities: transerror
 """

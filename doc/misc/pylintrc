@@ -56,13 +56,12 @@ max-args = 12
 [MESSAGES CONTROL]
 # Disable the following PyLint messages:
 # R0903 - Not enough public methods
-# W0102 - Dangerous default value [] as argument # list of callables
 # W0105 - String statement has no effect # often used for after-line doc
 # W0142 - Used * or ** magic
 # W0232 - Class has no __init__ method
 # W0212 - Access to a protected member ... of a client class
 # W0613 - Unused argument
-disable-msg=R0903,W0142,W0102,W0105,W0212,W0613
+disable-msg=R0903,W0142,W0105,W0212,W0613
 
 [REPORTS]
 
