@@ -13,6 +13,7 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.smlr import SMLR
+from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import ConfusionMatrix
 
 # features of sample data
@@ -29,9 +30,6 @@ samp1[:,:goodfeat] += offset
 samp2 = N.random.randn(nsamp,nfeat)
 samp2[:,:goodfeat] -= offset
 
-traindat = N.vstack((samp1[:ntrain,:],samp2[:ntrain,:]))
-testdat = N.vstack((samp1[ntrain:,:],samp2[ntrain:,:]))
-
 # create the pymvpa training dataset from the labeled features
 patternsPos = Dataset(samples=samp1[:ntrain,:], labels=1)
 patternsNeg = Dataset(samples=samp2[:ntrain,:], labels=0)
@@ -43,20 +41,40 @@ patternsNeg = Dataset(samples=samp2[ntrain:,:], labels=0)
 testpat = patternsPos + patternsNeg
 
 # set up the SMLR classifier
-clf = SMLR(lm=1.5)
+print "Evaluating SMLR classifier..."
+smlr = SMLR(lm=1.5)
 
 # enable saving of the values used for the prediction
-clf.states.enable('values')
+smlr.states.enable('values')
 
 # train with the known points
-clf.train(trainpat)
+smlr.train(trainpat)
 
 # run the predictions on the test values
-pre = clf.predict(testpat.samples)
+pre = smlr.predict(testpat.samples)
 
 # calculate the confusion matrix
-testing_confusion = ConfusionMatrix(
+smlr_confusion = ConfusionMatrix(
     labels=trainpat.uniquelabels, targets=testpat.labels,
     predictions=pre)
 
-print "Percent Correct: %g%%" % (testing_confusion.percentCorrect)
+# now do the same for a linear SVM
+print "Evaluating Linear SVM classifier..."
+lsvm = LinearNuSVMC(probability=1)
+
+# enable saving of the values used for the prediction
+lsvm.states.enable('values')
+
+# train with the known points
+lsvm.train(trainpat)
+
+# run the predictions on the test values
+pre = lsvm.predict(testpat.samples)
+
+# calculate the confusion matrix
+lsvm_confusion = ConfusionMatrix(
+    labels=trainpat.uniquelabels, targets=testpat.labels,
+    predictions=pre)
+
+print "SMLR Percent Correct:\t%g%%" % (smlr_confusion.percentCorrect)
+print "linear-SVM Percent Correct:\t%g%%" % (lsvm_confusion.percentCorrect)
