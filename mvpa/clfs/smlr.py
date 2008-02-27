@@ -35,7 +35,7 @@ class SMLR(Classifier):
         :Parameters:
           lm : float
             the penalty term lambda.  
-            (Defaults to .1)
+            (Defaults to 1.0)
 
         """
         # init base class first
@@ -53,11 +53,8 @@ class SMLR(Classifier):
         return """SMLR(lm=%f, enabled_states=%s)""" % \
             (self.__lm, str(self.states.enabled))
 
-    def __label_to_oneofm(self,labels):
+    def __label_to_oneofm(self,labels,ulabels):
         """Convert labels to one-of-M form."""
-        # get the unique labels
-        ulabels = N.unique1d(labels)
-        
         # allocate for the new one-of-M labels
         new_labels = N.zeros((len(labels),len(ulabels)))
 
@@ -65,27 +62,27 @@ class SMLR(Classifier):
         for i,c in enumerate(ulabels):
             new_labels[labels==c,i] = 1
 
-        return new_labels,ulabels
+        return new_labels
 
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
 
         # Process the labels to turn into 1 of N encoding
-        labels,ulabels = self.__label_to_oneofm(data.labels)
+        labels = self.__label_to_oneofm(data.labels,data.uniquelabels)
+        self.__ulabels = data.uniquelabels.copy()
         Y = labels
-        M = len(ulabels)
-        self.__ulabels = ulabels
+        M = len(self.__ulabels)
 
-        # get the samps
+        # get the data information into easy vars
         X = data.samples
         nd = data.nfeatures
         ns = data.nsamples
 
         # Precompute what we can
         auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X,0))
-        XY = N.dot(X.T,Y[:,:M-1])
-        lambda_over_2_auto_corr = (self.__lm/2)*auto_corr
+        XY = N.dot(X.T,Y[:,:(M-1)])
+        lambda_over_2_auto_corr = (self.__lm/2.)/auto_corr
 
         # set starting values
         w = N.zeros((nd,M-1),dtype=N.float)
@@ -96,7 +93,6 @@ class SMLR(Classifier):
 
         # initialize the iterative optimization
         converged = False
-        iter = 0
         incr = N.finfo(N.float).max
         non_zero = 0
         basis = 0
@@ -125,13 +121,13 @@ class SMLR(Classifier):
 
                 # keep weights within bounds
                 if w_new > lambda_over_2_auto_corr[basis]:
-                    w_new = w_new - lambda_over_2_auto_corr[basis]
+                    w_new -= lambda_over_2_auto_corr[basis]
                     changed = True
                     # unmark from being zero if necessary
                     if w_old == 0:
                         non_zero+=1
                 elif w_new < -lambda_over_2_auto_corr[basis]:
-                    w_new = w_new + lambda_over_2_auto_corr[basis]
+                    w_new += lambda_over_2_auto_corr[basis]
                     changed = True
                     # unmark from being zero if necessary
                     if w_old == 0:
@@ -150,6 +146,7 @@ class SMLR(Classifier):
         
                 # process any changes
                 if changed:
+                    #print "w[%d,%d] = %g" % (basis,m,w_new)
                     # update the expected values
                     Xw[:,m] = Xw[:,m] + X[:,basis]*(w_new-w_old)
                     E_new_m = N.exp(Xw[:,m])
@@ -167,19 +164,22 @@ class SMLR(Classifier):
                 if basis == 0:
                     # we completed a cycle of features
                     cycles += 1
-                    
+                                        
                     # assess convergence
-                    incr = N.linalg.norm(w_prev.ravel() - w.ravel()) / \
+                    incr = N.linalg.norm((w_prev - w).ravel()) / \
                         (N.linalg.norm(w_prev.ravel())+N.finfo(N.float).eps)
-
+                    w_prev = w.copy()
+                    
                     # save the new weights
-                    print incr
-                    1/0
                     converged = incr < self.__convergence_tol
 
                     # update the zero test factors
                     decrease_factor *= (non_zero/float((M-1)*nd))
                     test_zero_basis *= decrease_factor
+
+                    print "cycle=%d ; incr=%g ; non_zero=%d" % \
+                          (cycles,incr,non_zero)
+                    
         
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
@@ -188,20 +188,24 @@ class SMLR(Classifier):
 
         # save the weights
         self.w = w
-
+        
 
     def _predict(self, data):
         """
         Predict the output for the provided data.
         """
-        # determine the predictions
-        E = N.exp(N.dot(data,self.w))
-        S = N.sum(E,1)+1
+        # append the zeros column to the weights
+        w = N.hstack((self.w,N.zeros((self.w.shape[0],1))))
+        
+        # determine the values
+        E = N.exp(N.dot(data,w))
+        S = N.sum(E,1)
         values = E / S[:,N.newaxis].repeat(E.shape[1],axis=1)
         self.values = values
 
+        # generate predictions
         predictions = [self.__ulabels[N.argmax(vals)] for vals in values]
         self.predictions = predictions
-
+        
         return predictions
 
