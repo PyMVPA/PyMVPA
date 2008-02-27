@@ -17,6 +17,7 @@ from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import ConfusionMatrix
 
 # features of sample data
+print "Generating samples..."
 nfeat = 10000
 nsamp = 100
 ntrain = 90

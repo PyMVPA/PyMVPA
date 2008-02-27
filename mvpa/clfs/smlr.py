@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.clfs.classifier import Classifier
+from mvpa.misc.exceptions import ConvergenceError
 
 if __debug__:
     from mvpa.misc import debug
@@ -28,15 +29,20 @@ class SMLR(Classifier):
     """
 
     def __init__(self, lm=.1, convergence_tol=1e-3, 
-                 kill_threshold=1e-5, **kwargs):
+                 maxiter=10000, **kwargs):
         """
         Initialize a SMLR analysis.
 
         :Parameters:
           lm : float
-            the penalty term lambda.  
-            (Defaults to 1.0)
-
+            The penalty term lambda.  Larger values will give rise 
+            to more sparsification.
+          covergence_tol : float
+            When the weight change for each cycle drops below this value
+            the regression is considered converged.  Smaller values
+            lead to tighter convergence.
+          maxiter : int
+            Maximum number of iterations before stopping if not converged.
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -44,7 +50,7 @@ class SMLR(Classifier):
         # set the parameters
         self.__lm = lm
         self.__convergence_tol = convergence_tol
-        self.__kill_threshold = kill_threshold
+        self.__maxiter = maxiter
 
     def __repr__(self):
         """String summary of the object
@@ -103,7 +109,7 @@ class SMLR(Classifier):
         test_zero_basis = 1
 
         # perform the optimization
-        while not converged:
+        while not converged and cycles<self.__maxiter:
             # get the starting weight
             w_old = w[basis,m]
             
@@ -176,15 +182,27 @@ class SMLR(Classifier):
                     # update the zero test factors
                     decrease_factor *= (non_zero/float((M-1)*nd))
                     test_zero_basis *= decrease_factor
-
-                    print "cycle=%d ; incr=%g ; non_zero=%d" % \
-                          (cycles,incr,non_zero)
                     
-        
+                    if __debug__:
+                        debug("SMLR", \
+                                  "cycle=%d ; incr=%g ; non_zero=%d" % \
+                          (cycles,incr,non_zero))
+    
+        if not converged:
+            raise ConvergenceError, \
+                "More than %d Iterations without convergence" % \
+                (self.__maxiter)
+
+
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
 
-        print 'cycles=%d ; wasted basis=%g\n' % (cycles,wasted_basis/((M-1)*nd))
+#         if __debug__:
+#             debug("SMLR", \
+#                   "SMLR converged after %d steps. Error: %g" % \
+#                   (cycles, XXX))
+
+#        print 'cycles=%d ; wasted basis=%g\n' % (cycles,wasted_basis/((M-1)*nd))
 
         # save the weights
         self.w = w
@@ -197,7 +215,7 @@ class SMLR(Classifier):
         # append the zeros column to the weights
         w = N.hstack((self.w,N.zeros((self.w.shape[0],1))))
         
-        # determine the values
+        # determine the probability values for making the prediction
         E = N.exp(N.dot(data,w))
         S = N.sum(E,1)
         values = E / S[:,N.newaxis].repeat(E.shape[1],axis=1)

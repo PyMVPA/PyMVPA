@@ -114,7 +114,7 @@ class PLR(Classifier):
             if k > self.__maxiter:
                 raise ConvergenceError, \
                       "More than %d Iterations without convergence" % \
-                      (self.__criterion)
+                      (self.__maxiter)
 
         if __debug__:
             debug("PLR", \
