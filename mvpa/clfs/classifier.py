@@ -140,6 +140,13 @@ class Classifier(Stateful):
         return "%s\n %s" % (`self`, Stateful.__str__(self))
 
 
+    #XXX that is a bad idea since object seems to be be deallocated by here
+    #def __del__(self):
+    #    if __debug__:
+    #        debug('CLF_', 'Destroying classifier %s' % `self`)
+    #    self.untrain()
+
+
     def _pretrain(self, dataset):
         """Functionality prior to training
         """

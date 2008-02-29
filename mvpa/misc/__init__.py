@@ -58,7 +58,7 @@ if environ.has_key('MVPA_VERBOSE'):
 # Define Warning class so it is printed just once per each message
 class WarningLog(OnceLogger):
 
-    def __init__(self, btlevels=4, *args, **kwargs):
+    def __init__(self, btlevels=10, *args, **kwargs):
         """Define Warning logger.
 
         It is defined by
@@ -112,6 +112,7 @@ if __debug__:
     debug.register('STCOL', "State Collector")
 
     debug.register('CLF',    "Base Classifiers")
+    debug.register('CLF_',   "Base Classifiers verbose")
     debug.register('CLF_TB',
         "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")

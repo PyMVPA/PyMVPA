@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
+from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 
 # If we want simply to import all SVMs from libsvm
