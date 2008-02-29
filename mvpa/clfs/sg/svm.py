@@ -34,8 +34,15 @@ known_kernels = { "linear": shogun.Kernel.LinearKernel,
 
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    "gmnp" : shogun.Classifier.GMNPSVM,
+                   "gpbt" : shogun.Classifier.GPBTSVM,
                    "gnpp" : shogun.Classifier.GNPPSVM,
-                   "lightsvm" : shogun.Classifier.SVMLight }
+                   }
+
+try:
+    known_svm_impl["lightsvm"] = shogun.Classifier.SVMLight
+except:
+    warning("No LightSVM implementation is available in given shogun")
+
 
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG
@@ -70,6 +77,8 @@ def _tosg(data):
     if __debug__:
         debug("SG_", "Converting data for shogun into RealFeatures")
     features = shogun.Features.RealFeatures(data.astype('double').T)
+    if __debug__:
+        debug("SG__", "Done converting data for shogun into RealFeatures")
     _setdebug(features, 'Features')
     return features
 
@@ -101,7 +110,7 @@ class SVM_SG_Modular(Classifier):
     def __init__(self,
                  kernel_type='Linear',
                  kernel_params=[1.0],
-                 svm_impl="LibSVM",
+                 svm_impl="gpbt",
                  C=1.0,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
@@ -168,6 +177,7 @@ class SVM_SG_Modular(Classifier):
     def _train(self, dataset):
         """Train SVM
         """
+        self.untrain()
         self.__mclf = None
         svm_impl_class = None
 
@@ -251,6 +261,11 @@ class SVM_SG_Modular(Classifier):
 
         self.__svm.train()
 
+        # train
+        if __debug__:
+            debug("SG__", "Done training SG_SVM %s on data with labels %s" %
+                  (self.__kernel_type, dataset.uniquelabels))
+
 
     def _predict(self, data):
         """Predict values for the data
@@ -261,7 +276,9 @@ class SVM_SG_Modular(Classifier):
 
         if __debug__:
             debug("SG_", "Initializing kernel with training/testing data")
-        self.__kernel.init(self.__traindata, _tosg(data))
+
+        testdata = _tosg(data)
+        self.__kernel.init(self.__traindata, testdata)
 
         if __debug__:
             debug("SG_", "Classifying testing data")
@@ -293,13 +310,21 @@ class SVM_SG_Modular(Classifier):
         # store state variable
         self.values = values
 
+        # to avoid leaks with not yet properly fixed shogun
+        try:
+            testdata.free_features()
+        except:
+            pass
+
         return predictions
 
 
     def untrain(self):
         if __debug__:
-            debug("SVM", "Untraining %s and destroying libsvm model" % self)
+            debug("SG__", "Untraining %s and destroying sg's SVM" % self)
         super(SVM_SG_Modular, self).untrain()
+
+        # to avoid leaks with not yet properly fixed shogun
 
         # XXX make it nice... now it is just stable ;-)
         if not self.__mclf is None:
@@ -307,16 +332,22 @@ class SVM_SG_Modular(Classifier):
             self.__mclf = None
         elif not self.__traindata is None:
             try:
+                try:
+                    self.__traindata.free_features()
+                except:
+                    pass
                 self.__traindataset = None
-                self.__traindata = None
-                del self.__traindata
-                self.__traindata = None
                 del self.__kernel
                 self.__kernel = None
+                del self.__traindata
+                self.__traindata = None
                 del self.__svm
                 self.__svm = None
             except:
                 pass
+
+        if __debug__:
+            debug("SG__", "Done untraining %s and destroying sg's SVM" % self)
 
 
     svm = property(fget=lambda self: self.__svm)
