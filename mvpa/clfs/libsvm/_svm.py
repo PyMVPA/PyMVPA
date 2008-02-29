@@ -385,7 +385,7 @@ class SVMModel:
 
     def __del__(self):
         if __debug__:
-            debug('CLF_', 'Destroying libsvm.SVMModel %s %s' % (`self`, tb))
+            debug('CLF_', 'Destroying libsvm.SVMModel %s' % (`self`))
 
         svmc.svm_destroy_model(self.model)
 
