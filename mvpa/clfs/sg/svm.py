@@ -173,6 +173,11 @@ class SVM_SG_Modular(Classifier):
         res += ")"
         return res
 
+    def __repr__(self):
+        # adjust representation a bit to report SVM backend
+        id_ = super(SVM_SG_Modular, self).__repr__()
+        return id_.replace("#", "/%s#" % self.__svm_impl)
+
 
     def _train(self, dataset):
         """Train SVM
