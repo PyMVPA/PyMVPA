@@ -23,7 +23,7 @@ import numpy as N
 import copy
 
 from mvpa.misc.state import StateVariable, Stateful
-from mvpa.clfs.classifier import BoostedClassifier
+from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
 from mvpa.clfs.svm import LinearSVM
 from mvpa.misc.transformers import Absolute, Identity, FirstAxisMean
 
@@ -233,6 +233,17 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
                       (analyzer, clf, clf.clfs[0] ))
         banalyzer = BoostedClassifierSensitivityAnalyzer(clf,
                             analyzer=basic_analyzer, **kwargs)
+    elif isinstance(clf, ProxyClassifier):
+        if basic_analyzer is None:
+            basic_analyzer = selectAnalyzer(clf.clf, **kwargs)
+            if __debug__:
+                debug("SA", "Selected basic analyzer %s for classifier %s " %
+                      (basic_analyzer, clf) +
+                      "based on proxied classifier in it being %s" % clf.clf)
+        banalyzer = ProxyClassifierSensitivityAnalyzer(clf,
+                                                       analyzer=basic_analyzer,
+                                                       **kwargs)
+
     return banalyzer
 
 
@@ -333,3 +344,42 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
         return self.__combined_analyzer(dataset)
 
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
+
+
+class ProxyClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
+    """Set sensitivity analyzer output just to pass through"""
+
+    def __init__(self,
+                 clf,
+                 analyzer=None,
+                 **kwargs):
+        """Initialize Sensitivity Analyzer for `BoostedClassifier`
+        """
+        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+
+        self.__analyzer = None
+        """Analyzer to use for basic classifiers within boosted classifier"""
+
+
+    def _call(self, dataset):
+        if self.__analyzer is None:
+            self.__analyzer = selectAnalyzer(self.clf.clf)
+            if self.__analyzer is None:
+                raise ValueError, \
+                      "Wasn't able to figure basic analyzer for clf %s" % \
+                      `clf`
+            if __debug__:
+                debug("SA", "Selected analyzer %s for clf %s" % \
+                      (`self.__analyzer`, `self.clf.clf`))
+
+        # TODO "remove" unnecessary things below on each call...
+        # assign corresponding classifier
+        self.__analyzer.clf = self.clf.clf
+
+        # if clf was trained already - don't train again
+        if self.clf.clf.trained:
+            self.__analyzer._force_training = False
+
+        return self.__analyzer._call(dataset)
+
+    analyzer = property(fget=lambda x:x.__analyzer)
