@@ -14,7 +14,7 @@ from sys import stdout, stderr
 
 from os import environ
 
-from mvpa.misc.verbosity import LevelLogger, OnceLogger
+from mvpa.misc.verbosity import LevelLogger, OnceLogger, Logger
 
 #
 # Setup verbose and debug outputs
@@ -58,33 +58,61 @@ if environ.has_key('MVPA_VERBOSE'):
 # Define Warning class so it is printed just once per each message
 class WarningLog(OnceLogger):
 
-    def __init__(self, btlevels=10, *args, **kwargs):
+    def __init__(self, btlevels=10, btdefault=False,
+                 maxcount=1, *args, **kwargs):
         """Define Warning logger.
 
         It is defined by
-          `btlevels`, int: how many levels of backtrack to print to
-                           give a hint on WTF
+          btlevels : int
+            how many levels of backtrack to print to give a hint on WTF
+          btdefault : bool
+            if to print backtrace for all warnings at all
+          maxcount : int
+            how many times to print each warning
         """
         OnceLogger.__init__(self, *args, **kwargs)
         self.__btlevels = btlevels
+        self.__btdefault = btdefault
+        self.__maxcount = maxcount
 
-    def __call__(self, msg):
+
+    def __call__(self, msg, bt=None):
         import traceback
+        if bt is None:
+            bt = self.__btdefault
         tb = traceback.extract_stack(limit=2)
         msgid = `tb[-2]`                # take parent as the source of ID
         fullmsg = "WARNING: %s.\n\t(Please note: this warning is " % msg + \
                   "printed only once, but underlying problem might " + \
                   "occur many times.\n"
-        if self.__btlevels > 0:
+        if bt and self.__btlevels > 0:
             fullmsg += "Top-most backtrace:\n"
             fullmsg += reduce(lambda x, y: x + "\t%s:%d in %s where '%s'\n" % \
                               y,
                               traceback.extract_stack(limit=self.__btlevels),
                               "")
 
-        OnceLogger.__call__(self, msgid, fullmsg)
+        OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
-warning = WarningLog(handlers=[stdout])
+
+if environ.has_key('MVPA_WARNINGS_BT'):
+    warnings_btlevels = int(environ['MVPA_WARNINGS_BT'])
+    warnings_bt = True
+else:
+    warnings_btlevels = 10
+    warnings_bt = False
+
+if environ.has_key('MVPA_WARNINGS_COUNT'):
+    warnings_maxcount = int(environ['MVPA_WARNINGS_COUNT'])
+else:
+    warnings_maxcount = 1
+
+warning = WarningLog(handlers={False: [stdout],
+                               True: []}[environ.has_key('MVPA_NO_WARNINGS')],
+                     btlevels=warnings_btlevels,
+                     btdefault=warnings_bt,
+                     maxcount=warnings_maxcount
+                     )
 
 
 if __debug__:
