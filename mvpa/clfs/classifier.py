@@ -140,6 +140,12 @@ class Classifier(Stateful):
         return "%s\n %s" % (`self`, Stateful.__str__(self))
 
 
+    def __del__(self):
+        if __debug__:
+            debug('CLF_', 'Destroying classifier %s' % `self`)
+        self.untrain()
+
+
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
