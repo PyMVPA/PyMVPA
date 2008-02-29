@@ -110,7 +110,7 @@ class SVM_SG_Modular(Classifier):
     def __init__(self,
                  kernel_type='Linear',
                  kernel_params=[1.0],
-                 svm_impl="gpbt",
+                 svm_impl="lightsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
                  C=1.0,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
