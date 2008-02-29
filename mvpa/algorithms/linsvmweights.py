@@ -12,8 +12,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.clfs.svm import LinearSVM
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer, \
+     selectAnalyzer
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
