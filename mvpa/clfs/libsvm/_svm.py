@@ -21,6 +21,7 @@ from mvpa.clfs.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
                                   PRECOMPUTED
 
+from mvpa.misc import debug
 
 def intArray(seq):
     size = len(seq)
@@ -105,6 +106,8 @@ class SVMParameter(object):
                 set_func(self.param, val)
 
         def __del__(self):
+            if __debug__:
+                debug('CLF_', 'Destroying libsvm._SVMCParameter %s' % str(self))
             freeIntArray(svmc.svm_parameter_weight_label_get(self.param))
             freeDoubleArray(svmc.svm_parameter_weight_get(self.param))
             svmc.delete_svm_parameter(self.param)
@@ -148,6 +151,8 @@ class SVMParameter(object):
         return self.__svmc_params.param
 
     def __del__(self):
+        if __debug__:
+            debug('CLF_', 'Destroying libsvm.SVMParameter %s' % str(self))
         self._clear_svmc_params()
 
     def _setParameter(self, key, value):
@@ -229,6 +234,9 @@ class SVMProblem:
 
 
     def __del__(self):
+        if __debug__:
+            debug('CLF_', 'Destroying libsvm.SVMProblem %s' % `self`)
+
         svmc.delete_svm_problem(self.prob)
         svmc.delete_double(self.y_array)
         for i in range(self.size):
@@ -376,6 +384,9 @@ class SVMModel:
 
 
     def __del__(self):
+        if __debug__:
+            debug('CLF_', 'Destroying libsvm.SVMModel %s %s' % (`self`, tb))
+
         svmc.svm_destroy_model(self.model)
 
 
