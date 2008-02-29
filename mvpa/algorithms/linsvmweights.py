@@ -21,6 +21,8 @@ import mvpa.clfs.libsvm.svm as svm_libsvm
 
 try:
     import mvpa.clfs.sg.svm as svm_sg
+    import shogun.Classifier
+
     __sg_present = True
 except ImportError:
     # no shogun library is available, thus no sensitivity could be even checked
@@ -43,7 +45,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         """Initialize the analyzer with the classifier it shall use.
 
         :Parameters:
-          clf : LinearSVM
+          clf: LinearSVM
             classifier to use. Only classifiers sub-classed from
             `LinearSVM` may be used.
         """
@@ -70,12 +72,6 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
         rhos = N.array(self.clf.model.getRho())
-        if __debug__:
-            debug('SVM',
-                  "Extracting weigts for %d-class SVM: #SVs=%s, " %
-                  (self.clf.model.nr_class, `self.clf.model.getNSV()`) +
-                  " SVcoefshape=%s SVs.shape=%s Rhos=%s" %\
-                  (svcoef.shape, svs.shape, rhos))
 
         self.offsets = rhos
         # XXX yoh: .mean() is effectively
@@ -85,12 +81,30 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         #
         # First multiply SV coefficients with the actuall SVs to get
         # weighted impact of SVs on decision, then for each feature
-        # take absolute mean across SVs to get a single weight value
+        # take mean across SVs to get a single weight value
         # per feature
-        return (svcoef * svs).mean(axis=0).A1
+        weights = (svcoef * svs).mean(axis=0).A1
+
+        if __debug__:
+            debug('SVM',
+                  "Extracting weights for %d-class SVM: #SVs=%s, " %
+                  (self.clf.model.nr_class, `self.clf.model.getNSV()`) +
+                  " SVcoefshape=%s SVs.shape=%s Rhos=%s. Result: min=%f max=%f" %\
+                  (svcoef.shape, svs.shape, rhos, N.min(weights), N.max(weights)))
+        return weights
+
+
+    def __sg_helper(self, svm):
+        """Helper function to compute sensitivity for a single given SVM"""
+        self.offsets = svm.get_bias()
+        svcoef = N.matrix(svm.get_alphas())
+        svnums = svm.get_support_vectors()
+        svs = self.clf.traindataset.samples[svnums,:]
+        res = (svcoef * svs).mean(axis=0).A1
+        return res
+
 
     def __sg(self, dataset, callables=[]):
-        raise NotImplementedError
         #from IPython.Shell import IPShellEmbed
         #ipshell = IPShellEmbed()
         #ipshell()
@@ -107,15 +121,21 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # naming across our swig libsvm wrapper and sg access
         # functions for svm
 
-        self.offsets = self.clf.svm.get_bias()
-        svcoef = self.clf.svm.get_alphas()
-        svs = self.clf.svm.get_support_vectors()
-        res = (svcoef * svs).mean(axis=0)
-        print res
-        from IPython.Shell import IPShellEmbed
-        ipshell = IPShellEmbed()
-        ipshell()
-        return (svcoef * svs).mean(axis=0)
+        if not self.clf.mclf is None:
+            anal = selectAnalyzer(self.__mclf, basic_analyzer=self)
+            if __debug__:
+                debug('SVM',
+                      '! Delegating computing sensitivity to %s' % `anal`)
+            return anal(dataset, callables)
+
+        svm = self.clf.svm
+        sens = 0
+        if isinstance(svm, shogun.Classifier.MultiClassSVM):
+            for i in xrange(svm.get_num_svms()):
+                sens += self.__sg_helper(svm.get_svm(i))
+        else:
+            sens = N.abs(self.__sg_helper(svm))
+        return sens
 
 
     def _call(self, dataset, callables=[]):

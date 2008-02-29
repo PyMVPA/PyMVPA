@@ -13,10 +13,8 @@ import sys
 
 import numpy as N
 
-from optparse import OptionParser
-
 from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.algorithms.clfcrossval import ClfCrossValidation
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
@@ -26,14 +24,15 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import \
-     optsCommon, optClf, optsSVM, optRadius, optKNearestDegree, \
-     optCrossfoldDegree, optZScore
+     parser, \
+     optsCommon, optClf, optsSVM, optRadius, optsKNN, \
+     optsGener, optZScore
 
 def main():
     """ Wrapped into a function call for easy profiling later on
     """
 
-    usage = """\
+    parser.usage = """\
     %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
 
     where labels+blocks is a text file that lists the class label and the
@@ -41,11 +40,9 @@ def main():
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
 
+    parser.option_groups = [optsSVM, optsKNN, optsGener, optsCommon]
+    parser.options = [optClf, optRadius, optZScore]
 
-    parser = OptionParser(usage=usage,
-                          option_list=optsCommon + \
-                          [optClf, optRadius, optKNearestDegree,
-                           optCrossfoldDegree, optZScore] + optsSVM)
 
     (options, files) = parser.parse_args()
 
@@ -93,9 +90,9 @@ def main():
     if options.clf == 'knn':
         clf = kNN(k=options.knearestdegree)
     elif options.clf == 'lin_nu_svmc':
-        clf = LinearNuSVMC(options.nu)
+        clf = LinearNuSVMC(options.svm_nu)
     elif options.clf == 'rbf_nu_svmc':
-        clf = RbfNuSVMC(options.nu)
+        clf = RbfNuSVMC(options.svm_nu)
     else:
         raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
     verbose(3, "Using '%s' classifier" % options.clf)
@@ -104,7 +101,7 @@ def main():
 
     verbose(3, "Assigning a measure to be CrossValidation")
     # compute N-1 cross-validation with the selected classifier in each sphere
-    cv = ClfCrossValidation(TransferError(clf),
+    cv = CrossValidatedTransferError(TransferError(clf),
                             NFoldSplitter(cvtype=options.crossfolddegree))
 
     verbose(3, "Generating Searchlight instance")

@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.datasets.metric import Metric
+from mvpa.misc.vproperty import VProperty
 
 class Mapper(object):
     """Interface to provide mapping between two spaces: in and out.
@@ -105,11 +106,47 @@ class Mapper(object):
         raise NotImplementedError
 
 
+    def convertOutIds2OutMask(self, outIds):
+        """Returns a boolean mask with all features in `outIds` selected.
+
+        :Parameters:
+            outIds: list or 1d array
+                To be selected features ids in out-space.
+
+        :Returns:
+            ndarray: dtype='bool'
+                All selected features are set to True; False otherwise.
+        """
+        fmask = N.repeat(False, self.nfeatures)
+        fmask[outIds] = True
+
+        return fmask
+
+
+    def convertOutIds2InMask(self, outIds):
+        """Returns a boolean mask with all features in `ouIds` selected.
+
+        This method works exactly like Mapper.convertOutIds2OutMask(), but the
+        feature mask is finally (reverse) mapped into in-space.
+
+        :Parameters:
+            outIds: list or 1d array
+                To be selected features ids in out-space.
+
+        :Returns:
+            ndarray: dtype='bool'
+                All selected features are set to True; False otherwise.
+        """
+        return self.reverse(self.convertOutIds2OutMask(outIds))
+
+
+    nfeatures = VProperty(fget=getOutSize)
+
+
 ### yoh: To think about generalization
 ##
 ## getMask... it might be more generic... so far seems to be
 ##            specific for featsel and rfe
-## buildMaskFromFeatureIds ... used in ifs
 
 
 

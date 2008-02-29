@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Simply functors that transform the output of another functor."""
+"""Simply functors that transform something."""
 
 __docformat__ = 'restructuredtext'
 
@@ -14,40 +14,27 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 
-class Absolute(object):
-    """Returns the elementwise absolute value of the value(s) that are
-    returned by the wrapped object.
-    """
-    def __init__(self, obj):
-        """Cheap initialization."""
-        self.__callable = obj
+def Absolute(x):
+    """Returns the elementwise absolute of any argument."""
+    return N.absolute(x)
 
 
-    def __call__(self, *args, **kwargs):
-        """Pass the call to the wrapper object and transform output."""
-        return N.absolute(self.__callable(*(args), **(kwargs)))
+def OneMinus(x):
+    """Returns elementwise '1 - x' of any argument."""
+    return 1 - x
 
 
-
-class OneMinus(object):
-    """Returns elementwise '1 - x', where x is returned by the wrapped object.
-    """
-    def __init__(self, obj):
-        """Cheap initialization."""
-        self.__callable = obj
+def Identity(x):
+    """Return whatever it was called with."""
+    return x
 
 
-    def __call__(self, *args, **kwargs):
-        """Pass the call to the wrapper object and transform output."""
-        # not sure what is best
-        #return 1 - self.__callable(*(args), **(kwargs))
-
-        # perhaps in-place is better
-        out = self.__callable(*(args), **(kwargs))
-        out *= -1
-        out += 1
-        return out
+def FirstAxisMean(x):
+    """Mean computed along the first axis."""
+    return N.mean(x, axis=0)
 
 
-
+def GrandMean(x):
+    """Just what the name suggests."""
+    return N.mean(x)
 

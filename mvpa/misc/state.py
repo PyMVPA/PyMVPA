@@ -106,7 +106,7 @@ class StateCollection(object):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, items = {}, owner = None):
+    def __init__(self, items=None, owner = None):
         """Initialize the state variables of a derived class
 
         :Parameters:
@@ -121,6 +121,8 @@ class StateCollection(object):
 
         self.__owner = owner
 
+        if items == None:
+            items = {}
         self.__items = items
         """Dictionary to contain registered states as keys and
         values signal either they are enabled
@@ -172,7 +174,7 @@ class StateCollection(object):
         operation = { True: copy.deepcopy,
                       False: copy.copy }[deep]
 
-        if isinstance(fromstate, Statefull):
+        if isinstance(fromstate, Stateful):
             fromstate = fromstate.states
 
         self.enabled = fromstate.enabled
@@ -261,24 +263,36 @@ class StateCollection(object):
         """Disable state variable defined by `index` id"""
         self._action(index, StateVariable.enable, missingok=False, value=False)
 
-    def reset(self, index):
+    def reset(self, index=None):
         """Reset the state variable defined by `index`"""
-        self._action(index, StateVariable.reset, missingok=False)
+        if not index is None:
+            indexes = [ index ]
+        else:
+            indexes = self.names
+
+        # do for all
+        for index in indexes:
+            self._action(index, StateVariable.reset, missingok=False)
 
 
-    def _changeTemporarily(self, enable_states=[],
-                           disable_states=[], other=None):
+
+    def _changeTemporarily(self, enable_states=None,
+                           disable_states=None, other=None):
         """Temporarily enable/disable needed states for computation
 
         Enable or disable states which are enabled in `other` and listed in
         `enable _states`. Use `resetEnabledTemporarily` to reset
         to previous state of enabled.
 
-        `other` can be a Statefull object or StateCollection
+        `other` can be a Stateful object or StateCollection
         """
+        if enable_states == None:
+            enable_states = []
+        if disable_states == None:
+            disable_states = []
         self.__storedTemporarily.append(self.enabled)
         other_ = other
-        if isinstance(other, Statefull):
+        if isinstance(other, Stateful):
             other = other.states
 
         if not other is None:
@@ -353,9 +367,9 @@ class StateCollection(object):
         return self.__owner
 
     def _setOwner(self, owner):
-        if not isinstance(owner, Statefull):
+        if not isinstance(owner, Stateful):
             raise ValueError, \
-                  "Owner of the StateCollection must be Statefull object"
+                  "Owner of the StateCollection must be Stateful object"
         self.__owner = owner
 
 
@@ -415,7 +429,7 @@ class statecollector(type):
 
 
 
-class Statefull(object):
+class Stateful(object):
     """Base class for stateful objects.
 
     Classes inherited from this class gain ability to provide state
@@ -429,8 +443,13 @@ class Statefull(object):
     __metaclass__ = statecollector
 
     def __init__(self,
-                 enable_states=[],
-                 disable_states=[]):
+                 enable_states=None,
+                 disable_states=None):
+
+        if enable_states == None:
+            enable_states = []
+        if disable_states == None:
+            disable_states = []
 
         object.__setattr__(self, '_states',
                            copy.deepcopy( \
@@ -444,10 +463,10 @@ class Statefull(object):
         # some attributes most probably are not yet set in the original
         # child's __str__
         #if __debug__:
-        #    debug("ST", "Statefull.__init__ done for %s" % self)
+        #    debug("ST", "Stateful.__init__ done for %s" % self)
 
         if __debug__:
-            debug("ST", "Statefull.__init__ was done for %s id %s" \
+            debug("ST", "Stateful.__init__ was done for %s id %s" \
                 % (self.__class__, id(self)))
 
 
@@ -480,5 +499,5 @@ class Statefull(object):
         return "%s with %s" % (self.__class__.__name__, str(self.states))
 
     def __repr__(self):
-        return "<%s#%d>" % (self.__class__.__name__, id(self))
+        return "<%s.%s#%d>" % (self.__class__.__module__, self.__class__.__name__, id(self))
 

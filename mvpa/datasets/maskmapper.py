@@ -79,7 +79,10 @@ class MaskMapper(MetricMapper):
             % (self.__masksize, self.__masknonzerosize)
 
 
-    def __deepcopy__(self, memo={}):
+    def __deepcopy__(self, memo=None):
+        # XXX memo does not seem to be used
+        if memo is None:
+            memo = {}
         from copy import deepcopy
         # XXX might be necessary to deepcopy 'self.metric' as well
         # to some degree reimplement the constructor to prevent calling the
@@ -349,16 +352,6 @@ class MaskMapper(MetricMapper):
         # for selectOut but such index has to be figured out first there
         #      ....
 
-    def buildMaskFromFeatureIds(self, outIds):
-        """Returns a mask with all features in ids selected from the
-        current feature set.
-
-        XXX should be buildInMaskFromFeatureIds
-        """
-        fmask = N.repeat(False, self.nfeatures)
-        fmask[outIds] = True
-        return self.reverse(fmask)
-
 
     def getNeighborIn(self, inId, radius=0):
         """Return the list of coordinates for the neighbors.
@@ -388,7 +381,6 @@ class MaskMapper(MetricMapper):
     # Read-only props
     # TODO: refactor the property names? make them vproperty?
     dsshape = property(fget=getInShape)
-    nfeatures = property(fget=getOutSize)
     mask = property(fget=lambda self:self.getMask(False))
 
 

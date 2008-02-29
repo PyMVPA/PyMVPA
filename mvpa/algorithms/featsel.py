@@ -17,13 +17,13 @@ from numpy import arange
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc import warning
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.exceptions import UnknownStateError
 
 if __debug__:
     from mvpa.misc import debug
 
-class FeatureSelection(Statefull):
+class FeatureSelection(Stateful):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
@@ -34,10 +34,10 @@ class FeatureSelection(Statefull):
 
     def __init__(self, **kargs):
         # base init first
-        Statefull.__init__(self, **kargs)
+        Stateful.__init__(self, **kargs)
 
 
-    def __call__(self, dataset, testdataset=None, callables=[]):
+    def __call__(self, dataset, testdataset=None):
         """Invocation of the feature selection
 
         :Parameters:
@@ -45,8 +45,6 @@ class FeatureSelection(Statefull):
             dataset used to select features
           testdataset : Dataset
             dataset the might be used to compute a stopping criterion
-          callables : sequence
-            a list of functors to be called with locals()
 
         Returns a tuple with the dataset containing the selected features.
         If present the tuple also contains the selected features of the
@@ -270,14 +268,14 @@ class NBackHistoryStopCrit(StoppingCriterion):
 
 
 
-class ElementSelector(Statefull):
+class ElementSelector(Stateful):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
     def __init__(self):
         """Cheap initialization.
         """
-        Statefull.__init__(self)
+        Stateful.__init__(self)
 
 
     def __call__(self, seq):
@@ -432,7 +430,8 @@ class FractionTailSelector(TailSelector):
 
         :Parameters:
            felements : float (0,1.0]
-              Fraction of elements to select/discard.
+              Fraction of elements to select/discard. Note: Even when 0.0 is
+              specified at least one element will be selected.
         """
         TailSelector.__init__(self, **kargs)
         self._setFElements(felements)
@@ -507,7 +506,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
 
 
-    def __call__(self, dataset, testdataset=None, callables=[]):
+    def __call__(self, dataset, testdataset=None):
         """Select the most important features
 
         :Parameters:
@@ -538,10 +537,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         # Differ from the order in RFE when actually error reported is for
         results = (wdataset, wtestdataset)
-
-        # provide evil access to internals :)
-        for callable_ in callables:
-            callable_(locals())
 
         # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
         selected_ids.sort()
@@ -581,9 +576,6 @@ class FeatureSelectionPipeline(FeatureSelection):
 
     def __call__(self, dataset, testdataset=None, **kwargs):
         """Invocation of the feature selection
-
-        TODO: not clear what was to do with callables -- pass inside
-              or process locally. For now just pass inside
         """
         wdataset = dataset
         wtestdataset = testdataset

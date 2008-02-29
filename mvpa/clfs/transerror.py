@@ -20,7 +20,7 @@ from math import log10, ceil
 
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 
 if __debug__:
     from mvpa.misc import debug
@@ -38,7 +38,7 @@ class ConfusionMatrix(object):
     # XXX Michael: - How do multiple sets work and what are they there for?
     #              - This class does not work with regular Python sequences
     #                when passed to the constructor as targets and predictions.
-    def __init__(self, labels=[], targets=None, predictions=None):
+    def __init__(self, labels=None, targets=None, predictions=None):
         """Initialize ConfusionMatrix with optional list of `labels`
 
         :Parameters:
@@ -49,7 +49,8 @@ class ConfusionMatrix(object):
          predictions
            Optional set of predictions
         """
-
+        if labels == None:
+            labels = []
         self.__labels = labels
         """List of known labels"""
         self.__computed = False
@@ -275,7 +276,7 @@ class ConfusionMatrix(object):
 
 
 
-class ClassifierError(Statefull):
+class ClassifierError(Stateful):
     """Compute the some error of a (trained) classifier on a dataset.
     """
 
@@ -297,7 +298,7 @@ class ClassifierError(Statefull):
             unless train=False, classifier gets trained if
             trainingdata provided to __call__
         """
-        Statefull.__init__(self, **kwargs)
+        Stateful.__init__(self, **kwargs)
         self.__clf = clf
 
         self.__labels = labels
@@ -319,10 +320,17 @@ class ClassifierError(Statefull):
         """
         if not trainingdataset is None:
             if self.__train:
-                if self.__clf.isTrained(trainingdataset):
-                    warning('It seems that classifier %s was already trained' %
-                            self.__clf + ' on dataset %s. Please inspect' \
-                                % trainingdataset)
+                # XXX can be pretty annoying if triggered inside an algorithm
+                # where it cannot be switched of, but retraining might be
+                # intended or at least not avoidable.
+                # Additonally isTrained docs say:
+                #   MUST BE USED WITH CARE IF EVER
+                #
+                # switching it off for now
+                #if self.__clf.isTrained(trainingdataset):
+                #    warning('It seems that classifier %s was already trained' %
+                #            self.__clf + ' on dataset %s. Please inspect' \
+                #                % trainingdataset)
                 self.__clf.train(trainingdataset)
 
         if self.__clf.states.isEnabled('trained_labels') and \

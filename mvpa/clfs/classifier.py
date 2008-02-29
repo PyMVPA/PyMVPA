@@ -15,7 +15,7 @@ Base Classifiers can be grouped according to their function as
   SplitClassifier
 :group ProxyClassifiers: BinaryClassifier MappedClassifier
   FeatureSelectionClassifier
-:group Combiners for CombinedClassifier: Combiner MaximalVote
+:group PredictionsCombiners for CombinedClassifier: PredictionsCombiner MaximalVote
 
 """
 
@@ -29,7 +29,7 @@ from sets import Set
 
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import StateVariable, Statefull
+from mvpa.misc.state import StateVariable, Stateful
 
 from transerror import ConfusionMatrix
 
@@ -40,8 +40,20 @@ if __debug__:
     from mvpa.misc import debug
 
 
+def _deepcopyclf(clf):
+    """Deepcopying of a classifier.
 
-class Classifier(Statefull):
+    If deepcopy fails -- tries to untrain it first so that there is no
+    swig bindings attached
+    """
+    try:
+        return deepcopy(clf)
+    except:
+        clf.untrain()
+        return deepcopy(clf)
+
+
+class Classifier(Stateful):
     """Abstract classifier class to be inherited by all classifiers
 
     Required behavior:
@@ -66,9 +78,9 @@ class Classifier(Statefull):
              corresponds to the likelyhood of a sample to belong to the
              respective class. However the sematics might differ between
              classifiers, e.g. kNN would probably store distances to class-
-             neighbours, where PLF would store the raw function value of the
+             neighbours, where PLR would store the raw function value of the
              logistic function. So in the case of kNN low is predictive and for
-             PLF high is predictive. Don't know if there is the need to unify
+             PLR high is predictive. Don't know if there is the need to unify
              that.
 
              As the storage and/or computation of this information might be
@@ -109,7 +121,7 @@ class Classifier(Statefull):
     def __init__(self, train2predict=True, **kwargs):
         """Cheap initialization.
         """
-        Statefull.__init__(self, **kwargs)
+        Stateful.__init__(self, **kwargs)
 
         self.__train2predict = train2predict
         """Some classifiers might not need to be trained to predict"""
@@ -125,7 +137,7 @@ class Classifier(Statefull):
 
 
     def __str__(self):
-        return "%s\n %s" % (`self`, Statefull.__str__(self))
+        return "%s\n %s" % (`self`, Stateful.__str__(self))
 
 
     def _pretrain(self, dataset):
@@ -202,7 +214,7 @@ class Classifier(Statefull):
     def _postpredict(self, data, result):
         """Functionality after prediction is computed
         """
-        pass
+        self.predictions = result
 
 
     def _predict(self, data):
@@ -285,7 +297,7 @@ class BoostedClassifier(Classifier):
         doc="Values obtained from each classifier")
 
 
-    def __init__(self, clfs=[], **kwargs):
+    def __init__(self, clfs=None, **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -295,6 +307,9 @@ class BoostedClassifier(Classifier):
             dict of keyworded arguments which might get used
             by State or Classifier
         """
+        if clfs == None:
+            clfs = []
+
         Classifier.__init__(self, **kwargs)
 
         self.__clfs = None
@@ -434,11 +449,11 @@ class ProxyClassifier(Classifier):
 # Various combiners for CombinedClassifier
 #
 
-class Combiner(Statefull):
+class PredictionsCombiner(Stateful):
     """Base class for combining decisions of multiple classifiers"""
 
     def train(self, clfs, dataset):
-        """Combiner might need to be trained
+        """PredictionsCombiner might need to be trained
 
         :Parameters:
           clfs : list of Classifier
@@ -464,7 +479,7 @@ class Combiner(Statefull):
 
 
 
-class MaximalVote(Combiner):
+class MaximalVote(PredictionsCombiner):
     """Provides a decision using maximal vote rule"""
 
     predictions = StateVariable(enabled=True,
@@ -477,12 +492,12 @@ class MaximalVote(Combiner):
         voting is not unambigous (ie two classes have equal number of
         votes
         """
-        Combiner.__init__(self)
+        PredictionsCombiner.__init__(self)
 
 
     def __call__(self, clfs, dataset):
         """Actuall callable - perform voting
-        
+
         Extended functionality which might not be needed actually:
         Since `BinaryClassifier` might return a list of possible
         predictions (not just a single one), we should consider all of those
@@ -543,7 +558,7 @@ class MaximalVote(Combiner):
 
 
 
-class ClassifierCombiner(Combiner):
+class ClassifierCombiner(PredictionsCombiner):
     """Provides a decision using training a classifier on predictions/values
 
     TODO
@@ -553,7 +568,7 @@ class ClassifierCombiner(Combiner):
         doc="Trained predictions")
 
 
-    def __init__(self, clf, variables=['predictions']):
+    def __init__(self, clf, variables=None):
         """Initialize `ClassifierCombiner`
 
         :Parameters:
@@ -563,11 +578,13 @@ class ClassifierCombiner(Combiner):
             List of state variables stored in 'combined' classifiers, which
             to use as features for training this classifier
         """
-        Combiner.__init__(self)
+        PredictionsCombiner.__init__(self)
 
         self.__clf = clf
         """Classifier to train on `variables` states of provided classifiers"""
 
+        if variables == None:
+            variables = ['predictions']
         self.__variables = variables
         """What state variables of the classifiers to use"""
 
@@ -586,17 +603,17 @@ class ClassifierCombiner(Combiner):
 
 
 class CombinedClassifier(BoostedClassifier):
-    """`BoostedClassifier` which combines predictions using some `Combiner`
+    """`BoostedClassifier` which combines predictions using some `PredictionsCombiner`
     functor.
     """
 
-    def __init__(self, clfs=[], combiner=MaximalVote(), **kwargs):
+    def __init__(self, clfs=None, combiner=MaximalVote(), **kwargs):
         """Initialize the instance.
 
         :Parameters:
           clfs : list of Classifier
             list of classifier instances to use
-          combiner : Combiner
+          combiner : PredictionsCombiner
             callable which takes care about combining multiple
             results into a single one (e.g. maximal vote)
           kwargs : dict
@@ -608,6 +625,9 @@ class CombinedClassifier(BoostedClassifier):
             estimate (which is pretty much what is stored under
             `values`
         """
+        if clfs == None:
+            clfs = []
+
         BoostedClassifier.__init__(self, clfs, **kwargs)
 
         self.__combiner = combiner
@@ -817,10 +837,10 @@ class MulticlassClassifier(CombinedClassifier):
             biclfs = []
             for i in xrange(len(ulabels)):
                 for j in xrange(i+1, len(ulabels)):
-                    clf = deepcopy(self.__clf)
+                    clf = _deepcopyclf(self.__clf)
                     biclfs.append(
                         BinaryClassifier(
-                            deepcopy(clf),
+                            clf,
                             poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
             if __debug__:
                 debug("CLFMC", "Created %d binary classifiers for %d labels" %
@@ -879,7 +899,7 @@ class SplitClassifier(CombinedClassifier):
             if __debug__:
                 debug("CLFSPL",
                       "Deepcopying %s for %s" % (`self.__clf`, `self`))
-            clf = deepcopy(self.__clf)
+            clf = _deepcopyclf(self.__clf)
             bclfs.append(clf)
         self.clfs = bclfs
 

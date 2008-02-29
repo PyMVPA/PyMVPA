@@ -47,17 +47,28 @@ def _setdebug(obj, partname):
         later on (TODO)
     """
     debugname = "SG_%s" % partname.upper()
+
     if __debug__ and debugname  in debug.active:
-        debug(debugname, "Setting verbosity for shogun.%s to M_INFO" %
+        debug("SG_", "Setting verbosity for shogun.%s instance to M_DEBUG" %
               partname)
-        obj.io.set_loglevel(shogun.Kernel.M_INFO)
+        obj.io.set_loglevel(shogun.Kernel.M_DEBUG)
+        # progress is enabled by default so don't bother
     else:
+        debug("SG_", "Setting verbosity for shogun.%s instance to M_EMERGENCY" %
+              partname + " and disabling progress reports")
         obj.io.set_loglevel(shogun.Kernel.M_EMERGENCY)
+        try:
+            obj.io.disable_progress()
+        except:
+            warning("Shogun version installed has no way to disable progress" +
+                    " reports")
 
 
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format"""
 
+    if __debug__:
+        debug("SG_", "Converting data for shogun into RealFeatures")
     features = shogun.Features.RealFeatures(data.astype('double').T)
     _setdebug(features, 'Features')
     return features
@@ -131,6 +142,10 @@ class SVM_SG_Modular(Classifier):
 
         self.__kernel_params = kernel_params
 
+        # Need to store original data...
+        # TODO: keep 1 of them -- just __traindata or __traindataset
+        self.__traindataset = None
+
         # internal SG swig proxies
         self.__traindata = None
         self.__kernel = None
@@ -177,6 +192,7 @@ class SVM_SG_Modular(Classifier):
         if __debug__:
             debug("SG_", "Converting input data for shogun")
 
+        self.__traindataset = dataset
         self.__traindata = _tosg(dataset.samples)
 
         # create labels
@@ -248,8 +264,13 @@ class SVM_SG_Modular(Classifier):
         self.__kernel.init(self.__traindata, _tosg(data))
 
         if __debug__:
-            debug("SG_", "Classifing testing data")
-        values = self.__svm.classify().get_labels()
+            debug("SG_", "Classifying testing data")
+
+        # doesn't do any good imho although on unittests helps tiny bit... hm
+        #self.__svm.init_kernel_optimization()
+
+        values_ = self.__svm.classify()
+        values = values_.get_labels()
 
         if __debug__:
             debug("SG__", "Got values %s" % values)
@@ -282,13 +303,18 @@ class SVM_SG_Modular(Classifier):
 
         # XXX make it nice... now it is just stable ;-)
         if not self.__mclf is None:
+            self.__mclf.untrain()
             self.__mclf = None
         elif not self.__traindata is None:
             try:
+                self.__traindataset = None
+                self.__traindata = None
                 del self.__traindata
                 self.__traindata = None
                 del self.__kernel
                 self.__kernel = None
+                del self.__svm
+                self.__svm = None
             except:
                 pass
 
@@ -296,6 +322,13 @@ class SVM_SG_Modular(Classifier):
     svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
 
+    mclf = property(fget=lambda self: self.__mclf)
+    """Multiclass classifier if it was used"""
+
+    traindataset = property(fget=lambda self: self.__traindataset)
+    """Dataset which was used for training
+
+    TODO -- might better become state variable I guess"""
 
 
 class LinearSVM(SVM_SG_Modular):
@@ -308,15 +341,28 @@ class LinearSVM(SVM_SG_Modular):
 
 
 class LinearCSVMC(LinearSVM):
-    pass
+    def __init__(self, C=1.0, **kwargs):
+        """
+        """
+        # init base class
+        LinearSVM.__init__(self, C=C, **kwargs)
 
 
 class RbfCSVMC(SVM_SG_Modular):
     """C-SVM classifier using a radial basis function kernel.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, C=1.0, gamma=1.0, **kwargs):
         """
         """
         # init base class
-        SVM_SG_Modular.__init__(self, kernel_type='RBF', **kwargs)
+        SVM_SG_Modular.__init__(self, C=C, kernel_type='RBF', kernel_params=[gamma], **kwargs)
 
+
+#if __debug__:
+#    if 'SG_PROGRESS' in debug.active:
+#        debug('SG_PROGRESS', 'Allowing SG progress bars')
+#    else:
+#        if 
+#import shogun.Library
+#io = shogun.Library.IO()
+#io.disable_progress()
