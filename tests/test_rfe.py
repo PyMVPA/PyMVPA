@@ -22,11 +22,13 @@ from mvpa.algorithms.featsel import \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
-from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
+
+from tests_warehouse import sweepargs
+from tests_warehouse_clfs import *
 
 class SillySensitivityAnalyzer(SensitivityAnalyzer):
     """Simple one which just returns xrange[-N/2, N/2], where N is the
@@ -37,7 +39,7 @@ class SillySensitivityAnalyzer(SensitivityAnalyzer):
         SensitivityAnalyzer.__init__(self, **kwargs)
         self.__mult = mult
 
-    def __call__(self, dataset, callables=[]):
+    def __call__(self, dataset):
         """Train linear SVM on `dataset` and extract weights from classifier.
         """
         return( self.__mult *( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) ))
@@ -171,11 +173,12 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.ndiscarded == 3)
 
 
-    def testSensitivityBasedFeatureSelection(self):
-        svm = LinearNuSVMC()
+    @sweepargs(svm=clfs['LinearSVMC'])
+    def testSensitivityBasedFeatureSelection(self, svm):
+        #svm = LinearNuSVMC()
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = LinearSVMWeights(svm)
+        sens_ana = LinearSVMWeights(svm, transformer=Absolute)
 
         # of features to remove
         Nremove = 2
@@ -183,7 +186,7 @@ class RFETests(unittest.TestCase):
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
-        fe = SensitivityBasedFeatureSelection(Absolute(sens_ana),
+        fe = SensitivityBasedFeatureSelection(sens_ana,
                 feature_selector=FixedNElementTailSelector(2),
                 enable_states=["sensitivity", "selected_ids"])
 
@@ -251,16 +254,18 @@ class RFETests(unittest.TestCase):
                              list(range(10, wdata_nfeatures)))
 
 
-    def testRFE(self):
-        svm = LinearNuSVMC()
+    # TODO: should later on work for any clfs_with_sens
+    @sweepargs(svm=clfs['LinearSVMC'])
+    def testRFE(self, svm):
+        #svm = LinearNuSVMC()
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = LinearSVMWeights(svm)
+        sens_ana = LinearSVMWeights(svm, transformer=Absolute)
         trans_error = TransferError(svm)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
-        rfe = RFE(Absolute(sens_ana),
+        rfe = RFE(sens_ana,
                   trans_error,
                   feature_selector=FixedNElementTailSelector(1),
                   train_clf=False)

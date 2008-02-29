@@ -22,6 +22,9 @@ if __debug__:
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
+
+    This ridge regression adds an intercept term so your labels do not
+    have to be zero-centered.
     """
 
     def __init__(self, lm=None, **kwargs):
@@ -46,10 +49,10 @@ class RidgeReg(Classifier):
 
 
     def __repr__(self):
-        """String summary over the object
+        """String summary of the object
         """
         if self.__lm is None:
-            return """Ridge(lm=None, enabled_states=%s)""" % \
+            return """Ridge(lm=.05*nfeatures, enabled_states=%s)""" % \
                 (str(self.states.enabled))
         else:
             return """Ridge(lm=%f, enabled_states=%s)""" % \

@@ -98,8 +98,9 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('TEST', "Debug unittests")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
-    debug.register('PLF',  "PLF call")
+    debug.register('PLR',  "PLR call")
     debug.register('SLC',  "Searchlight call")
     debug.register('SA',   "Sensitivity analyzers call")
     debug.register('PSA',  "Perturbation analyzer call")
@@ -131,6 +132,7 @@ if __debug__:
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")
     debug.register('SG_KERNELS', "Internal shogun debug output for kernels")
+    debug.register('SG_PROGRESS', "Internal shogun progress bar during computation")
 
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")

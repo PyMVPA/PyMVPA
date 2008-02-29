@@ -38,10 +38,10 @@ def mahalanobisDistance(x, y=None, w=None):
 
     :Parameters:
       `x`
-        first list of points. Rows are observations, columns are
-        dimensions.
+        first list of points. Rows are samples, columns are
+        features.
       `y`
-        second optional list of points
+        second list of points (optional)
       `w` : N.ndarray
         optional inverse covariance matrix between the points. It is
         computed if not given
