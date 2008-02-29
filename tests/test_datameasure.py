@@ -56,6 +56,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
+    #@sweepargs(svm=[sg.svm.LinearCSVMC()])
     @sweepargs(svm=clfs['clfs_with_sens'])
     def testAnalyzerWithSplitClassifier(self, svm):
         #svm = LinearNuSVMC()
@@ -75,7 +76,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
                           + sana.clf.training_confusions.matrices:
             self.failUnless(conf_matrix.percentCorrect>85,
                             msg="We must have trained on each one more or " \
-                                "less correctly")
+                                "less correctly. Got %f%% correct on %d labels" %
+                            (conf_matrix.percentCorrect, len(self.dataset.uniquelabels)))
 
         errors = [x.percentCorrect 
                     for x in sana.clf.training_confusions.matrices]
