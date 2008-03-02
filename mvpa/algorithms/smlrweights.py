@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.clfs.svm import SMLR
+from mvpa.clfs.smlr import SMLR
 from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
@@ -55,12 +55,12 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
                     (`self.clf`, self.clf.w.shape[1]+1) +
                     " classes. Make sure that it is what you intended to do" )
 
-        weights = N.mean(self.clf.smlr.w, axis=0)
+        weights = N.mean(self.clf.w, axis=1)
 
         if __debug__:
             debug('SVM',
                   "Extracting weights for %d-class SMLR" %
-                  (self.clf.w.shape[1]+!) +
+                  (self.clf.w.shape[1]+1) +
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 

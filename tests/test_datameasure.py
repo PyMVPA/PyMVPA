@@ -68,7 +68,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # and we get sensitivity analyzer which works on splits
         map_ = sana(self.dataset)
-        self.failUnless(len(map_) == self.dataset.nfeatures)
+        self.failUnlessEqual(len(map_), self.dataset.nfeatures)
 
         for conf_matrix in [sana.clf.training_confusion] \
                           + sana.clf.training_confusions.matrices:
