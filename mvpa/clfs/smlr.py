@@ -95,7 +95,7 @@ class SMLR(Classifier):
     def _python_stepwise_regression(w, X, XY, Xw, E,
                                     auto_corr,
                                     lambda_over_2_auto_corr,
-                                    S):
+                                    S, *args):
         """The (much slower) python version of the stepwise
         regression.  I'm keeping this around for now so that we can
         compare results."""
