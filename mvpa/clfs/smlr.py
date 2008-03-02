@@ -65,36 +65,19 @@ class SMLR(Classifier):
         self.__convergence_tol = convergence_tol
         self.__maxiter = maxiter
 
-        if implementation.upper() == 'C':
-            # XXX silly lack of ctypes knowledge leaded yarik to the
-            # following masterpiece
-            #self._stepwise_regression = \
-            #     lambda w, X, XY, Xw, E, auto_corr, lm_2_ac_rows, \
-            #            S, maxiter, convergence_tol, verbosity: \
-            #            _c_stepwise_regression (
-            #                 w.shape[0], w.shape[1], w,
-            #                 X.shape[0], X.shape[1], X,
-            #                 XY.shape[0], XY.shape[1], XY,
-            #                 Xw.shape[0], Xw.shape[1], Xw,
-            #                 E.shape[0], E.shape[1], E,
-            #                 auto_corr.shape[0], auto_corr,
-            #                 lm_2_ac_rows.shape[0], lm_2_ac_rows,
-            #                 S.shape[0], S,
-            #                 maxiter, convergence_tol, verbosity)
-            self._stepwise_regression = _c_stepwise_regression
-        elif implementation.upper() == 'PYTHON':
-            self._stepwise_regression = self._python_stepwise_regression
-        else:
+        if not implementation.upper() in ['C', 'PYTHON']:
             raise ValueError, \
                   "Unknown implementation %s of stepwise_regression" % \
                   implementation
+        self.__implementation = implementation
 
     def __repr__(self):
-        """String summary of the object
+        """String representation of the object
         """
-        return """SMLR(lm=%f, convergence_tol=%g, maxiter=%d, enabled_states=%s)""" % \
+        return """SMLR(lm=%f, convergence_tol=%g, maxiter=%d, implementation='%s', enabled_states=%s)""" % \
             (self.__lm, self.__convergence_tol,
-             self.__maxiter, str(self.states.enabled))
+             self.__maxiter, self.__implementation,
+             str(self.states.enabled))
 
     def __label_to_oneofm(self,labels,ulabels):
         """Convert labels to one-of-M form."""
@@ -278,18 +261,28 @@ class SMLR(Classifier):
         # verbose and debug systems
         verbosity = 0
 
+        if self.__implementation.upper() == 'C':
+            _stepwise_regression = _c_stepwise_regression
+        elif self.__implementation.upper() == 'PYTHON':
+            _stepwise_regression = self._python_stepwise_regression
+        else:
+            raise ValueError, \
+                  "Unknown implementation %s of stepwise_regression" % \
+                  implementation
+
+
         # call the chosen version of stepwise_regression
-        cycles = self._stepwise_regression(w,
-                                           X,
-                                           XY,
-                                           Xw,
-                                           E,
-                                           auto_corr,
-                                           lambda_over_2_auto_corr,
-                                           S,
-                                           self.__maxiter,
-                                           self.__convergence_tol,
-                                           verbosity)
+        cycles = _stepwise_regression(w,
+                                      X,
+                                      XY,
+                                      Xw,
+                                      E,
+                                      auto_corr,
+                                      lambda_over_2_auto_corr,
+                                      S,
+                                      self.__maxiter,
+                                      self.__convergence_tol,
+                                      verbosity)
 
         if cycles >= self.__maxiter:
             # did not converge
@@ -316,7 +309,6 @@ class SMLR(Classifier):
 
         # generate predictions
         predictions = [self.__ulabels[N.argmax(vals)] for vals in values]
-        self.predictions = N.asarray(predictions)
 
-        return self.predictions
+        return N.asarray(predictions)
 
