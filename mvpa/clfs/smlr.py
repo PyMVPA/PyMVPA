@@ -33,7 +33,7 @@ class SMLR(Classifier):
     """
 
     def __init__(self, lm=.1, convergence_tol=1e-3,
-                 maxiter=10000, implementation="C", **kwargs):
+                 maxiter=10000, implementation="Python", **kwargs):
         """
         Initialize a SMLR analysis.
 
@@ -66,7 +66,19 @@ class SMLR(Classifier):
         self.__maxiter = maxiter
 
         if implementation.upper() == 'C':
-            self._stepwise_regression = _c_stepwise_regression
+            self._stepwise_regression = \
+                 lambda w, X, XY, Xw, E, auto_corr, lm_2_ac_rows, \
+                        S, maxiter, convergence_tol, verbosity: \
+                        _c_stepwise_regression (
+                             w.shape[0], w.shape[1], w,
+                             X.shape[0], X.shape[1], X,
+                             XY.shape[0], XY.shape[1], XY,
+                             Xw.shape[0], Xw.shape[1], Xw,
+                             E.shape[0], E.shape[1], E,
+                             auto_corr.shape[0], auto_corr,
+                             lm_2_ac_rows.shape[0], lm_2_ac_rows,
+                             S.shape[0], S,
+                             maxiter, convergence_tol, verbosity)
         elif implementation.upper() == 'PYTHON':
             self._stepwise_regression = self._python_stepwise_regression
         else:
@@ -92,16 +104,22 @@ class SMLR(Classifier):
 
         return new_labels
 
-    def _python_stepwise_regression(w, X, XY, Xw, E,
+    def _python_stepwise_regression(self, w, X, XY, Xw, E,
                                     auto_corr,
                                     lambda_over_2_auto_corr,
-                                    S):
+                                    S,
+                                    maxiter,
+                                    convergence_tol,
+                                    verbose):
         """The (much slower) python version of the stepwise
         regression.  I'm keeping this around for now so that we can
         compare results."""
 
         # get the data information into easy vars
         ns,nd = X.shape
+
+        # yoh: shouldn't be here and should be derived from the interface
+        M = len(self.__ulabels)
 
         # initialize the iterative optimization
         converged = False
