@@ -33,7 +33,7 @@ class SMLR(Classifier):
     """
 
     def __init__(self, lm=.1, convergence_tol=1e-3,
-                 maxiter=10000, implementation="Python", **kwargs):
+                 maxiter=10000, implementation="C", **kwargs):
         """
         Initialize a SMLR analysis.
 
@@ -66,19 +66,22 @@ class SMLR(Classifier):
         self.__maxiter = maxiter
 
         if implementation.upper() == 'C':
-            self._stepwise_regression = \
-                 lambda w, X, XY, Xw, E, auto_corr, lm_2_ac_rows, \
-                        S, maxiter, convergence_tol, verbosity: \
-                        _c_stepwise_regression (
-                             w.shape[0], w.shape[1], w,
-                             X.shape[0], X.shape[1], X,
-                             XY.shape[0], XY.shape[1], XY,
-                             Xw.shape[0], Xw.shape[1], Xw,
-                             E.shape[0], E.shape[1], E,
-                             auto_corr.shape[0], auto_corr,
-                             lm_2_ac_rows.shape[0], lm_2_ac_rows,
-                             S.shape[0], S,
-                             maxiter, convergence_tol, verbosity)
+            # XXX silly lack of ctypes knowledge leaded yarik to the
+            # following masterpiece
+            #self._stepwise_regression = \
+            #     lambda w, X, XY, Xw, E, auto_corr, lm_2_ac_rows, \
+            #            S, maxiter, convergence_tol, verbosity: \
+            #            _c_stepwise_regression (
+            #                 w.shape[0], w.shape[1], w,
+            #                 X.shape[0], X.shape[1], X,
+            #                 XY.shape[0], XY.shape[1], XY,
+            #                 Xw.shape[0], Xw.shape[1], Xw,
+            #                 E.shape[0], E.shape[1], E,
+            #                 auto_corr.shape[0], auto_corr,
+            #                 lm_2_ac_rows.shape[0], lm_2_ac_rows,
+            #                 S.shape[0], S,
+            #                 maxiter, convergence_tol, verbosity)
+            self._stepwise_regression = _c_stepwise_regression
         elif implementation.upper() == 'PYTHON':
             self._stepwise_regression = self._python_stepwise_regression
         else:
@@ -136,7 +139,7 @@ class SMLR(Classifier):
         w_diff = 0.0
 
         # perform the optimization
-        while not converged and cycles<self.__maxiter:
+        while not converged and cycles<maxiter:
             # get the starting weight
             w_old = w[basis,m]
 
@@ -212,7 +215,7 @@ class SMLR(Classifier):
                     sum2_w_old = 0.0
 
                     # save the new weights
-                    converged = incr < self.__convergence_tol
+                    converged = incr < convergence_tol
 
                     # update the zero test factors
                     decrease_factor *= (non_zero/float((M-1)*nd))
@@ -226,7 +229,7 @@ class SMLR(Classifier):
         if not converged:
             raise ConvergenceError, \
                 "More than %d Iterations without convergence" % \
-                (self.__maxiter)
+                (maxiter)
 
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
