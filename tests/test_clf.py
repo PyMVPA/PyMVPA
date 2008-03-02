@@ -266,8 +266,8 @@ class ClassifiersTests(unittest.TestCase):
         for traindata in traindatas:
             clf.train(traindata)
             self.failUnlessEqual(clf.training_confusion.percentCorrect, 100.0,
-                "Classifier %s must have 100%% correct learning on %s" %
-                (`clf`, traindata.samples))
+                "Classifier %s must have 100%% correct learning on %s. Has %f" %
+                (`clf`, traindata.samples, clf.training_confusion.percentCorrect))
 
             # and we must be able to predict every original sample thus
             for i in xrange(traindata.nsamples):

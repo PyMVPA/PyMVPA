@@ -39,7 +39,7 @@ class SMLR(Classifier):
 
         :Parameters:
           lm : float
-            The penalty term lambda.  Larger values will give rise 
+            The penalty term lambda.  Larger values will give rise
             to more sparsification.
           covergence_tol : float
             When the weight change for each cycle drops below this value
@@ -66,6 +66,21 @@ class SMLR(Classifier):
         self.__maxiter = maxiter
 
         if implementation.upper() == 'C':
+            # XXX silly lack of ctypes knowledge leaded yarik to the
+            # following masterpiece
+            #self._stepwise_regression = \
+            #     lambda w, X, XY, Xw, E, auto_corr, lm_2_ac_rows, \
+            #            S, maxiter, convergence_tol, verbosity: \
+            #            _c_stepwise_regression (
+            #                 w.shape[0], w.shape[1], w,
+            #                 X.shape[0], X.shape[1], X,
+            #                 XY.shape[0], XY.shape[1], XY,
+            #                 Xw.shape[0], Xw.shape[1], Xw,
+            #                 E.shape[0], E.shape[1], E,
+            #                 auto_corr.shape[0], auto_corr,
+            #                 lm_2_ac_rows.shape[0], lm_2_ac_rows,
+            #                 S.shape[0], S,
+            #                 maxiter, convergence_tol, verbosity)
             self._stepwise_regression = _c_stepwise_regression
         elif implementation.upper() == 'PYTHON':
             self._stepwise_regression = self._python_stepwise_regression
@@ -92,16 +107,22 @@ class SMLR(Classifier):
 
         return new_labels
 
-    def _python_stepwise_regression(w, X, XY, Xw, E,
+    def _python_stepwise_regression(self, w, X, XY, Xw, E,
                                     auto_corr,
                                     lambda_over_2_auto_corr,
-                                    S, *args):
+                                    S,
+                                    maxiter,
+                                    convergence_tol,
+                                    verbose):
         """The (much slower) python version of the stepwise
         regression.  I'm keeping this around for now so that we can
         compare results."""
 
         # get the data information into easy vars
         ns,nd = X.shape
+
+        # yoh: shouldn't be here and should be derived from the interface
+        M = len(self.__ulabels)
 
         # initialize the iterative optimization
         converged = False
@@ -116,12 +137,12 @@ class SMLR(Classifier):
         sum2_w_diff = 0.0
         sum2_w_old = 0.0
         w_diff = 0.0
-        
+
         # perform the optimization
-        while not converged and cycles<self.__maxiter:
+        while not converged and cycles<maxiter:
             # get the starting weight
             w_old = w[basis,m]
-            
+
             # see if we're gonna update
             if (w_old != 0) or N.random.rand()<= test_zero_basis:
                 # let's do it
@@ -158,7 +179,7 @@ class SMLR(Classifier):
                     else:
                         changed = True
                         non_zero-=1
-        
+
                 # process any changes
                 if changed:
                     #print "w[%d,%d] = %g" % (basis,m,w_new)
@@ -184,7 +205,7 @@ class SMLR(Classifier):
                 if basis == 0:
                     # we completed a cycle of features
                     cycles += 1
-                                        
+
                     # assess convergence
                     incr = N.sqrt(sum2_w_diff) / \
                            (N.sqrt(sum2_w_old)+N.finfo(N.float).eps);
@@ -192,9 +213,9 @@ class SMLR(Classifier):
                     # reset the sum diffs
                     sum2_w_diff = 0.0
                     sum2_w_old = 0.0
-                    
+
                     # save the new weights
-                    converged = incr < self.__convergence_tol
+                    converged = incr < convergence_tol
 
                     # update the zero test factors
                     decrease_factor *= (non_zero/float((M-1)*nd))
@@ -208,7 +229,7 @@ class SMLR(Classifier):
         if not converged:
             raise ConvergenceError, \
                 "More than %d Iterations without convergence" % \
-                (self.__maxiter)
+                (maxiter)
 
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
@@ -256,7 +277,7 @@ class SMLR(Classifier):
         # not vebose for now... must get this to work with the pymvpa
         # verbose and debug systems
         verbosity = 0
-        
+
         # call the chosen version of stepwise_regression
         cycles = self._stepwise_regression(w,
                                            X,
@@ -275,10 +296,10 @@ class SMLR(Classifier):
             raise ConvergenceError, \
                   "More than %d Iterations without convergence" % \
                   (self.__maxiter)
-        
+
         # save the weights
         self.w = w
-        
+
 
     def _predict(self, data):
         """
@@ -286,7 +307,7 @@ class SMLR(Classifier):
         """
         # append the zeros column to the weights
         w = N.hstack((self.w,N.zeros((self.w.shape[0],1))))
-        
+
         # determine the probability values for making the prediction
         E = N.exp(N.dot(data,w))
         S = N.sum(E,1)
@@ -296,6 +317,6 @@ class SMLR(Classifier):
         # generate predictions
         predictions = [self.__ulabels[N.argmax(vals)] for vals in values]
         self.predictions = predictions
-        
+
         return predictions
 

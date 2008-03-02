@@ -1,3 +1,5 @@
+/*emacs: -*- mode: c-mode; tab-width: 8; c-basic-offset: 2; indent-tabs-mode: t -*-
+  ex: set sts=4 ts=8 sw=4 noet: */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,12 +17,12 @@ gcc -shared -o smlr.so smlr.o -lm
 
 int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 			int X_rows, int X_cols, double X[X_rows][X_cols],
-			int XY_rows, int XY_cols, double XY[XY_rows][XY_cols], 
-			int Xw_rows, int Xw_cols, double Xw[Xw_rows][Xw_cols], 
-			int E_rows, int E_cols, double E[E_rows][E_cols], 
-			int ac_rows, double ac[ac_rows], 
-			int lm_2_ac_rows, double lm_2_ac[lm_2_ac_rows], 
-			int S_rows, double S[S_rows], 
+			int XY_rows, int XY_cols, double XY[XY_rows][XY_cols],
+			int Xw_rows, int Xw_cols, double Xw[Xw_rows][Xw_cols],
+			int E_rows, int E_cols, double E[E_rows][E_cols],
+			int ac_rows, double ac[ac_rows],
+			int lm_2_ac_rows, double lm_2_ac[lm_2_ac_rows],
+			int S_rows, double S[S_rows],
 			int maxiter,
 			double convergence_tol,
 			int verbose)
@@ -93,7 +95,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	    // more towards bounds, but keep it
 	    w_new -= lm_2_ac[basis];
 	    changed = 1;
-	    
+
 	    // umark from being zero if necessary
 	    if (w_old == 0.0)
 	    {
@@ -105,7 +107,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	    // more towards bounds, but keep it
 	    w_new += lm_2_ac[basis];
 	    changed = 1;
-	    
+
 	    // umark from being zero if necessary
 	    if (w_old == 0.0)
 	    {
@@ -152,7 +154,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
 	    // update the weight
 	    w[basis][m] = w_new;
-	    
+
 	    // keep track of the sqrt sum squared distances
 	    sum2_w_diff += w_diff*w_diff;
 	    sum2_w_old += w_old*w_old;
@@ -160,7 +162,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	}
       }
     }
-    
+
     // finished a cycle, assess convergence
     incr = sqrt(sum2_w_diff) / (sqrt(sum2_w_old)+DBL_EPSILON);
 
@@ -174,7 +176,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
       // we converged!!!
       break;
     }
-    
+
     // update the zero test factors
     decrease_factor *= non_zero/((M-1)*nd);
     test_zero_basis *= decrease_factor;
