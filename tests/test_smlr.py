@@ -44,7 +44,7 @@ class SMLRTests(unittest.TestCase):
         clf.states.enable('values')
         clf.states.enable('predictions')
 
-        p = clf.predict(data.samples)
+        p = N.asarray(clf.predict(data.samples))
 
         self.failUnless((p == clf.predictions).all())
         self.failUnless(N.array(clf.values).shape == N.array(p).shape)
