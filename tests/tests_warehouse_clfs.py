@@ -19,7 +19,7 @@ from mvpa.clfs.knn import *
 
 clfs={'LinearSVMC' : [LinearCSVMC(), LinearNuSVMC()],
       'NonLinearSVMC' : [RbfCSVMC(), RbfNuSVMC()],
-      'clfs_with_sens' : [LinearCSVMC(), LinearNuSVMC()],
+      'clfs_with_sens' : [LinearCSVMC(), LinearNuSVMC(), SMLR()],
       }
 
 clfs['LinearC'] = clfs['LinearSVMC'] + [ SMLR(implementation="Python") ]

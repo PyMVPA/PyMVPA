@@ -56,18 +56,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
-    @sweepargs(svm=clfs['clfs_with_sens'])
-    def testAnalyzerWithSplitClassifier(self, svm):
+    @sweepargs(clf=clfs['clfs_with_sens'])
+    def testAnalyzerWithSplitClassifier(self, clf):
 
         # assumming many defaults it is as simple as
         sana = selectAnalyzer(
-            SplitClassifier(clf=svm,
+            SplitClassifier(clf=clf,
                             enable_states=['training_confusion']),
             enable_states=["sensitivities"] )
         # and lets look at all sensitivities
 
-        # and we get sensitivity analyzer which works on splits and uses
-        # linear svm sensitivity
+        # and we get sensitivity analyzer which works on splits
         map_ = sana(self.dataset)
         self.failUnless(len(map_) == self.dataset.nfeatures)
 
