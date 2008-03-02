@@ -13,9 +13,6 @@ import numpy as N
 import os
 from glob import glob
 
-# C++ compiler is needed for the extension
-os.environ['CC'] = 'g++'
-
 # find numpy headers
 numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
@@ -24,9 +21,10 @@ numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
 # define the extension modules
 svmc_ext = Extension( 'mvpa.clfs.libsvm.svmc',
-                      [ 'mvpa/clfs/libsvm/svmc.i' ],
+            sources = [ 'mvpa/clfs/libsvm/svmc.i' ],
             include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
             libraries    = [ 'svm' ],
+            language     = 'c++',
             swig_opts    = [ '-c++', '-noproxy',
                              '-I/usr/include/libsvm-2.0/libsvm',
                              '-I' + numpy_headers ] )
