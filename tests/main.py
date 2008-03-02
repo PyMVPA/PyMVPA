@@ -32,7 +32,7 @@ tests = [
     'test_svm',
     'test_plr',
     'test_ridge',
-    'test_smlr',
+    #'test_smlr',
     # Various algorithms
     'test_transformers',
     'test_transerror',
