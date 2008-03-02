@@ -316,7 +316,7 @@ class SMLR(Classifier):
 
         # generate predictions
         predictions = [self.__ulabels[N.argmax(vals)] for vals in values]
-        self.predictions = predictions
+        self.predictions = N.asarray(predictions)
 
-        return predictions
+        return self.predictions
 
