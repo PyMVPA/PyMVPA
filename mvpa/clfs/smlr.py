@@ -16,7 +16,8 @@ import numpy as N
 from mvpa.clfs.classifier import Classifier
 from mvpa.misc.exceptions import ConvergenceError
 
-from mvpa.clfs.libsmlr import stepwise_regression
+# Uber-fast C-version of the stepwise regression
+from mvpa.clfs.libsmlr import stepwise_regression as _c_stepwise_regression
 
 if __debug__:
     from mvpa.misc import debug
@@ -31,8 +32,8 @@ class SMLR(Classifier):
     use this for your work.
     """
 
-    def __init__(self, lm=.1, convergence_tol=1e-3, 
-                 maxiter=10000, **kwargs):
+    def __init__(self, lm=.1, convergence_tol=1e-3,
+                 maxiter=10000, implementation="C", **kwargs):
         """
         Initialize a SMLR analysis.
 
@@ -46,6 +47,10 @@ class SMLR(Classifier):
             lead to tighter convergence.
           maxiter : int
             Maximum number of iterations before stopping if not converged.
+          implementation : basestr
+            Use C (default) or Python as the implementation of
+            stepwise_regression. C version brings significant speedup thus
+            is the default one.
 
         TODO:
         1) Add in likelihood calculation
@@ -59,6 +64,15 @@ class SMLR(Classifier):
         self.__lm = lm
         self.__convergence_tol = convergence_tol
         self.__maxiter = maxiter
+
+        if implementation.upper() == 'C':
+            self._stepwise_regression = _c_stepwise_regression
+        elif implementation.upper() == 'PYTHON':
+            self._stepwise_regression = self._python_stepwise_regression
+        else:
+            raise ValueError, \
+                  "Unknown implementation %s of stepwise_regression" % \
+                  implementation
 
     def __repr__(self):
         """String summary of the object
@@ -78,10 +92,10 @@ class SMLR(Classifier):
 
         return new_labels
 
-    def __stepwise_regression(w, X, XY, Xw, E,
-                              auto_corr,
-                              lambda_over_2_auto_corr,
-                              S):
+    def _python_stepwise_regression(w, X, XY, Xw, E,
+                                    auto_corr,
+                                    lambda_over_2_auto_corr,
+                                    S):
         """The (much slower) python version of the stepwise
         regression.  I'm keeping this around for now so that we can
         compare results."""
@@ -240,18 +254,18 @@ class SMLR(Classifier):
         # verbose and debug systems
         verbosity = 0
         
-        # call the uber-fast C-version of the stepwise regression
-        cycles = stepwise_regression(w,
-                                     X,
-                                     XY,
-                                     Xw,
-                                     E,
-                                     auto_corr,
-                                     lambda_over_2_auto_corr,
-                                     S,
-                                     self.__maxiter,
-                                     self.__convergence_tol,
-                                     verbosity)
+        # call the chosen version of stepwise_regression
+        cycles = self._stepwise_regression(w,
+                                           X,
+                                           XY,
+                                           Xw,
+                                           E,
+                                           auto_corr,
+                                           lambda_over_2_auto_corr,
+                                           S,
+                                           self.__maxiter,
+                                           self.__convergence_tol,
+                                           verbosity)
 
         if cycles >= self.__maxiter:
             # did not converge
