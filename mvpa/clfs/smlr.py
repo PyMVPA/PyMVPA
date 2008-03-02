@@ -16,6 +16,8 @@ import numpy as N
 from mvpa.clfs.classifier import Classifier
 from mvpa.misc.exceptions import ConvergenceError
 
+from mvpa.clfs.libsmlr import stepwise_regression
+
 if __debug__:
     from mvpa.misc import debug
 
@@ -25,7 +27,8 @@ class SMLR(Classifier):
 
     This is an implementation of the SMLR algorithm published in
     Krishnapuram et al. (2005, IEEE Transactions on Pattern Analysis
-    and Machine Intelligence).
+    and Machine Intelligence).  Be sure to cite that article if you
+    use this for your work.
     """
 
     def __init__(self, lm=.1, convergence_tol=1e-3, 
@@ -43,6 +46,11 @@ class SMLR(Classifier):
             lead to tighter convergence.
           maxiter : int
             Maximum number of iterations before stopping if not converged.
+
+        TODO:
+        1) Add in likelihood calculation
+        2) Add optional bias term
+        3) Add kernels, not just direct methods.
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -55,9 +63,9 @@ class SMLR(Classifier):
     def __repr__(self):
         """String summary of the object
         """
-        # XXX add in other params to the repr
-        return """SMLR(lm=%f, enabled_states=%s)""" % \
-            (self.__lm, str(self.states.enabled))
+        return """SMLR(lm=%f, convergence_tol=%g, maxiter=%d, enabled_states=%s)""" % \
+            (self.__lm, self.__convergence_tol,
+             self.__maxiter, str(self.states.enabled))
 
     def __label_to_oneofm(self,labels,ulabels):
         """Convert labels to one-of-M form."""
@@ -70,32 +78,16 @@ class SMLR(Classifier):
 
         return new_labels
 
-    def _train(self, data):
-        """Train the classifier using `data` (`Dataset`).
-        """
-
-        # Process the labels to turn into 1 of N encoding
-        labels = self.__label_to_oneofm(data.labels,data.uniquelabels)
-        self.__ulabels = data.uniquelabels.copy()
-        Y = labels
-        M = len(self.__ulabels)
+    def __stepwise_regression(w, X, XY, Xw, E,
+                              auto_corr,
+                              lambda_over_2_auto_corr,
+                              S):
+        """The (much slower) python version of the stepwise
+        regression.  I'm keeping this around for now so that we can
+        compare results."""
 
         # get the data information into easy vars
-        X = data.samples
-        nd = data.nfeatures
-        ns = data.nsamples
-
-        # Precompute what we can
-        auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X,0))
-        XY = N.dot(X.T,Y[:,:(M-1)])
-        lambda_over_2_auto_corr = (self.__lm/2.)/auto_corr
-
-        # set starting values
-        w = N.zeros((nd,M-1),dtype=N.float)
-        w_prev = w.copy()
-        Xw = N.zeros((ns,M-1),dtype=N.float)
-        E = N.ones((ns,M-1),dtype=N.float)
-        S = M*N.ones(ns,dtype=N.float)
+        ns,nd = X.shape
 
         # initialize the iterative optimization
         converged = False
@@ -105,9 +97,12 @@ class SMLR(Classifier):
         m = 0
         wasted_basis = 0
         cycles = 0
-        decrease_factor = 1
-        test_zero_basis = 1
-
+        decrease_factor = 1.
+        test_zero_basis = 1.
+        sum2_w_diff = 0.0
+        sum2_w_old = 0.0
+        w_diff = 0.0
+        
         # perform the optimization
         while not converged and cycles<self.__maxiter:
             # get the starting weight
@@ -154,13 +149,18 @@ class SMLR(Classifier):
                 if changed:
                     #print "w[%d,%d] = %g" % (basis,m,w_new)
                     # update the expected values
-                    Xw[:,m] = Xw[:,m] + X[:,basis]*(w_new-w_old)
+                    w_diff = w_new - w_old;
+                    Xw[:,m] = Xw[:,m] + X[:,basis]*w_diff
                     E_new_m = N.exp(Xw[:,m])
                     S += E_new_m - E[:,m]
                     E[:,m] = E_new_m
 
                     # update the weight
                     w[basis,m] = w_new
+
+                    # keep track of the sqrt sum squared distances
+                    sum2_w_diff += w_diff*w_diff;
+                    sum2_w_old += w_old*w_old;
 
             # update the class and basis
             m = N.mod(m+1,M-1)
@@ -172,9 +172,12 @@ class SMLR(Classifier):
                     cycles += 1
                                         
                     # assess convergence
-                    incr = N.linalg.norm((w_prev - w).ravel()) / \
-                        (N.linalg.norm(w_prev.ravel())+N.finfo(N.float).eps)
-                    w_prev = w.copy()
+                    incr = N.sqrt(sum2_w_diff) / \
+                           (N.sqrt(sum2_w_old)+N.finfo(N.float).eps);
+
+                    # reset the sum diffs
+                    sum2_w_diff = 0.0
+                    sum2_w_old = 0.0
                     
                     # save the new weights
                     converged = incr < self.__convergence_tol
@@ -182,17 +185,16 @@ class SMLR(Classifier):
                     # update the zero test factors
                     decrease_factor *= (non_zero/float((M-1)*nd))
                     test_zero_basis *= decrease_factor
-                    
+
                     if __debug__:
                         debug("SMLR", \
                                   "cycle=%d ; incr=%g ; non_zero=%d" % \
                           (cycles,incr,non_zero))
-    
+
         if not converged:
             raise ConvergenceError, \
                 "More than %d Iterations without convergence" % \
                 (self.__maxiter)
-
 
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
@@ -204,6 +206,59 @@ class SMLR(Classifier):
 
 #        print 'cycles=%d ; wasted basis=%g\n' % (cycles,wasted_basis/((M-1)*nd))
 
+
+
+        # save the weights
+        self.w = w
+
+    def _train(self, data):
+        """Train the classifier using `data` (`Dataset`).
+        """
+        # Process the labels to turn into 1 of N encoding
+        labels = self.__label_to_oneofm(data.labels,data.uniquelabels)
+        self.__ulabels = data.uniquelabels.copy()
+        Y = labels
+        M = len(self.__ulabels)
+
+        # get the data information into easy vars
+        X = data.samples
+        nd = data.nfeatures
+        ns = data.nsamples
+
+        # Precompute what we can
+        auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X,0))
+        XY = N.dot(X.T,Y[:,:(M-1)])
+        lambda_over_2_auto_corr = (self.__lm/2.)/auto_corr
+
+        # set starting values
+        w = N.zeros((nd,M-1),dtype=N.float)
+        Xw = N.zeros((ns,M-1),dtype=N.float)
+        E = N.ones((ns,M-1),dtype=N.float)
+        S = M*N.ones(ns,dtype=N.float)
+
+        # not vebose for now... must get this to work with the pymvpa
+        # verbose and debug systems
+        verbosity = 0
+        
+        # call the uber-fast C-version of the stepwise regression
+        cycles = stepwise_regression(w,
+                                     X,
+                                     XY,
+                                     Xw,
+                                     E,
+                                     auto_corr,
+                                     lambda_over_2_auto_corr,
+                                     S,
+                                     self.__maxiter,
+                                     self.__convergence_tol,
+                                     verbosity)
+
+        if cycles >= self.__maxiter:
+            # did not converge
+            raise ConvergenceError, \
+                  "More than %d Iterations without convergence" % \
+                  (self.__maxiter)
+        
         # save the weights
         self.w = w
         
