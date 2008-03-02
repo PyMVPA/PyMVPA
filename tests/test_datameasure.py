@@ -97,9 +97,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     @sweepargs(svm=clfs['LinearSVMC'])
     def testLinearSVMWeights(self, svm):
-        # first Yarik needs to figure out what the heck is happening ;-)
-        #svm = LinearCSVMC()
-
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( clf=svm,
                                enable_states=["sensitivities"] )
@@ -113,7 +110,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
 
 
-    @sweepargs(basic_clf=clfs['LinearSVMC'])
+    @sweepargs(basic_clf=clfs['clfs_with_sens'])
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self, basic_clf):
         #basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)
@@ -124,7 +121,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # somehow. Transfer error here should be 'leave-1-out' error
         # of split classifier itself
         rfe = RFE(sensitivity_analyzer=
-                      selectAnalyzer(SplitClassifier(clf=svm),
+                      selectAnalyzer(SplitClassifier(clf=basic_clf),
                                      enable_states=["sensitivities"]),
                   transfer_error=trans_error,
                   feature_selector=FeatureSelectionPipeline(
@@ -133,12 +130,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
                   train_clf=True)
 
         # assumming many defaults it is as simple as
-        sana = selectAnalyzer( SplitClassifier(clf=svm),
+        sana = selectAnalyzer( SplitClassifier(clf=basic_clf),
                                enable_states=["sensitivities"] )
                                # and lets look at all sensitivities
 
         # and we get sensitivity analyzer which works on splits and uses
-        # linear svm sensitivity
+        # sensitivity
         selected_features = rfe(self.dataset)
 
 
