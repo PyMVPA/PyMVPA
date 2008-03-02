@@ -38,8 +38,9 @@ build-stamp:
 	python setup.py build_ext --swig-opts="-c++ -noproxy"
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
-	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/libsvm/svmc.so \
-		mvpa/clfs/libsvm/
+	for ext in svm smlr; do \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
+		mvpa/clfs/lib$$ext/; done
 	touch $@
 
 #
@@ -55,9 +56,9 @@ clean:
 
 distclean:
 	-@rm -f MANIFEST
-	-@rm -f mvpa/clfs/libsvm/*.{c,so} \
-		mvpa/clfs/libsvm/svmc.py \
-		mvpa/clfs/libsvm/svmc_wrap.cpp \
+	-@rm -f mvpa/clfs/lib*/*.so \
+        mvpa/clfs/lib*/*_wrap.* \
+		mvpa/clfs/lib*/*c.py \
 		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \

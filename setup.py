@@ -29,7 +29,7 @@ svmc_ext = Extension( 'mvpa.clfs.libsvm.svmc',
                              '-I/usr/include/libsvm-2.0/libsvm',
                              '-I' + numpy_headers ] )
 
-smlr_ext = Extension( 'mvpa.clfs.libsmlr.smlr',
+smlrc_ext = Extension( 'mvpa.clfs.libsmlr.smlrc',
                       sources = [ 'mvpa/clfs/libsmlr/smlr.c' ],
                       libraries = ['m'],
                       language = 'c')
@@ -56,5 +56,5 @@ nothing but free-software to run.""",
                        'mvpa.algorithms',
                        'mvpa.misc',
                        'mvpa.misc.fsl' ],
-      ext_modules  = [ svmc_ext, smlr_ext]
+      ext_modules  = [ svmc_ext, smlrc_ext]
       )
