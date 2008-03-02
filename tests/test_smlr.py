@@ -32,7 +32,17 @@ class SMLRTests(unittest.TestCase):
         clf.train(data)
 
         # prediction has to be perfect
-        self.failUnless((clf.predict(data.samples) == data.labels).all())
+        #
+        # XXX yoh: whos said that?? ;-)
+        #
+        # There is always a tradeoff between learning and
+        # generalization errors so...  but in this case the problem is
+        # more interesting: absent bias disallows to learn data you
+        # have here -- there is no solution which would pass through
+        # (0,0)
+        predictions = clf.predict(data.samples)
+        self.failUnless((predictions == data.labels).all())
+
 
     def testSMLRState(self):
         data = dumbFeatureDataset()
