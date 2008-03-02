@@ -213,6 +213,9 @@ TODO
     * transerror.py for instance uses testdata/trainingdata
     * rfe.py dataset, testdataset
 
+ * mvpa.misc.warning may be should use stock python warnings module instead of
+   custom one?
+
  * ConfusionBasedError -> InternalError ?
 
  * Think about how to deal with Transformers to serve them with
