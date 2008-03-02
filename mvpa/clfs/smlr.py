@@ -236,6 +236,9 @@ class SMLR(Classifier):
 
         # get the data information into easy vars
         X = data.samples
+        if not 'f' in X.dtype.str:
+            # must cast to float
+            X = X.astype(N.float)
         nd = data.nfeatures
         ns = data.nsamples
 
