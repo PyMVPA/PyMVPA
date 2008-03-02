@@ -35,7 +35,7 @@ debian-build:
 build: build-stamp
 build-stamp:
 	python setup.py config --noisy
-	python setup.py build_ext
+	python setup.py build_ext --swig-opts="-c++ -noproxy"
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/libsvm/svmc.so \
