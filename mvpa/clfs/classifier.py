@@ -199,7 +199,14 @@ class Classifier(Stateful):
             debug("CLF_TB", "Traceback: %s" % tb)
 
         self._pretrain(dataset)
-        result = self._train(dataset)
+        if dataset.nfeatures > 0:
+            result = self._train(dataset)
+        else:
+            warning("Trying to train on dataset with no features present")
+            if __debug__:
+                debug("CLF",
+                      "No features present for training, no actual training is called")
+            result = None
         self._posttrain(dataset, result)
         return result
 
@@ -251,7 +258,15 @@ class Classifier(Stateful):
             debug("CLF_TB", "Traceback: %s" % tb)
 
         self._prepredict(data)
-        result = self._predict(data)
+        if self.__trainednfeatures > 0:
+            result = self._predict(data)
+        else:
+            warning("Trying to predict using classifier trainedon no features")
+            if __debug__:
+                debug("CLF",
+                      "No features were present for training, prediction is bogus")
+            result = [None]*data.shape[0]
+
         self._postpredict(data, result)
         return result
 
