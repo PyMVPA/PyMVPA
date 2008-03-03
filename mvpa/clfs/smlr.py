@@ -205,7 +205,7 @@ class SMLR(Classifier):
                     test_zero_basis *= decrease_factor
 
                     if __debug__:
-                        debug("SMLR", \
+                        debug("SMLR_", \
                                   "cycle=%d ; incr=%g ; non_zero=%d" % \
                           (cycles,incr,non_zero))
 
@@ -217,34 +217,33 @@ class SMLR(Classifier):
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
 
-#         if __debug__:
-#             debug("SMLR", \
-#                   "SMLR converged after %d steps. Error: %g" % \
-#                   (cycles, XXX))
+#        if __debug__:
+#            debug("SMLR_", \
+#                  "SMLR converged after %d steps. Error: %g" % \
+#                  (cycles, XXX))
 
 #        print 'cycles=%d ; wasted basis=%g\n' % (cycles,wasted_basis/((M-1)*nd))
-
-
 
         # save the weights
         self.w = w
 
-    def _train(self, data):
-        """Train the classifier using `data` (`Dataset`).
+
+    def _train(self, dataset):
+        """Train the classifier using `dataset` (`Dataset`).
         """
         # Process the labels to turn into 1 of N encoding
-        labels = self.__label_to_oneofm(data.labels,data.uniquelabels)
-        self.__ulabels = data.uniquelabels.copy()
+        labels = self.__label_to_oneofm(dataset.labels,dataset.uniquelabels)
+        self.__ulabels = dataset.uniquelabels.copy()
         Y = labels
         M = len(self.__ulabels)
 
-        # get the data information into easy vars
-        X = data.samples
+        # get the dataset information into easy vars
+        X = dataset.samples
         if not 'f' in X.dtype.str:
             # must cast to float
             X = X.astype(N.float)
-        nd = data.nfeatures
-        ns = data.nsamples
+        nd = dataset.nfeatures
+        ns = dataset.nsamples
 
         # Precompute what we can
         auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X,0))
@@ -259,7 +258,7 @@ class SMLR(Classifier):
 
         # not vebose for now... must get this to work with the pymvpa
         # verbose and debug systems
-        verbosity = 0
+        verbosity = int( "SMLR_" in debug.active )
 
         if self.__implementation.upper() == 'C':
             _stepwise_regression = _c_stepwise_regression
@@ -293,6 +292,11 @@ class SMLR(Classifier):
         # save the weights
         self.w = w
 
+        if __debug__:
+            debug('SMLR_', 'train finished in %s cycles on data.shape=%s min:max(data)=%f:%f, got min:max(w)=%f:%f' %
+                  (`cycles`, `X.shape`, N.min(X), N.max(X),
+                   N.min(w), N.max(w)))
+
 
     def _predict(self, data):
         """
@@ -301,9 +305,19 @@ class SMLR(Classifier):
         # append the zeros column to the weights
         w = N.hstack((self.w,N.zeros((self.w.shape[0],1))))
 
+        dot_prod = N.dot(data,w)
         # determine the probability values for making the prediction
-        E = N.exp(N.dot(data,w))
-        S = N.sum(E,1)
+        E = N.exp(dot_prod)
+        S = N.sum(E, 1)
+        #import pydb
+        #pydb.debugger()
+        if __debug__:
+            debug('SMLR_', 'predict on data.shape=%s min:max(data)=%f:%f min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f' %
+                  (`data.shape`, N.min(data), N.max(data),
+                   N.min(w), N.max(w),
+                   N.min(dot_prod), N.max(dot_prod),
+                   N.min(E), N.max(E)))
+            
         values = E / S[:,N.newaxis].repeat(E.shape[1],axis=1)
         self.values = values
 

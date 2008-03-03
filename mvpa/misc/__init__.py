@@ -154,6 +154,9 @@ if __debug__:
     debug.register('SVM',    "SVM")
     debug.register('SVMLIB', "Internal libsvm verbose output")
 
+    debug.register('SMLR',    "SMLR")
+    debug.register('SMLR_',    "SMLR verbose")
+
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('CROSSC',"Cross-validation call")
