@@ -208,8 +208,8 @@ class SMLR(Classifier):
 
                     if __debug__:
                         debug("SMLR_", \
-                                  "cycle=%d ; incr=%g ; non_zero=%d ; sum2_w_old=%g" % \
-                          (cycles,incr,non_zero,sum2_w_old))
+                                  "cycle=%d ; incr=%g ; non_zero=%d ; sum2_w_old=%g ; sum2_w_diff=%g" % \
+                          (cycles,incr,non_zero,sum2_w_old,sum2_w_diff))
 
                     # reset the sum diffs
                     sum2_w_diff = 0.0
