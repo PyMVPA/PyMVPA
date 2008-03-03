@@ -193,10 +193,6 @@ class SMLR(Classifier):
                     incr = N.sqrt(sum2_w_diff) / \
                            (N.sqrt(sum2_w_old)+N.finfo(N.float).eps);
 
-                    # reset the sum diffs
-                    sum2_w_diff = 0.0
-                    sum2_w_old = 0.0
-
                     # save the new weights
                     converged = incr < convergence_tol
 
@@ -206,8 +202,13 @@ class SMLR(Classifier):
 
                     if __debug__:
                         debug("SMLR_", \
-                                  "cycle=%d ; incr=%g ; non_zero=%d" % \
-                          (cycles,incr,non_zero))
+                                  "cycle=%d ; incr=%g ; non_zero=%d ; sum2_w_old=%g" % \
+                          (cycles,incr,non_zero,sum2_w_old))
+
+                    # reset the sum diffs
+                    sum2_w_diff = 0.0
+                    sum2_w_old = 0.0
+
 
         if not converged:
             raise ConvergenceError, \
@@ -241,7 +242,7 @@ class SMLR(Classifier):
         X = dataset.samples
         if not 'f' in X.dtype.str:
             # must cast to float
-            X = X.astype(N.float)
+            X = X.astype(N.double)
         nd = dataset.nfeatures
         ns = dataset.nsamples
 
@@ -251,10 +252,10 @@ class SMLR(Classifier):
         lambda_over_2_auto_corr = (self.__lm/2.)/auto_corr
 
         # set starting values
-        w = N.zeros((nd,M-1),dtype=N.float)
-        Xw = N.zeros((ns,M-1),dtype=N.float)
-        E = N.ones((ns,M-1),dtype=N.float)
-        S = M*N.ones(ns,dtype=N.float)
+        w = N.zeros((nd,M-1),dtype=N.double)
+        Xw = N.zeros((ns,M-1),dtype=N.double)
+        E = N.ones((ns,M-1),dtype=N.double)
+        S = M*N.ones(ns,dtype=N.double)
 
         # not vebose for now... must get this to work with the pymvpa
         # verbose and debug systems
