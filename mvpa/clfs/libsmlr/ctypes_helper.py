@@ -12,10 +12,10 @@ import numpy as N
 import ctypes as C
 
 # define an array type to help with wrapping
-c_darray = N.ctypeslib.ndpointer(dtype=N.float64)
-c_larray = N.ctypeslib.ndpointer(dtype=N.int64)
-c_farray = N.ctypeslib.ndpointer(dtype=N.float32)
-c_iarray = N.ctypeslib.ndpointer(dtype=N.int32)
+c_darray = N.ctypeslib.ndpointer(dtype=N.float64, flags='aligned,contiguous')
+c_larray = N.ctypeslib.ndpointer(dtype=N.int64, flags='aligned,contiguous')
+c_farray = N.ctypeslib.ndpointer(dtype=N.float32, flags='aligned,contiguous')
+c_iarray = N.ctypeslib.ndpointer(dtype=N.int32, flags='aligned,contiguous')
 
 def extend_args(*args):
     """Turn ndarray arguments into dims and arrays."""
