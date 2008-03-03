@@ -168,8 +168,8 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
     if (verbose)
     {
-      fprintf(stdout, "cycle=%ld ; incr=%g ; non_zero=%ld ; sum2_w_old=%g\n",
-	      cycle, incr, non_zero, sum2_w_old);
+      fprintf(stdout, "cycle=%ld ; incr=%g ; non_zero=%ld ; sum2_w_old=%g ; sum2_w_diff=%g\n",
+	      cycle, incr, non_zero, sum2_w_old, sum2_w_diff);
       fflush(stdout);
     }
 
