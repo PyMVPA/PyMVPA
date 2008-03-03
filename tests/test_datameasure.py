@@ -18,7 +18,6 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector, \
                                     FractionTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
-from mvpa.clfs.svm import RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
 from mvpa.algorithms.rfe import RFE
@@ -106,7 +105,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
-        svmnl = RbfNuSVMC()
+        svmnl = clfs['NonLinearSVMC'][0]
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
 
 
