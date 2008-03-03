@@ -19,7 +19,6 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector, \
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
 
 from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
-
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
@@ -60,28 +59,27 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
-    #@sweepargs(svm=[sg.svm.LinearCSVMC()])
-    @sweepargs(svm=clfs['clfs_with_sens'])
-    def testAnalyzerWithSplitClassifier(self, svm):
-        #svm = LinearNuSVMC()
-        #svm_weigths = LinearSVMWeights(svm)
+    @sweepargs(clf=clfs['clfs_with_sens'])
+    def testAnalyzerWithSplitClassifier(self, clf):
 
         # assumming many defaults it is as simple as
-        sana = selectAnalyzer( SplitClassifier(clf=svm),
-                               enable_states=["sensitivities"] )
-                               # and lets look at all sensitivities
+        sana = selectAnalyzer(
+            SplitClassifier(clf=clf,
+                            enable_states=['training_confusion']),
+            enable_states=["sensitivities"] )
+        # and lets look at all sensitivities
 
-        # and we get sensitivity analyzer which works on splits and uses
-        # linear svm sensitivity
+        # and we get sensitivity analyzer which works on splits
         map_ = sana(self.dataset)
-        self.failUnless(len(map_) == self.dataset.nfeatures)
+        self.failUnlessEqual(len(map_), self.dataset.nfeatures)
 
         for conf_matrix in [sana.clf.training_confusion] \
                           + sana.clf.training_confusions.matrices:
             self.failUnless(conf_matrix.percentCorrect>85,
                             msg="We must have trained on each one more or " \
                                 "less correctly. Got %f%% correct on %d labels" %
-                            (conf_matrix.percentCorrect, len(self.dataset.uniquelabels)))
+                            (conf_matrix.percentCorrect,
+                             len(self.dataset.uniquelabels)))
 
         errors = [x.percentCorrect 
                     for x in sana.clf.training_confusions.matrices]
@@ -102,9 +100,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     @sweepargs(svm=clfs['LinearSVMC'])
     def testLinearSVMWeights(self, svm):
-        # first Yarik needs to figure out what the heck is happening ;-)
-        #svm = LinearCSVMC()
-
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( clf=svm,
                                enable_states=["sensitivities"] )
@@ -115,11 +110,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
-        svmnl = RbfNuSVMC()
+        svmnl = clfs['NonLinearSVMC'][0]
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
 
 
-    @sweepargs(basic_clf=clfs['LinearSVMC'])
+    @sweepargs(basic_clf=clfs['clfs_with_sens'])
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self, basic_clf):
         #basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)
@@ -130,7 +125,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # somehow. Transfer error here should be 'leave-1-out' error
         # of split classifier itself
         rfe = RFE(sensitivity_analyzer=
-                      selectAnalyzer(SplitClassifier(clf=svm),
+                      selectAnalyzer(SplitClassifier(clf=basic_clf),
                                      enable_states=["sensitivities"]),
                   transfer_error=trans_error,
                   feature_selector=FeatureSelectionPipeline(
@@ -139,12 +134,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
                   train_clf=True)
 
         # assumming many defaults it is as simple as
-        sana = selectAnalyzer( SplitClassifier(clf=svm),
+        sana = selectAnalyzer( SplitClassifier(clf=basic_clf),
                                enable_states=["sensitivities"] )
                                # and lets look at all sensitivities
 
         # and we get sensitivity analyzer which works on splits and uses
-        # linear svm sensitivity
+        # sensitivity
         selected_features = rfe(self.dataset)
 
 

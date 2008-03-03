@@ -32,8 +32,8 @@ class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
-    def __init__(self):
-        Classifier.__init__(self, train2predict=False)
+    def __init__(self, **kwargs):
+        Classifier.__init__(self, train2predict=False, **kwargs)
 
     def _train(self, data):
         # we don't need that ;-)
@@ -72,7 +72,7 @@ class ClassifiersTests(unittest.TestCase):
             chunks=[0, 1, 2,  2, 3])  # chunks
 
     def testDummy(self):
-        clf = SameSignClassifier()
+        clf = SameSignClassifier(enable_states=['training_confusion'])
         clf.train(self.data_bin_1)
         self.failUnlessRaises(UnknownStateError, clf.states.get,
                               "predictions")
@@ -202,8 +202,9 @@ class ClassifiersTests(unittest.TestCase):
     # TODO: come up with nice idea on how to bring sweepargs here
     def testMulticlassClassifier(self):
         svm = LinearNuSVMC()
-        svm2 = LinearNuSVMC()
-        clf = MulticlassClassifier(clf=svm)
+        svm2 = LinearNuSVMC(enable_states=['training_confusion'])
+        clf = MulticlassClassifier(clf=svm,
+                                   enable_states=['training_confusion'])
 
         nfeatures = 6
         nonbogus = [1, 3, 4]
@@ -262,8 +263,8 @@ class ClassifiersTests(unittest.TestCase):
         for traindata in traindatas:
             clf.train(traindata)
             self.failUnlessEqual(clf.training_confusion.percentCorrect, 100.0,
-                "Classifier %s must have 100%% correct learning on %s" %
-                (`clf`, traindata.samples))
+                "Classifier %s must have 100%% correct learning on %s. Has %f" %
+                (`clf`, traindata.samples, clf.training_confusion.percentCorrect))
 
             # and we must be able to predict every original sample thus
             for i in xrange(traindata.nsamples):
