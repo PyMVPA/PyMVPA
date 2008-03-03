@@ -105,6 +105,9 @@ class Classifier(Stateful):
     trained_labels = StateVariable(enabled=True,
         doc="What labels (unique) clf was trained on")
 
+    trained_dataset = StateVariable(enabled=False,
+        doc="What dataset clf was trained on")
+
     training_confusion = StateVariable(enabled=False,
         doc="Result of learning: `ConfusionMatrix` " \
             "(and corresponding learning error)")
@@ -159,6 +162,8 @@ class Classifier(Stateful):
         For instance -- computing confusion matrix
         """
         self.trained_labels = Set(dataset.uniquelabels)
+
+        self.trained_dataset = dataset
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures

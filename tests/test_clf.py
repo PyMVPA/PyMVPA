@@ -78,6 +78,10 @@ class ClassifiersTests(unittest.TestCase):
                               "predictions")
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
+
+        self.failUnlessRaises(UnknownStateError, clf.states.get,
+                              "trained_dataset")
+
         self.failUnlessEqual(clf.training_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
@@ -86,6 +90,14 @@ class ClassifiersTests(unittest.TestCase):
 
         self.failUnlessEqual(len(clf.predictions), self.data_bin_1.nsamples,
             msg="Trained classifier stores predictions by default")
+
+        clf = SameSignClassifier(enable_states=['trained_dataset'])
+        clf.train(self.data_bin_1)
+        self.failUnless((clf.trained_dataset.samples ==
+                         self.data_bin_1.samples).all())
+        self.failUnless((clf.trained_dataset.labels ==
+                         self.data_bin_1.labels).all())
+
 
     def testBoosted(self):
         # XXXXXXX
