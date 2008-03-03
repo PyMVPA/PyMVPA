@@ -25,6 +25,7 @@ import copy
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
 from mvpa.clfs import sg, libsvm
+from mvpa.clfs.smlr import SMLR
 from mvpa.misc.transformers import Absolute, Identity, FirstAxisMean
 
 if __debug__:
@@ -224,6 +225,9 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
     if isinstance(clf, libsvm.svm.LinearSVM) or isinstance(clf, sg.svm.LinearSVM):
         from linsvmweights import LinearSVMWeights
         banalyzer = LinearSVMWeights(clf, transformer=Absolute, **kwargs)
+    elif isinstance(clf, SMLR):
+        from smlrweights import SMLRWeights
+        banalyzer = SMLRWeights(clf, transformer=Absolute, **kwargs)
     elif isinstance(clf, BoostedClassifier):
         if basic_analyzer is None and len(clf.clfs) > 0:
             basic_analyzer = selectAnalyzer(clf.clfs[0], **kwargs)

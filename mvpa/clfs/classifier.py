@@ -105,7 +105,7 @@ class Classifier(Stateful):
     trained_labels = StateVariable(enabled=True,
         doc="What labels (unique) clf was trained on")
 
-    training_confusion = StateVariable(enabled=True,
+    training_confusion = StateVariable(enabled=False,
         doc="Result of learning: `ConfusionMatrix` " \
             "(and corresponding learning error)")
 

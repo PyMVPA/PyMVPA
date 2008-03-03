@@ -1171,9 +1171,23 @@ The following verbosity levels are supported:
 Warning Messages
 ~~~~~~~~~~~~~~~~
 
-Reported by PyMVPA if something goes a little unexpected but not
-critical. They are printed just once per occasion, i.e. once per piece
-of code where it is called.
+Reported by PyMVPA if something goes a little unexpected but not critical. By
+default they are printed just once per occasion, i.e. once per piece of code
+where it is called. Following environment variables control the
+behavior of warnings:
+
+* ``MVPA_WARNINGS_COUNT=<int>`` controls for how many invocations of
+  specific warning it gets printed (default behavior is 1 for
+  once). Specification of negative count results in all invocations
+  being printed, and value of 0 obviously suppresses the warnings
+* ``MVPA_NO_WARNINGS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
+  resultant behavior
+* ``MVPA_WARNINGS_BT=<int>`` controls up to how many lines of traceback
+  is printed for the warnings
+
+In python code, invocation of warning with argument ``bt = True``
+enforces printout of traceback whenever warning tracebacks are
+disabled by default.
 
 
 Debug Messages
@@ -1207,7 +1221,7 @@ names comma-separated.
 As it was mentioned earlier, debug messages are printed only in
 non-optimized python invocation. That was done to eliminate any
 slowdown introduced by such 'debugging' output, which might appear at
-some computational bottleneck places in the code. 
+some computational bottleneck places in the code.
 
 .. TODO: Unify loggers behind verbose and debug. imho debug should have
    also way to specify the level for the message so we could provide
