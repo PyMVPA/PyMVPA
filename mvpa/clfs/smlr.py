@@ -246,6 +246,22 @@ class SMLR(Classifier):
 
         # get the dataset information into easy vars
         X = dataset.samples
+
+        if self.__implementation.upper() == 'C':
+            _stepwise_regression = _c_stepwise_regression
+            #
+            # TODO: avoid copying to non-contig arrays, use strides in ctypes?
+            if not (X.flags['C_CONTIGUOUS'] and X.flags['ALIGNED']):
+                if __debug__:
+                    debug("SMLR_", "Copying data to get it C_CONTIGUOUS/ALIGNED")
+                X = N.array(X, copy=True, dtype=N.double, order='C')
+        elif self.__implementation.upper() == 'PYTHON':
+            _stepwise_regression = self._python_stepwise_regression
+        else:
+            raise ValueError, \
+                  "Unknown implementation %s of stepwise_regression" % \
+                  implementation
+
         if not 'f' in X.dtype.str:
             # must cast to float
             X = X.astype(N.double)
@@ -267,16 +283,7 @@ class SMLR(Classifier):
         # verbose and debug systems
         verbosity = int( "SMLR_" in debug.active )
 
-        if self.__implementation.upper() == 'C':
-            _stepwise_regression = _c_stepwise_regression
-        elif self.__implementation.upper() == 'PYTHON':
-            _stepwise_regression = self._python_stepwise_regression
-        else:
-            raise ValueError, \
-                  "Unknown implementation %s of stepwise_regression" % \
-                  implementation
-
-        seed = 100
+        seed = None
 
         # call the chosen version of stepwise_regression
         cycles = _stepwise_regression(w,
