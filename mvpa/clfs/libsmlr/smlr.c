@@ -25,7 +25,8 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 			int S_rows, double S[S_rows],
 			int maxiter,
 			double convergence_tol,
-			int verbose)
+			int verbose,
+			int seed)
 {
   // initialize the iterative optimization
   double incr = DBL_MAX;
@@ -51,7 +52,16 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
   int ns = E_rows;
 
   // initialize random seed
-  srand ( time(NULL) );
+  if (seed == 0)
+    seed = time(NULL);
+
+  if (verbose)
+  {
+    fprintf(stdout, "SMLR: random seed=%d\n", seed);
+    fflush(stdout);
+  }
+
+  srand (seed);
 
 
   // loop over cycles
@@ -168,7 +178,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
     if (verbose)
     {
-      fprintf(stdout, "cycle=%ld ; incr=%g ; non_zero=%ld ; sum2_w_old=%g\n",
+      fprintf(stdout, "SMLR: cycle=%ld ; incr=%g ; non_zero=%ld ; sum2_w_old=%g\n",
 	      cycle, incr, non_zero, sum2_w_old);
       fflush(stdout);
     }

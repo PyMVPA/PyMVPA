@@ -96,7 +96,8 @@ class SMLR(Classifier):
                                     S,
                                     maxiter,
                                     convergence_tol,
-                                    verbose):
+                                    verbose,
+                                    seed = None):
         """The (much slower) python version of the stepwise
         regression.  I'm keeping this around for now so that we can
         compare results."""
@@ -120,6 +121,11 @@ class SMLR(Classifier):
         sum2_w_diff = 0.0
         sum2_w_old = 0.0
         w_diff = 0.0
+
+        N.random.seed(seed)
+        if __debug__:
+            debug("SMLR_", "random seed=%s" % seed)
+
 
         # perform the optimization
         while not converged and cycles<maxiter:
@@ -270,6 +276,7 @@ class SMLR(Classifier):
                   "Unknown implementation %s of stepwise_regression" % \
                   implementation
 
+        seed = 100
 
         # call the chosen version of stepwise_regression
         cycles = _stepwise_regression(w,
@@ -282,7 +289,8 @@ class SMLR(Classifier):
                                       S,
                                       self.__maxiter,
                                       self.__convergence_tol,
-                                      verbosity)
+                                      verbosity,
+                                      seed)
 
         if cycles >= self.__maxiter:
             # did not converge
