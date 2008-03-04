@@ -15,6 +15,7 @@ import numpy as N
 
 from mvpa.clfs.classifier import Classifier
 from mvpa.misc.exceptions import ConvergenceError
+from mvpa.misc.state import StateVariable
 
 # Uber-fast C-version of the stepwise regression
 from mvpa.clfs.libsmlr import stepwise_regression as _c_stepwise_regression
@@ -31,6 +32,10 @@ class SMLR(Classifier):
     and Machine Intelligence).  Be sure to cite that article if you
     use this for your work.
     """
+
+    weights = StateVariable(enabled=False,
+                            doc="Weights of the trained classifier")
+
 
     def __init__(self, lm=.1, convergence_tol=1e-3,
                  maxiter=10000, implementation="C", **kwargs):
@@ -232,7 +237,8 @@ class SMLR(Classifier):
 #        print 'cycles=%d ; wasted basis=%g\n' % (cycles,wasted_basis/((M-1)*nd))
 
         # save the weights
-        self.w = w
+        self.__weights = w
+        self.weights = w
 
 
     def _train(self, dataset):
@@ -307,7 +313,10 @@ class SMLR(Classifier):
                   (self.__maxiter)
 
         # save the weights
-        self.w = w
+        self.__weights = w
+
+        # save the weights state
+        self.weights = w
 
         if __debug__:
             debug('SMLR_', 'train finished in %s cycles on data.shape=%s min:max(data)=%f:%f, got min:max(w)=%f:%f' %
@@ -320,7 +329,7 @@ class SMLR(Classifier):
         Predict the output for the provided data.
         """
         # append the zeros column to the weights
-        w = N.hstack((self.w,N.zeros((self.w.shape[0],1))))
+        w = N.hstack((self.__weights,N.zeros((self.__weights.shape[0],1))))
 
         dot_prod = N.dot(data,w)
         # determine the probability values for making the prediction
@@ -340,6 +349,7 @@ class SMLR(Classifier):
 
         # generate predictions
         predictions = [self.__ulabels[N.argmax(vals)] for vals in values]
+        self.predictions = predictions
 
         return N.asarray(predictions)
 
