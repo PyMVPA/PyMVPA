@@ -262,7 +262,8 @@ class SMLR(Classifier):
                   "Unknown implementation %s of stepwise_regression" % \
                   implementation
 
-        if not 'f' in X.dtype.str:
+        # currently must be double for the C code
+        if X.dtype != N.double:
             # must cast to float
             X = X.astype(N.double)
         nd = dataset.nfeatures
