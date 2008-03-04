@@ -13,7 +13,7 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.datameasure import SensitivityAnalyzer
+from mvpa.algorithms.datameasure import SensitivityAnalyzer, selectAnalyzer
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
@@ -21,7 +21,7 @@ from mvpa.algorithms.featsel import \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector
-from mvpa.algorithms.linsvmweights import LinearSVMWeights
+
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 
@@ -173,12 +173,11 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.ndiscarded == 3)
 
 
-    @sweepargs(svm=clfs['LinearSVMC'])
-    def testSensitivityBasedFeatureSelection(self, svm):
-        #svm = LinearNuSVMC()
+    @sweepargs(clf=clfs['clfs_with_sens'])
+    def testSensitivityBasedFeatureSelection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = LinearSVMWeights(svm, transformer=Absolute)
+        sens_ana = selectAnalyzer(clf)
 
         # of features to remove
         Nremove = 2
@@ -255,13 +254,12 @@ class RFETests(unittest.TestCase):
 
 
     # TODO: should later on work for any clfs_with_sens
-    @sweepargs(svm=clfs['LinearSVMC'])
-    def testRFE(self, svm):
-        #svm = LinearNuSVMC()
+    @sweepargs(clf=clfs['clfs_with_sens'])
+    def testRFE(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = LinearSVMWeights(svm, transformer=Absolute)
-        trans_error = TransferError(svm)
+        sens_ana = selectAnalyzer(clf)
+        trans_error = TransferError(clf)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
