@@ -13,6 +13,8 @@ __docformat__ = 'restructuredtext'
 
 # Define sets of classifiers
 from mvpa.clfs import libsvm, sg
+import mvpa.clfs.libsvm.svm
+import mvpa.clfs.sg.svm
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.ridge import *
 from mvpa.clfs.knn import *
