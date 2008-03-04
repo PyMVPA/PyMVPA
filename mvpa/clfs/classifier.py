@@ -258,10 +258,10 @@ class Classifier(Stateful):
             debug("CLF_TB", "Traceback: %s" % tb)
 
         self._prepredict(data)
-        if self.__trainednfeatures > 0:
+        if self.__trainednfeatures > 0 or not self.__train2predict:
             result = self._predict(data)
         else:
-            warning("Trying to predict using classifier trainedon no features")
+            warning("Trying to predict using classifier trained on no features")
             if __debug__:
                 debug("CLF",
                       "No features were present for training, prediction is bogus")
