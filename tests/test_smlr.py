@@ -57,7 +57,7 @@ class SMLRTests(unittest.TestCase):
         p = N.asarray(clf.predict(data.samples))
 
         self.failUnless((p == clf.predictions).all())
-        self.failUnless(N.array(clf.values).shape == N.array(p).shape)
+        self.failUnless(N.array(clf.values).shape[0] == N.array(p).shape[0])
 
 
 def suite():

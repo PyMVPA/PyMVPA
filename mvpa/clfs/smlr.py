@@ -33,7 +33,7 @@ class SMLR(Classifier):
     """
 
     def __init__(self, lm=.1, convergence_tol=1e-3,
-                 maxiter=10000, implementation="C", **kwargs):
+                 maxiter=10000, bias=True, implementation="C", **kwargs):
         """
         Initialize a SMLR analysis.
 
@@ -47,6 +47,9 @@ class SMLR(Classifier):
             lead to tighter convergence.
           maxiter : int
             Maximum number of iterations before stopping if not converged.
+          bias : bool
+            Whether to add a bias term to allow fits to data not through
+            zero.  Defaults to True.
           implementation : basestr
             Use C (default) or Python as the implementation of
             stepwise_regression. C version brings significant speedup thus
@@ -64,6 +67,7 @@ class SMLR(Classifier):
         self.__lm = lm
         self.__convergence_tol = convergence_tol
         self.__maxiter = maxiter
+        self.__bias = bias
 
         if not implementation.upper() in ['C', 'PYTHON']:
             raise ValueError, \
@@ -74,9 +78,9 @@ class SMLR(Classifier):
     def __repr__(self):
         """String representation of the object
         """
-        return """SMLR(lm=%f, convergence_tol=%g, maxiter=%d, implementation='%s', enabled_states=%s)""" % \
+        return """SMLR(lm=%f, convergence_tol=%g, maxiter=%d, bias=%s, implementation='%s', enabled_states=%s)""" % \
             (self.__lm, self.__convergence_tol,
-             self.__maxiter, self.__implementation,
+             self.__maxiter, self.__bias, self.__implementation,
              str(self.states.enabled))
 
     def __label_to_oneofm(self,labels,ulabels):
@@ -247,6 +251,11 @@ class SMLR(Classifier):
         # get the dataset information into easy vars
         X = dataset.samples
 
+        # see if we are adding a bias term
+        if self.__bias:
+            # append the bias term to the features
+            X = N.hstack((X,N.ones((X.shape[0],1),dtype=X.dtype)))
+
         if self.__implementation.upper() == 'C':
             _stepwise_regression = _c_stepwise_regression
             #
@@ -262,11 +271,13 @@ class SMLR(Classifier):
                   "Unknown implementation %s of stepwise_regression" % \
                   implementation
 
+        # see if data are in proper double format
         if not 'f' in X.dtype.str:
-            # must cast to float
+            # must cast to double
             X = X.astype(N.double)
-        nd = dataset.nfeatures
-        ns = dataset.nsamples
+
+        # set the feature dimensions
+        ns,nd = X.shape
 
         # Precompute what we can
         auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X,0))
@@ -318,15 +329,19 @@ class SMLR(Classifier):
         """
         Predict the output for the provided data.
         """
+        # see if we are adding a bias term
+        if self.__bias:
+            # append the bias term to the features
+            data = N.hstack((data,N.ones((data.shape[0],1),dtype=data.dtype)))
+
         # append the zeros column to the weights
         w = N.hstack((self.w,N.zeros((self.w.shape[0],1))))
 
-        dot_prod = N.dot(data,w)
         # determine the probability values for making the prediction
+        dot_prod = N.dot(data,w)
         E = N.exp(dot_prod)
         S = N.sum(E, 1)
-        #import pydb
-        #pydb.debugger()
+
         if __debug__:
             debug('SMLR_', 'predict on data.shape=%s min:max(data)=%f:%f min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f' %
                   (`data.shape`, N.min(data), N.max(data),
@@ -338,7 +353,8 @@ class SMLR(Classifier):
         self.values = values
 
         # generate predictions
-        predictions = [self.__ulabels[N.argmax(vals)] for vals in values]
-
-        return N.asarray(predictions)
+        predictions = N.asarray([self.__ulabels[N.argmax(vals)] for vals in values])
+        self.predictions = predictions
+        
+        return predictions
 

@@ -43,6 +43,9 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
                   "Classifier %s has to be a SMLR, but is [%s]" \
                               % (`clf`, `type(clf)`)
 
+        # clf must have weights enabled
+        clf.states.enable('weights')
+        
         # init base classes first
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
@@ -50,12 +53,16 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
     def _call(self, dataset):
         """Extract weights from Linear SVM classifier.
         """
-        if self.clf.w.shape[1] != 1:
+        if self.clf.weights.shape[1] != 1:
             warning("You are estimating sensitivity for SVM %s trained on %d" %
-                    (`self.clf`, self.clf.w.shape[1]+1) +
+                    (`self.clf`, self.clf.weights.shape[1]+1) +
                     " classes. Make sure that it is what you intended to do" )
 
-        weights = N.mean(self.clf.w, axis=1)
+        # take the mean over classes
+        weights = N.mean(self.clf.weights, axis=1)
+
+        # ignore the bias term if it's there
+        weights = weights[:dataset.nsamples]
 
         if __debug__:
             debug('SVM',
