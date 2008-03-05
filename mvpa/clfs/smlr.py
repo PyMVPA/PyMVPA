@@ -50,18 +50,14 @@ class SMLR(Classifier):
     """
 
     weights = StateVariable(enabled=True,
-                            doc="Weights of the trained classifier")
-
-    weights_all = StateVariable(enabled=True,
-                            doc="All weights (including biases in last row)" +
-                                " of the trained classifier")
+        doc="Weights of the trained classifier")
 
     biases = StateVariable(enabled=True,
-                            doc="Biases (if was enabled) of the trained classifier")
+        doc="Biases (if `has_bias`==`True`) of the trained classifier")
 
 
     def __init__(self, lm=.1, convergence_tol=1e-3,
-                 maxiter=10000, bias=True, implementation="C", seed=None,
+                 maxiter=10000, has_bias=True, implementation="C", seed=None,
                  **kwargs):
         """
         Initialize an SMLR classifier.
@@ -76,7 +72,7 @@ class SMLR(Classifier):
             lead to tighter convergence.
           maxiter : int
             Maximum number of iterations before stopping if not converged.
-          bias : bool
+          has_bias : bool
             Whether to add a bias term to allow fits to data not through
             zero.
           implementation : basestr
@@ -98,10 +94,10 @@ class SMLR(Classifier):
         self.__lm = lm
         self.__convergence_tol = convergence_tol
         self.__maxiter = maxiter
-        self.__base_bias = bias
+        self.__has_bias = has_bias
         self.__seed = seed
 
-        if not bias:
+        if not has_bias:
             # no need to keep it enabled
             self.states.disable('biases')
 
@@ -123,8 +119,8 @@ class SMLR(Classifier):
         """
         return "SMLR(lm=%f, convergence_tol=%g, maxiter=%d, " % \
                (self.__lm, self.__convergence_tol, self.__maxiter) + \
-               "bias=%s, implementation='%s', seed=%s, enabled_states=%s)" % \
-               (self.__base_bias, self.__implementation,
+               "has_bias=%s, implementation='%s', seed=%s, enabled_states=%s)" % \
+               (self.__has_bias, self.__implementation,
                 self.__seed, str(self.states.enabled))
 
 
@@ -282,7 +278,7 @@ class SMLR(Classifier):
         X = dataset.samples
 
         # see if we are adding a bias term
-        if self.__base_bias:
+        if self.__has_bias:
             # append the bias term to the features
             X = N.hstack((X, N.ones((X.shape[0], 1), dtype=X.dtype)))
 
@@ -349,12 +345,11 @@ class SMLR(Classifier):
 
         # save the weights
         self.__weights_all = w
-        self.weights_all = w
         self.weights = w[:dataset.nfeatures,:]
 
         # and a bias
-        if self.__base_bias:
-            self.bias = w[-1,:]
+        if self.__has_bias:
+            self.biases = w[-1,:]
 
         if __debug__:
             debug('SMLR_', "train finished in %s cycles on data.shape=%s " %
@@ -368,7 +363,7 @@ class SMLR(Classifier):
         Predict the output for the provided data.
         """
         # see if we are adding a bias term
-        if self.__base_bias:
+        if self.__has_bias:
             # append the bias term to the features
             data = N.hstack((data, N.ones((data.shape[0], 1), dtype=data.dtype)))
 
@@ -397,3 +392,5 @@ class SMLR(Classifier):
         #self.predictions = predictions
 
         return predictions
+
+    has_bias = property(lambda self: self.__has_bias)

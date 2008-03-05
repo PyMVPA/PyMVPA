@@ -27,7 +27,7 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
     """
 
     biases = StateVariable(enabled=True,
-                           doc="Biases")
+                           doc="A 1-d ndarray of biases")
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -44,7 +44,7 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
 
         # clf must have weights enabled
         clf.states.enable(['weights', 'biases'])
-        
+
         # init base classes first
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
@@ -61,7 +61,7 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
         weights = N.mean(self.clf.weights, axis=1)
 
         # TODO: verify why was failing on unittests without isSet check
-        if self.clf.states.isActive('biases') and self.clf.states.isSet('biases'):
+        if self.clf.has_bias:
             self.biases = self.clf.biases
 
         if __debug__:
