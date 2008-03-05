@@ -61,9 +61,8 @@ class SMLR(Classifier):
             is the default one.
 
         TODO:
-        1) Add in likelihood calculation
-        2) Add optional bias term
-        3) Add kernels, not just direct methods.
+         # Add in likelihood calculation
+         # Add kernels, not just direct methods.
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -217,8 +216,10 @@ class SMLR(Classifier):
 
                     if __debug__:
                         debug("SMLR_", \
-                                  "cycle=%d ; incr=%g ; non_zero=%d ; sum2_w_old=%g ; sum2_w_diff=%g" % \
-                          (cycles,incr,non_zero,sum2_w_old,sum2_w_diff))
+                              "cycle=%d ; incr=%g ; non_zero=%d ; " %
+                              (cycles, incr, non_zero) +
+                              "sum2_w_old=%g ; sum2_w_diff=%g" %
+                              (sum2_w_old, sum2_w_diff))
 
                     # reset the sum diffs
                     sum2_w_diff = 0.0
@@ -268,19 +269,20 @@ class SMLR(Classifier):
             # TODO: avoid copying to non-contig arrays, use strides in ctypes?
             if not (X.flags['C_CONTIGUOUS'] and X.flags['ALIGNED']):
                 if __debug__:
-                    debug("SMLR_", "Copying data to get it C_CONTIGUOUS/ALIGNED")
+                    debug("SMLR_",
+                          "Copying data to get it C_CONTIGUOUS/ALIGNED")
                 X = N.array(X, copy=True, dtype=N.double, order='C')
+            # currently must be double for the C code
+            if X.dtype != N.double:
+                # must cast to double
+                X = X.astype(N.double)
+        # set the feature dimensions
         elif self.__implementation.upper() == 'PYTHON':
             _stepwise_regression = self._python_stepwise_regression
         else:
             raise ValueError, \
                   "Unknown implementation %s of stepwise_regression" % \
                   implementation
-
-        # currently must be double for the C code
-        if X.dtype != N.double:
-            # must cast to double
-            X = X.astype(N.double)
 
         # set the feature dimensions
         ns,nd = X.shape
@@ -296,9 +298,11 @@ class SMLR(Classifier):
         E = N.ones((ns,M-1),dtype=N.double)
         S = M*N.ones(ns,dtype=N.double)
 
-        # not vebose for now... must get this to work with the pymvpa
-        # verbose and debug systems
-        verbosity = int( "SMLR_" in debug.active )
+        # set verbosity
+        if __debug__:
+            verbosity = int( "SMLR_" in debug.active )
+        else:
+            verbosity = 0
 
         seed = None
 
@@ -329,9 +333,10 @@ class SMLR(Classifier):
         self.weights = w
 
         if __debug__:
-            debug('SMLR_', 'train finished in %s cycles on data.shape=%s min:max(data)=%f:%f, got min:max(w)=%f:%f' %
-                  (`cycles`, `X.shape`, N.min(X), N.max(X),
-                   N.min(w), N.max(w)))
+            debug('SMLR_', "train finished in %s cycles on data.shape=%s " %
+                  (`cycles`, `X.shape`) +
+                  "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
+                  (N.min(X), N.max(X), N.min(w), N.max(w)))
 
 
     def _predict(self, data):
@@ -352,18 +357,19 @@ class SMLR(Classifier):
         S = N.sum(E, 1)
 
         if __debug__:
-            debug('SMLR_', 'predict on data.shape=%s min:max(data)=%f:%f min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f' %
-                  (`data.shape`, N.min(data), N.max(data),
-                   N.min(w), N.max(w),
-                   N.min(dot_prod), N.max(dot_prod),
+            debug('SMLR_', "predict on data.shape=%s min:max(data)=%f:%f " %
+                  (`data.shape`, N.min(data), N.max(data)) +
+                  "min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f" %
+                  (N.min(w), N.max(w), N.min(dot_prod), N.max(dot_prod),
                    N.min(E), N.max(E)))
-            
+
         values = E / S[:,N.newaxis].repeat(E.shape[1],axis=1)
         self.values = values
 
         # generate predictions
-        predictions = N.asarray([self.__ulabels[N.argmax(vals)] for vals in values])
+        predictions = N.asarray([self.__ulabels[N.argmax(vals)]
+                                 for vals in values])
         self.predictions = predictions
-        
+
         return predictions
 
