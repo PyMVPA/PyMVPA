@@ -120,6 +120,48 @@ Tests
 * Every new feature should have a unittest
 
 
+Extending PyMVPA
+----------------
+
+This section shall provide a developer with the necessary pieces of information
+for writing extensions to PyMVPA. The guidelines given here, must be obeyed
+to ensure a maximum of compatibilty and inter-operability. As a consequence,
+all modifications that introduce changes to the basic interfaces outlined below
+have to be documented here and also should be announced in the changelog.
+
+
+Adding a new Dataset type
+~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Required interface for Mapper.
+ * only new subclasses of MappedDataset + new Mappers (all other as
+   improvements into the Dataset base class)?
+
+go into `mvpa/datasets/`
+
+Adding a new Classifier
+~~~~~~~~~~~~~~~~~~~~~~~
+
+ * when states and when properties?
+
+go into `mvpa/clfs/`
+
+Adding a new Sensitivity Analyzer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ * Conventions for classifier-based sensitivity analyzer: if clf already
+   provides weights, shall their anyway be an additional wrapper that serves as
+   a sensitivity analyzer?
+
+go into `mvpa/algorithms/`
+
+
+Adding a new Algorithm
+~~~~~~~~~~~~~~~~~~~~~~
+
+go into `mvpa/algorithms/`
+
+
+
 Git Repository
 --------------
 
