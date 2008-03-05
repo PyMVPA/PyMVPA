@@ -156,7 +156,7 @@ class Classifier(Stateful):
         pass
 
 
-    def _posttrain(self, dataset, result):
+    def _posttrain(self, dataset):
         """Functionality post training
 
         For instance -- computing confusion matrix
@@ -207,7 +207,7 @@ class Classifier(Stateful):
                 debug("CLF",
                       "No features present for training, no actual training is called")
             result = None
-        self._posttrain(dataset, result)
+        self._posttrain(dataset)
         return result
 
 
