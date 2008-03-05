@@ -27,8 +27,8 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     on a given `Dataset`.
     """
 
-    offsets = StateVariable(enabled=True,
-                            doc="Offsets of separating hyperplane")
+    biases = StateVariable(enabled=True,
+                           doc="Offsets of separating hyperplane")
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -58,7 +58,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         svs = N.matrix(self.clf.model.getSV())
         rhos = N.array(self.clf.model.getRho())
 
-        self.offsets = rhos
+        self.biases = rhos
         # XXX yoh: .mean() is effectively
         # averages across "sensitivities" of all paired classifiers (I
         # think). See more info on this topic in svm.py on how sv_coefs

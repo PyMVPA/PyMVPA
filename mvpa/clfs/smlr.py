@@ -49,12 +49,20 @@ class SMLR(Classifier):
     use this for your work.
     """
 
-    weights = StateVariable(enabled=False,
+    weights = StateVariable(enabled=True,
                             doc="Weights of the trained classifier")
+
+    weights_all = StateVariable(enabled=True,
+                            doc="All weights (including biases in last row)" +
+                                " of the trained classifier")
+
+    biases = StateVariable(enabled=True,
+                            doc="Biases (if was enabled) of the trained classifier")
 
 
     def __init__(self, lm=.1, convergence_tol=1e-3,
-                 maxiter=10000, bias=1.0, implementation="C", **kwargs):
+                 maxiter=10000, bias=1.0, implementation="C", seed=None,
+                 **kwargs):
         """
         Initialize an SMLR classifier.
 
@@ -77,6 +85,9 @@ class SMLR(Classifier):
             Use C (default) or Python as the implementation of
             stepwise_regression. C version brings significant speedup thus
             is the default one.
+          seed : int or None
+            Seed to be used to initialize random generator, might be used to
+            replicate the run
 
         TODO:
          # Add in likelihood calculation
@@ -90,15 +101,22 @@ class SMLR(Classifier):
         self.__convergence_tol = convergence_tol
         self.__maxiter = maxiter
         self.__base_bias = bias
+        self.__seed = seed
+
+        if not bias:
+            # no need to keep it enabled
+            self.states.disable('biases')
 
         # pylint friendly initializations
         self.__ulabels = None
-        self.__weights = None
+        self.__weights_all = None
+        """Contains all weights including bias values"""
 
         if not implementation.upper() in ['C', 'PYTHON']:
             raise ValueError, \
                   "Unknown implementation %s of stepwise_regression" % \
                   implementation
+
         self.__implementation = implementation
 
 
@@ -107,9 +125,9 @@ class SMLR(Classifier):
         """
         return "SMLR(lm=%f, convergence_tol=%g, maxiter=%d, " % \
                (self.__lm, self.__convergence_tol, self.__maxiter) + \
-               "bias=%s, implementation='%s', enabled_states=%s)" % \
+               "bias=%s, implementation='%s', seed=%s, enabled_states=%s)" % \
                (self.__base_bias, self.__implementation,
-                str(self.states.enabled))
+                self.__seed, str(self.states.enabled))
 
 
     def _pythonStepwiseRegression(self, w, X, XY, Xw, E,
@@ -138,6 +156,7 @@ class SMLR(Classifier):
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
 
         N.random.seed(seed)
+
         if __debug__:
             debug("SMLR_", "random seed=%s" % seed)
 
@@ -249,8 +268,7 @@ class SMLR(Classifier):
 #        print 'cycles=%d ; wasted basis=%g\n' % (cycles, wasted_basis/((M-1)*nd))
 
         # save the weights
-        self.__weights = w
-        self.weights = w
+        self.__weights_all = w
 
 
     def _train(self, dataset):
@@ -311,8 +329,6 @@ class SMLR(Classifier):
         else:
             verbosity = 0
 
-        seed = None
-
         # call the chosen version of stepwise_regression
         cycles = _stepwise_regression(w,
                                       X,
@@ -325,7 +341,7 @@ class SMLR(Classifier):
                                       self.__maxiter,
                                       self.__convergence_tol,
                                       verbosity,
-                                      seed)
+                                      self.__seed)
 
         if cycles >= self.__maxiter:
             # did not converge
@@ -334,10 +350,13 @@ class SMLR(Classifier):
                   (self.__maxiter)
 
         # save the weights
-        self.__weights = w
+        self.__weights_all = w
+        self.weights_all = w
+        self.weights = w[:dataset.nfeatures,:]
 
-        # save the weights state
-        self.weights = w
+        # and a bias
+        if self.__base_bias:
+            self.bias = w[-1,:]
 
         if __debug__:
             debug('SMLR_', "train finished in %s cycles on data.shape=%s " %
@@ -356,7 +375,7 @@ class SMLR(Classifier):
             data = N.hstack((data, N.ones((data.shape[0], 1), dtype=data.dtype)))
 
         # append the zeros column to the weights
-        w = N.hstack((self.__weights, N.zeros((self.__weights.shape[0], 1))))
+        w = N.hstack((self.__weights_all, N.zeros((self.__weights_all.shape[0], 1))))
 
         # determine the probability values for making the prediction
         dot_prod = N.dot(data, w)
@@ -376,7 +395,7 @@ class SMLR(Classifier):
         # generate predictions
         predictions = N.asarray([self.__ulabels[N.argmax(vals)]
                                  for vals in values])
-        self.predictions = predictions
+        # no need to assign state variable here -- would be done in Classifier._postpredict anyway
+        #self.predictions = predictions
 
         return predictions
-
