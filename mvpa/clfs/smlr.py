@@ -61,7 +61,7 @@ class SMLR(Classifier):
 
 
     def __init__(self, lm=.1, convergence_tol=1e-3,
-                 maxiter=10000, bias=1.0, implementation="C", seed=None,
+                 maxiter=10000, bias=True, implementation="C", seed=None,
                  **kwargs):
         """
         Initialize an SMLR classifier.
@@ -76,11 +76,9 @@ class SMLR(Classifier):
             lead to tighter convergence.
           maxiter : int
             Maximum number of iterations before stopping if not converged.
-          bias : float or list of float
+          bias : bool
             Whether to add a bias term to allow fits to data not through
-            zero.  Value 0 or None disables adding bias. In case of
-            multiclass classification single value would be replicated. If
-            list -- used directly
+            zero.
           implementation : basestr
             Use C (default) or Python as the implementation of
             stepwise_regression. C version brings significant speedup thus
