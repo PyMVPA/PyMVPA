@@ -26,9 +26,8 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
     on a given `Dataset`.
     """
 
-    # SMLR has no such one right?
-    #offsets = StateVariable(enabled=True,
-    #                        doc="Offsets of separating hyperplane")
+    biases = StateVariable(enabled=True,
+                           doc="Biases")
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -44,7 +43,7 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
                               % (`clf`, `type(clf)`)
 
         # clf must have weights enabled
-        clf.states.enable('weights')
+        clf.states.enable(['weights', 'biases'])
         
         # init base classes first
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
@@ -61,8 +60,9 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
         # take the mean over classes
         weights = N.mean(self.clf.weights, axis=1)
 
-        # ignore the bias term if it's there
-        weights = weights[:dataset.nsamples]
+        # TODO: verify why was failing on unittests without isSet check
+        if self.clf.states.isActive('biases') and self.clf.states.isSet('biases'):
+            self.biases = self.clf.biases
 
         if __debug__:
             debug('SVM',
