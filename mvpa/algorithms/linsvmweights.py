@@ -28,7 +28,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     """
 
     biases = StateVariable(enabled=True,
-                           doc="Offsets of separating hyperplane")
+                           doc="Offsets of separating hyperplanes")
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
