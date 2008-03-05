@@ -65,7 +65,6 @@ lsvm = LinearNuSVMC(probability=1)
 
 # enable saving of the values used for the prediction
 lsvm.states.enable('values')
-lsvm.states.enable('weights')
 
 # train with the known points
 lsvm.train(trainpat)
@@ -79,8 +78,12 @@ lsvm_confusion = ConfusionMatrix(
     predictions=pre)
 
 # now train SVM with selected features
-newtrainpat = trainpat.selectFeatures(smlr.weights!=0, sort=False)
-newtestpat = testpat.selectFeatures(smlr.weights!=0, sort=False)
+print "Evaluating Linear SVM classifier with SMLR's features..."
+
+keepInd = (smlr.weights.mean(axis=1)!=0)
+print keepInd.shape
+newtrainpat = trainpat.selectFeatures(keepInd, sort=False)
+newtestpat = testpat.selectFeatures(keepInd, sort=False)
 
 # train with the known points
 lsvm.train(newtrainpat)
