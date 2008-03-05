@@ -67,7 +67,7 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
         if __debug__:
             debug('SVM',
                   "Extracting weights for %d-class SMLR" %
-                  (self.clf.w.shape[1]+1) +
+                  (self.clf.weights.shape[1]+1) +
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 
