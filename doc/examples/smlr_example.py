@@ -47,6 +47,7 @@ smlr = SMLR(lm=1.5)
 
 # enable saving of the values used for the prediction
 smlr.states.enable('values')
+smlr.states.enable('weights')
 
 # train with the known points
 smlr.train(trainpat)
@@ -77,5 +78,6 @@ lsvm_confusion = ConfusionMatrix(
     labels=trainpat.uniquelabels, targets=testpat.labels,
     predictions=pre)
 
-print "SMLR Percent Correct:\t%g%%" % (smlr_confusion.percentCorrect)
+print "SMLR Percent Correct:\t%g%% (Retained %d/%d features)" % (smlr_confusion.percentCorrect,
+                                                                (smlr.weights!=0).sum(), nfeat)
 print "linear-SVM Percent Correct:\t%g%%" % (lsvm_confusion.percentCorrect)
