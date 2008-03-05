@@ -47,7 +47,6 @@ smlr = SMLR(lm=1.5)
 
 # enable saving of the values used for the prediction
 smlr.states.enable('values')
-smlr.states.enable('weights')
 
 # train with the known points
 smlr.train(trainpat)
@@ -66,6 +65,7 @@ lsvm = LinearNuSVMC(probability=1)
 
 # enable saving of the values used for the prediction
 lsvm.states.enable('values')
+lsvm.states.enable('weights')
 
 # train with the known points
 lsvm.train(trainpat)
@@ -78,6 +78,23 @@ lsvm_confusion = ConfusionMatrix(
     labels=trainpat.uniquelabels, targets=testpat.labels,
     predictions=pre)
 
+# now train SVM with selected features
+newtrainpat = trainpat.selectFeatures(smlr.weights!=0, sort=False)
+newtestpat = testpat.selectFeatures(smlr.weights!=0, sort=False)
+
+# train with the known points
+lsvm.train(newtrainpat)
+
+# run the predictions on the test values
+pre = lsvm.predict(newtestpat.samples)
+
+# calculate the confusion matrix
+lsvm_confusion_sparse = ConfusionMatrix(
+    labels=newtrainpat.uniquelabels, targets=newtestpat.labels,
+    predictions=pre)
+
+
 print "SMLR Percent Correct:\t%g%% (Retained %d/%d features)" % (smlr_confusion.percentCorrect,
                                                                 (smlr.weights!=0).sum(), nfeat)
 print "linear-SVM Percent Correct:\t%g%%" % (lsvm_confusion.percentCorrect)
+print "linear-SVM Percent Correct (with SMLR features):\t%g%%" % (lsvm_confusion_sparse.percentCorrect)
