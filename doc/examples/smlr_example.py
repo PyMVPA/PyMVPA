@@ -81,7 +81,6 @@ lsvm_confusion = ConfusionMatrix(
 print "Evaluating Linear SVM classifier with SMLR's features..."
 
 keepInd = (smlr.weights.mean(axis=1)!=0)
-print keepInd.shape
 newtrainpat = trainpat.selectFeatures(keepInd, sort=False)
 newtestpat = testpat.selectFeatures(keepInd, sort=False)
 
