@@ -12,8 +12,6 @@ and runs it multiple times on differents splits of a `Dataset`.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import StateVariable

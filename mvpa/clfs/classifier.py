@@ -15,7 +15,8 @@ Base Classifiers can be grouped according to their function as
   SplitClassifier
 :group ProxyClassifiers: BinaryClassifier MappedClassifier
   FeatureSelectionClassifier
-:group PredictionsCombiners for CombinedClassifier: PredictionsCombiner MaximalVote
+:group PredictionsCombiners for CombinedClassifier: PredictionsCombiner
+  MaximalVote
 
 """
 
@@ -31,7 +32,7 @@ from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful
 
-from transerror import ConfusionMatrix
+from mvpa.clfs.transerror import ConfusionMatrix
 
 from mvpa.misc import warning
 
@@ -624,8 +625,6 @@ class ClassifierCombiner(PredictionsCombiner):
 
         # XXX What is it, Exception or Return?
         raise NotImplementedError
-        self.predictions = predictions
-        return predictions
 
 
 

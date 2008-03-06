@@ -19,14 +19,13 @@ iterable container.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
 import copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
 from mvpa.clfs.svm import LinearSVM
 from mvpa.clfs.smlr import SMLR
-from mvpa.misc.transformers import Absolute, Identity, FirstAxisMean
+from mvpa.misc.transformers import Absolute, FirstAxisMean
 
 if __debug__:
     from mvpa.misc import debug
