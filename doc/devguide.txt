@@ -312,7 +312,7 @@ categories:
   * *OPT* : optimization
   * *BK* : breaks something and/or tests fail
   * *PL* : making pylint happier
-
+  * *DOC*: for all kinds of documentation related commits
 
 .. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 .. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
