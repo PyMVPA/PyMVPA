@@ -141,9 +141,74 @@ go into `mvpa/datasets/`
 Adding a new Classifier
 ~~~~~~~~~~~~~~~~~~~~~~~
 
- * when states and when properties?
+To add a new classifier implementation it is sufficient to create a new
+sub-class of Classifier_ and add implementations of the following methods:
 
-go into `mvpa/clfs/`
+`__init__(**kwargs)`
+    Additional arguments and keyword arguments may be added, but the base-class
+    contructor has to be called with `**kwargs`!
+
+`_train(dataset)`
+    Has to train the classifier when it is called with a Dataset_. Successive
+    calls to this methods always have to train the classifier on the respective
+    datasets. An eventually existing prior training status has to be cleared
+    automatically. Nothing is returned.
+
+`_predict(data)`
+    Unlike `_train()` the method is not called with a Dataset_ instance, but
+    with any sequence of data samples (e.g. arrays). It has to return a
+    sequence of predictions, one for each data sample.
+
+With this minimal implementation the classifier provides some useful
+functionality, by automatically storing some relevant information upon request
+in state variables.
+
+================== ==============================================   =========
+    State Name      Description                                      Default
+------------------ ----------------------------------------------   ---------
+trained_labels      Set of unique labels it has been trained on.     Enabled
+trained_dataset     The dataset it has been trained on.              Disabled
+trained_confusion   Confusion matrix of learning performance.        Disabled
+predictions         Most recent set of predictions.                  Enabled
+values              Internal classifier values the most recent       Disabled
+                    predictions are based on.
+================== ==============================================   =========
+
+If any intended functionality cannot be realized be implementing above methods.
+The Classifier_ class offers some additionals methods that might be overriden
+by sub-classes. For all methods described below it is strongly recommended to
+call the base-class methods at the end of the implementation in the sub-class
+to preserve the full functionality.
+
+`_pretrain(dataset)`
+    Called with the Dataset_ instance that shall be trained with, but before
+    the actual training is performed.
+
+`_posttrain(dataset)`
+    Called with the Dataset_ instance the classifier was trained on, just after 
+    training was performed.
+
+`_prepredict(data)`
+    Called with the data samples the classifier should do a prediction with,
+    just before the actual `_prediction()` call.
+
+`_postpredict(data, result)`
+    Called with the data sample for which predictions were made and the
+    resulting predictions themselves.
+
+
+Source code files of all classifier implementations go into `mvpa/clfs/`.
+
+
+.. _Classifier: api/mvpa.clfs.classifier.Classifier-class.html
+
+
+Outstanding Questions:
+
+	* when states and when properties?
+
+
+
 
 Adding a new Sensitivity Analyzer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
