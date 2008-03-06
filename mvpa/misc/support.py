@@ -161,3 +161,40 @@ def getBreakPoints(items, contiguous=True):
             result.append(index)
         prev = item
     return result
+
+
+class MapOverlap(object):
+    """Compute some overlap stats from a sequence of binary maps.
+
+    When called with a sequence of binary maps (e.g. lists or arrays) the
+    fraction of mask elements that are non-zero in a customizable proportion
+    of the maps is returned. By default this threshold is set to 1.0, i.e.
+    such an element has to be non-zero in *all* maps.
+
+    Three additional maps (same size as original) are computed:
+
+      * overlap_map: binary map which is non-zero for each overlapping element.
+      * spread_map:  binary map which is non-zero for each element that is
+                     non-zero in any map, but does not exceed the overlap
+                     threshold.
+      * ovstats_map: map of float with the raw elementwise fraction of overlap.
+
+    All maps are available via class members.
+    """
+    def __init__(self, overlap_threshold=1.0):
+        """Nothing to be seen here.
+        """
+        self.__overlap_threshold = overlap_threshold
+
+    def __call__(self, maps):
+        """Returns fraction of overlapping elements.
+        """
+        ovstats = N.mean(maps, axis=0)
+
+        self.overlap_map = (ovstats >= self.__overlap_threshold )
+        self.spread_map = N.logical_and(ovstats > 0.0,
+                                        ovstats < self.__overlap_threshold)
+        self.ovstats_map = ovstats
+
+        return N.mean(ovstats >= self.__overlap_threshold)
+
