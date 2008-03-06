@@ -10,8 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-
 from copy import copy
 
 from mvpa.algorithms.datameasure import ScalarDatasetMeasure
