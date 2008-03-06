@@ -13,12 +13,9 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from math import floor
-from numpy import arange
 
 from mvpa.misc.vproperty import VProperty
-from mvpa.misc import warning
 from mvpa.misc.state import StateVariable, Stateful
-from mvpa.misc.exceptions import UnknownStateError
 
 if __debug__:
     from mvpa.misc import debug

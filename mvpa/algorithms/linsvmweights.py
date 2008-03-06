@@ -13,8 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.clfs.svm import LinearSVM
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer, \
-     selectAnalyzer
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
@@ -41,7 +40,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         if not isinstance(clf, LinearSVM):
             raise ValueError, \
                   "Classifier %s has to be a LinearSVM, but is [%s]" \
-                              % (`clf`, `type(clf)`)
+                              % (str(clf), str(type(clf)))
 
         # init base classes first
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
@@ -52,7 +51,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         """
         if self.clf.model.nr_class != 2:
             warning("You are estimating sensitivity for SVM %s trained on %d" %
-                    (`self.clf`, self.clf.model.nr_class) +
+                    (str(self.clf), self.clf.model.nr_class) +
                     " classes. Make sure that it is what you intended to do" )
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
@@ -72,10 +71,11 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
 
         if __debug__:
             debug('SVM',
-                  "Extracting weights for %d-class SVM: #SVs=%s, " %
-                  (self.clf.model.nr_class, `self.clf.model.getNSV()`) +
-                  " SVcoefshape=%s SVs.shape=%s Rhos=%s. Result: min=%f max=%f" %\
-                  (svcoef.shape, svs.shape, rhos, N.min(weights), N.max(weights)))
+                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
+                  (self.clf.model.nr_class, str(self.clf.model.getNSV())) + \
+                  " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
+                  (svcoef.shape, svs.shape, rhos) + \
+                  " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
 
         return weights
 

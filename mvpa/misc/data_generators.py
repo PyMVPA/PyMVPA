@@ -13,21 +13,17 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.classifier import Classifier
-from mvpa.misc.state import Stateful
 
-if __debug__:
-    from mvpa.misc import debug
 
 def dumbFeatureDataset():
-    data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
-            [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
-            [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
-    regs = [1 for i in range(8)] \
-         + [2 for i in range(8)] \
-         + [3 for i in range(8)]
+    data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
+            [5, 0], [5, 1], [6, 0], [6, 1], [7, 0], [7, 1], [8, 0], [8, 1],
+            [9, 0], [9, 1], [10, 0], [10, 1], [11, 0], [11, 1], [12, 0],
+            [12, 1]]
+    regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
     return Dataset(samples=data, labels=regs)
+
 
 def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                          means=None, nonbogus_features=None, snr=1.0):
@@ -56,8 +52,10 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
         # add mean
         data += N.repeat(N.array(means, ndmin=2), perlabel, axis=0)
     labels = N.concatenate([N.repeat(i, perlabel) for i in range(nlabels)])
-    chunks = N.concatenate([N.repeat(range(nchunks), perlabel/nchunks) for i in range(nlabels)])
+    chunks = N.concatenate([N.repeat(range(nchunks),
+                                     perlabel/nchunks) for i in range(nlabels)])
     return Dataset(samples=data, labels=labels, chunks=chunks)
+
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     """ Create a 2d dataset with a clear multivariate signal, but no
@@ -71,25 +69,22 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     """
 
     # start with noise
-    data=N.random.normal(size=(4*patterns,2))
+    data = N.random.normal(size=(4*patterns, 2))
 
     # add signal
-    data[:2*patterns,1] += signal2noise
+    data[:2*patterns, 1] += signal2noise
 
-    data[2*patterns:4*patterns,1] -= signal2noise
-    data[:patterns,0] -= signal2noise
-    data[2*patterns:3*patterns,0] -= signal2noise
-    data[patterns:2*patterns,0] += signal2noise
-    data[3*patterns:4*patterns,0] += signal2noise
+    data[2*patterns:4*patterns, 1] -= signal2noise
+    data[:patterns, 0] -= signal2noise
+    data[2*patterns:3*patterns, 0] -= signal2noise
+    data[patterns:2*patterns, 0] += signal2noise
+    data[3*patterns:4*patterns, 0] += signal2noise
 
     # two conditions
-    regs = [0 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [1 for i in xrange(patterns)] \
-        + [0 for i in xrange(patterns)]
-    regs = N.array(regs)
+    regs = N.array(([0] * patterns) + ([1] * 2 * patterns) + ([0] * patterns))
 
     return Dataset(samples=data, labels=regs, chunks=chunks)
+
 
 def getMVPattern(s2n):
     run1 = pureMultivariateSignal(5, s2n, 1)
