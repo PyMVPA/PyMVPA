@@ -9,7 +9,8 @@
 """Misc function performing operations on datasets.
 
 TODO: shouldn't it be gone under mvpa.misc.signal? or may be smth like
-mvpa.misc.stats? Or may be we should have mvpa.processing to store this bastards?
+mvpa.misc.stats? Or may be we should have mvpa.processing to store this
+bastards?
 
 """
 

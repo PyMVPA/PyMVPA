@@ -16,9 +16,6 @@ from scipy.linalg import lstsq
 
 from mvpa.clfs.classifier import Classifier
 
-if __debug__:
-    from mvpa.misc import debug
-
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
@@ -39,6 +36,9 @@ class RidgeReg(Classifier):
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
+
+        # pylint happiness
+        self.w = None
 
         # It does not make sense to calculate a confusion matrix for a
         # ridge regression

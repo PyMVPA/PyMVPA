@@ -15,8 +15,6 @@ import re
 
 from copy import deepcopy
 
-if __debug__:
-    from mvpa.misc import debug
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """This function transforms a dataset by calculating the mean of a set of
@@ -85,15 +83,18 @@ def getUniqueLengthNCombinations(data, n):
                     # flag the current element as touched
                     occupied[i] = True
                     # next level
-                    take(data, occupied, depth+1, taken + [data[i]])
-                    # 'free' the current element
-                    occupied[i] == False
+                    take(data, occupied, depth+1, taken + [d])
+                    # if the current element would be set 'free', it would
+                    # results in ALL combinations of elements (obeying order
+                    # of elements) and not just in the unique sets of
+                    # combinations (without order)
+                    #occupied[i] = False
                 else:
                     # store the final combination
-                    combos.append(taken + [data[i]])
+                    combos.append(taken + [d])
     # some kind of bitset that stores the status of each element
     # (contained in combination or not)
-    occupied = [ False for i in data ]
+    occupied = [False] * len(data)
     # get the combinations
     take(data, occupied, 0, [])
 
@@ -107,7 +108,7 @@ def indentDoc(v):
     Needed for a cleaner __repr__ output
     `v` - arbitrary
     """
-    return re.sub('\n', '\n  ', `v`)
+    return re.sub('\n', '\n  ', str(v))
 
 
 def isSorted(items):
@@ -141,7 +142,7 @@ def getBreakPoints(items, contiguous=True):
 
     :return: list of indexes for every new set of items
     """
-
+    prev = None # pylint happiness event!
     known = []
     """List of items which was already seen"""
     result = []
@@ -153,7 +154,7 @@ def getBreakPoints(items, contiguous=True):
                 if prev != item:            # breakpoint
                     if contiguous:
                         raise ValueError, \
-                        "Item %s was already seen before" % `item`
+                        "Item %s was already seen before" % str(item)
                     else:
                         result.append(index)
         else:
@@ -185,6 +186,12 @@ class MapOverlap(object):
         """Nothing to be seen here.
         """
         self.__overlap_threshold = overlap_threshold
+
+        # pylint happiness block
+        self.overlap_map = None
+        self.spread_map = None
+        self.ovstats_map = None
+
 
     def __call__(self, maps):
         """Returns fraction of overlapping elements.
