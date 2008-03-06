@@ -76,6 +76,27 @@ class SupportFxTests(unittest.TestCase):
                              [0, 3, 6, 8])
 
 
+    def testMapOverlap(self):
+        mo = MapOverlap()
+
+        maps = [[1,0,1,0],
+                [1,0,0,1],
+                [1,0,1,0]]
+
+        overlap = mo(maps)
+
+        self.failUnlessEqual(overlap, 1./len(maps[0]))
+        self.failUnless((mo.overlap_map == [1,0,0,0]).all())
+        self.failUnless((mo.spread_map == [0,0,1,1]).all())
+        self.failUnless((mo.ovstats_map == [1,0,2./3,1./3]).all())
+
+        mo = MapOverlap(overlap_threshold=0.5)
+        overlap = mo(maps)
+        self.failUnlessEqual(overlap, 2./len(maps[0]))
+        self.failUnless((mo.overlap_map == [1,0,1,0]).all())
+        self.failUnless((mo.spread_map == [0,0,0,1]).all())
+        self.failUnless((mo.ovstats_map == [1,0,2./3,1./3]).all())
+
 
 def suite():
     return unittest.makeSuite(SupportFxTests)
