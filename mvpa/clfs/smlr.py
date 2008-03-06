@@ -15,7 +15,6 @@ import numpy as N
 
 from mvpa.clfs.classifier import Classifier
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.misc.state import StateVariable
 
 # Uber-fast C-version of the stepwise regression
 from mvpa.clfs.libsmlr import stepwise_regression as _cStepwiseRegression
@@ -49,16 +48,9 @@ class SMLR(Classifier):
     use this for your work.
     """
 
-    weights = StateVariable(enabled=True,
-        doc="Weights of the trained classifier")
-
-    biases = StateVariable(enabled=True,
-        doc="Biases (if `has_bias`==`True`) of the trained classifier")
-
-
-    def __init__(self, lm=.1, convergence_tol=1e-3,
-                 maxiter=10000, has_bias=True, implementation="C", seed=None,
-                 **kwargs):
+    def __init__(self, lm=.1, convergence_tol=1e-3, resamp_decay=.5,
+                 min_resamp=.001, maxiter=10000, has_bias=True,
+                 implementation="C", seed=None, **kwargs):
         """
         Initialize an SMLR classifier.
 
@@ -72,6 +64,12 @@ class SMLR(Classifier):
             lead to tighter convergence.
           maxiter : int
             Maximum number of iterations before stopping if not converged.
+          resamp_decay : float
+            Rate of decay in the probability of resampling a zero weight.
+            1.0 will immediately decrease to the min_resamp from 1.0,
+            0.0 will never decrease from 1.0.
+          min_resamp : float
+            Minimum resampling probability for zeroed weights.
           has_bias : bool
             Whether to add a bias term to allow fits to data not through
             zero.
@@ -93,6 +91,8 @@ class SMLR(Classifier):
         # set the parameters
         self.__lm = lm
         self.__convergence_tol = convergence_tol
+        self.__resamp_decay = resamp_decay
+        self.__min_resamp = min_resamp
         self.__maxiter = maxiter
         self.__has_bias = has_bias
         self.__seed = seed
@@ -103,8 +103,13 @@ class SMLR(Classifier):
 
         # pylint friendly initializations
         self.__ulabels = None
+        """Unigue labels from the training set."""
         self.__weights_all = None
         """Contains all weights including bias values"""
+        self.__weights = None
+        """Just the weights, without the biases"""
+        self.__biases = None
+        """The biases, will remain none if has_bias is False"""
 
         if not implementation.upper() in ['C', 'PYTHON']:
             raise ValueError, \
@@ -117,21 +122,25 @@ class SMLR(Classifier):
     def __repr__(self):
         """String representation of the object
         """
-        return "SMLR(lm=%f, convergence_tol=%g, maxiter=%d, " % \
-               (self.__lm, self.__convergence_tol, self.__maxiter) + \
+        return "SMLR(lm=%f, convergence_tol=%g, " % \
+               (self.__lm, self.__convergence_tol) + \
+               "resamp_decay=%f, min_resamp=%f, maxiter=%d, " % \
+               (self.__resamp_decay, self.__min_resamp, self.__maxiter) + \
                "has_bias=%s, implementation='%s', seed=%s, enabled_states=%s)" % \
                (self.__has_bias, self.__implementation,
                 self.__seed, str(self.states.enabled))
 
 
     def _pythonStepwiseRegression(self, w, X, XY, Xw, E,
-                                    auto_corr,
-                                    lambda_over_2_auto_corr,
-                                    S,
-                                    maxiter,
-                                    convergence_tol,
-                                    verbose,
-                                    seed = None):
+                                  auto_corr,
+                                  lambda_over_2_auto_corr,
+                                  S,
+                                  maxiter,
+                                  convergence_tol,
+                                  resamp_decay,
+                                  min_resamp,
+                                  verbose,
+                                  seed = None):
         """The (much slower) python version of the stepwise
         regression.  I'm keeping this around for now so that we can
         compare results."""
@@ -146,8 +155,8 @@ class SMLR(Classifier):
         converged = False
         incr = N.finfo(N.float).max
         non_zero, basis, m, wasted_basis, cycles = 0, 0, 0, 0, 0
-        decrease_factor, test_zero_basis = 1., 1.
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
+        p_resamp = N.ones(w.shape,dtype=N.float)
 
         N.random.seed(seed)
 
@@ -161,7 +170,7 @@ class SMLR(Classifier):
             w_old = w[basis, m]
 
             # see if we're gonna update
-            if (w_old != 0) or N.random.rand() <= test_zero_basis:
+            if (w_old != 0) or N.random.rand() < p_resamp[basis, m]:
                 # let's do it
                 # get the probability
                 P = E[:, m]/S
@@ -179,15 +188,23 @@ class SMLR(Classifier):
                     # unmark from being zero if necessary
                     if w_old == 0:
                         non_zero += 1
+                        # reset the prob of resampling
+                        p_resamp[basis, m] = 1.0
                 elif w_new < -lambda_over_2_auto_corr[basis]:
                     w_new += lambda_over_2_auto_corr[basis]
                     changed = True
                     # unmark from being zero if necessary
                     if w_old == 0:
                         non_zero += 1
+                        # reset the prob of resampling
+                        p_resamp[basis, m] = 1.0
                 else:
                     # gonna zero it out
                     w_new = 0.0
+
+                    # decrease the p_resamp
+                    p_resamp[basis, m] -= (p_resamp[basis, m] - \
+                                           min_resamp) * resamp_decay;
 
                     # set number of non-zero
                     if w_old == 0:
@@ -230,20 +247,19 @@ class SMLR(Classifier):
                     # save the new weights
                     converged = incr < convergence_tol
 
-                    # update the zero test factors
-                    decrease_factor *= (non_zero/float((M-1)*nd))
-                    test_zero_basis *= decrease_factor
-
                     if __debug__:
                         debug("SMLR_", \
                               "cycle=%d ; incr=%g ; non_zero=%d ; " %
                               (cycles, incr, non_zero) +
+                              "wasted_basis=%d ; " %
+                              (wasted_basis) +
                               "sum2_w_old=%g ; sum2_w_diff=%g" %
                               (sum2_w_old, sum2_w_diff))
 
-                    # reset the sum diffs
+                    # reset the sum diffs and wasted_basis
                     sum2_w_diff = 0.0
                     sum2_w_old = 0.0
+                    wasted_basis = 0
 
 
         if not converged:
@@ -260,9 +276,6 @@ class SMLR(Classifier):
 #                  (cycles, XXX))
 
 #        print 'cycles=%d ; wasted basis=%g\n' % (cycles, wasted_basis/((M-1)*nd))
-
-        # save the weights
-        self.__weights_all = w
 
 
     def _train(self, dataset):
@@ -334,6 +347,8 @@ class SMLR(Classifier):
                                       S,
                                       self.__maxiter,
                                       self.__convergence_tol,
+                                      self.__resamp_decay,
+                                      self.__min_resamp,
                                       verbosity,
                                       self.__seed)
 
@@ -345,11 +360,11 @@ class SMLR(Classifier):
 
         # save the weights
         self.__weights_all = w
-        self.weights = w[:dataset.nfeatures,:]
+        self.__weights = w[:dataset.nfeatures,:]
 
         # and a bias
         if self.__has_bias:
-            self.biases = w[-1,:]
+            self.__biases = w[-1,:]
 
         if __debug__:
             debug('SMLR_', "train finished in %s cycles on data.shape=%s " %
@@ -394,3 +409,5 @@ class SMLR(Classifier):
         return predictions
 
     has_bias = property(lambda self: self.__has_bias)
+    biases = property(lambda self: self.__biases)
+    weights = property(lambda self: self.__weights)
