@@ -226,13 +226,25 @@ Source code files of all sensitivity analyzer implementations go into
 Classifier-independent Sensitivity Analyzers
 ''''''''''''''''''''''''''''''''''''''''''''
 
+All sensitivity analyzers (actually all objects based on DatasetMeasure_)
+support a `transformer` keyword argument to their constructor. The functor
+passed as its value is called with the to be returned results and its outcome
+is returned as the final results. By default no transformation is performed.
+
+To add a new sensitivity analyzer implementation it is sufficient to create a
+new sub-class of SensitivityAnalyzer_ and add an implementation of the
+`_call(dataset)` method. It will be called with an instance of Dataset_ and has
+to return a vector of featurewise sensitivity scores.
+
+
+Supported state(s):
+
 ================== ==============================================   =========
     State Name      Description                                      Default
 ------------------ ----------------------------------------------   ---------
 raw_result          Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
-
 
 
 Classifier-based Sensitivity Analyzers
@@ -247,9 +259,11 @@ embedded classifier object is provided via the `clf` property.
 
 Outstanding Questions:
 
-	* What is a ProxyClassifierSensitivityAnalyzer_ useful for?
+  * What is a ProxyClassifierSensitivityAnalyzer_ useful for?
+  * Shouldn't there be a `sensitivities` state?
 
 
+.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
 .. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
 .. _ClassifierBasedSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ClassifierBasedSensitivityAnalyzer-class.html
 .. _ProxyClassifierSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ProxyClassifierSensitivityAnalyzer-class.html
