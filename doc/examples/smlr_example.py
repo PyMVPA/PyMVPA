@@ -16,6 +16,9 @@ from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import ConfusionMatrix
 
+#from mvpa.misc import debug
+#debug.active.append('SMLR_')
+
 # features of sample data
 print "Generating samples..."
 nfeat = 10000
@@ -43,7 +46,7 @@ testpat = patternsPos + patternsNeg
 
 # set up the SMLR classifier
 print "Evaluating SMLR classifier..."
-smlr = SMLR(lm=1.5)
+smlr = SMLR()
 
 # enable saving of the values used for the prediction
 smlr.states.enable('values')
