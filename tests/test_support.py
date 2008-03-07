@@ -98,6 +98,37 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless((mo.ovstats_map == [1,0,2./3,1./3]).all())
 
 
+    def _testLoop(self):
+
+        def genN(N=5, justi=False):
+            for i in xrange(N):
+                print "Y: ",i
+                if justi:
+                    yield i
+                else:
+                    yield i, "b" * i
+
+        def caller(*args, **kwargs):
+            """Accumulate me please"""
+            print "ARGS: ", args
+            print "KWARGS: ", kwargs
+
+        def callerAB(a, b):
+            return "%s:%s " %(a, b)
+
+        class callerC(object):
+            def __init__(self):
+                self.i = 0
+
+            def __call__(self, a, b):
+                self.i += 1
+                return a
+
+        r1 = loop(genN, callerC(), attribs=["i"])
+        r2 = loop(lambda :genN(justi=False), callerAB)
+        print r1
+        print r2
+
 def suite():
     return unittest.makeSuite(SupportFxTests)
 

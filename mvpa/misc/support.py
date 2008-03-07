@@ -13,8 +13,11 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re
 
-from copy import deepcopy
+from copy import copy, deepcopy
+from operator import isSequenceType
 
+if __debug__:
+    from mvpa.misc import debug
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """This function transforms a dataset by calculating the mean of a set of
@@ -205,3 +208,104 @@ class MapOverlap(object):
 
         return N.mean(ovstats >= self.__overlap_threshold)
 
+
+class Loop(object):
+    """World domination helper: do whatever it is asked and accumulate results
+
+    XXX Thinks about:
+      - Can we have multiple 'call's?
+      - Might we need to deepcopy attributes values?
+      - Might we need to specify what attribs to copy and which just to bind?
+    """
+
+    def __init__(self, looper, call,
+                 unroll=True, attribs=None, copy_attribs=True):
+        """Initialize
+
+        :Parameters:
+          looper
+            Generator which feeds the loop with new entries
+          call : Functor
+            Functor which is called in the loop
+          unroll : bool
+            Either to unroll output of looper into a list of arguments for
+            call
+          attribs : list of basestr
+            What attributes of call to store and return later on?
+          copy_attribs : bool
+            Force copying values of attributes
+        """
+
+        self.__looper = looper
+        """Generator which feeds the loop"""
+
+        self.__call = call
+        """Call which gets called in the loop"""
+
+        self.__unroll = unroll
+
+        if attribs is None: attribs = []
+        self.__attribs = attribs
+        self.__copy_attribs = copy_attribs
+
+
+    def __call__(self, *args, **kwargs):
+
+        # assign to local unroll since we might change it locally
+        # later on
+        unroll = self.__unroll
+
+        # Initialize retuned value -- dictionary of desired things
+        results = dict([ ('result', [])] +
+                       [(a, []) for a in self.__attribs])
+
+        # Lets do it!
+        for (i, X) in enumerate(self.__looper(*args, **kwargs)):
+
+            if i == 0 and unroll and not isSequenceType(X):
+
+                # XXX or should it be warning?
+                if __debug__:
+                    debug("LOOP",
+                          "Cannot unroll non-sequence result from looper %s" %
+                          `self.__looper` + " disabling unrolling")
+                unroll = False
+
+            if unroll:
+                result = self.__call(*X)
+            else:
+                result = self.__call(X)
+
+            if __debug__:
+                debug("LOOP", "Iteration %i on call %s. Got result %s" %
+                      (i, `self.__call`, `result`))
+
+
+            results['result'].append(result)
+
+            for attrib in self.__attribs:
+                attrv = self.__call.__getattribute__(attrib)
+
+                if self.__copy_attribs:
+                    attrv = copy(attrv)
+
+                results[attrib].append(attrv)
+
+        if len(self.__attribs)>0:
+            return results
+        else:
+            return results['result']
+
+
+def loop(looper, call,
+         unroll=True, attribs=None, copy_attribs=True, *args, **kwargs):
+    """XXX Loop twin brother
+
+    Helper for those who just wants to do smth like
+       loop(blah, bleh, grgr)
+     instead of
+       Loop(blah, bleh)(grgr)
+    """
+
+    return Loop(looper=looper, call=call, unroll=unroll,
+                attribs=attribs, copy_attribs=copy_attribs)(*args, **kwargs)
