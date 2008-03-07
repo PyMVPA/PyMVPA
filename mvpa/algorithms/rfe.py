@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     BestDetector, \
                                     NBackHistoryStopCrit, \
@@ -55,7 +56,7 @@ class RFE(FeatureSelection):
                  feature_selector=FractionTailSelector(0.05),
                  bestdetector=BestDetector(),
                  stopping_criterion=NBackHistoryStopCrit(BestDetector()),
-                 train_clf=True,
+                 train_clf=None,
                  update_sensitivity=True,
                  **kargs
                  ):
@@ -86,7 +87,9 @@ class RFE(FeatureSelection):
                 trained before computing the error. In general this is
                 required, but if the `sensitivity_analyzer` and
                 `transfer_error` share and make use of the same classifier it
-                can be switched off to save CPU cycles.
+                can be switched off to save CPU cycles. Default `None` checks
+                if sensitivity_analyzer is based on a classifier and doesn't train
+                if so.
             update_sensitivity : bool
                 If False the sensitivity map is only computed once and reused
                 for each iteration. Otherwise the senstitivities are
@@ -109,8 +112,12 @@ class RFE(FeatureSelection):
 
         self.__bestdetector = bestdetector
 
-        self.__train_clf = train_clf
-        """Flag whether training classifier is required."""
+        if train_clf is None:
+            self.__train_clf = isinstance(sensitivity_analyzer,
+                                          ClassifierBasedSensitivityAnalyzer)
+        else:
+            self.__train_clf = train_clf
+            """Flag whether training classifier is required."""
 
         self.__update_sensitivity = update_sensitivity
         """Flag whether sensitivity map is recomputed for each step."""
