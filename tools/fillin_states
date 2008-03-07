@@ -59,6 +59,8 @@ while i < len(inlines):
         keys = states.keys()
         keys.sort()
 
+        isthere = inlines[i+1].startswith("Supported st")
+
         suffix = ['', 's'][len(keys)>1]
         outlines.append("""
 Supported state%s:
@@ -83,9 +85,13 @@ Supported state%s:
 
         outlines.append("""================== ==============================================   =========\n""")
 
-        # aborb "older" lines until we hit good one
-        while not inlines[i].startswith('..'):
-            i += 1
+        if isthere:
+            count = 0
+            # aborb "older" lines until we hit good one
+            while count < 2:
+                count += inlines[i].startswith('======')
+                i += 1
+
 
 
 
