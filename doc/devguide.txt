@@ -163,6 +163,10 @@ With this minimal implementation the classifier provides some useful
 functionality, by automatically storing some relevant information upon request
 in state variables.
 
+.. IncludeStates: clfs.classifier Classifier
+
+Supported states:
+
 ================== ==============================================   =========
     State Name      Description                                      Default
 ------------------ ----------------------------------------------   ---------
@@ -236,8 +240,9 @@ new sub-class of SensitivityAnalyzer_ and add an implementation of the
 `_call(dataset)` method. It will be called with an instance of Dataset_ and has
 to return a vector of featurewise sensitivity scores.
 
+.. IncludeStates: algorithms.datameasure DatasetMeasure
 
-Supported state(s):
+Supported state:
 
 ================== ==============================================   =========
     State Name      Description                                      Default
@@ -255,6 +260,8 @@ classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
+
+.. IncludeStates: algorithms.datameasure ClassifierBasedSensitivityAnalyzer
 
 
 Outstanding Questions:

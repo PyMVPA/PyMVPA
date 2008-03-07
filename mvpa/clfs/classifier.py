@@ -104,20 +104,20 @@ class Classifier(Stateful):
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
     trained_labels = StateVariable(enabled=True,
-        doc="What labels (unique) clf was trained on")
+        doc="Set of unique labels it has been trained on")
 
     trained_dataset = StateVariable(enabled=False,
-        doc="What dataset clf was trained on")
+        doc="The dataset it has been trained on")
 
     training_confusion = StateVariable(enabled=False,
-        doc="Result of learning: `ConfusionMatrix` " \
-            "(and corresponding learning error)")
+        doc="Confusion matrix of learning performance")
 
     predictions = StateVariable(enabled=True,
-        doc="Reported predicted values")
+        doc="Most recent set of predictions")
 
     values = StateVariable(enabled=False,
-        doc="Internal values seen by the classifier")
+        doc="Internal classifier values the most recent " +
+            "predictions are based on")
 
 
     params = {}
