@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc import verbose
+from mvpa.misc import warning
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.classifier import Classifier
 
@@ -29,8 +29,9 @@ class kNN(Classifier):
 
     def __init__(self, k=2, **kwargs):
         """
-        Parameters:
-          k:       number of nearest neighbours to be used for voting
+        :Parameters:
+          k
+            number of nearest neighbours to be used for voting
         """
         # init base class first
         Classifier.__init__(self, train2predict=False, **kwargs)
@@ -64,7 +65,7 @@ class kNN(Classifier):
                 str(data.samples.dtype).startswith('uint') \
                 or str(data.samples.dtype).startswith('int'):
                 kNN.__warned = True
-                verbose(1, "kNN: input data is in integers. " + \
+                warning("kNN: input data is in integers. " + \
                         "Overflow on arithmetic operations might result in"+\
                         " errors. Please convert dataset's samples into" +\
                         " floating datatype if any error is reported.")
