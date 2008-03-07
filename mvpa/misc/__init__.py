@@ -128,6 +128,7 @@ if __debug__:
     debug.register('DBG',  "Debug output itself")
     debug.register('TEST', "Debug unittests")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
+    debug.register('LOOP', "Support's loop construct")
     debug.register('PLR',  "PLR call")
     debug.register('SLC',  "Searchlight call")
     debug.register('SA',   "Sensitivity analyzers call")
