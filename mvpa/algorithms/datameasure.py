@@ -39,7 +39,8 @@ class DatasetMeasure(Stateful):
     """
 
     raw_result = StateVariable(enabled=False,
-        doc="Result before applying transformer")
+        doc="Computed results before applying any " +
+            "transformation algorithm")
 
     def __init__(self, transformer=None, *args, **kwargs):
         """Does nothing special.
