@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+""" """
 
 __docformat__ = 'restructuredtext'
 
@@ -55,11 +55,11 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
                     " classes. Make sure that it is what you intended to do" )
 
         # take the mean over classes
-        weights = N.mean(self.clf.weights, axis=1)
+        weights = N.abs(self.clf.weights).mean(axis=1)
 
         # TODO: verify why was failing on unittests without isSet check
         if self.clf.has_bias:
-            self.biases = self.clf.biases
+            self.biases = N.abs(self.clf.biases)
 
         if __debug__:
             debug('SVM',
