@@ -13,6 +13,12 @@ import unittest
 import numpy as N
 
 from mvpa.misc.support import *
+from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.clfs.transerror import TransferError
+from tests_warehouse import getMVPattern
+from mvpa.clfs.knn import kNN
+
+
 
 class SupportFxTests(unittest.TestCase):
 
@@ -98,36 +104,44 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless((mo.ovstats_map == [1,0,2./3,1./3]).all())
 
 
-    def _testLoop(self):
+    def testHarvester(self):
+        # do very simple list comprehension
+        self.failUnlessEqual(
+            [(-1)*i for i in range(5)],
+            Harvester(xrange,
+                      [HarvesterCall(lambda x: (-1)*x, expand_args=False)])
+            (5))
 
-        def genN(N=5, justi=False):
-            for i in xrange(N):
-                print "Y: ",i
-                if justi:
-                    yield i
-                else:
-                    yield i, "b" * i
 
-        def caller(*args, **kwargs):
-            """Accumulate me please"""
-            print "ARGS: ", args
-            print "KWARGS: ", kwargs
+        # do clf cross-validation on a dataset with a very high SNR
+        cv = Harvester(NFoldSplitter(cvtype=1),
+                       [HarvesterCall(TransferError(kNN()), argfilter=[1,0])])
+        data = getMVPattern(10)
+        err = N.array(cv(data))
 
-        def callerAB(a, b):
-            return "%s:%s " %(a, b)
+        # has to be perfect
+        self.failUnless((err < 0.1).all())
+        self.failUnlessEqual(err.shape, (len(data.uniquechunks),))
 
-        class callerC(object):
-            def __init__(self):
-                self.i = 0
+        # now same stuff but two classifiers at once
+        cv = Harvester(NFoldSplitter(cvtype=1),
+                  [HarvesterCall(TransferError(kNN()), argfilter=[1,0]),
+                   HarvesterCall(TransferError(kNN()), argfilter=[1,0])])
+        err = N.array(cv(data))
+        self.failUnlessEqual(err.shape, (2,len(data.uniquechunks)))
 
-            def __call__(self, a, b):
-                self.i += 1
-                return a
+        # only one again, but this time remember confusion matrix
+        cv = Harvester(NFoldSplitter(cvtype=1),
+                  [HarvesterCall(TransferError(kNN(),
+                                               enable_states=['confusion']),
+                                 argfilter=[1,0], attribs=['confusion'])])
+        res = cv(data)
 
-        r1 = loop(genN, callerC(), attribs=["i"])
-        r2 = loop(lambda :genN(justi=False), callerAB)
-        print r1
-        print r2
+        self.failUnless(isinstance(res, dict))
+        self.failUnless(res.has_key('confusion') and res.has_key('result'))
+        self.failUnless(len(res['result']) == len(data.uniquechunks))
+
+
 
 def suite():
     return unittest.makeSuite(SupportFxTests)
