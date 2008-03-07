@@ -232,9 +232,10 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
         if basic_analyzer is None and len(clf.clfs) > 0:
             basic_analyzer = selectAnalyzer(clf.clfs[0], **kwargs)
             if __debug__:
-                debug("SA", "Selected basic analyzer %s for classifier %s " +
+                debug("SA", "Selected basic analyzer %s for classifier %s " %
+                      (basic_analyzer, clf ) +
                       "based on 0th classifier in it being %s" %
-                      (analyzer, clf, clf.clfs[0] ))
+                      (clf.clfs[0] ))
         banalyzer = BoostedClassifierSensitivityAnalyzer(clf,
                             analyzer=basic_analyzer, **kwargs)
     elif isinstance(clf, ProxyClassifier):
