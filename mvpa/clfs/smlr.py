@@ -235,12 +235,14 @@ class SMLR(Classifier):
                     # update the weight
                     w[basis, m] = w_new
 
-                    # keep track of the sqrt sum squared distances
+                    # keep track of the sqrt sum squared diffs
                     sum2_w_diff += w_diff*w_diff
-                    sum2_w_old += w_old*w_old
+
+                # add to the old no matter what
+                sum2_w_old += w_old*w_old
 
             # update the class and basis
-            m = N.mod(m+1, M-1)
+            m = N.mod(m+1, w.shape[1])
             if m == 0:
                 # we completed a cycle of labels
                 basis = N.mod(basis+1,nd)
