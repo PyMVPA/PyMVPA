@@ -244,18 +244,21 @@ class Loop(object):
 
         self.__unroll = unroll
 
-        if attribs is None: attribs = []
+        if attribs is None:
+            attribs = []
+
         self.__attribs = attribs
         self.__copy_attribs = copy_attribs
 
 
     def __call__(self, *args, **kwargs):
-
+        """
+        """
         # assign to local unroll since we might change it locally
         # later on
         unroll = self.__unroll
 
-        # Initialize retuned value -- dictionary of desired things
+        # Initialize returned value -- dictionary of desired things
         results = dict([ ('result', [])] +
                        [(a, []) for a in self.__attribs])
 
@@ -265,17 +268,23 @@ class Loop(object):
             if i == 0 and unroll and not isSequenceType(X):
 
                 # XXX or should it be warning?
-                if __debug__:
-                    debug("LOOP",
-                          "Cannot unroll non-sequence result from looper %s" %
-                          `self.__looper` + " disabling unrolling")
-                unroll = False
+                # MH: should be an exception as it is definitely not going
+                #     like it was intended.
+                raise RuntimeError, \
+                      "Cannot unroll non-sequence result from looper %s" % \
+                      `self.__looper`
+                #if __debug__:
+                #    debug("LOOP",
+                #          "Cannot unroll non-sequence result from looper %s" %
+                #          `self.__looper` + " disabling unrolling")
+                #unroll = False
 
             if unroll:
                 result = self.__call(*X)
             else:
                 result = self.__call(X)
 
+            # XXX pylint doesn't like `` for some reason
             if __debug__:
                 debug("LOOP", "Iteration %i on call %s. Got result %s" %
                       (i, `self.__call`, `result`))
@@ -291,7 +300,7 @@ class Loop(object):
 
                 results[attrib].append(attrv)
 
-        if len(self.__attribs)>0:
+        if len(self.__attribs) > 0:
             return results
         else:
             return results['result']
