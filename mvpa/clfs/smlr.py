@@ -62,14 +62,14 @@ class SMLR(Classifier):
             When the weight change for each cycle drops below this value
             the regression is considered converged.  Smaller values
             lead to tighter convergence.
-          maxiter : int
-            Maximum number of iterations before stopping if not converged.
           resamp_decay : float
             Rate of decay in the probability of resampling a zero weight.
             1.0 will immediately decrease to the min_resamp from 1.0,
             0.0 will never decrease from 1.0.
           min_resamp : float
             Minimum resampling probability for zeroed weights.
+          maxiter : int
+            Maximum number of iterations before stopping if not converged.
           has_bias : bool
             Whether to add a bias term to allow fits to data not through
             zero.
