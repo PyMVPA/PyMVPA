@@ -50,7 +50,8 @@ class SMLR(Classifier):
 
     def __init__(self, lm=.1, convergence_tol=1e-3, resamp_decay=.5,
                  min_resamp=.001, maxiter=10000, has_bias=True,
-                 implementation="C", seed=None, **kwargs):
+                 fit_all_weights=False, implementation="C", 
+                 seed=None, **kwargs):
         """
         Initialize an SMLR classifier.
 
@@ -73,6 +74,13 @@ class SMLR(Classifier):
           has_bias : bool
             Whether to add a bias term to allow fits to data not through
             zero.
+          fit_all_weights : bool
+            Whether to fit weights for all classes or to the number of 
+            classes minus one.  Both should give nearly identical results, but
+            if you set fit_all_weights to True it will take a little longer
+            and yield weights that are fully analyzable for each class.  Also,
+            note that the convergence rate may be different, but convergence
+            point is the same.
           implementation : basestr
             Use C (default) or Python as the implementation of
             stepwise_regression. C version brings significant speedup thus
@@ -95,6 +103,7 @@ class SMLR(Classifier):
         self.__min_resamp = min_resamp
         self.__maxiter = maxiter
         self.__has_bias = has_bias
+        self.__fit_all_weights = fit_all_weights
         self.__seed = seed
 
         if not has_bias:
@@ -126,15 +135,17 @@ class SMLR(Classifier):
                (self.__lm, self.__convergence_tol) + \
                "resamp_decay=%f, min_resamp=%f, maxiter=%d, " % \
                (self.__resamp_decay, self.__min_resamp, self.__maxiter) + \
-               "has_bias=%s, implementation='%s', seed=%s, enabled_states=%s)" % \
-               (self.__has_bias, self.__implementation,
-                self.__seed, str(self.states.enabled))
+               "has_bias=%s, fit_all_weights=%s, implementation='%s', " % \
+               (self.__has_bias, self.__fit_all_weights, self.__implementation) + \
+               "seed=%s, enabled_states=%s)" % \
+               (self.__seed, str(self.states.enabled))
 
 
     def _pythonStepwiseRegression(self, w, X, XY, Xw, E,
                                   auto_corr,
                                   lambda_over_2_auto_corr,
                                   S,
+                                  M,
                                   maxiter,
                                   convergence_tol,
                                   resamp_decay,
@@ -148,9 +159,6 @@ class SMLR(Classifier):
         # get the data information into easy vars
         ns, nd = X.shape
 
-        # yoh: shouldn't be here and should be derived from the interface
-        M = len(self.__ulabels)
-
         # initialize the iterative optimization
         converged = False
         incr = N.finfo(N.float).max
@@ -158,11 +166,11 @@ class SMLR(Classifier):
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
         p_resamp = N.ones(w.shape,dtype=N.float)
 
+        # set the random seed
         N.random.seed(seed)
 
         if __debug__:
             debug("SMLR_", "random seed=%s" % seed)
-
 
         # perform the optimization
         while not converged and cycles < maxiter:
@@ -319,15 +327,21 @@ class SMLR(Classifier):
         # set the feature dimensions
         ns, nd = X.shape
 
+        # decide the size of weights based on num classes estimated
+        if self.__fit_all_weights:
+            c_to_fit = M
+        else:
+            c_to_fit = M-1
+
         # Precompute what we can
         auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X, 0))
-        XY = N.dot(X.T, Y[:, :(M-1)])
+        XY = N.dot(X.T, Y[:, :c_to_fit])
         lambda_over_2_auto_corr = (self.__lm/2.)/auto_corr
 
         # set starting values
-        w = N.zeros((nd, M-1), dtype=N.double)
-        Xw = N.zeros((ns, M-1), dtype=N.double)
-        E = N.ones((ns, M-1), dtype=N.double)
+        w = N.zeros((nd, c_to_fit), dtype=N.double)
+        Xw = N.zeros((ns, c_to_fit), dtype=N.double)
+        E = N.ones((ns, c_to_fit), dtype=N.double)
         S = M*N.ones(ns, dtype=N.double)
 
         # set verbosity
@@ -345,6 +359,7 @@ class SMLR(Classifier):
                                       auto_corr,
                                       lambda_over_2_auto_corr,
                                       S,
+                                      M,
                                       self.__maxiter,
                                       self.__convergence_tol,
                                       self.__resamp_decay,
@@ -380,10 +395,15 @@ class SMLR(Classifier):
         # see if we are adding a bias term
         if self.__has_bias:
             # append the bias term to the features
-            data = N.hstack((data, N.ones((data.shape[0], 1), dtype=data.dtype)))
+            data = N.hstack((data, 
+                             N.ones((data.shape[0], 1), dtype=data.dtype)))
 
-        # append the zeros column to the weights
-        w = N.hstack((self.__weights_all, N.zeros((self.__weights_all.shape[0], 1))))
+        # append the zeros column to the weights if necessary
+        if self.__fit_all_weights:
+            w = self.__weights_all
+        else:
+            w = N.hstack((self.__weights_all, 
+                          N.zeros((self.__weights_all.shape[0], 1))))
 
         # determine the probability values for making the prediction
         dot_prod = N.dot(data, w)

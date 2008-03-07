@@ -23,6 +23,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 			int ac_rows, double ac[ac_rows],
 			int lm_2_ac_rows, double lm_2_ac[lm_2_ac_rows],
 			int S_rows, double S[S_rows],
+			int M,
 			int maxiter,
 			double convergence_tol,
 			float resamp_decay,
@@ -49,7 +50,6 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
   // get the num features and num classes
   int nd = w_rows;
-  int M = w_cols+1;
   int ns = E_rows;
 
   // prob of resample each weight
@@ -85,7 +85,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
     // update each weight
     for (basis=0; basis<nd; basis++)
     {
-      for (m=0; m<M-1; m++)
+      for (m=0; m<w_cols; m++)
       {
 	// get the starting weight
 	w_old = w[basis][m];
@@ -194,10 +194,12 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	    // update the weight
 	    w[basis][m] = w_new;
 
-	    // keep track of the sqrt sum squared distances
+	    // keep track of the sqrt sum squared diffs
 	    sum2_w_diff += w_diff*w_diff;
-	    sum2_w_old += w_old*w_old;
 	  }
+	  
+	  // no matter what we keep track of the old
+	  sum2_w_old += w_old*w_old;
 	}
       }
     }

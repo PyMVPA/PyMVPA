@@ -29,6 +29,7 @@ def stepwise_regression(*args):
                      C.c_int, c_darray,
                      C.c_int, c_darray,
                      C.c_int,
+                     C.c_int,
                      C.c_double,
                      C.c_float,
                      C.c_float,

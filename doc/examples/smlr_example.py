@@ -16,8 +16,8 @@ from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import ConfusionMatrix
 
-#from mvpa.misc import debug
-#debug.active.append('SMLR_')
+from mvpa.misc import debug
+debug.active.append('SMLR_')
 
 # features of sample data
 print "Generating samples..."
@@ -46,7 +46,7 @@ testpat = patternsPos + patternsNeg
 
 # set up the SMLR classifier
 print "Evaluating SMLR classifier..."
-smlr = SMLR()
+smlr = SMLR(fit_all_weights=True)
 
 # enable saving of the values used for the prediction
 smlr.states.enable('values')
@@ -83,7 +83,7 @@ lsvm_confusion = ConfusionMatrix(
 # now train SVM with selected features
 print "Evaluating Linear SVM classifier with SMLR's features..."
 
-keepInd = (smlr.weights.mean(axis=1)!=0)
+keepInd = (N.abs(smlr.weights).mean(axis=1)!=0)
 newtrainpat = trainpat.selectFeatures(keepInd, sort=False)
 newtestpat = testpat.selectFeatures(keepInd, sort=False)
 
@@ -99,7 +99,10 @@ lsvm_confusion_sparse = ConfusionMatrix(
     predictions=pre)
 
 
-print "SMLR Percent Correct:\t%g%% (Retained %d/%d features)" % (smlr_confusion.percentCorrect,
-                                                                (smlr.weights!=0).sum(), nfeat)
-print "linear-SVM Percent Correct:\t%g%%" % (lsvm_confusion.percentCorrect)
-print "linear-SVM Percent Correct (with SMLR features):\t%g%%" % (lsvm_confusion_sparse.percentCorrect)
+print "SMLR Percent Correct:\t%g%% (Retained %d/%d features)" % \
+    (smlr_confusion.percentCorrect,
+     (smlr.weights!=0).sum(), N.prod(smlr.weights.shape))
+print "linear-SVM Percent Correct:\t%g%%" % \
+    (lsvm_confusion.percentCorrect)
+print "linear-SVM Percent Correct (with %d features from SMLR):\t%g%%" % \
+    (keepInd.sum(), lsvm_confusion_sparse.percentCorrect)
