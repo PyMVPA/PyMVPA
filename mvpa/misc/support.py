@@ -209,26 +209,14 @@ class MapOverlap(object):
         return N.mean(ovstats >= self.__overlap_threshold)
 
 
-class Loop(object):
-    """World domination helper: do whatever it is asked and accumulate results
-
-    XXX Thinks about:
-      - Can we have multiple 'call's?
-      - Might we need to deepcopy attributes values?
-      - Might we need to specify what attribs to copy and which just to bind?
-    """
-
-    def __init__(self, looper, call,
-                 unroll=True, attribs=None, copy_attribs=True):
+class HarvesterCall(object):
+    def __init__(self, call, attribs=None, argfilter=None, expand_args=True,
+                 copy_attribs=True):
         """Initialize
 
         :Parameters:
-          looper
-            Generator which feeds the loop with new entries
-          call : Functor
-            Functor which is called in the loop
-          unroll : bool
-            Either to unroll output of looper into a list of arguments for
+          expand_args : bool
+            Either to expand the output of looper into a list of arguments for
             call
           attribs : list of basestr
             What attributes of call to store and return later on?
@@ -236,85 +224,127 @@ class Loop(object):
             Force copying values of attributes
         """
 
-        self.__looper = looper
-        """Generator which feeds the loop"""
-
-        self.__call = call
-        """Call which gets called in the loop"""
-
-        self.__unroll = unroll
+        self.call = call
+        """Call which gets called in the harvester."""
 
         if attribs is None:
             attribs = []
+        if not isSequenceType(attribs):
+            raise ValueError, "'attribs' have to specified as a sequence."
 
-        self.__attribs = attribs
-        self.__copy_attribs = copy_attribs
+        if not (argfilter is None or isSequenceType(argfilter)):
+            raise ValueError, "'argfilter' have to be a sequence or None."
+
+        # now give it to me...
+        self.argfilter = argfilter
+        self.expand_args = expand_args
+        self.copy_attribs = copy_attribs
+        self.attribs = attribs
+
+
+ 
+class Harvester(object):
+    """World domination helper: do whatever it is asked and accumulate results
+
+    XXX Thinks about:
+      - Might we need to deepcopy attributes values?
+      - Might we need to specify what attribs to copy and which just to bind?
+    """
+
+    def __init__(self, source, calls, simplify_results=True):
+        """Initialize
+
+        :Parameters:
+          source
+            Generator which produce food for the calls.
+          calls : sequence of HarvesterCall instances
+            Calls which are processed in the loop. All calls are processed in
+            order of apperance in the sequence.
+          simplify_results: bool
+            Remove unecessary overhead in results if possible (nested lists
+            and dictionaries).
+       """
+        if not isSequenceType(calls):
+            raise ValueError, "'calls' have to specified as a sequence."
+
+        self.__source = source
+        """Generator which feeds the harvester"""
+
+        self.__calls = calls
+        """Calls which gets called with each generated source"""
+
+        self.__simplify_results = simplify_results
 
 
     def __call__(self, *args, **kwargs):
         """
         """
-        # assign to local unroll since we might change it locally
-        # later on
-        unroll = self.__unroll
-
-        # Initialize returned value -- dictionary of desired things
-        results = dict([ ('result', [])] +
-                       [(a, []) for a in self.__attribs])
+        # prepare complex result structure for all calls and their respective
+        # attributes: calls x dict(attributes x loop iterations)
+        results = [dict([('result', [])] + [(a, []) for a in c.attribs]) \
+                        for c in self.__calls]
 
         # Lets do it!
-        for (i, X) in enumerate(self.__looper(*args, **kwargs)):
+        for (i, X) in enumerate(self.__source(*args, **kwargs)):
+            for (c, call) in enumerate(self.__calls):
+                # sanity check
+                if i == 0 and call.expand_args and not isSequenceType(X):
+                    raise RuntimeError, \
+                          "Cannot expand non-sequence result from %s" % \
+                          `self.__source`
 
-            if i == 0 and unroll and not isSequenceType(X):
+                # apply argument filter (and reorder) if requested
+                if call.argfilter:
+                    filtered_args = [X[f] for f in call.argfilter]
+                else:
+                    filtered_args = X
 
-                # XXX or should it be warning?
-                # MH: should be an exception as it is definitely not going
-                #     like it was intended.
-                raise RuntimeError, \
-                      "Cannot unroll non-sequence result from looper %s" % \
-                      `self.__looper`
-                #if __debug__:
-                #    debug("LOOP",
-                #          "Cannot unroll non-sequence result from looper %s" %
-                #          `self.__looper` + " disabling unrolling")
-                #unroll = False
+                if call.expand_args:
+                    result = call.call(*filtered_args)
+                else:
+                    result = call.call(filtered_args)
 
-            if unroll:
-                result = self.__call(*X)
-            else:
-                result = self.__call(X)
-
-            # XXX pylint doesn't like `` for some reason
-            if __debug__:
-                debug("LOOP", "Iteration %i on call %s. Got result %s" %
-                      (i, `self.__call`, `result`))
+#                # XXX pylint doesn't like `` for some reason
+#                if __debug__:
+#                    debug("LOOP", "Iteration %i on call %s. Got result %s" %
+#                          (i, `self.__call`, `result`))
 
 
-            results['result'].append(result)
+                results[c]['result'].append(result)
 
-            for attrib in self.__attribs:
-                attrv = self.__call.__getattribute__(attrib)
+                for attrib in call.attribs:
+                    attrv = call.call.__getattribute__(attrib)
 
-                if self.__copy_attribs:
-                    attrv = copy(attrv)
+                    if call.copy_attribs:
+                        attrv = copy(attrv)
 
-                results[attrib].append(attrv)
+                    results[c][attrib].append(attrv)
 
-        if len(self.__attribs) > 0:
-            return results
-        else:
-            return results['result']
+        # reduce results structure
+        if self.__simplify_results:
+            # get rid of dictionary if just the results are requested
+            for (c, call) in enumerate(self.__calls):
+                if not len(call.attribs):
+                    results[c] = results[c]['result']
+
+            if len(self.__calls) == 1:
+                results = results[0]
+
+        return results
 
 
-def loop(looper, call,
-         unroll=True, attribs=None, copy_attribs=True, *args, **kwargs):
-    """XXX Loop twin brother
-
-    Helper for those who just wants to do smth like
-       loop(blah, bleh, grgr)
-     instead of
-       Loop(blah, bleh)(grgr)
-    """
-
-    return Loop(looper=looper, call=call, unroll=unroll,
-                attribs=attribs, copy_attribs=copy_attribs)(*args, **kwargs)
+# XXX MH: this doesn't work in all cases, as you cannot have *args after a
+#         kwarg.
+#def loop(looper, call,
+#         unroll=True, attribs=None, copy_attribs=True, *args, **kwargs):
+#    """XXX Loop twin brother
+#
+#    Helper for those who just wants to do smth like
+#       loop(blah, bleh, grgr)
+#     instead of
+#       Loop(blah, bleh)(grgr)
+#    """
+#    print looper, call, unroll, attribs, copy_attribs
+#    print args, kwargs
+#    return Loop(looper=looper, call=call, unroll=unroll,
+#                attribs=attribs, copy_attribs=copy_attribs)(*args, **kwargs)
