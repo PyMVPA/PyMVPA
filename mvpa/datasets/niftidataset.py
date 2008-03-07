@@ -14,7 +14,7 @@ from nifti import NiftiImage
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
-from mvpa.misc import verbose
+from mvpa.misc import warning
 
 class NiftiDataset(MaskedDataset):
     """Dataset based on NiftiImage provided by pynifti.
@@ -51,8 +51,7 @@ class NiftiDataset(MaskedDataset):
                 try:
                     nifti = NiftiImage(samples)
                 except RuntimeError, e:
-                    verbose(0,
-                        "ERROR: NiftiDatasets: Cannot open samples file %s" \
+                    warning("ERROR: NiftiDatasets: Cannot open samples file %s" \
                             % samples) # should we make also error?
                     raise e
             elif isinstance(samples, NiftiImage):
@@ -77,9 +76,8 @@ class NiftiDataset(MaskedDataset):
                 try:
                     mask = NiftiImage(mask).asarray()
                 except RuntimeError, e:
-                    verbose(0,
-                            "ERROR: NiftiDatasets: Cannot open mask file %s" \
-                                % mask)
+                    warning("ERROR: NiftiDatasets: Cannot open mask file %s" \
+                            % mask)
                     raise e
 
             elif isinstance(mask, NiftiImage):
