@@ -382,7 +382,7 @@ class SMLR(Classifier):
             self.__biases = w[-1,:]
 
         if __debug__:
-            debug('SMLR_', "train finished in %s cycles on data.shape=%s " %
+            debug('SMLR', "train finished in %s cycles on data.shape=%s " %
                   (`cycles`, `X.shape`) +
                   "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
                   (N.min(X), N.max(X), N.min(w), N.max(w)))
@@ -411,7 +411,7 @@ class SMLR(Classifier):
         S = N.sum(E, 1)
 
         if __debug__:
-            debug('SMLR_', "predict on data.shape=%s min:max(data)=%f:%f " %
+            debug('SMLR', "predict on data.shape=%s min:max(data)=%f:%f " %
                   (`data.shape`, N.min(data), N.max(data)) +
                   "min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f" %
                   (N.min(w), N.max(w), N.min(dot_prod), N.max(dot_prod),
