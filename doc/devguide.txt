@@ -223,17 +223,15 @@ classifier and extract the sensitivities from it,
 ClassifierBasedSensitivityAnalyzer_ is a more appropriate base-class, as it
 provides some additional useful functionality for this use case.
 
-Source code files of all sensitivity analyzer implementations go into
-`mvpa/algorithms/`.
-
-
-Classifier-independent Sensitivity Analyzers
-''''''''''''''''''''''''''''''''''''''''''''
-
 All sensitivity analyzers (actually all objects based on DatasetMeasure_)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
+
+If a sensitivity analyzer computes sensitivities, were both large positive and
+large negative values indicate high sensitivity, it should nevertheless *not*
+return absolute sensitivities, but set a default transformer instead that takes
+the absolute.
 
 To add a new sensitivity analyzer implementation it is sufficient to create a
 new sub-class of SensitivityAnalyzer_ and add an implementation of the
@@ -250,6 +248,15 @@ Supported state:
 raw_result          Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
+
+Source code files of all sensitivity analyzer implementations go into
+`mvpa/algorithms/`.
+
+
+Classifier-independent Sensitivity Analyzers
+''''''''''''''''''''''''''''''''''''''''''''
+
+Nothing special.
 
 
 Classifier-based Sensitivity Analyzers
