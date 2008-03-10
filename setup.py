@@ -20,20 +20,22 @@ numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 # Version scheme is: major.minor.patch<suffix>
 
 # define the extension modules
-svmc_ext = Extension( 'mvpa.clfs.libsvm.svmc',
-            sources = [ 'mvpa/clfs/libsvm/svmc.i' ],
-            include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
-            libraries    = [ 'svm' ],
-            language     = 'c++',
-            swig_opts    = [ '-c++', '-noproxy',
-                             '-I/usr/include/libsvm-2.0/libsvm',
-                             '-I' + numpy_headers ] )
+svmc_ext = Extension(
+    'mvpa.clfs.libsvm.svmc',
+    sources = [ 'mvpa/clfs/libsvm/svmc.i' ],
+    include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
+    libraries    = [ 'svm' ],
+    language     = 'c++',
+    swig_opts    = [ '-c++', '-noproxy',
+                     '-I/usr/include/libsvm-2.0/libsvm',
+                     '-I' + numpy_headers ] )
 
-smlrc_ext = Extension('mvpa.clfs.libsmlr.smlrc',
-                      sources = [ 'mvpa/clfs/libsmlr/smlr.c' ],
-                      libraries = ['m'],
-                      # extra_compile_args = ['-O0'],
-                      language = 'c')
+smlrc_ext = Extension(
+    'mvpa.clfs.libsmlr.smlrc',
+    sources = [ 'mvpa/clfs/libsmlr/smlr.c' ],
+    libraries = ['m'],
+    # extra_compile_args = ['-O0'],
+    language = 'c')
 
 # define the setup
 setup(name       = 'pymvpa',
