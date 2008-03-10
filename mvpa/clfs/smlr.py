@@ -349,6 +349,7 @@ class SMLR(Classifier):
         # set verbosity
         if __debug__:
             verbosity = int( "SMLR_" in debug.active )
+            debug('SMLR_', 'Calling stepwise_regression. Seed %s' % self.__seed)
         else:
             verbosity = 0
 
