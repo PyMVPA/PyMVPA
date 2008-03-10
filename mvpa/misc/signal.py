@@ -70,43 +70,43 @@ def detrend_pattern(data, perchunk=True, polort=None, opt_reg=None):
     # loop over chunks if necessary
     if perchunk:
         # get the unique chunks
-        uchunks = N.unique1d(data.chunks)
+        uchunks = data.uniquechunks
 
         # loop over each chunk
         cpol = []
         for chunk in uchunks:
             cinds = data.chunks == chunk
-            x = N.linspace(-1,1,cinds.sum())
+            x = N.linspace(-1, 1, cinds.sum())
             # create the polort for each chunk
             pol = []
-            for n in range(1,polort+1):
-                pol.append(legendre(n)(x)[:,N.newaxis])
+            for n in range(1, polort + 1):
+                pol.append(legendre(n)(x)[:, N.newaxis])
             cpol.append(N.hstack(pol))
         pols = N.vstack(cpol)
     else:
         # just create the polort over the entire dataset
         pol = []
-        x = N.linspace(-1,1,data.nsamples)
-        for n in range(1,polort+1):
-            pol.append(legendre(n)(x)[:,N.newaxis])
+        x = N.linspace(-1, 1, data.nsamples)
+        for n in range(1, polort + 1):
+            pol.append(legendre(n)(x)[:, N.newaxis])
         pols = N.hstack(pol)
-        
+
     # combine all the regressors together
-    tocombine = [N.ones((data.nsamples,1))]
+    tocombine = [N.ones((data.nsamples, 1))]
     if not polort is None:
         # add in the optional regressors, too
-        tocombine.append(pols)    
+        tocombine.append(pols)
     if not opt_reg is None:
         # add in the optional regressors, too
         tocombine.append(opt_reg)
     regs = N.hstack(tocombine)
 
     # regress them out
-    res = lstsq(regs,data.samples)
+    res = lstsq(regs, data.samples)
 
     # remove the residuals
-    yhat = N.dot(regs,res[0])
+    yhat = N.dot(regs, res[0])
     data.samples -= yhat
 
     # return the results
-    return res,regs
+    return res, regs
