@@ -36,6 +36,7 @@ class SignalTests(unittest.TestCase):
 
         ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
         detrend(ds, perchunk=True)
+
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have detrended each chunk separately")
 
@@ -49,6 +50,31 @@ class SignalTests(unittest.TestCase):
         detrend(ds, perchunk=True)
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have removed all the signal")
+
+        # tests of the regress version of detrend
+        ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
+        detrend(ds, perchunk=False, model='regress', polort=1)
+        self.failUnless(linalg.norm(ds.samples - target_all) < thr,
+                        msg="Detrend should have detrended all the samples at once")
+
+        ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
+        (res, reg) = detrend(ds, perchunk=True, model='regress', polort=2)
+        psamps = ds.samples.copy()
+        self.failUnless(linalg.norm(ds.samples) < thr,
+                        msg="Detrend should have detrended each chunk separately")
+
+        self.failUnless(ds.samples.shape == samples.shape,
+                        msg="Detrend must preserve the size of dataset")
+
+        ods = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
+        (ores, oreg) = detrend(ods, perchunk=True, model='regress', opt_reg=reg[:,1:])
+        self.failUnless((ods.samples - psamps).sum() == 0.0,
+                        msg="Detrend for polort reg should be same as opt_reg " + \
+                        "when popt_reg is the same as the polort reg.")
+
+        self.failUnless(linalg.norm(ds.samples) < thr,
+                        msg="Detrend should have detrended each chunk separately")
+        
 
 def suite():
     return unittest.makeSuite(SignalTests)
