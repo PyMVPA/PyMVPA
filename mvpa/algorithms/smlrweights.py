@@ -54,14 +54,8 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
                     (`self.clf`, self.clf.weights.shape[1]+1) +
                     " classes. Make sure that it is what you intended to do" )
 
-        # take the mean over classes
-        # XXX MH: AFAIK negative weights indicate something different then
-        #         positive -- although both indicate importance. To take the
-        #         absolute, please use the 'transformer=' arg of
-        #         DatasetMeasure and set default to 'Absolute' if necessary.
-        weights = N.abs(self.clf.weights).sum(axis=1)
+        weights = self.clf.weights
 
-        # TODO: verify why was failing on unittests without isSet check
         if self.clf.has_bias:
             self.biases = self.clf.biases
 

@@ -25,7 +25,8 @@ from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
 from mvpa.clfs.svm import LinearSVM
 from mvpa.clfs.smlr import SMLR
-from mvpa.misc.transformers import Absolute, FirstAxisMean
+from mvpa.misc.transformers import Absolute, FirstAxisMean, \
+     SecondAxisSumOfAbs
 
 if __debug__:
     from mvpa.misc import debug
@@ -68,6 +69,7 @@ class DatasetMeasure(Stateful):
         container applying transformer if such is defined
         """
         result = self._call(dataset)
+        result = self._postcall(dataset, result)
         self.raw_result = result
         if not self.__transformer is None:
             result = self.__transformer(result)
@@ -83,6 +85,12 @@ class DatasetMeasure(Stateful):
         Returns the computed measure in some iterable (list-like) container.
         """
         raise NotImplemented
+
+
+    def _postcall(self, dataset, result):
+        """Some postprocessing on the result
+        """
+        return result
 
 
 
@@ -111,9 +119,23 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
 
     Should behave like a DatasetMeasure.
     """
-    def __init__(self, *args, **kwargs):
-        """Does nothing."""
+
+    base_sensitivities = StateVariable(enabled=False,
+        doc="Stores basic sensitivities if the sensitivity " +
+            "relies on combining multiple ones")
+
+    def __init__(self, combiner=SecondAxisSumOfAbs, *args, **kwargs):
+        """Initialize
+
+        :Parameters:
+          combiner : Functor
+            If _call returned value is 2d -- combines along 2nd
+            dimension as well as sets base_sensitivities
+            TODO change combiner's default
+        """
         DatasetMeasure.__init__(self, *(args), **(kwargs))
+
+        self.__combiner = combiner
 
 
     def _call(self, dataset):
@@ -124,6 +146,75 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         """
         raise NotImplementedError
 
+
+    def _postcall(self, dataset, result):
+        """Adjusts per-feature-measure for computed `result`
+
+
+        TODO: overlaps in what it does heavily with
+         CombinedSensitivityAnalyzer, thus this one might make use of
+         CombinedSensitivityAnalyzer yoh thinks, and here
+         base_sensitivities doesn't sound appropriate.
+        """
+        if len(result.shape)>1:
+            n_base = result.shape[1]
+            """Number of base sensitivities"""
+            if self.states.isEnabled('base_sensitivities'):
+                b_sensitivities = []
+                if not self.states.isKnown('biases'):
+                    biases = None
+                else:
+                    biases = self.biases
+                    if len(self.biases) != n_base:
+                        raise ValueError, \
+                            "Number of biases %d is different" % len(self.biases)\
+                            + " from number of base sensitivities %d" % n_base
+                for i in xrange(n_base):
+                    if not biases is None:
+                        bias = biases[i]
+                    else:
+                        bias = None
+                    b_sensitivities = StaticDatasetMeasure(
+                        measure = result[:,i],
+                        bias = bias)
+                self.base_sensitivities = b_sensitivities
+
+            # After we stored each sensitivity separately,
+            # we can apply combiner
+            result = self.__combiner(result)
+        return result
+
+
+
+class StaticDatasetMeasure(DatasetMeasure):
+    """A static (assigned) sensitivity measure.
+
+    Since implementation is generic it might be per feature or
+    per whole dataset
+    """
+
+    def __init__(self, measure=None, bias=None, *args, **kwargs):
+        """Initialize.
+
+        :Parameters:
+          measure
+             actual sensitivity to be returned
+          bias
+             optionally available bias
+        """
+        DatasetMeasure.__init__(self, *(args), **(kwargs))
+        if measure is None:
+            raise ValueError, "Sensitivity measure has to be provided"
+        self.__measure = measure
+        self.__bias = bias
+
+    def _call(self, dataset):
+        """Returns assigned sensitivity
+        """
+        return __measure
+
+    #XXX Might need to move into StateVariable?
+    bias = property(fget=lambda self:self.__bias)
 
 
 class SensitivityAnalyzer(FeaturewiseDatasetMeasure):

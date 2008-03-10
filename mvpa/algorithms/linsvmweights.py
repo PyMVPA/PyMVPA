@@ -67,7 +67,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # weighted impact of SVs on decision, then for each feature
         # take mean across SVs to get a single weight value
         # per feature
-        weights = (svcoef * svs).mean(axis=0).A1
+        weights = svcoef * svs
 
         if __debug__:
             debug('SVM',
@@ -77,5 +77,5 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
 
-        return weights
+        return N.array(weights.T)
 
