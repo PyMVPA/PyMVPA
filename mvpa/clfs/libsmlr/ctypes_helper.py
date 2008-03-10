@@ -38,8 +38,8 @@ def extend_args(*args):
 typemap = {
     N.float64: C.c_double,
     N.float32: C.c_float,
-    N.int64: C.c_long,
-    N.int32: C.c_int}
+    N.int64: C.c_int64,
+    N.int32: C.c_int32}
 
 def process_args(*args):
     """Turn ndarray arguments into dims and array pointers for calling

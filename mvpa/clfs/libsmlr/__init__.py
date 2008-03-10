@@ -33,7 +33,7 @@ def stepwise_regression(*args):
                      C.c_double,
                      C.c_float,
                      C.c_float,
-                     C.c_int]
+                     C.c_int64]
     func.restype = C.c_long
     
     # get the new arglist

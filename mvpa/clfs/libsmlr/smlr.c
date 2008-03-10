@@ -29,7 +29,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 			float resamp_decay,
 			float min_resamp,
 			int verbose,
-			int seed)
+			long long int seed)
 {
   // initialize the iterative optimization
   double incr = DBL_MAX;
@@ -57,11 +57,11 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
   // initialize random seed
   if (seed == 0)
-    seed = time(NULL);
+    seed = (long long int)time(NULL);
 
   if (verbose)
   {
-    fprintf(stdout, "SMLR: random seed=%d\n", seed);
+    fprintf(stdout, "SMLR: random seed=%lld\n", seed);
     fflush(stdout);
   }
 
