@@ -19,13 +19,13 @@ iterable container.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
 import copy
 
 from mvpa.misc.state import StateVariable, Stateful
-from mvpa.clfs.classifier import BoostedClassifier
+from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
 from mvpa.clfs.svm import LinearSVM
-from mvpa.misc.transformers import Absolute, Identity, FirstAxisMean
+from mvpa.clfs.smlr import SMLR
+from mvpa.misc.transformers import Absolute, FirstAxisMean
 
 if __debug__:
     from mvpa.misc import debug
@@ -37,13 +37,19 @@ class DatasetMeasure(Stateful):
     so it is possible to get the same type of measure for multiple datasets
     by passing them to the __call__() method successively.
     """
-    def __init__(self, transformer=Identity, *args, **kwargs):
+
+    raw_result = StateVariable(enabled=False,
+        doc="Computed results before applying any " +
+            "transformation algorithm")
+
+    def __init__(self, transformer=None, *args, **kwargs):
         """Does nothing special.
 
         :Parameter:
             transformer: Functor
-                This functor is called in `finalize()` to perform a final
-                processing step on the to be returned dataset measure.
+                This functor is called in `__call__()` to perform a final
+                processing step on the to be returned dataset measure. If None,
+                nothing is called
         """
         Stateful.__init__(self, **kwargs)
 
@@ -58,16 +64,25 @@ class DatasetMeasure(Stateful):
         Each implementation has to handle a single arguments: the source
         dataset.
 
+        Returns the computed measure in some iterable (list-like)
+        container applying transformer if such is defined
+        """
+        result = self._call(dataset)
+        self.raw_result = result
+        if not self.__transformer is None:
+            result = self.__transformer(result)
+        return result
+
+
+    def _call(self, dataset):
+        """Actually compute measure on a given `Dataset`.
+
+        Each implementation has to handle a single arguments: the source
+        dataset.
+
         Returns the computed measure in some iterable (list-like) container.
         """
-        raise NotImplementedError
-
-
-    def finalize(self, return_value):
-        """This method should be called with the to be returned value by the
-        `__call__()` methods of all subclasses of `DatasetMeasure`.
-        """
-        return self.__transformer(return_value)
+        raise NotImplemented
 
 
 
@@ -81,7 +96,7 @@ class ScalarDatasetMeasure(DatasetMeasure):
         DatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Computes a scalar measure on a given `Dataset`.
 
         Behaves like a `DatasetMeasure`, but computes and returns a single
@@ -101,7 +116,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         DatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Computes a per-feature-measure on a given `Dataset`.
 
         Behaves like a `DatasetMeasure`, but computes and returns a 1d ndarray
@@ -122,7 +137,7 @@ class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
         FeaturewiseDatasetMeasure.__init__(self, *(args), **(kwargs))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Perform sensitivity analysis on a given `Dataset`.
 
         Each implementation has to handle a single arguments: the source
@@ -171,7 +186,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
     def __call__(self, dataset):
-        """Train linear SVM on `dataset` and extract weights from classifier.
+        """Train classifier on `dataset` and then compute actual sensitivity.
         """
         if not self.clf.trained or self._force_training:
             if __debug__:
@@ -182,12 +197,7 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                        [self.clf.trained]))
             self.clf.train(dataset)
 
-        return self.finalize(self._call(dataset))
-
-
-    def _call(self, dataset):
-        """Actually the function which does the computation"""
-        raise NotImplementedError
+        return SensitivityAnalyzer.__call__(self, dataset)
 
 
     def _setClassifier(self, clf):
@@ -215,15 +225,30 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
     if isinstance(clf, LinearSVM):
         from linsvmweights import LinearSVMWeights
         banalyzer = LinearSVMWeights(clf, transformer=Absolute, **kwargs)
+    elif isinstance(clf, SMLR):
+        from smlrweights import SMLRWeights
+        banalyzer = SMLRWeights(clf, transformer=Absolute, **kwargs)
     elif isinstance(clf, BoostedClassifier):
         if basic_analyzer is None and len(clf.clfs) > 0:
             basic_analyzer = selectAnalyzer(clf.clfs[0], **kwargs)
             if __debug__:
-                debug("SA", "Selected basic analyzer %s for classifier %s " +
+                debug("SA", "Selected basic analyzer %s for classifier %s " %
+                      (basic_analyzer, clf ) +
                       "based on 0th classifier in it being %s" %
-                      (analyzer, clf, clf.clfs[0] ))
+                      (clf.clfs[0] ))
         banalyzer = BoostedClassifierSensitivityAnalyzer(clf,
                             analyzer=basic_analyzer, **kwargs)
+    elif isinstance(clf, ProxyClassifier):
+        if basic_analyzer is None:
+            basic_analyzer = selectAnalyzer(clf.clf, **kwargs)
+            if __debug__:
+                debug("SA", "Selected basic analyzer %s for classifier %s " %
+                      (basic_analyzer, clf) +
+                      "based on proxied classifier in it being %s" % clf.clf)
+        banalyzer = ProxyClassifierSensitivityAnalyzer(clf,
+                                                       analyzer=basic_analyzer,
+                                                       **kwargs)
+
     return banalyzer
 
 
@@ -248,7 +273,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         sensitivities = []
         ind = 0
         for analyzer in self.__analyzers:
@@ -260,8 +285,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
             ind += 1
 
         self.sensitivities = sensitivities
-        result = self.__combiner(sensitivities)
-        return self.finalize(result)
+        return self.__combiner(sensitivities)
 
 
     def _setAnalyzers(self, analyzers):
@@ -322,7 +346,45 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
 
         self.__combined_analyzer.analyzers = analyzers
 
-        # CombinedSensitivityAnalyzer already calls finalize()
         return self.__combined_analyzer(dataset)
 
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
+
+
+class ProxyClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
+    """Set sensitivity analyzer output just to pass through"""
+
+    def __init__(self,
+                 clf,
+                 analyzer=None,
+                 **kwargs):
+        """Initialize Sensitivity Analyzer for `BoostedClassifier`
+        """
+        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+
+        self.__analyzer = None
+        """Analyzer to use for basic classifiers within boosted classifier"""
+
+
+    def _call(self, dataset):
+        if self.__analyzer is None:
+            self.__analyzer = selectAnalyzer(self.clf.clf)
+            if self.__analyzer is None:
+                raise ValueError, \
+                      "Wasn't able to figure basic analyzer for clf %s" % \
+                      `clf`
+            if __debug__:
+                debug("SA", "Selected analyzer %s for clf %s" % \
+                      (`self.__analyzer`, `self.clf.clf`))
+
+        # TODO "remove" unnecessary things below on each call...
+        # assign corresponding classifier
+        self.__analyzer.clf = self.clf.clf
+
+        # if clf was trained already - don't train again
+        if self.clf.clf.trained:
+            self.__analyzer._force_training = False
+
+        return self.__analyzer._call(dataset)
+
+    analyzer = property(fget=lambda x:x.__analyzer)

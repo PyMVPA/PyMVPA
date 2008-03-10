@@ -55,7 +55,7 @@ class PerturbationSensitivityAnalyzer(SensitivityAnalyzer):
         self.__noise = noise
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Compute the sensitivity map.
 
         Returns a 1d array of sensitivities for all features in `dataset`.
@@ -98,5 +98,5 @@ class PerturbationSensitivityAnalyzer(SensitivityAnalyzer):
         if __debug__:
             debug('PSA', '')
 
-            return self.finalize(N.array(sens_map))
+        return N.array(sens_map)
 

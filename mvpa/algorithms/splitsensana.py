@@ -12,8 +12,6 @@ and runs it multiple times on differents splits of a `Dataset`.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import StateVariable
@@ -66,7 +64,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         __call__()"""
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Compute sensitivity maps for all dataset splits and run the
         postprocessing functions afterward (if any).
 
@@ -87,4 +85,4 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """Store the maps across splits"""
 
         # return all maps
-        return self.finalize(self.__combiner(maps))
+        return self.__combiner(maps)

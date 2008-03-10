@@ -215,16 +215,31 @@ class NoneSplitter(Splitter):
     The passed dataset is returned as the second element of the 2-tuple.
     The first element of that tuple will always be 'None'.
     """
-    def __init__(self, **kwargs):
+
+    _known_modes = ['first', 'second']
+    
+    def __init__(self, mode='second', **kwargs):
         """Cheap init -- nothing special
+
+        :Parameters:
+          mode
+            Either 'first' or 'second' (default) -- which output dataset
+            would actually contain the samples
         """
         Splitter.__init__(self, **(kwargs))
 
+        if not mode in NoneSplitter._known_modes:
+            raise ValueError, "Unknown mode %s for NoneSplitter" % mode
+        self.__mode = mode
+
 
     def _getSplitConfig(self, uniqueattrs):
-        """Return just one full split: no first dataset.
+        """Return just one full split: no first or second dataset.
         """
-        return [uniqueattrs]
+        if self.__mode == 'second':
+            return [uniqueattrs]
+        else:
+            return [[]]
 
 
     def __str__(self):
@@ -273,6 +288,33 @@ class OddEvenSplitter(Splitter):
         """
         return \
           "OddEvenSplitter / " + Splitter.__str__(self)
+
+
+
+class HalfSplitter(Splitter):
+    """Split a dataset into two halves of the sample attribute.
+
+    The splitter yields to splits: first (1st half, 2nd half) and second
+    (2nd half, 1st half).
+    """
+    def __init__(self, **kwargs):
+        """Cheap init.
+        """
+        Splitter.__init__(self, **(kwargs))
+
+
+    def _getSplitConfig(self, uniqueattrs):
+        """Huka chaka!
+        """
+        return [uniqueattrs[:len(uniqueattrs)/2],
+                uniqueattrs[len(uniqueattrs)/2:]]
+
+
+    def __str__(self):
+        """String summary over the object
+        """
+        return \
+          "HalfSplitter / " + Splitter.__str__(self)
 
 
 

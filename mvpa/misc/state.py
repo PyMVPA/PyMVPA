@@ -444,7 +444,8 @@ class Stateful(object):
 
     def __init__(self,
                  enable_states=None,
-                 disable_states=None):
+                 disable_states=None,
+                 descr=None):
 
         if enable_states == None:
             enable_states = []
@@ -459,6 +460,8 @@ class Stateful(object):
         self._states.owner = self
         self._states.enable(enable_states, missingok=True)
         self._states.disable(disable_states)
+        self.__descr = descr
+
         # bad to have str(self) here since it is a base class and
         # some attributes most probably are not yet set in the original
         # child's __str__
@@ -466,8 +469,8 @@ class Stateful(object):
         #    debug("ST", "Stateful.__init__ done for %s" % self)
 
         if __debug__:
-            debug("ST", "Stateful.__init__ was done for %s id %s" \
-                % (self.__class__, id(self)))
+            debug("ST", "Stateful.__init__ was done for %s id %s with descr=%s" \
+                % (self.__class__, id(self), descr))
 
 
     def __getattribute__(self, index):
@@ -501,3 +504,5 @@ class Stateful(object):
     def __repr__(self):
         return "<%s.%s#%d>" % (self.__class__.__module__, self.__class__.__name__, id(self))
 
+    descr = property(lambda self: self.__descr,
+                     doc="Description of the object if any")

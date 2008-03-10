@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.clfs.classifier import Classifier
@@ -40,7 +42,7 @@ class SVMBase(Classifier):
     def __init__(self,
                  kernel_type,
                  svm_type,
-                 C=1.0,
+                 C=-1.0,
                  nu=0.5,
                  coef0=0.0,
                  degree=3,
@@ -134,6 +136,10 @@ class SVMBase(Classifier):
         self.__model = None
         """Holds the trained SVM."""
 
+        self.__C = C
+        """Holds original value of C. self.param will be adjusted before training
+        if C<0 and it is C-SVM, so we could scale 'default' C value"""
+
 
     def __repr__(self):
         """Definition of the object summary over the object
@@ -148,6 +154,24 @@ class SVMBase(Classifier):
         return res
 
 
+    def _getDefaultC(self, data):
+        """Compute default C
+
+        TODO: for non-linear SVMs
+        """
+
+        if self.param.kernel_type == svm.svmc.LINEAR:
+            datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
+            value = 1.0/(datasetnorm*datasetnorm)
+            if __debug__:
+                debug("SVM", "Default C computed to be %f" % value)
+        else:
+            warning("TODO: No computation of default C is not yet implemented" +
+                    " for non-linear SVMs. Assigning 1.0")
+            value = 1.0
+
+        return value
+
     def _train(self, data):
         """Train SVM
         """
@@ -159,7 +183,13 @@ class SVMBase(Classifier):
 
         svmprob = svm.SVMProblem( data.labels.tolist(), src )
 
-        self.__model = svm.SVMModel( svmprob, self.param)
+        #import pydb
+        #pydb.debugger()
+        if self.__C < 0 and \
+               self.param.svm_type in [svm.svmc.C_SVC]:
+            self.param.C = self._getDefaultC(data.samples)*abs(self.__C)
+
+        self.__model = svm.SVMModel(svmprob, self.param)
 
 
     def _predict(self, data):
@@ -201,7 +231,7 @@ class LinearSVM(SVMBase):
     params = SVMBase.params.copy()
     def __init__(self,
                  svm_type,
-                 C=1.0,
+                 C=-1.0,
                  nu=0.5,
                  eps=0.00001,
                  p=0.1,
@@ -277,7 +307,7 @@ class LinearCSVMC(LinearSVM):
 
 
     def __init__(self,
-                 C=1.0,
+                 C=-1.0,
                  eps=0.00001,
                  probability=0,
                  shrinking=1,
@@ -357,7 +387,7 @@ class RbfCSVMC(SVMBase):
 
 
     def __init__(self,
-                 C=1.0,
+                 C=-1.0,
                  gamma=0.0,
                  eps=0.00001,
                  probability=0,

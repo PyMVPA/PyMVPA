@@ -301,7 +301,7 @@ class ClassifierError(Stateful):
         Stateful.__init__(self, **kwargs)
         self.__clf = clf
 
-        self.__labels = labels
+        self._labels = labels
         """Labels to add on top to existing in testing data"""
 
         self.__train = train
@@ -311,7 +311,8 @@ class ClassifierError(Stateful):
         """TODO: think... may be we need to copy self.clf"""
         out = ClassifierError.__new__(TransferError)
         ClassifierError.__init__(out, self.clf)
-        out._copy_states_(self)
+        # XXX: Disabled by Michael because there is no such thing
+        #out._copy_states_(self)
         return out
 
 
@@ -382,7 +383,7 @@ class ClassifierError(Stateful):
 
     @property
     def labels(self):
-        return self.__labels
+        return self._labels
 
 
 
@@ -415,8 +416,9 @@ class TransferError(ClassifierError):
         """TODO: think... may be we need to copy self.clf"""
         # TODO TODO -- use ClassifierError.__copy__
         out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, self.clf, self.errorfx, self.__labels)
-        out._copy_states_(self)
+        TransferError.__init__(out, self.clf, self.errorfx, self._labels)
+        # XXX: Disabled by Michael because there is no such thing
+        #out._copy_states_(self)
         return out
 
 
