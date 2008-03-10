@@ -124,7 +124,9 @@ class RFE(FeatureSelection):
 
         # force clf training when sensitivities are not updated as otherwise
         # shared classifiers are not retrained
-        if not self.__update_sensitivity and not self.__train_clf:
+        if not self.__update_sensitivity \
+               and isinstance(self.__transfer_error, ClassifierError) \
+               and not self.__train_clf:
             if __debug__:
                 debug("RFEC", "Forcing training of classifier since " +
                       "sensitivities aren't updated at each step")
