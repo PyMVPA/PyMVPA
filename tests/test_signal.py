@@ -67,7 +67,8 @@ class SignalTests(unittest.TestCase):
                         msg="Detrend must preserve the size of dataset")
 
         ods = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
-        (ores, oreg) = detrend(ods, perchunk=True, model='regress', opt_reg=reg[:,1:])
+        opt_reg = reg[N.ix_(range(reg.shape[0]),[1,2,4,5])]
+        (ores, oreg) = detrend(ods, perchunk=True, model='regress', opt_reg=opt_reg)
         self.failUnless((ods.samples - psamps).sum() == 0.0,
                         msg="Detrend for polort reg should be same as opt_reg " + \
                         "when popt_reg is the same as the polort reg.")
