@@ -29,9 +29,10 @@ svmc_ext = Extension( 'mvpa.clfs.libsvm.svmc',
                              '-I/usr/include/libsvm-2.0/libsvm',
                              '-I' + numpy_headers ] )
 
-smlrc_ext = Extension( 'mvpa.clfs.libsmlr.smlrc',
+smlrc_ext = Extension('mvpa.clfs.libsmlr.smlrc',
                       sources = [ 'mvpa/clfs/libsmlr/smlr.c' ],
                       libraries = ['m'],
+                      # extra_compile_args = ['-O0'],
                       language = 'c')
 
 # define the setup
