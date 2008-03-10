@@ -361,3 +361,30 @@ class SampleAttributes(ColumnData):
 
     nsamples = property(fget=getNSamples)
 
+
+
+class McFlirtParams(ColumnData):
+    """Read and write McFlirt's motion estimation parameters from and to text
+    files.
+    """
+    header_def = ['rot1', 'rot2', 'rot3', 'x', 'y', 'z']
+
+    def __init__(self, source):
+        """
+        :Parameter:
+
+            source: str
+                Filename of a parameter file.
+        """
+        ColumnData.__init__(self, source,
+                            header=McFlirtParams.header_def,
+                            sep=None, dtype=float)
+
+
+    def tofile(self, filename):
+        """Write motion parameters to file.
+        """
+        ColumnData.tofile(self, filename,
+                          header=False,
+                          header_order=McFlirtParams.header_def,
+                          sep=' ')
