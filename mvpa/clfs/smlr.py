@@ -106,10 +106,6 @@ class SMLR(Classifier):
         self.__fit_all_weights = fit_all_weights
         self.__seed = seed
 
-        if not has_bias:
-            # no need to keep it enabled
-            self.states.disable('biases')
-
         # pylint friendly initializations
         self.__ulabels = None
         """Unigue labels from the training set."""
@@ -294,6 +290,7 @@ class SMLR(Classifier):
         # Process the labels to turn into 1 of N encoding
         labels = _label2oneofm(dataset.labels, dataset.uniquelabels)
         self.__ulabels = dataset.uniquelabels.copy()
+
         Y = labels
         M = len(self.__ulabels)
 
@@ -302,6 +299,9 @@ class SMLR(Classifier):
 
         # see if we are adding a bias term
         if self.__has_bias:
+            if __debug__:
+                debug("SMLR_", "hstacking 1s for bias")
+
             # append the bias term to the features
             X = N.hstack((X, N.ones((X.shape[0], 1), dtype=X.dtype)))
 
@@ -314,10 +314,14 @@ class SMLR(Classifier):
                     debug("SMLR_",
                           "Copying data to get it C_CONTIGUOUS/ALIGNED")
                 X = N.array(X, copy=True, dtype=N.double, order='C')
+
             # currently must be double for the C code
             if X.dtype != N.double:
+                if __debug__:
+                    debug("SMLR_", "Converting data to double")
                 # must cast to double
                 X = X.astype(N.double)
+
         # set the feature dimensions
         elif self.__implementation.upper() == 'PYTHON':
             _stepwise_regression = self._pythonStepwiseRegression
