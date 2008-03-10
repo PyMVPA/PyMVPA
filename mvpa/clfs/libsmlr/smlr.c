@@ -61,7 +61,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
   if (verbose)
   {
-    fprintf(stdout, "SMLR: random seed=%d\n", seed);
+    fprintf(stdout, "SMLR: random seed=%lld\n", seed);
     fflush(stdout);
   }
 
