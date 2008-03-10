@@ -26,6 +26,8 @@ Unreleased changes
     artificial datasets.
   * More sophisticated data preprocessing: removal of non-linear trends and
     other arbitrary confounding regressors.
+  * New `Harvester` class to feed data from arbitrary generators into multiple
+    objects and store results of returned values and arbitrary properties.
 
 
 Releases
