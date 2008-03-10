@@ -18,9 +18,11 @@ from scipy.special import legendre
 
 from mvpa.misc.support import getBreakPoints
 
-def detrend(data, perchunk=False, dtype='linear'):
+def detrend(data, perchunk=False, model='linear',
+            polort=None, opt_reg=None):
     """
-    Given a dataset, detrend the data inplace either entirely or per each chunk
+    Given a dataset, detrend the data inplace either entirely
+    or per each chunk
 
     :Parameters:
       `data` : `Dataset`
@@ -28,21 +30,42 @@ def detrend(data, perchunk=False, dtype='linear'):
       `perchunk` : bool
         either to operate on whole dataset at once or on each chunk
         separately
-      `dtype`
-        type accepted by scipy.signal.detrend. Currently only
-        'linear' or 'constant' (which is just demeaning)
+      `model`
+        Type of detrending model to run.  If 'linear' or 'constant',
+        scipy.signal.detrend is used to perform a linear or demeaning
+        detrend. If 'regress', then you specify the polort and opt_reg
+        arguments to define regressors to regress out of the dataset.
+      `polort` : int
+        Order of the Legendre polynomial to remove from the data.  This
+        will remove every polynomial up to and including the provided
+        value.  For example, 3 will remove 1st, 2nd, and 3rd order
+        polynomials from the data.
+      `opt_reg` : ndarray
+        Optional ndarray of additional information to regress out from the
+        dataset.  One example would be to regress out motion parameters.
+        As with the data, time is on the first axis.
 
     """
 
-    bp = 0                              # no break points by default
+    if model in ['linear', 'constant']:
+        # perform scipy detrend
+        bp = 0                              # no break points by default
 
-    if perchunk:
-        bp = getBreakPoints(data.chunks)
+        if perchunk:
+            bp = getBreakPoints(data.chunks)
 
-    data.samples[:] = signal.detrend(data.samples, axis=0, type=dtype, bp=bp)
+        data.samples[:] = signal.detrend(data.samples, axis=0,
+                                         type=model, bp=bp)
+    elif model in ['regress']:
+        # perform regression-based detrend
+        return __detrend_regress(data, perchunk=perchunk,
+                                 polort=polort, opt_reg=opt_reg)
+    else:
+        # raise exception because not found
+        raise ValueError('Specified model type (%s) is unknown.'
+                         % (model))
 
-
-def detrend_pattern(data, perchunk=True, polort=None, opt_reg=None):
+def __detrend_regress(data, perchunk=True, polort=None, opt_reg=None):
     """
     Given a dataset, perform a detrend inplace, regressing out polynomial
     terms as well as optional regressors, such as motion parameters.
@@ -67,44 +90,54 @@ def detrend_pattern(data, perchunk=True, polort=None, opt_reg=None):
     """
 
     # create data to regress out
-    # loop over chunks if necessary
-    if perchunk:
-        # get the unique chunks
-        uchunks = data.uniquechunks
+    # Start a list of regressors, we always pull out mean
+    regstocombine = [N.ones((data.nsamples, 1))]
 
-        # loop over each chunk
-        cpol = []
-        for chunk in uchunks:
-            cinds = data.chunks == chunk
-            x = N.linspace(-1, 1, cinds.sum())
-            # create the polort for each chunk
+    # see if add in polort values    
+    if not polort is None:
+        # loop over chunks if necessary
+        if perchunk:
+            # get the unique chunks
+            uchunks = data.uniquechunks
+
+            # loop over each chunk
+            cpol = []
+            for chunk in uchunks:
+                cinds = data.chunks == chunk
+                x = N.linspace(-1, 1, cinds.sum())
+                # create the polort for each chunk
+                pol = []
+                for n in range(1, polort + 1):
+                    pol.append(legendre(n)(x)[:, N.newaxis])
+                cpol.append(N.hstack(pol))
+            pols = N.vstack(cpol)
+        else:
+            # just create the polort over the entire dataset
             pol = []
+            x = N.linspace(-1, 1, data.nsamples)
             for n in range(1, polort + 1):
                 pol.append(legendre(n)(x)[:, N.newaxis])
-            cpol.append(N.hstack(pol))
-        pols = N.vstack(cpol)
-    else:
-        # just create the polort over the entire dataset
-        pol = []
-        x = N.linspace(-1, 1, data.nsamples)
-        for n in range(1, polort + 1):
-            pol.append(legendre(n)(x)[:, N.newaxis])
-        pols = N.hstack(pol)
+            pols = N.hstack(pol)
 
-    # combine all the regressors together
-    tocombine = [N.ones((data.nsamples, 1))]
-    if not polort is None:
         # add in the optional regressors, too
-        tocombine.append(pols)
+        regstocombine.append(pols)
+
+    # see if add in optional regs
     if not opt_reg is None:
         # add in the optional regressors, too
-        tocombine.append(opt_reg)
-    regs = N.hstack(tocombine)
+        regstocombine.append(opt_reg)
 
-    # regress them out
+    # perform the combination
+    if len(regstocombine) > 1:
+        regs = N.hstack(regstocombine)
+    else:
+        # only have what we started with, so just pick it
+        regs = regstocombine[0]
+        
+    # perform the regression
     res = lstsq(regs, data.samples)
 
-    # remove the residuals
+    # remove all but the residuals
     yhat = N.dot(regs, res[0])
     data.samples -= yhat
 
