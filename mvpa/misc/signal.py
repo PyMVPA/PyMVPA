@@ -101,16 +101,16 @@ def __detrend_regress(data, perchunk=True, polort=None, opt_reg=None):
             uchunks = data.uniquechunks
 
             # loop over each chunk
-            cpol = []
+            pol = []
             for chunk in uchunks:
                 cinds = data.chunks == chunk
                 x = N.linspace(-1, 1, cinds.sum())
                 # create the polort for each chunk
-                pol = []
                 for n in range(1, polort + 1):
-                    pol.append(legendre(n)(x)[:, N.newaxis])
-                cpol.append(N.hstack(pol))
-            pols = N.vstack(cpol)
+                    newpol = N.zeros((data.nsamples, 1))
+                    newpol[cinds,0] = legendre(n)(x)
+                    pol.append(newpol)
+            pols = N.hstack(pol)
         else:
             # just create the polort over the entire dataset
             pol = []
@@ -133,7 +133,7 @@ def __detrend_regress(data, perchunk=True, polort=None, opt_reg=None):
     else:
         # only have what we started with, so just pick it
         regs = regstocombine[0]
-        
+
     # perform the regression
     res = lstsq(regs, data.samples)
 
