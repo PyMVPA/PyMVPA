@@ -15,7 +15,8 @@ Base Classifiers can be grouped according to their function as
   SplitClassifier
 :group ProxyClassifiers: BinaryClassifier MappedClassifier
   FeatureSelectionClassifier
-:group PredictionsCombiners for CombinedClassifier: PredictionsCombiner MaximalVote
+:group PredictionsCombiners for CombinedClassifier: PredictionsCombiner
+  MaximalVote
 
 """
 
@@ -31,7 +32,7 @@ from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful
 
-from transerror import ConfusionMatrix
+from mvpa.clfs.transerror import ConfusionMatrix
 
 from mvpa.misc import warning
 
@@ -103,17 +104,20 @@ class Classifier(Stateful):
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
     trained_labels = StateVariable(enabled=True,
-        doc="What labels (unique) clf was trained on")
+        doc="Set of unique labels it has been trained on")
 
-    training_confusion = StateVariable(enabled=True,
-        doc="Result of learning: `ConfusionMatrix` " \
-            "(and corresponding learning error)")
+    trained_dataset = StateVariable(enabled=False,
+        doc="The dataset it has been trained on")
+
+    training_confusion = StateVariable(enabled=False,
+        doc="Confusion matrix of learning performance")
 
     predictions = StateVariable(enabled=True,
-        doc="Reported predicted values")
+        doc="Most recent set of predictions")
 
     values = StateVariable(enabled=False,
-        doc="Internal values seen by the classifier")
+        doc="Internal classifier values the most recent " +
+            "predictions are based on")
 
 
     params = {}
@@ -140,18 +144,27 @@ class Classifier(Stateful):
         return "%s\n %s" % (`self`, Stateful.__str__(self))
 
 
+    #XXX that is a bad idea since object seems to be be deallocated by here
+    #def __del__(self):
+    #    if __debug__:
+    #        debug('CLF_', 'Destroying classifier %s' % `self`)
+    #    self.untrain()
+
+
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
         pass
 
 
-    def _posttrain(self, dataset, result):
+    def _posttrain(self, dataset):
         """Functionality post training
 
         For instance -- computing confusion matrix
         """
         self.trained_labels = Set(dataset.uniquelabels)
+
+        self.trained_dataset = dataset
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
@@ -187,8 +200,15 @@ class Classifier(Stateful):
             debug("CLF_TB", "Traceback: %s" % tb)
 
         self._pretrain(dataset)
-        result = self._train(dataset)
-        self._posttrain(dataset, result)
+        if dataset.nfeatures > 0:
+            result = self._train(dataset)
+        else:
+            warning("Trying to train on dataset with no features present")
+            if __debug__:
+                debug("CLF",
+                      "No features present for training, no actual training is called")
+            result = None
+        self._posttrain(dataset)
         return result
 
 
@@ -239,7 +259,15 @@ class Classifier(Stateful):
             debug("CLF_TB", "Traceback: %s" % tb)
 
         self._prepredict(data)
-        result = self._predict(data)
+        if self.__trainednfeatures > 0 or not self.__train2predict:
+            result = self._predict(data)
+        else:
+            warning("Trying to predict using classifier trained on no features")
+            if __debug__:
+                debug("CLF",
+                      "No features were present for training, prediction is bogus")
+            result = [None]*data.shape[0]
+
         self._postpredict(data, result)
         return result
 
@@ -597,8 +625,6 @@ class ClassifierCombiner(PredictionsCombiner):
 
         # XXX What is it, Exception or Return?
         raise NotImplementedError
-        self.predictions = predictions
-        return predictions
 
 
 

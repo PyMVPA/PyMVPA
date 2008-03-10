@@ -10,7 +10,7 @@
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter, \
-                                   NoneSplitter
+                                   NoneSplitter, HalfSplitter
 import unittest
 import numpy as N
 
@@ -66,14 +66,45 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[1] != None)
 
 
+    def testHalfSplit(self):
+        hs = HalfSplitter()
+
+        splits = [ (train, test) for (train, test) in hs(self.data) ]
+
+        self.failUnless(len(splits) == 2)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 2 )
+            self.failUnless( p[0].nsamples == 50 )
+            self.failUnless( p[1].nsamples == 50 )
+
+        self.failUnless((splits[0][1].uniquechunks == [0, 1, 2, 3, 4]).all())
+        self.failUnless((splits[0][0].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][1].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][0].uniquechunks == [0, 1, 2, 3, 4]).all())
+
+        # check if it works on pure odd and even chunk ids
+        moresplits = [ (train, test) for (train, test) in hs(splits[0][0])]
+
+        for split in moresplits:
+            self.failUnless(split[0] != None)
+            self.failUnless(split[1] != None)
+
+
+
     def testNoneSplitter(self):
         nos = NoneSplitter()
-
         splits = [ (train, test) for (train, test) in nos(self.data) ]
-
         self.failUnless(len(splits) == 1)
         self.failUnless(splits[0][0] == None)
         self.failUnless(splits[0][1].nsamples == 100)
+
+        nos = NoneSplitter(mode='first')
+        splits = [ (train, test) for (train, test) in nos(self.data) ]
+        self.failUnless(len(splits) == 1)
+        self.failUnless(splits[0][1] == None)
+        self.failUnless(splits[0][0].nsamples == 100)
+
 
         # test sampling tools
         nos = NoneSplitter(nrunspersplit=3,

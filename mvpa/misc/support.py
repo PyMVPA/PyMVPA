@@ -13,7 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re
 
-from copy import deepcopy
+from copy import copy, deepcopy
+from operator import isSequenceType
 
 if __debug__:
     from mvpa.misc import debug
@@ -85,15 +86,18 @@ def getUniqueLengthNCombinations(data, n):
                     # flag the current element as touched
                     occupied[i] = True
                     # next level
-                    take(data, occupied, depth+1, taken + [data[i]])
-                    # 'free' the current element
-                    occupied[i] == False
+                    take(data, occupied, depth+1, taken + [d])
+                    # if the current element would be set 'free', it would
+                    # results in ALL combinations of elements (obeying order
+                    # of elements) and not just in the unique sets of
+                    # combinations (without order)
+                    #occupied[i] = False
                 else:
                     # store the final combination
-                    combos.append(taken + [data[i]])
+                    combos.append(taken + [d])
     # some kind of bitset that stores the status of each element
     # (contained in combination or not)
-    occupied = [ False for i in data ]
+    occupied = [False] * len(data)
     # get the combinations
     take(data, occupied, 0, [])
 
@@ -107,7 +111,7 @@ def indentDoc(v):
     Needed for a cleaner __repr__ output
     `v` - arbitrary
     """
-    return re.sub('\n', '\n  ', `v`)
+    return re.sub('\n', '\n  ', str(v))
 
 
 def isSorted(items):
@@ -141,7 +145,7 @@ def getBreakPoints(items, contiguous=True):
 
     :return: list of indexes for every new set of items
     """
-
+    prev = None # pylint happiness event!
     known = []
     """List of items which was already seen"""
     result = []
@@ -153,7 +157,7 @@ def getBreakPoints(items, contiguous=True):
                 if prev != item:            # breakpoint
                     if contiguous:
                         raise ValueError, \
-                        "Item %s was already seen before" % `item`
+                        "Item %s was already seen before" % str(item)
                     else:
                         result.append(index)
         else:
@@ -161,3 +165,186 @@ def getBreakPoints(items, contiguous=True):
             result.append(index)
         prev = item
     return result
+
+
+class MapOverlap(object):
+    """Compute some overlap stats from a sequence of binary maps.
+
+    When called with a sequence of binary maps (e.g. lists or arrays) the
+    fraction of mask elements that are non-zero in a customizable proportion
+    of the maps is returned. By default this threshold is set to 1.0, i.e.
+    such an element has to be non-zero in *all* maps.
+
+    Three additional maps (same size as original) are computed:
+
+      * overlap_map: binary map which is non-zero for each overlapping element.
+      * spread_map:  binary map which is non-zero for each element that is
+                     non-zero in any map, but does not exceed the overlap
+                     threshold.
+      * ovstats_map: map of float with the raw elementwise fraction of overlap.
+
+    All maps are available via class members.
+    """
+    def __init__(self, overlap_threshold=1.0):
+        """Nothing to be seen here.
+        """
+        self.__overlap_threshold = overlap_threshold
+
+        # pylint happiness block
+        self.overlap_map = None
+        self.spread_map = None
+        self.ovstats_map = None
+
+
+    def __call__(self, maps):
+        """Returns fraction of overlapping elements.
+        """
+        ovstats = N.mean(maps, axis=0)
+
+        self.overlap_map = (ovstats >= self.__overlap_threshold )
+        self.spread_map = N.logical_and(ovstats > 0.0,
+                                        ovstats < self.__overlap_threshold)
+        self.ovstats_map = ovstats
+
+        return N.mean(ovstats >= self.__overlap_threshold)
+
+
+class HarvesterCall(object):
+    def __init__(self, call, attribs=None, argfilter=None, expand_args=True,
+                 copy_attribs=True):
+        """Initialize
+
+        :Parameters:
+          expand_args : bool
+            Either to expand the output of looper into a list of arguments for
+            call
+          attribs : list of basestr
+            What attributes of call to store and return later on?
+          copy_attribs : bool
+            Force copying values of attributes
+        """
+
+        self.call = call
+        """Call which gets called in the harvester."""
+
+        if attribs is None:
+            attribs = []
+        if not isSequenceType(attribs):
+            raise ValueError, "'attribs' have to specified as a sequence."
+
+        if not (argfilter is None or isSequenceType(argfilter)):
+            raise ValueError, "'argfilter' have to be a sequence or None."
+
+        # now give it to me...
+        self.argfilter = argfilter
+        self.expand_args = expand_args
+        self.copy_attribs = copy_attribs
+        self.attribs = attribs
+
+
+ 
+class Harvester(object):
+    """World domination helper: do whatever it is asked and accumulate results
+
+    XXX Thinks about:
+      - Might we need to deepcopy attributes values?
+      - Might we need to specify what attribs to copy and which just to bind?
+    """
+
+    def __init__(self, source, calls, simplify_results=True):
+        """Initialize
+
+        :Parameters:
+          source
+            Generator which produce food for the calls.
+          calls : sequence of HarvesterCall instances
+            Calls which are processed in the loop. All calls are processed in
+            order of apperance in the sequence.
+          simplify_results: bool
+            Remove unecessary overhead in results if possible (nested lists
+            and dictionaries).
+       """
+        if not isSequenceType(calls):
+            raise ValueError, "'calls' have to specified as a sequence."
+
+        self.__source = source
+        """Generator which feeds the harvester"""
+
+        self.__calls = calls
+        """Calls which gets called with each generated source"""
+
+        self.__simplify_results = simplify_results
+
+
+    def __call__(self, *args, **kwargs):
+        """
+        """
+        # prepare complex result structure for all calls and their respective
+        # attributes: calls x dict(attributes x loop iterations)
+        results = [dict([('result', [])] + [(a, []) for a in c.attribs]) \
+                        for c in self.__calls]
+
+        # Lets do it!
+        for (i, X) in enumerate(self.__source(*args, **kwargs)):
+            for (c, call) in enumerate(self.__calls):
+                # sanity check
+                if i == 0 and call.expand_args and not isSequenceType(X):
+                    raise RuntimeError, \
+                          "Cannot expand non-sequence result from %s" % \
+                          `self.__source`
+
+                # apply argument filter (and reorder) if requested
+                if call.argfilter:
+                    filtered_args = [X[f] for f in call.argfilter]
+                else:
+                    filtered_args = X
+
+                if call.expand_args:
+                    result = call.call(*filtered_args)
+                else:
+                    result = call.call(filtered_args)
+
+#                # XXX pylint doesn't like `` for some reason
+#                if __debug__:
+#                    debug("LOOP", "Iteration %i on call %s. Got result %s" %
+#                          (i, `self.__call`, `result`))
+
+
+                results[c]['result'].append(result)
+
+                for attrib in call.attribs:
+                    attrv = call.call.__getattribute__(attrib)
+
+                    if call.copy_attribs:
+                        attrv = copy(attrv)
+
+                    results[c][attrib].append(attrv)
+
+        # reduce results structure
+        if self.__simplify_results:
+            # get rid of dictionary if just the results are requested
+            for (c, call) in enumerate(self.__calls):
+                if not len(call.attribs):
+                    results[c] = results[c]['result']
+
+            if len(self.__calls) == 1:
+                results = results[0]
+
+        return results
+
+
+# XXX MH: this doesn't work in all cases, as you cannot have *args after a
+#         kwarg.
+#def loop(looper, call,
+#         unroll=True, attribs=None, copy_attribs=True, *args, **kwargs):
+#    """XXX Loop twin brother
+#
+#    Helper for those who just wants to do smth like
+#       loop(blah, bleh, grgr)
+#     instead of
+#       Loop(blah, bleh)(grgr)
+#    """
+#    print looper, call, unroll, attribs, copy_attribs
+#    print args, kwargs
+#    return Loop(looper=looper, call=call, unroll=unroll,
+#                attribs=attribs, copy_attribs=copy_attribs)(*args, **kwargs)

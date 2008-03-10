@@ -10,6 +10,7 @@
 
 import unittest
 import numpy as N
+from copy import copy
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.svm import LinearNuSVMC
@@ -94,6 +95,9 @@ class ErrorsTests(unittest.TestCase):
         self.failUnlessEqual(err(None), terr(train),
             msg="ConfusionBasedError should be equal to TransferError on" +
                 " traindataset")
+
+        # try copying the beast
+        terr_copy = copy(terr)
 
 
 def suite():

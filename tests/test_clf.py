@@ -32,8 +32,8 @@ class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
-    def __init__(self):
-        Classifier.__init__(self, train2predict=False)
+    def __init__(self, **kwargs):
+        Classifier.__init__(self, train2predict=False, **kwargs)
 
     def _train(self, data):
         # we don't need that ;-)
@@ -72,12 +72,16 @@ class ClassifiersTests(unittest.TestCase):
             chunks=[0, 1, 2,  2, 3])  # chunks
 
     def testDummy(self):
-        clf = SameSignClassifier()
+        clf = SameSignClassifier(enable_states=['training_confusion'])
         clf.train(self.data_bin_1)
         self.failUnlessRaises(UnknownStateError, clf.states.get,
                               "predictions")
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
+
+        self.failUnlessRaises(UnknownStateError, clf.states.get,
+                              "trained_dataset")
+
         self.failUnlessEqual(clf.training_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
@@ -86,6 +90,14 @@ class ClassifiersTests(unittest.TestCase):
 
         self.failUnlessEqual(len(clf.predictions), self.data_bin_1.nsamples,
             msg="Trained classifier stores predictions by default")
+
+        clf = SameSignClassifier(enable_states=['trained_dataset'])
+        clf.train(self.data_bin_1)
+        self.failUnless((clf.trained_dataset.samples ==
+                         self.data_bin_1.samples).all())
+        self.failUnless((clf.trained_dataset.labels ==
+                         self.data_bin_1.labels).all())
+
 
     def testBoosted(self):
         # XXXXXXX
@@ -202,8 +214,9 @@ class ClassifiersTests(unittest.TestCase):
     # TODO: come up with nice idea on how to bring sweepargs here
     def testMulticlassClassifier(self):
         svm = LinearNuSVMC()
-        svm2 = LinearNuSVMC()
-        clf = MulticlassClassifier(clf=svm)
+        svm2 = LinearNuSVMC(enable_states=['training_confusion'])
+        clf = MulticlassClassifier(clf=svm,
+                                   enable_states=['training_confusion'])
 
         nfeatures = 6
         nonbogus = [1, 3, 4]
@@ -244,6 +257,22 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfs['all'])
+    def testGenericTests(self, clf):
+        """Test all classifiers for conformant behavior
+        """
+        for traindata in [dumbFeatureDataset()]:
+
+            traindata_copy = deepcopy(traindata) # full copy of dataset
+            clf.train(traindata)
+            self.failUnless((traindata.samples == traindata_copy.samples).all(),
+                "Training of a classifier shouldn't change original dataset")
+
+            # TODO: enforce uniform return from predict??
+            #predicted = clf.predict(traindata.samples)
+            #self.failUnless(isinstance(predicted, N.ndarray))
+
+
+    @sweepargs(clf=clfs['all'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
@@ -265,8 +294,8 @@ class ClassifiersTests(unittest.TestCase):
         for traindata in traindatas:
             clf.train(traindata)
             self.failUnlessEqual(clf.training_confusion.percentCorrect, 100.0,
-                "Classifier %s must have 100%% correct learning on %s" %
-                (`clf`, traindata.samples))
+                "Classifier %s must have 100%% correct learning on %s. Has %f" %
+                (`clf`, traindata.samples, clf.training_confusion.percentCorrect))
 
             # and we must be able to predict every original sample thus
             for i in xrange(traindata.nsamples):

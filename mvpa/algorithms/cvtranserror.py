@@ -10,8 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-
 from copy import copy
 
 from mvpa.algorithms.datameasure import ScalarDatasetMeasure
@@ -87,7 +85,7 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
 #                      indentDoc(self.__errorfx), indentDoc(self.__combiner))
 
 
-    def __call__(self, dataset):
+    def _call(self, dataset):
         """Perform cross-validation on a dataset.
 
         'dataset' is passed to the splitter instance and serves as the source
@@ -142,7 +140,7 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
         self.results = results
         """Store state variable if it is enabled"""
 
-        return self.finalize(self.__combiner(results))
+        return self.__combiner(results)
 
 
     splitter = property(fget=lambda self:self.__splitter)

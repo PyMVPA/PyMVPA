@@ -32,6 +32,7 @@ tests = [
     'test_svm',
     'test_plr',
     'test_ridge',
+    'test_smlr',
     # Various algorithms
     'test_transformers',
     'test_transerror',
@@ -46,13 +47,15 @@ tests = [
     'test_nullhyptest'
     ]
 
-
+# No python warnings (like ctypes version for slmr)
+import warnings
+warnings.simplefilter('ignore')
 
 # import all test modules
 for t in tests:
     exec 'import ' + t
 
-# no warnings during whole testsuite
+# no MVPA warnings during whole testsuite
 from mvpa.misc import warning
 warning.handlers = []
 

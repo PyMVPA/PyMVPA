@@ -120,6 +120,177 @@ Tests
 * Every new feature should have a unittest
 
 
+Extending PyMVPA
+----------------
+
+This section shall provide a developer with the necessary pieces of information
+for writing extensions to PyMVPA. The guidelines given here, must be obeyed
+to ensure a maximum of compatibilty and inter-operability. As a consequence,
+all modifications that introduce changes to the basic interfaces outlined below
+have to be documented here and also should be announced in the changelog.
+
+
+Adding a new Dataset type
+~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Required interface for Mapper.
+ * only new subclasses of MappedDataset + new Mappers (all other as
+   improvements into the Dataset base class)?
+
+go into `mvpa/datasets/`
+
+Adding a new Classifier
+~~~~~~~~~~~~~~~~~~~~~~~
+
+To add a new classifier implementation it is sufficient to create a new
+sub-class of Classifier_ and add implementations of the following methods:
+
+`__init__(**kwargs)`
+    Additional arguments and keyword arguments may be added, but the base-class
+    contructor has to be called with `**kwargs`!
+
+`_train(dataset)`
+    Has to train the classifier when it is called with a Dataset_. Successive
+    calls to this methods always have to train the classifier on the respective
+    datasets. An eventually existing prior training status has to be cleared
+    automatically. Nothing is returned.
+
+`_predict(data)`
+    Unlike `_train()` the method is not called with a Dataset_ instance, but
+    with any sequence of data samples (e.g. arrays). It has to return a
+    sequence of predictions, one for each data sample.
+
+With this minimal implementation the classifier provides some useful
+functionality, by automatically storing some relevant information upon request
+in state variables.
+
+.. IncludeStates: clfs.classifier Classifier
+
+Supported states:
+
+================== ==============================================   =========
+    State Name      Description                                      Default
+------------------ ----------------------------------------------   ---------
+trained_labels      Set of unique labels it has been trained on.     Enabled
+trained_dataset     The dataset it has been trained on.              Disabled
+trained_confusion   Confusion matrix of learning performance.        Disabled
+predictions         Most recent set of predictions.                  Enabled
+values              Internal classifier values the most recent       Disabled
+                    predictions are based on.
+================== ==============================================   =========
+
+If any intended functionality cannot be realized be implementing above methods.
+The Classifier_ class offers some additionals methods that might be overriden
+by sub-classes. For all methods described below it is strongly recommended to
+call the base-class methods at the end of the implementation in the sub-class
+to preserve the full functionality.
+
+`_pretrain(dataset)`
+    Called with the Dataset_ instance that shall be trained with, but before
+    the actual training is performed.
+
+`_posttrain(dataset)`
+    Called with the Dataset_ instance the classifier was trained on, just after 
+    training was performed.
+
+`_prepredict(data)`
+    Called with the data samples the classifier should do a prediction with,
+    just before the actual `_prediction()` call.
+
+`_postpredict(data, result)`
+    Called with the data sample for which predictions were made and the
+    resulting predictions themselves.
+
+
+Source code files of all classifier implementations go into `mvpa/clfs/`.
+
+
+.. _Classifier: api/mvpa.clfs.classifier.Classifier-class.html
+
+
+Outstanding Questions:
+
+	* when states and when properties?
+
+
+
+
+Adding a new Sensitivity Analyzer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There are two possible base-classes for new sensitivity analyzers.
+First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
+generic approach. However, for sensitivity analyzers that make use of some
+classifier and extract the sensitivities from it,
+ClassifierBasedSensitivityAnalyzer_ is a more appropriate base-class, as it
+provides some additional useful functionality for this use case.
+
+All sensitivity analyzers (actually all objects based on DatasetMeasure_)
+support a `transformer` keyword argument to their constructor. The functor
+passed as its value is called with the to be returned results and its outcome
+is returned as the final results. By default no transformation is performed.
+
+If a sensitivity analyzer computes sensitivities, were both large positive and
+large negative values indicate high sensitivity, it should nevertheless *not*
+return absolute sensitivities, but set a default transformer instead that takes
+the absolute.
+
+To add a new sensitivity analyzer implementation it is sufficient to create a
+new sub-class of SensitivityAnalyzer_ and add an implementation of the
+`_call(dataset)` method. It will be called with an instance of Dataset_ and has
+to return a vector of featurewise sensitivity scores.
+
+.. IncludeStates: algorithms.datameasure DatasetMeasure
+
+Supported state:
+
+================== ==============================================   =========
+    State Name      Description                                      Default
+------------------ ----------------------------------------------   ---------
+raw_result          Computed results before applying any             Disabled
+                    transformation algorithm.
+================== ==============================================   =========
+
+Source code files of all sensitivity analyzer implementations go into
+`mvpa/algorithms/`.
+
+
+Classifier-independent Sensitivity Analyzers
+''''''''''''''''''''''''''''''''''''''''''''
+
+Nothing special.
+
+
+Classifier-based Sensitivity Analyzers
+''''''''''''''''''''''''''''''''''''''
+
+A ClassifierBasedSensitivityAnalyzer_ behaves exactly like its
+classifier-independent sibling, but additionally provides support for embedding
+the necessary classifier and handles its training upon request
+(boolean `force_training` keyword argument of the constructor). Access to the
+embedded classifier object is provided via the `clf` property.
+
+.. IncludeStates: algorithms.datameasure ClassifierBasedSensitivityAnalyzer
+
+
+Outstanding Questions:
+
+  * What is a ProxyClassifierSensitivityAnalyzer_ useful for?
+  * Shouldn't there be a `sensitivities` state?
+
+
+.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
+.. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
+.. _ClassifierBasedSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ClassifierBasedSensitivityAnalyzer-class.html
+.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ProxyClassifierSensitivityAnalyzer-class.html
+
+
+
+Adding a new Algorithm
+~~~~~~~~~~~~~~~~~~~~~~
+
+go into `mvpa/algorithms/`
+
+
+
 Git Repository
 --------------
 
@@ -169,7 +340,7 @@ categories:
   * *OPT* : optimization
   * *BK* : breaks something and/or tests fail
   * *PL* : making pylint happier
-
+  * *DOC*: for all kinds of documentation related commits
 
 .. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 .. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
@@ -212,6 +383,9 @@ TODO
 
     * transerror.py for instance uses testdata/trainingdata
     * rfe.py dataset, testdataset
+
+ * mvpa.misc.warning may be should use stock python warnings module instead of
+   custom one?
 
  * ConfusionBasedError -> InternalError ?
 
