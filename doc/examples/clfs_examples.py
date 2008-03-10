@@ -70,13 +70,10 @@ for (dataset, datasetdescr), clfs in \
         times = []
         for nfold, (training_ds, validation_ds) in \
                 enumerate(NFoldSplitter()(dataset)):
-            t0 = time()
             clf.train(training_ds)
-            t1 = time()
             predictions = clf.predict(validation_ds.samples)
-            t2 = time()
             confusion.add(validation_ds.labels, predictions)
-            times.append([t1-t0, t2-t1])
+            times.append([clf.training_time, clf.predicting_time])
 
         times = N.mean(times, axis=0)
         print "  %-30s: correct=%.1f%% train:%.1fsec predict:%.1fsec" % \
