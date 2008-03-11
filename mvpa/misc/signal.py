@@ -93,46 +93,49 @@ def __detrend_regress(data, perchunk=True, polort=None, opt_reg=None):
     # Start a list of regressors, we always pull out mean
     regstocombine = [N.ones((data.nsamples, 1))]
 
-    # see if add in polort values    
-    if not polort is None:
-        # loop over chunks if necessary
-        if perchunk:
-            # get the unique chunks
-            uchunks = data.uniquechunks
+    # loop over chunks if necessary
+    if perchunk:
+        # get the unique chunks
+        uchunks = data.uniquechunks
 
-            # loop over each chunk
-            pol = []
-            for chunk in uchunks:
-                cinds = data.chunks == chunk
+        # loop over each chunk
+        reg = []
+        for chunk in uchunks:
+            cinds = data.chunks == chunk
+            # add in the baseline shift
+            newreg = N.zeros((data.nsamples, 1))
+            newreg[cinds,0] = N.ones(cinds.sum())
+            reg.append(newreg)
+            
+            # see if add in polort values    
+            if not polort is None:
+                # create the timespan
                 x = N.linspace(-1, 1, cinds.sum())
-                # create the polort for each chunk
+                # create each polort
                 for n in range(1, polort + 1):
-                    newpol = N.zeros((data.nsamples, 1))
-                    newpol[cinds,0] = legendre(n)(x)
-                    pol.append(newpol)
-            pols = N.hstack(pol)
-        else:
-            # just create the polort over the entire dataset
-            pol = []
+                    newreg = N.zeros((data.nsamples, 1))
+                    newreg[cinds,0] = legendre(n)(x)
+                    reg.append(newreg)
+    else:
+        # take out mean over entire dataset
+        reg = [N.ones((data.nsamples, 1))]
+        # see if add in polort values    
+        if not polort is None:
+            # create the timespan
             x = N.linspace(-1, 1, data.nsamples)
             for n in range(1, polort + 1):
-                pol.append(legendre(n)(x)[:, N.newaxis])
-            pols = N.hstack(pol)
-
-        # add in the optional regressors, too
-        regstocombine.append(pols)
+                reg.append(legendre(n)(x)[:, N.newaxis])
 
     # see if add in optional regs
     if not opt_reg is None:
         # add in the optional regressors, too
-        regstocombine.append(opt_reg)
+        reg.append(opt_reg)
 
-    # perform the combination
-    if len(regstocombine) > 1:
-        regs = N.hstack(regstocombine)
+    # combine the regs
+    if len(reg) > 1:
+        regs = N.hstack(reg)
     else:
-        # only have what we started with, so just pick it
-        regs = regstocombine[0]
+        regs = reg[0]
 
     # perform the regression
     res = lstsq(regs, data.samples)
