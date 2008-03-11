@@ -9,10 +9,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Examples demonstrating varioius classifiers on different datasets"""
 
+import os
 from time import time
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
+from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.datasets.splitter import *
 
 # Define sets of classifiers
@@ -23,13 +25,17 @@ from mvpa.clfs.ridge import *
 from mvpa.clfs.knn import *
 
 # Algorithms
+from mvpa.algorithms.featsel import *
 from mvpa.algorithms.datameasure import *
+from mvpa.algorithms.anova import *
 from mvpa.algorithms.rfe import *
 from mvpa.algorithms.linsvmweights import *
+from mvpa.algorithms.smlrweights import *
 
 # Helpers
 from mvpa.clfs.transerror import *
 from mvpa.misc.data_generators import *
+from mvpa.misc.iohelpers import SampleAttributes
 
 # Misc tools
 #
@@ -38,13 +44,25 @@ from mvpa.misc import warning
 warning.handlers = []
 
 
-# Define groups of classifiers. Should be moved somewhere in mvpa
+# Define groups of classifiers.
+#
+# TODO: Should be moved somewhere in mvpa -- all those duplicate
+#       list of classifiers within tests/tests_warehouse_clfs
+#
+# NB:
+#  - Nu-classifiers are turned off since for haxby DS default nu
+#    is an 'infisible' one
+#  - Python's SMLR is turned off for the duration of development
+#    since it is slow and results should be the same as of C version
+#
 clfs={'LinearSVMC' : [LinearCSVMC(descr="Linear C-SVM (default)"),
-                      LinearNuSVMC(descr="Linear nu-SVM (default)")],
+#                      LinearNuSVMC(descr="Linear nu-SVM (default)")
+                      ],
       'NonLinearSVMC' : [RbfCSVMC(descr="Rbf C-SVM (default)"),
-                         RbfNuSVMC(descr="Rbf nu-SVM (default)")],
+#                         RbfNuSVMC(descr="Rbf nu-SVM (default)")
+                         ],
       'SMLR' : [ SMLR(implementation="C", descr="SMLR(default)"),
-                 # SMLR(implementation="Python", descr="SMLR(Python)")
+#                         SMLR(implementation="Python", descr="SMLR(Python)")
                  ]
       }
 
@@ -54,23 +72,40 @@ clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(descr="kNN(default)") ]
 clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR']
 
 # "Interesting" classifiers
-
 clfs['SMLR->SVM']  = [
     FeatureSelectionClassifier(
-        clf=clfs['LinearSVMC'][0],
+        clfs['LinearSVMC'][0],
         SensitivityBasedFeatureSelection(
-           SMLRWeights(clfs['SMLR'[0])),
-           NonZero()))#TODO
+           SMLRWeights(clfs['SMLR'][0]),
+           RangeElementSelector()),
+        descr="SVM on SMLR non-0 features")
+    ]
 
+clfs['Anova5%->SVM']  = [
+    FeatureSelectionClassifier(
+        clfs['LinearSVMC'][0],
+        SensitivityBasedFeatureSelection(
+           OneWayAnova(),
+           FractionTailSelector(0.05, mode='select')),
+        descr="SVM on 5% best(ANOVA) features")
+    ]
 
-# TODO: Fix a bug which wouldn't require me to explicitely untrain here
-clfs['LinearSVMC'][0].untrain()
+clfs['SVM5%->SVM']  = [
+    FeatureSelectionClassifier(
+        clfs['LinearSVMC'][0],
+        SensitivityBasedFeatureSelection(
+           LinearSVMWeights(clfs['LinearSVMC'][0],
+                            transformer=Absolute),
+           FractionTailSelector(0.05, mode='select')),
+        descr="SVM on 5% best(SVM) features")
+    ]
+
 
 # SVM with unbiased RFE -- transfer-error to another splits, or in
 # other terms leave-1-out error on the same dataset
 # Has to be bound outside of the RFE definition since both analyzer and
 # error should use the same instance.
-rfesvm = SplitClassifier(clfs['LinearSVMC'][0])
+rfesvm = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
 
 
 # "Almost" classical RFE. If this works it would differ only that
@@ -83,7 +118,7 @@ rfesvm = SplitClassifier(clfs['LinearSVMC'][0])
 #  much of changing
 clfs['SVM+RFE'] = [
   FeatureSelectionClassifier(
-    clf = clfs['LinearSVMC'][0],         # we train LinearSVM
+    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
     feature_selection = RFE(             # on features selected via RFE
         sensitivity_analyzer=selectAnalyzer( # based on sensitivity of a clf
            clf=SplitClassifier(clf=rfesvm)), # which does splitting internally
@@ -94,19 +129,38 @@ clfs['SVM+RFE'] = [
     descr='SVM+RFE/splits' )
   ]
 
+
 # Run on all here defined classifiers
-clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + clfs['SVM+RFE']
+clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
+              clfs['SVM5%->SVM'] + clfs['Anova5%->SVM'] + clfs['SMLR->SVM'] + \
+              clfs['SVM+RFE']
+
+#clfs['all'] = clfs['SVM+RFE']
 
 # fix seed or set to None for new each time
 N.random.seed(44)
 
+
+# Load Haxby dataset example
+haxby1path = '../../data'
+attrs = SampleAttributes(os.path.join(haxby1path, 'attributes.txt'))
+haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
+                      labels=attrs.labels,
+                      chunks=attrs.chunks,
+                      mask=os.path.join(haxby1path, 'mask.nii.gz'),
+                      dtype=N.float32)
+
+dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
+                              nfeatures=400,
+                              nchunks=6, nonbogus_features=[1, 2],
+                              snr=5.0)
+
+
 for (dataset, datasetdescr), clfs in \
     [
-    ( ( normalFeatureDataset(perlabel=10, nlabels=2,
-                             nfeatures=1000,
-                             nchunks=5, nonbogus_features=[1, 2],
-                             snr=5.0), "Dummy 2-class univariate with 2 useful features"), clfs['all'] ),
-    ( ( pureMultivariateSignal(4, 3), "Dummy XOR-pattern"), clfs['all'] )
+    ((dummy2, "Dummy 2-class univariate with 2 useful features"), clfs['all']),
+    ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all']),
+    ((haxby8, "Haxby 8-cat subject 1"), clfs['all']),
     ]:
 
     print "%s: %s" % (datasetdescr, `dataset`)
@@ -126,6 +180,6 @@ for (dataset, datasetdescr), clfs in \
             times.append([clf.training_time, clf.predicting_time])
 
         times = N.mean(times, axis=0)
-        print "  %-30s: correct=%.1f%% train:%.1fsec predict:%.1fsec" % \
+        print "  %-30s: correct=%.1f%% train:%.2fsec predict:%.2fsec" % \
               (clf.descr, confusion.percentCorrect, times[0], times[1])
 
