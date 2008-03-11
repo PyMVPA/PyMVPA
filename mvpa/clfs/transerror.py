@@ -277,7 +277,7 @@ class ConfusionMatrix(object):
 
 
 class ClassifierError(Stateful):
-    """Compute the some error of a (trained) classifier on a dataset.
+    """Compute (or return) some error of a (trained) classifier on a dataset.
     """
 
     confusion = StateVariable(enabled=False)
@@ -436,7 +436,11 @@ class TransferError(ClassifierError):
         predictions = self.clf.predict(testdataset.samples)
 
         # compute confusion matrix
-        # TODO should migrate into ClassifierError.__postcall?
+        # XXX should migrate into ClassifierError.__postcall?
+        # YYY probably not because other childs could estimate it
+        #  not from test/train datasets explicitely, see
+        #  `ConfusionBasedError`, where confusion is simply
+        #  bound to classifiers confusion matrix
         if self.states.isEnabled('confusion'):
             self.confusion = ConfusionMatrix(
                 labels=self.labels, targets=testdataset.labels,
@@ -463,8 +467,6 @@ class ConfusionBasedError(ClassifierError):
     This way we can perform feature selection taking as the error
     criterion either learning error, or transfer to splits error in
     the case of SplitClassifier
-
-    TODO: Derive it from some common class with `TransferError`
     """
 
     def __init__(self, clf, labels=None, confusion_state="training_confusion",
@@ -498,8 +500,6 @@ class ConfusionBasedError(ClassifierError):
 
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
-
-        TODO: may be we should train here the same way as TransferError does?
         """
         confusion = self.clf.states.get(self.__confusion_state)
         self.confusion = confusion
