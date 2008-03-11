@@ -269,10 +269,31 @@ class ElementSelector(Stateful):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
-    def __init__(self, **kwargs):
+
+    ndiscarded = StateVariable(True,
+        doc="Store number of discarded elements.")
+
+    def __init__(self, mode='discard', **kwargs):
         """Cheap initialization.
+
+        :Parameters:
+           mode : ['discard', 'select']
+              Decides whether to `select` or to `discard` features.
         """
         Stateful.__init__(self, **kwargs)
+
+        self._setMode(mode)
+        """Flag whether to select or to discard elements."""
+
+
+    def _setMode(self, mode):
+        """Choose `select` or `discard` mode."""
+
+        if not mode in ['discard', 'select']:
+            raise ValueError, "Unkown selection mode [%s]. Can only be one " \
+                              "of 'select' or 'discard'." % mode
+
+        self.__mode = mode
 
 
     def __call__(self, seq):
@@ -281,6 +302,81 @@ class ElementSelector(Stateful):
         """
         raise NotImplementedError
 
+    mode = property(fget=lambda self:self.__mode, fset=_setMode)
+
+
+class RangeElementSelector(ElementSelector):
+    """Select elements based on specified range of values"""
+
+    def __init__(self, lower=None, upper=None, inclusive=False,
+                 mode='select', **kwargs):
+        """Initialization `RangeElementSelector`
+
+        :Parameters:
+           lower
+             If not None -- select elements which are above of
+             specified value
+           upper
+             If not None -- select elements which are lower of
+             specified value
+           inclusive
+             Either to include end points
+           mode
+             overrides parent's default to be 'select' since it is more
+             native for RangeElementSelector
+             XXX TODO -- unify??
+
+        `upper` could be lower than `lower` -- then selection is done
+        on values <= lower or >=upper (ie tails). This would produce
+        the same result if called with flipped values for mode and
+        inclusive
+
+        HINT: to select non-0 elements (upper=0, lower=0)
+        """
+
+        if lower is None and upper is None:
+            raise ValueError, "Please provide at least lower or upper bounds"
+
+        # init State before registering anything
+        ElementSelector.__init__(self, mode=mode, **kwargs)
+
+        self.__range = (lower, upper)
+        """Values on which to base selection"""
+
+        self.__inclusive = inclusive
+
+    def __call__(self, seq):
+        """Returns selected IDs.
+        """
+        lower, upper = self.__range
+        len_seq = len(seq)
+        if not lower is None:
+            if self.__inclusive:
+                selected = seq >= lower
+            else:
+                selected = seq > lower
+        else:
+            selected = N.ones( (len_seq), dtype=N.bool )
+
+        if not upper is None:
+            if self.__inclusive:
+                selected_upper = seq <= upper
+            else:
+                selected_upper = seq < upper
+            if not lower is None:
+                if lower < upper:
+                    # regular range
+                    selected = N.logical_and(selected, selected_upper)
+                else:
+                    # outside, though that would be similar to exclude
+                    selected = N.logical_or(selected, selected_upper)
+            else:
+                selected = selected_upper
+
+        if self.mode == 'discard':
+            selected = N.logical_not(selected)
+
+        return N.where(selected)[0]
 
 
 class TailSelector(ElementSelector):
@@ -289,19 +385,13 @@ class TailSelector(ElementSelector):
     The default behaviour is to discard the lower tail of a given distribution.
     """
 
-    ndiscarded = StateVariable(True,
-        doc="Store number of discarded elements.")
-
-
     # TODO: 'both' to select from both tails
-    def __init__(self, tail='lower', mode='discard', sort=True, **kwargs):
+    def __init__(self, tail='lower', sort=True, **kwargs):
         """Initialize TailSelector
 
         :Parameters:
            tail : ['lower', 'upper']
               Choose the tail to be processed.
-           mode : ['discard', 'select']
-              Decides whether to `select` or to `discard` features.
            sort : bool
               Flag whether selected IDs will be sorted. Disable if not
               necessary to save some CPU cycles.
@@ -311,9 +401,6 @@ class TailSelector(ElementSelector):
 
         self._setTail(tail)
         """Know which tail to select."""
-
-        self._setMode(mode)
-        """Flag whether to select or to discard elements."""
 
         self.__sort = sort
 
@@ -325,16 +412,6 @@ class TailSelector(ElementSelector):
                               "of 'lower' or 'upper'." % tail
 
         self.__tail = tail
-
-
-    def _setMode(self, mode):
-        """Choose `select` or `discard` mode."""
-
-        if not mode in ['discard', 'select']:
-            raise ValueError, "Unkown selection mode [%s]. Can only be one " \
-                              "of 'select' or 'discard'." % mode
-
-        self.__mode = mode
 
 
     def _getNElements(self, seq):
@@ -357,13 +434,13 @@ class TailSelector(ElementSelector):
         # lowest value is first
         seqrank = N.array(seq).argsort()
 
-        if self.__mode == 'discard' and self.__tail == 'upper':
+        if self.mode == 'discard' and self.__tail == 'upper':
             good_ids = seqrank[:-1*nelements]
             self.ndiscarded = nelements
-        elif self.__mode == 'discard' and self.__tail == 'lower':
+        elif self.mode == 'discard' and self.__tail == 'lower':
             good_ids = seqrank[nelements:]
             self.ndiscarded = nelements
-        elif self.__mode == 'select' and self.__tail == 'upper':
+        elif self.mode == 'select' and self.__tail == 'upper':
             good_ids = seqrank[-1*nelements:]
             self.ndiscarded = len_seq - nelements
         else: # select lower tail
