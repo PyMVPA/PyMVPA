@@ -20,7 +20,7 @@ from mvpa.algorithms.featsel import \
      FeatureSelectionPipeline, \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
-     FixedNElementTailSelector, BestDetector
+     FixedNElementTailSelector, BestDetector, RangeElementSelector
 
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
@@ -164,6 +164,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.ndiscarded == 3) # se 3 were discarded
 
         selector = FixedNElementTailSelector(1)
+        #                   0   1   2  3   4    5  6  7  8   9
         dataset = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         self.failUnless((selector(dataset) == target10).all())
 
@@ -171,6 +172,49 @@ class RFETests(unittest.TestCase):
         self.failUnless(selector.nelements == 3)
         self.failUnless((selector(dataset) == target30).all())
         self.failUnless(selector.ndiscarded == 3)
+
+        # test range selector
+        # simple range 'above'
+        self.failUnless((RangeElementSelector(lower=0)(dataset) == \
+                         N.array([0,1,2,3,7,8,9])).all())
+
+        self.failUnless((RangeElementSelector(lower=0,
+                                              inclusive=True)(dataset) == \
+                         N.array([0,1,2,3,5,6,7,8,9])).all())
+
+        self.failUnless((RangeElementSelector(lower=0, mode='discard',
+                                              inclusive=True)(dataset) == \
+                         N.array([4])).all())
+
+        # simple range 'below'
+        self.failUnless((RangeElementSelector(upper=2)(dataset) == \
+                         N.array([4,5,6])).all())
+
+        self.failUnless((RangeElementSelector(upper=2,
+                                              inclusive=True)(dataset) == \
+                         N.array([4,5,6,7])).all())
+
+        self.failUnless((RangeElementSelector(upper=2, mode='discard',
+                                              inclusive=True)(dataset) == \
+                         N.array([0,1,2,3,8,9])).all())
+
+
+        # ranges
+        self.failUnless((RangeElementSelector(lower=2, upper=9)(dataset) == \
+                         N.array([0,2,3])).all())
+
+        self.failUnless((RangeElementSelector(lower=2, upper=9,
+                                              inclusive=True)(dataset) == \
+                         N.array([0,2,3,7,9])).all())
+
+        self.failUnless((RangeElementSelector(upper=2, lower=9, mode='discard',
+                                              inclusive=True)(dataset) ==
+                         RangeElementSelector(lower=2, upper=9,
+                                              inclusive=False)(dataset)).all())
+
+        # non-0 elements
+        self.failUnless((RangeElementSelector(lower=0, upper=0)(dataset) == \
+                         N.array([0,1,2,3,4,7,8,9])).all())
 
 
     @sweepargs(clf=clfs['clfs_with_sens'])
