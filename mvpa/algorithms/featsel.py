@@ -329,13 +329,15 @@ class RangeElementSelector(ElementSelector):
         `upper` could be lower than `lower` -- then selection is done
         on values <= lower or >=upper (ie tails). This would produce
         the same result if called with flipped values for mode and
-        inclusive
+        inclusive.
 
-        HINT: to select non-0 elements (upper=0, lower=0)
+        If no upper no lower is set, assuming upper,lower=0, thus
+        outputing non-0 elements
         """
 
         if lower is None and upper is None:
-            raise ValueError, "Please provide at least lower or upper bounds"
+            lower, upper = 0, 0
+            """Lets better return non-0 values if none of bounds is set"""
 
         # init State before registering anything
         ElementSelector.__init__(self, mode=mode, **kwargs)
