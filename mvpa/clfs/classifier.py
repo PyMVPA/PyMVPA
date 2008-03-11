@@ -468,7 +468,9 @@ class ProxyClassifier(Classifier):
         self.__clf.train(dataset)
 
         # for the ease of access
-        self.states._copy_states_(self.__clf, deep=False)
+        # TODO: if to copy we should exclude some states which are defined in
+        # base Classifier (such as training_time, predicting_time)
+        #self.states._copy_states_(self.__clf, deep=False)
 
 
     def _predict(self, data):
@@ -476,7 +478,7 @@ class ProxyClassifier(Classifier):
         """
         result = self.__clf.predict(data)
         # for the ease of access
-        self.states._copy_states_(self.__clf, deep=False)
+        #self.states._copy_states_(self.__clf, deep=False)
         return result
 
 
@@ -1073,7 +1075,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.__maskclf.clf.train(wdataset)
 
         # for the ease of access
-        self.states._copy_states_(self.__maskclf, deep=False)
+        # TODO see for ProxyClassifier
+        #self.states._copy_states_(self.__maskclf, deep=False)
 
 
     def _predict(self, data):
@@ -1081,7 +1084,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         result = self.__maskclf._predict(data)
         # for the ease of access
-        self.states._copy_states_(self.__maskclf, deep=False)
+        #self.states._copy_states_(self.__maskclf, deep=False)
         return result
 
     # XXX Shouldn't that be mappedclf ?
