@@ -29,9 +29,9 @@ class FeatureSelection(Stateful):
 
     selected_ids = StateVariable(enabled=False)
 
-    def __init__(self, **kargs):
+    def __init__(self, **kwargs):
         # base init first
-        Stateful.__init__(self, **kargs)
+        Stateful.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, testdataset=None):
@@ -269,10 +269,10 @@ class ElementSelector(Stateful):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Cheap initialization.
         """
-        Stateful.__init__(self)
+        Stateful.__init__(self, **kwargs)
 
 
     def __call__(self, seq):
@@ -294,7 +294,7 @@ class TailSelector(ElementSelector):
 
 
     # TODO: 'both' to select from both tails
-    def __init__(self, tail='lower', mode='discard', sort=True):
+    def __init__(self, tail='lower', mode='discard', sort=True, **kwargs):
         """Initialize TailSelector
 
         :Parameters:
@@ -307,7 +307,7 @@ class TailSelector(ElementSelector):
               necessary to save some CPU cycles.
 
         """
-        ElementSelector.__init__(self)  # init State before registering anything
+        ElementSelector.__init__(self, **kwargs)  # init State before registering anything
 
         self._setTail(tail)
         """Know which tail to select."""
@@ -384,14 +384,14 @@ class FixedNElementTailSelector(TailSelector):
     elements.
     """
 
-    def __init__(self, nelements, *args, **kwargs):
+    def __init__(self, nelements, **kwargs):
         """Cheap initialization.
 
         :Parameters:
           nselect : int
             Number of elements to select/discard.
         """
-        TailSelector.__init__(self, *args, **kwargs)
+        TailSelector.__init__(self, **kwargs)
         self._setNElements(nelements)
 
 
@@ -422,7 +422,7 @@ class FractionTailSelector(TailSelector):
     """Given a sequence, provide Ids for a fraction of elements
     """
 
-    def __init__(self, felements, **kargs):
+    def __init__(self, felements, **kwargs):
         """Cheap initialization.
 
         :Parameters:
@@ -430,7 +430,7 @@ class FractionTailSelector(TailSelector):
               Fraction of elements to select/discard. Note: Even when 0.0 is
               specified at least one element will be selected.
         """
-        TailSelector.__init__(self, **kargs)
+        TailSelector.__init__(self, **kwargs)
         self._setFElements(felements)
 
 
@@ -479,7 +479,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     def __init__(self,
                  sensitivity_analyzer,
                  feature_selector=FractionTailSelector(0.05),
-                 **kargs
+                 **kwargs
                  ):
         """Initialize feature selection
 
@@ -493,7 +493,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         """
 
         # base init first
-        FeatureSelection.__init__(self, **kargs)
+        FeatureSelection.__init__(self, **kwargs)
 
         self.__sensitivity_analyzer = sensitivity_analyzer
         """Sensitivity analyzer to use once"""
@@ -556,7 +556,7 @@ class FeatureSelectionPipeline(FeatureSelection):
 
     def __init__(self,
                  feature_selections,
-                 **kargs
+                 **kwargs
                  ):
         """Initialize feature selection pipeline
 
@@ -565,7 +565,7 @@ class FeatureSelectionPipeline(FeatureSelection):
             selections which to use. Order matters
         """
         # base init first
-        FeatureSelection.__init__(self, **kargs)
+        FeatureSelection.__init__(self, **kwargs)
 
         self.__feature_selections = feature_selections
         """Selectors to use in turn"""
