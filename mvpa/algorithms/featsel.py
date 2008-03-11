@@ -29,9 +29,9 @@ class FeatureSelection(Stateful):
 
     selected_ids = StateVariable(enabled=False)
 
-    def __init__(self, **kargs):
+    def __init__(self, **kwargs):
         # base init first
-        Stateful.__init__(self, **kargs)
+        Stateful.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, testdataset=None):
@@ -269,10 +269,31 @@ class ElementSelector(Stateful):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
-    def __init__(self):
+
+    ndiscarded = StateVariable(True,
+        doc="Store number of discarded elements.")
+
+    def __init__(self, mode='discard', **kwargs):
         """Cheap initialization.
+
+        :Parameters:
+           mode : ['discard', 'select']
+              Decides whether to `select` or to `discard` features.
         """
-        Stateful.__init__(self)
+        Stateful.__init__(self, **kwargs)
+
+        self._setMode(mode)
+        """Flag whether to select or to discard elements."""
+
+
+    def _setMode(self, mode):
+        """Choose `select` or `discard` mode."""
+
+        if not mode in ['discard', 'select']:
+            raise ValueError, "Unkown selection mode [%s]. Can only be one " \
+                              "of 'select' or 'discard'." % mode
+
+        self.__mode = mode
 
 
     def __call__(self, seq):
@@ -281,6 +302,83 @@ class ElementSelector(Stateful):
         """
         raise NotImplementedError
 
+    mode = property(fget=lambda self:self.__mode, fset=_setMode)
+
+
+class RangeElementSelector(ElementSelector):
+    """Select elements based on specified range of values"""
+
+    def __init__(self, lower=None, upper=None, inclusive=False,
+                 mode='select', **kwargs):
+        """Initialization `RangeElementSelector`
+
+        :Parameters:
+           lower
+             If not None -- select elements which are above of
+             specified value
+           upper
+             If not None -- select elements which are lower of
+             specified value
+           inclusive
+             Either to include end points
+           mode
+             overrides parent's default to be 'select' since it is more
+             native for RangeElementSelector
+             XXX TODO -- unify??
+
+        `upper` could be lower than `lower` -- then selection is done
+        on values <= lower or >=upper (ie tails). This would produce
+        the same result if called with flipped values for mode and
+        inclusive.
+
+        If no upper no lower is set, assuming upper,lower=0, thus
+        outputing non-0 elements
+        """
+
+        if lower is None and upper is None:
+            lower, upper = 0, 0
+            """Lets better return non-0 values if none of bounds is set"""
+
+        # init State before registering anything
+        ElementSelector.__init__(self, mode=mode, **kwargs)
+
+        self.__range = (lower, upper)
+        """Values on which to base selection"""
+
+        self.__inclusive = inclusive
+
+    def __call__(self, seq):
+        """Returns selected IDs.
+        """
+        lower, upper = self.__range
+        len_seq = len(seq)
+        if not lower is None:
+            if self.__inclusive:
+                selected = seq >= lower
+            else:
+                selected = seq > lower
+        else:
+            selected = N.ones( (len_seq), dtype=N.bool )
+
+        if not upper is None:
+            if self.__inclusive:
+                selected_upper = seq <= upper
+            else:
+                selected_upper = seq < upper
+            if not lower is None:
+                if lower < upper:
+                    # regular range
+                    selected = N.logical_and(selected, selected_upper)
+                else:
+                    # outside, though that would be similar to exclude
+                    selected = N.logical_or(selected, selected_upper)
+            else:
+                selected = selected_upper
+
+        if self.mode == 'discard':
+            selected = N.logical_not(selected)
+
+        return N.where(selected)[0]
 
 
 class TailSelector(ElementSelector):
@@ -289,31 +387,22 @@ class TailSelector(ElementSelector):
     The default behaviour is to discard the lower tail of a given distribution.
     """
 
-    ndiscarded = StateVariable(True,
-        doc="Store number of discarded elements.")
-
-
     # TODO: 'both' to select from both tails
-    def __init__(self, tail='lower', mode='discard', sort=True):
+    def __init__(self, tail='lower', sort=True, **kwargs):
         """Initialize TailSelector
 
         :Parameters:
            tail : ['lower', 'upper']
               Choose the tail to be processed.
-           mode : ['discard', 'select']
-              Decides whether to `select` or to `discard` features.
            sort : bool
               Flag whether selected IDs will be sorted. Disable if not
               necessary to save some CPU cycles.
 
         """
-        ElementSelector.__init__(self)  # init State before registering anything
+        ElementSelector.__init__(self, **kwargs)  # init State before registering anything
 
         self._setTail(tail)
         """Know which tail to select."""
-
-        self._setMode(mode)
-        """Flag whether to select or to discard elements."""
 
         self.__sort = sort
 
@@ -325,16 +414,6 @@ class TailSelector(ElementSelector):
                               "of 'lower' or 'upper'." % tail
 
         self.__tail = tail
-
-
-    def _setMode(self, mode):
-        """Choose `select` or `discard` mode."""
-
-        if not mode in ['discard', 'select']:
-            raise ValueError, "Unkown selection mode [%s]. Can only be one " \
-                              "of 'select' or 'discard'." % mode
-
-        self.__mode = mode
 
 
     def _getNElements(self, seq):
@@ -357,13 +436,13 @@ class TailSelector(ElementSelector):
         # lowest value is first
         seqrank = N.array(seq).argsort()
 
-        if self.__mode == 'discard' and self.__tail == 'upper':
+        if self.mode == 'discard' and self.__tail == 'upper':
             good_ids = seqrank[:-1*nelements]
             self.ndiscarded = nelements
-        elif self.__mode == 'discard' and self.__tail == 'lower':
+        elif self.mode == 'discard' and self.__tail == 'lower':
             good_ids = seqrank[nelements:]
             self.ndiscarded = nelements
-        elif self.__mode == 'select' and self.__tail == 'upper':
+        elif self.mode == 'select' and self.__tail == 'upper':
             good_ids = seqrank[-1*nelements:]
             self.ndiscarded = len_seq - nelements
         else: # select lower tail
@@ -384,14 +463,14 @@ class FixedNElementTailSelector(TailSelector):
     elements.
     """
 
-    def __init__(self, nelements, *args, **kwargs):
+    def __init__(self, nelements, **kwargs):
         """Cheap initialization.
 
         :Parameters:
           nselect : int
             Number of elements to select/discard.
         """
-        TailSelector.__init__(self, *args, **kwargs)
+        TailSelector.__init__(self, **kwargs)
         self._setNElements(nelements)
 
 
@@ -422,7 +501,7 @@ class FractionTailSelector(TailSelector):
     """Given a sequence, provide Ids for a fraction of elements
     """
 
-    def __init__(self, felements, **kargs):
+    def __init__(self, felements, **kwargs):
         """Cheap initialization.
 
         :Parameters:
@@ -430,7 +509,7 @@ class FractionTailSelector(TailSelector):
               Fraction of elements to select/discard. Note: Even when 0.0 is
               specified at least one element will be selected.
         """
-        TailSelector.__init__(self, **kargs)
+        TailSelector.__init__(self, **kwargs)
         self._setFElements(felements)
 
 
@@ -479,7 +558,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     def __init__(self,
                  sensitivity_analyzer,
                  feature_selector=FractionTailSelector(0.05),
-                 **kargs
+                 **kwargs
                  ):
         """Initialize feature selection
 
@@ -493,7 +572,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         """
 
         # base init first
-        FeatureSelection.__init__(self, **kargs)
+        FeatureSelection.__init__(self, **kwargs)
 
         self.__sensitivity_analyzer = sensitivity_analyzer
         """Sensitivity analyzer to use once"""
@@ -556,7 +635,7 @@ class FeatureSelectionPipeline(FeatureSelection):
 
     def __init__(self,
                  feature_selections,
-                 **kargs
+                 **kwargs
                  ):
         """Initialize feature selection pipeline
 
@@ -565,7 +644,7 @@ class FeatureSelectionPipeline(FeatureSelection):
             selections which to use. Order matters
         """
         # base init first
-        FeatureSelection.__init__(self, **kargs)
+        FeatureSelection.__init__(self, **kwargs)
 
         self.__feature_selections = feature_selections
         """Selectors to use in turn"""

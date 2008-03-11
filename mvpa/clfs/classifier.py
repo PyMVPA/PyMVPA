@@ -28,6 +28,8 @@ import numpy as N
 from copy import deepcopy
 from sets import Set
 
+from time import time
+
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful
@@ -119,6 +121,11 @@ class Classifier(Stateful):
         doc="Internal classifier values the most recent " +
             "predictions are based on")
 
+    training_time = StateVariable(enabled=True,
+        doc="Time (in seconds) which took classifier to train")
+
+    predicting_time = StateVariable(enabled=True,
+        doc="Time (in seconds) which took classifier to predict")
 
     params = {}
 
@@ -200,6 +207,10 @@ class Classifier(Stateful):
             debug("CLF_TB", "Traceback: %s" % tb)
 
         self._pretrain(dataset)
+
+        # remember the time when started training
+        t0 = time()
+
         if dataset.nfeatures > 0:
             result = self._train(dataset)
         else:
@@ -208,6 +219,8 @@ class Classifier(Stateful):
                 debug("CLF",
                       "No features present for training, no actual training is called")
             result = None
+
+        self.training_time = time() - t0
         self._posttrain(dataset)
         return result
 
@@ -258,6 +271,9 @@ class Classifier(Stateful):
             tb = traceback.extract_stack(limit=5)
             debug("CLF_TB", "Traceback: %s" % tb)
 
+        # remember the time when started computing predictions
+        t0 = time()
+
         self._prepredict(data)
         if self.__trainednfeatures > 0 or not self.__train2predict:
             result = self._predict(data)
@@ -267,6 +283,8 @@ class Classifier(Stateful):
                 debug("CLF",
                       "No features were present for training, prediction is bogus")
             result = [None]*data.shape[0]
+
+        self.predicting_time = time() - t0
 
         self._postpredict(data, result)
         return result
@@ -450,7 +468,9 @@ class ProxyClassifier(Classifier):
         self.__clf.train(dataset)
 
         # for the ease of access
-        self.states._copy_states_(self.__clf, deep=False)
+        # TODO: if to copy we should exclude some states which are defined in
+        # base Classifier (such as training_time, predicting_time)
+        #self.states._copy_states_(self.__clf, deep=False)
 
 
     def _predict(self, data):
@@ -458,7 +478,7 @@ class ProxyClassifier(Classifier):
         """
         result = self.__clf.predict(data)
         # for the ease of access
-        self.states._copy_states_(self.__clf, deep=False)
+        #self.states._copy_states_(self.__clf, deep=False)
         return result
 
 
@@ -1055,7 +1075,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.__maskclf.clf.train(wdataset)
 
         # for the ease of access
-        self.states._copy_states_(self.__maskclf, deep=False)
+        # TODO see for ProxyClassifier
+        #self.states._copy_states_(self.__maskclf, deep=False)
 
 
     def _predict(self, data):
@@ -1063,7 +1084,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         result = self.__maskclf._predict(data)
         # for the ease of access
-        self.states._copy_states_(self.__maskclf, deep=False)
+        #self.states._copy_states_(self.__maskclf, deep=False)
         return result
 
     # XXX Shouldn't that be mappedclf ?
