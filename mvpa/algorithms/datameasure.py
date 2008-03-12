@@ -231,10 +231,10 @@ class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
     def _call(self, dataset):
         """Perform sensitivity analysis on a given `Dataset`.
 
-        Each implementation has to handle a single arguments: the source
+        Each implementation has to handle a single argument: the source
         dataset.
 
-        Returns the computed sensitivity measure in a 1D array which's length
+        Returns the computed sensitivity measure in a 1D array whose length
         and order matches the features in the dataset. Higher sensitivity values
         should indicate higher sensitivity (or signal to noise ratio or
         amount of available information or the like).
