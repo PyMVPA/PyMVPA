@@ -58,7 +58,7 @@ sensanas = {'a) ANOVA': OneWayAnova(transformer=N.abs),
            }
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, type='linear')
+detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
 dataset = dataset.selectSamples(

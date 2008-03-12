@@ -16,6 +16,7 @@ import numpy as N
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.datasets.splitter import *
+from mvpa.datasets.misc import zscore
 
 # Define sets of classifiers
 from mvpa.clfs.classifier import *
@@ -36,6 +37,7 @@ from mvpa.algorithms.smlrweights import *
 from mvpa.clfs.transerror import *
 from mvpa.misc.data_generators import *
 from mvpa.misc.iohelpers import SampleAttributes
+from mvpa.misc.signal import detrend
 
 # Misc tools
 #
@@ -56,12 +58,15 @@ warning.handlers = []
 #    since it is slow and results should be the same as of C version
 #
 clfs={'LinearSVMC' : [LinearCSVMC(descr="Linear C-SVM (default)"),
+                      LinearCSVMC(C=1.0, descr="Linear C-SVM (C=1)"),
 #                      LinearNuSVMC(descr="Linear nu-SVM (default)")
                       ],
       'NonLinearSVMC' : [RbfCSVMC(descr="Rbf C-SVM (default)"),
 #                         RbfNuSVMC(descr="Rbf nu-SVM (default)")
                          ],
-      'SMLR' : [ SMLR(implementation="C", descr="SMLR(default)"),
+      'SMLR' : [ # SMLR(implementation="C", descr="SMLR(default)"),
+                 SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
+                 SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
 #                         SMLR(implementation="Python", descr="SMLR(Python)")
                  ]
       }
@@ -78,26 +83,26 @@ clfs['SMLR->SVM']  = [
         SensitivityBasedFeatureSelection(
            SMLRWeights(clfs['SMLR'][0]),
            RangeElementSelector()),
-        descr="SVM on SMLR non-0 features")
+        descr="SVM on SMLR(lm=10) non-0 features")
     ]
 
-clfs['Anova5%->SVM']  = [
+clfs['Anova25%->SVM']  = [
     FeatureSelectionClassifier(
         clfs['LinearSVMC'][0],
         SensitivityBasedFeatureSelection(
            OneWayAnova(),
            FractionTailSelector(0.05, mode='select')),
-        descr="SVM on 5% best(ANOVA) features")
+        descr="SVM on 25% best(ANOVA) features")
     ]
 
-clfs['SVM5%->SVM']  = [
+clfs['SVM25%->SVM']  = [
     FeatureSelectionClassifier(
         clfs['LinearSVMC'][0],
         SensitivityBasedFeatureSelection(
            LinearSVMWeights(clfs['LinearSVMC'][0],
                             transformer=Absolute),
            FractionTailSelector(0.05, mode='select')),
-        descr="SVM on 5% best(SVM) features")
+        descr="SVM on 25% best(SVM) features")
     ]
 
 
@@ -125,14 +130,15 @@ clfs['SVM+RFE'] = [
         transfer_error=ConfusionBasedError(
            rfesvm,
            confusion_state="training_confusions"), # and whose internall error we use
-        update_sensitivity=True),                     # and we update sensitivity at each step
+        feature_selector=FractionTailSelector(0.2),   # remove 20% of features at each step
+        update_sensitivity=True),                     # update sensitivity at each step
     descr='SVM+RFE/splits' )
   ]
 
 
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
-              clfs['SVM5%->SVM'] + clfs['Anova5%->SVM'] + clfs['SMLR->SVM'] + \
+              clfs['SVM25%->SVM'] + clfs['Anova25%->SVM'] + clfs['SMLR->SVM'] + \
               clfs['SVM+RFE']
 
 #clfs['all'] = clfs['SVM+RFE']
@@ -150,6 +156,11 @@ haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
                       mask=os.path.join(haxby1path, 'mask.nii.gz'),
                       dtype=N.float32)
 
+# preprocess slightly
+detrend(haxby8, perchunk=True, model='linear')
+zscore(haxby8, perchunk=True, baselinelabels=[0], targetdtype='float32')
+haxby8_no0 = haxby8.selectSamples(haxby8.labels != 0)
+
 dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
                               nfeatures=400,
                               nchunks=6, nonbogus_features=[1, 2],
@@ -158,9 +169,9 @@ dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
 
 for (dataset, datasetdescr), clfs in \
     [
-    ((dummy2, "Dummy 2-class univariate with 2 useful features"), clfs['all']),
-    ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all']),
-    ((haxby8, "Haxby 8-cat subject 1"), clfs['all']),
+#    ((dummy2, "Dummy 2-class univariate with 2 useful features"), clfs['all']),
+#    ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all']),
+    ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all']),
     ]:
 
     print "%s: %s" % (datasetdescr, `dataset`)
