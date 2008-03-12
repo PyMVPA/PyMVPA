@@ -53,12 +53,12 @@ class SignalTests(unittest.TestCase):
 
         # tests of the regress version of detrend
         ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
-        detrend(ds, perchunk=False, model='regress', polort=1)
+        detrend(ds, perchunk=False, model='regress', polyord=1)
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                         msg="Detrend should have detrended all the samples at once")
 
         ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
-        (res, reg) = detrend(ds, perchunk=True, model='regress', polort=2)
+        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=2)
         psamps = ds.samples.copy()
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have detrended each chunk separately")
@@ -67,15 +67,26 @@ class SignalTests(unittest.TestCase):
                         msg="Detrend must preserve the size of dataset")
 
         ods = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
-        opt_reg = reg[N.ix_(range(reg.shape[0]),[1,2,4,5])]
+        opt_reg = reg.copy()
         (ores, oreg) = detrend(ods, perchunk=True, model='regress', opt_reg=opt_reg)
         self.failUnless((ods.samples - psamps).sum() == 0.0,
-                        msg="Detrend for polort reg should be same as opt_reg " + \
-                        "when popt_reg is the same as the polort reg.")
+                        msg="Detrend for polyord reg should be same as opt_reg " + \
+                        "when popt_reg is the same as the polyord reg.")
 
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have detrended each chunk separately")
+
+
+        target_mixed = N.array( [[-1.0, 0, 1, 0, 0, 0],
+                                 [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
         
+        ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
+        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=[0,1])
+        self.failUnless(linalg.norm(ds.samples - target_mixed) < thr,
+                        msg="Detrend should have baseline corrected the first chunk, " + \
+                            "but baseline and linear detrended the second.")
+
+
 
 def suite():
     return unittest.makeSuite(SignalTests)
