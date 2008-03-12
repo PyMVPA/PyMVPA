@@ -77,6 +77,7 @@ class SignalTests(unittest.TestCase):
                         msg="Detrend should have detrended each chunk separately")
 
 
+        # test of different polyord on each chunk
         target_mixed = N.array( [[-1.0, 0, 1, 0, 0, 0],
                                  [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
         
@@ -86,6 +87,17 @@ class SignalTests(unittest.TestCase):
                         msg="Detrend should have baseline corrected the first chunk, " + \
                             "but baseline and linear detrended the second.")
 
+        # test applying detrend in sequence
+        ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
+        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=1)
+        opt_reg = reg[N.ix_(range(reg.shape[0]),[1,3])]
+        final_samps = ds.samples.copy()
+        ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
+        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=0)
+        (res, reg) = detrend(ds, perchunk=True, model='regress', opt_reg=opt_reg)
+        self.failUnless(linalg.norm(ds.samples - final_samps) < thr,
+                        msg="Detrend of polyord 1 should be same as detrend with " + \
+                            "0 followed by opt_reg the same as a 1st order.")
 
 
 def suite():
