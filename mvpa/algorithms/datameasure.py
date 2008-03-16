@@ -211,7 +211,7 @@ class StaticDatasetMeasure(DatasetMeasure):
     def _call(self, dataset):
         """Returns assigned sensitivity
         """
-        return __measure
+        return self.__measure
 
     #XXX Might need to move into StateVariable?
     bias = property(fget=lambda self:self.__bias)
@@ -463,7 +463,7 @@ class ProxyClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
             if self.__analyzer is None:
                 raise ValueError, \
                       "Wasn't able to figure basic analyzer for clf %s" % \
-                      `clf`
+                      `self.clf.clf`
             if __debug__:
                 debug("SA", "Selected analyzer %s for clf %s" % \
                       (`self.__analyzer`, `self.clf.clf`))

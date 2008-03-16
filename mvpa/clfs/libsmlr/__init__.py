@@ -12,10 +12,10 @@ import numpy as N
 import ctypes as C
 import os
 
-from ctypes_helper import extend_args,c_darray
+from mvpa.clfs.libsmlr.ctypes_helper import extend_args, c_darray
 
 # connect to library that's in this directory
-smlrlib = N.ctypeslib.load_library('smlrc',os.path.dirname(__file__))
+smlrlib = N.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
 
 # wrap the stepwise function
 def stepwise_regression(*args):

@@ -160,7 +160,7 @@ class SMLR(Classifier):
         incr = N.finfo(N.float).max
         non_zero, basis, m, wasted_basis, cycles = 0, 0, 0, 0, 0
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
-        p_resamp = N.ones(w.shape,dtype=N.float)
+        p_resamp = N.ones(w.shape, dtype=N.float)
 
         # set the random seed
         N.random.seed(seed)
@@ -208,7 +208,7 @@ class SMLR(Classifier):
 
                     # decrease the p_resamp
                     p_resamp[basis, m] -= (p_resamp[basis, m] - \
-                                           min_resamp) * resamp_decay;
+                                           min_resamp) * resamp_decay
 
                     # set number of non-zero
                     if w_old == 0:
@@ -241,7 +241,7 @@ class SMLR(Classifier):
             m = N.mod(m+1, w.shape[1])
             if m == 0:
                 # we completed a cycle of labels
-                basis = N.mod(basis+1,nd)
+                basis = N.mod(basis+1, nd)
                 if basis == 0:
                     # we completed a cycle of features
                     cycles += 1
@@ -382,11 +382,11 @@ class SMLR(Classifier):
 
         # save the weights
         self.__weights_all = w
-        self.__weights = w[:dataset.nfeatures,:]
+        self.__weights = w[:dataset.nfeatures, :]
 
         # and a bias
         if self.__has_bias:
-            self.__biases = w[-1,:]
+            self.__biases = w[-1, :]
 
         if __debug__:
             debug('SMLR', "train finished in %s cycles on data.shape=%s " %
