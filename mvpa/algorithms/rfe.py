@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.clfs.transerror import ClassifierError
 from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     BestDetector, \

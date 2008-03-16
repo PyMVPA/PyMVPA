@@ -138,7 +138,7 @@ class SVMBase(Classifier):
 
         self.__C = C
         """Holds original value of C. self.param will be adjusted before training
-        if C<0 and it is C-SVM, so we could scale 'default' C value"""
+        if C < 0 and it is C-SVM, so we could scale 'default' C value"""
 
 
     def __repr__(self):

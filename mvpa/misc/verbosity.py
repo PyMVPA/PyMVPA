@@ -176,7 +176,7 @@ class OnceLogger(Logger):
         if not self._known.has_key(ident):
             self._known[ident] = 0
 
-        if count<0 or self._known[ident] < count:
+        if count < 0 or self._known[ident] < count:
             self._known[ident] += 1
             Logger.__call__(self, msg, *args, **kwargs)
 
@@ -401,5 +401,5 @@ if __debug__:
         def _setOffsetByDepth(self, b):
             self._offsetbydepth = b
 
-        offsetbydepth = property(fget=lambda x:self._offsetbydepth,
+        offsetbydepth = property(fget=lambda x:x._offsetbydepth,
                                  fset=_setOffsetByDepth)

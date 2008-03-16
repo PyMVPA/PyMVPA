@@ -118,10 +118,10 @@ def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
 
         # loop over each chunk
         reg = []
-        for n,chunk in enumerate(uchunks):
+        for n, chunk in enumerate(uchunks):
             # get the indices for that chunk
             cinds = data.chunks == chunk
-            
+
             # see if add in polyord values    
             if not polyord is None:
                 # create the timespan
@@ -129,7 +129,7 @@ def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
                     newreg = N.zeros((data.nsamples, 1))
-                    newreg[cinds,0] = legendre(n)(x)
+                    newreg[cinds, 0] = legendre(n)(x)
                     reg.append(newreg)
     else:
         # take out mean over entire dataset
