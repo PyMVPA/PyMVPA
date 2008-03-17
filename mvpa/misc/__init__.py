@@ -137,6 +137,7 @@ if __debug__:
     debug.register('RFEC', "Recursive Feature Elimination call")
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
+    debug.register('DS_',  "*Dataset verbose")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
     debug.register('STCOL', "State Collector")
