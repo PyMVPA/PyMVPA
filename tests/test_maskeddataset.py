@@ -141,13 +141,14 @@ class MaskedDatasetTests(unittest.TestCase):
         partial_mask = N.zeros((2,4,3,5), dtype='uint')
         partial_mask[0,0,2,2] = 1
         partial_mask[1,2,2,0] = 1
+
         sel = data.selectFeaturesByMask( partial_mask )
         self.failUnless( sel.nfeatures == 2 )
         self.failUnless( sel.mapper.getMask().shape == (2,4,3,5))
 
         # check that feature selection does not change source data
         self.failUnless(data.nfeatures == 120)
-        self.failUnless(data.mapper.getOutSize() == 120)
+        self.failUnlessEqual(data.mapper.getOutSize(), 120)
 
         # check selection with feature list
         sel = data.selectFeatures([0,37,119])
