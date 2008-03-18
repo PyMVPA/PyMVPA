@@ -22,12 +22,18 @@ Base Classifiers can be grouped according to their function as
 
 __docformat__ = 'restructuredtext'
 
-import operator
+import operator, sys
 import numpy as N
 
-from copy import deepcopy
-from sets import Set
+# We have to use deepcopy from python 2.5, since otherwise it fails to
+# copy sensitivity analyzers with assigned combiners which are just
+# functions not functors
+if sys.version_info[0] > 2 or sys.version_info[1] > 4:
+    from copy import deepcopy
+else:
+    from mvpa.misc.copy import deepcopy
 
+from sets import Set
 from time import time
 
 from mvpa.datasets.maskmapper import MaskMapper
