@@ -95,9 +95,21 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
         results = []
 
         self.splits = []
+
+        if self.states.isEnabled('confusion') and \
+           not self.states.isEnabled('confusions'):
+            if __debug__:
+                debug('CROSSC',
+                      "Enabling confusions state var since confusion needs it")
+            self.states.enable(['confusions'])
+
         self.confusion = ConfusionMatrix()
         self.confusions = []
         self.transerrors = []
+
+        if self.states.isEnabled('confusions'):
+            self.__transerror.states._changeTemporarily(
+                enable_states=['confusion'])
 
         # splitter
         for split in self.__splitter(dataset):
@@ -136,6 +148,10 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
                 debug("CROSSC", "Split #%d: result %s" \
                       % (len(results), `result`))
             results.append(result)
+
+
+        if self.states.isEnabled('confusions'):
+            self.__transerror.states._resetEnabledTemporarily()
 
         self.results = results
         """Store state variable if it is enabled"""
