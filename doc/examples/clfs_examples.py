@@ -197,14 +197,16 @@ for (dataset, datasetdescr), clfs in \
         # to report transfer error
         confusion = ConfusionMatrix()
         times = []
+        t0 = time()
         for nfold, (training_ds, validation_ds) in \
                 enumerate(NFoldSplitter()(dataset)):
             clf.train(training_ds)
             predictions = clf.predict(validation_ds.samples)
             confusion.add(validation_ds.labels, predictions)
             times.append([clf.training_time, clf.predicting_time])
-
+        tfull = time() - t0
         times = N.mean(times, axis=0)
-        print "  %-30s: correct=%.1f%% train:%.2fsec predict:%.2fsec" % \
-              (clf.descr, confusion.percentCorrect, times[0], times[1])
+        print "  %-33s: correct=%.1f%% train:%.2fs predict:%.2fs" % \
+              (clf.descr, confusion.percentCorrect, times[0], times[1]) + \
+              " full: %.2fs" % tfull
 
