@@ -32,6 +32,7 @@ from mvpa.algorithms.anova import *
 from mvpa.algorithms.rfe import *
 from mvpa.algorithms.linsvmweights import *
 from mvpa.algorithms.smlrweights import *
+from mvpa.algorithms.cvtranserror import *
 
 # Helpers
 from mvpa.clfs.transerror import *
@@ -186,8 +187,13 @@ for (dataset, datasetdescr), clfs in \
     for clf in clfs:
         # Lets do splits/train/predict explicitely so we could track timing
         # otherwise could be just
-        # error = CrossValidatedTransferError(TransferError(clf),
-        #                                     NFoldSplitter())(dataset)
+        #cv = CrossValidatedTransferError(
+        #         TransferError(clf),
+        #         NFoldSplitter(),
+        #         enable_states=['confusion'])
+        #error = cv(dataset)
+        #print cv.confusion
+
         # to report transfer error
         confusion = ConfusionMatrix()
         times = []
