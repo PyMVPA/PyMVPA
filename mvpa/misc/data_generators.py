@@ -86,6 +86,90 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     return Dataset(samples=data, labels=regs, chunks=chunks)
 
 
+def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
+                           perlabel=50, activation_probability_steps=1,
+                           randomseed=None, randomvoxels=False):
+
+    if dataset is None and labels is None:
+        raise ValueError, \
+              "Provide at least labels or a background dataset"
+
+    if dataset is None:
+        Nlabels = len(labels)
+    else:
+        nchunks = len(dataset.uniquechunks)
+
+    N.random.seed(randomseed)
+
+    # Create a sequence of indexes from which to select voxels to be used
+    # for features
+    if randomvoxels:
+        indexes = N.random.permutation(dataset.nfeatures)
+    else:
+        indexes = N.arange(dataset.nfeatures)
+
+    allind, maps = [], []
+    if __debug__:
+        debug('DG', "Ugly creation of the copy of background")
+
+    dtype = dataset.samples.dtype
+    if not N.issubdtype(dtype, N.float):
+        dtype = N.float
+    totalsignal = N.zeros(dataset.samples.shape, dtype=dtype)
+
+    for l in xrange(len(labels)):
+        label = labels[l]
+        if __debug__:
+            debug('DG', "Simulating independent labels for %s" % label)
+
+        # What sample ids belong to this label
+        labelids = dataset.idsbylabels(label)
+
+
+        # What features belong here and what is left over
+        nfeatures = perlabel * activation_probability_steps
+        ind, indexes = indexes[0:nfeatures], \
+                       indexes[nfeatures+1:]
+        allind += list(ind)              # store what indexes we used
+
+        # Create a dataset only for 'selected' features
+        # NB there is sideeffect that selectFeatures will sort those ind provided
+        ds = dataset.selectFeatures(ind)
+        ds.samples[:] = 0.0             # zero them out
+
+        # assign data
+        prob = [1.0 - x*1.0/activation_probability_steps
+                for x in xrange(activation_probability_steps)]
+
+        # repeat so each feature gets itw own
+        probabilities = N.repeat(prob, perlabel)
+        verbose(4, 'For prob=%s probabilities=%s' % (prob, probabilities))
+
+        for chunk in ds.uniquechunks:
+            chunkids = ds.idsbychunks(chunk) # samples in this chunk
+            ids = list(Set(chunkids).intersection(Set(labelids)))
+            chunkvalue = N.random.uniform() # random number to decide either
+                                        # to 'activate' the voxel
+            for id_ in ids:
+                ds.samples[id_, :] = (chunkvalue <= probabilities).astype('float')
+            #verbose(5, "Chunk %d Chunkids %s ids %s" % (chunk, chunkids, ids))
+
+        maps.append(N.array(probabilities, copy=True))
+
+        signal = ds.map2Nifti(ds.samples)
+        totalsignal[:,ind] += ds.samples
+
+    # figure out average variance across all 'working' features
+    wfeatures = dataset.samples[:, allind]
+    meanstd = N.mean(N.std(wfeatures, 1))
+    verbose(2, "Mean deviation is %f" % meanstd)
+
+    totalsignal *= meanstd * options.snr
+    # add signal on top of background
+    dataset.samples += totalsignal
+
+    return dataset
+
 def getMVPattern(s2n):
     run1 = pureMultivariateSignal(5, s2n, 1)
     run2 = pureMultivariateSignal(5, s2n, 2)
@@ -97,3 +181,5 @@ def getMVPattern(s2n):
     data = run1 + run2 + run3 + run4 + run5 + run6
 
     return data
+
+
