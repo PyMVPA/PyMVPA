@@ -91,7 +91,7 @@ clfs['Anova25%->SVM']  = [
         clfs['LinearSVMC'][0],
         SensitivityBasedFeatureSelection(
            OneWayAnova(),
-           FractionTailSelector(0.05, mode='select')),
+           FractionTailSelector(0.25, mode='select')),
         descr="SVM on 25% best(ANOVA) features")
     ]
 
@@ -101,7 +101,7 @@ clfs['SVM25%->SVM']  = [
         SensitivityBasedFeatureSelection(
            LinearSVMWeights(clfs['LinearSVMC'][0],
                             transformer=Absolute),
-           FractionTailSelector(0.05, mode='select')),
+           FractionTailSelector(0.25, mode='select')),
         descr="SVM on 25% best(SVM) features")
     ]
 
@@ -111,7 +111,6 @@ clfs['SVM25%->SVM']  = [
 # Has to be bound outside of the RFE definition since both analyzer and
 # error should use the same instance.
 rfesvm = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
-
 
 # "Almost" classical RFE. If this works it would differ only that
 # our transfer_error is based on internal splitting and classifier used within RFE
@@ -136,12 +135,21 @@ clfs['SVM+RFE'] = [
   ]
 
 
+# RFE where each pair-wise classifier is trained with RFE, so we can get
+# different feature sets for different pairs of categories (labels)
+clfs['SVM/Multiclass+RFE'] = [ MulticlassClassifier(clfs['SVM+RFE'][0],
+                                                    descr='SVM/Multiclass+RFE') ]
+
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
               clfs['SVM25%->SVM'] + clfs['Anova25%->SVM'] + clfs['SMLR->SVM'] + \
               clfs['SVM+RFE']
 
+# since some classifiers make sense only for multiclass
+clfs['all_multi'] = clfs['all'] + clfs['SVM/Multiclass+RFE']
+
 #clfs['all'] = clfs['SVM+RFE']
+#clfs['all'] = clfs['SVM/Multiclass+RFE']
 
 # fix seed or set to None for new each time
 N.random.seed(44)
@@ -169,9 +177,9 @@ dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
 
 for (dataset, datasetdescr), clfs in \
     [
-#    ((dummy2, "Dummy 2-class univariate with 2 useful features"), clfs['all']),
-#    ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all']),
-    ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all']),
+    ((dummy2, "Dummy 2-class univariate with 2 useful features"), clfs['all']),
+    ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
+    ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
     ]:
 
     print "%s: %s" % (datasetdescr, `dataset`)
