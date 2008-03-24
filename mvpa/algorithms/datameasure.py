@@ -211,7 +211,7 @@ class StaticDatasetMeasure(DatasetMeasure):
     def _call(self, dataset):
         """Returns assigned sensitivity
         """
-        return __measure
+        return self.__measure
 
     #XXX Might need to move into StateVariable?
     bias = property(fget=lambda self:self.__bias)
@@ -231,10 +231,10 @@ class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
     def _call(self, dataset):
         """Perform sensitivity analysis on a given `Dataset`.
 
-        Each implementation has to handle a single arguments: the source
+        Each implementation has to handle a single argument: the source
         dataset.
 
-        Returns the computed sensitivity measure in a 1D array which's length
+        Returns the computed sensitivity measure in a 1D array whose length
         and order matches the features in the dataset. Higher sensitivity values
         should indicate higher sensitivity (or signal to noise ratio or
         amount of available information or the like).
@@ -463,7 +463,7 @@ class ProxyClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
             if self.__analyzer is None:
                 raise ValueError, \
                       "Wasn't able to figure basic analyzer for clf %s" % \
-                      `clf`
+                      `self.clf.clf`
             if __debug__:
                 debug("SA", "Selected analyzer %s for clf %s" % \
                       (`self.__analyzer`, `self.clf.clf`))

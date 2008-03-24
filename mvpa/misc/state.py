@@ -14,11 +14,9 @@ It was devised to provide conditional storage
 __docformat__ = 'restructuredtext'
 
 import operator, copy
-from copy import deepcopy
 from sets import Set
 
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc import warning
 
 if __debug__:
     from mvpa.misc import debug

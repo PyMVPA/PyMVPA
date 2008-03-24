@@ -21,7 +21,7 @@ def extend_args(*args):
     """Turn ndarray arguments into dims and arrays."""
     arglist = []
     for arg in args:
-        if isinstance(arg,N.ndarray):
+        if isinstance(arg, N.ndarray):
             # add the dimensions
             arglist.extend(arg.shape)
 
@@ -46,12 +46,13 @@ def process_args(*args):
     a ctypes-wrapped function."""
     arglist = []
     for arg in args:
-        if isinstance(arg,N.ndarray):
+        if isinstance(arg, N.ndarray):
             # add the dimensions
             arglist.extend(arg.shape)
 
             # add the pointer to the ndarray
-            arglist.append(arg.ctypes.data_as(C.POINTER(typemap[arg.dtype.type])))
+            arglist.append(arg.ctypes.data_as(
+                C.POINTER(typemap[arg.dtype.type])))
         else:
             # just append the arg
             arglist.append(arg)
@@ -61,15 +62,15 @@ def process_args(*args):
 def get_argtypes(*args):
     argtypes = []
     for arg in args:
-        if isinstance(arg,N.ndarray):
+        if isinstance(arg, N.ndarray):
             # add the dimensions
-            arglist.extend([C.c_int]*len(arg.shape))
+            argtypes.extend([C.c_int]*len(arg.shape))
 
             # add the pointer to the ndarray
-            arglist.append(N.ctypeslib.ndpointer(dtype=arg.dtype))
+            argtypes.append(N.ctypeslib.ndpointer(dtype=arg.dtype))
         else:
             # try and figure out the type
-            arglist.append(arg)
+            argtypes.append(arg)
     return argtypes
 
 
