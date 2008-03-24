@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
 from mvpa.datasets.metric import Metric
 from mvpa.misc.vproperty import VProperty
 
