@@ -285,6 +285,10 @@ class ClassifierError(Stateful):
        be indicies of the array
     """
 
+    training_confusion = StateVariable(enabled=False)
+    """Proxy training_confusion from underlying classifier
+    """
+
     def __init__(self, clf, labels=None, train=True, **kwargs):
         """Initialization.
 
@@ -332,7 +336,12 @@ class ClassifierError(Stateful):
                 #    warning('It seems that classifier %s was already trained' %
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
+                if self.states.isEnabled('training_confusion'):
+                    self.__clf.states._changeTemporarily(enable_states=['training_confusion'])
                 self.__clf.train(trainingdataset)
+                if self.states.isEnabled('training_confusion'):
+                    self.training_confusion = self.__clf.training_confusion
+                    self.__clf.states._resetEnabledTemporarily()
 
         if self.__clf.states.isEnabled('trained_labels') and \
                not testdataset is None:
