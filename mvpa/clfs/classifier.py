@@ -977,6 +977,11 @@ class SplitClassifier(CombinedClassifier):
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
             clf = self.clfs[i]
+
+            # assign testing dataset if given classifier can digest it
+            if hasattr(clf, 'testdataset'):
+                clf.testdataset = split[1]
+
             clf.train(split[0])
             if self.states.isEnabled("training_confusions"):
                 predictions = clf.predict(split[1].samples)
@@ -1131,6 +1136,11 @@ class FeatureSelectionClassifier(ProxyClassifier):
         #self.states._copy_states_(self.__maskclf, deep=False)
         return result
 
+    def setTestDataset(self, testdataset):
+        """Set testing dataset to be used for feature selection
+        """
+        self.__testdataset = testdataset
+
     # XXX Shouldn't that be mappedclf ?
     # YYY yoh: not sure... by nature it is mappedclf, by purpouse it
     # is maskclf using MaskMapper
@@ -1138,3 +1148,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
 
+
+    testdataset = property(fget=lambda x:x.__testdataset,
+                           fset=setTestDataset)
