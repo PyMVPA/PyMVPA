@@ -92,7 +92,7 @@ clfs['LinearSVM10%->LinearSVM']  = [
 # other terms leave-1-out error on the same dataset
 # Has to be bound outside of the RFE definition since both analyzer and
 # error should use the same instance.
-rfesvm = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
+rfesvm_split = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
 
 # "Almost" classical RFE. If this works it would differ only that
 # our transfer_error is based on internal splitting and classifier used within RFE
@@ -102,35 +102,57 @@ rfesvm = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
 # TODO: wrap head around on how to implement classical RFE (unbiased,
 #  ie with independent generalization) within out framework without
 #  much of changing
-clfs['SVM+RFE/splits'] = [
+clfs['SVM+RFE/splits_avg'] = [
   FeatureSelectionClassifier(
     clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
     feature_selection = RFE(             # on features selected via RFE
         sensitivity_analyzer=selectAnalyzer( # based on sensitivity of a clf
-           clf=rfesvm), # which does splitting internally
+           clf=rfesvm_split), # which does splitting internally
         transfer_error=ConfusionBasedError(
-           rfesvm,
+           rfesvm_split,
            confusion_state="training_confusions"), # and whose internall error we use
         feature_selector=FractionTailSelector(
                            0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
         update_sensitivity=True),                     # update sensitivity at each step
-    descr='SVM+RFE/splits' )
+    descr='SVM+RFE/splits_avg' )
+  ]
+
+
+rfesvm = LinearCSVMC()
+
+# This classifier will do RFE while taking transfer error to testing
+# set of that split. Resultant classifier is voted classifier on top
+# of all splits, let see what that would do ;-)
+clfs['SVM+RFE'] = [
+  SplitClassifier(                      # which does splitting internally
+   FeatureSelectionClassifier(
+    clf = LinearCSVMC(),
+    feature_selection = RFE(             # on features selected via RFE
+        sensitivity_analyzer=LinearSVMWeights(clf=rfesvm,
+                                              transformer=Absolute),
+        transfer_error=TransferError(rfesvm),
+        feature_selector=FractionTailSelector(
+                           0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
+        update_sensitivity=True)),                     # update sensitivity at each step
+    descr='Linear C-SVM(default)+RFE')
   ]
 
 
 # RFE where each pair-wise classifier is trained with RFE, so we can get
 # different feature sets for different pairs of categories (labels)
-clfs['SVM/Multiclass+RFE'] = [ MulticlassClassifier(clfs['SVM+RFE/splits'][0],
-                                                    descr='SVM/Multiclass+RFE') ]
+clfs['SVM/Multiclass+RFE/splits_avg'] = [ MulticlassClassifier(clfs['SVM+RFE/splits_avg'][0],
+                                                    descr='SVM/Multiclass+RFE/splits_avg') ]
 
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
               clfs['LinearSVM10%->LinearSVM'] + clfs['Anova10%->LinearSVM'] + clfs['SMLR->LinearSVM'] + \
-              clfs['SVM+RFE/splits']
+              clfs['SVM+RFE']
+              #clfs['SVM+RFE/splits'] + \
+
 
 # since some classifiers make sense only for multiclass
 clfs['all_multi'] = clfs['all']
 # TODO:  This one yet to be fixed: deepcopy might fail if
 #        sensitivity analyzer is classifierbased and classifier wasn't
 #        untrained, which can happen, thus for now it is disabled
-# + clfs['SVM/Multiclass+RFE']
+# + clfs['SVM/Multiclass+RFE/splits_avg']
