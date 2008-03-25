@@ -11,6 +11,8 @@
 
 __docformat__ = 'restructuredtext'
 
+# Data
+from mvpa.datasets.splitter import *
 
 # Define sets of classifiers
 from mvpa.clfs.classifier import *
@@ -137,6 +139,21 @@ clfs['SVM+RFE'] = [
     descr='Linear C-SVM(default)+RFE')
   ]
 
+clfs['SVM+RFE/oe'] = [
+  SplitClassifier(                      # which does splitting internally
+   FeatureSelectionClassifier(
+    clf = LinearCSVMC(),
+    feature_selection = RFE(             # on features selected via RFE
+        sensitivity_analyzer=LinearSVMWeights(clf=rfesvm,
+                                              transformer=Absolute),
+        transfer_error=TransferError(rfesvm),
+        feature_selector=FractionTailSelector(
+                           0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
+        update_sensitivity=True)),                     # update sensitivity at each step
+   splitter = OddEvenSplitter(),
+   descr='Linear C-SVM(default)+RFE(oddeven split)')
+  ]
+
 
 # RFE where each pair-wise classifier is trained with RFE, so we can get
 # different feature sets for different pairs of categories (labels)
@@ -146,7 +163,7 @@ clfs['SVM/Multiclass+RFE/splits_avg'] = [ MulticlassClassifier(clfs['SVM+RFE/spl
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
               clfs['LinearSVM10%->LinearSVM'] + clfs['Anova10%->LinearSVM'] + clfs['SMLR->LinearSVM'] + \
-              clfs['SVM+RFE']
+              clfs['SVM+RFE/oe'] + clfs['SVM+RFE']
               #clfs['SVM+RFE/splits'] + \
 
 
