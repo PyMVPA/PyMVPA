@@ -191,8 +191,10 @@ class StateCollection(object):
         """
         if not self.isKnown(index):
             raise KeyError, \
-                  "State of %s has no key '%s' registered" \
-                  % (self.__class__.__name__, index)
+                  "%s of %s has no key '%s' registered" \
+                  % (self.__class__.__name__,
+                     self.__owner.__class__.__name__,
+                     index)
 
 
     def isEnabled(self, index):
