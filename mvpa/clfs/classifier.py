@@ -133,6 +133,10 @@ class Classifier(Stateful):
     predicting_time = StateVariable(enabled=True,
         doc="Time (in seconds) which took classifier to predict")
 
+    feature_ids = StateVariable(enabled=False,
+        doc="Feature IDS which were used for the actual training." +
+            " Some classifiers might internally do feature selection (SMLR)")
+
     params = {}
 
     def __init__(self, train2predict=True, **kwargs):
@@ -167,7 +171,8 @@ class Classifier(Stateful):
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
-        pass
+        # By default all features are used
+        self.feature_ids = range(dataset.nfeatures)
 
 
     def _posttrain(self, dataset):
@@ -489,9 +494,10 @@ class ProxyClassifier(Classifier):
 
 
     def untrain(self):
-        """Untrain main classifier
+        """Untrain ProxyClassifier
         """
-        self.clf.untrain()
+        if not self.__clf is None:
+            self.__clf.untrain()
         super(ProxyClassifier, self).untrain()
 
 
@@ -643,6 +649,11 @@ class ClassifierCombiner(PredictionsCombiner):
         """What state variables of the classifiers to use"""
 
 
+    def untrain(self):
+        """It might be needed to untrain used classifier"""
+        if self.__clf:
+            self.__clf.untrain()
+
     def __call__(self, clfs, dataset):
         """
         """
@@ -690,6 +701,12 @@ class CombinedClassifier(BoostedClassifier):
         return "<%s(%d classifiers, combiner %s)>" \
                % (self.__class__.__name__, len(self.clfs), `self.__combiner`)
 
+    def untrain(self):
+        try:
+            self.__combiner.untrain()
+        except:
+            pass
+        super(CombinedClassifier, self).untrain()
 
     def _train(self, dataset):
         """Train `CombinedClassifier`
@@ -883,7 +900,6 @@ class MulticlassClassifier(CombinedClassifier):
         """
         # construct binary classifiers
         ulabels = dataset.uniquelabels
-
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
             biclfs = []
@@ -1052,6 +1068,18 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """`FeatureSelection` might like to use testdataset"""
 
 
+    def untrain(self):
+        """Untrain `FeatureSelectionClassifier`
+
+        Has to untrain any known classifier
+        """
+        if not self.trained:
+            return
+        if not self.__maskclf is None:
+            self.__maskclf.untrain()
+        super(FeatureSelectionClassifier, self).untrain()
+
+
     def _train(self, dataset):
         """Train `FeatureSelectionClassifier`
         """
@@ -1066,9 +1094,15 @@ class FeatureSelectionClassifier(ProxyClassifier):
         (wdataset, tdataset) = self.__feature_selection(dataset,
                                                         self.__testdataset)
         if __debug__:
-            debug("CLFFS", "{%s} selected %d out of %d features" %
+            add_ = ""
+            if "CLFFS_" in debug.active:
+                add_ = " Selected features: %s" % \
+                       self.__feature_selection.selected_ids
+            debug("CLFFS", "{%s} selected %d out of %d features.%s" %
                   (`self.__feature_selection`, wdataset.nfeatures,
-                   dataset.nfeatures))
+                   dataset.nfeatures, add_))
+
+        self.feature_ids = self.__feature_selection.selected_ids
 
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
