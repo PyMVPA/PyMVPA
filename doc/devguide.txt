@@ -384,6 +384,18 @@ TODO
     * transerror.py for instance uses testdata/trainingdata
     * rfe.py dataset, testdataset
 
+ * implement proper cloning of classifiers. untrain() doesn't work in some
+   cases, since we can create somewhat convolved object definitions so it is
+   hard, if not impossible, to get to all used classifiers. See for
+   instance clfs['SVM/Multiclass+RFE']. We can't get all the way into
+   classifier-based sensitivity analyzer. Thus instead of tracking all
+   the way down in hierarchy, we should finally create proper
+   'parametrization' handling of classifiers, so we could easily clone
+   basic ones (which might have active SWIG bindings), and top-level
+   ones should implement .clone() themselves. or may be some other
+   way, but things should be done. Or may be via proper implementation of
+   __reduce__ etc
+
  * mvpa.misc.warning may be should use stock python warnings module instead of
    custom one?
 
