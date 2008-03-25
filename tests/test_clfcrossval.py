@@ -35,7 +35,8 @@ class CrossValidationTests(unittest.TestCase):
 
         transerror = TransferError(kNN())
         cv = CrossValidatedTransferError(transerror,
-                                         NFoldSplitter(cvtype=1))
+                                         NFoldSplitter(cvtype=1),
+                                         enable_states=['confusion', 'training_confusion'])
 
         results = cv(data)
         self.failUnless( results < 0.2 and results >= 0.0 )
