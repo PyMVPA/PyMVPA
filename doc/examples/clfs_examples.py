@@ -63,19 +63,20 @@ if __name__ == "__main__":
     haxby8_no0 = haxby8.selectSamples(haxby8.labels != 0)
 
     dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
-                                  nfeatures=400,
-                                  nchunks=6, nonbogus_features=[1, 2],
-                                  snr=5.0)
+                                  nfeatures=100,
+                                  nchunks=6, nonbogus_features=[11, 10],
+                                  snr=3.0)
 
 
     for (dataset, datasetdescr), clfs in \
         [
-        ((dummy2, "Dummy 2-class univariate with 2 useful features"), clfs['all']),
+        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
         ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
         ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
         ]:
 
         print "%s: %s" % (datasetdescr, `dataset`)
+        print " Classifier                                  %corr  #features\t train predict  full"
         for clf in clfs:
             # Lets do splits/train/predict explicitely so we could track timing
             # otherwise could be just
@@ -89,16 +90,26 @@ if __name__ == "__main__":
             # to report transfer error
             confusion = ConfusionMatrix()
             times = []
+            nf = []
             t0 = time()
+            clf.states.enable('feature_ids')
             for nfold, (training_ds, validation_ds) in \
                     enumerate(NFoldSplitter()(dataset)):
                 clf.train(training_ds)
+                nf.append(len(clf.feature_ids))
+                if nf[-1] == 0:
+                    break
                 predictions = clf.predict(validation_ds.samples)
                 confusion.add(validation_ds.labels, predictions)
                 times.append([clf.training_time, clf.predicting_time])
+            print "  %-40s: "  % clf.descr,
+            if nf[-1] == 0:
+                print "no features were selected. skipped"
+                continue
             tfull = time() - t0
             times = N.mean(times, axis=0)
-            print "  %-33s: correct=%.1f%% train:%.2fs predict:%.2fs" % \
-                  (clf.descr, confusion.percentCorrect, times[0], times[1]) + \
-                  " full: %.2fs" % tfull
+            nf = N.mean(nf)
+            print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
+                  (confusion.percentCorrect, nf, times[0], times[1], tfull)
+
 
