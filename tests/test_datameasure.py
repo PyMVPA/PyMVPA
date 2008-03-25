@@ -61,7 +61,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         sana = selectAnalyzer(
             SplitClassifier(clf=clf,
-                            enable_states=['training_confusion']),
+                            enable_states=['training_confusion',
+                                           'training_confusions']),
             enable_states=["sensitivities"] )
         # and lets look at all sensitivities
 

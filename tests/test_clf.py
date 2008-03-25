@@ -143,7 +143,8 @@ class ClassifiersTests(unittest.TestCase):
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                              splitter=NFoldSplitter(1))
+                              splitter=NFoldSplitter(1),
+                              enable_states=['training_confusions'])
         clf.train(ds)                   # train the beast
         self.failUnlessEqual(clf.training_confusions.percentCorrect,
                              100,
