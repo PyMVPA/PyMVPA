@@ -92,6 +92,10 @@ class DatasetMeasure(Stateful):
         """
         return result
 
+    def __str__(self):
+        return "%s(transformer=%s, enable_states=%s)" % \
+               (self.__class__.__name__, self.__transformer,
+                str(self.states.enabled))
 
 
 class ScalarDatasetMeasure(DatasetMeasure):
@@ -269,11 +273,10 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
         self._force_training = force_training
         """Either to force it to train"""
 
-
     def __repr__(self):
         return \
-            "<ClassifierBasedSensitivityAnalyzer on %s. force_training=%s" % \
-               (`self.__clf`, str(self._force_training))
+            "<%s on %s, force_training=%s>" % \
+               (str(self), `self.__clf`, str(self._force_training))
 
 
     def __call__(self, dataset):
@@ -376,6 +379,10 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
             ind += 1
 
         self.sensitivities = sensitivities
+        if __debug__:
+            debug("SA", "Returning combined using %s sensitivity across %d items" %
+                  (`self.__combiner`, len(sensitivities)))
+
         return self.__combiner(sensitivities)
 
 
@@ -425,7 +432,7 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
                     debug("SA", "Selected analyzer %s for clf %s" % \
                           (`analyzer`, `clf`))
             else:
-                # shallow copy should be enough...
+                # XXX shallow copy should be enough...
                 analyzer = copy.copy(self.__analyzer)
 
             # assign corresponding classifier
