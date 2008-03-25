@@ -918,9 +918,9 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
-    training_confusions = StateVariable(enabled=True,
+    training_confusions = StateVariable(enabled=False,
         doc="Resultant confusion matrices whenever classifier trained " +
-            "on each was tested on 2nd part of the split")
+            "on 1 part and tested on 2nd part of each split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
@@ -1058,6 +1058,10 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # temporarily enable selected_ids
         self.__feature_selection.states._changeTemporarily(
             enable_states=["selected_ids"])
+
+        if __debug__:
+            debug("CLFFS", "Performing feature selection using %s" %
+                  self.__feature_selection + " on %s" % dataset)
 
         (wdataset, tdataset) = self.__feature_selection(dataset,
                                                         self.__testdataset)
