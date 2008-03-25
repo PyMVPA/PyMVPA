@@ -64,7 +64,7 @@ clfs['SMLR->SVM']  = [
         SensitivityBasedFeatureSelection(
            SMLRWeights(clfs['SMLR'][0]),
            RangeElementSelector()),
-        descr="SVM on SMLR(lm=10) non-0 features")
+        descr="SVM on SMLR(lm=1.0) non-0 features")
     ]
 
 clfs['Anova25%->SVM']  = [
