@@ -42,6 +42,10 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
        """Store actual confusion matrices (if available)""")
     confusion = StateVariable(enabled=False, doc=
        """Store total confusion matrix (if available)""")
+    training_confusions = StateVariable(enabled=False, doc=
+       """Store actual training confusion matrices (if available)""")
+    training_confusion = StateVariable(enabled=False, doc=
+       """Store total training confusion matrix (if available)""")
 
     def __init__(self,
                  transerror,
@@ -96,20 +100,28 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
 
         self.splits = []
 
-        if self.states.isEnabled('confusion') and \
-           not self.states.isEnabled('confusions'):
-            if __debug__:
-                debug('CROSSC',
-                      "Enabling confusions state var since confusion needs it")
-            self.states.enable(['confusions'])
+        terr_enable = []                # what states to enable in terr
+        for state_var in ['confusion', 'training_confusion']:
+            if self.states.isEnabled(state_var):
+                terr_enable += [state_var]
+                if not self.states.isEnabled('%ss' % state_var):
+                    if __debug__:
+                        debug('CROSSC',
+                              "Enabling %ss state var since confusion needs it" %
+                              state_var)
+                    self.states.enable(['%ss' % state_var])
 
+        # charge states with initial values
         self.confusion = ConfusionMatrix()
         self.confusions = []
+        self.training_confusion = ConfusionMatrix()
+        self.training_confusions = []
+
         self.transerrors = []
 
-        if self.states.isEnabled('confusions'):
+        if len(terr_enable):
             self.__transerror.states._changeTemporarily(
-                enable_states=['confusion'])
+                enable_states=terr_enable)
 
         # splitter
         for split in self.__splitter(dataset):
@@ -123,26 +135,22 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
             if self.states.isEnabled("transerrors"):
                 self.transerrors.append(copy(self.__transerror))
 
-            if self.states.isEnabled('confusions'):
-                if self.__transerror.states.isActive('confusion'):
-                    self.confusions.append(self.__transerror.confusion)
-                else:
-                    warning("Crossvalidator %s can't store confusions state " %
-                            self +
-                            "since transfer error %s " %
-                            self.__transerror +
-                            "doesn't have confusion enabled to registered")
-
-            if self.states.isEnabled('confusion'):
-                if self.__transerror.states.isActive('confusion'):
-                    self.confusion += self.__transerror.confusion
-                else:
-                    warning("Crossvalidator %s can't store confusion state " %
-                            self +
-                            "since transfer error %s " %
-                            self.__transerror +
-                            "doesn't have confusion enabled to registered")
-
+            for state_var in ['confusion', 'training_confusion']:
+                state_vars = "%ss" % state_var
+                if self.states.isEnabled(state_vars) or self.states.isEnabled(state_var):
+                    if self.__transerror.states.isActive(state_var):
+                        if self.states.isEnabled(state_vars):
+                            self.states.get(state_vars).append(self.__transerror.states.get(state_var))
+                        if self.states.isEnabled(state_var):
+                            self.states.get(state_var).__iadd__(self.__transerror.states.get(state_var))
+                    else:
+                        # XXX shouldn't happen actually. may be could be removed?
+                        warning("Crossvalidator %s can't store %s nor %s state " %
+                                (self, state_vars, state_var) +
+                                "since transfer error %s " %
+                                self.__transerror +
+                                "doesn't have %s enabled to registered" %
+                                state_var)
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" \
@@ -150,7 +158,7 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
             results.append(result)
 
 
-        if self.states.isEnabled('confusions'):
+        if len(terr_enable):
             self.__transerror.states._resetEnabledTemporarily()
 
         self.results = results

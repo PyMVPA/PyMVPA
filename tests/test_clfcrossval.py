@@ -40,6 +40,8 @@ class CrossValidationTests(unittest.TestCase):
         results = cv(data)
         self.failUnless( results < 0.2 and results >= 0.0 )
 
+        # TODO: test accessibility of {training_,}confusion{,s} of CrossValidatedTransferError
+
 
     def testNoiseClassification(self):
         # get a dataset with a very high SNR
