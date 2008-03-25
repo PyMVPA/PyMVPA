@@ -603,6 +603,10 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         # Select features to preserve
         selected_ids = self.__feature_selector(sensitivity)
 
+        if __debug__:
+            debug("FS_", "Sensitivity: %s Selected ids: %s" %
+                  (sensitivity, selected_ids))
+
         # Create a dataset only with selected features
         wdataset = dataset.selectFeatures(selected_ids)
 
