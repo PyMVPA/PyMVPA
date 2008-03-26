@@ -45,17 +45,6 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
     harvested_attribs = StateVariable(enabled=False, doc=
        """Store specified attributes of classifiers at each split""")
 
-    # XXX Two below should be deprecated due to
-    # harvested_attribs. Also think may be about cleaner way, like
-    #   harvested_states collection which get dynamically populated and
-    #   corresponding class's __getattrib__ helps to spit out values
-    #   from that collection... need more thinkning...
-    #   harvested_states is for now
-    confusions = StateVariable(enabled=False, doc=
-       """Store actual confusion matrices (if available)""")
-    training_confusions = StateVariable(enabled=False, doc=
-       """Store actual training confusion matrices (if available)""")
-
     def __init__(self,
                  transerror,
                  splitter=NoneSplitter(),
@@ -127,18 +116,10 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
         for state_var in ['confusion', 'training_confusion']:
             if self.states.isEnabled(state_var):
                 terr_enable += [state_var]
-                if not self.states.isEnabled('%ss' % state_var):
-                    if __debug__:
-                        debug('CROSSC',
-                              "Enabling %ss state var since confusion needs it" %
-                              state_var)
-                    self.states.enable(['%ss' % state_var])
 
         # charge states with initial values
         self.confusion = ConfusionMatrix()
-        self.confusions = []
         self.training_confusion = ConfusionMatrix()
-        self.training_confusions = []
 
         self.transerrors = []
 
@@ -156,8 +137,9 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
             result = self.__transerror(split[1], split[0])
 
             if self.states.isEnabled('harvested_attribs'):
+                transerror = self.__transerror
                 for attrib in self.__harvest_attribs:
-                    eval("attrv = self.__transerror.%s" % attrib)
+                    attrv = eval("transerror.%s" % attrib)
                     if self.__copy_attribs:
                         attrv = copy(attrv)
                     self.harvested_attribs[attrib].append(attrv)
@@ -168,18 +150,15 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
                 self.transerrors.append(copy(self.__transerror))
 
             for state_var in ['confusion', 'training_confusion']:
-                state_vars = "%ss" % state_var
-                if self.states.isEnabled(state_vars) or self.states.isEnabled(state_var):
+                if self.states.isEnabled(state_var):
                     if self.__transerror.states.isActive(state_var):
-                        if self.states.isEnabled(state_vars):
-                            self.states.get(state_vars).append(self.__transerror.states.get(state_var))
                         if self.states.isEnabled(state_var):
-                            self.states.get(state_var).__iadd__(self.__transerror.states.get(state_var))
+                            self.states.get(state_var).__iadd__(
+                                self.__transerror.states.get(state_var))
                     else:
                         # XXX shouldn't happen actually. may be could be removed?
-                        warning("Crossvalidator %s can't store %s nor %s state " %
-                                (self, state_vars, state_var) +
-                                "since transfer error %s " %
+                        warning("Crossvalidator %s can't store %s state " %
+                                (self, state_var) + "since transfer error %s " %
                                 self.__transerror +
                                 "doesn't have %s enabled to registered" %
                                 state_var)
