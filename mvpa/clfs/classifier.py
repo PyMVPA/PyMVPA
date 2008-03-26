@@ -947,6 +947,8 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
+    # TODO: unify with CrossValidatedTransferError which now uses
+    # harvest_attribs to expose gathered attributes
     training_confusions = StateVariable(enabled=False,
         doc="Resultant confusion matrices whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
