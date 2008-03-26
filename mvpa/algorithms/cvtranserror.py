@@ -38,19 +38,30 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
        """Store the actual splits of the data. Can be memory expensive""")
     transerrors = StateVariable(enabled=False, doc=
        """Store copies of transerrors at each step""")
-    confusions = StateVariable(enabled=False, doc=
-       """Store actual confusion matrices (if available)""")
     confusion = StateVariable(enabled=False, doc=
        """Store total confusion matrix (if available)""")
-    training_confusions = StateVariable(enabled=False, doc=
-       """Store actual training confusion matrices (if available)""")
     training_confusion = StateVariable(enabled=False, doc=
        """Store total training confusion matrix (if available)""")
+    harvested_attribs = StateVariable(enabled=False, doc=
+       """Store specified attributes of classifiers at each split""")
+
+    # XXX Two below should be deprecated due to
+    # harvested_attribs. Also think may be about cleaner way, like
+    #   harvested_states collection which get dynamically populated and
+    #   corresponding class's __getattrib__ helps to spit out values
+    #   from that collection... need more thinkning...
+    #   harvested_states is for now
+    confusions = StateVariable(enabled=False, doc=
+       """Store actual confusion matrices (if available)""")
+    training_confusions = StateVariable(enabled=False, doc=
+       """Store actual training confusion matrices (if available)""")
 
     def __init__(self,
                  transerror,
                  splitter=NoneSplitter(),
                  combiner=GrandMean,
+                 harvest_attribs=None,
+                 copy_attribs=True,
                  **kwargs):
         """
         Cheap initialization.
@@ -68,6 +79,11 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
             combiner : Functor
                 Used to aggregate the error values of all cross-validation
                 folds.
+            harvest_attribs : list of basestr
+                What attributes of call to store and return within
+                harvested state variable
+            copy_attribs : bool
+                Force copying values of attributes
         """
         ScalarDatasetMeasure.__init__(self, **kwargs)
 
@@ -75,7 +91,13 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
         self.__transerror = transerror
         self.__combiner = combiner
 
-
+        self.__copy_attribs = copy_attribs
+        if harvest_attribs:
+            self.states.enable('harvested_attribs')
+            self.__harvest_attribs = harvest_attribs
+        else:
+            # just to make sure it is not None or 0
+            self.__harvest_attribs = []
 
 # TODO: put back in ASAP
 #    def __repr__(self):
@@ -98,6 +120,7 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
         # store the results of the splitprocessor
         results = []
 
+        self.harvested_attribs = dict([(a, []) for a in self.__harvest_attribs])
         self.splits = []
 
         terr_enable = []                # what states to enable in terr
@@ -132,6 +155,15 @@ class CrossValidatedTransferError(ScalarDatasetMeasure):
 
             result = self.__transerror(split[1], split[0])
 
+            if self.states.isEnabled('harvested_attribs'):
+                for attrib in self.__harvest_attribs:
+                    eval("attrv = self.__transerror.%s" % attrib)
+                    if self.__copy_attribs:
+                        attrv = copy(attrv)
+                    self.harvested_attribs[attrib].append(attrv)
+
+            # XXX Look below -- may be we should have not auto added .?
+            #     then transerrors also could be deprecated
             if self.states.isEnabled("transerrors"):
                 self.transerrors.append(copy(self.__transerror))
 
