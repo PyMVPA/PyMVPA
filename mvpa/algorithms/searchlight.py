@@ -17,10 +17,11 @@ if __debug__:
 
 from mvpa.datasets.mappeddataset import MappedDataset
 from mvpa.datasets.mapper import MetricMapper
-from mvpa.algorithms.datameasure import SensitivityAnalyzer
+from mvpa.algorithms.datameasure import DatasetMeasure
+from mvpa.misc.state import StateVariable
 
 
-class Searchlight(SensitivityAnalyzer):
+class Searchlight(DatasetMeasure):
     """Runs a `ScalarDatasetMeasure` on all possible spheres of a certain size
     within a dataset.
 
@@ -32,14 +33,16 @@ class Searchlight(SensitivityAnalyzer):
       National Academy of Sciences of the United States of America 103,
       3863-3868.
     """
-    def __init__(self, datameasure,
-                 combinefx=N.array,
-                 radius=1.0):
-        """Initialize Searchlight to compute 'datameasure' for each sphere with
-        a certain 'radius' in a given dataset (see __call__()).
 
-        The results of the datameasures of all spheres are passed to 'combinefx'
-        and the output of that call is returned.
+    spheresizes = StateVariable(enabled=False,
+        doc="Number of features in each sphere.")
+
+    def __init__(self, datameasure, radius=1.0, **kwargs):
+        """Initialize Searchlight to compute 'datameasure' for each sphere with
+        a certain 'radius' in a given dataset.
+
+        In additions this class supports all keyword arguments of its
+        base-class `DatasetMeasure`.
 
         ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
         make sure that the specified `ScalarDatasetMeasure` returns large
@@ -50,17 +53,10 @@ class Searchlight(SensitivityAnalyzer):
         values indicating high sensitivites and this conflicts with the
         intended behavior of a `SensitivityAnalyzer`.
         """
-        SensitivityAnalyzer.__init__(self)
+        DatasetMeasure.__init__(self, **(kwargs))
 
         self.__datameasure = datameasure
         self.__radius = radius
-        self.__combinefx = combinefx
-        self.__spheresizes = []
-
-
-    def _resetState(self):
-        """Don't touch me"""
-        self.__spheresizes = []
 
 
     def _call(self, dataset):
@@ -72,7 +68,8 @@ class Searchlight(SensitivityAnalyzer):
                               "that make use of a mapper with information " \
                               "about the dataspace metrics."
 
-        self._resetState()
+        if self.states.isEnabled('spheresizes'):
+            self.spheresizes = []
 
         if __debug__:
             nspheres = dataset.nfeatures
@@ -93,7 +90,8 @@ class Searchlight(SensitivityAnalyzer):
             results.append(measure)
 
             # store the size of the sphere dataset
-            self.__spheresizes.append(sphere.nfeatures)
+            if self.states.isEnabled('spheresizes'):
+                self.spheresizes.append(sphere.nfeatures)
 
             if __debug__:
                 sphere_count += 1
@@ -106,10 +104,11 @@ class Searchlight(SensitivityAnalyzer):
         if __debug__:
             debug('SLC', '')
 
-        # transform the results with the user-supplied function and return
-        return self.__combinefx(results)
+        # charge state
+        self.raw_results = results
 
-    spheresizes = property(fget=lambda self: self.__spheresizes)
+        # return raw results, base-class will take care of transformations
+        return results
 
 
 

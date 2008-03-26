@@ -42,7 +42,8 @@ class SearchlightTests(unittest.TestCase):
                 transerror,
                 NFoldSplitter(cvtype=1))
         # contruct radius 1 searchlight
-        sl = Searchlight( cv, radius=1.0 )
+        sl = Searchlight(cv, radius=1.0, transformer=N.array,
+                         enable_states=['spheresizes'])
 
         # run searchlight
         results = sl(self.dataset)
@@ -58,6 +59,8 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless(max(sl.spheresizes) == 7)
         self.failUnless(min(sl.spheresizes) == 4)
 
+        # check base-class state
+        self.failUnlessEqual(len(sl.raw_results), 106)
 
 
 def suite():
