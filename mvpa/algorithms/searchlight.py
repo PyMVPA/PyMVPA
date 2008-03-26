@@ -25,8 +25,7 @@ class Searchlight(DatasetMeasure):
     """Runs a `ScalarDatasetMeasure` on all possible spheres of a certain size
     within a dataset.
 
-    The idea to use a searchlight as a sensitivity analyser stems from this
-    paper:
+    The idea for a searchlight algorithm stems from this paper:
 
       Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
       'Information-based functional brain mapping.' Proceedings of the
@@ -37,12 +36,21 @@ class Searchlight(DatasetMeasure):
     spheresizes = StateVariable(enabled=False,
         doc="Number of features in each sphere.")
 
-    def __init__(self, datameasure, radius=1.0, **kwargs):
-        """Initialize Searchlight to compute 'datameasure' for each sphere with
-        a certain 'radius' in a given dataset.
+    def __init__(self, datameasure, radius=1.0, center_ids=None, **kwargs):
+        """Initialize Searchlight to compute `datameasure` for each sphere with
+        a certain `radius` in a given dataset.
 
-        In additions this class supports all keyword arguments of its
-        base-class `DatasetMeasure`.
+        :Parameters:
+            datameasure: callable
+                Any object that takes a `Dataset` and returns some measure when called.
+            radius: float
+                All features within the radius around the center will be part of a sphere.
+            center_ids: list(int)
+                List of feature ids (not coordinates) the shall serve as sphere centers. By
+                default all features will be used.
+            **kwargs:
+                In additions this class supports all keyword arguments of its base-class
+                `DatasetMeasure`.
 
         ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
         make sure that the specified `ScalarDatasetMeasure` returns large
@@ -57,6 +65,7 @@ class Searchlight(DatasetMeasure):
 
         self.__datameasure = datameasure
         self.__radius = radius
+        self.__center_ids = center_ids
 
 
     def _call(self, dataset):
@@ -78,9 +87,16 @@ class Searchlight(DatasetMeasure):
         # collect the results in a list -- you never know what you get
         results = []
 
+        # decide whether to run on all possible center coords or just a provided
+        # subset
+        if not self.__center_ids == None:
+            generator = self.__center_ids
+        else:
+            generator = xrange(dataset.nfeatures)
+
         # put spheres around all features in the dataset and compute the
         # measure within them
-        for f in xrange(dataset.nfeatures):
+        for f in generator:
             sphere = dataset.selectFeatures(
                 dataset.mapper.getNeighbors(f, self.__radius),
                 plain=True)
