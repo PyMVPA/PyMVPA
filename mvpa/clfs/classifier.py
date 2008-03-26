@@ -354,12 +354,17 @@ class BoostedClassifier(Classifier):
         doc="Values obtained from each classifier")
 
 
-    def __init__(self, clfs=None, **kwargs):
+    def __init__(self, clfs=None, propagate_states=True, **kwargs):
         """Initialize the instance.
 
         :Parameters:
-          `clfs` : list
-            list of classifier instances to use
+          clfs : list
+            list of classifier instances to use (slave classifiers)
+          propagate_states : bool
+            either to propagate enabled states into slave classifiers.
+            It is in effect only when slaves get assigned - so if state
+            is enabled not during construction, it would not necessarily
+            propagate into slaves
           kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
@@ -371,6 +376,9 @@ class BoostedClassifier(Classifier):
 
         self.__clfs = None
         """Pylint friendly definition of __clfs"""
+
+        self.__propagate_states = propagate_states
+        """Enable current enabled states in slave classifiers"""
 
         self._setClassifiers(clfs)
         """Store the list of classifiers"""
@@ -426,6 +434,11 @@ class BoostedClassifier(Classifier):
                    % (str(train2predict), `self.__clfs`, str(train2predicts)))
         # set flag if it needs to be trained before predicting
         self._setTrain2predict(train2predict)
+
+        # enable corresponding states in the slave-classifiers
+        if self.__propagate_states:
+            for clf in self.__clfs:
+                clf.states.enable(self.states.enabled, missingok=True)
 
     def untrain(self):
         """Untrain `BoostedClassifier`

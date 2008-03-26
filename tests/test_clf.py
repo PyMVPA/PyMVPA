@@ -104,12 +104,32 @@ class ClassifiersTests(unittest.TestCase):
         # silly test if we get the same result with boosted as with a single one
         bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
                                         deepcopy(self.clf_sign)])
+
         self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
                              list(self.data_bin_1.labels),
                              msg="Boosted classifier should work")
         self.failUnlessEqual(bclf.predict(self.data_bin_1.samples),
                              self.clf_sign.predict(self.data_bin_1.samples),
                              msg="Boosted classifier should have the same as regular")
+
+
+    def testBoostedStatePropagation(self):
+        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)],
+                                  enable_states=['feature_ids'])
+
+        # check states enabling propagation
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
+
+        bclf2 = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)],
+                                  propagate_states=False,
+                                  enable_states=['feature_ids'])
+
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(bclf2.clfs[0].states.isEnabled('feature_ids'), False)
+
 
 
     def testBinaryDecorator(self):
