@@ -254,7 +254,11 @@ recommend to install these packages as well.
   libsvm_: fast SVM classifier
     Only the C library is required and none of the Python bindings are available
     on the upstream website. PyMVPA provides its own Python wrapper for libsvm
-    which is a fork based on the one included in the libsvm package.
+    which is a fork based on the one included in the libsvm package. 
+    Additionally the upstream libsvm distribution causes flooding of the console
+    with a huge amount of debugging messages. Please see the `Building from
+    Source`_ section for information on how to build an alternative version that
+    does not have this problem.
   PyNIfTI_: access to NIfTI files
     PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
     format. If you don't need that, PyNIfTI is not necessary, but otherwise
@@ -349,6 +353,37 @@ To be able to do this you need to have SWIG_ and the development files of
 libsvm_ (headers and library) installed on your system. Depending on where you
 installed them, it might be necessary to specify the full path to them with the
 `--include-dirs`, `--library-dirs` and `--swig` options.
+
+PyMVPA needs a patched libsvm version, as the original distribution generates
+a huge amount of debugging messages and therefore makes the console and PyMVPA
+output almost unusable. Debian and Ubuntu (since gutsy) already include the
+patched version. For all other systems it is easy to build it.
+
+First get the patched sources from::
+
+  http://packages.debian.org/source/sid/libsvm
+
+Download the `diff.gz` and the `orig.tar.gz` files offered at the bottom of the
+page. Once downloaded extract the `tar.gz` file and patch it. The following
+example refers to *libsvm* version 2.85.0, please adjust the filenames if you
+use a later version::
+
+  tar xvzf libsvm_2.85.0.orig.tar.gz
+  cd libsvm-2.85
+  zcat ../libsvm_2.85.0-1.diff.gz | patch -p1
+
+If `zcat` does not work for you, simply decompress the diff manually and do::
+
+  patch -p1 < ../libsvm_2.85.0-1.diff
+
+instead to patch the sources. If this is done build the library and install
+it::
+
+  make libsvm.so.2.85.0
+  DESTDIR=/usr/local make install
+
+Set `DESTDIR` to your prefered installation path. For those running Mac OSX,
+there is also a `Makefile.osx`.
 
 .. _SWIG: http://www.swig.org
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
