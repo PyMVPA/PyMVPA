@@ -163,8 +163,8 @@ class ClassifiersTests(unittest.TestCase):
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                              splitter=NFoldSplitter(1),
-                              enable_states=['training_confusions'])
+                splitter=NFoldSplitter(1),
+                enable_states=['training_confusions', 'feature_ids'])
         clf.train(ds)                   # train the beast
         self.failUnlessEqual(clf.training_confusions.percentCorrect,
                              100,
@@ -177,6 +177,12 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
 
+        # feature_ids must be list of lists, and since it is not
+        # feature-selecting classifier used - we expect all features
+        # to be utilized
+        self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
+        self.failUnless(N.array([len(ids)==ds.nfeatures
+                                 for ids in clf.feature_ids]).all())
 
     def testMappedClassifier(self):
         samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
@@ -207,7 +213,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # corresponding feature selections
         feat_sel = SensitivityBasedFeatureSelection(sens_ana,
-            FixedNElementTailSelector(1))
+            FixedNElementTailSelector(1, mode='discard'))
 
         feat_sel_rev = SensitivityBasedFeatureSelection(sens_ana_rev,
             FixedNElementTailSelector(1))
@@ -223,9 +229,13 @@ class ClassifiersTests(unittest.TestCase):
         res011 = [-1, 1, -1, 1, -1]
 
         # first classifier -- 0th feature should be discarded
-        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel)
+        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel,
+                    enable_states=['feature_ids'])
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
+
+        self.failUnlessEqual(len(clf011.feature_ids), 2)
+        "Feature selection classifier had to be trained on 2 features"
 
         # first classifier -- last feature should be discarded
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel_rev)
