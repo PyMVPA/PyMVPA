@@ -10,7 +10,7 @@
 PyMVPA Manual
 =============
 
-:Authors:
+:Manual Authors:
   Michael Hanke <michael.hanke@gmail.com>;
   Yaroslav O. Halchenko <debian@onerussian.com>;
   Per B. Sederberg <psederberg@gmail.com>;
@@ -97,7 +97,15 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
 
-.. <gjd> i would explicitly mention and link to the type of license
+PyMVPA is free-software (beer and speech) and covered by the `MIT License`_.
+This applies to all source code, documentation, examples and snippets inside
+the source distribution (including this manual).
+
+Please see the `License`_ section for the copyright statement and the
+full text of the license.
+
+.. _MIT License: http://www.opensource.org/licenses/mit-license.php
+
 
 
 What this Manual is NOT
@@ -304,16 +312,32 @@ Obtaining PyMVPA
 Binary packages
 '''''''''''''''
 
-Binary packages for Debian and some Ubuntu releases are available. Please read
-the `package repository instructions`_ to learn about how to obtain them. As
-soon as the package officially enters Debian this repository will be obsolete.
+The easiest way to obtain PyMVPA is to use pre-built binary packages.
+Currently the Debian/Ubuntu family is the only environment for which
+binary packages are available (see below). If you manage to build PyMVPA
+on Windows or OS X, we would be glad to hear from you.
+
+
+Debian
+^^^^^^
+
+PyMVPA is available in Debian_ (since *lenny*) as `python-mvpa` package. The
+documentation is provided by the optional `python-mvpa-doc` package.
+
+
+Debian backports and inofficial Ubuntu packages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Backports for the current Debian stable release and binary packages for recent
+Ubuntu releases are available from a `repository at the University of
+Magdeburg`_. Please read the `package repository instructions`_ to learn about
+how to obtain them.
 
 .. All of the PyMVPA developers have sworn a solemn oath to name their
    first-born child 'Debian'.
 
-Currently, there are no binary packages for other operating systems. If you
-manage to build PyMVPA on Windows or OS X, we would be glad to hear from you.
 
+.. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
 
@@ -323,12 +347,12 @@ Building from Source
 If a binary package for your platform and operating system is provided, you do
 not have to build the packages on your own -- use the corresponding pre-build
 packages instead. However, if there are no binary packages for your system you
-can easily build PyMVPA on your own. At first it is of course necessary to
-obtain the sources.
+can easily build PyMVPA on your own. Any recent linux distribution should be
+capable of doing it. Additionally, we are aware of successful builds on Mac
+OSX. 
 
-The source code tarballs of all PyMVPA releases are available from the `PyMVPA
-project website`_.
-
+The first step is obtaining the sources. The source code tarballs of all
+PyMVPA releases are available from the `PyMVPA project website`_.
 If you want to have access to both, the full PyMVPA history and the latest
 development code, you can use the PyMVPA Git_ repository, which is publicly
 available. To view the repository, please point your web browser to gitweb:
@@ -429,27 +453,10 @@ If there are no binary packages for your operating system or platform yet, you
 need to build from source. Please refer to `Building from Source`_ for more
 information.
 
-
-Debian
-''''''
-
-PyMVPA is available in Debian_ (since *lenny*) as `python-mvpa` package. The
-documentation is provided by the optional `python-mvpa-doc` package. Simply
-install it like any other package, e.g.::
+Otherwise just install the binary packages as you would do with any other
+package. For example on Debian or Ubuntu simply do::
 
   sudo aptitude install python-mvpa
-
-Backports for the current Debian stable release are available from a
-`repository at the University of Magdeburg`_.
-
-.. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
-
-
-Ubuntu
-''''''
-
-Binary packages for recent Ubuntu releases are available from the same
-repository as the backports for Debian releases (see above).
 
 
 How to cite PyMVPA
