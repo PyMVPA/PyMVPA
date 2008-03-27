@@ -61,18 +61,38 @@ clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(descr="kNN()") ]
 clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR']
 
 # "Interesting" classifiers
-clfs['SMLR->LinearSVM']  = [
+clfs['SMLR(lm=10)->LinearSVM']  = [
     FeatureSelectionClassifier(
-        LinearCSVMC(C=-10.0),
+        LinearCSVMC(),
         SensitivityBasedFeatureSelection(
            SMLRWeights(SMLR(lm=10.0, implementation="C")),
            RangeElementSelector(mode='select')),
         descr="LinSVM on SMLR(lm=10) non-0")
     ]
 
+# "Interesting" classifiers
+clfs['SMLR(lm=1)->LinearSVM']  = [
+    FeatureSelectionClassifier(
+        LinearCSVMC(),
+        SensitivityBasedFeatureSelection(
+           SMLRWeights(SMLR(lm=1.0, implementation="C")),
+           RangeElementSelector(mode='select')),
+        descr="LinSVM on SMLR(lm=1) non-0")
+    ]
+
+# "Interesting" classifiers
+clfs['SMLR->RbfSVM']  = [
+    FeatureSelectionClassifier(
+        RbfCSVMC(),
+        SensitivityBasedFeatureSelection(
+           SMLRWeights(SMLR(lm=10.0, implementation="C")),
+           RangeElementSelector(mode='select')),
+        descr="RbfSVM on SMLR(lm=10) non-0")
+    ]
+
 clfs['Anova5%->LinearSVM']  = [
     FeatureSelectionClassifier(
-        clfs['LinearSVMC'][0],
+        LinearCSVMC(),
         SensitivityBasedFeatureSelection(
            OneWayAnova(),
            FractionTailSelector(0.05, mode='select', tail='upper')),
@@ -163,7 +183,8 @@ clfs['SVM/Multiclass+RFE/splits_avg'] = [ MulticlassClassifier(clfs['SVM+RFE/spl
 
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
-              clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + clfs['SMLR->LinearSVM'] + \
+              clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + \
+              clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + clfs['SMLR->RbfSVM'] + \
               clfs['SVM+RFE'] + clfs['SVM+RFE/oe']
 #+ clfs['SVM+RFE/splits'] + \
 
