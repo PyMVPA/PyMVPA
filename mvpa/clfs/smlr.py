@@ -397,6 +397,8 @@ class SMLR(Classifier):
                   "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
                   (N.min(X), N.max(X), N.min(w), N.max(w)))
 
+    def _getFeatureIds(self):
+        return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
 
     def _predict(self, data):
         """

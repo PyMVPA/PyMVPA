@@ -171,14 +171,15 @@ class Classifier(Stateful):
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
-        # By default all features are used
-        self.feature_ids = range(dataset.nfeatures)
-
+        pass
 
     def _posttrain(self, dataset):
         """Functionality post training
 
         For instance -- computing confusion matrix
+        :Parameters:
+          dataset : Dataset
+            Data which was used for training
         """
         self.trained_labels = Set(dataset.uniquelabels)
 
@@ -187,6 +188,7 @@ class Classifier(Stateful):
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
         self.__trainedid = dataset._id
+
         if self.states.isEnabled('training_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
@@ -197,6 +199,19 @@ class Classifier(Stateful):
             self.training_confusion = ConfusionMatrix(
                 labels=dataset.uniquelabels, targets=dataset.labels,
                 predictions=predictions)
+
+        if self.states.isEnabled('feature_ids'):
+            self.feature_ids = self._getFeatureIds()
+
+
+    def _getFeatureIds(self):
+        """Virtual method to return feature_ids used while training
+
+        Is not intended to be called anywhere but from _posttrain,
+        thus classifier is assumed to be trained at this point
+        """
+        # By default all features are used
+        return range(self.__trainednfeatures)
 
 
     def _train(self, dataset):
@@ -319,6 +334,7 @@ class Classifier(Stateful):
     def untrain(self):
         """Reset trained state"""
         self.__trainednfeatures = None
+        self.states.reset()
 
 
     def _setTrain2predict(self, v):
@@ -394,6 +410,15 @@ class BoostedClassifier(Classifier):
         """
         for clf in self.__clfs:
             clf.train(dataset)
+
+
+    def _getFeatureIds(self):
+        """Custom _getFeatureIds for `BoostedClassifier`
+        """
+        feature_ids = []
+        for clf in self.__clfs:
+            feature_ids.append(clf.feature_ids)
+        return feature_ids
 
 
     def _predict(self, data):
@@ -947,7 +972,7 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
-    # TODO: unify with CrossValidatedTransferError which now uses
+    # Todo: unify with CrossValidatedTransferError which now uses
     # harvest_attribs to expose gathered attributes
     training_confusions = StateVariable(enabled=False,
         doc="Resultant confusion matrices whenever classifier trained " +
@@ -1122,8 +1147,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
                   (`self.__feature_selection`, wdataset.nfeatures,
                    dataset.nfeatures, add_))
 
-        self.feature_ids = self.__feature_selection.selected_ids
-
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
         mappermask = N.zeros(dataset.nfeatures)
@@ -1142,6 +1165,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # TODO see for ProxyClassifier
         #self.states._copy_states_(self.__maskclf, deep=False)
 
+    def _getFeatureIds(self):
+        return self.__feature_selection.selected_ids
 
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`
