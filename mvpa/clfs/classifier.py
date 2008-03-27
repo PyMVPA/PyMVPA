@@ -363,6 +363,7 @@ class BoostedClassifier(Classifier):
     """
 
     # should not be needed if we have prediction_values upstairs
+    # TODO : should be handled as Harvestable or smth like that
     raw_predictions = StateVariable(enabled=False,
         doc="Predictions obtained from each classifier")
 
@@ -415,10 +416,11 @@ class BoostedClassifier(Classifier):
     def _getFeatureIds(self):
         """Custom _getFeatureIds for `BoostedClassifier`
         """
-        feature_ids = []
+        # return union of all used features by slave classifiers
+        feature_ids = Set([])
         for clf in self.__clfs:
-            feature_ids.append(clf.feature_ids)
-        return feature_ids
+            feature_ids = feature_ids.union(Set(clf.feature_ids))
+        return list(feature_ids)
 
 
     def _predict(self, data):
@@ -1166,6 +1168,9 @@ class FeatureSelectionClassifier(ProxyClassifier):
         #self.states._copy_states_(self.__maskclf, deep=False)
 
     def _getFeatureIds(self):
+        """Return used feature ids for `FeatureSelectionClassifier`
+
+        """
         return self.__feature_selection.selected_ids
 
     def _predict(self, data):
