@@ -54,7 +54,7 @@ pylint
 2 empty lines
    According to original python style guidelines: single empty line to
    separate methods within class, and 2 empty lines between classes
-   BUT we do 2 empty between methods, 3 empty between classes
+   **BUT** we do 2 empty between methods, 3 empty between classes
 module docstring
    Each module should start with a docstring describing the module
    (which is not inside the hashed-comment of each file) look at
@@ -307,7 +307,7 @@ similar). Currently there are:
 
 Each developer can have an infinite number of branches. If the number of
 branches causes gitk output to exceed a usual 19" screen, the respective
-developer has to spend some bucks (or euries) on new screens for all others
+developer has to spend some bucks (or euros) on new screens for all others
 ;-)
 
 The main release branch is called *master*. This is a merge-only branch.
