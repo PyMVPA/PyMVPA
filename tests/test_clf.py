@@ -180,9 +180,13 @@ class ClassifiersTests(unittest.TestCase):
         # feature_ids must be list of lists, and since it is not
         # feature-selecting classifier used - we expect all features
         # to be utilized
-        self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
-        self.failUnless(N.array([len(ids)==ds.nfeatures
-                                 for ids in clf.feature_ids]).all())
+        #  NOT ANYMORE -- for BoostedClassifier we have now union of all
+        #  used features across slave classifiers. That makes
+        #  semantics clear. If you need to get deeper -- use upcoming
+        #  harvesting facility ;-)
+        # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
+        # self.failUnless(N.array([len(ids)==ds.nfeatures
+        #                         for ids in clf.feature_ids]).all())
 
     def testMappedClassifier(self):
         samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
