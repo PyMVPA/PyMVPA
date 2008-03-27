@@ -252,7 +252,7 @@ recommend to install these packages as well.
     regression classifier code. However, in the long run SciPy might be used a
     lot more and could become a required dependency of PyMVPA.
   libsvm_: fast SVM classifier
-    Only the C library is required and none of the Python bindings are available
+    Only the C library is required and none of the Python bindings that are available
     on the upstream website. PyMVPA provides its own Python wrapper for libsvm
     which is a fork based on the one included in the libsvm package. 
     Additionally the upstream libsvm distribution causes flooding of the console
@@ -335,7 +335,9 @@ available. To view the repository, please point your web browser to gitweb:
 
   http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 
-To clone (aka checkout) the PyMVPA repository simply do::
+The gitweb browser also allows to download arbitrary development snapshots
+of PyMVPA. For a full clone (aka checkout) of the PyMVPA repository simply
+do::
 
   git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
@@ -365,14 +367,15 @@ First get the patched sources from::
 
 Download the `diff.gz` and the `orig.tar.gz` files offered at the bottom of the
 page. Once downloaded extract the `tar.gz` file and patch it. The following
-example refers to *libsvm* version 2.85.0, please adjust the filenames if you
-use a later version::
+example refers to *libsvm* version 2.85.0, please adjust the filenames and
+versions if you use a later version::
 
   tar xvzf libsvm_2.85.0.orig.tar.gz
   cd libsvm-2.85
   zcat ../libsvm_2.85.0-1.diff.gz | patch -p1
 
-If `zcat` does not work for you, simply decompress the diff manually and do::
+If `zcat` does not work for you (which might happen on Mac OSX), simply
+decompress the diff manually and do::
 
   patch -p1 < ../libsvm_2.85.0-1.diff
 
@@ -390,6 +393,16 @@ there is also a `Makefile.osx`.
 
 .. Actually, AFAIK upstream libsvm does not easily allow for compiling a libsvm
    static or shared lib. Or am I wrong?
+
+The current development version of PyMVPA contains another classifier
+C-extension, which causes an additional dependencies. The be able to compile it
+either Python 2.5 or python-ctypes (>= 1.0.1) is necessary. Additionally, the
+extensions have to be compiled with::
+
+  python setup.py build_ext --swig-opts="-c++ -noproxy" 
+
+As an alternative, one can simply call `make` in the top-level directory of
+the source tree to build PyMVPA.
 
 Now, you are ready to install the package. Do this by invoking::
 
@@ -417,19 +430,32 @@ need to build from source. Please refer to `Building from Source`_ for more
 information.
 
 
+Debian
+''''''
+
+PyMVPA is available in Debian_ (since *lenny*) as `python-mvpa` package. The
+documentation is provided by the optional `python-mvpa-doc` package. Simply
+install it like any other package, e.g.::
+
+  sudo aptitude install python-mvpa
+
+Backports for the current Debian stable release are available from a
+`repository at the University of Magdeburg`_.
+
+.. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
+
+
+Ubuntu
+''''''
+
+Binary packages for recent Ubuntu releases are available from the same
+repository as the backports for Debian releases (see above).
+
 
 How to cite PyMVPA
 ~~~~~~~~~~~~~~~~~~
 
 (to be written)
-
-.. come up with something
-
-.. PBS: At some point we should write up a technical report or submit
-   something to neuroimage methods.
-
-.. <gjd> i found that presenting posters at conferences (e.g. HBM) works well.
-   you get to meet people, and it's less effort than a paper
 
 
 Credits
