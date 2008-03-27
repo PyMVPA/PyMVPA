@@ -76,10 +76,10 @@ class CrossValidationTests(unittest.TestCase):
         transerror = TransferError(LinearCSVMC())
         cv = CrossValidatedTransferError(transerror,
                                          NFoldSplitter(cvtype=1),
-                                         harvest_attribs=['clf.training_time'])
+                                         harvest_attribs=['transerror.clf.training_time'])
         result = cv(data)
-        self.failUnless(cv.harvested_attribs.has_key('clf.training_time'))
-        self.failUnless(len(cv.harvested_attribs['clf.training_time'])>1)
+        self.failUnless(cv.harvested.has_key('transerror.clf.training_time'))
+        self.failUnless(len(cv.harvested['transerror.clf.training_time'])>1)
 
 
 def suite():
