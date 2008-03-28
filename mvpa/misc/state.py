@@ -452,15 +452,19 @@ class Stateful(object):
         if disable_states == None:
             disable_states = []
 
-        object.__setattr__(self, '_states',
-                           copy.deepcopy( \
-                            object.__getattribute__(self,
-                                                    '_states_template')))
+        if not hasattr(self, '_states'):
+            # need to check to avoid override of enabled states in the case
+            # of multiple inheritance, like both Statefull and Harvestable
+            object.__setattr__(self, '_states',
+                               copy.deepcopy( \
+                                object.__getattribute__(self,
+                                                        '_states_template')))
 
-        self._states.owner = self
-        self._states.enable(enable_states, missingok=True)
-        self._states.disable(disable_states)
-        self.__descr = descr
+            self._states.owner = self
+            self._states.enable(enable_states, missingok=True)
+            self._states.disable(disable_states)
+
+            self.__descr = descr
 
         # bad to have str(self) here since it is a base class and
         # some attributes most probably are not yet set in the original
