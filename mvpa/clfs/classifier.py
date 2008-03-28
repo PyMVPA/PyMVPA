@@ -38,7 +38,7 @@ from time import time
 
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
 from mvpa.clfs.transerror import ConfusionMatrix
 
@@ -356,7 +356,7 @@ class Classifier(Stateful):
 # Base classifiers of various kinds
 #
 
-class BoostedClassifier(Classifier):
+class BoostedClassifier(Classifier, Harvestable):
     """Classifier containing the farm of other classifiers.
 
     Should rarely be used directly. Use one of its childs instead
@@ -371,7 +371,9 @@ class BoostedClassifier(Classifier):
         doc="Values obtained from each classifier")
 
 
-    def __init__(self, clfs=None, propagate_states=True, **kwargs):
+    def __init__(self, clfs=None, propagate_states=True,
+                 harvest_attribs=None, copy_attribs='copy',
+                 **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -382,6 +384,11 @@ class BoostedClassifier(Classifier):
             It is in effect only when slaves get assigned - so if state
             is enabled not during construction, it would not necessarily
             propagate into slaves
+          harvest_attribs : list of basestr
+            What attributes of call to store and return within
+            harvested state variable
+          copy_attribs : None or basestr
+            Force copying values of attributes on harvesting
           kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
@@ -390,6 +397,7 @@ class BoostedClassifier(Classifier):
             clfs = []
 
         Classifier.__init__(self, **kwargs)
+        Harvestable.__init__(self, harvest_attribs, copy_attribs)
 
         self.__clfs = None
         """Pylint friendly definition of __clfs"""
@@ -411,6 +419,17 @@ class BoostedClassifier(Classifier):
         """
         for clf in self.__clfs:
             clf.train(dataset)
+
+
+    def _posttrain(self, dataset):
+        """Custom posttrain of `BoostedClassifier`
+
+        Harvest over the trained classifiers if it was asked to so
+        """
+        Classifier._posttrain(self, dataset)
+        if self.states.isEnabled('harvested'):
+            for clf in self.__clfs:
+                self._harvest(locals())
 
 
     def _getFeatureIds(self):
