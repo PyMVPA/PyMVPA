@@ -188,6 +188,24 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
 
+    def testHarvesting(self):
+        """Basic testing of harvesting based on SplitClassifier
+        """
+        ds = self.data_bin_1
+        clf = SplitClassifier(clf=SameSignClassifier(),
+                splitter=NFoldSplitter(1),
+                enable_states=['training_confusions', 'feature_ids'],
+                harvest_attribs=['clf.feature_ids',
+                                 'clf.training_time'],
+                descr="DESCR")
+        clf.train(ds)                   # train the beast
+        # Number of harvested items should be equial to number of chunks
+        self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
+                             len(ds.uniquechunks))
+        # if we can blame multiple inheritance and Statefull.__init__
+        self.failUnlessEqual(clf.descr, "DESCR")
+
+
     def testMappedClassifier(self):
         samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
         testdata3 = Dataset(samples=samples, labels=1)
