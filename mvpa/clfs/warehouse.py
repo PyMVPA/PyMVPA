@@ -99,6 +99,17 @@ clfs['Anova5%->LinearSVM']  = [
         descr="LinSVM on 5%(ANOVA)")
     ]
 
+
+clfs['Anova50->LinearSVM']  = [
+    FeatureSelectionClassifier(
+        LinearCSVMC(),
+        SensitivityBasedFeatureSelection(
+           OneWayAnova(),
+           FixedNElementTailSelector(50, mode='select', tail='upper')),
+        descr="LinSVM on 50(ANOVA)")
+    ]
+
+
 clfs['LinearSVM5%->LinearSVM']  = [
     FeatureSelectionClassifier(
         clfs['LinearSVMC'][0],
@@ -107,6 +118,16 @@ clfs['LinearSVM5%->LinearSVM']  = [
                             transformer=Absolute),
            FractionTailSelector(0.05, mode='select', tail='upper')),
         descr="LinSVM on 5%(SVM)")
+    ]
+
+clfs['LinearSVM50->LinearSVM']  = [
+    FeatureSelectionClassifier(
+        clfs['LinearSVMC'][0],
+        SensitivityBasedFeatureSelection(
+           LinearSVMWeights(clfs['LinearSVMC'][0],
+                            transformer=Absolute),
+           FixedNElementTailSelector(50, mode='select', tail='upper')),
+        descr="LinSVM on 50(SVM)")
     ]
 
 
@@ -168,6 +189,7 @@ clfs['SVM+RFE/oe'] = [
         sensitivity_analyzer=LinearSVMWeights(clf=rfesvm,
                                               transformer=Absolute),
         transfer_error=TransferError(rfesvm),
+        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
         feature_selector=FractionTailSelector(
                            0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
         update_sensitivity=True)),                     # update sensitivity at each step
@@ -184,6 +206,7 @@ clfs['SVM/Multiclass+RFE/splits_avg'] = [ MulticlassClassifier(clfs['SVM+RFE/spl
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
               clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + \
+              clfs['LinearSVM50->LinearSVM'] + clfs['Anova50->LinearSVM'] + \
               clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + clfs['SMLR->RbfSVM'] + \
               clfs['SVM+RFE'] + clfs['SVM+RFE/oe']
 #+ clfs['SVM+RFE/splits'] + \
