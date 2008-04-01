@@ -12,12 +12,12 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
 from tests_warehouse import pureMultivariateSignal, getMVPattern
+from tests_warehouse_clfs import *
 
 class CrossValidationTests(unittest.TestCase):
 
@@ -66,6 +66,20 @@ class CrossValidationTests(unittest.TestCase):
         # must be at chance level
         pmean = N.array(results).mean()
         self.failUnless( pmean < 0.58 and pmean > 0.42 )
+
+
+    def testHarvesting(self):
+        # get a dataset with a very high SNR
+        data = getMVPattern(10)
+
+        # do crossval with default errorfx and 'mean' combiner
+        transerror = TransferError(LinearCSVMC())
+        cv = CrossValidatedTransferError(transerror,
+                                         NFoldSplitter(cvtype=1),
+                                         harvest_attribs=['transerror.clf.training_time'])
+        result = cv(data)
+        self.failUnless(cv.harvested.has_key('transerror.clf.training_time'))
+        self.failUnless(len(cv.harvested['transerror.clf.training_time'])>1)
 
 
 def suite():
