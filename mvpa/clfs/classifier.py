@@ -38,7 +38,7 @@ from time import time
 
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
 from mvpa.clfs.transerror import ConfusionMatrix
 
@@ -171,14 +171,15 @@ class Classifier(Stateful):
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
-        # By default all features are used
-        self.feature_ids = range(dataset.nfeatures)
-
+        pass
 
     def _posttrain(self, dataset):
         """Functionality post training
 
         For instance -- computing confusion matrix
+        :Parameters:
+          dataset : Dataset
+            Data which was used for training
         """
         self.trained_labels = Set(dataset.uniquelabels)
 
@@ -187,6 +188,7 @@ class Classifier(Stateful):
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
         self.__trainedid = dataset._id
+
         if self.states.isEnabled('training_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
@@ -197,6 +199,19 @@ class Classifier(Stateful):
             self.training_confusion = ConfusionMatrix(
                 labels=dataset.uniquelabels, targets=dataset.labels,
                 predictions=predictions)
+
+        if self.states.isEnabled('feature_ids'):
+            self.feature_ids = self._getFeatureIds()
+
+
+    def _getFeatureIds(self):
+        """Virtual method to return feature_ids used while training
+
+        Is not intended to be called anywhere but from _posttrain,
+        thus classifier is assumed to be trained at this point
+        """
+        # By default all features are used
+        return range(self.__trainednfeatures)
 
 
     def _train(self, dataset):
@@ -319,6 +334,7 @@ class Classifier(Stateful):
     def untrain(self):
         """Reset trained state"""
         self.__trainednfeatures = None
+        self.states.reset()
 
 
     def _setTrain2predict(self, v):
@@ -340,13 +356,14 @@ class Classifier(Stateful):
 # Base classifiers of various kinds
 #
 
-class BoostedClassifier(Classifier):
+class BoostedClassifier(Classifier, Harvestable):
     """Classifier containing the farm of other classifiers.
 
     Should rarely be used directly. Use one of its childs instead
     """
 
     # should not be needed if we have prediction_values upstairs
+    # TODO : should be handled as Harvestable or smth like that
     raw_predictions = StateVariable(enabled=False,
         doc="Predictions obtained from each classifier")
 
@@ -354,12 +371,24 @@ class BoostedClassifier(Classifier):
         doc="Values obtained from each classifier")
 
 
-    def __init__(self, clfs=None, **kwargs):
+    def __init__(self, clfs=None, propagate_states=True,
+                 harvest_attribs=None, copy_attribs='copy',
+                 **kwargs):
         """Initialize the instance.
 
         :Parameters:
-          `clfs` : list
-            list of classifier instances to use
+          clfs : list
+            list of classifier instances to use (slave classifiers)
+          propagate_states : bool
+            either to propagate enabled states into slave classifiers.
+            It is in effect only when slaves get assigned - so if state
+            is enabled not during construction, it would not necessarily
+            propagate into slaves
+          harvest_attribs : list of basestr
+            What attributes of call to store and return within
+            harvested state variable
+          copy_attribs : None or basestr
+            Force copying values of attributes on harvesting
           kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
@@ -368,9 +397,13 @@ class BoostedClassifier(Classifier):
             clfs = []
 
         Classifier.__init__(self, **kwargs)
+        Harvestable.__init__(self, harvest_attribs, copy_attribs)
 
         self.__clfs = None
         """Pylint friendly definition of __clfs"""
+
+        self.__propagate_states = propagate_states
+        """Enable current enabled states in slave classifiers"""
 
         self._setClassifiers(clfs)
         """Store the list of classifiers"""
@@ -386,6 +419,27 @@ class BoostedClassifier(Classifier):
         """
         for clf in self.__clfs:
             clf.train(dataset)
+
+
+    def _posttrain(self, dataset):
+        """Custom posttrain of `BoostedClassifier`
+
+        Harvest over the trained classifiers if it was asked to so
+        """
+        Classifier._posttrain(self, dataset)
+        if self.states.isEnabled('harvested'):
+            for clf in self.__clfs:
+                self._harvest(locals())
+
+
+    def _getFeatureIds(self):
+        """Custom _getFeatureIds for `BoostedClassifier`
+        """
+        # return union of all used features by slave classifiers
+        feature_ids = Set([])
+        for clf in self.__clfs:
+            feature_ids = feature_ids.union(Set(clf.feature_ids))
+        return list(feature_ids)
 
 
     def _predict(self, data):
@@ -426,6 +480,11 @@ class BoostedClassifier(Classifier):
                    % (str(train2predict), `self.__clfs`, str(train2predicts)))
         # set flag if it needs to be trained before predicting
         self._setTrain2predict(train2predict)
+
+        # enable corresponding states in the slave-classifiers
+        if self.__propagate_states:
+            for clf in self.__clfs:
+                clf.states.enable(self.states.enabled, missingok=True)
 
     def untrain(self):
         """Untrain `BoostedClassifier`
@@ -934,6 +993,8 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
+    # Todo: unify with CrossValidatedTransferError which now uses
+    # harvest_attribs to expose gathered attributes
     training_confusions = StateVariable(enabled=False,
         doc="Resultant confusion matrices whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
@@ -1107,8 +1168,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
                   (`self.__feature_selection`, wdataset.nfeatures,
                    dataset.nfeatures, add_))
 
-        self.feature_ids = self.__feature_selection.selected_ids
-
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
         mappermask = N.zeros(dataset.nfeatures)
@@ -1127,6 +1186,11 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # TODO see for ProxyClassifier
         #self.states._copy_states_(self.__maskclf, deep=False)
 
+    def _getFeatureIds(self):
+        """Return used feature ids for `FeatureSelectionClassifier`
+
+        """
+        return self.__feature_selection.selected_ids
 
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`

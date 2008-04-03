@@ -40,15 +40,15 @@ from mvpa.clfs.transerror import *
 #  - Python's SMLR is turned off for the duration of development
 #    since it is slow and results should be the same as of C version
 #
-clfs={'LinearSVMC' : [LinearCSVMC(descr="Linear C-SVM (default)"),
-                      LinearCSVMC(C=-10.0, descr="Linear C-SVM (10*default)"),
-                      LinearCSVMC(C=1.0, descr="Linear C-SVM (C=1)"),
+clfs={'LinearSVMC' : [LinearCSVMC(descr="LinSVM(C=def)"),
+                      LinearCSVMC(C=-10.0, descr="LinSVM(C=10*def)"),
+                      LinearCSVMC(C=1.0, descr="LinSVM(C=1)"),
 #                      LinearNuSVMC(descr="Linear nu-SVM (default)")
                       ],
-      'NonLinearSVMC' : [RbfCSVMC(descr="Rbf C-SVM (default)"),
+      'NonLinearSVMC' : [RbfCSVMC(descr="RbfSVM()"),
 #                         RbfNuSVMC(descr="Rbf nu-SVM (default)")
                          ],
-      'SMLR' : [ SMLR(implementation="C", descr="SMLR(default)"),
+      'SMLR' : [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
                  SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
                  SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
 #                         SMLR(implementation="Python", descr="SMLR(Python)")
@@ -57,36 +57,77 @@ clfs={'LinearSVMC' : [LinearCSVMC(descr="Linear C-SVM (default)"),
 
 clfs['LinReg'] = clfs['SMLR'] #+ [ RidgeReg(descr="RidgeReg(default)") ]
 clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg']
-clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(descr="kNN(default)") ]
+clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(descr="kNN()") ]
 clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR']
 
 # "Interesting" classifiers
-clfs['SMLR->LinearSVM']  = [
+clfs['SMLR(lm=10)->LinearSVM']  = [
     FeatureSelectionClassifier(
-        LinearCSVMC(C=-10.0),
+        LinearCSVMC(),
         SensitivityBasedFeatureSelection(
            SMLRWeights(SMLR(lm=10.0, implementation="C")),
            RangeElementSelector(mode='select')),
-        descr="Linear SVM(C=10*def) on SMLR(lm=10) non-0")
+        descr="LinSVM on SMLR(lm=10) non-0")
     ]
 
-clfs['Anova10%->LinearSVM']  = [
+# "Interesting" classifiers
+clfs['SMLR(lm=1)->LinearSVM']  = [
     FeatureSelectionClassifier(
-        clfs['LinearSVMC'][0],
+        LinearCSVMC(),
+        SensitivityBasedFeatureSelection(
+           SMLRWeights(SMLR(lm=1.0, implementation="C")),
+           RangeElementSelector(mode='select')),
+        descr="LinSVM on SMLR(lm=1) non-0")
+    ]
+
+# "Interesting" classifiers
+clfs['SMLR->RbfSVM']  = [
+    FeatureSelectionClassifier(
+        RbfCSVMC(),
+        SensitivityBasedFeatureSelection(
+           SMLRWeights(SMLR(lm=10.0, implementation="C")),
+           RangeElementSelector(mode='select')),
+        descr="RbfSVM on SMLR(lm=10) non-0")
+    ]
+
+clfs['Anova5%->LinearSVM']  = [
+    FeatureSelectionClassifier(
+        LinearCSVMC(),
         SensitivityBasedFeatureSelection(
            OneWayAnova(),
-           FractionTailSelector(0.10, mode='select', tail='upper')),
-        descr="Linear SVM on 10% best(ANOVA)")
+           FractionTailSelector(0.05, mode='select', tail='upper')),
+        descr="LinSVM on 5%(ANOVA)")
     ]
 
-clfs['LinearSVM10%->LinearSVM']  = [
+
+clfs['Anova50->LinearSVM']  = [
+    FeatureSelectionClassifier(
+        LinearCSVMC(),
+        SensitivityBasedFeatureSelection(
+           OneWayAnova(),
+           FixedNElementTailSelector(50, mode='select', tail='upper')),
+        descr="LinSVM on 50(ANOVA)")
+    ]
+
+
+clfs['LinearSVM5%->LinearSVM']  = [
     FeatureSelectionClassifier(
         clfs['LinearSVMC'][0],
         SensitivityBasedFeatureSelection(
            LinearSVMWeights(clfs['LinearSVMC'][0],
                             transformer=Absolute),
-           FractionTailSelector(0.10, mode='select', tail='upper')),
-        descr="Linear SVM on 10% best(SVM)")
+           FractionTailSelector(0.05, mode='select', tail='upper')),
+        descr="LinSVM on 5%(SVM)")
+    ]
+
+clfs['LinearSVM50->LinearSVM']  = [
+    FeatureSelectionClassifier(
+        clfs['LinearSVMC'][0],
+        SensitivityBasedFeatureSelection(
+           LinearSVMWeights(clfs['LinearSVMC'][0],
+                            transformer=Absolute),
+           FixedNElementTailSelector(50, mode='select', tail='upper')),
+        descr="LinSVM on 50(SVM)")
     ]
 
 
@@ -112,11 +153,11 @@ clfs['SVM+RFE/splits_avg'] = [
            clf=rfesvm_split), # which does splitting internally
         transfer_error=ConfusionBasedError(
            rfesvm_split,
-           confusion_state="training_confusions"), # and whose internall error we use
+           confusion_state="training_confusions"), # and whose internal error we use
         feature_selector=FractionTailSelector(
                            0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
         update_sensitivity=True),                     # update sensitivity at each step
-    descr='SVM+RFE/splits_avg' )
+    descr='LinSVM+RFE(splits_avg)' )
   ]
 
 
@@ -133,10 +174,11 @@ clfs['SVM+RFE'] = [
         sensitivity_analyzer=LinearSVMWeights(clf=rfesvm,
                                               transformer=Absolute),
         transfer_error=TransferError(rfesvm),
+        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
         feature_selector=FractionTailSelector(
                            0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
         update_sensitivity=True)),                     # update sensitivity at each step
-    descr='Linear C-SVM(default)+RFE')
+    descr='LinSVM+RFE(N-Fold)')
   ]
 
 clfs['SVM+RFE/oe'] = [
@@ -147,11 +189,12 @@ clfs['SVM+RFE/oe'] = [
         sensitivity_analyzer=LinearSVMWeights(clf=rfesvm,
                                               transformer=Absolute),
         transfer_error=TransferError(rfesvm),
+        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
         feature_selector=FractionTailSelector(
                            0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
         update_sensitivity=True)),                     # update sensitivity at each step
    splitter = OddEvenSplitter(),
-   descr='Linear C-SVM(default)+RFE(oddeven split)')
+   descr='LinSVM+RFE(OddEven)')
   ]
 
 
@@ -162,9 +205,11 @@ clfs['SVM/Multiclass+RFE/splits_avg'] = [ MulticlassClassifier(clfs['SVM+RFE/spl
 
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
-              clfs['LinearSVM10%->LinearSVM'] + clfs['Anova10%->LinearSVM'] + clfs['SMLR->LinearSVM'] + \
-              clfs['SVM+RFE/oe'] + clfs['SVM+RFE']
-              #clfs['SVM+RFE/splits'] + \
+              clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + \
+              clfs['LinearSVM50->LinearSVM'] + clfs['Anova50->LinearSVM'] + \
+              clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + clfs['SMLR->RbfSVM'] + \
+              clfs['SVM+RFE'] + clfs['SVM+RFE/oe']
+#+ clfs['SVM+RFE/splits'] + \
 
 
 # since some classifiers make sense only for multiclass
