@@ -389,6 +389,12 @@ Developer-TODO
 Things to implement for the next release (Release goals)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+ * Unify parameter naming across all classifiers and come up with a labeling
+   guideline for future classifier implementations and wrappers.
+ * Provide sufficient documentation about internal variable naming to make
+   Harvester/Harvesting functionality usable. Currently the user is supposed
+   to know, how a particular *local* variable is called to be able to harvest
+   e.g. `feature_ids` of classifiers over cross-validation folds.
  * Restructure code base (incl. renaming and moving pieces)
 
    Let's use the following list to come up with a nice structure for all
