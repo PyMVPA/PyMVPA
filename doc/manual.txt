@@ -18,7 +18,7 @@ PyMVPA Manual
 :Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
 :Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
 :IRC: #exppsy on OTFC/Freenode
-:Revision: 0.1
+:Revision: 0.1.1
 
 .. Please add yourself to the list of authors if you contribute something
    to this manual.
@@ -51,13 +51,13 @@ and the results you are getting from it.
 
 .. for us (Matlab MVPA), the tutorial_easy quickstart was an enormous
    success. i strongly recommend having some similar quick,
-   hands-on guide. feel free to borrow/steal/adapt anything from 
-   tutorial_easy for your needs if you like it (though you should probably 
+   hands-on guide. feel free to borrow/steal/adapt anything from
+   tutorial_easy for your needs if you like it (though you should probably
    check with jim before re-distributing the sample data).
 
 .. you dive straight into the nitty-gritty of the different
    kinds of datasets, attributes and other data structures. having a high-level
-   summary of the most important points might make it easier for a new 
+   summary of the most important points might make it easier for a new
    reader to get the big
    picture, and makes it more likely that people who don't
    like documentation will at least read the most important
@@ -262,7 +262,7 @@ recommend to install these packages as well.
   libsvm_: fast SVM classifier
     Only the C library is required and none of the Python bindings that are available
     on the upstream website. PyMVPA provides its own Python wrapper for libsvm
-    which is a fork based on the one included in the libsvm package. 
+    which is a fork based on the one included in the libsvm package.
     Additionally the upstream libsvm distribution causes flooding of the console
     with a huge amount of debugging messages. Please see the `Building from
     Source`_ section for information on how to build an alternative version that
@@ -349,7 +349,7 @@ not have to build the packages on your own -- use the corresponding pre-build
 packages instead. However, if there are no binary packages for your system you
 can easily build PyMVPA on your own. Any recent linux distribution should be
 capable of doing it. Additionally, we are aware of successful builds on Mac
-OSX. 
+OSX.
 
 The first step is obtaining the sources. The source code tarballs of all
 PyMVPA releases are available from the `PyMVPA project website`_.
@@ -382,8 +382,40 @@ installed them, it might be necessary to specify the full path to them with the
 
 PyMVPA needs a patched libsvm version, as the original distribution generates
 a huge amount of debugging messages and therefore makes the console and PyMVPA
-output almost unusable. Debian and Ubuntu (since gutsy) already include the
-patched version. For all other systems it is easy to build it.
+output almost unusable. Debian (since lenny: 2.84.0-1) and Ubuntu (since gutsy)
+already include the patched version. For all other systems it is easy to build
+patched libsvm (see `Building libsvm from Source`_).
+
+The current development version of PyMVPA contains another classifier
+C-extension, which causes an additional dependencies. The be able to compile it
+either Python 2.5 or python-ctypes (>= 1.0.1) is necessary. Additionally, the
+extensions have to be compiled with::
+
+  python setup.py build_ext --swig-opts="-c++ -noproxy"
+
+Now, you are ready to install the package. Do this by invoking::
+
+  python setup.py install
+
+Most likely you need superuser privileges for this step. If you want to install
+in a non-standard location, please take a look at the `--prefix` option. You
+also might want to consider `--optimize`.
+
+As an alternative, if you are doing development in PyMVPA or if you
+simply do not want (or do not have sufficient permissions to do so) to
+install PyMVPA system wide, you can simply call `make` (same `make
+build`) in the top-level directory of the source tree to build
+PyMVPA. Then extend or define your environment variable `PYTHONPATH`
+to point to the root of PyMVPA sources (i.e. where you invoked all
+previous commands from):
+
+  export PYTHONPATH=$PWD
+
+Now you should be ready to use PyMVPA on your system.
+
+
+Building libsvm from Source
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First get the patched sources from::
 
@@ -417,26 +449,6 @@ there is also a `Makefile.osx`.
 
 .. Actually, AFAIK upstream libsvm does not easily allow for compiling a libsvm
    static or shared lib. Or am I wrong?
-
-The current development version of PyMVPA contains another classifier
-C-extension, which causes an additional dependencies. The be able to compile it
-either Python 2.5 or python-ctypes (>= 1.0.1) is necessary. Additionally, the
-extensions have to be compiled with::
-
-  python setup.py build_ext --swig-opts="-c++ -noproxy" 
-
-As an alternative, one can simply call `make` in the top-level directory of
-the source tree to build PyMVPA.
-
-Now, you are ready to install the package. Do this by invoking::
-
-  python setup.py install
-
-Most likely you need superuser privileges for this step. If you want to install
-in a non-standard location, please take a look at the `--prefix` option. You
-also might want to consider `--optimize`.
-
-Now you should be ready to use PyMVPA on your system.
 
 
 Installation
@@ -487,7 +499,9 @@ throughout this manual.
 
   >>> import numpy as N
 
-
+Some examples might need to access sample dataset available under
+`data/` directory within root of PyMVPA hierarchy, thus they have to
+be invoked directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 
 Overview
 --------
@@ -496,7 +510,7 @@ The PyMVPA package consists of three major parts: `Data handling`_,
 Classifiers_ and Algorithms_ operating on datasets and classifiers.
 In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
-given. 
+given.
 
 
 Data Handling
@@ -589,7 +603,7 @@ are able to do reverse mapping from feature space into the original dataspace.
 
 Usually one does not have to deal with mappers directly. PyMVPA provides some
 convenience subclasses of Dataset_ that automatically perform the necessary
-mapping operations internally. 
+mapping operations internally.
 
 For an introduction into to concept of a dataset with mapping capabilities
 we can take a look at the MaskedDataset_ class. This dataset class works
@@ -678,8 +692,8 @@ performance is tested using the validation set.
 
 It is important to strictly separate training and validation datasets
 as otherwise no valid statement can be made whether a classifier
-really generated an appropriate model of the training data. Violating this 
-requirement spuriously elevates the classification performance, often termed 
+really generated an appropriate model of the training data. Violating this
+requirement spuriously elevates the classification performance, often termed
 'peeking' in the literature. However, they provide no relevant
 information because they are based on cheating or peeking and do not
 describe signal similarities between training and validation datasets.
@@ -727,7 +741,7 @@ dataset and the validation set contains the remaining chunk.
 The usage of the splitter, creating a splitter object and calling it with a
 dataset, is a very common design pattern in the PyMVPA package. Like splitters
 there are many more so called *processing objects*. These classes or objects
-are instantiated by passing all relevant parameters to the constructor. 
+are instantiated by passing all relevant parameters to the constructor.
 Processing objects can then be called multiple times with different datasets
 to perform their algorithm on the respective dataset. This design applies to
 virtually every piece of PyMVPA that is described in the Algorithms_ section,
@@ -751,7 +765,7 @@ by calling the classifier's `predict()` method with one or multiple data
 samples. `predict()` operates on pure sample data and not datasets, as in
 some cases the true label for a sample might be totally unknown.
 
-This examples demonstrates the typical daily life of a classifier. 
+This examples demonstrates the typical daily life of a classifier.
 
   >>> from mvpa.clfs.knn import kNN
   >>> from mvpa.datasets.dataset import Dataset
@@ -1122,7 +1136,7 @@ Splitting Sensitivity Analyzer
 The SplittingSensitivityAnalyzer_ uses a Splitter_ to generate dataset splits.
 A SensitivityAnalyzer_ is then used to compute sensitivity maps for all these
 dataset splits. At the end a `combiner` function is called with all sensitivity
-maps to produce the final sensitivity map. By default the mean sensitivity 
+maps to produce the final sensitivity map. By default the mean sensitivity
 maps across all splits is computed.
 
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
