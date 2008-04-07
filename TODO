@@ -7,13 +7,18 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-PyMVPA TODO for Mortals
-=======================
+TODO for Mortals
+----------------
 
-* Implement bindings to other ML toolboxes (e.g. shogun)
-* More sensitivity analyzers and feature selectors
-* IPython mode
-* More documentation and examples
-* Add ability to add/modify custom attributes to a dataset.
-* Expand splitter to specify both the train and test samples, not just the test samples.  This will enable us to write custom splitter functions that split based on new custom attributes.
-* Possibly make NiftiDataset default to float32 when it sees that the data are ints.
+  * Implement bindings to more ML toolboxes (e.g. shogun, TORCH, FANN)
+  * More sensitivity analyzers and feature selectors
+  * IPython mode
+  * More documentation and examples
+  * Add ability to add/modify custom attributes to a dataset.
+  * Expand splitter to specify both the train and test samples, not just the
+    test samples.  This will enable us to write custom splitter functions that
+    split based on new custom attributes.
+  * Possibly make NiftiDataset default to float32 when it sees that the data are
+    ints.
+
+
