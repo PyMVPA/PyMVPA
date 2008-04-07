@@ -68,7 +68,7 @@ if __name__ == "__main__":
                                   snr=3.0)
 
 
-    for (dataset, datasetdescr), clfs in \
+    for (dataset, datasetdescr), clfs_ in \
         [
         ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
         ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
         print "%s: %s" % (datasetdescr, `dataset`)
         print " Classifier                                  %corr  #features\t train predict  full"
-        for clf in clfs:
+        for clf in clfs_:
             # Lets do splits/train/predict explicitely so we could track timing
             # otherwise could be just
             #cv = CrossValidatedTransferError(
