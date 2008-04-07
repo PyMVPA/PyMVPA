@@ -12,6 +12,7 @@ disk."""
 __docformat__ = 'restructuredtext'
 
 import copy
+from sets import Set
 
 from mvpa.misc import warning
 
@@ -132,10 +133,12 @@ class ColumnData(dict):
 
         file_ = open(filename, 'r')
 
+        self._header_order = None
         # make column names, either take header or generate
         if header == True:
             # read first line and split by 'sep'
             hdr = file_.readline().split(sep)
+            self._header_order = hdr
         elif isinstance(header, list):
             hdr = header
         else:
@@ -239,7 +242,13 @@ class ColumnData(dict):
 
         # write header
         if header_order == None:
-            col_hdr = self.keys()
+            if self._header_order is None:
+                col_hdr = self.keys()
+            else:
+                # use stored order + newly added keys at the last columns
+                col_hdr = self._header_order + \
+                          list(Set(self.keys()).difference(
+                                                Set(self._header_order)))
         else:
             if not len(header_order) == self.getNColumns():
                 raise ValueError, 'Header list does not match number of ' \
