@@ -28,6 +28,10 @@ Unreleased changes
     other arbitrary confounding regressors.
   * New `Harvester` class to feed data from arbitrary generators into multiple
     objects and store results of returned values and arbitrary properties.
+  * Added documentation about how to build patched libsvm version with sane
+    debug output.
+  * Important bugfix in RFE, which reported incorrect feature ids in some
+    cases.
 
 
 Releases
