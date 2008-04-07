@@ -20,7 +20,7 @@
    (sys.argv[0]) with suffix".prof" appended
 
  Usage:
-   Replace unittest.main() with import test_runner
+   Replace unittest.main() with import runner
 
  Visualization:
    kcachegrind provides nice interactive GUI to inspect profiler
