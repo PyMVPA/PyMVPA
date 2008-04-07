@@ -56,7 +56,9 @@ def sweepargs(**kwargs):
                         e.__init__("%s on %s = %s" % (str(e), argname, `argvalue`))
                         # Reraise bloody exception ;-)
                         raise
+        do_sweep.func_name = method.func_name
         return do_sweep
+
     if len(kwargs) > 1:
         raise NotImplementedError
     return unittest_method
