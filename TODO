@@ -20,5 +20,6 @@ TODO for Mortals
     split based on new custom attributes.
   * Possibly make NiftiDataset default to float32 when it sees that the data are
     ints.
+  * Along with PCA/ICA mappers, we should add a PLS mapper.
 
 
