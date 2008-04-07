@@ -68,7 +68,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp
+	-@rm build-stamp apidoc-stamp website-stamp
 
 
 debian-clean:
@@ -113,22 +113,24 @@ apidoc-stamp: build
 # developer machine, because it is only necessary for the arch-all package,
 # but e.g. dpkg-buildpackage runs the indep target anyway -- not sure about
 # the buildds, though.
-#apidoc-stamp: $(PROFILE_FILE)
+#apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
 	epydoc --config doc/api/epydoc.conf
 	touch $@
 
-website: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
+website: website-stamp
+website-stamp: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
          htmldevguide printables apidoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
+	touch $@
 
 upload-website: website
 	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
 
 
 # this takes some minutes !!
-$(PROFILE_FILE): build tests/main.py
+profile: build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
 test-%: build
@@ -183,4 +185,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual
+.PHONY: fetch-data orig-src pylint apidoc doc manual profile website
