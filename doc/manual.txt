@@ -121,7 +121,7 @@ algorithms to (f)MRI data are two recent reviews by Norman et al. [NPD06]_ and
 Haynes and Rees [HR07]_.
 
 This manual also does not describe every bit and piece of the PyMVPA package.
-For more information, please have a look at the API documentation, which is a
+For more information, please have a look at the `API documentation`_, which is a
 comprehensive and up-to-date description of the whole package.
 
 More examples and usage patterns extending the ones described here can be taken
@@ -129,6 +129,7 @@ from the examples shipped with the PyMVPA source distribution (`doc/examples/`)
 or even the unit test battery, also part of the source distribution
 (in the `tests/` directory).
 
+.. _API Documentation: api/index.html
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
 .. [HR07] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
