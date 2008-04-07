@@ -48,7 +48,7 @@ import sys
 from os import environ
 
 profilelevel = None
-
+print globals().keys()
 if environ.has_key('PROFILELEVEL'):
     profilelevel = int(environ['PROFILELEVEL'])
 
