@@ -51,6 +51,7 @@ clfs={'LinearSVMC' : [LinearCSVMC(descr="LinSVM(C=def)"),
       'SMLR' : [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
                  SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
                  SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
+                 SMLR(lm=100.0, implementation="C", descr="SMLR(lm=100.0)"),
 #                         SMLR(implementation="Python", descr="SMLR(Python)")
                  ]
       }
@@ -81,7 +82,7 @@ clfs['SMLR(lm=1)->LinearSVM']  = [
     ]
 
 # "Interesting" classifiers
-clfs['SMLR->RbfSVM']  = [
+clfs['SMLR(lm=10)->RbfSVM']  = [
     FeatureSelectionClassifier(
         RbfCSVMC(),
         SensitivityBasedFeatureSelection(
@@ -89,6 +90,36 @@ clfs['SMLR->RbfSVM']  = [
            RangeElementSelector(mode='select')),
         descr="RbfSVM on SMLR(lm=10) non-0")
     ]
+
+clfs['SMLR(lm=10)->kNN']  = [
+    FeatureSelectionClassifier(
+        kNN(),
+        SensitivityBasedFeatureSelection(
+           SMLRWeights(SMLR(lm=10.0, implementation="C")),
+           RangeElementSelector(mode='select')),
+        descr="kNN on SMLR(lm=10) non-0")
+    ]
+
+
+clfs['Anova5%->kNN']  = [
+    FeatureSelectionClassifier(
+        kNN(),
+        SensitivityBasedFeatureSelection(
+           OneWayAnova(),
+           FractionTailSelector(0.05, mode='select', tail='upper')),
+        descr="kNN on 5%(ANOVA)")
+    ]
+
+
+clfs['Anova50->kNN']  = [
+    FeatureSelectionClassifier(
+        kNN(),
+        SensitivityBasedFeatureSelection(
+           OneWayAnova(),
+           FixedNElementTailSelector(50, mode='select', tail='upper')),
+        descr="kNN on 50(ANOVA)")
+    ]
+
 
 clfs['Anova5%->LinearSVM']  = [
     FeatureSelectionClassifier(
@@ -141,7 +172,7 @@ rfesvm_split = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
 # our transfer_error is based on internal splitting and classifier used within RFE
 # is a split classifier and its sensitivities per split will get averaged
 #
-#
+
 # TODO: wrap head around on how to implement classical RFE (unbiased,
 #  ie with independent generalization) within out framework without
 #  much of changing
@@ -158,6 +189,21 @@ clfs['SVM+RFE/splits_avg'] = [
                            0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
         update_sensitivity=True),                     # update sensitivity at each step
     descr='LinSVM+RFE(splits_avg)' )
+  ]
+
+clfs['SVM+RFE/splits_avg(static)'] = [
+  FeatureSelectionClassifier(
+    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
+    feature_selection = RFE(             # on features selected via RFE
+        sensitivity_analyzer=selectAnalyzer( # based on sensitivity of a clf
+           clf=rfesvm_split), # which does splitting internally
+        transfer_error=ConfusionBasedError(
+           rfesvm_split,
+           confusion_state="training_confusions"), # and whose internal error we use
+        feature_selector=FractionTailSelector(
+                           0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
+        update_sensitivity=False),                     # update sensitivity at each step
+    descr='LinSVM+RFE(splits_avg,static)' )
   ]
 
 
@@ -205,15 +251,22 @@ clfs['SVM/Multiclass+RFE/splits_avg'] = [ MulticlassClassifier(clfs['SVM+RFE/spl
 
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
+              clfs['Anova5%->kNN'] + clfs['Anova50->kNN'] + clfs['SMLR(lm=10)->kNN'] + \
               clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + \
               clfs['LinearSVM50->LinearSVM'] + clfs['Anova50->LinearSVM'] + \
-              clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + clfs['SMLR->RbfSVM'] + \
-              clfs['SVM+RFE'] + clfs['SVM+RFE/oe']
-#+ clfs['SVM+RFE/splits'] + \
+              clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + \
+              clfs['SMLR(lm=10)->RbfSVM'] + \
+              clfs['SVM+RFE'] + clfs['SVM+RFE/oe'] + \
+              clfs['SVM+RFE/splits_avg(static)'] + \
+              clfs['SVM+RFE/splits_avg']
 
 
 # since some classifiers make sense only for multiclass
-clfs['all_multi'] = clfs['all']
+clfs['all_multi'] = clfs['all'] + \
+                    [ MulticlassClassifier(
+                        clfs['SMLR'][0],
+                        descr='Pairs+maxvote multiclass on ' + clfs['SMLR'][0].descr) ]
+
 # TODO:  This one yet to be fixed: deepcopy might fail if
 #        sensitivity analyzer is classifierbased and classifier wasn't
 #        untrained, which can happen, thus for now it is disabled
