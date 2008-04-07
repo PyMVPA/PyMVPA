@@ -21,24 +21,63 @@ from mvpa.misc.exceptions import UnknownStateError
 if __debug__:
     from mvpa.misc import debug
 
+class Collectable(object):
+    """Base class for any custom behaving attribute intended to become part of a collection
 
-class StateVariable(object):
+    Derived classes will have specific semantics:
+    * StateVariable: conditional storage
+    * Parameter: attribute with validity ranges.
+     - ClassifierParameter: specialization to become a part of
+       Classifier's params collection
+     - KernelParameter: --//-- to become a part of Kernel Classifier's
+       kernel_params collection
+
+    Those Collectables are to be groupped into corresponding groups for each class
+    by statecollector metaclass
+    """
+
+    def __init__(self, name=None, doc=""):
+        self.__doc__ = doc
+        self.name = name
+        self._value = None
+        if __debug__:
+            debug("COL",
+                  "Initialized new state variable %s " % name + `self`)
+
+    def _get(self):
+        return self._value
+
+    def _set(self, val):
+        if __debug__:
+            debug("COL",
+                  "Setting %s to %s " % (str(self), val))
+        self._value = val
+
+    def reset(self):
+        """Simply detach the value, and reset the flag"""
+        self._value = None
+
+    def __str__(self):
+        return "Collectable %s id %d" % \
+            (self.name, id(self))
+
+    # XXX should become vproperty?
+    value = property(_get, _set)
+
+
+
+class StateVariable(Collectable):
     """Simple container intended to conditionally store the value
 
-    Unfortunately manipulation of enable is not straightforward and
-    has to be done via class object, e.g.
-
-      StateVariable.enable(self.__class__.values, self, False)
-
-      if self is an instance of the class which has
+    Statefull class provides easy interfact to access the variable
+    (simply through an attribute), or modifying internal state
+    (enable/disable) via .states attribute of type StateCollection.
     """
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
-        self._value = None
+        Collectable.__init__(self, name, doc)
         self._isset = False
         self._isenabled = enabled
-        self.__doc__ = doc
-        self.name = name
         if __debug__:
             debug("STV",
                   "Initialized new state variable %s " % name + `self`)
@@ -46,7 +85,9 @@ class StateVariable(object):
     def _get(self):
         if not self.isSet:
             raise UnknownStateError("Unknown yet value of %s" % (self.name))
-        return self._value
+        # XXX leave simple return?
+        #return self._value
+        return Collectable._get(self)
 
     def _set(self, val):
         if __debug__:
@@ -55,7 +96,9 @@ class StateVariable(object):
 
         if self.isEnabled:
             self._isset = True
-            self._value = val
+            # XXX may be should have left simple assignment
+            # self._value = val
+            Collectable._set(self, val)
 
     @property
     def isSet(self):
@@ -77,7 +120,9 @@ class StateVariable(object):
 
     def reset(self):
         """Simply detach the value, and reset the flag"""
-        self._value = None
+        # XXX simpler?
+        #self._value = None
+        Collectable.reset(self)
         self._isset = False
 
     def __str__(self):
