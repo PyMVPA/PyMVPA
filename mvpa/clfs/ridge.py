@@ -87,12 +87,6 @@ class RidgeReg(Classifier):
         Predict the output for the provided data.
         """
         # predict using the trained weights
-        predictions = N.dot(N.concatenate((data, N.ones((len(data), 1))), 1),
-                            self.w)
-
-        # save the state if desired, relying on State._setitem_ to
-        # decide if we will actually save the values
-        self.predictions = predictions
-
-        return predictions
+        return N.dot(N.concatenate((data, N.ones((len(data), 1))), 1),
+                     self.w)
 
