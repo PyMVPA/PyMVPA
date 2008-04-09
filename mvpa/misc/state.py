@@ -555,7 +555,7 @@ class collector(type):
 
         super(collector, cls).__init__(name, bases, dict)
 
-        items = {}
+        collections = {}
 
         for name, value in dict.iteritems():
             if isinstance(value, Collectable):
@@ -564,12 +564,14 @@ class collector(type):
                            'Parameter': "params",
                            'KernelParameter': "kernel_params"}[colname_]
                 # XXX should we allow to throw exceptions here?
-                if not items.has_key(colname):
-                    items[colname] = {}
-                items[colname][name] = value
+                if not collections.has_key(colname):
+                    collections[colname] = {}
+                collections[colname][name] = value
                 # and assign name if not yet was set
                 if value.name is None:
                     value.name = name
+
+        # XXX can we first collect parent's states and then populate with ours? TODO
 
         for base in bases:
             if hasattr(base, "__metaclass__") and \
@@ -584,12 +586,13 @@ class collector(type):
                     debug("COLR",
                           "Collect collections %s for %s from %s" %
                           (newcollections, cls, base))
-                for item, collection in newcollections.iteritems():
+                for colname, collection in newcollections.iteritems():
                     newitems = collection.items
-                    if items.has_key(item):
-                        items[item].update(newitems)
+                    if collections.has_key(colname):
+                        collections[colname].update(newitems)
                     else:
-                        items[item] = newitems
+                        collections[colname] = newitems
+
 
         if __debug__:
             debug("COLR",
@@ -598,8 +601,8 @@ class collector(type):
         # TODO: check on conflict in names of Collections' items!
         # since otherwise even order is not definite since we use dict for collections.
         # XXX should we switch to tuple?
-        collections = {}
-        for colname, colitems in items.iteritems():
+        # collections = {}
+        for colname, colitems in collections.iteritems():
             if colname == 'states':
                 collection = StateCollection(colitems, cls)
             elif colname == 'params':
