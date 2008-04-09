@@ -10,8 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.misc.state import Collectable
 
-class Parameter(object):
+class Parameter(Collectable):
     """This class shall serve as a representation of a parameter.
 
     It might be useful if a little more information than the pure parameter
@@ -20,27 +21,40 @@ class Parameter(object):
     Each parameter must have a value. However additional property can be
     passed to the constructor and will be stored in the object.
 
+    BIG ASSUMPTION: stored values are not mutable, ie nobody should do
+
+    cls.parameter1[:] = ...
+
+    or we wouldn't know that it was changed
+
     Here is a list of possible property names:
 
         min   - minimum value
         max   - maximum value
         step  - increment/decrement stepsize
-        descr - a descriptive string
     """
-    def __init__(self, value, **kwargs):
-        """Specify a parameter by its value and optionally an arbitrary number
+
+    def __init__(self, default, name=None, doc=None, **kwargs):
+        """Specify a parameter by its default value and optionally an arbitrary number
         of additional parameters.
 
-        The value will be available via the 'val' class member. No addtional
-        property with this name is allowed.
+        TODO: :Parameters: for Parameter
         """
+        self.__default = default
+
+        Collectable.__init__(self, name, doc)
+
         if __debug__:
             if kwargs.has_key('val'):
                 raise ValueError, "'val' property name is illegal."
 
-        self.val = value
-
+        # XXX probably is too generic...
         for k, v in kwargs.iteritems():
             self.__setattr__(k, v)
 
+
+    def reset(self):
+        """Simply detach the value, and reset the flag"""
+        Collectable.reset(self)
+        self._value = self.__default
 
