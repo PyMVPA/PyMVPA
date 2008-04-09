@@ -33,10 +33,9 @@ class SVMBase(Classifier):
     This is a simple interface to the libSVM package.
     """
     # init the parameter interface
-    params = Classifier.params.copy()
-    params['eps'] = Parameter(0.00001,
-                              min=0,
-                              descr='tolerance of termination criterium')
+    eps = Parameter(0.00001,
+                    min=0,
+                    doc='tolerance of termination criterium')
 
 
     def __init__(self,
@@ -89,7 +88,7 @@ class SVMBase(Classifier):
         0.001 in others). nu is the parameter in nu-SVM, nu-SVR, and
         one-class-SVM. p is the epsilon in epsilon-insensitive loss function
         of epsilon-SVM regression. shrinking = 1 means shrinking is conducted;
-        = 0 otherwise. probability = 1 means model with probability
+xo        = 0 otherwise. probability = 1 means model with probability
         information is obtained; = 0 otherwise.
 
         nr_weight, weight_label, and weight are used to change the penalty
@@ -228,7 +227,6 @@ class LinearSVM(SVMBase):
     """Base class of all linear SVM classifiers that make use of the libSVM
     package. Still not meant to be used directly.
     """
-    params = SVMBase.params.copy()
     def __init__(self,
                  svm_type,
                  C=-1.0,
@@ -261,16 +259,16 @@ class LinearSVM(SVMBase):
 class LinearNuSVMC(LinearSVM):
     """Classifier for linear Nu-SVM classification.
     """
-    params = LinearSVM.params.copy()
-    params['nu'] = Parameter(0.5,
-                             min=0.0,
-                             max=1.0,
-                             descr='fraction of datapoints within the margin')
+
+    nu = Parameter(0.5,
+                   min=0.0,
+                   max=1.0,
+                   doc='fraction of datapoints within the margin')
     # overwrite eps param with new default value (information taken from libSVM
     # docs
-    params['eps'] = Parameter(0.001,
-                              min=0,
-                              descr='tolerance of termination criterium')
+    eps = Parameter(0.001,
+                    min=0,
+                    doc='tolerance of termination criterium')
 
 
     def __init__(self,
@@ -300,10 +298,9 @@ class LinearNuSVMC(LinearSVM):
 class LinearCSVMC(LinearSVM):
     """Classifier for linear C-SVM classification.
     """
-    params = LinearSVM.params.copy()
-    params['C'] = Parameter(1.0,
-                            min=0.0,
-                            descr='cumulative constraint violation')
+    C = Parameter(1.0,
+                  min=0.0,
+                  doc='cumulative constraint violation')
 
 
     def __init__(self,
@@ -333,18 +330,18 @@ class LinearCSVMC(LinearSVM):
 class RbfNuSVMC(SVMBase):
     """Nu-SVM classifier using a radial basis function kernel.
     """
-    params = SVMBase.params.copy()
-    params['nu'] = Parameter(0.5,
-                             min=0.0,
-                             max=1.0,
-                             descr='fraction of datapoints within the margin')
+
+    nu = Parameter(0.5,
+                   min=0.0,
+                   max=1.0,
+                   doc='fraction of datapoints within the margin')
     # overwrite eps param with new default value (information taken from libSVM
     # docs
-    params['eps'] = Parameter(0.001,
-                              min=0,
-                              descr='tolerance of termination criterium')
-    params['gamma'] = \
-        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
+    eps = Parameter(0.001,
+                    min=0,
+                    doc='tolerance of termination criterium')
+    gamma = Parameter(0.0,
+                      min=0.0, doc='kernel width parameter - if set to 0.0' \
                                       'defaults to 1/(#classes)')
 
 
@@ -377,12 +374,12 @@ class RbfNuSVMC(SVMBase):
 class RbfCSVMC(SVMBase):
     """C-SVM classifier using a radial basis function kernel.
     """
-    params = SVMBase.params.copy()
-    params['C'] = Parameter(1.0,
-                            min=0.0,
-                            descr='cumulative constraint violation')
-    params['gamma'] = \
-        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
+    C = Parameter(1.0,
+                  min=0.0,
+                  doc='cumulative constraint violation')
+
+    gamma = \
+          Parameter(0.0, min=0.0, doc='kernel width parameter - if set to 0.0' \
                                       'defaults to 1/(#classes)')
 
 

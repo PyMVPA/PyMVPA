@@ -137,8 +137,6 @@ class Classifier(Stateful):
         doc="Feature IDS which were used for the actual training." +
             " Some classifiers might internally do feature selection (SMLR)")
 
-    params = {}
-
     def __init__(self, train2predict=True, **kwargs):
         """Cheap initialization.
         """
