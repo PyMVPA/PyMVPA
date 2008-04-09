@@ -53,8 +53,11 @@ class Parameter(Collectable):
             self.__setattr__(k, v)
 
 
-    def reset(self):
-        """Simply detach the value, and reset the flag"""
+    def resetvalue(self):
+        """Reset value to the default"""
         Collectable.reset(self)
         self._value = self.__default
 
+class KernelParameter(Parameter):
+    """Just that it is different beast"""
+    pass
