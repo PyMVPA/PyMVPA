@@ -61,8 +61,7 @@ class Collectable(object):
         return self._isset
 
     def reset(self):
-        """Simply detach the value, and reset the flag"""
-        self._value = None
+        """Simply reset the flag"""
         self._isset = False
 
     # TODO XXX unify all bloody __str__
@@ -106,6 +105,11 @@ class StateVariable(Collectable):
             # XXX may be should have left simple assignment
             # self._value = val
             Collectable._set(self, val)
+
+    def reset(self):
+        """Simply detach the value, and reset the flag"""
+        Collectable.reset(self)
+        self._value = None
 
     @property
     def isEnabled(self):
@@ -213,6 +217,11 @@ class Collection(object):
         """Returns `True` if state `index` is known at all"""
         return self._items.has_key(index)
 
+    def isSet(self, index):
+        """Returns `True` if state `index` has value set"""
+        self._checkIndex(index)
+        return self._items[index].isSet
+
     def _checkIndex(self, index):
         """Verify that given `index` is a known/registered state.
 
@@ -317,6 +326,24 @@ class Collection(object):
     listing = VProperty(fget=_getListing)
 
 
+class ParameterCollection(Collection):
+    """Container of Parameters for a stateful object.
+    """
+
+    def __init__(self, items=None, owner = None):
+        """Initialize the state variables of a derived class
+
+        :Parameters:
+          items : dict
+            dictionary of states
+        """
+        Collection.__init__(self, items, owner)
+
+
+    def resetvalue(self, index, missingok=False):
+        """Reset all parameters to default values"""
+        self._action(index, Parameter.resetvalue, missingok=False)
+
 
 class StateCollection(Collection):
     """Container of StateVariables for a stateful object.
@@ -397,12 +424,6 @@ class StateCollection(Collection):
         """Returns `True` if state `index` is enabled"""
         self._checkIndex(index)
         return self._items[index].isEnabled
-
-    def isSet(self, index):
-        """Returns `True` if state `index` has value set"""
-        self._checkIndex(index)
-        return self._items[index].isSet
-
 
     def isActive(self, index):
         """Returns `True` if state `index` is known and is enabled"""
@@ -519,7 +540,7 @@ class StateCollection(Collection):
 
 
 
-class statecollector(type):
+class collector(type):
     """Intended to collect and compose StateCollection for any child
     class of this metaclass
     """
@@ -527,43 +548,65 @@ class statecollector(type):
     def __init__(cls, name, bases, dict):
 
         if __debug__:
-            debug("STCOL",
+            debug("COLR",
                   "Collector call for %s.%s, where bases=%s, dict=%s " \
                   % (cls, name, bases, dict))
 
-        super(statecollector, cls).__init__(name, bases, dict)
+        super(collector, cls).__init__(name, bases, dict)
 
         items = {}
+
         for name, value in dict.iteritems():
-            if isinstance(value, StateVariable):
-                items[name] = value
+            if isinstance(value, Collectable):
+                colname = value.__class__.__name__
+                if not items.has_key(colname):
+                    items[colname] = {}
+                items[colname][name] = value
                 # and assign name if not yet was set
                 if value.name is None:
                     value.name = name
 
         for base in bases:
             if hasattr(base, "__metaclass__") and \
-                   base.__metaclass__ == statecollector:
+                   base.__metaclass__ == collector:
                 # TODO take care about overriding one from super class
                 # for state in base.states:
                 #    if state[0] =
-                newitems = base._states_template.items
-                if len(newitems) == 0:
+                newcollections = base._collectables
+                if len(newcollections) == 0:
                     continue
                 if __debug__:
-                    debug("STCOL",
-                          "Collect states %s for %s from %s" %
-                          (newitems, cls, base))
-                items.update(newitems)
+                    debug("COLR",
+                          "Collect collections %s for %s from %s" %
+                          (newcollections, cls, base))
+                for item, collection in newcollections.iteritems():
+                    newitems = collection.items
+                    if items.has_key(item):
+                        items[item].update(newitems)
+                    else:
+                        items[item] = newitems
 
         if __debug__:
-            debug("STCOL",
+            debug("COLR",
                   "Creating StateCollection template %s" % cls)
 
-        # and give it ownwership of class
-        statecollection = StateCollection(items, cls)
-        setattr(cls, "_states_template", statecollection)
-
+        collections = {}
+        for colname, colitems in items.iteritems():
+            cn = colname
+            if cn == 'StateVariable':
+                collection = StateCollection(colitems, cls)
+            elif cn == 'Parameter':
+                collection = ParameterCollection(colitems, cls)
+            elif cn == 'KernelParameter':
+                collection = ParameterCollection(colitems, cls)
+            else:
+                raise RuntimeError, \
+                      "collector doesn't know how to collect %s" % colname.__name__
+            collections[cn] = collection
+        # TODO: remove later on -- if class has no StateVariable's assigned -- no _states!
+        if not collections.has_key('StateVariable'):
+            collections['StateVariable'] = StateCollection(None, cls)
+        setattr(cls, "_collectables", collections)
 
 
 class Stateful(object):
@@ -579,7 +622,7 @@ class Stateful(object):
     be 'doc' -- no need to drag classes docstring imho.
     """
 
-    __metaclass__ = statecollector
+    __metaclass__ = collector
 
     def __init__(self,
                  enable_states=None,
@@ -597,7 +640,7 @@ class Stateful(object):
             object.__setattr__(self, '_states',
                                copy.deepcopy( \
                                 object.__getattribute__(self,
-                                                        '_states_template')))
+                                                        '_collectables')['StateVariable']))
 
             self._states.owner = self
             self._states.enable(enable_states, missingok=True)
