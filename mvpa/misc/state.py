@@ -16,6 +16,7 @@ __docformat__ = 'restructuredtext'
 import operator, copy
 from sets import Set
 
+from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
 
 if __debug__:
@@ -36,7 +37,7 @@ class Collectable(object):
     by statecollector metaclass
     """
 
-    def __init__(self, name=None, doc=""):
+    def __init__(self, name=None, doc=None):
         self.__doc__ = doc
         self.name = name
         self._value = None
@@ -133,13 +134,195 @@ class StateVariable(Collectable):
     value = property(_get, _set)
 
 
-class StateCollection(object):
-    """Container of states class for stateful object.
 
-    Classes inherited from this class gain ability to provide state
-    variables, accessed via __getitem__ method (currently implemented
-    by inherining `dict` class).
-    XXX
+class Collection(object):
+    """Container of some Collectables.
+
+    :Groups:
+     - `Public Access Functions`: `isKnown`
+     - `Access Implementors`: `_getListing`, `_getNames`
+     - `Mutators`: `__init__`
+     - `R/O Properties`: `listing`, `names`, `items`
+    """
+
+    def __init__(self, items=None, owner = None):
+        """Initialize the Collection
+
+        :Parameters:
+          items : dict of Collectable's
+            items to initialize with
+          enable_states : list
+            list of states to enable. If it contains 'all' (in any casing),
+            then all states (besides the ones in disable_states) will be enabled
+          disable_states : list
+            list of states to disable
+        """
+
+        self.__owner = owner
+
+        if items == None:
+            items = {}
+        self._items = items
+        """Dictionary to contain registered states as keys and
+        values signal either they are enabled
+        """
+
+    def __str__(self):
+        num = len(self._items)
+        res = "%d collectables:" % (num)
+        for i in xrange(min(num, 4)):
+            index = self._items.keys()[i]
+            res += " %s" % index
+
+        if len(self._items) > 4:
+            res += "..."
+        return res
+
+    #
+    # XXX TODO: figure out if there is a way to define proper
+    #           __copy__'s for a hierarchy of classes. Probably we had
+    #           to define __getinitargs__, etc... read more...
+    #
+    #def __copy__(self):
+# TODO Remove or refactor?
+#    def _copy_states_(self, fromstate, deep=False):
+#        """Copy known here states from `fromstate` object into current object
+#
+#        Crafted to overcome a problem mentioned above in the comment
+#        and is to be called from __copy__ of derived classes
+#
+#        Probably sooner than later will get proper __getstate__,
+#        __setstate__
+#        """
+#        # Bad check... doesn't generalize well...
+#        # if not issubclass(fromstate.__class__, self.__class__):
+#        #     raise ValueError, \
+#        #           "Class  %s is not subclass of %s, " % \
+#        #           (fromstate.__class__, self.__class__) + \
+#        #           "thus not eligible for _copy_states_"
+#        # TODO: FOR NOW NO TEST! But this beast needs to be fixed...
+#        operation = { True: copy.deepcopy,
+#                      False: copy.copy }[deep]
+#
+#        if isinstance(fromstate, Stateful):
+#            fromstate = fromstate.states
+#
+#        self.enabled = fromstate.enabled
+#        for name in self.names:
+#            if fromstate.isKnown(name):
+#                self._items[name] = operation(fromstate._items[name])
+
+    def isKnown(self, index):
+        """Returns `True` if state `index` is known at all"""
+        return self._items.has_key(index)
+
+    def _checkIndex(self, index):
+        """Verify that given `index` is a known/registered state.
+
+        :Raise `KeyError`: if given `index` is not known
+        """
+        if not self.isKnown(index):
+            raise KeyError, \
+                  "%s of %s has no key '%s' registered" \
+                  % (self.__class__.__name__,
+                     self.__owner.__class__.__name__,
+                     index)
+
+
+    def get(self, index):
+        """Returns the value by index"""
+        self._checkIndex(index)
+        return self._items[index].value
+
+    def set(self, index, value):
+        """Sets the value by index"""
+        self._checkIndex(index)
+        self._items[index].value = value
+
+
+    def _action(self, index, func, missingok=False, **kwargs):
+        """Run specific func either on a single item or on all of them
+
+        :Parameters:
+          index : basestr
+            Name of the state variable
+          func
+            Function (not bound) to call given an item, and **kwargs
+          missingok : bool
+            If True - do not complain about wrong index
+        """
+        if isinstance(index, basestring):
+            if index.upper() == 'ALL':
+                for index_ in self._items:
+                    self._action(index_, func, missingok=missingok, **kwargs)
+            else:
+                try:
+                    self._checkIndex(index)
+                    func(self._items[index], **kwargs)
+                except:
+                    if missingok:
+                        return
+                    raise
+        elif operator.isSequenceType(index):
+            for item in index:
+                self._action(item, func, missingok=missingok, **kwargs)
+        else:
+            raise ValueError, \
+                  "Don't know how to handle state variable given by %s" % index
+
+    # TODO: XXX StateCollection should use Collection.reset() but it seems that _action has to be refactored ...
+    def reset(self, index=None):
+        """Reset the state variable defined by `index`"""
+        raise NotImplementedError
+        if not index is None:
+            indexes = [ index ]
+        else:
+            indexes = self.names
+
+        # do for all
+        for index in indexes:
+            self._action(index, StateVariable.reset, missingok=False)
+
+
+    def _getListing(self):
+        """Return a list of registered states along with the documentation"""
+
+        # lets assure consistent litsting order
+        items = self._items.items()
+        items.sort()
+        return [ "%s%s: %s" % (x[0],
+                               {True:"[enabled]",
+                                False:""}[self.isEnabled(x[0])],
+                               x[1].__doc__) for x in items ]
+
+
+    def _getNames(self):
+        """Return ids for all registered state variables"""
+        return self._items.keys()
+
+
+    def _getOwner(self):
+        return self.__owner
+
+    def _setOwner(self, owner):
+        if not isinstance(owner, Stateful):
+            raise ValueError, \
+                  "Owner of the StateCollection must be Stateful object"
+        self.__owner = owner
+
+
+    # Properties
+    names = property(fget=_getNames)
+    items = property(fget=lambda x:x._items)
+    owner = property(fget=_getOwner, fset=_setOwner)
+
+    # Virtual properties
+    listing = VProperty(fget=_getListing)
+
+
+
+class StateCollection(Collection):
+    """Container of StateVariables for a stateful object.
 
     :Groups:
      - `Public Access Functions`: `isKnown`, `isEnabled`, `isActive`
@@ -161,15 +344,7 @@ class StateCollection(object):
           disable_states : list
             list of states to disable
         """
-
-        self.__owner = owner
-
-        if items == None:
-            items = {}
-        self.__items = items
-        """Dictionary to contain registered states as keys and
-        values signal either they are enabled
-        """
+        Collection.__init__(self, items, owner)
 
         self.__storedTemporarily = []
         """List to contain sets of enabled states which were enabled
@@ -177,17 +352,17 @@ class StateCollection(object):
         """
 
     def __str__(self):
-        num = len(self.__items)
+        num = len(self._items)
         res = "%d states:" % (num)
         for i in xrange(min(num, 4)):
-            index = self.__items.keys()[i]
+            index = self._items.keys()[i]
             res += " %s" % index
             if self.isEnabled(index):
                 res += '+'          # it is enabled but no value is assigned yet
             if self.isSet(index):
                 res += '*'          # so we have the value already
 
-        if len(self.__items) > 4:
+        if len(self._items) > 4:
             res += "..."
         return res
 
@@ -223,81 +398,24 @@ class StateCollection(object):
         self.enabled = fromstate.enabled
         for name in self.names:
             if fromstate.isKnown(name):
-                self.__items[name] = operation(fromstate.__items[name])
-
-    def isKnown(self, index):
-        """Returns `True` if state `index` is known at all"""
-        return self.__items.has_key(index)
-
-    def __checkIndex(self, index):
-        """Verify that given `index` is a known/registered state.
-
-        :Raise `KeyError`: if given `index` is not known
-        """
-        if not self.isKnown(index):
-            raise KeyError, \
-                  "%s of %s has no key '%s' registered" \
-                  % (self.__class__.__name__,
-                     self.__owner.__class__.__name__,
-                     index)
+                self._items[name] = operation(fromstate._items[name])
 
 
     def isEnabled(self, index):
         """Returns `True` if state `index` is enabled"""
-        self.__checkIndex(index)
-        return self.__items[index].isEnabled
+        self._checkIndex(index)
+        return self._items[index].isEnabled
 
     def isSet(self, index):
         """Returns `True` if state `index` has value set"""
-        self.__checkIndex(index)
-        return self.__items[index].isSet
-
-
-    def get(self, index):
-        """Returns the value by index"""
-        self.__checkIndex(index)
-        return self.__items[index].value
-
-    def set(self, index, value):
-        """Sets the value by index"""
-        self.__checkIndex(index)
-        self.__items[index].value = value
+        self._checkIndex(index)
+        return self._items[index].isSet
 
 
     def isActive(self, index):
         """Returns `True` if state `index` is known and is enabled"""
         return self.isKnown(index) and self.isEnabled(index)
 
-
-    def _action(self, index, func, missingok=False, **kwargs):
-        """Run specific func either on a single item or on all of them
-
-        :Parameters:
-          index : basestr
-            Name of the state variable
-          func
-            Function (not bound) to call given an item, and **kwargs
-          missingok : bool
-            If True - do not complain about wrong index
-        """
-        if isinstance(index, basestring):
-            if index.upper() == 'ALL':
-                for index_ in self.__items:
-                    self._action(index_, func, missingok=missingok, **kwargs)
-            else:
-                try:
-                    self.__checkIndex(index)
-                    func(self.__items[index], **kwargs)
-                except:
-                    if missingok:
-                        return
-                    raise
-        elif operator.isSequenceType(index):
-            for item in index:
-                self._action(item, func, missingok=missingok, **kwargs)
-        else:
-            raise ValueError, \
-                  "Don't know how to handle state variable given by %s" % index
 
     def enable(self, index, value=True, missingok=False):
         """Enable  state variable given in `index`"""
@@ -320,7 +438,8 @@ class StateCollection(object):
             self._action(index, StateVariable.reset, missingok=False)
 
 
-
+    # TODO XXX think about some more generic way to grab temporary
+    # snapshot of Collectables to be restored later on...
     def _changeTemporarily(self, enable_states=None,
                            disable_states=None, other=None):
         """Temporarily enable/disable needed states for computation
@@ -375,7 +494,7 @@ class StateCollection(object):
         """Return a list of registered states along with the documentation"""
 
         # lets assure consistent litsting order
-        items = self.__items.items()
+        items = self._items.items()
         items.sort()
         return [ "%s%s: %s" % (x[0],
                                {True:"[enabled]",
@@ -399,31 +518,12 @@ class StateCollection(object):
         >>> stateful.enabled = states_enabled
 
         """
-        for index in self.__items.keys():
+        for index in self._items.keys():
             self.enable(index, index in indexlist)
 
 
-    def _getNames(self):
-        """Return ids for all registered state variables"""
-        return self.__items.keys()
-
-
-    def _getOwner(self):
-        return self.__owner
-
-    def _setOwner(self, owner):
-        if not isinstance(owner, Stateful):
-            raise ValueError, \
-                  "Owner of the StateCollection must be Stateful object"
-        self.__owner = owner
-
-
     # Properties
-    listing = property(fget=_getListing)
-    names = property(fget=_getNames)
-    items = property(fget=lambda x:x.__items)
     enabled = property(fget=_getEnabled, fset=_setEnabled)
-    owner = property(fget=_getOwner, fset=_setOwner)
 
 
 
