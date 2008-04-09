@@ -171,7 +171,9 @@ class Classifier(Stateful):
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
-        pass
+        # So we reset all state variables and may be free up some memory
+        # explicitely
+        self.untrain()
 
     def _posttrain(self, dataset):
         """Functionality post training
