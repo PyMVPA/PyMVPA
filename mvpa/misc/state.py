@@ -342,6 +342,7 @@ class ParameterCollection(Collection):
 
     def resetvalue(self, index, missingok=False):
         """Reset all parameters to default values"""
+        from param import Parameter
         self._action(index, Parameter.resetvalue, missingok=False)
 
 
@@ -558,7 +559,11 @@ class collector(type):
 
         for name, value in dict.iteritems():
             if isinstance(value, Collectable):
-                colname = value.__class__.__name__
+                colname_ = value.__class__.__name__
+                colname = {'StateVariable': "states",
+                           'Parameter': "params",
+                           'KernelParameter': "kernel_params"}[colname_]
+                # XXX should we allow to throw exceptions here?
                 if not items.has_key(colname):
                     items[colname] = {}
                 items[colname][name] = value
@@ -572,7 +577,7 @@ class collector(type):
                 # TODO take care about overriding one from super class
                 # for state in base.states:
                 #    if state[0] =
-                newcollections = base._collectables
+                newcollections = base._collections_template
                 if len(newcollections) == 0:
                     continue
                 if __debug__:
@@ -590,23 +595,25 @@ class collector(type):
             debug("COLR",
                   "Creating StateCollection template %s" % cls)
 
+        # TODO: check on conflict in names of Collections' items!
+        # since otherwise even order is not definite since we use dict for collections.
+        # XXX should we switch to tuple?
         collections = {}
         for colname, colitems in items.iteritems():
-            cn = colname
-            if cn == 'StateVariable':
+            if colname == 'states':
                 collection = StateCollection(colitems, cls)
-            elif cn == 'Parameter':
+            elif colname == 'params':
                 collection = ParameterCollection(colitems, cls)
-            elif cn == 'KernelParameter':
+            elif colname == 'kernel_params':
                 collection = ParameterCollection(colitems, cls)
             else:
                 raise RuntimeError, \
-                      "collector doesn't know how to collect %s" % colname.__name__
-            collections[cn] = collection
+                      "collector doesn't know how to collect %s" % colname
+            collections[colname] = collection
         # TODO: remove later on -- if class has no StateVariable's assigned -- no _states!
-        if not collections.has_key('StateVariable'):
-            collections['StateVariable'] = StateCollection(None, cls)
-        setattr(cls, "_collectables", collections)
+        if not collections.has_key('states'):
+            collections['states'] = StateCollection(None, cls)
+        setattr(cls, "_collections_template", collections)
 
 
 class Stateful(object):
@@ -634,17 +641,19 @@ class Stateful(object):
         if disable_states == None:
             disable_states = []
 
-        if not hasattr(self, '_states'):
+        if not hasattr(self, '_collections'):
             # need to check to avoid override of enabled states in the case
             # of multiple inheritance, like both Statefull and Harvestable
-            object.__setattr__(self, '_states',
+            object.__setattr__(self, '_collections',
                                copy.deepcopy( \
                                 object.__getattribute__(self,
-                                                        '_collectables')['StateVariable']))
+                                                        '_collections_template')))
 
-            self._states.owner = self
-            self._states.enable(enable_states, missingok=True)
-            self._states.disable(disable_states)
+            if self._collections.has_key('states'):
+                states = self._collections['states']
+                states.owner = self
+                states.enable(enable_states, missingok=True)
+                states.disable(disable_states)
 
             self.__descr = descr
 
@@ -658,28 +667,23 @@ class Stateful(object):
         # queried by copy before instance is __init__ed
         if index.startswith('__'):
             return object.__getattribute__(self, index)
-        states = object.__getattribute__(self, '_states')
-        if index in ["states", "_states"]:
-            return states
-        if states.items.has_key(index):
-            return states.get(index)
-        else:
-            return object.__getattribute__(self, index)
+        for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
+            if index in [colname]:
+                return colvalues
+            if colvalues.items.has_key(index):
+                return colvalues.get(index)
+        return object.__getattribute__(self, index)
+
 
     def __setattr__(self, index, value):
-        states = object.__getattribute__(self, '_states')
-        if states.items.has_key(index):
-            states.set(index, value)
-        else:
-            object.__setattr__(self, index, value)
-
-
-    @property
-    def states(self):
-        return self._states
+        for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
+            if colvalues.items.has_key(index):
+                colvalues.set(index, value)
+                return
+        object.__setattr__(self, index, value)
 
     def __str__(self):
-        return "%s with %s" % (self.__class__.__name__, str(self.states))
+        return "%s with %s" % (self.__class__.__name__, str(self.states)) # XXX
 
     def __repr__(self):
         return "<%s.%s#%d>" % (self.__class__.__module__, self.__class__.__name__, id(self))
