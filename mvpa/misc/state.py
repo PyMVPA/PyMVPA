@@ -41,6 +41,7 @@ class Collectable(object):
         self.__doc__ = doc
         self.name = name
         self._value = None
+        self.reset()
         if __debug__:
             debug("COL",
                   "Initialized new state variable %s " % name + `self`)
@@ -53,11 +54,18 @@ class Collectable(object):
             debug("COL",
                   "Setting %s to %s " % (str(self), val))
         self._value = val
+        self._isset = True
+
+    @property
+    def isSet(self):
+        return self._isset
 
     def reset(self):
         """Simply detach the value, and reset the flag"""
         self._value = None
+        self._isset = False
 
+    # TODO XXX unify all bloody __str__
     def __str__(self):
         return "Collectable %s id %d" % \
             (self.name, id(self))
@@ -77,7 +85,6 @@ class StateVariable(Collectable):
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
         Collectable.__init__(self, name, doc)
-        self._isset = False
         self._isenabled = enabled
         if __debug__:
             debug("STV",
@@ -96,14 +103,9 @@ class StateVariable(Collectable):
                   "Setting %s to %s " % (str(self), val))
 
         if self.isEnabled:
-            self._isset = True
             # XXX may be should have left simple assignment
             # self._value = val
             Collectable._set(self, val)
-
-    @property
-    def isSet(self):
-        return self._isset
 
     @property
     def isEnabled(self):
@@ -118,13 +120,6 @@ class StateVariable(Collectable):
                   ({True: 'Enabling', False: 'Disabling'}[value], str(self)))
         self._isenabled = value
 
-
-    def reset(self):
-        """Simply detach the value, and reset the flag"""
-        # XXX simpler?
-        #self._value = None
-        Collectable.reset(self)
-        self._isset = False
 
     def __str__(self):
         return "%s variable %s id %d" % \
@@ -143,6 +138,8 @@ class Collection(object):
      - `Access Implementors`: `_getListing`, `_getNames`
      - `Mutators`: `__init__`
      - `R/O Properties`: `listing`, `names`, `items`
+
+     XXX Seems to be not used and duplicating functionality: `_getListing` (thus `listing` property)
     """
 
     def __init__(self, items=None, owner = None):
@@ -336,13 +333,8 @@ class StateCollection(Collection):
         """Initialize the state variables of a derived class
 
         :Parameters:
-          states : dict
+          items : dict
             dictionary of states
-          enable_states : list
-            list of states to enable. If it contains 'all' (in any casing),
-            then all states (besides the ones in disable_states) will be enabled
-          disable_states : list
-            list of states to disable
         """
         Collection.__init__(self, items, owner)
 
@@ -583,6 +575,8 @@ class Stateful(object):
     `StateCollection`.
 
     NB This one is to replace old State base class
+    TODO: fix drunk Yarik decision to add 'descr' -- it should simply
+    be 'doc' -- no need to drag classes docstring imho.
     """
 
     __metaclass__ = statecollector
@@ -610,12 +604,6 @@ class Stateful(object):
             self._states.disable(disable_states)
 
             self.__descr = descr
-
-        # bad to have str(self) here since it is a base class and
-        # some attributes most probably are not yet set in the original
-        # child's __str__
-        #if __debug__:
-        #    debug("ST", "Stateful.__init__ done for %s" % self)
 
         if __debug__:
             debug("ST", "Stateful.__init__ was done for %s id %s with descr=%s" \
