@@ -143,7 +143,7 @@ if __debug__:
     debug.register('COL',  "Generic Collectable debugging")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
-    debug.register('STCOL', "State Collector")
+    debug.register('COLR', "Collector for states and classifier parameters")
 
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")
