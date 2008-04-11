@@ -74,12 +74,12 @@ class ClassifiersTests(unittest.TestCase):
     def testDummy(self):
         clf = SameSignClassifier(enable_states=['training_confusion'])
         clf.train(self.data_bin_1)
-        self.failUnlessRaises(UnknownStateError, clf.states.get,
+        self.failUnlessRaises(UnknownStateError, clf.states.getvalue,
                               "predictions")
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
 
-        self.failUnlessRaises(UnknownStateError, clf.states.get,
+        self.failUnlessRaises(UnknownStateError, clf.states.getvalue,
                               "trained_dataset")
 
         self.failUnlessEqual(clf.training_confusion.percentCorrect,

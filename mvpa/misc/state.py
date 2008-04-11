@@ -44,7 +44,7 @@ class Collectable(object):
         self.reset()
         if __debug__:
             debug("COL",
-                  "Initialized new state variable %s " % name + `self`)
+                  "Initialized new collectable %s " % name + `self`)
 
     def _get(self):
         return self._value
@@ -236,6 +236,31 @@ class Collection(object):
 
 
     def get(self, index):
+        """Returns the collectable by index"""
+        self._checkIndex(index)
+        return self._items[index]
+
+    def __getattribute__(self, index):
+        # return all private ones first since smth like __dict__ might be
+        # queried by copy before instance is __init__ed
+        if index.startswith('_'):
+            return object.__getattribute__(self, index)
+        if self._items.has_key(index):
+            self._checkIndex(index)
+            return self._items[index]
+        return object.__getattribute__(self, index)
+
+
+    def __setattr__(self, index, value):
+        if index.startswith('_'):
+            return object.__setattr__(self, index, value)
+        if self._items.has_key(index):
+            self.set(index, value)
+            return
+        object.__setattr__(self, index, value)
+
+
+    def getvalue(self, index):
         """Returns the value by index"""
         self._checkIndex(index)
         return self._items[index].value
@@ -674,7 +699,7 @@ class Stateful(object):
             if index in [colname]:
                 return colvalues
             if colvalues.items.has_key(index):
-                return colvalues.get(index)
+                return colvalues.getvalue(index)
         return object.__getattribute__(self, index)
 
 
