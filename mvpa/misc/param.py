@@ -44,6 +44,8 @@ class Parameter(Collectable):
 
         Collectable.__init__(self, name, doc)
 
+        self.resetvalue()
+
         if __debug__:
             if kwargs.has_key('val'):
                 raise ValueError, "'val' property name is illegal."
