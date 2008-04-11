@@ -136,8 +136,8 @@ class CrossValidatedTransferError(ScalarDatasetMeasure, Harvestable):
                 if self.states.isEnabled(state_var):
                     if self.__transerror.states.isActive(state_var):
                         if self.states.isEnabled(state_var):
-                            self.states.get(state_var).__iadd__(
-                                self.__transerror.states.get(state_var))
+                            self.states.getvalue(state_var).__iadd__(
+                                self.__transerror.states.getvalue(state_var))
                     else:
                         # XXX shouldn't happen actually. may be could be removed?
                         warning("Crossvalidator %s can't store %s state " %
