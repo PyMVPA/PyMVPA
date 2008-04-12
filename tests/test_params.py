@@ -13,7 +13,7 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import Stateful
+from mvpa.misc.state import Stateful, StateVariable
 from mvpa.misc.param import Parameter, KernelParameter
 
 class BlankClass(Stateful):
@@ -22,6 +22,10 @@ class BlankClass(Stateful):
 class SimpleClass(Stateful):
     C = Parameter(1.0, min=0, doc="C parameter")
 
+class MixedClass(Stateful):
+    C = Parameter(1.0, min=0, doc="C parameter")
+    D = Parameter(3.0, min=0, doc="D parameter")
+    state1 = StateVariable(doc="bogus")
 
 class ParamsTests(unittest.TestCase):
 
@@ -31,19 +35,6 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'states')
         self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
 
-        return
-
-        blank  = BlankClass()
-
-        self.failUnlessEqual(blank.states.items, {})
-        self.failUnless(blank.states.enabled == [])
-        self.failUnlessRaises(AttributeError, blank.__getattribute__, 'dummy')
-        self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
-
-        # we shouldn't use _registerState now since metaclass statecollector wouldn't
-        # update the states... may be will be implemented in the future if necessity comes
-        return
-
     def testSimple(self):
         simple  = SimpleClass()
 
@@ -52,11 +43,35 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessRaises(AttributeError, simple.__getattribute__, '')
 
         self.failUnlessEqual(simple.C, 1.0)
+        self.failUnlessEqual(simple.params.isSet("C"), False)
+        self.failUnlessEqual(simple.params.isSet(), False)
         simple.C = 10.0
+        self.failUnlessEqual(simple.params.isSet("C"), True)
+        self.failUnlessEqual(simple.params.isSet(), True)
+
         self.failUnlessEqual(simple.C, 10.0)
         simple.params["C"].resetvalue()
+        self.failUnlessEqual(simple.params.isSet("C"), True)
+        # TODO: Test if we 'train' a classifier f we get isSet to false
         self.failUnlessEqual(simple.C, 1.0)
         self.failUnlessRaises(AttributeError, simple.params.__getattribute__, 'B')
+
+    def testMixed(self):
+        mixed  = MixedClass()
+
+        self.failUnlessEqual(len(mixed.params.items), 2)
+        self.failUnlessEqual(len(mixed.states.items), 1)
+        self.failUnlessRaises(AttributeError, mixed.__getattribute__, 'kernel_params')
+
+        self.failUnlessEqual(mixed.C, 1.0)
+        self.failUnlessEqual(mixed.params.isSet("C"), False)
+        self.failUnlessEqual(mixed.params.isSet(), False)
+        mixed.C = 10.0
+        self.failUnlessEqual(mixed.params.isSet("C"), True)
+        self.failUnlessEqual(mixed.params.isSet("D"), False)
+        self.failUnlessEqual(mixed.params.isSet(), True)
+        self.failUnlessEqual(mixed.D, 3.0)
+
 
 def suite():
     return unittest.makeSuite(ParamsTests)

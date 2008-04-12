@@ -436,6 +436,14 @@ class ParameterCollection(Collection):
         from param import Parameter
         self._action(index, Parameter.resetvalue, missingok=False)
 
+    def isSet(self, index=None):
+        if not index is None:
+            return Collection.isSet(self, index)
+        # go through all members and if any isSet -- return True
+        for index in self._items:
+            if Collection.isSet(self, index):
+                return True
+        return False
 
 class StateCollection(Collection):
     """Container of StateVariables for a stateful object.
