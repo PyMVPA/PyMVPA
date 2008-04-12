@@ -18,11 +18,12 @@ from sets import Set
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
+from mvpa.misc import warning
 
 if __debug__:
     from mvpa.misc import debug
 
-class Collectable(object):
+class CollectableAttribute(object):
     """Base class for any custom behaving attribute intended to become part of a collection
 
     Derived classes will have specific semantics:
@@ -33,13 +34,13 @@ class Collectable(object):
      - KernelParameter: --//-- to become a part of Kernel Classifier's
        kernel_params collection
 
-    Those Collectables are to be groupped into corresponding groups for each class
+    Those CollectableAttributes are to be groupped into corresponding groups for each class
     by statecollector metaclass
     """
 
     def __init__(self, name=None, doc=None):
         self.__doc__ = doc
-        self.name = name
+        self.__name = name
         self._value = None
         self.reset()
         if __debug__:
@@ -66,15 +67,29 @@ class Collectable(object):
 
     # TODO XXX unify all bloody __str__
     def __str__(self):
-        return "Collectable %s id %d" % \
+        return "CollectableAttribute %s id %d" % \
             (self.name, id(self))
+
+    def _getName(self):
+        return self.__name
+
+    def _setName(self, name):
+        if name is not None:
+            if isinstance(name, basestring):
+                if name.startswith('_'):
+                    raise ValueError, \
+                          "Collectable attribute name must not start with _. Got %s" % name
+            else:
+                raise ValueError, \
+                      "Collectable attribute name must be a string. Got %s" % `name`
+        self.__name = name
 
     # XXX should become vproperty?
     value = property(_get, _set)
+    name = property(_getName, _setName)
 
 
-
-class StateVariable(Collectable):
+class StateVariable(CollectableAttribute):
     """Simple container intended to conditionally store the value
 
     Statefull class provides easy interfact to access the variable
@@ -83,7 +98,7 @@ class StateVariable(Collectable):
     """
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
-        Collectable.__init__(self, name, doc)
+        CollectableAttribute.__init__(self, name, doc)
         self._isenabled = enabled
         if __debug__:
             debug("STV",
@@ -94,7 +109,7 @@ class StateVariable(Collectable):
             raise UnknownStateError("Unknown yet value of %s" % (self.name))
         # XXX leave simple return?
         #return self._value
-        return Collectable._get(self)
+        return CollectableAttribute._get(self)
 
     def _set(self, val):
         if __debug__:
@@ -104,11 +119,11 @@ class StateVariable(Collectable):
         if self.isEnabled:
             # XXX may be should have left simple assignment
             # self._value = val
-            Collectable._set(self, val)
+            CollectableAttribute._set(self, val)
 
     def reset(self):
         """Simply detach the value, and reset the flag"""
-        Collectable.reset(self)
+        CollectableAttribute.reset(self)
         self._value = None
 
     @property
@@ -135,7 +150,7 @@ class StateVariable(Collectable):
 
 
 class Collection(object):
-    """Container of some Collectables.
+    """Container of some CollectableAttributes.
 
     :Groups:
      - `Public Access Functions`: `isKnown`
@@ -150,7 +165,7 @@ class Collection(object):
         """Initialize the Collection
 
         :Parameters:
-          items : dict of Collectable's
+          items : dict of CollectableAttribute's
             items to initialize with
           enable_states : list
             list of states to enable. If it contains 'all' (in any casing),
@@ -241,13 +256,13 @@ class Collection(object):
         return self._items[index]
 
     def __getattribute__(self, index):
-        # return all private ones first since smth like __dict__ might be
-        # queried by copy before instance is __init__ed
+        # return all private and protected ones first since we will not have
+        # collectable's with _ (we should not have!)
         if index.startswith('_'):
             return object.__getattribute__(self, index)
         if self._items.has_key(index):
             self._checkIndex(index)
-            return self._items[index]
+            return self._items[index].getvalue(index)
         return object.__getattribute__(self, index)
 
 
@@ -255,9 +270,24 @@ class Collection(object):
         if index.startswith('_'):
             return object.__setattr__(self, index, value)
         if self._items.has_key(index):
-            self.set(index, value)
+            self.setvalue(index, value)
             return
         object.__setattr__(self, index, value)
+
+    def __getitem__(self, index):
+        if self._items.has_key(index):
+            self._checkIndex(index)
+            return self._items[index]
+        else:
+            raise AttributeError("State collection %s has no %s attribute" % (self, index))
+
+    # Probably not needed -- enable if need arises
+    #
+    #def __setattr__(self, index, value):
+    #    if self._items.has_key(index):
+    #        self._items[index] = value
+    #
+    #    object.__setattr__(self, index, value)
 
 
     def getvalue(self, index):
@@ -478,7 +508,7 @@ class StateCollection(Collection):
 
 
     # TODO XXX think about some more generic way to grab temporary
-    # snapshot of Collectables to be restored later on...
+    # snapshot of CollectableAttributes to be restored later on...
     def _changeTemporarily(self, enable_states=None,
                            disable_states=None, other=None):
         """Temporarily enable/disable needed states for computation
@@ -565,11 +595,21 @@ class StateCollection(Collection):
     enabled = property(fget=_getEnabled, fset=_setEnabled)
 
 
+_known_collections = {
+    'StateVariable': ("states", StateCollection),
+    'Parameter': ("params", ParameterCollection),
+    'KernelParameter': ("kernel_params", ParameterCollection)}
+
+_col2class = dict(_known_collections.values())
+"""Mapping from collection name into Collection class"""
+
+
 
 class collector(type):
     """Intended to collect and compose StateCollection for any child
     class of this metaclass
     """
+
 
     def __init__(cls, name, bases, dict):
 
@@ -583,11 +623,9 @@ class collector(type):
         collections = {}
 
         for name, value in dict.iteritems():
-            if isinstance(value, Collectable):
-                colname_ = value.__class__.__name__
-                colname = {'StateVariable': "states",
-                           'Parameter': "params",
-                           'KernelParameter': "kernel_params"}[colname_]
+            if isinstance(value, CollectableAttribute):
+                baseclassname = value.__class__.__name__
+                colname = _known_collections[baseclassname][0]
                 # XXX should we allow to throw exceptions here?
                 if not collections.has_key(colname):
                     collections[colname] = {}
@@ -623,24 +661,23 @@ class collector(type):
             debug("COLR",
                   "Creating StateCollection template %s" % cls)
 
+        # if there is an explicit
+        if hasattr(cls, "_ATTRIBUTE_COLLECTIONS"):
+            for colname in cls._ATTRIBUTE_COLLECTIONS:
+                if not colname in _col2class:
+                    raise ValueError, \
+                          "Requested collection %s is unknown to collector" % \
+                          colname
+                if not colname in collections:
+                    collections[colname] = None
+
         # TODO: check on conflict in names of Collections' items!
         # since otherwise even order is not definite since we use dict for collections.
         # XXX should we switch to tuple?
-        # collections = {}
+
         for colname, colitems in collections.iteritems():
-            if colname == 'states':
-                collection = StateCollection(colitems, cls)
-            elif colname == 'params':
-                collection = ParameterCollection(colitems, cls)
-            elif colname == 'kernel_params':
-                collection = ParameterCollection(colitems, cls)
-            else:
-                raise RuntimeError, \
-                      "collector doesn't know how to collect %s" % colname
-            collections[colname] = collection
-        # TODO: remove later on -- if class has no StateVariable's assigned -- no _states!
-        if not collections.has_key('states'):
-            collections['states'] = StateCollection(None, cls)
+            collections[colname] = _col2class[colname](colitems, cls)
+
         setattr(cls, "_collections_template", collections)
 
 
@@ -664,11 +701,6 @@ class Stateful(object):
                  disable_states=None,
                  descr=None):
 
-        if enable_states == None:
-            enable_states = []
-        if disable_states == None:
-            disable_states = []
-
         if not hasattr(self, '_collections'):
             # need to check to avoid override of enabled states in the case
             # of multiple inheritance, like both Statefull and Harvestable
@@ -677,11 +709,22 @@ class Stateful(object):
                                 object.__getattribute__(self,
                                                         '_collections_template')))
 
+            # Assign owner to all collections
+            for colvalue in self._collections.itervalues():
+                colvalue.owner = self
+
             if self._collections.has_key('states'):
+                if enable_states == None:
+                    enable_states = []
+                if disable_states == None:
+                    disable_states = []
+
                 states = self._collections['states']
-                states.owner = self
                 states.enable(enable_states, missingok=True)
                 states.disable(disable_states)
+            elif not (enable_states is None and disable_states is None):
+                warning("Provided enable_states and disable_states are " + \
+                        "ignored since object %s has no states"  % `self`)
 
             self.__descr = descr
 

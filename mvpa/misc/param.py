@@ -5,14 +5,14 @@
 #   See COPYING file distributed along with the PyMVPA package for the
 #   copyright and license terms.
 #
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
 """Parameter representation"""
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.misc.state import Collectable
+from mvpa.misc.state import CollectableAttribute
 
-class Parameter(Collectable):
+class Parameter(CollectableAttribute):
     """This class shall serve as a representation of a parameter.
 
     It might be useful if a little more information than the pure parameter
@@ -42,7 +42,7 @@ class Parameter(Collectable):
         """
         self.__default = default
 
-        Collectable.__init__(self, name, doc)
+        CollectableAttribute.__init__(self, name, doc)
 
         self.resetvalue()
 
@@ -57,7 +57,7 @@ class Parameter(Collectable):
 
     def resetvalue(self):
         """Reset value to the default"""
-        Collectable.reset(self)
+        CollectableAttribute.reset(self)
         self._value = self.__default
 
 class KernelParameter(Parameter):
