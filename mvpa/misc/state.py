@@ -436,6 +436,15 @@ class ParameterCollection(Collection):
         from param import Parameter
         self._action(index, Parameter.resetvalue, missingok=False)
 
+    def isSet(self, index=None):
+        if not index is None:
+            return Collection.isSet(self, index)
+        # go through all members and if any isSet -- return True
+        for index in self._items:
+            if Collection.isSet(self, index):
+                return True
+        return False
+
 
 class StateCollection(Collection):
     """Container of StateVariables for a stateful object.
@@ -621,6 +630,9 @@ class StateCollection(Collection):
     enabled = property(fget=_getEnabled, fset=_setEnabled)
 
 
+#
+# Helper dictionaries for collector
+#
 _known_collections = {
     'StateVariable': ("states", StateCollection),
     'Parameter': ("params", ParameterCollection),
@@ -628,7 +640,6 @@ _known_collections = {
 
 _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
-
 
 
 class collector(type):
@@ -771,13 +782,13 @@ class Stateful(object):
                 return colvalues.getvalue(index)
         return object.__getattribute__(self, index)
 
-
     def __setattr__(self, index, value):
         for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
             if colvalues.items.has_key(index):
                 colvalues.set(index, value)
                 return
         object.__setattr__(self, index, value)
+
 
     def __str__(self):
         s = "%s:" % (self.__class__.__name__)
@@ -790,6 +801,8 @@ class Stateful(object):
 
     descr = property(lambda self: self.__descr,
                      doc="Description of the object if any")
+
+
 
 class Harvestable(Stateful):
     """Classes inherited from this class intend to collect attributes
