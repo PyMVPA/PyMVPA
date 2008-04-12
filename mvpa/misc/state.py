@@ -582,18 +582,6 @@ class StateCollection(Collection):
                              "states")
 
 
-    def _getListing(self):
-        """Return a list of registered states along with the documentation"""
-
-        # lets assure consistent litsting order
-        items = self._items.items()
-        items.sort()
-        return [ "%s%s: %s" % (x[0],
-                               {True:"[enabled]",
-                                False:""}[self.isEnabled(x[0])],
-                               x[1].__doc__) for x in items ]
-
-
     def _getEnabled(self):
         """Return list of enabled states"""
         return filter(lambda y: self.isEnabled(y), self.names)
