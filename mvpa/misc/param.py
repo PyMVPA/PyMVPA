@@ -45,6 +45,7 @@ class Parameter(CollectableAttribute):
         CollectableAttribute.__init__(self, name, doc)
 
         self.resetvalue()
+        self._isset = False
 
         if __debug__:
             if kwargs.has_key('val'):
@@ -58,7 +59,9 @@ class Parameter(CollectableAttribute):
     def resetvalue(self):
         """Reset value to the default"""
         CollectableAttribute.reset(self)
-        self._value = self.__default
+        if self._value != self.__default:
+            self._isset = True
+            self._value = self.__default
 
 class KernelParameter(Parameter):
     """Just that it is different beast"""
