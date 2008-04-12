@@ -56,6 +56,12 @@ class Parameter(CollectableAttribute):
             self.__setattr__(k, v)
 
 
+    def __str__(self):
+        res = CollectableAttribute.__str__(self)
+        res += '=%s' % self.value # it is enabled but no value is assigned yet
+        return res
+
+
     def resetvalue(self):
         """Reset value to the default"""
         CollectableAttribute.reset(self)
