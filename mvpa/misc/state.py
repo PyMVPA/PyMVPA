@@ -47,6 +47,10 @@ class CollectableAttribute(object):
             debug("COL",
                   "Initialized new collectable %s " % name + `self`)
 
+    # Instead of going for VProperty lets make use of virtual method
+    def _getVirtual(self): return self._get()
+    def _setVirtual(self, value): return self._set(value)
+
     def _get(self):
         return self._value
 
@@ -87,7 +91,7 @@ class CollectableAttribute(object):
         self.__name = name
 
     # XXX should become vproperty?
-    value = property(_get, _set)
+    value = property(_getVirtual, _setVirtual)
     name = property(_getName, _setName)
 
 
@@ -147,9 +151,6 @@ class StateVariable(CollectableAttribute):
         if self.isEnabled:
             res += '+'          # it is enabled but no value is assigned yet
         return res
-
-    value = property(_get, _set)
-
 
 
 class Collection(object):
