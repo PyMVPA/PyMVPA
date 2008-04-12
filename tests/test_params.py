@@ -13,8 +13,20 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
+from mvpa.datasets.dataset import Dataset
 from mvpa.misc.state import Stateful, StateVariable
 from mvpa.misc.param import Parameter, KernelParameter
+
+from tests_warehouse_clfs import SameSignClassifier
+
+class ParametrizedClassifier(SameSignClassifier):
+    p1 = Parameter(1.0)
+    kp1 = KernelParameter(100.0)
+
+class ParametrizedClassifierExtended(ParametrizedClassifier):
+    def __init__(self):
+        ParametrizedClassifier.__init__(self)
+        self.kernel_params.add(KernelParameter(200.0, doc="Very useful param", name="kp2"))
 
 class BlankClass(Stateful):
     pass
@@ -72,6 +84,26 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(mixed.params.isSet(), True)
         self.failUnlessEqual(mixed.D, 3.0)
 
+
+    def testClassifier(self):
+        clf  = ParametrizedClassifier()
+        self.failUnlessEqual(len(clf.params.items), 1)
+        self.failUnlessEqual(len(clf.kernel_params.items), 1)
+
+        clfe  = ParametrizedClassifierExtended()
+        self.failUnlessEqual(len(clfe.params.items), 1)
+        self.failUnlessEqual(len(clfe.kernel_params.items), 2)
+        self.failUnlessEqual(len(clfe.kernel_params.listing), 2)
+
+        # check assignment once again
+        self.failUnlessEqual(clfe.kp2, 200.0)
+        clfe.kp2 = 201.0
+        self.failUnlessEqual(clfe.kp2, 201.0)
+        self.failUnlessEqual(clfe.kernel_params.isSet("kp2"), True)
+        clfe.train(Dataset(samples=[[0,0]], labels=[1], chunks=[1]))
+        self.failUnlessEqual(clfe.kernel_params.isSet("kp2"), False)
+        self.failUnlessEqual(clfe.kernel_params.isSet(), False)
+        self.failUnlessEqual(clfe.params.isSet(), False)
 
 def suite():
     return unittest.makeSuite(ParamsTests)
