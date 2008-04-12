@@ -334,7 +334,7 @@ class Classifier(Stateful):
     def untrain(self):
         """Reset trained state"""
         self.__trainednfeatures = None
-        self.states.reset()
+        Stateful.reset(self)
 
 
     def _setTrain2predict(self, v):
