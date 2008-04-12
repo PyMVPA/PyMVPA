@@ -67,8 +67,10 @@ class CollectableAttribute(object):
 
     # TODO XXX unify all bloody __str__
     def __str__(self):
-        return "CollectableAttribute %s id %d" % \
-            (self.name, id(self))
+        res = "%s" % (self.name)
+        if self.isSet:
+            res += '*'          # so we have the value already
+        return res
 
     def _getName(self):
         return self.__name
@@ -141,9 +143,10 @@ class StateVariable(CollectableAttribute):
 
 
     def __str__(self):
-        return "%s variable %s id %d" % \
-            ({True: 'Enabled',
-              False: 'Disabled'}[self.isEnabled], self.name, id(self))
+        res = CollectableAttribute.__str__(self)
+        if self.isEnabled:
+            res += '+'          # it is enabled but no value is assigned yet
+        return res
 
     value = property(_get, _set)
 
@@ -161,7 +164,7 @@ class Collection(object):
      XXX Seems to be not used and duplicating functionality: `_getListing` (thus `listing` property)
     """
 
-    def __init__(self, items=None, owner = None):
+    def __init__(self, items=None, owner=None):
         """Initialize the Collection
 
         :Parameters:
@@ -183,15 +186,16 @@ class Collection(object):
         values signal either they are enabled
         """
 
+
     def __str__(self):
         num = len(self._items)
-        res = "%d collectables:" % (num)
+        res = "{"
         for i in xrange(min(num, 4)):
-            index = self._items.keys()[i]
-            res += " %s" % index
-
+            if i>0: res += " "
+            res += "%s" % str(self._items.values()[i])
         if len(self._items) > 4:
             res += "..."
+        res += "}"
         return res
 
     #
@@ -249,14 +253,45 @@ class Collection(object):
                      self.__owner.__class__.__name__,
                      index)
 
+    def add(self, item):
+        """Add a new CollectableAttribute to the collection
+
+        :Parameters:
+          item : CollectableAttribute
+            or of derived class. Must have 'name' assigned
+
+        TODO: we should make it stricter to don't add smth of
+              wrong type into Collection since it might lead to problems
+        """
+        if not isinstance(item, CollectableAttribute):
+            raise ValueError, \
+                  "Collection can add only instances of " + \
+                  "CollectableAttribute-derived classes. Got %s" % `item`
+        if item.name is None:
+            raise ValueError, \
+                  "CollectableAttribute to be added %s must have 'name' set" % \
+                  item
+        self._items[item.name] = item
+
+
+    def remove(self, index):
+        """Remove item from the collection
+        """
+        self._checkIndex(index)
+        discard = self._items.pop(index)
+
 
     def get(self, index):
-        """Returns the collectable by index"""
+        """Returns the collectable by index
+        """
         self._checkIndex(index)
         return self._items[index]
 
+
     def __getattribute__(self, index):
-        # return all private and protected ones first since we will not have
+        """
+        """
+        #return all private and protected ones first since we will not have
         # collectable's with _ (we should not have!)
         if index.startswith('_'):
             return object.__getattribute__(self, index)
@@ -385,15 +420,15 @@ class ParameterCollection(Collection):
     """Container of Parameters for a stateful object.
     """
 
-    def __init__(self, items=None, owner = None):
-        """Initialize the state variables of a derived class
-
-        :Parameters:
-          items : dict
-            dictionary of states
-        """
-        Collection.__init__(self, items, owner)
-
+#    def __init__(self, items=None, owner=None, name=None):
+#        """Initialize the state variables of a derived class
+#
+#        :Parameters:
+#          items : dict
+#            dictionary of states
+#        """
+#        Collection.__init__(self, items, owner, name)
+#
 
     def resetvalue(self, index, missingok=False):
         """Reset all parameters to default values"""
@@ -412,12 +447,17 @@ class StateCollection(Collection):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, items=None, owner = None):
+    def __init__(self, items=None, owner=None):
         """Initialize the state variables of a derived class
 
         :Parameters:
           items : dict
             dictionary of states
+          owner : Stateful
+            object which owns the collection
+          name : basestring
+            literal description. Usually just attribute name for the
+            collection, e.g. 'states'
         """
         Collection.__init__(self, items, owner)
 
@@ -425,21 +465,6 @@ class StateCollection(Collection):
         """List to contain sets of enabled states which were enabled
         temporarily.
         """
-
-    def __str__(self):
-        num = len(self._items)
-        res = "%d states:" % (num)
-        for i in xrange(min(num, 4)):
-            index = self._items.keys()[i]
-            res += " %s" % index
-            if self.isEnabled(index):
-                res += '+'          # it is enabled but no value is assigned yet
-            if self.isSet(index):
-                res += '*'          # so we have the value already
-
-        if len(self._items) > 4:
-            res += "..."
-        return res
 
     #
     # XXX TODO: figure out if there is a way to define proper
@@ -754,7 +779,10 @@ class Stateful(object):
         object.__setattr__(self, index, value)
 
     def __str__(self):
-        return "%s with %s" % (self.__class__.__name__, str(self.states)) # XXX
+        s = "%s:" % (self.__class__.__name__)
+        for colname,colvalues in self._collections.iteritems():
+            s += " %d %s:%s" %(len(colvalues.items), colname, str(colvalues))
+        return s
 
     def __repr__(self):
         return "<%s.%s#%d>" % (self.__class__.__module__, self.__class__.__name__, id(self))
