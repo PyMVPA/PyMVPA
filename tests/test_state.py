@@ -119,7 +119,7 @@ class StateTests(unittest.TestCase):
 
         # if documentary on the state is appropriate
         self.failUnlessEqual(proper2.states.listing,
-                             ['state1[enabled]: state1 doc',
+                             ['state1+: state1 doc',
                               'state2: state2 doc'])
 
         # if __str__ lists correct number of states
