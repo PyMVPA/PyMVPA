@@ -365,20 +365,21 @@ class Collection(object):
                 self._action(item, func, missingok=missingok, **kwargs)
         else:
             raise ValueError, \
-                  "Don't know how to handle state variable given by %s" % index
+                  "Don't know how to handle  variable given by %s" % index
 
-    # TODO: XXX StateCollection should use Collection.reset() but it seems that _action has to be refactored ...
     def reset(self, index=None):
         """Reset the state variable defined by `index`"""
-        raise NotImplementedError
+
         if not index is None:
             indexes = [ index ]
         else:
             indexes = self.names
 
-        # do for all
-        for index in indexes:
-            self._action(index, StateVariable.reset, missingok=False)
+        if len(self.items):
+            for index in indexes:
+                # XXX Check if that works as desired
+                self._action(index, self._items.values()[0].__class__.reset,
+                             missingok=False)
 
 
     def _getListing(self):
@@ -387,10 +388,7 @@ class Collection(object):
         # lets assure consistent litsting order
         items = self._items.items()
         items.sort()
-        return [ "%s%s: %s" % (x[0],
-                               {True:"[enabled]",
-                                False:""}[self.isEnabled(x[0])],
-                               x[1].__doc__) for x in items ]
+        return [ "%s: %s" % (str(x[1]), x[1].__doc__) for x in items ]
 
 
     def _getNames(self):
@@ -435,6 +433,7 @@ class ParameterCollection(Collection):
         """Reset all parameters to default values"""
         from param import Parameter
         self._action(index, Parameter.resetvalue, missingok=False)
+
 
     def isSet(self, index=None):
         if not index is None:
@@ -529,17 +528,6 @@ class StateCollection(Collection):
     def disable(self, index):
         """Disable state variable defined by `index` id"""
         self._action(index, StateVariable.enable, missingok=False, value=False)
-
-    def reset(self, index=None):
-        """Reset the state variable defined by `index`"""
-        if not index is None:
-            indexes = [ index ]
-        else:
-            indexes = self.names
-
-        # do for all
-        for index in indexes:
-            self._action(index, StateVariable.reset, missingok=False)
 
 
     # TODO XXX think about some more generic way to grab temporary
@@ -789,6 +777,10 @@ class Stateful(object):
                 return
         object.__setattr__(self, index, value)
 
+    # XXX not sure if we shouldn't implement anything else...
+    def reset(self):
+        for collection in self._collections.values():
+            collection.reset()
 
     def __str__(self):
         s = "%s:" % (self.__class__.__name__)
