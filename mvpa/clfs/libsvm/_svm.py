@@ -387,7 +387,12 @@ class SVMModel:
         if __debug__:
             debug('CLF_', 'Destroying libsvm.SVMModel %s' % (`self`))
 
-        svmc.svm_destroy_model(self.model)
+        try:
+            svmc.svm_destroy_model(self.model)
+        except:
+            # blind way to overcome problem of already deleted model and
+            # "SVMModel instance has no attribute 'model'" in  ignored
+            pass
 
 
     def getTotalNSV(self):
