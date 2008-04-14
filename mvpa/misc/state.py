@@ -14,11 +14,9 @@ It was devised to provide conditional storage
 __docformat__ = 'restructuredtext'
 
 import operator, copy
-from copy import deepcopy
 from sets import Set
 
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc import warning
 
 if __debug__:
     from mvpa.misc import debug
@@ -193,8 +191,10 @@ class StateCollection(object):
         """
         if not self.isKnown(index):
             raise KeyError, \
-                  "State of %s has no key '%s' registered" \
-                  % (self.__class__.__name__, index)
+                  "%s of %s has no key '%s' registered" \
+                  % (self.__class__.__name__,
+                     self.__owner.__class__.__name__,
+                     index)
 
 
     def isEnabled(self, index):
@@ -444,21 +444,28 @@ class Stateful(object):
 
     def __init__(self,
                  enable_states=None,
-                 disable_states=None):
+                 disable_states=None,
+                 descr=None):
 
         if enable_states == None:
             enable_states = []
         if disable_states == None:
             disable_states = []
 
-        object.__setattr__(self, '_states',
-                           copy.deepcopy( \
-                            object.__getattribute__(self,
-                                                    '_states_template')))
+        if not hasattr(self, '_states'):
+            # need to check to avoid override of enabled states in the case
+            # of multiple inheritance, like both Statefull and Harvestable
+            object.__setattr__(self, '_states',
+                               copy.deepcopy( \
+                                object.__getattribute__(self,
+                                                        '_states_template')))
 
-        self._states.owner = self
-        self._states.enable(enable_states, missingok=True)
-        self._states.disable(disable_states)
+            self._states.owner = self
+            self._states.enable(enable_states, missingok=True)
+            self._states.disable(disable_states)
+
+            self.__descr = descr
+
         # bad to have str(self) here since it is a base class and
         # some attributes most probably are not yet set in the original
         # child's __str__
@@ -466,8 +473,8 @@ class Stateful(object):
         #    debug("ST", "Stateful.__init__ done for %s" % self)
 
         if __debug__:
-            debug("ST", "Stateful.__init__ was done for %s id %s" \
-                % (self.__class__, id(self)))
+            debug("ST", "Stateful.__init__ was done for %s id %s with descr=%s" \
+                % (self.__class__, id(self), descr))
 
 
     def __getattribute__(self, index):
@@ -501,3 +508,137 @@ class Stateful(object):
     def __repr__(self):
         return "<%s.%s#%d>" % (self.__class__.__module__, self.__class__.__name__, id(self))
 
+    descr = property(lambda self: self.__descr,
+                     doc="Description of the object if any")
+
+class Harvestable(Stateful):
+    """Classes inherited from this class intend to collect attributes
+    within internal processing.
+
+    Subclassing Harvestable we gain ability to collect any internal
+    data from the processing which is especially important if an
+    object performs something in loop and discards some intermidiate
+    possibly interesting results (like in case of
+    CrossValidatedTransferError and states of the trained classifier
+    or TransferError).
+
+    """
+
+    harvested = StateVariable(enabled=False, doc=
+       """Store specified attributes of classifiers at each split""")
+
+    _KNOWN_COPY_METHODS = [ None, 'copy', 'deepcopy' ]
+
+    def __init__(self, attribs=None, copy_attribs='copy', **kwargs):
+        """Initialize state of harvestable
+
+        :Parameters:
+            attribs : list of basestr or dicts
+                What attributes of call to store and return within
+                harvested state variable. If an item is a dictionary,
+                following keys are used ['name', 'copy']
+            copy_attribs : None or basestr
+                Default copying. If None -- no copying, 'copy'
+                - shallow copying, 'deepcopy' -- deepcopying
+
+        """
+        Stateful.__init__(self, **kwargs)
+
+        self.__atribs = attribs
+        self.__copy_attribs = copy_attribs
+
+        self._setAttribs(attribs)
+
+    def _setAttribs(self, attribs):
+        """Set attributes to harvest
+
+        Each attribute in self.__attribs must have following fields
+         - name : functional (or arbitrary if 'obj' or 'attr' is set)
+                  description of the thing to harvest,
+                  e.g. 'transerror.clf.training_time'
+         - obj : name of the object to harvest from (if empty,
+                 'self' is assumed),
+                 e.g 'transerror'
+         - attr : attribute of 'obj' to harvest,
+                 e.g. 'clf.training_time'
+         - copy : None, 'copy' or 'deepcopy' - way to copy attribute
+        """
+        if attribs:
+            # force the state
+            self.states.enable('harvested')
+            self.__attribs = []
+            for i, attrib in enumerate(attribs):
+                if isinstance(attrib, dict):
+                    if not 'name' in attrib:
+                        raise ValueError, \
+                              "Harvestable: attribute must be a string or " + \
+                              "a dictionary with 'name'"
+                else:
+                    attrib = {'name': attrib}
+
+                # assign default method to copy
+                if not 'copy' in attrib:
+                    attrib['copy'] = self.__copy_attribs
+
+                # check copy method
+                if not attrib['copy'] in self._KNOWN_COPY_METHODS:
+                    raise ValueError, "Unknown method %s. Known are %s" % \
+                          (attrib['copy'], self._KNOWN_COPY_METHODS)
+
+                if not ('obj' in attrib or 'attr' in attrib):
+                    # Process the item to harvest
+                    # split into obj, attr. If obj is empty, then assume self
+                    split = attrib['name'].split('.', 1)
+                    if len(split)==1:
+                        obj, attr = split[0], None
+                    else:
+                        obj, attr = split
+                    attrib.update({'obj':obj, 'attr':attr})
+
+                if attrib['obj'] == '':
+                    attrib['obj'] = 'self'
+
+                # TODO: may be enabling of the states??
+
+                self.__attribs.append(attrib)     # place value back
+        else:
+            # just to make sure it is not None or 0
+            self.__attribs = []
+
+
+    def _harvest(self, vars):
+        """The harvesting function: must obtain dictionary of variables from the caller.
+
+        :Parameters:
+            vars : dict
+                Dictionary of available data. Most often locals() could be
+                passed as `vars`. Mention that desired to be harvested
+                private attributes better be bound locally to some variable
+
+        :Returns:
+            nothing
+        """
+
+        if not self.states.isEnabled('harvested') or len(self.__attribs)==0:
+            return
+
+        if not self.states.isSet('harvested'):
+            self.harvested = dict([(a['name'], []) for a in self.__attribs])
+
+        for attrib in self.__attribs:
+            attrv = vars[attrib['obj']]
+
+            # access particular attribute if needed
+            if not attrib['attr'] is None:
+                attrv = eval('attrv.%s' % attrib['attr'])
+
+            # copy the value if needed
+            attrv = {'copy':copy.copy,
+                     'deepcopy':copy.deepcopy,
+                     None:lambda x:x}[attrib['copy']](attrv)
+
+            self.harvested[attrib['name']].append(attrv)
+
+
+    harvest_attribs = property(fget=lambda self:self.__attribs,
+                               fset=_setAttribs)

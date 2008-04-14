@@ -39,8 +39,8 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     on a given `Dataset`.
     """
 
-    offsets = StateVariable(enabled=True,
-                            doc="Offsets of separating hyperplane")
+    biases = StateVariable(enabled=True,
+                           doc="Offsets of separating hyperplanes")
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -67,14 +67,14 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     def __libsvm(self, dataset, callables=[]):
         if self.clf.model.nr_class != 2:
             warning("You are estimating sensitivity for SVM %s trained on %d" %
-                    (`self.clf`, self.clf.model.nr_class) +
+                    (str(self.clf), self.clf.model.nr_class) +
                     " classes. Make sure that it is what you intended to do" )
 
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
         rhos = N.array(self.clf.model.getRho())
 
-        self.offsets = rhos
+        self.biases = rhos
         # XXX yoh: .mean() is effectively
         # averages across "sensitivities" of all paired classifiers (I
         # think). See more info on this topic in svm.py on how sv_coefs
@@ -84,15 +84,17 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # weighted impact of SVs on decision, then for each feature
         # take mean across SVs to get a single weight value
         # per feature
-        weights = (svcoef * svs).mean(axis=0).A1
+        weights = svcoef * svs
 
         if __debug__:
             debug('SVM',
-                  "Extracting weights for %d-class SVM: #SVs=%s, " %
-                  (self.clf.model.nr_class, `self.clf.model.getNSV()`) +
-                  " SVcoefshape=%s SVs.shape=%s Rhos=%s. Result: min=%f max=%f" %\
-                  (svcoef.shape, svs.shape, rhos, N.min(weights), N.max(weights)))
-        return weights
+                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
+                  (self.clf.model.nr_class, str(self.clf.model.getNSV())) + \
+                  " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
+                  (svcoef.shape, svs.shape, rhos) + \
+                  " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
+
+        return N.array(weights.T)
 
 
     def __sg_helper(self, svm):
@@ -130,13 +132,13 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
             return anal(dataset)
 
         svm = self.clf.svm
-        sens = 0
         if isinstance(svm, shogun.Classifier.MultiClassSVM):
+            sens = []
             for i in xrange(svm.get_num_svms()):
-                sens += self.__sg_helper(svm.get_svm(i))
+                sens.append(self.__sg_helper(svm.get_svm(i)))
         else:
-            sens = N.abs(self.__sg_helper(svm))
-        return sens
+            sens = self.__sg_helper(svm)
+        return N.array(sens)
 
 
     def _call(self, dataset, callables=[]):

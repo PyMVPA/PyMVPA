@@ -16,6 +16,9 @@ from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import ConfusionMatrix
 
+from mvpa.misc import debug
+debug.active.append('SMLR_')
+
 # features of sample data
 print "Generating samples..."
 nfeat = 10000
@@ -43,7 +46,7 @@ testpat = patternsPos + patternsNeg
 
 # set up the SMLR classifier
 print "Evaluating SMLR classifier..."
-smlr = SMLR(lm=1.5)
+smlr = SMLR(fit_all_weights=True)
 
 # enable saving of the values used for the prediction
 smlr.states.enable('values')
@@ -77,5 +80,29 @@ lsvm_confusion = ConfusionMatrix(
     labels=trainpat.uniquelabels, targets=testpat.labels,
     predictions=pre)
 
-print "SMLR Percent Correct:\t%g%%" % (smlr_confusion.percentCorrect)
-print "linear-SVM Percent Correct:\t%g%%" % (lsvm_confusion.percentCorrect)
+# now train SVM with selected features
+print "Evaluating Linear SVM classifier with SMLR's features..."
+
+keepInd = (N.abs(smlr.weights).mean(axis=1)!=0)
+newtrainpat = trainpat.selectFeatures(keepInd, sort=False)
+newtestpat = testpat.selectFeatures(keepInd, sort=False)
+
+# train with the known points
+lsvm.train(newtrainpat)
+
+# run the predictions on the test values
+pre = lsvm.predict(newtestpat.samples)
+
+# calculate the confusion matrix
+lsvm_confusion_sparse = ConfusionMatrix(
+    labels=newtrainpat.uniquelabels, targets=newtestpat.labels,
+    predictions=pre)
+
+
+print "SMLR Percent Correct:\t%g%% (Retained %d/%d features)" % \
+    (smlr_confusion.percentCorrect,
+     (smlr.weights!=0).sum(), N.prod(smlr.weights.shape))
+print "linear-SVM Percent Correct:\t%g%%" % \
+    (lsvm_confusion.percentCorrect)
+print "linear-SVM Percent Correct (with %d features from SMLR):\t%g%%" % \
+    (keepInd.sum(), lsvm_confusion_sparse.percentCorrect)

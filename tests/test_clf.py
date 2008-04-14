@@ -78,6 +78,10 @@ class ClassifiersTests(unittest.TestCase):
                               "predictions")
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
+
+        self.failUnlessRaises(UnknownStateError, clf.states.get,
+                              "trained_dataset")
+
         self.failUnlessEqual(clf.training_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
@@ -87,17 +91,45 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(len(clf.predictions), self.data_bin_1.nsamples,
             msg="Trained classifier stores predictions by default")
 
+        clf = SameSignClassifier(enable_states=['trained_dataset'])
+        clf.train(self.data_bin_1)
+        self.failUnless((clf.trained_dataset.samples ==
+                         self.data_bin_1.samples).all())
+        self.failUnless((clf.trained_dataset.labels ==
+                         self.data_bin_1.labels).all())
+
+
     def testBoosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
         bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
                                         deepcopy(self.clf_sign)])
+
         self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
                              list(self.data_bin_1.labels),
                              msg="Boosted classifier should work")
         self.failUnlessEqual(bclf.predict(self.data_bin_1.samples),
                              self.clf_sign.predict(self.data_bin_1.samples),
                              msg="Boosted classifier should have the same as regular")
+
+
+    def testBoostedStatePropagation(self):
+        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)],
+                                  enable_states=['feature_ids'])
+
+        # check states enabling propagation
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
+
+        bclf2 = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)],
+                                  propagate_states=False,
+                                  enable_states=['feature_ids'])
+
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(bclf2.clfs[0].states.isEnabled('feature_ids'), False)
+
 
 
     def testBinaryDecorator(self):
@@ -131,7 +163,8 @@ class ClassifiersTests(unittest.TestCase):
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                              splitter=NFoldSplitter(1))
+                splitter=NFoldSplitter(1),
+                enable_states=['training_confusions', 'feature_ids'])
         clf.train(ds)                   # train the beast
         self.failUnlessEqual(clf.training_confusions.percentCorrect,
                              100,
@@ -143,6 +176,34 @@ class ClassifiersTests(unittest.TestCase):
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
+
+        # feature_ids must be list of lists, and since it is not
+        # feature-selecting classifier used - we expect all features
+        # to be utilized
+        #  NOT ANYMORE -- for BoostedClassifier we have now union of all
+        #  used features across slave classifiers. That makes
+        #  semantics clear. If you need to get deeper -- use upcoming
+        #  harvesting facility ;-)
+        # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
+        # self.failUnless(N.array([len(ids)==ds.nfeatures
+        #                         for ids in clf.feature_ids]).all())
+
+    def testHarvesting(self):
+        """Basic testing of harvesting based on SplitClassifier
+        """
+        ds = self.data_bin_1
+        clf = SplitClassifier(clf=SameSignClassifier(),
+                splitter=NFoldSplitter(1),
+                enable_states=['training_confusions', 'feature_ids'],
+                harvest_attribs=['clf.feature_ids',
+                                 'clf.training_time'],
+                descr="DESCR")
+        clf.train(ds)                   # train the beast
+        # Number of harvested items should be equial to number of chunks
+        self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
+                             len(ds.uniquechunks))
+        # if we can blame multiple inheritance and Statefull.__init__
+        self.failUnlessEqual(clf.descr, "DESCR")
 
 
     def testMappedClassifier(self):
@@ -174,7 +235,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # corresponding feature selections
         feat_sel = SensitivityBasedFeatureSelection(sens_ana,
-            FixedNElementTailSelector(1))
+            FixedNElementTailSelector(1, mode='discard'))
 
         feat_sel_rev = SensitivityBasedFeatureSelection(sens_ana_rev,
             FixedNElementTailSelector(1))
@@ -190,9 +251,13 @@ class ClassifiersTests(unittest.TestCase):
         res011 = [-1, 1, -1, 1, -1]
 
         # first classifier -- 0th feature should be discarded
-        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel)
+        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel,
+                    enable_states=['feature_ids'])
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
+
+        self.failUnlessEqual(len(clf011.feature_ids), 2)
+        "Feature selection classifier had to be trained on 2 features"
 
         # first classifier -- last feature should be discarded
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel_rev)
@@ -242,6 +307,22 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfs['all'])
+    def testGenericTests(self, clf):
+        """Test all classifiers for conformant behavior
+        """
+        for traindata in [dumbFeatureDataset()]:
+
+            traindata_copy = deepcopy(traindata) # full copy of dataset
+            clf.train(traindata)
+            self.failUnless((traindata.samples == traindata_copy.samples).all(),
+                "Training of a classifier shouldn't change original dataset")
+
+            # TODO: enforce uniform return from predict??
+            #predicted = clf.predict(traindata.samples)
+            #self.failUnless(isinstance(predicted, N.ndarray))
+
+
+    @sweepargs(clf=clfs['all'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
@@ -280,4 +361,4 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner

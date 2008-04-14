@@ -68,7 +68,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp
+	-@rm build-stamp apidoc-stamp website-stamp
 
 
 debian-clean:
@@ -92,10 +92,10 @@ htmlmanual: mkdir-HTML_DIR
 	cp -r -t $(HTML_DIR) doc/misc/*.css doc/misc/pics
 
 htmldevguide: mkdir-HTML_DIR
-	$(rst2html) doc/devguide.txt $(HTML_DIR)/devguide.html
+	cat doc/devguide.txt TODO | $(rst2html) > $(HTML_DIR)/devguide.html
 
 pdfmanual: mkdir-PDF_DIR
-	cat doc/manual.txt Changelog | $(rst2latex) > $(PDF_DIR)/manual.tex
+	cat doc/manual.txt Changelog TODO | $(rst2latex) > $(PDF_DIR)/manual.tex
 	-cp -r doc/misc/pics $(PDF_DIR)
 	# need to run twice to get cross-refs right
 	cd $(PDF_DIR) && pdflatex manual.tex && pdflatex manual.tex
@@ -113,22 +113,24 @@ apidoc-stamp: build
 # developer machine, because it is only necessary for the arch-all package,
 # but e.g. dpkg-buildpackage runs the indep target anyway -- not sure about
 # the buildds, though.
-#apidoc-stamp: $(PROFILE_FILE)
+#apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
 	epydoc --config doc/api/epydoc.conf
 	touch $@
 
-website: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
+website: website-stamp
+website-stamp: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
          htmldevguide printables apidoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
+	touch $@
 
 upload-website: website
 	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
 
 
 # this takes some minutes !!
-$(PROFILE_FILE): build tests/main.py
+profile: build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
 test-%: build
@@ -183,4 +185,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual
+.PHONY: fetch-data orig-src pylint apidoc doc manual profile website

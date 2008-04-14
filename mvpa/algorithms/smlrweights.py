@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+""" """
 
 __docformat__ = 'restructuredtext'
 
@@ -26,9 +26,8 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
     on a given `Dataset`.
     """
 
-    # SMLR has no such one right?
-    #offsets = StateVariable(enabled=True,
-    #                        doc="Offsets of separating hyperplane")
+    biases = StateVariable(enabled=True,
+                           doc="A 1-d ndarray of biases")
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -50,17 +49,20 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
     def _call(self, dataset):
         """Extract weights from Linear SVM classifier.
         """
-        if self.clf.w.shape[1] != 1:
-            warning("You are estimating sensitivity for SVM %s trained on %d" %
-                    (`self.clf`, self.clf.w.shape[1]+1) +
+        if self.clf.weights.shape[1] != 1:
+            warning("You are estimating sensitivity for SMLR %s trained on %d" %
+                    (`self.clf`, self.clf.weights.shape[1]+1) +
                     " classes. Make sure that it is what you intended to do" )
 
-        weights = N.mean(self.clf.w, axis=1)
+        weights = self.clf.weights
+
+        if self.clf.has_bias:
+            self.biases = self.clf.biases
 
         if __debug__:
             debug('SVM',
                   "Extracting weights for %d-class SMLR" %
-                  (self.clf.w.shape[1]+1) +
+                  (self.clf.weights.shape[1]+1) +
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 

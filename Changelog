@@ -19,6 +19,19 @@ Unreleased changes
   repository.
 
   * New Splitter class (HalfSplitter) to split into first and second half.
+  * New sparse multinomial logistic regression (SMLR) classifier and
+    associated sensitivity analyzer.
+  * Initial documentation on extending PyMVPA.
+  * New example comparing the performance of all classifiers on some
+    artificial datasets.
+  * More sophisticated data preprocessing: removal of non-linear trends and
+    other arbitrary confounding regressors.
+  * New `Harvester` class to feed data from arbitrary generators into multiple
+    objects and store results of returned values and arbitrary properties.
+  * Added documentation about how to build patched libsvm version with sane
+    debug output.
+  * Important bugfix in RFE, which reported incorrect feature ids in some
+    cases.
 
 
 Releases
