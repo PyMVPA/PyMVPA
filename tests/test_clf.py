@@ -305,6 +305,24 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
+    @sweepargs(clf=clfs['SVMC'])
+    def testSVMs(self, clf):
+        knows_probabilities = 'probabilities' in clf.states.names
+        enable_states = ['values']
+        if knows_probabilities: enable_states += ['probabilities']
+
+        clf.states._changeTemporarily(enable_states = enable_states)
+        testdata = normalFeatureDataset(nlabels=2)
+        for traindata in [normalFeatureDataset(nlabels=2)]:
+            clf.train(traindata)
+            predicts = clf.predict(testdata.samples)
+            # values should be different from predictions for SVMs we have
+            self.failUnless( (predicts != clf.values).any() )
+
+            if knows_probabilities and clf.states.isSet('probabilities'):
+                # XXX test more thoroughly what we are getting here ;-)
+                self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
+        clf.states._resetEnabledTemporarily()
 
     @sweepargs(clf=clfs['all'])
     def testGenericTests(self, clf):
