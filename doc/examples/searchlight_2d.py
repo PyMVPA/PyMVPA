@@ -43,7 +43,7 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
 #
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, type='linear')
+detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'house' and 'scrambled' samples from dataset
 dataset = dataset.selectSamples(

@@ -12,6 +12,7 @@ disk."""
 __docformat__ = 'restructuredtext'
 
 import copy
+from sets import Set
 
 from mvpa.misc import warning
 
@@ -132,10 +133,12 @@ class ColumnData(dict):
 
         file_ = open(filename, 'r')
 
+        self._header_order = None
         # make column names, either take header or generate
         if header == True:
             # read first line and split by 'sep'
             hdr = file_.readline().split(sep)
+            self._header_order = hdr
         elif isinstance(header, list):
             hdr = header
         else:
@@ -239,7 +242,13 @@ class ColumnData(dict):
 
         # write header
         if header_order == None:
-            col_hdr = self.keys()
+            if self._header_order is None:
+                col_hdr = self.keys()
+            else:
+                # use stored order + newly added keys at the last columns
+                col_hdr = self._header_order + \
+                          list(Set(self.keys()).difference(
+                                                Set(self._header_order)))
         else:
             if not len(header_order) == self.getNColumns():
                 raise ValueError, 'Header list does not match number of ' \
@@ -361,3 +370,30 @@ class SampleAttributes(ColumnData):
 
     nsamples = property(fget=getNSamples)
 
+
+
+class McFlirtParams(ColumnData):
+    """Read and write McFlirt's motion estimation parameters from and to text
+    files.
+    """
+    header_def = ['rot1', 'rot2', 'rot3', 'x', 'y', 'z']
+
+    def __init__(self, source):
+        """
+        :Parameter:
+
+            source: str
+                Filename of a parameter file.
+        """
+        ColumnData.__init__(self, source,
+                            header=McFlirtParams.header_def,
+                            sep=None, dtype=float)
+
+
+    def tofile(self, filename):
+        """Write motion parameters to file.
+        """
+        ColumnData.tofile(self, filename,
+                          header=False,
+                          header_order=McFlirtParams.header_def,
+                          sep=' ')

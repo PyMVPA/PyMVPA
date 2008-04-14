@@ -13,14 +13,14 @@ __docformat__ = 'restructuredtext'
 
 from cmath import sqrt
 import numpy as N
-
+from scipy import trapz
+from scipy.stats import pearsonr
 
 class ErrorFunctionBase(object):
     """
     Dummy error function base class
     """
     pass
-
 
 
 class ErrorFunction(ErrorFunctionBase):
@@ -32,7 +32,6 @@ class ErrorFunction(ErrorFunctionBase):
         values (both sequences).
         """
         raise NotImplemented
-
 
 
 class RMSErrorFx(ErrorFunction):
@@ -48,7 +47,6 @@ class RMSErrorFx(ErrorFunction):
         return sqrt(N.dot(difference, difference))
 
 
-
 class MeanMismatchErrorFx(ErrorFunction):
     """Computes the percentage of mismatches between some desired and some
     predicted values.
@@ -60,5 +58,32 @@ class MeanMismatchErrorFx(ErrorFunction):
         return 1 - N.mean( predicted == desired )
 
 
+class AUCErrorFx(ErrorFunction):
+    """Computes the area under the ROC for the given the 
+    desired and predicted to make the prediction."""
+    def __call__(self, predicted, desired):
+        """Requires all arguments."""
+        # sort the desired in descending order based on the predicted and
+        # set to boolean
+        t = desired[N.argsort(predicted)[::-1]] > 0
+        
+        # calculate the true positives
+        tp = N.concatenate(([0],
+                            N.cumsum(t)/t.sum(dtype=N.float),
+                            [1]))
 
+        # calculate the false positives
+        fp = N.concatenate(([0],
+                            N.cumsum(~t)/(~t).sum(dtype=N.float),
+                            [1]))
+
+        return trapz(tp,fp)
+
+        
+class CorrErrorFx(ErrorFunction):
+    """Computes the correlation between the desired and the predicted
+    values."""
+    def __call__(self, predicted, desired):
+        """Requires all arguments."""
+        return pearsonr(predicted, desired)[0]
 

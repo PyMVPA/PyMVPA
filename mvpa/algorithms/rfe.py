@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.clfs.transerror import ClassifierError
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     BestDetector, \
                                     NBackHistoryStopCrit, \
@@ -55,7 +57,7 @@ class RFE(FeatureSelection):
                  feature_selector=FractionTailSelector(0.05),
                  bestdetector=BestDetector(),
                  stopping_criterion=NBackHistoryStopCrit(BestDetector()),
-                 train_clf=True,
+                 train_clf=None,
                  update_sensitivity=True,
                  **kargs
                  ):
@@ -86,7 +88,9 @@ class RFE(FeatureSelection):
                 trained before computing the error. In general this is
                 required, but if the `sensitivity_analyzer` and
                 `transfer_error` share and make use of the same classifier it
-                can be switched off to save CPU cycles.
+                can be switched off to save CPU cycles. Default `None` checks
+                if sensitivity_analyzer is based on a classifier and doesn't train
+                if so.
             update_sensitivity : bool
                 If False the sensitivity map is only computed once and reused
                 for each iteration. Otherwise the senstitivities are
@@ -109,15 +113,21 @@ class RFE(FeatureSelection):
 
         self.__bestdetector = bestdetector
 
-        self.__train_clf = train_clf
-        """Flag whether training classifier is required."""
+        if train_clf is None:
+            self.__train_clf = isinstance(sensitivity_analyzer,
+                                          ClassifierBasedSensitivityAnalyzer)
+        else:
+            self.__train_clf = train_clf
+            """Flag whether training classifier is required."""
 
         self.__update_sensitivity = update_sensitivity
         """Flag whether sensitivity map is recomputed for each step."""
 
         # force clf training when sensitivities are not updated as otherwise
         # shared classifiers are not retrained
-        if not self.__update_sensitivity and not self.__train_clf:
+        if not self.__update_sensitivity \
+               and isinstance(self.__transfer_error, ClassifierError) \
+               and not self.__train_clf:
             if __debug__:
                 debug("RFEC", "Forcing training of classifier since " +
                       "sensitivities aren't updated at each step")
@@ -185,6 +195,11 @@ class RFE(FeatureSelection):
         selected_ids = result_selected_ids
 
         while wdataset.nfeatures > 0:
+
+            if __debug__:
+                debug('RFEC',
+                      "Step %d: nfeatures=%d" % (step, wdataset.nfeatures))
+
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
             # only mark on removed features at each step
@@ -219,7 +234,7 @@ class RFE(FeatureSelection):
             # store result
             if isthebest:
                 results = (wdataset, wtestdataset)
-                result_selected_ids = selected_ids
+                result_selected_ids = orig_feature_ids
 
             # stop if it is time to finish
             if nfeatures == 1 or stop:
@@ -230,10 +245,13 @@ class RFE(FeatureSelection):
 
             if __debug__:
                 debug('RFEC',
-                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d " \
+                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d "
                       "nfeatures_selected=%d" %
                       (step, nfeatures, error, isthebest, stop,
                        len(selected_ids)))
+                debug('RFEC_',
+                      "Sensitivity: %s, selected_ids: %s" %
+                      (sensitivity, selected_ids))
 
 
             # Create a dataset only with selected features
@@ -258,7 +276,7 @@ class RFE(FeatureSelection):
 
             # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
             selected_ids.sort()
-            if self.states.isEnabled("history"):
+            if self.states.isEnabled("history") or self.states.isEnabled('selected_ids'):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
 

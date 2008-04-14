@@ -23,16 +23,19 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 			int ac_rows, double ac[ac_rows],
 			int lm_2_ac_rows, double lm_2_ac[lm_2_ac_rows],
 			int S_rows, double S[S_rows],
+			int M,
 			int maxiter,
 			double convergence_tol,
-			int verbose)
+			float resamp_decay,
+			float min_resamp,
+			int verbose,
+			long long int seed)
 {
   // initialize the iterative optimization
   double incr = DBL_MAX;
   long non_zero = 0;
-  double wasted_basis = 0;
-  float decrease_factor = 1.0;
-  float test_zero_basis = 1.0;
+  long wasted_basis = 0;
+  long needed_basis = 0;
   int changed = 0;
 
   // for calculating stepwise changes
@@ -47,34 +50,62 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
   // get the num features and num classes
   int nd = w_rows;
-  int M = w_cols+1;
   int ns = E_rows;
 
-  // initialize random seed
-  srand ( time(NULL) );
+  // loop indexes
+  int i = 0;
 
+  // prob of resample each weight
+  // allocate everything in heap -- not on stack
+  float** p_resamp = (float **)calloc(w_rows, sizeof(float*));
+
+  for (i=0; i<w_rows; i++)
+    p_resamp[i] = (float*)calloc(w_cols, sizeof(float));
+
+  // initialize random seed
+  if (seed == 0)
+    seed = (long long int)time(NULL);
+
+  if (verbose)
+  {
+    fprintf(stdout, "SMLR: random seed=%lld\n", seed);
+    fflush(stdout);
+  }
+
+  srand (seed);
 
   // loop over cycles
   long cycle = 0;
   int basis = 0;
   int m = 0;
-  int i = 0;
+  float rval = 0;
+  i = 0;
   for (cycle=0; cycle<maxiter; cycle++)
   {
     // zero out the diffs for assessing change
     sum2_w_diff = 0.0;
     sum2_w_old = 0.0;
+    wasted_basis = 0;
+    if (cycle==1)
+      needed_basis = 0;
 
     // update each weight
     for (basis=0; basis<nd; basis++)
     {
-      for (m=0; m<M-1; m++)
+      for (m=0; m<w_cols; m++)
       {
 	// get the starting weight
 	w_old = w[basis][m];
 
+	// set the p_resamp if it's the first cycle
+	if (cycle == 0)
+	{
+	  p_resamp[basis][m] = 1.0;
+	}
+
 	// see if we're gonna update
-	if ((w_old != 0) || (((double)rand())/((double)RAND_MAX) < test_zero_basis))
+	rval = (float)rand()/(float)RAND_MAX;
+	if ((w_old != 0) || (rval < p_resamp[basis][m]))
 	{
 	  // calc the probability
 	  XdotP = 0.0;
@@ -100,6 +131,12 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	    if (w_old == 0.0)
 	    {
 	      non_zero += 1;
+
+	      // reset the p_resample
+	      p_resamp[basis][m] = 1.0;
+
+	      // we needed the basis
+	      needed_basis += 1;
 	    }
 	  }
 	  else if (w_new < -lm_2_ac[basis])
@@ -112,6 +149,12 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	    if (w_old == 0.0)
 	    {
 	      non_zero += 1;
+
+	      // reset the p_resample
+	      p_resamp[basis][m] = 1.0;
+
+	      // we needed the basis
+	      needed_basis += 1;
 	    }
 
 	  }
@@ -119,6 +162,9 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	  {
 	    // gonna zero it out
 	    w_new = 0.0;
+
+	    // decrease the p_resamp
+	    p_resamp[basis][m] -= (p_resamp[basis][m] - min_resamp) * resamp_decay;
 
 	    // set the number of non-zero
 	    if (w_old == 0.0)
@@ -155,10 +201,12 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	    // update the weight
 	    w[basis][m] = w_new;
 
-	    // keep track of the sqrt sum squared distances
+	    // keep track of the sqrt sum squared diffs
 	    sum2_w_diff += w_diff*w_diff;
-	    sum2_w_old += w_old*w_old;
 	  }
+
+	  // no matter what we keep track of the old
+	  sum2_w_old += w_old*w_old;
 	}
       }
     }
@@ -168,8 +216,8 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
     if (verbose)
     {
-      fprintf(stdout, "cycle=%ld ; incr=%g ; non_zero=%ld ; sum2_w_old=%g\n",
-	      cycle, incr, non_zero, sum2_w_old);
+      fprintf(stdout, "SMLR: cycle=%ld ; incr=%g ; non_zero=%ld ; wasted_basis=%ld ; needed_basis=%ld ; sum2_w_old=%g ; sum2_w_diff=%g\n",
+	      cycle, incr, non_zero, wasted_basis, needed_basis, sum2_w_old, sum2_w_diff);
       fflush(stdout);
     }
 
@@ -178,15 +226,16 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
       // we converged!!!
       break;
     }
-
-    // update the zero test factors
-    decrease_factor *= non_zero/((M-1)*nd);
-    test_zero_basis *= decrease_factor;
-
   }
 
   // finished updating weights
   // assess convergence
+
+  // free up used heap
+  for (i=0; i<w_rows; i++)
+    free(p_resamp[i]);
+
+  free(p_resamp);
 
   return cycle;
 }

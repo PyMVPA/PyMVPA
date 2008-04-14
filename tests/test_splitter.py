@@ -107,6 +107,7 @@ class SplitterTests(unittest.TestCase):
 
 
         # test sampling tools
+        # specified value
         nos = NoneSplitter(nrunspersplit=3,
                            nsecondsamples=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
@@ -116,6 +117,17 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 40)
             self.failUnless(split[1].samplesperlabel.values() == [10,10,10,10])
+
+        # auto-determined
+        nos = NoneSplitter(nrunspersplit=3,
+                           nsecondsamples='auto')
+        splits = [ (train, test) for (train, test) in nos(self.data) ]
+
+        self.failUnless(len(splits) == 3)
+        for split in splits:
+            self.failUnless(split[0] == None)
+            self.failUnless(split[1].nsamples == 100)
+            self.failUnless(split[1].samplesperlabel.values() == [25,25,25,25])
 
 
     def testLabelSplitter(self):
@@ -129,11 +141,10 @@ class SplitterTests(unittest.TestCase):
         self.failUnless((splits[1][1].uniquelabels == [0,2]).all())
 
 
-
 def suite():
     return unittest.makeSuite(SplitterTests)
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

@@ -51,7 +51,15 @@ indent-string='    '
 max-branchs = 20
 
 # some base class constructors have quite a few arguments
-max-args = 12
+max-args = 14
+
+# and due to Stateful and state variables classes by default have lots
+# of attributes
+max-attributes = 14
+
+# some sci computation can't be handled efficiently without having
+#lots of locals
+max-locals = 35
 
 [MESSAGES CONTROL]
 # Disable the following PyLint messages:

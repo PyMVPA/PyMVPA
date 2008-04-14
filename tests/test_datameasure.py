@@ -65,7 +65,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         sana = selectAnalyzer(
             SplitClassifier(clf=clf,
-                            enable_states=['training_confusion']),
+                            enable_states=['training_confusion',
+                                           'training_confusions']),
             enable_states=["sensitivities"] )
         # and lets look at all sensitivities
 
@@ -81,7 +82,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                             (conf_matrix.percentCorrect,
                              len(self.dataset.uniquelabels)))
 
-        errors = [x.percentCorrect 
+        errors = [x.percentCorrect
                     for x in sana.clf.training_confusions.matrices]
 
         self.failUnless(N.min(errors) != N.max(errors),
@@ -112,6 +113,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # a concern
         svmnl = clfs['NonLinearSVMC'][0]
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
+
+
+    # TODO -- unittests for sensitivity analyzers which use combiners
+    # (linsvmweights for multi-class SVMs and smlrweights for SMLR)
 
 
     @sweepargs(basic_clf=clfs['clfs_with_sens'])
@@ -148,5 +153,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

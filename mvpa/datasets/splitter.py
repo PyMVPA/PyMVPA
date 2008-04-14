@@ -182,7 +182,7 @@ class Splitter(object):
             # determine number number of patterns per class
             if samplesize == 'auto':
                 samplesize = \
-                   N.array(dataset.samplesperlabel).min()
+                   N.array(dataset.samplesperlabel.values()).min()
 
             # finally select the patterns
             samples = dataset.getRandomSamples(samplesize)
