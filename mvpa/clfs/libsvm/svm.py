@@ -141,7 +141,7 @@ class SVMBase(Classifier):
         if C<0 and it is C-SVM, so we could scale 'default' C value"""
 
 
-    def __str__(self):
+    def __repr__(self):
         """Definition of the object summary over the object
         """
         res = "SVMBase("

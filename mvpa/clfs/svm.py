@@ -10,23 +10,19 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+# By default for now we want simply to import all SVMs from libsvm
+from libsvm.svm import *
 
-from mvpa.misc.param import Parameter
-from mvpa.misc import warning
-
-# If we want simply to import all SVMs from libsvm
-# from libsvm.svm import *
-
-try:
-    from sg.svm import *
-
-    # Nu-SVMs are not provided by SG thus reverting to libsvm-wrappers
-    from libsvm.svm import LinearNuSVMC, RbfNuSVMC
-
-    # Or just bind them to C-SVMs ;)
-    #LinearNuSVMC = LinearCSVMC
-    #RbfNuSVMC = RbfCSVMC
-except:
-    warning("Cannot import shogun libraries. Reverting back to LibSVM wrappers")
-    from libsvm.svm import *
+#try:
+#    from sg.svm import *
+#
+#    # Nu-SVMs are not provided by SG thus reverting to libsvm-wrappers
+#    from libsvm.svm import LinearNuSVMC, RbfNuSVMC
+#
+#    # Or just bind them to C-SVMs ;)
+#    #LinearNuSVMC = LinearCSVMC
+#    #RbfNuSVMC = RbfCSVMC
+#except:
+#    from mvpa.misc import warning
+#    warning("Cannot import shogun libraries. Reverting back to LibSVM wrappers")
+#    from libsvm.svm import *
