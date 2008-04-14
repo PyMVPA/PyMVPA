@@ -14,6 +14,7 @@ import numpy as N
 
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
+from mvpa.misc.state import StateVariable
 from mvpa.clfs.classifier import Classifier
 import _svm as svm
 
@@ -37,6 +38,12 @@ class SVMBase(Classifier):
     params['eps'] = Parameter(0.00001,
                               min=0,
                               descr='tolerance of termination criterium')
+
+
+    # Since this is internal feature of LibSVM, this state variable is present
+    # here
+    probabilities = StateVariable(enabled=False,
+        doc="Estimates of samples probabilities as provided by LibSVM")
 
 
     def __init__(self,
@@ -201,15 +208,44 @@ class SVMBase(Classifier):
         else:
             src = data.astype('double')
 
-        predictions = [ self.model.predict( p ) for p in src ]
-        self.predictions = predictions
+        predictions = [ self.model.predict(p) for p in src ]
+
         if self.states.isEnabled("values"):
+            if len(self.trained_labels) > 2:
+                warning("'Values' for multiclass SVM classifier are ambiguous. You " +
+                        "are adviced to wrap your classifier with " +
+                        "MulticlassClassifier for explicit handling of  " +
+                        "separate binary classifiers and corresponding " +
+                        "'values'")
+            # XXX We do duplicate work. model.predict calls predictValuesRaw
+            # internally and then does voting or thresholding. So if speed becomes
+            # a factor we might want to move out logic from libsvm over here to base
+            # predictions on obtined values, or adjust libsvm to spit out values from
+            # predict() as well
+            #
+            #try:
+            values = [ self.model.predictValuesRaw(p) for p in src ]
+            if len(values)>0 and len(self.trained_labels) == 2:
+                if __debug__:
+                    debug("SVM","Forcing values to be ndarray and reshaping " +
+                          "them to be 1D vector")
+                values = N.array(values).reshape(len(values))
+            self.values = values
+            # XXX we should probably do the same as shogun for
+            # multiclass -- just spit out warning without
+            # providing actual values 'per pair' or whatever internal multiclass
+            # implementation it was
+            #except TypeError:
+            #    warning("Current SVM doesn't support probability estimation," +
+            #            " thus no 'values' state")
+
+        if self.states.isEnabled("probabilities"):
+            self.probabilities = [ self.model.predictProbability(p) for p in src ]
             try:
-                values = [ self.model.predictProbability( p ) for p in src ]
-                self.values = values
+                self.probabilities = [ self.model.predictProbability(p) for p in src ]
             except TypeError:
-                warning("Current SVM doesn't support probability estimation," +
-                        " thus no 'values' state")
+                warning("Current SVM %s doesn't support probability estimation," %
+                        self + " thus no 'values' state")
         return predictions
 
     def untrain(self):
