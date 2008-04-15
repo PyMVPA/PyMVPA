@@ -20,7 +20,7 @@ numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 # Version scheme is: major.minor.patch<suffix>
 
 # define the extension modules
-svmc_ext = Extension(
+libsvmc_ext = Extension(
     'mvpa.clfs.libsvm.svmc',
     sources = [ 'mvpa/clfs/libsvm/svmc.i' ],
     include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
@@ -36,6 +36,11 @@ smlrc_ext = Extension(
     libraries = ['m'],
     # extra_compile_args = ['-O0'],
     language = 'c')
+
+ext_modules = [smlrc_ext]
+
+if 'PYMVPA_LIBSVM' in os.environ.keys():
+    ext_modules.append(libsvmc_ext)
 
 # define the setup
 setup(name       = 'pymvpa',
@@ -56,8 +61,10 @@ nothing but free-software to run.""",
                        'mvpa.datasets',
                        'mvpa.clfs',
                        'mvpa.clfs.libsvm',
+                       'mvpa.clfs.libsmlr',
                        'mvpa.algorithms',
                        'mvpa.misc',
                        'mvpa.misc.fsl' ],
-      ext_modules  = [ svmc_ext, smlrc_ext]
+      ext_modules  = ext_modules
       )
+
