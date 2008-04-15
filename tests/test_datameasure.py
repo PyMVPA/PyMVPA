@@ -21,7 +21,7 @@ from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.datameasure import *
+from mvpa.algorithms.datameasure import selectAnalyzer
 from mvpa.algorithms.rfe import RFE
 
 from mvpa.misc.transformers import Absolute
