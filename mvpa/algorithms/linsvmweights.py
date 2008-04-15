@@ -12,14 +12,27 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.clfs.svm import LinearSVM
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer, \
+     selectAnalyzer
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
+# Import libsvm SVM implementation
+import mvpa.clfs.libsvm.svm as svm_libsvm
+
+try:
+    import mvpa.clfs.sg.svm as svm_sg
+    import shogun.Classifier
+
+    __sg_present = True
+except ImportError:
+    # no shogun library is available, thus no sensitivity could be even checked
+    # for
+    __sg_present = False
 
 if __debug__:
     from mvpa.misc import debug
+
 
 class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
     """`SensitivityAnalyzer` that reports the weights of a linear SVM trained
@@ -37,22 +50,26 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
             classifier to use. Only classifiers sub-classed from
             `LinearSVM` may be used.
         """
-        if not isinstance(clf, LinearSVM):
-            raise ValueError, \
-                  "Classifier %s has to be a LinearSVM, but is [%s]" \
-                              % (str(clf), str(type(clf)))
-
         # init base classes first
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
+        # poor man dispatch table
+        if isinstance(clf, svm_libsvm.LinearSVM):
+            self.__sens = self.__libsvm
+        elif isinstance(clf, svm_sg.SVM_SG_Modular):
+            self.__sens = self.__sg
+        else:
+            raise ValueError, "Don't know how to compute Linear SVM " + \
+                  "sensitivity for clf %s of type %s." % \
+                  (`clf`, `type(clf)`)
 
-    def _call(self, dataset):
-        """Extract weights from Linear SVM classifier.
-        """
+
+    def __libsvm(self, dataset, callables=[]):
         if self.clf.model.nr_class != 2:
             warning("You are estimating sensitivity for SVM %s trained on %d" %
                     (str(self.clf), self.clf.model.nr_class) +
                     " classes. Make sure that it is what you intended to do" )
+
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
         rhos = N.array(self.clf.model.getRho())
@@ -79,3 +96,52 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
 
         return N.array(weights.T)
 
+
+    def __sg_helper(self, svm):
+        """Helper function to compute sensitivity for a single given SVM"""
+        self.offsets = svm.get_bias()
+        svcoef = N.matrix(svm.get_alphas())
+        svnums = svm.get_support_vectors()
+        svs = self.clf.traindataset.samples[svnums,:]
+        res = (svcoef * svs).mean(axis=0).A1
+        return res
+
+
+    def __sg(self, dataset, callables=[]):
+        #from IPython.Shell import IPShellEmbed
+        #ipshell = IPShellEmbed()
+        #ipshell()
+        #12: self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_bias()
+        #19: alphas=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_alphas()
+        #20: svs=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_support_vectors()
+
+        # TODO: since multiclass is done internally - we need to check
+        # here if self.clf.__mclf is not an instance of some out
+        # Classifier and apply corresponding combiner of
+        # sensitivities... think about it more... damn
+
+        # XXX Hm... it might make sense to unify access functions
+        # naming across our swig libsvm wrapper and sg access
+        # functions for svm
+
+        if not self.clf.mclf is None:
+            anal = selectAnalyzer(self.clf.mclf, basic_analyzer=self)
+            if __debug__:
+                debug('SVM',
+                      '! Delegating computing sensitivity to %s' % `anal`)
+            return anal(dataset)
+
+        svm = self.clf.svm
+        if isinstance(svm, shogun.Classifier.MultiClassSVM):
+            sens = []
+            for i in xrange(svm.get_num_svms()):
+                sens.append(self.__sg_helper(svm.get_svm(i)))
+        else:
+            sens = self.__sg_helper(svm)
+        return N.array(sens)
+
+
+    def _call(self, dataset, callables=[]):
+        """Extract weights from Linear SVM classifier.
+        """
+        return self.__sens(dataset, callables)

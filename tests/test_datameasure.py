@@ -17,10 +17,14 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector, \
                                     FeatureSelectionPipeline, \
                                     FractionTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
+
 from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
+from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.datameasure import *
 from mvpa.algorithms.rfe import RFE
+
+from mvpa.misc.transformers import Absolute
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -88,9 +92,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # lets go through all sensitivities and see if we selected the right
         # features
         for map__ in [map_] + sana.combined_analyzer.sensitivities:
+            selected = FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)
             self.failUnlessEqual(
-                list(FixedNElementTailSelector(
-                        self.nfeatures - len(self.nonbogus))(map__)),
+                list(selected),
                 list(self.nonbogus),
                 msg="At the end we should have selected the right features")
 
@@ -100,7 +104,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( clf=svm,
                                enable_states=["sensitivities"] )
-                               # and lets look at all sensitivities
+
+        # and lets look at all sensitivities
         dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
         map_ = sana(dataset)
 
@@ -148,5 +153,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 
