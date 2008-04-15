@@ -23,7 +23,7 @@ import copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
-from mvpa.clfs.svm import LinearSVM
+from mvpa.clfs import sg, libsvm
 from mvpa.clfs.smlr import SMLR
 from mvpa.misc.transformers import Absolute, FirstAxisMean, \
      SecondAxisSumOfAbs
@@ -316,7 +316,7 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
     advanced/controlled computation assign them explicitely
     """
     banalyzer = None
-    if isinstance(clf, LinearSVM):
+    if isinstance(clf, libsvm.svm.LinearSVM) or isinstance(clf, sg.svm.LinearSVM):
         from linsvmweights import LinearSVMWeights
         banalyzer = LinearSVMWeights(clf, transformer=Absolute, **kwargs)
     elif isinstance(clf, SMLR):

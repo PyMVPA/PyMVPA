@@ -12,14 +12,21 @@ __docformat__ = 'restructuredtext'
 
 
 # Define sets of classifiers
-from mvpa.clfs.svm import *
+from mvpa.clfs import libsvm, sg
+import mvpa.clfs.libsvm.svm
+import mvpa.clfs.sg.svm
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.ridge import *
 from mvpa.clfs.knn import *
 
-clfs={'LinearSVMC' : [LinearCSVMC(), LinearNuSVMC()],
-      'NonLinearSVMC' : [RbfCSVMC(), RbfNuSVMC()],
+
+clfs={'LinearSVMC' : [libsvm.svm.LinearCSVMC(probability=1),
+                      libsvm.svm.LinearNuSVMC(probability=1), sg.svm.LinearCSVMC()],
+      'NonLinearSVMC' : [libsvm.svm.RbfCSVMC(probability=1),
+                         libsvm.svm.RbfNuSVMC(probability=1), sg.svm.RbfCSVMC()]
       }
+
+clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
 
 clfs['LinearC'] = clfs['LinearSVMC'] + \
                   [ SMLR(implementation="Python"), SMLR(implementation="C") ]
