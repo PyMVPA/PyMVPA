@@ -10,4 +10,4 @@
 
 __docformat__ = 'restructuredtext'
 
-
+from mvpa.clfs.sg import svm

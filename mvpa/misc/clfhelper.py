@@ -31,7 +31,6 @@ except:
 # conditional import of shogun
 try:
     from mvpa.clfs import sg
-    import sg.svm
     pymvpa_opt_clf_ext.append('shogun')
 except:
     pass
