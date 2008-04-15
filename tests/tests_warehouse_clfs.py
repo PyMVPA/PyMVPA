@@ -27,7 +27,6 @@ if 'libsvm' in pymvpa_opt_clf_ext:
     clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(probability=1),
                               libsvm.svm.RbfNuSVMC(probability=1)]
 if 'shogun' in pymvpa_opt_clf_ext:
-    import sg.svm
     clfs['LinearSVMC'].append(sg.svm.LinearCSVMC())
     clfs['NonLinearSVMC'].append(sg.svm.RbfCSVMC())
 
