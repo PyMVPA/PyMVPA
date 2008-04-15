@@ -35,7 +35,7 @@ debian-build:
 build: build-stamp
 build-stamp:
 	python setup.py config --noisy
-	python setup.py build_ext --swig-opts="-c++ -noproxy"
+	PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy"
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
