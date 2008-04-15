@@ -17,18 +17,10 @@ from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer, \
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
-# Import libsvm SVM implementation
-import mvpa.clfs.libsvm.svm as svm_libsvm
+from mvpa.misc.clfhelper import *
 
-try:
-    import mvpa.clfs.sg.svm as svm_sg
+if 'shogun' in pymvpa_opt_clf_ext:
     import shogun.Classifier
-
-    __sg_present = True
-except ImportError:
-    # no shogun library is available, thus no sensitivity could be even checked
-    # for
-    __sg_present = False
 
 if __debug__:
     from mvpa.misc import debug
@@ -54,9 +46,9 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
         # poor man dispatch table
-        if isinstance(clf, svm_libsvm.LinearSVM):
+        if 'libsvm' in pymvpa_opt_clf_ext and isinstance(clf, libsvm.svm.LinearSVM):
             self.__sens = self.__libsvm
-        elif isinstance(clf, svm_sg.SVM_SG_Modular):
+        elif 'shogun' in pymvpa_opt_clf_ext and isinstance(clf, sg.svm.SVM_SG_Modular):
             self.__sens = self.__sg
         else:
             raise ValueError, "Don't know how to compute Linear SVM " + \
