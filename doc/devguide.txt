@@ -445,6 +445,26 @@ Things to implement for the next release (Release goals)
     * plus additional helpers, ranging from simple to complex scattered
       all over the place
 
+  (From TODO with some additions):
+ * Add ability to add/modify custom attributes to a dataset.
+ * Expand splitter to specify both the train and test samples, not just the
+   test samples.  This will enable us to write custom splitter functions that
+   split based on new custom attributes.
+ * Possibly make NiftiDataset default to float32 when it sees that the data are
+   ints.
+ * Along with PCA/ICA mappers, we should add a PLS mapper.
+ * Add kernel methods as option to all classifiers, not just SVMs.  For example, you 
+   should be able to run a predefined or custom kernel on the samples going into SMLR.
+ * TransferError needs to know what type of data to send to any specific ErrorFX.  Right
+   now there is only support for predictions and labels, but the area under the ROC and
+   the correlation-based error functions expect to receive the "values" or "probabilities"
+   from a classifier.  Just to make this harder, every classifier is different.  For
+   example, a ridge regression's predictions are continuous values, whereas for a SVM you
+   need to pass in the probabilities.
+ * In a related issue, the predictions and values states of the classifiers need to have 
+   a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
+   returns a numpy ndarray.
+
 
 
 Long and medium term TODOs (aka stuff that has been here forever)
