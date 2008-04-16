@@ -264,12 +264,13 @@ recommend to install these packages as well.
     PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
     format. If you don't need that, PyNIfTI is not necessary, but otherwise
     it makes it really easy to read from and write to NIfTI images.
-  Shogun: various classifiers
-    (please explain me and add link to upstream website)
+  Shogun_: various classifiers
+    (please explain me)
 
 .. _SciPy: http://www.scipy.org/
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti/
+.. _Shogun: http://www.shogun-toolbox.org
 
 
 Suggestions
@@ -294,9 +295,9 @@ life a lot easier and leads to more efficiency when using PyMVPA.
     Though its primary data file format is BRIK files, it has the ability
     to read and write NIFTI files, which easily integrate with PyMVPA.
   libsvm_: fast SVM classifier
-    Only the C library is required and none of the Python bindings that are available
-    on the upstream website. PyMVPA provides its own Python wrapper for libsvm
-    which is a fork based on the one included in the libsvm package.
+    Only the C library is required and none of the Python bindings that are
+    available on the upstream website. PyMVPA provides its own Python wrapper
+    for libsvm which is a fork based on the one included in the libsvm package.
     Additionally the upstream libsvm distribution causes flooding of the console
     with a huge amount of debugging messages. Please see the `Building from
     Source`_ section for information on how to build an alternative version that
@@ -500,8 +501,9 @@ How to cite PyMVPA
 Credits
 ~~~~~~~
 
-  * NumPy
+  * NumPy, SciPy
   * libsvm
+  * Shogun
   * IPython
   * Debian (for hosting, environment, ...)
   * FOSS community
@@ -1024,6 +1026,13 @@ has a penalty term, however, it is trained to predict a binary outcome by
 means of the logistic function.
 
 .. _PLR: api/mvpa.clfs.plr.PLR-class.html
+
+
+Sparse Multinomial Logistic Regression
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This one is really fancy!
+
 
 
 Algorithms
