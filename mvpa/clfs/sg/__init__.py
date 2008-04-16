@@ -6,8 +6,8 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classifiers provied by LibSVM library"""
+"""Classifiers provied by shogun (sg) library"""
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.clfs.libsvm import svm
+from mvpa.clfs.sg import svm

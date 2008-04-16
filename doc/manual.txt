@@ -260,22 +260,17 @@ recommend to install these packages as well.
     SciPy_ is mainly used by the statistical testing and the logistic
     regression classifier code. However, in the long run SciPy might be used a
     lot more and could become a required dependency of PyMVPA.
-  libsvm_: fast SVM classifier
-    Only the C library is required and none of the Python bindings that are available
-    on the upstream website. PyMVPA provides its own Python wrapper for libsvm
-    which is a fork based on the one included in the libsvm package.
-    Additionally the upstream libsvm distribution causes flooding of the console
-    with a huge amount of debugging messages. Please see the `Building from
-    Source`_ section for information on how to build an alternative version that
-    does not have this problem.
   PyNIfTI_: access to NIfTI files
     PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
     format. If you don't need that, PyNIfTI is not necessary, but otherwise
     it makes it really easy to read from and write to NIfTI images.
+  Shogun_: various classifiers
+    (please explain me)
 
 .. _SciPy: http://www.scipy.org/
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti/
+.. _Shogun: http://www.shogun-toolbox.org
 
 
 Suggestions
@@ -299,7 +294,15 @@ life a lot easier and leads to more efficiency when using PyMVPA.
     Similar to FSL, AFNI is a free package for processing (f)MRI data.
     Though its primary data file format is BRIK files, it has the ability
     to read and write NIFTI files, which easily integrate with PyMVPA.
-
+  libsvm_: fast SVM classifier
+    Only the C library is required and none of the Python bindings that are
+    available on the upstream website. PyMVPA provides its own Python wrapper
+    for libsvm which is a fork based on the one included in the libsvm package.
+    Additionally the upstream libsvm distribution causes flooding of the console
+    with a huge amount of debugging messages. Please see the `Building from
+    Source`_ section for information on how to build an alternative version that
+    does not have this problem.
+ 
 .. _IPython: http://ipython.scipy.org
 .. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
 .. _showmedo.com: http://showmedo.com
@@ -376,23 +379,8 @@ by either extracting the source package or cloning the repository) and run::
 
   python setup.py build_ext
 
-To be able to do this you need to have SWIG_ and the development files of
-libsvm_ (headers and library) installed on your system. Depending on where you
-installed them, it might be necessary to specify the full path to them with the
-`--include-dirs`, `--library-dirs` and `--swig` options.
-
-PyMVPA needs a patched libsvm version, as the original distribution generates
-a huge amount of debugging messages and therefore makes the console and PyMVPA
-output almost unusable. Debian (since lenny: 2.84.0-1) and Ubuntu (since gutsy)
-already include the patched version. For all other systems it is easy to build
-patched libsvm (see `Building libsvm from Source`_).
-
-The current development version of PyMVPA contains another classifier
-C-extension, which causes an additional dependencies. The be able to compile it
-either Python 2.5 or python-ctypes (>= 1.0.1) is necessary. Additionally, the
-extensions have to be compiled with::
-
-  python setup.py build_ext --swig-opts="-c++ -noproxy"
+If you are using a Python version older than 2.5, you need to have
+python-ctypes (>= 1.0.1) installed to be able to do this.
 
 Now, you are ready to install the package. Do this by invoking::
 
@@ -402,21 +390,35 @@ Most likely you need superuser privileges for this step. If you want to install
 in a non-standard location, please take a look at the `--prefix` option. You
 also might want to consider `--optimize`.
 
-As an alternative, if you are doing development in PyMVPA or if you
-simply do not want (or do not have sufficient permissions to do so) to
-install PyMVPA system wide, you can simply call `make` (same `make
-build`) in the top-level directory of the source tree to build
-PyMVPA. Then extend or define your environment variable `PYTHONPATH`
-to point to the root of PyMVPA sources (i.e. where you invoked all
-previous commands from):
-
-  export PYTHONPATH=$PWD
-
 Now you should be ready to use PyMVPA on your system.
 
 
-Building libsvm from Source
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Build with enabled libsvm bindings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From the 0.2 release of PyMVPA on, the libsvm_ classifier extension is not
+build by default anymore. However, it is still shipped with PyMVPA and can
+be enabled at build time. To be able to do this you need to have SWIG_ and
+the development files of libsvm_ (headers and library) installed on your
+system. Depending on where you installed them, it might be necessary to
+specify the full path to them with the `--include-dirs`, `--library-dirs`
+and `--swig` options.
+
+PyMVPA needs a patched libsvm version, as the original distribution generates
+a huge amount of debugging messages and therefore makes the console and PyMVPA
+output almost unusable. Debian (since lenny: 2.84.0-1) and Ubuntu (since gutsy)
+already include the patched version. For all other systems it is easy to build
+patched libsvm (see `Building patched libsvm from Source`_).
+
+The command to build all extentions including the libsvm wrapper is::
+
+  PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy"
+
+The installation procedure is equivalent to the a build setup without libsvm_.
+
+
+Building patched libsvm from source
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First get the patched sources from::
 
@@ -452,6 +454,24 @@ there is also a `Makefile.osx`.
    static or shared lib. Or am I wrong?
 
 
+Alternative build procedure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Alternatively, if you are doing development in PyMVPA or if you
+simply do not want (or do not have sufficient permissions to do so) to
+install PyMVPA system wide, you can simply call `make` (same `make
+build`) in the top-level directory of the source tree to build
+PyMVPA. Then extend or define your environment variable `PYTHONPATH`
+to point to the root of PyMVPA sources (i.e. where you invoked all
+previous commands from):
+
+  export PYTHONPATH=$PWD
+
+However, please note that this procedure also always builds the libsvm_
+extension and therefore also required the patched libsvm version to be
+available.
+
+
 Installation
 ~~~~~~~~~~~~
 
@@ -481,8 +501,9 @@ How to cite PyMVPA
 Credits
 ~~~~~~~
 
-  * NumPy
+  * NumPy, SciPy
   * libsvm
+  * Shogun
   * IPython
   * Debian (for hosting, environment, ...)
   * FOSS community
@@ -1005,6 +1026,13 @@ has a penalty term, however, it is trained to predict a binary outcome by
 means of the logistic function.
 
 .. _PLR: api/mvpa.clfs.plr.PLR-class.html
+
+
+Sparse Multinomial Logistic Regression
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This one is really fancy!
+
 
 
 Algorithms
