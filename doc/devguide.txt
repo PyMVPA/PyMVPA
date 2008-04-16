@@ -404,6 +404,29 @@ Things to implement for the next release (Release goals)
    Harvester/Harvesting functionality usable. Currently the user is supposed
    to know, how a particular *local* variable is called to be able to harvest
    e.g. `feature_ids` of classifiers over cross-validation folds.
+ * Evaluate extinguishing everything related to
+   `ClassifierBasedSensitivityAnalyzer`.
+   I believe we should simply enhance all relevant classifiers to behave like
+   a `SensitivityAnalyzer` if called with a single dataset. Looking at the the
+   `SensitivityAnalyzers` that we have: `SMLRWeights` simply passes the weights
+   that are computed by the classifier anyway. `LinearSVMWeights` is even worse.
+   It does only a simple calculation, but involves a fairly large part of code
+   to deal with our multiple SVM implementations. Why not move the stuff into
+   their respective classifiers. There, the sensitivities would just be a 2-3
+   liner and we would also eliminate the multi-implementation issue (somewhat).
+   I propose:
+
+    * `git rm mvpa/algorithms/*weight*`
+    * Add `__call__()` to relevant classifiers that returns the weights.
+
+   Remaining SensitivityAnalyzers can than be downgraded to
+   `FeaturewiseDatasetMeasures`. All interfaces that used to accept a
+   `SensitivityAnalyzer` will also digest a pimped classifier with built-in
+   sensitivities. After all we're in Python-land...
+
+   And while we are at it: Let's also remove `SensitivityAnalyzer`, which does
+   nothing anyway.
+
  * Restructure code base (incl. renaming and moving pieces)
 
    Let's use the following list to come up with a nice structure for all
@@ -445,7 +468,6 @@ Things to implement for the next release (Release goals)
     * plus additional helpers, ranging from simple to complex scattered
       all over the place
 
-  (From TODO with some additions):
  * Add ability to add/modify custom attributes to a dataset.
  * Expand splitter to specify both the train and test samples, not just the
    test samples.  This will enable us to write custom splitter functions that
