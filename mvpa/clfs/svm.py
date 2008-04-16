@@ -10,8 +10,16 @@
 
 __docformat__ = 'restructuredtext'
 
-# By default for now we want simply to import all SVMs from libsvm
-from libsvm.svm import *
+# take care of conditional import of external classifiers
+from mvpa.misc.clfhelper import *
+
+if 'libsvm' in pymvpa_opt_clf_ext:
+    # By default for now we want simply to import all SVMs from libsvm
+    from mvpa.clfs.libsvm.svm import *
+elif 'shogun' in pymvpa_opt_clf_ext:
+    from mvpa.clfs.sg.svm import *
+else:
+    raise RuntimeError, "None of SVM implementions libraries was found"
 
 #try:
 #    from sg.svm import *
