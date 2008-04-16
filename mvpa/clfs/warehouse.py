@@ -40,14 +40,7 @@ from mvpa.clfs.transerror import *
 #  - Python's SMLR is turned off for the duration of development
 #    since it is slow and results should be the same as of C version
 #
-clfs={'LinearSVMC' : [LinearCSVMC(descr="LinSVM(C=def)"),
-                      LinearCSVMC(C=-10.0, descr="LinSVM(C=10*def)"),
-                      LinearCSVMC(C=1.0, descr="LinSVM(C=1)"),
-#                      LinearNuSVMC(descr="Linear nu-SVM (default)")
-                      ],
-      'NonLinearSVMC' : [RbfCSVMC(descr="RbfSVM()"),
-#                         RbfNuSVMC(descr="Rbf nu-SVM (default)")
-                         ],
+clfs={
       'SMLR' : [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
                  SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
                  SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
@@ -55,6 +48,30 @@ clfs={'LinearSVMC' : [LinearCSVMC(descr="LinSVM(C=def)"),
 #                         SMLR(implementation="Python", descr="SMLR(Python)")
                  ]
       }
+
+clfs['LinearSVMC'] = []
+clfs['NonLinearSVMC'] = []
+
+if 'libsvm' in pymvpa_opt_clf_ext:
+    clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
+                           libsvm.svm.LinearCSVMC(C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
+                           libsvm.svm.LinearCSVMC(C=1.0, descr="libsvm.LinSVM(C=1)"),
+                           # LinearNuSVMC(descr="Linear nu-SVM (default)")
+                           ]
+    clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
+                              # RbfNuSVMC(descr="Rbf nu-SVM (default)")
+                              ]
+
+if 'shogun' in pymvpa_opt_clf_ext:
+    for impl in sg.svm.known_svm_impl:
+        clfs['LinearSVMC'] += [
+            sg.svm.LinearCSVMC(descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
+            sg.svm.LinearCSVMC(C=-10.0, descr="sg.LinSVM(C=10*def)/%s" % impl, svm_impl=impl),
+            sg.svm.LinearCSVMC(C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
+            ]
+        clfs['NonLinearSVMC'] += [
+            sg.svm.RbfCSVMC(descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+            ]
 
 clfs['LinReg'] = clfs['SMLR'] #+ [ RidgeReg(descr="RidgeReg(default)") ]
 clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg']
@@ -207,7 +224,7 @@ clfs['SVM+RFE/splits_avg(static)'] = [
   ]
 
 
-rfesvm = LinearCSVMC()
+rfesvm = libsvm.svm.LinearCSVMC()
 
 # This classifier will do RFE while taking transfer error to testing
 # set of that split. Resultant classifier is voted classifier on top
@@ -255,10 +272,10 @@ clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
               clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + \
               clfs['LinearSVM50->LinearSVM'] + clfs['Anova50->LinearSVM'] + \
               clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + \
-              clfs['SMLR(lm=10)->RbfSVM'] + \
-              clfs['SVM+RFE'] + clfs['SVM+RFE/oe'] + \
-              clfs['SVM+RFE/splits_avg(static)'] + \
-              clfs['SVM+RFE/splits_avg']
+              clfs['SMLR(lm=10)->RbfSVM']
+#              clfs['SVM+RFE'] + clfs['SVM+RFE/oe'] + \
+#              clfs['SVM+RFE/splits_avg(static)'] + \
+#              clfs['SVM+RFE/splits_avg']
 
 
 # since some classifiers make sense only for multiclass
