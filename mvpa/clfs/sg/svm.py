@@ -34,7 +34,7 @@ known_kernels = { "linear": shogun.Kernel.LinearKernel,
 
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    "gmnp" : shogun.Classifier.GMNPSVM,
-                   "mpd"  : shogun.Classifier.MPDSVM,
+                #   "mpd"  : shogun.Classifier.MPDSVM,
                    "gpbt" : shogun.Classifier.GPBTSVM,
                    "gnpp" : shogun.Classifier.GNPPSVM,
                    }
@@ -94,17 +94,23 @@ class SVM_SG_Modular(Classifier):
     # TODO: should do that via __metaclass__ I guess -- collect all
     # parameters for a given class. And in general -- think about
     # class vs instance definition of them...
-    eps = Parameter(1e-5,
-                    min=0,
-                    descr='tolerance of termination criterium')
+    epsilon = Parameter(1e-5,
+                        min=1e-10,
+                        descr='Tolerance of termination criterium')
 
-    tune_eps = Parameter(1e-2,
-                         min=0,
-                         descr='XXX')
+    tube_epsilon = Parameter(1e-2,
+                             min=1e-10,
+                             descr='XXX Some kind of tolerance')
 
+    num_threads = Parameter(4,
+                            min=1,
+                            descr='Number of threads to utilize')
+
+    # All SVMs seems to be C-SVMs
     C = Parameter(1.0,
                   min=1e-10,
                   descr='Trade-off parameter. High C -- ridig margin SVM')
+
 
     def __init__(self,
                  kernel_type='Linear',
@@ -133,7 +139,8 @@ class SVM_SG_Modular(Classifier):
         """Holds `multiclassClassifier` if such one is needed"""
 
         # assign default params
-        self.params.C = C
+        # XXX taking abs for now since some implementations might freak out until we implement proper scaling
+        self.params.C = abs(C)
 
         if kernel_type.lower() in known_kernels:
             self.__kernel_type = known_kernels[kernel_type.lower()]
@@ -253,12 +260,18 @@ class SVM_SG_Modular(Classifier):
             debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
 
         self.__svm = svm_impl_class(self.params.C, self.__kernel, labels)
+
+        # Set optimization parameters
+        self.__svm.set_epsilon(self.params.epsilon)
+        self.__svm.set_tube_epsilon(self.params.tube_epsilon)
+        self.__svm.parallel.set_num_threads(self.params.num_threads)
+
         _setdebug(self.__svm, 'SVM')
 
         # train
         if __debug__:
-            debug("SG", "Training SG_SVM %s on data with labels %s" %
-                  (self.__kernel_type, dataset.uniquelabels))
+            debug("SG", "Training SG_SVM %s %s on data with labels %s" %
+                  (self.__kernel_type, self.params, dataset.uniquelabels))
 
         self.__svm.train()
 
