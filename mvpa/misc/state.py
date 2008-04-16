@@ -300,8 +300,7 @@ class Collection(object):
         if index.startswith('_'):
             return object.__getattribute__(self, index)
         if self._items.has_key(index):
-            self._checkIndex(index)
-            return self._items[index].getvalue(index)
+            return self._items[index].value
         return object.__getattribute__(self, index)
 
 
@@ -309,7 +308,7 @@ class Collection(object):
         if index.startswith('_'):
             return object.__setattr__(self, index, value)
         if self._items.has_key(index):
-            self.setvalue(index, value)
+            self._items[index].value = value
             return
         object.__setattr__(self, index, value)
 
@@ -334,7 +333,7 @@ class Collection(object):
         self._checkIndex(index)
         return self._items[index].value
 
-    def set(self, index, value):
+    def setvalue(self, index, value):
         """Sets the value by index"""
         self._checkIndex(index)
         self._items[index].value = value
@@ -821,7 +820,7 @@ class Stateful(object):
     def __setattr__(self, index, value):
         for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
             if colvalues.items.has_key(index):
-                colvalues.set(index, value)
+                colvalues.setvalue(index, value)
                 return
         object.__setattr__(self, index, value)
 
