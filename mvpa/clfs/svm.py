@@ -11,14 +11,20 @@
 __docformat__ = 'restructuredtext'
 
 # take care of conditional import of external classifiers
-from mvpa.misc.clfhelper import *
+import mvpa.base.externals as externals
 
-if 'libsvm' in pymvpa_opt_clf_ext:
+
+if 'libsvm' in externals.present:
     # By default for now we want simply to import all SVMs from libsvm
+    from mvpa.clfs import libsvm
     from mvpa.clfs.libsvm.svm import *
-elif 'shogun' in pymvpa_opt_clf_ext:
-    from mvpa.clfs.sg.svm import *
-else:
+
+if 'shogun' in externals.present:
+    from mvpa.clfs import sg
+    if not 'LinearCSVMC' in locals():
+        from mvpa.clfs.sg.svm import *
+
+if not 'LinearCSVMC' in locals():
     raise RuntimeError, "None of SVM implementions libraries was found"
 
 #try:

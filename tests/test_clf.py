@@ -23,8 +23,6 @@ from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
 
-from mvpa.clfs.svm import LinearNuSVMC
-
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -266,8 +264,8 @@ class ClassifiersTests(unittest.TestCase):
 
     # TODO: come up with nice idea on how to bring sweepargs here
     def testMulticlassClassifier(self):
-        svm = LinearNuSVMC()
-        svm2 = LinearNuSVMC(enable_states=['training_confusion'])
+        svm = LinearCSVMC()
+        svm2 = LinearCSVMC(enable_states=['training_confusion'])
         clf = MulticlassClassifier(clf=svm,
                                    enable_states=['training_confusion'])
 

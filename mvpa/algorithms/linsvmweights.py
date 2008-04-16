@@ -12,15 +12,18 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base import externals
+
 from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer, \
      selectAnalyzer
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
-from mvpa.misc.clfhelper import *
+from mvpa.clfs.svm import *
 
-if 'shogun' in pymvpa_opt_clf_ext:
+if 'shogun' in externals.present:
     import shogun.Classifier
+
 
 if __debug__:
     from mvpa.misc import debug
@@ -46,9 +49,9 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
         # poor man dispatch table
-        if 'libsvm' in pymvpa_opt_clf_ext and isinstance(clf, libsvm.svm.LinearSVM):
+        if 'libsvm' in externals.present and isinstance(clf, libsvm.svm.LinearSVM):
             self.__sens = self.__libsvm
-        elif 'shogun' in pymvpa_opt_clf_ext and isinstance(clf, sg.svm.SVM_SG_Modular):
+        elif 'shogun' in externals.present and isinstance(clf, sg.svm.LinearSVM):
             self.__sens = self.__sg
         else:
             raise ValueError, "Don't know how to compute Linear SVM " + \

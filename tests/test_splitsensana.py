@@ -14,11 +14,11 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
-from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer
 
 from tests_warehouse import *
+from tests_warehouse_clfs import *
 
 class SplitSensitivityAnalyserTests(unittest.TestCase):
 
@@ -26,8 +26,8 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         self.dataset = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4)
 
 
-    def testAnalyzer(self):
-        svm = LinearNuSVMC()
+    @sweepargs(svm=clfs['LinearSVMC'])
+    def testAnalyzer(self, svm):
         svm_weigths = LinearSVMWeights(svm)
 
         sana = SplittingSensitivityAnalyzer(
