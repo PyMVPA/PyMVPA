@@ -21,11 +21,14 @@ __docformat__ = 'restructuredtext'
 
 import copy
 
+from mvpa.base import externals
+
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
 from mvpa.misc.transformers import Absolute, FirstAxisMean, \
      SecondAxisSumOfAbs
-from mvpa.misc.clfhelper import *
+
+from mvpa.clfs.svm import *
 from mvpa.clfs.smlr import SMLR
 
 
@@ -317,8 +320,8 @@ def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
     advanced/controlled computation assign them explicitely
     """
     banalyzer = None
-    if ('libsvm' in pymvpa_opt_clf_ext and isinstance(clf, libsvm.svm.LinearSVM)) \
-       or ('shogun' in pymvpa_opt_clf_ext and isinstance(clf, sg.svm.LinearSVM)):
+    if ('libsvm' in externals.present and isinstance(clf, libsvm.svm.LinearSVM)) \
+       or ('shogun' in externals.present and isinstance(clf, sg.svm.LinearSVM)):
         from mvpa.algorithms.linsvmweights import LinearSVMWeights
         banalyzer = LinearSVMWeights(clf, transformer=Absolute, **kwargs)
     elif isinstance(clf, SMLR):
