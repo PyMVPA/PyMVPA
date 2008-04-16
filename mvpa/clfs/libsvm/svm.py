@@ -28,6 +28,11 @@ from svmc import \
      PRECOMPUTED
 
 
+known_kernels = { "linear": svm.svmc.LINEAR,
+                  "rbf" :   svm.svmc.RBF }
+
+# TODO: Complete the list ;-)
+
 class SVMBase(Classifier):
     """Support Vector Machine Classifier.
 
@@ -120,8 +125,13 @@ class SVMBase(Classifier):
             raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
                               "is not equal."
 
+        if kernel_type.lower() in known_kernels:
+            self.__kernel_type = known_kernels[kernel_type.lower()]
+        else:
+            raise ValueError, "Unknown kernel %s" % kernel_type
+
         self.param = svm.SVMParameter(
-                        kernel_type=kernel_type,
+                        kernel_type=self.__kernel_type,
                         svm_type=svm_type,
                         C=C,
                         nu=nu,
@@ -165,7 +175,7 @@ class SVMBase(Classifier):
         TODO: for non-linear SVMs
         """
 
-        if self.param.kernel_type == svm.svmc.LINEAR:
+        if self.param.kernel_type == 'linear':
             datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
             value = 1.0/(datasetnorm*datasetnorm)
             if __debug__:
@@ -284,7 +294,7 @@ class LinearSVM(SVMBase):
             weight = []
 
         # init base class
-        SVMBase.__init__(self, kernel_type=svm.svmc.LINEAR,
+        SVMBase.__init__(self, kernel_type='linear',
                          svm_type=svm_type, C=C, nu=nu, cache_size=cache_size,
                          eps=eps, p=p, probability=probability,
                          shrinking=shrinking, weight_label=weight_label,
@@ -395,7 +405,7 @@ class RbfNuSVMC(SVMBase):
             weight = []
 
         # init base class
-        SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
+        SVMBase.__init__(self, kernel_type='rbf',
                          svm_type=svm.svmc.NU_SVC, nu=nu, gamma=gamma,
                          cache_size=cache_size, eps=eps,
                          probability=probability, shrinking=shrinking,
@@ -436,7 +446,7 @@ class RbfCSVMC(SVMBase):
             weight = []
 
         # init base class
-        SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
+        SVMBase.__init__(self, kernel_type='rbf',
                          svm_type=svm.svmc.C_SVC, C=C, gamma=gamma,
                          cache_size=cache_size, eps=eps,
                          probability=probability, shrinking=shrinking,
