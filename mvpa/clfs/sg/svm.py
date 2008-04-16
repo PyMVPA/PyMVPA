@@ -34,6 +34,7 @@ known_kernels = { "linear": shogun.Kernel.LinearKernel,
 
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    "gmnp" : shogun.Classifier.GMNPSVM,
+                   "mpd"  : shogun.Classifier.MPDSVM,
                    "gpbt" : shogun.Classifier.GPBTSVM,
                    "gnpp" : shogun.Classifier.GNPPSVM,
                    }
@@ -110,7 +111,7 @@ class SVM_SG_Modular(Classifier):
     def __init__(self,
                  kernel_type='Linear',
                  kernel_params=[1.0],
-                 svm_impl="lightsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
+                 svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
                  C=1.0,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
