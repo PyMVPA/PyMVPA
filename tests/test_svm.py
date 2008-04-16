@@ -14,7 +14,7 @@ import numpy as N
 from sets import Set
 
 from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal, sweepargs
-from tests_warehouse_clfs import clfs
+from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
@@ -24,7 +24,8 @@ class SVMTests(unittest.TestCase):
         mv_lin_perf = []
         uv_perf = []
 
-        nl_clf = clfs['NonLinearSVMC'][0]
+        nl_clf = RbfCSVMC()
+
         #orig_keys = nl_clf.param._params.keys()
         #nl_param_orig = nl_clf.param._params.copy()
 
@@ -44,8 +45,6 @@ class SVMTests(unittest.TestCase):
 
         # We must be able to deepcopy not yet trained SVMs now
         import copy
-        nl_clf_copy = copy.deepcopy(nl_clf)
-
         try:
             nl_clf_copy = copy.deepcopy(nl_clf)
         except:
