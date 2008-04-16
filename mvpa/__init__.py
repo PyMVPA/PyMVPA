@@ -24,7 +24,7 @@ The mvpa package contains the following subpackages and modules:
 :author: `Michael Hanke <michael.hanke@gmail.com>`__
          `Yaroslav Halchenko <debian@onerussian.com>`__
 :requires: Python 2.4+
-:version: unreleased
+:version: 0.2.0-pre1
 :see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
