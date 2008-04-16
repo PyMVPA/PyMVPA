@@ -44,7 +44,7 @@ if 'PYMVPA_LIBSVM' in os.environ.keys():
 
 # define the setup
 setup(name       = 'pymvpa',
-      version      = '0.1.0',
+      version      = '0.2.0-pre1',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
