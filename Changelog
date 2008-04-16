@@ -32,6 +32,9 @@ Unreleased changes
     debug output.
   * Important bugfix in RFE, which reported incorrect feature ids in some
     cases.
+  * New wrapper from SVM implementation of the Shogun toolbox.
+  * libsvm bindings are not build by default anymore. Instructions on how to
+    reenable them are available in the manual.
 
 
 Releases

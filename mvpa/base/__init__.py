@@ -6,8 +6,19 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classifiers provied by LibSVM library"""
+"""Base functionality of PyMVPA
+
+Module Organization
+===================
+
+mvpa.base module contains various modules which are used through out
+PyMVPA code, and are generic building blocks
+
+.. packagetree::
+   :style: UML
+
+:group Basic: externals
+"""
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.clfs.libsvm import svm

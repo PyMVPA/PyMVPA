@@ -126,6 +126,7 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
@@ -163,8 +164,17 @@ if __debug__:
     debug.register('SVM',    "SVM")
     debug.register('SVMLIB', "Internal libsvm output")
 
-    debug.register('SMLR',   "SMLR")
-    debug.register('SMLR_',  "SMLR (verbose)")
+    debug.register('SMLR',    "SMLR")
+    debug.register('SMLR_',   "SMLR verbose")
+
+    debug.register('SG',  "PyMVPA SG wrapping")
+    debug.register('SG_', "PyMVPA SG wrapping verbose")
+    debug.register('SG__', "PyMVPA SG wrapping debug")
+    debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
+    debug.register('SG_FEATURES', "Internal shogun debug output for features")
+    debug.register('SG_LABELS', "Internal shogun debug output for labels")
+    debug.register('SG_KERNELS', "Internal shogun debug output for kernels")
+    debug.register('SG_PROGRESS', "Internal shogun progress bar during computation")
 
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
