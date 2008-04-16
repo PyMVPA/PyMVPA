@@ -52,7 +52,7 @@ clfs={
 clfs['LinearSVMC'] = []
 clfs['NonLinearSVMC'] = []
 
-if 'libsvm' in pymvpa_opt_clf_ext:
+if 'libsvm' in externals.present:
     clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
                            libsvm.svm.LinearCSVMC(C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
                            libsvm.svm.LinearCSVMC(C=1.0, descr="libsvm.LinSVM(C=1)"),
@@ -62,7 +62,7 @@ if 'libsvm' in pymvpa_opt_clf_ext:
                               # RbfNuSVMC(descr="Rbf nu-SVM (default)")
                               ]
 
-if 'shogun' in pymvpa_opt_clf_ext:
+if 'shogun' in externals.present:
     for impl in sg.svm.known_svm_impl:
         clfs['LinearSVMC'] += [
             sg.svm.LinearCSVMC(descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
@@ -224,7 +224,7 @@ clfs['SVM+RFE/splits_avg(static)'] = [
   ]
 
 
-rfesvm = libsvm.svm.LinearCSVMC()
+rfesvm = LinearCSVMC()
 
 # This classifier will do RFE while taking transfer error to testing
 # set of that split. Resultant classifier is voted classifier on top
