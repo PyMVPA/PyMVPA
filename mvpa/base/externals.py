@@ -6,31 +6,31 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper to conditionally import all optional classifier extensions (from
-external dependencies)
-
-The global variable 'pymvpa_opt_clf_ext' lists ids of all detected extension
-modules. Currently known are:
-
- * 'libsvm'
- * 'shogun'
+"""Helper to verify presence of external libraries and modules
 """
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.misc import warning
+
+if __debug__:
+    from mvpa.misc import debug
+
 # contains list of available (optional) external classifier extensions
-pymvpa_opt_clf_ext = []
+_KNOWN = {'libsvm':'import svm as __; import mvpa.clfs.libsvm.svmc as __',
+          'shogun':'import shogun as __'}
+present = []
 
-# conditional import of libsvm
-try:
-    from mvpa.clfs import libsvm
-    pymvpa_opt_clf_ext.append('libsvm')
-except:
-    pass
+for external,testcode in _KNOWN.iteritems():
+    if __debug__:
+        debug('EXT', "Checking for the presence of %s" % external)
+    # conditional import of libsvm
+    try:
+        exec testcode
+        present += [external]
+    except:
+        warning("Known external %s is not present, thus not available" % external)
 
-# conditional import of shogun
-try:
-    from mvpa.clfs import sg
-    pymvpa_opt_clf_ext.append('shogun')
-except:
-    pass
+if __debug__:
+    debug('EXT', 'Following optional externals are present: %s' % `present`)
+
