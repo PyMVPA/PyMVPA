@@ -427,6 +427,8 @@ Things to implement for the next release (Release goals)
    And while we are at it: Let's also remove `SensitivityAnalyzer`, which does
    nothing anyway.
 
+ * Try to get rid of selectAnalyzer() which pulls in half of the world and
+   causes cyclic dependencies.
  * Restructure code base (incl. renaming and moving pieces)
 
    Let's use the following list to come up with a nice structure for all
