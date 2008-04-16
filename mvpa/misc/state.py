@@ -264,6 +264,8 @@ class Collection(object):
 
         TODO: we should make it stricter to don't add smth of
               wrong type into Collection since it might lead to problems
+
+              Also we might convert to __setitem__
         """
         if not isinstance(item, CollectableAttribute):
             raise ValueError, \
@@ -282,14 +284,8 @@ class Collection(object):
         """Remove item from the collection
         """
         self._checkIndex(index)
+        self._updateOwner(index, register=False)
         discard = self._items.pop(index)
-
-
-    def get(self, index):
-        """Returns the collectable by index
-        """
-        self._checkIndex(index)
-        return self._items[index]
 
 
     def __getattribute__(self, index):
@@ -312,6 +308,7 @@ class Collection(object):
             return
         object.__setattr__(self, index, value)
 
+
     def __getitem__(self, index):
         if self._items.has_key(index):
             self._checkIndex(index)
@@ -323,7 +320,9 @@ class Collection(object):
     #
     #def __setattr__(self, index, value):
     #    if self._items.has_key(index):
+    #        self._updateOwner(index, register=False)
     #        self._items[index] = value
+    #        self._updateOwner(index, register=True)
     #
     #    object.__setattr__(self, index, value)
 
@@ -808,7 +807,7 @@ class Stateful(object):
     def __getattribute__(self, index):
         # return all private ones first since smth like __dict__ might be
         # queried by copy before instance is __init__ed
-        if index.startswith('__'):
+        if index.startswith('_'):
             return object.__getattribute__(self, index)
         for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
             if index in [colname]:
