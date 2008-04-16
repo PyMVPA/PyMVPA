@@ -113,8 +113,6 @@ class StateVariable(CollectableAttribute):
     def _get(self):
         if not self.isSet:
             raise UnknownStateError("Unknown yet value of %s" % (self.name))
-        # XXX leave simple return?
-        #return self._value
         return CollectableAttribute._get(self)
 
     def _set(self, val):
@@ -197,6 +195,9 @@ class Collection(object):
         if len(self._items) > 4:
             res += "..."
         res += "}"
+        if __debug__:
+            if "ST" in debug.active:
+                res += " owner:%s" % `self.owner`
         return res
 
     #
@@ -274,6 +275,8 @@ class Collection(object):
                   item
         self._items[item.name] = item
 
+        if not self.owner is None:
+            self._updateOwner(item.name)
 
     def remove(self, index):
         """Remove item from the collection
@@ -403,7 +406,59 @@ class Collection(object):
         if not isinstance(owner, Stateful):
             raise ValueError, \
                   "Owner of the StateCollection must be Stateful object"
+        if __debug__:
+            try:    strowner = str(owner)
+            except: strowner = "UNDEF: <%s#%s>" % (owner.__class__, id(owner))
+            debug("ST", "Setting owner for %s to be %s" % (self, strowner))
+        if not self.__owner is None:
+            # Remove attributes which were registered to that owner previousely
+            self._updateOwner(register=False)
         self.__owner = owner
+        if not self.__owner is None:
+            self._updateOwner(register=True)
+
+
+    def _updateOwner(self, index=None, register=True):
+        """Define an entry within owner's __dict__
+         so ipython could easily complete it
+
+         :Parameters:
+           index : basestring or list of basestring
+             Name of the attribute. If None -- all known get registered
+           register : bool
+             Register if True or unregister if False
+
+         XXX Needs refactoring since we duplicate the logic of expansion of index value
+        """
+        if not index is None:
+            if not index in self._items:
+                raise ValueError, \
+                      "Attribute %s is not known to %s" % (index, self)
+            indexes = [ index ]
+        else:
+            indexes = self.names
+
+        ownerdict = self.owner.__dict__
+        selfdict = self.__dict__
+
+        for index_ in indexes:
+            if register:
+                if index_ in ownerdict:
+                    raise RuntimeError, \
+                          "Cannot register attribute %s within %s " % \
+                          (index_, owner) + "since it has one already"
+                ownerdict[index_] = self._items[index_]
+                if index_ in selfdict:
+                    raise RuntimeError, \
+                          "Cannot register attribute %s within %s " % \
+                          (index_, self) + "since it has one already"
+                selfdict[index_] = self._items[index_]
+            else:
+                if index_ in ownerdict:
+                    # yoh doesn't think that we need to complain if False
+                    ownerdict.pop(index_)
+                if index_ in selfdict:
+                    selfdict.pop(index_)
 
 
     # Properties
@@ -468,7 +523,7 @@ class StateCollection(Collection):
             literal description. Usually just attribute name for the
             collection, e.g. 'states'
         """
-        Collection.__init__(self, items, owner)
+        Collection.__init__(self, items=items, owner=owner)
 
         self.__storedTemporarily = []
         """List to contain sets of enabled states which were enabled
@@ -689,7 +744,7 @@ class collector(type):
         # XXX should we switch to tuple?
 
         for colname, colitems in collections.iteritems():
-            collections[colname] = _col2class[colname](colitems, cls)
+            collections[colname] = _col2class[colname](colitems)
 
         setattr(cls, "_collections_template", collections)
 
@@ -723,7 +778,12 @@ class Stateful(object):
                                                         '_collections_template')))
 
             # Assign owner to all collections
-            for colvalue in self._collections.itervalues():
+            for colname, colvalue in self._collections.iteritems():
+                if colname in self.__dict__:
+                    raise ValueError, \
+                          "Stateful object %s has already attribute %s" % \
+                          (self, colname)
+                self.__dict__[colname] = colvalue
                 colvalue.owner = self
 
             if self._collections.has_key('states'):
