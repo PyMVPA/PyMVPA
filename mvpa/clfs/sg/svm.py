@@ -94,19 +94,17 @@ class SVM_SG_Modular(Classifier):
     # TODO: should do that via __metaclass__ I guess -- collect all
     # parameters for a given class. And in general -- think about
     # class vs instance definition of them...
-    params = Classifier.params.copy()
+    eps = Parameter(1e-5,
+                    min=0,
+                    descr='tolerance of termination criterium')
 
-    params['eps'] = Parameter(1e-5,
-                              min=0,
-                              descr='tolerance of termination criterium')
+    tune_eps = Parameter(1e-2,
+                         min=0,
+                         descr='XXX')
 
-    params['tune_eps'] = Parameter(1e-2,
-                                   min=0,
-                                   descr='XXX')
-
-    params['C'] = Parameter(1.0,
-                            min=1e-10,
-                            descr='Trade-off parameter. High C -- ridig margin SVM')
+    C = Parameter(1.0,
+                  min=1e-10,
+                  descr='Trade-off parameter. High C -- ridig margin SVM')
 
     def __init__(self,
                  kernel_type='Linear',
@@ -135,10 +133,7 @@ class SVM_SG_Modular(Classifier):
         """Holds `multiclassClassifier` if such one is needed"""
 
         # assign default params
-        self.params = {}
-        self.params.update(SVM_SG_Modular.params)
-
-        self.params['C'].val = C
+        self.params.C = C
 
         if kernel_type.lower() in known_kernels:
             self.__kernel_type = known_kernels[kernel_type.lower()]
@@ -257,7 +252,7 @@ class SVM_SG_Modular(Classifier):
         if __debug__:
             debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
 
-        self.__svm = svm_impl_class(self.params['C'].val, self.__kernel, labels)
+        self.__svm = svm_impl_class(self.params.C, self.__kernel, labels)
         _setdebug(self.__svm, 'SVM')
 
         # train
