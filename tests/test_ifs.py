@@ -15,11 +15,12 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.featsel import FixedNElementTailSelector
 
+from tests_warehouse import *
+from tests_warehouse_clfs import *
 
 def dumbFeatureDataset():
     data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
@@ -44,8 +45,8 @@ class IFSTests(unittest.TestCase):
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
 
 
-    def testIFS(self):
-        svm = LinearNuSVMC()
+    @sweepargs(svm=clfs['clfs_with_sens'])
+    def testIFS(self, svm):
 
         # data measure and transfer error quantifier use the SAME clf!
         trans_error = TransferError(svm)

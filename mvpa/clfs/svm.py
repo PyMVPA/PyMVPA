@@ -10,8 +10,22 @@
 
 __docformat__ = 'restructuredtext'
 
-# By default for now we want simply to import all SVMs from libsvm
-from libsvm.svm import *
+# take care of conditional import of external classifiers
+import mvpa.base.externals as externals
+
+
+if 'libsvm' in externals.present:
+    # By default for now we want simply to import all SVMs from libsvm
+    from mvpa.clfs import libsvm
+    from mvpa.clfs.libsvm.svm import *
+
+if 'shogun' in externals.present:
+    from mvpa.clfs import sg
+    if not 'LinearCSVMC' in locals():
+        from mvpa.clfs.sg.svm import *
+
+if not 'LinearCSVMC' in locals():
+    raise RuntimeError, "None of SVM implementions libraries was found"
 
 #try:
 #    from sg.svm import *

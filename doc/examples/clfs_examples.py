@@ -78,6 +78,7 @@ if __name__ == "__main__":
         print "%s: %s" % (datasetdescr, `dataset`)
         print " Classifier                                  %corr  #features\t train predict  full"
         for clf in clfs_:
+            print "  %-40s: "  % clf.descr,
             # Lets do splits/train/predict explicitely so we could track timing
             # otherwise could be just
             #cv = CrossValidatedTransferError(
@@ -102,7 +103,6 @@ if __name__ == "__main__":
                 predictions = clf.predict(validation_ds.samples)
                 confusion.add(validation_ds.labels, predictions)
                 times.append([clf.training_time, clf.predicting_time])
-            print "  %-40s: "  % clf.descr,
             if nf[-1] == 0:
                 print "no features were selected. skipped"
                 continue

@@ -126,6 +126,7 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
