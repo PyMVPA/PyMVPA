@@ -113,7 +113,7 @@ class IOHelperTests(unittest.TestCase):
 
 
     def testFslEV(self):
-        attr = SampleAttributes(os.path.join('data', 'smpl_attr.txt'))
+        attr = SampleAttributes(os.path.join('..', 'data', 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
         self.failUnless(sorted(attr.keys()) == \
