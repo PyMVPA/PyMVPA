@@ -17,7 +17,7 @@ if __debug__:
     from mvpa.misc import debug
 
 # contains list of available (optional) external classifier extensions
-_KNOWN = {'libsvm':'import svm as __; import mvpa.clfs.libsvm.svmc as __',
+_KNOWN = {'libsvm':'import svm as __; x=__._convert_to_svm_node_array',
           'shogun':'import shogun as __'}
 present = []
 
