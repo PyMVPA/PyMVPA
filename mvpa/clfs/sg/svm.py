@@ -23,14 +23,13 @@ import shogun.Library
 
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
-from mvpa.clfs.classifier import Classifier, MulticlassClassifier
+
+from mvpa.clfs.classifier import MulticlassClassifier
+from mvpa.clfs._svmbase import _SVM
 
 
 if __debug__:
     from mvpa.misc import debug
-
-known_kernels = { "linear": shogun.Kernel.LinearKernel,
-                  "rbf" :   shogun.Kernel.GaussianKernel }
 
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    "gmnp" : shogun.Classifier.GMNPSVM,
@@ -84,20 +83,13 @@ def _tosg(data):
     return features
 
 
-class SVM_SG_Modular(Classifier):
+class SVM_SG_Modular(_SVM):
     """Support Vector Machine Classifier(s) based on Shogun
 
     This is a simple base interface
     """
 
     # init the parameter interface
-    # TODO: should do that via __metaclass__ I guess -- collect all
-    # parameters for a given class. And in general -- think about
-    # class vs instance definition of them...
-    epsilon = Parameter(1e-5,
-                        min=1e-10,
-                        descr='Tolerance of termination criterium')
-
     tube_epsilon = Parameter(1e-2,
                              min=1e-10,
                              descr='XXX Some kind of tolerance')
@@ -111,6 +103,9 @@ class SVM_SG_Modular(Classifier):
                   min=1e-10,
                   descr='Trade-off parameter. High C -- ridig margin SVM')
 
+
+    KERNELS = { "linear": shogun.Kernel.LinearKernel,
+                "rbf" :   shogun.Kernel.GaussianKernel }
 
     def __init__(self,
                  kernel_type='Linear',
@@ -128,7 +123,7 @@ class SVM_SG_Modular(Classifier):
         TODO Documentation if this all works ;-)
         """
         # init base class
-        Classifier.__init__(self, **kwargs)
+        _SVM.__init__(self, **kwargs)
 
         self.__svm = None
         """Holds the trained svm."""
@@ -140,12 +135,7 @@ class SVM_SG_Modular(Classifier):
 
         # assign default params
         # XXX taking abs for now since some implementations might freak out until we implement proper scaling
-        self.params.C = abs(C)
-
-        if kernel_type.lower() in known_kernels:
-            self.__kernel_type = known_kernels[kernel_type.lower()]
-        else:
-            raise ValueError, "Unknown kernel %s" % kernel_type
+        self.params.C = C
 
         if svm_impl.lower() in known_svm_impl:
             self.__svm_impl = svm_impl.lower()
@@ -249,17 +239,21 @@ class SVM_SG_Modular(Classifier):
         #if len(self.__kernel_params)==1:
         if __debug__:
             debug("SG_",
-                  "Creating kernel instance of %s" % `self.__kernel_type`)
+                  "Creating kernel instance of %s" % `self._kernel_type`)
 
-        self.__kernel = self.__kernel_type(self.__traindata, self.__traindata,
-                                           self.__kernel_params[0])
+        self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
+                                          self.__kernel_params[0])
         _setdebug(self.__kernel, 'Kernels')
 
         # create SVM
         if __debug__:
             debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
 
-        self.__svm = svm_impl_class(self.params.C, self.__kernel, labels)
+        C = self.params.C
+        if C<0:
+            C = self._getDefaultC(dataset.samples)*abs(C)
+
+        self.__svm = svm_impl_class(C, self.__kernel, labels)
 
         # Set optimization parameters
         self.__svm.set_epsilon(self.params.epsilon)
@@ -271,14 +265,14 @@ class SVM_SG_Modular(Classifier):
         # train
         if __debug__:
             debug("SG", "Training SG_SVM %s %s on data with labels %s" %
-                  (self.__kernel_type, self.params, dataset.uniquelabels))
+                  (self._kernel_type, self.params, dataset.uniquelabels))
 
         self.__svm.train()
 
         # train
         if __debug__:
             debug("SG__", "Done training SG_SVM %s on data with labels %s" %
-                  (self.__kernel_type, dataset.uniquelabels))
+                  (self._kernel_type, dataset.uniquelabels))
 
 
     def _predict(self, data):
