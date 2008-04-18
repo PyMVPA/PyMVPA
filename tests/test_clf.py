@@ -285,7 +285,8 @@ class ClassifiersTests(unittest.TestCase):
         clf.train(dstrain)
         self.failUnlessEqual(str(clf.training_confusion),
                              str(svm2.training_confusion),
-            msg="Multiclass clf should provide same results as built-in libsvm's")
+            msg="Multiclass clf should provide same results as built-in libsvm's %s" %
+                             svm2)
 
         svm2.untrain()
 
