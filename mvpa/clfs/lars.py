@@ -58,16 +58,30 @@ class LARS(Classifier):
     
     """
 
-    def __init__(self, model_type="lasso", normalize=True, intercept=True,
-                 trace=False, max_steps=None, use_Gram=False, **kwargs):
+    def __init__(self, model_type="lasso", trace=False, normalize=True,
+                 intercept=True, max_steps=None, use_Gram=False, **kwargs):
         """
         Initialize LARS.
 
+        See the help in R for further details on the following parameters:
+
         :Parameters:
-          type : string
+          model_type : string
             Type of LARS to run. Can be one of ('lasso', 'lar',
             'forward.stagewise', 'stepwise').
-
+          trace : boolean
+            Whether to print progress in R as it works.
+          normalize : boolean
+            Whether to normalize the L2 Norm.
+          intercept : boolean
+            Whether to add a non-penalized intercept to the model.
+          max_steps : None or int
+            If not None, specify the total number of iterations to run. Each
+            iteration adds a feature, but leaving it none will add until
+            convergence.
+          use_Gram : boolean
+            Whether to compute the Gram matrix (this should be false if you
+            have more features than samples.)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
