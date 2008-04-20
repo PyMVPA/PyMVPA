@@ -1,0 +1,146 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Least angle regression (LARS) classifier."""
+
+__docformat__ = 'restructuredtext'
+
+# system imports
+import numpy as N
+
+try:
+    import rpy
+    rpy.r.library('lars')
+except:
+    raise RuntimeError("Unable to load LARS library from R with RPy.\n" +
+                       "Please ensure that they are all installed correctly.")
+
+# local imports
+from mvpa.clfs.classifier import Classifier
+
+
+class LARS(Classifier):
+    """Least angle regression (LARS) `Classifier`.
+
+    LARS is the model selection algorithm from:
+
+    Bradley Efron, Trevor Hastie, Iain Johnstone and Robert
+    Tibshirani, Least Angle Regression Annals of Statistics (with
+    discussion) (2004) 32(2), 407-499. A new method for variable
+    subset selection, with the lasso and 'epsilon' forward stagewise
+    methods as special cases.
+
+    Similar to SMLR, it performs a feature selection while performing
+    classification, but instead of starting with all features, it
+    starts with none and adds them in, which is similar to boosting.
+
+    This classifier behaves more like a ridge regression in that it
+    returns prediction values and it treats the training labels as
+    continuous.
+
+    In the true nature of the PyMVPA framework, this algorithm is
+    actually implemented in R by Trevor Hastie and wrapped via RPy.
+    To make use of LARS, you must have R and RPy installed as well as
+    the LARS contributed package. You can install the R and RPy with
+    the following command on Debian-based machines:
+
+    sudo aptitude install python-rpy python-rpy-doc r-base-dev
+
+    You can then install the LARS package by running R as root and
+    calling:
+
+    install.packages()
+    
+    """
+
+    def __init__(self, model_type="lasso", normalize=True, intercept=True,
+                 trace=False, max_steps=None, use_Gram=False, **kwargs):
+        """
+        Initialize LARS.
+
+        :Parameters:
+          type : string
+            Type of LARS to run. Can be one of ('lasso', 'lar',
+            'forward.stagewise', 'stepwise').
+
+        """
+        # init base class first
+        Classifier.__init__(self, **kwargs)
+
+        # set up the params
+        self.__type = model_type
+        self.__normalize = normalize
+        self.__intercept = intercept
+        self.__trace = trace
+        self.__max_steps = max_steps
+        self.__use_Gram = use_Gram
+        
+        # pylint friendly initializations
+        self.__weights = None
+        """The beta weights for each feature."""
+        self.__trained_model = None
+        """The model object after training that will be used for
+        predictions."""
+
+        # It does not make sense to calculate a confusion matrix for a
+        # regression
+        self.states.enable('training_confusion', False)
+
+    def __repr__(self):
+        """String summary of the object
+        """
+        return """LARS(type=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, use_Gram=%s, enabled_states=%s)""" % \
+               (self.__type,
+                self.__normalize,
+                self.__intercept,
+                self.__trace,
+                self.__max_steps,
+                self.__use_Gram,
+                str(self.states.enabled))
+
+
+    def _train(self, data):
+        """Train the classifier using `data` (`Dataset`).
+        """
+        if self.__max_steps is None:
+            # train without specifying max_steps
+            self.__trained_model = rpy.r.lars(data.samples,
+                                              data.labels[:,N.newaxis],
+                                              type=self.__type,
+                                              normalize=self.__normalize,
+                                              intercept=self.__intercept,
+                                              trace=self.__trace,
+                                              use_Gram=self.__use_Gram)
+        else:
+            # train with specifying max_steps
+            self.__trained_model = rpy.r.lars(data.samples,
+                                              data.labels[:,N.newaxis],
+                                              type=self.__type,
+                                              normalize=self.__normalize,
+                                              intercept=self.__intercept,
+                                              trace=self.__trace,
+                                              use_Gram=self.__use_Gram,
+                                              max_steps=self.__max_steps)
+
+        # set the weights to the final state
+        self.__weights = self.__trained_model['beta'][-1,:]
+        
+    def _predict(self, data):
+        """
+        Predict the output for the provided data.
+        """
+        # predict with the final state (i.e., fraction=1.0)
+        res = rpy.r.predict_lars(self.__trained_model,
+                                 data,
+                                 mode='fraction',
+                                 s=1.0)
+
+        return N.asarray(res['fit'])
+
+    weights = property(lambda self: self.__weights)
+

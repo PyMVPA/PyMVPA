@@ -15,7 +15,8 @@ from mvpa.base import externals
 
 # Define sets of classifiers
 from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import *
+from mvpa.clfs.lars import LARS
+from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.knn import *
 from mvpa.clfs.svm import *
 
@@ -35,9 +36,12 @@ if 'shogun' in externals.present:
 clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
 
 clfs['LinearC'] = clfs['LinearSVMC'] + \
-                  [ SMLR(implementation="Python"), SMLR(implementation="C") ]
+                  [ SMLR(implementation="Python"),
+                    SMLR(implementation="C"),
+                    RidgeReg(),
+                    LARS()]
 
-clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(k=1), RidgeReg() ]
+clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(k=1) ]
 
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC']
 
