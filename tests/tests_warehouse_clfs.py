@@ -37,9 +37,9 @@ clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
 
 clfs['LinearC'] = clfs['LinearSVMC'] + \
                   [ SMLR(implementation="Python"),
-                    SMLR(implementation="C"),
-                    RidgeReg(),
-                    LARS()]
+                    SMLR(implementation="C"),]
+#                    RidgeReg(),
+#                    LARS()]
 
 clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(k=1) ]
 
