@@ -140,6 +140,16 @@ all modifications that introduce changes to the basic interfaces outlined below
 have to be documented here and also should be announced in the changelog.
 
 
+Adding an External Dependency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Introducing new external dependencies should be done in a completely optional
+fashion. This includes both build-dependencies and runtime dependencies.
+With `mvpa.base.externals` PyMVPA provides a simple framework to test the
+availability of certain external components and publish the results of the
+tests throughout PyMVPA.
+
+
 Adding a new Dataset type
 ~~~~~~~~~~~~~~~~~~~~~~~~~
  * Required interface for Mapper.
