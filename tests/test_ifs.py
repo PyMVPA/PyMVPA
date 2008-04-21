@@ -22,17 +22,6 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-def dumbFeatureDataset():
-    data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
-            [0,5],[1,5],[0,6],[1,6],[0,7],[1,7],[0,8],[1,8],
-            [0,9],[1,9],[0,10],[1,10],[0,11],[1,11],[0,12],[1,12]]
-    regs = [1 for i in range(8)] \
-         + [2 for i in range(8)] \
-         + [3 for i in range(8)]
-
-    return Dataset(samples=data, labels=regs)
-
-
 
 class IFSTests(unittest.TestCase):
 
@@ -80,7 +69,7 @@ class IFSTests(unittest.TestCase):
         # repeat with dataset where selection order is known
         signal = dumbFeatureDataset()
         sdata, stdata = ifs(signal, signal)
-        self.failUnless((sdata.samples[:,0] == signal.samples[:,1]).all())
+        self.failUnless((sdata.samples[:,0] == signal.samples[:,0]).all())
 
 
 def suite():

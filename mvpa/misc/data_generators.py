@@ -25,6 +25,17 @@ def dumbFeatureDataset():
     return Dataset(samples=data, labels=regs)
 
 
+def dumbFeatureBinaryDataset():
+    data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
+            [5, 0], [5, 1], [6, 0], [6, 1], [7, 0], [7, 1], [8, 0], [8, 1],
+            [9, 0], [9, 1], [10, 0], [10, 1], [11, 0], [11, 1], [12, 0],
+            [12, 1]]
+    regs = ([0] * 12) + ([1] * 12)
+
+    return Dataset(samples=data, labels=regs)
+
+
+
 def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                          means=None, nonbogus_features=None, snr=1.0):
     """Generate a dataset where each label is some normally
