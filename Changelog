@@ -24,6 +24,7 @@ Unreleased changes
     of samples with any of those datasets (not just the validation set).
   * New sparse multinomial logistic regression (SMLR) classifier and
     associated sensitivity analyzer.
+  * New least angle regression classifier.
   * Initial documentation on extending PyMVPA.
   * New example comparing the performance of all classifiers on some
     artificial datasets.
