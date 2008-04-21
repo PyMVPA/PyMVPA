@@ -9,6 +9,7 @@
 """Main unit test interface for PyMVPA"""
 
 import unittest
+from mvpa.base import externals
 
 # list all test modules (without .py extension)
 tests = [
@@ -46,6 +47,16 @@ tests = [
     'test_anova',
     'test_nullhyptest'
     ]
+
+# and now for the optional tests
+optional_tests = []
+
+if 'lars' in externals.present:
+    optional_tests.append('test_lars')
+
+
+# finally merge all of them
+tests += optional_tests
 
 # No python warnings (like ctypes version for slmr)
 import warnings
