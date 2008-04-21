@@ -18,67 +18,68 @@ from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
-    @sweepargs(l_clf=clfs['LinearSVMC'])
-    def testMultivariate(self, l_clf):
-        mv_perf = []
-        mv_lin_perf = []
-        uv_perf = []
+    if clfs.has_key('LinearSVMC'):
+        @sweepargs(l_clf=clfs['LinearSVMC'])
+        def testMultivariate(self, l_clf):
+            mv_perf = []
+            mv_lin_perf = []
+            uv_perf = []
 
-        nl_clf = RbfCSVMC()
+            nl_clf = RbfCSVMC()
 
-        #orig_keys = nl_clf.param._params.keys()
-        #nl_param_orig = nl_clf.param._params.copy()
+            #orig_keys = nl_clf.param._params.keys()
+            #nl_param_orig = nl_clf.param._params.copy()
 
-        # l_clf = LinearNuSVMC()
+            # l_clf = LinearNuSVMC()
 
-        # XXX ??? not sure what below meant and it is obsolete if
-        # using SG... commenting out for now
-        # for some reason order is not preserved thus dictionaries are not
-        # the same any longer -- lets compare values
-        #self.failUnlessEqual([nl_clf.param._params[k] for k in orig_keys],
-        #                     [nl_param_orig[k] for k in orig_keys],
-        #   msg="New instance mustn't override values in previously created")
-        ## and keys separately
-        #self.failUnlessEqual(Set(nl_clf.param._params.keys()),
-        #                     Set(orig_keys),
-        #   msg="New instance doesn't change set of parameters in original")
+            # XXX ??? not sure what below meant and it is obsolete if
+            # using SG... commenting out for now
+            # for some reason order is not preserved thus dictionaries are not
+            # the same any longer -- lets compare values
+            #self.failUnlessEqual([nl_clf.param._params[k] for k in orig_keys],
+            #                     [nl_param_orig[k] for k in orig_keys],
+            #   msg="New instance mustn't override values in previously created")
+            ## and keys separately
+            #self.failUnlessEqual(Set(nl_clf.param._params.keys()),
+            #                     Set(orig_keys),
+            #   msg="New instance doesn't change set of parameters in original")
 
-        # We must be able to deepcopy not yet trained SVMs now
-        import copy
-        try:
-            nl_clf_copy = copy.deepcopy(nl_clf)
-        except:
-            self.fail(msg="Failed to deepcopy not-yet trained SVM")
+            # We must be able to deepcopy not yet trained SVMs now
+            import copy
+            try:
+                nl_clf_copy = copy.deepcopy(nl_clf)
+            except:
+                self.fail(msg="Failed to deepcopy not-yet trained SVM")
 
-        for i in xrange(20):
-            train = pureMultivariateSignal( 20, 3 )
-            test = pureMultivariateSignal( 20, 3 )
+            for i in xrange(20):
+                train = pureMultivariateSignal( 20, 3 )
+                test = pureMultivariateSignal( 20, 3 )
 
-            # use non-linear CLF on 2d data
-            nl_clf.train(train)
-            p_mv = nl_clf.predict(test.samples)
-            mv_perf.append(N.mean(p_mv==test.labels))
+                # use non-linear CLF on 2d data
+                nl_clf.train(train)
+                p_mv = nl_clf.predict(test.samples)
+                mv_perf.append(N.mean(p_mv==test.labels))
 
-            # use linear CLF on 2d data
-            l_clf.train(train)
-            p_lin_mv = l_clf.predict(test.samples)
-            mv_lin_perf.append(N.mean(p_lin_mv==test.labels))
+                # use linear CLF on 2d data
+                l_clf.train(train)
+                p_lin_mv = l_clf.predict(test.samples)
+                mv_lin_perf.append(N.mean(p_lin_mv==test.labels))
 
-            # use non-linear CLF on 1d data
-            nl_clf.train(train.selectFeatures([0]))
-            p_uv = nl_clf.predict(test.selectFeatures([0]).samples)
-            uv_perf.append(N.mean(p_uv==test.labels))
+                # use non-linear CLF on 1d data
+                nl_clf.train(train.selectFeatures([0]))
+                p_uv = nl_clf.predict(test.selectFeatures([0]).samples)
+                uv_perf.append(N.mean(p_uv==test.labels))
 
-        mean_mv_perf = N.mean(mv_perf)
-        mean_mv_lin_perf = N.mean(mv_lin_perf)
-        mean_uv_perf = N.mean(uv_perf)
+            mean_mv_perf = N.mean(mv_perf)
+            mean_mv_lin_perf = N.mean(mv_lin_perf)
+            mean_uv_perf = N.mean(uv_perf)
 
-        # non-linear CLF has to be close to perfect
-        self.failUnless( mean_mv_perf > 0.9 )
-        # linear CLF cannot learn this problem!
-        self.failUnless( mean_mv_perf > mean_mv_lin_perf )
-        # univariate has insufficient information
-        self.failUnless( mean_uv_perf < mean_mv_perf )
+            # non-linear CLF has to be close to perfect
+            self.failUnless( mean_mv_perf > 0.9 )
+            # linear CLF cannot learn this problem!
+            self.failUnless( mean_mv_perf > mean_mv_lin_perf )
+            # univariate has insufficient information
+            self.failUnless( mean_uv_perf < mean_mv_perf )
 
 
 #    def testFeatureBenchmark(self):

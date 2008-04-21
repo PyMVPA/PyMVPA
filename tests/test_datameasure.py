@@ -16,18 +16,19 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.algorithms.featsel import FixedNElementTailSelector, \
                                     FeatureSelectionPipeline, \
                                     FractionTailSelector
-from mvpa.algorithms.linsvmweights import LinearSVMWeights
 
 from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.datameasure import selectAnalyzer
 from mvpa.algorithms.rfe import RFE
 
 from mvpa.misc.transformers import Absolute
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
+
+if clfs.has_key('LinearSVMC'):
+    from mvpa.algorithms.linsvmweights import LinearSVMWeights
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -63,11 +64,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
     def testAnalyzerWithSplitClassifier(self, clf):
 
         # assumming many defaults it is as simple as
-        sana = selectAnalyzer(
-            SplitClassifier(clf=clf,
-                            enable_states=['training_confusion',
-                                           'training_confusions']),
-            enable_states=["sensitivities"] )
+        mclf = SplitClassifier(clf=clf,
+                               enable_states=['training_confusion',
+                                              'training_confusions'])
+        sana = mclf.getSensitivityAnalyzer(enable_states=["sensitivities"])
         # and lets look at all sensitivities
 
         # and we get sensitivity analyzer which works on splits
@@ -99,20 +99,20 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 msg="At the end we should have selected the right features")
 
 
-    @sweepargs(svm=clfs['LinearSVMC'])
-    def testLinearSVMWeights(self, svm):
-        # assumming many defaults it is as simple as
-        sana = selectAnalyzer( clf=svm,
-                               enable_states=["sensitivities"] )
+    if clfs.has_key('LinearSVMC'):
+        @sweepargs(svm=clfs['LinearSVMC'])
+        def testLinearSVMWeights(self, svm):
+            # assumming many defaults it is as simple as
+            sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
 
-        # and lets look at all sensitivities
-        dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
-        map_ = sana(dataset)
+            # and lets look at all sensitivities
+            dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
+            map_ = sana(dataset)
 
-        # for now we can do only linear SVM, so lets check if we raise
-        # a concern
-        svmnl = clfs['NonLinearSVMC'][0]
-        self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
+            # for now we can do only linear SVM, so lets check if we raise
+            # a concern
+            svmnl = clfs['NonLinearSVMC'][0]
+            self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
 
 
     # TODO -- unittests for sensitivity analyzers which use combiners
@@ -129,19 +129,15 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # but also due to multi class those need to be aggregated
         # somehow. Transfer error here should be 'leave-1-out' error
         # of split classifier itself
+        sclf = SplitClassifier(clf=basic_clf)
         rfe = RFE(sensitivity_analyzer=
-                      selectAnalyzer(SplitClassifier(clf=basic_clf),
-                                     enable_states=["sensitivities"]),
+                    sclf.getSensitivityAnalyzer(
+                        enable_states=["sensitivities"]),
                   transfer_error=trans_error,
                   feature_selector=FeatureSelectionPipeline(
                       [FractionTailSelector(0.5),
                        FixedNElementTailSelector(1)]),
                   train_clf=True)
-
-        # assumming many defaults it is as simple as
-        sana = selectAnalyzer( SplitClassifier(clf=basic_clf),
-                               enable_states=["sensitivities"] )
-                               # and lets look at all sensitivities
 
         # and we get sensitivity analyzer which works on splits and uses
         # sensitivity

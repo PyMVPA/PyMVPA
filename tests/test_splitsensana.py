@@ -13,12 +13,15 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
+
+if clfs.has_key('LinearSVMC'):
+    from mvpa.algorithms.linsvmweights import LinearSVMWeights
+
 
 class SplitSensitivityAnalyserTests(unittest.TestCase):
 
@@ -26,22 +29,23 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         self.dataset = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4)
 
 
-    @sweepargs(svm=clfs['LinearSVMC'])
-    def testAnalyzer(self, svm):
-        svm_weigths = LinearSVMWeights(svm)
+    if clfs.has_key('LinearSVMC'):
+        @sweepargs(svm=clfs['LinearSVMC'])
+        def testAnalyzer(self, svm):
+            svm_weigths = LinearSVMWeights(svm)
 
-        sana = SplittingSensitivityAnalyzer(
-                    svm_weigths,
-                    NFoldSplitter(cvtype=1),
-                    enable_states=['maps'])
+            sana = SplittingSensitivityAnalyzer(
+                        svm_weigths,
+                        NFoldSplitter(cvtype=1),
+                        enable_states=['maps'])
 
-        maps = sana(self.dataset)
+            maps = sana(self.dataset)
 
-        self.failUnless(len(maps) == 4)
-        self.failUnless(sana.states.isKnown('maps'))
-        allmaps = N.array(sana.maps)
-        self.failUnless(allmaps[:,0].mean() == maps[0])
-        self.failUnless(allmaps.shape == (5,4))
+            self.failUnless(len(maps) == 4)
+            self.failUnless(sana.states.isKnown('maps'))
+            allmaps = N.array(sana.maps)
+            self.failUnless(allmaps[:,0].mean() == maps[0])
+            self.failUnless(allmaps.shape == (5,4))
 
 
 def suite():
