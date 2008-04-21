@@ -13,22 +13,14 @@ from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.lars import LARS
 import numpy as N
 from scipy.stats import pearsonr
-
-def dumbFeatureDataset():
-    data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
-            [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
-            [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
-    regs = [0 for i in range(12)] \
-         + [1 for i in range(12)]
-
-    return Dataset(samples=data, labels=regs)
+from mvpa.misc.data_generators import dumbFeatureBinaryDataset
 
 class LARSTests(unittest.TestCase):
 
     def testLARS(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
-        data = dumbFeatureDataset()
+        data = dumbFeatureBinaryDataset()
 
         clf = LARS()
 
@@ -41,7 +33,7 @@ class LARSTests(unittest.TestCase):
         self.failUnless(cor[0] > .8)
 
     def testLARSState(self):
-        data = dumbFeatureDataset()
+        data = dumbFeatureBinaryDataset()
 
         clf = LARS()
 
@@ -50,7 +42,7 @@ class LARSTests(unittest.TestCase):
         clf.states.enable('predictions')
 
         p = clf.predict(data.samples)
-        
+
         self.failUnless((p == clf.predictions).all())
 
 
