@@ -79,23 +79,24 @@ class ErrorsTests(unittest.TestCase):
                              msg="Test if we get proper error value")
 
 
-    @sweepargs(l_clf=clfs['LinearSVMC'])
-    def testConfusionBasedError(self, l_clf):
-        train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=2,
-                                     nonbogus_features=[0,1], snr=3, nchunks=1)
-        err = ConfusionBasedError(clf=l_clf)
-        terr = TransferError(clf=l_clf)
+    if clfs.has_key('LinearSVMC'):
+        @sweepargs(l_clf=clfs['LinearSVMC'])
+        def testConfusionBasedError(self, l_clf):
+            train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=2,
+                                         nonbogus_features=[0,1], snr=3, nchunks=1)
+            err = ConfusionBasedError(clf=l_clf)
+            terr = TransferError(clf=l_clf)
 
-        self.failUnlessRaises(UnknownStateError, err, None)
-        """Shouldn't be able to access the state yet"""
+            self.failUnlessRaises(UnknownStateError, err, None)
+            """Shouldn't be able to access the state yet"""
 
-        l_clf.train(train)
-        self.failUnlessEqual(err(None), terr(train),
-            msg="ConfusionBasedError should be equal to TransferError on" +
-                " traindataset")
+            l_clf.train(train)
+            self.failUnlessEqual(err(None), terr(train),
+                msg="ConfusionBasedError should be equal to TransferError on" +
+                    " traindataset")
 
-        # try copying the beast
-        terr_copy = copy(terr)
+            # try copying the beast
+            terr_copy = copy(terr)
 
 
 def suite():

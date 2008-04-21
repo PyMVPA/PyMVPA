@@ -24,16 +24,12 @@ import copy
 from mvpa.base import externals
 
 from mvpa.misc.state import StateVariable, Stateful
-from mvpa.clfs.classifier import BoostedClassifier, ProxyClassifier
-from mvpa.misc.transformers import Absolute, FirstAxisMean, \
-     SecondAxisSumOfAbs
-
-from mvpa.clfs.svm import *
-from mvpa.clfs.smlr import SMLR
+from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 
 
 if __debug__:
     from mvpa.misc import debug
+
 
 class DatasetMeasure(Stateful):
     """A measure computed from a `Dataset` (base class).
@@ -305,51 +301,6 @@ class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
                    fset=_setClassifier)
 
 
-def selectAnalyzer(clf, basic_analyzer=None, **kwargs):
-    """Factory method which knows few classifiers and their sensitivity
-    analyzers.
-
-    :Parameters:
-      clf : Classifier
-        the one for which to select analyzer
-      basic_analyzer : SensitivityAnalyzer
-        in case if `clf` is a classifier which uses other classifiers
-        specify which basic_analyzer to use when constructing combined analyzer
-
-    This function is just to assign default values. For
-    advanced/controlled computation assign them explicitely
-    """
-    banalyzer = None
-    if ('libsvm' in externals.present and isinstance(clf, libsvm.svm.LinearSVM)) \
-       or ('shogun' in externals.present and isinstance(clf, sg.svm.LinearSVM)):
-        from mvpa.algorithms.linsvmweights import LinearSVMWeights
-        banalyzer = LinearSVMWeights(clf, transformer=Absolute, **kwargs)
-    elif isinstance(clf, SMLR):
-        from smlrweights import SMLRWeights
-        banalyzer = SMLRWeights(clf, transformer=Absolute, **kwargs)
-    elif isinstance(clf, BoostedClassifier):
-        if basic_analyzer is None and len(clf.clfs) > 0:
-            basic_analyzer = selectAnalyzer(clf.clfs[0], **kwargs)
-            if __debug__:
-                debug("SA", "Selected basic analyzer %s for classifier %s " %
-                      (basic_analyzer, clf ) +
-                      "based on 0th classifier in it being %s" %
-                      (clf.clfs[0] ))
-        banalyzer = BoostedClassifierSensitivityAnalyzer(clf,
-                            analyzer=basic_analyzer, **kwargs)
-    elif isinstance(clf, ProxyClassifier):
-        if basic_analyzer is None:
-            basic_analyzer = selectAnalyzer(clf.clf, **kwargs)
-            if __debug__:
-                debug("SA", "Selected basic analyzer %s for classifier %s " %
-                      (basic_analyzer, clf) +
-                      "based on proxied classifier in it being %s" % clf.clf)
-        banalyzer = ProxyClassifierSensitivityAnalyzer(clf,
-                                                       analyzer=basic_analyzer,
-                                                       **kwargs)
-
-    return banalyzer
-
 
 class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
     """Set sensitivity analyzers to be merged into a single output"""
@@ -428,7 +379,7 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
         # create analyzers
         for clf in self.clf.clfs:
             if self.__analyzer is None:
-                analyzer = selectAnalyzer(clf)
+                analyzer = clf.getSensitivityAnalyzer()
                 if analyzer is None:
                     raise ValueError, \
                           "Wasn't able to figure basic analyzer for clf %s" % \
@@ -471,7 +422,7 @@ class ProxyClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
 
     def _call(self, dataset):
         if self.__analyzer is None:
-            self.__analyzer = selectAnalyzer(self.clf.clf)
+            self.__analyzer = self.clf.clf.getSensitivityAnalyzer()
             if self.__analyzer is None:
                 raise ValueError, \
                       "Wasn't able to figure basic analyzer for clf %s" % \

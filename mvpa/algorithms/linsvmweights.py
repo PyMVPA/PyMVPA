@@ -14,8 +14,7 @@ import numpy as N
 
 from mvpa.base import externals
 
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer, \
-     selectAnalyzer
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
@@ -120,7 +119,7 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         # functions for svm
 
         if not self.clf.mclf is None:
-            anal = selectAnalyzer(self.clf.mclf, basic_analyzer=self)
+            anal = self.clf.mclf.getSensitivityAnalyzer()
             if __debug__:
                 debug('SVM',
                       '! Delegating computing sensitivity to %s' % `anal`)

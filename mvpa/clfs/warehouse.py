@@ -197,8 +197,8 @@ clfs['SVM+RFE/splits_avg'] = [
   FeatureSelectionClassifier(
     clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
     feature_selection = RFE(             # on features selected via RFE
-        sensitivity_analyzer=selectAnalyzer( # based on sensitivity of a clf
-           clf=rfesvm_split), # which does splitting internally
+        # based on sensitivity of a clf which does splitting internally
+        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
         transfer_error=ConfusionBasedError(
            rfesvm_split,
            confusion_state="training_confusions"), # and whose internal error we use
@@ -212,8 +212,8 @@ clfs['SVM+RFE/splits_avg(static)'] = [
   FeatureSelectionClassifier(
     clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
     feature_selection = RFE(             # on features selected via RFE
-        sensitivity_analyzer=selectAnalyzer( # based on sensitivity of a clf
-           clf=rfesvm_split), # which does splitting internally
+        # based on sensitivity of a clf which does splitting internally
+        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
         transfer_error=ConfusionBasedError(
            rfesvm_split,
            confusion_state="training_confusions"), # and whose internal error we use

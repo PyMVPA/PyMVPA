@@ -13,7 +13,7 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.datameasure import SensitivityAnalyzer, selectAnalyzer
+from mvpa.algorithms.datameasure import SensitivityAnalyzer
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
@@ -221,7 +221,7 @@ class RFETests(unittest.TestCase):
     def testSensitivityBasedFeatureSelection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = selectAnalyzer(clf)
+        sens_ana = clf.getSensitivityAnalyzer()
 
         # of features to remove
         Nremove = 2
@@ -302,7 +302,7 @@ class RFETests(unittest.TestCase):
     def testRFE(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = selectAnalyzer(clf)
+        sens_ana = clf.getSensitivityAnalyzer()
         trans_error = TransferError(clf)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
