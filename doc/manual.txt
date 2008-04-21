@@ -265,7 +265,9 @@ recommend to install these packages as well.
     format. If you don't need that, PyNIfTI is not necessary, but otherwise
     it makes it really easy to read from and write to NIfTI images.
   Shogun_: various classifiers
-    (please explain me)
+    PyMVPA currently can make use of several SVM implementations of the
+    Shogun_ toolbox. It requires the modular python interface of Shogun to be
+    installed. Any version from 0.6 on should work.
 
 .. _SciPy: http://www.scipy.org/
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
