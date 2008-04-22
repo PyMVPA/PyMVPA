@@ -20,7 +20,8 @@ from mvpa.misc.state import StateVariable
 
 from mvpa.clfs.svm import *
 
-if 'shogun' in externals.present:
+#if 'shogun' in externals.present:
+if externals.has_dep('shogun'):
     import shogun.Classifier
 
 
@@ -48,9 +49,11 @@ class LinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
         ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
 
         # poor man dispatch table
-        if 'libsvm' in externals.present and isinstance(clf, libsvm.svm.LinearSVM):
+        #if 'libsvm' in externals.present and isinstance(clf, libsvm.svm.LinearSVM):
+        if externals.has_dep('libsvm') and isinstance(clf, libsvm.svm.LinearSVM):
             self.__sens = self.__libsvm
-        elif 'shogun' in externals.present and isinstance(clf, sg.svm.LinearSVM):
+        #elif 'shogun' in externals.present and isinstance(clf, sg.svm.LinearSVM):
+        elif externals.has_dep('shogun') and isinstance(clf, sg.svm.LinearSVM):
             self.__sens = self.__sg
         else:
             raise ValueError, "Don't know how to compute Linear SVM " + \

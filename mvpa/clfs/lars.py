@@ -13,12 +13,21 @@ __docformat__ = 'restructuredtext'
 # system imports
 import numpy as N
 
-try:
-    import rpy
-    rpy.r.library('lars')
-except:
+import mvpa.base.externals as externals
+
+if not externals.has_dep('lars'):
     raise RuntimeError("Unable to load LARS library from R with RPy.\n" +
                        "Please ensure that they are all installed correctly.")
+else:
+    import rpy
+    rpy.r.library('lars')
+
+# try:
+#     import rpy
+#     rpy.r.library('lars')
+# except:
+#     raise RuntimeError("Unable to load LARS library from R with RPy.\n" +
+#                        "Please ensure that they are all installed correctly.")
 
 # local imports
 from mvpa.clfs.classifier import Classifier
