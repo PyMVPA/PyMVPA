@@ -47,5 +47,3 @@ if not __debug__:
     except:
         from mvpa.misc import verbose
         verbose(2, "Psyco online compilation is not enabled")
-
-#from mvpa.dataset import *
