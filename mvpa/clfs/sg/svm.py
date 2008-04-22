@@ -23,7 +23,9 @@ import shogun.Library
 
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
+from mvpa.misc.state import StateVariable
 from mvpa.clfs.classifier import Classifier, MulticlassClassifier
+from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 
 
 if __debug__:
@@ -82,6 +84,7 @@ def _tosg(data):
         debug("SG__", "Done converting data for shogun into RealFeatures")
     _setdebug(features, 'Features')
     return features
+
 
 
 class SVM_SG_Modular(Classifier):
@@ -368,6 +371,7 @@ class SVM_SG_Modular(Classifier):
     TODO -- might better become state variable I guess"""
 
 
+
 class LinearSVM(SVM_SG_Modular):
 
     def __init__(self, **kwargs):
@@ -375,6 +379,12 @@ class LinearSVM(SVM_SG_Modular):
         """
         # init base class
         SVM_SG_Modular.__init__(self, kernel_type='Linear', **kwargs)
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns an appropriate SensitivityAnalyzer."""
+        return ShogunLinearSVMWeights(self, **kwargs)
+
 
 
 class LinearCSVMC(LinearSVM):
@@ -385,6 +395,7 @@ class LinearCSVMC(LinearSVM):
         LinearSVM.__init__(self, C=C, **kwargs)
 
 
+
 class RbfCSVMC(SVM_SG_Modular):
     """C-SVM classifier using a radial basis function kernel.
     """
@@ -393,6 +404,72 @@ class RbfCSVMC(SVM_SG_Modular):
         """
         # init base class
         SVM_SG_Modular.__init__(self, C=C, kernel_type='RBF', kernel_params=[gamma], **kwargs)
+
+
+
+class ShogunLinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
+    """`SensitivityAnalyzer` that reports the weights of a linear SVM trained
+    on a given `Dataset`.
+    """
+
+    biases = StateVariable(enabled=True,
+                           doc="Offsets of separating hyperplanes")
+
+    def __init__(self, clf, **kwargs):
+        """Initialize the analyzer with the classifier it shall use.
+
+        :Parameters:
+          clf: LinearSVM
+            classifier to use. Only classifiers sub-classed from
+            `LinearSVM` may be used.
+        """
+        # init base classes first
+        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+
+
+    def __sg_helper(self, svm):
+        """Helper function to compute sensitivity for a single given SVM"""
+        self.offsets = svm.get_bias()
+        svcoef = N.matrix(svm.get_alphas())
+        svnums = svm.get_support_vectors()
+        svs = self.clf.traindataset.samples[svnums,:]
+        res = (svcoef * svs).mean(axis=0).A1
+        return res
+
+
+    def _call(self, dataset):
+        #from IPython.Shell import IPShellEmbed
+        #ipshell = IPShellEmbed()
+        #ipshell()
+        #12: self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_bias()
+        #19: alphas=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_alphas()
+        #20: svs=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_support_vectors()
+
+        # TODO: since multiclass is done internally - we need to check
+        # here if self.clf.__mclf is not an instance of some out
+        # Classifier and apply corresponding combiner of
+        # sensitivities... think about it more... damn
+
+        # XXX Hm... it might make sense to unify access functions
+        # naming across our swig libsvm wrapper and sg access
+        # functions for svm
+
+        if not self.clf.mclf is None:
+            anal = self.clf.mclf.getSensitivityAnalyzer()
+            if __debug__:
+                debug('SVM',
+                      '! Delegating computing sensitivity to %s' % `anal`)
+            return anal(dataset)
+
+        svm = self.clf.svm
+        if isinstance(svm, shogun.Classifier.MultiClassSVM):
+            sens = []
+            for i in xrange(svm.get_num_svms()):
+                sens.append(self.__sg_helper(svm.get_svm(i)))
+        else:
+            sens = self.__sg_helper(svm)
+        return N.array(sens)
+
 
 
 #if __debug__:
