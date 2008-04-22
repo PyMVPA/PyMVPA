@@ -22,7 +22,7 @@ import numpy as N
 from mvpa.algorithms.datameasure import SensitivityAnalyzer
 
 
-class PerturbationSensitivityAnalyzer(SensitivityAnalyzer):
+class NoisePerturbationSensitivity(SensitivityAnalyzer):
     """This is a `SensitivityAnalyzer` that uses a `ScalarDatasetMeasure` and
     selective noise perturbation to compute a sensitivity map.
 

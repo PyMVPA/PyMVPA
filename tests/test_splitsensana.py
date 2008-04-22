@@ -14,7 +14,7 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer
+from mvpa.measures.splitsensitivity import SplitSensitivity
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -31,7 +31,7 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         def testAnalyzer(self, svm):
             svm_weigths = svm.getSensitivityAnalyzer()
 
-            sana = SplittingSensitivityAnalyzer(
+            sana = SplitSensitivity(
                         svm_weigths,
                         NFoldSplitter(cvtype=1),
                         enable_states=['maps'])
