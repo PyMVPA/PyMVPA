@@ -17,7 +17,7 @@ from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import StateVariable
 from mvpa.misc.transformers import FirstAxisMean
 
-class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
+class SplitSensitivity(SensitivityAnalyzer):
     """This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
     and runs it multiple times on differents splits of a `Dataset`.
 

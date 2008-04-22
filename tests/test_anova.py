@@ -12,7 +12,7 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.algorithms.anova import OneWayAnova
+from mvpa.measures.anova import OneWayAnova
 from mvpa.misc.data_generators import dumbFeatureDataset
 
 
