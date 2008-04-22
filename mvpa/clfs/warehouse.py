@@ -52,7 +52,8 @@ clfs={
 clfs['LinearSVMC'] = []
 clfs['NonLinearSVMC'] = []
 
-if 'libsvm' in externals.present:
+#if 'libsvm' in externals.present:
+if externals.has_key('libsvm'):
     clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
                            libsvm.svm.LinearCSVMC(C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
                            libsvm.svm.LinearCSVMC(C=1.0, descr="libsvm.LinSVM(C=1)"),
@@ -62,7 +63,8 @@ if 'libsvm' in externals.present:
                               # RbfNuSVMC(descr="Rbf nu-SVM (default)")
                               ]
 
-if 'shogun' in externals.present:
+#if 'shogun' in externals.present:
+if externals.has_key('shogun'):
     for impl in sg.svm.known_svm_impl:
         clfs['LinearSVMC'] += [
             sg.svm.LinearCSVMC(descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),

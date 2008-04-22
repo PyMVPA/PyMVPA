@@ -29,34 +29,37 @@ clfs['NonLinearC'] = [ kNN(k=1) ]
 from mvpa.base import externals
 
 # if have ANY svm implementation
-if 'libsvm' in externals.present or 'shogun' in externals.present:
+#if 'libsvm' in externals.present or 'shogun' in externals.present:
+if externals.has_dep('libsvm') or externals.has_dep('shogun'):
     from mvpa.clfs.svm import *
     clfs['LinearSVMC'] = []
     clfs['NonLinearSVMC'] = []
 
 # libsvm check
-if 'libsvm' in externals.present:
+#if 'libsvm' in externals.present:
+if externals.has_dep('libsvm'):
     clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(probability=1),
                            libsvm.svm.LinearNuSVMC(probability=1)]
     clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(probability=1),
                               libsvm.svm.RbfNuSVMC(probability=1)]
 
 # shogun svm check
-if 'shogun' in externals.present:
+if externals.has_dep('shogun'):
     clfs['LinearSVMC'].append(sg.svm.LinearCSVMC())
     clfs['NonLinearSVMC'].append(sg.svm.RbfCSVMC())
 
 # finalize SVMs
-if 'libsvm' in externals.present or 'shogun' in externals.present:
+#if 'libsvm' in externals.present or 'shogun' in externals.present:
+if externals.has_dep('libsvm') or externals.has_dep('shogun'):
     clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
     clfs['LinearC'] += clfs['LinearSVMC']
     clfs['NonLinearC'] += clfs['NonLinearSVMC']
 
 # lars from R via RPy
-if 'lars' in externals.present:
+#if 'lars' in externals.present:
+if externals.has_dep('lars'):
     from mvpa.clfs.lars import LARS
     #clfs['LinearC'].append(LARS())
-
 
 
 # finally merge them all

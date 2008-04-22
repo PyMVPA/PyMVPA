@@ -51,7 +51,8 @@ tests = [
 # and now for the optional tests
 optional_tests = []
 
-if 'lars' in externals.present:
+#if 'lars' in externals.present:
+if externals.has_dep('lars'):
     optional_tests.append('test_lars')
 
 
