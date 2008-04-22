@@ -48,11 +48,13 @@ tests = [
     'test_nullhyptest'
     ]
 
+# fully test of externals
+externals.testAllDependencies()
+
 # and now for the optional tests
 optional_tests = []
 
-#if 'lars' in externals.present:
-if externals.has_dep('lars'):
+if externals.exists('lars'):
     optional_tests.append('test_lars')
 
 

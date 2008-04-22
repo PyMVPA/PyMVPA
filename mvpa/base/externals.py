@@ -21,8 +21,10 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'shogun':'import shogun as __',
           'lars': "import rpy; rpy.r.library('lars')"}
 
-_dep_list = {}
-def has_dep(dep, force=False):
+_VERIFIED = {}
+
+
+def exists(dep, force=False):
     """
     Test whether a known dependency is installed on the system.
 
@@ -38,24 +40,29 @@ def has_dep(dep, force=False):
         performed.
 
     """
-    if _dep_list.has_key(dep) and not force:
+    if _VERIFIED.has_key(dep) and not force:
         # we have already tested for it, so return our previous result
-        return _dep_list[dep]
+        return _VERIFIED[dep]
     elif not _KNOWN.has_key(dep):
         warning("%s is not a known dependency key." % (dep))
         return False
     else:
         # try and load the specific dependency
         # default to false
-        _dep_list[dep] = False
+        _VERIFIED[dep] = False
+
+        if __debug__:
+            debug('EXT', "Checking for the presence of %s" % dep)
+
         try:
             exec _KNOWN[dep]
-            _dep_list[dep] = True
+            _VERIFIED[dep] = True
         except ImportError, AttributeError:
             pass
-        return _dep_list[dep]
+        return _VERIFIED[dep]
 
-def test_all_deps(force=False):
+
+def testAllDependencies(force=False):
     """
     Test for all known dependencies.
 
@@ -67,25 +74,10 @@ def test_all_deps(force=False):
     """
     # loop over all known dependencies
     for dep in _KNOWN:
-        if __debug__:
-            debug('EXT', "Checking for the presence of %s" % dep)
-        if not has_dep(dep, force):
-            warning("Known dependency %s is not present, thus not available." % dep)
+        if not exists(dep, force):
+            warning("Known dependency %s is not present, thus not available." \
+                    % dep)
 
     if __debug__:
-        debug('EXT', 'The following optional externals are present: %s' % _dep_list.keys())
-
-# present = []
-# for external,testcode in _KNOWN.iteritems():
-#     if __debug__:
-#         debug('EXT', "Checking for the presence of %s" % external)
-#     # conditional import of libsvm
-#     try:
-#         exec testcode
-#         present += [external]
-#     except:
-#         warning("Known external %s is not present, thus not available" % external)
-
-# if __debug__:
-#     debug('EXT', 'Following optional externals are present: %s' % `present`)
-
+        debug('EXT', 'The following optional externals are present: %s' \
+                     % [ k for k in _VERIFIED.keys() if _VERIFIED[k]])
