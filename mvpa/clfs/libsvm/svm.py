@@ -16,7 +16,7 @@ from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.classifier import Classifier
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
+from mvpa.algorithms.datameasure import Sensitivity
 import _svm as svm
 
 if __debug__:
@@ -464,7 +464,7 @@ if hasattr(svm.svmc, 'svm_set_verbosity'):
 
 
 
-class LibSVMLinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
+class LibSVMLinearSVMWeights(Sensitivity):
     """`SensitivityAnalyzer` for the LIBSVM implementation of a linear SVM.
     """
 
@@ -480,7 +480,7 @@ class LibSVMLinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
             `LinearSVM` may be used.
         """
         # init base classes first
-        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+        Sensitivity.__init__(self, clf, **kwargs)
 
 
     def _call(self, dataset, callables=[]):

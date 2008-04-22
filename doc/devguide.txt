@@ -240,7 +240,7 @@ There are two possible base-classes for new sensitivity analyzers.
 First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
 generic approach. However, for sensitivity analyzers that make use of some
 classifier and extract the sensitivities from it,
-ClassifierBasedSensitivityAnalyzer_ is a more appropriate base-class, as it
+Sensitivity_ is a more appropriate base-class, as it
 provides some additional useful functionality for this use case.
 
 All sensitivity analyzers (actually all objects based on DatasetMeasure_)
@@ -282,13 +282,13 @@ Nothing special.
 Classifier-based Sensitivity Analyzers
 ''''''''''''''''''''''''''''''''''''''
 
-A ClassifierBasedSensitivityAnalyzer_ behaves exactly like its
+A Sensitivity_ behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
-.. IncludeStates: algorithms.datameasure ClassifierBasedSensitivityAnalyzer
+.. IncludeStates: algorithms.datameasure Sensitivity
 
 
 Outstanding Questions:
@@ -299,7 +299,7 @@ Outstanding Questions:
 
 .. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
 .. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
-.. _ClassifierBasedSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ClassifierBasedSensitivityAnalyzer-class.html
+.. _Sensitivity: api/mvpa.algorithms.datameasure.Sensitivity-class.html
 .. _ProxyClassifierSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ProxyClassifierSensitivityAnalyzer-class.html
 
 
