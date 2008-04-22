@@ -10,8 +10,8 @@
 datasets.
 
 Besides the `DatasetMeasure` base class this module also provides the (abstract)
-`SensitivityAnalyzer` class. The difference between a general measure and
-the output of the `SensitivityAnalyzer` is that the latter returns a 1d map
+`FeaturewiseDatasetMeasure` class. The difference between a general measure and
+the output of the `FeaturewiseDatasetMeasure` is that the latter returns a 1d map
 (one value per feature in the dataset). In contrast there are no restrictions
 on the returned value of `DatasetMeasure` except for that it has to be in some
 iterable container.
@@ -202,37 +202,11 @@ class StaticDatasetMeasure(DatasetMeasure):
     bias = property(fget=lambda self:self.__bias)
 
 
-class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
-    """Base class of all sensitivity analysers.
-
-    A sensitivity analyser is an algorithm that assigns a sensitivity value to
-    all features in a dataset.
-    """
-    def __init__(self, *args, **kwargs):
-        """Does nothing."""
-        FeaturewiseDatasetMeasure.__init__(self, *(args), **(kwargs))
-
-
-    def _call(self, dataset):
-        """Perform sensitivity analysis on a given `Dataset`.
-
-        Each implementation has to handle a single argument: the source
-        dataset.
-
-        Returns the computed sensitivity measure in a 1D array whose length
-        and order matches the features in the dataset. Higher sensitivity values
-        should indicate higher sensitivity (or signal to noise ratio or
-        amount of available information or the like).
-        """
-        # XXX should we allow to return multiple maps (as a sequence) as
-        # currently (illegally) done by SplittingSensitivityAnalyzer?
-        raise NotImplementedError
-
 
 #
-# Flavored implementations of SensitivityAnalyzers
+# Flavored implementations of FeaturewiseDatasetMeasures
 
-class Sensitivity(SensitivityAnalyzer):
+class Sensitivity(FeaturewiseDatasetMeasure):
 
     def __init__(self, clf, force_training=True, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -246,7 +220,7 @@ class Sensitivity(SensitivityAnalyzer):
         """
 
         """Does nothing special."""
-        SensitivityAnalyzer.__init__(self, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
         self.__clf = clf
         """Classifier used to computed sensitivity"""
@@ -272,7 +246,7 @@ class Sensitivity(SensitivityAnalyzer):
                        [self.clf.trained]))
             self.clf.train(dataset)
 
-        return SensitivityAnalyzer.__call__(self, dataset)
+        return FeaturewiseDatasetMeasure.__call__(self, dataset)
 
 
     def _setClassifier(self, clf):
@@ -283,7 +257,7 @@ class Sensitivity(SensitivityAnalyzer):
 
 
 
-class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
+class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     """Set sensitivity analyzers to be merged into a single output"""
 
     sensitivities = StateVariable(enabled=False,
@@ -295,7 +269,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
         if analyzers == None:
             analyzers = []
 
-        SensitivityAnalyzer.__init__(self, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
         self.__analyzers = analyzers
         """List of analyzers to use"""
 
@@ -347,7 +321,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         """
         Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:
-            combined_analyzer = CombinedSensitivityAnalyzer(**kwargs)
+            combined_analyzer = CombinedFeaturewiseDatasetMeasure(**kwargs)
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 

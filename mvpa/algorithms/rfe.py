@@ -32,11 +32,11 @@ if __debug__:
 class RFE(FeatureSelection):
     """Recursive feature elimination.
 
-    A `SensitivityAnalyzer` is used to compute sensitivity maps given a certain
-    dataset. These sensitivity maps are in turn used to discard unimportant
-    features. For each feature selection the transfer error on some testdatset
-    is computed. This procedure is repeated until a given `StoppingCriterion` is
-    reached.
+    A `FeaturewiseDatasetMeasure` is used to compute sensitivity maps given a
+    certain dataset. These sensitivity maps are in turn used to discard
+    unimportant features. For each feature selection the transfer error on some
+    testdatset is computed. This procedure is repeated until a given
+    `StoppingCriterion` is reached.
     """
 
     # TODO: remove
@@ -66,7 +66,7 @@ class RFE(FeatureSelection):
         """Initialize recursive feature elimination
 
         :Parameters:
-            sensitivity_analyzer : SensitivityAnalyzer object
+            sensitivity_analyzer : FeaturewiseDatasetMeasure object
             transfer_error : TransferError object
                 used to compute the transfer error of a classifier based on a
                 certain feature set on the test dataset.

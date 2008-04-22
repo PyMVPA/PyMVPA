@@ -408,7 +408,7 @@ class RbfCSVMC(SVM_SG_Modular):
 
 
 class ShogunLinearSVMWeights(Sensitivity):
-    """`SensitivityAnalyzer` that reports the weights of a linear SVM trained
+    """`Sensitivity` that reports the weights of a linear SVM trained
     on a given `Dataset`.
     """
 

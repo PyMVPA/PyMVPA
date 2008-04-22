@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""This is a `SensitivityAnalyzer` that uses a scalar `DatasetMeasure` and
+"""This is a `FeaturewiseDatasetMeasure` that uses a scalar `DatasetMeasure` and
 selective noise perturbation to compute a sensitivity map.
 """
 
@@ -19,12 +19,13 @@ from copy import deepcopy
 
 import numpy as N
 
-from mvpa.algorithms.datameasure import SensitivityAnalyzer
+from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
 
 
-class NoisePerturbationSensitivity(SensitivityAnalyzer):
-    """This is a `SensitivityAnalyzer` that uses a scalar `DatasetMeasure` and
-    selective noise perturbation to compute a sensitivity map.
+class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
+    """This is a `FeaturewiseDatasetMeasure` that uses a scalar
+    `DatasetMeasure` and selective noise perturbation to compute a sensitivity
+    map.
 
     First the scalar `DatasetMeasure` computed using the original dataset. Next
     the data measure is computed multiple times each with a single feature in
@@ -49,7 +50,7 @@ class NoisePerturbationSensitivity(SensitivityAnalyzer):
                    generators in NumPy's `random` module.
         """
         # init base classes first
-        SensitivityAnalyzer.__init__(self)
+        FeaturewiseDatasetMeasure.__init__(self)
 
         self.__datameasure = datameasure
         self.__noise = noise
