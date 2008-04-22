@@ -15,7 +15,7 @@ import numpy as N
 
 import mvpa.base.externals as externals
 
-if not externals.has_dep('lars'):
+if not externals.exists('lars'):
     raise RuntimeError("Unable to load LARS library from R with RPy.\n" +
                        "Please ensure that they are all installed correctly.")
 else:
