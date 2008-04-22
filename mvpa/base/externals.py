@@ -29,7 +29,7 @@ for external,testcode in _KNOWN.iteritems():
     try:
         exec testcode
         present += [external]
-    except:
+    except ImportError, AttributeError:
         warning("Known external %s is not present, thus not available" % external)
 
 if __debug__:
