@@ -548,7 +548,7 @@ class FractionTailSelector(TailSelector):
 class SensitivityBasedFeatureSelection(FeatureSelection):
     """Feature elimination.
 
-    A `SensitivityAnalyzer` is used to compute sensitivity maps given a certain
+    A `FeaturewiseDatasetMeasure` is used to compute sensitivity maps given a certain
     dataset. These sensitivity maps are in turn used to discard unimportant
     features.
     """
@@ -563,7 +563,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         """Initialize feature selection
 
         :Parameters:
-          sensitivity_analyzer : SensitivityAnalyzer
+          sensitivity_analyzer : FeaturewiseDatasetMeasure
             sensitivity analyzer to come up with sensitivity
           feature_selector : Functor
             Given a sensitivity map it has to return the ids of those

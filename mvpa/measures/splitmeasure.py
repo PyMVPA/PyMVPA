@@ -6,20 +6,22 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
-and runs it multiple times on differents splits of a `Dataset`.
+"""This is a `FeaturewiseDatasetMeasure` that uses another
+`FeaturewiseDatasetMeasure` and runs it multiple times on differents splits of
+a `Dataset`.
 """
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.algorithms.datameasure import SensitivityAnalyzer
+from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.misc.state import StateVariable
 from mvpa.misc.transformers import FirstAxisMean
 
-class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
-    """This is a `SensitivityAnalyzer` that uses another `SensitivityAnalyzer`
-    and runs it multiple times on differents splits of a `Dataset`.
+class SplitFeaturewiseMeasure(FeaturewiseDatasetMeasure):
+    """This is a `FeaturewiseDatasetMeasure` that uses another
+    `FeaturewiseDatasetMeasure` and runs it multiple times on differents
+    splits of a `Dataset`.
 
     When called with a `Dataset` it returns the mean sensitivity maps of all
     data splits.
@@ -40,7 +42,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
         """Cheap initialization.
 
         :Parameters:
-            sensana : SensitivityAnalyzer
+            sensana : FeaturewiseDatasetMeasure
                 that shall be run on the `Dataset` splits.
             splitter : Splitter
                 used to split the `Dataset`. By convention the first dataset
@@ -52,7 +54,7 @@ class SplittingSensitivityAnalyzer(SensitivityAnalyzer):
                 a combiner must be an 1d ndarray.
         """
         # init base classes first
-        SensitivityAnalyzer.__init__(self, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
         self.__sensana = sensana
         """Sensitivity analyzer used to compute the sensitivity maps.

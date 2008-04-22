@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.clfs.classifier import Classifier
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
+from mvpa.algorithms.datameasure import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.state import StateVariable
 from mvpa.misc import warning
@@ -457,7 +457,7 @@ class SMLR(Classifier):
 
 
 
-class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
+class SMLRWeights(Sensitivity):
     """`SensitivityAnalyzer` that reports the weights SMLR trained
     on a given `Dataset`.
     """
@@ -479,7 +479,7 @@ class SMLRWeights(ClassifierBasedSensitivityAnalyzer):
                               % (`clf`, `type(clf)`)
 
         # init base classes first
-        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+        Sensitivity.__init__(self, clf, **kwargs)
 
 
     def _call(self, dataset):

@@ -22,7 +22,7 @@ from mvpa.misc.state import StateVariable
 
 
 class Searchlight(DatasetMeasure):
-    """Runs a `ScalarDatasetMeasure` on all possible spheres of a certain size
+    """Runs a scalar `DatasetMeasure` on all possible spheres of a certain size
     within a dataset.
 
     The idea for a searchlight algorithm stems from this paper:
@@ -53,7 +53,7 @@ class Searchlight(DatasetMeasure):
                 `DatasetMeasure`.
 
         ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
-        make sure that the specified `ScalarDatasetMeasure` returns large
+        make sure that the specified scalar `DatasetMeasure` returns large
         (absolute) values for high sensitivities and small (absolute) values
         for low sensitivities. Especially when using error functions usually
         low values imply high performance and therefore high sensitivity. This
