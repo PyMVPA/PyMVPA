@@ -27,8 +27,6 @@ from mvpa.misc.transformers import Absolute
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-if clfs.has_key('LinearSVMC'):
-    from mvpa.algorithms.linsvmweights import LinearSVMWeights
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -112,7 +110,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
             # for now we can do only linear SVM, so lets check if we raise
             # a concern
             svmnl = clfs['NonLinearSVMC'][0]
-            self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
+            self.failUnlessRaises(NotImplementedError,
+                                  svmnl.getSensitivityAnalyzer)
 
 
     # TODO -- unittests for sensitivity analyzers which use combiners

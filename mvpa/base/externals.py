@@ -51,7 +51,7 @@ def has_dep(dep, force=False):
         try:
             exec _KNOWN[dep]
             _dep_list[dep] = True
-        except:
+        except ImportError, AttributeError:
             pass
         return _dep_list[dep]
 
@@ -74,7 +74,6 @@ def test_all_deps(force=False):
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' % _dep_list.keys())
-
 
 # present = []
 # for external,testcode in _KNOWN.iteritems():
