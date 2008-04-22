@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.clfs.transerror import ClassifierError
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
+from mvpa.algorithms.datameasure import Sensitivity
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     BestDetector, \
                                     NBackHistoryStopCrit, \
@@ -115,7 +115,7 @@ class RFE(FeatureSelection):
 
         if train_clf is None:
             self.__train_clf = isinstance(sensitivity_analyzer,
-                                          ClassifierBasedSensitivityAnalyzer)
+                                          Sensitivity)
         else:
             self.__train_clf = train_clf
             """Flag whether training classifier is required."""

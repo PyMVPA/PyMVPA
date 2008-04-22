@@ -25,7 +25,7 @@ from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.classifier import Classifier, MulticlassClassifier
-from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
+from mvpa.algorithms.datameasure import Sensitivity
 
 
 if __debug__:
@@ -407,7 +407,7 @@ class RbfCSVMC(SVM_SG_Modular):
 
 
 
-class ShogunLinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
+class ShogunLinearSVMWeights(Sensitivity):
     """`SensitivityAnalyzer` that reports the weights of a linear SVM trained
     on a given `Dataset`.
     """
@@ -424,7 +424,7 @@ class ShogunLinearSVMWeights(ClassifierBasedSensitivityAnalyzer):
             `LinearSVM` may be used.
         """
         # init base classes first
-        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+        Sensitivity.__init__(self, clf, **kwargs)
 
 
     def __sg_helper(self, svm):

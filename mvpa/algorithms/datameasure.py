@@ -232,7 +232,7 @@ class SensitivityAnalyzer(FeaturewiseDatasetMeasure):
 #
 # Flavored implementations of SensitivityAnalyzers
 
-class ClassifierBasedSensitivityAnalyzer(SensitivityAnalyzer):
+class Sensitivity(SensitivityAnalyzer):
 
     def __init__(self, clf, force_training=True, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -335,7 +335,7 @@ class CombinedSensitivityAnalyzer(SensitivityAnalyzer):
 
 
 
-class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
+class BoostedClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzers to be merged into a single output"""
 
     def __init__(self,
@@ -345,7 +345,7 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
         """
-        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+        Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:
             combined_analyzer = CombinedSensitivityAnalyzer(**kwargs)
         self.__combined_analyzer = combined_analyzer
@@ -386,7 +386,7 @@ class BoostedClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
 
 
-class ProxyClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
+class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzer output just to pass through"""
 
     def __init__(self,
@@ -395,7 +395,7 @@ class ProxyClassifierSensitivityAnalyzer(ClassifierBasedSensitivityAnalyzer):
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
         """
-        ClassifierBasedSensitivityAnalyzer.__init__(self, clf, **kwargs)
+        Sensitivity.__init__(self, clf, **kwargs)
 
         self.__analyzer = None
         """Analyzer to use for basic classifiers within boosted classifier"""
