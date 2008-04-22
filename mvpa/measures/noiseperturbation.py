@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""This is a `SensitivityAnalyzer` that uses a `ScalarDatasetMeasure` and
+"""This is a `SensitivityAnalyzer` that uses a scalar `DatasetMeasure` and
 selective noise perturbation to compute a sensitivity map.
 """
 
@@ -23,15 +23,15 @@ from mvpa.algorithms.datameasure import SensitivityAnalyzer
 
 
 class NoisePerturbationSensitivity(SensitivityAnalyzer):
-    """This is a `SensitivityAnalyzer` that uses a `ScalarDatasetMeasure` and
+    """This is a `SensitivityAnalyzer` that uses a scalar `DatasetMeasure` and
     selective noise perturbation to compute a sensitivity map.
 
-    First the `ScalarDatasetMeasure` computed using the original dataset. Next
+    First the scalar `DatasetMeasure` computed using the original dataset. Next
     the data measure is computed multiple times each with a single feature in
     the dataset perturbed by noise. The resulting difference in the
-    `ScalarDatasetMeasure` is used as the sensitivity for the respective
+    scalar `DatasetMeasure` is used as the sensitivity for the respective
     perturbed feature. Large differences are treated as an indicator of a
-    feature having great impact on the `ScalarDatasetMeasure`.
+    feature having great impact on the scalar `DatasetMeasure`.
 
     The computed sensitivity map might have positive and negative values!
     """
