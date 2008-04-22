@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.clfs.transerror import ClassifierError
 from mvpa.algorithms.datameasure import Sensitivity
-from mvpa.algorithms.featsel import FeatureSelection, \
-                                    BestDetector, \
-                                    NBackHistoryStopCrit, \
-                                    FractionTailSelector
+from mvpa.featsel.base import FeatureSelection
+from mvpa.featsel.helpers import BestDetector, \
+                                 NBackHistoryStopCrit, \
+                                 FractionTailSelector
 from numpy import arange
 from mvpa.misc.state import StateVariable
 

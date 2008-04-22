@@ -64,6 +64,7 @@ nothing but free-software to run.""",
                        'mvpa.clfs.libsmlr',
                        'mvpa.algorithms',
                        'mvpa.measures',
+                       'mvpa.featsel',
                        'mvpa.misc',
                        'mvpa.misc.fsl' ],
       ext_modules  = ext_modules

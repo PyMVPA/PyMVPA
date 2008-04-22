@@ -13,11 +13,11 @@ import numpy as N
 
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.ifs import IFS
+from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.featsel import FixedNElementTailSelector
+from mvpa.featsel.helpers import FixedNElementTailSelector
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
