@@ -14,10 +14,11 @@ from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
-from mvpa.algorithms.rfe import RFE
-from mvpa.algorithms.featsel import \
+from mvpa.featsel.rfe import RFE
+from mvpa.featsel.base import \
      SensitivityBasedFeatureSelection, \
-     FeatureSelectionPipeline, \
+     FeatureSelectionPipeline
+from mvpa.featsel.helpers import \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector, RangeElementSelector

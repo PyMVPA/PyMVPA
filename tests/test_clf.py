@@ -222,8 +222,9 @@ class ClassifiersTests(unittest.TestCase):
 
     def testFeatureSelectionClassifier(self):
         from test_rfe import SillySensitivityAnalyzer
-        from mvpa.algorithms.featsel import \
-             SensitivityBasedFeatureSelection, \
+        from mvpa.featsel.base import \
+             SensitivityBasedFeatureSelection
+        from mvpa.featsel.helpers import \
              FixedNElementTailSelector
 
         # should give lowest weight to the feature with lowest index

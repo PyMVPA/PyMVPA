@@ -17,10 +17,10 @@ __docformat__ = 'restructuredtext'
 
 from copy import copy
 
-from mvpa.algorithms.featsel import FeatureSelection, \
-                                    NBackHistoryStopCrit, \
-                                    FixedNElementTailSelector, \
-                                    BestDetector
+from mvpa.featsel.base import FeatureSelection
+from mvpa.featsel.helpers import NBackHistoryStopCrit, \
+                                 FixedNElementTailSelector, \
+                                 BestDetector
 
 from mvpa.misc.state import StateVariable
 
