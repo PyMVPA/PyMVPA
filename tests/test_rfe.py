@@ -13,7 +13,7 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.datameasure import SensitivityAnalyzer
+from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
 from mvpa.algorithms.rfe import RFE
 from mvpa.algorithms.featsel import \
      SensitivityBasedFeatureSelection, \
@@ -30,13 +30,13 @@ from mvpa.misc.state import UnknownStateError
 from tests_warehouse import sweepargs
 from tests_warehouse_clfs import *
 
-class SillySensitivityAnalyzer(SensitivityAnalyzer):
+class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
     """Simple one which just returns xrange[-N/2, N/2], where N is the
     number of features
     """
 
     def __init__(self, mult=1, **kwargs):
-        SensitivityAnalyzer.__init__(self, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
         self.__mult = mult
 
     def __call__(self, dataset):
