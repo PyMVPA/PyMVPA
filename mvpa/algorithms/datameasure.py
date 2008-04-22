@@ -98,25 +98,6 @@ class DatasetMeasure(Stateful):
                 str(self.states.enabled))
 
 
-class ScalarDatasetMeasure(DatasetMeasure):
-    """A scalar measure computed from a `Dataset` (base class).
-
-    Should behave like a DatasetMeasure.
-    """
-    def __init__(self, *args, **kwargs):
-        """Does nothing."""
-        DatasetMeasure.__init__(self, *(args), **(kwargs))
-
-
-    def _call(self, dataset):
-        """Computes a scalar measure on a given `Dataset`.
-
-        Behaves like a `DatasetMeasure`, but computes and returns a single
-        scalar value.
-        """
-        raise NotImplementedError
-
-
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
     """A per-feature-measure computed from a `Dataset` (base class).

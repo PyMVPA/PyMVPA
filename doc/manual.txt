@@ -1136,7 +1136,7 @@ Noise Perturbation
 
 Noise perturbation is a generic approach to determine feature sensitivity.
 The sensitivity analyzer (PerturbationSensitivityAnalyzer_) computes a
-ScalarDatasetMeasure_ using the original dataset. Afterwards, for each single
+scalar DatasetMeasure_ using the original dataset. Afterwards, for each single
 feature a noise pattern is added to the respective feature and the dataset
 measure is recomputed. The sensitivity of each feature is the difference
 between the dataset measure of the orginal dataset and the one with added
@@ -1145,13 +1145,13 @@ noise. The reasoning behind this algorithm is that adding to noise to
 classifier transfer error. However, adding noise the a feature that already
 only contains noise, will not change such a measure.
 
-Depending on the used ScalarDatasetMeasure_ using the sensitivity analyzer
+Depending on the used scalar DatasetMeasure_ using the sensitivity analyzer
 might be really CPU-intensive! Also depending on the measure, it might be
 necessary to use appropriate Transformers_ (see `transformer` constructor
 arguments) to ensure that higher values represent higher sensitivities.
 
 .. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
-.. _ScalarDatasetMeasure: api/mvpa.algorithms.datameasure.ScalarDatasetMeasure-class.html
+.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
 
 
 Meta Sensitivity Analyzer
@@ -1204,7 +1204,7 @@ Searchlight
 ~~~~~~~~~~~
 
 The term Searchlight_ refers to an algorithm that runs a
-`ScalarDatasetMeasure` on all possible spheres of a certain size within a
+scalar `DatasetMeasure` on all possible spheres of a certain size within a
 dataset. The measure typically computed is a cross-validated transfer error
 (see CrossValidatedTransferError_). The idea to use a searchlight as a
 sensitivity analyzer stems from a paper by Kriegeskorte and colleagues
