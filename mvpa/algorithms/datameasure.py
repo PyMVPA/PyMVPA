@@ -21,8 +21,6 @@ __docformat__ = 'restructuredtext'
 
 import copy
 
-from mvpa.base import externals
-
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 

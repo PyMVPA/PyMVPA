@@ -12,26 +12,17 @@
 __docformat__ = 'restructuredtext'
 
 # Data
-from mvpa.datasets.splitter import *
+from mvpa.datasets.splitter import OddEvenSplitter
 
 # Define sets of classifiers
-from mvpa.clfs.classifier import *
-from mvpa.clfs.svm import *
+from mvpa.clfs.classifier import FeatureSelectionClassifier, SplitClassifier, \
+                                 MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import *
-from mvpa.clfs.knn import *
-
-# Algorithms
-from mvpa.algorithms.featsel import *
-from mvpa.algorithms.datameasure import *
-from mvpa.algorithms.anova import *
-from mvpa.algorithms.rfe import *
-from mvpa.algorithms.linsvmweights import *
-from mvpa.algorithms.smlrweights import *
-from mvpa.algorithms.cvtranserror import *
+from mvpa.clfs.ridge import RidgeReg
+from mvpa.clfs.knn import kNN
 
 # Helpers
-from mvpa.clfs.transerror import *
+from mvpa.clfs.transerror import TransferError
 
 
 # NB:
@@ -40,7 +31,7 @@ from mvpa.clfs.transerror import *
 #  - Python's SMLR is turned off for the duration of development
 #    since it is slow and results should be the same as of C version
 #
-clfs={
+clfs = {
       'SMLR' : [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
                  SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
                  SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
@@ -53,7 +44,8 @@ clfs['LinearSVMC'] = []
 clfs['NonLinearSVMC'] = []
 
 #if 'libsvm' in externals.present:
-if externals.has_key('libsvm'):
+if externals.exists('libsvm'):
+    from mvpa.clfs.svm import LinearSVMC, RbfCSVMC
     clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
                            libsvm.svm.LinearCSVMC(C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
                            libsvm.svm.LinearCSVMC(C=1.0, descr="libsvm.LinSVM(C=1)"),
@@ -64,7 +56,7 @@ if externals.has_key('libsvm'):
                               ]
 
 #if 'shogun' in externals.present:
-if externals.has_key('shogun'):
+if externals.exists('shogun'):
     for impl in sg.svm.known_svm_impl:
         clfs['LinearSVMC'] += [
             sg.svm.LinearCSVMC(descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),

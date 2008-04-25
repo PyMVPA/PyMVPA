@@ -10,8 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-
 if __debug__:
     from mvpa.misc import debug
 
