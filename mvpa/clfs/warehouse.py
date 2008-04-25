@@ -18,11 +18,20 @@ from mvpa.datasets.splitter import OddEvenSplitter
 from mvpa.clfs.classifier import FeatureSelectionClassifier, SplitClassifier, \
                                  MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.knn import kNN
 
 # Helpers
 from mvpa.clfs.transerror import TransferError
+from mvpa.base import externals
+from mvpa.measures.anova import OneWayAnova
+from mvpa.misc.transformers import Absolute
+from mvpa.featsel.rfe import RFE
+from mvpa.clfs.smlr import SMLRWeights
+from mvpa.featsel.helpers import FractionTailSelector, \
+    FixedNElementTailSelector, RangeElementSelector, \
+    FixedErrorThresholdStopCrit
+from mvpa.clfs.transerror import ConfusionBasedError
+from mvpa.featsel.base import SensitivityBasedFeatureSelection
 
 
 # NB:
@@ -45,13 +54,15 @@ clfs['NonLinearSVMC'] = []
 
 #if 'libsvm' in externals.present:
 if externals.exists('libsvm'):
-    from mvpa.clfs.svm import LinearSVMC, RbfCSVMC
-    clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
-                           libsvm.svm.LinearCSVMC(C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
-                           libsvm.svm.LinearCSVMC(C=1.0, descr="libsvm.LinSVM(C=1)"),
+    from mvpa.clfs.svm import LinearCSVMC, RbfCSVMC
+    clfs['LinearSVMC'] += [LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
+                           LinearCSVMC(
+                                C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
+                           LinearCSVMC(
+                                C=1.0, descr="libsvm.LinSVM(C=1)"),
                            # LinearNuSVMC(descr="Linear nu-SVM (default)")
                            ]
-    clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
+    clfs['NonLinearSVMC'] += [RbfCSVMC(descr="libsvm.RbfSVM()"),
                               # RbfNuSVMC(descr="Rbf nu-SVM (default)")
                               ]
 
@@ -59,9 +70,12 @@ if externals.exists('libsvm'):
 if externals.exists('shogun'):
     for impl in sg.svm.known_svm_impl:
         clfs['LinearSVMC'] += [
-            sg.svm.LinearCSVMC(descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
-            sg.svm.LinearCSVMC(C=-10.0, descr="sg.LinSVM(C=10*def)/%s" % impl, svm_impl=impl),
-            sg.svm.LinearCSVMC(C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
+            sg.svm.LinearCSVMC(
+                descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
+            sg.svm.LinearCSVMC(
+                C=-10.0, descr="sg.LinSVM(C=10*def)/%s" % impl, svm_impl=impl),
+            sg.svm.LinearCSVMC(
+                C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
         clfs['NonLinearSVMC'] += [
             sg.svm.RbfCSVMC(descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
@@ -156,8 +170,7 @@ clfs['LinearSVM5%->LinearSVM']  = [
     FeatureSelectionClassifier(
         clfs['LinearSVMC'][0],
         SensitivityBasedFeatureSelection(
-           LinearSVMWeights(clfs['LinearSVMC'][0],
-                            transformer=Absolute),
+           clfs['LinearSVMC'][0].getSensitivityAnalyzer(transformer=Absolute),
            FractionTailSelector(0.05, mode='select', tail='upper')),
         descr="LinSVM on 5%(SVM)")
     ]
@@ -166,8 +179,7 @@ clfs['LinearSVM50->LinearSVM']  = [
     FeatureSelectionClassifier(
         clfs['LinearSVMC'][0],
         SensitivityBasedFeatureSelection(
-           LinearSVMWeights(clfs['LinearSVMC'][0],
-                            transformer=Absolute),
+           clfs['LinearSVMC'][0].getSensitivityAnalyzer(transformer=Absolute),
            FixedNElementTailSelector(50, mode='select', tail='upper')),
         descr="LinSVM on 50(SVM)")
     ]
@@ -180,8 +192,9 @@ clfs['LinearSVM50->LinearSVM']  = [
 rfesvm_split = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
 
 # "Almost" classical RFE. If this works it would differ only that
-# our transfer_error is based on internal splitting and classifier used within RFE
-# is a split classifier and its sensitivities per split will get averaged
+# our transfer_error is based on internal splitting and classifier used
+# within RFE is a split classifier and its sensitivities per split will get
+# averaged
 #
 
 # TODO: wrap head around on how to implement classical RFE (unbiased,
@@ -195,10 +208,13 @@ clfs['SVM+RFE/splits_avg'] = [
         sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
         transfer_error=ConfusionBasedError(
            rfesvm_split,
-           confusion_state="training_confusions"), # and whose internal error we use
+           confusion_state="training_confusions"),
+           # and whose internal error we use
         feature_selector=FractionTailSelector(
-                           0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
-        update_sensitivity=True),                     # update sensitivity at each step
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=True),
+        # update sensitivity at each step
     descr='LinSVM+RFE(splits_avg)' )
   ]
 
@@ -210,10 +226,13 @@ clfs['SVM+RFE/splits_avg(static)'] = [
         sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
         transfer_error=ConfusionBasedError(
            rfesvm_split,
-           confusion_state="training_confusions"), # and whose internal error we use
+           confusion_state="training_confusions"),
+           # and whose internal error we use
         feature_selector=FractionTailSelector(
-                           0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
-        update_sensitivity=False),                     # update sensitivity at each step
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=False),
+        # update sensitivity at each step
     descr='LinSVM+RFE(splits_avg,static)' )
   ]
 
@@ -228,13 +247,15 @@ clfs['SVM+RFE'] = [
    FeatureSelectionClassifier(
     clf = LinearCSVMC(),
     feature_selection = RFE(             # on features selected via RFE
-        sensitivity_analyzer=LinearSVMWeights(clf=rfesvm,
-                                              transformer=Absolute),
+        sensitivity_analyzer=\
+            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
         transfer_error=TransferError(rfesvm),
         stopping_criterion=FixedErrorThresholdStopCrit(0.05),
         feature_selector=FractionTailSelector(
-                           0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
-        update_sensitivity=True)),                     # update sensitivity at each step
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=True)),
+        # update sensitivity at each step
     descr='LinSVM+RFE(N-Fold)')
   ]
 
@@ -243,13 +264,15 @@ clfs['SVM+RFE/oe'] = [
    FeatureSelectionClassifier(
     clf = LinearCSVMC(),
     feature_selection = RFE(             # on features selected via RFE
-        sensitivity_analyzer=LinearSVMWeights(clf=rfesvm,
-                                              transformer=Absolute),
+        sensitivity_analyzer=\
+            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
         transfer_error=TransferError(rfesvm),
         stopping_criterion=FixedErrorThresholdStopCrit(0.05),
         feature_selector=FractionTailSelector(
-                           0.2, mode='discard', tail='lower'),   # remove 20% of features at each step
-        update_sensitivity=True)),                     # update sensitivity at each step
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=True)),
+        # update sensitivity at each step
    splitter = OddEvenSplitter(),
    descr='LinSVM+RFE(OddEven)')
   ]
@@ -257,12 +280,14 @@ clfs['SVM+RFE/oe'] = [
 
 # RFE where each pair-wise classifier is trained with RFE, so we can get
 # different feature sets for different pairs of categories (labels)
-clfs['SVM/Multiclass+RFE/splits_avg'] = [ MulticlassClassifier(clfs['SVM+RFE/splits_avg'][0],
-                                                    descr='SVM/Multiclass+RFE/splits_avg') ]
+clfs['SVM/Multiclass+RFE/splits_avg'] = \
+    [ MulticlassClassifier(clfs['SVM+RFE/splits_avg'][0],
+      descr='SVM/Multiclass+RFE/splits_avg') ]
 
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
-              clfs['Anova5%->kNN'] + clfs['Anova50->kNN'] + clfs['SMLR(lm=10)->kNN'] + \
+              clfs['Anova5%->kNN'] + clfs['Anova50->kNN'] + \
+              clfs['SMLR(lm=10)->kNN'] + \
               clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + \
               clfs['LinearSVM50->LinearSVM'] + clfs['Anova50->LinearSVM'] + \
               clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + \
@@ -276,7 +301,8 @@ clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
 clfs['all_multi'] = clfs['all'] + \
                     [ MulticlassClassifier(
                         clfs['SMLR'][0],
-                        descr='Pairs+maxvote multiclass on ' + clfs['SMLR'][0].descr) ]
+                        descr='Pairs+maxvote multiclass on ' + \
+                        clfs['SMLR'][0].descr) ]
 
 # TODO:  This one yet to be fixed: deepcopy might fail if
 #        sensitivity analyzer is classifierbased and classifier wasn't
