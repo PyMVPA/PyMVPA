@@ -162,32 +162,32 @@ class Splitter(object):
                 filters.append(None)
                 none_specs += 1
             else:
-                filter = N.array([ i in spec \
+                filter_ = N.array([ i in spec \
                     for i in eval('dataset.' + self.__splitattr)])
-                filters.append(filter)
+                filters.append(filter_)
                 if cum_filter == None:
-                    cum_filter = filter
+                    cum_filter = filter_
                 else:
-                    cum_filter = N.logical_and(cum_filter, filter)
+                    cum_filter = N.logical_and(cum_filter, filter_)
 
         # need to turn possible Nones into proper ids sequences
         if none_specs > 1:
             raise ValueError, "Splitter cannot handle more than one `None` " \
                               "split definition."
 
-        for i, filter in enumerate(filters):
-            if filter == None:
+        for i, filter_ in enumerate(filters):
+            if filter_ == None:
                 filters[i] = N.logical_not(cum_filter)
 
         # split data: return None if no samples are left
         # XXX: Maybe it should simply return an empty dataset instead, but
         #      keeping it this way for now, to maintain current behavior
         split_datasets = []
-        for filter in filters:
-            if (filter == False).all():
+        for filter_ in filters:
+            if (filter_ == False).all():
                 split_datasets.append(None)
             else:
-                split_datasets.append(dataset.selectSamples(filter))
+                split_datasets.append(dataset.selectSamples(filter_))
 
         return split_datasets
 
@@ -235,9 +235,9 @@ class NoneSplitter(Splitter):
         """Return just one full split: no first or second dataset.
         """
         if self.__mode == 'second':
-            return [([],None)]
+            return [([], None)]
         else:
-            return [(None,[])]
+            return [(None, [])]
 
 
     def __str__(self):

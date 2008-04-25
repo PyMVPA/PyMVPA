@@ -10,8 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-
 from mvpa.featsel.helpers import FractionTailSelector
 from mvpa.misc.state import StateVariable, Stateful
 
