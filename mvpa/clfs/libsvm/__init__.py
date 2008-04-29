@@ -9,3 +9,5 @@
 """Classifiers provied by LibSVM library"""
 
 __docformat__ = 'restructuredtext'
+
+from mvpa.clfs.libsvm import svm
