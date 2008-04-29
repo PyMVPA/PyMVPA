@@ -15,12 +15,16 @@ import numpy as N
 
 import mvpa.base.externals as externals
 
+if not externals.exists('rpy'):
+    raise RuntimeError("Unable to load RPy which is needed for LARS.\n" +
+                       "Please ensure that it was installed correctly.")
+
 if not externals.exists('lars'):
     raise RuntimeError("Unable to load LARS library from R with RPy.\n" +
-                       "Please ensure that they are all installed correctly.")
-else:
-    import rpy
-    rpy.r.library('lars')
+                       "Please ensure that LARS library was installed correctly.")
+
+import rpy
+rpy.r.library('lars')
 
 # try:
 #     import rpy
