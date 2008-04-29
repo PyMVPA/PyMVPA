@@ -26,23 +26,22 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
         self.dataset = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4)
 
 
-    if clfs.has_key('LinearSVMC'):
-        @sweepargs(svm=clfs['LinearSVMC'])
-        def testAnalyzer(self, svm):
-            svm_weigths = svm.getSensitivityAnalyzer()
+    @sweepargs(svm=clfs.get('LinearSVMC', []))
+    def testAnalyzer(self, svm):
+        svm_weigths = svm.getSensitivityAnalyzer()
 
-            sana = SplitFeaturewiseMeasure(
-                        svm_weigths,
-                        NFoldSplitter(cvtype=1),
-                        enable_states=['maps'])
+        sana = SplitFeaturewiseMeasure(
+                    svm_weigths,
+                    NFoldSplitter(cvtype=1),
+                    enable_states=['maps'])
 
-            maps = sana(self.dataset)
+        maps = sana(self.dataset)
 
-            self.failUnless(len(maps) == 4)
-            self.failUnless(sana.states.isKnown('maps'))
-            allmaps = N.array(sana.maps)
-            self.failUnless(allmaps[:,0].mean() == maps[0])
-            self.failUnless(allmaps.shape == (5,4))
+        self.failUnless(len(maps) == 4)
+        self.failUnless(sana.states.isKnown('maps'))
+        allmaps = N.array(sana.maps)
+        self.failUnless(allmaps[:,0].mean() == maps[0])
+        self.failUnless(allmaps.shape == (5,4))
 
 
 def suite():
