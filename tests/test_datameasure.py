@@ -97,21 +97,20 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 msg="At the end we should have selected the right features")
 
 
-    if clfs.has_key('LinearSVMC'):
-        @sweepargs(svm=clfs['LinearSVMC'])
-        def testLinearSVMWeights(self, svm):
-            # assumming many defaults it is as simple as
-            sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
+    @sweepargs(svm=clfs.get('LinearSVMC', []))
+    def testLinearSVMWeights(self, svm):
+        # assumming many defaults it is as simple as
+        sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
 
-            # and lets look at all sensitivities
-            dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
-            map_ = sana(dataset)
+        # and lets look at all sensitivities
+        dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
+        map_ = sana(dataset)
 
-            # for now we can do only linear SVM, so lets check if we raise
-            # a concern
-            svmnl = clfs['NonLinearSVMC'][0]
-            self.failUnlessRaises(NotImplementedError,
-                                  svmnl.getSensitivityAnalyzer)
+        # for now we can do only linear SVM, so lets check if we raise
+        # a concern
+        svmnl = clfs['NonLinearSVMC'][0]
+        self.failUnlessRaises(NotImplementedError,
+                              svmnl.getSensitivityAnalyzer)
 
 
     # TODO -- unittests for sensitivity analyzers which use combiners

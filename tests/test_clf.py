@@ -263,69 +263,70 @@ class ClassifiersTests(unittest.TestCase):
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
-    # TODO: come up with nice idea on how to bring sweepargs here
-    if clfs.has_key('LinearSVMC'):
-        def testMulticlassClassifier(self):
-            svm = LinearCSVMC()
-            svm2 = LinearCSVMC(enable_states=['training_confusion'])
-            clf = MulticlassClassifier(clf=svm,
-                                       enable_states=['training_confusion'])
 
-            nfeatures = 6
-            nonbogus = [1, 3, 4]
-            dstrain = normalFeatureDataset(perlabel=50, nlabels=3,
-                                           nfeatures=nfeatures,
-                                           nonbogus_features=nonbogus,
-                                           snr=3.0)
+    @sweepargs(clf=clfs.get('LinearSVMC', []))
+    def testMulticlassClassifier(self, clf):
+        svm = clf
+        svm2 = deepcopy(clf)
+        svm2.states.enable(['training_confusion'])
 
-            dstest = normalFeatureDataset(perlabel=50, nlabels=3,
-                                          nfeatures=nfeatures,
-                                          nonbogus_features=nonbogus,
-                                          snr=3.0)
-            svm2.train(dstrain)
+        clf = MulticlassClassifier(clf=svm,
+                                   enable_states=['training_confusion'])
 
-            clf.train(dstrain)
-            self.failUnlessEqual(str(clf.training_confusion),
-                                 str(svm2.training_confusion),
-                msg="Multiclass clf should provide same results as built-in libsvm's %s" %
-                                 svm2)
+        nfeatures = 6
+        nonbogus = [1, 3, 4]
+        dstrain = normalFeatureDataset(perlabel=50, nlabels=3,
+                                       nfeatures=nfeatures,
+                                       nonbogus_features=nonbogus,
+                                       snr=3.0)
 
-            svm2.untrain()
+        dstest = normalFeatureDataset(perlabel=50, nlabels=3,
+                                      nfeatures=nfeatures,
+                                      nonbogus_features=nonbogus,
+                                      snr=3.0)
+        svm2.train(dstrain)
 
-            self.failUnless(svm2.trained == False,
-                msg="Un-Trained SVM should be untrained")
+        clf.train(dstrain)
+        self.failUnlessEqual(str(clf.training_confusion),
+                             str(svm2.training_confusion),
+            msg="Multiclass clf should provide same results as built-in libsvm's %s" %
+                             svm2)
 
-            self.failUnless(N.array([x.trained for x in clf.clfs]).all(),
-                msg="Trained Boosted classifier should have all primary classifiers trained")
-            self.failUnless(clf.trained,
-                msg="Trained Boosted classifier should be marked as trained")
+        svm2.untrain()
 
-            clf.untrain()
+        self.failUnless(svm2.trained == False,
+            msg="Un-Trained SVM should be untrained")
 
-            self.failUnless(not clf.trained,
-                            msg="UnTrained Boosted classifier should not be trained")
-            self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
-                msg="UnTrained Boosted classifier should have no primary classifiers trained")
+        self.failUnless(N.array([x.trained for x in clf.clfs]).all(),
+            msg="Trained Boosted classifier should have all primary classifiers trained")
+        self.failUnless(clf.trained,
+            msg="Trained Boosted classifier should be marked as trained")
 
-    if clfs.has_key('SVMC'):
-        @sweepargs(clf=clfs['SVMC'])
-        def testSVMs(self, clf):
-            knows_probabilities = 'probabilities' in clf.states.names
-            enable_states = ['values']
-            if knows_probabilities: enable_states += ['probabilities']
+        clf.untrain()
 
-            clf.states._changeTemporarily(enable_states = enable_states)
-            testdata = normalFeatureDataset(nlabels=2)
-            for traindata in [normalFeatureDataset(nlabels=2)]:
-                clf.train(traindata)
-                predicts = clf.predict(testdata.samples)
-                # values should be different from predictions for SVMs we have
-                self.failUnless( (predicts != clf.values).any() )
+        self.failUnless(not clf.trained,
+                        msg="UnTrained Boosted classifier should not be trained")
+        self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
+            msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
-                if knows_probabilities and clf.states.isSet('probabilities'):
-                    # XXX test more thoroughly what we are getting here ;-)
-                    self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
-            clf.states._resetEnabledTemporarily()
+    @sweepargs(clf=clfs.get('SVMC', []))
+    def testSVMs(self, clf):
+        knows_probabilities = 'probabilities' in clf.states.names
+        enable_states = ['values']
+        if knows_probabilities: enable_states += ['probabilities']
+
+        clf.states._changeTemporarily(enable_states = enable_states)
+        testdata = normalFeatureDataset(nlabels=2)
+        for traindata in [normalFeatureDataset(nlabels=2)]:
+            clf.train(traindata)
+            predicts = clf.predict(testdata.samples)
+            # values should be different from predictions for SVMs we have
+            self.failUnless( (predicts != clf.values).any() )
+
+            if knows_probabilities and clf.states.isSet('probabilities'):
+                # XXX test more thoroughly what we are getting here ;-)
+                self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
+        clf.states._resetEnabledTemporarily()
 
     @sweepargs(clf=clfs['all'])
     def testGenericTests(self, clf):
