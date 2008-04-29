@@ -47,7 +47,9 @@ if externals.exists('shogun'):
     clfs['NonLinearSVMC'].append(sg.svm.RbfCSVMC())
 
 # finalize SVMs
-if externals.exists('libsvm') or externals.exists('shogun'):
+if len(clfs.get('LinearSVMC', [])):
+    # Make generic import
+    from mvpa.clfs.svm import LinearCSVMC, RbfCSVMC
     clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
     clfs['LinearC'] += clfs['LinearSVMC']
     clfs['NonLinearC'] += clfs['NonLinearSVMC']
