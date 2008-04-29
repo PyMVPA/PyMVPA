@@ -19,7 +19,9 @@ if __debug__:
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'shogun':'import shogun as __',
-          'lars': "import rpy; rpy.r.library('lars')"}
+          'rpy': "import rpy",
+          'lars': "import rpy; rpy.r.library('lars')",
+          }
 
 _VERIFIED = {}
 
