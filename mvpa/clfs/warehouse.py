@@ -52,22 +52,21 @@ clfs = {
 clfs['LinearSVMC'] = []
 clfs['NonLinearSVMC'] = []
 
-#if 'libsvm' in externals.present:
 if externals.exists('libsvm'):
-    from mvpa.clfs.svm import LinearCSVMC, RbfCSVMC
-    clfs['LinearSVMC'] += [LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
-                           LinearCSVMC(
+    from mvpa.clfs import libsvm
+    clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
+                           libsvm.svm.LinearCSVMC(
                                 C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
-                           LinearCSVMC(
+                           libsvm.svm.LinearCSVMC(
                                 C=1.0, descr="libsvm.LinSVM(C=1)"),
-                           # LinearNuSVMC(descr="Linear nu-SVM (default)")
+                           # libsvm.svm.LinearNuSVMC(descr="Linear nu-SVM (default)")
                            ]
-    clfs['NonLinearSVMC'] += [RbfCSVMC(descr="libsvm.RbfSVM()"),
-                              # RbfNuSVMC(descr="Rbf nu-SVM (default)")
+    clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
+                              # libsvm.svm.RbfNuSVMC(descr="Rbf nu-SVM (default)")
                               ]
 
-#if 'shogun' in externals.present:
 if externals.exists('shogun'):
+    from mvpa.clfs import sg
     for impl in sg.svm.known_svm_impl:
         clfs['LinearSVMC'] += [
             sg.svm.LinearCSVMC(
@@ -80,6 +79,10 @@ if externals.exists('shogun'):
         clfs['NonLinearSVMC'] += [
             sg.svm.RbfCSVMC(descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
             ]
+
+if len(clfs['LinearSVMC']) > 0:
+    # if any SVM implementation is known, import default ones
+    from mvpa.clfs.svm import *
 
 clfs['LinReg'] = clfs['SMLR'] #+ [ RidgeReg(descr="RidgeReg(default)") ]
 clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg']
