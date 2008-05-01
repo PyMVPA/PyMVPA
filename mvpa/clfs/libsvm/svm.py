@@ -15,7 +15,10 @@ import numpy as N
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
+
 from mvpa.clfs._svmbase import _SVM
+from mvpa.algorithms.datameasure import Sensitivity
+
 import _svm as svm
 
 if __debug__:
@@ -235,6 +238,7 @@ class SVMBase(_SVM):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
+        self.param.untrain()           # reset any automagical assignment of params
         super(SVMBase, self).untrain()
         del self.__model
         self.__model = None
@@ -256,6 +260,11 @@ class LinearSVM(SVMBase):
         # init base class
         SVMBase.__init__(self, kernel_type='linear',
                          svm_type=svm_type, **kwargs)
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns an appropriate SensitivityAnalyzer."""
+        return LibSVMLinearSVMWeights(self, **kwargs)
 
 
 
@@ -349,3 +358,56 @@ if hasattr(svm.svmc, 'svm_set_verbosity'):
         svm.svmc.svm_set_verbosity(255)
     else:
         svm.svmc.svm_set_verbosity(0)
+
+
+
+class LibSVMLinearSVMWeights(Sensitivity):
+    """`SensitivityAnalyzer` for the LIBSVM implementation of a linear SVM.
+    """
+
+    biases = StateVariable(enabled=True,
+                           doc="Offsets of separating hyperplanes")
+
+    def __init__(self, clf, **kwargs):
+        """Initialize the analyzer with the classifier it shall use.
+
+        :Parameters:
+          clf: LinearSVM
+            classifier to use. Only classifiers sub-classed from
+            `LinearSVM` may be used.
+        """
+        # init base classes first
+        Sensitivity.__init__(self, clf, **kwargs)
+
+
+    def _call(self, dataset, callables=[]):
+        if self.clf.model.nr_class != 2:
+            warning("You are estimating sensitivity for SVM %s trained on %d" %
+                    (str(self.clf), self.clf.model.nr_class) +
+                    " classes. Make sure that it is what you intended to do" )
+
+        svcoef = N.matrix(self.clf.model.getSVCoef())
+        svs = N.matrix(self.clf.model.getSV())
+        rhos = N.array(self.clf.model.getRho())
+
+        self.biases = rhos
+        # XXX yoh: .mean() is effectively
+        # averages across "sensitivities" of all paired classifiers (I
+        # think). See more info on this topic in svm.py on how sv_coefs
+        # are stored
+        #
+        # First multiply SV coefficients with the actuall SVs to get
+        # weighted impact of SVs on decision, then for each feature
+        # take mean across SVs to get a single weight value
+        # per feature
+        weights = svcoef * svs
+
+        if __debug__:
+            debug('SVM',
+                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
+                  (self.clf.model.nr_class, str(self.clf.model.getNSV())) + \
+                  " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
+                  (svcoef.shape, svs.shape, rhos) + \
+                  " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
+
+        return N.array(weights.T)

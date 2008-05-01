@@ -114,9 +114,13 @@ class SVMParameter(object):
 
 
     def __init__(self, **kw):
+        self._orig_params = kw
+        self.untrain()
+
+    def untrain(self):
         self._params = {}
         self._params.update(self.default_parameters) # kinda copy.copy ;-)
-        self._params.update(**kw)       # update with new values
+        self._params.update(**self._orig_params)       # update with new values
         self.__svmc_params = None       # none is computed 
         self.__svmc_recompute = False   # thus none to recompute
 

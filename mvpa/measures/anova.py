@@ -6,17 +6,17 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""SensitivityAnalyzer performing a univariate ANOVA."""
+"""FeaturewiseDatasetMeasure performing a univariate ANOVA."""
 
 __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.algorithms.datameasure import SensitivityAnalyzer
+from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
 
 
-class OneWayAnova(SensitivityAnalyzer):
-    """`SensitivityAnalyzer` that performs a univariate ANOVA.
+class OneWayAnova(FeaturewiseDatasetMeasure):
+    """`FeaturewiseDatasetMeasure` that performs a univariate ANOVA.
 
     F-scores are computed for each feature as the standard fraction of between
     and within group variances. Groups are defined by samples with unique
@@ -30,7 +30,7 @@ class OneWayAnova(SensitivityAnalyzer):
         """Nothing special to do here.
         """
         # init base classes first
-        SensitivityAnalyzer.__init__(self, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
 
     def _call(self, dataset):

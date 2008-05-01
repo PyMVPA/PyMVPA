@@ -191,8 +191,9 @@ class ClassifiersTests(unittest.TestCase):
 
     def testFeatureSelectionClassifier(self):
         from test_rfe import SillySensitivityAnalyzer
-        from mvpa.algorithms.featsel import \
-             SensitivityBasedFeatureSelection, \
+        from mvpa.featsel.base import \
+             SensitivityBasedFeatureSelection
+        from mvpa.featsel.helpers import \
              FixedNElementTailSelector
 
         # should give lowest weight to the feature with lowest index
@@ -231,10 +232,13 @@ class ClassifiersTests(unittest.TestCase):
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
-    # TODO: come up with nice idea on how to bring sweepargs here
-    def testMulticlassClassifier(self):
-        svm = LinearCSVMC()
-        svm2 = LinearCSVMC(enable_states=['training_confusion'])
+
+    @sweepargs(clf=clfs.get('LinearSVMC', []))
+    def testMulticlassClassifier(self, clf):
+        svm = clf
+        svm2 = deepcopy(clf)
+        svm2.states.enable(['training_confusion'])
+
         clf = MulticlassClassifier(clf=svm,
                                    enable_states=['training_confusion'])
 
@@ -254,7 +258,8 @@ class ClassifiersTests(unittest.TestCase):
         clf.train(dstrain)
         self.failUnlessEqual(str(clf.training_confusion),
                              str(svm2.training_confusion),
-            msg="Multiclass clf should provide same results as built-in libsvm's")
+            msg="Multiclass clf should provide same results as built-in libsvm's %s" %
+                             svm2)
 
         svm2.untrain()
 
@@ -268,11 +273,12 @@ class ClassifiersTests(unittest.TestCase):
 
         clf.untrain()
 
-        self.failUnless(not clf.trained, msg="UnTrained Boosted classifier should not be trained")
+        self.failUnless(not clf.trained,
+                        msg="UnTrained Boosted classifier should not be trained")
         self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
-    @sweepargs(clf=clfs['SVMC'])
+    @sweepargs(clf=clfs.get('SVMC', []))
     def testSVMs(self, clf):
         knows_probabilities = 'probabilities' in clf.states.names
         enable_states = ['values']

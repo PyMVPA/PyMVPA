@@ -14,12 +14,12 @@ __docformat__ = 'restructuredtext'
 import mvpa.base.externals as externals
 
 
-if 'libsvm' in externals.present:
+if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
     from mvpa.clfs import libsvm
     from mvpa.clfs.libsvm.svm import *
 
-if 'shogun' in externals.present:
+if externals.exists('shogun'):
     from mvpa.clfs import sg
     if not 'LinearCSVMC' in locals():
         from mvpa.clfs.sg.svm import *

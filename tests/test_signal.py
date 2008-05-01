@@ -69,9 +69,10 @@ class SignalTests(unittest.TestCase):
         ods = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
         opt_reg = reg.copy()
         (ores, oreg) = detrend(ods, perchunk=True, model='regress', opt_reg=opt_reg)
-        self.failUnless((ods.samples - psamps).sum() == 0.0,
+        dsamples = (ods.samples - psamps).sum()
+        self.failUnless(abs(dsamples) <= 1e-10,
                         msg="Detrend for polyord reg should be same as opt_reg " + \
-                        "when popt_reg is the same as the polyord reg.")
+                        "when popt_reg is the same as the polyord reg. But got %g" % dsamples)
 
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have detrended each chunk separately")
@@ -80,7 +81,7 @@ class SignalTests(unittest.TestCase):
         # test of different polyord on each chunk
         target_mixed = N.array( [[-1.0, 0, 1, 0, 0, 0],
                                  [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
-        
+
         ds = Dataset(samples=samples, labels=chunks, chunks=chunks, copy_samples=True)
         (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=[0,1])
         self.failUnless(linalg.norm(ds.samples - target_mixed) < thr,

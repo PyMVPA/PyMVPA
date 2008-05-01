@@ -140,6 +140,16 @@ all modifications that introduce changes to the basic interfaces outlined below
 have to be documented here and also should be announced in the changelog.
 
 
+Adding an External Dependency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Introducing new external dependencies should be done in a completely optional
+fashion. This includes both build-dependencies and runtime dependencies.
+With `mvpa.base.externals` PyMVPA provides a simple framework to test the
+availability of certain external components and publish the results of the
+tests throughout PyMVPA.
+
+
 Adding a new Dataset type
 ~~~~~~~~~~~~~~~~~~~~~~~~~
  * Required interface for Mapper.
@@ -200,7 +210,7 @@ to preserve the full functionality.
     the actual training is performed.
 
 `_posttrain(dataset)`
-    Called with the Dataset_ instance the classifier was trained on, just after 
+    Called with the Dataset_ instance the classifier was trained on, just after
     training was performed.
 
 `_prepredict(data)`
@@ -230,7 +240,7 @@ There are two possible base-classes for new sensitivity analyzers.
 First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
 generic approach. However, for sensitivity analyzers that make use of some
 classifier and extract the sensitivities from it,
-ClassifierBasedSensitivityAnalyzer_ is a more appropriate base-class, as it
+Sensitivity_ is a more appropriate base-class, as it
 provides some additional useful functionality for this use case.
 
 All sensitivity analyzers (actually all objects based on DatasetMeasure_)
@@ -272,13 +282,13 @@ Nothing special.
 Classifier-based Sensitivity Analyzers
 ''''''''''''''''''''''''''''''''''''''
 
-A ClassifierBasedSensitivityAnalyzer_ behaves exactly like its
+A Sensitivity_ behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
-.. IncludeStates: algorithms.datameasure ClassifierBasedSensitivityAnalyzer
+.. IncludeStates: algorithms.datameasure Sensitivity
 
 
 Outstanding Questions:
@@ -289,7 +299,7 @@ Outstanding Questions:
 
 .. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
 .. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
-.. _ClassifierBasedSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ClassifierBasedSensitivityAnalyzer-class.html
+.. _Sensitivity: api/mvpa.algorithms.datameasure.Sensitivity-class.html
 .. _ProxyClassifierSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ProxyClassifierSensitivityAnalyzer-class.html
 
 
@@ -399,57 +409,72 @@ Things to implement for the next release (Release goals)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
  * Unify parameter naming across all classifiers and come up with a labeling
-   guideline for future classifier implementations and wrappers.
+   guideline for future classifier implementations and wrappers::
+
+    Numeric parameters can be part of .params Collection now, so they are
+    joined together.
+
  * Provide sufficient documentation about internal variable naming to make
    Harvester/Harvesting functionality usable. Currently the user is supposed
    to know, how a particular *local* variable is called to be able to harvest
-   e.g. `feature_ids` of classifiers over cross-validation folds.
- * Evaluate extinguishing everything related to
-   `ClassifierBasedSensitivityAnalyzer`.
-   I believe we should simply enhance all relevant classifiers to behave like
-   a `SensitivityAnalyzer` if called with a single dataset. Looking at the the
-   `SensitivityAnalyzers` that we have: `SMLRWeights` simply passes the weights
-   that are computed by the classifier anyway. `LinearSVMWeights` is even worse.
-   It does only a simple calculation, but involves a fairly large part of code
-   to deal with our multiple SVM implementations. Why not move the stuff into
-   their respective classifiers. There, the sensitivities would just be a 2-3
-   liner and we would also eliminate the multi-implementation issue (somewhat).
-   I propose:
+   e.g. `feature_ids` of classifiers over cross-validation folds::
 
-    * `git rm mvpa/algorithms/*weight*`
-    * Add `__call__()` to relevant classifiers that returns the weights.
+     class.HARVESTABLE={'blah' : ' some description'}
 
-   Remaining SensitivityAnalyzers can than be downgraded to
-   `FeaturewiseDatasetMeasures`. All interfaces that used to accept a
-   `SensitivityAnalyzer` will also digest a pimped classifier with built-in
-   sensitivities. After all we're in Python-land...
+     Add information on HARVESTABLE and StateVariable
+     Collectable -> Attribute
 
-   And while we are at it: Let's also remove `SensitivityAnalyzer`, which does
-   nothing anyway.
+     base.attributes
 
- * Try to get rid of selectAnalyzer() which pulls in half of the world and
-   causes cyclic dependencies.
  * Restructure code base (incl. renaming and moving pieces)
 
    Let's use the following list to come up with a nice structure for all
    logical components we have:
 
-    * several base classes with framework infrastructure (Harvester,
-      Stateful, virtual properties, ...)
-    * Classifiers
-    * Regressions
     * Datasets
-    * Mappers
+
     * Sensitivity analyzers (maybe: featurewise measures)
-        * Classifier sensitivities (SVM, SMLR)
-        * ANOVA
-        * Noise perturbation
-        * meta-algorithms (splitting)
+        * Classifier sensitivities (SVM, SMLR) -> respective classifiers
+        * ANOVA                         -> mvpa.measures.anova
+        * Noise perturbation ->         -> mvpa.measures.noisepertrubation
+        * meta-algorithms (splitting)   -> mvpa.measures
+
+     DatasetMeasure -> Measure (transformers)
+     FeaturewiseDatasetMeasure?
+       combiners to be absorbed withing transformers? and then gone?
+     {Classifier?}Sensitivity?
+
+    * Mappers::
+        mvpa.mappers (AKA mvpa.projections mvpa.transformers)
+
+      * Along with PCA/ICA mappers, we should add a PLS mapper::
+
+          PCA.train(learningdataset)
+             .forward,
+             .backward
+
+          Package pychem for Debian, see how to use from PyMVPA! ;-) Same for MDP
+          (ie use from pymvpa)
+
+
     * Feature selection algorithms
         * Simple thresholding
         * RFE
         * IFS
-    * Searchlight
+
+  		.mapper state variable
+
+          mvpa.featsel (NB no featsel.featsel.featsel more than 4 times!)
+          mvpa.featsel.rfe
+          mvpa.featsel.ifs
+
+    * several base classes with framework infrastructure (Harvester,
+      Stateful, virtual properties, ...)
+
+    * Classifiers
+
+    * Regressions
+
     * Transfer error calculation
     * Cross-validation support
     * Monte-Carlo-based significance testing
@@ -470,14 +495,20 @@ Things to implement for the next release (Release goals)
     * plus additional helpers, ranging from simple to complex scattered
       all over the place
 
+ * Resultant hierarchy:
+
+   - mvpa
+
+     + datasets
+     + clfs
+     + measures
+     + featsel
+
+
  * Add ability to add/modify custom attributes to a dataset.
- * Expand splitter to specify both the train and test samples, not just the
-   test samples.  This will enable us to write custom splitter functions that
-   split based on new custom attributes.
  * Possibly make NiftiDataset default to float32 when it sees that the data are
    ints.
- * Along with PCA/ICA mappers, we should add a PLS mapper.
- * Add kernel methods as option to all classifiers, not just SVMs.  For example, you 
+ * Add kernel methods as option to all classifiers, not just SVMs.  For example, you
    should be able to run a predefined or custom kernel on the samples going into SMLR.
  * TransferError needs to know what type of data to send to any specific ErrorFX.  Right
    now there is only support for predictions and labels, but the area under the ROC and
@@ -485,7 +516,11 @@ Things to implement for the next release (Release goals)
    from a classifier.  Just to make this harder, every classifier is different.  For
    example, a ridge regression's predictions are continuous values, whereas for a SVM you
    need to pass in the probabilities.
- * In a related issue, the predictions and values states of the classifiers need to have 
+
+   For binary:       1 value
+       multiclass:   1 value, or N values
+
+ * In a related issue, the predictions and values states of the classifiers need to have
    a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
    returns a numpy ndarray.
 

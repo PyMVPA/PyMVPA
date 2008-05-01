@@ -17,10 +17,10 @@ __docformat__ = 'restructuredtext'
 
 from copy import copy
 
-from mvpa.algorithms.featsel import FeatureSelection, \
-                                    NBackHistoryStopCrit, \
-                                    FixedNElementTailSelector, \
-                                    BestDetector
+from mvpa.featsel.base import FeatureSelection
+from mvpa.featsel.helpers import NBackHistoryStopCrit, \
+                                 FixedNElementTailSelector, \
+                                 BestDetector
 
 from mvpa.misc.state import StateVariable
 
@@ -31,7 +31,7 @@ if __debug__:
 class IFS(FeatureSelection):
     """Incremental feature search.
 
-    A `ScalarDatasetMeasure` is computed multiple times on variations of a
+    A scalar `DatasetMeasure` is computed multiple times on variations of a
     certain dataset. These measures are in turn used to incrementally select
     important features. Starting with an empty feature set the dataset measure
     is first computed for each single feature. A number of features is selected
@@ -61,7 +61,7 @@ class IFS(FeatureSelection):
         """Initialize incremental feature search
 
         :Parameter:
-            data_measure : ScalarDatasetMeasure
+            data_measure : DatasetMeasure
                 Computed for each candidate feature selection.
             transfer_error : TransferError
                 Compute against a test dataset for each incremental feature

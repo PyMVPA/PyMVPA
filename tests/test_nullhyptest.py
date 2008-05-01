@@ -28,7 +28,7 @@ class NullHypothesisTests(unittest.TestCase):
         orig_labels = wdata.labels.copy()
 
         # linear clf on non-linear problem
-        terr = TransferError(clfs['LinearSVMC'][0])
+        terr = TransferError(clfs['LinearC'][0])
         null = NullHypothesisTest(terr, permutations=100)
 
         lin_p = null(wdata, tdata)

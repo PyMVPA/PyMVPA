@@ -265,7 +265,9 @@ recommend to install these packages as well.
     format. If you don't need that, PyNIfTI is not necessary, but otherwise
     it makes it really easy to read from and write to NIfTI images.
   Shogun_: various classifiers
-    (please explain me)
+    PyMVPA currently can make use of several SVM implementations of the
+    Shogun_ toolbox. It requires the modular python interface of Shogun to be
+    installed. Any version from 0.6 on should work.
 
 .. _SciPy: http://www.scipy.org/
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
@@ -1046,13 +1048,13 @@ procedure.
 First, the impact of each individual feature on a classification has
 to be determined.  The resulting map reflects the sensitivities of all
 features with respect to a certain decision and, therefore, algorithms
-generating these maps are called `Sensitivity Analyzers`_ in PyMVPA.
+generating these maps are summarized as Sensitivity_ in PyMVPA.
 
 Second, once the feature sensitivities are known, they can be used as
 criteria for feature selection. However, possible selection strategies
 range from very simple *Go with the 10% best features* to more
 complicated algorithms like *Recursive feature selection*
-(RFE_). Because `Sensitivity Analyzers`_ and selections strategies can
+(RFE_). Because `Sensitivity Measures`_ and selections strategies can
 be arbitrarily combined, PyMVPA offers a quite flexible framework for
 feature selection.
 
@@ -1067,17 +1069,17 @@ datasets.
    Finally more detailed note and references for each larger algorithm.
 
 
-Sensitivity Analyzers
-~~~~~~~~~~~~~~~~~~~~~
+Sensitivity Measures
+~~~~~~~~~~~~~~~~~~~~
 
-It was already mentioned that a SensitivityAnalyzer_ computes a featurewise
+It was already mentioned that a Sensitivity_ computes a featurewise
 score that indicates how much interesting signal each feature contains
 -- hoping that this score somehow correlates with the impact of the features
 on a classifier's decision for a certain problem.
 
 Every sensitivity analyzer object computes a one-dimensional array with the
 respective score for every feature, when called with a Dataset_. Due to this
-common behaviour all SensitivityAnalyzer_ types are interchangeable and can be
+common behaviour all Sensitivity_ types are interchangeable and can be
 combined with any other algorithm requiring a sensitivity analyzer.
 
 By convention higher sensitivity values indicate more interesting features.
@@ -1087,16 +1089,17 @@ analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
 on the other hand utilize another sensitivity analyzer to compute their
 sensitivity maps.
 
-.. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
+.. _Sensitivity: api/mvpa.algorithms.datameasure.Sensitivity-class.html
 
 
-Basic Sensitivity Analyzers
-'''''''''''''''''''''''''''
+Basic Sensitivity Measures (and related Measures)
+'''''''''''''''''''''''''''''''''''''''''''''''''
 
 ANOVA
 ^^^^^
 
-The OneWayAnova_ class provides a simple (and fast) univariate sensitivity
+The OneWayAnova_ class provides a simple (and fast) univariate measure, that
+can be used for feature selection, although it is not a proper sensitivity
 measure. For each feature an individual F-score is computed as the fraction
 of between and within group variances. Groups are defined by samples with
 unique labels.
@@ -1117,7 +1120,7 @@ all types of *linear* support vector machines and report those weights.
 
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
 or negative, with both extremes indicating higher sensitivities. To deal with
-this property all subclasses of SensitivityAnalyzer_ support a `transformer`
+this property all subclasses of DatasetMeasure_ support a `transformer`
 arguments in the contructor. A transformer is a functor that is finally called
 with the computed sensitivity map. PyMVPA already comes with some convenience
 functors which can be used for this purpose (see Transformers_).
@@ -1133,8 +1136,8 @@ Noise Perturbation
 ^^^^^^^^^^^^^^^^^^
 
 Noise perturbation is a generic approach to determine feature sensitivity.
-The sensitivity analyzer (PerturbationSensitivityAnalyzer_) computes a
-ScalarDatasetMeasure_ using the original dataset. Afterwards, for each single
+The sensitivity analyzer (NoisePerturbationSensitivity_) computes a
+scalar DatasetMeasure_ using the original dataset. Afterwards, for each single
 feature a noise pattern is added to the respective feature and the dataset
 measure is recomputed. The sensitivity of each feature is the difference
 between the dataset measure of the orginal dataset and the one with added
@@ -1143,33 +1146,33 @@ noise. The reasoning behind this algorithm is that adding to noise to
 classifier transfer error. However, adding noise the a feature that already
 only contains noise, will not change such a measure.
 
-Depending on the used ScalarDatasetMeasure_ using the sensitivity analyzer
+Depending on the used scalar DatasetMeasure_ using the sensitivity analyzer
 might be really CPU-intensive! Also depending on the measure, it might be
 necessary to use appropriate Transformers_ (see `transformer` constructor
 arguments) to ensure that higher values represent higher sensitivities.
 
-.. _PerturbationSensitivityAnalyzer: api/mvpa.algorithms.perturbsensana.PerturbationSensitivityAnalyzer-class.html
-.. _ScalarDatasetMeasure: api/mvpa.algorithms.datameasure.ScalarDatasetMeasure-class.html
+.. _NoisePerturbationSensitivity: api/mvpa.measures.noiseperturbation.NoisePerturbationSensitivity-class.html
+.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
 
 
-Meta Sensitivity Analyzer
-''''''''''''''''''''''''''
+Meta Sensitivity Measures
+'''''''''''''''''''''''''
 
-Meta Sensitivity Analyzers are SensitivityAnalyzer_ that internally use one
-of the `Basic Sensitivity Analyzers`_ to compute their sensitivity scores.
+Meta Sensitivity Measures are FeaturewiseDatasetMeasures_ that internally use one
+of the `Basic Sensitivity Measures`_ to compute their sensitivity scores.
 
 
-Splitting Sensitivity Analyzer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Splitting Measures
+^^^^^^^^^^^^^^^^^^
 
-The SplittingSensitivityAnalyzer_ uses a Splitter_ to generate dataset splits.
-A SensitivityAnalyzer_ is then used to compute sensitivity maps for all these
+The SplittingFeaturewiseMeasure_ uses a Splitter_ to generate dataset splits.
+A FeaturewiseDatasetMeasure_ is then used to compute sensitivity maps for all these
 dataset splits. At the end a `combiner` function is called with all sensitivity
 maps to produce the final sensitivity map. By default the mean sensitivity
 maps across all splits is computed.
 
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
-.. _SplittingSensitivityAnalyzer: api/mvpa.algorithms.splitsensana.SplittingSensitivityAnalyzer-class.html
+.. _SplitFeaturewiseMeasure: api/mvpa.measures.splitmeasure.SplitFeaturewiseMeasure-class.html
 
 
 
@@ -1202,7 +1205,7 @@ Searchlight
 ~~~~~~~~~~~
 
 The term Searchlight_ refers to an algorithm that runs a
-`ScalarDatasetMeasure` on all possible spheres of a certain size within a
+scalar `DatasetMeasure` on all possible spheres of a certain size within a
 dataset. The measure typically computed is a cross-validated transfer error
 (see CrossValidatedTransferError_). The idea to use a searchlight as a
 sensitivity analyzer stems from a paper by Kriegeskorte and colleagues
