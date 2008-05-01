@@ -252,6 +252,7 @@ class SVMBase(Classifier):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
+        self.param.untrain()           # reset any automagical assignment of params
         super(SVMBase, self).untrain()
         del self.__model
         self.__model = None
