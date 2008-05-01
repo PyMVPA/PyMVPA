@@ -26,16 +26,10 @@ if not externals.exists('lars'):
 import rpy
 rpy.r.library('lars')
 
-# try:
-#     import rpy
-#     rpy.r.library('lars')
-# except:
-#     raise RuntimeError("Unable to load LARS library from R with RPy.\n" +
-#                        "Please ensure that they are all installed correctly.")
-
 # local imports
 from mvpa.clfs.classifier import Classifier
 
+known_models = ('lasso',) #,  'stepwise', 'lar', 'forward.stagewise')
 
 class LARS(Classifier):
     """Least angle regression (LARS) `Classifier`.
@@ -68,7 +62,7 @@ class LARS(Classifier):
     calling:
 
     install.packages()
-    
+
     """
 
     def __init__(self, model_type="lasso", trace=False, normalize=True,
@@ -99,6 +93,10 @@ class LARS(Classifier):
         # init base class first
         Classifier.__init__(self, **kwargs)
 
+        if not model_type in known_models:
+            raise ValueError('Unknown model %s for LARS is specified. Known' %
+                             model_type + 'are %s' % `known_models`)
+
         # set up the params
         self.__type = model_type
         self.__normalize = normalize
@@ -106,7 +104,7 @@ class LARS(Classifier):
         self.__trace = trace
         self.__max_steps = max_steps
         self.__use_Gram = use_Gram
-        
+
         # pylint friendly initializations
         self.__weights = None
         """The beta weights for each feature."""
@@ -156,7 +154,7 @@ class LARS(Classifier):
 
         # set the weights to the final state
         self.__weights = self.__trained_model['beta'][-1,:]
-        
+
     def _predict(self, data):
         """
         Predict the output for the provided data.
