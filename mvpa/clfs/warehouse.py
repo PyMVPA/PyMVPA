@@ -84,10 +84,19 @@ if len(clfs['LinearSVMC']) > 0:
     # if any SVM implementation is known, import default ones
     from mvpa.clfs.svm import *
 
+# lars from R via RPy
+if externals.exists('lars'):
+    import mvpa.clfs.lars as lars
+    from mvpa.clfs.lars import LARS
+    clfs['LARS'] = []
+    for model in lars.known_models:
+        clfs['LARS'] += [LARS(descr="LARS(%s)" % model, model_type=model)]
+
 clfs['LinReg'] = clfs['SMLR'] #+ [ RidgeReg(descr="RidgeReg(default)") ]
-clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg']
+clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg'] + clfs['LARS']
 clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(descr="kNN()") ]
-clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR']
+clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR'] #+ clfs['LARS']
+
 
 # "Interesting" classifiers
 clfs['SMLR(lm=10)->LinearSVM']  = [
