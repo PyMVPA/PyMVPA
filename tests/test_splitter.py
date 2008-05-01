@@ -10,7 +10,7 @@
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter, \
-                                   NoneSplitter, HalfSplitter
+                                   NoneSplitter, HalfSplitter, CustomSplitter
 import unittest
 import numpy as N
 
@@ -22,7 +22,6 @@ class SplitterTests(unittest.TestCase):
             MaskedDataset(samples=N.random.normal(size=(100,10)),
                            labels=[ i%4 for i in range(100) ],
                             chunks=[ i/10 for i in range(100)])
-
 
 
     def testSimplestCVPatGen(self):
@@ -91,7 +90,52 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[1] != None)
 
 
+    def testCustomSplit(self):
+        #simulate half splitter
+        hs = CustomSplitter([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
 
+        splits = [ (train, test) for (train, test) in hs(self.data) ]
+
+        self.failUnless(len(splits) == 2)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 2 )
+            self.failUnless( p[0].nsamples == 50 )
+            self.failUnless( p[1].nsamples == 50 )
+
+        self.failUnless((splits[0][1].uniquechunks == [0, 1, 2, 3, 4]).all())
+        self.failUnless((splits[0][0].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][1].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][0].uniquechunks == [0, 1, 2, 3, 4]).all())
+
+
+        # check fully customized split with working and validation set specified
+        cs = CustomSplitter([([0,3,4],[5,9])])
+        splits = [ (train, test) for (train, test) in cs(self.data) ]
+        self.failUnless(len(splits) == 1)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 2 )
+            self.failUnless( p[0].nsamples == 30 )
+            self.failUnless( p[1].nsamples == 20 )
+
+        self.failUnless((splits[0][1].uniquechunks == [5, 9]).all())
+        self.failUnless((splits[0][0].uniquechunks == [0, 3, 4]).all())
+
+        # full test with additional sampling and 3 datasets per split
+        cs = CustomSplitter([([0,3,4],[5,9],[2])],
+                            nperlabel=[3,4,1],
+                            nrunspersplit=3)
+        splits = [ ds for ds in cs(self.data) ]
+        self.failUnless(len(splits) == 3)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 3 )
+            self.failUnless( p[0].nsamples == 12 )
+            self.failUnless( p[1].nsamples == 16 )
+            self.failUnless( p[2].nsamples == 4 )
+
+ 
     def testNoneSplitter(self):
         nos = NoneSplitter()
         splits = [ (train, test) for (train, test) in nos(self.data) ]
@@ -109,7 +153,7 @@ class SplitterTests(unittest.TestCase):
         # test sampling tools
         # specified value
         nos = NoneSplitter(nrunspersplit=3,
-                           nsecondsamples=10)
+                           nperlabel=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)
@@ -120,7 +164,7 @@ class SplitterTests(unittest.TestCase):
 
         # auto-determined
         nos = NoneSplitter(nrunspersplit=3,
-                           nsecondsamples='auto')
+                           nperlabel='equal')
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)

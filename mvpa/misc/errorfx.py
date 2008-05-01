@@ -59,14 +59,14 @@ class MeanMismatchErrorFx(ErrorFunction):
 
 
 class AUCErrorFx(ErrorFunction):
-    """Computes the area under the ROC for the given the 
+    """Computes the area under the ROC for the given the
     desired and predicted to make the prediction."""
     def __call__(self, predicted, desired):
         """Requires all arguments."""
         # sort the desired in descending order based on the predicted and
         # set to boolean
         t = desired[N.argsort(predicted)[::-1]] > 0
-        
+
         # calculate the true positives
         tp = N.concatenate(([0],
                             N.cumsum(t)/t.sum(dtype=N.float),
@@ -79,7 +79,7 @@ class AUCErrorFx(ErrorFunction):
 
         return trapz(tp,fp)
 
-        
+
 class CorrErrorFx(ErrorFunction):
     """Computes the correlation between the desired and the predicted
     values."""

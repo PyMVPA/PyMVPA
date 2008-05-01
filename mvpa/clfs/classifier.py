@@ -42,6 +42,8 @@ from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
 from mvpa.clfs.transerror import ConfusionMatrix
 
+from mvpa.algorithms.datameasure import \
+    BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer
 from mvpa.misc import warning
 
 if __debug__:
@@ -351,6 +353,11 @@ class Classifier(Stateful):
         return self.__train2predict
 
 
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Factory method to return an appropriate sensitivity analyzer for
+        the respective classifier."""
+        raise NotImplementedError
+
 
 #
 # Base classifiers of various kinds
@@ -497,6 +504,7 @@ class BoostedClassifier(Classifier, Harvestable):
             clf.untrain()
         super(BoostedClassifier, self).untrain()
 
+
     clfs = property(fget=lambda x:x.__clfs,
                     fset=_setClassifiers,
                     doc="Used classifiers")
@@ -558,6 +566,14 @@ class ProxyClassifier(Classifier):
         if not self.__clf is None:
             self.__clf.untrain()
         super(ProxyClassifier, self).untrain()
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer"""
+        return ProxyClassifierSensitivityAnalyzer(
+                self,
+                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                **kwargs)
 
 
     clf = property(lambda x:x.__clf, doc="Used `Classifier`")
@@ -1048,6 +1064,14 @@ class SplitClassifier(CombinedClassifier):
                 predictions = clf.predict(split[1].samples)
                 self.training_confusions.add(split[1].labels, predictions)
             i += 1
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer"""
+        return BoostedClassifierSensitivityAnalyzer(
+                self,
+                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                **kwargs)
 
 
 

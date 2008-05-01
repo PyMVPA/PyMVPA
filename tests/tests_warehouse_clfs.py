@@ -6,42 +6,65 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Miscelaneous functions/datasets to be used in the unit tests"""
+"""Provides `clfs` dictionary with instances of all available classifiers."""
 
 __docformat__ = 'restructuredtext'
 
-# take care of conditional import of external classifiers
+#
+# first deal with classifiers which do not have external deps
+#
+from mvpa.clfs.smlr import SMLR
+from mvpa.clfs.ridge import RidgeReg
+from mvpa.clfs.knn import *
+
+clfs = {}
+clfs['LinearC'] = [ SMLR(implementation="Python"),
+                    SMLR(implementation="C"),
+                    RidgeReg()]
+clfs['NonLinearC'] = [ kNN(k=1) ]
+
+#
+# and now make all stuff with external deps completely optional
+#
 from mvpa.base import externals
 
-# Define sets of classifiers
-from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import *
-from mvpa.clfs.knn import *
-from mvpa.clfs.svm import *
+# if have ANY svm implementation
+if externals.exists('libsvm') or externals.exists('shogun'):
+    from mvpa.clfs.svm import *
+    clfs['LinearSVMC'] = []
+    clfs['NonLinearSVMC'] = []
 
-# assume that we at least have some SVMs
-clfs = {'LinearSVMC': [], 'NonLinearSVMC': []}
-
-if 'libsvm' in externals.present:
+# libsvm check
+if externals.exists('libsvm'):
     clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(probability=1),
                            libsvm.svm.LinearNuSVMC(probability=1)]
     clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(probability=1),
                               libsvm.svm.RbfNuSVMC(probability=1)]
-if 'shogun' in externals.present:
+
+# shogun svm check
+if externals.exists('shogun'):
     clfs['LinearSVMC'].append(sg.svm.LinearCSVMC())
     clfs['NonLinearSVMC'].append(sg.svm.RbfCSVMC())
 
+# finalize SVMs
+if len(clfs.get('LinearSVMC', [])):
+    # Make generic import
+    from mvpa.clfs.svm import LinearCSVMC, RbfCSVMC
+    clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
+    clfs['LinearC'] += clfs['LinearSVMC']
+    clfs['NonLinearC'] += clfs['NonLinearSVMC']
 
-clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
+# lars from R via RPy
+if externals.exists('lars'):
+    from mvpa.clfs.lars import LARS
+    #clfs['LinearC'].append(LARS())
 
-clfs['LinearC'] = clfs['LinearSVMC'] + \
-                  [ SMLR(implementation="Python"), SMLR(implementation="C") ]
 
-clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(k=1), RidgeReg() ]
-
+# finally merge them all
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC']
 
-clfs['clfs_with_sens'] =  clfs['LinearC']
+# RidgeReg does not have a corresponding sensitivity analyzer yet
+clfs['clfs_with_sens'] =  [ i for i in clfs['LinearC'] if not isinstance(i, RidgeReg) ]
 
 #
 # Few silly classifiers

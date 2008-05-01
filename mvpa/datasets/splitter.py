@@ -6,9 +6,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base class of all dataset splitter"""
+"""Collection of dataset splitters."""
 
 __docformat__ = 'restructuredtext'
+
+import operator
 
 import numpy as N
 
@@ -16,43 +18,41 @@ import mvpa.misc.support as support
 
 
 class Splitter(object):
-    """Base class of a data splitter.
+    """Base class of dataset splitters.
 
     Each splitter should be initialized with all its necessary parameters. The
     final splitting is done running the splitter object on a certain Dataset
     via __call__(). This method has to be implemented like a generator, i.e. it
     has to return every possible split with a yield() call.
 
-    Each split has to be returned as a tuple of Dataset(s). The properties
+    Each split has to be returned as a sequence of Datasets. The properties
     of the splitted dataset may vary between implementations. It is possible
-    to declare a tuple element as 'None'. 
+    to declare a sequence element as 'None'. 
 
     Please note, that even if there is only one Dataset returned it has to be
-    an element in a tuple and not just the Dataset object!
+    an element in a sequence and not just the Dataset object!
     """
     def __init__(self,
-                 nfirstsamples=None,
-                 nsecondsamples=None,
+                 nperlabel='all',
                  nrunspersplit=1,
                  permute=False,
                  attr='chunks'):
-        """Initialize base splitter.
+        """Initialize splitter base.
 
         :Parameters:
-          nfirstsamples : int, str or None
-            Number of first dataset samples to be included in each
-            split. Please see the setNFirstSetSamples() method for
-            special arguments.
-          nsecondsamples : int, str or None
-            Number of second dataset samples to be included in each
-            split. Please see the setNSecondSetSamples() method for
-            special arguments.
+          nperlabel : int or str (or list of them)
+            Number of dataset samples per label to be included in each
+            split. Two special strings are recognized: 'all' uses all available
+            samples (default) and 'equal' uses the maximum number of samples
+            the can be provided by all of the classes. This value might be
+            provided as a sequence whos length matches the number of datasets
+            per split and indicates the configuration for the respective dataset
+            in each split.
           nrunspersplit: int
             Number of times samples for each split are chosen. This
             is mostly useful if a subset of the available samples
             is used in each split and the subset is randomly
-            selected for each run (see the `nfirstsamples`
-            and `nsecondsamples` arguments).
+            selected for each run (see the `nperlabel` argument).
           permute : bool
             If set to `True`, the labels of each generated dataset
             will be permuted on a per-chunk basis.
@@ -60,39 +60,23 @@ class Splitter(object):
             Sample attribute used to determine splits.
         """
         # pylint happyness block
-        self.__first_samplesize = None
-        self.__second_samplesize = None
+        self.__nperlabel = None
         self.__runspersplit = nrunspersplit
         self.__permute = permute
         self.__splitattr = attr
 
         # pattern sampling status vars
-        self.setNFirstSetSamples(nfirstsamples)
-        self.setNSecondSetSamples(nsecondsamples)
+        self.setNPerLabel(nperlabel)
 
 
-    def setNFirstSetSamples(self, samplesize):
-        """None is off, 'auto' sets sample size to highest possible number
-        of patterns that can be provided by each class.
+    def setNPerLabel(self, value):
+        """Set the number of samples per label in the split datasets.
+
+        'equal' sets sample size to highest possible number of samples that
+        can be provided by each class. 'all' uses all available samples
+        (default).
         """
-        # check if automization is requested
-        if isinstance(samplesize, str):
-            if not samplesize == 'auto':
-                raise ValueError, "Only 'auto' is a valid string argument."
-
-        self.__first_samplesize = samplesize
-
-
-    def setNSecondSetSamples(self, samplesize):
-        """None is off, 'auto' sets sample size to highest possible number
-        of patterns that can be provided by each class.
-        """
-        # check if automization is requested
-        if isinstance(samplesize, str):
-            if not samplesize == 'auto':
-                raise ValueError, "Only 'auto' is a valid string argument."
-
-        self.__second_samplesize = samplesize
+        self.__nperlabel = value
 
 
     def _getSplitConfig(self, uniqueattr):
@@ -109,97 +93,111 @@ class Splitter(object):
         This method behaves like a generator.
         """
 
-        # do cross-validation
+        # for each split
         for split in self.splitcfg(dataset):
-            wset, vset = self.splitDataset(dataset, split)
 
-            # do the sampling for this split
+            # determine sample sizes
+            if not operator.isSequenceType(self.__nperlabel) \
+                   or isinstance(self.__nperlabel, str):
+                nperlabel = [self.__nperlabel] * len(split)
+            else:
+                nperlabel = self.__nperlabel
+
+            # get splitted datasets
+            split_ds = self.splitDataset(dataset, split)
+
+            # do multiple post-processing runs for this split
             for run in xrange(self.__runspersplit):
-                # permute the labels
-                if self.__permute:
-                    wset.permuteLabels(True, perchunk=True)
-                    vset.permuteLabels(True, perchunk=True)
 
-                # choose samples
-                wset_samples = \
-                    Splitter.selectSamples(wset, self.__first_samplesize)
-                vset_samples = \
-                    Splitter.selectSamples(vset,  self.__second_samplesize)
+                # post-process all datasets
+                finalized_datasets = []
 
-                yield wset_samples, vset_samples
+                for i, ds in enumerate(split_ds):
+                    # permute the labels
+                    if self.__permute:
+                        ds.permuteLabels(True, perchunk=True)
+
+                    # select subset of samples if requested
+                    if nperlabel[i] == 'all':
+                        finalized_datasets.append(ds)
+                    else:
+                        # just pass through if no real dataset
+                        if ds == None:
+                            finalized_datasets.append(None)
+                        else:
+                            # go for maximum possible number of samples provided
+                            # by each label in this dataset
+                            if nperlabel[i] == 'equal':
+                                # determine number number of samples per class
+                                npl = N.array(ds.samplesperlabel.values()).min()
+                            else:
+                                npl = nperlabel[i]
+
+                            # finally select the patterns
+                            finalized_datasets.append(
+                                ds.getRandomSamples(npl))
+
+                yield finalized_datasets
 
 
-    def splitDataset(self, dataset, splitids):
+    def splitDataset(self, dataset, specs):
         """Split a dataset by separating the samples where the configured
-        sample attribute matches an element of `splitids`.
+        sample attribute matches an element of `specs`.
 
         :Parameters:
           dataset : Dataset
             This is this source dataset.
-          splitids : list or other sequence
+          specs : sequence of sequences
             Contains ids of a sample attribute that shall be split into the
             another dataset.
 
         :Returns: Tuple of splitted datasets.
         """
-        # build a boolean selector vector to choose select samples
-        split_filter =  \
-            N.array([ i in splitids \
-                for i in eval('dataset.' + self.__splitattr)])
-        wset_filter = N.logical_not(split_filter)
+        # collect the sample ids for each resulting dataset
+        filters = []
+        none_specs = 0
+        cum_filter = None
+        for spec in specs:
+            if spec == None:
+                filters.append(None)
+                none_specs += 1
+            else:
+                filter_ = N.array([ i in spec \
+                    for i in eval('dataset.' + self.__splitattr)])
+                filters.append(filter_)
+                if cum_filter == None:
+                    cum_filter = filter_
+                else:
+                    cum_filter = N.logical_and(cum_filter, filter_)
+
+        # need to turn possible Nones into proper ids sequences
+        if none_specs > 1:
+            raise ValueError, "Splitter cannot handle more than one `None` " \
+                              "split definition."
+
+        for i, filter_ in enumerate(filters):
+            if filter_ == None:
+                filters[i] = N.logical_not(cum_filter)
 
         # split data: return None if no samples are left
         # XXX: Maybe it should simply return an empty dataset instead, but
         #      keeping it this way for now, to maintain current behavior
-        if (wset_filter == False).all():
-            wset = None
-        else:
-            wset = dataset.selectSamples(wset_filter)
-        if (split_filter == False).all():
-            vset = None
-        else:
-            vset = dataset.selectSamples(split_filter)
+        split_datasets = []
+        for filter_ in filters:
+            if (filter_ == False).all():
+                split_datasets.append(None)
+            else:
+                split_datasets.append(dataset.selectSamples(filter_))
 
-        return wset, vset
-
-
-    @staticmethod
-    def selectSamples(dataset, samplesize):
-        """Select a number of samples for each label value.
-
-        :Parameters:
-          dataset : Dataset
-            Source samples.
-          samplesize : int, str, None
-            number of to be selected samples. Two special values are
-            recognized. None is off (all samples are selected), 'auto' sets
-            sample size to highest possible number of samples that can be
-            provided by each label class.
-
-        :Returns: `Dataset` object with the selected samples
-        """
-        if not samplesize == None:
-            # determine number number of patterns per class
-            if samplesize == 'auto':
-                samplesize = \
-                   N.array(dataset.samplesperlabel.values()).min()
-
-            # finally select the patterns
-            samples = dataset.getRandomSamples(samplesize)
-        else:
-            # take all training patterns in the sampling run
-            samples = dataset
-
-        return samples
+        return split_datasets
 
 
     def __str__(self):
         """String summary over the object
         """
         return \
-          "SplitterConfig: work:%s runs-per-split:%d validate:%s permute:%s" \
-          % (self.__first_samplesize, self.__runspersplit,
-             self.__second_samplesize, self.__permute)
+          "SplitterConfig: nperlabel:%s runs-per-split:%d permute:%s" \
+          % (self.__nperlabel, self.__runspersplit, self.__permute)
 
 
     def splitcfg(self, dataset):
@@ -217,7 +215,7 @@ class NoneSplitter(Splitter):
     """
 
     _known_modes = ['first', 'second']
-    
+
     def __init__(self, mode='second', **kwargs):
         """Cheap init -- nothing special
 
@@ -237,9 +235,9 @@ class NoneSplitter(Splitter):
         """Return just one full split: no first or second dataset.
         """
         if self.__mode == 'second':
-            return [uniqueattrs]
+            return [([], None)]
         else:
-            return [[]]
+            return [(None, [])]
 
 
     def __str__(self):
@@ -276,11 +274,11 @@ class OddEvenSplitter(Splitter):
         """Huka chaka!
         """
         if self.__usevalues:
-            return [uniqueattrs[(uniqueattrs % 2) == True],
-                    uniqueattrs[(uniqueattrs % 2) == False]]
+            return [(None, uniqueattrs[(uniqueattrs % 2) == True]),
+                    (None, uniqueattrs[(uniqueattrs % 2) == False])]
         else:
-            return [uniqueattrs[N.arange(len(uniqueattrs)) %2 == True],
-                    uniqueattrs[N.arange(len(uniqueattrs)) %2 == False]]
+            return [(None, uniqueattrs[N.arange(len(uniqueattrs)) %2 == True]),
+                    (None, uniqueattrs[N.arange(len(uniqueattrs)) %2 == False])]
 
 
     def __str__(self):
@@ -306,8 +304,8 @@ class HalfSplitter(Splitter):
     def _getSplitConfig(self, uniqueattrs):
         """Huka chaka!
         """
-        return [uniqueattrs[:len(uniqueattrs)/2],
-                uniqueattrs[len(uniqueattrs)/2:]]
+        return [(None, uniqueattrs[:len(uniqueattrs)/2]),
+                (None, uniqueattrs[len(uniqueattrs)/2:])]
 
 
     def __str__(self):
@@ -332,7 +330,7 @@ class NFoldSplitter(Splitter):
           cvtype: Int
             Type of cross-validation: N-(cvtype)
           kwargs
-            Addtional parameters are passed to the `Splitter` base class.
+            Additional parameters are passed to the `Splitter` base class.
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -350,5 +348,55 @@ class NFoldSplitter(Splitter):
     def _getSplitConfig(self, uniqueattrs):
         """Returns proper split configuration for N-M fold split.
         """
-        return support.getUniqueLengthNCombinations(uniqueattrs,
-                                                    self.__cvtype)
+        return [(None, i) for i in \
+                    support.getUniqueLengthNCombinations(uniqueattrs,
+                                                         self.__cvtype)]
+
+
+
+class CustomSplitter(Splitter):
+    """Split a dataset using an arbitrary custom rule.
+
+    The splitter is configured by passing a custom spitting rule (`splitrule`)
+    to its constructor. Such a rule is basically a sequence of split
+    definitions. Every single element in this sequence results in excatly one
+    split generated by the Splitter. Each element is another sequence for
+    sequences of sample ids for each dataset that shall be generated in the
+    split.
+
+    Example:
+
+      * Generate two splits. In the first split the *second* dataset
+        contains all samples with sample attributes corresponding to
+        either 0, 1 or 2. The *first* dataset of the first split contains
+        all samples which are not split into the second dataset.
+
+        The second split yields three datasets. The first with all samples
+        corresponding to sample attributes 1 and 2, the second dataset
+        contains only samples with attrbiute 3 and the last dataset
+        contains the samples with attribute 5 and 6.
+
+        CustomSplitter([(None, [0, 1, 2]), ([1,2], [3], [5, 6])])
+    """
+    def __init__(self, splitrule, **kwargs):
+        """Cheap init.
+        """
+        Splitter.__init__(self, **(kwargs))
+
+        self.__splitrule = splitrule
+
+
+    def _getSplitConfig(self, uniqueattrs):
+        """Huka chaka!
+        """
+        return self.__splitrule
+
+
+    def __str__(self):
+        """String summary over the object
+        """
+        return "CustomSplitter / " + Splitter.__str__(self)
+
+
+
+

@@ -18,7 +18,7 @@ from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
-    @sweepargs(l_clf=clfs['LinearSVMC'])
+    @sweepargs(l_clf=clfs.get('LinearSVMC', []))
     def testMultivariate(self, l_clf):
         mv_perf = []
         mv_lin_perf = []

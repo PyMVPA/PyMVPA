@@ -13,7 +13,7 @@ import unittest
 import numpy as N
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.searchlight import Searchlight
+from mvpa.measures.searchlight import Searchlight
 from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError

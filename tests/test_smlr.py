@@ -12,15 +12,8 @@ import unittest
 from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.smlr import SMLR
 import numpy as N
+from mvpa.misc.data_generators import dumbFeatureDataset
 
-def dumbFeatureDataset():
-    data = [[1,0],[1,1],[2,0],[2,1],[3,0],[3,1],[4,0],[4,1],
-            [5,0],[5,1],[6,0],[6,1],[7,0],[7,1],[8,0],[8,1],
-            [9,0],[9,1],[10,0],[10,1],[11,0],[11,1],[12,0],[12,1]]
-    regs = [0 for i in range(12)] \
-         + [1 for i in range(12)]
-
-    return Dataset(samples=data, labels=regs)
 
 class SMLRTests(unittest.TestCase):
 

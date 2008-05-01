@@ -6,45 +6,48 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA logistic regression classifier"""
+"""Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
 import unittest
 from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.plr import PLR
+from mvpa.clfs.lars import LARS
 import numpy as N
+from scipy.stats import pearsonr
 from mvpa.misc.data_generators import dumbFeatureBinaryDataset
 
+class LARSTests(unittest.TestCase):
 
-class PLRTests(unittest.TestCase):
-
-    def testPLR(self):
+    def testLARS(self):
+        # not the perfect dataset with which to test, but
+        # it will do for now.
         data = dumbFeatureBinaryDataset()
 
-        clf = PLR()
+        clf = LARS()
 
         clf.train(data)
 
-        # prediction has to be perfect
-        self.failUnless((clf.predict(data.samples) == data.labels).all())
+        # prediction has to be almost perfect
+        # test with a correlation
+        pre = clf.predict(data.samples)
+        cor = pearsonr(pre,data.labels)
+        self.failUnless(cor[0] > .8)
 
-    def testPLRState(self):
+    def testLARSState(self):
         data = dumbFeatureBinaryDataset()
 
-        clf = PLR()
+        clf = LARS()
 
         clf.train(data)
 
-        clf.states.enable('values')
         clf.states.enable('predictions')
 
         p = clf.predict(data.samples)
 
         self.failUnless((p == clf.predictions).all())
-        self.failUnless(N.array(clf.values).shape == N.array(p).shape)
 
 
 def suite():
-    return unittest.makeSuite(PLRTests)
+    return unittest.makeSuite(LARSTests)
 
 
 if __name__ == '__main__':

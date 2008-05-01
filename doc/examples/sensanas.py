@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating some SensitivityAnalyzers performing on a fMRI
+"""Example demonstrating some FeaturewiseDatasetMeasures performing on a fMRI
 dataset with brain activity recorded while perceiving images of objects
 (shoes vs. chairs).
 

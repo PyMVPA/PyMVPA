@@ -41,7 +41,7 @@ class Mapper(object):
         """
         raise NotImplementedError
 
-    def __getitem__(self, data):
+    def __call__(self, data):
         """Calls the mappers forward() method.
         """
         return self.forward(data)
@@ -51,11 +51,11 @@ class Mapper(object):
         """
         raise NotImplementedError
 
-    def __call__(self, data):
-        """Calls the mappers reverse() method.
-        """
-        return self.reverse(data)
-
+    #def __getitem__(self, data):
+    #    """Calls the mappers reverse() method.
+    #    """
+    #    return self.reverse(data)
+    #
     def getInShape(self):
         """Returns the dimensionality speicification of the original dataspace.
 

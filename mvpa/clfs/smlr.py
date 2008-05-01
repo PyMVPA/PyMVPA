@@ -14,7 +14,10 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.clfs.classifier import Classifier
+from mvpa.algorithms.datameasure import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
+from mvpa.misc.state import StateVariable
+from mvpa.misc import warning
 
 # Uber-fast C-version of the stepwise regression
 from mvpa.clfs.libsmlr import stepwise_regression as _cStepwiseRegression
@@ -397,8 +400,10 @@ class SMLR(Classifier):
                   "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
                   (N.min(X), N.max(X), N.min(w), N.max(w)))
 
+
     def _getFeatureIds(self):
         return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
+
 
     def _predict(self, data):
         """
@@ -440,6 +445,62 @@ class SMLR(Classifier):
 
         return predictions
 
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns a sensitivity analyzer for SMLR."""
+        return SMLRWeights(self, **kwargs)
+
+
     has_bias = property(lambda self: self.__has_bias)
     biases = property(lambda self: self.__biases)
     weights = property(lambda self: self.__weights)
+
+
+
+class SMLRWeights(Sensitivity):
+    """`SensitivityAnalyzer` that reports the weights SMLR trained
+    on a given `Dataset`.
+    """
+
+    biases = StateVariable(enabled=True,
+                           doc="A 1-d ndarray of biases")
+
+    def __init__(self, clf, **kwargs):
+        """Initialize the analyzer with the classifier it shall use.
+
+        :Parameters:
+          clf: SMLR
+            classifier to use. Only classifiers sub-classed from
+            `SMLR` may be used.
+        """
+        if not isinstance(clf, SMLR):
+            raise ValueError, \
+                  "Classifier %s has to be a SMLR, but is [%s]" \
+                              % (`clf`, `type(clf)`)
+
+        # init base classes first
+        Sensitivity.__init__(self, clf, **kwargs)
+
+
+    def _call(self, dataset):
+        """Extract weights from Linear SVM classifier.
+        """
+        if self.clf.weights.shape[1] != 1:
+            warning("You are estimating sensitivity for SMLR %s trained on %d" %
+                    (`self.clf`, self.clf.weights.shape[1]+1) +
+                    " classes. Make sure that it is what you intended to do" )
+
+        weights = self.clf.weights
+
+        if self.clf.has_bias:
+            self.biases = self.clf.biases
+
+        if __debug__:
+            debug('SVM',
+                  "Extracting weights for %d-class SMLR" %
+                  (self.clf.weights.shape[1]+1) +
+                  "Result: min=%f max=%f" %\
+                  (N.min(weights), N.max(weights)))
+
+        return weights
+
