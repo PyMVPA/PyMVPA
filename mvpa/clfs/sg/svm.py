@@ -35,7 +35,7 @@ if __debug__:
 
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    "gmnp" : shogun.Classifier.GMNPSVM,
-                #   "mpd"  : shogun.Classifier.MPDSVM,
+                   #"mpd"  : shogun.Classifier.MPDSVM, # disable due to infinite looping on XOR
                    "gpbt" : shogun.Classifier.GPBTSVM,
                    "gnpp" : shogun.Classifier.GNPPSVM,
                    }
