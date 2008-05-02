@@ -82,8 +82,11 @@ class ErrorsTests(unittest.TestCase):
 
     @sweepargs(l_clf=clfs.get('LinearSVMC', []))
     def testConfusionBasedError(self, l_clf):
-        train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=2,
+        train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
                                      nonbogus_features=[0,1], snr=3, nchunks=1)
+        # to check if we fail to classify for 3 labels
+        test3 = normalFeatureDataset(perlabel=50, nlabels=3, nfeatures=3,
+                                     nonbogus_features=[0,1,2], snr=3, nchunks=1)
         err = ConfusionBasedError(clf=l_clf)
         terr = TransferError(clf=l_clf)
 
@@ -94,6 +97,10 @@ class ErrorsTests(unittest.TestCase):
         self.failUnlessEqual(err(None), terr(train),
             msg="ConfusionBasedError should be equal to TransferError on" +
                 " traindataset")
+
+        # this will print nasty WARNING but it is ok -- it is just checking code
+        # NB warnings are not printed while doing whole testing
+        self.failIf(terr(test3) is None)
 
         # try copying the beast
         terr_copy = copy(terr)

@@ -349,7 +349,7 @@ class ClassifierError(Stateful):
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (`self.__clf`, `newlabels`) +
-                        " present in testing dataset. Make sure that you has" %
+                        " present in testing dataset. Make sure that you has" +
                         " not mixed order/names of the arguments anywhere")
 
         ### Here checking for if it was trained... might be a cause of trouble
