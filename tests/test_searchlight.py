@@ -18,6 +18,7 @@ from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
+from mvpa.misc.stats import chisquare
 
 
 class SearchlightTests(unittest.TestCase):
@@ -79,6 +80,29 @@ class SearchlightTests(unittest.TestCase):
 
         # only two spheres but error for all CV-folds
         self.failUnlessEqual(results.shape, (2,5))
+
+
+    def testChiSquareSearchlight(self):
+        # only do partial to save time
+        transerror = TransferError(kNN(k=5))
+        cv = CrossValidatedTransferError(
+                transerror,
+                NFoldSplitter(cvtype=1),
+                enable_states=['confusion'])
+
+        def getconfusion(data):
+            cv(data)
+            return chisquare(cv.confusion.matrix)[0]
+
+        # contruct radius 1 searchlight
+        sl = Searchlight(getconfusion, radius=1.0,
+                         center_ids=[3,50])
+
+        # run searchlight
+        results = sl(self.dataset)
+
+        print results
+
 
 
 def suite():
