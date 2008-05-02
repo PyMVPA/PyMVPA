@@ -29,7 +29,7 @@ rpy.r.library('lars')
 # local imports
 from mvpa.clfs.classifier import Classifier
 
-known_models = ('lasso',) #,  'stepwise', 'lar', 'forward.stagewise')
+known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
 
 class LARS(Classifier):
     """Least angle regression (LARS) `Classifier`.
@@ -159,11 +159,11 @@ class LARS(Classifier):
         """
         Predict the output for the provided data.
         """
-        # predict with the final state (i.e., fraction=1.0)
+        # predict with the final state (i.e., the last step)
         res = rpy.r.predict_lars(self.__trained_model,
                                  data,
-                                 mode='fraction',
-                                 s=1.0)
+                                 mode='step',
+                                 s=self.__trained_model['beta'].shape[0])
 
         return N.asarray(res['fit'])
 
