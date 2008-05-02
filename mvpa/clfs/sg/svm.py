@@ -96,7 +96,7 @@ class SVM_SG_Modular(_SVM):
                              min=1e-10,
                              descr='XXX Some kind of tolerance')
 
-    num_threads = Parameter(4,
+    num_threads = Parameter(1,
                             min=1,
                             descr='Number of threads to utilize')
 
@@ -254,6 +254,8 @@ class SVM_SG_Modular(_SVM):
         C = self.params.C
         if C<0:
             C = self._getDefaultC(dataset.samples)*abs(C)
+            if __debug__:
+                debug("SG_", "Default C for %s was computed to be %s" % (self.params.C, C))
 
         self.__svm = svm_impl_class(C, self.__kernel, labels)
 
@@ -273,9 +275,11 @@ class SVM_SG_Modular(_SVM):
 
         # train
         if __debug__:
-            debug("SG__", "Done training SG_SVM %s on data with labels %s" %
+            debug("SG_", "Done training SG_SVM %s on data with labels %s" %
                   (self._kernel_type, dataset.uniquelabels))
-
+            if "SG__" in debug.active:
+                trained_labels = self.__svm.classify().get_labels()
+                debug("SG__", "Original labels: %s, Trained labels: %s" % (dataset.labels, trained_labels))
 
     def _predict(self, data):
         """Predict values for the data
