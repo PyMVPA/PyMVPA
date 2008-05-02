@@ -129,5 +129,9 @@ If you have problems installing the software or questions about usage,
 documentation or something else related to PyMVPA, you can post to the PyMVPA
 mailing list or contact the authors on IRC:
 
-:Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org
+:Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_, archive_]
 :IRC: #exppsy on OTFC/Freenode
+
+
+.. _subscription: http://lists.alioth.debian.org/mailman/listinfo/pkg-exppsy-pymvpa
+.. _archive: http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/
