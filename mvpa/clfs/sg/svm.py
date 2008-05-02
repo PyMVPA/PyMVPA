@@ -125,7 +125,7 @@ class SVM_SG_Modular(_SVM):
         TODO Documentation if this all works ;-)
         """
         # init base class
-        _SVM.__init__(self, **kwargs)
+        _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
 
         self.__svm = None
         """Holds the trained svm."""
