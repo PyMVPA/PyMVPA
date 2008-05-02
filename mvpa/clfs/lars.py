@@ -29,7 +29,7 @@ rpy.r.library('lars')
 # local imports
 from mvpa.clfs.classifier import Classifier
 
-known_models = ('lasso',) #,  'stepwise', 'lar', 'forward.stagewise')
+known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
 
 class LARS(Classifier):
     """Least angle regression (LARS) `Classifier`.
