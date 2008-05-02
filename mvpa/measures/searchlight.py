@@ -40,15 +40,17 @@ class Searchlight(DatasetMeasure):
 
         :Parameters:
             datameasure: callable
-                Any object that takes a `Dataset` and returns some measure when called.
+                Any object that takes a `Dataset` and returns some measure when
+                called.
             radius: float
-                All features within the radius around the center will be part of a sphere.
+                All features within the radius around the center will be part
+                of a sphere.
             center_ids: list(int)
-                List of feature ids (not coordinates) the shall serve as sphere centers. By
-                default all features will be used.
+                List of feature ids (not coordinates) the shall serve as sphere
+                centers. By default all features will be used.
             **kwargs:
-                In additions this class supports all keyword arguments of its base-class
-                `DatasetMeasure`.
+                In additions this class supports all keyword arguments of its
+                base-class `DatasetMeasure`.
 
         ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
         make sure that the specified scalar `DatasetMeasure` returns large
