@@ -37,8 +37,10 @@ if externals.exists('libsvm') or externals.exists('shogun'):
 # libsvm check
 if externals.exists('libsvm'):
     clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(probability=1),
+                           libsvm.svm.LinearCSVMC(probability=1, C=10),
                            libsvm.svm.LinearNuSVMC(probability=1)]
     clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(probability=1),
+                              libsvm.svm.RbfCSVMC(probability=1, C=10),
                               libsvm.svm.RbfNuSVMC(probability=1)]
 
 # shogun svm check
