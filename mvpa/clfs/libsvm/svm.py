@@ -42,26 +42,17 @@ class SVMBase(_SVM):
     probabilities = StateVariable(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
-    KERNELS = { "linear": svm.svmc.LINEAR,
-                "rbf" :   svm.svmc.RBF }
+    _KERNELS = { "linear":  (svm.svmc.LINEAR, None),
+                 "rbf" :    (svm.svmc.RBF,     ('gamma',)),
+                 "poly":    (svm.svmc.POLY,    ('gamma', 'degree')),
+                 "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0')),
+                 }
     # TODO: Complete the list ;-)
 
-    _KNOWN_PARAMS = ( 'C', 'nu', 'p', 'epsilon', 'probability',
-                      'shrinking', 'weight_label', 'weight', 'cache_size' )
-    _KNOWN_KERNEL_PARAMS = ( 'gamma', 'coef0', 'degree' )
+    # TODO p is specific for SVR
+    _KNOWN_PARAMS = [ 'p', 'epsilon', 'probability', 'shrinking', 'weight_label', 'weight']
 
-    #C=-1.0,
-    #nu=0.5,
-    #coef0=0.0,
-    #degree=3,
-    #eps=0.00001,
-    #p=0.1,
-    #gamma=0.0,
-    #probability=0,
-    #shrinking=1,
-    #weight_label=None,
-    #weight=None,
-    #cache_size=100,
+    _KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
 
 
     def __init__(self,
@@ -116,27 +107,22 @@ class SVMBase(_SVM):
         If you do not want to change penalty for any of the classes,
         just set nr_weight to 0.
         """
+        self._KNOWN_PARAMS = SVMBase._KNOWN_PARAMS[:]
+        self._KNOWN_KERNEL_PARAMS = SVMBase._KNOWN_KERNEL_PARAMS[:]
+
         if svm_type in [svm.svmc.C_SVC]:
-            softness = 'C'
+            self._KNOWN_PARAMS += ['C']
         elif svm_type in [svm.svmc.NU_SVC, svm.svmc.NU_SVR]:
-            softness = 'nu'
-        else:
-            softness = None
+            self._KNOWN_PARAMS += ['nu']
 
         # init base class
-        _SVM.__init__(self, kernel_type, softness=softness, **kwargs)
+        _SVM.__init__(self, kernel_type, **kwargs)
 
         self._svm_type = svm_type
         # XXX move that logic into _svm I think
         #if not len(weight_label) == len(weight):
         #    raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
         #                      "is not equal."
-
-        # XXX refactor
-        #if softness == 'C':
-        #    self.C = C
-        #else:
-        #    self.nu = nu
 
         self.__param = None
         """Holds the trained LibSVM params."""
@@ -150,19 +136,14 @@ class SVMBase(_SVM):
         """
         res = "%s(" % self.__class__.__name__
         sep = ""
-        for k in self.params.names:
-            # list only params with not default values
-            if not self.params[k].isSet:
-                continue
-            res += "%s%s=%s" % (sep, k, self.params[k].value)
-            sep = ', '
+        for col in [self.params, self.kernel_params]:
+            for k in col.names:
+                # list only params with not default values
+                if not col[k].isSet:
+                    continue
+                res += "%s%s=%s" % (sep, k, col[k].value)
+                sep = ', '
 
-        #try:
-        #    for k, v in self._param._params.iteritems():
-        #        res += "%s%s=%s" % (sep, k, str(v))
-        #        sep = ', '
-        #except:
-        #    pass
         res += sep + "enable_states=%s" % (str(self.states.enabled))
         res += ")"
         return res
@@ -201,7 +182,7 @@ class SVMBase(_SVM):
             if self.C < 0:
                 newC = self._getDefaultC(dataset.samples)*abs(self.C)
                 if __debug__:
-                    debug("SVM", "Computed C to be %s" % newC)
+                    debug("SVM", "Computed C to be %s for C=%s" % (newC, self.C))
                 self.__param._setParameter('C', newC)
 
         self.__model = svm.SVMModel(svmprob, self.__param)

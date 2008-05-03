@@ -28,8 +28,8 @@ class _SVM(Classifier):
 
     Derived classes should define:
 
-    * KERNELS: map(dict) should define assignment to internal kernel type
-      e.g. KERNELS = { 'linear': shogun.Kernel.LinearKernel, ... }
+    * _KERNELS: map(dict) should define assignment to internal kernel type
+      e.g. _KERNELS = { 'linear': shogun.Kernel.LinearKernel, ... }
 
     """
 
@@ -42,7 +42,9 @@ class _SVM(Classifier):
         'coef0': Parameter(0.0, descr='Offset coefficient in polynomial and sigmoid kernels'),
         'degree': Parameter(3, descr='Degree of polynomial kernel'),
         'p': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression'),
-        'gamma': Parameter(0.0, descr='Scaling within non-linear kernels'),
+        'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
+        'max_shift': Parameter(10.0, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
+        'shift_step': Parameter(1.0, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
         'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),
         'shrinking': Parameter(1, descr='Either shrinking is to be conducted'),
         'weight_label': Parameter([], descr='???'),
@@ -53,24 +55,33 @@ class _SVM(Classifier):
                         descr='Tolerance of termination criterium')
         }
 
-    def __init__(self, kernel_type='linear', softness=None, **kwargs):
+
+    def __init__(self, kernel_type='linear', **kwargs):
         """Init base class of SVMs. *Not to be publicly used*
 
         :Parameters:
           kernel_type : basestr
-            String must be a valid key for cls.KERNELS
+            String must be a valid key for cls._KERNELS
         """
 
-        # pop out all args which are known to be SVM parameters
-        _params = {}
+        kernel_type = kernel_type.lower()
+        if not kernel_type in self._KERNELS:
+            raise ValueError, "Unknown kernel " + kernel_type
+
+        # Add corresponding kernel parameters to 'known' depending on what
+        # kernel was chosen
+        if self._KERNELS[kernel_type][1] is not None:
+            # XXX need to do only if it is a class variable
+            self._KNOWN_KERNEL_PARAMS = \
+                 self._KNOWN_KERNEL_PARAMS[:] + list(self._KERNELS[kernel_type][1])
+
+        # pop out all args from **kwargs which are known to be SVM parameters
+        _args = {}
         for param in self._KNOWN_KERNEL_PARAMS + self._KNOWN_PARAMS:
             if param in kwargs:
-                _params[param] = kwargs.pop(param)
+                _args[param] = kwargs.pop(param)
 
         Classifier.__init__(self, **kwargs)
-
-        if 'C' in _params and 'nu' in _params:
-            raise ValueError, 'Specify only C or nu corresponding for your SVM type'
 
         for paramfamily, paramset in ( (self._KNOWN_PARAMS, self.params),
                                        (self._KNOWN_KERNEL_PARAMS, self.kernel_params)):
@@ -79,20 +90,18 @@ class _SVM(Classifier):
                     raise ValueError, "Unknown parameter %s" % paramname
                 param = deepcopy(self._SVM_PARAMS[paramname])
                 param.name = paramname
-                if paramname in _params:
-                    param.value = _params[paramname]
+                if paramname in _args:
+                    param.value = _args[paramname]
+                    # XXX UGLY!
+                    #param._default = _args[paramname]
+                    #param._isset = False
 
                 paramset.add(param)
 
-        kernel_type = kernel_type.lower()
-
-        if kernel_type in self.KERNELS:
-            self._kernel_type = self.KERNELS[kernel_type]
-            if __debug__:
-                debug("SVM", "Initialized %s with kernel %s:%s" % 
-                      (id(self), kernel_type, self._kernel_type))
-        else:
-            raise ValueError, "Unknown kernel %s" % kernel_type
+        self._kernel_type = self._KERNELS[kernel_type][0]
+        if __debug__:
+            debug("SVM", "Initialized %s with kernel %s:%s" % 
+                  (id(self), kernel_type, self._kernel_type))
 
         # XXX might want to create a Parameter with a list of
         # available kernels?
