@@ -235,11 +235,19 @@ class ClassifiersTests(unittest.TestCase):
 
     @sweepargs(clf=clfs.get('LinearSVMC', []))
     def testMulticlassClassifier(self, clf):
+        oldC = None
+        # XXX somewhat ugly way to force non-dataspecific C value.
+        # Otherwise multiclass libsvm builtin and our MultiClass would differ
+        # in results
+        if clf.params.isKnown('C') and clf.C<0:
+            oldC = clf.C
+            clf.C = 1.0                 # reset C to be 1
+
         svm = clf
         svm2 = deepcopy(clf)
         svm2.states.enable(['training_confusion'])
 
-        clf = MulticlassClassifier(clf=svm,
+        mclf = MulticlassClassifier(clf=svm,
                                    enable_states=['training_confusion'])
 
         nfeatures = 6
@@ -255,8 +263,8 @@ class ClassifiersTests(unittest.TestCase):
                                       snr=3.0)
         svm2.train(dstrain)
 
-        clf.train(dstrain)
-        self.failUnlessEqual(str(clf.training_confusion),
+        mclf.train(dstrain)
+        self.failUnlessEqual(str(mclf.training_confusion),
                              str(svm2.training_confusion),
             msg="Multiclass clf should provide same results as built-in libsvm's %s" %
                              svm2)
@@ -266,17 +274,20 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(svm2.trained == False,
             msg="Un-Trained SVM should be untrained")
 
-        self.failUnless(N.array([x.trained for x in clf.clfs]).all(),
+        self.failUnless(N.array([x.trained for x in mclf.clfs]).all(),
             msg="Trained Boosted classifier should have all primary classifiers trained")
-        self.failUnless(clf.trained,
+        self.failUnless(mclf.trained,
             msg="Trained Boosted classifier should be marked as trained")
 
-        clf.untrain()
+        mclf.untrain()
 
-        self.failUnless(not clf.trained,
+        self.failUnless(not mclf.trained,
                         msg="UnTrained Boosted classifier should not be trained")
-        self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
+        self.failUnless(not N.array([x.trained for x in mclf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
+
+        if oldC is not None:
+            clf.C = oldC
 
     @sweepargs(clf=clfs.get('SVMC', []))
     def testSVMs(self, clf):
