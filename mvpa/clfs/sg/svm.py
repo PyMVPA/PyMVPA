@@ -100,14 +100,18 @@ class SVM_SG_Modular(_SVM):
                             min=1,
                             descr='Number of threads to utilize')
 
-    KERNELS = { "linear": shogun.Kernel.LinearKernel,
-                "rbf" :   shogun.Kernel.GaussianKernel }
+    # XXX gamma is width in SG notation for RBF(Gaussian)
+    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ()),
+                 "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',)),
+                 "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step')),
+                 "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0')),
+                }
 
-    _KNOWN_PARAMS = ( 'C', 'epsilon' )
-    _KNOWN_KERNEL_PARAMS = ( 'gamma', )
+    _KNOWN_PARAMS = [ 'C', 'epsilon' ]
+    _KNOWN_KERNEL_PARAMS = [ ]
 
     def __init__(self,
-                 kernel_type='Linear',
+                 kernel_type='linear',
                  kernel_params=[1.0],
                  svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
                  **kwargs):
@@ -120,8 +124,9 @@ class SVM_SG_Modular(_SVM):
 
         TODO Documentation if this all works ;-)
         """
+
         # init base class
-        _SVM.__init__(self, kernel_type=kernel_type, softness='C', **kwargs)
+        _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
 
         self.__svm = None
         """Holds the trained svm."""
@@ -149,6 +154,7 @@ class SVM_SG_Modular(_SVM):
         # internal SG swig proxies
         self.__traindata = None
         self.__kernel = None
+
 
     def __str__(self):
         """Definition of the object summary over the object
@@ -379,8 +385,7 @@ class LinearSVM(SVM_SG_Modular):
         """
         """
         # init base class
-        SVM_SG_Modular.__init__(self, kernel_type='Linear', **kwargs)
-
+        SVM_SG_Modular.__init__(self, kernel_type='linear', **kwargs)
 
     def getSensitivityAnalyzer(self, **kwargs):
         """Returns an appropriate SensitivityAnalyzer."""
