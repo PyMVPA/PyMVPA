@@ -46,22 +46,27 @@ class SVMBase(_SVM):
                 "rbf" :   svm.svmc.RBF }
     # TODO: Complete the list ;-)
 
+    _KNOWN_PARAMS = ( 'C', 'nu', 'p', 'epsilon', 'probability',
+                      'shrinking', 'weight_label', 'weight', 'cache_size' )
+    _KNOWN_KERNEL_PARAMS = ( 'gamma', 'coef0', 'degree' )
+
+    #C=-1.0,
+    #nu=0.5,
+    #coef0=0.0,
+    #degree=3,
+    #eps=0.00001,
+    #p=0.1,
+    #gamma=0.0,
+    #probability=0,
+    #shrinking=1,
+    #weight_label=None,
+    #weight=None,
+    #cache_size=100,
+
 
     def __init__(self,
                  kernel_type,
                  svm_type,
-                 C=-1.0,
-                 nu=0.5,
-                 coef0=0.0,
-                 degree=3,
-                 eps=0.00001,
-                 p=0.1,
-                 gamma=0.0,
-                 probability=0,
-                 shrinking=1,
-                 weight_label=None,
-                 weight=None,
-                 cache_size=100,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
@@ -121,40 +126,20 @@ class SVMBase(_SVM):
         # init base class
         _SVM.__init__(self, kernel_type, softness=softness, **kwargs)
 
-        if weight_label == None:
-            weight_label = []
-        if weight == None:
-            weight = []
-
-        if not len(weight_label) == len(weight):
-            raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
-                              "is not equal."
+        self._svm_type = svm_type
+        # XXX move that logic into _svm I think
+        #if not len(weight_label) == len(weight):
+        #    raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
+        #                      "is not equal."
 
         # XXX refactor
-        if softness == 'C':
-            self.C = C
-        else:
-            self.nu = nu
+        #if softness == 'C':
+        #    self.C = C
+        #else:
+        #    self.nu = nu
 
-        # XXX All those parameters should be fetched if present from
-        # **kwargs and create appropriate parameters within .params or .kernel_params
-        self._param = svm.SVMParameter(
-                        kernel_type=self._kernel_type,
-                        eps=self.params.epsilon,
-                        svm_type=svm_type,
-                        C=C,
-                        nu=nu,
-                        cache_size=cache_size,
-                        coef0=coef0,
-                        degree=degree,
-                        p=p,
-                        gamma=gamma,
-                        nr_weight=len(weight),
-                        probability=probability,
-                        shrinking=shrinking,
-                        weight_label=weight_label,
-                        weight=weight)
-        """Store SVM parameters in libSVM compatible format."""
+        self.__param = None
+        """Holds the trained LibSVM params."""
 
         self.__model = None
         """Holds the trained SVM."""
@@ -166,6 +151,7 @@ class SVMBase(_SVM):
         res = "%s(" % self.__class__.__name__
         sep = ""
         for k in self.params.names:
+            # list only params with not default values
             if not self.params[k].isSet:
                 continue
             res += "%s%s=%s" % (sep, k, self.params[k].value)
@@ -193,14 +179,32 @@ class SVMBase(_SVM):
 
         svmprob = svm.SVMProblem( dataset.labels.tolist(), src )
 
+        # Translate few params
+        TRANSLATEDICT={'epsilon': 'eps'}
+        args = []
+        for paramname, param in self.params.items.items() + self.kernel_params.items.items():
+            if paramname in TRANSLATEDICT:
+                argname = TRANSLATEDICT[paramname]
+            else:
+                argname = paramname
+            args.append( (argname, param.value) )
+
+        # XXX All those parameters should be fetched if present from
+        # **kwargs and create appropriate parameters within .params or .kernel_params
+        self.__param = svm.SVMParameter(
+                        kernel_type=self._kernel_type,
+                        svm_type=self._svm_type,
+                        **dict(args))
+        """Store SVM parameters in libSVM compatible format."""
+
         if self.params.isKnown('C'):#svm_type in [svm.svmc.C_SVC]:
             if self.C < 0:
                 newC = self._getDefaultC(dataset.samples)*abs(self.C)
                 if __debug__:
                     debug("SVM", "Computed C to be %s" % newC)
-                self._param._setParameter('C', newC)
+                self.__param._setParameter('C', newC)
 
-        self.__model = svm.SVMModel(svmprob, self._param)
+        self.__model = svm.SVMModel(svmprob, self.__param)
 
 
     def _predict(self, data):
@@ -255,7 +259,8 @@ class SVMBase(_SVM):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
-        self._param.untrain()           # reset any automagical assignment of params
+        if self.__param:
+            self.__param.untrain()           # reset any automagical assignment of params
         super(SVMBase, self).untrain()
         del self.__model
         self.__model = None
@@ -316,11 +321,6 @@ class RbfNuSVMC(SVMBase):
     """Nu-SVM classifier using a radial basis function kernel.
     """
 
-    gamma = \
-        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
-                                      'defaults to 1/(#classes)')
-
-
     def __init__(self, **kwargs):
         """
         """
@@ -335,11 +335,6 @@ class RbfNuSVMC(SVMBase):
 class RbfCSVMC(SVMBase):
     """C-SVM classifier using a radial basis function kernel.
     """
-
-    gamma = \
-        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
-                                      'defaults to 1/(#classes)')
-
 
     def __init__(self, **kwargs):
         """

@@ -103,11 +103,13 @@ class SVM_SG_Modular(_SVM):
     KERNELS = { "linear": shogun.Kernel.LinearKernel,
                 "rbf" :   shogun.Kernel.GaussianKernel }
 
+    _KNOWN_PARAMS = ( 'C', 'epsilon' )
+    _KNOWN_KERNEL_PARAMS = ( 'gamma', )
+
     def __init__(self,
                  kernel_type='Linear',
                  kernel_params=[1.0],
                  svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
-                 C=1.0,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
@@ -131,7 +133,7 @@ class SVM_SG_Modular(_SVM):
 
         # assign default params
         # XXX taking abs for now since some implementations might freak out until we implement proper scaling
-        self.params.C = C
+        # self.params.C = C
 
         if svm_impl.lower() in known_svm_impl:
             self.__svm_impl = svm_impl.lower()
