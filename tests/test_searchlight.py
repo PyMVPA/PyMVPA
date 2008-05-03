@@ -101,7 +101,7 @@ class SearchlightTests(unittest.TestCase):
         # run searchlight
         results = sl(self.dataset)
 
-        print results
+        self.failUnless(len(results) == 2)
 
 
 
