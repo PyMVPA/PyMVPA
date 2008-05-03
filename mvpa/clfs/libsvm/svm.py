@@ -123,12 +123,29 @@ class SVMBase(_SVM):
             raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
                               "is not equal."
 
+        # if we decide to remove hierarchy
+        if svm_type == svm.svmc.C_SVC:
+            # Give it C parameter
+            self.params.add(Parameter(1.0,
+                                      name='C',
+                                      min=1e-10,
+                                      descr='Trade-off parameter. High C -- rigid margin SVM'))
+            self.C = C
+        else:
+            self.params.add(Parameter(0.5,
+                                      name='nu',
+                                      min=0.0,
+                                      max=1.0,
+                                      descr='fraction of datapoints within the margin'))
+            self.nu = nu
+
+
+
         # XXX All those parameters should be fetched if present from
         # **kwargs and create appropriate parameters within .params or .kernel_params
-        self.param = svm.SVMParameter(
+        self._param = svm.SVMParameter(
                         kernel_type=self._kernel_type,
                         eps=self.params.epsilon,
-
                         svm_type=svm_type,
                         C=C,
                         nu=nu,
@@ -147,10 +164,6 @@ class SVMBase(_SVM):
         self.__model = None
         """Holds the trained SVM."""
 
-        self.__C = C
-        """Holds original value of C. self.param will be adjusted before training
-        if C<0 and it is C-SVM, so we could scale 'default' C value"""
-
 
     def __repr__(self):
         """Definition of the object summary over the object
@@ -158,7 +171,7 @@ class SVMBase(_SVM):
         res = "SVMBase("
         sep = ""
         try:
-            for k, v in self.param._params.iteritems():
+            for k, v in self._param._params.iteritems():
                 res += "%s%s=%s" % (sep, k, str(v))
                 sep = ', '
         except:
@@ -179,11 +192,14 @@ class SVMBase(_SVM):
 
         svmprob = svm.SVMProblem( dataset.labels.tolist(), src )
 
-        if self.__C < 0 and \
-               self.param.svm_type in [svm.svmc.C_SVC]:
-            self.param.C = self._getDefaultC(dataset.samples)*abs(self.__C)
+        if self.params.isKnown('C'):#svm_type in [svm.svmc.C_SVC]:
+            if self.C < 0:
+                newC = self._getDefaultC(dataset.samples)*abs(self.C)
+                if __debug__:
+                    debug("SVM", "Computed C to be %s" % newC)
+                self._param._setParameter('C', newC)
 
-        self.__model = svm.SVMModel(svmprob, self.param)
+        self.__model = svm.SVMModel(svmprob, self._param)
 
 
     def _predict(self, data):
@@ -238,7 +254,7 @@ class SVMBase(_SVM):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
-        self.param.untrain()           # reset any automagical assignment of params
+        self._param.untrain()           # reset any automagical assignment of params
         super(SVMBase, self).untrain()
         del self.__model
         self.__model = None
@@ -272,11 +288,6 @@ class LinearNuSVMC(LinearSVM):
     """Classifier for linear Nu-SVM classification.
     """
 
-    nu = Parameter(0.5,
-                   min=0.0,
-                   max=1.0,
-                   descr='fraction of datapoints within the margin')
-
     def __init__(self, **kwargs):
         """
         """
@@ -292,10 +303,6 @@ class LinearCSVMC(LinearSVM):
     """Classifier for linear C-SVM classification.
     """
 
-    C = Parameter(1.0,
-                  min=0.0,
-                  descr='cumulative constraint violation')
-
     def __init__(self, **kwargs):
         """
         """
@@ -307,11 +314,6 @@ class LinearCSVMC(LinearSVM):
 class RbfNuSVMC(SVMBase):
     """Nu-SVM classifier using a radial basis function kernel.
     """
-
-    nu = Parameter(0.5,
-                   min=0.0,
-                   max=1.0,
-                   descr='fraction of datapoints within the margin')
 
     gamma = \
         Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
@@ -332,10 +334,6 @@ class RbfNuSVMC(SVMBase):
 class RbfCSVMC(SVMBase):
     """C-SVM classifier using a radial basis function kernel.
     """
-
-    C = Parameter(1.0,
-                  min=0.0,
-                  descr='cumulative constraint violation')
 
     gamma = \
         Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
