@@ -12,6 +12,9 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.misc.state import CollectableAttribute
 
+if __debug__:
+    from mvpa.misc import debug
+
 class Parameter(CollectableAttribute):
     """This class shall serve as a representation of a parameter.
 
@@ -64,10 +67,28 @@ class Parameter(CollectableAttribute):
 
     def resetvalue(self):
         """Reset value to the default"""
-        CollectableAttribute.reset(self)
+        #CollectableAttribute.reset(self)
         if self._value != self.__default:
             self._isset = True
             self._value = self.__default
+
+    def _set(self, val):
+        if self._value != val:
+            if __debug__:
+                debug("COL",
+                      "Parameter: setting %s to %s " % (str(self), val))
+            self._value = val
+            self._isset = True
+        elif __debug__:
+            debug("COL",
+                  "Parameter: not setting %s since value is the same" % (str(self)))
+
+
+
+    def reset(self):
+        """Override reset so we don't clean the flag"""
+        pass
+
 
 class KernelParameter(Parameter):
     """Just that it is different beast"""
