@@ -23,6 +23,12 @@ class _SVM(Classifier):
     """Support Vector Machine Classifier.
 
     Base class for all external SVM implementations.
+
+    Derived classes should define:
+
+    * KERNELS: map(dict) should define assignment to internal kernel type
+      e.g. KERNELS = { 'linear': shogun.Kernel.LinearKernel, ... }
+
     """
 
     _ATTRIBUTE_COLLECTIONS = ['params', 'kernel_params'] # enforce presence of params collections
@@ -32,13 +38,15 @@ class _SVM(Classifier):
                         min=1e-10,
                         descr='Tolerance of termination criterium')
 
-    # KERNELS map should be defined in the derived classes
-    # e.g.
-    # KERNELS = { 'linear': ... }
+    def __init__(self, kernel_type='linear', softness=None, **kwargs):
+        """Init base class of SVMs. *Not to be publicly used*
 
-    def __init__(self, kernel_type='linear', **kwargs):
-        # init base class
+        :Parameters:
+          kernel_type : basestr
+            String must be a valid key for cls.KERNELS
+        """
         Classifier.__init__(self, **kwargs)
+
         kernel_type = kernel_type.lower()
         if kernel_type in self.KERNELS:
             self._kernel_type = self.KERNELS[kernel_type]
@@ -47,9 +55,28 @@ class _SVM(Classifier):
                       (id(self), kernel_type, self._kernel_type))
         else:
             raise ValueError, "Unknown kernel %s" % kernel_type
+
         # XXX might want to create a Parameter with a list of
         # available kernels?
         self._kernel_type_literal = kernel_type
+
+        if softness is not None:
+            softness = softness.lower()
+
+        # assign appropriate parameter
+        if softness == 'c':
+            # Give it C parameter
+            self.params.add(Parameter(-1.0,
+                                      name='C',
+                                      min=1e-10,
+                                      descr='Trade-off parameter. High C -- rigid margin SVM'))
+        elif softness == 'nu':
+            self.params.add(Parameter(0.5,
+                                      name='nu',
+                                      min=0.0,
+                                      max=1.0,
+                                      descr='fraction of datapoints within the margin'))
+
 
     def _getDefaultC(self, data):
         """Compute default C

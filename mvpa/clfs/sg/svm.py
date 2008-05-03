@@ -100,12 +100,6 @@ class SVM_SG_Modular(_SVM):
                             min=1,
                             descr='Number of threads to utilize')
 
-    # All SVMs seems to be C-SVMs
-    C = Parameter(1.0,
-                  min=1e-10,
-                  descr='Trade-off parameter. High C -- rigid margin SVM')
-
-
     KERNELS = { "linear": shogun.Kernel.LinearKernel,
                 "rbf" :   shogun.Kernel.GaussianKernel }
 
@@ -125,7 +119,7 @@ class SVM_SG_Modular(_SVM):
         TODO Documentation if this all works ;-)
         """
         # init base class
-        _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
+        _SVM.__init__(self, kernel_type=kernel_type, softness='C', **kwargs)
 
         self.__svm = None
         """Holds the trained svm."""

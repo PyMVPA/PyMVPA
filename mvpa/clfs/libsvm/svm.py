@@ -111,8 +111,15 @@ class SVMBase(_SVM):
         If you do not want to change penalty for any of the classes,
         just set nr_weight to 0.
         """
+        if svm_type in [svm.svmc.C_SVC]:
+            softness = 'C'
+        elif svm_type in [svm.svmc.NU_SVC, svm.svmc.NU_SVR]:
+            softness = 'nu'
+        else:
+            softness = None
+
         # init base class
-        _SVM.__init__(self, kernel_type, **kwargs)
+        _SVM.__init__(self, kernel_type, softness=softness, **kwargs)
 
         if weight_label == None:
             weight_label = []
@@ -123,23 +130,11 @@ class SVMBase(_SVM):
             raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
                               "is not equal."
 
-        # if we decide to remove hierarchy
-        if svm_type == svm.svmc.C_SVC:
-            # Give it C parameter
-            self.params.add(Parameter(1.0,
-                                      name='C',
-                                      min=1e-10,
-                                      descr='Trade-off parameter. High C -- rigid margin SVM'))
+        # XXX refactor
+        if softness == 'C':
             self.C = C
         else:
-            self.params.add(Parameter(0.5,
-                                      name='nu',
-                                      min=0.0,
-                                      max=1.0,
-                                      descr='fraction of datapoints within the margin'))
             self.nu = nu
-
-
 
         # XXX All those parameters should be fetched if present from
         # **kwargs and create appropriate parameters within .params or .kernel_params
@@ -168,14 +163,20 @@ class SVMBase(_SVM):
     def __repr__(self):
         """Definition of the object summary over the object
         """
-        res = "SVMBase("
+        res = "%s(" % self.__class__.__name__
         sep = ""
-        try:
-            for k, v in self._param._params.iteritems():
-                res += "%s%s=%s" % (sep, k, str(v))
-                sep = ', '
-        except:
-            pass
+        for k in self.params.names:
+            if not self.params[k].isSet:
+                continue
+            res += "%s%s=%s" % (sep, k, self.params[k].value)
+            sep = ', '
+
+        #try:
+        #    for k, v in self._param._params.iteritems():
+        #        res += "%s%s=%s" % (sep, k, str(v))
+        #        sep = ', '
+        #except:
+        #    pass
         res += sep + "enable_states=%s" % (str(self.states.enabled))
         res += ")"
         return res
