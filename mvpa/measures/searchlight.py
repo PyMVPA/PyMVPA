@@ -17,6 +17,7 @@ from mvpa.datasets.mappeddataset import MappedDataset
 from mvpa.datasets.mapper import MetricMapper
 from mvpa.algorithms.datameasure import DatasetMeasure
 from mvpa.misc.state import StateVariable
+from mvpa.base.dochelpers import enhancedDocString
 
 
 class Searchlight(DatasetMeasure):
@@ -66,6 +67,9 @@ class Searchlight(DatasetMeasure):
         self.__datameasure = datameasure
         self.__radius = radius
         self.__center_ids = center_ids
+
+
+    __doc__ = enhancedDocString('Searchlight', locals(), DatasetMeasure)
 
 
     def _call(self, dataset):
@@ -125,6 +129,7 @@ class Searchlight(DatasetMeasure):
 
         # return raw results, base-class will take care of transformations
         return results
+
 
 
 

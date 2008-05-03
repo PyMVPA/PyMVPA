@@ -15,6 +15,7 @@ import operator
 import numpy as N
 
 import mvpa.misc.support as support
+from mvpa.base.dochelpers import enhancedDocString
 
 
 class Splitter(object):
@@ -338,6 +339,9 @@ class NFoldSplitter(Splitter):
         self.__cvtype = cvtype
 
 
+    __doc__ = enhancedDocString('NFoldSplitter', locals(), Splitter)
+
+
     def __str__(self):
         """String summary over the object
         """
@@ -396,7 +400,3 @@ class CustomSplitter(Splitter):
         """String summary over the object
         """
         return "CustomSplitter / " + Splitter.__str__(self)
-
-
-
-
