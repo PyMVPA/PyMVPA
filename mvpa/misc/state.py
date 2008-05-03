@@ -819,6 +819,8 @@ class Stateful(object):
         return object.__getattribute__(self, index)
 
     def __setattr__(self, index, value):
+        if index.startswith('_'):
+            return object.__setattr__(self, index, value)
         for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
             if colvalues.items.has_key(index):
                 colvalues.setvalue(index, value)

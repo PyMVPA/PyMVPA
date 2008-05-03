@@ -43,7 +43,7 @@ class Parameter(CollectableAttribute):
 
         TODO: :Parameters: for Parameter
         """
-        self.__default = default
+        self._default = default
 
         CollectableAttribute.__init__(self, name, doc)
 
@@ -68,9 +68,9 @@ class Parameter(CollectableAttribute):
     def resetvalue(self):
         """Reset value to the default"""
         #CollectableAttribute.reset(self)
-        if self._value != self.__default:
+        if self._value != self._default:
             self._isset = True
-            self._value = self.__default
+            self._value = self._default
 
     def _set(self, val):
         if self._value != val:
