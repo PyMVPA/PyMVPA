@@ -23,7 +23,7 @@ import copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
-
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.misc import debug
@@ -55,6 +55,9 @@ class DatasetMeasure(Stateful):
         self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
         methods."""
+
+
+    __doc__ = enhancedDocString('DatasetMeasure', locals(), Stateful)
 
 
     def __call__(self, dataset):
