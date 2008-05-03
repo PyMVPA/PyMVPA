@@ -444,7 +444,7 @@ class Collection(object):
                 if index_ in ownerdict:
                     raise RuntimeError, \
                           "Cannot register attribute %s within %s " % \
-                          (index_, owner) + "since it has one already"
+                          (index_, self.owner) + "since it has one already"
                 ownerdict[index_] = self._items[index_]
                 if index_ in selfdict:
                     raise RuntimeError, \
