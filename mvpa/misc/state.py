@@ -67,6 +67,8 @@ class CollectableAttribute(object):
 
     def reset(self):
         """Simply reset the flag"""
+        if __debug__:
+            debug("COL", "Reset %s to being non-modified" % self.name)
         self._isset = False
 
     # TODO XXX unify all bloody __str__
