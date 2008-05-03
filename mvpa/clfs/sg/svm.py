@@ -103,7 +103,7 @@ class SVM_SG_Modular(_SVM):
     # All SVMs seems to be C-SVMs
     C = Parameter(1.0,
                   min=1e-10,
-                  descr='Trade-off parameter. High C -- ridig margin SVM')
+                  descr='Trade-off parameter. High C -- rigid margin SVM')
 
 
     KERNELS = { "linear": shogun.Kernel.LinearKernel,
