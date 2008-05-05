@@ -834,8 +834,9 @@ class Stateful(object):
 
     def __str__(self):
         s = "%s:" % (self.__class__.__name__)
-        for colname,colvalues in self._collections.iteritems():
-            s += " %d %s:%s" %(len(colvalues.items), colname, str(colvalues))
+        if hasattr(self, "_collections"):
+            for colname,colvalues in self._collections.iteritems():
+                s += " %d %s:%s" %(len(colvalues.items), colname, str(colvalues))
         return s
 
     def __repr__(self):
