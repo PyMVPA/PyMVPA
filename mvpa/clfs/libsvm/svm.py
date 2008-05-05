@@ -44,7 +44,7 @@ class SVMBase(_SVM):
 
     _KERNELS = { "linear":  (svm.svmc.LINEAR, None),
                  "rbf" :    (svm.svmc.RBF,     ('gamma',)),
-                 "poly":    (svm.svmc.POLY,    ('gamma', 'degree')),
+                 "poly":    (svm.svmc.POLY,    ('gamma', 'degree', 'coef0')),
                  "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0')),
                  }
     # TODO: Complete the list ;-)
@@ -121,6 +121,11 @@ class SVMBase(_SVM):
 
         # init base class
         _SVM.__init__(self, kernel_type, **kwargs)
+
+        if 'nu' in self._KNOWN_PARAMS:
+            # overwrite eps param with new default value (information taken from libSVM
+            # docs
+            self.params['epsilon'].setDefault(0.001)
 
         self._svm_type = svm_type
 
@@ -237,6 +242,7 @@ class SVMBase(_SVM):
                         self + " thus no 'values' state")
         return predictions
 
+
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
@@ -280,10 +286,6 @@ class LinearNuSVMC(LinearSVM):
         """
         # init base class
         LinearSVM.__init__(self, svm_type=svm.svmc.NU_SVC, **kwargs)
-        # overwrite eps param with new default value (information taken from libSVM
-        # docs
-        self.params.epsilon = 0.001
-
 
 
 class LinearCSVMC(LinearSVM):
@@ -308,9 +310,6 @@ class RbfNuSVMC(SVMBase):
         # init base class
         SVMBase.__init__(self, kernel_type='rbf',
                          svm_type=svm.svmc.NU_SVC, **kwargs)
-
-        self.params.eps = 0.001
-        """Decrease precision"""
 
 
 class RbfCSVMC(SVMBase):
