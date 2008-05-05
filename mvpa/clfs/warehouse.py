@@ -59,10 +59,16 @@ if externals.exists('libsvm'):
                                 C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
                            libsvm.svm.LinearCSVMC(
                                 C=1.0, descr="libsvm.LinSVM(C=1)"),
-                           # libsvm.svm.LinearNuSVMC(descr="Linear nu-SVM (default)")
+                           libsvm.svm.LinearNuSVMC(descr="libsvm.LinNuSVM(nu=def)")
                            ]
     clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
-                              # libsvm.svm.RbfNuSVMC(descr="Rbf nu-SVM (default)")
+                              libsvm.svm.SVMBase(kernel_type='poly',
+                                                 svm_type=libsvm.svmc.C_SVC,
+                                                 descr='libsvm.PolySVM()'),
+                              libsvm.svm.SVMBase(kernel_type='sigmoid',
+                                                 svm_type=libsvm.svmc.C_SVC,
+                                                 descr='libsvm.SigmoidSVM()'),
+                              libsvm.svm.RbfNuSVMC(descr="libsvm.RbfNuSVM(nu=def)")
                               ]
 
 if externals.exists('shogun'):
@@ -78,11 +84,17 @@ if externals.exists('shogun'):
             ]
         clfs['NonLinearSVMC'] += [
             sg.svm.RbfCSVMC(descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+#            sg.svm.RbfCSVMC(descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
+#           sg.svm.SVM_SG_Modular(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
 if len(clfs['LinearSVMC']) > 0:
     # if any SVM implementation is known, import default ones
     from mvpa.clfs.svm import *
+
+
+clfs['LinReg'] = clfs['SMLR'] #+ [ RidgeReg(descr="RidgeReg(default)") ]
+clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg']
 
 # lars from R via RPy
 if externals.exists('lars'):
@@ -90,10 +102,12 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
     clfs['LARS'] = []
     for model in lars.known_models:
-        clfs['LARS'] += [LARS(descr="LARS(%s)" % model, model_type=model)]
+        # XXX create proper repository of classifiers!
+        lars = LARS(descr="LARS(%s)" % model, model_type=model)
+        clfs['LARS'] += [MulticlassClassifier(lars,
+                                              descr='Multiclass %s' % lars.descr)]
+    clfs['LinearC'] +=  clfs['LARS']
 
-clfs['LinReg'] = clfs['SMLR'] #+ [ RidgeReg(descr="RidgeReg(default)") ]
-clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg'] + clfs['LARS']
 clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(descr="kNN()") ]
 clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR'] #+ clfs['LARS']
 
