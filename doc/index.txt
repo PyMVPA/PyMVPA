@@ -5,6 +5,9 @@
  PyMVPA - Multivariate Pattern Analysis in Python
 ==================================================
 
+  * :ref:`Contents <contents>`
+  * :ref:`Developer Guidelines <devguide>`
+  * :ref:`genindex`
 
 Pie ... what?
 -------------
