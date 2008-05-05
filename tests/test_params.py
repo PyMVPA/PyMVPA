@@ -57,9 +57,19 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(simple.C, 1.0)
         self.failUnlessEqual(simple.params.isSet("C"), False)
         self.failUnlessEqual(simple.params.isSet(), False)
+        self.failUnlessEqual(simple.params["C"].isDefault, True)
+        self.failUnlessEqual(simple.params["C"].equalDefault, True)
+
+        simple.C = 1.0
+        # we are not actually setting the value if == default
+        self.failUnlessEqual(simple.params["C"].isDefault, True)
+        self.failUnlessEqual(simple.params["C"].equalDefault, True)
+
         simple.C = 10.0
         self.failUnlessEqual(simple.params.isSet("C"), True)
         self.failUnlessEqual(simple.params.isSet(), True)
+        self.failUnlessEqual(simple.params["C"].isDefault, False)
+        self.failUnlessEqual(simple.params["C"].equalDefault, False)
 
         self.failUnlessEqual(simple.C, 10.0)
         simple.params["C"].resetvalue()

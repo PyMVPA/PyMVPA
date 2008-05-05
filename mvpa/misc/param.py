@@ -68,7 +68,7 @@ class Parameter(CollectableAttribute):
     def resetvalue(self):
         """Reset value to the default"""
         #CollectableAttribute.reset(self)
-        if self._value != self._default:
+        if not self.isDefault:
             self._isset = True
             self._value = self._default
 
@@ -83,11 +83,20 @@ class Parameter(CollectableAttribute):
             debug("COL",
                   "Parameter: not setting %s since value is the same" % (str(self)))
 
+    @property
+    def isDefault(self):
+        """Returns True if current value is bound to default one"""
+        return self._value is self._default
 
+    @property
+    def equalDefault(self):
+        """Returns True if current value is equal to default one"""
+        return self._value == self._default
 
-    def reset(self):
-        """Override reset so we don't clean the flag"""
-        pass
+    # incorrect behavior
+    #def reset(self):
+    #    """Override reset so we don't clean the flag"""
+    #    pass
 
 
 class KernelParameter(Parameter):
