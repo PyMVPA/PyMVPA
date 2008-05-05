@@ -67,11 +67,10 @@ if __name__ == "__main__":
                                   nchunks=6, nonbogus_features=[11, 10],
                                   snr=3.0)
 
-
     for (dataset, datasetdescr), clfs_ in \
         [
         ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
-        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
+        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all']),
         ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
         ]:
 
