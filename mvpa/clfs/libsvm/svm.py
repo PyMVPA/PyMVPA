@@ -139,7 +139,7 @@ class SVMBase(_SVM):
         for col in [self.params, self.kernel_params]:
             for k in col.names:
                 # list only params with not default values
-                if not col[k].isSet:
+                if col[k].isDefault:
                     continue
                 res += "%s%s=%s" % (sep, k, col[k].value)
                 sep = ', '
