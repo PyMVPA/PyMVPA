@@ -41,6 +41,7 @@ Unreleased changes
   * New wrapper from SVM implementation of the Shogun toolbox.
   * libsvm bindings are not build by default anymore. Instructions on how to
     reenable them are available in the manual.
+  * Switch to Sphinx for documentation handling.
 
 
 Releases
