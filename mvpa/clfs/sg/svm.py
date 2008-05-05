@@ -112,7 +112,6 @@ class SVM_SG_Modular(_SVM):
 
     def __init__(self,
                  kernel_type='linear',
-                 kernel_params=[1.0],
                  svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
@@ -144,8 +143,6 @@ class SVM_SG_Modular(_SVM):
             self.__svm_impl = svm_impl.lower()
         else:
             raise ValueError, "Unknown SVM implementation %s" % svm_impl
-
-        self.__kernel_params = kernel_params
 
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
@@ -241,12 +238,24 @@ class SVM_SG_Modular(_SVM):
         # TODO: decide on how to handle kernel parameters more or less
         # appropriately
         #if len(self.__kernel_params)==1:
+
+        kargs = []
+        for arg in self._KERNELS[self._kernel_type_literal][1]:
+            value = self.kernel_params[arg].value
+            # XXX Unify damn automagic gamma value
+            if arg == 'gamma' and value == 0.0:
+                value = 1.0/len(ul)     # the same way is done in libsvm
+            kargs += [value]
+
         if __debug__:
             debug("SG_",
-                  "Creating kernel instance of %s" % `self._kernel_type`)
+                  "Creating kernel instance of %s giving arguments %s" %
+                  (`self._kernel_type`, kargs))
+
 
         self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
-                                          self.__kernel_params[0])
+                                          *kargs)
+
         _setdebug(self.__kernel, 'Kernels')
 
         # create SVM
@@ -394,22 +403,22 @@ class LinearSVM(SVM_SG_Modular):
 
 
 class LinearCSVMC(LinearSVM):
-    def __init__(self, C=1.0, **kwargs):
+    def __init__(self, **kwargs):
         """
         """
         # init base class
-        LinearSVM.__init__(self, C=C, **kwargs)
+        LinearSVM.__init__(self, **kwargs)
 
 
 
 class RbfCSVMC(SVM_SG_Modular):
     """C-SVM classifier using a radial basis function kernel.
     """
-    def __init__(self, C=1.0, gamma=1.0, **kwargs):
+    def __init__(self, C=1, **kwargs):
         """
         """
         # init base class
-        SVM_SG_Modular.__init__(self, C=C, kernel_type='RBF', kernel_params=[gamma], **kwargs)
+        SVM_SG_Modular.__init__(self, C=C, kernel_type='RBF', **kwargs)
 
 
 
