@@ -313,7 +313,6 @@ class ClassifiersTests(unittest.TestCase):
         """Test all classifiers for conformant behavior
         """
         for traindata in [dumbFeatureDataset()]:
-
             traindata_copy = deepcopy(traindata) # full copy of dataset
             clf.train(traindata)
             self.failUnless((traindata.samples == traindata_copy.samples).all(),
@@ -323,6 +322,13 @@ class ClassifiersTests(unittest.TestCase):
             #predicted = clf.predict(traindata.samples)
             #self.failUnless(isinstance(predicted, N.ndarray))
 
+        #print "here repr: %s str: %s" %(`clf`, str(clf))
+
+        # Just simple test that all of them are syntaxed correctly
+        self.failUnless(str(clf) != "")
+        self.failUnless(repr(clf) != "")
+
+        # TODO: unify str and repr for all classifiers
 
     @sweepargs(clf=clfs['all'])
     def testCorrectDimensionsOrder(self, clf):
