@@ -62,6 +62,10 @@ class _SVM(Classifier):
         :Parameters:
           kernel_type : basestr
             String must be a valid key for cls._KERNELS
+
+        TODO: handling of parameters might migrate to be generic for
+        all classifiers. SVMs are choosen to be testbase for that
+        functionality to see how well it would fit.
         """
 
         kernel_type = kernel_type.lower()
@@ -87,7 +91,8 @@ class _SVM(Classifier):
                                        (self._KNOWN_KERNEL_PARAMS, self.kernel_params)):
             for paramname in paramfamily:
                 if not (paramname in self._SVM_PARAMS):
-                    raise ValueError, "Unknown parameter %s" % paramname
+                    raise ValueError, "Unknown parameter %s" % paramname + \
+                          ". Known SVM params are: %s" % self._SVM_PARAMS.keys()
                 param = deepcopy(self._SVM_PARAMS[paramname])
                 param.name = paramname
                 if paramname in _args:
@@ -97,6 +102,12 @@ class _SVM(Classifier):
                     #param._isset = False
 
                 paramset.add(param)
+
+        # Some postchecks
+        if self.params.isKnown('weight') and self.params.isKnown('weight_label'):
+            if not len(self.weight_label) == len(self.weight):
+                raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
+                      "must be equal."
 
         self._kernel_type = self._KERNELS[kernel_type][0]
         if __debug__:

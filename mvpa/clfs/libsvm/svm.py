@@ -50,7 +50,7 @@ class SVMBase(_SVM):
     # TODO: Complete the list ;-)
 
     # TODO p is specific for SVR
-    _KNOWN_PARAMS = [ 'p', 'epsilon', 'probability', 'shrinking', 'weight_label', 'weight']
+    _KNOWN_PARAMS = [ 'epsilon', 'probability', 'shrinking', 'weight_label', 'weight']
 
     _KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
 
@@ -115,14 +115,14 @@ class SVMBase(_SVM):
         elif svm_type in [svm.svmc.NU_SVC, svm.svmc.NU_SVR]:
             self._KNOWN_PARAMS += ['nu']
 
+        if svm_type in [svm.svmc.EPSILON_SVR]:
+            self._KNOWN_PARAMS += ['p']
+
+
         # init base class
         _SVM.__init__(self, kernel_type, **kwargs)
 
         self._svm_type = svm_type
-        # XXX move that logic into _svm I think
-        #if not len(weight_label) == len(weight):
-        #    raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
-        #                      "is not equal."
 
         self.__param = None
         """Holds the trained LibSVM params."""
