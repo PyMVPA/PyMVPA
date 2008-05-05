@@ -1,16 +1,9 @@
 .. -*- mode: rst -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
-==================================================
- PyMVPA - Multivariate Pattern Analysis in Python
-==================================================
-
-  * :ref:`Contents <contents>`
-  * :ref:`Developer Guidelines <devguide>`
-  * :ref:`genindex`
 
 Pie ... what?
--------------
+=============
 
 PyMVPA is a Python_ module intended to ease pattern classification
 analyses of large datasets. It provides high-level abstraction of typical
@@ -26,45 +19,57 @@ come.
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
 in **Py**\ thon.
 
-To learn how to use PyMVPA it is best to start with the manual_ (`manual as
-PDF`_). It explains
-the basic concepts of the module and shows examples of a typical workflow.
-The `API documentation`_  on the other hand provides comprehensive information
-about all functionality included in PyMVPA.
+..
+  To learn how to use PyMVPA it is best to start with the manual_ (`manual as
+  PDF`_). It explains
+  the basic concepts of the module and shows examples of a typical workflow.
+  The `API documentation`_  on the other hand provides comprehensive information
+  about all functionality included in PyMVPA.
 
-If you want to contribute some code to PyMVPA you might also want to have a
-look at some (few) `developer guidelines`_ (`devguide as PDF`_) to make your
-code fit nicely into the PyMVPA codebase.
-
-.. _manual: manual.html
-.. _manual as PDF: manual.pdf
-.. _API Documentation: api/index.html
-.. _developer guidelines: devguide.html
-.. _devguide as PDF: devguide.pdf
+..
+  If you want to contribute some code to PyMVPA you might also want to have a
+  look at some (few) `developer guidelines`_ (`devguide as PDF`_) to make your
+  code fit nicely into the PyMVPA codebase.
+  .. _manual: manual.html
+  .. _manual as PDF: manual.pdf
+  .. _developer guidelines: devguide.html
+  .. _devguide as PDF: devguide.pdf
 
 PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
 website, the source code repository and download services are hosted on 
-Alioth_, which is kindly provided by the `Debian project`_.
+Alioth_, a service that is kindly provided by the `Debian project`_.
 
 .. _Debian Experimental Psychology Project: http://pkg-exppsy.alioth.debian.org
 .. _Alioth: http://alioth.debian.org
 .. _Debian project: http://www.debian.org
 
-A development history including latest changes which are not yet released is
-available from the changelog_.
+..
+  A development history including latest changes which are not yet released is
+  available from the changelog_.
+  .. _changelog: changelog.html
 
-.. _changelog: changelog.html
 
+Documentation
+=============
+
+  * :ref:`User Documentation <contents>`
+  * :ref:`Developer Guidelines <devguide>`
+  * `API Reference`_
+  * :ref:`Development Changelog <changelog>`
+  * :ref:`genindex`
+  * :ref:`search`
+
+.. _API Reference: api/index.html
 
 Legal stuff
------------
+===========
 
 PyMVPA is free-software (beer and speech) and covered by the `MIT License`_.
 This applies to all source code, documentation, examples and snippets inside
 the source distribution (including this website).
 
-Please see the `appendix of the manual`_ for the copyright statement and the
-full text of the license.
+Please see the :ref:`appendix of the manual <license>` for the copyright
+statement and the full text of the license.
 
 .. _MIT License: http://www.opensource.org/licenses/mit-license.php
 .. _appendix of the manual: manual.html#license
@@ -72,10 +77,10 @@ full text of the license.
 
 
 Download
---------
+========
 
 Source code
-~~~~~~~~~~~
+-----------
 
 Source code tarballs of PyMVPA releases are available from the `file release
 system`_.
@@ -99,8 +104,13 @@ working directory, that contains the PyMVPA repository.
 .. _Git: http://git.or.cz/
 
 
+More detailed instructions on :ref:`installation requirements <requirements>`
+and on how to :ref:`build PyMVPA from source <buildfromsource>` are provided
+in the manual.
+
+
 Binary packages
-~~~~~~~~~~~~~~~
+---------------
 
 Binary packages for Debian and some Ubuntu releases are available. Please read
 the `package repository instructions`_ to learn about how to obtain them. As
@@ -115,18 +125,8 @@ manage to build PyMVPA on Windows or OS X, we would be glad to hear from you.
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
 
-Building & Installation
------------------------
-
-Detailed instructions on how to `build PyMVPA from source`_ or `install binary
-packages`_ are provided in the manual.
-
-.. _build PyMVPA from source: manual.html#building-from-source
-.. _install binary packages: manual.html#installation
-
-
 Support
--------
+=======
 
 If you have problems installing the software or questions about usage,
 documentation or something else related to PyMVPA, you can post to the PyMVPA
