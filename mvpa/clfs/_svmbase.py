@@ -28,8 +28,15 @@ class _SVM(Classifier):
 
     Derived classes should define:
 
-    * _KERNELS: map(dict) should define assignment to internal kernel type
-      e.g. _KERNELS = { 'linear': shogun.Kernel.LinearKernel, ... }
+    * _KERNELS: map(dict) should define assignment to a tuple containing
+      implementation kernel type and a list of parameters adherent to the
+      kernel, e.g.::
+
+      _KERNELS = {
+             'linear': (shogun.Kernel.LinearKernel, ()),
+             'rbf' :   (shogun.Kernel.GaussianKernel, ('gamma',)),
+             ...
+             }
 
     """
 
@@ -85,7 +92,18 @@ class _SVM(Classifier):
             if param in kwargs:
                 _args[param] = kwargs.pop(param)
 
-        Classifier.__init__(self, **kwargs)
+        try:
+            Classifier.__init__(self, **kwargs)
+        except TypeError, e:
+            if "__init__() got an unexpected keyword argument " in e.args[0]:
+                # TODO: make it even more specific -- if that argument is listed
+                # within _SVM_PARAMS
+                e.args = tuple( [e.args[0] +
+                                 "\n Given SVM instance knows following parameters: %s" %
+                                 self._KNOWN_PARAMS +
+                                 ", and kernel parameters: %s" %
+                                 self._KNOWN_KERNEL_PARAMS] + list(e.args)[1:])
+            raise e
 
         for paramfamily, paramset in ( (self._KNOWN_PARAMS, self.params),
                                        (self._KNOWN_KERNEL_PARAMS, self.kernel_params)):
