@@ -165,7 +165,14 @@ class LARS(Classifier):
                                  mode='step',
                                  s=self.__trained_model['beta'].shape[0])
 
-        return N.asarray(res['fit'])
+        fit = N.asarray(res['fit'])
+        if len(fit.shape) == 0:
+            # if we just got 1 sample with a scalar
+            fit = fit.reshape( (1,) )
+        self.values = fit
+
+        # XXX finally come up with unification of regression vs classifier
+        return N.sign(fit)
 
     weights = property(lambda self: self.__weights)
 
