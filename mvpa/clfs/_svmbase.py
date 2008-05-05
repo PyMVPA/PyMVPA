@@ -46,7 +46,7 @@ class _SVM(Classifier):
         'C' : Parameter(-1.0, min=1e-10, descr='Trade-off parameter. High C -- rigid margin SVM'),
         'nu' : Parameter(0.5, min=0.0, max=1.0, descr='Fraction of datapoints within the margin'),
         'cache_size': Parameter(100, descr='Size of the kernel cache, specified in megabytes'),
-        'coef0': Parameter(0.0, descr='Offset coefficient in polynomial and sigmoid kernels'),
+        'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
         'degree': Parameter(3, descr='Degree of polynomial kernel'),
         'p': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression'),
         'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
