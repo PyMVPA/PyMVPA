@@ -81,6 +81,16 @@ class SVMTests(unittest.TestCase):
         self.failUnless( mean_uv_perf < mean_mv_perf )
 
 
+    def testSillyness(self):
+        """Test if we raise exceptions on incorrect specifications
+        """
+
+        if externals.exists('libsvm'):
+            self.failUnlessRaises(TypeError, LinearCSVMC, nu=2.3)
+            self.failUnlessRaises(TypeError, LinearNuSVMC, C=2.3)
+        if externals.exists('shogun'):
+            self.failUnlessRaises(TypeError, sg.svm.RbfCSVMC, coef0=3)
+
 #    def testFeatureBenchmark(self):
 #        pat = dumbFeatureDataset()
 #        clf = SVM()
