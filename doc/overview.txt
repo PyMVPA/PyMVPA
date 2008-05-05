@@ -1,0 +1,19 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+********
+Overview
+********
+
+The PyMVPA package consists of three major parts: `Data handling`_,
+Classifiers_ and Algorithms_ operating on datasets and classifiers.
+In the following sections the basic concept of all three parts will be
+described and examples using certain parts of the PyMVPA package will be
+given.

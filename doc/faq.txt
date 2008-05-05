@@ -1,0 +1,39 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+**************************
+Frequently Asked Questions
+**************************
+
+=======
+General
+=======
+
+I feel like I want to contribute something, do you mind?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Not at all! If you think there is something that is not well explained in
+  the documentation, send us an improvement. If you implemented a new algorithm
+  using PyMVPA that you want to share, please share. If you have an idea for
+  some other improvement (e.g. speed, functionality), but you have no
+  time/cannot/do not want to implement it yourself, please post your idea to
+  the PyMVPA mailing list.
+
+
+The manual is quite insufficient. When will you improve it?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Writing a manual can be a tricky task if you already know the details and
+  have to imagine what might be the most interesting information for someone
+  who is just starting. If you feel that something is missing which has cost
+  you some time to figure out, please drop us a note and we will add it as soon
+  as possible. If you have developed some code snippets to demonstrate some
+  feature or non-trivial behaviour, please consider sharing this snippet with
+  us and we will put it into the example collection or the manual. Thanks!
+

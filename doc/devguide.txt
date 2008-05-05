@@ -7,16 +7,18 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
+.. _devguide:
+
+***************************
 PyMVPA Developer Guidelines
-===========================
+***************************
 
 .. contents:: Table of Contents
-.. sectnum::
 
 
 
 Documentation
--------------
+=============
 
 Documentation of the code and supplementary material (such as this file)
 should be done in reST_ (reStructuredText) light markup language.  See `Demo
@@ -26,7 +28,7 @@ quick demo.
 
 
 Code Documentation
-~~~~~~~~~~~~~~~~~~
+------------------
 
 Code must be documented in accordance to `epydoc + reST usage guidelines
 <http://epydoc.sourceforge.net/manual-othermarkup.html>`__
@@ -37,7 +39,7 @@ For an example how to do it right, please see mvpa/datasets/dataset.py
 
 
 Code Formatting
----------------
+===============
 
 pylint
    Code should be conformant with Pylint_ driven by config located at
@@ -82,7 +84,7 @@ notes
 
 
 Coding Conventions
-------------------
+==================
 
 __repr__
   most of the classes should provide meaningful and concise summary
@@ -92,10 +94,10 @@ __repr__
 
 
 Naming Conventions
-------------------
+==================
 
 Function Arguments
-~~~~~~~~~~~~~~~~~~
+------------------
 
 dataset vs data
   Ones which are supposed to be derived from Dataset_ class should
@@ -123,7 +125,7 @@ dataset vs data
 
 
 Tests
------
+=====
 * Every more or less "interesting" bugfix should be accompanied by a
   unittest which might help to prevent it in the future refactoring
 * Every new feature should have a unittest
@@ -131,7 +133,7 @@ Tests
 
 
 Extending PyMVPA
-----------------
+================
 
 This section shall provide a developer with the necessary pieces of information
 for writing extensions to PyMVPA. The guidelines given here, must be obeyed
@@ -141,7 +143,7 @@ have to be documented here and also should be announced in the changelog.
 
 
 Adding an External Dependency
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 Introducing new external dependencies should be done in a completely optional
 fashion. This includes both build-dependencies and runtime dependencies.
@@ -151,7 +153,8 @@ tests throughout PyMVPA.
 
 
 Adding a new Dataset type
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
+
  * Required interface for Mapper.
  * only new subclasses of MappedDataset + new Mappers (all other as
    improvements into the Dataset base class)?
@@ -160,7 +163,7 @@ go into `mvpa/datasets/`
 
 
 Adding a new Classifier
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 To add a new classifier implementation it is sufficient to create a new
 sub-class of Classifier_ and add implementations of the following methods:
@@ -234,7 +237,7 @@ Outstanding Questions:
 
 
 Adding a new Sensitivity Analyzer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 There are two possible base-classes for new sensitivity analyzers.
 First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
@@ -274,13 +277,13 @@ Source code files of all sensitivity analyzer implementations go into
 
 
 Classifier-independent Sensitivity Analyzers
-''''''''''''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Nothing special.
 
 
 Classifier-based Sensitivity Analyzers
-''''''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A Sensitivity_ behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
@@ -305,17 +308,17 @@ Outstanding Questions:
 
 
 Adding a new Algorithm
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 go into `mvpa/algorithms/`
 
 
 
 Git Repository
---------------
+==============
 
 Layout
-~~~~~~
+------
 
 The repository is structured by a number of branches. Each developer should
 prefix his/her branches with a unique string plus '/' (maybe initials or
@@ -348,7 +351,7 @@ releases should be gone under *maint/codename.flavor* (e.g. *maint/lenny*,
 
 
 Commits
-~~~~~~~
+-------
 
 Please prefix all commit summaries with one (or more) of the following labels.
 This should help others to easily classify the commits into meaningful
@@ -368,7 +371,7 @@ categories:
 
 
 Merges
-~~~~~~
+------
 
 For easy tracking of what changes were absorbed during merge, we
 advice to enable merge summary within git:
@@ -377,7 +380,7 @@ advice to enable merge summary within git:
 
 
 Changelog
----------
+=========
 
 The PyMVPA changelog is located in the toplevel directory of the source tree
 in the `Changelog` file. The content of this file should be formated as
@@ -403,10 +406,10 @@ into the master branch, not necessarily with a release already approaching.
 
 
 Developer-TODO
---------------
+==============
 
 Things to implement for the next release (Release goals)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------
 
  * Unify parameter naming across all classifiers and come up with a labeling
    guideline for future classifier implementations and wrappers::
@@ -527,7 +530,7 @@ Things to implement for the next release (Release goals)
 
 
 Long and medium term TODOs (aka stuff that has been here forever)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------------------
 
  * selected_ids -> implement via MaskMapper?
 
