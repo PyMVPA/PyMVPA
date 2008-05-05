@@ -7,6 +7,7 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
+.. _intro:
 
 ************
 Introduction
@@ -67,6 +68,8 @@ or even the unit test battery, also part of the source distribution
 ..            mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
 ..            Cognitive Science 10, 424–430.
 
+
+.. _history:
 
 A bit of History
 ~~~~~~~~~~~~~~~~
@@ -145,6 +148,8 @@ faster and easier than it has ever been before.
 .. _Yaroslav Halchenko: http://www.onerussian.com/
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
 
+
+.. _requirements:
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -241,6 +246,8 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 .. _AFNI: http://afni.nimh.nih.gov/afni/
 
 
+.. _obtaining:
+
 Obtaining PyMVPA
 ~~~~~~~~~~~~~~~~
 
@@ -275,6 +282,8 @@ how to obtain them.
 .. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
+
+.. _buildfromsource:
 
 Building from Source
 ''''''''''''''''''''

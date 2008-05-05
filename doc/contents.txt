@@ -19,5 +19,4 @@ PyMVPA Documentation Contents
    faq
    copying
    changelog
-   devguide
    todo

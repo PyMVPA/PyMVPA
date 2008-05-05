@@ -76,7 +76,7 @@ pygments_style = 'sphinx'
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_style = 'default.css'
+html_style = 'pymvpa.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -100,14 +100,14 @@ html_last_updated_fmt = '%b %d, %Y'
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
+html_sidebars = {'index': 'indexsidebar.html'}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#html_additional_pages = {}
+#html_additional_pages = {'index': 'index.html'}
 
 # If false, no module index is generated.
-#html_use_modindex = True
+html_use_modindex = False
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
 #html_copy_source = True

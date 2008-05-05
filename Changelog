@@ -1,12 +1,14 @@
 .. -*- mode: rst -*-
 
+.. _changelog:
+
 PyMVPA Development Changelog
 -----------------------------
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
 
-  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=shortlog;h=upstream
+  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
 
 'Closes' statement IDs refer to the Debian bug tracking system and can be
 queried by visiting the URL::
