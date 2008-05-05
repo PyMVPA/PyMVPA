@@ -93,6 +93,12 @@ class Parameter(CollectableAttribute):
         """Returns True if current value is equal to default one"""
         return self._value == self._default
 
+    def setDefault(self, value):
+        self._default = value
+        if self.isDefault:
+            self.resetvalue()
+            self._isset = False
+
     # incorrect behavior
     #def reset(self):
     #    """Override reset so we don't clean the flag"""
