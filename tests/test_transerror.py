@@ -27,13 +27,14 @@ class ErrorsTests(unittest.TestCase):
         data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
         regl = [1,2,1,2,2,2,3,2,1]
-
+        correct_cm = [[2,0,1],[1,3,1],[0,0,1]]
         # Check if we are ok with any input type - either list, or N.array, or tuple
         for t in [reg, tuple(reg), list(reg), N.array(reg)]:
             for p in [regl, tuple(regl), list(regl), N.array(regl)]:
                 cm = ConfusionMatrix(targets=t, predictions=p)
                 # check table content
-                self.failUnless((cm.matrix == [[2,1,0],[0,3,0],[1,1,1]]).all())
+                self.failUnless((cm.matrix == correct_cm).all())
+
 
         # Do a bit more thorough checking
         cm = ConfusionMatrix()
@@ -51,7 +52,7 @@ class ErrorsTests(unittest.TestCase):
         """ConfusionMatrix must complaint if number of samples different"""
 
         # check table content
-        self.failUnless((cm.matrix == [[2,1,0],[0,3,0],[1,1,1]]).all())
+        self.failUnless((cm.matrix == correct_cm).all())
 
         # lets add with new labels (not yet known)
         cm.add(reg, N.array([1,4,1,2,2,2,4,2,1]))
