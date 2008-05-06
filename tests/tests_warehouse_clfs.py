@@ -57,12 +57,12 @@ if len(clfs.get('LinearSVMC', [])):
 # lars from R via RPy
 if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
-    #clfs['LinearC'].append(LARS())
+    clfs['LinearC'].append(LARS())
 
 
 # finally merge them all
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC']
 
 # RidgeReg does not have a corresponding sensitivity analyzer yet
-clfs['clfs_with_sens'] =  [ i for i in clfs['LinearC'] if not isinstance(i, RidgeReg) ]
+clfs['clfs_with_sens'] =  [ i for i in clfs['LinearC'] if not isinstance(i, RidgeReg) and not isinstance(i, LARS) ]
 
