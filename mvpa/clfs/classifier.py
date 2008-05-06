@@ -141,6 +141,11 @@ class Classifier(Stateful):
 
     params = {}
 
+    _clf_internals = []
+    """Describes some specifics about the classifier -- is that it is
+    doing regression for instance...."""
+
+
     def __init__(self, train2predict=True, regression=False, **kwargs):
         """Cheap initialization.
         """
@@ -187,6 +192,15 @@ class Classifier(Stateful):
         # So we reset all state variables and may be free up some memory
         # explicitely
         self.untrain()
+
+        if not self._regression and 'regression' in self._clf_internals \
+           and not self.states.isEnabled('trained_labels'):
+            # if classifier internally does regression we need to have
+            # labels it was trained on
+            if __debug__:
+                debug("CLF", "Enabling trained_labels state since it is needed")
+            self.states.enable('trained_labels')
+
 
     def _posttrain(self, dataset):
         """Functionality post training
@@ -327,6 +341,21 @@ class Classifier(Stateful):
             result = [None]*data.shape[0]
 
         self.predicting_time = time() - t0
+
+        if 'regression' in self._clf_internals and not self._regression:
+            # We need to convert regression values into labels
+            # XXX unify may be labels -> internal_labels conversion.
+            #if len(self.trained_labels) != 2:
+            #    raise RuntimeError, "XXX Ask developer to implement for multiclass mapping from regression into classification"
+            result_ = N.array(result)
+            self.values = result_
+            trained_labels = N.asarray(list(self.trained_labels))
+            for i,value in enumerate(result):
+                dists = N.abs(value - trained_labels)
+                result[i] = trained_labels[N.argmin(dists)]
+
+            if __debug__:
+                debug("CLF_", "Converted regression result %s into labels %s" % (result_, result))
 
         self._postpredict(data, result)
         return result
