@@ -35,6 +35,23 @@ class ConfusionMatrix(object):
     complete set of labels, but you like to include all labels,
     provide them as a parameter to constructor.
     """
+
+
+    _STATS_DESCRIPTION = (
+        ('TP', 'true positive (AKA hit)', None),
+        ('TN', 'true negative (AKA correct rejection)', None),
+        ('FP', 'false positive (AKA false alarm, Type I error)', None),
+        ('FN', 'false negative (AKA miss, Type II error)', None),
+        ('TPR', 'true positive rate (AKA hit rate, recall, sensitivity)','TPR = TP / P = TP / (TP + FN)'),
+        ('FPR', 'false positive rate (AKA false alarm rate, fall-out)','FPR = FP / N = FP / (FP + TN)'),
+        ('ACC', 'accuracy', 'ACC = (TP + TN) / (P + N)'),
+        ('SPC', 'specificity', 'SPC = TN / (FP + TN) = 1 - FPR'),
+        ('PPV', 'positive predictive value (AKA precision)', 'PPV = TP / (TP + FP)'),
+        ('NPV', 'negative predictive value', 'NPV = TN / (TN + FN)'),
+        ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
+        ('MCC', "Matthews Correlation Coefficient", "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
+        )
+
     # XXX Michael: - How do multiple sets work and what are they there for?
     # YYY Yarik:   - Set is just a tuple (targets, predictions). While 'computing'
     #                the matrix, all sets are considered together.
@@ -120,7 +137,7 @@ class ConfusionMatrix(object):
             debug("CM", "Got labels %s" % labels)
 
         # Create a matrix for all votes
-        mat_all = N.zeros( (Nsets, Nlabels, Nlabels) )
+        mat_all = N.zeros( (Nsets, Nlabels, Nlabels), dtype=int )
 
         # create total number of samples of each label counts
         # just for convinience I guess since it can always be
@@ -131,20 +148,45 @@ class ConfusionMatrix(object):
         rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
         for iset, (targets, predictions) in enumerate(self.__sets):
             for t,p in zip(targets, predictions):
-                mat_all[iset, rev_map[t], rev_map[p]] += 1
+                mat_all[iset, rev_map[p], rev_map[t]] += 1
 
 
         # for now simply compute a sum of votes across different sets
         # we might do something more sophisticated later on, and this setup
         # should easily allow it
         self.__matrix = N.sum(mat_all, axis=0)
-        self.__Nsamples = N.sum(self.__matrix, axis=1)
+        self.__Nsamples = N.sum(self.__matrix, axis=0)
         self.__Ncorrect = sum(N.diag(self.__matrix))
+
+        TP = N.diag(self.__matrix)
+        offdiag = self.__matrix - N.diag(TP)
+        stats = {'TP' : TP,
+                 'FP' : N.sum(offdiag, axis=1),
+                 'FN' : N.sum(offdiag, axis=0)}
+
+        stats['CORR']  = N.sum(TP)
+        stats['TN']  = stats['CORR'] - stats['TP']
+        stats['P']  = stats['TP'] + stats['FN']
+        stats['N']  = N.sum(stats['P']) - stats['P']
+        stats["P'"] = stats['TP'] + stats['FP']
+        stats["N'"] = stats['TN'] + stats['FN']
+        stats['TPR'] = stats['TP'] / (1.0*stats['P'])
+        stats['PPV'] = stats['TP'] / (1.0*stats["P'"])
+        stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
+        stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
+        stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
+        stats['MCC'] = (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN']) / \
+                       N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+
+        stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
+        stats['ACC%'] = stats['ACC'] * 100.0
+
+        self.__stats = stats
         self.__computed = True
 
 
     def __str__(self, header=True, percents=True, summary=True,
-                print_empty=False):
+                print_empty=False, description=True):
         """'Pretty print' the matrix"""
         self._compute()
 
@@ -155,7 +197,7 @@ class ConfusionMatrix(object):
         out = StringIO()
         # numbers of different entries
         Nlabels = len(labels)
-        Nsamples = self.__Nsamples
+        Nsamples = self.__Nsamples.astype(int)
 
         if len(self.__sets) == 0:
             return "Empty confusion matrix"
@@ -163,55 +205,76 @@ class ConfusionMatrix(object):
         Ndigitsmax = int(ceil(log10(max(Nsamples))))
         Nlabelsmax = max( [len(str(x)) for x in labels] )
 
-        L = max(Ndigitsmax, Nlabelsmax)     # length of a single label/value
+        L = max(Ndigitsmax+2, Nlabelsmax) #, len("100.00%"))     # length of a single label/value
         res = ""
 
-        prefixlen = Nlabelsmax+2+Ndigitsmax+1
-        pref = ' '*(prefixlen) # empty prefix
-        if header:
-            # print out the header
-            out.write(pref)
-            for label in labels:
-                label = str(label)      # make it a string
-                # center damn label
-                Nspaces = int(ceil((L-len(label))/2.0))
-                out.write(" %%%ds%%s%%%ds"
-                          % (Nspaces, L-Nspaces-len(label))
-                          % ('', label, ''))
-            out.write("\n")
+        stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR', 'SPC', 'FDR', 'MCC']
+        stats_pertarget = ['P', 'N', 'TP', 'TN']
+        stats_summary = ['ACC', 'ACC%']
 
-            # underscores
-            out.write("%s%s\n" % (pref, (" %s" % ("-" * L)) * Nlabels))
+
+        #prefixlen = Nlabelsmax + 2 + Ndigitsmax + 1
+        prefixlen = Nlabelsmax + 1
+        pref = ' '*(prefixlen) # empty prefix
 
         if matrix.shape != (Nlabels, Nlabels):
             raise ValueError, \
                   "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (Nlabels, matrix.shape)
 
-        for i in xrange(Nlabels):
-            # print the label
-            if Nsamples[i] == 0:
-                continue
-            out.write("%%%ds {%%%dd}" \
-                % (Nlabelsmax, Ndigitsmax) % (labels[i], Nsamples[i])),
-            for j in xrange(Nlabels):
-                out.write(" %%%dd" % L % matrix[i, j])
-            if percents:
-                out.write(' [%6.2f%%]' % (matrix[i, i] * 100.0 / Nsamples[i]))
-            out.write("\n")
+        # list of lists of what is printed
+        printed = []
+        underscores = [" %s" % ("-" * L)] * Nlabels
+        if header:
+            # labels
+            printed.append(['----------.        '])
+            printed.append(['predictions\\targets'] + labels)
+            # underscores
+            printed.append(['            `------'] + underscores + stats_perpredict)
+
+        # matrix itself
+        for i, line in enumerate(matrix):
+            printed.append([labels[i]] +
+                           [ str(x) for x in line ] +
+                           [ '%.2g' % self.__stats[x][i] for x in stats_perpredict])
 
         if summary:
-            out.write("%%-%ds%%s\n"
-                      % prefixlen
-                      % ("", "-"*((L+1)*Nlabels)))
+            printed.append(['Per target:'] + underscores)
+            for stat in stats_pertarget:
+                printed.append([stat] + ['%.2g' % self.__stats[stat][i] for i in xrange(Nlabels)])
 
-            out.write("%%-%ds[%%6.2f%%%%]\n"
-                      % (prefixlen + (L+1)*Nlabels)
-                      % ("Total Correct {%d out of %d}" \
-                        % (self.__Ncorrect, sum(Nsamples)),
-                         self.percentCorrect ))
+            printed.append(['SUMMARY:'] + underscores)
+
+            for stat in stats_summary:
+                printed.append([stat] + ['%.2g' % self.__stats[stat]])
+
+        # equalize number of elements in each row
+        Nelements_max = max(len(x) for x in printed)
+        for i,printed_ in enumerate(printed):
+            printed[i] += [''] * (Nelements_max - len(printed_))
+
+        # figure out lengths within each column
+        aprinted = N.array(printed)
+        col_width = [ max( [len(x) for x in column] ) for column in aprinted.T ]
+
+        for i, printed_ in enumerate(printed):
+            for j, item in enumerate(printed_):
+                item = str(item)
+                NspacesL = ceil((col_width[j] - len(item))/2.0)
+                NspacesR = col_width[j] - NspacesL - len(item)
+                out.write("%%%ds%%s%%%ds " % (NspacesL, NspacesR) % ('', item, ''))
+            out.write("\n")
 
 
+        if description:
+            out.write("\nStatistics computed in 1-vs-rest fashion per each target.\n")
+            out.write("Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):\n")
+            for d, val, eq in self._STATS_DESCRIPTION:
+                out.write(" %-3s: %s\n" % (d, val))
+                if eq is not None:
+                    out.write("      " + eq + "\n")
+
+        #out.write("%s" % printed)
         result = out.getvalue()
         out.close()
         return result
