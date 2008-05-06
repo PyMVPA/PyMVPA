@@ -36,8 +36,8 @@ class ConfusionMatrix(object):
     provide them as a parameter to constructor.
     """
     # XXX Michael: - How do multiple sets work and what are they there for?
-    #              - This class does not work with regular Python sequences
-    #                when passed to the constructor as targets and predictions.
+    # YYY Yarik:   - Set is just a tuple (targets, predictions). While 'computing'
+    #                the matrix, all sets are considered together.
     def __init__(self, labels=None, targets=None, predictions=None):
         """Initialize ConfusionMatrix with optional list of `labels`
 
@@ -70,7 +70,7 @@ class ConfusionMatrix(object):
 
     def add(self, targets, predictions):
         """Add new results to the set of known results"""
-        if len(targets)!=len(predictions):
+        if len(targets) != len(predictions):
             raise ValueError, \
                   "Targets[%d] and predictions[%d]" % (len(targets),
                                                        len(predictions)) + \
@@ -84,6 +84,8 @@ class ConfusionMatrix(object):
             if t1 != t2:
                 #warning("Obtained target %s and prediction %s are of " %
                 #       (t1, t2) + "different datatypes.")
+                if isinstance(predictions, tuple):
+                    predictions = list(predictions)
                 predictions[i] = t1(predictions[i])
 
         self.__sets.append( (targets, predictions) )
@@ -125,19 +127,11 @@ class ConfusionMatrix(object):
         # computed from mat_all
         counts_all = N.zeros( (Nsets, Nlabels) )
 
-        iset = 0
-        for targets, predictions in self.__sets:
-            # convert predictions into numpy array
-            pred = N.array(predictions)
-
-            # create the contingency table template
-            mat = N.zeros( (len(labels), len(labels)), dtype = 'uint' )
-
-            for t, tl in enumerate( labels ):
-                for p, pl in enumerate( labels ):
-                    mat_all[iset, t, p] = N.sum( pred[targets==tl] == pl )
-
-            iset += 1                   # go to next set
+        # reverse mapping from label into index in the list of labels
+        rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
+        for iset, (targets, predictions) in enumerate(self.__sets):
+            for t,p in zip(targets, predictions):
+                mat_all[iset, rev_map[t], rev_map[p]] += 1
 
 
         # for now simply compute a sum of votes across different sets
