@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets.mappeddataset import MappedDataset
-from mvpa.datasets.mapper import MaskMapper
+from mvpa.datasets.mappers import MaskMapper
 
 if __debug__:
     from mvpa.misc import debug
