@@ -61,7 +61,11 @@ def _setdebug(obj, partname):
         debug("SG_", "Setting verbosity for shogun.%s instance to M_DEBUG" %
               partname)
         obj.io.set_loglevel(shogun.Kernel.M_DEBUG)
-        # progress is enabled by default so don't bother
+        try:
+            obj.io.enable_progress()
+        except:
+            warning("Shogun version installed has no way to enable progress" +
+                    " reports")
     else:
         debug("SG_", "Setting verbosity for shogun.%s instance to M_EMERGENCY" %
               partname + " and disabling progress reports")

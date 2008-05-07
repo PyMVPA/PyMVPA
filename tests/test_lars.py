@@ -22,14 +22,14 @@ class LARSTests(unittest.TestCase):
         # it will do for now.
         data = dumbFeatureBinaryDataset()
 
-        clf = LARS()
+        clf = LARS(regression=True)
 
         clf.train(data)
 
         # prediction has to be almost perfect
         # test with a correlation
         pre = clf.predict(data.samples)
-        cor = pearsonr(pre,data.labels)
+        cor = pearsonr(pre, data.labels)
         self.failUnless(cor[0] > .8)
 
     def testLARSState(self):

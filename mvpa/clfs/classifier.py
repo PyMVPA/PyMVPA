@@ -139,18 +139,34 @@ class Classifier(Stateful):
         doc="Feature IDS which were used for the actual training." +
             " Some classifiers might internally do feature selection (SMLR)")
 
-    def __init__(self, train2predict=True, **kwargs):
+    _clf_internals = []
+    """Describes some specifics about the classifier -- is that it is
+    doing regression for instance...."""
+
+
+    def __init__(self, train2predict=True, regression=False, **kwargs):
         """Cheap initialization.
         """
         Stateful.__init__(self, **kwargs)
 
-        self.__train2predict = train2predict
+        self._train2predict = train2predict
         """Some classifiers might not need to be trained to predict"""
 
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
 
+        self._regression = regression
+        """If True - perform regression, not classification"""
+
+        if self._regression:
+            for statevar in [ "trained_labels", "training_confusion" ]:
+                if self.states.isEnabled(statevar):
+                    if __debug__:
+                        debug("CLF",
+                              "Disabling state %s since doing regression, " %
+                              statevar + "not classification")
+                    self.states.disable(statevar)
 
         self.__trainedid = None
         """Stores id of the dataset on which it was trained to signal
@@ -175,6 +191,15 @@ class Classifier(Stateful):
         # explicitely
         self.untrain()
 
+        if not self._regression and 'regression' in self._clf_internals \
+           and not self.states.isEnabled('trained_labels'):
+            # if classifier internally does regression we need to have
+            # labels it was trained on
+            if __debug__:
+                debug("CLF", "Enabling trained_labels state since it is needed")
+            self.states.enable('trained_labels')
+
+
     def _posttrain(self, dataset):
         """Functionality post training
 
@@ -183,7 +208,8 @@ class Classifier(Stateful):
           dataset : Dataset
             Data which was used for training
         """
-        self.trained_labels = Set(dataset.uniquelabels)
+        if self.states.isEnabled('trained_labels'):
+            self.trained_labels = Set(dataset.uniquelabels)
 
         self.trained_dataset = dataset
 
@@ -256,7 +282,7 @@ class Classifier(Stateful):
     def _prepredict(self, data):
         """Functionality prior prediction
         """
-        if self.__train2predict:
+        if self._train2predict:
             # check if classifier was trained if that is needed
             if not self.trained:
                 raise ValueError, \
@@ -303,7 +329,7 @@ class Classifier(Stateful):
         t0 = time()
 
         self._prepredict(data)
-        if self.__trainednfeatures > 0 or not self.__train2predict:
+        if self.__trainednfeatures > 0 or not self._train2predict:
             result = self._predict(data)
         else:
             warning("Trying to predict using classifier trained on no features")
@@ -313,6 +339,21 @@ class Classifier(Stateful):
             result = [None]*data.shape[0]
 
         self.predicting_time = time() - t0
+
+        if 'regression' in self._clf_internals and not self._regression:
+            # We need to convert regression values into labels
+            # XXX unify may be labels -> internal_labels conversion.
+            #if len(self.trained_labels) != 2:
+            #    raise RuntimeError, "XXX Ask developer to implement for multiclass mapping from regression into classification"
+            result_ = N.array(result)
+            self.values = result_
+            trained_labels = N.asarray(list(self.trained_labels))
+            for i,value in enumerate(result):
+                dists = N.abs(value - trained_labels)
+                result[i] = trained_labels[N.argmin(dists)]
+
+            if __debug__:
+                debug("CLF_", "Converted regression result %s into labels %s" % (result_, result))
 
         self._postpredict(data, result)
         return result
@@ -329,6 +370,19 @@ class Classifier(Stateful):
                    and (self.__trainedid == dataset._id)
 
     @property
+    def regression(self):
+        return self._regression
+
+
+    def _regressionIsBogus(self):
+        """Some classifiers like BinaryClassifier can't be used for regression"""
+
+        if self.regression:
+            raise ValueError, "Regression mode is meaningless for %s" % \
+                  self.__class__.__name__ + " thus don't enable it"
+
+
+    @property
     def trained(self):
         """Either classifier was already trained"""
         return self.isTrained()
@@ -339,18 +393,10 @@ class Classifier(Stateful):
         Stateful.reset(self)
 
 
-    def _setTrain2predict(self, v):
-        """Set the flag for necessary training prior doing prediction
-
-        NOTE: Is not supposed to be called by the user but just by
-        derived classes"""
-        self.__train2predict = v
-
-
     @property
     def train2predict(self):
         """Either classifier has to be trained to predict"""
-        return self.__train2predict
+        return self._train2predict
 
 
     def getSensitivityAnalyzer(self, **kwargs):
@@ -479,14 +525,15 @@ class BoostedClassifier(Classifier, Harvestable):
         self.__clfs = clfs
         """Classifiers to use"""
 
-        train2predicts = [clf.train2predict for clf in self.__clfs]
-        train2predict = reduce(lambda x, y: x or y, train2predicts, False)
-        if __debug__:
-            debug("CLFBST", "Setting train2predict=%s for classifiers " \
-                   "%s with %s" \
-                   % (str(train2predict), `self.__clfs`, str(train2predicts)))
-        # set flag if it needs to be trained before predicting
-        self._setTrain2predict(train2predict)
+        for flag in ['_train2predict', '_regression']:
+            values = N.array([clf.__dict__[flag] for clf in self.__clfs])
+            value = values.any()
+            if __debug__:
+                debug("CLFBST", "Setting %s=%s for classifiers " \
+                      "%s with %s" \
+                      % (flag, str(value), `self.__clfs`, str(values)))
+            # set flag if it needs to be trained before predicting
+            self.__dict__[flag] = value
 
         # enable corresponding states in the slave-classifiers
         if self.__propagate_states:
@@ -537,6 +584,8 @@ class ProxyClassifier(Classifier):
         self.__clf = clf
         """Store the classifier to use."""
 
+        self._regression = clf.regression
+        """Do regression if base classifier does"""
 
     def _train(self, dataset):
         """Train `ProxyClassifier`
@@ -831,7 +880,10 @@ class BinaryClassifier(ProxyClassifier):
           neglabels : list
             list of labels which are treated as -1 category
         """
+
         ProxyClassifier.__init__(self, clf, **kwargs)
+
+        self._regressionIsBogus()
 
         # Handle labels
         sposlabels = Set(poslabels) # so to remove duplicates
@@ -955,6 +1007,10 @@ class MulticlassClassifier(CombinedClassifier):
             classifiers
           """
         CombinedClassifier.__init__(self, **kwargs)
+        self._regressionIsBogus()
+        if not clf is None:
+            clf._regressionIsBogus()
+
         self.__clf = clf
         """Store sample instance of basic classifier"""
 
@@ -1036,7 +1092,8 @@ class SplitClassifier(CombinedClassifier):
         """
         # generate pairs and corresponding classifiers
         bclfs = []
-        self.training_confusions = ConfusionMatrix(labels=dataset.uniquelabels)
+        if self.states.isEnabled('training_confusions'):
+            self.training_confusions = ConfusionMatrix(labels=dataset.uniquelabels)
 
         # for proper and easier debugging - first define classifiers and then
         # train them

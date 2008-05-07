@@ -1,0 +1,22 @@
+.. _contents:
+
+*****************************
+PyMVPA Documentation Contents
+*****************************
+
+.. toctree::
+
+   intro
+   overview
+   datasets
+   classifiers
+   measures
+   featsel
+   algorithms
+   misc
+   glossary
+   matlab
+   faq
+   copying
+   changelog
+   todo
