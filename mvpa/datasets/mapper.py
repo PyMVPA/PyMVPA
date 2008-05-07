@@ -15,7 +15,7 @@ from operator import isSequenceType
 
 from mvpa.datasets.metric import Metric, DescreteMetric, cartesianDistance
 from mvpa.misc.vproperty import VProperty
-
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.misc import warning
@@ -36,40 +36,41 @@ class Mapper(object):
     `getInShape` and `getOutSize` respectively. This cannot be
     done in the baseclass as standard Python properties would still point to
     the baseclass methods.
-
-    See here for a possible solution:
-    http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/440634
     """
     def __init__(self):
+        """Does nothing."""
         pass
+
+
+    __doc__ = enhancedDocString('Mapper', locals())
+
 
     def forward(self, data):
         """Map data from the original dataspace into featurespace.
         """
         raise NotImplementedError
 
+
     def __call__(self, data):
         """Calls the mappers forward() method.
         """
         return self.forward(data)
+
 
     def reverse(self, data):
         """Reverse map data from featurespace into the original dataspace.
         """
         raise NotImplementedError
 
-    #def __getitem__(self, data):
-    #    """Calls the mappers reverse() method.
-    #    """
-    #    return self.reverse(data)
-    #
+
     def getInShape(self):
-        """Returns the dimensionality speicification of the original dataspace.
+        """Returns the dimensionality specification of the original dataspace.
 
         XXX -- should be deprecated and  might be substituted
         with functions like  getEmptyFrom / getEmptyTo
         """
         raise NotImplementedError
+
 
     def getOutShape(self):
         """
@@ -82,6 +83,7 @@ class Mapper(object):
     def getInSize(self):
         """Returns the size of the entity in input space"""
         raise NotImplementedError
+
 
     def getOutSize(self):
         """Returns the size of the entity in output space"""
@@ -98,20 +100,33 @@ class Mapper(object):
 #        """Returns empty instance of input object"""
 #        raise NotImplementedError
 #
+#
 #    def getOutEmpty(self):
 #        """Returns empty instance of output object"""
 #        raise NotImplementedError
 
+
     def getInId(self, outId):
-        """For a given Id in "out" returns corresponding "in" Id"""
+        """For a given Id in "out" returns corresponding "in" Id.
+
+        XXX: Not meaningful for PCA mapper!
+        """
         raise NotImplementedError
+
 
     def getInIds(self):
-        """Returns corresponding "in" Ids"""
+        """Returns corresponding "in" Ids.
+
+        XXX: Not meaningful for PCA mapper!
+        """
         raise NotImplementedError
 
+
     def getOutId(self, inId):
-        """Returns corresponding "out" Id"""
+        """Returns corresponding "out" Id.
+
+        XXX: Not meaningful for PCA mapper!
+        """
         raise NotImplementedError
 
 
@@ -125,6 +140,8 @@ class Mapper(object):
         :Returns:
             ndarray: dtype='bool'
                 All selected features are set to True; False otherwise.
+
+        XXX: Not meaningful for PCA mapper!
         """
         fmask = N.repeat(False, self.nfeatures)
         fmask[outIds] = True
@@ -145,6 +162,8 @@ class Mapper(object):
         :Returns:
             ndarray: dtype='bool'
                 All selected features are set to True; False otherwise.
+
+        XXX: Not meaningful for PCA mapper!
         """
         return self.reverse(self.convertOutIds2OutMask(outIds))
 
@@ -178,6 +197,9 @@ class MetricMapper(Mapper, Metric):
         self.__metric = metric
 
 
+    __doc__ = enhancedDocString('MetricMapper', locals(), Mapper, Metric)
+
+
     def getMetric(self):
         """To make pylint happy"""
         return self.__metric
@@ -189,6 +211,7 @@ class MetricMapper(Mapper, Metric):
 
 
     metric = property(fget=getMetric, fset=setMetric)
+
 
 
 class MaskMapper(MetricMapper):
@@ -242,6 +265,9 @@ class MaskMapper(MetricMapper):
                       self.__masknonzerosize = self.__forwardmap = \
                       self.__masknonzero = None # to make pylint happy
         self._initMask(mask)
+
+
+    __doc__ = enhancedDocString('MaskMapper', locals(), MetricMapper)
 
 
     def __str__(self):
@@ -569,6 +595,8 @@ def isInVolume(coord, shape):
     Returns True/False. Assumes that volume coordinates start at 0.
     No more generalization (arbitrary minimal coord) is done to save
     on performance
+
+    XXX: should move somewhere else.
     """
     for i in xrange(len(coord)):
         if coord[i] < 0 or coord[i] >= shape[i]:
