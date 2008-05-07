@@ -63,6 +63,13 @@ class Mapper(object):
         raise NotImplementedError
 
 
+    def train(self, data):
+        """Sub-classes have to override this method if the mapper need
+        training.
+        """
+        pass
+
+
     def getInShape(self):
         """Returns the dimensionality specification of the original dataspace.
 
