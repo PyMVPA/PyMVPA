@@ -16,6 +16,7 @@ tests = [
     # Basic data structures/manipulators
     'test_dataset',
     'test_maskmapper',
+    'test_pcamapper',
     'test_neighbor',
     'test_maskeddataset',
     'test_niftidataset',

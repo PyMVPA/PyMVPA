@@ -36,7 +36,7 @@ else:
 from sets import Set
 from time import time
 
-from mvpa.datasets.maskmapper import MaskMapper
+from mvpa.datasets.mappers import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
