@@ -14,7 +14,7 @@ import numpy as N
 from copy import deepcopy
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.datasets.maskmapper import MaskMapper
+from mvpa.datasets.mapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
