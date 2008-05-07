@@ -6,20 +6,141 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Mapper using a mask array to map dataspace to featurespace"""
+"""Data mapper"""
 
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-
 from operator import isSequenceType
 
-from mvpa.datasets.mapper import MetricMapper
-from mvpa.datasets.metric import DescreteMetric, cartesianDistance
+from mvpa.datasets.metric import Metric, DescreteMetric, cartesianDistance
+from mvpa.misc.vproperty import VProperty
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.misc import warning
     from mvpa.misc.support import isSorted
+
+
+class Mapper(object):
+    """Interface to provide mapping between two spaces: in and out.
+    Methods are prefixed correspondingly. forward/reverse operate
+    on the entire dataset. get(In|Out)Id[s] operate per element::
+
+              forward
+        in   ---------> out
+             <--------/
+               reverse
+
+    Subclasses should define 'dsshape' and 'nfeatures' properties that point to
+    `getInShape` and `getOutSize` respectively. This cannot be
+    done in the baseclass as standard Python properties would still point to
+    the baseclass methods.
+    """
+    def __init__(self):
+        """Does nothing."""
+        pass
+
+
+    __doc__ = enhancedDocString('Mapper', locals())
+
+
+    def forward(self, data):
+        """Map data from the original dataspace into featurespace.
+        """
+        raise NotImplementedError
+
+
+    def __call__(self, data):
+        """Calls the mappers forward() method.
+        """
+        return self.forward(data)
+
+
+    def reverse(self, data):
+        """Reverse map data from featurespace into the original dataspace.
+        """
+        raise NotImplementedError
+
+
+    def train(self, data):
+        """Sub-classes have to override this method if the mapper need
+        training.
+        """
+        pass
+
+
+    def getInShape(self):
+        """Returns the dimensionality specification of the original dataspace.
+
+        XXX -- should be deprecated and  might be substituted
+        with functions like  getEmptyFrom / getEmptyTo
+        """
+        raise NotImplementedError
+
+
+    def getOutShape(self):
+        """
+        Returns the shape (or other dimensionality speicification)
+        of the destination dataspace.
+        """
+        raise NotImplementedError
+
+
+    def getInSize(self):
+        """Returns the size of the entity in input space"""
+        raise NotImplementedError
+
+
+    def getOutSize(self):
+        """Returns the size of the entity in output space"""
+        raise NotImplementedError
+
+
+    def selectOut(self, outIds):
+        """Remove some elements and leave only ids in 'out'/feature space"""
+        raise NotImplementedError
+
+
+    nfeatures = VProperty(fget=getOutSize)
+
+
+
+class MetricMapper(Mapper, Metric):
+    """Mapper which has information about the metrics of the dataspace it is
+    mapping.
+    """
+    def __init__(self, metric):
+        """Cheap initialisation.
+
+        'metric' is a subclass of Metric.
+        """
+        Mapper.__init__(self)
+        Metric.__init__(self)
+
+        if not isinstance(metric, Metric):
+            raise ValueError, "MetricMapper has to be initialized with an " \
+                              "instance of a 'Metric' object. Got %s" \
+                                % `type(metric)`
+        self.__metric = metric
+
+
+    __doc__ = enhancedDocString('MetricMapper', locals(), Mapper, Metric)
+
+
+    def getMetric(self):
+        """To make pylint happy"""
+        return self.__metric
+
+
+    def setMetric(self, metric):
+        """To make pylint happy"""
+        self.__metric = metric
+
+
+    metric = property(fget=getMetric, fset=setMetric)
+
+
 
 class MaskMapper(MetricMapper):
     """Mapper which uses a binary mask to select "Features" """
@@ -72,6 +193,9 @@ class MaskMapper(MetricMapper):
                       self.__masknonzerosize = self.__forwardmap = \
                       self.__masknonzero = None # to make pylint happy
         self._initMask(mask)
+
+
+    __doc__ = enhancedDocString('MaskMapper', locals(), MetricMapper)
 
 
     def __str__(self):
@@ -132,7 +256,8 @@ class MaskMapper(MetricMapper):
         # under assumption that we +1 values in forwardmap so that
         # 0 can be used to signal outside of mask
 
-        self.__forwardmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
+        self.__forwardmap[self.__masknonzero] = \
+            N.arange(self.__masknonzerosize)
 
 
     def forward(self, data):
@@ -323,7 +448,8 @@ class MaskMapper(MetricMapper):
         # since we merged _tent/maskmapper-init-noloop it is not necessary
         # to zero-out discarded entries since we anyway would check with mask
         # in getOutId(s)
-        self.__forwardmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
+        self.__forwardmap[self.__masknonzero] = \
+            N.arange(self.__masknonzerosize)
 
 
     def discardOut(self, outIds):
@@ -378,6 +504,51 @@ class MaskMapper(MetricMapper):
             yield self.getOutId(inId)
 
 
+# comment out for now... introduce when needed
+#    def getInEmpty(self):
+#        """Returns empty instance of input object"""
+#        raise NotImplementedError
+#
+#
+#    def getOutEmpty(self):
+#        """Returns empty instance of output object"""
+#        raise NotImplementedError
+
+
+    def convertOutIds2OutMask(self, outIds):
+        """Returns a boolean mask with all features in `outIds` selected.
+
+        :Parameters:
+            outIds: list or 1d array
+                To be selected features ids in out-space.
+
+        :Returns:
+            ndarray: dtype='bool'
+                All selected features are set to True; False otherwise.
+        """
+        fmask = N.repeat(False, self.nfeatures)
+        fmask[outIds] = True
+
+        return fmask
+
+
+    def convertOutIds2InMask(self, outIds):
+        """Returns a boolean mask with all features in `ouIds` selected.
+
+        This method works exactly like Mapper.convertOutIds2OutMask(), but the
+        feature mask is finally (reverse) mapped into in-space.
+
+        :Parameters:
+            outIds: list or 1d array
+                To be selected features ids in out-space.
+
+        :Returns:
+            ndarray: dtype='bool'
+                All selected features are set to True; False otherwise.
+        """
+        return self.reverse(self.convertOutIds2OutMask(outIds))
+
+
     # Read-only props
     # TODO: refactor the property names? make them vproperty?
     dsshape = property(fget=getInShape)
@@ -393,12 +564,131 @@ class MaskMapper(MetricMapper):
 
 
 
+class PCAMapper(Mapper):
+    """Mapper to project data onto PCA components estimated from some dataset.
+
+    After the mapper has been instantiated, it has to be train first. When
+    `train()` is called with a 2D (samples x features) matrix the PCA
+    components are determined by performing singular value decomposition
+    on the covariance matrix.
+
+    The PCA mapper only handle 2D data matrices.
+    """
+    def __init__(self):
+        """Does nothing."""
+        Mapper.__init__(self)
+
+        self.mix = None
+        """Transformation matrix from orginal features onto PCA-components."""
+        self.unmix = None
+        """Un-mixing matrix for projecting from the PCA space back onto the
+        original features."""
+        self.sv = None
+        """Eigenvalues of the covariance matrix."""
+
+
+    __doc__ = enhancedDocString('PCAMapper', locals(), Mapper)
+
+
+    def __deepcopy__(self, memo=None):
+        """Yes, this is it."""
+        if memo is None:
+            memo = {}
+        out = PCAMapper()
+        out.mix = self.mix.copy()
+        out.sv = self.sv.copy()
+
+        return out
+
+
+    def train(self, data):
+        """Determine the projection matrix onto the PCA components from
+        a 2D samples x feature data matrix.
+        """
+        # transpose the data to minimize the number of columns and therefore
+        # reduce the size of the covariance matrix!
+        transposed_data = False
+        if data.shape[0] < data.shape[1]:
+            transposed_data = True
+            X = N.matrix(data).T
+        else:
+            X = N.matrix(data)
+
+        # compute covariance matrix
+        R = X.T * X / X.shape[0]
+
+        # singular value decomposition
+        # note: U and V are equal in this case, as R is a covanriance matrix
+        U, SV, V = N.linalg.svd(R)
+
+        # store the final matrix with the new basis vextors to project the
+        # features onto the PCA components
+        if transposed_data:
+            self.mix = (X * U).T
+        else:
+            self.mix = U.T
+
+        # also store eigenvalues of all components
+        self.sv = SV
+
+
+    def forward(self, data):
+        """Project a 2D samples x features matrix onto the PCA components.
+
+        :Returns:
+          NumPy array
+        """
+        return N.array(self.mix * N.matrix(data).T).T
+
+
+    def reverse(self, data):
+        """Projects feature vectors or matrices with feature vectors back
+        onto the original features.
+
+        :Returns:
+          NumPy array
+        """
+        if self.unmix == None:
+            self.unmix = self.mix.I
+        return (self.unmix * N.matrix(data).T).T.A
+
+
+    def getInShape(self):
+        """Returns a one-tuple with the number of original features."""
+        return (self.mix.shape[1], )
+
+
+    def getOutShape(self):
+        """Returns a one-tuple with the number of PCA components."""
+        return (self.mix.shape[0], )
+
+
+    def getInSize(self):
+        """Returns the number of original features."""
+        return self.mix.shape[1]
+
+
+    def getOutSize(self):
+        """Returns the number of PCA components."""
+        return self.mix.shape[0]
+
+
+    def selectOut(self, outIds):
+        """Choose a subset of PCA components (and remove all others)."""
+        self.mix = self.mix[outIds]
+        # invalidate unmixing matrix
+        self.unmix = None
+
+
+
 def isInVolume(coord, shape):
     """For given coord check if it is within a specified volume size.
 
     Returns True/False. Assumes that volume coordinates start at 0.
     No more generalization (arbitrary minimal coord) is done to save
     on performance
+
+    XXX: should move somewhere else.
     """
     for i in xrange(len(coord)):
         if coord[i] < 0 or coord[i] >= shape[i]:
