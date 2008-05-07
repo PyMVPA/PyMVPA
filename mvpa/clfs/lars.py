@@ -65,6 +65,8 @@ class LARS(Classifier):
 
     """
 
+    _clf_internals = [ 'regression' ]
+
     def __init__(self, model_type="lasso", trace=False, normalize=True,
                  intercept=True, max_steps=None, use_Gram=False, **kwargs):
         """
@@ -169,10 +171,7 @@ class LARS(Classifier):
         if len(fit.shape) == 0:
             # if we just got 1 sample with a scalar
             fit = fit.reshape( (1,) )
-        self.values = fit
-
-        # XXX finally come up with unification of regression vs classifier
-        return N.sign(fit)
+        return fit
 
     weights = property(lambda self: self.__weights)
 

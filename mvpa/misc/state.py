@@ -19,6 +19,7 @@ from sets import Set
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc import warning
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.misc import debug
@@ -111,6 +112,7 @@ class StateVariable(CollectableAttribute):
         if __debug__:
             debug("STV",
                   "Initialized new state variable %s " % name + `self`)
+
 
     def _get(self):
         if not self.isSet:
@@ -804,6 +806,9 @@ class Stateful(object):
         if __debug__:
             debug("ST", "Stateful.__init__ was done for %s id %s with descr=%s" \
                 % (self.__class__, id(self), descr))
+
+
+    __doc__ = enhancedDocString('Stateful', locals())
 
 
     def __getattribute__(self, index):

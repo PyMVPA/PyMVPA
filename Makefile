@@ -3,18 +3,12 @@ COVERAGE_REPORT=coverage
 HTML_DIR=build/html
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=build/pdf
+LATEX_DIR=build/latex
 WWW_DIR=build/website
 
 
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
-
-rst2html = rst2html --date --strict --stylesheet=pymvpa.css --link-stylesheet
-rst2latex=rst2latex --documentclass=scrartcl \
-					--use-latex-citations \
-					--strict \
-					--use-latex-footnotes \
-					--stylesheet ../../doc/misc/style.tex
 
 
 mkdir-%:
@@ -80,31 +74,12 @@ debian-clean:
 #
 doc: website
 
-htmlindex: mkdir-HTML_DIR
-	$(rst2html) doc/index.txt $(HTML_DIR)/index.html
+htmldoc:
+	cd doc && $(MAKE) html
 
-htmlchangelog: mkdir-HTML_DIR
-	$(rst2html) Changelog $(HTML_DIR)/changelog.html
-
-htmlmanual: mkdir-HTML_DIR
-	$(rst2html) doc/manual.txt $(HTML_DIR)/manual.html
-	# copy images and styles
-	cp -r -t $(HTML_DIR) doc/misc/*.css doc/misc/pics
-
-htmldevguide: mkdir-HTML_DIR
-	cat doc/devguide.txt TODO | $(rst2html) > $(HTML_DIR)/devguide.html
-
-pdfmanual: mkdir-PDF_DIR
-	cat doc/manual.txt Changelog TODO | $(rst2latex) > $(PDF_DIR)/manual.tex
-	-cp -r doc/misc/pics $(PDF_DIR)
-	# need to run twice to get cross-refs right
-	cd $(PDF_DIR) && pdflatex manual.tex && pdflatex manual.tex
-
-pdfdevguide: mkdir-PDF_DIR
-	$(rst2latex) doc/devguide.txt $(PDF_DIR)/devguide.tex
-	cd $(PDF_DIR) && pdflatex devguide.tex
-
-printables: pdfmanual pdfdevguide
+pdfdoc:
+	cd doc && $(MAKE) latex
+	cd $(LATEX_DIR) && $(MAKE) all-pdf
 
 apidoc: apidoc-stamp
 apidoc-stamp: build
@@ -119,10 +94,9 @@ apidoc-stamp: build
 	touch $@
 
 website: website-stamp
-website-stamp: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
-         htmldevguide printables apidoc
+website-stamp: mkdir-WWW_DIR htmldoc pdfdoc apidoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
-	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
+	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
 	touch $@
 
 upload-website: website
