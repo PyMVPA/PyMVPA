@@ -129,9 +129,6 @@ class SVMBase(_SVM):
 
         self._svm_type = svm_type
 
-        self.__param = None
-        """Holds the trained LibSVM params."""
-
         self.__model = None
         """Holds the trained SVM."""
 
@@ -177,10 +174,10 @@ class SVMBase(_SVM):
 
         # XXX All those parameters should be fetched if present from
         # **kwargs and create appropriate parameters within .params or .kernel_params
-        self.__param = svm.SVMParameter(
-                        kernel_type=self._kernel_type,
-                        svm_type=self._svm_type,
-                        **dict(args))
+        libsvm_param = svm.SVMParameter(
+            kernel_type=self._kernel_type,
+            svm_type=self._svm_type,
+            **dict(args))
         """Store SVM parameters in libSVM compatible format."""
 
         if self.params.isKnown('C'):#svm_type in [svm.svmc.C_SVC]:
@@ -188,9 +185,9 @@ class SVMBase(_SVM):
                 newC = self._getDefaultC(dataset.samples)*abs(self.C)
                 if __debug__:
                     debug("SVM", "Computed C to be %s for C=%s" % (newC, self.C))
-                self.__param._setParameter('C', newC)
+                libsvm_param._setParameter('C', newC)
 
-        self.__model = svm.SVMModel(svmprob, self.__param)
+        self.__model = svm.SVMModel(svmprob, libsvm_param)
 
 
     def _predict(self, data):
@@ -246,8 +243,6 @@ class SVMBase(_SVM):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
-        if self.__param:
-            self.__param.untrain()           # reset any automagical assignment of params
         super(SVMBase, self).untrain()
         del self.__model
         self.__model = None
