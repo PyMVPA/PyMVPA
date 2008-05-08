@@ -1112,7 +1112,7 @@ class MappedClassifier(ProxyClassifier):
         """
         # for train() we have to provide dataset -- not just samples to train!
         wdataset = dataset.applyMapper(featuresmapper = self.__mapper)
-        ProxyClassifier.train(self, wdataset)
+        ProxyClassifier._train(self, wdataset)
 
     def _predict(self, data):
         """Predict using `MappedClassifier`
