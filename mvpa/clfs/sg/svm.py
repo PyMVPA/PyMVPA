@@ -28,7 +28,7 @@ from mvpa.clfs.classifier import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.misc.state import StateVariable
 from mvpa.algorithms.datameasure import Sensitivity
-
+from mvpa.base import externals
 
 if __debug__:
     from mvpa.misc import debug
@@ -41,11 +41,8 @@ known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    "gnpp" : shogun.Classifier.GNPPSVM,
                    }
 
-try:
+if externals.exists('shogun.lightsvm'):
     known_svm_impl["lightsvm"] = shogun.Classifier.SVMLight
-except:
-    warning("No LightSVM implementation is available in given shogun")
-
 
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG
