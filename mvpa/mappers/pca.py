@@ -14,6 +14,7 @@ import numpy as N
 
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import Mapper
+from mvpa.featsel.helpers import ElementSelector
 
 
 class PCAMapper(Mapper):
@@ -26,10 +27,22 @@ class PCAMapper(Mapper):
 
     The PCA mapper only handle 2D data matrices.
     """
-    def __init__(self):
-        """Does nothing."""
+    def __init__(self, selector=None):
+        """Initialize the PCAMapper
+
+        :Parameters:
+            selector: None, list of ElementSelector
+                Which PCA components should be used for mapping. If `selector`
+                is `None` all components are used. If a list is provided, all
+                list elements are treated as component ids and the respective
+                components are selected (all others are discarded).
+                Alternatively an `ElementSelector` instance can be provided
+                which chooses components based on the corresponding eigenvalues
+                of each component.
+        """
         Mapper.__init__(self)
 
+        self.__selector = selector
         self.mix = None
         """Transformation matrix from orginal features onto PCA-components."""
         self.unmix = None
@@ -57,14 +70,10 @@ class PCAMapper(Mapper):
         """Determine the projection matrix onto the PCA components from
         a 2D samples x feature data matrix.
         """
-        # transpose the data to minimize the number of columns and therefore
-        # reduce the size of the covariance matrix!
-        transposed_data = False
-        if data.shape[0] < data.shape[1]:
-            transposed_data = True
-            X = N.matrix(data).T
-        else:
-            X = N.matrix(data)
+        X = N.matrix(data)
+
+        # demean the training data
+        X = X - X.mean(axis=0)
 
         # compute covariance matrix
         R = X.T * X / X.shape[0]
@@ -73,15 +82,20 @@ class PCAMapper(Mapper):
         # note: U and V are equal in this case, as R is a covanriance matrix
         U, SV, V = N.linalg.svd(R)
 
-        # store the final matrix with the new basis vextors to project the
+        # store the final matrix with the new basis vectors to project the
         # features onto the PCA components
-        if transposed_data:
-            self.mix = (X * U).T
-        else:
-            self.mix = U.T
+        self.mix = U.T
 
         # also store eigenvalues of all components
         self.sv = SV
+
+        if not self.__selector == None:
+            if isinstance(self.__selector, list):
+                self.selectOut(self.__selector)
+            elif isinstance(self.__selector, ElementSelector):
+                self.selectOut(self.__selector(SV))
+            else:
+                raise ValueError, 'Unknown type of selector.'
 
 
     def forward(self, data):
@@ -90,6 +104,9 @@ class PCAMapper(Mapper):
         :Returns:
           NumPy array
         """
+        if self.mix == None:
+            raise RuntimeError, "PCAMapper needs to be train before used."
+
         return N.array(self.mix * N.matrix(data).T).T
 
 
