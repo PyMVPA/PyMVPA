@@ -49,15 +49,17 @@ class _SVM(Classifier):
         'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
         'degree': Parameter(3, descr='Degree of polynomial kernel'),
         'p': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression'),
-        'gamma': Parameter(1.0, descr='Scaling (width in RBF) within non-linear kernels'),
+        'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
         'max_shift': Parameter(10.0, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
         'shift_step': Parameter(1.0, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
         'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),
         'shrinking': Parameter(1, descr='Either shrinking is to be conducted'),
         'weight_label': Parameter([], descr='???'),
         'weight': Parameter([], descr='???'),
-        'epsilon': Parameter(5e-5,  # XXX it used to work fine with 1e-5 but after Yariks
-                                    # evil RF it got slowed down too much. 
+        # For some reason setting up epsilong to 1e-5 slowed things down a bit
+        # in comparison to how it was before (in yoh/master) by up to 20%... not clear why
+        # may be related to 1e-3 default within _svm.py?
+        'epsilon': Parameter(5e-5,
                         min=1e-10,
                         descr='Tolerance of termination criterium')
         }
@@ -115,9 +117,7 @@ class _SVM(Classifier):
                 param.name = paramname
                 if paramname in _args:
                     param.value = _args[paramname]
-                    # XXX UGLY!
-                    #param._default = _args[paramname]
-                    #param._isset = False
+                    # XXX might want to set default to it -- not just value
 
                 paramset.add(param)
 
@@ -132,8 +132,6 @@ class _SVM(Classifier):
             debug("SVM", "Initialized %s with kernel %s:%s" % 
                   (id(self), kernel_type, self._kernel_type))
 
-        # XXX might want to create a Parameter with a list of
-        # available kernels?
         self._kernel_type_literal = kernel_type
 
 
@@ -155,4 +153,20 @@ class _SVM(Classifier):
 
         return value
 
+
+    def _getDefaultGamma(self, dataset):
+        """Compute default Gamma
+
+        TODO: unify bloody libsvm interface so it makes use of this function.
+        Now it is computed within SVMModel.__init__
+        """
+
+        if self.kernel_params.isKnown('gamma'):
+            value = 1.0 / len(dataset.uniquelabels)
+            if __debug__:
+                debug("SVM", "Default Gamma is computed to be %f" % value)
+        else:
+            raise RuntimeError, "Shouldn't ask for default Gamma here"
+
+        return value
 

@@ -35,7 +35,8 @@ if __debug__:
 
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    "gmnp" : shogun.Classifier.GMNPSVM,
-                   #"mpd"  : shogun.Classifier.MPDSVM, # disable due to infinite looping on XOR
+                   # disabled due to infinite looping on XOR
+                   #"mpd"  : shogun.Classifier.MPDSVM,
                    "gpbt" : shogun.Classifier.GPBTSVM,
                    "gnpp" : shogun.Classifier.GNPPSVM,
                    }
@@ -57,32 +58,35 @@ def _setdebug(obj, partname):
     """
     debugname = "SG_%s" % partname.upper()
 
-    if __debug__ and debugname  in debug.active:
-        debug("SG_", "Setting verbosity for shogun.%s instance to M_DEBUG" %
-              partname)
-        obj.io.set_loglevel(shogun.Kernel.M_DEBUG)
+    switch = {True: (shogun.Kernel.M_DEBUG, 'M_DEBUG', "enable"),
+              False: (shogun.Kernel.M_EMERGENCY, 'M_EMERGENCY', "disable")}
+
+    key = __debug__ and debugname in debug.active
+
+    sglevel, slevel, progressfunc = switch[key]
+
+    if __debug__:
+        debug("SG_", "Setting verbosity for shogun.%s instance: %s to %s" %
+              (partname, `obj`, slevel))
+        obj.io.set_loglevel(sglevel)
         try:
-            obj.io.enable_progress()
+            exec "obj.io.%s_progress()" % progressfunc
         except:
             warning("Shogun version installed has no way to enable progress" +
-                    " reports")
-    else:
-        debug("SG_", "Setting verbosity for shogun.%s instance to M_EMERGENCY" %
-              partname + " and disabling progress reports")
-        obj.io.set_loglevel(shogun.Kernel.M_EMERGENCY)
-        try:
-            obj.io.disable_progress()
-        except:
-            warning("Shogun version installed has no way to disable progress" +
                     " reports")
 
 
 def _tosg(data):
-    """Draft helper function to convert data we have into SG suitable format"""
+    """Draft helper function to convert data we have into SG suitable format
+
+    TODO: Support different datatypes
+    """
 
     if __debug__:
         debug("SG_", "Converting data for shogun into RealFeatures")
+
     features = shogun.Features.RealFeatures(data.astype('double').T)
+
     if __debug__:
         debug("SG__", "Done converting data for shogun into RealFeatures")
     _setdebug(features, 'Features')
@@ -104,7 +108,7 @@ class SVM_SG_Modular(_SVM):
                             min=1,
                             descr='Number of threads to utilize')
 
-    # XXX gamma is width in SG notation for RBF(Gaussian)
+    # NOTE: gamma is width in SG notation for RBF(Gaussian)
     _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ()),
                  "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',)),
                  "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step')),
@@ -118,10 +122,6 @@ class SVM_SG_Modular(_SVM):
                  kernel_type='linear',
                  svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
                  **kwargs):
-        # XXX Determine which parameters depend on each other and implement
-        # safety/simplifying logic around them
-        # already done for: nr_weight
-        # thought: weight and weight_label should be a dict
         """This is the base class of all classifier that utilize so
         far just SVM classifiers provided by shogun.
 
@@ -135,21 +135,22 @@ class SVM_SG_Modular(_SVM):
         """Holds the trained svm."""
 
         # although there are some multiclass SVMs already in shogun,
-        # we might rely on our own
+        # we might rely on our own in some cases
+        # XXX should be removed from here after we set proper tags like
+        #     'binary', 'multiclass', ...
         self.__mclf = None
         """Holds `multiclassClassifier` if such one is needed"""
 
         # assign default params
-        # XXX taking abs for now since some implementations might freak out until we implement proper scaling
-        # self.params.C = C
-
-        if svm_impl.lower() in known_svm_impl:
-            self.__svm_impl = svm_impl.lower()
+        svm_impl = svm_impl.lower()
+        if  svm_impl in known_svm_impl:
+            self.__svm_impl = svm_impl
         else:
             raise ValueError, "Unknown SVM implementation %s" % svm_impl
 
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
+        # For now it is needed for computing sensitivities
         self.__traindataset = None
 
         # internal SG swig proxies
@@ -186,6 +187,11 @@ class SVM_SG_Modular(_SVM):
 
         ul = dataset.uniquelabels
         ul.sort()
+
+        # XXX sooner than later we should simply disallow this hidden logic
+        #     and just throw an exception so people use MulticlassClassifier
+        #     if needed
+        #
         if len(ul) > 2: # or (ul != [-1.0, 1.0]).any():
             if self.__svm_impl == 'libsvm':
                 svm_impl_class = shogun.Classifier.LibSVMMultiClass
@@ -208,8 +214,7 @@ class SVM_SG_Modular(_SVM):
         self.__traindataset = dataset
         self.__traindata = _tosg(dataset.samples)
 
-        # create labels
-        #
+        # create LABELS
 
         # OK -- we have to map labels since
         #  binary ones expect -1/+1
@@ -223,7 +228,7 @@ class SVM_SG_Modular(_SVM):
             self._labels_dict = {ul[0]:-1.0,
                                  ul[1]:+1.0}
         elif len(ul) < 2:
-            raise ValueError, "we do not have 1-class SVM brought into pymvpa yet"
+            raise ValueError, "we do not have 1-class SVM brought into SG yet"
         else:
             # can't use plain enumerate since we need them swapped
             self._labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
@@ -232,31 +237,37 @@ class SVM_SG_Modular(_SVM):
         self._labels_dict_rev = dict([(x[1], x[0])
                                       for x in self._labels_dict.items()])
 
+        # Map labels
+        #
+        # TODO: top level classifier should take care about labels
+        # mapping if that is needed
         if __debug__:
             debug("SG__", "Mapping labels using dict %s" % self._labels_dict)
         labels_ = N.array([ self._labels_dict[x] for x in dataset.labels ], dtype='double')
         labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
 
-        # create kernel
-        # TODO: decide on how to handle kernel parameters more or less
-        # appropriately
-        #if len(self.__kernel_params)==1:
-
+        # If needed compute or just collect arguments for SVM and for
+        # the kernel
         kargs = []
         for arg in self._KERNELS[self._kernel_type_literal][1]:
             value = self.kernel_params[arg].value
             # XXX Unify damn automagic gamma value
             if arg == 'gamma' and value == 0.0:
-                value = 1.0/len(ul)     # the same way is done in libsvm
+                value = self._getDefaultGamma(dataset)
             kargs += [value]
 
+        C = self.params.C
+        if C<0:
+            C = self._getDefaultC(dataset.samples)*abs(C)
+            if __debug__:
+                debug("SG_", "Default C for %s was computed to be %s" %
+                             (self.params.C, C))
+
+        # create KERNEL
         if __debug__:
-            debug("SG_",
-                  "Creating kernel instance of %s giving arguments %s" %
+            debug("SG_", "Creating kernel instance of %s giving arguments %s" %
                   (`self._kernel_type`, kargs))
-
-
         self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
                                           *kargs)
 
@@ -265,12 +276,6 @@ class SVM_SG_Modular(_SVM):
         # create SVM
         if __debug__:
             debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
-
-        C = self.params.C
-        if C<0:
-            C = self._getDefaultC(dataset.samples)*abs(C)
-            if __debug__:
-                debug("SG_", "Default C for %s was computed to be %s" % (self.params.C, C))
 
         self.__svm = svm_impl_class(C, self.__kernel, labels)
 
@@ -294,7 +299,9 @@ class SVM_SG_Modular(_SVM):
                   (self._kernel_type, dataset.uniquelabels))
             if "SG__" in debug.active:
                 trained_labels = self.__svm.classify().get_labels()
-                debug("SG__", "Original labels: %s, Trained labels: %s" % (dataset.labels, trained_labels))
+                debug("SG__", "Original labels: %s, Trained labels: %s" %
+                              (dataset.labels, trained_labels))
+
 
     def _predict(self, data):
         """Predict values for the data
@@ -354,7 +361,6 @@ class SVM_SG_Modular(_SVM):
         super(SVM_SG_Modular, self).untrain()
 
         # to avoid leaks with not yet properly fixed shogun
-
         # XXX make it nice... now it is just stable ;-)
         if not self.__mclf is None:
             self.__mclf.untrain()
@@ -405,14 +411,8 @@ class LinearSVM(SVM_SG_Modular):
         return ShogunLinearSVMWeights(self, **kwargs)
 
 
-
-class LinearCSVMC(LinearSVM):
-    def __init__(self, **kwargs):
-        """
-        """
-        # init base class
-        LinearSVM.__init__(self, **kwargs)
-
+# We don't have nu-SVM here
+LinearCSVMC = LinearSVM
 
 
 class RbfCSVMC(SVM_SG_Modular):
@@ -457,13 +457,6 @@ class ShogunLinearSVMWeights(Sensitivity):
 
 
     def _call(self, dataset):
-        #from IPython.Shell import IPShellEmbed
-        #ipshell = IPShellEmbed()
-        #ipshell()
-        #12: self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_bias()
-        #19: alphas=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_alphas()
-        #20: svs=self.clf._SVM_SG_Modular__mclf.clfs[0].clf._SVM_SG_Modular__svm.get_support_vectors()
-
         # TODO: since multiclass is done internally - we need to check
         # here if self.clf.__mclf is not an instance of some out
         # Classifier and apply corresponding combiner of
@@ -489,13 +482,3 @@ class ShogunLinearSVMWeights(Sensitivity):
             sens = self.__sg_helper(svm)
         return N.array(sens)
 
-
-
-#if __debug__:
-#    if 'SG_PROGRESS' in debug.active:
-#        debug('SG_PROGRESS', 'Allowing SG progress bars')
-#    else:
-#        if 
-#import shogun.Library
-#io = shogun.Library.IO()
-#io.disable_progress()
