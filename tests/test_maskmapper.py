@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA mask mapper"""
 
 
-from mvpa.datasets.mappers import MaskMapper
+from mvpa.mappers import MaskMapper
 from mvpa.datasets.metric import *
 import unittest
 import numpy as N

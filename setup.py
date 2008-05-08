@@ -59,6 +59,7 @@ PyMVPA is truely free software (in every respect) and additonally requires
 nothing but free-software to run.""",
       packages     = [ 'mvpa',
                        'mvpa.datasets',
+                       'mvpa.mappers',
                        'mvpa.clfs',
                        'mvpa.clfs.libsvm',
                        'mvpa.clfs.libsmlr',

@@ -14,7 +14,7 @@ import numpy as N
 from sets import Set
 from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.misc import zscore, aggregateFeatures
-from mvpa.datasets.mappers import MaskMapper
+from mvpa.mappers import MaskMapper
 from mvpa.misc.exceptions import DatasetError
 
 class DatasetTests(unittest.TestCase):
