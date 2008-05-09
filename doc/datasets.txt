@@ -30,7 +30,7 @@ of the derived classes. However, it is perfectly possible to use it directly.
 In the simplest case a dataset can be constructed by specifying some
 data samples and the corresponding class labels.
 
-  >>> from mvpa.datasets.dataset import Dataset
+  >>> from mvpa.datasets import Dataset
   >>> data = Dataset(samples=N.random.normal(size=(10,5)), labels=1)
   >>> data
   Dataset / float64 10 x 5, uniq: 1 labels, 10 chunks

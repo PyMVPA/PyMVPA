@@ -6,90 +6,91 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA PCA mapper"""
+"""Unit tests for PyMVPA SVD mapper"""
 
 
 import unittest
 from copy import deepcopy
 import numpy as N
-from mvpa.mappers import PCAMapper
-
 from mvpa.datasets.base import Dataset
+from mvpa.mappers import SVDMapper
 
 
-class PCAMapperTests(unittest.TestCase):
+class SVDMapperTests(unittest.TestCase):
 
     def setUp(self):
         # data: 40 sample feature line in 20d space (40x20; samples x features)
         self.ndlin = Dataset(samples=N.concatenate(
-                        [N.arange(40) for i in range(20)]).reshape(20,-1).T, labels=1, chunks=1)
+            [N.arange(40) for i in range(20)]).reshape(20,-1).T, labels=1, chunks=1)
 
         # data: 10 sample feature line in 40d space
         #       (10x40; samples x features)
         self.largefeat = Dataset(samples=N.concatenate(
-                        [N.arange(10) for i in range(40)]).reshape(40,-1).T, labels=1, chunks=1)
-
-        self.pm = PCAMapper()
+            [N.arange(10) for i in range(40)]).reshape(40,-1).T, labels=1, chunks=1)
 
 
-    def testSimplePCA(self):
-        # train PCA
-        self.pm.train(self.ndlin)
+    def testSimpleSVD(self):
+        pm = SVDMapper()
+        # train SVD
+        pm.train(self.ndlin)
 
-        self.failUnlessEqual(self.pm.mix.shape, (20, 20))
+        self.failUnlessEqual(pm.mix.shape, (20, 20))
 
         # now project data into PCA space
-        p = self.pm.forward(self.ndlin.samples)
+        p = pm.forward(self.ndlin.samples)
 
         # only first eigenvalue significant
-        self.failUnless(self.pm.sv[:1] > 1.0)
-        self.failUnless((self.pm.sv[1:] < 0.0001).all())
+        self.failUnless(pm.sv[:1] > 1.0)
+        self.failUnless((pm.sv[1:] < 0.0001).all())
 
         # only variance of first component significant
         var = p.var(axis=0)
 
-        # test that only one component has variance
+       # test that only one component has variance
         self.failUnless(var[:1] > 1.0)
         self.failUnless((var[1:] < 0.0001).all())
 
         # check that the mapped data can be fully recovered by 'reverse()'
-        self.failUnless((N.round(self.pm.reverse(p)) == self.ndlin.samples).all())
+        pr = pm.reverse(p)
+
+        self.failUnlessEqual(pr.shape, (40,20))
+        self.failUnless(N.abs(pm.reverse(p) - self.ndlin.samples).sum() < 0.0001)
 
 
-    def testAutoOptimizePCA(self):
-        # train PCA
-        self.pm.train(self.largefeat)
+    def testMoreSVD(self):
+        pm = SVDMapper()
+        # train SVD
+        pm.train(self.largefeat)
 
         # mixing matrix cannot be square
-#        self.failUnlessEqual(self.pm.mix.shape, (10, 40))
+        self.failUnlessEqual(pm.mix.shape, (40, 10))
 
-        # only first eigenvalue significant
-        self.failUnless(self.pm.sv[:1] > 10)
-        self.failUnless((self.pm.sv[1:] < 10).all())
+        # only first singular value significant
+        self.failUnless(pm.sv[:1] > 10)
+        self.failUnless((pm.sv[1:] < 10).all())
 
-        # now project data into PCA space
-        p = self.pm.forward(self.largefeat.samples)
+        # now project data into SVD space
+        p = pm.forward(self.largefeat.samples)
 
         # only variance of first component significant
         var = p.var(axis=0)
+
         # test that only one component has variance
         self.failUnless(var[:1] > 1.0)
         self.failUnless((var[1:] < 0.0001).all())
 
         # check that the mapped data can be fully recovered by 'reverse()'
-        rp = self.pm.reverse(p)
+        rp = pm.reverse(p)
         self.failUnlessEqual(rp.shape, self.largefeat.samples.shape)
         self.failUnless((N.round(rp) == self.largefeat.samples).all())
 
-        self.failUnlessEqual(self.pm.getInSize(), 40)
-#        self.failUnlessEqual(self.pm.getOutSize(), 10)
-        self.failUnlessEqual(self.pm.getOutSize(), 40)
-        self.failUnlessEqual(self.pm.getInShape(), (40,))
-#        self.failUnlessEqual(self.pm.getOutShape(), (10,))
-        self.failUnlessEqual(self.pm.getOutShape(), (40,))
+        self.failUnlessEqual(pm.getInSize(), 40)
+        self.failUnlessEqual(pm.getOutSize(), 10)
+        self.failUnlessEqual(pm.getInShape(), (40,))
+        self.failUnlessEqual(pm.getOutShape(), (10,))
 
         # copy mapper
-        pm2 = deepcopy(self.pm)
+        pm2 = deepcopy(pm)
 
         # now remove all but the first 2 components from the mapper
         pm2.selectOut([0,1])
@@ -99,14 +100,24 @@ class PCAMapperTests(unittest.TestCase):
         self.failUnlessEqual(pm2.getOutSize(), 2)
 
         # but orginal mapper must be left intact
-        self.failUnlessEqual(self.pm.getInSize(), 40)
-#        self.failUnlessEqual(self.pm.getOutSize(), 10)
-        self.failUnlessEqual(self.pm.getOutSize(), 40)
+        self.failUnlessEqual(pm.getInSize(), 40)
+        self.failUnlessEqual(pm.getOutSize(), 10)
 
         # data should still be fully recoverable by 'reverse()'
         rp2 = pm2.reverse(p[:,[0,1]])
         self.failUnlessEqual(rp2.shape, self.largefeat.samples.shape)
-        self.failUnless((N.round(rp2) == self.largefeat.samples).all())
+        self.failUnless(N.abs(rp2 - self.largefeat.samples).sum() < 0.0001)
+
+
+        # now make new random data and do forward->reverse check
+        data = N.random.normal(size=(98,40))
+        data_f = pm.forward(data)
+
+        self.failUnlessEqual(data_f.shape, (98,10))
+
+        data_r = pm.reverse(data_f)
+        self.failUnlessEqual(data_r.shape, (98,40))
+
 
 
 def suite():
