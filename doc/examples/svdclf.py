@@ -22,7 +22,7 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.svm import LinearCSVMC
-from mvpa.clfs.classifier import MappedClassifier
+from mvpa.clfs.base import MappedClassifier
 from mvpa.mappers import SVDMapper
 
 from mvpa.misc import debug

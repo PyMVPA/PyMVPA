@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 from mvpa.algorithms.datameasure import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.state import StateVariable

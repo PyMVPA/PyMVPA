@@ -187,7 +187,7 @@ With this minimal implementation the classifier provides some useful
 functionality, by automatically storing some relevant information upon request
 in state variables.
 
-.. IncludeStates: clfs.classifier Classifier
+.. IncludeStates: clfs.base Classifier
 
 Supported states:
 
@@ -228,7 +228,7 @@ to preserve the full functionality.
 Source code files of all classifier implementations go into `mvpa/clfs/`.
 
 
-.. _Classifier: api/mvpa.clfs.classifier.Classifier-class.html
+.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 
 
 Outstanding Questions:
