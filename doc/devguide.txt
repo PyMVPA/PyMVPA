@@ -187,7 +187,7 @@ With this minimal implementation the classifier provides some useful
 functionality, by automatically storing some relevant information upon request
 in state variables.
 
-.. IncludeStates: clfs.classifier Classifier
+.. IncludeStates: clfs.base Classifier
 
 Supported states:
 
@@ -228,7 +228,7 @@ to preserve the full functionality.
 Source code files of all classifier implementations go into `mvpa/clfs/`.
 
 
-.. _Classifier: api/mvpa.clfs.classifier.Classifier-class.html
+.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 
 
 Outstanding Questions:
@@ -261,7 +261,7 @@ new sub-class of SensitivityAnalyzer_ and add an implementation of the
 `_call(dataset)` method. It will be called with an instance of Dataset_ and has
 to return a vector of featurewise sensitivity scores.
 
-.. IncludeStates: algorithms.datameasure DatasetMeasure
+.. IncludeStates: measures.base DatasetMeasure
 
 Supported state:
 
@@ -291,7 +291,7 @@ the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
-.. IncludeStates: algorithms.datameasure Sensitivity
+.. IncludeStates: measures.base Sensitivity
 
 
 Outstanding Questions:
@@ -300,10 +300,9 @@ Outstanding Questions:
   * Shouldn't there be a `sensitivities` state?
 
 
-.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
-.. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
-.. _Sensitivity: api/mvpa.algorithms.datameasure.Sensitivity-class.html
-.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ProxyClassifierSensitivityAnalyzer-class.html
+.. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
+.. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
+.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.measures.base.ProxyClassifierSensitivityAnalyzer-class.html
 
 
 

@@ -11,7 +11,7 @@
 import unittest
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.measures.anova import OneWayAnova
 from mvpa.misc.data_generators import dumbFeatureDataset
 

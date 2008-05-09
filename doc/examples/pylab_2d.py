@@ -13,7 +13,7 @@ import numpy as N
 import pylab as P
 
 # local imports
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.plr import PLR
 from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC

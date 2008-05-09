@@ -19,7 +19,7 @@ from copy import deepcopy
 
 import numpy as N
 
-from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseDatasetMeasure
 
 
 class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):

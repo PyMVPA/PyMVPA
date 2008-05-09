@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 if __debug__:
     from mvpa.misc import debug

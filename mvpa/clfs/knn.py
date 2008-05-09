@@ -15,7 +15,7 @@ import numpy as N
 
 from mvpa.misc import warning
 from mvpa.misc.support import indentDoc
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 
 class kNN(Classifier):
