@@ -57,8 +57,12 @@ class CollectableAttribute(object):
 
     def _set(self, val):
         if __debug__:
+            # Since this call is quite often, don't convert
+            # values to strings here, rely on passing them
+            # withing msgargs
             debug("COL",
-                  "Setting %s to %s " % (str(self), val))
+                  "Setting %(self)s to %(val)s ",
+                  msgargs={'self':self, 'val':val})
         self._value = val
         self._isset = True
 
