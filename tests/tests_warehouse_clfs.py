@@ -66,3 +66,16 @@ clfs['all'] = clfs['LinearC'] + clfs['NonLinearC']
 # RidgeReg does not have a corresponding sensitivity analyzer yet
 clfs['clfs_with_sens'] =  [ i for i in clfs['LinearC'] if not isinstance(i, RidgeReg) and not isinstance(i, LARS) ]
 
+
+# Sample universal classifiers (linear and non-linear) which should be
+# used whenever it doesn't matter what classifier it is for testing
+# some higher level creations -- chosen so it is the fastest universal
+# one. Also it should not punch state.py in the face how it is
+# happening with kNN...
+sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
+if externals.exists('shogun'):
+    sample_clf_nl = sg.svm.RbfCSVMC(svm_impl='libsvm')
+else:
+    #classical one which was used for a while
+    #and surprisingly it is not bad at all for the unittests
+    sample_clf_nl = kNN(k=5)
