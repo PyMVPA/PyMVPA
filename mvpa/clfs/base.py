@@ -42,7 +42,7 @@ from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
 from mvpa.clfs.transerror import ConfusionMatrix
 
-from mvpa.algorithms.datameasure import \
+from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer
 from mvpa.misc import warning
 

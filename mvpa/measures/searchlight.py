@@ -15,7 +15,7 @@ if __debug__:
 
 from mvpa.datasets.mappeddataset import MappedDataset
 from mvpa.mappers.metric import MetricMapper
-from mvpa.algorithms.datameasure import DatasetMeasure
+from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.base.dochelpers import enhancedDocString
 

@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from copy import copy
 
-from mvpa.algorithms.datameasure import DatasetMeasure
+from mvpa.measures.base import DatasetMeasure
 from mvpa.datasets.splitter import NoneSplitter
 from mvpa.clfs.transerror import ConfusionMatrix
 from mvpa.misc import warning

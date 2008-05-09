@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseDatasetMeasure
 
 
 class OneWayAnova(FeaturewiseDatasetMeasure):
