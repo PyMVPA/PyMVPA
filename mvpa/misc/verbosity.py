@@ -69,6 +69,9 @@ class Logger(object):
         it appends a newline (lf = Line Feed) since most commonly each
         call is a separate message
         """
+        if kwargs.has_key('msgargs'):
+            msg = msg % kwargs['msgargs']
+
         if cr:
             msg_ = ""
             if self.__crprev > 0:
