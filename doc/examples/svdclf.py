@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a how to use data projection onto PCA components
+"""Example demonstrating a how to use data projection onto SVD components
 for *any* clasifier"""
 
 import numpy as N
@@ -23,7 +23,7 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.svm import LinearCSVMC
 from mvpa.clfs.classifier import MappedClassifier
-from mvpa.mappers import PCAMapper
+from mvpa.mappers import SVDMapper
 
 from mvpa.misc import debug
 debug.active += ["CROSSC"]
@@ -88,15 +88,15 @@ dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
                                         dtype='bool'))
 
 # define some classifiers: a simple one and several classifiers with built-in
-# PCAs
+# SVDs
 clfs = [('All orig. features', LinearCSVMC()),
-        ('All PCs', MappedClassifier(LinearCSVMC(), PCAMapper())),
+        ('All PCs', MappedClassifier(LinearCSVMC(), SVDMapper())),
         ('First 3 PCs', MappedClassifier(LinearCSVMC(),
-                        PCAMapper(selector=range(5)))),
+                        SVDMapper(selector=range(5)))),
         ('First 50 PCs', MappedClassifier(LinearCSVMC(),
-                        PCAMapper(selector=range(50)))),
+                        SVDMapper(selector=range(50)))),
         ('PCs 3-50', MappedClassifier(LinearCSVMC(),
-                        PCAMapper(selector=range(3,50))))]
+                        SVDMapper(selector=range(3,50))))]
 
 
 # run and visualize in barplot
