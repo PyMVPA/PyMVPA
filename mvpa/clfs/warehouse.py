@@ -99,13 +99,13 @@ clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR'] #+ clfs['LARS']
 
 
 # "Interesting" classifiers
-clfs['SMLR(lm=10)->LinearSVM']  = [
+clfs['SMLR(lm=1)->LinearSVM']  = [
     FeatureSelectionClassifier(
         LinearCSVMC(),
         SensitivityBasedFeatureSelection(
-           SMLRWeights(SMLR(lm=10.0, implementation="C")),
+           SMLRWeights(SMLR(lm=1.0, implementation="C")),
            RangeElementSelector(mode='select')),
-        descr="LinSVM on SMLR(lm=10) non-0")
+        descr="LinSVM on SMLR(lm=1) non-0")
     ]
 
 # "Interesting" classifiers
@@ -119,22 +119,22 @@ clfs['SMLR(lm=1)->LinearSVM']  = [
     ]
 
 # "Interesting" classifiers
-clfs['SMLR(lm=10)->RbfSVM']  = [
+clfs['SMLR(lm=1)->RbfSVM']  = [
     FeatureSelectionClassifier(
         RbfCSVMC(),
         SensitivityBasedFeatureSelection(
-           SMLRWeights(SMLR(lm=10.0, implementation="C")),
+           SMLRWeights(SMLR(lm=1.0, implementation="C")),
            RangeElementSelector(mode='select')),
-        descr="RbfSVM on SMLR(lm=10) non-0")
+        descr="RbfSVM on SMLR(lm=1) non-0")
     ]
 
-clfs['SMLR(lm=10)->kNN']  = [
+clfs['SMLR(lm=1)->kNN']  = [
     FeatureSelectionClassifier(
         kNN(),
         SensitivityBasedFeatureSelection(
-           SMLRWeights(SMLR(lm=10.0, implementation="C")),
+           SMLRWeights(SMLR(lm=1.0, implementation="C")),
            RangeElementSelector(mode='select')),
-        descr="kNN on SMLR(lm=10) non-0")
+        descr="kNN on SMLR(lm=1) non-0")
     ]
 
 
@@ -299,11 +299,11 @@ clfs['SVM/Multiclass+RFE/splits_avg'] = \
 # Run on all here defined classifiers
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC'] + \
               clfs['Anova5%->kNN'] + clfs['Anova50->kNN'] + \
-              clfs['SMLR(lm=10)->kNN'] + \
+              clfs['SMLR(lm=1)->kNN'] + \
               clfs['LinearSVM5%->LinearSVM'] + clfs['Anova5%->LinearSVM'] + \
               clfs['LinearSVM50->LinearSVM'] + clfs['Anova50->LinearSVM'] + \
-              clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=10)->LinearSVM'] + \
-              clfs['SMLR(lm=10)->RbfSVM']
+              clfs['SMLR(lm=1)->LinearSVM'] + clfs['SMLR(lm=1)->LinearSVM'] + \
+              clfs['SMLR(lm=1)->RbfSVM']
 #              clfs['SVM+RFE'] + clfs['SVM+RFE/oe'] + \
 #              clfs['SVM+RFE/splits_avg(static)'] + \
 #              clfs['SVM+RFE/splits_avg']
