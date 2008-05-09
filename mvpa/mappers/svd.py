@@ -16,11 +16,13 @@ from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import Mapper
 from mvpa.featsel.helpers import ElementSelector
 
+if __debug__:
+    from mvpa.misc import debug
 
 class SVDMapper(Mapper):
     """Mapper to project data onto SVD components estimated from some dataset.
     """
-    def __init__(self, selector=None):
+    def __init__(self, selector=None, demean=True):
         """Initialize the PCAMapper
 
         :Parameters:
@@ -32,6 +34,9 @@ class SVDMapper(Mapper):
                 Alternatively an `ElementSelector` instance can be provided
                 which chooses components based on the corresponding eigenvalues
                 of each component.
+            demean: bool
+                Either data should be demeaned while computing projections and
+                applied back while doing reverse()
         """
         Mapper.__init__(self)
 
@@ -43,19 +48,25 @@ class SVDMapper(Mapper):
         original features."""
         self.sv = None
         """Singular values of the training matrix."""
-
+        self.__demean = demean
+        self.mean = None
+        """Data mean"""
 
     __doc__ = enhancedDocString('SVDMapper', locals(), Mapper)
 
 
     def __deepcopy__(self, memo=None):
-        """Yes, this is it."""
+        """Yes, this is it.
+        XXX But do we need it really? copy.deepcopy wouldn't have a problem copying stuff
+        """
         if memo is None:
             memo = {}
         out = SVDMapper()
         if self.mix is not None:
             out.mix = self.mix.copy()
             out.sv = self.sv.copy()
+        if self.mean is not None:
+            out.mean = self.mean.copy()
 
         return out
 
@@ -66,18 +77,35 @@ class SVDMapper(Mapper):
         """
         X = N.asmatrix(dataset.samples)
 
-        # demean the training data
-        X = X - X.mean(axis=0)
+        if self.__demean:
+            # demean the training data
+            self.mean = X.mean(axis=0)
+            X = X - self.mean
+
+            if __debug__:
+                debug("MAP_",
+                      "Mean of data in input space %s was subtracted" %
+                      (self.mean))
+
 
         # singular value decomposition
         U, SV, Vh = N.linalg.svd(X, full_matrices=0)
 
         # store the final matrix with the new basis vectors to project the
-        # features onto the PCA components
-        self.mix = Vh
+        # features onto the PCA components. And store its .H right away to
+        # avoid computing it in forward()
+        self.mix = Vh.H
 
         # also store singular values of all components
         self.sv = SV
+
+        if __debug__:
+            debug("MAP", "SVD was done on %s and obtained %d SVs " %
+                  (dataset, len(SV)) + " (%d non-0, max=%f)" %
+                  (len(SV.nonzero()), SV[0]))
+
+            debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
+                  (self.mix.shape, N.linalg.norm(self.mix)))
 
         if not self.__selector == None:
             if isinstance(self.__selector, list):
@@ -85,10 +113,11 @@ class SVDMapper(Mapper):
             elif isinstance(self.__selector, ElementSelector):
                 self.selectOut(self.__selector(SV))
             else:
-                raise ValueError, 'Unknown type of selector.'
+                raise ValueError, \
+                      'Unknown type of selector %s' % self.__selector
 
 
-    def forward(self, data):
+    def forward(self, data, demean=True):
         """Project a 2D samples x features matrix onto the PCA components.
 
         :Returns:
@@ -96,8 +125,10 @@ class SVDMapper(Mapper):
         """
         if self.mix is None:
             raise RuntimeError, "PCAMapper needs to be train before used."
-
-        return N.asarray(self.mix * N.asmatrix(data).T).T
+        if demean and self.mean is not None:
+            return ((N.asmatrix(data) - self.mean)*self.mix).A
+        else:
+            return (N.asmatrix(data) * self.mix).A
 
 
     def reverse(self, data):
@@ -111,34 +142,44 @@ class SVDMapper(Mapper):
             raise RuntimeError, "PCAMapper needs to be train before used."
 
         if self.unmix is None:
-            # XXX yoh: should be simply H instead of I
+            # YYY yoh: should better be simply H instead of I
             self.unmix = self.mix.H
 
-        return (self.unmix * N.asmatrix(data).T).T.A
+            if self.__demean:
+                self.mean_out = self.forward(self.mean, demean=False)
+                if __debug__:
+                    debug("MAP_",
+                          "Mean of data in input space %s bacame %s in outspace" %
+                          (self.mean, self.mean_out))
+
+        if self.__demean:
+            return ((N.asmatrix(data) + self.mean_out) * self.unmix).A
+        else:
+            return ((N.asmatrix(data)) * self.unmix).A
 
 
     def getInShape(self):
         """Returns a one-tuple with the number of original features."""
-        return (self.mix.shape[1], )
+        return (self.mix.shape[0], )
 
 
     def getOutShape(self):
         """Returns a one-tuple with the number of PCA components."""
-        return (self.mix.shape[0], )
+        return (self.mix.shape[1], )
 
 
     def getInSize(self):
         """Returns the number of original features."""
-        return self.mix.shape[1]
+        return self.mix.shape[0]
 
 
     def getOutSize(self):
         """Returns the number of PCA components."""
-        return self.mix.shape[0]
+        return self.mix.shape[1]
 
 
     def selectOut(self, outIds):
         """Choose a subset of PCA components (and remove all others)."""
-        self.mix = self.mix[outIds]
+        self.mix = self.mix[:, outIds]
         # invalidate unmixing matrix
         self.unmix = None
