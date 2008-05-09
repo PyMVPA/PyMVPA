@@ -52,9 +52,12 @@ class StateVariable(object):
 
     def _set(self, val):
         if __debug__:
-            debug("STV",
-                  "Setting %s to %s " % (str(self), val))
-
+            # Since this call is quite often, don't convert
+            # values to strings here, rely on passing them
+            # withing msgargs
+            debug("COL",
+                  "Setting %(self)s to %(val)s ",
+                  msgargs={'self':self, 'val':val})
         if self.isEnabled:
             self._isset = True
             self._value = val
