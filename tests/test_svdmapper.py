@@ -63,7 +63,7 @@ class SVDMapperTests(unittest.TestCase):
         pm.train(self.largefeat)
 
         # mixing matrix cannot be square
-        self.failUnlessEqual(pm.mix.shape, (10, 40))
+        self.failUnlessEqual(pm.mix.shape, (40, 10))
 
         # only first singular value significant
         self.failUnless(pm.sv[:1] > 10)
