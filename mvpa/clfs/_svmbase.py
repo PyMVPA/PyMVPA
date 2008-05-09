@@ -15,7 +15,7 @@ import numpy as N
 from copy import deepcopy
 
 from mvpa.misc import warning
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 
 if __debug__:

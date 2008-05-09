@@ -18,7 +18,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 from sets import Set
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 
 
 def zscore(dataset, mean = None, std = None,

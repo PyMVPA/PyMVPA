@@ -62,7 +62,7 @@ analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
 on the other hand utilize another sensitivity analyzer to compute their
 sensitivity maps.
 
-.. _Sensitivity: api/mvpa.algorithms.datameasure.Sensitivity-class.html
+.. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
 
 
 Basic Sensitivity (and related Measures)
@@ -125,7 +125,7 @@ necessary to use appropriate Transformers_ (see `transformer` constructor
 arguments) to ensure that higher values represent higher sensitivities.
 
 .. _NoisePerturbationSensitivity: api/mvpa.measures.noiseperturbation.NoisePerturbationSensitivity-class.html
-.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
+.. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
 
 
 Meta Sensitivity Measures

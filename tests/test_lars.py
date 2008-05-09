@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
 import unittest
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.lars import LARS
 import numpy as N
 from scipy.stats import pearsonr

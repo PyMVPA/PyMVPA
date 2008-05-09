@@ -16,8 +16,9 @@ from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
 
+from mvpa.clfs.base import Classifier
 from mvpa.clfs._svmbase import _SVM
-from mvpa.algorithms.datameasure import Sensitivity
+from mvpa.measures.base import Sensitivity
 
 import _svm as svm
 

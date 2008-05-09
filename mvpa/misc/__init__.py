@@ -142,6 +142,10 @@ if __debug__:
     debug.register('DS_',  "*Dataset (verbose)")
 
     debug.register('COL',  "Generic Collectable debugging")
+
+    debug.register('MAP',   "*Mapper")
+    debug.register('MAP_',  "*Mapper (verbose)")
+
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
     debug.register('COLR', "Collector for states and classifier parameters")

@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA sparse multinomial logistic regression classifier"""
 
 import unittest
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.smlr import SMLR
 import numpy as N
 from mvpa.misc.data_generators import dumbFeatureDataset

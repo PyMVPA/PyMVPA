@@ -24,11 +24,13 @@ import shogun.Library
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 
-from mvpa.clfs.classifier import MulticlassClassifier
+from mvpa.clfs.base import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.misc.state import StateVariable
-from mvpa.algorithms.datameasure import Sensitivity
+from mvpa.clfs.base import Classifier, MulticlassClassifier
+from mvpa.measures.base import Sensitivity
 from mvpa.base import externals
+
 
 if __debug__:
     from mvpa.misc import debug
@@ -65,12 +67,12 @@ def _setdebug(obj, partname):
     if __debug__:
         debug("SG_", "Setting verbosity for shogun.%s instance: %s to %s" %
               (partname, `obj`, slevel))
-        obj.io.set_loglevel(sglevel)
-        try:
-            exec "obj.io.%s_progress()" % progressfunc
-        except:
-            warning("Shogun version installed has no way to enable progress" +
-                    " reports")
+    obj.io.set_loglevel(sglevel)
+    try:
+        exec "obj.io.%s_progress()" % progressfunc
+    except:
+        warning("Shogun version installed has no way to enable progress" +
+                " reports")
 
 
 def _tosg(data):
