@@ -16,9 +16,6 @@ from glob import glob
 # find numpy headers
 numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
-# Notes on the setup
-# Version scheme is: major.minor.patch<suffix>
-
 # define the extension modules
 libsvmc_ext = Extension(
     'mvpa.clfs.libsvm.svmc',
@@ -41,6 +38,9 @@ ext_modules = [smlrc_ext]
 
 if 'PYMVPA_LIBSVM' in os.environ.keys():
     ext_modules.append(libsvmc_ext)
+
+# Notes on the setup
+# Version scheme is: major.minor.patch<suffix>
 
 # define the setup
 setup(name       = 'pymvpa',

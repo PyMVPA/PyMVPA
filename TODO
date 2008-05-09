@@ -20,6 +20,6 @@ TODO
   * Add ability to add/modify custom attributes to a dataset.
   * Possibly make NiftiDataset default to float32 when it sees that the data are
     ints.
-  * Along with PCA/ICA mappers, we should add a PLS mapper.
+  * Along with ICA mapper, we should add a PLS mapper.
 
 
