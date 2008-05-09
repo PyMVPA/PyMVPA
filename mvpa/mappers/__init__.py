@@ -13,3 +13,4 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.mappers.mask import MaskMapper
 from mvpa.mappers.pca import PCAMapper
+from mvpa.mappers.svd import SVDMapper
