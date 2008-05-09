@@ -1169,7 +1169,7 @@ class MappedClassifier(ProxyClassifier):
         """
         # first train the mapper
         # XXX: should training be done using whole dataset or just samples
-        self.__mapper.train(dataset.samples)
+        self.__mapper.train(dataset)
 
         # for train() we have to provide dataset -- not just samples to train!
         wdataset = dataset.applyMapper(featuresmapper = self.__mapper)

@@ -55,7 +55,7 @@ class Mapper(object):
         raise NotImplementedError
 
 
-    def train(self, data):
+    def train(self, dataset):
         """Sub-classes have to override this method if the mapper need
         training.
         """

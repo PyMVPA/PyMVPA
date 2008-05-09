@@ -55,16 +55,16 @@ class SVDMapper(Mapper):
         out = SVDMapper()
         if self.mix is not None:
             out.mix = self.mix.copy()
-        out.sv = self.sv.copy()
+            out.sv = self.sv.copy()
 
         return out
 
 
-    def train(self, data):
+    def train(self, dataset):
         """Determine the projection matrix onto the SVD components from
         a 2D samples x feature data matrix.
         """
-        X = N.matrix(data)
+        X = N.asmatrix(dataset.samples)
 
         # demean the training data
         X = X - X.mean(axis=0)
@@ -97,7 +97,7 @@ class SVDMapper(Mapper):
         if self.mix is None:
             raise RuntimeError, "PCAMapper needs to be train before used."
 
-        return N.array(self.mix * N.matrix(data).T).T
+        return N.asarray(self.mix * N.asmatrix(data).T).T
 
 
     def reverse(self, data):
@@ -114,7 +114,7 @@ class SVDMapper(Mapper):
             # XXX yoh: should be simply H instead of I
             self.unmix = self.mix.H
 
-        return (self.unmix * N.matrix(data).T).T.A
+        return (self.unmix * N.asmatrix(data).T).T.A
 
 
     def getInShape(self):
