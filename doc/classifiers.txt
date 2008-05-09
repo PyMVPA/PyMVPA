@@ -28,7 +28,7 @@ some cases the true label for a sample might be totally unknown.
 This examples demonstrates the typical daily life of a classifier.
 
   >>> from mvpa.clfs.knn import kNN
-  >>> from mvpa.datasets.dataset import Dataset
+  >>> from mvpa.datasets import Dataset
   >>> training = Dataset(samples=N.array(N.arange(100),ndmin=2).T,
                          labels=[0] * 50 + [1] * 50)
   >>> rand100 = N.random.rand(10)*100

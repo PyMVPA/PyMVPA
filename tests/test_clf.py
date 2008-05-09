@@ -13,7 +13,7 @@ import numpy as N
 
 from copy import deepcopy
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.mappers import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 

@@ -12,7 +12,7 @@ import unittest
 
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.featsel.base import FeatureSelectionPipeline
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector
