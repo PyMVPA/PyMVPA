@@ -53,7 +53,8 @@ class SVDMapper(Mapper):
         if memo is None:
             memo = {}
         out = SVDMapper()
-        out.mix = self.mix.copy()
+        if self.mix is not None:
+            out.mix = self.mix.copy()
         out.sv = self.sv.copy()
 
         return out
@@ -69,11 +70,11 @@ class SVDMapper(Mapper):
         X = X - X.mean(axis=0)
 
         # singular value decomposition
-        U, SV, V = N.linalg.svd(X, full_matrices=0)
+        U, SV, Vh = N.linalg.svd(X, full_matrices=0)
 
         # store the final matrix with the new basis vectors to project the
         # features onto the PCA components
-        self.mix = V
+        self.mix = Vh
 
         # also store singular values of all components
         self.sv = SV
@@ -93,7 +94,7 @@ class SVDMapper(Mapper):
         :Returns:
           NumPy array
         """
-        if self.mix == None:
+        if self.mix is None:
             raise RuntimeError, "PCAMapper needs to be train before used."
 
         return N.array(self.mix * N.matrix(data).T).T
@@ -106,8 +107,13 @@ class SVDMapper(Mapper):
         :Returns:
           NumPy array
         """
-        if self.unmix == None:
-            self.unmix = self.mix.I
+        if self.mix is None:
+            raise RuntimeError, "PCAMapper needs to be train before used."
+
+        if self.unmix is None:
+            # XXX yoh: should be simply H instead of I
+            self.unmix = self.mix.H
+
         return (self.unmix * N.matrix(data).T).T.A
 
 
