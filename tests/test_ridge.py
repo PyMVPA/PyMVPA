@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA ridge regression classifier"""
 
 import unittest
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.ridge import RidgeReg
 import numpy as N
 from scipy.stats import pearsonr

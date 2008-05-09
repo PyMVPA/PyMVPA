@@ -32,3 +32,6 @@ The mvpa.datasets module contains the following modules:
 """
 
 __docformat__ = 'restructuredtext'
+
+# nothing in here that works without the base class
+from mvpa.datasets.base import Dataset

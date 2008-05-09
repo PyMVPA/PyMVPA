@@ -13,7 +13,7 @@ import os
 from time import time
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.datasets.splitter import *
 from mvpa.datasets.misc import zscore

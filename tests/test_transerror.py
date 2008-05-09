@@ -12,7 +12,7 @@ import unittest
 import numpy as N
 from copy import copy
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.transerror import \
      TransferError, ConfusionMatrix, ConfusionBasedError
 
