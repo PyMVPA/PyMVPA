@@ -24,8 +24,8 @@ import shogun.Library
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
-from mvpa.clfs.classifier import Classifier, MulticlassClassifier
-from mvpa.algorithms.datameasure import Sensitivity
+from mvpa.clfs.base import Classifier, MulticlassClassifier
+from mvpa.measures.base import Sensitivity
 
 
 if __debug__:

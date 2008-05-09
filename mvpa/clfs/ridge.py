@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 from scipy.linalg import lstsq
 
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 
 class RidgeReg(Classifier):

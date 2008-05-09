@@ -13,7 +13,7 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
      SensitivityBasedFeatureSelection, \

@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.datasets.splitter import OddEvenSplitter
 
 # Define sets of classifiers
-from mvpa.clfs.classifier import FeatureSelectionClassifier, SplitClassifier, \
+from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
                                  MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN

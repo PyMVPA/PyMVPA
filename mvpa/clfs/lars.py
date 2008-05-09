@@ -27,7 +27,7 @@ import rpy
 rpy.r.library('lars')
 
 # local imports
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
 

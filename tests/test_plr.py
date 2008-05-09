@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA logistic regression classifier"""
 
 import unittest
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.plr import PLR
 import numpy as N
 from mvpa.misc.data_generators import dumbFeatureBinaryDataset

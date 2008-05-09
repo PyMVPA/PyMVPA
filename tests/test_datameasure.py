@@ -12,13 +12,13 @@ import unittest
 
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.featsel.base import FeatureSelectionPipeline
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector
 from mvpa.featsel.rfe import RFE
 
-from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
+from mvpa.clfs.base import SplitClassifier, MulticlassClassifier
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
 
