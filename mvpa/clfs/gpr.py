@@ -127,7 +127,7 @@ class SquaredExponential(Kernel):
 
 
 
-class GaussianProcessReg(Classifier):
+class GPR(Classifier):
     """Gaussian Process Regression (GPR).
     
     """
@@ -213,6 +213,6 @@ if __name__=="__main__":
     kse = SquaredExponential()
     print kse
     
-    g = GaussianProcessReg()
+    g = GPR()
     print g
     
