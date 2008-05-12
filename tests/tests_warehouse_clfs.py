@@ -18,6 +18,7 @@ from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.ridge import *
 from mvpa.clfs.knn import *
 from mvpa.clfs.svm import *
+from mvpa.clfs.gpr import *
 
 # assume that we at least have some SVMs
 clfs = {'LinearSVMC': [], 'NonLinearSVMC': []}
@@ -37,7 +38,7 @@ clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
 clfs['LinearC'] = clfs['LinearSVMC'] + \
                   [ SMLR(implementation="Python"), SMLR(implementation="C") ]
 
-clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(k=1), RidgeReg() ]
+clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(k=1), RidgeReg(), GPR() ]
 
 clfs['all'] = clfs['LinearC'] + clfs['NonLinearC']
 
