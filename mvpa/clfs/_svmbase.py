@@ -50,6 +50,7 @@ class _SVM(Classifier):
         'degree': Parameter(3, descr='Degree of polynomial kernel'),
         'p': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression'),
         'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
+        'tau': Parameter(1e-6, descr='TAU parameter of KRR regression in shogun'),
         'max_shift': Parameter(10.0, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
         'shift_step': Parameter(1.0, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
         'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),

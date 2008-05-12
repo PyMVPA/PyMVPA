@@ -17,6 +17,7 @@ import numpy as N
 # TODO: XXX dual-license under GPL for use of SG?
 import shogun.Features
 import shogun.Classifier
+import shogun.Regression
 import shogun.Kernel
 import shogun.Library
 
@@ -48,6 +49,13 @@ known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    # Failes some times with 'assertion Cache_Size > 2' though should work
                    # check later
                    #"gnpp" : shogun.Classifier.GNPPSVM,
+
+                   # Regressions
+                   "libsvr": shogun.Regression.LibSVR,
+                   # also not that simple to make it 'generalize' as a binary classifier
+                   # after proper 'binning'
+                   #"svrlight": shogun.Regression.SVRLight,
+                   #"krr": shogun.Regression.KRR
                    }
 
 if externals.exists('shogun.lightsvm'):
@@ -133,6 +141,8 @@ class SVM_SG_Modular(_SVM):
 
         TODO Documentation if this all works ;-)
         """
+        if svm_impl == 'krr':
+            self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
 
         # init base class
         _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
@@ -158,6 +168,9 @@ class SVM_SG_Modular(_SVM):
         self._clf_internals.append(
             {True: 'multiclass', False:'binary'}[
             svm_impl in ['gmnp', 'libsvm']])
+        if svm_impl in ['svrlight', 'libsvr', 'krr']:
+            self._clf_internals += [ 'regression' ]
+
 
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
@@ -234,27 +247,31 @@ class SVM_SG_Modular(_SVM):
         if __debug__:
             debug("SG_", "Creating labels instance")
 
-        if len(ul) == 2:
-            # assure that we have -1/+1
-            self._labels_dict = {ul[0]:-1.0,
-                                 ul[1]:+1.0}
-        elif len(ul) < 2:
-            raise ValueError, "we do not have 1-class SVM brought into SG yet"
+        if 'regression' in self._clf_internals:
+            labels_ = N.asarray(dataset.labels, dtype='double')
         else:
-            # can't use plain enumerate since we need them swapped
-            self._labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
+            if len(ul) == 2:
+                # assure that we have -1/+1
+                self._labels_dict = {ul[0]:-1.0,
+                                     ul[1]:+1.0}
+            elif len(ul) < 2:
+                raise ValueError, "we do not have 1-class SVM brought into SG yet"
+            else:
+                # can't use plain enumerate since we need them swapped
+                self._labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
 
-        # reverse labels dict for back mapping in _predict
-        self._labels_dict_rev = dict([(x[1], x[0])
-                                      for x in self._labels_dict.items()])
+            # reverse labels dict for back mapping in _predict
+            self._labels_dict_rev = dict([(x[1], x[0])
+                                          for x in self._labels_dict.items()])
 
-        # Map labels
-        #
-        # TODO: top level classifier should take care about labels
-        # mapping if that is needed
-        if __debug__:
-            debug("SG__", "Mapping labels using dict %s" % self._labels_dict)
-        labels_ = N.array([ self._labels_dict[x] for x in dataset.labels ], dtype='double')
+            # Map labels
+            #
+            # TODO: top level classifier should take care about labels
+            # mapping if that is needed
+            if __debug__:
+                debug("SG__", "Mapping labels using dict %s" % self._labels_dict)
+            labels_ = N.asarray([ self._labels_dict[x] for x in dataset.labels ], dtype='double')
+
         labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
 
@@ -288,11 +305,18 @@ class SVM_SG_Modular(_SVM):
         if __debug__:
             debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
 
-        self.__svm = svm_impl_class(C, self.__kernel, labels)
+        if self.__svm_impl in ['libsvr', 'svrlight']:
+            # for regressions constructor a bit different
+            self.__svm = svm_impl_class(C, self.params.epsilon, self.__kernel, labels)
+        elif self.__svm_impl in ['krr']:
+            self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
+        else:
+            self.__svm = svm_impl_class(C, self.__kernel, labels)
+            self.__svm.set_epsilon(self.params.epsilon)
 
         # Set optimization parameters
-        self.__svm.set_epsilon(self.params.epsilon)
-        self.__svm.set_tube_epsilon(self.params.tube_epsilon)
+        if hasattr(self.__svm, 'set_tunbe_epsilon'):
+            self.__svm.set_tube_epsilon(self.params.tube_epsilon)
         self.__svm.parallel.set_num_threads(self.params.num_threads)
 
         _setdebug(self.__svm, 'SVM')
@@ -339,20 +363,23 @@ class SVM_SG_Modular(_SVM):
         if __debug__:
             debug("SG__", "Got values %s" % values)
 
-        if len(self._labels_dict) == 2:
-            predictions = 1.0-2*N.signbit(values)
-        else:
+        if ('regression' in self._clf_internals):
             predictions = values
+        else:
+            if len(self._labels_dict) == 2:
+                predictions = 1.0-2*N.signbit(values)
+            else:
+                predictions = values
 
-        # assure that we have the same type
-        label_type = type(self._labels_dict.values()[0])
+            # assure that we have the same type
+            label_type = type(self._labels_dict.values()[0])
 
-        # remap labels back adjusting their type
-        predictions = [self._labels_dict_rev[label_type(x)]
-                       for x in predictions]
+            # remap labels back adjusting their type
+            predictions = [self._labels_dict_rev[label_type(x)]
+                           for x in predictions]
 
-        if __debug__:
-            debug("SG__", "Tuned predictions %s" % predictions)
+            if __debug__:
+                debug("SG__", "Tuned predictions %s" % predictions)
 
         # store state variable
         self.values = values
