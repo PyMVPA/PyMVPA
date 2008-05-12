@@ -14,7 +14,7 @@ from copy import deepcopy
 import numpy as N
 from mvpa.mappers import PCAMapper
 
-from mvpa.datasets.base import Dataset
+from mvpa.datasets import Dataset
 
 
 class PCAMapperTests(unittest.TestCase):
