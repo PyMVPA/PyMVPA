@@ -38,11 +38,10 @@ warning.handlers = []
 # DONE:
 from mvpa.clfs.warehouse import clfs
 
-
 #clfs['all'] = clfs['SVM+RFE']
 #clfs['all'] = clfs['SVM/Multiclass+RFE']
 
-if __name__ == "__main__":
+def main():
 
     # fix seed or set to None for new each time
     N.random.seed(44)
@@ -112,3 +111,5 @@ if __name__ == "__main__":
                   (confusion.percentCorrect, nf, times[0], times[1], tfull)
 
 
+if __name__ == "__main__":
+    main()
