@@ -143,6 +143,22 @@ class _SVM(Classifier):
 
         self._kernel_type_literal = kernel_type
 
+    def __repr__(self):
+        """Definition of the object summary over the object
+        """
+        res = "%s(kernel_type='%s'" % (self.__class__.__name__, self._kernel_type_literal)
+        sep = ", "
+        for col in [self.params, self.kernel_params]:
+            for k in col.names:
+                # list only params with not default values
+                if col[k].isDefault: continue
+                res += "%s%s=%s" % (sep, k, col[k].value)
+                #sep = ', '
+
+        res += sep + "enable_states=%s" % (str(self.states.enabled))
+        res += ")"
+        return res
+
 
     def _getDefaultC(self, data):
         """Compute default C
