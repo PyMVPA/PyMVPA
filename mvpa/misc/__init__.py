@@ -128,6 +128,7 @@ if __debug__:
     debug.register('DBG',  "Debug output itself")
     debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
+    debug.register('_QUICKTEST_', "Quick unittests") # TODO: handle levels of unittests properly
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
