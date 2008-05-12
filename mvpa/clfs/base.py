@@ -542,7 +542,7 @@ class BoostedClassifier(Classifier, Harvestable):
 
         # adhere to their capabilities + 'multiclass'
         # XXX do intersection across all classifiers!
-        self._clf_internals = [ 'multiclass' ]
+        self._clf_internals = [ 'multiclass', 'meta' ]
         if len(clfs)>0:
             self._clf_internals += self.__clfs[0]._clf_internals
 
@@ -556,6 +556,12 @@ class BoostedClassifier(Classifier, Harvestable):
         for clf in self.clfs:
             clf.untrain()
         super(BoostedClassifier, self).untrain()
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer"""
+        return BoostedClassifierSensitivityAnalyzer(
+                self,
+                **kwargs)
 
 
     clfs = property(fget=lambda x:x.__clfs,
@@ -595,7 +601,7 @@ class ProxyClassifier(Classifier):
 
         # adhere to slave classifier capabilities
         # XXX test test test
-        self._clf_internals = self._clf_internals[:]
+        self._clf_internals = self._clf_internals[:] + ['meta']
         if clf is not None:
             self._clf_internals += clf._clf_internals
 
@@ -1210,7 +1216,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
     we should expclitely use isTrained here if we want... need to think more
     """
 
-    _clf_internals = [ 'does_feature_selection' ]
+    _clf_internals = [ 'does_feature_selection', 'meta' ]
 
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance
