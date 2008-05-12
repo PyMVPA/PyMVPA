@@ -124,7 +124,7 @@ class SVMBase(_SVM):
         _SVM.__init__(self, kernel_type, **kwargs)
 
         # Set internal flags to signal abilities
-        self._clf_internals += [ 'multiclass' ] # we can do multiclass internally
+        self._clf_internals += [ 'multiclass', 'libsvm' ] # we can do multiclass internally
 
         if svm_type in [svm.svmc.EPSILON_SVR, svm.svmc.NU_SVR]:
             self._clf_internals += [ 'regression' ]
@@ -139,23 +139,6 @@ class SVMBase(_SVM):
         self.__model = None
         """Holds the trained SVM."""
 
-
-    def __repr__(self):
-        """Definition of the object summary over the object
-        """
-        res = "%s(" % self.__class__.__name__
-        sep = ""
-        for col in [self.params, self.kernel_params]:
-            for k in col.names:
-                # list only params with not default values
-                if col[k].isDefault:
-                    continue
-                res += "%s%s=%s" % (sep, k, col[k].value)
-                sep = ', '
-
-        res += sep + "enable_states=%s" % (str(self.states.enabled))
-        res += ")"
-        return res
 
 
     def _train(self, dataset):
