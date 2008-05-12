@@ -18,13 +18,15 @@ from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
-    @sweepargs(l_clf=clfs.get('LinearSVMC', []))
-    def testMultivariate(self, l_clf):
+#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
+#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
+    def testMultivariate(self):
         mv_perf = []
         mv_lin_perf = []
         uv_perf = []
 
-        nl_clf = RbfCSVMC()
+        l_clf = clfs['linear', 'svm'][0]
+        nl_clf = clfs['non-linear', 'svm'][0]
 
         #orig_keys = nl_clf.param._params.keys()
         #nl_param_orig = nl_clf.param._params.copy()

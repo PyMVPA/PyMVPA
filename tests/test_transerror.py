@@ -90,7 +90,7 @@ class ErrorsTests(unittest.TestCase):
 
 
 
-    @sweepargs(l_clf=clfs.get('LinearSVMC', []))
+    @sweepargs(l_clf=clfs['linear', 'svm'])
     def testConfusionBasedError(self, l_clf):
         train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
                                      nonbogus_features=[0,1], snr=3, nchunks=1)
