@@ -73,7 +73,7 @@ class CrossValidationTests(unittest.TestCase):
         data = getMVPattern(10)
 
         # do crossval with default errorfx and 'mean' combiner
-        transerror = TransferError(clfs['LinearC'][0])
+        transerror = TransferError(clfs['linear'][0])
         cv = CrossValidatedTransferError(transerror,
                                          NFoldSplitter(cvtype=1),
                                          harvest_attribs=['transerror.clf.training_time'])

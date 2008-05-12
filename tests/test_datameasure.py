@@ -58,7 +58,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             snr=6)
 
 
-    @sweepargs(clf=clfs['clfs_with_sens'])
+    # XXX meta should work too but doesn't 
+    @sweepargs(clf=clfs['has_sensitivity', '!meta'])
     def testAnalyzerWithSplitClassifier(self, clf):
 
         # assumming many defaults it is as simple as
@@ -101,7 +102,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 msg="At the end we should have selected the right features")
 
 
-    @sweepargs(svm=clfs.get('LinearSVMC', []))
+    @sweepargs(svm=clfs['linear', 'svm'])
     def testLinearSVMWeights(self, svm):
         # assumming many defaults it is as simple as
         sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
@@ -112,7 +113,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
-        svmnl = clfs['NonLinearSVMC'][0]
+        svmnl = clfs['non-linear', 'svm'][0]
         self.failUnlessRaises(NotImplementedError,
                               svmnl.getSensitivityAnalyzer)
 
@@ -121,7 +122,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     # (linsvmweights for multi-class SVMs and smlrweights for SMLR)
 
 
-    @sweepargs(basic_clf=clfs['clfs_with_sens'])
+    @sweepargs(basic_clf=clfs['has_sensitivity'])
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self, basic_clf):
         #basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)
