@@ -47,7 +47,7 @@ class Warehouse(object):
 
     _KNOWN_INTERNALS = Set(['knn', 'binary', 'svm', 'linear', 'smlr', 'does_feature_selection',
                             'has_sensitivity', 'multiclass', 'non-linear', 'kernel-based', 'lars',
-                            'regression'])
+                            'regression', 'libsvm', 'sg', 'meta'])
 
     def __init__(self):
         self.__items = []
@@ -136,20 +136,20 @@ clfs += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvm
-    clfs += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)"),
+    clfs += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.svm.LinearCSVMC(
-                 C=-10.0, descr="libsvm.LinSVM(C=10*def)"),
+                 C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
              libsvm.svm.LinearCSVMC(
-                 C=1.0, descr="libsvm.LinSVM(C=1)"),
-             libsvm.svm.LinearNuSVMC(descr="libsvm.LinNuSVM(nu=def)")
+                 C=1.0, descr="libsvm.LinSVM(C=1)", probability=1),
+             libsvm.svm.LinearNuSVMC(descr="libsvm.LinNuSVM(nu=def)", probability=1)
              ]
     clfs += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
              libsvm.svm.SVMBase(kernel_type='poly',
                                 svm_type=libsvm.svmc.C_SVC,
-                                descr='libsvm.PolySVM()'),
-             libsvm.svm.SVMBase(kernel_type='sigmoid',
-                                svm_type=libsvm.svmc.C_SVC,
-                                descr='libsvm.SigmoidSVM()'),
+                                descr='libsvm.PolySVM()', probability=1),
+             #libsvm.svm.SVMBase(kernel_type='sigmoid',
+             #                   svm_type=libsvm.svmc.C_SVC,
+             #                   descr='libsvm.SigmoidSVM()'),
              libsvm.svm.RbfNuSVMC(descr="libsvm.RbfNuSVM(nu=def)")
              ]
 
@@ -186,7 +186,7 @@ if externals.exists('lars'):
         clfs += lars
         # clfs += MulticlassClassifier(lars, descr='Multiclass %s' % lars.descr)
 
-clfs += kNN(descr="kNN()")
+clfs += kNN(k=5, descr="kNN(k=5)")
 
 
 # "Interesting" classifiers
