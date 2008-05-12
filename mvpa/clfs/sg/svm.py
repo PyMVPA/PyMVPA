@@ -147,6 +147,10 @@ class SVM_SG_Modular(_SVM):
         else:
             raise ValueError, "Unknown SVM implementation %s" % svm_impl
 
+        self._clf_internals.append(
+            {True: 'multiclass', False:'binary'}[
+            svm_impl in ['gmnp', 'libsvm']])
+
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
         # For now it is needed for computing sensitivities

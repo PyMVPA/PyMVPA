@@ -123,6 +123,12 @@ class SVMBase(_SVM):
         # init base class
         _SVM.__init__(self, kernel_type, **kwargs)
 
+        # Set internal flags to signal abilities
+        self._clf_internals += [ 'multiclass' ] # we can do multiclass internally
+
+        if svm_type in [svm.svmc.EPSILON_SVR, svm.svmc.NU_SVR]:
+            self._clf_internals += [ 'regression' ]
+
         if 'nu' in self._KNOWN_PARAMS:
             # overwrite eps param with new default value (information taken from libSVM
             # docs

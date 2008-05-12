@@ -51,6 +51,10 @@ class SMLR(Classifier):
     use this for your work.
     """
 
+    _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'multiclass',
+                       'does_feature_selection' ] # later 'kernel-based'?
+
+
     def __init__(self, lm=.1, convergence_tol=1e-3, resamp_decay=.5,
                  min_resamp=.001, maxiter=10000, has_bias=True,
                  fit_all_weights=False, implementation="C", 

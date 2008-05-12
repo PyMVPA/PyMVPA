@@ -540,6 +540,12 @@ class BoostedClassifier(Classifier, Harvestable):
             for clf in self.__clfs:
                 clf.states.enable(self.states.enabled, missingok=True)
 
+        # adhere to their capabilities + 'multiclass'
+        # XXX do intersection across all classifiers!
+        self._clf_internals = [ 'multiclass' ]
+        if len(clfs)>0:
+            self._clf_internals += self.__clfs[0]._clf_internals
+
     def untrain(self):
         """Untrain `BoostedClassifier`
 
@@ -586,6 +592,13 @@ class ProxyClassifier(Classifier):
 
         self._regression = clf.regression
         """Do regression if base classifier does"""
+
+        # adhere to slave classifier capabilities
+        # XXX test test test
+        self._clf_internals = self._clf_internals[:]
+        if clf is not None:
+            self._clf_internals += clf._clf_internals
+
 
     def _train(self, dataset):
         """Train `ProxyClassifier`
@@ -1196,6 +1209,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
     has been addressed by adding .trained property to classifier, but now
     we should expclitely use isTrained here if we want... need to think more
     """
+
+    _clf_internals = [ 'does_feature_selection' ]
 
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance

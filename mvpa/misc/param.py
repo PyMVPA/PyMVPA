@@ -94,8 +94,9 @@ class Parameter(CollectableAttribute):
         return self._value == self._default
 
     def setDefault(self, value):
+        wasdefault = self.isDefault
         self._default = value
-        if self.isDefault:
+        if wasdefault:
             self.resetvalue()
             self._isset = False
 

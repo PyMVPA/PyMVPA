@@ -65,6 +65,8 @@ class _SVM(Classifier):
         }
 
 
+    _clf_internals = [ 'svm', 'kernel-based' ]
+
     def __init__(self, kernel_type='linear', **kwargs):
         """Init base class of SVMs. *Not to be publicly used*
 
@@ -87,6 +89,13 @@ class _SVM(Classifier):
             # XXX need to do only if it is a class variable
             self._KNOWN_KERNEL_PARAMS = \
                  self._KNOWN_KERNEL_PARAMS[:] + list(self._KERNELS[kernel_type][1])
+
+        # Assign per-instance _clf_internals
+        self._clf_internals = _SVM._clf_internals[:]
+        if kernel_type == 'linear':
+            self._clf_internals += [ 'linear', 'has_sensitivity' ]
+        else:
+            self._clf_internals += [ 'non-linear' ]
 
         # pop out all args from **kwargs which are known to be SVM parameters
         _args = {}
