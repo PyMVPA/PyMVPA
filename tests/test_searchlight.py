@@ -14,12 +14,11 @@ import numpy as N
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.measures.searchlight import Searchlight
-from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.stats import chisquare
-
+from tests_warehouse_clfs import *
 
 class SearchlightTests(unittest.TestCase):
 
@@ -38,7 +37,7 @@ class SearchlightTests(unittest.TestCase):
 
     def testSearchlight(self):
         # compute N-1 cross-validation for each sphere
-        transerror = TransferError(kNN(k=5))
+        transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
@@ -66,7 +65,7 @@ class SearchlightTests(unittest.TestCase):
 
     def testPartialSearchlightWithFullReport(self):
         # compute N-1 cross-validation for each sphere
-        transerror = TransferError(kNN(k=5))
+        transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),
@@ -84,7 +83,7 @@ class SearchlightTests(unittest.TestCase):
 
     def testChiSquareSearchlight(self):
         # only do partial to save time
-        transerror = TransferError(kNN(k=5))
+        transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),

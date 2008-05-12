@@ -23,7 +23,7 @@ class SVDMapper(Mapper):
     """Mapper to project data onto SVD components estimated from some dataset.
     """
     def __init__(self, selector=None, demean=True):
-        """Initialize the PCAMapper
+        """Initialize the SVDMapper
 
         :Parameters:
             selector: None, list of ElementSelector
@@ -92,7 +92,7 @@ class SVDMapper(Mapper):
         U, SV, Vh = N.linalg.svd(X, full_matrices=0)
 
         # store the final matrix with the new basis vectors to project the
-        # features onto the PCA components. And store its .H right away to
+        # features onto the SVD components. And store its .H right away to
         # avoid computing it in forward()
         self.mix = Vh.H
 
@@ -118,13 +118,20 @@ class SVDMapper(Mapper):
 
 
     def forward(self, data, demean=True):
-        """Project a 2D samples x features matrix onto the PCA components.
+        """Project a 2D samples x features matrix onto the SVD components.
 
+        :Parameters:
+            data: array
+                Data arry to map
+            demean: bool
+                Flag whether to substract the training data mean before mapping.
+                XXX: Not sure if this is the right place. Maybe better move to
+                     constructor as it would be difficult to set this flag.
         :Returns:
           NumPy array
         """
         if self.mix is None:
-            raise RuntimeError, "PCAMapper needs to be train before used."
+            raise RuntimeError, "SVDMapper needs to be train before used."
         if demean and self.mean is not None:
             return ((N.asmatrix(data) - self.mean)*self.mix).A
         else:
@@ -139,18 +146,18 @@ class SVDMapper(Mapper):
           NumPy array
         """
         if self.mix is None:
-            raise RuntimeError, "PCAMapper needs to be train before used."
+            raise RuntimeError, "SVDMapper needs to be train before used."
 
         if self.unmix is None:
-            # YYY yoh: should better be simply H instead of I
             self.unmix = self.mix.H
 
             if self.__demean:
+                # XXX: why store in object if computed all the time?
                 self.mean_out = self.forward(self.mean, demean=False)
                 if __debug__:
                     debug("MAP_",
-                          "Mean of data in input space %s bacame %s in outspace" %
-                          (self.mean, self.mean_out))
+                          "Mean of data in input space %s bacame %s in " \
+                          "outspace" % (self.mean, self.mean_out))
 
         if self.__demean:
             return ((N.asmatrix(data) + self.mean_out) * self.unmix).A
@@ -164,7 +171,7 @@ class SVDMapper(Mapper):
 
 
     def getOutShape(self):
-        """Returns a one-tuple with the number of PCA components."""
+        """Returns a one-tuple with the number of SVD components."""
         return (self.mix.shape[1], )
 
 
@@ -174,12 +181,12 @@ class SVDMapper(Mapper):
 
 
     def getOutSize(self):
-        """Returns the number of PCA components."""
+        """Returns the number of SVD components."""
         return self.mix.shape[1]
 
 
     def selectOut(self, outIds):
-        """Choose a subset of PCA components (and remove all others)."""
+        """Choose a subset of SVD components (and remove all others)."""
         self.mix = self.mix[:, outIds]
         # invalidate unmixing matrix
         self.unmix = None
