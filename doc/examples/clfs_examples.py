@@ -68,9 +68,9 @@ def main():
 
     for (dataset, datasetdescr), clfs_ in \
         [
-        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
-        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all']),
-        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
+        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs[:]),
+        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['multiclass', 'non-linear']),
+        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['multiclass']),
         ]:
 
         print "%s: %s" % (datasetdescr, `dataset`)
