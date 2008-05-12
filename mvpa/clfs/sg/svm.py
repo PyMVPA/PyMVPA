@@ -36,11 +36,18 @@ if __debug__:
     from mvpa.misc import debug
 
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
-                   "gmnp" : shogun.Classifier.GMNPSVM,
+                   # fails to train though it should... disabled for now
+                   #"gmnp" : shogun.Classifier.GMNPSVM,
+
                    # disabled due to infinite looping on XOR
                    #"mpd"  : shogun.Classifier.MPDSVM,
-                   "gpbt" : shogun.Classifier.GPBTSVM,
-                   "gnpp" : shogun.Classifier.GNPPSVM,
+
+                   # fails to train for testAnalyzerWithSplitClassifier
+                   #"gpbt" : shogun.Classifier.GPBTSVM,
+
+                   # Failes some times with 'assertion Cache_Size > 2' though should work
+                   # check later
+                   #"gnpp" : shogun.Classifier.GNPPSVM,
                    }
 
 if externals.exists('shogun.lightsvm'):
@@ -147,6 +154,7 @@ class SVM_SG_Modular(_SVM):
         else:
             raise ValueError, "Unknown SVM implementation %s" % svm_impl
 
+        self._clf_internals += [ 'sg' ]
         self._clf_internals.append(
             {True: 'multiclass', False:'binary'}[
             svm_impl in ['gmnp', 'libsvm']])
@@ -161,24 +169,24 @@ class SVM_SG_Modular(_SVM):
         self.__kernel = None
 
 
-    def __str__(self):
-        """Definition of the object summary over the object
-        """
-        res = "<SVM_SG_Modular#%d>" % id(self)
-        return res # XXX
-
-        sep = ""
-        for k,v in self.param._params.iteritems():
-            res += "%s%s=%s" % (sep, k, str(v))
-            sep = ', '
-        res += sep + "enable_states=%s" % (str(self.states.enabled))
-        res += ")"
-        return res
+    #def __str__(self):
+    #    """Definition of the object summary over the object
+    #    """
+    #    res = "<SVM_SG_Modular#%d>" % id(self)
+    #    return res # XXX
+    #
+    #    sep = ""
+    #    for k,v in self.param._params.iteritems():
+    #        res += "%s%s=%s" % (sep, k, str(v))
+    #        sep = ', '
+    #    res += sep + "enable_states=%s" % (str(self.states.enabled))
+    #    res += ")"
+    #    return res
 
     def __repr__(self):
         # adjust representation a bit to report SVM backend
-        id_ = super(SVM_SG_Modular, self).__repr__()
-        return id_.replace("#", "/%s#" % self.__svm_impl)
+        repr_ = super(SVM_SG_Modular, self).__repr__()
+        return repr_.replace("(kern", "(svm_impl='%s', kern" % self.__svm_impl)
 
 
     def _train(self, dataset):
@@ -388,6 +396,15 @@ class SVM_SG_Modular(_SVM):
             debug("SG__", "Done untraining %s and destroying sg's SVM" % self)
 
 
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns an appropriate SensitivityAnalyzer."""
+        if self._kernel_type_literal == 'linear':
+            return ShogunLinearSVMWeights(self, **kwargs)
+        else:
+            raise NotImplementedError, 'Non-linear SVM sensitivity is not yet here'
+
+
+
     svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
 
@@ -408,10 +425,6 @@ class LinearSVM(SVM_SG_Modular):
         """
         # init base class
         SVM_SG_Modular.__init__(self, kernel_type='linear', **kwargs)
-
-    def getSensitivityAnalyzer(self, **kwargs):
-        """Returns an appropriate SensitivityAnalyzer."""
-        return ShogunLinearSVMWeights(self, **kwargs)
 
 
 # We don't have nu-SVM here
