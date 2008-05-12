@@ -65,7 +65,8 @@ class LARS(Classifier):
 
     """
 
-    _clf_internals = [ 'regression' ]
+    # XXX from yoh: it is linear, isn't it?
+    _clf_internals = [ 'lars', 'regression', 'linear' ]
 
     def __init__(self, model_type="lasso", trace=False, normalize=True,
                  intercept=True, max_steps=None, use_Gram=False, **kwargs):
