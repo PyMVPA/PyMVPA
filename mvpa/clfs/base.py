@@ -353,7 +353,7 @@ class Classifier(Stateful):
                 result[i] = trained_labels[N.argmin(dists)]
 
             if __debug__:
-                debug("CLF_", "Converted regression result %s into labels %s" % (result_, result))
+                debug("CLF_", "Converted regression result %s into labels %s for %s" % (result_, result, self))
 
         self._postpredict(data, result)
         return result
