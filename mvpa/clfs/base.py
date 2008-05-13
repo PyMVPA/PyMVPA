@@ -144,7 +144,8 @@ class Classifier(Stateful):
     doing regression for instance...."""
 
 
-    def __init__(self, train2predict=True, regression=False, **kwargs):
+    def __init__(self, train2predict=True, regression=False, retrainable=False,
+                 **kwargs):
         """Cheap initialization.
         """
         Stateful.__init__(self, **kwargs)
@@ -159,6 +160,9 @@ class Classifier(Stateful):
         self._regression = regression
         """If True - perform regression, not classification"""
 
+        self._retrainable = retrainable
+        """If True - store anything necessary for efficient retrain"""
+
         if self._regression:
             for statevar in [ "trained_labels", "training_confusion" ]:
                 if self.states.isEnabled(statevar):
@@ -168,7 +172,7 @@ class Classifier(Stateful):
                               statevar + "not classification")
                     self.states.disable(statevar)
 
-        self.__trainedid = None
+        self.__trainedidhash = None
         """Stores id of the dataset on which it was trained to signal
         in trained() if it was trained already on the same dataset"""
 
@@ -189,7 +193,11 @@ class Classifier(Stateful):
         """
         # So we reset all state variables and may be free up some memory
         # explicitely
-        self.untrain()
+        if not self._retrainable:
+            self.untrain()
+        else:
+            # just reset the states
+            self.states.reset()
 
         if not self._regression and 'regression' in self._clf_internals \
            and not self.states.isEnabled('trained_labels'):

@@ -58,6 +58,25 @@ known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
                    #"krr": shogun.Regression.KRR
                    }
 
+def _get_implementation(svm_impl, nl):
+    if nl > 2:
+        if svm_impl == 'libsvm':
+            svm_impl_class = shogun.Classifier.LibSVMMultiClass
+        elif svm_impl == 'gmnp':
+            svm_impl_class = shogun.Classifier.GMNPSVM
+        else:
+            raise RuntimeError, \
+                  "Shogun: Implementation %s doesn't handle multiclass " \
+                  "data. Got labels %s. Use some other classifier" % \
+                  (svm_impl, ul)
+        if __debug__:
+            debug("SG_", "Using %s for multiclass data of %s" %
+                  (svm_impl_class, svm_impl))
+    else:
+            svm_impl_class = known_svm_impl[svm_impl]
+    return svm_impl_class
+
+
 if externals.exists('shogun.lightsvm'):
     known_svm_impl["lightsvm"] = shogun.Classifier.SVMLight
 
@@ -174,6 +193,21 @@ class SVM_SG_Modular(_SVM):
         self.__traindata = None
         self.__kernel = None
 
+        # if we do retraining -- store hashes
+        self.__idhashes = (None, None)  # samples, labels
+
+        if __debug__:
+            if 'RETRAIN' in debug.active:
+                # XXX it is not clear though if idhash is faster than
+                # simple comparison of (dataset != __traineddataset).any(),
+                # but if we like to get rid of __traineddataset then we should
+                # use idhash anyways
+
+                # XXX now we keep 2 copies of the data -- __traineddataset
+                #     has it in SG format... uff
+                #
+                self.__trained = (None, None) # samples, labels
+
 
     def __repr__(self):
         # adjust representation a bit to report SVM backend
@@ -184,33 +218,34 @@ class SVM_SG_Modular(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
+        # XXX might get up in hierarchy
+        if self._retrainable:
+            changedParams = self.params.whichSet()
+            changedKernelParams = self.kernel_params.whichSet()
+            changedData = (None, None)  # samples, labels
+
         self.untrain()
-        svm_impl_class = None
+
+        if self._retrainable:
+            for descr, i, entry in ( ('samples', 0, dataset.samples),
+                                     ('labels', 1, dataset.labels) ):
+                idhash = idhash(entry)
+
+                changed = self.__idhash[i] != idhash
+
+                if __debug__ and 'RETRAIN' in debug.active:
+                    if entry != self.__trained[i]:
+                        raise RuntimeError, \
+                          'hashid found to be weak for %s. Though hashid %s==%s, '\
+                          'values %s != %s' % \
+                          (descr, idhash, self.__idhash[i],
+                           entry, self.__trained[i])
+
+                self.__idhash[i] == idhash
+                changedData[i] = changed
 
         ul = dataset.uniquelabels
         ul.sort()
-
-        # XXX sooner than later we should simply disallow this hidden logic
-        #     and just throw an exception so people use MulticlassClassifier
-        #     if needed
-        #
-        svm_impl = self.__svm_impl
-        if len(ul) > 2:
-            if svm_impl == 'libsvm':
-                svm_impl_class = shogun.Classifier.LibSVMMultiClass
-            elif svm_impl == 'gmnp':
-                svm_impl_class = shogun.Classifier.GMNPSVM
-                # or just known_svm_impl[self.__svm_impl]
-            else:
-                raise RuntimeError, \
-                      "Shogun: Implementation %s doesn't handle multiclass " \
-                      "data. Got labels %s. Use some other classifier" % \
-                      (svm_impl, ul)
-            if __debug__:
-                debug("SG_", "Using %s for multiclass data of %s" %
-                      (svm_impl_class, svm_impl))
-        else:
-            svm_impl_class = known_svm_impl[svm_impl]
 
         # create training data
         if __debug__:
@@ -273,34 +308,50 @@ class SVM_SG_Modular(_SVM):
                 debug("SG_", "Default C for %s was computed to be %s" %
                              (self.params.C, C))
 
-        # create KERNEL
-        if __debug__:
-            debug("SG_", "Creating kernel instance of %s giving arguments %s" %
-                  (`self._kernel_type`, kargs))
-        self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
-                                          *kargs)
+        # KERNEL
+        if not self._retrainable or changedData[0] or changedKernelParams:
+            if self._retrainable and __debug__:
+                debug("SG_",
+                      "Re-Creating kernel instance since samples/kernel_params has changed")
 
-        _setdebug(self.__kernel, 'Kernels')
+            if __debug__:
+                debug("SG_", "Creating kernel instance of %s giving arguments %s" %
+                      (`self._kernel_type`, kargs))
+            self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
+                                              *kargs)
+            if self._retrainable:
+                self.__kernel.set_precompute_matrix(True, True)
+            _setdebug(self.__kernel, 'Kernels')
 
-        # create SVM
-        if __debug__:
-            debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
+        # SVM
+        if not self._retrainable or self.__svm is None:
+            # Choose appropriate implementation
+            svm_impl_class = _get_implementation(self.__svm_impl, len(ul))
 
-        if self.__svm_impl in ['libsvr', 'svrlight']:
-            # for regressions constructor a bit different
-            self.__svm = svm_impl_class(C, self.params.epsilon, self.__kernel, labels)
-        elif self.__svm_impl in ['krr']:
-            self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
+            if __debug__:
+                debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
+
+            if self.__svm_impl in ['libsvr', 'svrlight']:
+                # for regressions constructor a bit different
+                self.__svm = svm_impl_class(C, self.params.epsilon, self.__kernel, labels)
+            elif self.__svm_impl in ['krr']:
+                self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
+            else:
+                self.__svm = svm_impl_class(C, self.__kernel, labels)
+                self.__svm.set_epsilon(self.params.epsilon)
+            _setdebug(self.__svm, 'SVM')
+            # Set optimization parameters
+            if hasattr(self.__svm, 'set_tube_epsilon'):
+                self.__svm.set_tube_epsilon(self.params.tube_epsilon)
+            self.__svm.parallel.set_num_threads(self.params.num_threads)
         else:
-            self.__svm = svm_impl_class(C, self.__kernel, labels)
-            self.__svm.set_epsilon(self.params.epsilon)
-
-        # Set optimization parameters
-        if hasattr(self.__svm, 'set_tunbe_epsilon'):
-            self.__svm.set_tube_epsilon(self.params.tube_epsilon)
-        self.__svm.parallel.set_num_threads(self.params.num_threads)
-
-        _setdebug(self.__svm, 'SVM')
+            if __debug__:
+                debug("SG_", "SVM instance is not re-created")
+            if changedData[1]:          # labels were changed
+                self.__svm.set_labels(labels)
+            if changedParams:
+                raise NotImplementedError, \
+                      "Implement handling of changing params of SVM"
 
         # train
         if __debug__:
@@ -376,6 +427,8 @@ class SVM_SG_Modular(_SVM):
             debug("SG__", "Untraining %s and destroying sg's SVM" % self)
         super(SVM_SG_Modular, self).untrain()
 
+        self.__idhashes = (None, None)  # samples, labels
+
         # to avoid leaks with not yet properly fixed shogun
         # XXX make it nice... now it is just stable ;-)
         if not self.__traindata is None:
@@ -384,6 +437,9 @@ class SVM_SG_Modular(_SVM):
                     self.__traindata.free_features()
                 except:
                     pass
+                if __debug__:
+                    if 'RETRAIN' in debug.active:
+                        self.__trained = (None,None)
                 self.__traindataset = None
                 del self.__kernel
                 self.__kernel = None
