@@ -393,8 +393,6 @@ class ClassifierError(Stateful):
         """TODO: think... may be we need to copy self.clf"""
         out = ClassifierError.__new__(TransferError)
         ClassifierError.__init__(out, self.clf)
-        # XXX: Disabled by Michael because there is no such thing
-        #out._copy_states_(self)
         return out
 
 
