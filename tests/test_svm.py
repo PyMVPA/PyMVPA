@@ -48,9 +48,10 @@ class SVMTests(unittest.TestCase):
         # We must be able to deepcopy not yet trained SVMs now
         import copy
         try:
+            nl_clf.untrain()
             nl_clf_copy = copy.deepcopy(nl_clf)
         except:
-            self.fail(msg="Failed to deepcopy not-yet trained SVM")
+            self.fail(msg="Failed to deepcopy not-yet trained SVM %s" % nl_clf)
 
         for i in xrange(20):
             train = pureMultivariateSignal( 20, 3 )
