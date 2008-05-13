@@ -285,9 +285,12 @@ class SVMModel:
         and some statistics
         """
         ret = '<SVMModel:'
-        ret += ' type = %s, ' % `self.svm_type`
-        ret += ' number of classes = %d (%s), ' \
-                % ( self.nr_class, `self.labels` )
+        try:
+            ret += ' type = %s, ' % `self.svm_type`
+            ret += ' number of classes = %d (%s), ' \
+                   % ( self.nr_class, `self.labels` )
+        except:
+            pass
         return ret+'>'
 
 
