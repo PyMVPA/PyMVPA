@@ -215,7 +215,7 @@ class Classifier(Stateful):
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
-        self.__trainedid = dataset._id
+        self.__trainedidhash = dataset.idhash
 
         if self.states.isEnabled('training_confusion'):
             # we should not store predictions for training data,
@@ -367,7 +367,7 @@ class Classifier(Stateful):
             return not self.__trainednfeatures is None
         else:
             return (self.__trainednfeatures == dataset.nfeatures) \
-                   and (self.__trainedid == dataset._id)
+                   and (self.__trainedidhash == dataset.idhash)
 
     @property
     def regression(self):

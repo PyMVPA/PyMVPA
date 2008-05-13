@@ -15,9 +15,10 @@ import numpy as N
 from mvpa.misc.support import *
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
-from tests_warehouse import getMVPattern
+from tests_warehouse import getMVPattern, sweepargs
 from tests_warehouse_clfs import *
 
+from mvpa.misc.copy import deepcopy
 
 class SupportFxTests(unittest.TestCase):
 
@@ -140,6 +141,26 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(res.has_key('confusion') and res.has_key('result'))
         self.failUnless(len(res['result']) == len(data.uniquechunks))
 
+
+    @sweepargs(pair=[(N.random.normal(size=(10,20)), N.random.normal(size=(10,20))),
+                     ([1,2,3,0], [1,3,2,0]),
+                     ((1,2,3,1), (1,3,2,1))])
+    def testIdHash(self, pair):
+        a, b = pair
+        a1 = deepcopy(a)
+        a_1 = idhash(a)
+        self.failUnless(a_1 == idhash(a),  msg="Must be of the same idhash")
+        self.failUnless(a_1 != idhash(b), msg="Must be of different idhash")
+        if isinstance(a, N.ndarray):
+            self.failUnless(a_1 != idhash(a.T), msg=".T must be of different idhash")
+        if not isinstance(a, tuple):
+            self.failUnless(a_1 != idhash(a1), msg="Must be of different idhash")
+            a[2] += 1; a_2 = idhash(a)
+            self.failUnless(a_1 != a_2, msg="Idhash must change")
+        else:
+            a_2 = a_1
+        a = a[2:]; a_3 = idhash(a)
+        self.failUnless(a_2 != a_3, msg="Idhash must change after slicing")
 
 
 def suite():
