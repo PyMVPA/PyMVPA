@@ -21,6 +21,7 @@ from math import log10, ceil
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable, Stateful
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.misc import debug
@@ -385,6 +386,9 @@ class ClassifierError(Stateful):
         """Either to train classifier if trainingdata is provided"""
 
 
+    __doc__ = enhancedDocString('ClassifierError', locals(), Stateful)
+
+
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""
         out = ClassifierError.__new__(TransferError)
@@ -497,6 +501,9 @@ class TransferError(ClassifierError):
         self.__errorfx = errorfx
 
 
+    __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
+
+
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""
         # TODO TODO -- use ClassifierError.__copy__
@@ -582,6 +589,10 @@ class ConfusionBasedError(ClassifierError):
                 debug('CERR', "Forcing state %s to be enabled for %s" %
                       (confusion_state, `clf`))
             clf.states.enable(confusion_state)
+
+
+    __doc__ = enhancedDocString('ConfusionBasedError', locals(),
+                                ClassifierError)
 
 
     def _call(self, testdata, trainingdata=None):
