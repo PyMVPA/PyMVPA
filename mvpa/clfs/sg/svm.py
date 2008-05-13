@@ -132,6 +132,8 @@ class SVM_SG_Modular(_SVM):
     _KNOWN_PARAMS = [ 'C', 'epsilon' ]
     _KNOWN_KERNEL_PARAMS = [ ]
 
+    _clf_internals = _SVM._clf_internals + [ 'sg' ]
+
     def __init__(self,
                  kernel_type='linear',
                  svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
@@ -150,13 +152,6 @@ class SVM_SG_Modular(_SVM):
         self.__svm = None
         """Holds the trained svm."""
 
-        # although there are some multiclass SVMs already in shogun,
-        # we might rely on our own in some cases
-        # XXX should be removed from here after we set proper tags like
-        #     'binary', 'multiclass', ...
-        self.__mclf = None
-        """Holds `multiclassClassifier` if such one is needed"""
-
         # assign default params
         svm_impl = svm_impl.lower()
         if  svm_impl in known_svm_impl:
@@ -164,13 +159,11 @@ class SVM_SG_Modular(_SVM):
         else:
             raise ValueError, "Unknown SVM implementation %s" % svm_impl
 
-        self._clf_internals += [ 'sg' ]
         self._clf_internals.append(
             {True: 'multiclass', False:'binary'}[
             svm_impl in ['gmnp', 'libsvm']])
         if svm_impl in ['svrlight', 'libsvr', 'krr']:
             self._clf_internals += [ 'regression' ]
-
 
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
@@ -182,20 +175,6 @@ class SVM_SG_Modular(_SVM):
         self.__kernel = None
 
 
-    #def __str__(self):
-    #    """Definition of the object summary over the object
-    #    """
-    #    res = "<SVM_SG_Modular#%d>" % id(self)
-    #    return res # XXX
-    #
-    #    sep = ""
-    #    for k,v in self.param._params.iteritems():
-    #        res += "%s%s=%s" % (sep, k, str(v))
-    #        sep = ', '
-    #    res += sep + "enable_states=%s" % (str(self.states.enabled))
-    #    res += ")"
-    #    return res
-
     def __repr__(self):
         # adjust representation a bit to report SVM backend
         repr_ = super(SVM_SG_Modular, self).__repr__()
@@ -206,7 +185,6 @@ class SVM_SG_Modular(_SVM):
         """Train SVM
         """
         self.untrain()
-        self.__mclf = None
         svm_impl_class = None
 
         ul = dataset.uniquelabels
@@ -216,20 +194,23 @@ class SVM_SG_Modular(_SVM):
         #     and just throw an exception so people use MulticlassClassifier
         #     if needed
         #
-        if len(ul) > 2: # or (ul != [-1.0, 1.0]).any():
-            if self.__svm_impl == 'libsvm':
+        svm_impl = self.__svm_impl
+        if len(ul) > 2:
+            if svm_impl == 'libsvm':
                 svm_impl_class = shogun.Classifier.LibSVMMultiClass
-            elif self.__svm_impl == 'gmnp':
+            elif svm_impl == 'gmnp':
                 svm_impl_class = shogun.Classifier.GMNPSVM
                 # or just known_svm_impl[self.__svm_impl]
             else:
-                warning("XXX Using built-in MultiClass classifier for now")
-                mclf = MulticlassClassifier(self)
-                mclf._train(dataset)
-                self.__mclf = mclf
-                return
+                raise RuntimeError, \
+                      "Shogun: Implementation %s doesn't handle multiclass " \
+                      "data. Got labels %s. Use some other classifier" % \
+                      (svm_impl, ul)
+            if __debug__:
+                debug("SG_", "Using %s for multiclass data of %s" %
+                      (svm_impl_class, svm_impl))
         else:
-            svm_impl_class = known_svm_impl[self.__svm_impl]
+            svm_impl_class = known_svm_impl[svm_impl]
 
         # create training data
         if __debug__:
@@ -342,9 +323,6 @@ class SVM_SG_Modular(_SVM):
         """Predict values for the data
         """
 
-        if not self.__mclf is None:
-            return self.__mclf._predict(data)
-
         if __debug__:
             debug("SG_", "Initializing kernel with training/testing data")
 
@@ -400,10 +378,7 @@ class SVM_SG_Modular(_SVM):
 
         # to avoid leaks with not yet properly fixed shogun
         # XXX make it nice... now it is just stable ;-)
-        if not self.__mclf is None:
-            self.__mclf.untrain()
-            self.__mclf = None
-        elif not self.__traindata is None:
+        if not self.__traindata is None:
             try:
                 try:
                     self.__traindata.free_features()
@@ -434,9 +409,6 @@ class SVM_SG_Modular(_SVM):
 
     svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
-
-    mclf = property(fget=lambda self: self.__mclf)
-    """Multiclass classifier if it was used"""
 
     traindataset = property(fget=lambda self: self.__traindataset)
     """Dataset which was used for training
@@ -500,22 +472,9 @@ class ShogunLinearSVMWeights(Sensitivity):
 
 
     def _call(self, dataset):
-        # TODO: since multiclass is done internally - we need to check
-        # here if self.clf.__mclf is not an instance of some out
-        # Classifier and apply corresponding combiner of
-        # sensitivities... think about it more... damn
-
         # XXX Hm... it might make sense to unify access functions
         # naming across our swig libsvm wrapper and sg access
         # functions for svm
-
-        if not self.clf.mclf is None:
-            anal = self.clf.mclf.getSensitivityAnalyzer()
-            if __debug__:
-                debug('SVM',
-                      '! Delegating computing sensitivity to %s' % `anal`)
-            return anal(dataset)
-
         svm = self.clf.svm
         if isinstance(svm, shogun.Classifier.MultiClassSVM):
             sens = []
