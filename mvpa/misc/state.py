@@ -508,6 +508,15 @@ class ParameterCollection(Collection):
                 return True
         return False
 
+    def whichSet(self):
+        """Return list of indexes which were set"""
+        result = []
+        # go through all members and if any isSet -- return True
+        for index in self._items:
+            if Collection.isSet(self, index):
+                result += index
+        return result
+
 
 class StateCollection(Collection):
     """Container of StateVariables for a stateful object.
