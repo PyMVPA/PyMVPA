@@ -42,19 +42,23 @@ class ConfusionMatrix(object):
         ('TN', 'true negative (AKA correct rejection)', None),
         ('FP', 'false positive (AKA false alarm, Type I error)', None),
         ('FN', 'false negative (AKA miss, Type II error)', None),
-        ('TPR', 'true positive rate (AKA hit rate, recall, sensitivity)','TPR = TP / P = TP / (TP + FN)'),
-        ('FPR', 'false positive rate (AKA false alarm rate, fall-out)','FPR = FP / N = FP / (FP + TN)'),
+        ('TPR', 'true positive rate (AKA hit rate, recall, sensitivity)',
+                'TPR = TP / P = TP / (TP + FN)'),
+        ('FPR', 'false positive rate (AKA false alarm rate, fall-out)',
+                'FPR = FP / N = FP / (FP + TN)'),
         ('ACC', 'accuracy', 'ACC = (TP + TN) / (P + N)'),
         ('SPC', 'specificity', 'SPC = TN / (FP + TN) = 1 - FPR'),
-        ('PPV', 'positive predictive value (AKA precision)', 'PPV = TP / (TP + FP)'),
+        ('PPV', 'positive predictive value (AKA precision)',
+                'PPV = TP / (TP + FP)'),
         ('NPV', 'negative predictive value', 'NPV = TN / (TN + FN)'),
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
-        ('MCC', "Matthews Correlation Coefficient", "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
+        ('MCC', "Matthews Correlation Coefficient",
+                "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
         )
 
     # XXX Michael: - How do multiple sets work and what are they there for?
-    # YYY Yarik:   - Set is just a tuple (targets, predictions). While 'computing'
-    #                the matrix, all sets are considered together.
+    # YYY Yarik:   - Set is just a tuple (targets, predictions). While
+    #                'computing' the matrix, all sets are considered together.
     def __init__(self, labels=None, targets=None, predictions=None):
         """Initialize ConfusionMatrix with optional list of `labels`
 
@@ -118,13 +122,14 @@ class ConfusionMatrix(object):
             if not self.__matrix is None:
                 debug("LAZY", "Have to recompute ConfusionMatrix %s" % `self`)
 
-        # TODO: BinaryClassifier might spit out a list of predictions for each value
-        # need to handle it... for now just keep original labels
+        # TODO: BinaryClassifier might spit out a list of predictions for each
+        # value need to handle it... for now just keep original labels
         try:
             # figure out what labels we have
-            labels = list(reduce(lambda x, y: x.union(Set(y[0]).union(Set(y[1]))),
-                                 self.__sets,
-                                 Set(self.__labels)))
+            labels = \
+                list(reduce(lambda x, y: x.union(Set(y[0]).union(Set(y[1]))),
+                            self.__sets,
+                            Set(self.__labels)))
         except:
             labels = self.__labels
 
@@ -175,8 +180,9 @@ class ConfusionMatrix(object):
         stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
         stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
-        stats['MCC'] = (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN']) / \
-                       N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+        stats['MCC'] = \
+            (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN']) \
+            / N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
@@ -205,10 +211,12 @@ class ConfusionMatrix(object):
         Ndigitsmax = int(ceil(log10(max(Nsamples))))
         Nlabelsmax = max( [len(str(x)) for x in labels] )
 
-        L = max(Ndigitsmax+2, Nlabelsmax) #, len("100.00%"))     # length of a single label/value
+        # length of a single label/value
+        L = max(Ndigitsmax+2, Nlabelsmax) #, len("100.00%"))
         res = ""
 
-        stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR', 'SPC', 'FDR', 'MCC']
+        stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
+                            'SPC', 'FDR', 'MCC']
         stats_pertarget = ['P', 'N', 'TP', 'TN']
         stats_summary = ['ACC', 'ACC%']
 
@@ -230,18 +238,21 @@ class ConfusionMatrix(object):
             printed.append(['----------.        '])
             printed.append(['predictions\\targets'] + labels)
             # underscores
-            printed.append(['            `------'] + underscores + stats_perpredict)
+            printed.append(['            `------'] \
+                           + underscores + stats_perpredict)
 
         # matrix itself
         for i, line in enumerate(matrix):
-            printed.append([labels[i]] +
-                           [ str(x) for x in line ] +
-                           [ '%.2g' % self.__stats[x][i] for x in stats_perpredict])
+            printed.append(
+                [labels[i]] +
+                [ str(x) for x in line ] +
+                [ '%.2g' % self.__stats[x][i] for x in stats_perpredict])
 
         if summary:
             printed.append(['Per target:'] + underscores)
             for stat in stats_pertarget:
-                printed.append([stat] + ['%.2g' % self.__stats[stat][i] for i in xrange(Nlabels)])
+                printed.append([stat] + ['%.2g' \
+                    % self.__stats[stat][i] for i in xrange(Nlabels)])
 
             printed.append(['SUMMARY:'] + underscores)
 
@@ -262,13 +273,16 @@ class ConfusionMatrix(object):
                 item = str(item)
                 NspacesL = ceil((col_width[j] - len(item))/2.0)
                 NspacesR = col_width[j] - NspacesL - len(item)
-                out.write("%%%ds%%s%%%ds " % (NspacesL, NspacesR) % ('', item, ''))
+                out.write("%%%ds%%s%%%ds " \
+                          % (NspacesL, NspacesR) % ('', item, ''))
             out.write("\n")
 
 
         if description:
-            out.write("\nStatistics computed in 1-vs-rest fashion per each target.\n")
-            out.write("Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):\n")
+            out.write("\nStatistics computed in 1-vs-rest fashion per each " \
+                      "target.\n")
+            out.write("Abbreviations (for details see " \
+                      "http://en.wikipedia.org/wiki/ROC_curve):\n")
             for d, val, eq in self._STATS_DESCRIPTION:
                 out.write(" %-3s: %s\n" % (d, val))
                 if eq is not None:
@@ -319,10 +333,12 @@ class ConfusionMatrix(object):
         self._compute()
         return self.__matrix
 
+
     @property
     def percentCorrect(self):
         self._compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
+
 
     @property
     def error(self):
@@ -367,6 +383,7 @@ class ClassifierError(Stateful):
 
         self.__train = train
         """Either to train classifier if trainingdata is provided"""
+
 
     def __copy__(self):
         """TODO: think... may be we need to copy self.clf"""
@@ -443,9 +460,11 @@ class ClassifierError(Stateful):
         self._postcall(testdataset, trainingdataset, error)
         return error
 
+
     @property
     def clf(self):
         return self.__clf
+
 
     @property
     def labels(self):
@@ -519,6 +538,7 @@ class TransferError(ClassifierError):
                                testdataset.labels)
 
         return error
+
 
     @property
     def errorfx(self): return self.__errorfx
