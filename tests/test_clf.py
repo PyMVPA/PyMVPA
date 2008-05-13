@@ -309,15 +309,16 @@ class ClassifiersTests(unittest.TestCase):
                 self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
         clf.states._resetEnabledTemporarily()
 
-    @sweepargs(clf=clfs[:])
-    def testGenericTests(self, clf):
+    def testGenericTests(self):
         """Test all classifiers for conformant behavior
         """
-        for traindata in [dumbFeatureDataset()]:
+        for clf_, traindata in [(clfs['multiclass'] + clfs['binary'], dumbFeatureBinaryDataset()),
+                          (clfs['multiclass'], dumbFeatureDataset())]:
             traindata_copy = deepcopy(traindata) # full copy of dataset
-            clf.train(traindata)
-            self.failUnless((traindata.samples == traindata_copy.samples).all(),
-                "Training of a classifier shouldn't change original dataset")
+            for clf in clf_:
+                clf.train(traindata)
+                self.failUnless((traindata.samples == traindata_copy.samples).all(),
+                                "Training of a classifier shouldn't change original dataset")
 
             # TODO: enforce uniform return from predict??
             #predicted = clf.predict(traindata.samples)
