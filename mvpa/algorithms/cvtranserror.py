@@ -104,7 +104,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         results = []
         self.splits = []
 
-        terr_enable = []                # what states to enable in terr
+        # what states to enable in terr
+        terr_enable = []
         for state_var in ['confusion', 'training_confusion']:
             if self.states.isEnabled(state_var):
                 terr_enable += [state_var]
@@ -112,9 +113,10 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         # charge states with initial values
         self.confusion = ConfusionMatrix()
         self.training_confusion = ConfusionMatrix()
-
         self.transerrors = []
 
+        # enable requested states in child TransferError instance (restored
+        # again below)
         if len(terr_enable):
             self.__transerror.states._changeTemporarily(
                 enable_states=terr_enable)
@@ -127,6 +129,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 self.splits.append(split)
 
             result = self.__transerror(split[1], split[0])
+
+            # next line is important for 'self._harvest' call
             transerror = self.__transerror
             self._harvest(locals())
 
@@ -137,24 +141,15 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
             for state_var in ['confusion', 'training_confusion']:
                 if self.states.isEnabled(state_var):
-                    if self.__transerror.states.isActive(state_var):
-                        if self.states.isEnabled(state_var):
-                            self.states.get(state_var).__iadd__(
-                                self.__transerror.states.get(state_var))
-                    else:
-                        # XXX shouldn't happen actually. may be could be removed?
-                        warning("Crossvalidator %s can't store %s state " %
-                                (self, state_var) + "since transfer error %s " %
-                                self.__transerror +
-                                "doesn't have %s enabled to registered" %
-                                state_var)
+                    self.states.get(state_var).__iadd__(
+                        self.__transerror.states.get(state_var))
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" \
                       % (len(results), `result`))
             results.append(result)
 
-
+        # put states of child TransferError back into original config
         if len(terr_enable):
             self.__transerror.states._resetEnabledTemporarily()
 
