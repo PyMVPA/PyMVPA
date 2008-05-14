@@ -33,7 +33,7 @@ class CrossValidationTests(unittest.TestCase):
             (data.chunks == \
                 [ k for k in range(1,7) for i in range(20) ] ).all() )
 
-        transerror = TransferError(kNN())
+        transerror = TransferError(sample_clf_nl)
         cv = CrossValidatedTransferError(transerror,
                                          NFoldSplitter(cvtype=1),
                                          enable_states=['confusion', 'training_confusion'])
@@ -49,7 +49,7 @@ class CrossValidationTests(unittest.TestCase):
         data = getMVPattern(10)
 
         # do crossval with default errorfx and 'mean' combiner
-        transerror = TransferError(kNN())
+        transerror = TransferError(sample_clf_nl)
         cv = CrossValidatedTransferError(transerror, NFoldSplitter(cvtype=1)) 
 
         # must return a scalar value

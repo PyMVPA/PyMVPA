@@ -12,12 +12,11 @@ import unittest
 
 import numpy as N
 
-from mvpa.clfs.knn import kNN
 from mvpa.clfs.stats import MonteCarloTest
 from mvpa.clfs.transerror import TransferError
 
 from tests_warehouse import pureMultivariateSignal
-from tests_warehouse_clfs import clfs
+from tests_warehouse_clfs import *
 
 class NullHypothesisTests(unittest.TestCase):
 
@@ -40,7 +39,7 @@ class NullHypothesisTests(unittest.TestCase):
         self.failUnless((wdata.labels == orig_labels).all())
 
         # non-linear clf on non-linear problem
-        terr = TransferError(kNN(5))
+        terr = TransferError(sample_clf_lin)
         null = MonteCarloTest(terr, permutations=100)
 
         nlin_p = null(wdata, tdata)

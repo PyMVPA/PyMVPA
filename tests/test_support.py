@@ -16,8 +16,7 @@ from mvpa.misc.support import *
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
 from tests_warehouse import getMVPattern
-from mvpa.clfs.knn import kNN
-
+from tests_warehouse_clfs import *
 
 
 class SupportFxTests(unittest.TestCase):
@@ -27,22 +26,22 @@ class SupportFxTests(unittest.TestCase):
         sp = N.arange(10)
 
         # check if stupid thing don't work
-        self.failUnlessRaises(ValueError, 
+        self.failUnlessRaises(ValueError,
                               transformWithBoxcar,
                               data,
                               sp,
                               0 )
 
         # now do an identity transformation
-        trans = transformWithBoxcar( data, sp, 1)
+        trans = transformWithBoxcar(data, sp, 1)
         self.failUnless( (trans == data).all() )
 
         # now check for illegal boxes
-        self.failUnlessRaises( ValueError,
-                               transformWithBoxcar,
-                               data,
-                               sp,
-                               2 )
+        self.failUnlessRaises(ValueError,
+                              transformWithBoxcar,
+                              data,
+                              sp,
+                              2)
 
         # now something that should work
         sp = N.arange(9)
@@ -115,7 +114,7 @@ class SupportFxTests(unittest.TestCase):
 
         # do clf cross-validation on a dataset with a very high SNR
         cv = Harvester(NFoldSplitter(cvtype=1),
-                       [HarvesterCall(TransferError(kNN()), argfilter=[1,0])])
+                       [HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0])])
         data = getMVPattern(10)
         err = N.array(cv(data))
 
@@ -125,14 +124,14 @@ class SupportFxTests(unittest.TestCase):
 
         # now same stuff but two classifiers at once
         cv = Harvester(NFoldSplitter(cvtype=1),
-                  [HarvesterCall(TransferError(kNN()), argfilter=[1,0]),
-                   HarvesterCall(TransferError(kNN()), argfilter=[1,0])])
+                  [HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0]),
+                   HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0])])
         err = N.array(cv(data))
         self.failUnlessEqual(err.shape, (2,len(data.uniquechunks)))
 
         # only one again, but this time remember confusion matrix
         cv = Harvester(NFoldSplitter(cvtype=1),
-                  [HarvesterCall(TransferError(kNN(),
+                  [HarvesterCall(TransferError(sample_clf_nl,
                                                enable_states=['confusion']),
                                  argfilter=[1,0], attribs=['confusion'])])
         res = cv(data)
