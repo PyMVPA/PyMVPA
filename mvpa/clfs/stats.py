@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.misc.state import StateVariable, Stateful
 
 
-class NullHypothesisTest(Stateful):
+class MonteCarloTest(Stateful):
     # XXX this should be the baseclass of a bunch of tests with more
     # sophisticated tests, perhaps making more assumptions about the data
     # TODO find a nicer name for it
@@ -68,22 +68,23 @@ class NullHypothesisTest(Stateful):
         distribution."""
 
 
-    def __call__(self, data, testdata):
+    def __call__(self, wdata, vdata):
         """Returns an estimate of the probability of an empirical transfer
         error (or lower) computed using a given dataset and a classifier when
         the `data` contains no relevant information.
 
         :Parameter:
-            `data`: `Dataset` which gets permuted and used to train a
+            wdata: `Dataset` which gets permuted and used to train a
                 classifier multiple times.
-            `testdata`: `Dataset` used to validate each trained classifier.
+            `vdata`: `Dataset` used to validate each trained classifier.
 
         Return a single scalar floating point value.
         """
         null_errors = []
         """Holds the transfer errors when randomized signal."""
 
-        emp_error = self.__trans_error(testdata, data)
+        # XXX: should be computed outside
+        emp_error = self.__trans_error(vdata, wdata)
         """Transfer error with original signal."""
 
         # estimate null-distribution
@@ -95,10 +96,10 @@ class NullHypothesisTest(Stateful):
             # classifier, hence the number of permutations to estimate the
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
-            data.permuteLabels(True, perchunk=False)
+            wdata.permuteLabels(True, perchunk=False)
 
             # compute and store the training error of this permutation
-            null_errors.append(self.__trans_error(testdata, data))
+            null_errors.append(self.__trans_error(vdata, wdata))
 
         # calculate the probability estimate of 'emp_error' being likely
         # when no signal is in the data
@@ -106,7 +107,7 @@ class NullHypothesisTest(Stateful):
         prob = (null_errors <= emp_error).mean()
 
         # restore original labels
-        data.permuteLabels(False, perchunk=False)
+        wdata.permuteLabels(False, perchunk=False)
 
         self.emp_error = emp_error
         self.null_errors = null_errors
