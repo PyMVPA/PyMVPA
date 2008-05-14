@@ -13,7 +13,7 @@ import unittest
 import numpy as N
 
 from mvpa.clfs.knn import kNN
-from mvpa.algorithms.nullhyptest import NullHypothesisTest
+from mvpa.clfs.stats import MonteCarloTest
 from mvpa.clfs.transerror import TransferError
 
 from tests_warehouse import pureMultivariateSignal
@@ -29,7 +29,7 @@ class NullHypothesisTests(unittest.TestCase):
 
         # linear clf on non-linear problem
         terr = TransferError(clfs['LinearC'][0])
-        null = NullHypothesisTest(terr, permutations=100)
+        null = MonteCarloTest(terr, permutations=100)
 
         lin_p = null(wdata, tdata)
 
@@ -41,7 +41,7 @@ class NullHypothesisTests(unittest.TestCase):
 
         # non-linear clf on non-linear problem
         terr = TransferError(kNN(5))
-        null = NullHypothesisTest(terr, permutations=100)
+        null = MonteCarloTest(terr, permutations=100)
 
         nlin_p = null(wdata, tdata)
 

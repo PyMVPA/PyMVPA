@@ -46,7 +46,7 @@ tests = [
     'test_perturbsensana',
     'test_splitsensana',
     'test_anova',
-    'test_nullhyptest'
+    'test_clfstats'
     ]
 
 # fully test of externals
