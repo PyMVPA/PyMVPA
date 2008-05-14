@@ -56,6 +56,9 @@ class ColumnData(dict):
         # init base class
         dict.__init__(self)
 
+        # intialize with default
+        self._header_order = None
+
         if isinstance(source, str):
             self._fromFile(source, header=header, sep=sep, dtype=dtype)
 
