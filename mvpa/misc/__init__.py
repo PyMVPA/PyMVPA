@@ -141,6 +141,7 @@ if __debug__:
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
     debug.register('DS_',  "*Dataset (verbose)")
+    debug.register('DS_ID',"ID Datasets")
 
     debug.register('COL',  "Generic Collectable debugging")
 
