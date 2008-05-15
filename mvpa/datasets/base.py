@@ -447,8 +447,14 @@ class Dataset(object):
     def __repr__(self, full=True):
         """String summary over the object
         """
-        s = """<Dataset / %s %d x %d""" % \
-                   (self.samples.dtype, self.nsamples, self.nfeatures)
+        if __debug__ and 'DS_ID' in debug.active:
+            s = """<Dataset{%s}/ %s %d{%s} x %d""" % \
+                (self.idhash, self.samples.dtype,
+                 self.nsamples, idhash(self.samples),
+                 self.nfeatures)
+        else:
+            s = """<Dataset / %s %d x %d""" % \
+                (self.samples.dtype, self.nsamples, self.nfeatures)
 
         if not full:
             return s                    # enough is enough
