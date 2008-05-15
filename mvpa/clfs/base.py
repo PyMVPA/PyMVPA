@@ -160,8 +160,9 @@ class Classifier(Stateful):
         self._regression = regression
         """If True - perform regression, not classification"""
 
-        self.__retrainable = retrainable
+        self.__retrainable = None
         """If True - store anything necessary for efficient retrain"""
+        self._setRetrainable(retrainable)
 
         if self._regression:
             for statevar in [ "trained_labels", "training_confusion" ]:
@@ -418,8 +419,25 @@ class Classifier(Stateful):
     def _setRetrainable(self, value):
         if value != self.__retrainable:
             # assure that we don't drag anything behind
-            self.untrain()
+            if self.trained:
+                self.untrain()
+            states = self.states
+            if not value and states.isKnown('retrained'):
+                states.remove('retrained')
+                states.remove('retested')
+            if value:
+                if not 'retrainable' in self._clf_internals:
+                    warning("Setting of flag retrainable for %s has no effect"
+                            " since classifier has no such capability" % self)
+                states.add(StateVariable(enabled=True,
+                                         name='retrained',
+                                         doc="Either retrainable classifier was retrained"))
+                states.add(StateVariable(enabled=True,
+                                         name='retested',
+                                         doc="Either retrainable classifier was retested"))
+
             self.__retrainable = value
+
 
     retrainable = property(fget=_getRetrainable, fset=_setRetrainable,
                       doc="Specifies either classifier should be retrainable")

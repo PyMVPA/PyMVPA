@@ -47,7 +47,7 @@ class Warehouse(object):
 
     _KNOWN_INTERNALS = Set(['knn', 'binary', 'svm', 'linear', 'smlr', 'does_feature_selection',
                             'has_sensitivity', 'multiclass', 'non-linear', 'kernel-based', 'lars',
-                            'regression', 'libsvm', 'sg', 'meta'])
+                            'regression', 'libsvm', 'sg', 'meta', 'retrainable'])
 
     def __init__(self):
         self.__items = []
