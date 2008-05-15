@@ -160,7 +160,7 @@ class Classifier(Stateful):
         self._regression = regression
         """If True - perform regression, not classification"""
 
-        self._retrainable = retrainable
+        self.__retrainable = retrainable
         """If True - store anything necessary for efficient retrain"""
 
         if self._regression:
@@ -193,7 +193,7 @@ class Classifier(Stateful):
         """
         # So we reset all state variables and may be free up some memory
         # explicitely
-        if not self._retrainable:
+        if not self.__retrainable:
             self.untrain()
         else:
             # just reset the states
@@ -411,6 +411,18 @@ class Classifier(Stateful):
         """Factory method to return an appropriate sensitivity analyzer for
         the respective classifier."""
         raise NotImplementedError
+
+    def _getRetrainable(self):
+        return self.__retrainable
+
+    def _setRetrainable(self, value):
+        if value != self.__retrainable:
+            # assure that we don't drag anything behind
+            self.untrain()
+            self.__retrainable = value
+
+    retrainable = property(fget=_getRetrainable, fset=_setRetrainable,
+                      doc="Specifies either classifier should be retrainable")
 
 
 #
