@@ -152,7 +152,7 @@ class SVM_SG_Modular(_SVM):
     _KNOWN_PARAMS = [ 'C', 'epsilon' ]
     _KNOWN_KERNEL_PARAMS = [ ]
 
-    _clf_internals = _SVM._clf_internals + [ 'sg' ]
+    _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
 
     def __init__(self,
                  kernel_type='linear',
@@ -196,7 +196,8 @@ class SVM_SG_Modular(_SVM):
         self.__testdata = None
 
         # if we do retraining -- store hashes
-        self.__idhash = [None, None, None]  # samples, labels, test_samples
+        # samples, labels, test_samples, trainsamples_intest
+        self.__idhash = [None, None, None, None]
 
         if __debug__:
             if 'RETRAIN' in debug.active:
@@ -208,7 +209,8 @@ class SVM_SG_Modular(_SVM):
                 # XXX now we keep 2 copies of the data -- __traineddataset
                 #     has it in SG format... uff
                 #
-                self.__trained = (None, None, None) # samples, labels
+                # samples, labels, test_samples, trainsamples_intest
+                self.__trained = (None, None, None, None)
 
 
     def __repr__(self):
@@ -230,7 +232,10 @@ class SVM_SG_Modular(_SVM):
                   (descr, idhash_, self.__idhash[i], changed,
                    entry, self.__trained[i], changed2)
             self.__trained[i] = entry
-        self.__idhash[i] == idhash
+        if __debug__ and changed:
+            debug('SG__', "Changed %s from %s to %s"
+                      % (descr, self.__idhash[i], idhash_))
+        self.__idhash[i] = idhash_
         return changed
 
 
@@ -239,24 +244,22 @@ class SVM_SG_Modular(_SVM):
         """
         # XXX might get up in hierarchy
         if self.retrainable:
-            changedParams = self.params.whichSet()
-            changedKernelParams = self.kernel_params.whichSet()
+            changed_params = self.params.whichSet()
+            changed_kernel_params = self.kernel_params.whichSet()
 
-        self.untrain()
-
+        # XXX watchout
+        # self.untrain()
+        newkernel, newsvm = False, False
         if self.retrainable:
+            if __debug__:
+                debug('SG__', "IDHashes are %s" % (self.__idhash))
             changed_samples = self.__wasChanged('samples', 0, dataset.samples)
             changed_labels = self.__wasChanged('labels', 1, dataset.labels)
-
+ 
         ul = dataset.uniquelabels
         ul.sort()
 
-        # create training data
-        if __debug__:
-            debug("SG_", "Converting input data for shogun")
-
         self.__traindataset = dataset
-        self.__traindata = _tosg(dataset.samples)
 
         # LABELS
 
@@ -297,7 +300,7 @@ class SVM_SG_Modular(_SVM):
 
 
         # KERNEL
-        if not self.retrainable or changed_samples or changedKernelParams:
+        if not self.retrainable or changed_samples or changed_kernel_params:
             # If needed compute or just collect arguments for SVM and for
             # the kernel
             kargs = []
@@ -309,8 +312,18 @@ class SVM_SG_Modular(_SVM):
                 kargs += [value]
 
             if self.retrainable and __debug__:
-                debug("SG_",
-                      "Re-Creating kernel instance since samples/kernel_params has changed")
+                if changed_samples:
+                    debug("SG_",
+                          "Re-Creating kernel since samples has changed")
+
+                if changed_kernel_params:
+                    debug("SG_",
+                          "Re-Creating kernel since params %s has changed" %
+                          changed_kernel_params)
+
+            # create training data
+            if __debug__: debug("SG_", "Converting input data for shogun")
+            self.__traindata = _tosg(dataset.samples)
 
             if __debug__:
                 debug("SG_", "Creating kernel instance of %s giving arguments %s" %
@@ -318,6 +331,7 @@ class SVM_SG_Modular(_SVM):
 
             self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
                                               *kargs)
+            newkernel = True
             if self.retrainable:
                 self.__kernel.set_precompute_matrix(True, True)
                 self.__kernel_test = None
@@ -347,6 +361,7 @@ class SVM_SG_Modular(_SVM):
             else:
                 self.__svm = svm_impl_class(C, self.__kernel, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
+            newsvm = True
             _setdebug(self.__svm, 'SVM')
             # Set optimization parameters
             if hasattr(self.__svm, 'set_tube_epsilon'):
@@ -357,14 +372,19 @@ class SVM_SG_Modular(_SVM):
                 debug("SG_", "SVM instance is not re-created")
             if changed_labels:          # labels were changed
                 self.__svm.set_labels(labels)
-            if changedParams:
+            if changed_params:
                 raise NotImplementedError, \
                       "Implement handling of changing params of SVM"
 
+        if self.retrainable:
+            # we must assign it only if it is retrainable
+            self.states.retrained = not newsvm or not newkernel
+
         # Train
         if __debug__:
-            debug("SG", "Training SG_SVM %s %s on data with labels %s" %
-                  (self._kernel_type, self.params, dataset.uniquelabels))
+            debug("SG", "%sTraining SG_SVM %s %s on data with labels %s" %
+                  (("","Re-")[self.retrainable and self.states.retrained], self._kernel_type,
+                   self.params, dataset.uniquelabels))
 
         self.__svm.train()
 
@@ -387,21 +407,35 @@ class SVM_SG_Modular(_SVM):
 
         if self.retrainable:
             changed_testdata = self.__wasChanged('test_samples', 2, data)
+            if not changed_testdata:
+                changed_traindata = self.__wasChanged('trainsamples_intest', 3,
+                                                      self.traindataset.samples)
+                if __debug__ and changed_traindata:
+                    debug("SG__",
+                          "Though testdata didn't change, traindata used for"
+                          " computing test kernel has changed")
 
         if not self.retrainable or changed_testdata:
             testdata = _tosg(data)
 
         if not self.retrainable:
+            # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
         else:
             if changed_testdata:
                 if __debug__:
-                    debug("SG__", "Re-creating testing kernel")
+                    debug("SG__",
+                          "Re-creating testing kernel of %s giving "
+                          "arguments %s" %
+                          (`self._kernel_type`, self.__kernel_args))
                 kernel_test = self._kernel_type(self.__traindata, testdata,
                                                 *self.__kernel_args)
+                _setdebug(kernel_test, 'Kernels')
                 self.__kernel_test = shogun.Kernel.CustomKernel(self.__traindata, testdata)
+                _setdebug(self.__kernel_test, 'Kernels')
                 self.__kernel_test.set_full_kernel_matrix_from_full(
                     kernel_test.get_kernel_matrix())
+                self.__idhash[3] = idhash(self.traindataset.samples)
             elif __debug__:
                 debug("SG__", "Re-using testing kernel")
 
@@ -413,11 +447,15 @@ class SVM_SG_Modular(_SVM):
 
         # doesn't do any good imho although on unittests helps tiny bit... hm
         #self.__svm.init_kernel_optimization()
-
         values_ = self.__svm.classify()
+        #if self.retrainable and not changed_testdata:
+        #    import pydb
+        #    pydb.debugger()
         values = values_.get_labels()
 
         if self.retrainable:
+            # we must assign it only if it is retrainable
+            self.states.retested = not changed_testdata
             if __debug__:
                 debug("SG__", "Re-assigning learing kernel")
             # return back original kernel
@@ -461,32 +499,35 @@ class SVM_SG_Modular(_SVM):
             debug("SG__", "Untraining %s and destroying sg's SVM" % self)
         super(SVM_SG_Modular, self).untrain()
 
-        self.__idhash = [None, None, None]  # samples, labels
+        if not self.retrainable:
+            self.__idhash = [None, None, None, None]  # samples, labels
 
-        # to avoid leaks with not yet properly fixed shogun
-        # XXX make it nice... now it is just stable ;-)
-        if not self.__traindata is None:
-            try:
+            # to avoid leaks with not yet properly fixed shogun
+            # XXX make it nice... now it is just stable ;-)
+            if not self.__traindata is None:
                 try:
-                    self.__traindata.free_features()
+                    try:
+                        self.__traindata.free_features()
+                    except:
+                        pass
+                    if __debug__:
+                        if 'RETRAIN' in debug.active:
+                            self.__trained = [None,None, None, None]
+                    self.__traindataset = None
+                    del self.__kernel
+                    self.__kernel = None
+                    self.__kernel_test = None
+                    del self.__traindata
+                    self.__traindata = None
+                    del self.__svm
+                    self.__svm = None
                 except:
                     pass
-                if __debug__:
-                    if 'RETRAIN' in debug.active:
-                        self.__trained = (None,None)
-                self.__traindataset = None
-                del self.__kernel
-                self.__kernel = None
-                self.__kernel_test = None
-                del self.__traindata
-                self.__traindata = None
-                del self.__svm
-                self.__svm = None
-            except:
-                pass
 
-        if __debug__:
-            debug("SG__", "Done untraining %s and destroying sg's SVM" % self)
+            if __debug__:
+                debug("SG__", "Done untraining %s and destroying sg's SVM" % self)
+        elif __debug__:
+            debug("SG__", "Not untraining %s since it is retrainable" % self)
 
 
     def getSensitivityAnalyzer(self, **kwargs):
