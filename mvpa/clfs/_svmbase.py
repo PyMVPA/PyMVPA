@@ -81,6 +81,7 @@ class _SVM(Classifier):
         """
 
         kernel_type = kernel_type.lower()
+        self._kernel_type_literal = kernel_type
         if not kernel_type in self._KERNELS:
             raise ValueError, "Unknown kernel " + kernel_type
 
@@ -92,7 +93,7 @@ class _SVM(Classifier):
                  self._KNOWN_KERNEL_PARAMS[:] + list(self._KERNELS[kernel_type][1])
 
         # Assign per-instance _clf_internals
-        self._clf_internals = _SVM._clf_internals[:]
+        self._clf_internals = self._clf_internals[:]
         if kernel_type == 'linear':
             self._clf_internals += [ 'linear', 'has_sensitivity' ]
         else:
@@ -142,7 +143,6 @@ class _SVM(Classifier):
             debug("SVM", "Initialized %s with kernel %s:%s" % 
                   (id(self), kernel_type, self._kernel_type))
 
-        self._kernel_type_literal = kernel_type
 
     def __repr__(self):
         """Definition of the object summary over the object
