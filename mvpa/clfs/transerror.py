@@ -481,8 +481,12 @@ class TransferError(ClassifierError):
     Optionally the classifier can be trained by passing an additional
     training dataset to the __call__() method.
     """
+
+    null_prob = StateVariable(enabled=True)
+    """Stores the probability of an error result under the NULL hypothesis"""
+
     def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
-                 **kwargs):
+                 null_dist=None, **kwargs):
         """Initialization.
 
         :Parameters:
@@ -494,9 +498,11 @@ class TransferError(ClassifierError):
           labels : list
             if provided, should be a set of labels to add on top of the
             ones present in testdata
+          null_dist : instance of distribution estimator
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
+        self.__null_dist = null_dist
 
 
     __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
@@ -507,8 +513,7 @@ class TransferError(ClassifierError):
         # TODO TODO -- use ClassifierError.__copy__
         out = TransferError.__new__(TransferError)
         TransferError.__init__(out, self.clf, self.errorfx, self._labels)
-        # XXX: Disabled by Michael because there is no such thing
-        #out._copy_states_(self)
+
         return out
 
 
@@ -536,13 +541,30 @@ class TransferError(ClassifierError):
                 labels=self.labels, targets=testdataset.labels,
                 predictions=predictions)
 
-        # TODO
-
         # compute error from desired and predicted values
         error = self.__errorfx(predictions,
                                testdataset.labels)
 
         return error
+
+
+    def _postcall(self, vdata, wdata=None, error=None):
+        """
+        """
+        # estimate the NULL distribution when functor and training data is
+        # given
+        if not self.__null_dist is None and not wdata is None:
+            # we need a matching transfer error instances (e.g. same error
+            # function), but we have to disable the estimation of the null
+            # distribution in that child to prevent infinite looping.
+            null_terr = copy.copy(self)
+            null_terr.__null_dist = None
+            self.__null_dist.fit(null_terr, wdata, vdata)
+
+
+        # get probability of error under NULL hypothesis if available
+        if not error is None and not self.__null_dist is None:
+            self.null_prob = self.__null_dist.cdf(error)
 
 
     @property

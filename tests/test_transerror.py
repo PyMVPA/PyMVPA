@@ -15,6 +15,7 @@ from copy import copy
 from mvpa.datasets import Dataset
 from mvpa.clfs.transerror import \
      TransferError, ConfusionMatrix, ConfusionBasedError
+from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -114,6 +115,28 @@ class ErrorsTests(unittest.TestCase):
 
         # try copying the beast
         terr_copy = copy(terr)
+
+
+    @sweepargs(l_clf=clfs.get('LinearSVMC', []))
+    def testNullDistProb(self, l_clf):
+        train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
+                                     nonbogus_features=[0,1], snr=3, nchunks=1)
+
+        # define class to estimate NULL distribution of errors
+        # use left tail of the distribution since we use MeanMatchFx as error
+        # function and lower is better
+        terr = TransferError(clf=l_clf,
+                             null_dist=MCNullDist(permutations=10,
+                                                  tail='left'))
+
+        # check reasonable error range
+        err = terr(train, train)
+        self.failUnless(err < 0.4)
+
+        # check that the result is highly significant since we know that the
+        # data has signal
+        self.failUnless(terr.null_prob < 0.01)
+
 
 
 def suite():
