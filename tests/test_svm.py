@@ -18,13 +18,15 @@ from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
-    @sweepargs(l_clf=clfs.get('LinearSVMC', []))
-    def testMultivariate(self, l_clf):
+#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
+#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
+    def testMultivariate(self):
         mv_perf = []
         mv_lin_perf = []
         uv_perf = []
 
-        nl_clf = RbfCSVMC()
+        l_clf = clfs['linear', 'svm'][0]
+        nl_clf = clfs['non-linear', 'svm'][0]
 
         #orig_keys = nl_clf.param._params.keys()
         #nl_param_orig = nl_clf.param._params.copy()
@@ -46,9 +48,10 @@ class SVMTests(unittest.TestCase):
         # We must be able to deepcopy not yet trained SVMs now
         import copy
         try:
+            nl_clf.untrain()
             nl_clf_copy = copy.deepcopy(nl_clf)
         except:
-            self.fail(msg="Failed to deepcopy not-yet trained SVM")
+            self.fail(msg="Failed to deepcopy not-yet trained SVM %s" % nl_clf)
 
         for i in xrange(20):
             train = pureMultivariateSignal( 20, 3 )
@@ -80,6 +83,16 @@ class SVMTests(unittest.TestCase):
         # univariate has insufficient information
         self.failUnless( mean_uv_perf < mean_mv_perf )
 
+
+    def testSillyness(self):
+        """Test if we raise exceptions on incorrect specifications
+        """
+
+        if externals.exists('libsvm'):
+            self.failUnlessRaises(TypeError, LinearCSVMC, nu=2.3)
+            self.failUnlessRaises(TypeError, LinearNuSVMC, C=2.3)
+        if externals.exists('shogun'):
+            self.failUnlessRaises(TypeError, sg.svm.RbfCSVMC, coef0=3)
 
 #    def testFeatureBenchmark(self):
 #        pat = dumbFeatureDataset()

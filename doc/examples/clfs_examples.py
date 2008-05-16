@@ -66,12 +66,11 @@ def main():
                                   nchunks=6, nonbogus_features=[11, 10],
                                   snr=3.0)
 
-
     for (dataset, datasetdescr), clfs_ in \
         [
-        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
-        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
-        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
+        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs[:]),
+        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['non-linear']),
+        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['multiclass']),
         ]:
 
         print "%s: %s" % (datasetdescr, `dataset`)

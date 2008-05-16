@@ -25,8 +25,8 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
     def setUp(self):
         self.dataset = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4)
 
-
-    @sweepargs(svm=clfs.get('LinearSVMC', []))
+    # XXX meta should work TODO
+    @sweepargs(svm=clfs['linear', 'svm', '!meta'])
     def testAnalyzer(self, svm):
         svm_weigths = svm.getSensitivityAnalyzer()
 

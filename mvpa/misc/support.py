@@ -114,6 +114,23 @@ def indentDoc(v):
     return re.sub('\n', '\n  ', str(v))
 
 
+
+def idhash(val):
+    """Craft unique id+hash for an object
+    """
+    res = id(val)
+    if isinstance(val, list):
+        val = tuple(val)
+    try:
+        res += hash(buffer(val))
+    except:
+        try:
+            res += hash(val)
+        except:
+            pass
+        pass
+    return res
+
 def isSorted(items):
     """Check if listed items are in sorted order.
 

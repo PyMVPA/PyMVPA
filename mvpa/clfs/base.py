@@ -139,14 +139,13 @@ class Classifier(Stateful):
         doc="Feature IDS which were used for the actual training." +
             " Some classifiers might internally do feature selection (SMLR)")
 
-    params = {}
-
     _clf_internals = []
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
 
 
-    def __init__(self, train2predict=True, regression=False, **kwargs):
+    def __init__(self, train2predict=True, regression=False, retrainable=False,
+                 **kwargs):
         """Cheap initialization.
         """
         Stateful.__init__(self, **kwargs)
@@ -161,6 +160,10 @@ class Classifier(Stateful):
         self._regression = regression
         """If True - perform regression, not classification"""
 
+        self.__retrainable = None
+        """If True - store anything necessary for efficient retrain"""
+        self._setRetrainable(retrainable)
+
         if self._regression:
             for statevar in [ "trained_labels", "training_confusion" ]:
                 if self.states.isEnabled(statevar):
@@ -170,7 +173,7 @@ class Classifier(Stateful):
                               statevar + "not classification")
                     self.states.disable(statevar)
 
-        self.__trainedid = None
+        self.__trainedidhash = None
         """Stores id of the dataset on which it was trained to signal
         in trained() if it was trained already on the same dataset"""
 
@@ -191,7 +194,11 @@ class Classifier(Stateful):
         """
         # So we reset all state variables and may be free up some memory
         # explicitely
-        self.untrain()
+        if not self.__retrainable:
+            self.untrain()
+        else:
+            # just reset the states
+            self.states.reset()
 
         if not self._regression and 'regression' in self._clf_internals \
            and not self.states.isEnabled('trained_labels'):
@@ -217,7 +224,7 @@ class Classifier(Stateful):
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
-        self.__trainedid = dataset._id
+        self.__trainedidhash = dataset.idhash
 
         if self.states.isEnabled('training_confusion'):
             # we should not store predictions for training data,
@@ -355,7 +362,7 @@ class Classifier(Stateful):
                 result[i] = trained_labels[N.argmin(dists)]
 
             if __debug__:
-                debug("CLF_", "Converted regression result %s into labels %s" % (result_, result))
+                debug("CLF_", "Converted regression result %s into labels %s for %s" % (result_, result, self))
 
         self._postpredict(data, result)
         return result
@@ -369,7 +376,7 @@ class Classifier(Stateful):
             return not self.__trainednfeatures is None
         else:
             return (self.__trainednfeatures == dataset.nfeatures) \
-                   and (self.__trainedid == dataset._id)
+                   and (self.__trainedidhash == dataset.idhash)
 
     @property
     def regression(self):
@@ -392,7 +399,7 @@ class Classifier(Stateful):
     def untrain(self):
         """Reset trained state"""
         self.__trainednfeatures = None
-        self.states.reset()
+        Stateful.reset(self)
 
 
     @property
@@ -405,6 +412,35 @@ class Classifier(Stateful):
         """Factory method to return an appropriate sensitivity analyzer for
         the respective classifier."""
         raise NotImplementedError
+
+    def _getRetrainable(self):
+        return self.__retrainable
+
+    def _setRetrainable(self, value):
+        if value != self.__retrainable:
+            # assure that we don't drag anything behind
+            if self.trained:
+                self.untrain()
+            states = self.states
+            if not value and states.isKnown('retrained'):
+                states.remove('retrained')
+                states.remove('retested')
+            if value:
+                if not 'retrainable' in self._clf_internals:
+                    warning("Setting of flag retrainable for %s has no effect"
+                            " since classifier has no such capability" % self)
+                states.add(StateVariable(enabled=True,
+                                         name='retrained',
+                                         doc="Either retrainable classifier was retrained"))
+                states.add(StateVariable(enabled=True,
+                                         name='retested',
+                                         doc="Either retrainable classifier was retested"))
+
+            self.__retrainable = value
+
+
+    retrainable = property(fget=_getRetrainable, fset=_setRetrainable,
+                      doc="Specifies either classifier should be retrainable")
 
 
 #
@@ -542,6 +578,12 @@ class BoostedClassifier(Classifier, Harvestable):
             for clf in self.__clfs:
                 clf.states.enable(self.states.enabled, missingok=True)
 
+        # adhere to their capabilities + 'multiclass'
+        # XXX do intersection across all classifiers!
+        self._clf_internals = [ 'multiclass', 'meta' ]
+        if len(clfs)>0:
+            self._clf_internals += self.__clfs[0]._clf_internals
+
     def untrain(self):
         """Untrain `BoostedClassifier`
 
@@ -552,6 +594,12 @@ class BoostedClassifier(Classifier, Harvestable):
         for clf in self.clfs:
             clf.untrain()
         super(BoostedClassifier, self).untrain()
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer"""
+        return BoostedClassifierSensitivityAnalyzer(
+                self,
+                **kwargs)
 
 
     clfs = property(fget=lambda x:x.__clfs,
@@ -588,6 +636,13 @@ class ProxyClassifier(Classifier):
 
         self._regression = clf.regression
         """Do regression if base classifier does"""
+
+        # adhere to slave classifier capabilities
+        # XXX test test test
+        self._clf_internals = self._clf_internals[:] + ['meta']
+        if clf is not None:
+            self._clf_internals += clf._clf_internals
+
 
     def _train(self, dataset):
         """Train `ProxyClassifier`
@@ -1198,6 +1253,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
     has been addressed by adding .trained property to classifier, but now
     we should expclitely use isTrained here if we want... need to think more
     """
+
+    _clf_internals = [ 'does_feature_selection', 'meta' ]
 
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance

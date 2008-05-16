@@ -38,27 +38,28 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                             nonbogus_features=self.nonbogus,
                                             snr=6)
         self.datasetsmall = normalFeatureDataset(perlabel=2, nlabels=2,
-                                            nfeatures=3, nchunks=1,
-                                            snr=6)
+                                                 nfeatures=3, nchunks=1,
+                                                 snr=6)
         self.dataset3 = normalFeatureDataset(perlabel=200, nlabels=3,
-                                            nfeatures=self.nfeatures,
-                                            nonbogus_features=[0,1,3],
-                                            snr=6)
+                                             nfeatures=self.nfeatures,
+                                             nonbogus_features=[0,1,3],
+                                             snr=6)
         self.dataset3small = normalFeatureDataset(perlabel=2, nlabels=3,
-                                            nfeatures=4, nchunks=1,
-                                            snr=6)
+                                                  nfeatures=4, nchunks=1,
+                                                  snr=6)
 
         self.dataset4 = normalFeatureDataset(perlabel=200, nlabels=4,
-                                            nfeatures=self.nfeatures,
-                                            nonbogus_features=[0,1,3,5],
-                                            snr=6)
+                                             nfeatures=self.nfeatures,
+                                             nonbogus_features=[0,1,3,5],
+                                             snr=6)
 
         self.dataset4small = normalFeatureDataset(perlabel=2, nlabels=4,
-                                            nfeatures=5, nchunks=1,
-                                            snr=6)
+                                                nfeatures=5, nchunks=1,
+                                                snr=6)
 
 
-    @sweepargs(clf=clfs['clfs_with_sens'])
+    # XXX meta should work too but doesn't
+    @sweepargs(clf=clfs['has_sensitivity', '!meta'])
     def testAnalyzerWithSplitClassifier(self, clf):
 
         # assumming many defaults it is as simple as
@@ -101,18 +102,16 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 msg="At the end we should have selected the right features")
 
 
-    @sweepargs(svm=clfs.get('LinearSVMC', []))
+    @sweepargs(svm=clfs['linear', 'svm'])
     def testLinearSVMWeights(self, svm):
         # assumming many defaults it is as simple as
         sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
 
         # and lets look at all sensitivities
-        dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
-        map_ = sana(dataset)
-
+        map_ = sana(self.dataset)
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
-        svmnl = clfs['NonLinearSVMC'][0]
+        svmnl = clfs['non-linear', 'svm'][0]
         self.failUnlessRaises(NotImplementedError,
                               svmnl.getSensitivityAnalyzer)
 
@@ -121,7 +120,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     # (linsvmweights for multi-class SVMs and smlrweights for SMLR)
 
 
-    @sweepargs(basic_clf=clfs['clfs_with_sens'])
+    @sweepargs(basic_clf=clfs['has_sensitivity'])
     def __testFSPipelineWithAnalyzerWithSplitClassifier(self, basic_clf):
         #basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)

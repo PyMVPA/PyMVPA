@@ -17,6 +17,7 @@ import copy
 import numpy as N
 
 from mvpa.misc.exceptions import DatasetError
+from mvpa.misc.support import idhash
 
 if __debug__:
     from mvpa.misc import debug, warning
@@ -197,16 +198,14 @@ class Dataset(object):
             self._resetallunique(force=True)
 
     @property
-    def _id(self):
+    def idhash(self):
         """To verify if dataset is in the same state as when smth else was done
 
         Like if classifier was trained on the same dataset as in question"""
 
         res = id(self._data)
         for val in self._data.values():
-            res += id(val)
-            if isinstance(val, N.ndarray):
-                res += hash(buffer(val))
+            res += idhash(val)
         return res
 
 
@@ -448,8 +447,14 @@ class Dataset(object):
     def __repr__(self, full=True):
         """String summary over the object
         """
-        s = """<Dataset / %s %d x %d""" % \
-                   (self.samples.dtype, self.nsamples, self.nfeatures)
+        if __debug__ and 'DS_ID' in debug.active:
+            s = """<Dataset{%s}/ %s %d{%s} x %d""" % \
+                (self.idhash, self.samples.dtype,
+                 self.nsamples, idhash(self.samples),
+                 self.nfeatures)
+        else:
+            s = """<Dataset / %s %d x %d""" % \
+                (self.samples.dtype, self.nsamples, self.nfeatures)
 
         if not full:
             return s                    # enough is enough
