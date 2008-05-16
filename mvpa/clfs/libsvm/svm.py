@@ -210,7 +210,7 @@ class SVMBase(_SVM):
                 if __debug__:
                     debug("SVM","Forcing values to be ndarray and reshaping " +
                           "them to be 1D vector")
-                values = N.array(values).reshape(len(values))
+                values = N.asarray(values).reshape(len(values))
             self.values = values
             # XXX we should probably do the same as shogun for
             # multiclass -- just spit out warning without
@@ -347,7 +347,7 @@ class LibSVMLinearSVMWeights(Sensitivity):
 
         svcoef = N.matrix(self.clf.model.getSVCoef())
         svs = N.matrix(self.clf.model.getSV())
-        rhos = N.array(self.clf.model.getRho())
+        rhos = N.asarray(self.clf.model.getRho())
 
         self.biases = rhos
         # XXX yoh: .mean() is effectively
@@ -369,4 +369,4 @@ class LibSVMLinearSVMWeights(Sensitivity):
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
 
-        return N.array(weights.T)
+        return N.asarray(weights.T)
