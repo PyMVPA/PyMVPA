@@ -196,8 +196,8 @@ class SVM_SG_Modular(_SVM):
         self.__testdata = None
 
         # if we do retraining -- store hashes
-        # samples, labels, test_samples, trainsamples_intest
-        self.__idhash = [None, None, None, None]
+        # samples, labels, test_samples
+        self.__idhash = [None, None, None]
 
         if __debug__:
             if 'RETRAIN' in debug.active:
@@ -210,7 +210,7 @@ class SVM_SG_Modular(_SVM):
                 #     has it in SG format... uff
                 #
                 # samples, labels, test_samples, trainsamples_intest
-                self.__trained = (None, None, None, None)
+                self.__trained = (None, None, None)
 
 
     def __repr__(self):
@@ -406,14 +406,8 @@ class SVM_SG_Modular(_SVM):
             debug("SG_", "Initializing kernel with training/testing data")
 
         if self.retrainable:
-            changed_testdata = self.__wasChanged('test_samples', 2, data)
-            if not changed_testdata:
-                changed_traindata = self.__wasChanged('trainsamples_intest', 3,
-                                                      self.traindataset.samples)
-                if __debug__ and changed_traindata:
-                    debug("SG__",
-                          "Though testdata didn't change, traindata used for"
-                          " computing test kernel has changed")
+            changed_testdata = self.__kernel_test is None or \
+                               self.__wasChanged('test_samples', 2, data)
 
         if not self.retrainable or changed_testdata:
             testdata = _tosg(data)
@@ -431,11 +425,11 @@ class SVM_SG_Modular(_SVM):
                 kernel_test = self._kernel_type(self.__traindata, testdata,
                                                 *self.__kernel_args)
                 _setdebug(kernel_test, 'Kernels')
-                self.__kernel_test = shogun.Kernel.CustomKernel(self.__traindata, testdata)
-                _setdebug(self.__kernel_test, 'Kernels')
+                kernel_test_custom = shogun.Kernel.CustomKernel(self.__traindata, testdata)
+                _setdebug(kernel_test, 'Kernels')
+                self.__kernel_test = kernel_test_custom
                 self.__kernel_test.set_full_kernel_matrix_from_full(
                     kernel_test.get_kernel_matrix())
-                self.__idhash[3] = idhash(self.traindataset.samples)
             elif __debug__:
                 debug("SG__", "Re-using testing kernel")
 
@@ -485,22 +479,24 @@ class SVM_SG_Modular(_SVM):
         # store state variable
         self.values = values
 
-        # to avoid leaks with not yet properly fixed shogun
-        try:
-            testdata.free_features()
-        except:
-            pass
+        ## to avoid leaks with not yet properly fixed shogun
+        if not self.retrainable:
+            try:
+                testdata.free_features()
+            except:
+                pass
 
         return predictions
 
 
     def untrain(self):
-        if __debug__:
-            debug("SG__", "Untraining %s and destroying sg's SVM" % self)
         super(SVM_SG_Modular, self).untrain()
 
         if not self.retrainable:
-            self.__idhash = [None, None, None, None]  # samples, labels
+            if __debug__:
+                debug("SG__", "Untraining %s and destroying sg's SVM" % self)
+
+            self.__idhash = [None, None, None]  # samples, labels
 
             # to avoid leaks with not yet properly fixed shogun
             # XXX make it nice... now it is just stable ;-)
@@ -512,7 +508,7 @@ class SVM_SG_Modular(_SVM):
                         pass
                     if __debug__:
                         if 'RETRAIN' in debug.active:
-                            self.__trained = [None,None, None, None]
+                            self.__trained = [None, None, None]
                     self.__traindataset = None
                     del self.__kernel
                     self.__kernel = None
@@ -525,9 +521,12 @@ class SVM_SG_Modular(_SVM):
                     pass
 
             if __debug__:
-                debug("SG__", "Done untraining %s and destroying sg's SVM" % self)
+                debug("SG__",
+                      "Done untraining %(self)s and destroying sg's SVM",
+                      msgargs=locals())
         elif __debug__:
-            debug("SG__", "Not untraining %s since it is retrainable" % self)
+            debug("SG__", "Not untraining %(self)s since it is retrainable",
+                  msgargs=locals())
 
 
     def getSensitivityAnalyzer(self, **kwargs):
