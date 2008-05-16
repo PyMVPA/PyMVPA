@@ -210,7 +210,7 @@ class SVM_SG_Modular(_SVM):
                 #     has it in SG format... uff
                 #
                 # samples, labels, test_samples, trainsamples_intest
-                self.__trained = (None, None, None)
+                self.__trained = [None, None, None]
 
 
     def __repr__(self):
@@ -225,7 +225,9 @@ class SVM_SG_Modular(_SVM):
         changed = self.__idhash[i] != idhash_
         if __debug__ and 'RETRAIN' in debug.active:
             changed2 = entry != self.__trained[i]
-            if changed != changed2:
+            if isinstance(changed2, N.ndarray):
+                changed2 = changed2.any()
+            if changed != changed2:# and not changed:
                 raise RuntimeError, \
                   'hashid found to be weak for %s. Though hashid %s!=%s %s, '\
                   'values %s!=%s %s' % \
