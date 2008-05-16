@@ -266,7 +266,7 @@ class ConfusionMatrix(object):
             printed[i] += [''] * (Nelements_max - len(printed_))
 
         # figure out lengths within each column
-        aprinted = N.array(printed)
+        aprinted = N.asarray(printed)
         col_width = [ max( [len(x) for x in column] ) for column in aprinted.T ]
 
         for i, printed_ in enumerate(printed):

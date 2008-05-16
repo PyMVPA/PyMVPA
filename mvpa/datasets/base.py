@@ -250,7 +250,7 @@ class Dataset(object):
             raise ValueError, \
                   "Provided %s have %d entries while there is %d samples" % \
                   (attrib, len(value), self.nsamples)
-        self._data[attrib] = N.array(value)
+        self._data[attrib] = N.asarray(value)
         uniqueattr = "unique" + attrib
 
         if self._dsattr.has_key(uniqueattr):

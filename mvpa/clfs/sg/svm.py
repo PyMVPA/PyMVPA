@@ -615,5 +615,5 @@ class ShogunLinearSVMWeights(Sensitivity):
                 sens.append(self.__sg_helper(svm.get_svm(i)))
         else:
             sens = self.__sg_helper(svm)
-        return N.array(sens)
+        return N.asarray(sens)
 

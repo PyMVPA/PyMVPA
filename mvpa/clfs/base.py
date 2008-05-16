@@ -327,7 +327,7 @@ class Classifier(Stateful):
         should call _predict if within _predict instead of predict()
         since otherwise it would loop
         """
-        data = N.array(data)
+        data = N.asarray(data)
         if __debug__:
             debug("CLF", "Predicting classifier %s on data %s" \
                 % (`self`, `data.shape`))
@@ -354,6 +354,10 @@ class Classifier(Stateful):
             # XXX unify may be labels -> internal_labels conversion.
             #if len(self.trained_labels) != 2:
             #    raise RuntimeError, "XXX Ask developer to implement for multiclass mapping from regression into classification"
+
+            # must be N.array so we copy it to assign labels directly
+            # into labels.
+            # XXX or should we just recreate "result"
             result_ = N.array(result)
             self.values = result_
             trained_labels = N.asarray(list(self.trained_labels))

@@ -89,7 +89,7 @@ class MCNullDist(object):
             dist_samples.append(transerr(vdata, wdata))
 
         # store errors
-        self.__dist_samples = N.array(dist_samples)
+        self.__dist_samples = N.asarray(dist_samples)
 
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
