@@ -408,8 +408,8 @@ class SVM_SG_Modular(_SVM):
             debug("SG_", "Initializing kernel with training/testing data")
 
         if self.retrainable:
-            changed_testdata = self.__kernel_test is None or \
-                               self.__wasChanged('test_samples', 2, data)
+            changed_testdata = self.__wasChanged('test_samples', 2, data) or \
+                               self.__kernel_test is None
 
         if not self.retrainable or changed_testdata:
             testdata = _tosg(data)
@@ -453,7 +453,8 @@ class SVM_SG_Modular(_SVM):
             # we must assign it only if it is retrainable
             self.states.retested = not changed_testdata
             if __debug__:
-                debug("SG__", "Re-assigning learing kernel")
+                debug("SG__", "Re-assigning learing kernel. Retested is %s"
+                      % self.states.retested)
             # return back original kernel
             self.__svm.set_kernel(self.__kernel)
 

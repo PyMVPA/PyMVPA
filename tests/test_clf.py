@@ -348,9 +348,8 @@ class ClassifiersTests(unittest.TestCase):
             else:
                 self.failUnless(clf_re.states.retrained,
                             "Must retrain instead of full training")
-                # ! TODO ;)
-                #self.failUnless(clf_re.states.retested,
-                #            "Must retest instead of full testing")
+                self.failUnless(clf_re.states.retested,
+                            "Must retest instead of full testing")
             self.failUnless(corr > corrcoef_eps,
               msg="Result must be close to the one without retraining."
                   " Got corrcoef=%s" % (corr))
