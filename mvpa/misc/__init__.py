@@ -128,6 +128,7 @@ if __debug__:
     debug.register('DBG',  "Debug output itself")
     debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
+    debug.register('_QUICKTEST_', "Quick unittests") # TODO: handle levels of unittests properly
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
@@ -140,11 +141,16 @@ if __debug__:
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
     debug.register('DS_',  "*Dataset (verbose)")
+    debug.register('DS_ID',"ID Datasets")
+
+    debug.register('COL',  "Generic Collectable debugging")
+
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
+
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
-    debug.register('STCOL', "State Collector")
+    debug.register('COLR', "Collector for states and classifier parameters")
 
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")

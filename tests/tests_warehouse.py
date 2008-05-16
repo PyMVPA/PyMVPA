@@ -56,6 +56,13 @@ def sweepargs(**kwargs):
                         e.__init__("%s on %s = %s" % (str(e), argname, `argvalue`))
                         # Reraise bloody exception ;-)
                         raise
+                    if __debug__:
+                        if '_QUICKTEST_' in debug.active:
+                            # on TESTQUICK just run test for 1st entry in the list,
+                            # the rest are omitted
+                            # TODO: proper partitioning of unittests
+                            break
+
         do_sweep.func_name = method.func_name
         return do_sweep
 

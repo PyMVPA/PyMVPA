@@ -34,7 +34,7 @@ class IFSTests(unittest.TestCase):
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
 
 
-    @sweepargs(svm=clfs['clfs_with_sens'])
+    @sweepargs(svm=clfs['has_sensitivity', '!meta'])
     def testIFS(self, svm):
 
         # data measure and transfer error quantifier use the SAME clf!
@@ -67,7 +67,7 @@ class IFSTests(unittest.TestCase):
 
 
         # repeat with dataset where selection order is known
-        signal = dumbFeatureDataset()
+        signal = dumbFeatureBinaryDataset()
         sdata, stdata = ifs(signal, signal)
         self.failUnless((sdata.samples[:,0] == signal.samples[:,0]).all())
 

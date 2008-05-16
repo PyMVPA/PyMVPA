@@ -141,8 +141,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
             for state_var in ['confusion', 'training_confusion']:
                 if self.states.isEnabled(state_var):
-                    self.states.get(state_var).__iadd__(
-                        self.__transerror.states.get(state_var))
+                    self.states.getvalue(state_var).__iadd__(
+                        self.__transerror.states.getvalue(state_var))
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" \
