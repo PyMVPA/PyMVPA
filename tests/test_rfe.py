@@ -299,7 +299,7 @@ class RFETests(unittest.TestCase):
 
 
     # TODO: should later on work for any clfs_with_sens
-    @sweepargs(clf=clfs['has_sensitivity', '!meta'])
+    @sweepargs(clf=clfs['has_sensitivity', '!meta'][:1])
     def testRFE(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
