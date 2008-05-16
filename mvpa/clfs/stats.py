@@ -6,86 +6,73 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Null-hypothesis testing of transfer errors."""
+"""Estimator for classifier error distributions."""
 
 __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc.state import StateVariable, Stateful
 
-
-class MonteCarloTest(Stateful):
+class MCNullDist(object):
     # XXX this should be the baseclass of a bunch of tests with more
     # sophisticated tests, perhaps making more assumptions about the data
-    # TODO find a nicer name for it
     # TODO invent derived classes that make use of some reasonable assumptions
     # e.g. a gaussian distribution of transfer errors under the null hypothesis
     # this would have the advantage that a model could be fitted to a much
     # lower number of transfer errors and therefore dramatically reduce the
     # necessary CPU time. This is almost trivial to do with
     #   scipy.stats.norm.{fit,cdf}
-    """Simple class to determine statistical significance of classification
-    transfer errors.
+    """Class to determine the distribution of a transfer error under the NULL
+    distribution (no signal).
 
-    No assumptions are made about the distribution of the errors under the null
+    No assumptions are made about the shape of the distribution under the null
     hypothesis. Instead this distribution is estimated by performing multiple
     classification attempts with permuted `label` vectors, hence no or random
-    signal (abrv. RTE: random transfer error). After a customizable number of
-    permutations another transfer error is computed using the original `label`
-    vector (abrv. ETE: empirical transfer error).
+    signal.
 
-    The `__call__()` method finally returns the fraction of RTEs that are of
-    *lower or equal* value than the ETE. This value is an estimate of the
-    probability to achieve a transfer error as low or lower as the ETE, when
-    the data samples contain *no* signal.
+    The distribution is estimated by calling fit() with an appropriate
+    `TransferError` instance and a training and a validation dataset. For a
+    customizable amount of cycles the training data labels are permuted and the
+    corresponding error when predicting the *correct* labels of the validation
+    dataset is determined.
+
+    The distribution be queried using the `cdf()` method, which can be
+    configured to report probabilities/frequencies from `left` or `right` tail,
+    i.e. fraction of the distribution that is lower or larger than some
+    critical value.
     """
-
-    # register state members
-    null_errors = StateVariable()
-    emp_error = StateVariable()
-
-    def __init__(self,
-                 transerror,
-                 permutations=1000
-                ):
+    def __init__(self, permutations=1000, tail='left'):
         """Cheap initialization.
 
         :Parameter:
-            `transerror`: `TransferError` instance.
-            `permutations`: Number of permutations.
+            permutations: int
                 This many classification attempts with permuted label vectors
                 will be performed to determine the distribution under the null
                 hypothesis.
+            tail: str ['left', 'right']
+                Which tail of the distribution to report.
+
         """
-        Stateful.__init__(self)
-
-        self.__trans_error = transerror
-        """`TransferError` instance used to compute all errors."""
-
+        self.__dist_samples = None
         self.__permutations = permutations
         """Number of permutations to compute the estimate the null
         distribution."""
+        self.__tail = tail
 
 
-    def __call__(self, wdata, vdata):
-        """Returns an estimate of the probability of an empirical transfer
-        error (or lower) computed using a given dataset and a classifier when
-        the `data` contains no relevant information.
+    def fit(self, transerr, wdata, vdata):
+        """Fit the distribution by performing multiple cycles which repeatedly
+        permuted labels in the training dataset.
 
         :Parameter:
+            transerror: `TransferError`
+                TransferError instance used to compute all errors.
             wdata: `Dataset` which gets permuted and used to train a
                 classifier multiple times.
-            `vdata`: `Dataset` used to validate each trained classifier.
-
-        Return a single scalar floating point value.
+            vdata: `Dataset` used to validate each trained classifier.
         """
-        null_errors = []
+        dist_samples = []
         """Holds the transfer errors when randomized signal."""
-
-        # XXX: should be computed outside
-        emp_error = self.__trans_error(vdata, wdata)
-        """Transfer error with original signal."""
 
         # estimate null-distribution
         for p in xrange(self.__permutations):
@@ -99,17 +86,23 @@ class MonteCarloTest(Stateful):
             wdata.permuteLabels(True, perchunk=False)
 
             # compute and store the training error of this permutation
-            null_errors.append(self.__trans_error(vdata, wdata))
+            dist_samples.append(transerr(vdata, wdata))
 
-        # calculate the probability estimate of 'emp_error' being likely
-        # when no signal is in the data
-        null_errors = N.array(null_errors)
-        prob = (null_errors <= emp_error).mean()
+        # store errors
+        self.__dist_samples = N.array(dist_samples)
 
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
 
-        self.emp_error = emp_error
-        self.null_errors = null_errors
 
-        return prob
+    def cdf(self, x):
+        """Returns the probability of a scalar value `x` or lower given the
+        estimated distribution.
+        """
+        if self.__tail == 'left':
+            return (self.__dist_samples <= x).mean()
+        elif self.__tail == 'right':
+            return (self.__dist_samples >= x).mean()
+        else:
+            raise ValueError, 'Unknown value "%s" to `tail` argument.' \
+                              % self.__tail
