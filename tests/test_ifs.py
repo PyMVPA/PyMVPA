@@ -34,7 +34,10 @@ class IFSTests(unittest.TestCase):
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
 
 
-    @sweepargs(svm=clfs['has_sensitivity', '!meta'])
+    # XXX just testing based on a single classifier. Not sure if
+    # should test for every known classifier since we are simply
+    # testing IFS algorithm - not sensitivities
+    @sweepargs(svm=clfs['has_sensitivity', '!meta'][:1])
     def testIFS(self, svm):
 
         # data measure and transfer error quantifier use the SAME clf!
