@@ -18,21 +18,14 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.stats import chisquare
+
+from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 class SearchlightTests(unittest.TestCase):
 
     def setUp(self):
-        data = N.random.standard_normal(( 100, 3, 6, 6 ))
-        labels = N.concatenate( ( N.repeat( 0, 50 ),
-                                  N.repeat( 1, 50 ) ) )
-        chunks = N.repeat( range(5), 10 )
-        chunks = N.concatenate( (chunks, chunks) )
-        mask = N.ones( (3, 6, 6) )
-        mask[0,0,0] = 0
-        mask[1,3,2] = 0
-        self.dataset = MaskedDataset(samples=data, labels=labels,
-                                     chunks=chunks, mask=mask)
+        self.dataset = datasets['3dlarge']
 
 
     def testSearchlight(self):
