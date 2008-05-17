@@ -65,8 +65,9 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     labels = N.concatenate([N.repeat(i, perlabel) for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    return Dataset(samples=data, labels=labels, chunks=chunks)
-
+    ds = Dataset(samples=data, labels=labels, chunks=chunks)
+    ds.nonbogus_features = nonbogus_features
+    return ds
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     """ Create a 2d dataset with a clear multivariate signal, but no

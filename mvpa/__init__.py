@@ -47,3 +47,16 @@ if not __debug__:
     except:
         from mvpa.misc import verbose
         verbose(2, "Psyco online compilation is not enabled")
+else:
+    # Controllable seeding of random number generator
+    from mvpa.misc import debug
+    import numpy as N
+    from os import environ
+
+    debug('INIT', 'mvpa')
+    if environ.has_key('MVPA_SEED'):
+        __random_seed = int(environ['MVPA_SEED'])
+    else:
+        __random_seed = int(N.random.uniform()*(2**31-1))
+    debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
+    N.random.seed(__random_seed)

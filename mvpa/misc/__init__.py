@@ -126,6 +126,8 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('INIT', "Just sequence of inits")
+    debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
     debug.register('_QUICKTEST_', "Quick unittests") # TODO: handle levels of unittests properly

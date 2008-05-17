@@ -98,7 +98,9 @@ ids to be enabled (reported):
   line if optDebug_ is used, ``-d list`` is given, PyMVPA will print
   out list of known ids.
 * environment: variable ``MVPA_DEBUG`` can contain comma-separated
-  list of ids.
+  list of ids or python regular expressions to match multiple ids. Thus
+  specifying ``MVPA_DEBUG=CLF.*`` would enable all ids which start with
+  ``CLF``, and ``MVPA_DEBUG=.*`` would enable all known ids.
 * code: debug.active property (e.g. ``debug.active = [ 'RFEC', 'CLF' ]``)
 
 Besides printing debug messages, it is also possible to print some
@@ -111,6 +113,11 @@ As it was mentioned earlier, debug messages are printed only in
 non-optimized python invocation. That was done to eliminate any
 slowdown introduced by such 'debugging' output, which might appear at
 some computational bottleneck places in the code.
+
+Some of the debug ids are defined to facilitate additional checking of the
+validity of the analysis. E.g. ``RETRAIN`` id would cause additional checking
+of the data in retraining phase. Such additional testing might spot out some
+bugs in the internal logic.
 
 .. TODO: Unify loggers behind verbose and debug. imho debug should have
    also way to specify the level for the message so we could provide
@@ -125,6 +132,23 @@ some computational bottleneck places in the code.
 Additional Little Helpers
 =========================
 
+Random Number Generation
+------------------------
+
+To facilitate reproducible troubleshooting, a seed value of random generator
+of NumPy can be provided in debug mode (python is called without ``-O``) via
+environment variable ``MVPA_SEED=<int>``. Otherwise it gets seeded with random
+integer which can be displayed with debug id ``RANDOM`` e.g.::
+
+  > MVPA_SEED=123 MVPA_DEBUG=RANDOM python test_clf.py
+  [RANDOM] DBG: Seeding RNG with 123
+  ...
+  > MVPA_DEBUG=RANDOM python test_clf.py
+  [RANDOM] DBG: Seeding RNG with 1447286079
+  ...
+
+Others
+------
 (to be written)
 
 .. put information about IO helpers, external bindings, etc here
