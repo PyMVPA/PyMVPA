@@ -31,32 +31,7 @@ from tests_warehouse_clfs import *
 class SensitivityAnalysersTests(unittest.TestCase):
 
     def setUp(self):
-        self.nonbogus = [1, 3]          # informative features
-        self.nfeatures = 6              # total features
-        self.dataset = normalFeatureDataset(perlabel=200, nlabels=2,
-                                            nfeatures=self.nfeatures,
-                                            nonbogus_features=self.nonbogus,
-                                            snr=6)
-        self.datasetsmall = normalFeatureDataset(perlabel=2, nlabels=2,
-                                                 nfeatures=3, nchunks=1,
-                                                 snr=6)
-        self.dataset3 = normalFeatureDataset(perlabel=200, nlabels=3,
-                                             nfeatures=self.nfeatures,
-                                             nonbogus_features=[0,1,3],
-                                             snr=6)
-        self.dataset3small = normalFeatureDataset(perlabel=2, nlabels=3,
-                                                  nfeatures=4, nchunks=1,
-                                                  snr=6)
-
-        self.dataset4 = normalFeatureDataset(perlabel=200, nlabels=4,
-                                             nfeatures=self.nfeatures,
-                                             nonbogus_features=[0,1,3,5],
-                                             snr=6)
-
-        self.dataset4small = normalFeatureDataset(perlabel=2, nlabels=4,
-                                                nfeatures=5, nchunks=1,
-                                                snr=6)
-
+        self.dataset = datasets['uni2large']
 
     # XXX meta should work too but doesn't
     @sweepargs(clf=clfs['has_sensitivity', '!meta'])
@@ -95,10 +70,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #     we don't have yet way to provide transformers thus internal call to
         #     getSensitivityAnalyzer in _call of them is not parametrized
         for map__ in [map_]: # + sana.combined_analyzer.sensitivities:
-            selected = FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)
+            selected = FixedNElementTailSelector(
+                self.dataset.nfeatures -
+                len(self.dataset.nonbogus_features))(map__)
             self.failUnlessEqual(
                 list(selected),
-                list(self.nonbogus),
+                list(self.dataset.nonbogus_features),
                 msg="At the end we should have selected the right features")
 
 

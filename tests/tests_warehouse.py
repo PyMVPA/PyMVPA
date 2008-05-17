@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets import Dataset
+from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import Stateful
 from mvpa.misc.data_generators import *
@@ -70,3 +71,38 @@ def sweepargs(**kwargs):
         raise NotImplementedError
     return unittest_method
 
+#
+# Define datasets to be used all over
+#
+specs = { 'large' : { 'perlabel' : 180, 'nchunks' : 3 },
+          'small' : { 'perlabel' : 2,   'nchunks' : 1 } }
+nonbogus_pool = [0, 1, 3, 5]
+datasets = {}
+nfeatures = 6
+
+for kind, spec in specs.iteritems():
+    # set of univariate datasets
+    for nlabels in [ 2, 3, 4 ]:
+        basename = 'uni%d%s' % (nlabels, kind)
+        for replication in ( 'test', 'train' ):
+            datasets["%s_%s" % (basename, replication)] = \
+                normalFeatureDataset(
+                    nlabels=nlabels,
+                    nfeatures=nfeatures,
+                    nonbogus_features=nonbogus_pool[:nlabels],
+                    snr=8, **spec)
+        # shortcut
+        datasets[basename] = datasets['%s_train' % basename]
+
+    # sample 3D
+    total = 2*spec['perlabel']
+    nchunks = spec['nchunks']
+    data = N.random.standard_normal(( total, 3, 6, 6 ))
+    labels = N.concatenate( ( N.repeat( 0, spec['perlabel'] ),
+                              N.repeat( 1, spec['perlabel'] ) ) )
+    chunks = N.asarray(range(nchunks)*(total/nchunks))
+    mask = N.ones( (3, 6, 6) )
+    mask[0,0,0] = 0
+    mask[1,3,2] = 0
+    datasets['3d%s' % kind] = MaskedDataset(samples=data, labels=labels,
+                                            chunks=chunks, mask=mask)
