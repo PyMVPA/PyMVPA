@@ -71,7 +71,7 @@ class SearchlightTests(unittest.TestCase):
         results = sl(self.dataset)
 
         # only two spheres but error for all CV-folds
-        self.failUnlessEqual(results.shape, (2,5))
+        self.failUnlessEqual(results.shape, (2, len(self.dataset.uniquechunks)))
 
 
     def testChiSquareSearchlight(self):
