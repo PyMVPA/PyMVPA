@@ -10,3 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.featsel')
+
+if __debug__:
+    debug('INIT', 'mvpa.featsel end')

@@ -8,3 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Import helper for FSL"""
 
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.misc.fsl')
+    debug('INIT', 'mvpa.misc.fsl end')

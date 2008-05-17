@@ -33,5 +33,12 @@ The mvpa.datasets module contains the following modules:
 
 __docformat__ = 'restructuredtext'
 
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.datasets')
+
 # nothing in here that works without the base class
 from mvpa.datasets.base import Dataset
+
+if __debug__:
+    debug('INIT', 'mvpa.datasets end')
