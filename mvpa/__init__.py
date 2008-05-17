@@ -60,3 +60,4 @@ else:
         __random_seed = int(N.random.uniform()*(2**31-1))
     debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
     N.random.seed(__random_seed)
+    debug('INIT', 'mvpa end')

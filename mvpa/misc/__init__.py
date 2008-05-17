@@ -197,3 +197,7 @@ if __debug__:
     # Lets check if environment can tell us smth
     if environ.has_key('MVPA_DEBUG_METRICS'):
         debug.registerMetric(environ['MVPA_DEBUG_METRICS'].split(","))
+
+if __debug__:
+    debug('INIT', 'mvpa.misc end')
+

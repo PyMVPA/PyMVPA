@@ -10,3 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.measures')
+
+if __debug__:
+    debug('INIT', 'mvpa.measures end')
