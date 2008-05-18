@@ -48,7 +48,8 @@ class _SVM(Classifier):
         'cache_size': Parameter(100, descr='Size of the kernel cache, specified in megabytes'),
         'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
         'degree': Parameter(3, descr='Degree of polynomial kernel'),
-        'p': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression'),
+            # init the parameter interface
+        'tube_epsilon': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression (SVR)'),
         'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
         'tau': Parameter(1e-6, descr='TAU parameter of KRR regression in shogun'),
         'max_shift': Parameter(10.0, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
