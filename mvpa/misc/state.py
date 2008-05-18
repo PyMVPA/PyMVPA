@@ -113,6 +113,7 @@ class StateVariable(CollectableAttribute):
     def __init__(self, name=None, enabled=True, doc="State variable"):
         CollectableAttribute.__init__(self, name, doc)
         self._isenabled = enabled
+        self._defaultenabled = enabled
         if __debug__:
             debug("STV",
                   "Initialized new state variable %s " % name + `self`)
@@ -655,9 +656,17 @@ class StateCollection(Collection):
                              "states")
 
 
-    def _getEnabled(self):
-        """Return list of enabled states"""
-        return filter(lambda y: self.isEnabled(y), self.names)
+    def _getEnabled(self, nondefault=True):
+        """Return list of enabled states
+        :Parameters:
+          nondefault : bool
+            Either to return also states which are enabled simply by default
+        """
+        if nondefault:
+            ffunc = lambda y: self.isEnabled(y)
+        else:
+            ffunc = lambda y: self.isEnabled(y) and not self._items[y]._defaultenabled
+        return filter(ffunc, self.names)
 
 
     def _setEnabled(self, indexlist):
