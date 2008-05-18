@@ -255,7 +255,7 @@ class SVM_SG_Modular(_SVM):
                 debug('SG__', "IDHashes are %s" % (self.__idhash))
             changed_samples = self.__wasChanged('samples', 0, dataset.samples)
             changed_labels = self.__wasChanged('labels', 1, dataset.labels)
- 
+
         ul = dataset.uniquelabels
         ul.sort()
 
@@ -383,9 +383,9 @@ class SVM_SG_Modular(_SVM):
 
         # Train
         if __debug__:
-            debug("SG", "%sTraining SG_SVM %s %s on data with labels %s" %
-                  (("","Re-")[self.retrainable and self.states.retrained], self._kernel_type,
-                   self.params, dataset.uniquelabels))
+            debug("SG", "%sTraining %s on data with labels %s" %
+                  (("","Re-")[self.retrainable and self.states.retrained], self,
+                   dataset.uniquelabels))
 
         self.__svm.train()
 
