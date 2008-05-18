@@ -117,7 +117,7 @@ class SVMBase(_SVM):
             self._KNOWN_PARAMS += ['nu']
 
         if svm_type in [svm.svmc.EPSILON_SVR]:
-            self._KNOWN_PARAMS += ['p']
+            self._KNOWN_PARAMS += ['tube_epsilon']
 
 
         # init base class
@@ -153,7 +153,8 @@ class SVMBase(_SVM):
         svmprob = svm.SVMProblem( dataset.labels.tolist(), src )
 
         # Translate few params
-        TRANSLATEDICT={'epsilon': 'eps'}
+        TRANSLATEDICT={'epsilon': 'eps',
+                       'tube_epsilon': 'p'}
         args = []
         for paramname, param in self.params.items.items() + self.kernel_params.items.items():
             if paramname in TRANSLATEDICT:

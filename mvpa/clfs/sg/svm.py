@@ -133,11 +133,6 @@ class SVM_SG_Modular(_SVM):
     This is a simple base interface
     """
 
-    # init the parameter interface
-    tube_epsilon = Parameter(1e-2,
-                             min=1e-10,
-                             descr='XXX Some kind of tolerance')
-
     num_threads = Parameter(1,
                             min=1,
                             descr='Number of threads to utilize')
@@ -163,8 +158,12 @@ class SVM_SG_Modular(_SVM):
 
         TODO Documentation if this all works ;-)
         """
+
+        svm_impl = svm_impl.lower()
         if svm_impl == 'krr':
             self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
+        if svm_impl in ['svrlight', 'libsvr']:
+            self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tube_epsilon']
 
         # init base class
         _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
@@ -173,7 +172,6 @@ class SVM_SG_Modular(_SVM):
         """Holds the trained svm."""
 
         # assign default params
-        svm_impl = svm_impl.lower()
         if  svm_impl in known_svm_impl:
             self.__svm_impl = svm_impl
         else:
@@ -366,7 +364,8 @@ class SVM_SG_Modular(_SVM):
             newsvm = True
             _setdebug(self.__svm, 'SVM')
             # Set optimization parameters
-            if hasattr(self.__svm, 'set_tube_epsilon'):
+            if self.params.isKnown('tube_epsilon') and \
+                   hasattr(self.__svm, 'set_tube_epsilon'):
                 self.__svm.set_tube_epsilon(self.params.tube_epsilon)
             self.__svm.parallel.set_num_threads(self.params.num_threads)
         else:
