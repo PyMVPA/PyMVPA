@@ -515,7 +515,7 @@ class ParameterCollection(Collection):
         # go through all members and if any isSet -- return True
         for index in self._items:
             if Collection.isSet(self, index):
-                result += index
+                result.append(index)
         return result
 
 
