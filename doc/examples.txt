@@ -63,6 +63,6 @@ Runs both classifiers on the the same dataset and compare their performance.
 This example also shows an example usage of confusion matrices and how two
 classifers can be combined.
 
-.. literalinclude:: examples/smlr_example.py
+.. literalinclude:: examples/smlr.py
 
 

@@ -113,6 +113,10 @@ test-%: build
 test: build
 	@cd tests && PYTHONPATH=.. python main.py
 
+te-%: build
+	PYTHONPATH=. python doc/examples/$*.py
+
+testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \
