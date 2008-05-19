@@ -138,3 +138,13 @@ mailing list or contact the authors on IRC:
 
 .. _subscription: http://lists.alioth.debian.org/mailman/listinfo/pkg-exppsy-pymvpa
 .. _archive: http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/
+
+
+Publications
+============
+
+The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
+*German Society for Psychophysiology and its Application* in Magdeburg,
+2008.
+
+.. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
