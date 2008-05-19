@@ -179,7 +179,10 @@ class Classifier(Stateful):
 
 
     def __str__(self):
-        return "%s\n %s" % (`self`, Stateful.__str__(self))
+        if __debug__ and 'CLF_' in debug.active:
+            return "%s / %s" % (`self`, Stateful.__str__(self))
+        else:
+            return `self`
 
 
     #XXX that is a bad idea since object seems to be be deallocated by here
