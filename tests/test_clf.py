@@ -320,7 +320,9 @@ class ClassifiersTests(unittest.TestCase):
         # datasets since otherwise unittests would fail.
         dsargs = {'perlabel':50, 'nlabels':2, 'nfeatures':5, 'nchunks':1,
                   'nonbogus_features':[2,4], 'snr': 5.0}
-
+        # NB datasets will be changed by the end of testing, so if
+        # are to change to use generic datasets - make sure to copy
+        # them here
         dstrain = normalFeatureDataset(**dsargs)
         dstest = normalFeatureDataset(**dsargs)
 
@@ -337,31 +339,74 @@ class ClassifiersTests(unittest.TestCase):
         eps = 0.05
         corrcoef_eps = 0.85             # just to get no failures... usually > 0.95
 
-        for i in xrange(3):             # do few times
+
+        def batch_test(retrain=True, retest=True, closer=True):
+            err = trerr(dstest, dstrain)
             err_re = trerr_re(dstest, dstrain)
-            corr = N.corrcoef(values_1, clf_re.values)[0,1]
-            if i == 0:
-                self.failUnless(not clf_re.states.retrained,
-                            "Must fully train on 1st pass")
-                self.failUnless(not clf_re.states.retested,
-                            "Must fully test on 1st pass")
-            else:
-                self.failUnless(clf_re.states.retrained,
-                            "Must retrain instead of full training")
-                self.failUnless(clf_re.states.retested,
-                            "Must retest instead of full testing")
+            corr = N.corrcoef(clf.values, clf_re.values)[0,1]
+            corr_old = N.corrcoef(values_1, clf_re.values)[0,1]
+            if __debug__:
+                debug('TEST', "Retraining stats: errors %g %g corr %g "
+                      "with old error %g corr %g" %
+                  (err, err_re, corr, err_1, corr_old))
+            self.failUnless(clf_re.states.retrained == retrain,
+                            ("Must fully train",
+                             "Must retrain instead of full training")[retrain])
+            self.failUnless(clf_re.states.retested == retest,
+                            ("Must fully test",
+                             "Must retest instead of full testing")[retest])
             self.failUnless(corr > corrcoef_eps,
               msg="Result must be close to the one without retraining."
                   " Got corrcoef=%s" % (corr))
-            # even a classifier if trained without retraining, due to
-            # difference in convergence and unstable 'valuews' (ie
-            # close to 0), might switch its decision, so lets check
-            # only values
-            #self.failUnless(abs(err_1 - err_re) <= eps,
-            #     msg="We should get the same error with retraining."
-            #         " Got %s and %s" % (err_1, err_re))
+            if closer:
+                self.failUnless(corr > corr_old,
+                                msg="Result must be closer to current without retraining"
+                                " than to old one. Got corrcoef=%s" % (corr_old))
 
-        # Check the logic
+        # Check sequential retraining/retesting
+        for i in xrange(3):
+            flag = bool(i!=0)
+            # ok - on 1st call we should train/test, then retrain/retest
+            # and we can't compare for closinest to old result since
+            # we are working on the same data/classifier
+            batch_test(retrain=flag, retest=flag, closer=False)
+
+        # should retrain nicely if we change a parameter
+        if 'C' in clf.params.names:
+            clf.params.C *= 0.1
+            clf_re.params.C *= 0.1
+            batch_test()
+        else:
+            raise RuntimeError, \
+                  'Please implement testing while changing some of the ' \
+                  'params for clf %s' % clf
+
+        # should retrain nicely if we change kernel parameter
+        if hasattr(clf, 'kernel_params') and len(clf.kernel_params.names):
+            clf.kernel_params.gamma = 0.1
+            clf_re.kernel_params.gamma = 0.1
+            # retest is false since kernel got recomputed thus
+            # can't expect to use the same kernel
+            batch_test(retest=False)
+
+        # should retrain nicely if we change labels
+        oldlabels = dstrain.labels[:]
+        dstrain.permuteLabels(status=True)
+        self.failUnless((oldlabels != dstrain.labels).any())
+        batch_test()
+
+        # should retest nicely if we change labels in testing data
+        oldlabels = dstest.labels[:]
+        dstest.permuteLabels(status=True)
+        self.failUnless((oldlabels != dstest.labels).any())
+        batch_test()
+
+        # should re-train if we change data
+        # reuse trained SVM and its 'final' optimization point
+        oldsamples = dstrain.samples.copy()
+        dstrain.samples[:] += dstrain.samples*0.05
+        self.failUnless((oldsamples != dstrain.samples).any())
+        batch_test(retest=False)
 
         clf.states._resetEnabledTemporarily()
 
@@ -375,8 +420,9 @@ class ClassifiersTests(unittest.TestCase):
             traindata_copy = deepcopy(traindata) # full copy of dataset
             for clf in clf_:
                 clf.train(traindata)
-                self.failUnless((traindata.samples == traindata_copy.samples).all(),
-                                "Training of a classifier shouldn't change original dataset")
+                self.failUnless(
+                   (traindata.samples == traindata_copy.samples).all(),
+                   "Training of a classifier shouldn't change original dataset")
 
             # TODO: enforce uniform return from predict??
             #predicted = clf.predict(traindata.samples)
