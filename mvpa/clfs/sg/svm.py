@@ -338,15 +338,17 @@ class SVM_SG_Modular(_SVM):
                 self.__kernel_args = kargs
             _setdebug(self.__kernel, 'Kernels')
 
-        # SVM
-        C = self.params.C
-        if C<0:
-            C = self._getDefaultC(dataset.samples)*abs(C)
-            if __debug__:
-                debug("SG_", "Default C for %s was computed to be %s" %
-                             (self.params.C, C))
+        # TODO -- handle changed_params correctly, ie without recreating
+        # whole SVM
+        if not self.retrainable or self.__svm is None or changed_params: 
+            # SVM
+            C = self.params.C
+            if C<0:
+                C = self._getDefaultC(dataset.samples)*abs(C)
+                if __debug__:
+                    debug("SG_", "Default C for %s was computed to be %s" %
+                          (self.params.C, C))
 
-        if not self.retrainable or self.__svm is None:
             # Choose appropriate implementation
             svm_impl_class = _get_implementation(self.__svm_impl, len(ul))
 
