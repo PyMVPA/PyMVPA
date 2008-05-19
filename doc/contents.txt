@@ -14,6 +14,7 @@ PyMVPA Documentation Contents
    featsel
    algorithms
    misc
+   examples
    glossary
    matlab
    faq
