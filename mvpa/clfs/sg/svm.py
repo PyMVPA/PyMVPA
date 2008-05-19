@@ -313,11 +313,11 @@ class SVM_SG_Modular(_SVM):
 
             if self.retrainable and __debug__:
                 if changed_samples:
-                    debug("SG_",
+                    debug("SG",
                           "Re-Creating kernel since samples has changed")
 
                 if changed_kernel_params:
-                    debug("SG_",
+                    debug("SG",
                           "Re-Creating kernel since params %s has changed" %
                           changed_kernel_params)
 
@@ -326,12 +326,13 @@ class SVM_SG_Modular(_SVM):
             self.__traindata = _tosg(dataset.samples)
 
             if __debug__:
-                debug("SG_", "Creating kernel instance of %s giving arguments %s" %
+                debug("SG", "Creating kernel instance of %s giving arguments %s" %
                       (`self._kernel_type`, kargs))
 
             self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
                                               *kargs)
             newkernel = True
+            self.kernel_params.reset()  # mark them as not-changed
             if self.retrainable:
                 self.__kernel.set_precompute_matrix(True, True)
                 self.__kernel_test = None
@@ -340,7 +341,7 @@ class SVM_SG_Modular(_SVM):
 
         # TODO -- handle changed_params correctly, ie without recreating
         # whole SVM
-        if not self.retrainable or self.__svm is None or changed_params: 
+        if not self.retrainable or self.__svm is None or changed_params:
             # SVM
             C = self.params.C
             if C<0:
@@ -353,7 +354,7 @@ class SVM_SG_Modular(_SVM):
             svm_impl_class = _get_implementation(self.__svm_impl, len(ul))
 
             if __debug__:
-                debug("SG_", "Creating SVM instance of %s" % `svm_impl_class`)
+                debug("SG", "Creating SVM instance of %s" % `svm_impl_class`)
 
             if self.__svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
@@ -363,6 +364,7 @@ class SVM_SG_Modular(_SVM):
             else:
                 self.__svm = svm_impl_class(C, self.__kernel, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
+            self.params.reset()  # mark them as not-changed
             newsvm = True
             _setdebug(self.__svm, 'SVM')
             # Set optimization parameters
@@ -375,6 +377,8 @@ class SVM_SG_Modular(_SVM):
                 debug("SG_", "SVM instance is not re-created")
             if changed_labels:          # labels were changed
                 self.__svm.set_labels(labels)
+            if newkernel:               # kernel was replaced
+                self.__svm.set_kernel(self.__kernel)
             if changed_params:
                 raise NotImplementedError, \
                       "Implement handling of changing params of SVM"
