@@ -21,8 +21,9 @@ The mvpa package contains the following subpackages and modules:
 :group Algorithms: algorithms
 :group Miscellaneous: misc
 
-:author: `Michael Hanke <michael.hanke@gmail.com>`__
-         `Yaroslav Halchenko <debian@onerussian.com>`__
+:author: `Michael Hanke <michael.hanke@gmail.com>`__,
+         `Yaroslav Halchenko <debian@onerussian.com>`__,
+         `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
 :version: 0.2.0-pre1
 :see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
