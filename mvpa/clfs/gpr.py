@@ -14,116 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.clfs.classifier import Classifier
-
-from scipy import weave
-from scipy.weave import converters
-import time
-
-def distance_matrix(data1,data2,symmetric=False):
-    """
-    Compute (euclidean) distance matrix between two datasets. This
-    implementation is super fast since it uses inline C code.    
-
-    Note that when symmetric==True only half matrix is computed and
-    then replicated (optimization).
-
-    Note that the resulting distance matrix has data1 on rows and
-    data2 on columns.
-    I believe it's more readable. All the code inthe following
-    functions is adapted to this new convention.
-    """
-    size1 = data1.shape[0]
-    size2 = data2.shape[0]
-    F = data1.shape[1]
-    dm = N.zeros((data1.shape[0],data2.shape[0]),'d')
-    code = None
-    if symmetric==False:
-        code = """
-        int i,j,t;
-        double tmp,distance;
-        for (i=0;i<size1;i++) {
-            for (j=0;j<size2;j++) {
-                tmp = 0.0;
-                for(t=0;t<F;t++) {
-                    distance = data1(i,t)-data2(j,t);
-                    tmp = tmp+distance*distance;
-                    }
-                dm(i,j) = tmp;
-                }
-            }
-        return_val = 0;
-        """
-    else:
-        code = """
-        int i,j,t;
-        double tmp,distance;
-        for (i=0;i<size1-1;i++) {
-            for (j=i;j<size2;j++) {
-                tmp = 0.0;
-                for(t=0;t<F;t++) {
-                    distance = data1(i,t)-data2(j,t);
-                    tmp = tmp+distance*distance;
-                    }
-                dm(i,j) = tmp;
-                }
-            }
-        return_val = 0;
-        """        
-    t = time.time()
-    retval = weave.inline(code,
-                           ['data1','size1','data2','size2','F','dm'],
-                           type_converters=converters.blitz,
-                           compiler = 'gcc')
-    if symmetric==True:
-        dm = dm+N.triu(dm).T # copy upper part to lower part
-        pass
-    print "Distance matrix computed in",time.time()-t,"sec."
-    
-    return dm
-
-
-
-class Kernel(object):
-    """Kernel function base class.
-       
-    """
-    def __repr__(self):
-        return "A basic Kernel."
-
-    pass
-
-
-
-class SquaredExponential(Kernel):
-    """The Squared Exponential kernel function class.
-
-    """
-    def __init__(self,length_scale=0.01,sigma_noise=0.001, **kwargs):
-        """Initialize the Squared Exponential class.
-
-        :Parameters:
-          length_scale : float
-            the characteristic lengthscale of the phenomenon under investigation.
-            (Defaults to 0.01)
-
-          sigma_noise : float
-            the standard deviation of the gaussian noise.
-            (Defaults to 0.001)
-        """
-        # init base class first
-        Kernel.__init__(self, **kwargs)
-        
-        self.length_scale = length_scale
-        self.sigma_noise = sigma_noise
-        return
-
-    def __repr__(self):
-        return "Squared_Exponential_kernel(length_scale=%f,sigma_noise=%f)" % (self.length_scale,self.sigma_noise)
-
-    def compute(self,distance_matrix):
-        return N.exp(-distance_matrix/(2.0*self.length_scale**2))
-
-    pass
+from mvpa.clfs.kernel import Kernel, KernelSquaredExponential
 
 
 
@@ -132,14 +23,18 @@ class GPR(Classifier):
     
     """
 
-    def __init__(self, kernel=SquaredExponential(lengthscale=0.01,sigma_noise=0.001), **kwargs):
+    def __init__(self, kernel=KernelSquaredExponential(lengthscale=0.01),sigma_noise=0.001, **kwargs):
         """
         Initialize a GPR regression analysis.
 
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
-            (Default to SquaredExponential(lengthscale=0.01,sigma_noise=0.001))
+            (Default to KernelSquaredExponential(lengthscale=0.01)
+
+          sigma_noise : float
+            the standard deviation of the gaussian noise.
+            (Defaults to 0.001)
 
         """
         # init base class first
@@ -151,11 +46,14 @@ class GPR(Classifier):
         # It does not make sense to calculate a confusion matrix for a GPR
         self.states.enable('training_confusion', False)
 
-        # set kernel
+        # set kernel:
         self.__kernel = kernel
+
+        # set noise level:
+        self.sigma_noise = sigma_noise
+
         return
     
-
 
     def __repr__(self):
         """String summary of the object
@@ -168,13 +66,14 @@ class GPR(Classifier):
         """Train the classifier using `data` (`Dataset`).
         """
 
-        print "Computing train train Distance Matrix"
         self.train_fv = data.samples
         self.train_labels = data.labels
-        self.dm_train_train = distance_matrix(self.train_fv,self.train_fv,symmetric=True)
-        self.km_train_train = self.__kernel.compute(self.dm_train_train)
+        # self.dm_train_train = distance_matrix(self.train_fv,self.train_fv,symmetric=True)
+        # self.km_train_train = self.__kernel.compute(self.dm_train_train)
+        print "Computing train train kernel matrix"
+        self.km_train_train = self.__kernel.compute(self.train_fv)
 
-        self.L = N.linalg.cholesky(self.km_train_train+self.__kernel.sigma_noise**2*N.identity(self.km_train_train.shape[0],'d'))
+        self.L = N.linalg.cholesky(self.km_train_train+self.sigma_noise**2*N.identity(self.km_train_train.shape[0],'d'))
         self.alpha = N.linalg.solve(self.L.transpose(),N.linalg.solve(self.L,self.train_labels))
 
         return
@@ -185,34 +84,76 @@ class GPR(Classifier):
         Predict the output for the provided data.
         """
 
-        print "Computing test train Distance Matrix"
-        dm_train_test = distance_matrix(self.train_fv,data,symmetric=False)
-        print "Computing test test Distance Matrix"
-        dm_test_test = distance_matrix(data,data,symmetric=True)
-
-        km_train_test = self.__kernel.compute(dm_train_test)
-        km_test_test = self.__kernel.compute(dm_test_test)
-
+        print "Computing train test kernel matrix"
+        km_train_test = self.__kernel.compute(self.train_fv,data)
+        print "Computing test test kernel matrix"
+        km_test_test = self.__kernel.compute(data)
+        
         predicted_label = N.dot(km_train_test.transpose(),self.alpha)
         # v = N.linalg.solve(L,km_train_test)
         # predicted_variance = N.diag(km_test_test-N.dot(v.transpose(),v))
         # log_marginal_likelihood = -0.5*N.dot(train_label,alpha)-N.log(L.diagonal()).sum()-km_train_train.shape[0]*0.5*N.log(2*N.pi)
         
-
         return predicted_label
 
     pass
 
 
+
+def gen_data(n_instances,n_features,flat=False):
+    data = None
+    if flat:
+        data = (N.arange(0.0,1.0,1.0/n_instances)*N.pi)
+        data.resize(n_instances,n_features)
+        print data
+    else:
+        data = N.random.rand(n_instances,n_features)*N.pi
+        pass
+    label = N.sin((data**2).sum(1)).round()
+    data = N.matrix(data)
+    return data,label
+    
+
 if __name__=="__main__":
 
-    
-    k = Kernel()
-    print k
 
-    kse = SquaredExponential()
-    print kse
+    N.random.seed(1)    
+
+    from mvpa.datasets.dataset import Dataset
     
-    g = GPR()
+    train_size = 15
+    test_size = 100
+    F = 1
+
+    
+    data_train, label_train = gen_data(train_size,F)
+    print label_train
+
+    data_test, label_test = gen_data(test_size,F,flat=True)
+    print label_train
+
+    dataset = Dataset(samples=data_train, labels=label_train)
+
+    kse = KernelSquaredExponential(length_scale=2e-1)
+    g = GPR(kse,sigma_noise=0.001)
     print g
     
+    g.train(dataset)
+    prediction = g.predict(data_test)
+    
+    print label_test
+    print prediction.round(2)
+    # accuracy = 1-N.sqrt(((prediction-label_test)**2).sum()/prediction.size) # 1-RMSE
+    accuracy = (prediction.round().astype('l')==label_test.astype('l')).sum()/float(prediction.size)
+    print "accuracy:",accuracy
+    
+    if F==1:
+        import pylab
+        pylab.close("all")
+        pylab.ion()
+        pylab.plot(data_train,label_train,"ro",label="train")
+        pylab.plot(data_test,prediction,"b+-",label="prediction")
+        pylab.plot(data_test,label_test,"gx-",label="test")
+        pylab.text(0.5,-1.2,"accuracy="+str(accuracy))
+        pylab.legend()
+        pass
