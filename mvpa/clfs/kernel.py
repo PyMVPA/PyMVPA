@@ -3,7 +3,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   Copyright (c) 2008 Emanuele Olivetti <emanuele@relativita.com>
-#   
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Kernels for Gaussian Process Regression and Classification."""
