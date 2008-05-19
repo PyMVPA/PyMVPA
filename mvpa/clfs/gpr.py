@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.clfs.classifier import Classifier
-from mvpa.clfs.kernel import Kernel, KernelSquaredExponential
+from mvpa.clfs.kernel import KernelSquaredExponential
 
 
 
@@ -23,7 +23,7 @@ class GPR(Classifier):
     
     """
 
-    def __init__(self, kernel=KernelSquaredExponential(lengthscale=0.01),sigma_noise=0.001, **kwargs):
+    def __init__(self, kernel=KernelSquaredExponential(length_scale=0.01), sigma_noise=0.001, **kwargs):
         """
         Initialize a GPR regression analysis.
 
@@ -68,13 +68,11 @@ class GPR(Classifier):
 
         self.train_fv = data.samples
         self.train_labels = data.labels
-        # self.dm_train_train = distance_matrix(self.train_fv,self.train_fv,symmetric=True)
-        # self.km_train_train = self.__kernel.compute(self.dm_train_train)
         print "Computing train train kernel matrix"
         self.km_train_train = self.__kernel.compute(self.train_fv)
 
-        self.L = N.linalg.cholesky(self.km_train_train+self.sigma_noise**2*N.identity(self.km_train_train.shape[0],'d'))
-        self.alpha = N.linalg.solve(self.L.transpose(),N.linalg.solve(self.L,self.train_labels))
+        self.L = N.linalg.cholesky(self.km_train_train+self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
+        self.alpha = N.linalg.solve(self.L.transpose(), N.linalg.solve(self.L, self.train_labels))
 
         return
 
@@ -85,14 +83,14 @@ class GPR(Classifier):
         """
 
         print "Computing train test kernel matrix"
-        km_train_test = self.__kernel.compute(self.train_fv,data)
+        km_train_test = self.__kernel.compute(self.train_fv, data)
         print "Computing test test kernel matrix"
         km_test_test = self.__kernel.compute(data)
         
-        predicted_label = N.dot(km_train_test.transpose(),self.alpha)
-        # v = N.linalg.solve(L,km_train_test)
-        # predicted_variance = N.diag(km_test_test-N.dot(v.transpose(),v))
-        # log_marginal_likelihood = -0.5*N.dot(train_label,alpha)-N.log(L.diagonal()).sum()-km_train_train.shape[0]*0.5*N.log(2*N.pi)
+        predicted_label = N.dot(km_train_test.transpose(), self.alpha)
+        # v = N.linalg.solve(L, km_train_test)
+        # predicted_variance = N.diag(km_test_test-N.dot(v.transpose(), v))
+        # log_marginal_likelihood = -0.5*N.dot(train_label, alpha)-N.log(L.diagonal()).sum()-km_train_train.shape[0]*0.5*N.log(2*N.pi)
         
         return predicted_label
 
@@ -100,21 +98,21 @@ class GPR(Classifier):
 
 
 
-def gen_data(n_instances,n_features,flat=False):
+def gen_data(n_instances, n_features, flat=False):
     data = None
     if flat:
-        data = (N.arange(0.0,1.0,1.0/n_instances)*N.pi)
-        data.resize(n_instances,n_features)
-        print data
+        data = (N.arange(0.0, 1.0, 1.0/n_instances)*N.pi)
+        data.resize(n_instances, n_features)
+        # print data
     else:
-        data = N.random.rand(n_instances,n_features)*N.pi
+        data = N.random.rand(n_instances, n_features)*N.pi
         pass
     label = N.sin((data**2).sum(1)).round()
     data = N.matrix(data)
-    return data,label
+    return data, label
     
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
 
     N.random.seed(1)    
@@ -126,34 +124,36 @@ if __name__=="__main__":
     F = 1
 
     
-    data_train, label_train = gen_data(train_size,F)
+    data_train, label_train = gen_data(train_size, F)
     print label_train
 
-    data_test, label_test = gen_data(test_size,F,flat=True)
-    print label_train
+    data_test, label_test = gen_data(test_size, F, flat=True)
+    # print label_test
 
     dataset = Dataset(samples=data_train, labels=label_train)
 
     kse = KernelSquaredExponential(length_scale=2e-1)
-    g = GPR(kse,sigma_noise=0.001)
+    g = GPR(kse, sigma_noise=0.001)
     print g
     
     g.train(dataset)
     prediction = g.predict(data_test)
     
     print label_test
-    print prediction.round(2)
+    print prediction.round()
     # accuracy = 1-N.sqrt(((prediction-label_test)**2).sum()/prediction.size) # 1-RMSE
     accuracy = (prediction.round().astype('l')==label_test.astype('l')).sum()/float(prediction.size)
-    print "accuracy:",accuracy
+    print "accuracy:", accuracy
     
-    if F==1:
-        import pylab
-        pylab.close("all")
-        pylab.ion()
-        pylab.plot(data_train,label_train,"ro",label="train")
-        pylab.plot(data_test,prediction,"b+-",label="prediction")
-        pylab.plot(data_test,label_test,"gx-",label="test")
-        pylab.text(0.5,-1.2,"accuracy="+str(accuracy))
+    import pylab
+    pylab.close("all")
+    pylab.ion()
+
+    if F == 1:
+        pylab.plot(data_train, label_train, "ro", label="train")
+        pylab.plot(data_test, prediction, "b+-", label="prediction")
+        pylab.plot(data_test, label_test, "gx-", label="test")
+        pylab.text(0.5, -1.2, "accuracy="+str(accuracy))
         pylab.legend()
         pass
+
