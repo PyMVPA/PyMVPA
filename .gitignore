@@ -9,7 +9,6 @@
 /html
 */html
 */*/html
-/html
 build
 *.prof
 *.kcache
@@ -25,7 +24,6 @@ debian/*.debhelper
 debian/*.substvars
 debian/files
 *-stamp
-*.html
 *.dot
 *.ps
 profile.out
