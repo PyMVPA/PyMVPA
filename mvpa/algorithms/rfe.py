@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.clfs.transerror import ClassifierError
 from mvpa.algorithms.datameasure import ClassifierBasedSensitivityAnalyzer
 from mvpa.algorithms.featsel import FeatureSelection, \
                                     BestDetector, \
@@ -124,7 +125,9 @@ class RFE(FeatureSelection):
 
         # force clf training when sensitivities are not updated as otherwise
         # shared classifiers are not retrained
-        if not self.__update_sensitivity and not self.__train_clf:
+        if not self.__update_sensitivity \
+               and isinstance(self.__transfer_error, ClassifierError) \
+               and not self.__train_clf:
             if __debug__:
                 debug("RFEC", "Forcing training of classifier since " +
                       "sensitivities aren't updated at each step")
@@ -192,6 +195,11 @@ class RFE(FeatureSelection):
         selected_ids = result_selected_ids
 
         while wdataset.nfeatures > 0:
+
+            if __debug__:
+                debug('RFEC',
+                      "Step %d: nfeatures=%d" % (step, wdataset.nfeatures))
+
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
             # only mark on removed features at each step
@@ -226,7 +234,7 @@ class RFE(FeatureSelection):
             # store result
             if isthebest:
                 results = (wdataset, wtestdataset)
-                result_selected_ids = selected_ids
+                result_selected_ids = orig_feature_ids
 
             # stop if it is time to finish
             if nfeatures == 1 or stop:
@@ -237,10 +245,13 @@ class RFE(FeatureSelection):
 
             if __debug__:
                 debug('RFEC',
-                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d " \
+                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d "
                       "nfeatures_selected=%d" %
                       (step, nfeatures, error, isthebest, stop,
                        len(selected_ids)))
+                debug('RFEC_',
+                      "Sensitivity: %s, selected_ids: %s" %
+                      (sensitivity, selected_ids))
 
 
             # Create a dataset only with selected features
@@ -265,7 +276,7 @@ class RFE(FeatureSelection):
 
             # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
             selected_ids.sort()
-            if self.states.isEnabled("history"):
+            if self.states.isEnabled("history") or self.states.isEnabled('selected_ids'):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
 

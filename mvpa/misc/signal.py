@@ -16,11 +16,15 @@ from scipy import signal
 from scipy.linalg import lstsq
 from scipy.special import legendre
 
+from operator import isSequenceType
+
 from mvpa.misc.support import getBreakPoints
 
-def detrend(data, perchunk=False, dtype='linear'):
+def detrend(data, perchunk=False, model='linear',
+            polyord=None, opt_reg=None):
     """
-    Given a dataset, detrend the data inplace either entirely or per each chunk
+    Given a dataset, detrend the data inplace either entirely
+    or per each chunk
 
     :Parameters:
       `data` : `Dataset`
@@ -28,21 +32,47 @@ def detrend(data, perchunk=False, dtype='linear'):
       `perchunk` : bool
         either to operate on whole dataset at once or on each chunk
         separately
-      `dtype`
-        type accepted by scipy.signal.detrend. Currently only
-        'linear' or 'constant' (which is just demeaning)
+      `model`
+        Type of detrending model to run.  If 'linear' or 'constant',
+        scipy.signal.detrend is used to perform a linear or demeaning
+        detrend. If 'regress', then you specify the polyord and opt_reg
+        arguments to define regressors to regress out of the dataset.
+      `polyord` : int or list
+        Order of the Legendre polynomial to remove from the data.  This
+        will remove every polynomial up to and including the provided
+        value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
+        polynomials from the data.  N.B.: The 0th polynomial is the 
+        baseline shift, the 1st is the linear trend.
+        If you specify a single int and perchunk is True, then this value
+        is used for each chunk.  You can also specify a differnt polyord 
+        value for each chunk by providing a list or ndarray of polyord
+        values the length of the number of chunks.
+      `opt_reg` : ndarray
+        Optional ndarray of additional information to regress out from the
+        dataset.  One example would be to regress out motion parameters.
+        As with the data, time is on the first axis.
 
     """
 
-    bp = 0                              # no break points by default
+    if model in ['linear', 'constant']:
+        # perform scipy detrend
+        bp = 0                              # no break points by default
 
-    if perchunk:
-        bp = getBreakPoints(data.chunks)
+        if perchunk:
+            bp = getBreakPoints(data.chunks)
 
-    data.samples[:] = signal.detrend(data.samples, axis=0, type=dtype, bp=bp)
+        data.samples[:] = signal.detrend(data.samples, axis=0,
+                                         type=model, bp=bp)
+    elif model in ['regress']:
+        # perform regression-based detrend
+        return __detrend_regress(data, perchunk=perchunk,
+                                 polyord=polyord, opt_reg=opt_reg)
+    else:
+        # raise exception because not found
+        raise ValueError('Specified model type (%s) is unknown.'
+                         % (model))
 
-
-def detrend_pattern(data, perchunk=True, polort=None, opt_reg=None):
+def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
     """
     Given a dataset, perform a detrend inplace, regressing out polynomial
     terms as well as optional regressors, such as motion parameters.
@@ -55,56 +85,82 @@ def detrend_pattern(data, perchunk=True, polort=None, opt_reg=None):
         separately.  If perchunk is True, all the samples within a
         chunk should be contiguous and the chunks should be sorted in
         order from low to high.
-      `polort` : int
+      `polyord` : int
         Order of the Legendre polynomial to remove from the data.  This
         will remove every polynomial up to and including the provided
-        value.  For example, 3 will remove 1st, 2nd, and 3rd order
-        polynomials from the data.
+        value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
+        polynomials from the data.  N.B.: The 0th polynomial is the 
+        baseline shift, the 1st is the linear trend.
+        If you specify a single int and perchunk is True, then this value
+        is used for each chunk.  You can also specify a differnt polyord 
+        value for each chunk by providing a list or ndarray of polyord
+        values the length of the number of chunks.
       `opt_reg` : ndarray
         Optional ndarray of additional information to regress out from the
         dataset.  One example would be to regress out motion parameters.
         As with the data, time is on the first axis.
     """
 
-    # create data to regress out
+    # Process the polyord to be a list with length of the number of chunks
+    if not polyord is None:
+        if not isSequenceType(polyord):
+            # repeat to be proper length
+            polyord = [polyord]*len(data.uniquechunks)
+        elif perchunk and len(polyord) != len(data.uniquechunks):
+            raise ValueError("If you specify a sequence of polyord values " + \
+                                 "they sequence length must match the " + \
+                                 "number of unique chunks in the data.")
+
     # loop over chunks if necessary
     if perchunk:
         # get the unique chunks
         uchunks = data.uniquechunks
 
         # loop over each chunk
-        cpol = []
-        for chunk in uchunks:
+        reg = []
+        for n, chunk in enumerate(uchunks):
+            # get the indices for that chunk
             cinds = data.chunks == chunk
-            x = N.linspace(-1, 1, cinds.sum())
-            # create the polort for each chunk
-            pol = []
-            for n in range(1, polort + 1):
-                pol.append(legendre(n)(x)[:, N.newaxis])
-            cpol.append(N.hstack(pol))
-        pols = N.vstack(cpol)
-    else:
-        # just create the polort over the entire dataset
-        pol = []
-        x = N.linspace(-1, 1, data.nsamples)
-        for n in range(1, polort + 1):
-            pol.append(legendre(n)(x)[:, N.newaxis])
-        pols = N.hstack(pol)
 
-    # combine all the regressors together
-    tocombine = [N.ones((data.nsamples, 1))]
-    if not polort is None:
-        # add in the optional regressors, too
-        tocombine.append(pols)
+            # see if add in polyord values    
+            if not polyord is None:
+                # create the timespan
+                x = N.linspace(-1, 1, cinds.sum())
+                # create each polyord with the value for that chunk
+                for n in range(polyord[n] + 1):
+                    newreg = N.zeros((data.nsamples, 1))
+                    newreg[cinds, 0] = legendre(n)(x)
+                    reg.append(newreg)
+    else:
+        # take out mean over entire dataset
+        reg = []
+        # see if add in polyord values    
+        if not polyord is None:
+            # create the timespan
+            x = N.linspace(-1, 1, data.nsamples)
+            for n in range(polyord[0] + 1):
+                reg.append(legendre(n)(x)[:, N.newaxis])
+
+    # see if add in optional regs
     if not opt_reg is None:
         # add in the optional regressors, too
-        tocombine.append(opt_reg)
-    regs = N.hstack(tocombine)
+        reg.append(opt_reg)
 
-    # regress them out
+    # combine the regs
+    if len(reg) > 0:
+        if len(reg) > 1:
+            regs = N.hstack(reg)
+        else:
+            regs = reg[0]
+    else:
+        # no regs to remove
+        raise ValueError("You must specify at least one " + \
+                             "regressor to regress out.")
+
+    # perform the regression
     res = lstsq(regs, data.samples)
 
-    # remove the residuals
+    # remove all but the residuals
     yhat = N.dot(regs, res[0])
     data.samples -= yhat
 

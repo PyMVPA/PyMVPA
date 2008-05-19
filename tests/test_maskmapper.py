@@ -54,7 +54,7 @@ class MaskMapperTests(unittest.TestCase):
         mask[1,1] = 0
         map_ = MaskMapper(mask)
 
-        rmapped = map_(N.arange(1,6))
+        rmapped = map_.reverse(N.arange(1,6))
         self.failUnless( rmapped.shape == (3,2) )
         self.failUnless( rmapped[1,1] == 0 )
         self.failUnless( rmapped[2,1] == 5 )
@@ -65,7 +65,7 @@ class MaskMapperTests(unittest.TestCase):
                                map_,
                                N.arange(6))
 
-        rmapped2 = map_(N.arange(1,11).reshape(2,5))
+        rmapped2 = map_.reverse(N.arange(1,11).reshape(2,5))
         self.failUnless( rmapped2.shape == (2,3,2) )
         self.failUnless( rmapped2[0,1,1] == 0 )
         self.failUnless( rmapped2[1,1,1] == 0 )
@@ -108,9 +108,9 @@ class MaskMapperTests(unittest.TestCase):
 
     def testMapperAliases(self):
         mm=MaskMapper(N.ones((3,4,2)))
-
-        self.failUnless((mm(N.arange(24)) == mm.reverse(N.arange(24))).all())
-        self.failUnless((mm[N.ones((3,4,2))] \
+        # We decided to don't have alias for reverse
+        #self.failUnless((mm(N.arange(24)) == mm.reverse(N.arange(24))).all())
+        self.failUnless((mm(N.ones((3,4,2))) \
                         == mm.forward(N.ones((3,4,2)))).all())
 
 
@@ -219,5 +219,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

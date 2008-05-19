@@ -17,7 +17,7 @@ from mvpa.datasets.niftidataset import *
 class NiftiDatasetTests(unittest.TestCase):
 
     def testNiftiDataset(self):
-        data = NiftiDataset(samples=os.path.join('data','example4d'),
+        data = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
                             labels=[1,2])
         self.failUnless(data.nfeatures == 294912)
         self.failUnless(data.nsamples == 2)
@@ -49,7 +49,7 @@ class NiftiDatasetTests(unittest.TestCase):
 
 
     def testNiftiMapper(self):
-        data = NiftiDataset(samples=os.path.join('data','example4d'),
+        data = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
                             labels=[1,2])
 
 
@@ -60,7 +60,7 @@ class NiftiDatasetTests(unittest.TestCase):
 
 
     def testNiftiSelfMapper(self):
-        example_path = os.path.join('data','example4d')
+        example_path = os.path.join('..', 'data','example4d')
         example = NiftiImage(example_path)
         data = NiftiDataset(samples=example_path,
                             labels=[1,2])
@@ -79,9 +79,9 @@ class NiftiDatasetTests(unittest.TestCase):
     def testMultipleCalls(self):
         # test if doing exactly the same operation twice yields the same
         # result
-        data = NiftiDataset(samples=os.path.join('data','example4d'),
+        data = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
                             labels=1)
-        data2 = NiftiDataset(samples=os.path.join('data','example4d'),
+        data2 = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
                              labels=1)
 
         # Currently this test fails and I don't know why!
@@ -102,5 +102,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

@@ -60,7 +60,8 @@ class IOHelperTests(unittest.TestCase):
 
         # test file write
         # TODO: check if correct
-        d.tofile(fpath)
+        header_order = ['drei', 'zwei', 'eins']
+        d.tofile(fpath, header_order=header_order)
 
         # test sample selection
         dsel = d.selectSamples([0, 2])
@@ -68,6 +69,17 @@ class IOHelperTests(unittest.TestCase):
         self.failUnlessEqual(dsel['zwei'], [1, 1])
         self.failUnlessEqual(dsel['drei'], [2, 2])
 
+        # test if order is read from file when available
+        d3 = ColumnData(fpath)
+        self.failUnlessEqual(d3._header_order, header_order)
+
+        # add another column -- should be appended as the last column
+        # while storing
+        d3['four'] = [0.1] * len(d3['eins'])
+        d3.tofile(fpath)
+
+        d4 = ColumnData(fpath)
+        self.failUnlessEqual(d4._header_order, header_order + ['four'])
 
         # cleanup
         os.remove(fpath)
@@ -101,7 +113,7 @@ class IOHelperTests(unittest.TestCase):
 
 
     def testFslEV(self):
-        attr = SampleAttributes(os.path.join('data', 'smpl_attr.txt'))
+        attr = SampleAttributes(os.path.join('..', 'data', 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
         self.failUnless(sorted(attr.keys()) == \
@@ -115,5 +127,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

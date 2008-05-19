@@ -17,10 +17,14 @@ from mvpa.algorithms.featsel import FixedNElementTailSelector, \
                                     FeatureSelectionPipeline, \
                                     FractionTailSelector
 from mvpa.algorithms.linsvmweights import LinearSVMWeights
+
 from mvpa.clfs.classifier import SplitClassifier, MulticlassClassifier
+from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.datameasure import *
+from mvpa.algorithms.datameasure import selectAnalyzer
 from mvpa.algorithms.rfe import RFE
+
+from mvpa.misc.transformers import Absolute
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -61,7 +65,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         sana = selectAnalyzer(
             SplitClassifier(clf=clf,
-                            enable_states=['training_confusion']),
+                            enable_states=['training_confusion',
+                                           'training_confusions']),
             enable_states=["sensitivities"] )
         # and lets look at all sensitivities
 
@@ -77,7 +82,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                             (conf_matrix.percentCorrect,
                              len(self.dataset.uniquelabels)))
 
-        errors = [x.percentCorrect 
+        errors = [x.percentCorrect
                     for x in sana.clf.training_confusions.matrices]
 
         self.failUnless(N.min(errors) != N.max(errors),
@@ -87,9 +92,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # lets go through all sensitivities and see if we selected the right
         # features
         for map__ in [map_] + sana.combined_analyzer.sensitivities:
+            selected = FixedNElementTailSelector(self.nfeatures - len(self.nonbogus))(map__)
             self.failUnlessEqual(
-                list(FixedNElementTailSelector(
-                        self.nfeatures - len(self.nonbogus))(map__)),
+                list(selected),
                 list(self.nonbogus),
                 msg="At the end we should have selected the right features")
 
@@ -99,7 +104,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         sana = selectAnalyzer( clf=svm,
                                enable_states=["sensitivities"] )
-                               # and lets look at all sensitivities
+
+        # and lets look at all sensitivities
         dataset = self.dataset4small.selectSamples([0,1,2,4,6,7])
         map_ = sana(dataset)
 
@@ -107,6 +113,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # a concern
         svmnl = clfs['NonLinearSVMC'][0]
         self.failUnlessRaises(ValueError, LinearSVMWeights, svmnl)
+
+
+    # TODO -- unittests for sensitivity analyzers which use combiners
+    # (linsvmweights for multi-class SVMs and smlrweights for SMLR)
 
 
     @sweepargs(basic_clf=clfs['clfs_with_sens'])
@@ -143,5 +153,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

@@ -10,7 +10,7 @@
 
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter, \
-                                   NoneSplitter, HalfSplitter
+                                   NoneSplitter, HalfSplitter, CustomSplitter
 import unittest
 import numpy as N
 
@@ -91,6 +91,38 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[1] != None)
 
 
+    def testCustomSplit(self):
+        #simulate half splitter
+        hs = CustomSplitter([[0,1,2,3,4],[5,6,7,8,9]])
+
+        splits = [ (train, test) for (train, test) in hs(self.data) ]
+
+        self.failUnless(len(splits) == 2)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 2 )
+            self.failUnless( p[0].nsamples == 50 )
+            self.failUnless( p[1].nsamples == 50 )
+
+        self.failUnless((splits[0][1].uniquechunks == [0, 1, 2, 3, 4]).all())
+        self.failUnless((splits[0][0].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][1].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][0].uniquechunks == [0, 1, 2, 3, 4]).all())
+
+
+        # check fully customized split with working and validation set specified
+        cs = CustomSplitter([([0,3,4],[5,9])])
+        splits = [ (train, test) for (train, test) in cs(self.data) ]
+        self.failUnless(len(splits) == 1)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 2 )
+            self.failUnless( p[0].nsamples == 30 )
+            self.failUnless( p[1].nsamples == 20 )
+
+        self.failUnless((splits[0][1].uniquechunks == [5, 9]).all())
+        self.failUnless((splits[0][0].uniquechunks == [0, 3, 4]).all())
+
 
     def testNoneSplitter(self):
         nos = NoneSplitter()
@@ -107,6 +139,7 @@ class SplitterTests(unittest.TestCase):
 
 
         # test sampling tools
+        # specified value
         nos = NoneSplitter(nrunspersplit=3,
                            nsecondsamples=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
@@ -116,6 +149,17 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 40)
             self.failUnless(split[1].samplesperlabel.values() == [10,10,10,10])
+
+        # auto-determined
+        nos = NoneSplitter(nrunspersplit=3,
+                           nsecondsamples='auto')
+        splits = [ (train, test) for (train, test) in nos(self.data) ]
+
+        self.failUnless(len(splits) == 3)
+        for split in splits:
+            self.failUnless(split[0] == None)
+            self.failUnless(split[1].nsamples == 100)
+            self.failUnless(split[1].samplesperlabel.values() == [25,25,25,25])
 
 
     def testLabelSplitter(self):
@@ -129,11 +173,10 @@ class SplitterTests(unittest.TestCase):
         self.failUnless((splits[1][1].uniquelabels == [0,2]).all())
 
 
-
 def suite():
     return unittest.makeSuite(SplitterTests)
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

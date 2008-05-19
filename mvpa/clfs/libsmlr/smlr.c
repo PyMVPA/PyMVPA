@@ -29,7 +29,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 			float resamp_decay,
 			float min_resamp,
 			int verbose,
-			int seed)
+			long long int seed)
 {
   // initialize the iterative optimization
   double incr = DBL_MAX;
@@ -52,16 +52,23 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
   int nd = w_rows;
   int ns = E_rows;
 
+  // loop indexes
+  int i = 0;
+
   // prob of resample each weight
-  float p_resamp[w_rows][w_cols];
+  // allocate everything in heap -- not on stack
+  float** p_resamp = (float **)calloc(w_rows, sizeof(float*));
+
+  for (i=0; i<w_rows; i++)
+    p_resamp[i] = (float*)calloc(w_cols, sizeof(float));
 
   // initialize random seed
   if (seed == 0)
-    seed = time(NULL);
+    seed = (long long int)time(NULL);
 
   if (verbose)
   {
-    fprintf(stdout, "SMLR: random seed=%d\n", seed);
+    fprintf(stdout, "SMLR: random seed=%lld\n", seed);
     fflush(stdout);
   }
 
@@ -71,8 +78,8 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
   long cycle = 0;
   int basis = 0;
   int m = 0;
-  int i = 0;
   float rval = 0;
+  i = 0;
   for (cycle=0; cycle<maxiter; cycle++)
   {
     // zero out the diffs for assessing change
@@ -197,7 +204,7 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	    // keep track of the sqrt sum squared diffs
 	    sum2_w_diff += w_diff*w_diff;
 	  }
-	  
+
 	  // no matter what we keep track of the old
 	  sum2_w_old += w_old*w_old;
 	}
@@ -223,6 +230,12 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
   // finished updating weights
   // assess convergence
+
+  // free up used heap
+  for (i=0; i<w_rows; i++)
+    free(p_resamp[i]);
+
+  free(p_resamp);
 
   return cycle;
 }

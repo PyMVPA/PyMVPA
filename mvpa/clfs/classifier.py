@@ -22,15 +22,23 @@ Base Classifiers can be grouped according to their function as
 
 __docformat__ = 'restructuredtext'
 
-import operator
+import operator, sys
 import numpy as N
 
-from copy import deepcopy
+# We have to use deepcopy from python 2.5, since otherwise it fails to
+# copy sensitivity analyzers with assigned combiners which are just
+# functions not functors
+if sys.version_info[0] > 2 or sys.version_info[1] > 4:
+    from copy import deepcopy
+else:
+    from mvpa.misc.copy import deepcopy
+
 from sets import Set
+from time import time
 
 from mvpa.datasets.maskmapper import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
 from mvpa.clfs.transerror import ConfusionMatrix
 
@@ -119,6 +127,15 @@ class Classifier(Stateful):
         doc="Internal classifier values the most recent " +
             "predictions are based on")
 
+    training_time = StateVariable(enabled=True,
+        doc="Time (in seconds) which took classifier to train")
+
+    predicting_time = StateVariable(enabled=True,
+        doc="Time (in seconds) which took classifier to predict")
+
+    feature_ids = StateVariable(enabled=False,
+        doc="Feature IDS which were used for the actual training." +
+            " Some classifiers might internally do feature selection (SMLR)")
 
     params = {}
 
@@ -154,13 +171,17 @@ class Classifier(Stateful):
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
-        pass
-
+        # So we reset all state variables and may be free up some memory
+        # explicitely
+        self.untrain()
 
     def _posttrain(self, dataset):
         """Functionality post training
 
         For instance -- computing confusion matrix
+        :Parameters:
+          dataset : Dataset
+            Data which was used for training
         """
         self.trained_labels = Set(dataset.uniquelabels)
 
@@ -169,6 +190,7 @@ class Classifier(Stateful):
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
         self.__trainedid = dataset._id
+
         if self.states.isEnabled('training_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
@@ -179,6 +201,19 @@ class Classifier(Stateful):
             self.training_confusion = ConfusionMatrix(
                 labels=dataset.uniquelabels, targets=dataset.labels,
                 predictions=predictions)
+
+        if self.states.isEnabled('feature_ids'):
+            self.feature_ids = self._getFeatureIds()
+
+
+    def _getFeatureIds(self):
+        """Virtual method to return feature_ids used while training
+
+        Is not intended to be called anywhere but from _posttrain,
+        thus classifier is assumed to be trained at this point
+        """
+        # By default all features are used
+        return range(self.__trainednfeatures)
 
 
     def _train(self, dataset):
@@ -200,6 +235,10 @@ class Classifier(Stateful):
             debug("CLF_TB", "Traceback: %s" % tb)
 
         self._pretrain(dataset)
+
+        # remember the time when started training
+        t0 = time()
+
         if dataset.nfeatures > 0:
             result = self._train(dataset)
         else:
@@ -208,6 +247,8 @@ class Classifier(Stateful):
                 debug("CLF",
                       "No features present for training, no actual training is called")
             result = None
+
+        self.training_time = time() - t0
         self._posttrain(dataset)
         return result
 
@@ -258,6 +299,9 @@ class Classifier(Stateful):
             tb = traceback.extract_stack(limit=5)
             debug("CLF_TB", "Traceback: %s" % tb)
 
+        # remember the time when started computing predictions
+        t0 = time()
+
         self._prepredict(data)
         if self.__trainednfeatures > 0 or not self.__train2predict:
             result = self._predict(data)
@@ -267,6 +311,8 @@ class Classifier(Stateful):
                 debug("CLF",
                       "No features were present for training, prediction is bogus")
             result = [None]*data.shape[0]
+
+        self.predicting_time = time() - t0
 
         self._postpredict(data, result)
         return result
@@ -290,6 +336,7 @@ class Classifier(Stateful):
     def untrain(self):
         """Reset trained state"""
         self.__trainednfeatures = None
+        self.states.reset()
 
 
     def _setTrain2predict(self, v):
@@ -311,13 +358,14 @@ class Classifier(Stateful):
 # Base classifiers of various kinds
 #
 
-class BoostedClassifier(Classifier):
+class BoostedClassifier(Classifier, Harvestable):
     """Classifier containing the farm of other classifiers.
 
     Should rarely be used directly. Use one of its childs instead
     """
 
     # should not be needed if we have prediction_values upstairs
+    # TODO : should be handled as Harvestable or smth like that
     raw_predictions = StateVariable(enabled=False,
         doc="Predictions obtained from each classifier")
 
@@ -325,12 +373,24 @@ class BoostedClassifier(Classifier):
         doc="Values obtained from each classifier")
 
 
-    def __init__(self, clfs=None, **kwargs):
+    def __init__(self, clfs=None, propagate_states=True,
+                 harvest_attribs=None, copy_attribs='copy',
+                 **kwargs):
         """Initialize the instance.
 
         :Parameters:
-          `clfs` : list
-            list of classifier instances to use
+          clfs : list
+            list of classifier instances to use (slave classifiers)
+          propagate_states : bool
+            either to propagate enabled states into slave classifiers.
+            It is in effect only when slaves get assigned - so if state
+            is enabled not during construction, it would not necessarily
+            propagate into slaves
+          harvest_attribs : list of basestr
+            What attributes of call to store and return within
+            harvested state variable
+          copy_attribs : None or basestr
+            Force copying values of attributes on harvesting
           kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
@@ -339,9 +399,13 @@ class BoostedClassifier(Classifier):
             clfs = []
 
         Classifier.__init__(self, **kwargs)
+        Harvestable.__init__(self, harvest_attribs, copy_attribs)
 
         self.__clfs = None
         """Pylint friendly definition of __clfs"""
+
+        self.__propagate_states = propagate_states
+        """Enable current enabled states in slave classifiers"""
 
         self._setClassifiers(clfs)
         """Store the list of classifiers"""
@@ -357,6 +421,27 @@ class BoostedClassifier(Classifier):
         """
         for clf in self.__clfs:
             clf.train(dataset)
+
+
+    def _posttrain(self, dataset):
+        """Custom posttrain of `BoostedClassifier`
+
+        Harvest over the trained classifiers if it was asked to so
+        """
+        Classifier._posttrain(self, dataset)
+        if self.states.isEnabled('harvested'):
+            for clf in self.__clfs:
+                self._harvest(locals())
+
+
+    def _getFeatureIds(self):
+        """Custom _getFeatureIds for `BoostedClassifier`
+        """
+        # return union of all used features by slave classifiers
+        feature_ids = Set([])
+        for clf in self.__clfs:
+            feature_ids = feature_ids.union(Set(clf.feature_ids))
+        return list(feature_ids)
 
 
     def _predict(self, data):
@@ -397,6 +482,11 @@ class BoostedClassifier(Classifier):
                    % (str(train2predict), `self.__clfs`, str(train2predicts)))
         # set flag if it needs to be trained before predicting
         self._setTrain2predict(train2predict)
+
+        # enable corresponding states in the slave-classifiers
+        if self.__propagate_states:
+            for clf in self.__clfs:
+                clf.states.enable(self.states.enabled, missingok=True)
 
     def untrain(self):
         """Untrain `BoostedClassifier`
@@ -450,7 +540,9 @@ class ProxyClassifier(Classifier):
         self.__clf.train(dataset)
 
         # for the ease of access
-        self.states._copy_states_(self.__clf, deep=False)
+        # TODO: if to copy we should exclude some states which are defined in
+        # base Classifier (such as training_time, predicting_time)
+        #self.states._copy_states_(self.__clf, deep=False)
 
 
     def _predict(self, data):
@@ -458,14 +550,15 @@ class ProxyClassifier(Classifier):
         """
         result = self.__clf.predict(data)
         # for the ease of access
-        self.states._copy_states_(self.__clf, deep=False)
+        #self.states._copy_states_(self.__clf, deep=False)
         return result
 
 
     def untrain(self):
-        """Untrain main classifier
+        """Untrain ProxyClassifier
         """
-        self.clf.untrain()
+        if not self.__clf is None:
+            self.__clf.untrain()
         super(ProxyClassifier, self).untrain()
 
 
@@ -617,6 +710,11 @@ class ClassifierCombiner(PredictionsCombiner):
         """What state variables of the classifiers to use"""
 
 
+    def untrain(self):
+        """It might be needed to untrain used classifier"""
+        if self.__clf:
+            self.__clf.untrain()
+
     def __call__(self, clfs, dataset):
         """
         """
@@ -664,6 +762,12 @@ class CombinedClassifier(BoostedClassifier):
         return "<%s(%d classifiers, combiner %s)>" \
                % (self.__class__.__name__, len(self.clfs), `self.__combiner`)
 
+    def untrain(self):
+        try:
+            self.__combiner.untrain()
+        except:
+            pass
+        super(CombinedClassifier, self).untrain()
 
     def _train(self, dataset):
         """Train `CombinedClassifier`
@@ -857,7 +961,6 @@ class MulticlassClassifier(CombinedClassifier):
         """
         # construct binary classifiers
         ulabels = dataset.uniquelabels
-
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
             biclfs = []
@@ -892,9 +995,11 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
-    training_confusions = StateVariable(enabled=True,
+    # Todo: unify with CrossValidatedTransferError which now uses
+    # harvest_attribs to expose gathered attributes
+    training_confusions = StateVariable(enabled=False,
         doc="Resultant confusion matrices whenever classifier trained " +
-            "on each was tested on 2nd part of the split")
+            "on 1 part and tested on 2nd part of each split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
@@ -935,6 +1040,11 @@ class SplitClassifier(CombinedClassifier):
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
             clf = self.clfs[i]
+
+            # assign testing dataset if given classifier can digest it
+            if hasattr(clf, 'testdataset'):
+                clf.testdataset = split[1]
+
             clf.train(split[0])
             if self.states.isEnabled("training_confusions"):
                 predictions = clf.predict(split[1].samples)
@@ -1026,6 +1136,18 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """`FeatureSelection` might like to use testdataset"""
 
 
+    def untrain(self):
+        """Untrain `FeatureSelectionClassifier`
+
+        Has to untrain any known classifier
+        """
+        if not self.trained:
+            return
+        if not self.__maskclf is None:
+            self.__maskclf.untrain()
+        super(FeatureSelectionClassifier, self).untrain()
+
+
     def _train(self, dataset):
         """Train `FeatureSelectionClassifier`
         """
@@ -1033,12 +1155,20 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.__feature_selection.states._changeTemporarily(
             enable_states=["selected_ids"])
 
+        if __debug__:
+            debug("CLFFS", "Performing feature selection using %s" %
+                  self.__feature_selection + " on %s" % dataset)
+
         (wdataset, tdataset) = self.__feature_selection(dataset,
                                                         self.__testdataset)
         if __debug__:
-            debug("CLFFS", "{%s} selected %d out of %d features" %
+            add_ = ""
+            if "CLFFS_" in debug.active:
+                add_ = " Selected features: %s" % \
+                       self.__feature_selection.selected_ids
+            debug("CLFFS", "{%s} selected %d out of %d features.%s" %
                   (`self.__feature_selection`, wdataset.nfeatures,
-                   dataset.nfeatures))
+                   dataset.nfeatures, add_))
 
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
@@ -1055,16 +1185,27 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.__maskclf.clf.train(wdataset)
 
         # for the ease of access
-        self.states._copy_states_(self.__maskclf, deep=False)
+        # TODO see for ProxyClassifier
+        #self.states._copy_states_(self.__maskclf, deep=False)
 
+    def _getFeatureIds(self):
+        """Return used feature ids for `FeatureSelectionClassifier`
+
+        """
+        return self.__feature_selection.selected_ids
 
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`
         """
         result = self.__maskclf._predict(data)
         # for the ease of access
-        self.states._copy_states_(self.__maskclf, deep=False)
+        #self.states._copy_states_(self.__maskclf, deep=False)
         return result
+
+    def setTestDataset(self, testdataset):
+        """Set testing dataset to be used for feature selection
+        """
+        self.__testdataset = testdataset
 
     # XXX Shouldn't that be mappedclf ?
     # YYY yoh: not sure... by nature it is mappedclf, by purpouse it
@@ -1073,3 +1214,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
 
+
+    testdataset = property(fget=lambda x:x.__testdataset,
+                           fset=setTestDataset)

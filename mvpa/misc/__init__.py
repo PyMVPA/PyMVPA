@@ -126,7 +126,9 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
+    debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
     debug.register('PLR',  "PLR call")
@@ -134,14 +136,16 @@ if __debug__:
     debug.register('SA',   "Sensitivity analyzers call")
     debug.register('PSA',  "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
+    debug.register('RFEC_', "Recursive Feature Elimination call (verbose)")
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
+    debug.register('DS_',  "*Dataset (verbose)")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
     debug.register('STCOL', "State Collector")
 
     debug.register('CLF',    "Base Classifiers")
-    debug.register('CLF_',   "Base Classifiers verbose")
+    debug.register('CLF_',   "Base Classifiers (verbose)")
     debug.register('CLF_TB',
         "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
@@ -149,14 +153,26 @@ if __debug__:
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
     debug.register('CLFFS',  "FeatureSelectionClassifier")
+    debug.register('CLFFS_', "FeatureSelectionClassifier (verbose)")
 
-    debug.register('FSPL',  "FeatureSelectionPipeline")
+    debug.register('FS',     "FeatureSelections")
+    debug.register('FS_',    "FeatureSelections (verbose)")
+    debug.register('FSPL',   "FeatureSelectionPipeline")
 
     debug.register('SVM',    "SVM")
-    debug.register('SVMLIB', "Internal libsvm verbose output")
+    debug.register('SVMLIB', "Internal libsvm output")
 
     debug.register('SMLR',    "SMLR")
-    debug.register('SMLR_',    "SMLR verbose")
+    debug.register('SMLR_',   "SMLR verbose")
+
+    debug.register('SG',  "PyMVPA SG wrapping")
+    debug.register('SG_', "PyMVPA SG wrapping verbose")
+    debug.register('SG__', "PyMVPA SG wrapping debug")
+    debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
+    debug.register('SG_FEATURES', "Internal shogun debug output for features")
+    debug.register('SG_LABELS', "Internal shogun debug output for labels")
+    debug.register('SG_KERNELS', "Internal shogun debug output for kernels")
+    debug.register('SG_PROGRESS', "Internal shogun progress bar during computation")
 
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")

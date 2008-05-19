@@ -13,7 +13,6 @@ import numpy as N
 from copy import copy
 
 from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import \
      TransferError, ConfusionMatrix, ConfusionBasedError
 
@@ -84,7 +83,6 @@ class ErrorsTests(unittest.TestCase):
     def testConfusionBasedError(self, l_clf):
         train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=2,
                                      nonbogus_features=[0,1], snr=3, nchunks=1)
-        #l_clf = LinearNuSVMC()
         err = ConfusionBasedError(clf=l_clf)
         terr = TransferError(clf=l_clf)
 
@@ -105,5 +103,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

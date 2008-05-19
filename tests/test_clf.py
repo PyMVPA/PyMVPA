@@ -23,8 +23,6 @@ from mvpa.clfs.classifier import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
 
-from mvpa.clfs.svm import LinearNuSVMC
-
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -104,12 +102,32 @@ class ClassifiersTests(unittest.TestCase):
         # silly test if we get the same result with boosted as with a single one
         bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
                                         deepcopy(self.clf_sign)])
+
         self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
                              list(self.data_bin_1.labels),
                              msg="Boosted classifier should work")
         self.failUnlessEqual(bclf.predict(self.data_bin_1.samples),
                              self.clf_sign.predict(self.data_bin_1.samples),
                              msg="Boosted classifier should have the same as regular")
+
+
+    def testBoostedStatePropagation(self):
+        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)],
+                                  enable_states=['feature_ids'])
+
+        # check states enabling propagation
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
+
+        bclf2 = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
+                                        deepcopy(self.clf_sign)],
+                                  propagate_states=False,
+                                  enable_states=['feature_ids'])
+
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(bclf2.clfs[0].states.isEnabled('feature_ids'), False)
+
 
 
     def testBinaryDecorator(self):
@@ -143,7 +161,8 @@ class ClassifiersTests(unittest.TestCase):
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                              splitter=NFoldSplitter(1))
+                splitter=NFoldSplitter(1),
+                enable_states=['training_confusions', 'feature_ids'])
         clf.train(ds)                   # train the beast
         self.failUnlessEqual(clf.training_confusions.percentCorrect,
                              100,
@@ -155,6 +174,34 @@ class ClassifiersTests(unittest.TestCase):
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
+
+        # feature_ids must be list of lists, and since it is not
+        # feature-selecting classifier used - we expect all features
+        # to be utilized
+        #  NOT ANYMORE -- for BoostedClassifier we have now union of all
+        #  used features across slave classifiers. That makes
+        #  semantics clear. If you need to get deeper -- use upcoming
+        #  harvesting facility ;-)
+        # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
+        # self.failUnless(N.array([len(ids)==ds.nfeatures
+        #                         for ids in clf.feature_ids]).all())
+
+    def testHarvesting(self):
+        """Basic testing of harvesting based on SplitClassifier
+        """
+        ds = self.data_bin_1
+        clf = SplitClassifier(clf=SameSignClassifier(),
+                splitter=NFoldSplitter(1),
+                enable_states=['training_confusions', 'feature_ids'],
+                harvest_attribs=['clf.feature_ids',
+                                 'clf.training_time'],
+                descr="DESCR")
+        clf.train(ds)                   # train the beast
+        # Number of harvested items should be equial to number of chunks
+        self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
+                             len(ds.uniquechunks))
+        # if we can blame multiple inheritance and Statefull.__init__
+        self.failUnlessEqual(clf.descr, "DESCR")
 
 
     def testMappedClassifier(self):
@@ -186,7 +233,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # corresponding feature selections
         feat_sel = SensitivityBasedFeatureSelection(sens_ana,
-            FixedNElementTailSelector(1))
+            FixedNElementTailSelector(1, mode='discard'))
 
         feat_sel_rev = SensitivityBasedFeatureSelection(sens_ana_rev,
             FixedNElementTailSelector(1))
@@ -202,9 +249,13 @@ class ClassifiersTests(unittest.TestCase):
         res011 = [-1, 1, -1, 1, -1]
 
         # first classifier -- 0th feature should be discarded
-        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel)
+        clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel,
+                    enable_states=['feature_ids'])
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
+
+        self.failUnlessEqual(len(clf011.feature_ids), 2)
+        "Feature selection classifier had to be trained on 2 features"
 
         # first classifier -- last feature should be discarded
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel_rev)
@@ -213,8 +264,8 @@ class ClassifiersTests(unittest.TestCase):
 
     # TODO: come up with nice idea on how to bring sweepargs here
     def testMulticlassClassifier(self):
-        svm = LinearNuSVMC()
-        svm2 = LinearNuSVMC(enable_states=['training_confusion'])
+        svm = LinearCSVMC()
+        svm2 = LinearCSVMC(enable_states=['training_confusion'])
         clf = MulticlassClassifier(clf=svm,
                                    enable_states=['training_confusion'])
 
@@ -234,15 +285,13 @@ class ClassifiersTests(unittest.TestCase):
         clf.train(dstrain)
         self.failUnlessEqual(str(clf.training_confusion),
                              str(svm2.training_confusion),
-            msg="Multiclass clf should provide same results as built-in libsvm's")
-
-        self.failUnless(not svm2.model is None,
-            msg="Trained SVM should have a model accessible")
+            msg="Multiclass clf should provide same results as built-in libsvm's %s" %
+                             svm2)
 
         svm2.untrain()
 
-        self.failUnless(svm2.model is None,
-            msg="Un-Trained SVM should have no model")
+        self.failUnless(svm2.trained == False,
+            msg="Un-Trained SVM should be untrained")
 
         self.failUnless(N.array([x.trained for x in clf.clfs]).all(),
             msg="Trained Boosted classifier should have all primary classifiers trained")
@@ -255,6 +304,24 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(not N.array([x.trained for x in clf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
+    @sweepargs(clf=clfs['SVMC'])
+    def testSVMs(self, clf):
+        knows_probabilities = 'probabilities' in clf.states.names
+        enable_states = ['values']
+        if knows_probabilities: enable_states += ['probabilities']
+
+        clf.states._changeTemporarily(enable_states = enable_states)
+        testdata = normalFeatureDataset(nlabels=2)
+        for traindata in [normalFeatureDataset(nlabels=2)]:
+            clf.train(traindata)
+            predicts = clf.predict(testdata.samples)
+            # values should be different from predictions for SVMs we have
+            self.failUnless( (predicts != clf.values).any() )
+
+            if knows_probabilities and clf.states.isSet('probabilities'):
+                # XXX test more thoroughly what we are getting here ;-)
+                self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
+        clf.states._resetEnabledTemporarily()
 
     @sweepargs(clf=clfs['all'])
     def testGenericTests(self, clf):
@@ -311,4 +378,4 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner

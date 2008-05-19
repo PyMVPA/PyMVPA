@@ -14,8 +14,10 @@ PyMVPA Developer Guidelines
 .. sectnum::
 
 
+
 Documentation
 -------------
+
 Documentation of the code and supplementary material (such as this file)
 should be done in reST_ (reStructuredText) light markup language.  See `Demo
 <http://docutils.sourceforge.net/docs/user/rst/cheatsheet.txt>`__ or a
@@ -33,8 +35,10 @@ Parameter lists should be written as definition lists and not bulleted lists.
 For an example how to do it right, please see mvpa/datasets/dataset.py
 
 
+
 Code Formatting
 ---------------
+
 pylint
    Code should be conformant with Pylint_ driven by config located at
    `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback notation
@@ -54,7 +58,7 @@ pylint
 2 empty lines
    According to original python style guidelines: single empty line to
    separate methods within class, and 2 empty lines between classes
-   BUT we do 2 empty between methods, 3 empty between classes
+   **BUT** we do 2 empty between methods, 3 empty between classes
 module docstring
    Each module should start with a docstring describing the module
    (which is not inside the hashed-comment of each file) look at
@@ -76,12 +80,16 @@ notes
      comment/answer to above mentioned XXX concern
 
 
+
 Coding Conventions
 ------------------
+
 __repr__
   most of the classes should provide meaningful and concise summary
   over their identity (name + parameters + some summary over results
   if any)
+
+
 
 Naming Conventions
 ------------------
@@ -113,11 +121,13 @@ dataset vs data
 .. _NumPy: http://numpy.scipy.org/
 
 
+
 Tests
 -----
 * Every more or less "interesting" bugfix should be accompanied by a
   unittest which might help to prevent it in the future refactoring
 * Every new feature should have a unittest
+
 
 
 Extending PyMVPA
@@ -137,6 +147,7 @@ Adding a new Dataset type
    improvements into the Dataset base class)?
 
 go into `mvpa/datasets/`
+
 
 Adding a new Classifier
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -189,7 +200,7 @@ to preserve the full functionality.
     the actual training is performed.
 
 `_posttrain(dataset)`
-    Called with the Dataset_ instance the classifier was trained on, just after 
+    Called with the Dataset_ instance the classifier was trained on, just after
     training was performed.
 
 `_prepredict(data)`
@@ -209,13 +220,12 @@ Source code files of all classifier implementations go into `mvpa/clfs/`.
 
 Outstanding Questions:
 
-	* when states and when properties?
-
-
+    * when states and when properties?
 
 
 Adding a new Sensitivity Analyzer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 There are two possible base-classes for new sensitivity analyzers.
 First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
 generic approach. However, for sensitivity analyzers that make use of some
@@ -307,7 +317,7 @@ similar). Currently there are:
 
 Each developer can have an infinite number of branches. If the number of
 branches causes gitk output to exceed a usual 19" screen, the respective
-developer has to spend some bucks (or euries) on new screens for all others
+developer has to spend some bucks (or euros) on new screens for all others
 ;-)
 
 The main release branch is called *master*. This is a merge-only branch.
@@ -347,6 +357,15 @@ categories:
 .. _Pylint: http://packages.debian.org/unstable/python/pylint
 
 
+Merges
+~~~~~~
+
+For easy tracking of what changes were absorbed during merge, we
+advice to enable merge summary within git:
+
+  git-config merge.summary true
+
+
 Changelog
 ---------
 
@@ -371,8 +390,182 @@ contributing regularly.
 Changelog entries should be added whenever something is ready to be merged
 into the master branch, not necessarily with a release already approaching.
 
-TODO
-----
+
+
+Developer-TODO
+--------------
+
+Things to implement for the next release (Release goals)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ * Unify parameter naming across all classifiers and come up with a labeling
+   guideline for future classifier implementations and wrappers::
+
+    Numeric parameters can be part of .params Collection now, so they are
+    joined together.
+
+ * Provide sufficient documentation about internal variable naming to make
+   Harvester/Harvesting functionality usable. Currently the user is supposed
+   to know, how a particular *local* variable is called to be able to harvest
+   e.g. `feature_ids` of classifiers over cross-validation folds::
+
+     class.HARVESTABLE={'blah' : ' some description'}
+
+     Add information on HARVESTABLE and StateVariable
+     Collectable -> Attribute
+
+     base.attributes
+
+ * Evaluate extinguishing everything related to
+   `ClassifierBasedSensitivityAnalyzer`.
+   I believe we should simply enhance all relevant classifiers to behave like
+   a `SensitivityAnalyzer` if called with a single dataset. Looking at the the
+   `SensitivityAnalyzers` that we have: `SMLRWeights` simply passes the weights
+   that are computed by the classifier anyway. `LinearSVMWeights` is even worse.
+   It does only a simple calculation, but involves a fairly large part of code
+   to deal with our multiple SVM implementations. Why not move the stuff into
+   their respective classifiers. There, the sensitivities would just be a 2-3
+   liner and we would also eliminate the multi-implementation issue (somewhat).
+   I propose:
+
+    * `git rm mvpa/algorithms/*weight*`
+    * Add `__call__()` to relevant classifiers that returns the weights.
+
+   Remaining SensitivityAnalyzers can than be downgraded to
+   `FeaturewiseDatasetMeasures`. All interfaces that used to accept a
+   `SensitivityAnalyzer` will also digest a pimped classifier with built-in
+   sensitivities. After all we're in Python-land...
+
+   And while we are at it: Let's also remove `SensitivityAnalyzer`, which does
+   nothing anyway::
+
+     Enduser cares about FeatureSelection
+     Question is just about naming and terminology
+
+     DatasetMeasure -> Measure (transformers)
+     ScalarDatasetMeasure ->  gone?
+     FeaturewiseDatasetMeasure?
+       combiners to be absorbed withing transformers? and then gone?
+     {Classifier?}Sensitivity?
+
+     SensitivityAnalyzer -> gone?
+
+     ClassifierBasedSensitivityAnalyzer -> Sensitivity
+
+     CombinedSensitivityAnalyzer -> CombinedAnalyzer
+
+     Q: be under mvpa.datasets.measures
+     Anova stays in algorithms
+
+ * Try to get rid of selectAnalyzer() which pulls in half of the world and
+   causes cyclic dependencies::
+
+    Together with Classifier.sensitivity() provide
+    Classifier.sensitivityAnalyzer() factory method, which spits out
+    appropriate analyzer right off the box
+
+ * Restructure code base (incl. renaming and moving pieces)
+
+   Let's use the following list to come up with a nice structure for all
+   logical components we have:
+
+    * Datasets
+
+    * Sensitivity analyzers (maybe: featurewise measures)
+        * Classifier sensitivities (SVM, SMLR) -> respective classifiers
+        * ANOVA                         -> mvpa.measures.anova
+        * Noise perturbation ->         -> mvpa.measures.noisepertrubation
+        * meta-algorithms (splitting)   -> mvpa.measures
+
+    * Searchlight -> stays in mvpa.measures.searchlight,
+
+    * Mappers::
+        mvpa.mappers (AKA mvpa.projections mvpa.transformers)
+
+      * Along with PCA/ICA mappers, we should add a PLS mapper::
+
+          PCA.train(learningdataset)
+             .forward,
+             .backward
+
+          Package pychem for Debian, see how to use from PyMVPA! ;-) Same for MDP
+          (ie use from pymvpa)
+
+
+    * Feature selection algorithms
+        * Simple thresholding
+        * RFE
+        * IFS
+
+  		.mapper state variable
+
+          mvpa.featsel (NB no featsel.featsel.featsel more than 4 times!)
+          mvpa.featsel.rfe
+          mvpa.featsel.ifs
+
+    * several base classes with framework infrastructure (Harvester,
+      Stateful, virtual properties, ...)
+
+    * Classifiers
+
+    * Regressions
+
+    * Transfer error calculation
+    * Cross-validation support
+    * Monte-Carlo-based significance testing
+    * Dataset splitter
+    * Metrics and distance functions
+    * Functions operating on dataset for preprocessing or transformations
+    * Commandline interface support
+    * Functions to generate artificial datasets
+    * Error functions (i.e. for TransferError)
+    * Custom exception types
+    * Python 2.5 copy() aka external code shipped with PyMVPA
+    * Several helpers for data IO
+    * Left-over from the last attempt to establish a generic parameter
+      interface
+    * Detrending (operating on Datasets)
+    * Result 'Transformers' to be used with 'transformer=' kwarg
+    * Debugging and verbosity infrastructure
+    * plus additional helpers, ranging from simple to complex scattered
+      all over the place
+
+ * Resultant hierarchy:
+
+   - mvpa
+
+     + datasets
+     + clfs
+     + measures
+     + featsel
+
+
+ * Add ability to add/modify custom attributes to a dataset.
+ * (DONE?) Expand splitter to specify both the train and test samples, not just the
+   test samples.  This will enable us to write custom splitter functions that
+   split based on new custom attributes.
+ * Possibly make NiftiDataset default to float32 when it sees that the data are
+   ints.
+ * Add kernel methods as option to all classifiers, not just SVMs.  For example, you
+   should be able to run a predefined or custom kernel on the samples going into SMLR.
+ * TransferError needs to know what type of data to send to any specific ErrorFX.  Right
+   now there is only support for predictions and labels, but the area under the ROC and
+   the correlation-based error functions expect to receive the "values" or "probabilities"
+   from a classifier.  Just to make this harder, every classifier is different.  For
+   example, a ridge regression's predictions are continuous values, whereas for a SVM you
+   need to pass in the probabilities.
+
+   For binary:       1 value
+       multiclass:   1 value, or N values
+
+ * In a related issue, the predictions and values states of the classifiers need to have
+   a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
+   returns a numpy ndarray.
+
+
+
+Long and medium term TODOs (aka stuff that has been here forever)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
  * selected_ids -> implement via MaskMapper?
 
@@ -383,6 +576,18 @@ TODO
 
     * transerror.py for instance uses testdata/trainingdata
     * rfe.py dataset, testdataset
+
+ * implement proper cloning of classifiers. untrain() doesn't work in some
+   cases, since we can create somewhat convolved object definitions so it is
+   hard, if not impossible, to get to all used classifiers. See for
+   instance clfs['SVM/Multiclass+RFE']. We can't get all the way into
+   classifier-based sensitivity analyzer. Thus instead of tracking all
+   the way down in hierarchy, we should finally create proper
+   'parametrization' handling of classifiers, so we could easily clone
+   basic ones (which might have active SWIG bindings), and top-level
+   ones should implement .clone() themselves. or may be some other
+   way, but things should be done. Or may be via proper implementation of
+   __reduce__ etc
 
  * mvpa.misc.warning may be should use stock python warnings module instead of
    custom one?

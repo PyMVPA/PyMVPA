@@ -34,6 +34,22 @@ def FirstAxisMean(x):
     return N.mean(x, axis=0)
 
 
+def SecondAxisSumOfAbs(x):
+    """Sum of absolute values along the 2nd axis
+
+    Use cases:
+     - to combine multiple sensitivities to get sense about
+       what features are most influential
+    """
+    return N.abs(x).sum(axis=1)
+
+
+def SecondAxisMaxOfAbs(x):
+    """Max of absolute values along the 2nd axis
+    """
+    return N.abs(x).max(axis=1)
+
+
 def GrandMean(x):
     """Just what the name suggests."""
     return N.mean(x)

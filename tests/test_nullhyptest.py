@@ -12,12 +12,12 @@ import unittest
 
 import numpy as N
 
-from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.knn import kNN
 from mvpa.algorithms.nullhyptest import NullHypothesisTest
 from mvpa.clfs.transerror import TransferError
 
 from tests_warehouse import pureMultivariateSignal
+from tests_warehouse_clfs import clfs
 
 class NullHypothesisTests(unittest.TestCase):
 
@@ -28,7 +28,7 @@ class NullHypothesisTests(unittest.TestCase):
         orig_labels = wdata.labels.copy()
 
         # linear clf on non-linear problem
-        terr = TransferError(LinearNuSVMC())
+        terr = TransferError(clfs['LinearSVMC'][0])
         null = NullHypothesisTest(terr, permutations=100)
 
         lin_p = null(wdata, tdata)
@@ -58,5 +58,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import test_runner
+    import runner
 

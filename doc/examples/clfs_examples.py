@@ -9,21 +9,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Examples demonstrating varioius classifiers on different datasets"""
 
+import os
 from time import time
 import numpy as N
 
 from mvpa.datasets.dataset import Dataset
-
-# Define sets of classifiers
-from mvpa.clfs.classifier import *
-from mvpa.clfs.svm import *
-from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import *
-from mvpa.clfs.knn import *
+from mvpa.datasets.niftidataset import NiftiDataset
+from mvpa.datasets.splitter import *
+from mvpa.datasets.misc import zscore
 
 # Helpers
-from mvpa.clfs.transerror import ConfusionMatrix
+from mvpa.clfs.transerror import *
 from mvpa.misc.data_generators import *
+from mvpa.misc.iohelpers import SampleAttributes
+from mvpa.misc.signal import detrend
 
 # Misc tools
 #
@@ -32,53 +31,85 @@ from mvpa.misc import warning
 warning.handlers = []
 
 
-# Define groups of classifiers. Should be moved somewhere in mvpa
-clfs={'LinearSVMC' : [LinearCSVMC(descr="Linear C-SVM (default)"),
-                      LinearNuSVMC(descr="Linear nu-SVM (default)")],
-      'NonLinearSVMC' : [RbfCSVMC(descr="Rbf C-SVM (default)"),
-                         RbfNuSVMC(descr="Rbf nu-SVM (default)")],
-      'SMLR' : [ SMLR(implementation="C", descr="SMLR(default)"),
-                 SMLR(implementation="Python", descr="SMLR(Python)")]
-      }
+# Define groups of classifiers.
+#
+# TODO: Should be moved somewhere in mvpa -- all those duplicate
+#       list of classifiers within tests/tests_warehouse_clfs
+# DONE:
+from mvpa.clfs.warehouse import clfs
 
-clfs['LinReg'] = clfs['SMLR'] + [ RidgeReg(descr="RidgeReg(default)") ]
-clfs['LinearC'] = clfs['LinearSVMC'] + clfs['LinReg']
-clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(descr="kNN(default)") ]
-clfs['all'] = clfs['LinearC'] + clfs['NonLinearC']
-clfs['clfs_with_sens'] =  clfs['LinearSVMC'] + clfs['SMLR']
 
-# Fix seed or set to None for new each time
-N.random.seed(44)
+#clfs['all'] = clfs['SVM+RFE']
+#clfs['all'] = clfs['SVM/Multiclass+RFE']
 
-for (dataset, datasetdescr), clfs in \
-    [
-    ( ( normalFeatureDataset(perlabel=10, nlabels=2,
-                             nfeatures=1000,
-                             nchunks=5, nonbogus_features=[1, 2],
-                             snr=5.0), "Dummy 2-class univariate with 2 useful features"), clfs['all'] ),
-    ( ( pureMultivariateSignal(20, 3), "Dummy XOR-pattern"), clfs['all'] )
-    ]:
+if __name__ == "__main__":
 
-    print "%s: %s" % (datasetdescr, `dataset`)
-    for clf in clfs:
-        # Lets do splits/train/predict explicitely so we could track timing
-        # otherwise could be just
-        # error = CrossValidatedTransferError(TransferError(clf),
-        #                                     NFoldSplitter())(dataset)
-        # to report transfer error
-        confusion = ConfusionMatrix()
-        times = []
-        for nfold, (training_ds, validation_ds) in \
-                enumerate(NFoldSplitter()(dataset)):
+    # fix seed or set to None for new each time
+    N.random.seed(44)
+
+
+    # Load Haxby dataset example
+    haxby1path = '../../data'
+    attrs = SampleAttributes(os.path.join(haxby1path, 'attributes.txt'))
+    haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
+                          labels=attrs.labels,
+                          chunks=attrs.chunks,
+                          mask=os.path.join(haxby1path, 'mask.nii.gz'),
+                          dtype=N.float32)
+
+    # preprocess slightly
+    detrend(haxby8, perchunk=True, model='linear')
+    zscore(haxby8, perchunk=True, baselinelabels=[0], targetdtype='float32')
+    haxby8_no0 = haxby8.selectSamples(haxby8.labels != 0)
+
+    dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
+                                  nfeatures=100,
+                                  nchunks=6, nonbogus_features=[11, 10],
+                                  snr=3.0)
+
+
+    for (dataset, datasetdescr), clfs_ in \
+        [
+        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
+        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
+        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
+        ]:
+
+        print "%s: %s" % (datasetdescr, `dataset`)
+        print " Classifier                                  %corr  #features\t train predict  full"
+        for clf in clfs_:
+            print "  %-40s: "  % clf.descr,
+            # Lets do splits/train/predict explicitely so we could track timing
+            # otherwise could be just
+            #cv = CrossValidatedTransferError(
+            #         TransferError(clf),
+            #         NFoldSplitter(),
+            #         enable_states=['confusion'])
+            #error = cv(dataset)
+            #print cv.confusion
+
+            # to report transfer error
+            confusion = ConfusionMatrix()
+            times = []
+            nf = []
             t0 = time()
-            clf.train(training_ds)
-            t1 = time()
-            predictions = clf.predict(validation_ds.samples)
-            t2 = time()
-            confusion.add(validation_ds.labels, predictions)
-            times.append([t1-t0, t2-t1])
+            clf.states.enable('feature_ids')
+            for nfold, (training_ds, validation_ds) in \
+                    enumerate(NFoldSplitter()(dataset)):
+                clf.train(training_ds)
+                nf.append(len(clf.feature_ids))
+                if nf[-1] == 0:
+                    break
+                predictions = clf.predict(validation_ds.samples)
+                confusion.add(validation_ds.labels, predictions)
+                times.append([clf.training_time, clf.predicting_time])
+            if nf[-1] == 0:
+                print "no features were selected. skipped"
+                continue
+            tfull = time() - t0
+            times = N.mean(times, axis=0)
+            nf = N.mean(nf)
+            print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
+                  (confusion.percentCorrect, nf, times[0], times[1], tfull)
 
-        times = N.mean(times, axis=0)
-        print "  %-30s: correct=%.1f%% train:%.1fsec predict:%.1fsec" % \
-              (clf.descr, confusion.percentCorrect, times[0], times[1])
 

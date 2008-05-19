@@ -10,16 +10,29 @@
 
 __docformat__ = 'restructuredtext'
 
+# take care of conditional import of external classifiers
+from mvpa.base import externals
 
 # Define sets of classifiers
-from mvpa.clfs.svm import *
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.ridge import *
 from mvpa.clfs.knn import *
+from mvpa.clfs.svm import *
 
-clfs={'LinearSVMC' : [LinearCSVMC(), LinearNuSVMC()],
-      'NonLinearSVMC' : [RbfCSVMC(), RbfNuSVMC()],
-      }
+# assume that we at least have some SVMs
+clfs = {'LinearSVMC': [], 'NonLinearSVMC': []}
+
+if 'libsvm' in externals.present:
+    clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(probability=1),
+                           libsvm.svm.LinearNuSVMC(probability=1)]
+    clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(probability=1),
+                              libsvm.svm.RbfNuSVMC(probability=1)]
+if 'shogun' in externals.present:
+    clfs['LinearSVMC'].append(sg.svm.LinearCSVMC())
+    clfs['NonLinearSVMC'].append(sg.svm.RbfCSVMC())
+
+
+clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
 
 clfs['LinearC'] = clfs['LinearSVMC'] + \
                   [ SMLR(implementation="Python"), SMLR(implementation="C") ]

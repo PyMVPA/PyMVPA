@@ -106,10 +106,6 @@ class SMLR(Classifier):
         self.__fit_all_weights = fit_all_weights
         self.__seed = seed
 
-        if not has_bias:
-            # no need to keep it enabled
-            self.states.disable('biases')
-
         # pylint friendly initializations
         self.__ulabels = None
         """Unigue labels from the training set."""
@@ -164,7 +160,7 @@ class SMLR(Classifier):
         incr = N.finfo(N.float).max
         non_zero, basis, m, wasted_basis, cycles = 0, 0, 0, 0, 0
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
-        p_resamp = N.ones(w.shape,dtype=N.float)
+        p_resamp = N.ones(w.shape, dtype=N.float)
 
         # set the random seed
         N.random.seed(seed)
@@ -212,7 +208,7 @@ class SMLR(Classifier):
 
                     # decrease the p_resamp
                     p_resamp[basis, m] -= (p_resamp[basis, m] - \
-                                           min_resamp) * resamp_decay;
+                                           min_resamp) * resamp_decay
 
                     # set number of non-zero
                     if w_old == 0:
@@ -245,7 +241,7 @@ class SMLR(Classifier):
             m = N.mod(m+1, w.shape[1])
             if m == 0:
                 # we completed a cycle of labels
-                basis = N.mod(basis+1,nd)
+                basis = N.mod(basis+1, nd)
                 if basis == 0:
                     # we completed a cycle of features
                     cycles += 1
@@ -294,6 +290,7 @@ class SMLR(Classifier):
         # Process the labels to turn into 1 of N encoding
         labels = _label2oneofm(dataset.labels, dataset.uniquelabels)
         self.__ulabels = dataset.uniquelabels.copy()
+
         Y = labels
         M = len(self.__ulabels)
 
@@ -302,6 +299,9 @@ class SMLR(Classifier):
 
         # see if we are adding a bias term
         if self.__has_bias:
+            if __debug__:
+                debug("SMLR_", "hstacking 1s for bias")
+
             # append the bias term to the features
             X = N.hstack((X, N.ones((X.shape[0], 1), dtype=X.dtype)))
 
@@ -314,10 +314,14 @@ class SMLR(Classifier):
                     debug("SMLR_",
                           "Copying data to get it C_CONTIGUOUS/ALIGNED")
                 X = N.array(X, copy=True, dtype=N.double, order='C')
+
             # currently must be double for the C code
             if X.dtype != N.double:
+                if __debug__:
+                    debug("SMLR_", "Converting data to double")
                 # must cast to double
                 X = X.astype(N.double)
+
         # set the feature dimensions
         elif self.__implementation.upper() == 'PYTHON':
             _stepwise_regression = self._pythonStepwiseRegression
@@ -349,6 +353,7 @@ class SMLR(Classifier):
         # set verbosity
         if __debug__:
             verbosity = int( "SMLR_" in debug.active )
+            debug('SMLR_', 'Calling stepwise_regression. Seed %s' % self.__seed)
         else:
             verbosity = 0
 
@@ -377,11 +382,14 @@ class SMLR(Classifier):
 
         # save the weights
         self.__weights_all = w
-        self.__weights = w[:dataset.nfeatures,:]
+        self.__weights = w[:dataset.nfeatures, :]
+
+        if self.states.isEnabled('feature_ids'):
+            self.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures,:]), axis=1)>0)[0]
 
         # and a bias
         if self.__has_bias:
-            self.__biases = w[-1,:]
+            self.__biases = w[-1, :]
 
         if __debug__:
             debug('SMLR', "train finished in %s cycles on data.shape=%s " %
@@ -389,6 +397,8 @@ class SMLR(Classifier):
                   "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
                   (N.min(X), N.max(X), N.min(w), N.max(w)))
 
+    def _getFeatureIds(self):
+        return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
 
     def _predict(self, data):
         """
