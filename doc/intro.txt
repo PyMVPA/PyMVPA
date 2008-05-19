@@ -26,16 +26,6 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
 
-PyMVPA is free-software (beer and speech) and covered by the `MIT License`_.
-This applies to all source code, documentation, examples and snippets inside
-the source distribution (including this manual).
-
-Please see the `License`_ section for the copyright statement and the
-full text of the license.
-
-.. _MIT License: http://www.opensource.org/licenses/mit-license.php
-
-
 
 What this Manual is NOT
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,8 +36,8 @@ of high-quality text books about this field available. A very good example is:
 `Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
 
 A good starting point to learn about the application of machine learning
-algorithms to (f)MRI data are two recent reviews by Norman et al. NPD06_ and
-Haynes and Rees HR07_.
+algorithms to (f)MRI data are two recent reviews by Norman et al. [NPD06]_ and
+Haynes and Rees [HR07]_.
 
 This manual also does not describe every bit and piece of the PyMVPA package.
 For more information, please have a look at the `API documentation`_, which is a
@@ -62,14 +52,15 @@ or even the unit test battery, also part of the source distribution
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
 
-.. .. [HR07] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
-..           activity in humans. Nature Reviews Neuroscience, 7, 523–534.
-.. .. [NPD06] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
-..            mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
-..            Cognitive Science 10, 424–430.
+.. [HR07] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
+          activity in humans. Nature Reviews Neuroscience, 7, 523–534.
+.. [NPD06] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
+           mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
+           Cognitive Science 10, 424–430.
 
 
 .. _history:
+
 
 A bit of History
 ~~~~~~~~~~~~~~~~
@@ -81,7 +72,7 @@ problems.
 
 During a visit to `Princeton University`_ in spring 2005, Michael Hanke
 was introduced to the `MVPA toolbox`_ for `Matlab
-<http://buchholz.hs-bremen.de/aes/aes_matlab.gif>`_, which has several
+<http://buchholz.hs-bremen.de/aes/aes_matlab.gif>`_, which had several
 advantages over a C++ library. Most importantly it was easier to use. While a
 user of a C++ library is forced to write a significant amount of front-end
 code, users of the MVPA toolbox could simply load their data and start
@@ -202,6 +193,8 @@ recommend to install these packages as well.
     PyMVPA currently can make use of several SVM implementations of the
     Shogun_ toolbox. It requires the modular python interface of Shogun to be
     installed. Any version from 0.6 on should work.
+  R_ and RPy_: more classifiers
+    Currently PyMVPA provides a wrapper around the LARS library.
 
 .. _SciPy: http://www.scipy.org/
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
@@ -263,9 +256,11 @@ on Windows or OS X, we would be glad to hear from you.
 Debian
 ^^^^^^
 
-PyMVPA is available in Debian_ (since *lenny*) as `python-mvpa` package. The
-documentation is provided by the optional `python-mvpa-doc` package.
+PyMVPA is available as an `official Debian package`_ (`python-mvpa`;
+since *lenny*). The documentation is provided by the optional
+`python-mvpa-doc` package.
 
+.. _official Debian package: http://packages.debian.org/python-mvpa
 
 Debian backports and inofficial Ubuntu packages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -294,6 +289,8 @@ packages instead. However, if there are no binary packages for your system you
 can easily build PyMVPA on your own. Any recent linux distribution should be
 capable of doing it. Additionally, we are aware of successful builds on Mac
 OSX.
+
+.. _PyMVPA project website: http://pkg-exppsy.alioth.debian.org/pymvpa/
 
 The first step is obtaining the sources. The source code tarballs of all
 PyMVPA releases are available from the `PyMVPA project website`_.
@@ -435,11 +432,18 @@ package. For example on Debian or Ubuntu simply do::
 How to cite PyMVPA
 ~~~~~~~~~~~~~~~~~~
 
-(almost there)
+The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
+*German Society for Psychophysiology and its Application* in Magdeburg,
+2008. This is currently the prefered way to cite PyMVPA. However, we submitted
+a paper introducing the toolbox, which should become replace the poster soon.
+
+.. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
 
 
 Credits
 ~~~~~~~
+
+(needs some more words, for now just a list)
 
   * NumPy, SciPy
   * libsvm
@@ -461,7 +465,6 @@ throughout this manual.
 
   >>> import numpy as N
 
-Some examples might need to access sample dataset available under
-`data/` directory within root of PyMVPA hierarchy, thus they have to
+Some :ref:`examples <examples>` might need to access sample dataset available
+under `data/` directory within root of PyMVPA hierarchy, thus they have to
 be invoked directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
-
