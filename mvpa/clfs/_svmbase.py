@@ -156,9 +156,11 @@ class _SVM(Classifier):
                 if col[k].isDefault: continue
                 res += "%s%s=%s" % (sep, k, col[k].value)
                 #sep = ', '
-        enabled_states = self.states._getEnabled(nondefault=False)
-        if len(enabled_states):
-            res += sep + "enable_states=%s" % (str(enabled_states))
+        for name, invert in ( ('enable', False), ('disable', True) ):
+            states = self.states._getEnabled(nondefault=False, invert=invert)
+            if len(states):
+                res += sep + "%s_states=%s" % (name, str(states))
+
         res += ")"
         return res
 
