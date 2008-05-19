@@ -656,16 +656,23 @@ class StateCollection(Collection):
                              "states")
 
 
-    def _getEnabled(self, nondefault=True):
+    def _getEnabled(self, nondefault=True, invert=False):
         """Return list of enabled states
         :Parameters:
           nondefault : bool
             Either to return also states which are enabled simply by default
+          invert : bool
+            Would invert the meaning, ie would return disabled states
         """
-        if nondefault:
-            ffunc = lambda y: self.isEnabled(y)
+        if invert:
+            fmatch = lambda y: not self.isEnabled(y)
         else:
-            ffunc = lambda y: self.isEnabled(y) and not self._items[y]._defaultenabled
+            fmatch = lambda y: self.isEnabled(y)
+
+        if nondefault:
+            ffunc = fmatch
+        else:
+            ffunc = lambda y: fmatch(y) and self._items[y]._defaultenabled != self.isEnabled(y)
         return filter(ffunc, self.names)
 
 
