@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Michael Hanke <michael.hanke@gmail.com>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-docutils, python-ctypes (>= 1.0.1), texlive, texlive-latex-extra, texlive-lang-french
+Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-sphinx, python-ctypes (>= 1.0.1), texlive, texlive-latex-extra, texlive-lang-french
 Standards-Version: 3.7.3
 Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
