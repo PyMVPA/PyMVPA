@@ -60,7 +60,7 @@ def exists(dep, force=False):
         try:
             exec _KNOWN[dep]
             _VERIFIED[dep] = True
-        except (ImportError, AttributeError, rpy.RException):
+        except:
             pass
         return _VERIFIED[dep]
 
