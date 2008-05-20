@@ -4,8 +4,10 @@ pymvpa (0.2.0-1) UNRELEASED; urgency=low
   * Added build-dependency to python-ctypes for a new classifier extension.
   * Added watch file.
   * Move from python-docutils to python-sphinx for building the package docs.
+  * Disable libsvm setting check and add setup.cfg to permanently enable
+    building the libsvm wrapper for Debian.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Mon, 19 May 2008 15:51:51 +0200
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 20 May 2008 19:59:19 +0200
 
 pymvpa (0.1.0-1) unstable; urgency=low
 
