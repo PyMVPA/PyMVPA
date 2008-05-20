@@ -36,8 +36,8 @@ of high-quality text books about this field available. A very good example is:
 `Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
 
 A good starting point to learn about the application of machine learning
-algorithms to (f)MRI data are two recent reviews by Norman et al. [NPD06]_ and
-Haynes and Rees [HR07]_.
+algorithms to (f)MRI data are two recent reviews by Norman et al. [1]_ and
+Haynes and Rees [2]_.
 
 This manual also does not describe every bit and piece of the PyMVPA package.
 For more information, please have a look at the `API documentation`_, which is a
@@ -52,11 +52,11 @@ or even the unit test battery, also part of the source distribution
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
 
-.. [HR07] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
-          activity in humans. Nature Reviews Neuroscience, 7, 523–534.
-.. [NPD06] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
-           mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
-           Cognitive Science 10, 424–430.
+.. [1] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
+       mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
+       Cognitive Science 10, 424–430.
+.. [2] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
+       activity in humans. Nature Reviews Neuroscience, 7, 523–534.
 
 
 .. _history:
@@ -455,16 +455,3 @@ Credits
 
 .. Please add some notes when you think that you should give credits to someone
    that enables or motivates you to work on PyMVPA ;-)
-
-
-Manual Conventions
-~~~~~~~~~~~~~~~~~~
-
-In all examples the NumPy package is assumed to be imported using the alias N
-throughout this manual.
-
-  >>> import numpy as N
-
-Some :ref:`examples <examples>` might need to access sample dataset available
-under `data/` directory within root of PyMVPA hierarchy, thus they have to
-be invoked directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
