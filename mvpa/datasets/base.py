@@ -670,6 +670,8 @@ class Dataset(object):
     def permuteLabels(self, status, perchunk = True):
         """Permute the labels.
 
+        TODO: rename status into something closer in semantics.
+
         Calling this method with 'status' set to True, the labels are
         permuted among all samples.
 
@@ -682,7 +684,7 @@ class Dataset(object):
         """
         if not status:
             # restore originals
-            if self._data['origlabels'] == None:
+            if self._data.get('origlabels', None) is None:
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'permuteLabels() has never been ' \
                                     'called with status == True.'

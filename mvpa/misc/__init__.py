@@ -176,6 +176,9 @@ if __debug__:
     debug.register('SMLR',    "SMLR")
     debug.register('SMLR_',   "SMLR verbose")
 
+    debug.register('GPR',     "GPR")
+    debug.register('KERNEL',  "Kernels module")
+
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG__', "PyMVPA SG wrapping debug")
