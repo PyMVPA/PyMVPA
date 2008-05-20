@@ -122,7 +122,7 @@ class LARS(Classifier):
     def __repr__(self):
         """String summary of the object
         """
-        return """LARS(type=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, use_Gram=%s, enabled_states=%s)""" % \
+        return """LARS(type=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, use_Gram=%s, enable_states=%s)""" % \
                (self.__type,
                 self.__normalize,
                 self.__intercept,
