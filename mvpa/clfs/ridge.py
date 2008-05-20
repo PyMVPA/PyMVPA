@@ -52,10 +52,10 @@ class RidgeReg(Classifier):
         """String summary of the object
         """
         if self.__lm is None:
-            return """Ridge(lm=.05*nfeatures, enabled_states=%s)""" % \
+            return """Ridge(lm=.05*nfeatures, enable_states=%s)""" % \
                 (str(self.states.enabled))
         else:
-            return """Ridge(lm=%f, enabled_states=%s)""" % \
+            return """Ridge(lm=%f, enable_states=%s)""" % \
                 (self.__lm, str(self.states.enabled))
 
 
