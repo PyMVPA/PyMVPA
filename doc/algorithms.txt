@@ -1,0 +1,91 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+.. _algorithms:
+
+.. highlight:: python
+   :linenothreshold: 5
+
+
+**********
+Algorithms
+**********
+
+
+Searchlight
+===========
+
+The term Searchlight_ refers to an algorithm that runs a
+scalar `DatasetMeasure` on all possible spheres of a certain size within a
+dataset. The measure typically computed is a cross-validated transfer error
+(see CrossValidatedTransferError_). The idea to use a searchlight as a
+sensitivity analyzer stems from a paper by Kriegeskorte and colleagues
+KGB06_.
+
+A searchlight analysis is can be easily performed. The following code snippet
+shows a sketch of a complete analysis. An example of a typical application of
+this algorithm can be found in the file at `doc/examples/searchlight_2d.py`
+in the source distribution of PyMVPA::
+
+  # load label and chunk definitions
+  attr = SampleAttributes('sample_attr_filename.txt')
+
+  # open dataset from a NIfTI file and perform masking for a certain ROI
+  # defined by another NIfTI image
+  dataset = NiftiDataset(
+                samples='subj1_bold.nii.gz',
+                labels=attr.labels,
+                chunks=attr.chunks,
+                mask='subj1_roi_mask.nii.gz')
+
+  # setup measure to be computed in each sphere (cross-validated
+  # generalization error on odd/even splits)
+  cv = CrossValidatedTransferError(
+           TransferError(LinearCSVMC()),
+           OddEvenSplitter())
+
+  # setup searchlight with 5 mm radius and measure configured above
+  sl = Searchlight(cv, radius=5)
+
+  # run searchlight on dataset
+  sl_map = sl(dataset)
+
+  # store computed error map in a nifti file
+  # The map will be in the original dataspace and can be easily viewed
+  # (and overlayed) with any NIfTI-aware viewer
+  dataset.map2Nifti(sl_map).save(
+      'searchlight_5mm.nii.gz')
+
+
+
+.. _Searchlight: api/mvpa.algorithms.searchlight.Searchlight-class.html
+
+.. Mention the fact that it also is a special `SensitivityAnalyzer`
+
+.. Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
+           'Information-based functional brain mapping.' Proceedings of the
+           National Academy of Sciences of the United States of America 103,
+           3863-3868.
+
+
+
+Statistical Testing
+===================
+
+NullHypothesisTest_
+
+(to be written)
+
+.. _NullHypothesisTest: api/mvpa.algorithms.nullhyptest.NullHypothesisTest-class.html
+
+.. Point to the problem of an unknown H0 distribution, which is a problem
+   for a lot of statistical tests.
+
+

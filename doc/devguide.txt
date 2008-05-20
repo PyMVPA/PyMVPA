@@ -7,16 +7,18 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
+.. _devguide:
+
+***************************
 PyMVPA Developer Guidelines
-===========================
+***************************
 
 .. contents:: Table of Contents
-.. sectnum::
 
 
 
 Documentation
--------------
+=============
 
 Documentation of the code and supplementary material (such as this file)
 should be done in reST_ (reStructuredText) light markup language.  See `Demo
@@ -26,7 +28,7 @@ quick demo.
 
 
 Code Documentation
-~~~~~~~~~~~~~~~~~~
+------------------
 
 Code must be documented in accordance to `epydoc + reST usage guidelines
 <http://epydoc.sourceforge.net/manual-othermarkup.html>`__
@@ -37,7 +39,7 @@ For an example how to do it right, please see mvpa/datasets/dataset.py
 
 
 Code Formatting
----------------
+===============
 
 pylint
    Code should be conformant with Pylint_ driven by config located at
@@ -82,7 +84,7 @@ notes
 
 
 Coding Conventions
-------------------
+==================
 
 __repr__
   most of the classes should provide meaningful and concise summary
@@ -92,10 +94,10 @@ __repr__
 
 
 Naming Conventions
-------------------
+==================
 
 Function Arguments
-~~~~~~~~~~~~~~~~~~
+------------------
 
 dataset vs data
   Ones which are supposed to be derived from Dataset_ class should
@@ -123,7 +125,7 @@ dataset vs data
 
 
 Tests
------
+=====
 * Every more or less "interesting" bugfix should be accompanied by a
   unittest which might help to prevent it in the future refactoring
 * Every new feature should have a unittest
@@ -131,7 +133,7 @@ Tests
 
 
 Extending PyMVPA
-----------------
+================
 
 This section shall provide a developer with the necessary pieces of information
 for writing extensions to PyMVPA. The guidelines given here, must be obeyed
@@ -140,8 +142,19 @@ all modifications that introduce changes to the basic interfaces outlined below
 have to be documented here and also should be announced in the changelog.
 
 
+Adding an External Dependency
+-----------------------------
+
+Introducing new external dependencies should be done in a completely optional
+fashion. This includes both build-dependencies and runtime dependencies.
+With `mvpa.base.externals` PyMVPA provides a simple framework to test the
+availability of certain external components and publish the results of the
+tests throughout PyMVPA.
+
+
 Adding a new Dataset type
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
+
  * Required interface for Mapper.
  * only new subclasses of MappedDataset + new Mappers (all other as
    improvements into the Dataset base class)?
@@ -150,7 +163,7 @@ go into `mvpa/datasets/`
 
 
 Adding a new Classifier
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 To add a new classifier implementation it is sufficient to create a new
 sub-class of Classifier_ and add implementations of the following methods:
@@ -174,7 +187,7 @@ With this minimal implementation the classifier provides some useful
 functionality, by automatically storing some relevant information upon request
 in state variables.
 
-.. IncludeStates: clfs.classifier Classifier
+.. IncludeStates: clfs.base Classifier
 
 Supported states:
 
@@ -215,7 +228,7 @@ to preserve the full functionality.
 Source code files of all classifier implementations go into `mvpa/clfs/`.
 
 
-.. _Classifier: api/mvpa.clfs.classifier.Classifier-class.html
+.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 
 
 Outstanding Questions:
@@ -224,13 +237,13 @@ Outstanding Questions:
 
 
 Adding a new Sensitivity Analyzer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 There are two possible base-classes for new sensitivity analyzers.
 First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
 generic approach. However, for sensitivity analyzers that make use of some
 classifier and extract the sensitivities from it,
-ClassifierBasedSensitivityAnalyzer_ is a more appropriate base-class, as it
+Sensitivity_ is a more appropriate base-class, as it
 provides some additional useful functionality for this use case.
 
 All sensitivity analyzers (actually all objects based on DatasetMeasure_)
@@ -248,7 +261,7 @@ new sub-class of SensitivityAnalyzer_ and add an implementation of the
 `_call(dataset)` method. It will be called with an instance of Dataset_ and has
 to return a vector of featurewise sensitivity scores.
 
-.. IncludeStates: algorithms.datameasure DatasetMeasure
+.. IncludeStates: measures.base DatasetMeasure
 
 Supported state:
 
@@ -264,21 +277,21 @@ Source code files of all sensitivity analyzer implementations go into
 
 
 Classifier-independent Sensitivity Analyzers
-''''''''''''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Nothing special.
 
 
 Classifier-based Sensitivity Analyzers
-''''''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A ClassifierBasedSensitivityAnalyzer_ behaves exactly like its
+A Sensitivity_ behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
-.. IncludeStates: algorithms.datameasure ClassifierBasedSensitivityAnalyzer
+.. IncludeStates: measures.base Sensitivity
 
 
 Outstanding Questions:
@@ -287,25 +300,24 @@ Outstanding Questions:
   * Shouldn't there be a `sensitivities` state?
 
 
-.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
-.. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
-.. _ClassifierBasedSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ClassifierBasedSensitivityAnalyzer-class.html
-.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ProxyClassifierSensitivityAnalyzer-class.html
+.. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
+.. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
+.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.measures.base.ProxyClassifierSensitivityAnalyzer-class.html
 
 
 
 Adding a new Algorithm
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 go into `mvpa/algorithms/`
 
 
 
 Git Repository
---------------
+==============
 
 Layout
-~~~~~~
+------
 
 The repository is structured by a number of branches. Each developer should
 prefix his/her branches with a unique string plus '/' (maybe initials or
@@ -338,7 +350,7 @@ releases should be gone under *maint/codename.flavor* (e.g. *maint/lenny*,
 
 
 Commits
-~~~~~~~
+-------
 
 Please prefix all commit summaries with one (or more) of the following labels.
 This should help others to easily classify the commits into meaningful
@@ -358,7 +370,7 @@ categories:
 
 
 Merges
-~~~~~~
+------
 
 For easy tracking of what changes were absorbed during merge, we
 advice to enable merge summary within git:
@@ -367,7 +379,7 @@ advice to enable merge summary within git:
 
 
 Changelog
----------
+=========
 
 The PyMVPA changelog is located in the toplevel directory of the source tree
 in the `Changelog` file. The content of this file should be formated as
@@ -393,10 +405,10 @@ into the master branch, not necessarily with a release already approaching.
 
 
 Developer-TODO
---------------
+==============
 
 Things to implement for the next release (Release goals)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------
 
  * Unify parameter naming across all classifiers and come up with a labeling
    guideline for future classifier implementations and wrappers::
@@ -416,54 +428,6 @@ Things to implement for the next release (Release goals)
 
      base.attributes
 
- * Evaluate extinguishing everything related to
-   `ClassifierBasedSensitivityAnalyzer`.
-   I believe we should simply enhance all relevant classifiers to behave like
-   a `SensitivityAnalyzer` if called with a single dataset. Looking at the the
-   `SensitivityAnalyzers` that we have: `SMLRWeights` simply passes the weights
-   that are computed by the classifier anyway. `LinearSVMWeights` is even worse.
-   It does only a simple calculation, but involves a fairly large part of code
-   to deal with our multiple SVM implementations. Why not move the stuff into
-   their respective classifiers. There, the sensitivities would just be a 2-3
-   liner and we would also eliminate the multi-implementation issue (somewhat).
-   I propose:
-
-    * `git rm mvpa/algorithms/*weight*`
-    * Add `__call__()` to relevant classifiers that returns the weights.
-
-   Remaining SensitivityAnalyzers can than be downgraded to
-   `FeaturewiseDatasetMeasures`. All interfaces that used to accept a
-   `SensitivityAnalyzer` will also digest a pimped classifier with built-in
-   sensitivities. After all we're in Python-land...
-
-   And while we are at it: Let's also remove `SensitivityAnalyzer`, which does
-   nothing anyway::
-
-     Enduser cares about FeatureSelection
-     Question is just about naming and terminology
-
-     DatasetMeasure -> Measure (transformers)
-     ScalarDatasetMeasure ->  gone?
-     FeaturewiseDatasetMeasure?
-       combiners to be absorbed withing transformers? and then gone?
-     {Classifier?}Sensitivity?
-
-     SensitivityAnalyzer -> gone?
-
-     ClassifierBasedSensitivityAnalyzer -> Sensitivity
-
-     CombinedSensitivityAnalyzer -> CombinedAnalyzer
-
-     Q: be under mvpa.datasets.measures
-     Anova stays in algorithms
-
- * Try to get rid of selectAnalyzer() which pulls in half of the world and
-   causes cyclic dependencies::
-
-    Together with Classifier.sensitivity() provide
-    Classifier.sensitivityAnalyzer() factory method, which spits out
-    appropriate analyzer right off the box
-
  * Restructure code base (incl. renaming and moving pieces)
 
    Let's use the following list to come up with a nice structure for all
@@ -477,7 +441,10 @@ Things to implement for the next release (Release goals)
         * Noise perturbation ->         -> mvpa.measures.noisepertrubation
         * meta-algorithms (splitting)   -> mvpa.measures
 
-    * Searchlight -> stays in mvpa.measures.searchlight,
+     DatasetMeasure -> Measure (transformers)
+     FeaturewiseDatasetMeasure?
+       combiners to be absorbed withing transformers? and then gone?
+     {Classifier?}Sensitivity?
 
     * Mappers::
         mvpa.mappers (AKA mvpa.projections mvpa.transformers)
@@ -541,9 +508,6 @@ Things to implement for the next release (Release goals)
 
 
  * Add ability to add/modify custom attributes to a dataset.
- * (DONE?) Expand splitter to specify both the train and test samples, not just the
-   test samples.  This will enable us to write custom splitter functions that
-   split based on new custom attributes.
  * Possibly make NiftiDataset default to float32 when it sees that the data are
    ints.
  * Add kernel methods as option to all classifiers, not just SVMs.  For example, you
@@ -565,7 +529,7 @@ Things to implement for the next release (Release goals)
 
 
 Long and medium term TODOs (aka stuff that has been here forever)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------------------
 
  * selected_ids -> implement via MaskMapper?
 

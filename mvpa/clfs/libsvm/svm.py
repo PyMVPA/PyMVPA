@@ -15,7 +15,11 @@ import numpy as N
 from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable
-from mvpa.clfs.classifier import Classifier
+
+from mvpa.clfs.base import Classifier
+from mvpa.clfs._svmbase import _SVM
+from mvpa.measures.base import Sensitivity
+
 import _svm as svm
 
 if __debug__:
@@ -28,39 +32,33 @@ from svmc import \
      PRECOMPUTED
 
 
-class SVMBase(Classifier):
+class SVMBase(_SVM):
     """Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
     """
-    # init the parameter interface
-    params = Classifier.params.copy()
-    params['eps'] = Parameter(0.00001,
-                              min=0,
-                              descr='tolerance of termination criterium')
-
 
     # Since this is internal feature of LibSVM, this state variable is present
     # here
     probabilities = StateVariable(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
+    _KERNELS = { "linear":  (svm.svmc.LINEAR, None),
+                 "rbf" :    (svm.svmc.RBF,     ('gamma',)),
+                 "poly":    (svm.svmc.POLY,    ('gamma', 'degree', 'coef0')),
+                 "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0')),
+                 }
+    # TODO: Complete the list ;-)
+
+    # TODO p is specific for SVR
+    _KNOWN_PARAMS = [ 'epsilon', 'probability', 'shrinking', 'weight_label', 'weight']
+
+    _KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
+
 
     def __init__(self,
                  kernel_type,
                  svm_type,
-                 C=-1.0,
-                 nu=0.5,
-                 coef0=0.0,
-                 degree=3,
-                 eps=0.00001,
-                 p=0.1,
-                 gamma=0.0,
-                 probability=0,
-                 shrinking=1,
-                 weight_label=None,
-                 weight=None,
-                 cache_size=100,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
@@ -110,93 +108,77 @@ class SVMBase(Classifier):
         If you do not want to change penalty for any of the classes,
         just set nr_weight to 0.
         """
-        if weight_label == None:
-            weight_label = []
-        if weight == None:
-            weight = []
+        self._KNOWN_PARAMS = SVMBase._KNOWN_PARAMS[:]
+        self._KNOWN_KERNEL_PARAMS = SVMBase._KNOWN_KERNEL_PARAMS[:]
+
+        if svm_type in [svm.svmc.C_SVC]:
+            self._KNOWN_PARAMS += ['C']
+        elif svm_type in [svm.svmc.NU_SVC, svm.svmc.NU_SVR]:
+            self._KNOWN_PARAMS += ['nu']
+
+        if svm_type in [svm.svmc.EPSILON_SVR]:
+            self._KNOWN_PARAMS += ['tube_epsilon']
+
 
         # init base class
-        Classifier.__init__(self, **kwargs)
+        _SVM.__init__(self, kernel_type, **kwargs)
 
-        if not len(weight_label) == len(weight):
-            raise ValueError, "Lenght of 'weight' and 'weight_label' lists is" \
-                              "is not equal."
+        # Set internal flags to signal abilities
+        self._clf_internals += [ 'multiclass', 'libsvm' ] # we can do multiclass internally
 
-        self.param = svm.SVMParameter(
-                        kernel_type=kernel_type,
-                        svm_type=svm_type,
-                        C=C,
-                        nu=nu,
-                        cache_size=cache_size,
-                        coef0=coef0,
-                        degree=degree,
-                        eps=eps,
-                        p=p,
-                        gamma=gamma,
-                        nr_weight=len(weight),
-                        probability=probability,
-                        shrinking=shrinking,
-                        weight_label=weight_label,
-                        weight=weight)
-        """Store SVM parameters in libSVM compatible format."""
+        if svm_type in [svm.svmc.EPSILON_SVR, svm.svmc.NU_SVR]:
+            self._clf_internals += [ 'regression' ]
+
+        if 'nu' in self._KNOWN_PARAMS:
+            # overwrite eps param with new default value (information taken from libSVM
+            # docs
+            self.params['epsilon'].setDefault(0.001)
+
+        self._svm_type = svm_type
 
         self.__model = None
         """Holds the trained SVM."""
 
-        self.__C = C
-        """Holds original value of C. self.param will be adjusted before training
-        if C<0 and it is C-SVM, so we could scale 'default' C value"""
 
 
-    def __repr__(self):
-        """Definition of the object summary over the object
-        """
-        res = "SVMBase("
-        sep = ""
-        for k, v in self.param._params.iteritems():
-            res += "%s%s=%s" % (sep, k, str(v))
-            sep = ', '
-        res += sep + "enable_states=%s" % (str(self.states.enabled))
-        res += ")"
-        return res
-
-
-    def _getDefaultC(self, data):
-        """Compute default C
-
-        TODO: for non-linear SVMs
-        """
-
-        if self.param.kernel_type == svm.svmc.LINEAR:
-            datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
-            value = 1.0/(datasetnorm*datasetnorm)
-            if __debug__:
-                debug("SVM", "Default C computed to be %f" % value)
-        else:
-            warning("TODO: No computation of default C is not yet implemented" +
-                    " for non-linear SVMs. Assigning 1.0")
-            value = 1.0
-
-        return value
-
-    def _train(self, data):
+    def _train(self, dataset):
         """Train SVM
         """
         # libsvm needs doubles
-        if data.samples.dtype == 'float64':
-            src = data.samples
+        if dataset.samples.dtype == 'float64':
+            src = dataset.samples
         else:
-            src = data.samples.astype('double')
+            src = dataset.samples.astype('double')
 
-        svmprob = svm.SVMProblem( data.labels.tolist(), src )
+        svmprob = svm.SVMProblem( dataset.labels.tolist(), src )
 
-        #import pydb
-        #pydb.debugger()
-        if self.__C < 0 and \
-               self.param.svm_type in [svm.svmc.C_SVC]:
-            self.param.C = self._getDefaultC(data.samples)*abs(self.__C)
+        # Translate few params
+        TRANSLATEDICT={'epsilon': 'eps',
+                       'tube_epsilon': 'p'}
+        args = []
+        for paramname, param in self.params.items.items() + self.kernel_params.items.items():
+            if paramname in TRANSLATEDICT:
+                argname = TRANSLATEDICT[paramname]
+            else:
+                argname = paramname
+            args.append( (argname, param.value) )
 
-        self.__model = svm.SVMModel(svmprob, self.param)
+        # XXX All those parameters should be fetched if present from
+        # **kwargs and create appropriate parameters within .params or .kernel_params
+        libsvm_param = svm.SVMParameter(
+            kernel_type=self._kernel_type,
+            svm_type=self._svm_type,
+            **dict(args))
+        """Store SVM parameters in libSVM compatible format."""
+
+        if self.params.isKnown('C'):#svm_type in [svm.svmc.C_SVC]:
+            if self.C < 0:
+                newC = self._getDefaultC(dataset.samples)*abs(self.C)
+                if __debug__:
+                    debug("SVM", "Computed C to be %s for C=%s" % (newC, self.C))
+                libsvm_param._setParameter('C', newC)
+
+        self.__model = svm.SVMModel(svmprob, libsvm_param)
 
 
     def _predict(self, data):
@@ -229,7 +211,7 @@ class SVMBase(Classifier):
                 if __debug__:
                     debug("SVM","Forcing values to be ndarray and reshaping " +
                           "them to be 1D vector")
-                values = N.array(values).reshape(len(values))
+                values = N.asarray(values).reshape(len(values))
             self.values = values
             # XXX we should probably do the same as shogun for
             # multiclass -- just spit out warning without
@@ -248,6 +230,7 @@ class SVMBase(Classifier):
                         self + " thus no 'values' state")
         return predictions
 
+
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
@@ -264,187 +247,67 @@ class LinearSVM(SVMBase):
     """Base class of all linear SVM classifiers that make use of the libSVM
     package. Still not meant to be used directly.
     """
-    params = SVMBase.params.copy()
-    def __init__(self,
-                 svm_type,
-                 C=-1.0,
-                 nu=0.5,
-                 eps=0.00001,
-                 p=0.1,
-                 probability=0,
-                 shrinking=1,
-                 weight_label=None,
-                 weight=None,
-                 cache_size=100,
-                 **kwargs):
+
+    def __init__(self, svm_type, **kwargs):
         """The constructor arguments are virtually identical to the ones of
         the SVMBase class, except that 'kernel_type' is set to LINEAR.
         """
-        if weight_label == None:
-            weight_label = []
-        if weight == None:
-            weight = []
-
         # init base class
-        SVMBase.__init__(self, kernel_type=svm.svmc.LINEAR,
-                         svm_type=svm_type, C=C, nu=nu, cache_size=cache_size,
-                         eps=eps, p=p, probability=probability,
-                         shrinking=shrinking, weight_label=weight_label,
-                         weight=weight, **kwargs)
+        SVMBase.__init__(self, kernel_type='linear',
+                         svm_type=svm_type, **kwargs)
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns an appropriate SensitivityAnalyzer."""
+        return LibSVMLinearSVMWeights(self, **kwargs)
 
 
 
 class LinearNuSVMC(LinearSVM):
     """Classifier for linear Nu-SVM classification.
     """
-    params = LinearSVM.params.copy()
-    params['nu'] = Parameter(0.5,
-                             min=0.0,
-                             max=1.0,
-                             descr='fraction of datapoints within the margin')
-    # overwrite eps param with new default value (information taken from libSVM
-    # docs
-    params['eps'] = Parameter(0.001,
-                              min=0,
-                              descr='tolerance of termination criterium')
 
-
-    def __init__(self,
-                 nu=0.5,
-                 eps=0.001,
-                 probability=0,
-                 shrinking=1,
-                 weight_label=None,
-                 weight=None,
-                 cache_size=100,
-                 **kwargs):
+    def __init__(self, **kwargs):
         """
         """
-        if weight_label == None:
-            weight_label = []
-        if weight == None:
-            weight = []
-
         # init base class
-        LinearSVM.__init__(self, svm_type=svm.svmc.NU_SVC,
-                           nu=nu, eps=eps, probability=probability,
-                           shrinking=shrinking, weight_label=weight_label,
-                           weight=weight, cache_size=cache_size, **kwargs)
-
+        LinearSVM.__init__(self, svm_type=svm.svmc.NU_SVC, **kwargs)
 
 
 class LinearCSVMC(LinearSVM):
     """Classifier for linear C-SVM classification.
     """
-    params = LinearSVM.params.copy()
-    params['C'] = Parameter(1.0,
-                            min=0.0,
-                            descr='cumulative constraint violation')
 
-
-    def __init__(self,
-                 C=-1.0,
-                 eps=0.00001,
-                 probability=0,
-                 shrinking=1,
-                 weight_label=None,
-                 weight=None,
-                 cache_size=100,
-                 **kwargs):
+    def __init__(self, **kwargs):
         """
         """
-        if weight_label == None:
-            weight_label = []
-        if weight == None:
-            weight = []
-
         # init base class
-        LinearSVM.__init__(self, svm_type=svm.svmc.C_SVC,
-                           C=C, eps=eps, probability=probability,
-                           shrinking=shrinking, weight_label=weight_label,
-                           weight=weight, cache_size=cache_size, **kwargs)
+        LinearSVM.__init__(self, svm_type=svm.svmc.C_SVC, **kwargs)
 
 
 
 class RbfNuSVMC(SVMBase):
     """Nu-SVM classifier using a radial basis function kernel.
     """
-    params = SVMBase.params.copy()
-    params['nu'] = Parameter(0.5,
-                             min=0.0,
-                             max=1.0,
-                             descr='fraction of datapoints within the margin')
-    # overwrite eps param with new default value (information taken from libSVM
-    # docs
-    params['eps'] = Parameter(0.001,
-                              min=0,
-                              descr='tolerance of termination criterium')
-    params['gamma'] = \
-        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
-                                      'defaults to 1/(#classes)')
 
-
-    def __init__(self,
-                 nu=0.5,
-                 gamma=0.0,
-                 eps=0.001,
-                 probability=0,
-                 shrinking=1,
-                 weight_label=None,
-                 weight=None,
-                 cache_size=100,
-                 **kwargs):
+    def __init__(self, **kwargs):
         """
         """
-        if weight_label == None:
-            weight_label = []
-        if weight == None:
-            weight = []
-
         # init base class
-        SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
-                         svm_type=svm.svmc.NU_SVC, nu=nu, gamma=gamma,
-                         cache_size=cache_size, eps=eps,
-                         probability=probability, shrinking=shrinking,
-                         weight_label=weight_label, weight=weight, **kwargs)
-
+        SVMBase.__init__(self, kernel_type='rbf',
+                         svm_type=svm.svmc.NU_SVC, **kwargs)
 
 
 class RbfCSVMC(SVMBase):
     """C-SVM classifier using a radial basis function kernel.
     """
-    params = SVMBase.params.copy()
-    params['C'] = Parameter(1.0,
-                            min=0.0,
-                            descr='cumulative constraint violation')
-    params['gamma'] = \
-        Parameter(0.0, min=0.0, descr='kernel width parameter - if set to 0.0' \
-                                      'defaults to 1/(#classes)')
 
-
-    def __init__(self,
-                 C=-1.0,
-                 gamma=0.0,
-                 eps=0.00001,
-                 probability=0,
-                 shrinking=1,
-                 weight_label=None,
-                 weight=None,
-                 cache_size=100,
-                 **kwargs):
+    def __init__(self, **kwargs):
         """
         """
-        if weight_label == None:
-            weight_label = []
-        if weight == None:
-            weight = []
-
         # init base class
-        SVMBase.__init__(self, kernel_type=svm.svmc.RBF,
-                         svm_type=svm.svmc.C_SVC, C=C, gamma=gamma,
-                         cache_size=cache_size, eps=eps,
-                         probability=probability, shrinking=shrinking,
-                         weight_label=weight_label, weight=weight, **kwargs)
+        SVMBase.__init__(self, kernel_type='rbf',
+                         svm_type=svm.svmc.C_SVC, **kwargs)
 
 
 # check if there is a libsvm version with configurable
@@ -455,3 +318,56 @@ if hasattr(svm.svmc, 'svm_set_verbosity'):
         svm.svmc.svm_set_verbosity(255)
     else:
         svm.svmc.svm_set_verbosity(0)
+
+
+
+class LibSVMLinearSVMWeights(Sensitivity):
+    """`SensitivityAnalyzer` for the LIBSVM implementation of a linear SVM.
+    """
+
+    biases = StateVariable(enabled=True,
+                           doc="Offsets of separating hyperplanes")
+
+    def __init__(self, clf, **kwargs):
+        """Initialize the analyzer with the classifier it shall use.
+
+        :Parameters:
+          clf: LinearSVM
+            classifier to use. Only classifiers sub-classed from
+            `LinearSVM` may be used.
+        """
+        # init base classes first
+        Sensitivity.__init__(self, clf, **kwargs)
+
+
+    def _call(self, dataset, callables=[]):
+        if self.clf.model.nr_class != 2:
+            warning("You are estimating sensitivity for SVM %s trained on %d" %
+                    (str(self.clf), self.clf.model.nr_class) +
+                    " classes. Make sure that it is what you intended to do" )
+
+        svcoef = N.matrix(self.clf.model.getSVCoef())
+        svs = N.matrix(self.clf.model.getSV())
+        rhos = N.asarray(self.clf.model.getRho())
+
+        self.biases = rhos
+        # XXX yoh: .mean() is effectively
+        # averages across "sensitivities" of all paired classifiers (I
+        # think). See more info on this topic in svm.py on how sv_coefs
+        # are stored
+        #
+        # First multiply SV coefficients with the actuall SVs to get
+        # weighted impact of SVs on decision, then for each feature
+        # take mean across SVs to get a single weight value
+        # per feature
+        weights = svcoef * svs
+
+        if __debug__:
+            debug('SVM',
+                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
+                  (self.clf.model.nr_class, str(self.clf.model.getNSV())) + \
+                  " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
+                  (svcoef.shape, svs.shape, rhos) + \
+                  " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
+
+        return N.asarray(weights.T)

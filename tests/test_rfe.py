@@ -13,11 +13,12 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.datameasure import SensitivityAnalyzer, selectAnalyzer
-from mvpa.algorithms.rfe import RFE
-from mvpa.algorithms.featsel import \
+from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.featsel.rfe import RFE
+from mvpa.featsel.base import \
      SensitivityBasedFeatureSelection, \
-     FeatureSelectionPipeline, \
+     FeatureSelectionPipeline
+from mvpa.featsel.helpers import \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
@@ -30,13 +31,13 @@ from mvpa.misc.state import UnknownStateError
 from tests_warehouse import sweepargs
 from tests_warehouse_clfs import *
 
-class SillySensitivityAnalyzer(SensitivityAnalyzer):
+class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
     """Simple one which just returns xrange[-N/2, N/2], where N is the
     number of features
     """
 
     def __init__(self, mult=1, **kwargs):
-        SensitivityAnalyzer.__init__(self, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
         self.__mult = mult
 
     def __call__(self, dataset):
@@ -217,11 +218,11 @@ class RFETests(unittest.TestCase):
                          N.nonzero(data)[0]).all())
 
 
-    @sweepargs(clf=clfs['clfs_with_sens'])
+    @sweepargs(clf=clfs['has_sensitivity', '!meta'])
     def testSensitivityBasedFeatureSelection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = selectAnalyzer(clf)
+        sens_ana = clf.getSensitivityAnalyzer()
 
         # of features to remove
         Nremove = 2
@@ -298,11 +299,11 @@ class RFETests(unittest.TestCase):
 
 
     # TODO: should later on work for any clfs_with_sens
-    @sweepargs(clf=clfs['clfs_with_sens'])
+    @sweepargs(clf=clfs['has_sensitivity', '!meta'][:1])
     def testRFE(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = selectAnalyzer(clf)
+        sens_ana = clf.getSensitivityAnalyzer()
         trans_error = TransferError(clf)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation

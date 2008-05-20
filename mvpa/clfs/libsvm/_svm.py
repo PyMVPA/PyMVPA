@@ -21,7 +21,8 @@ from mvpa.clfs.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
                                   PRECOMPUTED
 
-from mvpa.misc import debug
+if __debug__:
+    from mvpa.misc import debug
 
 def intArray(seq):
     size = len(seq)
@@ -114,9 +115,13 @@ class SVMParameter(object):
 
 
     def __init__(self, **kw):
+        self._orig_params = kw
+        self.untrain()
+
+    def untrain(self):
         self._params = {}
         self._params.update(self.default_parameters) # kinda copy.copy ;-)
-        self._params.update(**kw)       # update with new values
+        self._params.update(**self._orig_params)       # update with new values
         self.__svmc_params = None       # none is computed 
         self.__svmc_recompute = False   # thus none to recompute
 
@@ -280,9 +285,12 @@ class SVMModel:
         and some statistics
         """
         ret = '<SVMModel:'
-        ret += ' type = %s, ' % `self.svm_type`
-        ret += ' number of classes = %d (%s), ' \
-                % ( self.nr_class, `self.labels` )
+        try:
+            ret += ' type = %s, ' % `self.svm_type`
+            ret += ' number of classes = %d (%s), ' \
+                   % ( self.nr_class, `self.labels` )
+        except:
+            pass
         return ret+'>'
 
 

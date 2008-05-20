@@ -22,7 +22,7 @@ from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.algorithms.searchlight import Searchlight
+from mvpa.measures.searchlight import Searchlight
 from mvpa.misc import debug
 
 # enable debug output for searchlight call
@@ -85,7 +85,7 @@ for radius in [1,5,10]:
     sl_map = sl(dataset)
 
     # map sensitivity map into original dataspace
-    orig_sl_map = dataset.mapReverse(sl_map)
+    orig_sl_map = dataset.mapReverse(N.array(sl_map))
     masked_orig_sl_map = N.ma.masked_array(orig_sl_map, mask=orig_sl_map == 0)
 
     # make a new subplot for each classifier

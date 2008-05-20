@@ -1,0 +1,150 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+********
+Measures
+********
+
+
+PyMVPA provides a number of useful measures. The vast majority of
+them are dedicated to feature selection. To increase analysis
+flexibility, PyMVPA distinguishes two parts of a feature selection
+procedure.
+
+First, the impact of each individual feature on a classification has
+to be determined.  The resulting map reflects the sensitivities of all
+features with respect to a certain decision and, therefore, algorithms
+generating these maps are summarized as Sensitivity_ in PyMVPA.
+
+Second, once the feature sensitivities are known, they can be used as
+criteria for feature selection. However, possible selection strategies
+range from very simple *Go with the 10% best features* to more
+complicated algorithms like *Recursive feature selection*
+(RFE_). Because `Sensitivity Measures`_ and selections strategies can
+be arbitrarily combined, PyMVPA offers a quite flexible framework for
+feature selection.
+
+Similar to dataset splitters, all PyMVPA algorithms are implemented and
+behave like *processing objects*. To recap, this means that they are
+instantiated by passing all relevant arguments to the constructor. Once
+created, they can be used multiple times by calling them with different
+datasets.
+
+.. Again general overview first. What is a `SensitivityAnalyzer`, what is the
+   difference between a `FeatureSelection` and an `ElementSelector`.
+   Finally more detailed note and references for each larger algorithm.
+
+
+Sensitivity
+===========
+
+It was already mentioned that a Sensitivity_ computes a featurewise
+score that indicates how much interesting signal each feature contains
+-- hoping that this score somehow correlates with the impact of the features
+on a classifier's decision for a certain problem.
+
+Every sensitivity analyzer object computes a one-dimensional array with the
+respective score for every feature, when called with a Dataset_. Due to this
+common behaviour all Sensitivity_ types are interchangeable and can be
+combined with any other algorithm requiring a sensitivity analyzer.
+
+By convention higher sensitivity values indicate more interesting features.
+
+There are two types of sensitivity analyzers in PyMVPA. Basic sensitivity
+analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
+on the other hand utilize another sensitivity analyzer to compute their
+sensitivity maps.
+
+.. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
+
+
+Basic Sensitivity (and related Measures)
+----------------------------------------
+
+ANOVA
+^^^^^
+
+The OneWayAnova_ class provides a simple (and fast) univariate measure, that
+can be used for feature selection, although it is not a proper sensitivity
+measure. For each feature an individual F-score is computed as the fraction
+of between and within group variances. Groups are defined by samples with
+unique labels.
+
+Higher F-scores indicate higher sensitivities, as with all other sensitivity
+analyzers.
+
+
+.. _OneWayAnova: api/mvpa.algorithms.anova.OneWayAnova-class.html
+
+
+Linear SVM Weights
+^^^^^^^^^^^^^^^^^^
+
+The featurewise weights of a trained support vector machine are another
+possible sensitivity measure. The LinearSVMWeights_ class can internally train
+all types of *linear* support vector machines and report those weights.
+
+In contrast to the F-scores computed by an ANOVA, the weights can be positive
+or negative, with both extremes indicating higher sensitivities. To deal with
+this property all subclasses of DatasetMeasure_ support a `transformer`
+arguments in the contructor. A transformer is a functor that is finally called
+with the computed sensitivity map. PyMVPA already comes with some convenience
+functors which can be used for this purpose (see Transformers_).
+
+Please note, that this class *cannot* extract reasonable weights from
+non-linear SVMs (e.g. with RBF kernels).
+
+.. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
+.. _Transformers: api/mvpa.misc.transformers-module.html
+
+
+Noise Perturbation
+^^^^^^^^^^^^^^^^^^
+
+Noise perturbation is a generic approach to determine feature sensitivity.
+The sensitivity analyzer (NoisePerturbationSensitivity_) computes a
+scalar DatasetMeasure_ using the original dataset. Afterwards, for each single
+feature a noise pattern is added to the respective feature and the dataset
+measure is recomputed. The sensitivity of each feature is the difference
+between the dataset measure of the orginal dataset and the one with added
+noise. The reasoning behind this algorithm is that adding to noise to
+*important* features will impair a dataset measure like cross-validated
+classifier transfer error. However, adding noise the a feature that already
+only contains noise, will not change such a measure.
+
+Depending on the used scalar DatasetMeasure_ using the sensitivity analyzer
+might be really CPU-intensive! Also depending on the measure, it might be
+necessary to use appropriate Transformers_ (see `transformer` constructor
+arguments) to ensure that higher values represent higher sensitivities.
+
+.. _NoisePerturbationSensitivity: api/mvpa.measures.noiseperturbation.NoisePerturbationSensitivity-class.html
+.. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
+
+
+Meta Sensitivity Measures
+-------------------------
+
+Meta Sensitivity Measures are FeaturewiseDatasetMeasures that internally use one
+of the `Basic Sensitivity Measures` to compute their sensitivity scores.
+
+
+Splitting Measures
+^^^^^^^^^^^^^^^^^^
+
+The SplittingFeaturewiseMeasure uses a Splitter_ to generate dataset splits.
+A FeaturewiseDatasetMeasure is then used to compute sensitivity maps for all these
+dataset splits. At the end a `combiner` function is called with all sensitivity
+maps to produce the final sensitivity map. By default the mean sensitivity
+maps across all splits is computed.
+
+.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
+.. _SplitFeaturewiseMeasure: api/mvpa.measures.splitmeasure.SplitFeaturewiseMeasure-class.html
+
+

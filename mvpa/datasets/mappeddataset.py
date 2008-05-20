@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import copy
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 
 
 class MappedDataset(Dataset):

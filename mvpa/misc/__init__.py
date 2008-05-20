@@ -126,8 +126,11 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('INIT', "Just sequence of inits")
+    debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
+    debug.register('_QUICKTEST_', "Quick unittests") # TODO: handle levels of unittests properly
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
@@ -140,9 +143,17 @@ if __debug__:
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
     debug.register('DS_',  "*Dataset (verbose)")
+    debug.register('DS_ID',"ID Datasets")
+    debug.register('RETRAIN', "Doing additional checking in retraining/retesting")
+
+    debug.register('COL',  "Generic Collectable debugging")
+
+    debug.register('MAP',   "*Mapper")
+    debug.register('MAP_',  "*Mapper (verbose)")
+
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
-    debug.register('STCOL', "State Collector")
+    debug.register('COLR', "Collector for states and classifier parameters")
 
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")
@@ -165,6 +176,9 @@ if __debug__:
     debug.register('SMLR',    "SMLR")
     debug.register('SMLR_',   "SMLR verbose")
 
+    debug.register('GPR',     "GPR")
+    debug.register('KERNEL',  "Kernels module")
+
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG__', "PyMVPA SG wrapping debug")
@@ -186,3 +200,7 @@ if __debug__:
     # Lets check if environment can tell us smth
     if environ.has_key('MVPA_DEBUG_METRICS'):
         debug.registerMetric(environ['MVPA_DEBUG_METRICS'].split(","))
+
+if __debug__:
+    debug('INIT', 'mvpa.misc end')
+

@@ -23,7 +23,10 @@ mvpa.clfs module contains various classifiers
 
 __docformat__ = 'restructuredtext'
 
-#from classifier import *
-#from knn import kNN
-#from svm import SVMBase, LinearSVM, LinearNuSVMC, LinearCSVMC, RbfNuSVMC, \
-#                RbfCSVMC
+
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.clfs')
+
+if __debug__:
+    debug('INIT', 'mvpa.clfs end')

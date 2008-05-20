@@ -24,7 +24,6 @@ class SplitterTests(unittest.TestCase):
                             chunks=[ i/10 for i in range(100)])
 
 
-
     def testSimplestCVPatGen(self):
         # create the generator
         nfs = NFoldSplitter(cvtype=1)
@@ -93,7 +92,7 @@ class SplitterTests(unittest.TestCase):
 
     def testCustomSplit(self):
         #simulate half splitter
-        hs = CustomSplitter([[0,1,2,3,4],[5,6,7,8,9]])
+        hs = CustomSplitter([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
 
         splits = [ (train, test) for (train, test) in hs(self.data) ]
 
@@ -123,7 +122,20 @@ class SplitterTests(unittest.TestCase):
         self.failUnless((splits[0][1].uniquechunks == [5, 9]).all())
         self.failUnless((splits[0][0].uniquechunks == [0, 3, 4]).all())
 
+        # full test with additional sampling and 3 datasets per split
+        cs = CustomSplitter([([0,3,4],[5,9],[2])],
+                            nperlabel=[3,4,1],
+                            nrunspersplit=3)
+        splits = [ ds for ds in cs(self.data) ]
+        self.failUnless(len(splits) == 3)
 
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 3 )
+            self.failUnless( p[0].nsamples == 12 )
+            self.failUnless( p[1].nsamples == 16 )
+            self.failUnless( p[2].nsamples == 4 )
+
+ 
     def testNoneSplitter(self):
         nos = NoneSplitter()
         splits = [ (train, test) for (train, test) in nos(self.data) ]
@@ -141,7 +153,7 @@ class SplitterTests(unittest.TestCase):
         # test sampling tools
         # specified value
         nos = NoneSplitter(nrunspersplit=3,
-                           nsecondsamples=10)
+                           nperlabel=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)
@@ -152,7 +164,7 @@ class SplitterTests(unittest.TestCase):
 
         # auto-determined
         nos = NoneSplitter(nrunspersplit=3,
-                           nsecondsamples='auto')
+                           nperlabel='equal')
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)

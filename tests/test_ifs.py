@@ -11,27 +11,16 @@
 import unittest
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.ifs import IFS
+from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.featsel import FixedNElementTailSelector
+from mvpa.featsel.helpers import FixedNElementTailSelector
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
-
-def dumbFeatureDataset():
-    data = [[0,1],[1,1],[0,2],[1,2],[0,3],[1,3],[0,4],[1,4],
-            [0,5],[1,5],[0,6],[1,6],[0,7],[1,7],[0,8],[1,8],
-            [0,9],[1,9],[0,10],[1,10],[0,11],[1,11],[0,12],[1,12]]
-    regs = [1 for i in range(8)] \
-         + [2 for i in range(8)] \
-         + [3 for i in range(8)]
-
-    return Dataset(samples=data, labels=regs)
-
 
 
 class IFSTests(unittest.TestCase):
@@ -45,7 +34,10 @@ class IFSTests(unittest.TestCase):
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
 
 
-    @sweepargs(svm=clfs['clfs_with_sens'])
+    # XXX just testing based on a single classifier. Not sure if
+    # should test for every known classifier since we are simply
+    # testing IFS algorithm - not sensitivities
+    @sweepargs(svm=clfs['has_sensitivity', '!meta'][:1])
     def testIFS(self, svm):
 
         # data measure and transfer error quantifier use the SAME clf!
@@ -78,9 +70,9 @@ class IFSTests(unittest.TestCase):
 
 
         # repeat with dataset where selection order is known
-        signal = dumbFeatureDataset()
+        signal = dumbFeatureBinaryDataset()
         sdata, stdata = ifs(signal, signal)
-        self.failUnless((sdata.samples[:,0] == signal.samples[:,1]).all())
+        self.failUnless((sdata.samples[:,0] == signal.samples[:,0]).all())
 
 
 def suite():

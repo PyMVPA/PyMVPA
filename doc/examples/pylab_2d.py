@@ -13,7 +13,7 @@ import numpy as N
 import pylab as P
 
 # local imports
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.plr import PLR
 from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
@@ -45,8 +45,10 @@ patterns = patternsPos + patternsNeg
 
 # set up classifiers to try out
 clfs = {'Ridge Regression': RidgeReg(),
-        'Linear SVM': LinearNuSVMC(probability=1),
-        'RBF SVM': RbfNuSVMC(probability=1),
+        'Linear SVM': LinearNuSVMC(probability=1,
+                      enable_states=['probabilities']),
+        'RBF SVM': RbfNuSVMC(probability=1,
+                      enable_states=['probabilities']),
         'Logistic Regression': PLR(criterion=0.00001),
         'k-Nearest-Neighbour': kNN(k=10)}
 
@@ -88,7 +90,8 @@ for c in clfs:
         res = N.asarray(clf.values)
     else:
         # get the probabilities from the svm
-        res = N.asarray([(q[1][1] - q[1][0] + 1) / 2 for q in clf.values])
+        res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
+                for q in clf.probabilities])
 
     # reshape the results
     z = N.asarray(res).reshape((100, 100))

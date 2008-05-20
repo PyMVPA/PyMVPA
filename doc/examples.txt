@@ -1,0 +1,72 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+.. _examples:
+
+********
+Examples
+********
+
+Each of the following examples is a stand-alone script containing all
+necessary code to run some analysis. All examples are shipped with PyMVPA and
+can be found in the `doc/examples/` directory in the source package. This
+directory include some more special-interest examples which are not listed
+here.
+
+Some examples need to access sample dataset available under `data/` directory
+within root of PyMVPA hierarchy, thus they have to be invoked directly from
+PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
+
+
+Simple Plotting of Classifier Behavior
+======================================
+
+This example runs a number of classifiers on a simple dataset and plots the
+decision surface of each classifier.
+
+.. literalinclude:: examples/pylab_2d.py
+
+
+Easy Searchlight
+================
+
+Run a searchlight analysis on the example fMRI dataset that is shipped with
+PyMVPA.
+
+.. literalinclude:: examples/searchlight_2d.py
+
+
+Sensitivity Measure
+===================
+
+Run some basic and meta sensitivity measures on the example fMRI dataset that
+comes with PyMVPA and plot the computed featurewise measures for each.
+
+.. literalinclude:: examples/sensanas.py
+
+
+Classification of SVD-mapped Datasets
+=====================================
+
+Demonstrate the usage of a dataset mapper performing singular value
+decomposition within a cross-validation.
+
+.. literalinclude:: examples/svdclf.py
+
+
+Compare SMLR to Linear SVM Classifier
+=====================================
+
+Runs both classifiers on the the same dataset and compare their performance.
+This example also shows an example usage of confusion matrices and how two
+classifers can be combined.
+
+.. literalinclude:: examples/smlr.py
+
+

@@ -12,9 +12,9 @@ import unittest
 import random
 import numpy as N
 from sets import Set
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.datasets.misc import zscore, aggregateFeatures
-from mvpa.datasets.maskmapper import MaskMapper
+from mvpa.mappers import MaskMapper
 from mvpa.misc.exceptions import DatasetError
 
 class DatasetTests(unittest.TestCase):
@@ -299,42 +299,42 @@ class DatasetTests(unittest.TestCase):
         if we get one -- remove this check and place a test"""
 
     def testId(self):
-        """Test Dataset._id() if it gets changed if any of the labels/chunks changes"""
+        """Test Dataset.idhash() if it gets changed if any of the labels/chunks changes"""
 
         dataset = Dataset(samples=N.arange(12).reshape( (4,3) ),
                           labels=1,
                           chunks=1)
-        origid = dataset._id
+        origid = dataset.idhash
         dataset.labels = [3, 1, 2, 3]           # change all labels
-        self.failUnless(origid != dataset._id,
-                        msg="Changing all labels should alter dataset's _id")
+        self.failUnless(origid != dataset.idhash,
+                        msg="Changing all labels should alter dataset's idhash")
 
-        origid = dataset._id
+        origid = dataset.idhash
 
         z = dataset.labels[1]
-        self.failUnlessEqual(origid, dataset._id,
-                             msg="Accessing shouldn't change _id")
+        self.failUnlessEqual(origid, dataset.idhash,
+                             msg="Accessing shouldn't change idhash")
         z = dataset.chunks
-        self.failUnlessEqual(origid, dataset._id,
-                             msg="Accessing shouldn't change _id")
+        self.failUnlessEqual(origid, dataset.idhash,
+                             msg="Accessing shouldn't change idhash")
         z[2] = 333
-        self.failUnless(origid != dataset._id,
-                        msg="Changing value in attribute should change _id")
+        self.failUnless(origid != dataset.idhash,
+                        msg="Changing value in attribute should change idhash")
 
-        origid = dataset._id
+        origid = dataset.idhash
         dataset.samples[1,1] = 1000
-        self.failUnless(origid != dataset._id,
-                        msg="Changing value in data should change _id")
+        self.failUnless(origid != dataset.idhash,
+                        msg="Changing value in data should change idhash")
 
 
-        origid = dataset._id
+        origid = dataset.idhash
         dataset.permuteLabels(True)
-        self.failUnless(origid != dataset._id,
-                        msg="Permutation also changes _id")
+        self.failUnless(origid != dataset.idhash,
+                        msg="Permutation also changes idhash")
 
         dataset.permuteLabels(False)
-        self.failUnless(origid != dataset._id,
-                        msg="Permutation also changes _id even on restore")
+        self.failUnless(origid != dataset.idhash,
+                        msg="Permutation also changes idhash even on restore")
 
 
     def testFeatureMaskConversion(self):

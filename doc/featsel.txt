@@ -1,0 +1,35 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+*****************
+Feature Selection
+*****************
+
+Recursive Feature Elimination
+=============================
+
+RFE_
+
+(to be written)
+
+.. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
+
+
+Incremental Feature Search
+==========================
+
+IFS_
+
+(to be written)
+
+.. _IFS: api/mvpa.algorithms.ifs.IFS-class.html
+
+.. What are the practical differences (besides speed) between RFE and IFS?
+

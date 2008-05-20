@@ -6,40 +6,67 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Miscelaneous functions/datasets to be used in the unit tests"""
+"""Provides `clfs` dictionary with instances of all available classifiers."""
 
 __docformat__ = 'restructuredtext'
 
-# take care of conditional import of external classifiers
+#
+# first deal with classifiers which do not have external deps
+#
+from mvpa.clfs.smlr import SMLR
+from mvpa.clfs.ridge import RidgeReg
+from mvpa.clfs.knn import *
+
+from mvpa.clfs.warehouse import clfs
 from mvpa.base import externals
 
-# Define sets of classifiers
-from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import *
-from mvpa.clfs.knn import *
-from mvpa.clfs.svm import *
+# if have ANY svm implementation
+if externals.exists('libsvm') or externals.exists('shogun'):
+    from mvpa.clfs.svm import *
 
-# assume that we at least have some SVMs
-clfs = {'LinearSVMC': [], 'NonLinearSVMC': []}
+#
+# Few silly classifiers
+#
+class SameSignClassifier(Classifier):
+    """Dummy classifier which reports +1 class if both features have
+    the same sign, -1 otherwise"""
 
-if 'libsvm' in externals.present:
-    clfs['LinearSVMC'] += [libsvm.svm.LinearCSVMC(probability=1),
-                           libsvm.svm.LinearNuSVMC(probability=1)]
-    clfs['NonLinearSVMC'] += [libsvm.svm.RbfCSVMC(probability=1),
-                              libsvm.svm.RbfNuSVMC(probability=1)]
-if 'shogun' in externals.present:
-    clfs['LinearSVMC'].append(sg.svm.LinearCSVMC())
-    clfs['NonLinearSVMC'].append(sg.svm.RbfCSVMC())
+    def __init__(self, **kwargs):
+        Classifier.__init__(self, train2predict=False, **kwargs)
+
+    def _train(self, data):
+        # we don't need that ;-)
+        pass
+
+    def _predict(self, data):
+        datalen = len(data)
+        values = []
+        for d in data:
+            values.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
+        self.predictions = values
+        return values
 
 
-clfs['SVMC'] = clfs['LinearSVMC'] + clfs['NonLinearSVMC']
+class Less1Classifier(SameSignClassifier):
+    """Dummy classifier which reports +1 class if abs value of max less than 1"""
+    def _predict(self, data):
+        datalen = len(data)
+        values = []
+        for d in data:
+            values.append(2*int(max(d)<=1)-1)
+        self.predictions = values
+        return values
 
-clfs['LinearC'] = clfs['LinearSVMC'] + \
-                  [ SMLR(implementation="Python"), SMLR(implementation="C") ]
+# Sample universal classifiers (linear and non-linear) which should be
+# used whenever it doesn't matter what classifier it is for testing
+# some higher level creations -- chosen so it is the fastest universal
+# one. Also it should not punch state.py in the face how it is
+# happening with kNN...
+sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 
-clfs['NonLinearC'] = clfs['NonLinearSVMC'] + [ kNN(k=1), RidgeReg() ]
-
-clfs['all'] = clfs['LinearC'] + clfs['NonLinearC']
-
-clfs['clfs_with_sens'] =  clfs['LinearC']
-
+if externals.exists('shogun'):
+    sample_clf_nl = sg.svm.RbfCSVMC(svm_impl='libsvm')
+else:
+    #classical one which was used for a while
+    #and surprisingly it is not bad at all for the unittests
+    sample_clf_nl = kNN(k=5)

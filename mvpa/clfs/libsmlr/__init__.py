@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wraper for the stepwise_regression function for SMLR."""
 
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.clfs.libsmlr')
+
 import numpy as N
 import ctypes as C
 import os
@@ -35,7 +39,11 @@ def stepwise_regression(*args):
                      C.c_float,
                      C.c_int64]
     func.restype = C.c_long
-    
+
     # get the new arglist
     arglist = extend_args(*args)
     return func(*arglist)
+
+if __debug__:
+    debug('INIT', 'mvpa.clfs.libsmlr end')
+

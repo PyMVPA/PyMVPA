@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 
 
 def dumbFeatureDataset():
@@ -23,6 +23,17 @@ def dumbFeatureDataset():
     regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
     return Dataset(samples=data, labels=regs)
+
+
+def dumbFeatureBinaryDataset():
+    data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
+            [5, 0], [5, 1], [6, 0], [6, 1], [7, 0], [7, 1], [8, 0], [8, 1],
+            [9, 0], [9, 1], [10, 0], [10, 1], [11, 0], [11, 1], [12, 0],
+            [12, 1]]
+    regs = ([0] * 12) + ([1] * 12)
+
+    return Dataset(samples=data, labels=regs)
+
 
 
 def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
@@ -54,8 +65,9 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     labels = N.concatenate([N.repeat(i, perlabel) for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    return Dataset(samples=data, labels=labels, chunks=chunks)
-
+    ds = Dataset(samples=data, labels=labels, chunks=chunks)
+    ds.nonbogus_features = nonbogus_features
+    return ds
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     """ Create a 2d dataset with a clear multivariate signal, but no

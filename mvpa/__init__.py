@@ -21,8 +21,9 @@ The mvpa package contains the following subpackages and modules:
 :group Algorithms: algorithms
 :group Miscellaneous: misc
 
-:author: `Michael Hanke <michael.hanke@gmail.com>`__
-         `Yaroslav Halchenko <debian@onerussian.com>`__
+:author: `Michael Hanke <michael.hanke@gmail.com>`__,
+         `Yaroslav Halchenko <debian@onerussian.com>`__,
+         `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
 :version: 0.2.0-pre1
 :see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
@@ -47,5 +48,17 @@ if not __debug__:
     except:
         from mvpa.misc import verbose
         verbose(2, "Psyco online compilation is not enabled")
+else:
+    # Controllable seeding of random number generator
+    from mvpa.misc import debug
+    import numpy as N
+    from os import environ
 
-#from mvpa.dataset import *
+    debug('INIT', 'mvpa')
+    if environ.has_key('MVPA_SEED'):
+        __random_seed = int(environ['MVPA_SEED'])
+    else:
+        __random_seed = int(N.random.uniform()*(2**31-1))
+    debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
+    N.random.seed(__random_seed)
+    debug('INIT', 'mvpa end')

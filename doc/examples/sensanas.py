@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating some SensitivityAnalyzers performing on a fMRI
+"""Example demonstrating some FeaturewiseDatasetMeasures performing on a fMRI
 dataset with brain activity recorded while perceiving images of objects
 (shoes vs. chairs).
 
@@ -22,12 +22,11 @@ import pylab as P
 # local imports
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.algorithms.anova import OneWayAnova
+from mvpa.measures.anova import OneWayAnova
 from mvpa.clfs.svm import LinearNuSVMC
-from mvpa.algorithms.linsvmweights import LinearSVMWeights
 from mvpa.datasets.misc import zscore
 from mvpa.misc.signal import detrend
-from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer
+from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
 from mvpa.datasets.splitter import OddEvenSplitter, NFoldSplitter
 
 # load PyMVPA example dataset
@@ -39,21 +38,21 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
 
 # define sensitivity analyzer
 sensanas = {'a) ANOVA': OneWayAnova(transformer=N.abs),
-            'b) Linear SVM weights': LinearSVMWeights(LinearNuSVMC(),
-                                                   transformer=N.abs),
+            'b) Linear SVM weights': LinearNuSVMC().getSensitivityAnalyzer(
+                                                       transformer=N.abs),
             'c) Splitting ANOVA (odd-even)':
-                SplittingSensitivityAnalyzer(OneWayAnova(transformer=N.abs),
+                SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
                                              OddEvenSplitter()),
             'd) Splitting SVM (odd-even)':
-                SplittingSensitivityAnalyzer(
-                    LinearSVMWeights(LinearNuSVMC(), transformer=N.abs),
+                SplitFeaturewiseMeasure(
+                    LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
                                      OddEvenSplitter()),
             'e) Splitting ANOVA (nfold)':
-                SplittingSensitivityAnalyzer(OneWayAnova(transformer=N.abs),
+                SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
                                              NFoldSplitter()),
             'f) Splitting SVM (nfold)':
-                SplittingSensitivityAnalyzer(
-                    LinearSVMWeights(LinearNuSVMC(), transformer=N.abs),
+                SplitFeaturewiseMeasure(
+                    LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
                                      NFoldSplitter())
            }
 

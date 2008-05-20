@@ -57,12 +57,11 @@ class VerboseOutputTest(unittest.TestCase):
         verbose.handlers = [self.sout]
 
     def tearDown(self):
-        verbose.handlers = self.__oldverbosehandlers
         if __debug__:
             debug.active = self.__olddebugactive
             debug.handlers = self.__olddebughandlers
             debug.offsetbydepth = True
-
+        verbose.handlers = self.__oldverbosehandlers
         self.sout.close()
 
 

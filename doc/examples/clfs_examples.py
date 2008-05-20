@@ -13,7 +13,7 @@ import os
 from time import time
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.datasets.splitter import *
 from mvpa.datasets.misc import zscore
@@ -38,11 +38,10 @@ warning.handlers = []
 # DONE:
 from mvpa.clfs.warehouse import clfs
 
-
 #clfs['all'] = clfs['SVM+RFE']
 #clfs['all'] = clfs['SVM/Multiclass+RFE']
 
-if __name__ == "__main__":
+def main():
 
     # fix seed or set to None for new each time
     N.random.seed(44)
@@ -67,12 +66,11 @@ if __name__ == "__main__":
                                   nchunks=6, nonbogus_features=[11, 10],
                                   snr=3.0)
 
-
     for (dataset, datasetdescr), clfs_ in \
         [
-        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
-        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
-        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
+        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs[:]),
+        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['non-linear']),
+        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['multiclass']),
         ]:
 
         print "%s: %s" % (datasetdescr, `dataset`)
@@ -113,3 +111,5 @@ if __name__ == "__main__":
                   (confusion.percentCorrect, nf, times[0], times[1], tfull)
 
 
+if __name__ == "__main__":
+    main()

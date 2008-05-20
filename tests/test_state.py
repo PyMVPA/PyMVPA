@@ -16,7 +16,16 @@ from sets import Set
 from mvpa.misc.state import Stateful, StateVariable
 from mvpa.misc.exceptions import UnknownStateError
 
+class TestClassEmpty(Stateful):
+    pass
+
 class TestClassBlank(Stateful):
+    # We can force to have 'states' present even though we don't have
+    # any StateVariable defined here -- it might be added later on at run time
+    _ATTRIBUTE_COLLECTIONS = ['states']
+    pass
+
+class TestClassBlankNoExplicitStates(Stateful):
     pass
 
 class TestClassProper(Stateful):
@@ -33,8 +42,11 @@ class TestClassProperChild(TestClassProper):
 class StateTests(unittest.TestCase):
 
     def testBlankState(self):
+        empty  = TestClassEmpty()
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
+
+        self.failUnlessRaises(AttributeError, empty.__getattribute__, 'states')
 
         self.failUnlessEqual(blank.states.items, {})
         self.failUnless(blank.states.enabled == [])
@@ -107,7 +119,7 @@ class StateTests(unittest.TestCase):
 
         # if documentary on the state is appropriate
         self.failUnlessEqual(proper2.states.listing,
-                             ['state1[enabled]: state1 doc',
+                             ['state1+: state1 doc',
                               'state2: state2 doc'])
 
         # if __str__ lists correct number of states

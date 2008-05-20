@@ -1,0 +1,274 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+.. _classifiers:
+
+***********
+Classifiers
+***********
+
+PyMVPA includes a number of ready-to-use classifiers, which are
+described in the following sections. All classifiers implement the
+same, very simple interface. Each classifier object takes all relevant
+parameters as arguments to its constructor. Once instantiated, the
+classifier object's `train()` method can be called with some
+dataset. This trains the classifier using *all* samples in the
+respective dataset.
+
+The major task for a classifier is to make predictions. Predictions are made
+by calling the classifier's `predict()` method with one or multiple data
+samples. `predict()` operates on pure sample data and not datasets, as in
+some cases the true label for a sample might be totally unknown.
+
+This examples demonstrates the typical daily life of a classifier.
+
+  >>> import numpy as N
+  >>> from mvpa.clfs.knn import kNN
+  >>> from mvpa.datasets import Dataset
+  >>> training = Dataset(samples=N.array(
+  ...                                N.arange(100),ndmin=2, dtype='float').T,
+  ...                    labels=[0] * 50 + [1] * 50)
+  >>> rand100 = N.random.rand(10)*100
+  >>> validation = Dataset(samples=N.array(rand100, ndmin=2, dtype='float').T,
+  ...                      labels=[ int(i>50) for i in rand100 ])
+  >>> clf = kNN(k=10)
+  >>> clf.train(training)
+  >>> N.mean(clf.predict(training.samples) == training.labels)
+  1.0
+  >>> N.mean(clf.predict(validation.samples) == validation.labels)
+  1.0
+
+Two datasets with 100 and 10 samples each are generated. Both datasets only
+have one feature and the associated label is 0 if the feature value is below
+50 or 1 otherwise. The larger dataset contains all integers in the interval
+(0,100) and is used to train the classifier. The smaller is used as a
+validation dataset, to check whether the classifier learned something that
+generalizes well across samples not included in the training dataset. In this
+case the validation dataset consists of 10 random floating point values in the
+interval (0,100).
+
+The classifier in this example is a k-Nearest-Neighbour_ classifier that makes
+use of the 10 nearest neighbours of a data sample to make its predictions
+(k=10). One can see that after the training the classifier performs optimally
+on the training dataset as well as on the validation data samples.
+
+The choice of the classifier in the above example is more or less arbitrary.
+Any classifier in PyMVPA could be used in place of kNN. This demonstrates
+another useful feature of PyMVPA's classifiers. Due to the high-level
+abstraction and the simple interface, almost all classifiers can be combined
+with most algorithms in PyMVPA (please see the Algorithms_ section for
+details). This makes it very easy to test different classifiers on some
+dataset (see Fig. 1).
+
+.. image:: misc/pics/classifier_comparison_plot.png
+   :width: 15cm
+   :alt: Classifier comparison
+
+A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
+linear SVM, logistic regression, ridge regression and SVM with radial basis
+function kernel) on a simple classification problem. The code to generate
+these figure can be found in the `pylab_2d.py` example.
+
+
+Stateful objects
+================
+
+Before looking at the different classifiers in more detail, it is
+important to mention another feature common to all of them. While
+their interface is simple, classifiers are in no way limited to report
+only predictions. All classifiers implement an additional interface:
+the so-called `Stateful` interface.  Objects of any class that is
+derived from `Stateful` have attributes (we refer to such attributes
+as state variables), which are conditionally computed and stored by
+PyMVPA. Such conditional storage and access is handy if a variable of
+interest might consume a lot of memory or needs intensive computation,
+and not needed in most (or in some) of the use cases.
+
+For instance, the `Classifier` class defines the `trained_labels`
+state variable, which just stores the unique labels for which the
+classifier was trained. Since `trained_labels` stores meaningful
+information only for a trained classifier, attempt to access
+'clf.trained_labels' before training would result in a raised
+`UnknownStateError` exception since the classifier has not seen the
+data yet and, thus, does not know the labels. In other words, 'clf' is
+not yet in the state to know anything about the labels, hence the name
+`Stateful`. We will refer to instances of classes derived from
+`Stateful` as 'statefull'.  Any state variable can be enabled or
+disabled on per instance basis at any time of the execution.
+
+To continue the last example, each classifier, or more precisely every
+statefull object, can be asked to report existing state-related attributes:
+
+  >>> list_with_verbose_explanations = clf.states.listing
+
+'clf.states' is an instance of `StateCollection` class which is a container
+for all state variables of the given class. Although values can be queried
+or set (if state is enabled) operating directly on the statefull object
+
+  >>> clf.trained_labels
+  Set([0, 1])
+
+any other operation on the state (e.g. enabling, disabling) has to be carried
+out through the `StateCollection` '.states'.
+
+  >>> print clf.states
+  {trained_dataset predicting_time*+ training_confusion predictions*+...}
+  >>> clf.states.enable('values')
+  >>> print clf.states
+  {trained_dataset predicting_time*+ training_confusion predictions*+...}
+  >>> clf.states.disable('values')
+
+A string representation of the state collection mentioned above lists
+all state variables present accompanied with 2 markers: '+' for an
+enabled state variable, and '*' for a variable that stores some value
+(but might have been disabled already and, therefore, would have no
+'+' and attempts to reassign it would result in no action).
+
+.. TODO: Refactor
+
+By default all classifiers provide state variables `values`,
+`predictions`. The latter is simply the set of predictions that was returned
+by the last call to the objects `predict()` method. The former is heavily
+classifier-specific. By convention the `values` key provides access to the
+raw values that a classifier prediction is based on. Depending on the
+classifier, this information might required significant resources when stored.
+Therefore all states can be disabled or enabled (`states.disable()`,
+`states.enable()`) and their current status can be queried like this:
+
+  >>> clf.states.isActive('predictions')
+  True
+  >>> clf.states.isActive('values')
+  False
+
+States can be enabled or disabled during statefull object construction, if
+`enable_states` or `disable_states` (or both) arguments, which store the list
+of desired state variables names, passed to the object constructor. Keyword
+'all' can be used to select all known states for that statefull object.
+
+
+Error Calculation
+=================
+
+The TransferError_ class provides a convenient way to determine the transfer
+error of a trained classifier on some validation dataset. A TransferError_
+object is instanciated by passing a classifier object to the constructor.
+Optionally a custom error function can be specified (see `errorfx` argument).
+
+To compute the transfer error simply call the object with a validation dataset.
+The computed error value is returned. TransferError_ also supports a state
+variable `confusion` that contains the full confusion matrix of the predictions
+made on the validation dataset. The confusion matrix is disabled by default.
+
+If the TransferError_ object is called with an optional training dataset, the
+contained classifier is first training using this dataset before predictions
+on the validation dataset are made.
+
+  >>> from mvpa.clfs.transerror import TransferError
+  >>> clf = kNN(k=10)
+  >>> terr = TransferError(clf)
+  >>> terr(validation, training )
+  0.0
+
+.. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
+
+
+Cross-validated Transfer Error
+------------------------------
+
+Often one is not only interested in a single transfer error on one validation
+dataset, but on a cross-validated estimate of the transfer error. A popular
+method is the so-called leave-one-out cross-validation.
+
+The CrossValidatedTransferError_ class provides a simple way to compute such
+measure. It utilizes a TransferError_ object and a Splitter_. When called with
+a Dataset_ the splitter generates splits of the Dataset and the transfer error
+for all splits is computed by training on one of the splitted datasets and
+making predictions on the other. By default the mean of transfer errors is
+returned (but the actual `combiner` function is customizable).
+
+The following example shows the minimal code for a leave-one-out
+cross-validation reusing the transfer error object from the previous example
+and some Dataset_ `data`.
+
+  >>> # create some dataset
+  >>> from mvpa.misc.data_generators import normalFeatureDataset
+  >>> data = normalFeatureDataset(perlabel=50, nlabels=2,
+  ...                             nfeatures=20, nonbogus_features=[3, 7],
+  ...                             snr=3.0)
+  >>> # now cross-validation
+  >>> from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> cvterr = CrossValidatedTransferError(terr,
+  ...                                      NFoldSplitter(cvtype=1))
+  >>> error = cvterr(data)
+
+.. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
+
+
+
+Boosted and Multi-class Classifiers
+===================================
+
+(to be written)
+
+.. Point to the special case of multi-class classification and how to deal with
+   it. Finally describe features of all available classifiers.
+
+
+k-Nearest-Neighbour
+===================
+
+The kNN_ classifier makes predictions based on the labels of nearby samples.
+It currently uses Euclidian distance to determine the nearest neighbours, but
+future enhancements may include support for other kernels.
+
+.. _kNN: api/mvpa.clfs.knn.kNN-class.html
+
+
+Support Vector Machines
+=======================
+
+The support vector machine classes provide a family of classifers by wrapping
+the libsvm_ library.  While the SVMBase_ class provides a complete interface,
+the other child classes make it easy to run standard classifiers, such as
+linear SVM, with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_,
+RbfNuSVMC_ and RbfCSVMC_).
+
+.. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
+.. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
+.. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
+.. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
+.. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
+
+
+Ridge Regression
+================
+
+The ridge regression classifier (RidgeReg_) performs a simple linear regression
+with a penalty parameter to help avoid over-fitting.  The regression inserts an
+intercept term so that you do not have to center your data.
+
+.. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
+
+
+Penalized Logistic Regression
+=============================
+
+The penalized logistic regression (PLR_) is similar to the ridge in that it
+has a penalty term, however, it is trained to predict a binary outcome by
+means of the logistic function.
+
+.. _PLR: api/mvpa.clfs.plr.PLR-class.html
+
+
+Sparse Multinomial Logistic Regression
+======================================
+
+This one is really fancy!
+

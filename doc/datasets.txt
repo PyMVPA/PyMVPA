@@ -1,0 +1,247 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+.. _datasets:
+
+.. index:: datasets
+
+********
+Datasets
+********
+
+The foundation of PyMVPA's data handling is the Dataset_
+class. Basically, this class stores data samples, sample attributes
+and dataset attributes.  Sample attributes assign a value to each data
+sample and dataset attributes are additional information or
+functionality that applies to the whole dataset.
+
+.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+
+.. <gjd> i had a hard time making sense of the above
+   paragraph on first reading. add an example to get
+   first-time users thinking in the right direction
+
+Most likely the Dataset_ class will not be used directly, but through one
+of the derived classes. However, it is perfectly possible to use it directly.
+In the simplest case a dataset can be constructed by specifying some
+data samples and the corresponding class labels.
+
+  >>> import numpy as N
+  >>> from mvpa.datasets import Dataset
+  >>> data = Dataset(samples=N.random.normal(size=(10,5)), labels=1)
+  >>> data
+  <Dataset / float64 10 x 5 uniq: 1 labels 10 chunks>
+
+.. index:: chunks, labels
+
+The above example creates a dataset with 10 samples and 5 features each. The
+values of all features stem from normally distributed random noise. The class
+label '1' is assigned to all samples. Instead of a single scalar value `labels`
+can also be a sequence with individual labels for each data sample. In this
+case the length of this sequence has to match the number of samples.
+
+Interestingly, the dataset object tells us about 10 `chunks`. In PyMVPA chunks
+are used to group subsets of data samples. However, if no grouping information
+is provided all data samples are assumed to be in their own group, hence no
+sample grouping is performed.
+
+Both `labels` and `chunks` are so called *sample attributes*. All sample
+attributes are stored in sequence-type containers consisting of one value per
+sample. These containers can be accessed by properties with the same as the
+attribute:
+
+  >>> data.labels
+  array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+  >>> data.chunks
+  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+The *data samples* themselves are stored as a two-dimensional matrix
+where each row vector is a `sample` and each column vector contains
+the values of a `feature` across all `samples`. The Dataset_ class
+provides access to the samples matrix via the `samples` property.
+
+  >>> data.samples.shape
+  (10, 5)
+
+The Dataset_ class itself can only deal with 2d sample matrices. However,
+PyMVPA provides a very easy way to deal with data where each data sample is
+more than a 1d vector: `Data Mapping`_
+
+
+Data Mapping
+============
+
+It was already mentioned that the Dataset_ class cannot deal with data samples
+that are more than simple vectors. This could be a problem in cases where the
+data has a higher dimensionality, e.g. functional brain-imaging data where
+each data sample is typically a three-dimensional volume.
+
+One approach to deal with this situation would be to concatenate the whole
+volume into a 1d vector. While this would work in certain cases there is
+definitely information lost. Especially for brain-imaging data one would most
+likely want keep information about neighbourhood and distances between data
+sample elements.
+
+In PyMVPA this is done by mappers that transform data samples from their
+original *dataspace* into the so-called *features space*. In the above
+neuro-imaging example the *dataspace* is three-dimensional and the
+*feature space* always refers to the 2d `samples x features` representation
+that is required by the Dataset_ class. In the context of mappers the
+dataspace is sometimes also referred to as *in-space* while the feature space
+is labeled as *out-space*.
+
+.. <gjd> is there any mnemonic i can use to try and remember why 'in' vs
+   'out' makes sense in this context?
+
+The task of a mapper, besides transforming samples into 1d vectors, is to
+retain as much information of the dataspace as possible. Some mappers provide
+information about dataspace metrics and feature neighbourhood, but all mappers
+are able to do reverse mapping from feature space into the original dataspace.
+
+Usually one does not have to deal with mappers directly. PyMVPA provides some
+convenience subclasses of Dataset_ that automatically perform the necessary
+mapping operations internally.
+
+For an introduction into to concept of a dataset with mapping capabilities
+we can take a look at the MaskedDataset_ class. This dataset class works
+almost exactly like the basic Dataset_ class, except that it provides some
+additional methods and is more flexible with respect to the format of the
+sample data. A masked dataset can be created just like a normal dataset.
+
+  >>> from mvpa.datasets.maskeddataset import MaskedDataset
+  >>> mdata = MaskedDataset(samples=N.random.normal(size=(5,3,4)),
+  ...                       labels=[1,2,3,4,5])
+  >>> mdata
+  <Dataset / float64 5 x 12 uniq: 5 labels 5 chunks>
+
+.. _MaskedDataset: api/mvpa.datasets.maskeddataset.MaskedDataset-class.html
+
+However, unlike Dataset_ the MaskedDataset_ class can deal with sample
+data arrays with more than two dimensions. More precisely it handles arrays of
+any dimensionality. The only assumption that is made is that the first axis
+of a sample array separates the sample data points. In the above example we
+therefore have 5 samples, where each sample is a 3x4 plane.
+
+If we look at the self-description of the created dataset we can see that it
+doesn't tell us about 3x4 plane, but simply 12 features. That is because
+internally the sample array is automatically reshaped into the aforementioned
+2d matrix representation of the Dataset_ class. However, the information about
+the original dataspace is not lost, but kept inside the mapper used by
+MaskedDataset_. Two useful methods of MaskedDataset_ make use of the mapper:
+`mapForward()` and `mapReverse()`. The former can be used to transform
+additional data from dataspace into the feature space and the latter performs
+the same in the opposite direction.
+
+  >>> mdata.mapForward(N.arange(12).reshape(3,4)).shape
+  (12,)
+  >>> mdata.mapReverse(N.array([1]*mdata.nfeatures)).shape
+  (3, 4)
+
+Especially reverse mapping can be very useful when visualizing classification
+results and information maps on the original dataspace.
+
+Another feature of mapped datasets is that valid mapping information is
+maintained even when the feature space changes. When running some feature
+selection algorithm (see Algorithms_) some features of the original features
+set will be removed, but after feature selection one will most likely want
+to know where the selected (or removed) features are in the original dataspace.
+To make use of the neuro-imaging example again: The most convenient way to
+access this kind of information would be a map of the selected features that
+can be overlayed over some anatomical image. This is trivial with PyMVPA,
+because the mapping is automatically updated upon feature selection.
+
+  >>> mdata.mapReverse(N.arange(1,mdata.nfeatures+1))
+  array([[ 1,  2,  3,  4],
+         [ 5,  6,  7,  8],
+         [ 9, 10, 11, 12]])
+  >>> sdata = mdata.selectFeatures([2,7,9,10])
+  >>> sdata
+  <Dataset / float64 5 x 4 uniq: 5 labels 5 chunks>
+  >>> sdata.mapReverse(N.arange(1,sdata.nfeatures+1))
+  array([[0, 0, 1, 0],
+         [0, 0, 0, 2],
+         [0, 3, 4, 0]])
+
+The above example selects four features from the set of the 12 original
+ones, by passing their ids to the `selectFeatures()` method. The method
+returns a new dataset only containing the nine selected features. Both datasets
+share the sample data (using a NumPy array view). Using `selectFeatures()`
+is therefore both memory efficient and relatively fast. All other
+information like class labels and chunks are maintained. By calling
+`mapReverse()` on the new dataset one can see that the remaining four features
+are precisely mapped back onto their original locations in the data space.
+
+
+Data Splitting
+==============
+
+In many cases some algorithm should not run on a complete dataset, but just
+some parts of it. One well-known example is leave-one-out cross-validation,
+where a dataset is typically split into a number of training and validation
+datasets. A classifier is trained on the training set and its generalization
+performance is tested using the validation set.
+
+It is important to strictly separate training and validation datasets
+as otherwise no valid statement can be made whether a classifier
+really generated an appropriate model of the training data. Violating this
+requirement spuriously elevates the classification performance, often termed
+'peeking' in the literature. However, they provide no relevant
+information because they are based on cheating or peeking and do not
+describe signal similarities between training and validation datasets.
+
+.. <gjd> this point about 'peeking' is a critical one and
+   maybe deserves emphasis. i was just looking at how we deal
+   with it in our documentation, and we need to improve ours too!
+
+With the splitter classes, PyMVPA makes dataset splitting easy. All dataset
+splitters in PyMVPA are implemented as Python generators, meaning that when
+called with a dataset once, they return one dataset split per iteration and
+an appropriate Exception when they are done. This is exactly the same behavior
+as of e.g. the Python `xrange()` function.
+
+To perform data splitting for the already mentioned cross-validation, PyMVPA
+provides the NFoldSplitter_ class. It implements a method to generate
+arbitrary N-M splits, where N is the number of different chunks in a dataset
+and M is any non-negative integer smaller than N. Doing a leave-one-out split
+of our example dataset looks like this:
+
+  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
+  >>> for wdata, vdata in splitter(data):
+  ...     pass
+
+.. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
+
+where `wdata` is the *working dataset* and `vdata` is the *validation dataset*.
+If we have a look a those datasets we can see that the splitter did what we
+intended:
+
+  >>> split = [ i for i in splitter(data)][0]
+  >>> for s in split:
+  ...     print s
+  <Dataset / float64 9 x 5 uniq: 1 labels 9 chunks>
+  <Dataset / float64 1 x 5 uniq: 1 labels 1 chunks>
+  >>> split[0].uniquechunks
+  array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+  >>> split[1].uniquechunks
+  array([0])
+
+In the first split, the working dataset contains nine chunks of the original
+dataset and the validation set contains the remaining chunk.
+
+The usage of the splitter, creating a splitter object and calling it with a
+dataset, is a very common design pattern in the PyMVPA package. Like splitters
+there are many more so called *processing objects*. These classes or objects
+are instantiated by passing all relevant parameters to the constructor.
+Processing objects can then be called multiple times with different datasets
+to perform their algorithm on the respective dataset. This design applies to
+virtually every piece of PyMVPA that is described in the Algorithms_ section,
+but also the many other parts.
+
+

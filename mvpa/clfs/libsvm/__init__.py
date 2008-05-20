@@ -10,4 +10,11 @@
 
 __docformat__ = 'restructuredtext'
 
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.clfs.libsvm')
+
 from mvpa.clfs.libsvm import svm
+
+if __debug__:
+    debug('INIT', 'mvpa.clfs.libsvm end')

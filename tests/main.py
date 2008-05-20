@@ -9,12 +9,14 @@
 """Main unit test interface for PyMVPA"""
 
 import unittest
+from mvpa.base import externals
 
 # list all test modules (without .py extension)
 tests = [
     # Basic data structures/manipulators
     'test_dataset',
     'test_maskmapper',
+    'test_pcamapper',
     'test_neighbor',
     'test_maskeddataset',
     'test_niftidataset',
@@ -44,8 +46,20 @@ tests = [
     'test_perturbsensana',
     'test_splitsensana',
     'test_anova',
-    'test_nullhyptest'
     ]
+
+# fully test of externals
+externals.testAllDependencies()
+
+# and now for the optional tests
+optional_tests = []
+
+if externals.exists('lars'):
+    optional_tests.append('test_lars')
+
+
+# finally merge all of them
+tests += optional_tests
 
 # No python warnings (like ctypes version for slmr)
 import warnings

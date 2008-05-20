@@ -15,7 +15,7 @@ import numpy as N
 
 from mvpa.misc import warning
 from mvpa.misc.support import indentDoc
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 
 class kNN(Classifier):
@@ -26,6 +26,8 @@ class kNN(Classifier):
     """
 
     __warned = False
+
+    _clf_internals = [ 'knn', 'non-linear', 'multiclass' ]
 
     def __init__(self, k=2, **kwargs):
         """
@@ -83,7 +85,7 @@ class kNN(Classifier):
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = N.array(data)
+        data = N.asarray(data)
 
         if not data.ndim == 2:
             raise ValueError, "Data array must be two-dimensional."
@@ -137,7 +139,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.array(votes).argmax()], \
+        return uniquelabels[N.asarray(votes).argmax()], \
                votes
 
 
@@ -178,7 +180,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.array(votes).argmax()], \
+        return uniquelabels[N.asarray(votes).argmax()], \
                votes
 
 

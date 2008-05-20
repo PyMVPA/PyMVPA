@@ -1,12 +1,14 @@
 .. -*- mode: rst -*-
 
+.. _changelog:
+
 PyMVPA Development Changelog
 -----------------------------
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
 
-  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=shortlog;h=upstream
+  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
 
 'Closes' statement IDs refer to the Debian bug tracking system and can be
 queried by visiting the URL::
@@ -19,22 +21,29 @@ Unreleased changes
   repository.
 
   * New Splitter class (HalfSplitter) to split into first and second half.
+  * New Splitter class (CustomSplitter) to allow for splits with an arbitrary
+    number of datasets per split and the ability to specify the association
+    of samples with any of those datasets (not just the validation set).
   * New sparse multinomial logistic regression (SMLR) classifier and
     associated sensitivity analyzer.
+  * New least angle regression classifier (LARS).
   * Initial documentation on extending PyMVPA.
+  * Switch to Sphinx for documentation handling.
   * New example comparing the performance of all classifiers on some
     artificial datasets.
+  * New data mapper performing singular value decomposition (SVDMapper) and an
+    example showing its usage.
   * More sophisticated data preprocessing: removal of non-linear trends and
     other arbitrary confounding regressors.
   * New `Harvester` class to feed data from arbitrary generators into multiple
     objects and store results of returned values and arbitrary properties.
   * Added documentation about how to build patched libsvm version with sane
     debug output.
-  * Important bugfix in RFE, which reported incorrect feature ids in some
-    cases.
-  * New wrapper from SVM implementation of the Shogun toolbox.
   * libsvm bindings are not build by default anymore. Instructions on how to
     reenable them are available in the manual.
+  * New wrapper from SVM implementation of the Shogun toolbox.
+  * Important bugfix in RFE, which reported incorrect feature ids in some
+    cases.
 
 
 Releases
