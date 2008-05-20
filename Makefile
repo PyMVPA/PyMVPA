@@ -118,6 +118,14 @@ te-%: build
 
 testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d
 
+tm-%: build
+	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
+	                       --doctest-tests doc/$*.txt
+
+testmanual: build
+	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
+	                       --doctest-tests doc/
+
 $(COVERAGE_REPORT): build
 	@cd tests && { \
 	  export PYTHONPATH=..; \
