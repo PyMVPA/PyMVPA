@@ -30,10 +30,11 @@ of the derived classes. However, it is perfectly possible to use it directly.
 In the simplest case a dataset can be constructed by specifying some
 data samples and the corresponding class labels.
 
+  >>> import numpy as N
   >>> from mvpa.datasets import Dataset
   >>> data = Dataset(samples=N.random.normal(size=(10,5)), labels=1)
   >>> data
-  Dataset / float64 10 x 5, uniq: 1 labels, 10 chunks
+  <Dataset / float64 10 x 5 uniq: 1 labels 10 chunks>
 
 .. index:: chunks, labels
 
@@ -64,7 +65,7 @@ the values of a `feature` across all `samples`. The Dataset_ class
 provides access to the samples matrix via the `samples` property.
 
   >>> data.samples.shape
-  (10,5)
+  (10, 5)
 
 The Dataset_ class itself can only deal with 2d sample matrices. However,
 PyMVPA provides a very easy way to deal with data where each data sample is
@@ -111,22 +112,22 @@ almost exactly like the basic Dataset_ class, except that it provides some
 additional methods and is more flexible with respect to the format of the
 sample data. A masked dataset can be created just like a normal dataset.
 
-.. _MaskedDataset: api/mvpa.datasets.maskeddataset.MaskedDataset-class.html
-
   >>> from mvpa.datasets.maskeddataset import MaskedDataset
-  >>> mdata = MaskedDataset(samples=N.random.normal(size=(5,2,3,4)),
+  >>> mdata = MaskedDataset(samples=N.random.normal(size=(5,3,4)),
   ...                       labels=[1,2,3,4,5])
   >>> mdata
-  Dataset / float64 5 x 24 uniq: 5 labels 5 chunks
+  <Dataset / float64 5 x 12 uniq: 5 labels 5 chunks>
+
+.. _MaskedDataset: api/mvpa.datasets.maskeddataset.MaskedDataset-class.html
 
 However, unlike Dataset_ the MaskedDataset_ class can deal with sample
 data arrays with more than two dimensions. More precisely it handles arrays of
 any dimensionality. The only assumption that is made is that the first axis
 of a sample array separates the sample data points. In the above example we
-therefore have 5 samples, where each sample is a 2x3x4 volume.
+therefore have 5 samples, where each sample is a 3x4 plane.
 
 If we look at the self-description of the created dataset we can see that it
-doesn't tell us about 2x3x4 volumes, but simply 24 features. That is because
+doesn't tell us about 3x4 plane, but simply 12 features. That is because
 internally the sample array is automatically reshaped into the aforementioned
 2d matrix representation of the Dataset_ class. However, the information about
 the original dataspace is not lost, but kept inside the mapper used by
@@ -135,10 +136,10 @@ MaskedDataset_. Two useful methods of MaskedDataset_ make use of the mapper:
 additional data from dataspace into the feature space and the latter performs
 the same in the opposite direction.
 
-  >>> mdata.mapForward(N.arange(24).reshape(2,3,4))
-  (24,)
+  >>> mdata.mapForward(N.arange(12).reshape(3,4)).shape
+  (12,)
   >>> mdata.mapReverse(N.array([1]*mdata.nfeatures)).shape
-  (2, 3, 4)
+  (3, 4)
 
 Especially reverse mapping can be very useful when visualizing classification
 results and information maps on the original dataspace.
@@ -154,30 +155,24 @@ can be overlayed over some anatomical image. This is trivial with PyMVPA,
 because the mapping is automatically updated upon feature selection.
 
   >>> mdata.mapReverse(N.arange(1,mdata.nfeatures+1))
-  array([[[ 1,  2,  3,  4],
-          [ 5,  6,  7,  8],
-          [ 9, 10, 11, 12]],
-         [[13, 14, 15, 16],
-          [17, 18, 19, 20],
-          [21, 22, 23, 24]]])
-  >>> sdata = mdata.selectFeatures([2,7,9,10,16,18,20,21,23])
+  array([[ 1,  2,  3,  4],
+         [ 5,  6,  7,  8],
+         [ 9, 10, 11, 12]])
+  >>> sdata = mdata.selectFeatures([2,7,9,10])
   >>> sdata
-  Dataset / float64 5 x 9 uniq: 5 labels 5 chunks
+  <Dataset / float64 5 x 4 uniq: 5 labels 5 chunks>
   >>> sdata.mapReverse(N.arange(1,sdata.nfeatures+1))
-  array([[[0, 0, 1, 0],
-          [0, 0, 0, 2],
-          [0, 3, 4, 0]],
-         [[0, 0, 0, 0],
-          [5, 0, 6, 0],
-          [7, 8, 0, 9]]])
+  array([[0, 0, 1, 0],
+         [0, 0, 0, 2],
+         [0, 3, 4, 0]])
 
-The above example selects nine features from the set of the 24 original
+The above example selects four features from the set of the 12 original
 ones, by passing their ids to the `selectFeatures()` method. The method
 returns a new dataset only containing the nine selected features. Both datasets
 share the sample data (using a NumPy array view). Using `selectFeatures()`
 is therefore both memory efficient and relatively fast. All other
 information like class labels and chunks are maintained. By calling
-`mapReverse()` on the new dataset one can see that the remaining nine features
+`mapReverse()` on the new dataset one can see that the remaining four features
 are precisely mapped back onto their original locations in the data space.
 
 
@@ -214,22 +209,22 @@ arbitrary N-M splits, where N is the number of different chunks in a dataset
 and M is any non-negative integer smaller than N. Doing a leave-one-out split
 of our example dataset looks like this:
 
-.. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
-
   >>> from mvpa.datasets.splitter import NFoldSplitter
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
   >>> for wdata, vdata in splitter(data):
-          # do something
-          pass
+  ...     pass
+
+.. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
 
 where `wdata` is the *working dataset* and `vdata` is the *validation dataset*.
 If we have a look a those datasets we can see that the splitter did what we
 intended:
 
   >>> split = [ i for i in splitter(data)][0]
-  >>> split
-  (Dataset / float64 9 x 5 uniq: 1 labels 9 chunks,
-   Dataset / float64 1 x 5 uniq: 1 labels 1 chunks)
+  >>> for s in split:
+  ...     print s
+  <Dataset / float64 9 x 5 uniq: 1 labels 9 chunks>
+  <Dataset / float64 1 x 5 uniq: 1 labels 1 chunks>
   >>> split[0].uniquechunks
   array([1, 2, 3, 4, 5, 6, 7, 8, 9])
   >>> split[1].uniquechunks
