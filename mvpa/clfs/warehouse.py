@@ -22,6 +22,7 @@ from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
                                  MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
+from mvpa.clfs.gpr import GPR
 
 # Helpers
 from mvpa.clfs.transerror import TransferError
@@ -47,7 +48,7 @@ class Warehouse(object):
 
     _KNOWN_INTERNALS = Set(['knn', 'binary', 'svm', 'linear', 'smlr', 'does_feature_selection',
                             'has_sensitivity', 'multiclass', 'non-linear', 'kernel-based', 'lars',
-                            'regression', 'libsvm', 'sg', 'meta', 'retrainable'])
+                            'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr'])
 
     def __init__(self):
         self.__items = []
@@ -186,8 +187,11 @@ if externals.exists('lars'):
         clfs += lars
         # clfs += MulticlassClassifier(lars, descr='Multiclass %s' % lars.descr)
 
+# kNN
 clfs += kNN(k=5, descr="kNN(k=5)")
 
+# GPR
+clfs += GPR(descr="GPR()")
 
 # "Interesting" classifiers
 clfs += \

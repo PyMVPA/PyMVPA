@@ -140,7 +140,7 @@ class SMLR(Classifier):
                (self.__resamp_decay, self.__min_resamp, self.__maxiter) + \
                "has_bias=%s, fit_all_weights=%s, implementation='%s', " % \
                (self.__has_bias, self.__fit_all_weights, self.__implementation) + \
-               "seed=%s, enabled_states=%s)" % \
+               "seed=%s, enable_states=%s)" % \
                (self.__seed, str(self.states.enabled))
 
 
