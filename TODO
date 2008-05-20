@@ -13,7 +13,7 @@
 TODO
 ****
 
-  * Implement bindings to more ML toolboxes (e.g. shogun, TORCH, FANN)
+  * Implement bindings to more ML toolboxes (e.g. TORCH, FANN)
   * More sensitivity analyzers and feature selectors
   * IPython mode
   * More documentation and examples
