@@ -30,19 +30,19 @@ class GPR(Classifier):
         doc="Variance per each predicted value")
 
     log_marginal_likelihood = StateVariable(enabled=False,
-        doc="Log Marginal Likelihood ;-)")
+        doc="Log Marginal Likelihood")
 
 
     _clf_internals = [ 'gpr', 'regression', 'non-linear' ]
 
-    def __init__(self, kernel=KernelSquaredExponential(length_scale=0.01),
+    def __init__(self, kernel=KernelSquaredExponential(),
                  sigma_noise=0.001, **kwargs):
         """Initialize a GPR regression analysis.
 
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
-            (Default to KernelSquaredExponential(lengthscale=0.01)
+            (Defaults to KernelSquaredExponential())
           sigma_noise : float
             the standard deviation of the gaussian noise.
             (Defaults to 0.001)
@@ -62,6 +62,9 @@ class GPR(Classifier):
 
         # set noise level:
         self.sigma_noise = sigma_noise
+
+        self.predicted_variances = None
+        self.log_marginal_likelihood = None
 
 
     def __repr__(self):
@@ -85,6 +88,8 @@ class GPR(Classifier):
               self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
         self.alpha = N.linalg.solve(self.L.transpose(),
                                     N.linalg.solve(self.L, self.train_labels))
+        # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
+        # but preliminary tests show them to be slower.
 
 
     def _predict(self, data):
@@ -102,18 +107,22 @@ class GPR(Classifier):
 
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
-            v = N.linalg.solve(L, km_train_test)
+            v = N.linalg.solve(self.L, km_train_test)
             self.predicted_variances = \
                            N.diag(km_test_test-N.dot(v.transpose(), v))
 
         if self.states.isEnabled('log_marginal_likelihood'):
-            log_marginal_likelihood = -0.5*N.dot(train_label, alpha) - \
-                                      N.log(L.diagonal()).sum() - \
-                                      km_train_train.shape[0]*0.5*N.log(2*N.pi)
+            self.log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
+                                      N.log(self.L.diagonal()).sum() - \
+                                      self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
 
         return predictions
 
+
 def gen_data(n_instances, n_features, flat=False):
+    """
+    Generate a (quite) complex multidimensional dataset.
+    """
     data = None
     if flat:
         data = (N.arange(0.0, 1.0, 1.0/n_instances)*N.pi)
@@ -138,7 +147,6 @@ if __name__ == "__main__":
     test_size = 100
     F = 1
 
-
     data_train, label_train = gen_data(train_size, F)
     print label_train
 
@@ -147,18 +155,32 @@ if __name__ == "__main__":
 
     dataset = Dataset(samples=data_train, labels=label_train)
 
-    kse = KernelSquaredExponential(length_scale=2e-1)
-    g = GPR(kse, sigma_noise=0.001)
+    kse = KernelSquaredExponential(length_scale=2.0e-1)
+    regression = True
+    g = GPR(kse, sigma_noise=0.01,regression=regression)
     print g
+    if regression:
+        g.states.enable("predicted_variances")
+        pass
 
+    lml = True
+    if lml:
+        g.states.enable("log_marginal_likelihood")
+        pass
+        
     g.train(dataset)
     prediction = g.predict(data_test)
 
     print label_test
-    print prediction.round()
-    # accuracy = 1-N.sqrt(((prediction-label_test)**2).sum()/prediction.size) # 1-RMSE
-    accuracy = (prediction.round().astype('l')==label_test.astype('l')).sum()/float(prediction.size)
-    print "accuracy:", accuracy
+    print prediction
+    accuracy = None
+    if regression:
+        accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
+        print "RMSE:",accuracy
+    else:
+        accuracy = (prediction.astype('l')==label_test.astype('l')).sum()/float(prediction.size)
+        print "accuracy:", accuracy
+        pass
 
     import pylab
     pylab.close("all")
@@ -167,8 +189,15 @@ if __name__ == "__main__":
     if F == 1:
         pylab.plot(data_train, label_train, "ro", label="train")
         pylab.plot(data_test, prediction, "b+-", label="prediction")
-        pylab.plot(data_test, label_test, "gx-", label="test")
-        pylab.text(0.5, -1.2, "accuracy="+str(accuracy))
+        pylab.plot(data_test, label_test, "gx-", label="test (true)")
+        if regression:
+            pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
+            pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
+            pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))            
+        else:
+            pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
+            pass
         pylab.legend()
         pass
 
+    print g.log_marginal_likelihood
