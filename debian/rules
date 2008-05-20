@@ -17,6 +17,6 @@ DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
 # immediately useable documentation
 DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt
 # -doc package contents
-DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/pdf/*.pdf doc/*.txt
+DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/latex/*.pdf
 DEB_INSTALL_EXAMPLES_python-mvpa-doc := doc/examples/* data
 
