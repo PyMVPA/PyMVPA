@@ -186,8 +186,11 @@ if externals.exists('lars'):
         clfs += lars
         # clfs += MulticlassClassifier(lars, descr='Multiclass %s' % lars.descr)
 
+# kNN
 clfs += kNN(k=5, descr="kNN(k=5)")
 
+# GPR
+clfs += GPR(descr="GPR()")
 
 # "Interesting" classifiers
 clfs += \
