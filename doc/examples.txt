@@ -19,6 +19,9 @@ can be found in the `doc/examples/` directory in the source package. This
 directory include some more special-interest examples which are not listed
 here.
 
+Some examples need to access sample dataset available under `data/` directory
+within root of PyMVPA hierarchy, thus they have to be invoked directly from
+PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 
 
 Simple Plotting of Classifier Behavior

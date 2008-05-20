@@ -17,3 +17,7 @@ Classifiers_ and Algorithms_ operating on datasets and classifiers.
 In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
 given.
+
+.. image:: misc/pics/design.png
+   :alt: PyMVPA architecture
+
