@@ -16,61 +16,57 @@ import numpy as N
 
 from scipy import weave
 from scipy.weave import converters
-import time
+
+if __debug__:
+    import time
+    from mvpa.misc import debug
 
 
 class Kernel(object):
     """Kernel function base class.
-       
+
     """
 
     def __init__(self):
         self.euclidean_distance_matrix = None
-        pass
-    
+
     def __repr__(self):
-        return "Constant kernel."
+        return "Kernel()"
 
-    pass
-
-
-    def euclidean_distance(self, data1, data2=None, symmetric=False, weight=None):
+    def euclidean_distance(self, data1, data2=None, symmetric=False,
+                           weight=None):
         """Compute weighted euclidean distance matrix between two datasets.
 
 
         :Parameters:
           data1 : numpy.ndarray
-          first dataset
-
+              first dataset
           data2 : numpy.ndarray
-          second dataset. If None set symmetric to True.
-          (Defaults to None)
-
+              second dataset. If None set symmetric to True.
+              (Defaults to None)
           symmetric : bool
-          compute the euclidean distance between the first dataset versus itself (True) or the second one (False).
-          Note that 
-          (Defaults to False)
-
+              compute the euclidean distance between the first dataset versus
+              itself (True) or the second one (False). Note that
+              (Defaults to False)
           weight : numpy.ndarray
-          vector of weights, each one associated to each dimension of the dataset
-          (Defaults to None)
-
+              vector of weights, each one associated to each dimension of the
+              dataset (Defaults to None)
         """
-        if data2 == None:
+
+        if data2 is None:
             data2 = data1
             symmetric = True
-            pass
 
         size1 = data1.shape[0]
         size2 = data2.shape[0]
         F = data1.shape[1]
-        if weight == None:
+        if weight is None:
             weight = N.ones(F,'d') # unitary weight
-        pass
 
-        euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]), 'd')
+        euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
+                                            'd')
         code = None
-        if symmetric == False:
+        if not symmetric:
             code = """
             int i,j,t;
             double tmp,distance;
@@ -102,24 +98,26 @@ class Kernel(object):
                 }
             return_val = 0;
             """
-            pass
-        t = time.time()
+
+        if __debug__:
+            t = time.time()
         retval = weave.inline(code,
                               ['data1','size1','data2','size2','F',
                                'euclidean_distance_matrix','weight'],
                               type_converters=converters.blitz,
                               compiler = 'gcc')
-        if symmetric == True:
+        if symmetric:
             # copy upper part to lower part
             euclidean_distance_matrix = euclidean_distance_matrix + \
                                         N.triu(euclidean_distance_matrix).T
-            pass
-        print "Distance matrix computed in", time.time()-t, "sec."
+
+        if __debug__:
+            # XXX not need to report time took to complete -- could be
+            # assessed from using MVPA_DEBUG_METRICS=reltime environment
+            # variable
+            debug('KERNEL', "Distance matrix computed in %s sec." % (time.time() - t))
         self.euclidean_distance_matrix = euclidean_distance_matrix
         return self.euclidean_distance_matrix
-        
-    pass
-
 
 
 class KernelSquaredExponential(Kernel):
@@ -133,20 +131,16 @@ class KernelSquaredExponential(Kernel):
           length_scale : float
             the characteristic lengthscale of the phenomenon under investigation.
             (Defaults to 0.01)
-
         """
         # init base class first
         Kernel.__init__(self, **kwargs)
-        
+
         self.length_scale = length_scale
         self.kernel_matrix = None
-        pass
 
 
     def __repr__(self):
-        return "Squared_Exponential_kernel(length_scale=%f)" \
-               % (self.length_scale)
-
+        return "%s=%f)" % (self.__class__.__name__, self.length_scale)
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -154,7 +148,6 @@ class KernelSquaredExponential(Kernel):
         :Parameters:
           data1 : numpy.ndarray
             data
-          
           data2 : numpy.ndarray
             data
         """
@@ -162,13 +155,9 @@ class KernelSquaredExponential(Kernel):
                                    /(2.0*self.length_scale**2))
         return self.kernel_matrix
 
-    pass
-
-
-
 if __name__ == "__main__":
 
-    N.random.seed(1)    
+    N.random.seed(1)
     data = N.random.rand(4, 2)
 
     k = Kernel()
@@ -178,5 +167,5 @@ if __name__ == "__main__":
     kse = KernelSquaredExponential()
     print kse
     ksem = kse.compute(data)
-    
-    
+
+
