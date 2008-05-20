@@ -7,6 +7,9 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
+
+.. _algorithms:
+
 .. highlight:: python
    :linenothreshold: 5
 
