@@ -14,8 +14,14 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from scipy import weave
-from scipy.weave import converters
+HAS_WEAVE = False # TO BE DECIDED: what to do with weave?
+
+try:
+    from scipy import weave
+    from scipy.weave import converters
+except ImportError:
+    HAS_WEAVE = False
+    pass
 
 if __debug__:
     import time
@@ -65,57 +71,65 @@ class Kernel(object):
 
         euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
                                             'd')
-        code = None
-        if not symmetric:
-            code = """
-            int i,j,t;
-            double tmp,distance;
-            for (i=0;i<size1;i++) {
-                for (j=0;j<size2;j++) {
-                    tmp = 0.0;
-                    for(t=0;t<F;t++) {
-                        distance = data1(i,t)-data2(j,t);
-                        tmp = tmp+distance*distance*weight(t);
+
+        if HAS_WEAVE:
+            code = None
+            if not symmetric:
+                code = """
+                int i,j,t;
+                double tmp,distance;
+                for (i=0;i<size1;i++) {
+                    for (j=0;j<size2;j++) {
+                        tmp = 0.0;
+                        for(t=0;t<F;t++) {
+                            distance = data1(i,t)-data2(j,t);
+                            tmp = tmp+distance*distance*weight(t);
+                            }
+                        euclidean_distance_matrix(i,j) = tmp;
                         }
-                    euclidean_distance_matrix(i,j) = tmp;
                     }
-                }
-            return_val = 0;
-            """
+                return_val = 0;
+                """
+            else:
+                code = """
+                int i,j,t;
+                double tmp,distance;
+                for (i=0;i<size1-1;i++) {
+                    for (j=i;j<size2;j++) {
+                        tmp = 0.0;
+                        for(t=0;t<F;t++) {
+                            distance = data1(i,t)-data2(j,t);
+                            tmp = tmp+distance*distance*weight(t);
+                            }
+                        euclidean_distance_matrix(i,j) = tmp;
+                        }
+                    }
+                return_val = 0;
+                """
+
+                if __debug__:
+                    t = time.time()
+                    retval = weave.inline(code,
+                                          ['data1','size1','data2','size2','F',
+                                           'euclidean_distance_matrix','weight'],
+                                          type_converters=converters.blitz,
+                                          compiler = 'gcc')
+                    pass
+                
+                if symmetric:
+                    # copy upper part to lower part
+                    euclidean_distance_matrix = euclidean_distance_matrix + \
+                                                N.triu(euclidean_distance_matrix).T
+                    pass                
+                pass
+            pass
         else:
-            code = """
-            int i,j,t;
-            double tmp,distance;
-            for (i=0;i<size1-1;i++) {
-                for (j=i;j<size2;j++) {
-                    tmp = 0.0;
-                    for(t=0;t<F;t++) {
-                        distance = data1(i,t)-data2(j,t);
-                        tmp = tmp+distance*distance*weight(t);
-                        }
-                    euclidean_distance_matrix(i,j) = tmp;
-                    }
-                }
-            return_val = 0;
-            """
-
-        if __debug__:
-            t = time.time()
-        retval = weave.inline(code,
-                              ['data1','size1','data2','size2','F',
-                               'euclidean_distance_matrix','weight'],
-                              type_converters=converters.blitz,
-                              compiler = 'gcc')
-        if symmetric:
-            # copy upper part to lower part
-            euclidean_distance_matrix = euclidean_distance_matrix + \
-                                        N.triu(euclidean_distance_matrix).T
-
-        if __debug__:
-            # XXX not need to report time took to complete -- could be
-            # assessed from using MVPA_DEBUG_METRICS=reltime environment
-            # variable
-            debug('KERNEL', "Distance matrix computed in %s sec." % (time.time() - t))
+            for i in range(size1):
+                for j in range(size2):
+                    euclidean_distance_matrix[i,j] = ((data1[i,:]-data2[j,:])**2*weight).sum()
+                    pass
+                pass
+            pass
         self.euclidean_distance_matrix = euclidean_distance_matrix
         return self.euclidean_distance_matrix
 
@@ -140,7 +154,7 @@ class KernelSquaredExponential(Kernel):
 
 
     def __repr__(self):
-        return "%s=%f)" % (self.__class__.__name__, self.length_scale)
+        return "%s(length_scale=%f)" % (self.__class__.__name__, self.length_scale)
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
