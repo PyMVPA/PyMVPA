@@ -32,15 +32,21 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 Documentation
 =============
 
-  * :ref:`User Documentation <contents>`
-  * :ref:`Developer Guidelines <devguide>`
-  * `API Reference`_
-  * :ref:`Development Changelog <changelog>`
-  * :ref:`genindex`
-  * :ref:`search`
+* :ref:`User Documentation <contents>` (**the** documentation)
+* :ref:`Development Changelog <changelog>` (see what has changed)
+* :ref:`Developer Guidelines <devguide>` (information for people contributing code)
+* `API Reference`_ (comprehensive and up-to-date information about the details of the implementation)
+* :ref:`genindex` (access by keywords)
+* :ref:`search` (online and offline full-text search)
 
 .. _API Reference: api/index.html
 
+* `PyMVPA Manual (PDF)`_ (all documentation except for developer guidelines
+  and API reference)
+* `Developer Guidelines (PDF)`_
+
+.. _PyMVPA Manual (PDF): PyMVPA-Manual.pdf
+.. _Developer Guidelines (PDF): PyMVPA-DevGuide.pdf
 
 
 License
@@ -113,7 +119,7 @@ Support
 
 If you have problems installing the software or questions about usage,
 documentation or something else related to PyMVPA, you can post to the PyMVPA
-mailing list or contact the authors on IRC:
+mailing list (prefered) or contact the authors on IRC:
 
 :Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_, archive_]
 :IRC: #exppsy on OTFC/Freenode
@@ -132,7 +138,8 @@ Publications
 ============
 
 The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
-*German Society for Psychophysiology and its Application* in Magdeburg,
+*German Society for Psychophysiology and its Application* in Magdeburg_,
 2008.
 
 .. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
+.. _Magdeburg: http://www.magdeburg.de/

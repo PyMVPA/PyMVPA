@@ -13,9 +13,6 @@
 PyMVPA Developer Guidelines
 ***************************
 
-.. contents:: Table of Contents
-
-
 
 Documentation
 =============
