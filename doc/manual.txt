@@ -7,34 +7,14 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _manual:
+**********************************
+ PDF version of the PyMVPA Manual
+**********************************
 
-*************
-PyMVPA Manual
-*************
+The PDF version of the manual is available for download_.
 
-:Manual Authors:
-  Michael Hanke <michael.hanke@gmail.com>;
-  Yaroslav O. Halchenko <debian@onerussian.com>;
-  Per B. Sederberg <psederberg@gmail.com>;
-  Greg Detre <greg@gregdetre.co.uk>
-:Contact:  pkg-exppsy-pymvpa@lists.alioth.debian.org
-:Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa/
-:IRC: #exppsy on OTFC/Freenode
+.. _download: PyMVPA-Manual.pdf
 
-.. Please add yourself to the list of authors if you contribute something
-   to this manual.
-
-The latest version of this manual is available from the `PyMVPA project
-website`_:
-
-  * HTML: http://pkg-exppsy.alioth.debian.org/pymvpa/manual.html
-  * PDF: http://pkg-exppsy.alioth.debian.org/pymvpa/files/manual.pdf
-
-*Important notice*: This software is work in progress. Do not blindly trust it
-and the results you are getting from it.
-
-.. _PyMVPA project website: http://pkg-exppsy.alioth.debian.org/pymvpa/
 
 .. toctree::
 
@@ -49,7 +29,8 @@ and the results you are getting from it.
    glossary
    matlab
    faq
-   copying
+   examples
+   legal
    changelog
 
 .. <gjd> high-level comments

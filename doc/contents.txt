@@ -14,10 +14,10 @@ PyMVPA Documentation Contents
    featsel
    algorithms
    misc
-   examples
    glossary
    matlab
    faq
-   copying
+   examples
+   legal
    changelog
    todo
