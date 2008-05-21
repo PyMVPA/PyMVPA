@@ -13,13 +13,8 @@
 TODO
 ****
 
-  * Implement bindings to more ML toolboxes (e.g. TORCH, FANN)
-  * More sensitivity analyzers and feature selectors
   * IPython mode
-  * More documentation and examples
   * Add ability to add/modify custom attributes to a dataset.
   * Possibly make NiftiDataset default to float32 when it sees that the data are
     ints.
   * Along with ICA mapper, we should add a PLS mapper.
-
-
