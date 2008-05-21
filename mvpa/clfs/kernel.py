@@ -39,8 +39,8 @@ class Kernel(object):
     def __repr__(self):
         return "Kernel()"
 
-    def euclidean_distance(self, data1, data2=None, symmetric=False,
-                           weight=None):
+    def euclidean_distance(self, data1, data2=None, weight=None,
+                           symmetric=False):
         """Compute weighted euclidean distance matrix between two datasets.
 
 
@@ -50,29 +50,50 @@ class Kernel(object):
           data2 : numpy.ndarray
               second dataset. If None set symmetric to True.
               (Defaults to None)
+          weight : numpy.ndarray
+              vector of weights, each one associated to each dimension of the
+              dataset (Defaults to None)
           symmetric : bool
               compute the euclidean distance between the first dataset versus
               itself (True) or the second one (False). Note that
               (Defaults to False)
-          weight : numpy.ndarray
-              vector of weights, each one associated to each dimension of the
-              dataset (Defaults to None)
         """
 
         if data2 is None:
             data2 = data1
             symmetric = True
+            pass
 
         size1 = data1.shape[0]
         size2 = data2.shape[0]
         F = data1.shape[1]
         if weight is None:
             weight = N.ones(F,'d') # unitary weight
+            pass
 
         euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
                                             'd')
-
-        if HAS_WEAVE:
+        # In the following you can find faster implementations of the
+        # following code:
+        # 
+        # for i in range(size1):
+        #     for j in range(size2):
+        #         euclidean_distance_matrix[i,j] = ((data1[i,:]-data2[j,:])**2*weight).sum()
+        #         pass
+        #     pass
+        #
+        if not HAS_WEAVE:
+            # Fast computation of distance matrix in Python+NumPy,
+            # adapted from Bill Baxter's post on [numpy-discussion].
+            # Basically: (x-y)**2*w = x*w*x - 2*x*w*y + y*y*w
+            data1w = data1*weight
+            euclidean_distance_matrix = (data1w*data1).sum(1)[:,None] \
+                                        -2*N.dot(data1w,data2.T)+ \
+                                        (data2*data2*weight).sum(1)
+            # correction to some possible numerical instabilities:
+            print euclidean_distance_matrix.shape,euclidean_distance_matrix.dtype
+            euclidean_distance_matrix[euclidean_distance_matrix<0] = 0
+        else:
             code = None
             if not symmetric:
                 code = """
@@ -121,13 +142,6 @@ class Kernel(object):
                     euclidean_distance_matrix = euclidean_distance_matrix + \
                                                 N.triu(euclidean_distance_matrix).T
                     pass                
-                pass
-            pass
-        else:
-            for i in range(size1):
-                for j in range(size2):
-                    euclidean_distance_matrix[i,j] = ((data1[i,:]-data2[j,:])**2*weight).sum()
-                    pass
                 pass
             pass
         self.euclidean_distance_matrix = euclidean_distance_matrix
