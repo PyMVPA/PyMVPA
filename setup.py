@@ -58,9 +58,11 @@ not limited to neuroimaging data it is eminently suited for such datasets.
 PyMVPA is truely free software (in every respect) and additonally requires
 nothing but free-software to run.""",
       packages     = [ 'mvpa',
+                       'mvpa.base',
                        'mvpa.datasets',
                        'mvpa.mappers',
                        'mvpa.clfs',
+                       'mvpa.clfs.sg',
                        'mvpa.clfs.libsvm',
                        'mvpa.clfs.libsmlr',
                        'mvpa.algorithms',
