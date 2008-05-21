@@ -91,6 +91,14 @@ class GPR(Classifier):
         # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
         # but preliminary tests show them to be slower.
 
+        if self.states.isEnabled('log_marginal_likelihood'):
+            self.log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
+                                      N.log(self.L.diagonal()).sum() - \
+                                      self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
+            pass
+
+
+        
 
     def _predict(self, data):
         """
@@ -111,15 +119,10 @@ class GPR(Classifier):
             self.predicted_variances = \
                            N.diag(km_test_test-N.dot(v.transpose(), v))
 
-        if self.states.isEnabled('log_marginal_likelihood'):
-            self.log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
-                                      N.log(self.L.diagonal()).sum() - \
-                                      self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
-
         return predictions
 
 
-def gen_data(n_instances, n_features, flat=False):
+def gen_data(n_instances, n_features, flat=False, noise=0.4):
     """
     Generate a (quite) complex multidimensional dataset.
     """
@@ -132,7 +135,7 @@ def gen_data(n_instances, n_features, flat=False):
         data = N.random.rand(n_instances, n_features)*N.pi
         pass
     label = N.sin((data**2).sum(1)).round()
-    data = N.matrix(data)
+    label += N.random.rand(label.size)*noise
     return data, label
 
 
@@ -141,30 +144,79 @@ if __name__ == "__main__":
 
     N.random.seed(1)
 
+    import pylab
+    pylab.close("all")
+    pylab.ion()
+
     from mvpa.datasets import Dataset
 
-    train_size = 15
+    train_size = 40
     test_size = 100
     F = 1
 
     data_train, label_train = gen_data(train_size, F)
-    print label_train
+    # print label_train
 
     data_test, label_test = gen_data(test_size, F, flat=True)
     # print label_test
 
     dataset = Dataset(samples=data_train, labels=label_train)
 
-    kse = KernelSquaredExponential(length_scale=2.0e-1)
     regression = True
-    g = GPR(kse, sigma_noise=0.01,regression=regression)
+    logml = True
+
+    if logml :
+        print "Looking for better hyperparameters"
+            
+        sigma_noise_steps = N.linspace(0.1, 0.25, num=20)
+        lengthscale_steps = N.linspace(2.0, 5.0, num=20) 
+        lml = N.zeros((len(sigma_noise_steps), len(lengthscale_steps)))
+        lml_best = -N.inf
+        lengthscale_best = 0.0
+        sigma_noise_best = 0.0
+        i = 0
+        for x in sigma_noise_steps:
+            j = 0
+            for y in lengthscale_steps: 
+                kse = KernelSquaredExponential(length_scale=y)
+                g = GPR(kse, sigma_noise=x,regression=regression)
+                g.states.enable("log_marginal_likelihood")
+                g.train(dataset)
+                lml[i,j] = g.log_marginal_likelihood
+                if lml[i,j] > lml_best:
+                    lml_best = lml[i,j]
+                    lengthscale_best = y
+                    sigma_noise_best = x
+                    pass
+                j += 1
+                pass
+            i += 1
+            pass
+        pylab.figure()
+        X = N.repeat(sigma_noise_steps[:,N.newaxis],sigma_noise_steps.size,axis=1)
+        Y = N.repeat(lengthscale_steps[N.newaxis,:],lengthscale_steps.size,axis=0)
+        step = (lml.max()-lml.min())/30
+        pylab.contour(X,Y, lml, N.arange(lml.min(), lml.max()+step, step),colors='k')
+        pylab.plot([sigma_noise_best],[lengthscale_best],"k+",markeredgewidth=2, markersize=8)
+        pylab.xlabel("noise standard deviation")
+        pylab.ylabel("characteristic lengthscale")
+        pylab.title("Hyperparameters' search")
+        pylab.axis("tight")
+        print "lml_best",lml_best
+        print "sigma_noise_best",sigma_noise_best
+        print "lengthscale_best",lengthscale_best
+        pass
+    
+
+
+    kse = KernelSquaredExponential(length_scale=lengthscale_best)
+    g = GPR(kse, sigma_noise=sigma_noise_best,regression=regression)
     print g
     if regression:
         g.states.enable("predicted_variances")
         pass
 
-    lml = True
-    if lml:
+    if logml:
         g.states.enable("log_marginal_likelihood")
         pass
         
@@ -182,11 +234,8 @@ if __name__ == "__main__":
         print "accuracy:", accuracy
         pass
 
-    import pylab
-    pylab.close("all")
-    pylab.ion()
-
     if F == 1:
+        pylab.figure()
         pylab.plot(data_train, label_train, "ro", label="train")
         pylab.plot(data_test, prediction, "b+-", label="prediction")
         pylab.plot(data_test, label_test, "gx-", label="test (true)")
@@ -201,3 +250,4 @@ if __name__ == "__main__":
         pass
 
     print g.log_marginal_likelihood
+
