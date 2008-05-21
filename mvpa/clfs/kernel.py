@@ -91,7 +91,6 @@ class Kernel(object):
                                         -2*N.dot(data1w,data2.T)+ \
                                         (data2*data2*weight).sum(1)
             # correction to some possible numerical instabilities:
-            print euclidean_distance_matrix.shape,euclidean_distance_matrix.dtype
             euclidean_distance_matrix[euclidean_distance_matrix<0] = 0
         else:
             code = None
