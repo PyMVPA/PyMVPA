@@ -178,6 +178,18 @@ on the validation dataset are made.
 .. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
 
 
+Statistical Testing of Classifier Errors
+----------------------------------------
+
+(to be written)
+
+.. _MCNullDist: api/mvpa.clfs.stats.MCNullDist-class.html
+
+.. Point to the problem of an unknown H0 distribution, which is a problem
+   for a lot of statistical tests.
+
+
+
 Cross-validated Transfer Error
 ------------------------------
 

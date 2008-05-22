@@ -32,12 +32,14 @@ decision surface of each classifier.
 
 .. literalinclude:: examples/pylab_2d.py
 
+.. _example_searchlight:
 
 Easy Searchlight
 ================
 
 Run a searchlight analysis on the example fMRI dataset that is shipped with
-PyMVPA.
+PyMVPA. This example is part of the PyMVPA source distribution:
+doc/examples/searchlight_2d.py`.
 
 .. literalinclude:: examples/searchlight_2d.py
 
