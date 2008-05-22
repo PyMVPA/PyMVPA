@@ -9,6 +9,8 @@
 
 .. _classifiers:
 
+.. index:: classifier
+
 ***********
 Classifiers
 ***********
@@ -75,6 +77,8 @@ linear SVM, logistic regression, ridge regression and SVM with radial basis
 function kernel) on a simple classification problem. The code to generate
 these figure can be found in the `pylab_2d.py` example.
 
+
+.. index:: states
 
 Stateful objects
 ================
@@ -152,6 +156,8 @@ of desired state variables names, passed to the object constructor. Keyword
 'all' can be used to select all known states for that statefull object.
 
 
+.. index:: error, classifier error, transfer error
+
 Error Calculation
 =================
 
@@ -178,6 +184,8 @@ on the validation dataset are made.
 .. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
 
 
+.. index:: statistical testing
+
 Statistical Testing of Classifier Errors
 ----------------------------------------
 
@@ -189,6 +197,7 @@ Statistical Testing of Classifier Errors
    for a lot of statistical tests.
 
 
+.. index:: cross-validation
 
 Cross-validated Transfer Error
 ------------------------------
@@ -233,6 +242,8 @@ Boosted and Multi-class Classifiers
    it. Finally describe features of all available classifiers.
 
 
+.. index:: k-nearest-neighbour, kNN
+
 k-Nearest-Neighbour
 ===================
 
@@ -242,6 +253,8 @@ future enhancements may include support for other kernels.
 
 .. _kNN: api/mvpa.clfs.knn.kNN-class.html
 
+
+.. index:: support vector machine, SVM
 
 Support Vector Machines
 =======================
@@ -259,6 +272,8 @@ RbfNuSVMC_ and RbfCSVMC_).
 .. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
 
+.. index:: ridge regression
+
 Ridge Regression
 ================
 
@@ -269,6 +284,8 @@ intercept term so that you do not have to center your data.
 .. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
 
 
+.. index:: logistic regression, penalized logistic regression
+
 Penalized Logistic Regression
 =============================
 
@@ -278,6 +295,8 @@ means of the logistic function.
 
 .. _PLR: api/mvpa.clfs.plr.PLR-class.html
 
+
+.. index:: sparse multinomial logistic regression, SMLR
 
 Sparse Multinomial Logistic Regression
 ======================================

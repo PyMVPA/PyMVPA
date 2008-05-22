@@ -13,6 +13,8 @@
 Introduction
 ************
 
+.. index:: MVPA
+
 PyMVPA is a Python_ module intended to ease pattern classification
 analysis of large datasets. It provides high-level abstraction of typical
 processing steps and a number of implementations of some popular algorithms.
@@ -29,6 +31,8 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 What this Manual is NOT
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+.. index:: textbook, review, API reference, examples
 
 This manual does not make an attempt to be a comprehensive introduction into
 machine learning theory or pattern recognition techniques. There is a wealth
@@ -61,6 +65,7 @@ or even the unit test battery, also part of the source distribution
 
 .. _history:
 
+.. index:: history, MVPA toolbox for Matlab, license, free software
 
 A bit of History
 ~~~~~~~~~~~~~~~~
@@ -104,6 +109,8 @@ development goal. Python is a very powerful language that magically combines
 the possibility to write really fast code and a simplicity that allows one to
 learn the basic concepts within a few days.
 
+.. index:: RPy, PyMatlab
+
 One of the major advantages of Python is the availability of a huge amount of
 so called *modules*. Modules can include extensions written in a hardcore
 language like C (or even FORTRAN) and therefore allow one to incorporate
@@ -123,6 +130,8 @@ the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
 with EEG/MEG data (3d) or even non-neuroimaging datasets.
 
+.. index:: NIfTI
+
 By September 2007 PyMVPA included support for reading and writing datasets
 from and to the `NIfTI format`_, kNN and Support Vector Machine classifiers,
 as well as several analysis algorithms (e.g. searchlight and incremental
@@ -141,6 +150,7 @@ faster and easier than it has ever been before.
 
 
 .. _requirements:
+.. index:: requirements
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -157,6 +167,7 @@ As PyMVPA is about pattern recognition a basic understanding about machine
 learning principles is necessary to correctly apply methods with PyMVPA to
 ensure interpretability of the results.
 
+.. index:: dependencies, Python, NumPy
 
 Dependencies
 ''''''''''''
@@ -173,6 +184,8 @@ The following software packages are required or PyMVPA will not work at all.
 
 .. _NumPy: http://numpy.scipy.org/
 
+
+.. index:: recommandations, SciPy, PyNIfTI, Shogun, R, RPy
 
 Strong Recommendations
 ''''''''''''''''''''''
@@ -201,6 +214,8 @@ recommend to install these packages as well.
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti/
 .. _Shogun: http://www.shogun-toolbox.org
 
+
+.. index:: suggestions, IPython, FSL, AFNI, libsvm
 
 Suggestions
 ''''''''''''
@@ -244,6 +259,8 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 Obtaining PyMVPA
 ~~~~~~~~~~~~~~~~
 
+.. index:: binary package
+
 Binary packages
 '''''''''''''''
 
@@ -252,6 +269,7 @@ Currently the Debian/Ubuntu family is the only environment for which
 binary packages are available (see below). If you manage to build PyMVPA
 on Windows or OS X, we would be glad to hear from you.
 
+.. index:: Debian
 
 Debian
 ^^^^^^
@@ -261,6 +279,8 @@ since *lenny*). The documentation is provided by the optional
 `python-mvpa-doc` package.
 
 .. _official Debian package: http://packages.debian.org/python-mvpa
+
+.. index:: backports, Debian, Ubuntu
 
 Debian backports and inofficial Ubuntu packages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -280,6 +300,9 @@ how to obtain them.
 
 .. _buildfromsource:
 
+
+.. index:: building from source, source package, MacOSX
+
 Building from Source
 ''''''''''''''''''''
 
@@ -292,8 +315,16 @@ OSX.
 
 .. _PyMVPA project website: http://pkg-exppsy.alioth.debian.org/pymvpa/
 
+.. index:: releases, development snapshot
+
 The first step is obtaining the sources. The source code tarballs of all
 PyMVPA releases are available from the `PyMVPA project website`_.
+Alternatively, one can also download a tarball of the latest development
+snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
+code repository).
+
+.. index:: Git repository
+
 If you want to have access to both, the full PyMVPA history and the latest
 development code, you can use the PyMVPA Git_ repository, which is publicly
 available. To view the repository, please point your web browser to gitweb:
@@ -329,6 +360,7 @@ option. You also might want to consider :command:`--optimize`.
 
 Now you should be ready to use PyMVPA on your system.
 
+.. index:: libsvm, SWIG
 
 Build with enabled libsvm bindings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -391,6 +423,8 @@ there is also a `Makefile.osx`.
    static or shared lib. Or am I wrong?
 
 
+.. index:: alternative build procedure
+
 Alternative build procedure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -408,6 +442,8 @@ However, please note that this procedure also always builds the libsvm_
 extension and therefore also required the patched libsvm version to be
 available.
 
+
+.. index:: installation
 
 Installation
 ~~~~~~~~~~~~
@@ -428,6 +464,8 @@ package. For example on Debian or Ubuntu simply do::
 
   sudo aptitude install python-mvpa
 
+
+.. index:: citation, PyMVPA poster
 
 How to cite PyMVPA
 ~~~~~~~~~~~~~~~~~~

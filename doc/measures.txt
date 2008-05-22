@@ -8,6 +8,8 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
+.. index:: measure, sensitivity
+
 ********
 Measures
 ********
@@ -23,6 +25,8 @@ to be determined.  The resulting map reflects the sensitivities of all
 features with respect to a certain decision and, therefore, algorithms
 generating these maps are summarized as Sensitivity_ in PyMVPA.
 
+.. index:: feature selection
+
 Second, once the feature sensitivities are known, they can be used as
 criteria for feature selection. However, possible selection strategies
 range from very simple *Go with the 10% best features* to more
@@ -30,6 +34,8 @@ complicated algorithms like *Recursive feature selection*
 (RFE_). Because `Sensitivity Measures`_ and selections strategies can
 be arbitrarily combined, PyMVPA offers a quite flexible framework for
 feature selection.
+
+.. index:: processing object
 
 Similar to dataset splitters, all PyMVPA algorithms are implemented and
 behave like *processing objects*. To recap, this means that they are
@@ -41,6 +47,8 @@ datasets.
    difference between a `FeatureSelection` and an `ElementSelector`.
    Finally more detailed note and references for each larger algorithm.
 
+
+.. index:: sensitivity
 
 Sensitivity
 ===========
@@ -68,6 +76,8 @@ sensitivity maps.
 Basic Sensitivity (and related Measures)
 ----------------------------------------
 
+.. index:: anova, F-score, univariate, measure
+
 ANOVA
 ^^^^^
 
@@ -83,6 +93,8 @@ analyzers.
 
 .. _OneWayAnova: api/mvpa.algorithms.anova.OneWayAnova-class.html
 
+
+.. index:: classifier weights, weights, SVM, measure
 
 Linear SVM Weights
 ^^^^^^^^^^^^^^^^^^
@@ -104,6 +116,8 @@ non-linear SVMs (e.g. with RBF kernels).
 .. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
 .. _Transformers: api/mvpa.misc.transformers-module.html
 
+
+.. index:: noise perturbation, measure
 
 Noise Perturbation
 ^^^^^^^^^^^^^^^^^^
@@ -128,12 +142,16 @@ arguments) to ensure that higher values represent higher sensitivities.
 .. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
 
 
+.. index:: meta measures
+
 Meta Sensitivity Measures
 -------------------------
 
 Meta Sensitivity Measures are FeaturewiseDatasetMeasures that internally use one
 of the `Basic Sensitivity Measures` to compute their sensitivity scores.
 
+
+.. index:: splitting measures, measure
 
 Splitting Measures
 ^^^^^^^^^^^^^^^^^^
@@ -146,5 +164,3 @@ maps across all splits is computed.
 
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _SplitFeaturewiseMeasure: api/mvpa.measures.splitmeasure.SplitFeaturewiseMeasure-class.html
-
-

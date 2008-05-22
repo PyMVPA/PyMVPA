@@ -10,11 +10,13 @@
 
 .. _scenarios:
 
+.. index:: analysis scenarios
 
 ********************
  Analysis Scenarios
 ********************
 
+.. index:: searchlight, cross-validation, NIfTI
 
 Searchlight
 ===========
