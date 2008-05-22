@@ -16,20 +16,28 @@ Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-scipy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco
-Description: multivariate pattern recognition with Python
- This package provides a Python module to ease pattern classification
- analyses of large datasets. It provides high-level abstraction of typical
- processing steps and a number of implementations of some popular algorithms.
+Suggests: fslview, fsl
+Description: multivariate pattern analysis with Python
+ Python module to ease pattern classification analyses of large
+ datasets. It provides high-level abstraction of typical processing
+ steps (e.g. data preparation, classification, feature selection,
+ generalization testing), a number of implementations of some popular
+ algorithms (e.g. kNN, Ridge Regressions, Sparse Multinomial Logistic
+ Regression), and bindings to external ML libraries (libsvm, shogun).
  .
- While it is not limited to neuroimaging data it is eminently suited for such
- datasets.
+ While it is not limited to neuroimaging data (e.g. FMRI) it
+ is eminently suited for such datasets.
 
 
 Package: python-mvpa-doc
 Architecture: all
 Section: doc
-Description: manual, API documentation and examples for PyMVPA
- This package contains the PyMVPA documentation in HTML, TXT and PDF format,
- as well as the API documentation as Epydoc-generated HTML.
+Description: documention and examples for PyMVPA
+ This package contains PyMVPA documentation in various formats
+ (HTML, TXT, PDF) including
+ * User manual
+ * Developer guidelines
+ * API documentation
  .
- Addtionally all example scripts shipped with the PyMVPA sources are included.
+ Addtionally all example scripts shipped with the PyMVPA sources are
+ included.
