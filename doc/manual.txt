@@ -24,7 +24,7 @@ The PDF version of the manual is available for download_.
    classifiers
    measures
    featsel
-   algorithms
+   scenarios
    misc
    glossary
    matlab

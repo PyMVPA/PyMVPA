@@ -9,6 +9,8 @@
 
 .. _examples:
 
+.. index:: example
+
 ********
 Examples
 ********
@@ -23,6 +25,7 @@ Some examples need to access sample dataset available under `data/` directory
 within root of PyMVPA hierarchy, thus they have to be invoked directly from
 PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 
+.. index:: plotting
 
 Simple Plotting of Classifier Behavior
 ======================================
@@ -32,15 +35,22 @@ decision surface of each classifier.
 
 .. literalinclude:: examples/pylab_2d.py
 
+.. _example_searchlight:
+
+
+.. index:: searchlight
 
 Easy Searchlight
 ================
 
 Run a searchlight analysis on the example fMRI dataset that is shipped with
-PyMVPA.
+PyMVPA. This example is part of the PyMVPA source distribution:
+doc/examples/searchlight_2d.py`.
 
 .. literalinclude:: examples/searchlight_2d.py
 
+
+.. index:: sensitivity
 
 Sensitivity Measure
 ===================
@@ -51,6 +61,8 @@ comes with PyMVPA and plot the computed featurewise measures for each.
 .. literalinclude:: examples/sensanas.py
 
 
+.. index:: mapper, SVD, MappedClassifier
+
 Classification of SVD-mapped Datasets
 =====================================
 
@@ -59,6 +71,8 @@ decomposition within a cross-validation.
 
 .. literalinclude:: examples/svdclf.py
 
+
+.. index:: SMLR, SVM
 
 Compare SMLR to Linear SVM Classifier
 =====================================
