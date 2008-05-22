@@ -30,10 +30,10 @@ generating these maps are summarized as Sensitivity_ in PyMVPA.
 Second, once the feature sensitivities are known, they can be used as
 criteria for feature selection. However, possible selection strategies
 range from very simple *Go with the 10% best features* to more
-complicated algorithms like *Recursive feature selection*
-(RFE_). Because `Sensitivity Measures`_ and selections strategies can
-be arbitrarily combined, PyMVPA offers a quite flexible framework for
-feature selection.
+complicated algorithms like :ref:`recursive_feature_elimination`.
+Because :ref:`sensitivity_measures` and selections strategies can be
+arbitrarily combined, PyMVPA offers a quite flexible framework for feature
+selection.
 
 .. index:: processing object
 
@@ -49,9 +49,10 @@ datasets.
 
 
 .. index:: sensitivity
+.. _sensitivity_measures:
 
-Sensitivity
-===========
+Sensitivity Measures
+====================
 
 It was already mentioned that a Sensitivity_ computes a featurewise
 score that indicates how much interesting signal each feature contains
@@ -70,6 +71,7 @@ analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
 on the other hand utilize another sensitivity analyzer to compute their
 sensitivity maps.
 
+.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
 .. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
 
 

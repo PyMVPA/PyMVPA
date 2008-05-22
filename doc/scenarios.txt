@@ -24,9 +24,9 @@ Searchlight
 The term Searchlight_ refers to an algorithm that runs a
 scalar `DatasetMeasure` on all possible spheres of a certain size within a
 dataset. The measure typically computed is a cross-validated transfer error
-(see CrossValidatedTransferError_). The idea to use a searchlight as a
-sensitivity analyzer stems from a paper by Kriegeskorte and colleagues
-[1]_.
+(see :ref:`CrossValidatedTransferError <cross-validation>`). The idea to use
+a searchlight as a sensitivity analyzer stems from a paper by Kriegeskorte and
+colleagues [1]_.
 
 A searchlight analysis is can be easily performed. The following code snippet
 shows a draft of a complete analysis.

@@ -9,12 +9,14 @@
 
 
 .. index:: feature selection
+.. _featsel:
 
 *****************
 Feature Selection
 *****************
 
 .. index:: recursive feature selection, RFE
+.. _recursive_feature_elimination:
 
 Recursive Feature Elimination
 =============================
@@ -27,6 +29,7 @@ RFE_
 
 
 .. index:: incremental feature search, IFS
+.. _incremental_feature_search:
 
 Incremental Feature Search
 ==========================

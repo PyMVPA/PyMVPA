@@ -64,9 +64,8 @@ The choice of the classifier in the above example is more or less arbitrary.
 Any classifier in PyMVPA could be used in place of kNN. This demonstrates
 another useful feature of PyMVPA's classifiers. Due to the high-level
 abstraction and the simple interface, almost all classifiers can be combined
-with most algorithms in PyMVPA (please see the Algorithms_ section for
-details). This makes it very easy to test different classifiers on some
-dataset (see Fig. 1).
+with most algorithms in PyMVPA. This makes it very easy to test different
+classifiers on some dataset (see Fig. 1).
 
 .. image:: misc/pics/classifier_comparison_plot.png
    :width: 15cm
@@ -198,6 +197,7 @@ Statistical Testing of Classifier Errors
 
 
 .. index:: cross-validation
+.. _cross-validation:
 
 Cross-validated Transfer Error
 ------------------------------
@@ -229,6 +229,8 @@ and some Dataset_ `data`.
   ...                                      NFoldSplitter(cvtype=1))
   >>> error = cvterr(data)
 
+.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
 
 
@@ -341,6 +343,7 @@ RbfNuSVMC_ and RbfCSVMC_).
 .. [#] Vapnik, V. (1995). *The Nature of Statistical Learning Theory*.
        Springer, New York.
 
+.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _Wikipedia entry about SVM: http://en.wikipedia.org/wiki/Support_Vector_Machine
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html

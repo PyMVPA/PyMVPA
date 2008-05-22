@@ -13,8 +13,8 @@ Overview
 ********
 
 The PyMVPA package consists of three major parts: :ref:`Data handling
-<datasets>`, :ref:`Classifiers <classifiers>` and :ref:`Algorithms
-<algorithms>` operating on datasets and classifiers.
+<datasets>`, :ref:`Classifiers <classifiers>` and various algorithms and
+measures that operate on datasets and classifiers.
 In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
 given.
