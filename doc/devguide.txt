@@ -233,30 +233,35 @@ Outstanding Questions:
     * when states and when properties?
 
 
-Adding a new Sensitivity Analyzer
----------------------------------
+Adding a new DatasetMeasure
+---------------------------
 
-There are two possible base-classes for new sensitivity analyzers.
-First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
-generic approach. However, for sensitivity analyzers that make use of some
-classifier and extract the sensitivities from it,
-Sensitivity_ is a more appropriate base-class, as it
-provides some additional useful functionality for this use case.
+There are few possible base-classes for new measures (former sensitivity
+analyzers).  First, DatasetMeasure_ can directly be sub-classed. It is a base
+class for any measure to be computed on a Dataset_. This is the more generic
+approach. In the most of the cases, measures are to be reported per each
+feature, thus FeaturewiseDatasetMeasure_ should serve as a base class in those
+cases. Furthermore, for measures that make use of some classifier and extract
+the sensitivities from it, Sensitivity_ (derived from
+FeaturewiseDatasetMeasure_) is a more appropriate base-class, as it provides
+some additional useful functionality for this use case (e.g. training a
+classifier if needed).
 
-All sensitivity analyzers (actually all objects based on DatasetMeasure_)
+All measures (actually all objects based on DatasetMeasure_)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
 
-If a sensitivity analyzer computes sensitivities, were both large positive and
-large negative values indicate high sensitivity, it should nevertheless *not*
+If a DatasetMeasure_ computes a characteristic, were both large positive and
+large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
-the absolute.
+the absolute (e.g. plain `N.absolute` or a convinience wrapper Absolute_).
 
-To add a new sensitivity analyzer implementation it is sufficient to create a
-new sub-class of SensitivityAnalyzer_ and add an implementation of the
-`_call(dataset)` method. It will be called with an instance of Dataset_ and has
-to return a vector of featurewise sensitivity scores.
+To add a new measure implementation it is sufficient to create a new sub-class
+of DatasetMeasure_ (or FeaturewiseDatasetMeasure_, or Sensitivity_) and add an
+implementation of the `_call(dataset)` method. It will be called with an
+instance of Dataset_. FeaturewiseDatasetMeasure_ (e.g. Sensitivity_ as well)
+has to return a vector of featurewise sensitivity scores.
 
 .. IncludeStates: measures.base DatasetMeasure
 
@@ -270,7 +275,7 @@ raw_result          Computed results before applying any             Disabled
 ================== ==============================================   =========
 
 Source code files of all sensitivity analyzer implementations go into
-`mvpa/algorithms/`.
+`mvpa/measures/`.
 
 
 Classifier-independent Sensitivity Analyzers
@@ -297,7 +302,9 @@ Outstanding Questions:
   * Shouldn't there be a `sensitivities` state?
 
 
+.. _Absolute: api/mvpa.misc.Absolute-def.html
 .. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
+.. _FeaturewiseDatasetMeasure: api/mvpa.measures.base.FeaturewiseDatasetMeasure-class.html
 .. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
 .. _ProxyClassifierSensitivityAnalyzer: api/mvpa.measures.base.ProxyClassifierSensitivityAnalyzer-class.html
 
@@ -439,8 +446,10 @@ Things to implement for the next release (Release goals)
         * meta-algorithms (splitting)   -> mvpa.measures
 
      DatasetMeasure -> Measure (transformers)
+
      FeaturewiseDatasetMeasure?
-       combiners to be absorbed withing transformers? and then gone?
+
+     combiners to be absorbed withing transformers? and then gone?
      {Classifier?}Sensitivity?
 
     * Mappers::
