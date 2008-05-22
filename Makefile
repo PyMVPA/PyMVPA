@@ -107,10 +107,10 @@ upload-website: website
 profile: build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
-test-%: build
+ut-%: build
 	@cd tests && PYTHONPATH=.. python test_$*.py
 
-test: build
+unittest: build
 	@cd tests && PYTHONPATH=.. python main.py
 
 te-%: build
@@ -125,6 +125,8 @@ tm-%: build
 testmanual: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
 	                       --doctest-tests doc/
+
+test: unittest testmanual testexamples
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \

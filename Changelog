@@ -2,6 +2,8 @@
 
 .. _changelog:
 
+.. index:: changelog
+
 PyMVPA Development Changelog
 -----------------------------
 
@@ -19,6 +21,15 @@ queried by visiting the URL::
 Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
+
+  (currently none)
+
+
+
+Releases
+~~~~~~~~
+
+* 0.2.0 (Wed, 28 May 2008)
 
   * New Splitter class (HalfSplitter) to split into first and second half.
   * New Splitter class (CustomSplitter) to allow for splits with an arbitrary
@@ -45,9 +56,6 @@ Unreleased changes
   * Important bugfix in RFE, which reported incorrect feature ids in some
     cases.
 
-
-Releases
-~~~~~~~~
 
 * 0.1.0 (Wed, 20 Feb 2008)
 

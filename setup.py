@@ -44,7 +44,7 @@ if 'PYMVPA_LIBSVM' in os.environ.keys():
 
 # define the setup
 setup(name       = 'pymvpa',
-      version      = '0.2.0-pre1',
+      version      = '0.2.0',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -58,9 +58,11 @@ not limited to neuroimaging data it is eminently suited for such datasets.
 PyMVPA is truely free software (in every respect) and additonally requires
 nothing but free-software to run.""",
       packages     = [ 'mvpa',
+                       'mvpa.base',
                        'mvpa.datasets',
                        'mvpa.mappers',
                        'mvpa.clfs',
+                       'mvpa.clfs.sg',
                        'mvpa.clfs.libsvm',
                        'mvpa.clfs.libsmlr',
                        'mvpa.algorithms',

@@ -26,6 +26,13 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
 
 _VERIFIED = {}
 
+_caught_exceptions = [ImportError, AttributeError]
+"""Exceptions which are silently caught while running tests for externals"""
+try:
+    import rpy
+    _caught_exceptions += [rpy.RException]
+except:
+    pass
 
 def exists(dep, force=False):
     """
@@ -60,7 +67,7 @@ def exists(dep, force=False):
         try:
             exec _KNOWN[dep]
             _VERIFIED[dep] = True
-        except:
+        except tuple(_caught_exceptions):
             pass
         return _VERIFIED[dep]
 

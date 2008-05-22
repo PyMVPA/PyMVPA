@@ -8,9 +8,15 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
+.. index:: feature selection
+.. _featsel:
+
 *****************
 Feature Selection
 *****************
+
+.. index:: recursive feature selection, RFE
+.. _recursive_feature_elimination:
 
 Recursive Feature Elimination
 =============================
@@ -21,6 +27,9 @@ RFE_
 
 .. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
 
+
+.. index:: incremental feature search, IFS
+.. _incremental_feature_search:
 
 Incremental Feature Search
 ==========================

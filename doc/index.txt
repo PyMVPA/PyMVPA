@@ -19,22 +19,6 @@ come.
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
 in **Py**\ thon.
 
-..
-  To learn how to use PyMVPA it is best to start with the manual_ (`manual as
-  PDF`_). It explains
-  the basic concepts of the module and shows examples of a typical workflow.
-  The `API documentation`_  on the other hand provides comprehensive information
-  about all functionality included in PyMVPA.
-
-..
-  If you want to contribute some code to PyMVPA you might also want to have a
-  look at some (few) `developer guidelines`_ (`devguide as PDF`_) to make your
-  code fit nicely into the PyMVPA codebase.
-  .. _manual: manual.html
-  .. _manual as PDF: manual.pdf
-  .. _developer guidelines: devguide.html
-  .. _devguide as PDF: devguide.pdf
-
 PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
 website, the source code repository and download services are hosted on 
 Alioth_, a service that is kindly provided by the `Debian project`_.
@@ -43,25 +27,26 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 .. _Alioth: http://alioth.debian.org
 .. _Debian project: http://www.debian.org
 
-..
-  A development history including latest changes which are not yet released is
-  available from the changelog_.
-  .. _changelog: changelog.html
-
 
 
 Documentation
 =============
 
-  * :ref:`User Documentation <contents>`
-  * :ref:`Developer Guidelines <devguide>`
-  * `API Reference`_
-  * :ref:`Development Changelog <changelog>`
-  * :ref:`genindex`
-  * :ref:`search`
+* :ref:`User Documentation <contents>` (**the** documentation)
+* :ref:`Development Changelog <changelog>` (see what has changed)
+* :ref:`Developer Guidelines <devguide>` (information for people contributing code)
+* `API Reference`_ (comprehensive and up-to-date information about the details of the implementation)
+* :ref:`genindex` (access by keywords)
+* :ref:`search` (online and offline full-text search)
 
 .. _API Reference: api/index.html
 
+* `PyMVPA Manual (PDF)`_ (all documentation except for developer guidelines
+  and API reference)
+* `Developer Guidelines (PDF)`_
+
+.. _PyMVPA Manual (PDF): PyMVPA-Manual.pdf
+.. _Developer Guidelines (PDF): PyMVPA-DevGuide.pdf
 
 
 License
@@ -101,12 +86,12 @@ Source code
 -----------
 
 Source code tarballs of PyMVPA releases are available from the `file release
-system`_.
-
-.. _file release system: http://alioth.debian.org/frs/?group_id=30954
+system`_. Alternatively, one can also download a tarball of the latest
+development snapshot_ (i.e. the current state of the *master* branch of the
+PyMVPA source code repository).
 
 To get access to both the full PyMVPA history and the latest
-development code the PyMVPA Git_ repository is publicly available. To view the
+development code, the PyMVPA Git_ repository is publicly available. To view the
 repository, please point your webbrowser to gitweb:
 http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 
@@ -119,13 +104,14 @@ To clone (aka checkout) the PyMVPA repository simply do:
 After a short while you will have a `pymvpa` directory below your current
 working directory, that contains the PyMVPA repository.
 
-.. _Git: http://git.or.cz/
-
-
 More detailed instructions on :ref:`installation requirements <requirements>`
 and on how to :ref:`build PyMVPA from source <buildfromsource>` are provided
 in the manual.
 
+
+.. _file release system: http://alioth.debian.org/frs/?group_id=30954
+.. _Git: http://git.or.cz/
+.. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
 
 
 Support
@@ -133,11 +119,15 @@ Support
 
 If you have problems installing the software or questions about usage,
 documentation or something else related to PyMVPA, you can post to the PyMVPA
-mailing list or contact the authors on IRC:
+mailing list (prefered) or contact the authors on IRC:
 
 :Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_, archive_]
 :IRC: #exppsy on OTFC/Freenode
 
+All users should subscribe to the mailing list. PyMVPA is still a young project that
+is under heavy development. Significant modifications (hopefully improvements) are
+very likely to happen frequently. The mailing list is the prefered way to announce
+such changes.
 
 .. _subscription: http://lists.alioth.debian.org/mailman/listinfo/pkg-exppsy-pymvpa
 .. _archive: http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/
@@ -148,7 +138,8 @@ Publications
 ============
 
 The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
-*German Society for Psychophysiology and its Application* in Magdeburg,
+*German Society for Psychophysiology and its Application* in Magdeburg_,
 2008.
 
 .. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
+.. _Magdeburg: http://www.magdeburg.de/

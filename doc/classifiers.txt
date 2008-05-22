@@ -9,6 +9,8 @@
 
 .. _classifiers:
 
+.. index:: classifier
+
 ***********
 Classifiers
 ***********
@@ -62,9 +64,8 @@ The choice of the classifier in the above example is more or less arbitrary.
 Any classifier in PyMVPA could be used in place of kNN. This demonstrates
 another useful feature of PyMVPA's classifiers. Due to the high-level
 abstraction and the simple interface, almost all classifiers can be combined
-with most algorithms in PyMVPA (please see the Algorithms_ section for
-details). This makes it very easy to test different classifiers on some
-dataset (see Fig. 1).
+with most algorithms in PyMVPA. This makes it very easy to test different
+classifiers on some dataset (see Fig. 1).
 
 .. image:: misc/pics/classifier_comparison_plot.png
    :width: 15cm
@@ -75,6 +76,8 @@ linear SVM, logistic regression, ridge regression and SVM with radial basis
 function kernel) on a simple classification problem. The code to generate
 these figure can be found in the `pylab_2d.py` example.
 
+
+.. index:: states
 
 Stateful objects
 ================
@@ -152,6 +155,8 @@ of desired state variables names, passed to the object constructor. Keyword
 'all' can be used to select all known states for that statefull object.
 
 
+.. index:: error, classifier error, transfer error
+
 Error Calculation
 =================
 
@@ -177,6 +182,22 @@ on the validation dataset are made.
 
 .. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
 
+
+.. index:: statistical testing
+
+Statistical Testing of Classifier Errors
+----------------------------------------
+
+(to be written)
+
+.. _MCNullDist: api/mvpa.clfs.stats.MCNullDist-class.html
+
+.. Point to the problem of an unknown H0 distribution, which is a problem
+   for a lot of statistical tests.
+
+
+.. index:: cross-validation
+.. _cross-validation:
 
 Cross-validated Transfer Error
 ------------------------------
@@ -208,6 +229,8 @@ and some Dataset_ `data`.
   ...                                      NFoldSplitter(cvtype=1))
   >>> error = cvterr(data)
 
+.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
 
 
@@ -221,6 +244,18 @@ Boosted and Multi-class Classifiers
    it. Finally describe features of all available classifiers.
 
 
+.. index:: gassian process regression, GPR
+
+Gaussian Process Regression
+===========================
+
+(`Wikipedia entry about gaussian process regression`_).
+
+.. _Wikipedia entry about gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
+
+
+.. index:: k-nearest-neighbour, kNN
+
 k-Nearest-Neighbour
 ===================
 
@@ -231,8 +266,73 @@ future enhancements may include support for other kernels.
 .. _kNN: api/mvpa.clfs.knn.kNN-class.html
 
 
+.. index:: least angle regression, LARS
+
+Least Angle Regression
+======================
+
+[#]_
+
+.. [#] Bradley Efron, Trevor Hastie, Iain Johnstone and Robert Tibshirani
+       (2004). A new method for variable subset selection, with the
+       lasso and "epsilon" forward stagewise methods as special cases.
+       *Annals of Statistics, 32*, 407-499.
+
+
+.. index:: logistic regression, penalized logistic regression
+
+Penalized Logistic Regression
+=============================
+
+The penalized logistic regression (PLR_) is similar to the ridge in that it
+has a penalty term, however, it is trained to predict a binary outcome by
+means of the logistic function (`Wikipedia entry about logistic regression`_).
+
+.. _Wikipedia entry about logistic regression: http://en.wikipedia.org/wiki/Logistic_regression
+.. _PLR: api/mvpa.clfs.plr.PLR-class.html
+
+
+
+.. index:: ridge regression
+
+Ridge Regression
+================
+
+Ridge regression (aka Tikhonov regularization) is a variant of a linear regression
+(`Wikipedia entry about ridge regression`_).
+
+The ridge regression classifier (RidgeReg_) performs a simple linear regression
+with a penalty parameter to help avoid over-fitting.  The regression inserts an
+intercept term so that you do not have to center your data.
+
+.. _Wikipedia entry about ridge regression: http://en.wikipedia.org/wiki/Ridge_regression
+.. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
+
+
+.. index:: sparse multinomial logistic regression, SMLR
+
+Sparse Multinomial Logistic Regression
+======================================
+
+Sparse Multinomial Logistic Regression [#]_ is a fast multi-class classifier that
+can easily with high-dimensional problems (`research paper about SMLR`_). PyMVPA
+include two implementations: one in pure Python and a faster one that makes use
+of a C extension for the performance critical pieces of the code.
+
+.. [#] Krishnapuram, B., Figueiredo, M., Carin, L., & Hartemink, A. (2005).
+       Sparse Multinomial Logistic Regression: Fast Algorithms and
+       Generalization Bounds. *IEEE Transactions on Pattern Analysis and
+       Machine Intelligence (PAMI)*, 957–968.
+.. _research paper about SMLR: http://www.cs.duke.edu/~amink/publications/manuscripts/hartemink05.pami.pdf
+
+
+.. index:: support vector machine, SVM
+
 Support Vector Machines
 =======================
+
+Support vector machines [#]_ are a popular classifier that can deal with very high dimensional
+problems (`Wikipedia entry about SVM`_).
 
 The support vector machine classes provide a family of classifers by wrapping
 the libsvm_ library.  While the SVMBase_ class provides a complete interface,
@@ -240,6 +340,11 @@ the other child classes make it easy to run standard classifiers, such as
 linear SVM, with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_,
 RbfNuSVMC_ and RbfCSVMC_).
 
+.. [#] Vapnik, V. (1995). *The Nature of Statistical Learning Theory*.
+       Springer, New York.
+
+.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _Wikipedia entry about SVM: http://en.wikipedia.org/wiki/Support_Vector_Machine
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
 .. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
@@ -247,28 +352,4 @@ RbfNuSVMC_ and RbfCSVMC_).
 .. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
 
-Ridge Regression
-================
-
-The ridge regression classifier (RidgeReg_) performs a simple linear regression
-with a penalty parameter to help avoid over-fitting.  The regression inserts an
-intercept term so that you do not have to center your data.
-
-.. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
-
-
-Penalized Logistic Regression
-=============================
-
-The penalized logistic regression (PLR_) is similar to the ridge in that it
-has a penalty term, however, it is trained to predict a binary outcome by
-means of the logistic function.
-
-.. _PLR: api/mvpa.clfs.plr.PLR-class.html
-
-
-Sparse Multinomial Logistic Regression
-======================================
-
-This one is really fancy!
 

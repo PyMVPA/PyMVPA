@@ -12,12 +12,12 @@ PyMVPA Documentation Contents
    classifiers
    measures
    featsel
-   algorithms
+   scenarios
    misc
-   examples
    glossary
    matlab
    faq
-   copying
+   examples
+   legal
    changelog
    todo

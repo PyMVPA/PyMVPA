@@ -93,7 +93,7 @@ def _setdebug(obj, partname):
     debugname = "SG_%s" % partname.upper()
 
     switch = {True: (shogun.Kernel.M_DEBUG, 'M_DEBUG', "enable"),
-              False: (shogun.Kernel.M_EMERGENCY, 'M_EMERGENCY', "disable")}
+              False: (shogun.Kernel.M_ERROR, 'M_ERROR', "disable")}
 
     key = __debug__ and debugname in debug.active
 
