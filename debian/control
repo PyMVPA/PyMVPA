@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Michael Hanke <michael.hanke@gmail.com>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-sphinx, python-ctypes (>= 1.0.1), texlive, texlive-latex-extra, texlive-lang-french
+Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-sphinx, python-ctypes (>= 1.0.1), texlive, texlive-latex-extra
 Standards-Version: 3.7.3
 Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
@@ -23,9 +23,10 @@ Description: multivariate pattern analysis with Python
  steps (e.g. data preparation, classification, feature selection,
  generalization testing), a number of implementations of some popular
  algorithms (e.g. kNN, Ridge Regressions, Sparse Multinomial Logistic
- Regression), and bindings to external ML libraries (libsvm, shogun).
+ Regression), and bindings to external machine learning libraries (libsvm,
+ shogun).
  .
- While it is not limited to neuroimaging data (e.g. FMRI) it
+ While it is not limited to neuroimaging data (e.g. fMRI) it
  is eminently suited for such datasets.
 
 
@@ -35,9 +36,9 @@ Section: doc
 Description: documention and examples for PyMVPA
  This package contains PyMVPA documentation in various formats
  (HTML, TXT, PDF) including
- * User manual
- * Developer guidelines
- * API documentation
+  * User manual
+  * Developer guidelines
+  * API documentation
  .
- Addtionally all example scripts shipped with the PyMVPA sources are
+ Additionally, all example scripts shipped with the PyMVPA sources are
  included.
