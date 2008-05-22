@@ -8,9 +8,13 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
+.. index:: misc
+
 *************
 Miscellaneous
 *************
+
+.. index:: progress tracking, verbosity, debug, warning
 
 Progress Tracking
 =================
@@ -32,6 +36,8 @@ There are 3 types of messages PyMVPA can produce:
 .. _debug: api/mvpa.misc-module.html#debug
 .. _warning: api/mvpa.misc-module.html#warning
 
+
+.. index:: verbosity
 
 Verbose Messages
 ----------------
@@ -57,6 +63,8 @@ The following verbosity levels are supported:
   :4: computation/algorithm relevant thing
 
 
+.. index:: warning
+
 Warning Messages
 ----------------
 
@@ -78,6 +86,8 @@ In python code, invocation of warning with argument ``bt = True``
 enforces printout of traceback whenever warning tracebacks are
 disabled by default.
 
+
+.. index:: debug
 
 Debug Messages
 --------------
@@ -132,6 +142,8 @@ bugs in the internal logic.
 Additional Little Helpers
 =========================
 
+.. index:: random number generation, RNG
+
 Random Number Generation
 ------------------------
 
@@ -153,6 +165,8 @@ Others
 
 .. put information about IO helpers, external bindings, etc here
 
+
+.. index:: FSL
 
 FSL Bindings
 ============

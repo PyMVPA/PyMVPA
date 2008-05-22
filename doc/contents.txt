@@ -12,7 +12,7 @@ PyMVPA Documentation Contents
    classifiers
    measures
    featsel
-   algorithms
+   scenarios
    misc
    glossary
    matlab
