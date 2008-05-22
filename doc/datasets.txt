@@ -7,9 +7,9 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _datasets:
 
 .. index:: dataset, sample attribute, dataset attribute
+.. _datasets:
 
 ********
 Datasets
@@ -154,7 +154,7 @@ results and information maps on the original dataspace.
 
 Another feature of mapped datasets is that valid mapping information is
 maintained even when the feature space changes. When running some feature
-selection algorithm (see Algorithms_) some features of the original features
+selection algorithm (see :ref:`featsel`) some features of the original features
 set will be removed, but after feature selection one will most likely want
 to know where the selected (or removed) features are in the original dataspace.
 To make use of the neuro-imaging example again: The most convenient way to
@@ -187,6 +187,7 @@ are precisely mapped back onto their original locations in the data space.
 
 
 .. index:: data splitting, splitter, leave-one-out
+.. _data_splitter:
 
 Data Splitting
 ==============
@@ -255,7 +256,4 @@ there are many more so called *processing objects*. These classes or objects
 are instantiated by passing all relevant parameters to the constructor.
 Processing objects can then be called multiple times with different datasets
 to perform their algorithm on the respective dataset. This design applies to
-virtually every piece of PyMVPA that is described in the Algorithms_ section,
-but also the many other parts.
-
-
+the majority of the algorithms implemented in PyMVPA.

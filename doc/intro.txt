@@ -323,6 +323,7 @@ Alternatively, one can also download a tarball of the latest development
 snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
 code repository).
 
+.. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
 .. index:: Git repository
 
 If you want to have access to both, the full PyMVPA history and the latest
