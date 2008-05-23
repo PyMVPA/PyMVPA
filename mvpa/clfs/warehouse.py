@@ -126,7 +126,7 @@ clfs = Warehouse()
 clfs += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
           SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
           SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
-          SMLR(lm=100.0, implementation="C", descr="SMLR(lm=100.0)"),
+          #SMLR(lm=100.0, implementation="C", descr="SMLR(lm=100.0)"),
           #                         SMLR(implementation="Python", descr="SMLR(Python)")
           ]
 
