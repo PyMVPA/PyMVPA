@@ -30,19 +30,19 @@ class GPR(Classifier):
         doc="Variance per each predicted value")
 
     log_marginal_likelihood = StateVariable(enabled=False,
-        doc="Log Marginal Likelihood ;-)")
+        doc="Log Marginal Likelihood")
 
 
     _clf_internals = [ 'gpr', 'regression', 'non-linear' ]
 
-    def __init__(self, kernel=KernelSquaredExponential(length_scale=0.01),
+    def __init__(self, kernel=KernelSquaredExponential(),
                  sigma_noise=0.001, **kwargs):
         """Initialize a GPR regression analysis.
 
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
-            (Default to KernelSquaredExponential(lengthscale=0.01)
+            (Defaults to KernelSquaredExponential())
           sigma_noise : float
             the standard deviation of the gaussian noise.
             (Defaults to 0.001)
@@ -62,6 +62,9 @@ class GPR(Classifier):
 
         # set noise level:
         self.sigma_noise = sigma_noise
+
+        self.predicted_variances = None
+        self.log_marginal_likelihood = None
 
 
     def __repr__(self):
@@ -85,7 +88,17 @@ class GPR(Classifier):
               self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
         self.alpha = N.linalg.solve(self.L.transpose(),
                                     N.linalg.solve(self.L, self.train_labels))
+        # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
+        # but preliminary tests show them to be slower.
 
+        if self.states.isEnabled('log_marginal_likelihood'):
+            self.log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
+                                      N.log(self.L.diagonal()).sum() - \
+                                      self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
+            pass
+
+
+        
 
     def _predict(self, data):
         """
@@ -102,18 +115,17 @@ class GPR(Classifier):
 
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
-            v = N.linalg.solve(L, km_train_test)
+            v = N.linalg.solve(self.L, km_train_test)
             self.predicted_variances = \
                            N.diag(km_test_test-N.dot(v.transpose(), v))
 
-        if self.states.isEnabled('log_marginal_likelihood'):
-            log_marginal_likelihood = -0.5*N.dot(train_label, alpha) - \
-                                      N.log(L.diagonal()).sum() - \
-                                      km_train_train.shape[0]*0.5*N.log(2*N.pi)
-
         return predictions
 
-def gen_data(n_instances, n_features, flat=False):
+
+def gen_data(n_instances, n_features, flat=False, noise=0.4):
+    """
+    Generate a (quite) complex multidimensional dataset.
+    """
     data = None
     if flat:
         data = (N.arange(0.0, 1.0, 1.0/n_instances)*N.pi)
@@ -123,7 +135,7 @@ def gen_data(n_instances, n_features, flat=False):
         data = N.random.rand(n_instances, n_features)*N.pi
         pass
     label = N.sin((data**2).sum(1)).round()
-    data = N.matrix(data)
+    label += N.random.rand(label.size)*noise
     return data, label
 
 
@@ -132,43 +144,110 @@ if __name__ == "__main__":
 
     N.random.seed(1)
 
+    import pylab
+    pylab.close("all")
+    pylab.ion()
+
     from mvpa.datasets import Dataset
 
-    train_size = 15
+    train_size = 40
     test_size = 100
     F = 1
 
-
     data_train, label_train = gen_data(train_size, F)
-    print label_train
+    # print label_train
 
     data_test, label_test = gen_data(test_size, F, flat=True)
     # print label_test
 
     dataset = Dataset(samples=data_train, labels=label_train)
 
-    kse = KernelSquaredExponential(length_scale=2e-1)
-    g = GPR(kse, sigma_noise=0.001)
-    print g
+    regression = True
+    logml = True
 
+    if logml :
+        print "Looking for better hyperparameters"
+            
+        sigma_noise_steps = N.linspace(0.1, 0.25, num=20)
+        lengthscale_steps = N.linspace(2.0, 5.0, num=20) 
+        lml = N.zeros((len(sigma_noise_steps), len(lengthscale_steps)))
+        lml_best = -N.inf
+        lengthscale_best = 0.0
+        sigma_noise_best = 0.0
+        i = 0
+        for x in sigma_noise_steps:
+            j = 0
+            for y in lengthscale_steps: 
+                kse = KernelSquaredExponential(length_scale=y)
+                g = GPR(kse, sigma_noise=x,regression=regression)
+                g.states.enable("log_marginal_likelihood")
+                g.train(dataset)
+                lml[i,j] = g.log_marginal_likelihood
+                if lml[i,j] > lml_best:
+                    lml_best = lml[i,j]
+                    lengthscale_best = y
+                    sigma_noise_best = x
+                    pass
+                j += 1
+                pass
+            i += 1
+            pass
+        pylab.figure()
+        X = N.repeat(sigma_noise_steps[:,N.newaxis],sigma_noise_steps.size,axis=1)
+        Y = N.repeat(lengthscale_steps[N.newaxis,:],lengthscale_steps.size,axis=0)
+        step = (lml.max()-lml.min())/30
+        pylab.contour(X,Y, lml, N.arange(lml.min(), lml.max()+step, step),colors='k')
+        pylab.plot([sigma_noise_best],[lengthscale_best],"k+",markeredgewidth=2, markersize=8)
+        pylab.xlabel("noise standard deviation")
+        pylab.ylabel("characteristic lengthscale")
+        pylab.title("Hyperparameters' search")
+        pylab.axis("tight")
+        print "lml_best",lml_best
+        print "sigma_noise_best",sigma_noise_best
+        print "lengthscale_best",lengthscale_best
+        pass
+    
+
+
+    kse = KernelSquaredExponential(length_scale=lengthscale_best)
+    g = GPR(kse, sigma_noise=sigma_noise_best,regression=regression)
+    print g
+    if regression:
+        g.states.enable("predicted_variances")
+        pass
+
+    if logml:
+        g.states.enable("log_marginal_likelihood")
+        pass
+        
     g.train(dataset)
     prediction = g.predict(data_test)
 
     print label_test
-    print prediction.round()
-    # accuracy = 1-N.sqrt(((prediction-label_test)**2).sum()/prediction.size) # 1-RMSE
-    accuracy = (prediction.round().astype('l')==label_test.astype('l')).sum()/float(prediction.size)
-    print "accuracy:", accuracy
-
-    import pylab
-    pylab.close("all")
-    pylab.ion()
+    print prediction
+    accuracy = None
+    if regression:
+        accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
+        print "RMSE:",accuracy
+    else:
+        accuracy = (prediction.astype('l')==label_test.astype('l')).sum()/float(prediction.size)
+        print "accuracy:", accuracy
+        pass
 
     if F == 1:
+        pylab.figure()
         pylab.plot(data_train, label_train, "ro", label="train")
         pylab.plot(data_test, prediction, "b+-", label="prediction")
-        pylab.plot(data_test, label_test, "gx-", label="test")
-        pylab.text(0.5, -1.2, "accuracy="+str(accuracy))
+        pylab.plot(data_test, label_test, "gx-", label="test (true)")
+        if regression:
+            pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
+            pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
+            pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))            
+        else:
+            pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
+            pass
         pylab.legend()
         pass
+
+    print g.log_marginal_likelihood
 

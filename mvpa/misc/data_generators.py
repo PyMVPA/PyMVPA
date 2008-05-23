@@ -62,6 +62,9 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     if not means is None:
         # add mean
         data += N.repeat(N.array(means, ndmin=2), perlabel, axis=0)
+    # bring it 'under 1', since otherwise some classifiers have difficulties
+    # during optimization
+    data = 1.0/(N.max(N.abs(data))) * data
     labels = N.concatenate([N.repeat(i, perlabel) for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
