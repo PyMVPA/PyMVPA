@@ -36,7 +36,7 @@ class MCNullDist(object):
     corresponding measure computed. In case of a `TransferError` this is the
     error when predicting the *correct* labels of the validation dataset.
 
-    The distribution be queried using the `cdf()` method, which can be
+    The distribution can be queried using the `cdf()` method, which can be
     configured to report probabilities/frequencies from `left` or `right` tail,
     i.e. fraction of the distribution that is lower or larger than some
     critical value.
