@@ -21,6 +21,7 @@ from mvpa.clfs.kernel import KernelSquaredExponential
 if __debug__:
     from mvpa.misc import debug
 
+
 class GPR(Classifier):
     """Gaussian Process Regression (GPR).
 
@@ -65,23 +66,25 @@ class GPR(Classifier):
 
         self.predicted_variances = None
         self.log_marginal_likelihood = None
-
+        self.train_fv = None
+        self.labels = None
+        self.km_train_train = None
+        pass
 
     def __repr__(self):
         """String summary of the object
         """
-        return """GPR(kernel=%s, enable_states=%s)""" % \
-               (self.__kernel, str(self.states.enabled))
+        return """GPR(kernel=%s, sigma_noise=%f, enable_states=%s)""" % \
+               (self.__kernel, self.sigma_noise, str(self.states.enabled))
 
 
-    def _train(self, data):
-        """Train the classifier using `data` (`Dataset`).
+    def compute_log_marginal_likelihood(self):
         """
-
-        self.train_fv = data.samples
-        self.train_labels = data.labels
+        Compute log marginal likelihood using self.train_fv and self.labels.
+        """
         if __debug__:
-            debug("GPR", "Computing train train kernel matrix")
+            debug("GPR", "Computing train train kernel matrix")            
+
         self.km_train_train = self.__kernel.compute(self.train_fv)
 
         self.L = N.linalg.cholesky(self.km_train_train +
@@ -96,7 +99,20 @@ class GPR(Classifier):
                                       N.log(self.L.diagonal()).sum() - \
                                       self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
             pass
+        return self.log_marginal_likelihood
 
+
+
+    def _train(self, data):
+        """Train the classifier using `data` (`Dataset`).
+        """
+
+        self.train_fv = data.samples
+        self.train_labels = data.labels
+
+        tmp = self.compute_log_marginal_likelihood()
+        
+        pass
 
         
 
@@ -120,6 +136,22 @@ class GPR(Classifier):
                            N.diag(km_test_test-N.dot(v.transpose(), v))
 
         return predictions
+    
+    def set_hyperparameters(self,*args):
+        """
+        Set hyperparameters' values.
+
+        Note that this is a list so the order of the values is
+        important.
+        """
+        args=args[0]
+        self.sigma_noise = args[0]
+        if len(args)>1:
+            self.__kernel.set_hyperparameters(*args[1:])
+            pass
+        return
+
+    pass
 
 
 def gen_data(n_instances, n_features, flat=False, noise=0.4):
@@ -138,9 +170,56 @@ def gen_data(n_instances, n_features, flat=False, noise=0.4):
     label += N.random.rand(label.size)*noise
     return data, label
 
+def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F,logml=True):
+    data_train = dataset.samples
+    label_train = dataset.labels
+    import pylab
+    kse = KernelSquaredExponential(length_scale=length_scale_best)
+    g = GPR(kse, sigma_noise=sigma_noise_best,regression=regression)
+    print g
+    if regression:
+        g.states.enable("predicted_variances")
+        pass
+
+    if logml:
+        g.states.enable("log_marginal_likelihood")
+        pass
+        
+    g.train(dataset)
+    prediction = g.predict(data_test)
+
+    # print label_test
+    # print prediction
+    accuracy = None
+    if regression:
+        accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
+        print "RMSE:",accuracy
+    else:
+        accuracy = (prediction.astype('l')==label_test.astype('l')).sum()/float(prediction.size)
+        print "accuracy:", accuracy
+        pass
+
+    if F == 1:
+        pylab.figure()
+        pylab.plot(data_train, label_train, "ro", label="train")
+        pylab.plot(data_test, prediction, "b+-", label="prediction")
+        pylab.plot(data_test, label_test, "gx-", label="test (true)")
+        if regression:
+            pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
+            pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
+            pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))            
+        else:
+            pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
+            pass
+        pylab.legend()
+        pass
+
+    print "LML:",g.log_marginal_likelihood
+
+
+
 
 if __name__ == "__main__":
-
 
     N.random.seed(1)
 
@@ -168,25 +247,30 @@ if __name__ == "__main__":
     if logml :
         print "Looking for better hyperparameters"
             
-        sigma_noise_steps = N.linspace(0.1, 0.25, num=20)
-        lengthscale_steps = N.linspace(2.0, 5.0, num=20) 
-        lml = N.zeros((len(sigma_noise_steps), len(lengthscale_steps)))
+        sigma_noise_steps = N.linspace(0.1, 0.6, num=20)
+        length_scale_steps = N.linspace(0.01, 1.0, num=20) 
+        lml = N.zeros((len(sigma_noise_steps), len(length_scale_steps)))
         lml_best = -N.inf
-        lengthscale_best = 0.0
+        length_scale_best = 0.0
         sigma_noise_best = 0.0
         i = 0
         for x in sigma_noise_steps:
             j = 0
-            for y in lengthscale_steps: 
+            for y in length_scale_steps: 
                 kse = KernelSquaredExponential(length_scale=y)
                 g = GPR(kse, sigma_noise=x,regression=regression)
                 g.states.enable("log_marginal_likelihood")
                 g.train(dataset)
                 lml[i,j] = g.log_marginal_likelihood
+                # print x,y,g.log_marginal_likelihood
+                # g.train_fv = dataset.samples
+                # g.train_labels = dataset.labels
+                # lml[i,j] = g.compute_log_marginal_likelihood()
                 if lml[i,j] > lml_best:
                     lml_best = lml[i,j]
-                    lengthscale_best = y
+                    length_scale_best = y
                     sigma_noise_best = x
+                    print x,y,lml_best
                     pass
                 j += 1
                 pass
@@ -194,60 +278,20 @@ if __name__ == "__main__":
             pass
         pylab.figure()
         X = N.repeat(sigma_noise_steps[:,N.newaxis],sigma_noise_steps.size,axis=1)
-        Y = N.repeat(lengthscale_steps[N.newaxis,:],lengthscale_steps.size,axis=0)
+        Y = N.repeat(length_scale_steps[N.newaxis,:],length_scale_steps.size,axis=0)
         step = (lml.max()-lml.min())/30
         pylab.contour(X,Y, lml, N.arange(lml.min(), lml.max()+step, step),colors='k')
-        pylab.plot([sigma_noise_best],[lengthscale_best],"k+",markeredgewidth=2, markersize=8)
+        pylab.plot([sigma_noise_best],[length_scale_best],"k+",markeredgewidth=2, markersize=8)
         pylab.xlabel("noise standard deviation")
-        pylab.ylabel("characteristic lengthscale")
-        pylab.title("Hyperparameters' search")
+        pylab.ylabel("characteristic length_scale")
+        pylab.title("log marginal likelihood")
         pylab.axis("tight")
         print "lml_best",lml_best
         print "sigma_noise_best",sigma_noise_best
-        print "lengthscale_best",lengthscale_best
+        print "length_scale_best",length_scale_best
+        print "number of expected upcrossing on the unitary intervale:",1.0/(2*N.pi*length_scale_best)
         pass
     
 
 
-    kse = KernelSquaredExponential(length_scale=lengthscale_best)
-    g = GPR(kse, sigma_noise=sigma_noise_best,regression=regression)
-    print g
-    if regression:
-        g.states.enable("predicted_variances")
-        pass
-
-    if logml:
-        g.states.enable("log_marginal_likelihood")
-        pass
-        
-    g.train(dataset)
-    prediction = g.predict(data_test)
-
-    print label_test
-    print prediction
-    accuracy = None
-    if regression:
-        accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
-        print "RMSE:",accuracy
-    else:
-        accuracy = (prediction.astype('l')==label_test.astype('l')).sum()/float(prediction.size)
-        print "accuracy:", accuracy
-        pass
-
-    if F == 1:
-        pylab.figure()
-        pylab.plot(data_train, label_train, "ro", label="train")
-        pylab.plot(data_test, prediction, "b+-", label="prediction")
-        pylab.plot(data_test, label_test, "gx-", label="test (true)")
-        if regression:
-            pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
-            pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
-            pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))            
-        else:
-            pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
-            pass
-        pylab.legend()
-        pass
-
-    print g.log_marginal_likelihood
-
+    compute_prediction(sigma_noise_best,length_scale_best,regression,datasetZ,data_test,label_test,F,logml)
