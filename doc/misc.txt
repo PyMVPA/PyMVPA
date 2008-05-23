@@ -32,10 +32,43 @@ There are 3 types of messages PyMVPA can produce:
     messages which are reported by mvpa if something goes a little
     unexpected but not critical
 
+
 .. _verbose: api/mvpa.misc-module.html#verbose
 .. _debug: api/mvpa.misc-module.html#debug
 .. _warning: api/mvpa.misc-module.html#warning
 
+
+.. index:: redirecting output
+
+Redirecting Output
+------------------
+
+By default, all types of messages are printed by PyMVPA to the standard
+output. It is possible to redirect them to standard error, or a file, or a
+list of multiple such targets, by using environment variable
+``MVPA_?_OUTPUT``, where X is either ``VERBOSE``, ``DEBUG``, or ``WARNING``
+correspondingly. E.g.::
+
+  export MVPA_VERBOSE_OUTPUT=stdout,/tmp/1 MVPA_WARNING_OUTPUT=/tmp/3 MVPA_DEBUG_OUTPUT=stderr,/tmp/2
+
+would direct verbose messages to standard output as well as to ``/tmp/1``
+file, warnings will be stored only in ``/tmp/3``, and debug output would
+appear on standard error output, as well as in the file ``/tmp/2``.
+
+PyMVPA output redirection though has no effect on external libraries debug
+output if corresponding debug_ target is enabled
+
+ shogun
+   debug output (if any of internal ``SG_`` debug_ targets is enabled)
+   appears on standard output
+
+ SMLR
+   debug output (if ``SMLR_`` debug_ target is enabled) appears on standard
+   output
+
+ libsvm
+   debug output (if ``LIBSVM`` debug_ target is enabled) appears on
+   standard error
 
 .. index:: verbosity
 
