@@ -22,24 +22,27 @@ class MCNullDist(object):
     # lower number of transfer errors and therefore dramatically reduce the
     # necessary CPU time. This is almost trivial to do with
     #   scipy.stats.norm.{fit,cdf}
-    """Class to determine the distribution of a transfer error under the NULL
+    """Class to determine the distribution of a measure under the NULL
     distribution (no signal).
 
     No assumptions are made about the shape of the distribution under the null
     hypothesis. Instead this distribution is estimated by performing multiple
-    classification attempts with permuted `label` vectors, hence no or random
-    signal.
+    measurements with permuted `label` vectors, hence no or random signal.
 
     The distribution is estimated by calling fit() with an appropriate
-    `TransferError` instance and a training and a validation dataset. For a
-    customizable amount of cycles the training data labels are permuted and the
-    corresponding error when predicting the *correct* labels of the validation
-    dataset is determined.
+    `DatasetMeasure` or `TransferError` instance and a training and a
+    validation dataset (in case of a `TransferError`). For a customizable
+    amount of cycles the training data labels are permuted and the
+    corresponding measure computed. In case of a `TransferError` this is the
+    error when predicting the *correct* labels of the validation dataset.
 
     The distribution be queried using the `cdf()` method, which can be
     configured to report probabilities/frequencies from `left` or `right` tail,
     i.e. fraction of the distribution that is lower or larger than some
     critical value.
+
+    This class also supports `FeaturewiseDatasetMeasure`. In that case `cdf()`
+    returns an array of featurewise probabilities/frequencies.
     """
     def __init__(self, permutations=1000, tail='left'):
         """Cheap initialization.
@@ -60,16 +63,18 @@ class MCNullDist(object):
         self.__tail = tail
 
 
-    def fit(self, transerr, wdata, vdata):
+    def fit(self, measure, wdata, vdata=None):
         """Fit the distribution by performing multiple cycles which repeatedly
         permuted labels in the training dataset.
 
         :Parameter:
-            transerror: `TransferError`
+            measure: (`Featurewise`)`DatasetMeasure` | `TransferError`
                 TransferError instance used to compute all errors.
-            wdata: `Dataset` which gets permuted and used to train a
-                classifier multiple times.
-            vdata: `Dataset` used to validate each trained classifier.
+            wdata: `Dataset` which gets permuted and used to compute the
+                measure/transfer error multiple times.
+            vdata: `Dataset` used for validation. 
+                If provided measure is assumed to be a `TransferError` and
+                working and validation dataset are passed onto it.
         """
         dist_samples = []
         """Holds the transfer errors when randomized signal."""
@@ -85,24 +90,34 @@ class MCNullDist(object):
             # when the *right* permutations (the ones that matter) are done.
             wdata.permuteLabels(True, perchunk=False)
 
-            # compute and store the training error of this permutation
-            dist_samples.append(transerr(vdata, wdata))
+            # compute and store the measure of this permutation
+            if not vdata is None:
+                # assume it has `TransferError` interface
+                dist_samples.append(measure(vdata, wdata))
+            else:
+                dist_samples.append(measure(wdata))
 
         # store errors
         self.__dist_samples = N.asarray(dist_samples)
 
+        print self.__dist_samples
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
 
 
     def cdf(self, x):
-        """Returns the probability of a scalar value `x` or lower given the
-        estimated distribution.
+        """Returns the frequency/probability of a value `x` given the estimated
+        distribution. Returned values are determined left or right tailed
+        depending on the constructor setting.
+
+        In case a `FeaturewiseDatasetMeasure` was used to estimate the
+        distribution the method returns an array. In that case `x` can be
+        a scalar value or an array of a matching shape.
         """
         if self.__tail == 'left':
-            return (self.__dist_samples <= x).mean()
+            return (self.__dist_samples <= x).mean(axis=0)
         elif self.__tail == 'right':
-            return (self.__dist_samples >= x).mean()
+            return (self.__dist_samples >= x).mean(axis=0)
         else:
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
                               % self.__tail
