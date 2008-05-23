@@ -17,7 +17,7 @@ import copy
 import numpy as N
 
 from mvpa.misc.exceptions import DatasetError
-from mvpa.misc.support import idhash
+from mvpa.misc.support import idhash as idhash_
 
 if __debug__:
     from mvpa.misc import debug, warning
@@ -205,7 +205,7 @@ class Dataset(object):
 
         res = id(self._data)
         for val in self._data.values():
-            res += idhash(val)
+            res += idhash_(val)
         return res
 
 
@@ -219,7 +219,7 @@ class Dataset(object):
         # I guess we better checked if dictname is known  but...
         for k in self._uniqueattributes:
             if __debug__:
-                debug("DS", "Reset attribute %s" % k)
+                debug("DS_", "Reset attribute %s" % k)
             self._dsattr[k] = None
         self._dsattr['__uniquereseted'] = True
 
@@ -231,8 +231,8 @@ class Dataset(object):
         """
         if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
             if __debug__:
-                debug("DS", "Recomputing unique set for attrib %s within %s" %
-                      (attrib, self.__repr__(False)))
+                debug("DS_", "Recomputing unique set for attrib %s within %s" %
+                      (attrib, self.summary(uniq=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
             self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
@@ -444,33 +444,58 @@ class Dataset(object):
                     'such capability is not present')
 
 
-    def __repr__(self, full=True):
+    def __str__(self):
         """String summary over the object
         """
-        if __debug__ and 'DS_ID' in debug.active:
-            s = """<Dataset{%s}/ %s %d{%s} x %d""" % \
-                (self.idhash, self.samples.dtype,
-                 self.nsamples, idhash(self.samples),
-                 self.nfeatures)
+        return self.summary(uniq=True,
+                            idhash=__debug__ and ('DS_ID' in debug.active),
+                            stats=__debug__ and ('DS_STATS' in debug.active),
+                            )
+
+    def __repr__(self):
+        return "<%s>" % str(self)
+
+    def summary(self, uniq=True, idhash=True, stats=True):
+        """String summary over the object
+
+        :Parameters:
+          uniq : bool
+             include summary over data attributes which have unique
+          idhash : bool
+             include idhash value for dataset and samples
+          stats : bool
+             include some basic statistics (mean, std, var) over dataset samples
+        """
+        if idhash:
+            idhash_ds = "{%s}" % self.idhash
+            idhash_samples = "{%s}" % idhash_(self.samples)
         else:
-            s = """<Dataset / %s %d x %d""" % \
-                (self.samples.dtype, self.nsamples, self.nfeatures)
+            idhash_ds = ""
+            idhash_samples = ""
 
-        if not full:
-            return s                    # enough is enough
+        s = """Dataset%s/ %s %d%s x %d""" % \
+            (idhash_ds, self.samples.dtype,
+             self.nsamples, idhash_samples, self.nfeatures)
 
-        s +=  " uniq:"
-        for uattr in self._dsattr.keys():
-            if not uattr.startswith("unique"):
-                continue
-            attr = uattr[6:]
-            try:
-                value = self._getuniqueattr(attrib=uattr,
-                                            dict_=self._data)
-                s += " %d %s" % (len(value), attr)
-            except:
-                pass
-        return s + '>'
+        if uniq:
+            s +=  " uniq:"
+            for uattr in self._dsattr.keys():
+                if not uattr.startswith("unique"):
+                    continue
+                attr = uattr[6:]
+                try:
+                    value = self._getuniqueattr(attrib=uattr,
+                                                dict_=self._data)
+                    s += " %d %s" % (len(value), attr)
+                except:
+                    pass
+
+        if stats:
+            # TODO -- avg per chunk?
+            s += " stats: mean=%g std=%g var=%g" % \
+                 (N.mean(self.samples), N.std(self.samples),
+                  N.var(self.samples))
+        return s
 
 
     def __iadd__( self, other ):
