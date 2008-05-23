@@ -30,31 +30,50 @@ if __debug__:
 
 
 class DatasetMeasure(Stateful):
-    """A measure computed from a `Dataset` (base class).
+    """A measure computed from a `Dataset`
 
-    All subclasses shall get all necessary parameters via their constructor,
-    so it is possible to get the same type of measure for multiple datasets
-    by passing them to the __call__() method successively.
+    All dataset measures support arbitrary transformation of the measure
+    after it has been computed. Transformation are done by processing the
+    measure with a functor that is specified via the `transformer` keyword
+    argument of the constructor. Upon request, the raw measure (before
+    transformations are applied) is stored in the `raw_result` state variable.
+
+    Additionally all dataset measures support the estimation of the
+    probabilit(y,ies) of a measure under some distribution. Typically this will
+    be the NULL distribution (no signal), that can be estimated with
+    permutation tests. If a distribution estimator instance is passed to the
+    `null_dist` keyword argument of the constructor the respective
+    probabilities are automatically computed and stored in the `null_prob`
+    state variable.
+
+    :Developer note:
+      All subclasses shall get all necessary parameters via their constructor,
+      so it is possible to get the same type of measure for multiple datasets
+      by passing them to the __call__() method successively.
     """
 
     raw_result = StateVariable(enabled=False,
         doc="Computed results before applying any " +
             "transformation algorithm")
+    null_prob = StateVariable(enabled=True)
+    """Stores the probability of a measure under the NULL hypothesis"""
 
-    def __init__(self, transformer=None, *args, **kwargs):
+    def __init__(self, transformer=None, null_dist=None, *args, **kwargs):
         """Does nothing special.
 
         :Parameter:
-            transformer: Functor
-                This functor is called in `__call__()` to perform a final
-                processing step on the to be returned dataset measure. If None,
-                nothing is called
+          transformer: Functor
+            This functor is called in `__call__()` to perform a final
+            processing step on the to be returned dataset measure. If None,
+            nothing is called
+          null_dist : instance of distribution estimator
         """
         Stateful.__init__(self, **kwargs)
 
         self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
         methods."""
+        self.__null_dist = null_dist
 
 
     __doc__ = enhancedDocString('DatasetMeasure', locals(), Stateful)
@@ -91,7 +110,20 @@ class DatasetMeasure(Stateful):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
+        # estimate the NULL distribution when functor is given
+        if not self.__null_dist is None:
+            # we need a matching datameasure instance, but we have to disable
+            # the estimation of the null distribution in that child to prevent
+            # infinite looping.
+            measure = copy.copy(self)
+            measure.__null_dist = None
+            self.__null_dist.fit(measure, dataset)
+
+            # get probability of result under NULL hypothesis if available
+            self.null_prob = self.__null_dist.cdf(result)
+
         return result
+
 
     def __str__(self):
         return "%s(transformer=%s, enable_states=%s)" % \
@@ -168,6 +200,10 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             # After we stored each sensitivity separately,
             # we can apply combiner
             result = self.__combiner(result)
+
+        # call base class postcall
+        result = DatasetMeasure._postcall(self, dataset, result)
+
         return result
 
 
