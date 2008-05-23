@@ -313,8 +313,8 @@ class RbfCSVMC(SVMBase):
 # check if there is a libsvm version with configurable
 # noise reduction ;)
 if hasattr(svm.svmc, 'svm_set_verbosity'):
-    if __debug__ and "SVMLIB" in debug.active:
-        debug("SVM", "Setting verbosity for libsvm to 255")
+    if __debug__ and "LIBSVM" in debug.active:
+        debug("LIBSVM", "Setting verbosity for libsvm to 255")
         svm.svmc.svm_set_verbosity(255)
     else:
         svm.svmc.svm_set_verbosity(0)
