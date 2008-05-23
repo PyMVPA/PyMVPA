@@ -30,11 +30,26 @@ if __debug__:
 
 
 class DatasetMeasure(Stateful):
-    """A measure computed from a `Dataset` (base class).
+    """A measure computed from a `Dataset`
 
-    All subclasses shall get all necessary parameters via their constructor,
-    so it is possible to get the same type of measure for multiple datasets
-    by passing them to the __call__() method successively.
+    All dataset measures support arbitrary transformation of the measure
+    after it has been computed. Transformation are done by processing the
+    measure with a functor that is specified via the `transformer` keyword
+    argument of the constructor. Upon request, the raw measure (before
+    transformations are applied) is stored in the `raw_result` state variable.
+
+    Additionally all dataset measures support the estimation of the
+    probabilit(y,ies) of a measure under some distribution. Typically this will
+    be the NULL distribution (no signal), that can be estimated with
+    permutation tests. If a distribution estimator instance is passed to the
+    `null_dist` keyword argument of the constructor the respective
+    probabilities are automatically computed and stored in the `null_prob`
+    state variable.
+
+    :Developer note:
+      All subclasses shall get all necessary parameters via their constructor,
+      so it is possible to get the same type of measure for multiple datasets
+      by passing them to the __call__() method successively.
     """
 
     raw_result = StateVariable(enabled=False,
