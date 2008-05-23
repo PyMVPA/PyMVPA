@@ -13,7 +13,35 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 
-class MCNullDist(object):
+class Distribution(object):
+    def __init__(self, tail='left'):
+        """Cheap initialization.
+
+        :Parameter:
+          tail: str ['left', 'right']
+            Which tail of the distribution to report.
+        """
+        self._tail = tail
+
+        # sanity check
+        if self._tail not in ['left', 'right']:
+            raise ValueError, 'Unknown value "%s" to `tail` argument.' \
+
+
+    def fit(self, measure, wdata, vdata=None):
+        """Implement to fit the distribution to the data."""
+        raise NotImplementedError
+
+
+    def cdf(self, x):
+        """Implementations return the value of the cumulative distribution
+        function (left or right tail dpending on the setting).
+        """
+        raise NotImplementedError
+
+
+
+class MCNullDist(Distribution):
     # XXX this should be the baseclass of a bunch of tests with more
     # sophisticated tests, perhaps making more assumptions about the data
     # TODO invent derived classes that make use of some reasonable assumptions
@@ -44,7 +72,7 @@ class MCNullDist(object):
     This class also supports `FeaturewiseDatasetMeasure`. In that case `cdf()`
     returns an array of featurewise probabilities/frequencies.
     """
-    def __init__(self, permutations=1000, tail='left'):
+    def __init__(self, permutations=1000, **kwargs):
         """Cheap initialization.
 
         :Parameter:
@@ -52,15 +80,13 @@ class MCNullDist(object):
                 This many classification attempts with permuted label vectors
                 will be performed to determine the distribution under the null
                 hypothesis.
-            tail: str ['left', 'right']
-                Which tail of the distribution to report.
-
         """
+        Distribution.__init__(self, **kwargs)
+
         self.__dist_samples = None
         self.__permutations = permutations
         """Number of permutations to compute the estimate the null
         distribution."""
-        self.__tail = tail
 
 
     def fit(self, measure, wdata, vdata=None):
@@ -113,10 +139,54 @@ class MCNullDist(object):
         distribution the method returns an array. In that case `x` can be
         a scalar value or an array of a matching shape.
         """
-        if self.__tail == 'left':
+        if self._tail == 'left':
             return (self.__dist_samples <= x).mean(axis=0)
-        elif self.__tail == 'right':
-            return (self.__dist_samples >= x).mean(axis=0)
         else:
-            raise ValueError, 'Unknown value "%s" to `tail` argument.' \
-                              % self.__tail
+            return (self.__dist_samples >= x).mean(axis=0)
+
+
+
+class FixedDist(Distribution):
+    """Proxy/Adaptor class for SciPy distributions.
+
+    All distributions from SciPy's 'stats' module can be used with this class.
+
+    >>> import numpy as N
+    >>> from scipy import stats
+    >>> from mvpa.clfs.stats import FixedDist
+    >>>
+    >>> dist = FixedDist(stats.norm(loc=2, scale=4))
+    >>> dist.cdf(2)
+    array(0.5)
+    >>>
+    >>> dist.cdf(N.arange(5))
+    array([ 0.30853754,  0.40129367,  0.5       ,  0.59870633,  0.69146246])
+    >>>
+    >>> dist = FixedDist(stats.norm(loc=2, scale=4), tail='right')
+    >>> dist.cdf(N.arange(5))
+    array([ 0.69146246,  0.59870633,  0.5       ,  0.40129367,  0.30853754])
+    """
+    def __init__(self, dist, **kwargs):
+        """
+        :Parameter:
+          dist: distribution object
+            This can be any object the has a `cdf()` method to report the
+            cumulative distribition function values.
+        """
+        Distribution.__init__(self, **kwargs)
+
+        self._dist = dist
+
+
+    def fit(self, measure, wdata, vdata=None):
+        """Does nothing since the distribution is already fixed."""
+        pass
+
+
+    def cdf(self, x):
+        """Return value of the cumulative distribution function at `x`.
+        """
+        if self._tail == 'left':
+            return self._dist.cdf(x)
+        else:
+            return 1 - self._dist.cdf(x)
