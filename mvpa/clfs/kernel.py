@@ -182,6 +182,10 @@ class KernelSquaredExponential(Kernel):
                                    /(2.0*self.length_scale**2))
         return self.kernel_matrix
 
+    def set_hyperparameters(self,length_scale):
+        self.length_scale = length_scale
+        return
+
 if __name__ == "__main__":
 
     N.random.seed(1)
