@@ -55,6 +55,8 @@ Releases
   * New wrapper from SVM implementation of the Shogun toolbox.
   * Important bugfix in RFE, which reported incorrect feature ids in some
     cases.
+  * Added ability to compute stats/probabilities for all measures and transfer
+    errors.
 
 
 * 0.1.0 (Wed, 20 Feb 2008)
