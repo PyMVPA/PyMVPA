@@ -30,3 +30,4 @@ profile.out
 data/haxby8x6
 .nfs*
 *.valgrind.out*
+*.kcache.*
