@@ -100,7 +100,6 @@ class MCNullDist(object):
         # store errors
         self.__dist_samples = N.asarray(dist_samples)
 
-        print self.__dist_samples
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
 
