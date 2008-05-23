@@ -50,6 +50,27 @@ class StatsTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, null.cdf, [5,3,4])
 
 
+    def testDatasetMeasureProb(self):
+        ds = normalFeatureDataset(perlabel=20, nlabels=2, nfeatures=4,
+                                  nonbogus_features=[1,3], snr=4, nchunks=1)
+
+        # to estimate null distribution
+        m = OneWayAnova(null_dist=MCNullDist(permutations=10, tail='right'))
+
+        score = m(ds)
+
+        # plausability check
+        self.failUnless(score[0] + score[2] < score[1] + score[3])
+
+        # feature 1 and 3 should have a very unlikely value
+        self.failUnless(m.null_prob[1] < 0.05)
+        self.failUnless(m.null_prob[3] < 0.05)
+
+        # the others should be a lot larger
+        self.failUnless(m.null_prob[0] + m.null_prob[2] \
+                        > m.null_prob[1] + m.null_prob[3])
+
+
 
 def suite():
     return unittest.makeSuite(StatsTests)
