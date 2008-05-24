@@ -68,12 +68,11 @@ def main():
 
     for (dataset, datasetdescr), clfs_ in \
         [
-        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs[:]),
+        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 100"), clfs[:]),
         ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['non-linear']),
         ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['multiclass']),
         ]:
-
-        print "%s: %s" % (datasetdescr, `dataset`)
+        print "%s\n %s" % (datasetdescr, dataset.summary(idhash=False))
         print " Classifier                                  %corr  #features\t train predict  full"
         for clf in clfs_:
             print "  %-40s: "  % clf.descr,
