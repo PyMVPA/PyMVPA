@@ -9,6 +9,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Example demonstrating a simple classifiction of a 2-D dataset"""
 
+from mvpa.suite import *
+"""
+# Command above substitutes the following list
+
 import numpy as N
 import pylab as P
 
@@ -18,6 +22,8 @@ from mvpa.clfs.plr import PLR
 from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
 from mvpa.clfs.knn import kNN
+"""
+
 
 # set up the labeled data
 # two skewed 2-D distributions
