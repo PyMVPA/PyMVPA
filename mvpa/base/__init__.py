@@ -27,5 +27,7 @@ if __debug__:
     from mvpa.misc import debug
     debug('INIT', 'mvpa.base')
 
+import externals
+
 if __debug__:
     debug('INIT', 'mvpa.base end')
