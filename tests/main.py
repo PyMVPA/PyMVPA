@@ -47,6 +47,8 @@ tests = [
     'test_perturbsensana',
     'test_splitsensana',
     'test_anova',
+    # And the suite (all-in-1)
+    'test_suite',
     ]
 
 # fully test of externals

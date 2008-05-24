@@ -126,7 +126,18 @@ testmanual: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
 	                       --doctest-tests doc/
 
-test: unittest testmanual testexamples
+# Just check if everything imported in unitests is known to the mvpa.suite()
+testsuite:
+	@git grep -h '^\W*from mvpa.*import' tests | \
+	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
+	 sort | uniq | \
+	while read i; do \
+	 grep -q "^ *$$i" mvpa/suite.py || \
+	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
+	 done
+
+
+test: unittest testmanual testsuite testexamples
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \
