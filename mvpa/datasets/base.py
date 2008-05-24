@@ -473,7 +473,7 @@ class Dataset(object):
             idhash_ds = ""
             idhash_samples = ""
 
-        s = """Dataset%s/ %s %d%s x %d""" % \
+        s = """Dataset %s/ %s %d%s x %d""" % \
             (idhash_ds, self.samples.dtype,
              self.nsamples, idhash_samples, self.nfeatures)
 
