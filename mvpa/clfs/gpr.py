@@ -56,6 +56,9 @@ class GPR(Classifier):
         self.w = None
 
         # It does not make sense to calculate a confusion matrix for a GPR
+        # XXX Like for any other regression unless it is used as a classifier
+        #     with binning in top level Classifier, was it causing hickups? it
+        #     is disabled by default...
         self.states.enable('training_confusion', False)
 
         # set kernel:
@@ -82,25 +85,15 @@ class GPR(Classifier):
         """
         Compute log marginal likelihood using self.train_fv and self.labels.
         """
-        if __debug__:
-            debug("GPR", "Computing train train kernel matrix")            
-
-        self.km_train_train = self.__kernel.compute(self.train_fv)
-
-        self.L = N.linalg.cholesky(self.km_train_train +
-              self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
-        self.alpha = N.linalg.solve(self.L.transpose(),
-                                    N.linalg.solve(self.L, self.train_labels))
         # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
         # but preliminary tests show them to be slower.
 
-        if self.states.isEnabled('log_marginal_likelihood'):
-            self.log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
-                                      N.log(self.L.diagonal()).sum() - \
-                                      self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
-            pass
-        return self.log_marginal_likelihood
+        log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
+                                  N.log(self.L.diagonal()).sum() - \
+                                  self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
+        self.log_marginal_likelihood = log_marginal_likelihood
 
+        return log_marginal_likelihood
 
 
     def _train(self, data):
@@ -110,11 +103,26 @@ class GPR(Classifier):
         self.train_fv = data.samples
         self.train_labels = data.labels
 
-        tmp = self.compute_log_marginal_likelihood()
-        
+        if __debug__:
+            debug("GPR", "Computing train train kernel matrix")
+
+        # XXX Since self.alpha is used in _predict, we must compute
+        # them in _train, and optionally compute
+        # log_marginal_likelihood, depending if state variable was
+        # enabled
+        self.km_train_train = self.__kernel.compute(self.train_fv)
+
+        self.L = N.linalg.cholesky(self.km_train_train +
+              self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
+        self.alpha = N.linalg.solve(self.L.transpose(),
+                                    N.linalg.solve(self.L, self.train_labels))
+
+        # compute only if the state is enabled
+        if self.states.isEnabled('log_marginal_likelihood'):
+            self.compute_log_marginal_likelihood()
+
         pass
 
-        
 
     def _predict(self, data):
         """
@@ -136,7 +144,8 @@ class GPR(Classifier):
                            N.diag(km_test_test-N.dot(v.transpose(), v))
 
         return predictions
-    
+
+
     def set_hyperparameters(self,*args):
         """
         Set hyperparameters' values.
@@ -170,6 +179,7 @@ def gen_data(n_instances, n_features, flat=False, noise=0.4):
     label += N.random.rand(label.size)*noise
     return data, label
 
+
 def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F,logml=True):
     data_train = dataset.samples
     label_train = dataset.labels
@@ -184,7 +194,7 @@ def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,dat
     if logml:
         g.states.enable("log_marginal_likelihood")
         pass
-        
+
     g.train(dataset)
     prediction = g.predict(data_test)
 
@@ -207,13 +217,13 @@ def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,dat
         if regression:
             pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
             pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
-            pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))            
+            pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))
         else:
             pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
             pass
         pylab.legend()
         pass
-
+    
     print "LML:",g.log_marginal_likelihood
 
 
@@ -246,9 +256,9 @@ if __name__ == "__main__":
 
     if logml :
         print "Looking for better hyperparameters"
-            
+
         sigma_noise_steps = N.linspace(0.1, 0.6, num=20)
-        length_scale_steps = N.linspace(0.01, 1.0, num=20) 
+        length_scale_steps = N.linspace(0.01, 1.0, num=20)
         lml = N.zeros((len(sigma_noise_steps), len(length_scale_steps)))
         lml_best = -N.inf
         length_scale_best = 0.0
@@ -256,7 +266,7 @@ if __name__ == "__main__":
         i = 0
         for x in sigma_noise_steps:
             j = 0
-            for y in length_scale_steps: 
+            for y in length_scale_steps:
                 kse = KernelSquaredExponential(length_scale=y)
                 g = GPR(kse, sigma_noise=x,regression=regression)
                 g.states.enable("log_marginal_likelihood")
@@ -291,7 +301,7 @@ if __name__ == "__main__":
         print "length_scale_best",length_scale_best
         print "number of expected upcrossing on the unitary intervale:",1.0/(2*N.pi*length_scale_best)
         pass
-    
 
 
-    compute_prediction(sigma_noise_best,length_scale_best,regression,datasetZ,data_test,label_test,F,logml)
+
+    compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F,logml)
