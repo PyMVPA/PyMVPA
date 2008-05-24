@@ -9,9 +9,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Examples demonstrating varioius classifiers on different datasets"""
 
+from mvpa.suite import *
+"""
+# Command above substitutes commands below
+
 import os
-from time import time
 import numpy as N
+import time
 
 from mvpa.datasets import Dataset
 from mvpa.datasets.niftidataset import NiftiDataset
@@ -23,23 +27,15 @@ from mvpa.clfs.transerror import *
 from mvpa.misc.data_generators import *
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.misc.signal import detrend
+from mvpa.clfs.warehouse import clfs
 
 # Misc tools
 #
-# no MVPA warnings during whole testsuite
 from mvpa.misc import warning
+"""
+
+# no MVPA warnings during whole testsuite
 warning.handlers = []
-
-
-# Define groups of classifiers.
-#
-# TODO: Should be moved somewhere in mvpa -- all those duplicate
-#       list of classifiers within tests/tests_warehouse_clfs
-# DONE:
-from mvpa.clfs.warehouse import clfs
-
-#clfs['all'] = clfs['SVM+RFE']
-#clfs['all'] = clfs['SVM/Multiclass+RFE']
 
 def main():
 
@@ -89,7 +85,7 @@ def main():
             confusion = ConfusionMatrix()
             times = []
             nf = []
-            t0 = time()
+            t0 = time.time()
             clf.states.enable('feature_ids')
             for nfold, (training_ds, validation_ds) in \
                     enumerate(NFoldSplitter()(dataset)):
@@ -103,7 +99,7 @@ def main():
             if nf[-1] == 0:
                 print "no features were selected. skipped"
                 continue
-            tfull = time() - t0
+            tfull = time.time() - t0
             times = N.mean(times, axis=0)
             nf = N.mean(nf)
             print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \

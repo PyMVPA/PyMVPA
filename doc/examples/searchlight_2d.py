@@ -9,6 +9,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Example demonstrating a searchlight analysis on an fMRI dataset"""
 
+from mvpa.suite import *
+"""
+# Command above substitutes commands below
+
 import numpy as N
 import pylab as P
 
@@ -24,6 +28,7 @@ from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.searchlight import Searchlight
 from mvpa.misc import debug
+"""
 
 # enable debug output for searchlight call
 debug.active += ["SLC"]

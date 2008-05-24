@@ -16,6 +16,10 @@ Generated images show sensitivity maps computed by six sensitivity analyzers.
 This example assumes that the PyMVPA example dataset is located in data/.
 """
 
+from mvpa.suite import *
+"""
+# Command above substitutes commands below
+
 import numpy as N
 import pylab as P
 
@@ -28,6 +32,7 @@ from mvpa.datasets.misc import zscore
 from mvpa.misc.signal import detrend
 from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
 from mvpa.datasets.splitter import OddEvenSplitter, NFoldSplitter
+"""
 
 # load PyMVPA example dataset
 attr = SampleAttributes('data/attributes.txt')
