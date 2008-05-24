@@ -455,7 +455,7 @@ class Dataset(object):
     def __repr__(self):
         return "<%s>" % str(self)
 
-    def summary(self, uniq=True, idhash=True, stats=True):
+    def summary(self, uniq=True, stats=True, idhash=False):
         """String summary over the object
 
         :Parameters:
