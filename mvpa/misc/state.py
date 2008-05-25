@@ -15,11 +15,12 @@ __docformat__ = 'restructuredtext'
 
 import operator, copy
 from sets import Set
+from textwrap import TextWrapper
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc import warning
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhancedClassDocString, enhancedDocString
 
 if __debug__:
     from mvpa.misc import debug
@@ -658,6 +659,7 @@ class StateCollection(Collection):
 
     def _getEnabled(self, nondefault=True, invert=False):
         """Return list of enabled states
+
         :Parameters:
           nondefault : bool
             Either to return also states which are enabled simply by default
@@ -706,6 +708,7 @@ _known_collections = {
 _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
+_collections_order = ['params', 'kernel_params', 'states']
 
 class collector(type):
     """Intended to collect and compose StateCollection for any child
@@ -723,7 +726,6 @@ class collector(type):
         super(collector, cls).__init__(name, bases, dict)
 
         collections = {}
-
         for name, value in dict.iteritems():
             if isinstance(value, CollectableAttribute):
                 baseclassname = value.__class__.__name__
@@ -782,6 +784,42 @@ class collector(type):
 
         setattr(cls, "_collections_template", collections)
 
+        #
+        # Expand documentation for the class based on the listed
+        # parameters an if it is stateful
+        #
+        # TODO -- figure nice way on how to alter __init__ doc directly...
+        paramsdoc = ""
+        textwrapper = TextWrapper(subsequent_indent="    ",
+                                  initial_indent="    ",
+                                  width=70)
+
+        for col in ('params', 'kernel_params'):
+            if collections.has_key(col):
+                for param, parameter in collections[col].items.iteritems():
+                    paramsdoc += "  %s" % param
+                    try:
+                        paramsdoc += " : %s" % parameter.allowedtype
+                    except:
+                        pass
+                    paramsdoc += "\n"
+                    try:
+                        doc = parameter.__doc__
+                        try:
+                            doc += " (Default: %s)" % parameter.default
+                        except:
+                            pass
+                        paramsdoc += '\n'.join(textwrapper.wrap(doc))+'\n'
+                    except Exception, e:
+                        pass
+
+        if paramsdoc != "":
+            if __debug__:
+                debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
+            setattr(cls, "_paramsdoc", paramsdoc)
+
+            cls.__doc__ = enhancedClassDocString(cls, *bases)
+
 
 class Stateful(object):
     """Base class for stateful objects.
@@ -792,8 +830,8 @@ class Stateful(object):
     `StateCollection`.
 
     NB This one is to replace old State base class
-    TODO: fix drunk Yarik decision to add 'descr' -- it should simply
-    be 'doc' -- no need to drag classes docstring imho.
+    TODO: rename 'descr'? -- it should simply
+          be 'doc' -- no need to drag classes docstring imho.
     """
 
     __metaclass__ = collector
@@ -805,7 +843,17 @@ class Stateful(object):
                  enable_states=None,
                  disable_states=None,
                  descr=None):
+        """Initialize Stateful object
 
+        :Parameters:
+          enable_states : None or list of basestring
+            Names of the state variables which should be enabled additionally
+            to default ones
+          disable_states : None or list of basestring
+            Names of the state variables which should be disabled
+          descr : basestring
+            Description of the instance
+        """
         if not hasattr(self, '_collections'):
             # need to check to avoid override of enabled states in the case
             # of multiple inheritance, like both Statefull and Harvestable
@@ -843,7 +891,7 @@ class Stateful(object):
                 % (self.__class__, id(self), descr))
 
 
-    __doc__ = enhancedDocString('Stateful', locals())
+    #__doc__ = enhancedDocString('Stateful', locals())
 
 
     def __getattribute__(self, index):
@@ -1024,9 +1072,13 @@ class Parametrized(Stateful):
     """Base class for all classes which have collected parameters
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, init_classes=None, **kwargs):
         """Initialize Parametrized class instance
 
+        :Parameters:
+          init_classes : list of class
+            List of classes which should be called with arguments which
+            were not handled by Parametrized
         """
         # compose kwargs to be passed to Stateful and remove them from kwargs
         kwargs_stateful = {}
@@ -1042,17 +1094,33 @@ class Parametrized(Stateful):
                              self._collections.values())
 
         # assign given parameters
-        for arg, argument in kwargs.iteritems():
+        for arg, argument in kwargs.items():
             set = False
             for collection in collections:
                 if collection.items.has_key(arg):
                     collection.setvalue(arg, argument)
                     set = True
                     break
-            if not set:
+            if set:
+                trash = kwargs.pop(arg)
+            #if not set:
+            #    known_params = reduce(lambda x,y:x+y, [x.items.keys() for x in collections], [])
+            #    raise TypeError, \
+            #          "Unknown parameter %s=%s for %s." % (arg, argument, self) \
+            #          + " Valid parameters are %s" % known_params
+
+        # Initialize other base classes
+        if init_classes is not None:
+            # return back stateful arguments since they might be
+            # processed by underlying classes
+            kwargs.update(kwargs_stateful)
+            for cls in init_classes:
+                cls.__init__(self, **kwargs)
+        else:
+            if len(kwargs)>0:
                 known_params = reduce(lambda x,y:x+y, [x.items.keys() for x in collections], [])
                 raise TypeError, \
-                      "Unknown parameter %s=%s for %s." % (arg, argument, self) \
+                      "Unknown parameters %s for %s." % (kwargs.keys(), self) \
                       + " Valid parameters are %s" % known_params
 
 
@@ -1070,7 +1138,7 @@ class Parametrized(Stateful):
         sep = ""
         collections = self._collections
         # we want them in this particular order
-        for col in ['params', 'kernel_params', 'states']:
+        for col in _collections_order:
             if not collections.has_key(col):
                 continue
             collection = collections[col]
