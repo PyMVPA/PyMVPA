@@ -184,7 +184,6 @@ class Classifier(Stateful):
         else:
             return `self`
 
-
     #XXX that is a bad idea since object seems to be be deallocated by here
     #def __del__(self):
     #    if __debug__:
@@ -269,8 +268,9 @@ class Classifier(Stateful):
         if __debug__:
             debug("CLF", "Training classifier %s on dataset %s" % \
                   (`self`, `dataset`))
-            tb = traceback.extract_stack(limit=5)
-            debug("CLF_TB", "Traceback: %s" % tb)
+            if 'CLF_TB' in debug.active:
+                tb = traceback.extract_stack(limit=5)
+                debug("CLF_TB", "Traceback: %s" % tb)
 
         self._pretrain(dataset)
 
