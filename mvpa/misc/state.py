@@ -89,7 +89,7 @@ class CollectableAttribute(object):
     def _setName(self, name):
         if name is not None:
             if isinstance(name, basestring):
-                if name.startswith('_'):
+                if name[0] == '_':
                     raise ValueError, \
                           "Collectable attribute name must not start with _. Got %s" % name
             else:
@@ -305,7 +305,7 @@ class Collection(object):
         """
         #return all private and protected ones first since we will not have
         # collectable's with _ (we should not have!)
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__getattribute__(self, index)
         if self._items.has_key(index):
             return self._items[index].value
@@ -313,7 +313,7 @@ class Collection(object):
 
 
     def __setattr__(self, index, value):
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__setattr__(self, index, value)
         if self._items.has_key(index):
             self._items[index].value = value
@@ -846,7 +846,7 @@ class Stateful(object):
     def __getattribute__(self, index):
         # return all private ones first since smth like __dict__ might be
         # queried by copy before instance is __init__ed
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__getattribute__(self, index)
         for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
             if index in [colname]:
@@ -856,7 +856,7 @@ class Stateful(object):
         return object.__getattribute__(self, index)
 
     def __setattr__(self, index, value):
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__setattr__(self, index, value)
         for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
             if colvalues.items.has_key(index):
