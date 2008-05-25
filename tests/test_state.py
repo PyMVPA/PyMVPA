@@ -51,7 +51,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(blank.states.items, {})
         self.failUnless(blank.states.enabled == [])
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'dummy')
-        self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, '_')
 
         # we shouldn't use _registerState now since metaclass statecollector wouldn't
         # update the states... may be will be implemented in the future if necessity comes
