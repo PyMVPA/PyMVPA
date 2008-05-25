@@ -43,7 +43,7 @@ class _SVM(Classifier):
     _ATTRIBUTE_COLLECTIONS = ['params', 'kernel_params'] # enforce presence of params collections
 
     _SVM_PARAMS = {
-        'C' : Parameter(-1.0, min=1e-10, descr='Trade-off parameter. High C -- rigid margin SVM'),
+        'C' : Parameter(-1.0, descr='Trade-off parameter. High C -- rigid margin SVM'),
         'nu' : Parameter(0.5, min=0.0, max=1.0, descr='Fraction of datapoints within the margin'),
         'cache_size': Parameter(100, descr='Size of the kernel cache, specified in megabytes'),
         'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
