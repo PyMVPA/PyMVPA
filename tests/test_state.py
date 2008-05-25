@@ -260,6 +260,7 @@ class StateTests(unittest.TestCase):
         # validate that string representation of the object is valid and consistent
         a_str = `a`
         try:
+            import test_state
             exec "a2=%s" % a_str
         except Exception, e:
             self.fail(msg="Failed to generate an instance out of "
