@@ -16,6 +16,27 @@ Frequently Asked Questions
 General
 =======
 
+I am tired of of writing these endless import blocks. Any alternative?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Sure. Instead of individually importing all pieces that are required
+  by a script, you can import them all at once. A simple::
+
+    import mvpa.suite as mvpa
+
+  makes everything directly accessible through the mvpa namespace, e.g.
+  `mvpa.datasets.base.Dataset` becomes `mvpa.Dataset`. Really lazy people
+  can even do::
+
+    from mvpa.suite import *
+
+  However, as always there is a price to pay for this convenience. In contrast
+  to the individual imports there is some intial performance and memory cost. In
+  the worst case you'll get all external dependencies loaded (e.g. a full R
+  session), just because you have them installed. Therefore, it might be better
+  to limit this use to case where individual key presses matter and use
+  individual imports for production scripts.
+
+
 I feel like I want to contribute something, do you mind?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Not at all! If you think there is something that is not well explained in
