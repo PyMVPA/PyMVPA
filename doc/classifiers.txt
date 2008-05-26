@@ -157,6 +157,9 @@ of desired state variables names, passed to the object constructor. Keyword
 
 .. index:: error, classifier error, transfer error
 
+
+.. _transfer_error:
+
 Error Calculation
 =================
 
@@ -183,17 +186,6 @@ on the validation dataset are made.
 .. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
 
 
-.. index:: statistical testing
-
-Statistical Testing of Classifier Errors
-----------------------------------------
-
-(to be written)
-
-.. _MCNullDist: api/mvpa.clfs.stats.MCNullDist-class.html
-
-.. Point to the problem of an unknown H0 distribution, which is a problem
-   for a lot of statistical tests.
 
 
 .. index:: cross-validation
