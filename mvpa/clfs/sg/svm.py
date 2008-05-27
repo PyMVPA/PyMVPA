@@ -175,7 +175,7 @@ class SVM_SG_Modular(_SVM):
 
     def __init__(self,
                  kernel_type='linear',
-                 svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
+                 svm_impl="libsvm",
                  **kwargs):
         """This is the base class of all classifier that utilize so
         far just SVM classifiers provided by shogun.

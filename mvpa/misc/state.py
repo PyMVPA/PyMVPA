@@ -1,4 +1,4 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#Emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -15,11 +15,12 @@ __docformat__ = 'restructuredtext'
 
 import operator, copy
 from sets import Set
+from textwrap import TextWrapper
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc import warning
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhancedClassDocString, enhancedDocString
 
 if __debug__:
     from mvpa.misc import debug
@@ -89,7 +90,7 @@ class CollectableAttribute(object):
     def _setName(self, name):
         if name is not None:
             if isinstance(name, basestring):
-                if name.startswith('_'):
+                if name[0] == '_':
                     raise ValueError, \
                           "Collectable attribute name must not start with _. Got %s" % name
             else:
@@ -305,7 +306,7 @@ class Collection(object):
         """
         #return all private and protected ones first since we will not have
         # collectable's with _ (we should not have!)
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__getattribute__(self, index)
         if self._items.has_key(index):
             return self._items[index].value
@@ -313,7 +314,7 @@ class Collection(object):
 
 
     def __setattr__(self, index, value):
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__setattr__(self, index, value)
         if self._items.has_key(index):
             self._items[index].value = value
@@ -658,6 +659,7 @@ class StateCollection(Collection):
 
     def _getEnabled(self, nondefault=True, invert=False):
         """Return list of enabled states
+
         :Parameters:
           nondefault : bool
             Either to return also states which are enabled simply by default
@@ -706,6 +708,7 @@ _known_collections = {
 _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
+_collections_order = ['params', 'kernel_params', 'states']
 
 class collector(type):
     """Intended to collect and compose StateCollection for any child
@@ -723,15 +726,14 @@ class collector(type):
         super(collector, cls).__init__(name, bases, dict)
 
         collections = {}
-
         for name, value in dict.iteritems():
             if isinstance(value, CollectableAttribute):
                 baseclassname = value.__class__.__name__
-                colname = _known_collections[baseclassname][0]
+                col = _known_collections[baseclassname][0]
                 # XXX should we allow to throw exceptions here?
-                if not collections.has_key(colname):
-                    collections[colname] = {}
-                collections[colname][name] = value
+                if not collections.has_key(col):
+                    collections[col] = {}
+                collections[col][name] = value
                 # and assign name if not yet was set
                 if value.name is None:
                     value.name = name
@@ -751,12 +753,12 @@ class collector(type):
                     debug("COLR",
                           "Collect collections %s for %s from %s" %
                           (newcollections, cls, base))
-                for colname, collection in newcollections.iteritems():
+                for col, collection in newcollections.iteritems():
                     newitems = collection.items
-                    if collections.has_key(colname):
-                        collections[colname].update(newitems)
+                    if collections.has_key(col):
+                        collections[col].update(newitems)
                     else:
-                        collections[colname] = newitems
+                        collections[col] = newitems
 
 
         if __debug__:
@@ -765,22 +767,58 @@ class collector(type):
 
         # if there is an explicit
         if hasattr(cls, "_ATTRIBUTE_COLLECTIONS"):
-            for colname in cls._ATTRIBUTE_COLLECTIONS:
-                if not colname in _col2class:
+            for col in cls._ATTRIBUTE_COLLECTIONS:
+                if not col in _col2class:
                     raise ValueError, \
                           "Requested collection %s is unknown to collector" % \
-                          colname
-                if not colname in collections:
-                    collections[colname] = None
+                          col
+                if not col in collections:
+                    collections[col] = None
 
         # TODO: check on conflict in names of Collections' items!
         # since otherwise even order is not definite since we use dict for collections.
         # XXX should we switch to tuple?
 
-        for colname, colitems in collections.iteritems():
-            collections[colname] = _col2class[colname](colitems)
+        for col, colitems in collections.iteritems():
+            collections[col] = _col2class[col](colitems)
 
         setattr(cls, "_collections_template", collections)
+
+        #
+        # Expand documentation for the class based on the listed
+        # parameters an if it is stateful
+        #
+        # TODO -- figure nice way on how to alter __init__ doc directly...
+        paramsdoc = ""
+        textwrapper = TextWrapper(subsequent_indent="    ",
+                                  initial_indent="    ",
+                                  width=70)
+
+        for col in ('params', 'kernel_params'):
+            if collections.has_key(col):
+                for param, parameter in collections[col].items.iteritems():
+                    paramsdoc += "  %s" % param
+                    try:
+                        paramsdoc += " : %s" % parameter.allowedtype
+                    except:
+                        pass
+                    paramsdoc += "\n"
+                    try:
+                        doc = parameter.__doc__
+                        try:
+                            doc += " (Default: %s)" % parameter.default
+                        except:
+                            pass
+                        paramsdoc += '\n'.join(textwrapper.wrap(doc))+'\n'
+                    except Exception, e:
+                        pass
+
+        if paramsdoc != "":
+            if __debug__:
+                debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
+            setattr(cls, "_paramsdoc", paramsdoc)
+
+            cls.__doc__ = enhancedClassDocString(cls, *bases)
 
 
 class Stateful(object):
@@ -792,17 +830,30 @@ class Stateful(object):
     `StateCollection`.
 
     NB This one is to replace old State base class
-    TODO: fix drunk Yarik decision to add 'descr' -- it should simply
-    be 'doc' -- no need to drag classes docstring imho.
+    TODO: rename 'descr'? -- it should simply
+          be 'doc' -- no need to drag classes docstring imho.
     """
 
     __metaclass__ = collector
+
+    _initargs = [ 'enable_states', 'disable_states', 'descr' ]
+    """Initialization parameters which should be passed to Statefull"""
 
     def __init__(self,
                  enable_states=None,
                  disable_states=None,
                  descr=None):
+        """Initialize Stateful object
 
+        :Parameters:
+          enable_states : None or list of basestring
+            Names of the state variables which should be enabled additionally
+            to default ones
+          disable_states : None or list of basestring
+            Names of the state variables which should be disabled
+          descr : basestring
+            Description of the instance
+        """
         if not hasattr(self, '_collections'):
             # need to check to avoid override of enabled states in the case
             # of multiple inheritance, like both Statefull and Harvestable
@@ -812,13 +863,13 @@ class Stateful(object):
                                                         '_collections_template')))
 
             # Assign owner to all collections
-            for colname, colvalue in self._collections.iteritems():
-                if colname in self.__dict__:
+            for col, collection in self._collections.iteritems():
+                if col in self.__dict__:
                     raise ValueError, \
                           "Stateful object %s has already attribute %s" % \
-                          (self, colname)
-                self.__dict__[colname] = colvalue
-                colvalue.owner = self
+                          (self, col)
+                self.__dict__[col] = collection
+                collection.owner = self
 
             if self._collections.has_key('states'):
                 if enable_states == None:
@@ -840,27 +891,27 @@ class Stateful(object):
                 % (self.__class__, id(self), descr))
 
 
-    __doc__ = enhancedDocString('Stateful', locals())
+    #__doc__ = enhancedDocString('Stateful', locals())
 
 
     def __getattribute__(self, index):
         # return all private ones first since smth like __dict__ might be
         # queried by copy before instance is __init__ed
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__getattribute__(self, index)
-        for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
-            if index in [colname]:
-                return colvalues
-            if colvalues.items.has_key(index):
-                return colvalues.getvalue(index)
+        for col, collection in object.__getattribute__(self, '_collections').iteritems():
+            if index in [col]:
+                return collection
+            if collection.items.has_key(index):
+                return collection.getvalue(index)
         return object.__getattribute__(self, index)
 
     def __setattr__(self, index, value):
-        if index.startswith('_'):
+        if index[0] == '_':
             return object.__setattr__(self, index, value)
-        for colname, colvalues in object.__getattribute__(self, '_collections').iteritems():
-            if colvalues.items.has_key(index):
-                colvalues.setvalue(index, value)
+        for col, collection in object.__getattribute__(self, '_collections').iteritems():
+            if collection.items.has_key(index):
+                collection.setvalue(index, value)
                 return
         object.__setattr__(self, index, value)
 
@@ -872,8 +923,8 @@ class Stateful(object):
     def __str__(self):
         s = "%s:" % (self.__class__.__name__)
         if hasattr(self, "_collections"):
-            for colname,colvalues in self._collections.iteritems():
-                s += " %d %s:%s" %(len(colvalues.items), colname, str(colvalues))
+            for col, collection in self._collections.iteritems():
+                s += " %d %s:%s" %(len(collection.items), col, str(collection))
         return s
 
     def __repr__(self):
@@ -1015,3 +1066,97 @@ class Harvestable(Stateful):
 
     harvest_attribs = property(fget=lambda self:self.__attribs,
                                fset=_setAttribs)
+
+
+class Parametrized(Stateful):
+    """Base class for all classes which have collected parameters
+    """
+
+    def __init__(self, init_classes=None, **kwargs):
+        """Initialize Parametrized class instance
+
+        :Parameters:
+          init_classes : list of class
+            List of classes which should be called with arguments which
+            were not handled by Parametrized
+        """
+        # compose kwargs to be passed to Stateful and remove them from kwargs
+        kwargs_stateful = {}
+        for arg in Stateful._initargs:
+            if kwargs.has_key(arg):
+                kwargs_stateful[arg] = kwargs.pop(arg)
+
+        # initialize Stateful with only needed parameters
+        Stateful.__init__(self, **kwargs_stateful)
+
+        # take only relevant collections
+        collections = filter(lambda x:isinstance(x, ParameterCollection),
+                             self._collections.values())
+
+        # assign given parameters
+        for arg, argument in kwargs.items():
+            set = False
+            for collection in collections:
+                if collection.items.has_key(arg):
+                    collection.setvalue(arg, argument)
+                    set = True
+                    break
+            if set:
+                trash = kwargs.pop(arg)
+            #if not set:
+            #    known_params = reduce(lambda x,y:x+y, [x.items.keys() for x in collections], [])
+            #    raise TypeError, \
+            #          "Unknown parameter %s=%s for %s." % (arg, argument, self) \
+            #          + " Valid parameters are %s" % known_params
+
+        # Initialize other base classes
+        if init_classes is not None:
+            # return back stateful arguments since they might be
+            # processed by underlying classes
+            kwargs.update(kwargs_stateful)
+            for cls in init_classes:
+                cls.__init__(self, **kwargs)
+        else:
+            if len(kwargs)>0:
+                known_params = reduce(lambda x,y:x+y, [x.items.keys() for x in collections], [])
+                raise TypeError, \
+                      "Unknown parameters %s for %s." % (kwargs.keys(), self) \
+                      + " Valid parameters are %s" % known_params
+
+
+    def __repr__(self, fullname=True):
+        """Definition of the object summary over Parametrized object
+        """
+        # XXX res = "%s(kernel_type='%s'" % (self.__class__.__name__, self._kernel_type_literal)
+        res = ""
+        if fullname:
+            modulename = '%s' % self.__class__.__module__
+            if modulename != "__main__":
+                res = "%s." % modulename
+        res += "%s(" % (self.__class__.__name__)
+
+        sep = ""
+        collections = self._collections
+        # we want them in this particular order
+        for col in _collections_order:
+            if not collections.has_key(col):
+                continue
+            collection = collections[col]
+            if isinstance(collection, ParameterCollection):
+                for k in collection.names:
+                    # list only params with not default values
+                    if collection[k].isDefault: continue
+                    res += "%s%s=%s" % (sep, k, collection[k].value)
+                    sep = ', '
+            elif isinstance(collection, StateCollection):
+                for name, invert in ( ('enable', False), ('disable', True) ):
+                    states = collection._getEnabled(nondefault=False, invert=invert)
+                    if len(states):
+                        res += sep + "%s_states=%s" % (name, str(states))
+            else:
+                raise RuntimeError, "Unknown type of collection %s" % col
+        res += ")"
+        return res
+
+    def __str__(self):
+        return self.__repr__(fullname=False)
