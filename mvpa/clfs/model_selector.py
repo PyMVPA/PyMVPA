@@ -100,7 +100,6 @@ class ModelSelector(object):
 
 
 
-    
 if __name__ == "__main__":
 
     import gpr
@@ -135,7 +134,6 @@ if __name__ == "__main__":
 
     print "GPR hyperparameters' search through maximization of marginal likelihood on train data."
     print
-    
     ms = ModelSelector(g,dataset)
 
     sigma_noise_initial = 1.0
@@ -143,7 +141,6 @@ if __name__ == "__main__":
 
     lml =  ms.maximize_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial],
                                          maxiter=1, optimization_algorithm="ralg")
-    
     sigma_noise_best, length_scale_best = ms.hyperparameters_best
     print
     print "Best sigma_noise:",sigma_noise_best
