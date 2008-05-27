@@ -23,8 +23,9 @@ class ModelSelector(object):
     parametrized by a set of hyperparamenters).
     """
 
-    def __init__(self,parametric_model):
+    def __init__(self, parametric_model, dataset):
         self.parametric_model = parametric_model
+        self.dataset = dataset
         self.hyperparameters_best = None
         self.log_marginal_likelihood_best = None
         self.problem = None
@@ -63,6 +64,7 @@ class ModelSelector(object):
             minimization only.
             """
             self.parametric_model.set_hyperparameters(*args)
+            self.parametric_model.train(self.dataset)
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
             return -log_marginal_likelihood # minus sign because optimizers do _minimization_.
 
@@ -134,7 +136,7 @@ if __name__ == "__main__":
     print "GPR hyperparameters' search through maximization of marginal likelihood on train data."
     print
     
-    ms = ModelSelector(g)
+    ms = ModelSelector(g,dataset)
 
     sigma_noise_initial = 1.0
     length_scale_initial = 1.0
