@@ -34,6 +34,12 @@ def sweepargs(**kwargs):
     """
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):
+            def untrain_clf(argvalue):
+                if isinstance(argvalue, Classifier):
+                    # clear classifier after its use -- just to be sure ;-)
+                    argvalue.untrain()
+            failed_tests_str = []
+            exception = None
             for argname in kwargs.keys():
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
@@ -49,20 +55,22 @@ def sweepargs(**kwargs):
                             debug('TEST', 'Running %s on args=%s and kwargs=%s' %
                                   (method.__name__, `args_`, `kwargs_`))
                         method(*args_, **kwargs_)
-                        if isinstance(argvalue, Classifier):
-                            # clear classifier after its use -- just to be sure ;-)
-                            argvalue.untrain()
+                        untrain_clf(argvalue)
                     except Exception, e:
+                        exception = e
                         # Adjust message making it more informative
-                        e.__init__("%s on %s = %s" % (str(e), argname, `argvalue`))
-                        # Reraise bloody exception ;-)
-                        raise
+                        failed_tests_str.append("%s on %s = %s" % (str(e), argname, `argvalue`))
+                        untrain_clf(argvalue) # untrain classifier
+                        debug('TEST', 'Failed #%d' % len(failed_tests_str))
                     if __debug__:
                         if '_QUICKTEST_' in debug.active:
                             # on TESTQUICK just run test for 1st entry in the list,
                             # the rest are omitted
                             # TODO: proper partitioning of unittests
                             break
+            if exception is not None:
+                exception.__init__('\n'.join(failed_tests_str))
+                raise
 
         do_sweep.func_name = method.func_name
         return do_sweep

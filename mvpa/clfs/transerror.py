@@ -101,9 +101,12 @@ class ConfusionMatrix(object):
         # enforce labels in predictions to be of the same datatype as in
         # targets, since otherwise we are getting doubles for unknown at a
         # given moment labels
+        nonetype = type(None)
         for i in xrange(len(targets)):
             t1, t2 = type(targets[i]), type(predictions[i])
-            if t1 != t2:
+            # if there were no prediction made - leave None, otherwise
+            # convert to appropriate type
+            if t1 != t2 and t2 != nonetype:
                 #warning("Obtained target %s and prediction %s are of " %
                 #       (t1, t2) + "different datatypes.")
                 if isinstance(predictions, tuple):

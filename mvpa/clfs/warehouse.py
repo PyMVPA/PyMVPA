@@ -156,20 +156,26 @@ if externals.exists('libsvm'):
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
+    # some classifiers are not yet ready to be used out-of-the-box in
+    # PyMVPA, thus we don't populate warehouse with their instances
+    bad_classifiers = [
+        'mpd',  # was segfault, now non-training on testcases, and XOR.
+                # and was described as "for educational purposes", thus
+                # shouldn't be used for real data ;-)
+        # Should be a drop-in replacement for lightsvm
+        'gpbt', # fails to train for testAnalyzerWithSplitClassifier
+                # also 'retraining' doesn't work -- fails to generalize
+        'gmnp', # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3, also refuses to train
+        'svrlight', # fails to 'generalize' as a binary classifier after 'binning'
+        'krr', # fails to generalize
+        ]
+    if not externals.exists('sg_fixedcachesize'):
+        # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
+        bad_classifiers.append('gnpp')
+
     for impl in sg.svm.known_svm_impl:
         # Uncomment the ones to disable
-        if impl in [
-            'mpd',  # was segfault, now non-training on testcases, and XOR.
-                    # and was described as "for educational purposes", thus
-                    # shouldn't be used for real data ;-)
-            # Should be a drop-in replacement for lightsvm
-            'gpbt', # fails to train for testAnalyzerWithSplitClassifier
-                    # also 'retraining' doesn't work -- fails to generalize
-            'gmnp', # failes some times with 'assertion Cache_Size > 2' though should work
-            'gnpp', # failes some times with 'assertion Cache_Size > 2' though should work
-            'svrlight', # fails to 'generalize' as a binary classifier after 'binning'
-            'krr', # fails to generalize
-            ]:
+        if impl in bad_classifiers:
             continue
         clfs += [
             sg.svm.LinearCSVMC(
