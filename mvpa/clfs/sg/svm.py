@@ -154,7 +154,7 @@ def _tosg(data):
     return features
 
 
-class SVM_SG_Modular(_SVM):
+class SVM(_SVM):
     """Support Vector Machine Classifier(s) based on Shogun
 
     This is a simple base interface
@@ -240,7 +240,7 @@ class SVM_SG_Modular(_SVM):
 
     def __repr__(self):
         # adjust representation a bit to report SVM backend
-        repr_ = super(SVM_SG_Modular, self).__repr__()
+        repr_ = super(SVM, self).__repr__()
         return repr_.replace("(kern", "(svm_impl='%s', kern" % self.__svm_impl)
 
 
@@ -525,7 +525,7 @@ class SVM_SG_Modular(_SVM):
 
 
     def untrain(self):
-        super(SVM_SG_Modular, self).untrain()
+        super(SVM, self).untrain()
 
         if not self.retrainable:
             if __debug__:
@@ -583,27 +583,27 @@ class SVM_SG_Modular(_SVM):
 
 
 
-class LinearSVM(SVM_SG_Modular):
+class LinearSVM(SVM):
 
     def __init__(self, **kwargs):
         """
         """
         # init base class
-        SVM_SG_Modular.__init__(self, kernel_type='linear', **kwargs)
+        SVM.__init__(self, kernel_type='linear', **kwargs)
 
 
 # We don't have nu-SVM here
 LinearCSVMC = LinearSVM
 
 
-class RbfCSVMC(SVM_SG_Modular):
+class RbfCSVMC(SVM):
     """C-SVM classifier using a radial basis function kernel.
     """
     def __init__(self, C=1, **kwargs):
         """
         """
         # init base class
-        SVM_SG_Modular.__init__(self, C=C, kernel_type='RBF', **kwargs)
+        SVM.__init__(self, C=C, kernel_type='RBF', **kwargs)
 
 
 
