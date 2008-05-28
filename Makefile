@@ -126,7 +126,8 @@ testmanual: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
 	                       --doctest-tests doc/
 
-# Just check if everything imported in unitests is known to the mvpa.suite()
+# Check if everything imported in unitests is known to the
+# mvpa.suite()
 testsuite:
 	@git grep -h '^\W*from mvpa.*import' tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
@@ -136,8 +137,14 @@ testsuite:
 	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
 	 done
 
+# Check if links to api/ within documentation are broken
+testapiref: apidoc
+	@for tf in doc/*.txt; do \
+	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
+	  ff=build/website/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
+	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
-test: unittest testmanual testsuite testexamples
+test: unittest testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \
