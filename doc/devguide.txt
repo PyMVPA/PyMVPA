@@ -116,7 +116,7 @@ dataset vs data
   Such convention should be enforced in all ``*train``,
   ``*predict`` functions of classifiers.
 
-.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _NumPy: http://numpy.scipy.org/
 
 
@@ -302,7 +302,7 @@ Outstanding Questions:
   * Shouldn't there be a `sensitivities` state?
 
 
-.. _Absolute: api/mvpa.misc.Absolute-def.html
+.. _Absolute: api/mvpa.misc.transformers-module.html#Absolute
 .. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
 .. _FeaturewiseDatasetMeasure: api/mvpa.measures.base.FeaturewiseDatasetMeasure-class.html
 .. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html

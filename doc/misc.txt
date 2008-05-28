@@ -169,7 +169,7 @@ bugs in the internal logic.
 .. _optVerbose: api/mvpa.misc.cmdline-module.html#optVerbose
 .. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
 .. _misc module sources: api/mvpa.misc-pysrc.html
-.. _Recursive Feature Elimination call: api/mvpa.algorithms.rfe.RFE-class.html#__call__
+.. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__
 
 
 Additional Little Helpers
