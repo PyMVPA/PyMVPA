@@ -62,7 +62,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp
 
 
 debian-clean:
@@ -77,9 +77,11 @@ doc: website
 htmldoc:
 	cd doc && $(MAKE) html
 
-pdfdoc:
+pdfdoc: pdfdoc-stamp
+pdfdoc-stamp:
 	cd doc && $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
+	touch $@
 
 apidoc: apidoc-stamp
 apidoc-stamp: build
@@ -94,7 +96,7 @@ apidoc-stamp: build
 	touch $@
 
 website: website-stamp
-website-stamp: mkdir-WWW_DIR htmldoc pdfdoc apidoc
+website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
 	touch $@
