@@ -107,6 +107,7 @@ class ModelSelector(object):
 if __name__ == "__main__":
 
     import gpr
+    import kernel
 
     N.random.seed(1)
 
@@ -133,7 +134,9 @@ if __name__ == "__main__":
     regression = True
     logml = True
 
-    g = gpr.GPR(regression=regression)
+    k = kernel.KernelLinear(coefficient=N.ones(1))
+    # k = kernel.KernelConstant()
+    g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
     # g.train_fv = dataset.samples
     # g.train_labels = dataset.labels
@@ -145,7 +148,7 @@ if __name__ == "__main__":
     sigma_noise_initial = 1.0
     length_scale_initial = 1.0
 
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg")
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-4)
     lml = ms.solve()
     sigma_noise_best, length_scale_best = ms.hyperparameters_best
     print
@@ -157,7 +160,6 @@ if __name__ == "__main__":
 
     print
     print "GPR ARD on dataset from Williams and Rasmussen 1996:"
-    import kernel
     data, labels = kernel.generate_dataset_wr1996()
     # data = N.hstack([data]*10) # test a larger set of dimensions: reduce ftol!
     dataset = Dataset(samples=data, labels=labels)
