@@ -29,12 +29,12 @@ class _SVM(Classifier):
     Derived classes should define:
 
     * _KERNELS: map(dict) should define assignment to a tuple containing
-      implementation kernel type and a list of parameters adherent to the
-      kernel, e.g.::
+      implementation kernel type, list of parameters adherent to the
+      kernel, and sensitivity analyzer e.g.::
 
       _KERNELS = {
-             'linear': (shogun.Kernel.LinearKernel, ()),
-             'rbf' :   (shogun.Kernel.GaussianKernel, ('gamma',)),
+             'linear': (shogun.Kernel.LinearKernel, (), LinearSVMWeights),
+             'rbf' :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
              ...
              }
 
@@ -200,3 +200,12 @@ class _SVM(Classifier):
 
         return value
 
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns an appropriate SensitivityAnalyzer."""
+        sana = self._KERNELS[self._kernel_type_literal][2]
+        if sana is not None:
+            return sana(self, **kwargs)
+        else:
+            raise NotImplementedError, \
+                  "Sensitivity analyzers for kernel %s is TODO" % \
+                  self._kernel_type_literal

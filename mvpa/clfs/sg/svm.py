@@ -33,6 +33,7 @@ from mvpa.clfs.base import Classifier, MulticlassClassifier
 from mvpa.measures.base import Sensitivity
 from mvpa.base import externals
 
+from sens import *
 
 if __debug__:
     from mvpa.misc import debug
@@ -63,23 +64,23 @@ and (I trained on 10 million strings based on this).
 And yes currently we only implemented parallel training for svmlight,
 however all SVMs can be evaluated in parallel.
 """
-known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
-                   "gmnp" : shogun.Classifier.GMNPSVM,
-                   "mpd"  : shogun.Classifier.MPDSVM,
-                   "gpbt" : shogun.Classifier.GPBTSVM,
-                   "gnpp" : shogun.Classifier.GNPPSVM,
+known_svm_impl = { "libsvm" : (shogun.Classifier.LibSVM, ''),
+                   "gmnp" : (shogun.Classifier.GMNPSVM, ''),
+                   "mpd"  : (shogun.Classifier.MPDSVM, ''),
+                   "gpbt" : (shogun.Classifier.GPBTSVM, ''),
+                   "gnpp" : (shogun.Classifier.GNPPSVM, ''),
 
                    ## TODO: Needs sparse features...
-                   # "svmlin" : shogun.Classifier.SVMLin,
-                   # "liblinear" : shogun.Classifier.LibLinear,
-                   # "subgradient" : shogun.Classifier.SubGradientSVM,
+                   # "svmlin" : (shogun.Classifier.SVMLin, ''),
+                   # "liblinear" : (shogun.Classifier.LibLinear, ''),
+                   # "subgradient" : (shogun.Classifier.SubGradientSVM, ''),
                    ## good 2-class linear SVMs
-                   # "ocas" : shogun.Classifier.SVMOcas,
-                   # "sgd" :  shogun.Classifier.SVMSGD,
+                   # "ocas" : (shogun.Classifier.SVMOcas, ''),
+                   # "sgd" : ( shogun.Classifier.SVMSGD, ''),
 
                    # regressions
-                   "libsvr": shogun.Regression.LibSVR,
-                   "krr": shogun.Regression.KRR
+                   "libsvr": (shogun.Regression.LibSVR, ''),
+                   "krr": (shogun.Regression.KRR, ''),
                    }
 
 def _get_implementation(svm_impl, nl):
@@ -97,15 +98,18 @@ def _get_implementation(svm_impl, nl):
             debug("SG_", "Using %s for multiclass data of %s" %
                   (svm_impl_class, svm_impl))
     else:
-            svm_impl_class = known_svm_impl[svm_impl]
+            svm_impl_class = known_svm_impl[svm_impl][0]
     return svm_impl_class
 
 # Conditionally make some of the implementations available if they are
 # present in the present shogun
-for name, item in [('lightsvm', "shogun.Classifier.SVMLight"),
-                   ('svrlight', "shogun.Regression.SVRLight")]:
+for name, item, descr in \
+        [('lightsvm', "shogun.Classifier.SVMLight",
+          "SVMLight classification http://svmlight.joachims.org/"),
+         ('svrlight', "shogun.Regression.SVRLight",
+          "SVMLight regression http://svmlight.joachims.org/")]:
     if externals.exists('shogun.%s' % name):
-        exec "known_svm_impl[\"%s\"] = %s" % (name, item)
+        exec "known_svm_impl[\"%s\"] = (%s, \"%s\")" % (name, item, descr)
 
 
 def _setdebug(obj, partname):
@@ -165,10 +169,10 @@ class SVM(_SVM):
                             descr='Number of threads to utilize')
 
     # NOTE: gamma is width in SG notation for RBF(Gaussian)
-    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ()),
-                 "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',)),
-                 "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step')),
-                 "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0')),
+    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   (), LinearSVMWeights),
+                 "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
+                 "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step'), None),
+                 "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0'), None),
                 }
 
     _KNOWN_PARAMS = [ 'C', 'epsilon' ]
@@ -564,15 +568,6 @@ class SVM(_SVM):
                   msgargs=locals())
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
-        """Returns an appropriate SensitivityAnalyzer."""
-        if self._kernel_type_literal == 'linear':
-            return ShogunLinearSVMWeights(self, **kwargs)
-        else:
-            raise NotImplementedError, 'Non-linear SVM sensitivity is not yet here'
-
-
-
     svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
 
@@ -583,70 +578,4 @@ class SVM(_SVM):
 
 
 
-class LinearSVM(SVM):
-
-    def __init__(self, **kwargs):
-        """
-        """
-        # init base class
-        SVM.__init__(self, kernel_type='linear', **kwargs)
-
-
-# We don't have nu-SVM here
-LinearCSVMC = LinearSVM
-
-
-class RbfCSVMC(SVM):
-    """C-SVM classifier using a radial basis function kernel.
-    """
-    def __init__(self, C=1, **kwargs):
-        """
-        """
-        # init base class
-        SVM.__init__(self, C=C, kernel_type='RBF', **kwargs)
-
-
-
-class ShogunLinearSVMWeights(Sensitivity):
-    """`Sensitivity` that reports the weights of a linear SVM trained
-    on a given `Dataset`.
-    """
-
-    biases = StateVariable(enabled=True,
-                           doc="Offsets of separating hyperplanes")
-
-    def __init__(self, clf, **kwargs):
-        """Initialize the analyzer with the classifier it shall use.
-
-        :Parameters:
-          clf: LinearSVM
-            classifier to use. Only classifiers sub-classed from
-            `LinearSVM` may be used.
-        """
-        # init base classes first
-        Sensitivity.__init__(self, clf, **kwargs)
-
-
-    def __sg_helper(self, svm):
-        """Helper function to compute sensitivity for a single given SVM"""
-        self.offsets = svm.get_bias()
-        svcoef = N.matrix(svm.get_alphas())
-        svnums = svm.get_support_vectors()
-        svs = self.clf.traindataset.samples[svnums,:]
-        res = (svcoef * svs).mean(axis=0).A1
-        return res
-
-
-    def _call(self, dataset):
-        # XXX Hm... it might make sense to unify access functions
-        # naming across our swig libsvm wrapper and sg access
-        # functions for svm
-        svm = self.clf.svm
-        if isinstance(svm, shogun.Classifier.MultiClassSVM):
-            sens = []
-            for i in xrange(svm.get_num_svms()):
-                sens.append(self.__sg_helper(svm.get_svm(i)))
-        else:
-            sens = self.__sg_helper(svm)
-        return N.asarray(sens)
 

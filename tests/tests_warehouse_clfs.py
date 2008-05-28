@@ -65,7 +65,7 @@ class Less1Classifier(SameSignClassifier):
 sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 
 if externals.exists('shogun'):
-    sample_clf_nl = sg.svm.RbfCSVMC(svm_impl='libsvm')
+    sample_clf_nl = sg.SVM(kernel_type='RBF', svm_impl='libsvm')
 else:
     #classical one which was used for a while
     #and surprisingly it is not bad at all for the unittests
