@@ -145,12 +145,12 @@ if externals.exists('libsvm'):
              libsvm.svm.LinearNuSVMC(descr="libsvm.LinNuSVM(nu=def)", probability=1)
              ]
     clfs += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
-             libsvm.svm.SVMBase(kernel_type='poly',
-                                svm_type=libsvm.svmc.C_SVC,
-                                descr='libsvm.PolySVM()', probability=1),
-             #libsvm.svm.SVMBase(kernel_type='sigmoid',
-             #                   svm_type=libsvm.svmc.C_SVC,
-             #                   descr='libsvm.SigmoidSVM()'),
+             libsvm.svm.SVM(kernel_type='poly',
+                            svm_type=libsvm.svmc.C_SVC,
+                            descr='libsvm.PolySVM()', probability=1),
+             #libsvm.svm.SVM(kernel_type='sigmoid',
+             #               svm_type=libsvm.svmc.C_SVC,
+             #               descr='libsvm.SigmoidSVM()'),
              libsvm.svm.RbfNuSVMC(descr="libsvm.RbfNuSVM(nu=def)")
              ]
 

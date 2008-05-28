@@ -32,7 +32,7 @@ from svmc import \
      PRECOMPUTED
 
 
-class SVMBase(_SVM):
+class SVM(_SVM):
     """Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
@@ -108,8 +108,8 @@ class SVMBase(_SVM):
         If you do not want to change penalty for any of the classes,
         just set nr_weight to 0.
         """
-        self._KNOWN_PARAMS = SVMBase._KNOWN_PARAMS[:]
-        self._KNOWN_KERNEL_PARAMS = SVMBase._KNOWN_KERNEL_PARAMS[:]
+        self._KNOWN_PARAMS = SVM._KNOWN_PARAMS[:]
+        self._KNOWN_KERNEL_PARAMS = SVM._KNOWN_KERNEL_PARAMS[:]
 
         if svm_type in [svm.svmc.C_SVC]:
             self._KNOWN_PARAMS += ['C']
@@ -234,7 +234,7 @@ class SVMBase(_SVM):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
-        super(SVMBase, self).untrain()
+        super(SVM, self).untrain()
         del self.__model
         self.__model = None
 
@@ -243,17 +243,17 @@ class SVMBase(_SVM):
 
 
 
-class LinearSVM(SVMBase):
+class LinearSVM(SVM):
     """Base class of all linear SVM classifiers that make use of the libSVM
     package. Still not meant to be used directly.
     """
 
     def __init__(self, svm_type, **kwargs):
         """The constructor arguments are virtually identical to the ones of
-        the SVMBase class, except that 'kernel_type' is set to LINEAR.
+        the SVM class, except that 'kernel_type' is set to LINEAR.
         """
         # init base class
-        SVMBase.__init__(self, kernel_type='linear',
+        SVM.__init__(self, kernel_type='linear',
                          svm_type=svm_type, **kwargs)
 
 
@@ -286,7 +286,7 @@ class LinearCSVMC(LinearSVM):
 
 
 
-class RbfNuSVMC(SVMBase):
+class RbfNuSVMC(SVM):
     """Nu-SVM classifier using a radial basis function kernel.
     """
 
@@ -294,11 +294,11 @@ class RbfNuSVMC(SVMBase):
         """
         """
         # init base class
-        SVMBase.__init__(self, kernel_type='rbf',
-                         svm_type=svm.svmc.NU_SVC, **kwargs)
+        SVM.__init__(self, kernel_type='rbf',
+                     svm_type=svm.svmc.NU_SVC, **kwargs)
 
 
-class RbfCSVMC(SVMBase):
+class RbfCSVMC(SVM):
     """C-SVM classifier using a radial basis function kernel.
     """
 
@@ -306,8 +306,8 @@ class RbfCSVMC(SVMBase):
         """
         """
         # init base class
-        SVMBase.__init__(self, kernel_type='rbf',
-                         svm_type=svm.svmc.C_SVC, **kwargs)
+        SVM.__init__(self, kernel_type='rbf',
+                     svm_type=svm.svmc.C_SVC, **kwargs)
 
 
 # check if there is a libsvm version with configurable
