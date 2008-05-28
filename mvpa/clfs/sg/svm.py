@@ -79,7 +79,6 @@ known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
 
                    # regressions
                    "libsvr": shogun.Regression.LibSVR,
-                   "svrlight": shogun.Regression.SVRLight,
                    "krr": shogun.Regression.KRR
                    }
 
@@ -101,9 +100,13 @@ def _get_implementation(svm_impl, nl):
             svm_impl_class = known_svm_impl[svm_impl]
     return svm_impl_class
 
+# Conditionally make some of the implementations available if they are
+# present in the present shogun
+for name, item in [('lightsvm', "shogun.Classifier.SVMLight"),
+                   ('svrlight', "shogun.Regression.SVRLight")]:
+    if externals.exists('shogun.%s' % name):
+        exec "known_svm_impl[\"%s\"] = %s" % (name, item)
 
-if externals.exists('shogun.lightsvm'):
-    known_svm_impl["lightsvm"] = shogun.Classifier.SVMLight
 
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG

@@ -32,6 +32,7 @@ def __check_shogun(bottom_version, custom_versions=[2456]):
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'shogun':'import shogun as __',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
+          'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
           'rpy': "import rpy",
           'lars': "import rpy; rpy.r.library('lars')",
           'pylab': "import pylab as __",
