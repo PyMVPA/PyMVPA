@@ -38,6 +38,7 @@ Releases
   * New sparse multinomial logistic regression (SMLR) classifier and
     associated sensitivity analyzer.
   * New least angle regression classifier (LARS).
+  * New gaussian process regression classifier (GPR).
   * Initial documentation on extending PyMVPA.
   * Switch to Sphinx for documentation handling.
   * New example comparing the performance of all classifiers on some
