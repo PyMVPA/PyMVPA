@@ -84,16 +84,18 @@ class Kernel(object):
         euclidean_distance_matrix[euclidean_distance_matrix<0] = 0
         self.euclidean_distance_matrix = euclidean_distance_matrix
         return self.euclidean_distance_matrix
+    pass
 
 
 class KernelSquaredExponential(Kernel):
-    """The Squared Exponential kernel function class.
+    """The Squared Exponential kernel class.
 
-    Note that it enables a length scale for each dimension.
+    Note that it can handle a length scale for each dimension for
+    Automtic Relevance Determination.
 
     """
     def __init__(self, length_scale=0.01, **kwargs):
-        """Initialize the Squared Exponential class.
+        """Initialize a Squared Exponential kernel instance.
 
         :Parameters:
           length_scale : float OR numpy.ndarray
@@ -125,15 +127,93 @@ class KernelSquaredExponential(Kernel):
         return self.kernel_matrix
 
     def gradient(self,data1,data2):
+        """Compute gradient of the kernel matrix. A must for fast
+        model selection with high-dimensional data.
         """
-        """
-
+        # TODO SOON
+        grad = None
         return grad
 
     def set_hyperparameters(self,*length_scale):
+        """Facility to set lengthscales. Used model selection.
+        """
         self.length_scale = N.array(length_scale)
         return
     pass
+
+
+class KernelConstant(Kernel):
+    """The constant kernel class.
+    """
+    def __init__(self, coefficient=None, **kwargs):
+        """Initialize the constant kernel instance.
+
+        :Parameters:
+          coefficient : numpy.ndarray
+            the coefficients of the linear kernel
+            (Defaults to None)
+        """
+        # init base class first
+        Kernel.__init__(self, **kwargs)
+
+        self.coefficient = coefficient
+        self.kernel_matrix = None
+
+
+    def __repr__(self):
+        return "%s(coefficient=%s)" % (self.__class__.__name__, str(self.coefficient))
+
+    def compute(self, data1, data2=None):
+        """Compute kernel matrix.
+
+        :Parameters:
+          data1 : numpy.ndarray
+            data
+          data2 : numpy.ndarray
+            data
+            (Defaults to None)
+        """
+        if data2 == None:
+            data2 = data1
+            pass
+        self.kernel_matrix = (self.coefficient**2)*N.ones((data1.shape[0],data2.shape[0]))
+        return self.kernel_matrix
+
+
+    def set_hyperparameters(self,*coefficient):
+        self.coefficient = N.array(coefficient)
+        return
+    pass
+
+
+class KernelLinear(KernelConstant):
+    """The linear kernel class.
+    """
+    def compute(self, data1, data2=None):
+        """Compute kernel matrix.
+
+        :Parameters:
+          data1 : numpy.ndarray
+            data
+          data2 : numpy.ndarray
+            data
+            (Defaults to None)
+        """
+        if data2 == None:
+            data2 = data1
+            pass
+        self.kernel_matrix = N.dot(data1*(self.coefficient**2),data2.T)
+        return self.kernel_matrix
+
+    pass
+
+
+class KernelMatern(Kernel):
+    """The Matern kernel class.
+    """
+    # TODO
+    pass
+
 
 
 def generate_dataset_wr1996(size=200):
@@ -189,3 +269,10 @@ if __name__ == "__main__":
     ksem = kse.compute(data)
 
     data,labels = generate_dataset_wr1996()
+
+    kl = KernelLinear(coefficient=N.ones(data.shape[1]))
+    print kl
+
+    kc = KernelConstant(coefficient=1.0)
+    print kc
+
