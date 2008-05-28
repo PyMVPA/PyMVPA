@@ -28,6 +28,7 @@ tests = [
     'test_verbosity',
     'test_iohelpers',
     'test_signal',
+    'test_cmdline',
     # Classifiers (longer tests)
     'test_clf',
     'test_knn',
@@ -46,6 +47,8 @@ tests = [
     'test_perturbsensana',
     'test_splitsensana',
     'test_anova',
+    # And the suite (all-in-1)
+    'test_suite',
     ]
 
 # fully test of externals

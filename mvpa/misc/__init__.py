@@ -40,8 +40,12 @@ class __Singleton:
     def __call__(self):
         raise NotImplementedError
 
-verbose = __Singleton("verbose", LevelLogger(handlers=[stdout]))
-errors = __Singleton("errors", LevelLogger(handlers=[stderr]))
+verbose = __Singleton("verbose", LevelLogger(
+    handlers=environ.get('MVPA_VERBOSE_OUTPUT', 'stdout').split(',')))
+
+# Not supported/explained/used by now since verbose(0, is to print errors
+#error = __Singleton("error", LevelLogger(
+#    handlers=environ.get('MVPA_ERROR_OUTPUT', 'stderr').split(',')))
 
 # Levels for verbose
 # 0 -- nothing besides errors
@@ -107,7 +111,7 @@ if environ.has_key('MVPA_WARNINGS_COUNT'):
 else:
     warnings_maxcount = 1
 
-warning = WarningLog(handlers={False: [stdout],
+warning = WarningLog(handlers={False: environ.get('MVPA_WARNING_OUTPUT', 'stdout').split(','),
                                True: []}[environ.has_key('MVPA_NO_WARNINGS')],
                      btlevels=warnings_btlevels,
                      btdefault=warnings_bt,
@@ -119,7 +123,9 @@ if __debug__:
     from mvpa.misc.verbosity import DebugLogger
     # NOTE: all calls to debug must be preconditioned with
     # if __debug__:
-    debug = __Singleton("debug", DebugLogger(handlers=[stderr]))
+
+    debug = __Singleton("debug", DebugLogger(
+        handlers=environ.get('MVPA_DEBUG_OUTPUT', 'stdout').split(',')))
 
     # set some debugging matricses to report
     # debug.registerMetric('vmem')
@@ -143,7 +149,8 @@ if __debug__:
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
     debug.register('DS_',  "*Dataset (verbose)")
-    debug.register('DS_ID',"ID Datasets")
+    debug.register('DS_ID',   "ID Datasets")
+    debug.register('DS_STATS',"Datasets statistics")
     debug.register('RETRAIN', "Doing additional checking in retraining/retesting")
 
     debug.register('COL',  "Generic Collectable debugging")
@@ -171,7 +178,7 @@ if __debug__:
     debug.register('FSPL',   "FeatureSelectionPipeline")
 
     debug.register('SVM',    "SVM")
-    debug.register('SVMLIB', "Internal libsvm output")
+    debug.register('LIBSVM', "Internal libsvm output")
 
     debug.register('SMLR',    "SMLR")
     debug.register('SMLR_',   "SMLR verbose")

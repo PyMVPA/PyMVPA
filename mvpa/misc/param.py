@@ -43,7 +43,7 @@ class Parameter(CollectableAttribute):
 
         TODO: :Parameters: for Parameter
         """
-        self._default = default
+        self.__default = default
 
         CollectableAttribute.__init__(self, name, doc)
 
@@ -70,13 +70,25 @@ class Parameter(CollectableAttribute):
         #CollectableAttribute.reset(self)
         if not self.isDefault:
             self._isset = True
-            self._value = self._default
+            self.value = self.__default
 
     def _set(self, val):
         if self._value != val:
             if __debug__:
                 debug("COL",
                       "Parameter: setting %s to %s " % (str(self), val))
+            if hasattr(self, 'min') and val < self.min:
+                raise ValueError, \
+                      "Minimal value for parameter %s is %s. Got %s" % \
+                      (self.name, self.min, val)
+            if hasattr(self, 'max') and val > self.max:
+                raise ValueError, \
+                      "Maximal value for parameter %s is %s. Got %s" % \
+                      (self.name, self.max, val)
+            if hasattr(self, 'choices') and (not val in self.choices):
+                raise ValueError, \
+                      "Valid choices for parameter %s are %s. Got %s" % \
+                      (self.name, self.choices, val)
             self._value = val
             self._isset = True
         elif __debug__:
@@ -86,16 +98,16 @@ class Parameter(CollectableAttribute):
     @property
     def isDefault(self):
         """Returns True if current value is bound to default one"""
-        return self._value is self._default
+        return self._value is self.default
 
     @property
     def equalDefault(self):
         """Returns True if current value is equal to default one"""
-        return self._value == self._default
+        return self._value == self.__default
 
     def setDefault(self, value):
         wasdefault = self.isDefault
-        self._default = value
+        self.__default = value
         if wasdefault:
             self.resetvalue()
             self._isset = False
@@ -105,6 +117,8 @@ class Parameter(CollectableAttribute):
     #    """Override reset so we don't clean the flag"""
     #    pass
 
+    default = property(fget=lambda x:x.__default, fset=setDefault)
+    value = property(fget=lambda x:x._value, fset=_set)
 
 class KernelParameter(Parameter):
     """Just that it is different beast"""

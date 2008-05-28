@@ -185,14 +185,14 @@ The following software packages are required or PyMVPA will not work at all.
 .. _NumPy: http://numpy.scipy.org/
 
 
-.. index:: recommandations, SciPy, PyNIfTI, Shogun, R, RPy
+.. index:: recommendations, SciPy, PyNIfTI, Shogun, R, RPy
 
 Strong Recommendations
 ''''''''''''''''''''''
 
 While most parts of PyMVPA will work without any additional software, some
 functionality makes use of additional software packages. It is strongly
-recommend to install these packages as well.
+recommended to install these packages as well.
 
   SciPy_: linear algebra, standard distributions
     SciPy_ is mainly used by the statistical testing and the logistic

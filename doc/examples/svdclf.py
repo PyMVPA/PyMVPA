@@ -10,6 +10,10 @@
 """Example demonstrating a how to use data projection onto SVD components
 for *any* clasifier"""
 
+from mvpa.suite import *
+"""
+# Command above substitutes commands below
+
 import numpy as N
 import pylab as P
 
@@ -26,8 +30,9 @@ from mvpa.clfs.base import MappedClassifier
 from mvpa.mappers import SVDMapper
 
 from mvpa.misc import debug
-debug.active += ["CROSSC"]
+"""
 
+debug.active += ["CROSSC"]
 
 # plotting helper function
 def makeBarPlot(data, labels=None, title=None, ylim=None, ylabel=None):

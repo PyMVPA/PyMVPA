@@ -16,12 +16,26 @@ from mvpa.misc import warning
 if __debug__:
     from mvpa.misc import debug
 
+def __check_shogun(bottom_version, custom_versions=[2456]):
+    """Check if version of shogun is high enough (or custom known) to
+    be enabled in the testsuite"""
+    import shogun.Classifier as __sc
+    ver = __sc.Version_get_version_revision()
+    if (ver in custom_versions) or (ver >= bottom_version) : # custom built
+        return True
+    else:
+        raise ImportError, 'Version %s is smaller than needed %s' % \
+              (ver, bottom_version)
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'shogun':'import shogun as __',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'rpy': "import rpy",
           'lars': "import rpy; rpy.r.library('lars')",
+          'pylab': "import pylab as __",
+          'sg_fixedcachesize': "__check_shogun(3043)",
           }
 
 _VERIFIED = {}
@@ -69,6 +83,11 @@ def exists(dep, force=False):
             _VERIFIED[dep] = True
         except tuple(_caught_exceptions):
             pass
+
+        if __debug__:
+            debug('EXT', "Presence of %s is%s verified" %
+                  (dep, {True:'', False:' NOT'}[_VERIFIED[dep]]))
+
         return _VERIFIED[dep]
 
 

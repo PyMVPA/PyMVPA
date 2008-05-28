@@ -138,7 +138,7 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = os.path.join('_static', 'logo.pdf')
 
 # Additional stuff for the LaTeX preamble.
 #latex_preamble = ''

@@ -15,7 +15,7 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 __docformat__ = 'restructuredtext'
 
-from sys import stdout
+from sys import stdout, stderr
 from sets import Set
 # GOALS
 #  any logger should be able
@@ -39,18 +39,43 @@ class Logger(object):
         """
         if handlers == None:
             handlers = [stdout]
+        self.__close_handlers = []
         self._setHandlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
 
+    def __del__(self):
+        self._closeOpenedHandlers()
 
     def _setHandlers(self, handlers):
         """Set list of handlers for the log.
 
-        Handlers can be logfiles, stdout, stderr, etc
+        A handler can be opened files, stdout, stderr, or a string, which
+        will be considered a filename to be opened for writing
         """
-        self.__handlers = handlers
+        handlers_ = []
+        self._closeOpenedHandlers()
+        for handler in handlers:
+            if isinstance(handler, basestring):
+                try:
+                    handler = {'stdout' : stdout,
+                               'stderr' : stderr}[handler.lower()]
+                except:
+                    try:
+                        handler = open(handler, 'w')
+                        self.__close_handlers.append(handler)
+                    except:
+                        raise RuntimeError, \
+                              "Cannot open file %s for writing by the logger" \
+                              % handler
+            handlers_.append(handler)
+        self.__handlers = handlers_
 
+    def _closeOpenedHandlers(self):
+        """Close opened handlers (such as opened logfiles
+        """
+        for handler in self.__close_handlers:
+            handler.close()
 
     def _getHandlers(self):
         """Return active handlers

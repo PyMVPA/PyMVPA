@@ -37,26 +37,50 @@ from mvpa.base import externals
 if __debug__:
     from mvpa.misc import debug
 
+# Some words of wisdom from shogun author:
+# XXX remove after proper comments added to implementations
+"""
+If you'd like to train linear SVMs use SGD or OCAS. These are (I am
+serious) the fastest linear SVM-solvers to date. (OCAS cannot do SVMs
+with standard additive bias, but will L2 reqularize it - though it
+should not matter much in practice (although it will give slightly
+different solutions)). Note that SGD has no stopping criterion (you
+simply have to specify the number of iterations) and that OCAS has a
+different stopping condition than svmlight for example which may be more
+tight and more loose depending on the problem - I sugeest 1e-2 or 1e-3
+for epsilon.
+
+If you would like to train kernel SVMs use libsvm/gpdt/svmlight -
+depending on the problem one is faster than the other (hard to say when,
+I *think* when your dataset is very unbalanced chunking methods like
+svmlight/gpdt are better), for smaller problems definitely libsvm.
+
+If you use string kernels then gpdt/svmlight have a special 'linadd'
+speedup for this (requires sg 0.6.2 - there was some inefficiency in the
+code for python-modular before that). This is effective for big datasets
+and (I trained on 10 million strings based on this).
+
+And yes currently we only implemented parallel training for svmlight,
+however all SVMs can be evaluated in parallel.
+"""
 known_svm_impl = { "libsvm" : shogun.Classifier.LibSVM,
-                   # fails to train though it should... disabled for now
-                   #"gmnp" : shogun.Classifier.GMNPSVM,
+                   "gmnp" : shogun.Classifier.GMNPSVM,
+                   "mpd"  : shogun.Classifier.MPDSVM,
+                   "gpbt" : shogun.Classifier.GPBTSVM,
+                   "gnpp" : shogun.Classifier.GNPPSVM,
 
-                   # disabled due to infinite looping on XOR
-                   #"mpd"  : shogun.Classifier.MPDSVM,
+                   ## TODO: Needs sparse features...
+                   # "svmlin" : shogun.Classifier.SVMLin,
+                   # "liblinear" : shogun.Classifier.LibLinear,
+                   # "subgradient" : shogun.Classifier.SubGradientSVM,
+                   ## good 2-class linear SVMs
+                   # "ocas" : shogun.Classifier.SVMOcas,
+                   # "sgd" :  shogun.Classifier.SVMSGD,
 
-                   # fails to train for testAnalyzerWithSplitClassifier
-                   #"gpbt" : shogun.Classifier.GPBTSVM,
-
-                   # Failes some times with 'assertion Cache_Size > 2' though should work
-                   # check later
-                   #"gnpp" : shogun.Classifier.GNPPSVM,
-
-                   # Regressions
+                   # regressions
                    "libsvr": shogun.Regression.LibSVR,
-                   # also not that simple to make it 'generalize' as a binary classifier
-                   # after proper 'binning'
-                   #"svrlight": shogun.Regression.SVRLight,
-                   #"krr": shogun.Regression.KRR
+                   "svrlight": shogun.Regression.SVRLight,
+                   "krr": shogun.Regression.KRR
                    }
 
 def _get_implementation(svm_impl, nl):
@@ -151,7 +175,7 @@ class SVM_SG_Modular(_SVM):
 
     def __init__(self,
                  kernel_type='linear',
-                 svm_impl="libsvm",   # gpbt was failing on testAnalyzerWithSplitClassifier for some reason
+                 svm_impl="libsvm",
                  **kwargs):
         """This is the base class of all classifier that utilize so
         far just SVM classifiers provided by shogun.

@@ -101,9 +101,12 @@ class ConfusionMatrix(object):
         # enforce labels in predictions to be of the same datatype as in
         # targets, since otherwise we are getting doubles for unknown at a
         # given moment labels
+        nonetype = type(None)
         for i in xrange(len(targets)):
             t1, t2 = type(targets[i]), type(predictions[i])
-            if t1 != t2:
+            # if there were no prediction made - leave None, otherwise
+            # convert to appropriate type
+            if t1 != t2 and t2 != nonetype:
                 #warning("Obtained target %s and prediction %s are of " %
                 #       (t1, t2) + "different datatypes.")
                 if isinstance(predictions, tuple):
@@ -192,8 +195,8 @@ class ConfusionMatrix(object):
         self.__computed = True
 
 
-    def __str__(self, header=True, percents=True, summary=True,
-                print_empty=False, description=True):
+    def asstring(self, header=True, percents=True, summary=True,
+                  print_empty=False, description=False):
         """'Pretty print' the matrix"""
         self._compute()
 
@@ -294,6 +297,20 @@ class ConfusionMatrix(object):
         out.close()
         return result
 
+
+    def __str__(self):
+        """String summary over the confusion matrix
+
+        It would print description of the summary statistics if 'CM'
+        debug target is active
+        """
+        if __debug__:
+            description = ('CM' in debug.active)
+        else:
+            description = False
+        return self.asstring(header=True, percents=True,
+                             summary=True, print_empty=False,
+                             description=description)
 
     def __iadd__(self, other):
         """Add the sets from `other` s `ConfusionMatrix` to current one
