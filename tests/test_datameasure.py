@@ -50,7 +50,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         for conf_matrix in [sana.clf.training_confusion] \
                           + sana.clf.training_confusions.matrices:
-            self.failUnless(conf_matrix.percentCorrect>85,
+            self.failUnless(conf_matrix.percentCorrect>75,
                             msg="We must have trained on each one more or " \
                                 "less correctly. Got %f%% correct on %d labels" %
                             (conf_matrix.percentCorrect,
