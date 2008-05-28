@@ -137,21 +137,22 @@ clfs += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvm
-    clfs += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)", probability=1),
-             libsvm.svm.LinearCSVMC(
+    clfs += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
+             libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
-             libsvm.svm.LinearCSVMC(
+             libsvm.SVM(
                  C=1.0, descr="libsvm.LinSVM(C=1)", probability=1),
-             libsvm.svm.LinearNuSVMC(descr="libsvm.LinNuSVM(nu=def)", probability=1)
+             libsvm.SVM(svm_impl='NU_SVC',
+                        descr="libsvm.LinNuSVM(nu=def)", probability=1)
              ]
-    clfs += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
-             libsvm.svm.SVM(kernel_type='poly',
-                            svm_type=libsvm.svmc.C_SVC,
-                            descr='libsvm.PolySVM()', probability=1),
+    clfs += [libsvm.SVM(kernel_type='RBF', descr="libsvm.RbfSVM()"),
+             libsvm.SVM(kernel_type='RBF', svm_impl='NU_SVC',
+                        descr="libsvm.RbfNuSVM(nu=def)"),
+             libsvm.SVM(kernel_type='poly',
+                        descr='libsvm.PolySVM()', probability=1),
              #libsvm.svm.SVM(kernel_type='sigmoid',
-             #               svm_type=libsvm.svmc.C_SVC,
+             #               svm_impl='C_SVC',
              #               descr='libsvm.SigmoidSVM()'),
-             libsvm.svm.RbfNuSVMC(descr="libsvm.RbfNuSVM(nu=def)")
              ]
 
 if externals.exists('shogun'):
@@ -178,17 +179,17 @@ if externals.exists('shogun'):
         if impl in bad_classifiers:
             continue
         clfs += [
-            sg.svm.LinearCSVMC(
+            sg.SVM(
                 descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
-            sg.svm.LinearCSVMC(
+            sg.SVM(
                 C=-10.0, descr="sg.LinSVM(C=10*def)/%s" % impl, svm_impl=impl),
-            sg.svm.LinearCSVMC(
+            sg.SVM(
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
         clfs += [
-            sg.svm.RbfCSVMC(descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.svm.RbfCSVMC(descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
-#           sg.svm.SVM_SG_Modular(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
+            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+#            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
+#           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
 

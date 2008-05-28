@@ -14,7 +14,7 @@ if __debug__:
     from mvpa.misc import debug
     debug('INIT', 'mvpa.clfs.sg')
 
-from mvpa.clfs.sg import svm
+from mvpa.clfs.sg.svm import SVM
 
 if __debug__:
     debug('INIT', 'mvpa.clfs.sg end')
