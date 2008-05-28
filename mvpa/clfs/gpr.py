@@ -273,7 +273,7 @@ if __name__ == "__main__":
                     lml_best = lml[i,j]
                     length_scale_best = y
                     sigma_noise_best = x
-                    print x,y,lml_best
+                    # print x,y,lml_best
                     pass
                 j += 1
                 pass
