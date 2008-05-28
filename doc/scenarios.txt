@@ -63,7 +63,7 @@ searchlight map (`sl_map`) can be mapped back into the original dataspace
 and viewed as a brain overlay. The :ref:`example section <example_searchlight>`
 contains a typical application of this algorithm.
 
-.. _Searchlight: api/mvpa.algorithms.searchlight.Searchlight-class.html
+.. _Searchlight: api/mvpa.measures.searchlight.Searchlight-class.html
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
 

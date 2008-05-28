@@ -25,7 +25,7 @@ RFE_
 
 (to be written)
 
-.. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
+.. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
 
 .. index:: incremental feature search, IFS
@@ -38,7 +38,7 @@ IFS_
 
 (to be written)
 
-.. _IFS: api/mvpa.algorithms.ifs.IFS-class.html
+.. _IFS: api/mvpa.featsel.ifs.IFS-class.html
 
 .. What are the practical differences (besides speed) between RFE and IFS?
 

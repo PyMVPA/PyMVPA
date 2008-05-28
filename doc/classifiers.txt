@@ -221,7 +221,7 @@ and some Dataset_ `data`.
   ...                                      NFoldSplitter(cvtype=1))
   >>> error = cvterr(data)
 
-.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
 
@@ -323,19 +323,20 @@ of a C extension for the performance critical pieces of the code.
 Support Vector Machines
 =======================
 
-Support vector machines [#]_ are a popular classifier that can deal with very high dimensional
-problems (`Wikipedia entry about SVM`_).
+Support vector machines [#]_ are a popular classifier that can deal with very
+high dimensional problems (`Wikipedia entry about SVM`_).
 
-The support vector machine classes provide a family of classifers by wrapping
-the libsvm_ library.  While the SVMBase_ class provides a complete interface,
-the other child classes make it easy to run standard classifiers, such as
-linear SVM, with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_,
-RbfNuSVMC_ and RbfCSVMC_).
+The support vector machine classes provide a family of classifiers by wrapping
+libsvm_ and Shogun_ libraries.  While the SVMBase_ class provides a complete
+interface, the other child classes make it easy to run standard classifiers,
+such as linear SVM, with a default set of parameters (see LinearCSVMC_,
+LinearNuSVMC_, RbfNuSVMC_ and RbfCSVMC_).
 
 .. [#] Vapnik, V. (1995). *The Nature of Statistical Learning Theory*.
        Springer, New York.
 
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _Shogun: http://www.shogun-toolbox.org
 .. _Wikipedia entry about SVM: http://en.wikipedia.org/wiki/Support_Vector_Machine
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
