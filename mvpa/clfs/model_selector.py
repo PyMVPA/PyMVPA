@@ -23,19 +23,19 @@ class ModelSelector(object):
     parametrized by a set of hyperparamenters).
     """
 
-    def __init__(self,parametric_model):
+    def __init__(self, parametric_model, dataset):
         self.parametric_model = parametric_model
+        self.dataset = dataset
         self.hyperparameters_best = None
         self.log_marginal_likelihood_best = None
         self.problem = None
         pass
 
 
-    def maximize_log_marginal_likelihood(self, hyp_initial_guess,
-                                         maxiter=1, optimization_algorithm="scipy_cg",ftol=1.0e-2):
+    def max_log_marginal_likelihood(self, hyp_initial_guess,maxiter=1, optimization_algorithm="scipy_cg",ftol=1.0e-2):
         """
-        Search hyperparameters in order to maximize the log marginal
-        likelihood of data of a parametric model.
+        Set up the optimization problem in order to maximize
+        the log_marginal_likelihood.
 
         :Parameters:
 
@@ -55,6 +55,7 @@ class ModelSelector(object):
         optimization problem (NLP). This fact is confirmed by Dmitrey,
         author of OpenOpt.
         """
+        self.optimization_algorithm = optimization_algorithm
 
         def f(*args):
             """
@@ -63,6 +64,7 @@ class ModelSelector(object):
             minimization only.
             """
             self.parametric_model.set_hyperparameters(*args)
+            self.parametric_model.train(self.dataset)
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
             return -log_marginal_likelihood # minus sign because optimizers do _minimization_.
 
@@ -81,9 +83,13 @@ class ModelSelector(object):
         self.problem.checkdf = True # check whether the derivative of log_marginal_likelihood converged to zero before ending optimization
         self.problem.ftol = ftol # set increment of log_marginal_likelihood under which the optimizer stops
         self.problem.iprint = 0 # shut up OpenOpt (note: -1 = no logs, 0 = small log, 1 = verbose)
+        return self.problem
 
-        result = self.problem.solve(optimization_algorithm) # perform optimization!
 
+    def solve(self, problem=None):
+        """Solve the minimization problem, check outcome and collect results.
+        """
+        result = self.problem.solve(self.optimization_algorithm) # perform optimization!
         if result.stopcase == -1:
             print "Unable to find a maximum to log_marginal_likelihood"
         elif result.stopcase == 0:
@@ -98,10 +104,10 @@ class ModelSelector(object):
 
 
 
-    
 if __name__ == "__main__":
 
     import gpr
+    import kernel
 
     N.random.seed(1)
 
@@ -110,6 +116,8 @@ if __name__ == "__main__":
     pylab.ion()
 
     from mvpa.datasets import Dataset
+
+    print "GPR:",
 
     train_size = 40
     test_size = 100
@@ -126,22 +134,22 @@ if __name__ == "__main__":
     regression = True
     logml = True
 
-    g = gpr.GPR(regression=regression)
+    k = kernel.KernelLinear(coefficient=N.ones(1))
+    # k = kernel.KernelConstant()
+    g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
-    g.train_fv = dataset.samples
-    g.train_labels = dataset.labels
+    # g.train_fv = dataset.samples
+    # g.train_labels = dataset.labels
 
     print "GPR hyperparameters' search through maximization of marginal likelihood on train data."
     print
-    
-    ms = ModelSelector(g)
+    ms = ModelSelector(g,dataset)
 
     sigma_noise_initial = 1.0
     length_scale_initial = 1.0
 
-    lml =  ms.maximize_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial],
-                                         maxiter=1, optimization_algorithm="ralg")
-    
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-4)
+    lml = ms.solve()
     sigma_noise_best, length_scale_best = ms.hyperparameters_best
     print
     print "Best sigma_noise:",sigma_noise_best
@@ -149,3 +157,25 @@ if __name__ == "__main__":
     print "Best log_marginal_likelihood:",lml
 
     gpr.compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F)
+
+    print
+    print "GPR ARD on dataset from Williams and Rasmussen 1996:"
+    data, labels = kernel.generate_dataset_wr1996()
+    # data = N.hstack([data]*10) # test a larger set of dimensions: reduce ftol!
+    dataset = Dataset(samples=data, labels=labels)
+    k = kernel.KernelSquaredExponential(length_scale=N.ones(dataset.samples.shape[1]))
+    g = gpr.GPR(k, regression=regression)
+    ms = ModelSelector(g, dataset)
+
+    sigma_noise_initial = 0.01
+    length_scales_initial = 0.5*N.ones(dataset.samples.shape[1])
+
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.hstack([sigma_noise_initial,length_scales_initial]), optimization_algorithm="ralg")
+    lml = ms.solve()
+    sigma_noise_best = ms.hyperparameters_best[0]
+    length_scales_best = ms.hyperparameters_best[1:]
+    print
+    print "Best sigma_noise:",sigma_noise_best
+    print "Best length_scale:",length_scales_best
+    print "Best log_marginal_likelihood:",lml
+
