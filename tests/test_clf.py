@@ -251,20 +251,8 @@ class ClassifiersTests(unittest.TestCase):
         mclf = MulticlassClassifier(clf=svm,
                                    enable_states=['training_confusion'])
 
-        nfeatures = 6
-        nonbogus = [1, 3, 4]
-        dstrain = normalFeatureDataset(perlabel=50, nlabels=3,
-                                       nfeatures=nfeatures,
-                                       nonbogus_features=nonbogus,
-                                       snr=3.0)
-
-        dstest = normalFeatureDataset(perlabel=50, nlabels=3,
-                                      nfeatures=nfeatures,
-                                      nonbogus_features=nonbogus,
-                                      snr=3.0)
-        svm2.train(dstrain)
-
-        mclf.train(dstrain)
+        svm2.train(datasets['uni2small_train'])
+        mclf.train(datasets['uni2small_train'])
         self.failUnlessEqual(str(mclf.training_confusion),
                              str(svm2.training_confusion),
             msg="Multiclass clf should provide same results as built-in libsvm's %s" %
@@ -298,8 +286,8 @@ class ClassifiersTests(unittest.TestCase):
         if knows_probabilities: enable_states += ['probabilities']
 
         clf.states._changeTemporarily(enable_states = enable_states)
-        testdata = normalFeatureDataset(nlabels=2)
-        for traindata in [normalFeatureDataset(nlabels=2)]:
+        for traindata, testdata in [
+            (datasets['uni2small_train'], datasets['uni2small_test']) ]:
             clf.train(traindata)
             predicts = clf.predict(testdata.samples)
             # values should be different from predictions for SVMs we have
@@ -315,16 +303,18 @@ class ClassifiersTests(unittest.TestCase):
         clf.states._changeTemporarily(enable_states = ['values'])
         clf_re = _deepcopyclf(clf)
         clf_re.retrainable = True
-
+        debug('SG', "Here with clf %s" % clf)
         # need to have high snr so we don't 'cope' with problematic
         # datasets since otherwise unittests would fail.
         dsargs = {'perlabel':50, 'nlabels':2, 'nfeatures':5, 'nchunks':1,
                   'nonbogus_features':[2,4], 'snr': 5.0}
+
+        ## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # NB datasets will be changed by the end of testing, so if
         # are to change to use generic datasets - make sure to copy
         # them here
-        dstrain = normalFeatureDataset(**dsargs)
-        dstest = normalFeatureDataset(**dsargs)
+        dstrain = deepcopy(datasets['uni2small_train'])
+        dstest = deepcopy(datasets['uni2small_test'])
 
         clf.untrain()
         clf_re.untrain()
@@ -395,10 +385,11 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless((oldlabels != dstrain.labels).any())
         batch_test()
 
-        # should retest nicely if we change labels in testing data
+        # Change labels in testing
         oldlabels = dstest.labels[:]
         dstest.permuteLabels(status=True)
-        self.failUnless((oldlabels != dstest.labels).any())
+        self.failUnless((oldlabels != dstest.labels).any(),
+            msg="Should retest nicely if we change labels in testing data")
         batch_test()
 
         # should re-train if we change data
@@ -407,7 +398,6 @@ class ClassifiersTests(unittest.TestCase):
         dstrain.samples[:] += dstrain.samples*0.05
         self.failUnless((oldsamples != dstrain.samples).any())
         batch_test(retest=False)
-
         clf.states._resetEnabledTemporarily()
 
     def testGenericTests(self):
@@ -427,8 +417,6 @@ class ClassifiersTests(unittest.TestCase):
             # TODO: enforce uniform return from predict??
             #predicted = clf.predict(traindata.samples)
             #self.failUnless(isinstance(predicted, N.ndarray))
-
-        #print "here repr: %s str: %s" %(`clf`, str(clf))
 
         # Just simple test that all of them are syntaxed correctly
         self.failUnless(str(clf) != "")
