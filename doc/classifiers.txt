@@ -323,14 +323,19 @@ of a C extension for the performance critical pieces of the code.
 Support Vector Machines
 =======================
 
-Support vector machines [#]_ are a popular classifier that can deal with very
-high dimensional problems (`Wikipedia entry about SVM`_).
+Support vector machines [#]_ classifiers (and regressions) are popular
+since they can deal with very high dimensional problems (`Wikipedia
+entry about SVM`_), while maintaining reasonable generalization performance.
 
 The support vector machine classes provide a family of classifiers by wrapping
-libsvm_ and Shogun_ libraries.  While the SVMBase_ class provides a complete
-interface, the other child classes make it easy to run standard classifiers,
-such as linear SVM, with a default set of parameters (see LinearCSVMC_,
-LinearNuSVMC_, RbfNuSVMC_ and RbfCSVMC_).
+libsvm_ and Shogun_ libraries, with corresponding base classes libsvm.SVM_ and
+sg.SVM_ accordingly. By default SVM class is bound to libsvm's implementation
+if such is available (shogun otherwise).
+
+While any SVM class provides a complete interface, the others child classes
+make it easy to run some subset of standard classifiers, such as linear SVM,
+with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_, RbfNuSVMC_
+and RbfCSVMC_).
 
 .. [#] Vapnik, V. (1995). *The Nature of Statistical Learning Theory*.
        Springer, New York.
@@ -338,11 +343,31 @@ LinearNuSVMC_, RbfNuSVMC_ and RbfCSVMC_).
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _Shogun: http://www.shogun-toolbox.org
 .. _Wikipedia entry about SVM: http://en.wikipedia.org/wiki/Support_Vector_Machine
+.. _libsvm.SVM: api/mvpa.clfs.libsvm.svm.SVM-class.html
+.. _sg.SVM: api/mvpa.clfs.sg.svm.SVM-class.html
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
 .. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
 .. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
-.. _SVMBase: api/mvpa.clfs.svm.SVMBase-class.html
 
+
+
+Classifiers "Warehouse"
+=======================
+
+To facilitate easy trial of different classifiers for any specific task,
+Warehouse_ of classifiers clfs.warehouse.clfs was defined to create a sample
+collection of some commonly used parameterizations of the classifiers present
+in PyMVPA. Such collection can be queried by any set of known keywords/tags
+with tags prefixed with ``!`` being excluded::
+
+  >>> from mvpa.clfs.warehouse import clfs
+  >>> print len(clfs['multiclass', '!svm'])
+  8
+
+to simply sweep through classifiers which are capable of multiclass
+classification and are not SVM based.
+
+.. _Warehouse: api/mvpa.clfs.warehouse.Warehouse-class.html
 
 
