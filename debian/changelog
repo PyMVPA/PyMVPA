@@ -1,4 +1,4 @@
-pymvpa (0.2.0-1) UNRELEASED; urgency=low
+pymvpa (0.2.0-1) unstable; urgency=low
 
   * New upstream release.
   * Added build-dependency to python-ctypes for a new classifier extension.
@@ -7,7 +7,7 @@ pymvpa (0.2.0-1) UNRELEASED; urgency=low
   * Disable libsvm setting check and add setup.cfg to permanently enable
     building the libsvm wrapper for Debian.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Tue, 20 May 2008 19:59:19 +0200
+ -- Michael Hanke <michael.hanke@gmail.com>  Thu, 29 May 2008 08:13:14 +0200
 
 pymvpa (0.1.0-1) unstable; urgency=low
 
