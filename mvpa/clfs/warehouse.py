@@ -37,6 +37,11 @@ from mvpa.featsel.helpers import FractionTailSelector, \
 from mvpa.clfs.transerror import ConfusionBasedError
 from mvpa.featsel.base import SensitivityBasedFeatureSelection
 
+_KNOWN_INTERNALS=[ 'knn', 'binary', 'svm', 'linear',
+        'smlr', 'does_feature_selection', 'has_sensitivity',
+        'multiclass', 'non-linear', 'kernel-based', 'lars',
+        'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr' ]
+
 class Warehouse(object):
     """Class to keep known instantiated classifiers
 
@@ -46,11 +51,8 @@ class Warehouse(object):
      capable of doing multiclass classification
      """
 
-    _KNOWN_INTERNALS = Set(['knn', 'binary', 'svm', 'linear', 'smlr', 'does_feature_selection',
-                            'has_sensitivity', 'multiclass', 'non-linear', 'kernel-based', 'lars',
-                            'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr'])
-
-    def __init__(self):
+    def __init__(self, known_tags=None):
+        self.__known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
 
@@ -63,11 +65,12 @@ class Warehouse(object):
             args = []
 
         # lets remove optional modifier '!'
-        dargs = Set([x.lstrip('!') for x in args]).difference(self._KNOWN_INTERNALS)
+        dargs = Set([x.lstrip('!') for x in args]).difference(
+            self.__known_tags)
 
         if len(dargs)>0:
             raise ValueError, "Unknown internals %s requested. Known are %s" % \
-                  (list(dargs), list(self._KNOWN_INTERNALS))
+                  (list(dargs), list(self.__known_tags))
 
         # dummy implementation for now
         result = []
@@ -96,12 +99,12 @@ class Warehouse(object):
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty _clf_internals"
             clf_internals = Set(item._clf_internals)
-            if clf_internals.issubset(self._KNOWN_INTERNALS):
+            if clf_internals.issubset(self.__known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
             else:
                 raise ValueError, 'Unknown clf internal(s) %s' % \
-                      clf_internals.difference(self._KNOWN_INTERNALS)
+                      clf_internals.difference(self.__known_tags)
         return self
 
     @property
@@ -115,7 +118,7 @@ class Warehouse(object):
     def items(self):
         return self.__items
 
-clfs = Warehouse()
+clfs = Warehouse(known_tags=_KNOWN_INTERNALS)
 
 # NB:
 #  - Nu-classifiers are turned off since for haxby DS default nu
