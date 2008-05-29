@@ -55,7 +55,7 @@ while i < len(inlines):
         # import asked module
         exec "from mvpa.%s import %s as Victim" % (d['path'], d['cls'])
 
-        states = Victim._states_template.items
+        states = Victim._collections_template['states'].items
         keys = states.keys()
         keys.sort()
 
