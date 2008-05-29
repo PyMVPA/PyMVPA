@@ -44,7 +44,7 @@ def main():
 
 
     # Load Haxby dataset example
-    haxby1path = '../../data'
+    haxby1path = 'data'
     attrs = SampleAttributes(os.path.join(haxby1path, 'attributes.txt'))
     haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
                           labels=attrs.labels,
