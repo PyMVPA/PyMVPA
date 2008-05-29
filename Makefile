@@ -186,7 +186,10 @@ orig-src: distclean debian-clean
 	# clean leftover
 	rm MANIFEST
 
-debsrc: orig-src
+# make Debian source package
+# # DO NOT depend on orig-src here as it would generate a source tarball in a
+# Debian branch and might miss patches!
+debsrc:
 	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
 
 #
