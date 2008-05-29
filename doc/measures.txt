@@ -103,8 +103,9 @@ Linear SVM Weights
 ^^^^^^^^^^^^^^^^^^
 
 The featurewise weights of a trained support vector machine are another
-possible sensitivity measure. The LinearSVMWeights_ class can internally train
-all types of *linear* support vector machines and report those weights.
+possible sensitivity measure. The libsvm.LinearSVMWeights_ and
+sg.LinearSVMWeights_ class can internally train all types of *linear* support
+vector machines and report those weights.
 
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
 or negative, with both extremes indicating higher sensitivities. To deal with
@@ -116,7 +117,8 @@ functors which can be used for this purpose (see Transformers_).
 Please note, that this class *cannot* extract reasonable weights from
 non-linear SVMs (e.g. with RBF kernels).
 
-.. _LinearSVMWeights: api/mvpa.algorithms.linsvmweights.LinearSVMWeights-class.html
+.. _libsvm.LinearSVMWeights: api/mvpa.clfs.libsvm.sens.LinearSVMWeights-class.html
+.. _sg.LinearSVMWeights: api/mvpa.clfs.sg.sens.LinearSVMWeights-class.html
 .. _Transformers: api/mvpa.misc.transformers-module.html
 
 
