@@ -137,11 +137,11 @@ testsuite:
 	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
 	 done
 
-# Check if links to api/ within documentation are broken
+# Check if links to api/ within documentation are broken.
 testapiref: apidoc
 	@for tf in doc/*.txt; do \
 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
-	  ff=build/website/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
+	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
 test: unittest testmanual testsuite testapiref testexamples
@@ -191,4 +191,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual profile website
+.PHONY: fetch-data orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all
