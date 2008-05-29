@@ -15,9 +15,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 if __debug__:
-    import time
     from mvpa.misc import debug
-
 
 class Kernel(object):
     """Kernel function base class.
@@ -212,50 +210,13 @@ class KernelMatern(Kernel):
     """The Matern kernel class.
     """
     # TODO
-    pass
-
-
-
-def generate_dataset_wr1996(size=200):
-    """
-    Generate a known dataset ('6d robot arm',Williams and Rasmussen 1996)
-    in order to test the correctness of the implementation of kernel ARD.
-    For full details see:
-    http://www.gaussianprocess.org/gpml/code/matlab/doc/regression.html#ard
-
-    x_1 picked randomly in [-1.932, -0.453]
-    x_2 picked randomly in [0.534, 3.142]
-    r_1 = 2.0
-    r_2 = 1.3
-    f(x_1,x_2) = r_1 cos (x_1) + r_2 cos(x_1 + x_2) + N(0,0.0025)
-    etc.
-
-    Expected relevances:
-    ell_1      1.804377
-    ell_2      1.963956
-    ell_3      8.884361
-    ell_4     34.417657
-    ell_5   1081.610451
-    ell_6    375.445823
-    sigma_f    2.379139
-    sigma_n    0.050835
-    """
-    intervals = N.array([[-1.932, -0.453],[0.534, 3.142]])
-    r = N.array([2.0,1.3])
-    x = N.random.rand(size,2)
-    x *= N.array(intervals[:,1]-intervals[:,0])
-    x += N.array(intervals[:,0])
-    # print x[:,0].min(), x[:,0].max()
-    # print x[:,1].min(), x[:,1].max()
-    y = r[0]*N.cos(x[:,0] + r[1]*N.cos(x.sum(1))) + N.random.randn(size)*N.sqrt(0.0025)
-    y -= y.mean()
-    x34 = x + N.random.randn(size,2)*0.02
-    x56 = N.random.randn(size,2)
-    x = N.hstack([x,x34,x56])
-    return x,y
+    def __init__(self):
+        raise NotImplementedError
 
 
 if __name__ == "__main__":
+
+    from mvpa.misc import data_generators
 
     N.random.seed(1)
     data = N.random.rand(4, 2)
@@ -268,7 +229,10 @@ if __name__ == "__main__":
     print kse
     ksem = kse.compute(data)
 
-    data,labels = generate_dataset_wr1996()
+    dataset = data_generators.wr1996()
+    print dataset
+    data = dataset.samples
+    labels = dataset.labels
 
     kl = KernelLinear(coefficient=N.ones(data.shape[1]))
     print kl
