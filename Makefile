@@ -179,7 +179,8 @@ orig-src: distclean debian-clean
 		fi \
 	fi
 	# let python create the source tarball
-	python setup.py sdist --formats=gztar
+	# enable libsvm to get all sources!
+	PYMVPA_LIBSVM=1 python setup.py sdist --formats=gztar
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
