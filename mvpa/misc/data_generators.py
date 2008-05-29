@@ -12,10 +12,16 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from sets import Set
+
 from mvpa.datasets import Dataset
 
+if __debug__:
+    from mvpa.misc import debug
 
 def dumbFeatureDataset():
+    """Create a very simple dataset with 2 features and 3 labels
+    """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
             [5, 0], [5, 1], [6, 0], [6, 1], [7, 0], [7, 1], [8, 0], [8, 1],
             [9, 0], [9, 1], [10, 0], [10, 1], [11, 0], [11, 1], [12, 0],
@@ -26,6 +32,8 @@ def dumbFeatureDataset():
 
 
 def dumbFeatureBinaryDataset():
+    """Very simple binary (2 labels) dataset
+    """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
             [5, 0], [5, 1], [6, 0], [6, 1], [7, 0], [7, 1], [8, 0], [8, 1],
             [9, 0], [9, 1], [10, 0], [10, 1], [11, 0], [11, 1], [12, 0],
@@ -104,13 +112,15 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
 def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
                            perlabel=50, activation_probability_steps=1,
                            randomseed=None, randomvoxels=False):
+    """ NOT FINISHED """
+    raise NotImplementedError
 
     if dataset is None and labels is None:
         raise ValueError, \
               "Provide at least labels or a background dataset"
 
     if dataset is None:
-        Nlabels = len(labels)
+        nlabels = len(labels)
     else:
         nchunks = len(dataset.uniquechunks)
 
@@ -147,8 +157,8 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
                        indexes[nfeatures+1:]
         allind += list(ind)              # store what indexes we used
 
-        # Create a dataset only for 'selected' features
-        # NB there is sideeffect that selectFeatures will sort those ind provided
+        # Create a dataset only for 'selected' features NB there is
+        # sideeffect that selectFeatures will sort those ind provided
         ds = dataset.selectFeatures(ind)
         ds.samples[:] = 0.0             # zero them out
 
@@ -158,7 +168,8 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
 
         # repeat so each feature gets itw own
         probabilities = N.repeat(prob, perlabel)
-        verbose(4, 'For prob=%s probabilities=%s' % (prob, probabilities))
+        if __debug__:
+            debug('DG', 'For prob=%s probabilities=%s' % (prob, probabilities))
 
         for chunk in ds.uniquechunks:
             chunkids = ds.idsbychunks(chunk) # samples in this chunk
@@ -166,18 +177,19 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
             chunkvalue = N.random.uniform() # random number to decide either
                                         # to 'activate' the voxel
             for id_ in ids:
-                ds.samples[id_, :] = (chunkvalue <= probabilities).astype('float')
-            #verbose(5, "Chunk %d Chunkids %s ids %s" % (chunk, chunkids, ids))
+                ds.samples[id_, :] = \
+                                (chunkvalue <= probabilities).astype('float')
 
         maps.append(N.array(probabilities, copy=True))
 
         signal = ds.map2Nifti(ds.samples)
-        totalsignal[:,ind] += ds.samples
+        totalsignal[:, ind] += ds.samples
 
     # figure out average variance across all 'working' features
     wfeatures = dataset.samples[:, allind]
     meanstd = N.mean(N.std(wfeatures, 1))
-    verbose(2, "Mean deviation is %f" % meanstd)
+    if __debug__:
+        debug('DG', "Mean deviation is %f" % meanstd)
 
     totalsignal *= meanstd * options.snr
     # add signal on top of background
@@ -186,6 +198,8 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
     return dataset
 
 def getMVPattern(s2n):
+    """Simple multivariate dataset"""
+    
     run1 = pureMultivariateSignal(5, s2n, 1)
     run2 = pureMultivariateSignal(5, s2n, 2)
     run3 = pureMultivariateSignal(5, s2n, 3)
@@ -197,4 +211,45 @@ def getMVPattern(s2n):
 
     return data
 
+
+def wr1996(size=200):
+    """Generate '6d robot arm' dataset (Williams and Rasmussen 1996)
+
+    Was originally created in order to test the correctness of the
+    implementation of kernel ARD.  For full details see:
+    http://www.gaussianprocess.org/gpml/code/matlab/doc/regression.html#ard
+
+    x_1 picked randomly in [-1.932, -0.453]
+    x_2 picked randomly in [0.534, 3.142]
+    r_1 = 2.0
+    r_2 = 1.3
+    f(x_1,x_2) = r_1 cos (x_1) + r_2 cos(x_1 + x_2) + N(0,0.0025)
+    etc.
+
+    Expected relevances:
+    ell_1      1.804377
+    ell_2      1.963956
+    ell_3      8.884361
+    ell_4     34.417657
+    ell_5   1081.610451
+    ell_6    375.445823
+    sigma_f    2.379139
+    sigma_n    0.050835
+    """
+    intervals = N.array([[-1.932, -0.453], [0.534, 3.142]])
+    r = N.array([2.0, 1.3])
+    x = N.random.rand(size, 2)
+    x *= N.array(intervals[:, 1]-intervals[:, 0])
+    x += N.array(intervals[:, 0])
+    if __debug__:
+        for i in xrange(2):
+            debug('DG', '%d columnt Min: %g Max: %g' %
+                  (i, x[:, i].min(), x[:, i].max()))
+    y = r[0]*N.cos(x[:, 0] + r[1]*N.cos(x.sum(1))) + \
+        N.random.randn(size)*N.sqrt(0.0025)
+    y -= y.mean()
+    x34 = x + N.random.randn(size, 2)*0.02
+    x56 = N.random.randn(size, 2)
+    x = N.hstack([x, x34, x56])
+    return Dataset(samples=x, labels=y)
 
