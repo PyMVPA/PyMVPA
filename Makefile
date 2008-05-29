@@ -172,9 +172,11 @@ orig-src: distclean debian-clean
 	# clean existing dist dir first to have a single source tarball to process
 	-rm -rf dist
 
-	if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
-			printf "WARNING: Changelog version does not match tarball version!\n" ;\
-			exit 1; \
+	if [ -f debian/changelog ]; then \
+		if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
+				printf "WARNING: Changelog version does not match tarball version!\n" ;\
+				exit 1; \
+		fi \
 	fi
 	# let python create the source tarball
 	python setup.py sdist --formats=gztar
@@ -184,7 +186,10 @@ orig-src: distclean debian-clean
 	# clean leftover
 	rm MANIFEST
 
-debsrc: orig-src
+# make Debian source package
+# # DO NOT depend on orig-src here as it would generate a source tarball in a
+# Debian branch and might miss patches!
+debsrc:
 	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
 
 #
