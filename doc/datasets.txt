@@ -21,7 +21,7 @@ and dataset attributes.  Sample attributes assign a value to each data
 sample and dataset attributes are additional information or
 functionality that applies to the whole dataset.
 
-.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 
 .. <gjd> i had a hard time making sense of the above
    paragraph on first reading. add an example to get

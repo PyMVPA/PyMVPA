@@ -29,7 +29,7 @@ Unreleased changes
 Releases
 ~~~~~~~~
 
-* 0.2.0 (Wed, 28 May 2008)
+* 0.2.0 (Wed, 29 May 2008)
 
   * New Splitter class (HalfSplitter) to split into first and second half.
   * New Splitter class (CustomSplitter) to allow for splits with an arbitrary
@@ -38,6 +38,7 @@ Releases
   * New sparse multinomial logistic regression (SMLR) classifier and
     associated sensitivity analyzer.
   * New least angle regression classifier (LARS).
+  * New gaussian process regression classifier (GPR).
   * Initial documentation on extending PyMVPA.
   * Switch to Sphinx for documentation handling.
   * New example comparing the performance of all classifiers on some

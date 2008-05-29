@@ -21,6 +21,7 @@ from mvpa.clfs._svmbase import _SVM
 from mvpa.measures.base import Sensitivity
 
 import _svm as svm
+from sens import *
 
 if __debug__:
     from mvpa.misc import debug
@@ -31,8 +32,14 @@ from svmc import \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
      PRECOMPUTED
 
+known_svm_impl = { 'C_SVC' : (svm.svmc.C_SVC, 'C-SVM classification'),
+                   'NU_SVC' : (svm.svmc.NU_SVC, 'nu-SVM classification'),
+                   'ONE_CLASS' : (svm.svmc.ONE_CLASS, 'one-class-SVM'),
+                   'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, 'epsilon-SVM regression'),
+                   'NU_SVR' : (svm.svmc.NU_SVR, 'nu-SVM regression') }
 
-class SVMBase(_SVM):
+
+class SVM(_SVM):
     """Support Vector Machine Classifier.
 
     This is a simple interface to the libSVM package.
@@ -43,10 +50,10 @@ class SVMBase(_SVM):
     probabilities = StateVariable(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
-    _KERNELS = { "linear":  (svm.svmc.LINEAR, None),
-                 "rbf" :    (svm.svmc.RBF,     ('gamma',)),
-                 "poly":    (svm.svmc.POLY,    ('gamma', 'degree', 'coef0')),
-                 "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0')),
+    _KERNELS = { "linear":  (svm.svmc.LINEAR, None, LinearSVMWeights),
+                 "rbf" :    (svm.svmc.RBF,     ('gamma',), None),
+                 "poly":    (svm.svmc.POLY,    ('gamma', 'degree', 'coef0'), None),
+                 "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0'), None),
                  }
     # TODO: Complete the list ;-)
 
@@ -57,8 +64,8 @@ class SVMBase(_SVM):
 
 
     def __init__(self,
-                 kernel_type,
-                 svm_type,
+                 kernel_type='linear',
+                 svm_impl=None,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
@@ -108,8 +115,33 @@ class SVMBase(_SVM):
         If you do not want to change penalty for any of the classes,
         just set nr_weight to 0.
         """
-        self._KNOWN_PARAMS = SVMBase._KNOWN_PARAMS[:]
-        self._KNOWN_KERNEL_PARAMS = SVMBase._KNOWN_KERNEL_PARAMS[:]
+        self._KNOWN_PARAMS = SVM._KNOWN_PARAMS[:]
+        self._KNOWN_KERNEL_PARAMS = SVM._KNOWN_KERNEL_PARAMS[:]
+
+        # Depending on given arguments, figure out desired SVM
+        # implementation
+        if svm_impl is None:
+            for arg, impl in [ ('tube_epsilon', 'EPSILON_SVR'),
+                               ('C', 'C_SVC'),
+                               ('nu', 'NU_SVC') ]:
+                if kwargs.has_key(arg):
+                    svm_impl = impl
+                    if __debug__:
+                        debug('SVM', 'No implementation was specified. Since '
+                              '%s is given among arguments, assume %s' %
+                              (arg, impl))
+                    break
+            if svm_impl is None:
+                svm_impl = 'C_SVC'
+                if __debug__:
+                      debug('SVM', 'Assign C_SVC "by default"')
+
+        svm_type_ = known_svm_impl.get(svm_impl, None)
+        if svm_type_ is None:
+            raise ValueError, \
+                  "Unknown SVM implementation '%s' is requested for libsvm." \
+                  "Known are: %s" % (svm_impl, known_svm_impl.keys())
+        svm_type = svm_type_[0]          # just implementation
 
         if svm_type in [svm.svmc.C_SVC]:
             self._KNOWN_PARAMS += ['C']
@@ -234,7 +266,7 @@ class SVMBase(_SVM):
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
-        super(SVMBase, self).untrain()
+        super(SVM, self).untrain()
         del self.__model
         self.__model = None
 
@@ -243,73 +275,73 @@ class SVMBase(_SVM):
 
 
 
-class LinearSVM(SVMBase):
-    """Base class of all linear SVM classifiers that make use of the libSVM
-    package. Still not meant to be used directly.
-    """
+#class LinearSVM(SVM):
+#    """Base class of all linear SVM classifiers that make use of the libSVM
+#    package. Still not meant to be used directly.
+#    """
+#
+#    def __init__(self, svm_impl, **kwargs):
+#        """The constructor arguments are virtually identical to the ones of
+#        the SVM class, except that 'kernel_type' is set to LINEAR.
+#        """
+#        # init base class
+#        SVM.__init__(self, kernel_type='linear',
+#                         svm_impl=svm_impl, **kwargs)
+#
+#
+#    def getSensitivityAnalyzer(self, **kwargs):
+#        """Returns an appropriate SensitivityAnalyzer."""
+#        return LibSVMLinearSVMWeights(self, **kwargs)
+#
+#
 
-    def __init__(self, svm_type, **kwargs):
-        """The constructor arguments are virtually identical to the ones of
-        the SVMBase class, except that 'kernel_type' is set to LINEAR.
-        """
-        # init base class
-        SVMBase.__init__(self, kernel_type='linear',
-                         svm_type=svm_type, **kwargs)
-
-
-    def getSensitivityAnalyzer(self, **kwargs):
-        """Returns an appropriate SensitivityAnalyzer."""
-        return LibSVMLinearSVMWeights(self, **kwargs)
-
-
-
-class LinearNuSVMC(LinearSVM):
-    """Classifier for linear Nu-SVM classification.
-    """
-
-    def __init__(self, **kwargs):
-        """
-        """
-        # init base class
-        LinearSVM.__init__(self, svm_type=svm.svmc.NU_SVC, **kwargs)
-
-
-class LinearCSVMC(LinearSVM):
-    """Classifier for linear C-SVM classification.
-    """
-
-    def __init__(self, **kwargs):
-        """
-        """
-        # init base class
-        LinearSVM.__init__(self, svm_type=svm.svmc.C_SVC, **kwargs)
-
-
-
-class RbfNuSVMC(SVMBase):
-    """Nu-SVM classifier using a radial basis function kernel.
-    """
-
-    def __init__(self, **kwargs):
-        """
-        """
-        # init base class
-        SVMBase.__init__(self, kernel_type='rbf',
-                         svm_type=svm.svmc.NU_SVC, **kwargs)
-
-
-class RbfCSVMC(SVMBase):
-    """C-SVM classifier using a radial basis function kernel.
-    """
-
-    def __init__(self, **kwargs):
-        """
-        """
-        # init base class
-        SVMBase.__init__(self, kernel_type='rbf',
-                         svm_type=svm.svmc.C_SVC, **kwargs)
-
-
+#class LinearNuSVMC(LinearSVM):
+#    """Classifier for linear Nu-SVM classification.
+#    """
+#
+#    def __init__(self, **kwargs):
+#        """
+#        """
+#        # init base class
+#        LinearSVM.__init__(self, svm_impl='NU_SVC', **kwargs)
+#
+#
+#class LinearCSVMC(LinearSVM):
+#    """Classifier for linear C-SVM classification.
+#    """
+#
+#    def __init__(self, **kwargs):
+#        """
+#        """
+#        # init base class
+#        LinearSVM.__init__(self, svm_impl='C_SVC', **kwargs)
+#
+#
+#
+#class RbfNuSVMC(SVM):
+#    """Nu-SVM classifier using a radial basis function kernel.
+#    """
+#
+#    def __init__(self, **kwargs):
+#        """
+#        """
+#        # init base class
+#        SVM.__init__(self, kernel_type='rbf',
+#                     svm_impl='NU_SVC', **kwargs)
+#
+#
+#class RbfCSVMC(SVM):
+#    """C-SVM classifier using a radial basis function kernel.
+#    """
+#
+#    def __init__(self, **kwargs):
+#        """
+#        """
+#        # init base class
+#        SVM.__init__(self, kernel_type='rbf',
+#                     svm_impl='C_SVC', **kwargs)
+#
+#
 # check if there is a libsvm version with configurable
 # noise reduction ;)
 if hasattr(svm.svmc, 'svm_set_verbosity'):
@@ -321,7 +353,7 @@ if hasattr(svm.svmc, 'svm_set_verbosity'):
 
 
 
-class LibSVMLinearSVMWeights(Sensitivity):
+class LinearSVMWeights(Sensitivity):
     """`SensitivityAnalyzer` for the LIBSVM implementation of a linear SVM.
     """
 

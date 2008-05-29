@@ -37,6 +37,11 @@ from mvpa.featsel.helpers import FractionTailSelector, \
 from mvpa.clfs.transerror import ConfusionBasedError
 from mvpa.featsel.base import SensitivityBasedFeatureSelection
 
+_KNOWN_INTERNALS=[ 'knn', 'binary', 'svm', 'linear',
+        'smlr', 'does_feature_selection', 'has_sensitivity',
+        'multiclass', 'non-linear', 'kernel-based', 'lars',
+        'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr' ]
+
 class Warehouse(object):
     """Class to keep known instantiated classifiers
 
@@ -46,11 +51,8 @@ class Warehouse(object):
      capable of doing multiclass classification
      """
 
-    _KNOWN_INTERNALS = Set(['knn', 'binary', 'svm', 'linear', 'smlr', 'does_feature_selection',
-                            'has_sensitivity', 'multiclass', 'non-linear', 'kernel-based', 'lars',
-                            'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr'])
-
-    def __init__(self):
+    def __init__(self, known_tags=None):
+        self.__known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
 
@@ -63,11 +65,12 @@ class Warehouse(object):
             args = []
 
         # lets remove optional modifier '!'
-        dargs = Set([x.lstrip('!') for x in args]).difference(self._KNOWN_INTERNALS)
+        dargs = Set([x.lstrip('!') for x in args]).difference(
+            self.__known_tags)
 
         if len(dargs)>0:
             raise ValueError, "Unknown internals %s requested. Known are %s" % \
-                  (list(dargs), list(self._KNOWN_INTERNALS))
+                  (list(dargs), list(self.__known_tags))
 
         # dummy implementation for now
         result = []
@@ -96,12 +99,12 @@ class Warehouse(object):
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty _clf_internals"
             clf_internals = Set(item._clf_internals)
-            if clf_internals.issubset(self._KNOWN_INTERNALS):
+            if clf_internals.issubset(self.__known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
             else:
                 raise ValueError, 'Unknown clf internal(s) %s' % \
-                      clf_internals.difference(self._KNOWN_INTERNALS)
+                      clf_internals.difference(self.__known_tags)
         return self
 
     @property
@@ -115,7 +118,7 @@ class Warehouse(object):
     def items(self):
         return self.__items
 
-clfs = Warehouse()
+clfs = Warehouse(known_tags=_KNOWN_INTERNALS)
 
 # NB:
 #  - Nu-classifiers are turned off since for haxby DS default nu
@@ -137,21 +140,22 @@ clfs += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvm
-    clfs += [libsvm.svm.LinearCSVMC(descr="libsvm.LinSVM(C=def)", probability=1),
-             libsvm.svm.LinearCSVMC(
+    clfs += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
+             libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
-             libsvm.svm.LinearCSVMC(
+             libsvm.SVM(
                  C=1.0, descr="libsvm.LinSVM(C=1)", probability=1),
-             libsvm.svm.LinearNuSVMC(descr="libsvm.LinNuSVM(nu=def)", probability=1)
+             libsvm.SVM(svm_impl='NU_SVC',
+                        descr="libsvm.LinNuSVM(nu=def)", probability=1)
              ]
-    clfs += [libsvm.svm.RbfCSVMC(descr="libsvm.RbfSVM()"),
-             libsvm.svm.SVMBase(kernel_type='poly',
-                                svm_type=libsvm.svmc.C_SVC,
-                                descr='libsvm.PolySVM()', probability=1),
-             #libsvm.svm.SVMBase(kernel_type='sigmoid',
-             #                   svm_type=libsvm.svmc.C_SVC,
-             #                   descr='libsvm.SigmoidSVM()'),
-             libsvm.svm.RbfNuSVMC(descr="libsvm.RbfNuSVM(nu=def)")
+    clfs += [libsvm.SVM(kernel_type='RBF', descr="libsvm.RbfSVM()"),
+             libsvm.SVM(kernel_type='RBF', svm_impl='NU_SVC',
+                        descr="libsvm.RbfNuSVM(nu=def)"),
+             libsvm.SVM(kernel_type='poly',
+                        descr='libsvm.PolySVM()', probability=1),
+             #libsvm.svm.SVM(kernel_type='sigmoid',
+             #               svm_impl='C_SVC',
+             #               descr='libsvm.SigmoidSVM()'),
              ]
 
 if externals.exists('shogun'):
@@ -178,17 +182,17 @@ if externals.exists('shogun'):
         if impl in bad_classifiers:
             continue
         clfs += [
-            sg.svm.LinearCSVMC(
+            sg.SVM(
                 descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
-            sg.svm.LinearCSVMC(
+            sg.SVM(
                 C=-10.0, descr="sg.LinSVM(C=10*def)/%s" % impl, svm_impl=impl),
-            sg.svm.LinearCSVMC(
+            sg.SVM(
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
         clfs += [
-            sg.svm.RbfCSVMC(descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.svm.RbfCSVMC(descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
-#           sg.svm.SVM_SG_Modular(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
+            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+#            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
+#           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
 

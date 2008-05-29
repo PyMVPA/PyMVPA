@@ -13,6 +13,8 @@ import unittest
 import numpy as N
 from sets import Set
 
+from mvpa.clfs.svm import SVM
+
 from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal, sweepargs
 from tests_warehouse_clfs import *
 
@@ -88,11 +90,17 @@ class SVMTests(unittest.TestCase):
         """Test if we raise exceptions on incorrect specifications
         """
 
+        if externals.exists('libsvm') or externals.exists('shogun'):
+            self.failUnlessRaises(TypeError, SVM,  C=1.0, nu=2.3)
+
         if externals.exists('libsvm'):
-            self.failUnlessRaises(TypeError, LinearCSVMC, nu=2.3)
+            self.failUnlessRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)
             self.failUnlessRaises(TypeError, LinearNuSVMC, C=2.3)
+            self.failUnlessRaises(TypeError, LinearCSVMC, nu=2.3)
+
         if externals.exists('shogun'):
-            self.failUnlessRaises(TypeError, sg.svm.RbfCSVMC, coef0=3)
+            self.failUnlessRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
+                                  coef0=3)
 
 #    def testFeatureBenchmark(self):
 #        pat = dumbFeatureDataset()

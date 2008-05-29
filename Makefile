@@ -62,7 +62,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp
 
 
 debian-clean:
@@ -77,9 +77,11 @@ doc: website
 htmldoc:
 	cd doc && $(MAKE) html
 
-pdfdoc:
+pdfdoc: pdfdoc-stamp
+pdfdoc-stamp:
 	cd doc && $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
+	touch $@
 
 apidoc: apidoc-stamp
 apidoc-stamp: build
@@ -94,7 +96,7 @@ apidoc-stamp: build
 	touch $@
 
 website: website-stamp
-website-stamp: mkdir-WWW_DIR htmldoc pdfdoc apidoc
+website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
 	touch $@
@@ -126,7 +128,8 @@ testmanual: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
 	                       --doctest-tests doc/
 
-# Just check if everything imported in unitests is known to the mvpa.suite()
+# Check if everything imported in unitests is known to the
+# mvpa.suite()
 testsuite:
 	@git grep -h '^\W*from mvpa.*import' tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
@@ -136,8 +139,14 @@ testsuite:
 	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
 	 done
 
+# Check if links to api/ within documentation are broken.
+testapiref: apidoc
+	@for tf in doc/*.txt; do \
+	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
+	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
+	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
-test: unittest testmanual testsuite testexamples
+test: unittest testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \
@@ -184,4 +193,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual profile website
+.PHONY: fetch-data orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all

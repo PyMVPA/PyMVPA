@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets import Dataset
+from mvpa.datasets.splitter import OddEvenSplitter
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import Stateful
@@ -37,6 +38,7 @@ def sweepargs(**kwargs):
             def untrain_clf(argvalue):
                 if isinstance(argvalue, Classifier):
                     # clear classifier after its use -- just to be sure ;-)
+                    argvalue.retrainable = False
                     argvalue.untrain()
             failed_tests_str = []
             exception = None
@@ -79,26 +81,32 @@ def sweepargs(**kwargs):
         raise NotImplementedError
     return unittest_method
 
+# Define datasets to be used all over. Split-half later on is used to
+# split into training/testing
 #
-# Define datasets to be used all over
-#
-specs = { 'large' : { 'perlabel' : 180, 'nchunks' : 3 },
-          'small' : { 'perlabel' : 2,   'nchunks' : 1 } }
+specs = { 'large' : { 'perlabel' : 99, 'nchunks' : 11, 'nfeatures' : 20, 'snr' : 8 },
+          'small' : { 'perlabel' : 12,  'nchunks' : 4, 'nfeatures' : 6, 'snr' : 14} }
 nonbogus_pool = [0, 1, 3, 5]
 datasets = {}
-nfeatures = 6
+#nfeatures = 6
 
 for kind, spec in specs.iteritems():
     # set of univariate datasets
     for nlabels in [ 2, 3, 4 ]:
         basename = 'uni%d%s' % (nlabels, kind)
-        for replication in ( 'test', 'train' ):
-            datasets["%s_%s" % (basename, replication)] = \
-                normalFeatureDataset(
-                    nlabels=nlabels,
-                    nfeatures=nfeatures,
-                    nonbogus_features=nonbogus_pool[:nlabels],
-                    snr=8, **spec)
+        dataset = normalFeatureDataset(
+            nlabels=nlabels,
+            #nfeatures=nfeatures,
+            nonbogus_features=nonbogus_pool[:nlabels],
+            **spec)
+        oes = OddEvenSplitter()
+        splits = [(train, test) for (train, test) in oes(dataset)]
+        for i, replication in enumerate( ['test', 'train'] ):
+            dataset_ = splits[0][i]
+            dataset_.nonbogus_features = nonbogus_pool[:nlabels]
+            datasets["%s_%s" % (basename, replication)] = dataset_
+
+
         # shortcut
         datasets[basename] = datasets['%s_train' % basename]
 
@@ -114,3 +122,4 @@ for kind, spec in specs.iteritems():
     mask[1,3,2] = 0
     datasets['3d%s' % kind] = MaskedDataset(samples=data, labels=labels,
                                             chunks=chunks, mask=mask)
+

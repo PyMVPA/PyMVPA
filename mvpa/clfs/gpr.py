@@ -56,9 +56,6 @@ class GPR(Classifier):
         self.w = None
 
         # It does not make sense to calculate a confusion matrix for a GPR
-        # XXX Like for any other regression unless it is used as a classifier
-        #     with binning in top level Classifier, was it causing hickups? it
-        #     is disabled by default...
         self.states.enable('training_confusion', False)
 
         # set kernel:
@@ -106,10 +103,6 @@ class GPR(Classifier):
         if __debug__:
             debug("GPR", "Computing train train kernel matrix")
 
-        # XXX Since self.alpha is used in _predict, we must compute
-        # them in _train, and optionally compute
-        # log_marginal_likelihood, depending if state variable was
-        # enabled
         self.km_train_train = self.__kernel.compute(self.train_fv)
 
         self.L = N.linalg.cholesky(self.km_train_train +
@@ -255,7 +248,7 @@ if __name__ == "__main__":
     logml = True
 
     if logml :
-        print "Looking for better hyperparameters"
+        print "Looking for better hyperparameters: grid search"
 
         sigma_noise_steps = N.linspace(0.1, 0.6, num=20)
         length_scale_steps = N.linspace(0.01, 1.0, num=20)
@@ -280,7 +273,7 @@ if __name__ == "__main__":
                     lml_best = lml[i,j]
                     length_scale_best = y
                     sigma_noise_best = x
-                    print x,y,lml_best
+                    # print x,y,lml_best
                     pass
                 j += 1
                 pass
