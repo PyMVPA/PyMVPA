@@ -14,6 +14,8 @@ __docformat__ = 'restructuredtext'
 import mvpa.base.externals as externals
 from mvpa.misc import warning
 
+from _svmbase import _SVM
+
 # default SVM implementation
 SVM = None
 _NuSVM = None
@@ -34,6 +36,9 @@ if externals.exists('libsvm'):
 if SVM is None:
     warning("None of SVM implementions libraries was found")
 else:
+    _defaultC = _SVM._SVM_PARAMS['C'].default
+    _defaultNu = _SVM._SVM_PARAMS['nu'].default
+
     # Define some convinience classes
     class LinearCSVMC(SVM):
         """C-SVM classifier using linear kernel.
@@ -41,7 +46,7 @@ else:
         See help for %s for more details
         """ % SVM.__class__.__name__
 
-        def __init__(self, C=1, **kwargs):
+        def __init__(self, C=_defaultC, **kwargs):
             """
             """
             # init base class
@@ -54,7 +59,7 @@ else:
         See help for %s for more details
         """ % SVM.__class__.__name__
 
-        def __init__(self, C=1, **kwargs):
+        def __init__(self, C=_defaultC, **kwargs):
             """
             """
             # init base class
@@ -67,9 +72,19 @@ else:
             See help for %s for more details
             """ % _NuSVM.__class__.__name__
 
-            def __init__(self, nu=0.5, **kwargs):
+            def __init__(self, nu=_defaultNu, **kwargs):
                 """
                 """
                 # init base class
-                _NuSVM.__init__(self, nu=0.5, kernel_type='linear', **kwargs)
+                _NuSVM.__init__(self, nu=nu, kernel_type='linear', **kwargs)
+
+        class RbfNuSVMC(SVM):
+            """Nu-SVM classifier using a radial basis function kernel.
+
+            See help for %s for more details
+            """ % SVM.__class__.__name__
+
+            def __init__(self, nu=_defaultNu, **kwargs):
+                # init base class
+                SVM.__init__(self, nu=nu, kernel_type='RBF', **kwargs)
 
