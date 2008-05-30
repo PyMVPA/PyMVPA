@@ -404,8 +404,7 @@ class ClassifiersTests(unittest.TestCase):
         """Test all classifiers for conformant behavior
         """
         for clf_, traindata in \
-                [(clfs['multiclass'] + clfs['binary'],
-                  dumbFeatureBinaryDataset()),
+                [(clfs['binary'], dumbFeatureBinaryDataset()),
                  (clfs['multiclass'], dumbFeatureDataset())]:
             traindata_copy = deepcopy(traindata) # full copy of dataset
             for clf in clf_:

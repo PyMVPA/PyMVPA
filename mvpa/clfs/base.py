@@ -587,7 +587,7 @@ class BoostedClassifier(Classifier, Harvestable):
 
         # adhere to their capabilities + 'multiclass'
         # XXX do intersection across all classifiers!
-        self._clf_internals = [ 'multiclass', 'meta' ]
+        self._clf_internals = [ 'binary', 'multiclass', 'meta' ]
         if len(clfs)>0:
             self._clf_internals += self.__clfs[0]._clf_internals
 
