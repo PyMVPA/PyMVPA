@@ -234,14 +234,14 @@ class SVM(_SVM):
         """Train SVM
         """
         # XXX might get up in hierarchy
-        if self.retrainable:
+        if self.params.retrainable:
             changed_params = self.params.whichSet()
             changed_kernel_params = self.kernel_params.whichSet()
 
         # XXX watchout
         # self.untrain()
         newkernel, newsvm = False, False
-        if self.retrainable:
+        if self.params.retrainable:
             if __debug__:
                 debug('SG__', "IDHashes are %s" % (self.__idhash))
             changed_samples = self.__wasChanged('samples', 0, dataset.samples)
@@ -291,7 +291,7 @@ class SVM(_SVM):
 
 
         # KERNEL
-        if not self.retrainable or changed_samples or changed_kernel_params:
+        if not self.params.retrainable or changed_samples or changed_kernel_params:
             # If needed compute or just collect arguments for SVM and for
             # the kernel
             kargs = []
@@ -302,7 +302,7 @@ class SVM(_SVM):
                     value = self._getDefaultGamma(dataset)
                 kargs += [value]
 
-            if self.retrainable and __debug__:
+            if self.params.retrainable and __debug__:
                 if changed_samples:
                     debug("SG",
                           "Re-Creating kernel since samples has changed")
@@ -324,7 +324,7 @@ class SVM(_SVM):
                                               *kargs)
             newkernel = True
             self.kernel_params.reset()  # mark them as not-changed
-            if self.retrainable:
+            if self.params.retrainable:
                 self.__kernel.set_precompute_matrix(True, True)
                 self.__kernel_test = None
                 self.__kernel_args = kargs
@@ -332,7 +332,7 @@ class SVM(_SVM):
 
         # TODO -- handle changed_params correctly, ie without recreating
         # whole SVM
-        if not self.retrainable or self.__svm is None or changed_params:
+        if not self.params.retrainable or self.__svm is None or changed_params:
             # SVM
             C = self.params.C
             if C<0:
@@ -374,14 +374,14 @@ class SVM(_SVM):
                 raise NotImplementedError, \
                       "Implement handling of changing params of SVM"
 
-        if self.retrainable:
+        if self.params.retrainable:
             # we must assign it only if it is retrainable
             self.states.retrained = not newsvm or not newkernel
 
         # Train
         if __debug__:
             debug("SG", "%sTraining %s on data with labels %s" %
-                  (("","Re-")[self.retrainable and self.states.retrained], self,
+                  (("","Re-")[self.params.retrainable and self.states.retrained], self,
                    dataset.uniquelabels))
 
         self.__svm.train()
@@ -403,14 +403,14 @@ class SVM(_SVM):
         if __debug__:
             debug("SG_", "Initializing kernel with training/testing data")
 
-        if self.retrainable:
+        if self.params.retrainable:
             changed_testdata = self.__wasChanged('test_samples', 2, data) or \
                                self.__kernel_test is None
 
-        if not self.retrainable or changed_testdata:
+        if not self.params.retrainable or changed_testdata:
             testdata = _tosg(data)
 
-        if not self.retrainable:
+        if not self.params.retrainable:
             # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
         else:
@@ -440,12 +440,12 @@ class SVM(_SVM):
         # doesn't do any good imho although on unittests helps tiny bit... hm
         #self.__svm.init_kernel_optimization()
         values_ = self.__svm.classify()
-        #if self.retrainable and not changed_testdata:
+        #if self.params.retrainable and not changed_testdata:
         #    import pydb
         #    pydb.debugger()
         values = values_.get_labels()
 
-        if self.retrainable:
+        if self.params.retrainable:
             # we must assign it only if it is retrainable
             self.states.retested = not changed_testdata
             if __debug__:
@@ -479,7 +479,7 @@ class SVM(_SVM):
         self.values = values
 
         ## to avoid leaks with not yet properly fixed shogun
-        if not self.retrainable:
+        if not self.params.retrainable:
             try:
                 testdata.free_features()
             except:
@@ -491,7 +491,7 @@ class SVM(_SVM):
     def untrain(self):
         super(SVM, self).untrain()
 
-        if not self.retrainable:
+        if not self.params.retrainable:
             if __debug__:
                 debug("SG__", "Untraining %s and destroying sg's SVM" % self)
 
