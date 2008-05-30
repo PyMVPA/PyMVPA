@@ -108,7 +108,7 @@ for kind, spec in specs.iteritems():
 
 
         # shortcut
-        datasets[basename] = datasets['%s_train' % basename]
+        datasets[basename] = dataset
 
     # sample 3D
     total = 2*spec['perlabel']
