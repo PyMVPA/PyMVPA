@@ -27,7 +27,7 @@ class kNN(Classifier):
 
     __warned = False
 
-    _clf_internals = [ 'knn', 'non-linear', 'multiclass' ]
+    _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass' ]
 
     def __init__(self, k=2, **kwargs):
         """

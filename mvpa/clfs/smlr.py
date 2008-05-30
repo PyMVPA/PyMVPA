@@ -52,8 +52,8 @@ class SMLR(Classifier, Parametrized):
     use this for your work.
     """
 
-    _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'multiclass',
-                       'does_feature_selection' ] # later 'kernel-based'?
+    _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
+                       'multiclass', 'does_feature_selection' ] # later 'kernel-based'?
 
     lm = Parameter(.1, min=1e-10, allowedtype='float',
              doc="""The penalty term lambda.  Larger values will give rise to
