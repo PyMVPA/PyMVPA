@@ -130,6 +130,8 @@ class _SVM(Classifier):
         # Add corresponding internals
         if add_internals is not None:
             self._clf_internals += list(add_internals)
+        self._clf_internals.append(svm_impl)
+
         if kernel_type == 'linear':
             self._clf_internals += [ 'linear', 'has_sensitivity' ]
         else:

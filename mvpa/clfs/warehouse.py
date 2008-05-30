@@ -52,7 +52,7 @@ class Warehouse(object):
      """
 
     def __init__(self, known_tags=None):
-        self.__known_tags = Set(known_tags)
+        self._known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
 
@@ -66,11 +66,11 @@ class Warehouse(object):
 
         # lets remove optional modifier '!'
         dargs = Set([x.lstrip('!') for x in args]).difference(
-            self.__known_tags)
+            self._known_tags)
 
         if len(dargs)>0:
             raise ValueError, "Unknown internals %s requested. Known are %s" % \
-                  (list(dargs), list(self.__known_tags))
+                  (list(dargs), list(self._known_tags))
 
         # dummy implementation for now
         result = []
@@ -99,12 +99,12 @@ class Warehouse(object):
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty _clf_internals"
             clf_internals = Set(item._clf_internals)
-            if clf_internals.issubset(self.__known_tags):
+            if clf_internals.issubset(self._known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
             else:
                 raise ValueError, 'Unknown clf internal(s) %s' % \
-                      clf_internals.difference(self.__known_tags)
+                      clf_internals.difference(self._known_tags)
         return self
 
     @property
@@ -140,6 +140,7 @@ clfs += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvm
+    clfs._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfs += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
@@ -160,6 +161,8 @@ if externals.exists('libsvm'):
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
+    clfs._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
+
     # some classifiers are not yet ready to be used out-of-the-box in
     # PyMVPA, thus we don't populate warehouse with their instances
     bad_classifiers = [
