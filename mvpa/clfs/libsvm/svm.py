@@ -177,8 +177,13 @@ class SVM(_SVM):
         for paramname, param in self.params.items.items() + self.kernel_params.items.items():
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
-            else:
+            elif paramname in svm.SVMParameter.default_parameters:
                 argname = paramname
+            else:
+                if __debug__:
+                    debug("SVM_", "Skipping parameter %s since it is not known"
+                          "to libsvm" % paramname)
+                continue
             args.append( (argname, param.value) )
 
         # XXX All those parameters should be fetched if present from
