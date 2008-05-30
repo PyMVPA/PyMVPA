@@ -177,7 +177,7 @@ if externals.exists('shogun'):
         # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
         bad_classifiers.append('gnpp')
 
-    for impl in sg.svm.known_svm_impl:
+    for impl in sg.SVM._KNOWN_IMPLEMENTATIONS:
         # Uncomment the ones to disable
         if impl in bad_classifiers:
             continue
@@ -194,7 +194,6 @@ if externals.exists('shogun'):
 #            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
 #           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
-
 
 
 if len(clfs['svm', 'linear']) > 0:

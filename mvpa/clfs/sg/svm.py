@@ -38,78 +38,7 @@ from sens import *
 if __debug__:
     from mvpa.misc import debug
 
-# Some words of wisdom from shogun author:
-# XXX remove after proper comments added to implementations
-"""
-If you'd like to train linear SVMs use SGD or OCAS. These are (I am
-serious) the fastest linear SVM-solvers to date. (OCAS cannot do SVMs
-with standard additive bias, but will L2 reqularize it - though it
-should not matter much in practice (although it will give slightly
-different solutions)). Note that SGD has no stopping criterion (you
-simply have to specify the number of iterations) and that OCAS has a
-different stopping condition than svmlight for example which may be more
-tight and more loose depending on the problem - I sugeest 1e-2 or 1e-3
-for epsilon.
 
-If you would like to train kernel SVMs use libsvm/gpdt/svmlight -
-depending on the problem one is faster than the other (hard to say when,
-I *think* when your dataset is very unbalanced chunking methods like
-svmlight/gpdt are better), for smaller problems definitely libsvm.
-
-If you use string kernels then gpdt/svmlight have a special 'linadd'
-speedup for this (requires sg 0.6.2 - there was some inefficiency in the
-code for python-modular before that). This is effective for big datasets
-and (I trained on 10 million strings based on this).
-
-And yes currently we only implemented parallel training for svmlight,
-however all SVMs can be evaluated in parallel.
-"""
-known_svm_impl = { "libsvm" : (shogun.Classifier.LibSVM, ''),
-                   "gmnp" : (shogun.Classifier.GMNPSVM, ''),
-                   "mpd"  : (shogun.Classifier.MPDSVM, ''),
-                   "gpbt" : (shogun.Classifier.GPBTSVM, ''),
-                   "gnpp" : (shogun.Classifier.GNPPSVM, ''),
-
-                   ## TODO: Needs sparse features...
-                   # "svmlin" : (shogun.Classifier.SVMLin, ''),
-                   # "liblinear" : (shogun.Classifier.LibLinear, ''),
-                   # "subgradient" : (shogun.Classifier.SubGradientSVM, ''),
-                   ## good 2-class linear SVMs
-                   # "ocas" : (shogun.Classifier.SVMOcas, ''),
-                   # "sgd" : ( shogun.Classifier.SVMSGD, ''),
-
-                   # regressions
-                   "libsvr": (shogun.Regression.LibSVR, ''),
-                   "krr": (shogun.Regression.KRR, ''),
-                   }
-
-def _get_implementation(svm_impl, nl):
-    if nl > 2:
-        if svm_impl == 'libsvm':
-            svm_impl_class = shogun.Classifier.LibSVMMultiClass
-        elif svm_impl == 'gmnp':
-            svm_impl_class = shogun.Classifier.GMNPSVM
-        else:
-            raise RuntimeError, \
-                  "Shogun: Implementation %s doesn't handle multiclass " \
-                  "data. Got labels %s. Use some other classifier" % \
-                  (svm_impl, ul)
-        if __debug__:
-            debug("SG_", "Using %s for multiclass data of %s" %
-                  (svm_impl_class, svm_impl))
-    else:
-            svm_impl_class = known_svm_impl[svm_impl][0]
-    return svm_impl_class
-
-# Conditionally make some of the implementations available if they are
-# present in the present shogun
-for name, item, descr in \
-        [('lightsvm', "shogun.Classifier.SVMLight",
-          "SVMLight classification http://svmlight.joachims.org/"),
-         ('svrlight', "shogun.Regression.SVRLight",
-          "SVMLight regression http://svmlight.joachims.org/")]:
-    if externals.exists('shogun.%s' % name):
-        exec "known_svm_impl[\"%s\"] = (%s, \"%s\")" % (name, item, descr)
 
 
 def _setdebug(obj, partname):
@@ -180,9 +109,56 @@ class SVM(_SVM):
 
     _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
 
+
+    # Some words of wisdom from shogun author:
+    # XXX remove after proper comments added to implementations
+    """
+    If you'd like to train linear SVMs use SGD or OCAS. These are (I am
+    serious) the fastest linear SVM-solvers to date. (OCAS cannot do SVMs
+    with standard additive bias, but will L2 reqularize it - though it
+    should not matter much in practice (although it will give slightly
+    different solutions)). Note that SGD has no stopping criterion (you
+    simply have to specify the number of iterations) and that OCAS has a
+    different stopping condition than svmlight for example which may be more
+    tight and more loose depending on the problem - I sugeest 1e-2 or 1e-3
+    for epsilon.
+
+    If you would like to train kernel SVMs use libsvm/gpdt/svmlight -
+    depending on the problem one is faster than the other (hard to say when,
+    I *think* when your dataset is very unbalanced chunking methods like
+    svmlight/gpdt are better), for smaller problems definitely libsvm.
+
+    If you use string kernels then gpdt/svmlight have a special 'linadd'
+    speedup for this (requires sg 0.6.2 - there was some inefficiency in the
+    code for python-modular before that). This is effective for big datasets
+    and (I trained on 10 million strings based on this).
+
+    And yes currently we only implemented parallel training for svmlight,
+    however all SVMs can be evaluated in parallel.
+    """
+    _KNOWN_IMPLEMENTATIONS = {
+        "libsvm" : (shogun.Classifier.LibSVM, (), ('multiclass', 'binary'), ''),
+        "gmnp" : (shogun.Classifier.GMNPSVM, (), ('multiclass', 'binary'), ''),
+        "mpd"  : (shogun.Classifier.MPDSVM, (), ('binary',), ''),
+        "gpbt" : (shogun.Classifier.GPBTSVM, (), ('binary',), ''),
+        "gnpp" : (shogun.Classifier.GNPPSVM, (), ('binary',), ''),
+
+        ## TODO: Needs sparse features...
+        # "svmlin" : (shogun.Classifier.SVMLin, ''),
+        # "liblinear" : (shogun.Classifier.LibLinear, ''),
+        # "subgradient" : (shogun.Classifier.SubGradientSVM, ''),
+        ## good 2-class linear SVMs
+        # "ocas" : (shogun.Classifier.SVMOcas, ''),
+        # "sgd" : ( shogun.Classifier.SVMSGD, ''),
+
+        # regressions
+        "libsvr": (shogun.Regression.LibSVR, ('tube_epsilon',), ('regression',), ''),
+        "krr": (shogun.Regression.KRR, ('tau',), ('regression',), ''),
+        }
+
+
     def __init__(self,
                  kernel_type='linear',
-                 svm_impl="libsvm",
                  **kwargs):
         """This is the base class of all classifier that utilize so
         far just SVM classifiers provided by shogun.
@@ -190,29 +166,19 @@ class SVM(_SVM):
         TODO Documentation if this all works ;-)
         """
 
-        svm_impl = svm_impl.lower()
-        if svm_impl == 'krr':
-            self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
-        if svm_impl in ['svrlight', 'libsvr']:
-            self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tube_epsilon']
+        svm_impl = kwargs.get('svm_impl', 'libsvm').lower()
+        kwargs['svm_impl'] = svm_impl
+
+        #if svm_impl == 'krr':
+        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
+        #if svm_impl in ['svrlight', 'libsvr']:
+        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tube_epsilon']
 
         # init base class
         _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
 
         self.__svm = None
         """Holds the trained svm."""
-
-        # assign default params
-        if  svm_impl in known_svm_impl:
-            self.__svm_impl = svm_impl
-        else:
-            raise ValueError, "Unknown SVM implementation %s" % svm_impl
-
-        self._clf_internals.append(
-            {True: 'multiclass', False:'binary'}[
-            svm_impl in ['gmnp', 'libsvm']])
-        if svm_impl in ['svrlight', 'libsvr', 'krr']:
-            self._clf_internals += [ 'regression' ]
 
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
@@ -240,12 +206,6 @@ class SVM(_SVM):
                 #
                 # samples, labels, test_samples, trainsamples_intest
                 self.__trained = [None, None, None]
-
-
-    def __repr__(self):
-        # adjust representation a bit to report SVM backend
-        repr_ = super(SVM, self).__repr__()
-        return repr_.replace("(kern", "(svm_impl='%s', kern" % self.__svm_impl)
 
 
     def __wasChanged(self, descr, i, entry):
@@ -382,15 +342,15 @@ class SVM(_SVM):
                           (self.params.C, C))
 
             # Choose appropriate implementation
-            svm_impl_class = _get_implementation(self.__svm_impl, len(ul))
+            svm_impl_class = self.__get_implementation(len(ul))
 
             if __debug__:
                 debug("SG", "Creating SVM instance of %s" % `svm_impl_class`)
 
-            if self.__svm_impl in ['libsvr', 'svrlight']:
+            if self._svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
                 self.__svm = svm_impl_class(C, self.params.epsilon, self.__kernel, labels)
-            elif self.__svm_impl in ['krr']:
+            elif self._svm_impl in ['krr']:
                 self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
             else:
                 self.__svm = svm_impl_class(C, self.__kernel, labels)
@@ -568,6 +528,25 @@ class SVM(_SVM):
                   msgargs=locals())
 
 
+    def __get_implementation(self, nl):
+        if nl > 2:
+            if self._svm_impl == 'libsvm':
+                svm_impl_class = shogun.Classifier.LibSVMMultiClass
+            elif self._svm_impl == 'gmnp':
+                svm_impl_class = shogun.Classifier.GMNPSVM
+            else:
+                raise RuntimeError, \
+                      "Shogun: Implementation %s doesn't handle multiclass " \
+                      "data. Got labels %s. Use some other classifier" % \
+                      (self._svm_impl, self.__traindataset.uniquelabels)
+            if __debug__:
+                debug("SG_", "Using %s for multiclass data of %s" %
+                      (svm_impl_class, self._svm_impl))
+        else:
+                svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
+        return svm_impl_class
+
+
     svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
 
@@ -578,4 +557,12 @@ class SVM(_SVM):
 
 
 
-
+# Conditionally make some of the implementations available if they are
+# present in the present shogun
+for name, item, params, descr in \
+        [('lightsvm', "shogun.Classifier.SVMLight", "(), ('binary',)",
+          "SVMLight classification http://svmlight.joachims.org/"),
+         ('svrlight', "shogun.Regression.SVRLight", "('tube_epsilon',), ('regression',)",
+          "SVMLight regression http://svmlight.joachims.org/")]:
+    if externals.exists('shogun.%s' % name):
+        exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)

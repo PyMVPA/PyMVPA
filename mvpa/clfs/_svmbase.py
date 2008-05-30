@@ -25,18 +25,31 @@ class _SVM(Classifier):
     """Support Vector Machine Classifier.
 
     Base class for all external SVM implementations.
+    """
 
+    """
     Derived classes should define:
 
     * _KERNELS: map(dict) should define assignment to a tuple containing
       implementation kernel type, list of parameters adherent to the
       kernel, and sensitivity analyzer e.g.::
 
-      _KERNELS = {
+        _KERNELS = {
              'linear': (shogun.Kernel.LinearKernel, (), LinearSVMWeights),
              'rbf' :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
              ...
              }
+
+    * _KNOWN_IMPLEMENTATIONS: map(dict) should define assignment to a
+      tuple containing implementation of the SVM, list of parameters
+      adherent to the implementation, additional internals, and
+      description e.g.::
+
+        _KNOWN_IMPLEMENTATIONS = {
+          'C_SVC' : (svm.svmc.C_SVC, ('C',),
+                   ('binary', 'multiclass'), 'C-SVM classification'),
+          ...
+          }
 
     """
 
@@ -81,20 +94,42 @@ class _SVM(Classifier):
         functionality to see how well it would fit.
         """
 
+        # Check if requested implementation is known
+        svm_impl = kwargs.get('svm_impl', None)
+        if not svm_impl in self._KNOWN_IMPLEMENTATIONS:
+            raise ValueError, \
+                  "Unknown SVM implementation '%s' is requested for %s." \
+                  "Known are: %s" % (svm_impl, self.__class__,
+                                     self._KNOWN_IMPLEMENTATIONS.keys())
+        self._svm_impl = svm_impl
+
+        # Check the kernel
         kernel_type = kernel_type.lower()
-        self._kernel_type_literal = kernel_type
         if not kernel_type in self._KERNELS:
             raise ValueError, "Unknown kernel " + kernel_type
+        self._kernel_type_literal = kernel_type
+
+        impl, add_params, add_internals, descr = \
+              self._KNOWN_IMPLEMENTATIONS[svm_impl]
+
+        # Add corresponding parameters to 'known' depending on the
+        # implementation chosen
+        if add_params is not None:
+            self._KNOWN_PARAMS = \
+                 self._KNOWN_PARAMS[:] + list(add_params)
 
         # Add corresponding kernel parameters to 'known' depending on what
-        # kernel was chosen
+        # kernel chosen
         if self._KERNELS[kernel_type][1] is not None:
-            # XXX need to do only if it is a class variable
             self._KNOWN_KERNEL_PARAMS = \
                  self._KNOWN_KERNEL_PARAMS[:] + list(self._KERNELS[kernel_type][1])
 
         # Assign per-instance _clf_internals
         self._clf_internals = self._clf_internals[:]
+
+        # Add corresponding internals
+        if add_internals is not None:
+            self._clf_internals += list(add_internals)
         if kernel_type == 'linear':
             self._clf_internals += [ 'linear', 'has_sensitivity' ]
         else:
@@ -102,7 +137,7 @@ class _SVM(Classifier):
 
         # pop out all args from **kwargs which are known to be SVM parameters
         _args = {}
-        for param in self._KNOWN_KERNEL_PARAMS + self._KNOWN_PARAMS:
+        for param in self._KNOWN_KERNEL_PARAMS + self._KNOWN_PARAMS + ['svm_impl']:
             if param in kwargs:
                 _args[param] = kwargs.pop(param)
 
@@ -113,8 +148,8 @@ class _SVM(Classifier):
                 # TODO: make it even more specific -- if that argument is listed
                 # within _SVM_PARAMS
                 e.args = tuple( [e.args[0] +
-                                 "\n Given SVM instance knows following parameters: %s" %
-                                 self._KNOWN_PARAMS +
+                                 "\n Given SVM instance of class %s knows following parameters: %s" %
+                                 (self.__class__, self._KNOWN_PARAMS) +
                                  ", and kernel parameters: %s" %
                                  self._KNOWN_KERNEL_PARAMS] + list(e.args)[1:])
             raise e
@@ -148,7 +183,9 @@ class _SVM(Classifier):
     def __repr__(self):
         """Definition of the object summary over the object
         """
-        res = "%s(kernel_type='%s'" % (self.__class__.__name__, self._kernel_type_literal)
+        res = "%s(kernel_type='%s', svm_impl='%s'" % \
+              (self.__class__.__name__, self._kernel_type_literal,
+               self._svm_impl)
         sep = ", "
         for col in [self.params, self.kernel_params]:
             for k in col.names:
