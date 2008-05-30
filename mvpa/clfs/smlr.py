@@ -43,7 +43,7 @@ def _label2oneofm(labels, ulabels):
 
 
 
-class SMLR(Classifier, Parametrized):
+class SMLR(Classifier):
     """Sparse Multinomial Logistic Regression `Classifier`.
 
     This is an implementation of the SMLR algorithm published in
@@ -109,7 +109,7 @@ class SMLR(Classifier, Parametrized):
          # Add kernels, not just direct methods.
          """
         # init base class first
-        Parametrized.__init__(self, init_classes=[Classifier], **kwargs)
+        Classifier.__init__(self, **kwargs)
 
         # pylint friendly initializations
         self.__ulabels = None
