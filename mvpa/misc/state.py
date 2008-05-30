@@ -201,11 +201,15 @@ class Collection(object):
 
     def __str__(self):
         num = len(self._items)
+        if __debug__ and "ST" in debug.active:
+            maxnumber = 1000            # I guess all
+        else:
+            maxnumber = 4
         res = "{"
-        for i in xrange(min(num, 4)):
+        for i in xrange(min(num, maxnumber)):
             if i>0: res += " "
             res += "%s" % str(self._items.values()[i])
-        if len(self._items) > 4:
+        if len(self._items) > maxnumber:
             res += "..."
         res += "}"
         if __debug__:
@@ -927,8 +931,41 @@ class Stateful(object):
                 s += " %d %s:%s" %(len(collection.items), col, str(collection))
         return s
 
-    def __repr__(self):
-        return "<%s.%s#%d>" % (self.__class__.__module__, self.__class__.__name__, id(self))
+    def __repr__(self, fullname=False, prefix=""):
+        """Definition of the object summary over Parametrized object
+        """
+        res = ""
+        if fullname:
+            modulename = '%s' % self.__class__.__module__
+            if modulename != "__main__":
+                res = "%s." % modulename
+        res += "%s(%s" % (self.__class__.__name__, prefix)
+        if prefix != "":
+            sep = ", "
+        else:
+            sep = ""
+        collections = self._collections
+        # we want them in this particular order
+        for col in _collections_order:
+            if not collections.has_key(col):
+                continue
+            collection = collections[col]
+            if isinstance(collection, ParameterCollection):
+                for k in collection.names:
+                    # list only params with not default values
+                    if collection[k].isDefault: continue
+                    res += "%s%s=%s" % (sep, k, collection[k].value)
+                    sep = ', '
+            elif isinstance(collection, StateCollection):
+                for name, invert in ( ('enable', False), ('disable', True) ):
+                    states = collection._getEnabled(nondefault=False, invert=invert)
+                    if len(states):
+                        res += sep + "%s_states=%s" % (name, str(states))
+            else:
+                raise RuntimeError, "Unknown type of collection %s" % col
+        res += ")"
+        return res
+
 
     descr = property(lambda self: self.__descr,
                      doc="Description of the object if any")
@@ -1123,40 +1160,6 @@ class Parametrized(Stateful):
                       "Unknown parameters %s for %s." % (kwargs.keys(), self) \
                       + " Valid parameters are %s" % known_params
 
-
-    def __repr__(self, fullname=True):
-        """Definition of the object summary over Parametrized object
-        """
-        # XXX res = "%s(kernel_type='%s'" % (self.__class__.__name__, self._kernel_type_literal)
-        res = ""
-        if fullname:
-            modulename = '%s' % self.__class__.__module__
-            if modulename != "__main__":
-                res = "%s." % modulename
-        res += "%s(" % (self.__class__.__name__)
-
-        sep = ""
-        collections = self._collections
-        # we want them in this particular order
-        for col in _collections_order:
-            if not collections.has_key(col):
-                continue
-            collection = collections[col]
-            if isinstance(collection, ParameterCollection):
-                for k in collection.names:
-                    # list only params with not default values
-                    if collection[k].isDefault: continue
-                    res += "%s%s=%s" % (sep, k, collection[k].value)
-                    sep = ', '
-            elif isinstance(collection, StateCollection):
-                for name, invert in ( ('enable', False), ('disable', True) ):
-                    states = collection._getEnabled(nondefault=False, invert=invert)
-                    if len(states):
-                        res += sep + "%s_states=%s" % (name, str(states))
-            else:
-                raise RuntimeError, "Unknown type of collection %s" % col
-        res += ")"
-        return res
 
     def __str__(self):
         return self.__repr__(fullname=False)
