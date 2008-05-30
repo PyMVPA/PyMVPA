@@ -51,10 +51,22 @@ class Warehouse(object):
      capable of doing multiclass classification
      """
 
-    def __init__(self, known_tags=None):
+    def __init__(self, known_tags=None, matches={}):
+        """Initialize warehouse
+
+        :Parameters:
+          known_tags : list of basestring
+            List of known tags
+          matches : dict
+            Optional dictionary of additional matches. E.g. since any
+            regression can be used as a binary classifier,
+            matches={'binary':['regression']}, would allow to provide
+            regressions also if 'binary' was requested
+            """
         self._known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
+        self.__matches = matches
 
     def __getitem__(self, *args):
         if isinstance(args[0], tuple):
@@ -74,14 +86,26 @@ class Warehouse(object):
 
         # dummy implementation for now
         result = []
+        # check every known item
         for item in self.__items:
             good = True
+            # by default each one counts
             for arg in args:
-                if (arg.startswith('!') and \
-                    (arg[1:] in item._clf_internals)) or \
-                    (not arg.startswith('!') and \
-                     (not (arg in item._clf_internals))):
-                    good = False
+                # check for rejection first
+                if arg.startswith('!'):
+                    if (arg[1:] in item._clf_internals):
+                        good = False
+                        break
+                    else:
+                        continue
+                # check for inclusion
+                found = False
+                for arg in [arg] + self.__matches.get(arg, []):
+                    if (arg in item._clf_internals):
+                        found = True
+                        break
+                good = found
+                if not good:
                     break
             if good:
                 result.append(item)
@@ -118,7 +142,8 @@ class Warehouse(object):
     def items(self):
         return self.__items
 
-clfs = Warehouse(known_tags=_KNOWN_INTERNALS)
+clfs = Warehouse(known_tags=_KNOWN_INTERNALS,
+                 matches={'binary':['regression']})
 
 # NB:
 #  - Nu-classifiers are turned off since for haxby DS default nu
