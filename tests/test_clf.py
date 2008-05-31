@@ -313,7 +313,7 @@ class ClassifiersTests(unittest.TestCase):
         clf.states._changeTemporarily(enable_states = ['values'])
         clf_re = _deepcopyclf(clf)
         clf_re.retrainable = True
-        debug('SG', "Here with clf %s" % clf)
+
         # need to have high snr so we don't 'cope' with problematic
         # datasets since otherwise unittests would fail.
         dsargs = {'perlabel':50, 'nlabels':2, 'nfeatures':5, 'nchunks':1,
