@@ -11,6 +11,14 @@
 import unittest
 from mvpa.base import externals
 
+if __debug__:
+    from mvpa.misc import debug
+    # Lets add some targets which provide additional testing
+    debug.active += ['RETRAIN']
+    # NOTE: it had to be done here instead of test_clf.py for
+    # instance, since for RETRAIN it has to be set before object gets
+    # created, ie while importing clfs.warehouse
+
 # list all test modules (without .py extension)
 tests = [
     # Basic data structures/manipulators
