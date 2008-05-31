@@ -216,7 +216,7 @@ class SVM(_SVM):
             changed2 = entry != self.__trained[i]
             if isinstance(changed2, N.ndarray):
                 changed2 = changed2.any()
-            if changed != changed2:# and not changed:
+            if changed != changed2 and not changed:
                 raise RuntimeError, \
                   'hashid found to be weak for %s. Though hashid %s!=%s %s, '\
                   'values %s!=%s %s' % \
