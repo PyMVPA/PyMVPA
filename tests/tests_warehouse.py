@@ -63,7 +63,8 @@ def sweepargs(**kwargs):
                         # Adjust message making it more informative
                         failed_tests_str.append("%s on %s = %s" % (str(e), argname, `argvalue`))
                         untrain_clf(argvalue) # untrain classifier
-                        debug('TEST', 'Failed #%d' % len(failed_tests_str))
+                        if __debug__:
+                            debug('TEST', 'Failed #%d' % len(failed_tests_str))
                     if __debug__:
                         if '_QUICKTEST_' in debug.active:
                             # on TESTQUICK just run test for 1st entry in the list,
