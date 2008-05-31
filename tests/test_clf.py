@@ -312,7 +312,9 @@ class ClassifiersTests(unittest.TestCase):
     def testRetrainables(self, clf):
         clf.states._changeTemporarily(enable_states = ['values'])
         clf_re = _deepcopyclf(clf)
-        clf_re.retrainable = True
+        # TODO: .retrainable must have a callback to call smth like
+        # _setRetrainable
+        clf_re._setRetrainable(True)
 
         # need to have high snr so we don't 'cope' with problematic
         # datasets since otherwise unittests would fail.
@@ -359,7 +361,7 @@ class ClassifiersTests(unittest.TestCase):
               msg="Result must be close to the one without retraining."
                   " Got corrcoef=%s" % (corr))
             if closer:
-                self.failUnless(corr > corr_old or corr_old==1.0,
+                self.failUnless(corr >= corr_old,
                                 msg="Result must be closer to current without retraining"
                                 " than to old one. Got corrcoef=%s" % (corr_old))
 
