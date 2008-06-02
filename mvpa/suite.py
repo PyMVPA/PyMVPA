@@ -59,6 +59,8 @@ from mvpa.misc.data_generators import *
 from mvpa.misc.exceptions import *
 from mvpa.misc import *
 from mvpa.misc.iohelpers import *
+from mvpa.misc.fsl import *
+from mvpa.misc.bv import *
 from mvpa.misc.param import *
 from mvpa.misc.signal import *
 from mvpa.misc.state import *

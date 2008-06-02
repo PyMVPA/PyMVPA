@@ -15,6 +15,7 @@ import numpy as N
 
 from mvpa.misc.iohelpers import ColumnData, SampleAttributes
 from mvpa.misc.fsl.base import FslEV3
+from mvpa.misc.bv.base import BrainVoyagerRTC
 
 
 class IOHelperTests(unittest.TestCase):
@@ -113,7 +114,7 @@ class IOHelperTests(unittest.TestCase):
         os.remove(fpath)
 
 
-    def testFslEV(self):
+    def testFslEV2(self):
         attr = SampleAttributes(os.path.join('..', 'data', 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
@@ -122,6 +123,20 @@ class IOHelperTests(unittest.TestCase):
 
         self.failUnless(attr.nsamples == 3)
 
+    def testBVRTC(self):
+        """Simple testing of reading RTC files from BrainVoyager"""
+
+        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        self.failUnlessEqual(attr.ncolumns, 4, "We must have 4 colums")
+        self.failUnlessEqual(attr.nrows, 147, "We must have 147 rows")
+
+        self.failUnlessEqual(attr._header_order,
+                ['l_60 B', 'r_60 B', 'l_80 B', 'r_80 B'],
+                "We must got column names correctly")
+        self.failUnless(len(attr.r_60_B) == attr.nrows,
+                "We must have got access to column by property")
+        self.failUnless(attr.toarray() != None,
+                "We must have got access to column by property")
 
 def suite():
     return unittest.makeSuite(IOHelperTests)
