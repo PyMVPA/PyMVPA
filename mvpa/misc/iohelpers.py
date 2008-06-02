@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import copy
 from sets import Set
-
+from re import sub as re_sub
 from mvpa.misc import warning
 
 if __debug__:
@@ -33,25 +33,33 @@ class ColumnData(dict):
     Because data is read into a dictionary no two columns can have the same
     name in the header! Each column is stored as a list in the dictionary.
     """
-    def __init__(self, source, header=True, sep=None, dtype=float):
+    def __init__(self, source, header=True, sep=None, headersep=None,
+                 dtype=float, skiplines=0):
         """Read data from file into a dictionary.
 
-        Parameters
-        ----------
-         - `source`: Can be a filename or a dictionary. In the case of the
-                     first all data is read from that file and additonal
-                     keyword arguments can be sued to customize the read
-                     procedure. If a dictionary is passed a deepcopy is
-                     performed.
-         - `header`: Indicates whether the column names should be read from the
-                     first line (`header=True`). If `header=False` unique
-                     column names will be generated (see class docs). If
-                     `header` is a python list, it's content is used as column
-                     header names and its length has to match the number of
-                     columns in the file.
-         - `sep`: Separator string. The actual meaning depends on the output
-                  format (see class docs).
-         - `dtype`: Desired datatype.
+        :Parameters:
+          source : basestring or dict
+            If values is given as a string all data is read from the
+            file and additonal keyword arguments can be sued to
+            customize the read procedure. If a dictionary is passed
+            a deepcopy is performed.
+          header : bool or list of basestring
+            Indicates whether the column names should be read from the
+            first line (`header=True`). If `header=False` unique
+            column names will be generated (see class docs). If
+            `header` is a python list, it's content is used as column
+            header names and its length has to match the number of
+            columns in the file.
+          sep : basestring or None
+            Separator string. The actual meaning depends on the output
+            format (see class docs).
+          headersep : basestring or None
+            Separator string used in the header. The actual meaning
+            depends on the output format (see class docs).
+          dtype
+            Desired datatype.
+          skiplines : int
+            Number of lines to skip at the beginning of the file.
         """
         # init base class
         dict.__init__(self)
@@ -60,7 +68,8 @@ class ColumnData(dict):
         self._header_order = None
 
         if isinstance(source, str):
-            self._fromFile(source, header=header, sep=sep, dtype=dtype)
+            self._fromFile(source, header=header, sep=sep, headersep=headersep,
+                           dtype=dtype, skiplines=skiplines)
 
         elif isinstance(source, dict):
             for k, v in source.iteritems():
@@ -77,14 +86,21 @@ class ColumnData(dict):
         for k in self.keys():
             if not classdict.has_key(k):
                 getter = "lambda self: self._getAttrib('%s')" % (k)
+                # Sanitarize the key, substitute ' []' with '_'
+                k_ = re_sub('[[\] ]', '_', k)
+                # replace multipe _s
+                k_ = re_sub('__+', '_', k_)
+                # remove quotes
+                k_ = re_sub('["\']', '', k_)
                 if __debug__:
-                    debug("IOH", "Registering property %s for ColumnData" % `k`)
+                    debug("IOH", "Registering property %s for ColumnData key %s"
+                          % (k_, k))
                 # make sure to import class directly into local namespace
                 # otherwise following does not work for classes defined elsewhere
                 exec 'from %s import %s' % (self.__module__,
                                             self.__class__.__name__)
                 exec "%s.%s = property(fget=%s)"  % \
-                     (self.__class__.__name__, k, getter)
+                     (self.__class__.__name__, k_, getter)
                 # TODO!!! Check if it is safe actually here to rely on value of
                 #         k in lambda. May be it is treated as continuation and
                 #         some local space would override it????
@@ -132,7 +148,8 @@ class ColumnData(dict):
                                       "have equal length."
 
 
-    def _fromFile(self, filename, header, sep, dtype):
+    def _fromFile(self, filename, header, sep, headersep,
+                  dtype, skiplines):
         """Loads column data from file -- clears object first.
         """
         # make a clean table
@@ -141,10 +158,15 @@ class ColumnData(dict):
         file_ = open(filename, 'r')
 
         self._header_order = None
+
+        [ file_.readline() for x in range(skiplines) ]
+        """Simply skip some lines"""
         # make column names, either take header or generate
         if header == True:
             # read first line and split by 'sep'
-            hdr = file_.readline().split(sep)
+            hdr = file_.readline().split(headersep)
+            # remove bogus empty header titles
+            hdr = filter(lambda x:len(x.strip()), hdr)
             self._header_order = hdr
         elif isinstance(header, list):
             hdr = header
@@ -152,6 +174,8 @@ class ColumnData(dict):
             hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
             # reset file to not miss the first line
             file_.seek(0)
+            [ file_.readline() for x in range(skiplines) ]
+
 
         # string in lists: one per column
         tbl = [ [] for i in xrange(len(hdr)) ]
@@ -288,6 +312,8 @@ class ColumnData(dict):
         else:
             return len(self[self.keys()[0]])
 
+    ncolumns = property(fget=getNColumns)
+    nrows = property(fget=getNRows)
 
 
 class SampleAttributes(ColumnData):
