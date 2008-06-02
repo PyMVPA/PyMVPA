@@ -24,6 +24,8 @@ from mvpa.clfs.base import Classifier, CombinedClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      _deepcopyclf
 from mvpa.clfs.transerror import TransferError
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -124,8 +126,15 @@ class ClassifiersTests(unittest.TestCase):
                         msg="BinaryClassifier should not alter labels")
 
 
-        # check by selecting just 
-        #self. fail
+    # TODO: gune up default GPR?
+    @sweepargs(clf=clfs['binary', '!gpr'])
+    def testClassifierGeneralization(self, clf):
+        """Simple test if classifiers can generalize ok on simple data
+        """
+        te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
+        cve = te(datasets['uni2medium'])
+        self.failUnless(cve < 0.25,
+             msg="Got transfer error %g" % (cve))
 
 
     def testSplitClassifier(self):
@@ -298,12 +307,15 @@ class ClassifiersTests(unittest.TestCase):
                 self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
         clf.states._resetEnabledTemporarily()
 
+
     @sweepargs(clf=clfs['retrainable'])
     def testRetrainables(self, clf):
         clf.states._changeTemporarily(enable_states = ['values'])
         clf_re = _deepcopyclf(clf)
-        clf_re.retrainable = True
-        debug('SG', "Here with clf %s" % clf)
+        # TODO: .retrainable must have a callback to call smth like
+        # _setRetrainable
+        clf_re._setRetrainable(True)
+
         # need to have high snr so we don't 'cope' with problematic
         # datasets since otherwise unittests would fail.
         dsargs = {'perlabel':50, 'nlabels':2, 'nfeatures':5, 'nchunks':1,
@@ -349,7 +361,7 @@ class ClassifiersTests(unittest.TestCase):
               msg="Result must be close to the one without retraining."
                   " Got corrcoef=%s" % (corr))
             if closer:
-                self.failUnless(corr > corr_old,
+                self.failUnless(corr >= corr_old,
                                 msg="Result must be closer to current without retraining"
                                 " than to old one. Got corrcoef=%s" % (corr_old))
 
@@ -404,8 +416,7 @@ class ClassifiersTests(unittest.TestCase):
         """Test all classifiers for conformant behavior
         """
         for clf_, traindata in \
-                [(clfs['multiclass'] + clfs['binary'],
-                  dumbFeatureBinaryDataset()),
+                [(clfs['binary'], dumbFeatureBinaryDataset()),
                  (clfs['multiclass'], dumbFeatureDataset())]:
             traindata_copy = deepcopy(traindata) # full copy of dataset
             for clf in clf_:

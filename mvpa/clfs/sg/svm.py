@@ -38,78 +38,7 @@ from sens import *
 if __debug__:
     from mvpa.misc import debug
 
-# Some words of wisdom from shogun author:
-# XXX remove after proper comments added to implementations
-"""
-If you'd like to train linear SVMs use SGD or OCAS. These are (I am
-serious) the fastest linear SVM-solvers to date. (OCAS cannot do SVMs
-with standard additive bias, but will L2 reqularize it - though it
-should not matter much in practice (although it will give slightly
-different solutions)). Note that SGD has no stopping criterion (you
-simply have to specify the number of iterations) and that OCAS has a
-different stopping condition than svmlight for example which may be more
-tight and more loose depending on the problem - I sugeest 1e-2 or 1e-3
-for epsilon.
 
-If you would like to train kernel SVMs use libsvm/gpdt/svmlight -
-depending on the problem one is faster than the other (hard to say when,
-I *think* when your dataset is very unbalanced chunking methods like
-svmlight/gpdt are better), for smaller problems definitely libsvm.
-
-If you use string kernels then gpdt/svmlight have a special 'linadd'
-speedup for this (requires sg 0.6.2 - there was some inefficiency in the
-code for python-modular before that). This is effective for big datasets
-and (I trained on 10 million strings based on this).
-
-And yes currently we only implemented parallel training for svmlight,
-however all SVMs can be evaluated in parallel.
-"""
-known_svm_impl = { "libsvm" : (shogun.Classifier.LibSVM, ''),
-                   "gmnp" : (shogun.Classifier.GMNPSVM, ''),
-                   "mpd"  : (shogun.Classifier.MPDSVM, ''),
-                   "gpbt" : (shogun.Classifier.GPBTSVM, ''),
-                   "gnpp" : (shogun.Classifier.GNPPSVM, ''),
-
-                   ## TODO: Needs sparse features...
-                   # "svmlin" : (shogun.Classifier.SVMLin, ''),
-                   # "liblinear" : (shogun.Classifier.LibLinear, ''),
-                   # "subgradient" : (shogun.Classifier.SubGradientSVM, ''),
-                   ## good 2-class linear SVMs
-                   # "ocas" : (shogun.Classifier.SVMOcas, ''),
-                   # "sgd" : ( shogun.Classifier.SVMSGD, ''),
-
-                   # regressions
-                   "libsvr": (shogun.Regression.LibSVR, ''),
-                   "krr": (shogun.Regression.KRR, ''),
-                   }
-
-def _get_implementation(svm_impl, nl):
-    if nl > 2:
-        if svm_impl == 'libsvm':
-            svm_impl_class = shogun.Classifier.LibSVMMultiClass
-        elif svm_impl == 'gmnp':
-            svm_impl_class = shogun.Classifier.GMNPSVM
-        else:
-            raise RuntimeError, \
-                  "Shogun: Implementation %s doesn't handle multiclass " \
-                  "data. Got labels %s. Use some other classifier" % \
-                  (svm_impl, ul)
-        if __debug__:
-            debug("SG_", "Using %s for multiclass data of %s" %
-                  (svm_impl_class, svm_impl))
-    else:
-            svm_impl_class = known_svm_impl[svm_impl][0]
-    return svm_impl_class
-
-# Conditionally make some of the implementations available if they are
-# present in the present shogun
-for name, item, descr in \
-        [('lightsvm', "shogun.Classifier.SVMLight",
-          "SVMLight classification http://svmlight.joachims.org/"),
-         ('svrlight', "shogun.Regression.SVRLight",
-          "SVMLight regression http://svmlight.joachims.org/")]:
-    if externals.exists('shogun.%s' % name):
-        exec "known_svm_impl[\"%s\"] = (%s, \"%s\")" % (name, item, descr)
 
 
 def _setdebug(obj, partname):
@@ -180,9 +109,56 @@ class SVM(_SVM):
 
     _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
 
+
+    # Some words of wisdom from shogun author:
+    # XXX remove after proper comments added to implementations
+    """
+    If you'd like to train linear SVMs use SGD or OCAS. These are (I am
+    serious) the fastest linear SVM-solvers to date. (OCAS cannot do SVMs
+    with standard additive bias, but will L2 reqularize it - though it
+    should not matter much in practice (although it will give slightly
+    different solutions)). Note that SGD has no stopping criterion (you
+    simply have to specify the number of iterations) and that OCAS has a
+    different stopping condition than svmlight for example which may be more
+    tight and more loose depending on the problem - I sugeest 1e-2 or 1e-3
+    for epsilon.
+
+    If you would like to train kernel SVMs use libsvm/gpdt/svmlight -
+    depending on the problem one is faster than the other (hard to say when,
+    I *think* when your dataset is very unbalanced chunking methods like
+    svmlight/gpdt are better), for smaller problems definitely libsvm.
+
+    If you use string kernels then gpdt/svmlight have a special 'linadd'
+    speedup for this (requires sg 0.6.2 - there was some inefficiency in the
+    code for python-modular before that). This is effective for big datasets
+    and (I trained on 10 million strings based on this).
+
+    And yes currently we only implemented parallel training for svmlight,
+    however all SVMs can be evaluated in parallel.
+    """
+    _KNOWN_IMPLEMENTATIONS = {
+        "libsvm" : (shogun.Classifier.LibSVM, (), ('multiclass', 'binary'), ''),
+        "gmnp" : (shogun.Classifier.GMNPSVM, (), ('multiclass', 'binary'), ''),
+        "mpd"  : (shogun.Classifier.MPDSVM, (), ('binary',), ''),
+        "gpbt" : (shogun.Classifier.GPBTSVM, (), ('binary',), ''),
+        "gnpp" : (shogun.Classifier.GNPPSVM, (), ('binary',), ''),
+
+        ## TODO: Needs sparse features...
+        # "svmlin" : (shogun.Classifier.SVMLin, ''),
+        # "liblinear" : (shogun.Classifier.LibLinear, ''),
+        # "subgradient" : (shogun.Classifier.SubGradientSVM, ''),
+        ## good 2-class linear SVMs
+        # "ocas" : (shogun.Classifier.SVMOcas, ''),
+        # "sgd" : ( shogun.Classifier.SVMSGD, ''),
+
+        # regressions
+        "libsvr": (shogun.Regression.LibSVR, ('tube_epsilon',), ('regression',), ''),
+        "krr": (shogun.Regression.KRR, ('tau',), ('regression',), ''),
+        }
+
+
     def __init__(self,
                  kernel_type='linear',
-                 svm_impl="libsvm",
                  **kwargs):
         """This is the base class of all classifier that utilize so
         far just SVM classifiers provided by shogun.
@@ -190,29 +166,19 @@ class SVM(_SVM):
         TODO Documentation if this all works ;-)
         """
 
-        svm_impl = svm_impl.lower()
-        if svm_impl == 'krr':
-            self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
-        if svm_impl in ['svrlight', 'libsvr']:
-            self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tube_epsilon']
+        svm_impl = kwargs.get('svm_impl', 'libsvm').lower()
+        kwargs['svm_impl'] = svm_impl
+
+        #if svm_impl == 'krr':
+        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
+        #if svm_impl in ['svrlight', 'libsvr']:
+        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tube_epsilon']
 
         # init base class
         _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
 
         self.__svm = None
         """Holds the trained svm."""
-
-        # assign default params
-        if  svm_impl in known_svm_impl:
-            self.__svm_impl = svm_impl
-        else:
-            raise ValueError, "Unknown SVM implementation %s" % svm_impl
-
-        self._clf_internals.append(
-            {True: 'multiclass', False:'binary'}[
-            svm_impl in ['gmnp', 'libsvm']])
-        if svm_impl in ['svrlight', 'libsvr', 'krr']:
-            self._clf_internals += [ 'regression' ]
 
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
@@ -242,12 +208,6 @@ class SVM(_SVM):
                 self.__trained = [None, None, None]
 
 
-    def __repr__(self):
-        # adjust representation a bit to report SVM backend
-        repr_ = super(SVM, self).__repr__()
-        return repr_.replace("(kern", "(svm_impl='%s', kern" % self.__svm_impl)
-
-
     def __wasChanged(self, descr, i, entry):
         """Check if given entry was changed from what known prior. If so -- store"""
         idhash_ = idhash(entry)
@@ -256,7 +216,7 @@ class SVM(_SVM):
             changed2 = entry != self.__trained[i]
             if isinstance(changed2, N.ndarray):
                 changed2 = changed2.any()
-            if changed != changed2:# and not changed:
+            if changed != changed2 and not changed:
                 raise RuntimeError, \
                   'hashid found to be weak for %s. Though hashid %s!=%s %s, '\
                   'values %s!=%s %s' % \
@@ -274,14 +234,14 @@ class SVM(_SVM):
         """Train SVM
         """
         # XXX might get up in hierarchy
-        if self.retrainable:
+        if self.params.retrainable:
             changed_params = self.params.whichSet()
             changed_kernel_params = self.kernel_params.whichSet()
 
         # XXX watchout
         # self.untrain()
         newkernel, newsvm = False, False
-        if self.retrainable:
+        if self.params.retrainable:
             if __debug__:
                 debug('SG__', "IDHashes are %s" % (self.__idhash))
             changed_samples = self.__wasChanged('samples', 0, dataset.samples)
@@ -331,7 +291,7 @@ class SVM(_SVM):
 
 
         # KERNEL
-        if not self.retrainable or changed_samples or changed_kernel_params:
+        if not self.params.retrainable or changed_samples or changed_kernel_params:
             # If needed compute or just collect arguments for SVM and for
             # the kernel
             kargs = []
@@ -342,7 +302,7 @@ class SVM(_SVM):
                     value = self._getDefaultGamma(dataset)
                 kargs += [value]
 
-            if self.retrainable and __debug__:
+            if self.params.retrainable and __debug__:
                 if changed_samples:
                     debug("SG",
                           "Re-Creating kernel since samples has changed")
@@ -364,7 +324,7 @@ class SVM(_SVM):
                                               *kargs)
             newkernel = True
             self.kernel_params.reset()  # mark them as not-changed
-            if self.retrainable:
+            if self.params.retrainable:
                 self.__kernel.set_precompute_matrix(True, True)
                 self.__kernel_test = None
                 self.__kernel_args = kargs
@@ -372,7 +332,7 @@ class SVM(_SVM):
 
         # TODO -- handle changed_params correctly, ie without recreating
         # whole SVM
-        if not self.retrainable or self.__svm is None or changed_params:
+        if not self.params.retrainable or self.__svm is None or changed_params:
             # SVM
             C = self.params.C
             if C<0:
@@ -382,15 +342,15 @@ class SVM(_SVM):
                           (self.params.C, C))
 
             # Choose appropriate implementation
-            svm_impl_class = _get_implementation(self.__svm_impl, len(ul))
+            svm_impl_class = self.__get_implementation(len(ul))
 
             if __debug__:
                 debug("SG", "Creating SVM instance of %s" % `svm_impl_class`)
 
-            if self.__svm_impl in ['libsvr', 'svrlight']:
+            if self._svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
                 self.__svm = svm_impl_class(C, self.params.epsilon, self.__kernel, labels)
-            elif self.__svm_impl in ['krr']:
+            elif self._svm_impl in ['krr']:
                 self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
             else:
                 self.__svm = svm_impl_class(C, self.__kernel, labels)
@@ -414,14 +374,14 @@ class SVM(_SVM):
                 raise NotImplementedError, \
                       "Implement handling of changing params of SVM"
 
-        if self.retrainable:
+        if self.params.retrainable:
             # we must assign it only if it is retrainable
             self.states.retrained = not newsvm or not newkernel
 
         # Train
         if __debug__:
             debug("SG", "%sTraining %s on data with labels %s" %
-                  (("","Re-")[self.retrainable and self.states.retrained], self,
+                  (("","Re-")[self.params.retrainable and self.states.retrained], self,
                    dataset.uniquelabels))
 
         self.__svm.train()
@@ -443,14 +403,14 @@ class SVM(_SVM):
         if __debug__:
             debug("SG_", "Initializing kernel with training/testing data")
 
-        if self.retrainable:
+        if self.params.retrainable:
             changed_testdata = self.__wasChanged('test_samples', 2, data) or \
                                self.__kernel_test is None
 
-        if not self.retrainable or changed_testdata:
+        if not self.params.retrainable or changed_testdata:
             testdata = _tosg(data)
 
-        if not self.retrainable:
+        if not self.params.retrainable:
             # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
         else:
@@ -480,12 +440,12 @@ class SVM(_SVM):
         # doesn't do any good imho although on unittests helps tiny bit... hm
         #self.__svm.init_kernel_optimization()
         values_ = self.__svm.classify()
-        #if self.retrainable and not changed_testdata:
+        #if self.params.retrainable and not changed_testdata:
         #    import pydb
         #    pydb.debugger()
         values = values_.get_labels()
 
-        if self.retrainable:
+        if self.params.retrainable:
             # we must assign it only if it is retrainable
             self.states.retested = not changed_testdata
             if __debug__:
@@ -519,7 +479,7 @@ class SVM(_SVM):
         self.values = values
 
         ## to avoid leaks with not yet properly fixed shogun
-        if not self.retrainable:
+        if not self.params.retrainable:
             try:
                 testdata.free_features()
             except:
@@ -531,7 +491,7 @@ class SVM(_SVM):
     def untrain(self):
         super(SVM, self).untrain()
 
-        if not self.retrainable:
+        if not self.params.retrainable:
             if __debug__:
                 debug("SG__", "Untraining %s and destroying sg's SVM" % self)
 
@@ -568,6 +528,25 @@ class SVM(_SVM):
                   msgargs=locals())
 
 
+    def __get_implementation(self, nl):
+        if nl > 2:
+            if self._svm_impl == 'libsvm':
+                svm_impl_class = shogun.Classifier.LibSVMMultiClass
+            elif self._svm_impl == 'gmnp':
+                svm_impl_class = shogun.Classifier.GMNPSVM
+            else:
+                raise RuntimeError, \
+                      "Shogun: Implementation %s doesn't handle multiclass " \
+                      "data. Got labels %s. Use some other classifier" % \
+                      (self._svm_impl, self.__traindataset.uniquelabels)
+            if __debug__:
+                debug("SG_", "Using %s for multiclass data of %s" %
+                      (svm_impl_class, self._svm_impl))
+        else:
+                svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
+        return svm_impl_class
+
+
     svm = property(fget=lambda self: self.__svm)
     """Access to the SVM model."""
 
@@ -578,4 +557,12 @@ class SVM(_SVM):
 
 
 
-
+# Conditionally make some of the implementations available if they are
+# present in the present shogun
+for name, item, params, descr in \
+        [('lightsvm', "shogun.Classifier.SVMLight", "(), ('binary',)",
+          "SVMLight classification http://svmlight.joachims.org/"),
+         ('svrlight', "shogun.Regression.SVRLight", "('tube_epsilon',), ('regression',)",
+          "SVMLight regression http://svmlight.joachims.org/")]:
+    if externals.exists('shogun.%s' % name):
+        exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
