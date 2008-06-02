@@ -79,6 +79,10 @@ class ColumnData(dict):
                 getter = "lambda self: self._getAttrib('%s')" % (k)
                 if __debug__:
                     debug("IOH", "Registering property %s for ColumnData" % `k`)
+                # make sure to import class directly into local namespace
+                # otherwise following does not work for classes defined elsewhere
+                exec 'from %s import %s' % (self.__module__,
+                                            self.__class__.__name__)
                 exec "%s.%s = property(fget=%s)"  % \
                      (self.__class__.__name__, k, getter)
                 # TODO!!! Check if it is safe actually here to rely on value of
