@@ -123,3 +123,13 @@ class McFlirtParams(ColumnData):
         P.ylabel('Rotations in rad')
         P.legend(('rot1', 'rot2', 'rot3'), loc=0)
 
+
+    def toarray(self):
+        """Returns the data as an array with six columns (same order as in file).
+        """
+        import numpy as N
+
+        # return as array with time axis first
+        return N.array([self[i] for i in McFlirtParams.header_def],
+                       dtype='float').T
+
