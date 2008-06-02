@@ -13,7 +13,8 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from mvpa.misc.iohelpers import ColumnData, FslEV3, SampleAttributes
+from mvpa.misc.iohelpers import ColumnData, SampleAttributes
+from mvpa.misc.fsl.base import FslEV3
 
 
 class IOHelperTests(unittest.TestCase):

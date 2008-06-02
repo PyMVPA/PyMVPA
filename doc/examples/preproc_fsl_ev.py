@@ -24,6 +24,7 @@ the effect that linear detrending (--detrend) will perform a separate fit for
 this chunk and will not simply remove a global trend.
 """
 
+from mvpa.misc.fsl.base import FslEV3
 from mvpa.suite import *
 """
 # Command above substitutes the following list
