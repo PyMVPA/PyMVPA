@@ -40,6 +40,8 @@ The mvpa package contains the following subpackages and modules:
 
 __docformat__ = 'restructuredtext'
 
+import os
+import numpy as N
 
 if not __debug__:
     try:
@@ -51,14 +53,16 @@ if not __debug__:
 else:
     # Controllable seeding of random number generator
     from mvpa.misc import debug
-    import numpy as N
-    from os import environ
 
     debug('INIT', 'mvpa')
-    if environ.has_key('MVPA_SEED'):
-        __random_seed = int(environ['MVPA_SEED'])
-    else:
-        __random_seed = int(N.random.uniform()*(2**31-1))
+
+if os.environ.has_key('MVPA_SEED'):
+    __random_seed = int(os.environ['MVPA_SEED'])
+else:
+    __random_seed = int(N.random.uniform()*(2**31-1))
+
+N.random.seed(__random_seed)
+
+if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
-    N.random.seed(__random_seed)
     debug('INIT', 'mvpa end')

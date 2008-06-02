@@ -51,10 +51,22 @@ class Warehouse(object):
      capable of doing multiclass classification
      """
 
-    def __init__(self, known_tags=None):
-        self.__known_tags = Set(known_tags)
+    def __init__(self, known_tags=None, matches={}):
+        """Initialize warehouse
+
+        :Parameters:
+          known_tags : list of basestring
+            List of known tags
+          matches : dict
+            Optional dictionary of additional matches. E.g. since any
+            regression can be used as a binary classifier,
+            matches={'binary':['regression']}, would allow to provide
+            regressions also if 'binary' was requested
+            """
+        self._known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
+        self.__matches = matches
 
     def __getitem__(self, *args):
         if isinstance(args[0], tuple):
@@ -66,22 +78,34 @@ class Warehouse(object):
 
         # lets remove optional modifier '!'
         dargs = Set([x.lstrip('!') for x in args]).difference(
-            self.__known_tags)
+            self._known_tags)
 
         if len(dargs)>0:
             raise ValueError, "Unknown internals %s requested. Known are %s" % \
-                  (list(dargs), list(self.__known_tags))
+                  (list(dargs), list(self._known_tags))
 
         # dummy implementation for now
         result = []
+        # check every known item
         for item in self.__items:
             good = True
+            # by default each one counts
             for arg in args:
-                if (arg.startswith('!') and \
-                    (arg[1:] in item._clf_internals)) or \
-                    (not arg.startswith('!') and \
-                     (not (arg in item._clf_internals))):
-                    good = False
+                # check for rejection first
+                if arg.startswith('!'):
+                    if (arg[1:] in item._clf_internals):
+                        good = False
+                        break
+                    else:
+                        continue
+                # check for inclusion
+                found = False
+                for arg in [arg] + self.__matches.get(arg, []):
+                    if (arg in item._clf_internals):
+                        found = True
+                        break
+                good = found
+                if not good:
                     break
             if good:
                 result.append(item)
@@ -99,12 +123,12 @@ class Warehouse(object):
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty _clf_internals"
             clf_internals = Set(item._clf_internals)
-            if clf_internals.issubset(self.__known_tags):
+            if clf_internals.issubset(self._known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
             else:
                 raise ValueError, 'Unknown clf internal(s) %s' % \
-                      clf_internals.difference(self.__known_tags)
+                      clf_internals.difference(self._known_tags)
         return self
 
     @property
@@ -118,7 +142,8 @@ class Warehouse(object):
     def items(self):
         return self.__items
 
-clfs = Warehouse(known_tags=_KNOWN_INTERNALS)
+clfs = Warehouse(known_tags=_KNOWN_INTERNALS,
+                 matches={'binary':['regression']})
 
 # NB:
 #  - Nu-classifiers are turned off since for haxby DS default nu
@@ -140,6 +165,7 @@ clfs += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvm
+    clfs._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfs += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
@@ -160,6 +186,8 @@ if externals.exists('libsvm'):
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
+    clfs._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
+
     # some classifiers are not yet ready to be used out-of-the-box in
     # PyMVPA, thus we don't populate warehouse with their instances
     bad_classifiers = [
@@ -177,7 +205,7 @@ if externals.exists('shogun'):
         # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
         bad_classifiers.append('gnpp')
 
-    for impl in sg.svm.known_svm_impl:
+    for impl in sg.SVM._KNOWN_IMPLEMENTATIONS:
         # Uncomment the ones to disable
         if impl in bad_classifiers:
             continue
@@ -194,7 +222,6 @@ if externals.exists('shogun'):
 #            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
 #           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
-
 
 
 if len(clfs['svm', 'linear']) > 0:

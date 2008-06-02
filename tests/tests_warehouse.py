@@ -63,7 +63,8 @@ def sweepargs(**kwargs):
                         # Adjust message making it more informative
                         failed_tests_str.append("%s on %s = %s" % (str(e), argname, `argvalue`))
                         untrain_clf(argvalue) # untrain classifier
-                        debug('TEST', 'Failed #%d' % len(failed_tests_str))
+                        if __debug__:
+                            debug('TEST', 'Failed #%d' % len(failed_tests_str))
                     if __debug__:
                         if '_QUICKTEST_' in debug.active:
                             # on TESTQUICK just run test for 1st entry in the list,
@@ -85,6 +86,7 @@ def sweepargs(**kwargs):
 # split into training/testing
 #
 specs = { 'large' : { 'perlabel' : 99, 'nchunks' : 11, 'nfeatures' : 20, 'snr' : 8 },
+          'medium' : { 'perlabel' : 24, 'nchunks' : 6, 'nfeatures' : 14, 'snr' : 8 },
           'small' : { 'perlabel' : 12,  'nchunks' : 4, 'nfeatures' : 6, 'snr' : 14} }
 nonbogus_pool = [0, 1, 3, 5]
 datasets = {}
@@ -108,7 +110,7 @@ for kind, spec in specs.iteritems():
 
 
         # shortcut
-        datasets[basename] = datasets['%s_train' % basename]
+        datasets[basename] = dataset
 
     # sample 3D
     total = 2*spec['perlabel']
