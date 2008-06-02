@@ -400,3 +400,32 @@ class McFlirtParams(ColumnData):
                           header=False,
                           header_order=McFlirtParams.header_def,
                           sep=' ')
+
+
+    def plot(self):
+        """Produce a simple plot of the estimated translation and rotation
+        parameters using.
+
+        You still need to can pylab.show() or pylab.savefig() if you want to
+        see/get anything.
+        """
+        # import internally as it takes some time and might not be needed most
+        # of the time
+        import pylab as P
+
+        # translations subplot
+        P.subplot(211)
+        P.plot(self.x)
+        P.plot(self.y)
+        P.plot(self.z)
+        P.ylabel('Translations in mm')
+        P.legend(('x', 'y', 'z'), loc=0)
+
+        # rotations subplot
+        P.subplot(212)
+        P.plot(self.rot1)
+        P.plot(self.rot2)
+        P.plot(self.rot3)
+        P.ylabel('Rotations in rad')
+        P.legend(('rot1', 'rot2', 'rot3'), loc=0)
+
