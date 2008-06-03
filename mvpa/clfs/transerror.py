@@ -234,6 +234,20 @@ class ConfusionMatrix(object):
                   "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (Nlabels, matrix.shape)
 
+        def p2(x):
+            """Helper to print depending on the type nicely. For some
+            reason %.2g for 100 prints exponential form which is ugly
+            """
+            if isinstance(x, int):
+                return "%d" % x
+            elif isinstance(x, float):
+                s = ("%.2f" % x).rstrip('0.').lstrip()
+                if s == '':
+                    s = '0'
+                return s
+            else:
+                return "%s" % x
+
         # list of lists of what is printed
         printed = []
         underscores = [" %s" % ("-" * L)] * Nlabels
@@ -250,18 +264,18 @@ class ConfusionMatrix(object):
             printed.append(
                 [labels[i]] +
                 [ str(x) for x in line ] +
-                [ '%.2g' % self.__stats[x][i] for x in stats_perpredict])
+                [ p2(self.__stats[x][i]) for x in stats_perpredict])
 
         if summary:
             printed.append(['Per target:'] + underscores)
             for stat in stats_pertarget:
-                printed.append([stat] + ['%.2g' \
-                    % self.__stats[stat][i] for i in xrange(Nlabels)])
+                printed.append([stat] + [
+                    p2(self.__stats[stat][i]) for i in xrange(Nlabels)])
 
             printed.append(['SUMMARY:'] + underscores)
 
             for stat in stats_summary:
-                printed.append([stat] + ['%.2g' % self.__stats[stat]])
+                printed.append([stat] + [p2(self.__stats[stat])])
 
         # equalize number of elements in each row
         Nelements_max = max(len(x) for x in printed)
