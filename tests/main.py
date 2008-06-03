@@ -27,7 +27,6 @@ tests = [
     'test_pcamapper',
     'test_neighbor',
     'test_maskeddataset',
-    'test_niftidataset',
     'test_splitter',
     'test_state',
     # Misc supporting utilities
@@ -62,11 +61,15 @@ tests = [
 # fully test of externals
 externals.testAllDependencies()
 
+__optional_tests = ( ('lars', 'lars'),
+                     ('nifti', 'niftidataset') )
+
 # and now for the optional tests
 optional_tests = []
 
-if externals.exists('lars'):
-    optional_tests.append('test_lars')
+for external, testname in __optional_tests:
+    if externals.exists(external):
+        optional_tests.append('test_%s' % testname)
 
 
 # finally merge all of them

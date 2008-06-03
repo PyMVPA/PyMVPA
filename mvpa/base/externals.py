@@ -30,6 +30,7 @@ def __check_shogun(bottom_version, custom_versions=[2456]):
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
+          'nifti':'from nifti import NiftiImage as __',
           'shogun':'import shogun as __',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
