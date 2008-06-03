@@ -394,3 +394,47 @@ def design2labels(columndata, baseline_label=0,
             label = baseline_label
         labels.append(label)
     return labels
+
+
+__known_chunking_methods = {
+    'alllabels': 'Each chunk must contain instances of all labels'
+    }
+
+def labels2chunks(labels, method="alllabels"):
+    """Automagically decide on chunks based on labels
+
+    :Parameters:
+      labels
+        labels to base chunking on
+      method : basestring
+        codename for method to use. Known are %s
+
+    :rtype: list
+    """ % __known_chunking_methods.keys()
+
+    chunks = []
+    alllabels = Set(labels)
+    if method == 'alllabels':
+        seenlabels = Set()
+        lastlabel = None
+        chunk = 0
+        for label in labels:
+            if label != lastlabel:
+                if seenlabels == alllabels:
+                    chunk += 1
+                    seenlabels = Set()
+                lastlabel = label
+                seenlabels.union_update([label])
+            chunks.append(chunk)
+        import numpy as N
+        chunks = N.array(chunks)
+        # fix up a bit the trailer
+        if seenlabels != alllabels:
+            chunks[chunks==chunk] = chunk-1
+        chunks = list(chunks)
+    else:
+        errmsg = "Unknown method to derive chunks is requested. Known are:\n"
+        for method, descr in __known_chunking_methods.iteritems():
+            errmsg += "  %s : %s\n" % (method, descr)
+        raise ValueError, errmsg
+    return chunks

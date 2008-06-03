@@ -13,7 +13,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from mvpa.misc.iohelpers import ColumnData, SampleAttributes, design2labels
+from mvpa.misc.iohelpers import *
 from mvpa.misc.fsl.base import FslEV3
 from mvpa.misc.bv.base import BrainVoyagerRTC
 
@@ -156,6 +156,18 @@ class IOHelperTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, design2labels, attr,
                         baseline_label='silence', func=lambda x:x>-1.0)
 
+
+    def testlabels2chunks(self):
+        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        labels = design2labels(attr, baseline_label='silence')
+        self.failUnlessRaises(ValueError, labels2chunks, labels, 'bugga')
+        chunks = labels2chunks(labels)
+        self.failUnlessEqual(len(labels), len(chunks))
+        # we must got them in sorted order
+        chunks_sorted = N.sort(chunks)
+        self.failUnless((chunks == chunks_sorted).all())
+        # for this specific one we must have just 4 chunks
+        self.failUnless((N.unique(chunks) == range(4)).all())
 
 def suite():
     return unittest.makeSuite(IOHelperTests)
