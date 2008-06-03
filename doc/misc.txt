@@ -204,5 +204,39 @@ Others
 FSL Bindings
 ============
 
-(to be written)
+PyMVPA contains a few little helpers to make interfacing with FSL_ easier.
+The purpose of these helpers is to increase the efficiency when doing an
+analysis by (re)using useful information that is already available from some
+FSL output. FSL usually stores most interesting information in the NIfTI
+format. Therefore it can be easily imported into PyMVPA using PyNIfTI. However,
+some information is stored in textfiles, e.g. estimated motion correction
+parameters and *FEAT's three-column custom EV* files. PyMVPA provides import
+and export helpers for both of them (among other stuff like a *MELODIC*
+results import helper). Here is an example how the *McFlirt* parameter output
+can be used to perform motion-aware data detrending:
+
+  >>> from os import path
+  >>> import numpy as N
+  >>>
+  >>> # some dummy dataset
+  >>> from mvpa.datasets import Dataset
+  >>> ds = Dataset(samples=N.random.normal(size=(19, 3)), labels=1)
+  >>>
+  >>> # load motion correction output
+  >>> from mvpa.misc.fsl.base import McFlirtParams
+  >>> mc = McFlirtParams(path.join('data', 'bold_mc.par'))
+  >>>
+  >>> # simple plot using pylab (use pylab.show() or pylab.savefig()
+  >>> # afterwards)
+  >>> mc.plot()
+  >>>
+  >>> # detrend some dataset with mc params as additonal regressors
+  >>> from mvpa.misc.signal import detrend
+  >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
+  >>> # 'res' contains all regressors and their associated weights
+
+All FSL bindings are located in the `mvpa.misc.fsl`_ module. 
+
+.. _FSL: http://www.fmrib.ox.ac.uk
+.. _mvpa.misc.fsl: api/mvpa.misc.fsl-module.html
 
