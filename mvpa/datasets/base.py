@@ -565,11 +565,11 @@ class Dataset(object):
         # disabled and warning is not necessary anymore
         if sort:
             ids.sort()
-#        elif __debug__:
-#            from mvpa.misc.support import isSorted
-#            if not isSorted(ids):
-#                warning("IDs for selectFeatures must be provided " +
-#                       "in sorted order, otherwise major headache might occur")
+        elif __debug__ and 'CHECK_DS_SORTED' in debug.active:
+            from mvpa.misc.support import isSorted
+            if not isSorted(ids):
+                warning("IDs for selectFeatures must be provided " +
+                       "in sorted order, otherwise major headache might occur")
 
         # shallow-copy all stuff from current data dict
         new_data = self._data.copy()

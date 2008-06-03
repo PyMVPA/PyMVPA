@@ -158,9 +158,10 @@ slowdown introduced by such 'debugging' output, which might appear at
 some computational bottleneck places in the code.
 
 Some of the debug ids are defined to facilitate additional checking of the
-validity of the analysis. E.g. ``RETRAIN`` id would cause additional checking
-of the data in retraining phase. Such additional testing might spot out some
-bugs in the internal logic.
+validity of the analysis. Their debug ids a prefixed by
+``CHECK_``. E.g. ``CHECK_RETRAIN`` id would cause additional checking of the
+data in retraining phase. Such additional testing might spot out some bugs in
+the internal logic, thus enabled when full test suite is ran.
 
 .. TODO: Unify loggers behind verbose and debug. imho debug should have
    also way to specify the level for the message so we could provide

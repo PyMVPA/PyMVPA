@@ -151,7 +151,8 @@ if __debug__:
     debug.register('DS_',  "*Dataset (verbose)")
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
-    debug.register('RETRAIN', "Doing additional checking in retraining/retesting")
+    debug.register('CHECK_DS_SORTED',"Additional checking in datasets for sorted")
+    debug.register('CHECK_RETRAIN', "Additional checking in retraining/retesting")
 
     debug.register('COL',  "Generic Collectable debugging")
 

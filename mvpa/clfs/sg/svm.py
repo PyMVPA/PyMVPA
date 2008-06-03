@@ -195,7 +195,7 @@ class SVM(_SVM):
         self.__idhash = [None, None, None]
 
         if __debug__:
-            if 'RETRAIN' in debug.active:
+            if 'CHECK_RETRAIN' in debug.active:
                 # XXX it is not clear though if idhash is faster than
                 # simple comparison of (dataset != __traineddataset).any(),
                 # but if we like to get rid of __traineddataset then we should
@@ -212,7 +212,7 @@ class SVM(_SVM):
         """Check if given entry was changed from what known prior. If so -- store"""
         idhash_ = idhash(entry)
         changed = self.__idhash[i] != idhash_
-        if __debug__ and 'RETRAIN' in debug.active:
+        if __debug__ and 'CHECK_RETRAIN' in debug.active:
             changed2 = entry != self.__trained[i]
             if isinstance(changed2, N.ndarray):
                 changed2 = changed2.any()
@@ -506,7 +506,7 @@ class SVM(_SVM):
                     except:
                         pass
                     if __debug__:
-                        if 'RETRAIN' in debug.active:
+                        if 'CHECK_RETRAIN' in debug.active:
                             self.__trained = [None, None, None]
                     self.__traindataset = None
                     del self.__kernel
