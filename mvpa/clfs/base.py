@@ -188,7 +188,7 @@ class Classifier(Parametrized):
 
     def __str__(self):
         if __debug__ and 'CLF_' in debug.active:
-            return "%s / %s" % (`self`, super(Classifier, self).__str__(self))
+            return "%s / %s" % (`self`, super(Classifier, self).__str__())
         else:
             return `self`
 
