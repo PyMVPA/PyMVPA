@@ -281,7 +281,8 @@ class Dataset(object):
         """Return indecies of samples given a list of attributes
         """
 
-        if not operator.isSequenceType(values):
+        if not operator.isSequenceType(values) \
+               or isinstance(values, basestring):
             values = [ values ]
 
         # TODO: compare to plain for loop through the labels
