@@ -13,7 +13,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from mvpa.misc.iohelpers import ColumnData, SampleAttributes
+from mvpa.misc.iohelpers import ColumnData, SampleAttributes, Design2Labels
 from mvpa.misc.fsl.base import FslEV3
 from mvpa.misc.bv.base import BrainVoyagerRTC
 
@@ -137,6 +137,25 @@ class IOHelperTests(unittest.TestCase):
                 "We must have got access to column by property")
         self.failUnless(attr.toarray() != None,
                 "We must have got access to column by property")
+
+    def testDesign2Labels(self):
+        """Simple testing of helper Design2Labels"""
+
+        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        labels0 = Design2Labels(attr, baseline_label='silence')
+        labels = Design2Labels(attr, baseline_label='silence',
+                                func=lambda x:x>0.5)
+        Nsilence = lambda x:len(N.where(N.array(x) == 'silence')[0])
+
+        nsilence0 = Nsilence(labels0)
+        nsilence = Nsilence(labels)
+        self.failUnless(nsilence0 < nsilence,
+                        "We must have more silence if thr is higher")
+        self.failUnlessEqual(len(labels), attr.nrows,
+                        "We must have the same number of labels as rows")
+        self.failUnlessRaises(ValueError, Design2Labels, attr,
+                        baseline_label='silence', func=lambda x:x>-1.0)
+
 
 def suite():
     return unittest.makeSuite(IOHelperTests)

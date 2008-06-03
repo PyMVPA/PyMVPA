@@ -349,3 +349,48 @@ class SampleAttributes(ColumnData):
 
 
     nsamples = property(fget=getNSamples)
+
+
+def Design2Labels(columndata, baseline_label=0,
+                  func=lambda x:x>0.0):
+    """Helper to convert design matrix into a list of labels
+
+    Given a design, assign a single label to any given sample
+
+    TODO: fix description/naming
+
+    :Parameters:
+      columndata : ColumnData
+        Attributes where each known will be considered as a separate
+        explanatory variable (EV) in the design.
+      baseline_label
+        What label to assign for samples where none of EVs was given a value
+      func : functor
+        Function which decides either a value should be considered
+
+    :Output:
+      list of labels which are taken from column names in
+      ColumnData and baseline_label
+
+    """
+    # doing it simple naive way but it should be of better control if
+    # we decide to process columndata with non-numeric entries etc
+    keys = columndata.keys()
+    labels = []
+    for row in xrange(columndata.nrows):
+        entries = [ columndata[key][row] for key in keys ]
+        # which entries get selected
+        selected = filter(lambda x: func(x[1]), zip(keys, entries))
+        nselected = len(selected)
+
+        if nselected > 1:
+            # if there is more than a single one -- we are in problem
+            raise ValueError, "Row #%i with items %s has multiple entries " \
+                  "meeting the criterion. Cannot decide on the label" % \
+                  (row, entries)
+        elif nselected == 1:
+            label = selected[0][0]
+        else:
+            label = baseline_label
+        labels.append(label)
+    return labels
