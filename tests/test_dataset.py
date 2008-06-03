@@ -80,7 +80,7 @@ class DatasetTests(unittest.TestCase):
         # default must be no mask
         self.failUnless( data.nfeatures == 100 )
         # check selection with feature list
-        sel = data.selectFeatures( [0,20,79] )
+        sel = data.selectFeatures( [0,20,79], sort=False )
         self.failUnless(sel.nfeatures == 3)
 
         # check size of the masked patterns
