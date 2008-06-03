@@ -351,7 +351,7 @@ class SampleAttributes(ColumnData):
     nsamples = property(fget=getNSamples)
 
 
-def Design2Labels(columndata, baseline_label=0,
+def design2labels(columndata, baseline_label=0,
                   func=lambda x:x>0.0):
     """Helper to convert design matrix into a list of labels
 
