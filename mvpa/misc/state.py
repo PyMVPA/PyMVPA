@@ -1161,5 +1161,3 @@ class Parametrized(Stateful):
                       + " Valid parameters are %s" % known_params
 
 
-    def __str__(self):
-        return self.__repr__(fullname=False)
