@@ -92,15 +92,21 @@ zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
                                         dtype='bool'))
 
+# Specify the base classifier to be used
+# To parametrize the classifier to be used
+#   Clf = lambda *args:LinearCSVMC(C=-10, *args)
+# Just to assign a particular classifier class
+Clf = LinearCSVMC
+
 # define some classifiers: a simple one and several classifiers with built-in
 # SVDs
-clfs = [('All orig. features', LinearCSVMC()),
-        ('All PCs', MappedClassifier(LinearCSVMC(), SVDMapper())),
-        ('First 3 PCs', MappedClassifier(LinearCSVMC(),
+clfs = [('All orig. features', Clf()),
+        ('All PCs', MappedClassifier(Clf(), SVDMapper())),
+        ('First 3 PCs', MappedClassifier(Clf(),
                         SVDMapper(selector=range(5)))),
-        ('First 50 PCs', MappedClassifier(LinearCSVMC(),
+        ('First 50 PCs', MappedClassifier(Clf(),
                         SVDMapper(selector=range(50)))),
-        ('PCs 3-50', MappedClassifier(LinearCSVMC(),
+        ('PCs 3-50', MappedClassifier(Clf(),
                         SVDMapper(selector=range(3,50))))]
 
 
