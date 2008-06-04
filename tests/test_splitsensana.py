@@ -8,16 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-import unittest
-
-import numpy as N
-
-from mvpa.datasets import Dataset
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
+from mvpa.misc.data_generators import normalFeatureDataset
 
 
 class SplitSensitivityAnalyserTests(unittest.TestCase):

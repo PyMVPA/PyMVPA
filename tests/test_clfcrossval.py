@@ -8,14 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA classifier cross-validation"""
 
-import unittest
-import numpy as N
-
-from mvpa.datasets import Dataset
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
+from tests_warehouse import *
 from tests_warehouse import pureMultivariateSignal, getMVPattern
 from tests_warehouse_clfs import *
 

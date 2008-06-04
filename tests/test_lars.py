@@ -8,19 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
-import unittest
-from mvpa.datasets import Dataset
 from mvpa.clfs.lars import LARS
-import numpy as N
 from scipy.stats import pearsonr
-from mvpa.misc.data_generators import dumbFeatureBinaryDataset
+from tests_warehouse import *
 
 class LARSTests(unittest.TestCase):
 
     def testLARS(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
-        data = dumbFeatureBinaryDataset()
+        data = datasets['dumb2']
 
         clf = LARS(regression=True)
 
@@ -33,7 +30,7 @@ class LARSTests(unittest.TestCase):
         self.failUnless(cor[0] > .8)
 
     def testLARSState(self):
-        data = dumbFeatureBinaryDataset()
+        data = datasets['dumb2']
 
         clf = LARS()
 

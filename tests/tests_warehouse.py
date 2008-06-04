@@ -20,8 +20,11 @@ from mvpa.clfs.base import Classifier
 from mvpa.misc.state import Stateful
 from mvpa.misc.data_generators import *
 
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
+
 if __debug__:
     from mvpa.misc import debug
+    __all__.append('debug')
 
 
 def sweepargs(**kwargs):
@@ -127,6 +130,3 @@ for kind, spec in specs.iteritems():
 datasets['dumb2'] = dumbFeatureBinaryDataset()
 datasets['dumb'] = dumbFeatureDataset()
 
-__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
-if __debug__:
-    __all__.append('debug')

@@ -8,18 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA univariate ANOVA sensitivity analyzer."""
 
-import unittest
-import numpy as N
-
-from mvpa.datasets import Dataset
 from mvpa.measures.anova import OneWayAnova
-from mvpa.misc.data_generators import dumbFeatureDataset
+from tests_warehouse import *
 
 
 class ANOVATests(unittest.TestCase):
 
     def testANOVA(self):
-        data = dumbFeatureDataset()
+        data = datasets['dumb']
         aov = OneWayAnova()
 
         # compute f-scores

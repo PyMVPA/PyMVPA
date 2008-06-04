@@ -8,10 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA searchlight algorithm"""
 
-import unittest
-
-import numpy as N
-
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.measures.searchlight import Searchlight
 from mvpa.datasets.splitter import NFoldSplitter

@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA classifier cross-validation"""
 
-import unittest
-import numpy as N
 from copy import copy
 
 from mvpa.datasets import Dataset
@@ -19,7 +17,8 @@ from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from tests_warehouse import normalFeatureDataset, sweepargs
+from tests_warehouse import *
+from tests_warehouse import normalFeatureDataset
 from tests_warehouse_clfs import *
 
 class ErrorsTests(unittest.TestCase):
