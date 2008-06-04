@@ -13,7 +13,7 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import Stateful, StateVariable, Parametrized
+from mvpa.misc.state import Stateful, StateVariable, Parametrized, ParameterCollection
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -53,7 +53,7 @@ class TestClassParametrized(TestClassProper, Parametrized):
 
 class StateTests(unittest.TestCase):
 
-    def _testBlankState(self):
+    def testBlankState(self):
         empty  = TestClassEmpty()
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
@@ -93,7 +93,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessRaises(AttributeError, blank2.__getattribute__, 'state1')
 
 
-    def _testProperState(self):
+    def testProperState(self):
         proper   = TestClassProper()
         proper2  = TestClassProper(enable_states=['state1'], disable_states=['state2'])
 
@@ -157,7 +157,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state2')
 
 
-    def _testGetSaveEnabled(self):
+    def testGetSaveEnabled(self):
         """Check if we can store/restore set of enabled states"""
 
         proper  = TestClassProper()
@@ -177,7 +177,7 @@ class StateTests(unittest.TestCase):
 
     # TODO: make test for _copy_states_ or whatever comes as an alternative
 
-    def _testStoredTemporarily(self):
+    def testStoredTemporarily(self):
         proper   = TestClassProper()
         properch = TestClassProperChild(enable_states=["state1"])
 
@@ -198,7 +198,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(proper.states.enabled, ["state2"])
 
 
-    def _testProperStateChild(self):
+    def testProperStateChild(self):
         """
         Simple test if child gets state variables from the parent as well
         """
@@ -207,7 +207,7 @@ class StateTests(unittest.TestCase):
                              Set(['state1', 'state2', 'state4']))
 
 
-    def _testStateVariables(self):
+    def testStateVariables(self):
         """To test new states"""
 
         from mvpa.misc.state import StateVariable, Stateful
@@ -265,7 +265,17 @@ class StateTests(unittest.TestCase):
         except Exception, e:
             self.fail(msg="Failed to generate an instance out of "
                       "representation %s. Got exception: %s" % (a_str, e))
+
         self.failUnless(`a2` == a_str, msg="Generated object must have the same repr")
+
+        # Test at least that repr of collection is of correct syntax
+        aparams_str = `a.params`
+        try:
+            import test_state
+            exec "aparams2=%s" % aparams_str
+        except Exception, e:
+            self.fail(msg="Failed to generate an instance out of "
+                      "representation  %s of params. Got exception: %s" % (aparams_str, e))
 
 
 def suite():
