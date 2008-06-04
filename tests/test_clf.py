@@ -196,7 +196,7 @@ class ClassifiersTests(unittest.TestCase):
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (error, cverror))
 
-        self.failUnless( error < 0.2,
+        self.failUnless( error < 0.25,
                          msg="clf should generalize more or less fine. "
                          "Got error %s" % error)
         self.failUnlessEqual(len(clf.training_confusions.sets),
