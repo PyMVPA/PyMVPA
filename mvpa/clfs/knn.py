@@ -35,12 +35,16 @@ class kNN(Classifier):
           k
             number of nearest neighbours to be used for voting
         """
+
         # init base class first
         Classifier.__init__(self, train2predict=False, **kwargs)
 
         self.__k = k
         # XXX So is the voting function fixed forever?
-        self.__votingfx = self.getWeightedVote
+        # YYY assignment of bound method breakes deepcopying, for now
+        #     since there is no alternative yet -- just call method
+        #     explicitely
+        #self.__votingfx = self.getWeightedVote
         self.__data = None
 
 
@@ -111,7 +115,9 @@ class kNN(Classifier):
             knn = dists.argsort()[:self.__k]
 
             # finally get the class label
-            prediction, vote = self.__votingfx(knn)
+            # XXX call getWeightedVote for now explicitely
+            #prediction, vote = self.__votingfx(knn)
+            prediction, vote = self.getWeightedVote(knn)
             predicted.append(prediction)
             votes.append(vote)
 
