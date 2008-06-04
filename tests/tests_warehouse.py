@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import unittest
 import numpy as N
 
 from mvpa.datasets import Dataset
@@ -90,7 +91,6 @@ specs = { 'large' : { 'perlabel' : 99, 'nchunks' : 11, 'nfeatures' : 20, 'snr' :
           'small' : { 'perlabel' : 12,  'nchunks' : 4, 'nfeatures' : 6, 'snr' : 14} }
 nonbogus_pool = [0, 1, 3, 5]
 datasets = {}
-#nfeatures = 6
 
 for kind, spec in specs.iteritems():
     # set of univariate datasets
@@ -98,7 +98,6 @@ for kind, spec in specs.iteritems():
         basename = 'uni%d%s' % (nlabels, kind)
         dataset = normalFeatureDataset(
             nlabels=nlabels,
-            #nfeatures=nfeatures,
             nonbogus_features=nonbogus_pool[:nlabels],
             **spec)
         oes = OddEvenSplitter()
@@ -108,8 +107,7 @@ for kind, spec in specs.iteritems():
             dataset_.nonbogus_features = nonbogus_pool[:nlabels]
             datasets["%s_%s" % (basename, replication)] = dataset_
 
-
-        # shortcut
+        # full dataset
         datasets[basename] = dataset
 
     # sample 3D
@@ -125,3 +123,10 @@ for kind, spec in specs.iteritems():
     datasets['3d%s' % kind] = MaskedDataset(samples=data, labels=labels,
                                             chunks=chunks, mask=mask)
 
+# some additional datasets
+datasets['dumb2'] = dumbFeatureBinaryDataset()
+datasets['dumb'] = dumbFeatureDataset()
+
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
+if __debug__:
+    __all__.append('debug')
