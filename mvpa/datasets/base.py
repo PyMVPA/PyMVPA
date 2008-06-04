@@ -368,8 +368,6 @@ class Dataset(object):
         Creates property assigning getters/setters depending on the
         availability of corresponding _get, _set functions.
         """
-        #import pydb
-        #pydb.debugger()
         classdict = cls.__dict__
         if not classdict.has_key(key):
             if __debug__:
@@ -693,21 +691,31 @@ class Dataset(object):
 
 
 
-    def permuteLabels(self, status, perchunk = True):
+    def permuteLabels(self, status, perchunk=True, assure_permute=False):
         """Permute the labels.
 
         TODO: rename status into something closer in semantics.
 
-        Calling this method with 'status' set to True, the labels are
-        permuted among all samples.
-
-        If 'perorigin' is True permutation is limited to samples sharing the
-        same chunk value. Therefore only the association of a certain sample
-        with a label is permuted while keeping the absolute number of
-        occurences of each label value within a certain chunk constant.
-
-        If 'status' is False the original labels are restored.
+        :Parameters:
+          status : bool
+            Calling this method with set to True, the labels are
+            permuted among all samples. If 'status' is False the
+            original labels are restored.
+          perchunk : bool
+            If True permutation is limited to samples sharing the same
+            chunk value. Therefore only the association of a certain
+            sample with a label is permuted while keeping the absolute
+            number of occurences of each label value within a certain
+            chunk constant.
+          assure_permute : bool
+            If True, assures that labels are permutted, ie any one is
+            different from the original one
         """
+        if len(self.uniquelabels)<2:
+            raise RuntimeError, \
+                  "Call to permuteLabels is bogus since there is insuficient" \
+                  " number of labels: %s" % self.uniquelabels
+
         if not status:
             # restore originals
             if self._data.get('origlabels', None) is None:
@@ -721,20 +729,37 @@ class Dataset(object):
             # calls with status == True will destroy the original labels
             if not self._data.has_key('origlabels') \
                 or self._data['origlabels'] == None:
-                # rebind old labels to origlabels
+                # bind old labels to origlabels
                 self._data['origlabels'] = self._data['labels']
-                # assign a copy so modifications do not impact original data
-                self._data['labels'] = self._data['labels'].copy()
+                # copy labels
+                self._data['labels'] = copy.copy(self._data['labels'])
 
-            # now scramble the rest
+            labels = self._data['labels']
+            # now scramble
             if perchunk:
                 for o in self.uniquechunks:
-                    self._data['labels'][self.chunks == o ] = \
-                        N.random.permutation( self.labels[ self.chunks == o ] )
-                # to recompute uniquelabels
-                self.labels = self._data['labels']
+                    labels[self.chunks == o] = \
+                        N.random.permutation(labels[self.chunks == o])
             else:
-                self.labels = N.random.permutation(self._data['labels'])
+                labels = N.random.permutation(labels)
+
+            self.labels = labels
+
+            if assure_permute:
+                if not (self._data['labels'] != self._data['origlabels']).any():
+                    if not (assure_permute is True):
+                        if assure_permute == 1:
+                            raise RuntimeError, \
+                                  "Cannot assure permutation of labels %s for " \
+                                  "some reason with chunks %s and while " \
+                                  "perchunk=%s . Should not happen" % \
+                                  (self.labels, self.chunks, perchunk)
+                    else:
+                        assure_permute = 11 # make 10 attempts
+                    if __debug__:
+                        debug("DS",  "Recalling permute to assure different labels")
+                    self.permuteLabels(status, perchunk=perchunk,
+                                       assure_permute=assure_permute-1)
 
 
     def getRandomSamples( self, nperlabel ):
