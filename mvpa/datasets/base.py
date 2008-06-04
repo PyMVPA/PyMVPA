@@ -13,8 +13,9 @@ __docformat__ = 'restructuredtext'
 import operator
 import random
 import copy
-
 import numpy as N
+
+from sets import Set
 
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
@@ -296,6 +297,48 @@ class Dataset(object):
         sel.sort()
 
         return sel
+
+
+    def idsonboundaries(self, prior=0, post=0,
+                        attributes_to_track=['labels', 'chunks'],
+                        revert=False):
+        """Find samples which are on the boundaries of the blocks
+
+        Such samples might need to be removed.  By default (with
+        prior=0, post=0) ids of the first samples in a 'block' are
+        reported
+
+        :Parameters:
+          prior : int
+            how many samples prior to transition sample to include
+          post : int
+            how many samples post the transition sample to include
+          attributes_to_track : list of basestring
+            which attributes to track to decide on the boundary condition
+          revert : bool
+            either to revert the meaning and provide ids of samples which are found
+            to not to be boundary samples
+        """
+        lastseen = [None for attr in attributes_to_track]
+        transitions = []
+        nsamples = self.nsamples
+        for i in xrange(nsamples):
+            current = [self._data[attr][i] for attr in attributes_to_track]
+            if lastseen != current:
+                # transition point
+                new_transitions = range(max(0, i-prior),
+                                        min(nsamples-1, i+post)+1)
+                transitions += new_transitions
+                lastseen = current
+
+        transitions = Set(transitions)
+        if revert:
+            transitions = Set(range(nsamples)).difference(transitions)
+
+        # postprocess
+        transitions = N.array(list(transitions))
+        transitions.sort()
+        return list(transitions)
 
 
     def _shapeSamples(self, samples, dtype, copy):
