@@ -569,7 +569,7 @@ class BoostedClassifier(Classifier, Harvestable):
 
         We have to allow to set list of classifiers after the object
         was actually created. It will be used by
-        BoostedMulticlassClassifier
+        MulticlassClassifier
         """
         self.__clfs = clfs
         """Classifiers to use"""
