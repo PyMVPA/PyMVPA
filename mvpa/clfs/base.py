@@ -1141,6 +1141,9 @@ class MulticlassClassifier(CombinedClassifier):
 class SplitClassifier(CombinedClassifier):
     """`BoostedClassifier` to work on splits of the data
 
+    """
+
+    """
     TODO: SplitClassifier and MulticlassClassifier have too much in
           common -- need to refactor: just need a splitter which would
           split dataset in pairs of class labels. MulticlassClassifier
@@ -1148,7 +1151,7 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
-    # Todo: unify with CrossValidatedTransferError which now uses
+    # TODO: unify with CrossValidatedTransferError which now uses
     # harvest_attribs to expose gathered attributes
     training_confusions = StateVariable(enabled=False,
         doc="Resultant confusion matrices whenever classifier trained " +
@@ -1167,6 +1170,12 @@ class SplitClassifier(CombinedClassifier):
         CombinedClassifier.__init__(self, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
+
+        if isinstance(splitter, type):
+            raise ValueError, \
+                  "Please provide an instance of a splitter, not a type." \
+                  " Got %s" % splitter
+
         self.__splitter = splitter
 
 
