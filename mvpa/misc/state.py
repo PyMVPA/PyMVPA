@@ -217,6 +217,26 @@ class Collection(object):
                 res += " owner:%s" % `self.owner`
         return res
 
+    def __repr__(self):
+        s = "%s(" % self.__class__.__name__
+        items_s = ""
+        sep = ""
+        for item in self._items:
+            try:
+                itemvalue = "%s" % `self._items[item].value`
+                if len(itemvalue)>50:
+                    itemvalue = itemvalue[:10] + '...' + itemvalue[-10:]
+                items_s += "%s'%s':%s" % (sep, item, itemvalue)
+                sep = ', '
+            except:
+                pass
+        if items_s != "":
+            s += "items={%s}" % items_s
+        if self.owner is not None:
+            s += "%sowner=%s" % (sep, `self.owner`)
+        s += ")"
+        return s
+
     #
     # XXX TODO: figure out if there is a way to define proper
     #           __copy__'s for a hierarchy of classes. Probably we had
