@@ -379,6 +379,11 @@ class ConfusionMatrix(object):
         self._compute()
         return 1.0-self.__Ncorrect*1.0/sum(self.__Nsamples)
 
+    @property
+    def stats(self):
+        self._compute()
+        return self.__stats
+
     sets = property(lambda self:self.__sets)
 
 
