@@ -80,7 +80,7 @@ class SMLR(Classifier):
              doc="""Whether to add a bias term to allow fits to data not through
              zero""")
 
-    fit_all_weights = Parameter(False, allowedtype='bool',
+    fit_all_weights = Parameter(True, allowedtype='bool',
              doc="""Whether to fit weights for all classes or to the number of
             classes minus one.  Both should give nearly identical results, but
             if you set fit_all_weights to True it will take a little longer
