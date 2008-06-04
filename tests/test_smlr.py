@@ -8,17 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA sparse multinomial logistic regression classifier"""
 
-import unittest
-from mvpa.datasets import Dataset
 from mvpa.clfs.smlr import SMLR
-import numpy as N
-from mvpa.misc.data_generators import dumbFeatureDataset
+from tests_warehouse import *
 
 
 class SMLRTests(unittest.TestCase):
 
     def testSMLR(self):
-        data = dumbFeatureDataset()
+        data = datasets['dumb']
 
         clf = SMLR()
 
@@ -38,7 +35,7 @@ class SMLRTests(unittest.TestCase):
 
 
     def testSMLRState(self):
-        data = dumbFeatureDataset()
+        data = datasets['dumb']
 
         clf = SMLR()
 

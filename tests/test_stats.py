@@ -8,15 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
-import unittest
-
-import numpy as N
-
 from mvpa.misc.stats import chisquare
 from mvpa.clfs.stats import MCNullDist
 from mvpa.measures.anova import OneWayAnova
+from tests_warehouse import *
+# TODO -- use datasets
 from mvpa.misc.data_generators import normalFeatureDataset
-
 
 class StatsTests(unittest.TestCase):
 

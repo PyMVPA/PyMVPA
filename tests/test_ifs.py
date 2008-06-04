@@ -8,10 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA incremental feature search."""
 
-import unittest
-import numpy as N
-
-from mvpa.datasets import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -70,7 +66,7 @@ class IFSTests(unittest.TestCase):
 
 
         # repeat with dataset where selection order is known
-        signal = dumbFeatureBinaryDataset()
+        signal = datasets['dumb2']
         sdata, stdata = ifs(signal, signal)
         self.failUnless((sdata.samples[:,0] == signal.samples[:,0]).all())
 

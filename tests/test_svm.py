@@ -8,14 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
 
-import unittest
-
-import numpy as N
 from sets import Set
 
-from mvpa.clfs.svm import SVM
-
-from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal, sweepargs
+from tests_warehouse import pureMultivariateSignal
+from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
@@ -101,22 +97,6 @@ class SVMTests(unittest.TestCase):
         if externals.exists('shogun'):
             self.failUnlessRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
                                   coef0=3)
-
-#    def testFeatureBenchmark(self):
-#        pat = dumbFeatureDataset()
-#        clf = SVM()
-#        clf.train(pat)
-#        rank = clf.getFeatureBenchmark()
-#
-#        # has to be 1d array
-#        self.failUnless(len(rank.shape) == 1)
-#
-#        # has to be one value per feature
-#        self.failUnless(len(rank) == pat.nfeatures)
-#
-#        # first feature is discriminative, second is not
-#        self.failUnless(rank[0] > rank[1])
-#
 
 def suite():
     return unittest.makeSuite(SVMTests)

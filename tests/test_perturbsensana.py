@@ -8,16 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA perturbation sensitivity analyzer."""
 
-import unittest
-
-import numpy as N
-
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.measures.noiseperturbation import NoisePerturbationSensitivity
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
+from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 class PerturbationSensitivityAnalyzerTests(unittest.TestCase):

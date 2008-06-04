@@ -8,11 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-import unittest
-
-import numpy as N
-
-from mvpa.datasets import Dataset
 from mvpa.featsel.base import FeatureSelectionPipeline
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector
