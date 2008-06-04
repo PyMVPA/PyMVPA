@@ -55,6 +55,7 @@ class ConfusionMatrix(object):
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
+        ('# of sets', 'number of target/prediction sets which were provided')
         )
 
     # XXX Michael: - How do multiple sets work and what are they there for?
@@ -190,6 +191,7 @@ class ConfusionMatrix(object):
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
+        stats['# of sets'] = len(self.sets)
 
         self.__stats = stats
         self.__computed = True
@@ -222,7 +224,7 @@ class ConfusionMatrix(object):
         stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
                             'SPC', 'FDR', 'MCC']
         stats_pertarget = ['P', 'N', 'TP', 'TN']
-        stats_summary = ['ACC', 'ACC%']
+        stats_summary = ['ACC', 'ACC%', '# of sets']
 
 
         #prefixlen = Nlabelsmax + 2 + Ndigitsmax + 1
