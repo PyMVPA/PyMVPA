@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
 
-import unittest
-import numpy as N
-
 from copy import deepcopy
 
 from mvpa.datasets import Dataset
@@ -72,8 +69,8 @@ class ClassifiersTests(unittest.TestCase):
     def testBoosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
-        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
-                                        deepcopy(self.clf_sign)])
+        bclf = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
+                                        _deepcopyclf(self.clf_sign)])
 
         self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
                              list(self.data_bin_1.labels),
@@ -84,16 +81,16 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def testBoostedStatePropagation(self):
-        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
-                                        deepcopy(self.clf_sign)],
+        bclf = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
+                                        _deepcopyclf(self.clf_sign)],
                                   enable_states=['feature_ids'])
 
         # check states enabling propagation
         self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
         self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
 
-        bclf2 = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
-                                        deepcopy(self.clf_sign)],
+        bclf2 = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
+                                        _deepcopyclf(self.clf_sign)],
                                   propagate_states=False,
                                   enable_states=['feature_ids'])
 
@@ -136,13 +133,26 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(cve < 0.25,
              msg="Got transfer error %g" % (cve))
 
-
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
                 enable_states=['training_confusions', 'feature_ids'])
         clf.train(ds)                   # train the beast
+        error = clf.training_confusions.error
+
+        clf2 = _deepcopyclf(clf)
+        cv = CrossValidatedTransferError(
+            TransferError(clf2),
+            NFoldSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        cverror = cv(ds)
+
+        self.failUnlessEqual(error, cverror,
+                msg="We should get the same error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (error, cverror))
+
         self.failUnlessEqual(clf.training_confusions.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
@@ -164,6 +174,40 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
+
+    @sweepargs(clf_=clfs['binary', '!gpr', '!meta'])
+    def testSplitClassifierExtended(self, clf_):
+        clf2 = _deepcopyclf(clf_)
+        ds = datasets['uni2medium']#self.data_bin_1
+        clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
+                splitter=NFoldSplitter(1),
+                enable_states=['training_confusions', 'feature_ids'])
+        clf.train(ds)                   # train the beast
+        error = clf.training_confusions.error
+
+        cv = CrossValidatedTransferError(
+            TransferError(clf2),
+            NFoldSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        cverror = cv(ds)
+
+        self.failUnless(abs(error-cverror)<0.01,
+                msg="We should get the same error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (error, cverror))
+
+        self.failUnless( error < 0.2,
+                         msg="clf should generalize more or less fine. "
+                         "Got error %s" % error)
+        self.failUnlessEqual(len(clf.training_confusions.sets),
+                             len(ds.uniquechunks),
+                             msg="Should have 1 confusion per each split")
+        self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
+                             msg="Should have number of classifiers equal # of epochs")
+        #self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
+        #                     msg="Should classify correctly")
+
+
 
     def testHarvesting(self):
         """Basic testing of harvesting based on SplitClassifier
@@ -254,7 +298,7 @@ class ClassifiersTests(unittest.TestCase):
             clf.C = 1.0                 # reset C to be 1
 
         svm = clf
-        svm2 = deepcopy(clf)
+        svm2 = _deepcopyclf(clf)
         svm2.states.enable(['training_confusion'])
 
         mclf = MulticlassClassifier(clf=svm,
@@ -310,6 +354,8 @@ class ClassifiersTests(unittest.TestCase):
 
     @sweepargs(clf=clfs['retrainable'])
     def testRetrainables(self, clf):
+        # we need a copy since will tune its internals later on
+        clf = _deepcopyclf(clf)
         clf.states._changeTemporarily(enable_states = ['values'])
         clf_re = _deepcopyclf(clf)
         # TODO: .retrainable must have a callback to call smth like
@@ -416,8 +462,8 @@ class ClassifiersTests(unittest.TestCase):
         """Test all classifiers for conformant behavior
         """
         for clf_, traindata in \
-                [(clfs['binary'], dumbFeatureBinaryDataset()),
-                 (clfs['multiclass'], dumbFeatureDataset())]:
+                [(clfs['binary'], datasets['dumb2']),
+                 (clfs['multiclass'], datasets['dumb'])]:
             traindata_copy = deepcopy(traindata) # full copy of dataset
             for clf in clf_:
                 clf.train(traindata)
