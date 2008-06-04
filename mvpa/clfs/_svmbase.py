@@ -156,6 +156,7 @@ class _SVM(Classifier):
                                  self._KNOWN_KERNEL_PARAMS] + list(e.args)[1:])
             raise e
 
+        # populate collections and add values from arguments
         for paramfamily, paramset in ( (self._KNOWN_PARAMS, self.params),
                                        (self._KNOWN_KERNEL_PARAMS, self.kernel_params)):
             for paramname in paramfamily:
@@ -169,6 +170,14 @@ class _SVM(Classifier):
                     # XXX might want to set default to it -- not just value
 
                 paramset.add(param)
+
+        # tune up C if it has one and non-linear classifier is used
+        if self.params.isKnown('C') and kernel_type != "linear" \
+               and self.params['C'].isDefault:
+            if __debug__:
+                debug("SVM_", "Assigning default C value to be 1.0 for SVM "
+                      "%s with non-linear kernel" % self)
+            self.params['C'].default = 1.0
 
         # Some postchecks
         if self.params.isKnown('weight') and self.params.isKnown('weight_label'):
