@@ -104,6 +104,9 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 upload-website: website
 	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
 
+upload-htmldoc: htmldoc
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+
 
 # this takes some minutes !!
 profile: build tests/main.py
