@@ -41,6 +41,7 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 import os
+import random
 import numpy as N
 
 if not __debug__:
@@ -62,6 +63,7 @@ else:
     __random_seed = int(N.random.uniform()*(2**31-1))
 
 N.random.seed(__random_seed)
+random.seed(__random_seed)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
