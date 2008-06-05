@@ -294,7 +294,8 @@ class Classifier(Parametrized):
             warning("Trying to train on dataset with no features present")
             if __debug__:
                 debug("CLF",
-                      "No features present for training, no actual training is called")
+                      "No features present for training, no actual training " \
+                      "is called")
             result = None
 
         self.training_time = time() - t0
@@ -358,7 +359,8 @@ class Classifier(Parametrized):
             warning("Trying to predict using classifier trained on no features")
             if __debug__:
                 debug("CLF",
-                      "No features were present for training, prediction is bogus")
+                      "No features were present for training, prediction is " \
+                      "bogus")
             result = [None]*data.shape[0]
 
         self.predicting_time = time() - t0
@@ -367,7 +369,8 @@ class Classifier(Parametrized):
             # We need to convert regression values into labels
             # XXX unify may be labels -> internal_labels conversion.
             #if len(self.trained_labels) != 2:
-            #    raise RuntimeError, "XXX Ask developer to implement for multiclass mapping from regression into classification"
+            #    raise RuntimeError, "XXX Ask developer to implement for " \
+            #        "multiclass mapping from regression into classification"
 
             # must be N.array so we copy it to assign labels directly
             # into labels.
@@ -375,12 +378,13 @@ class Classifier(Parametrized):
             result_ = N.array(result)
             self.values = result_
             trained_labels = N.asarray(list(self.trained_labels))
-            for i,value in enumerate(result):
+            for i, value in enumerate(result):
                 dists = N.abs(value - trained_labels)
                 result[i] = trained_labels[N.argmin(dists)]
 
             if __debug__:
-                debug("CLF_", "Converted regression result %s into labels %s for %s" % (result_, result, self))
+                debug("CLF_", "Converted regression result %s into labels " \
+                              "%s for %s" % (result_, result, self))
 
         self._postpredict(data, result)
         return result
@@ -398,7 +402,8 @@ class Classifier(Parametrized):
 
 
     def _regressionIsBogus(self):
-        """Some classifiers like BinaryClassifier can't be used for regression"""
+        """Some classifiers like BinaryClassifier can't be used for
+        regression"""
 
         if self.params.regression:
             raise ValueError, "Regression mode is meaningless for %s" % \
@@ -436,11 +441,11 @@ class Classifier(Parametrized):
                     warning("Setting of flag retrainable for %s has no effect"
                             " since classifier has no such capability" % self)
                 states.add(StateVariable(enabled=True,
-                                         name='retrained',
-                                         doc="Either retrainable classifier was retrained"))
+                        name='retrained',
+                        doc="Either retrainable classifier was retrained"))
                 states.add(StateVariable(enabled=True,
-                                         name='retested',
-                                         doc="Either retrainable classifier was retested"))
+                        name='retested',
+                        doc="Either retrainable classifier was retested"))
 
             self.params.retrainable = value
 
@@ -508,10 +513,11 @@ class BoostedClassifier(Classifier, Harvestable):
 
     def __repr__(self, prefix=""):
         if self.__clfs is None or len(self.__clfs)==0:
-            prefix_="clfs=%s" % self.__clfs
+            prefix_ = "clfs=%s" % self.__clfs
         else:
-            prefix_="clfs=[%s,...]" % self.__clfs[0]
-        if prefix != "": prefix += ", "
+            prefix_ = "clfs=[%s,...]" % self.__clfs[0]
+        if prefix != "":
+            prefix += ", "
         prefix += prefix_
         return super(BoostedClassifier, self).__repr__(prefix)
 
@@ -656,7 +662,8 @@ class ProxyClassifier(Classifier):
 
 
     def __repr__(self, prefix=""):
-        if prefix != "": prefix += ", "
+        if prefix != "":
+            prefix += ", "
         prefix += "clf=%s" % self.__clf
         return super(ProxyClassifier, self).__repr__(prefix)
 
@@ -863,8 +870,8 @@ class ClassifierCombiner(PredictionsCombiner):
 
 
 class CombinedClassifier(BoostedClassifier):
-    """`BoostedClassifier` which combines predictions using some `PredictionsCombiner`
-    functor.
+    """`BoostedClassifier` which combines predictions using some
+    `PredictionsCombiner` functor.
     """
 
     def __init__(self, clfs=None, combiner=MaximalVote(), **kwargs):
@@ -895,7 +902,8 @@ class CombinedClassifier(BoostedClassifier):
 
 
     def __repr__(self, prefix=""):
-        if prefix != "": prefix += ", "
+        if prefix != "":
+            prefix += ", "
         prefix += "combiner=%s" % `self.__combiner`
         return super(CombinedClassifier, self).__repr__(prefix)
 
@@ -929,9 +937,9 @@ class CombinedClassifier(BoostedClassifier):
                 self.values = self.__combiner.values
             else:
                 if __debug__:
-                    warning("Boosted classifier %s has 'values' state" % `self` +
-                            " enabled, but combiner has it active, thus no" +
-                            " values could be provided directly, access .clfs")
+                  warning("Boosted classifier %s has 'values' state" % `self` +
+                          " enabled, but combiner has it active, thus no" +
+                          " values could be provided directly, access .clfs")
         return predictions
 
 
@@ -980,19 +988,20 @@ class BinaryClassifier(ProxyClassifier):
         # over different subsets of data with some voting later on
         # (1-vs-therest?)
 
-        if len(self.__poslabels)>1:
+        if len(self.__poslabels) > 1:
             self.__predictpos = self.__poslabels
         else:
             self.__predictpos = self.__poslabels[0]
 
-        if len(self.__neglabels)>1:
+        if len(self.__neglabels) > 1:
             self.__predictneg = self.__neglabels
         else:
             self.__predictneg = self.__neglabels[0]
 
 
     def __repr__(self, prefix=""):
-        if prefix != "": prefix += ", "
+        if prefix != "":
+            prefix += ", "
         prefix += "poslabels=%s, neglabels=%s" % (
             `self.__poslabels`, `self.__neglabels`)
         return super(BinaryClassifier, self).__repr__(prefix)
@@ -1104,7 +1113,8 @@ class MulticlassClassifier(CombinedClassifier):
     # XXX fix it up a bit... it seems that MulticlassClassifier should
     # be actually ProxyClassifier and use BoostedClassifier internally
     def __repr__(self, prefix=""):
-        if prefix != "": prefix += ", "
+        if prefix != "":
+            prefix += ", "
         prefix += "bclf_type='%s', clf=%s" % (self.__bclf_type, self.__clf)
         return super(MulticlassClassifier, self).__repr__(prefix)
 
@@ -1185,7 +1195,8 @@ class SplitClassifier(CombinedClassifier):
         # generate pairs and corresponding classifiers
         bclfs = []
         if self.states.isEnabled('training_confusions'):
-            self.training_confusions = ConfusionMatrix(labels=dataset.uniquelabels)
+            self.training_confusions = \
+                ConfusionMatrix(labels=dataset.uniquelabels)
 
         # for proper and easier debugging - first define classifiers and then
         # train them
