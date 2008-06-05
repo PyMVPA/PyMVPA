@@ -36,6 +36,7 @@ tests = [
     'test_iohelpers',
     'test_signal',
     'test_cmdline',
+    'test_eepdataset',
     # Classifiers (longer tests)
     'test_clf',
     'test_knn',
