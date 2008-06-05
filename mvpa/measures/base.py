@@ -58,7 +58,7 @@ class DatasetMeasure(Stateful):
     null_prob = StateVariable(enabled=True)
     """Stores the probability of a measure under the NULL hypothesis"""
 
-    def __init__(self, transformer=None, null_dist=None, *args, **kwargs):
+    def __init__(self, transformer=None, null_dist=None, **kwargs):
         """Does nothing special.
 
         :Parameter:
