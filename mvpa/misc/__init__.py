@@ -168,6 +168,7 @@ if __debug__:
     debug.register('CLF_TB',
         "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
+    debug.register('CLFBST_TB', "BoostClassifier traceback")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
@@ -179,6 +180,7 @@ if __debug__:
     debug.register('FSPL',   "FeatureSelectionPipeline")
 
     debug.register('SVM',    "SVM")
+    debug.register('SVM_',   "SVM (verbose)")
     debug.register('LIBSVM', "Internal libsvm output")
 
     debug.register('SMLR',    "SMLR")
