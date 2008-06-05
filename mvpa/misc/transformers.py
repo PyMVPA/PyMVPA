@@ -54,3 +54,18 @@ def GrandMean(x):
     """Just what the name suggests."""
     return N.mean(x)
 
+
+def RankOrder(x, reverse=False):
+    """Rank-order by value. Highest gets 0"""
+    nelements = len(x)
+    indexes = N.arange(nelements)
+    if not reverse:
+        indexes = indexes[::-1]
+    tosort = zip(x, indexes)
+    tosort.sort()
+    return [x[1] for x in tosort]
+
+
+def ReverseRankOrder(x):
+    """Convinience functor"""
+    return RankOrder(x, reverse=True)
