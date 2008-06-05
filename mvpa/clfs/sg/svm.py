@@ -218,7 +218,7 @@ class SVM(_SVM):
                 changed2 = changed2.any()
             if changed != changed2 and not changed:
                 raise RuntimeError, \
-                  'hashid found to be weak for %s. Though hashid %s!=%s %s, '\
+                  'idhash found to be weak for %s. Though hashid %s!=%s %s, '\
                   'values %s!=%s %s' % \
                   (descr, idhash_, self.__idhash[i], changed,
                    entry, self.__trained[i], changed2)
