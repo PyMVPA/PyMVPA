@@ -144,12 +144,6 @@ class Classifier(Parametrized):
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
 
-    train2predict = Parameter(True, allowedtype='bool',
-        doc="""Wheather classifier needs to be trained to predict, which
-        is True in most of the cases, but might be false (e.g. kNN). Will be
-        absorbed into _clf_internals very soon. TODO: move into
-        _clf_internals""")
-
     regression = Parameter(False, allowedtype='bool',
         doc="""Either to use 'regression' as regression. By default any
         Classifier-derived class serves as a classifier, so regression
@@ -305,7 +299,7 @@ class Classifier(Parametrized):
     def _prepredict(self, data):
         """Functionality prior prediction
         """
-        if self.params.train2predict:
+        if not ('notrain2predict' in self._clf_internals):
             # check if classifier was trained if that is needed
             if not self.trained:
                 raise ValueError, \
@@ -352,7 +346,7 @@ class Classifier(Parametrized):
         t0 = time()
 
         self._prepredict(data)
-        if self.__trainednfeatures > 0 or not self.params.train2predict:
+        if self.__trainednfeatures > 0 or 'notrain2predict' in self._clf_internals:
             result = self._predict(data)
         else:
             warning("Trying to predict using classifier trained on no features")
@@ -574,7 +568,7 @@ class BoostedClassifier(Classifier, Harvestable):
         self.__clfs = clfs
         """Classifiers to use"""
 
-        for flag in ['train2predict', 'regression']:
+        for flag in ['regression']:
             values = N.array([clf.params[flag].value for clf in self.__clfs])
             value = values.any()
             if __debug__:
@@ -640,7 +634,7 @@ class ProxyClassifier(Classifier):
           clf : Classifier
             classifier based on which mask classifiers is created
           """
-        Classifier.__init__(self, train2predict=clf.train2predict, **kwargs)
+        Classifier.__init__(self, **kwargs)
 
         self.__clf = clf
         """Store the classifier to use."""

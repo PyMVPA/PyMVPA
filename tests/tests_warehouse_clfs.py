@@ -31,8 +31,9 @@ class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
+    _clf_internals = ['notrain2predict']
     def __init__(self, **kwargs):
-        Classifier.__init__(self, train2predict=False, **kwargs)
+        Classifier.__init__(self, **kwargs)
 
     def _train(self, data):
         # we don't need that ;-)
