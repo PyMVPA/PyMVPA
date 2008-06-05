@@ -467,9 +467,9 @@ class SMLRWeights(Sensitivity):
         """Extract weights from Linear SVM classifier.
         """
         if self.clf.weights.shape[1] != 1:
-            warning("You are estimating sensitivity for SMLR %s trained on %d" %
-                    (`self.clf`, self.clf.weights.shape[1]+1) +
-                    " classes. Make sure that it is what you intended to do" )
+            warning("You are estimating sensitivity for SMLR %s with multiple"
+                    " sensitivities available. Make sure that it is what you"
+                    " intended to do" % self )
 
         weights = self.clf.weights
 
