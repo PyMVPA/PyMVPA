@@ -27,7 +27,7 @@ class kNN(Classifier):
 
     __warned = False
 
-    _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass' ]
+    _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
 
     def __init__(self, k=2, **kwargs):
         """
@@ -37,7 +37,7 @@ class kNN(Classifier):
         """
 
         # init base class first
-        Classifier.__init__(self, train2predict=False, **kwargs)
+        Classifier.__init__(self, **kwargs)
 
         self.__k = k
         # XXX So is the voting function fixed forever?
