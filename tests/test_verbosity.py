@@ -17,6 +17,9 @@ from mvpa.misc import verbose
 
 if __debug__:
     from mvpa.misc import debug
+    debug.register('1', 'id 1')           # needed for testing
+    debug.register('2', 'id 2')
+
     from sets import Set
 
 ## XXX There must be smth analogous in python... don't know it yet
@@ -50,7 +53,7 @@ class VerboseOutputTest(unittest.TestCase):
         if __debug__:
             self.__olddebughandlers = debug.handlers
             self.__olddebugactive = debug.active
-            debug.active = [1, 2, 'SLC']
+            debug.active = ['1', '2', 'SLC']
             debug.handlers = [self.sout]
             debug.offsetbydepth = False
 
@@ -128,9 +131,11 @@ class VerboseOutputTest(unittest.TestCase):
     if __debug__:
         def testDebug(self):
             verbose.handlers = []           # so debug doesn't spoil it
-            debug.active = [1, 2, 'SLC']
+            debug.active = ['1', '2', 'SLC']
             # do not offset for this test
             debug('SLC', self.msg, lf=False)
+            self.failUnlessRaises(ValueError, debug, 3, 'bugga')
+            #Should complain about unknown debug id
             self.failUnlessEqual(self.sout.getvalue(),
                                  "[SLC] DBG: %s" % self.msg)
 

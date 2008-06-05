@@ -247,9 +247,16 @@ class SetLogger(Logger):
                 # try to match item as it is regexp
                 regexp = re.compile("^%s$" % item)
                 matching_keys = filter(regexp.match, registered_keys)
-                self.__active += matching_keys
+                toactivate = matching_keys
             else:
-                self.__active.append(item)
+                toactivate = [item]
+            # Lets check if asked items are known
+            for item_ in toactivate:
+                if not (item_ in registered_keys):
+                    raise ValueError, \
+                          "Unknown debug ID %s was asked to become active" \
+                          % item_
+            self.__active += toactivate
 
         self.__active = list(Set(self.__active)) # select just unique ones
         self.__maxstrlength = max([len(str(x)) for x in self.__active] + [0])
@@ -269,8 +276,6 @@ class SetLogger(Logger):
         It appends a newline since most commonly each call is a separate
         message
         """
-        if not self.__registered.has_key(setid):
-            self.__registered[setid] = "No Description"
 
         if setid in self.__active:
             if self.__printsetid:
@@ -402,6 +407,10 @@ if __debug__:
 
 
         def __call__(self, setid, msg, *args, **kwargs):
+
+            if not self.registered.has_key(setid):
+                raise ValueError, "Not registered debug ID %s" % setid
+
             if not setid in self.active:
                 # don't even compute the metrics, since they might
                 # be statefull as RelativeTime
