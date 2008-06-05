@@ -118,14 +118,14 @@ def indentDoc(v):
 def idhash(val):
     """Craft unique id+hash for an object
     """
-    res = id(val)
+    res = "%s" % id(val)
     if isinstance(val, list):
         val = tuple(val)
     try:
-        res += hash(buffer(val))
+        res += ":%s" % hash(buffer(val))
     except:
         try:
-            res += hash(val)
+            res += ":%s" % hash(val)
         except:
             pass
         pass
