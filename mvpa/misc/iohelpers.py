@@ -96,7 +96,8 @@ class ColumnData(dict):
                     debug("IOH", "Registering property %s for ColumnData key %s"
                           % (k_, k))
                 # make sure to import class directly into local namespace
-                # otherwise following does not work for classes defined elsewhere
+                # otherwise following does not work for classes defined
+                # elsewhere
                 exec 'from %s import %s' % (self.__module__,
                                             self.__class__.__name__)
                 exec "%s.%s = property(fget=%s)"  % \
@@ -430,7 +431,7 @@ def labels2chunks(labels, method="alllabels"):
         chunks = N.array(chunks)
         # fix up a bit the trailer
         if seenlabels != alllabels:
-            chunks[chunks==chunk] = chunk-1
+            chunks[chunks == chunk] = chunk-1
         chunks = list(chunks)
     else:
         errmsg = "Unknown method to derive chunks is requested. Known are:\n"

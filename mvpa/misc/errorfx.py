@@ -77,7 +77,7 @@ class AUCErrorFx(ErrorFunction):
                             N.cumsum(~t)/(~t).sum(dtype=N.float),
                             [1]))
 
-        return trapz(tp,fp)
+        return trapz(tp, fp)
 
 
 class CorrErrorFx(ErrorFunction):
