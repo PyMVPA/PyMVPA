@@ -56,8 +56,9 @@ class ColumnData(dict):
           headersep : basestring or None
             Separator string used in the header. The actual meaning
             depends on the output format (see class docs).
-          dtype
-            Desired datatype.
+          dtype : type or list(types)
+            Desired datatype(s). Datatype per column get be specified by
+            passing a list of types.
           skiplines : int
             Number of lines to skip at the beginning of the file.
         """
@@ -181,6 +182,10 @@ class ColumnData(dict):
         # string in lists: one per column
         tbl = [ [] for i in xrange(len(hdr)) ]
 
+        # do per column dtypes
+        if not isinstance(dtype, list):
+            dtype = [dtype] * len(hdr)
+
         # parse line by line and feed into the lists
         for line in file_:
             # get rid of leading and trailing whitespace
@@ -196,9 +201,9 @@ class ColumnData(dict):
                       "of columns in header [%i]." % (len(l), len(hdr))
 
             for i, v in enumerate(l):
-                if not dtype is None:
+                if not dtype[i] is None:
                     try:
-                        v = dtype(v)
+                        v = dtype[i](v)
                     except ValueError:
                         warning("Can't convert %s to desired datatype %s." %
                                 (`v`, `dtype`) + " Leaving original type")
@@ -317,6 +322,7 @@ class ColumnData(dict):
     nrows = property(fget=getNRows)
 
 
+
 class SampleAttributes(ColumnData):
     """Read and write PyMVPA sample attribute definitions from and to text
     files.
@@ -350,6 +356,35 @@ class SampleAttributes(ColumnData):
 
 
     nsamples = property(fget=getNSamples)
+
+
+
+class SensorLocations(ColumnData):
+    """Read sensor location definitions from a text file.
+
+    File layout is assumed to be 5 columns:
+
+      1. sensor name
+      2. some useless integer
+      3. position on x-axis (left-right)
+      4. position on y-axis (anterior-posterior)
+      5. position on z-axis (superior-inferior)
+
+    XXX: Need to support much more formats and column orders.
+    """
+    def __init__(self, source):
+        """Read sensor locations from file.
+
+        Parameter
+        ---------
+
+          source : filename of an atrribute file
+        """
+        ColumnData.__init__(self, source,
+                            header=['names', 'some_number', 'pos_x', 'pos_y', 'pos_z'],
+                            sep=None, dtype=[str, int, float, float, float])
+
+
 
 
 def design2labels(columndata, baseline_label=0,
