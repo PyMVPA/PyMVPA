@@ -204,7 +204,7 @@ class Dataset(object):
 
         Like if classifier was trained on the same dataset as in question"""
 
-        res = id(self._data)
+        res = idhash_(self._data)
         for val in self._data.values():
             res += idhash_(val)
         return res
