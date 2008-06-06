@@ -23,7 +23,7 @@ if __debug__:
 tests = [
     # Basic data structures/manipulators
     'test_dataset',
-    'test_maskmapper',
+    'test_arraymapper',
     'test_pcamapper',
     'test_neighbor',
     'test_maskeddataset',
