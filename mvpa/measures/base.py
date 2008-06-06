@@ -358,6 +358,8 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         """
         Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:
+            # sanitarize kwargs
+            kwargs.pop('force_training', None)
             combined_analyzer = CombinedFeaturewiseDatasetMeasure(**kwargs)
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
