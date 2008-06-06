@@ -29,6 +29,7 @@ tests = [
     'test_maskeddataset',
     'test_splitter',
     'test_state',
+    'test_eepdataset',
     # Misc supporting utilities
     'test_stats',
     'test_support',
