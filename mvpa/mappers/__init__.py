@@ -14,7 +14,7 @@ if __debug__:
     from mvpa.misc import debug
     debug('INIT', 'mvpa.mappers')
 
-from mvpa.mappers.mask import MaskMapper
+from mvpa.mappers.base import MaskMapper
 from mvpa.mappers.pca import PCAMapper
 from mvpa.mappers.svd import SVDMapper
 
