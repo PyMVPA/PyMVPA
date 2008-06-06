@@ -169,6 +169,15 @@ class IOHelperTests(unittest.TestCase):
         # for this specific one we must have just 4 chunks
         self.failUnless((N.unique(chunks) == range(4)).all())
 
+
+    def testSensorLocations(self):
+        sl = SensorLocations(os.path.join('..', 'data', 'xavr1010.dat'))
+
+        for var in ['names', 'pos_x', 'pos_y', 'pos_z']:
+            self.failUnless(len(eval('sl.' + var)) == 31)
+
+
+
 def suite():
     return unittest.makeSuite(IOHelperTests)
 
