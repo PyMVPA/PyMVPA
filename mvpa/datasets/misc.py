@@ -22,7 +22,8 @@ from mvpa.datasets import Dataset
 
 
 def zscore(dataset, mean = None, std = None,
-           perchunk=True, baselinelabels=None, targetdtype='float64'):
+           perchunk=True, baselinelabels=None,
+           pervoxel=True, targetdtype='float64'):
     """Z-Score the samples of a `Dataset` (in-place).
 
     `mean` and `std` can be used to pass custom values to the z-scoring.
@@ -50,17 +51,27 @@ def zscore(dataset, mean = None, std = None,
             # if nothing provided  -- mean/std on all samples
             statsamples = samples
 
+        if pervoxel:
+            axisarg = {'axis':0}
+        else:
+            axisarg = {}
+
         # calculate mean if necessary
         if not mean:
-            mean = statsamples.mean(axis=0)
+            mean = statsamples.mean(**axisarg)
+
+        # de-mean
+        samples -= mean
 
         # calculate std-deviation if necessary
         if not std:
-            std = statsamples.std(axis=0)
+            std = statsamples.std(**axisarg)
 
         # do the z-scoring
-        samples -= mean
-        samples[:, std != 0] /= std[std != 0]
+        if pervoxel:
+            samples[:, std != 0] /= std[std != 0]
+        else:
+            samples /= std
 
         return samples
 
