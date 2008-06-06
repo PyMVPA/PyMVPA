@@ -10,7 +10,7 @@
 
 
 import unittest
-from copy import deepcopy
+from mvpa.misc.copy import deepcopy
 import numpy as N
 from mvpa.datasets import Dataset
 from mvpa.mappers import SVDMapper

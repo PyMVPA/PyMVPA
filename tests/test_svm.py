@@ -44,7 +44,7 @@ class SVMTests(unittest.TestCase):
         #   msg="New instance doesn't change set of parameters in original")
 
         # We must be able to deepcopy not yet trained SVMs now
-        import copy
+        import mvpa.misc.copy as copy
         try:
             nl_clf.untrain()
             nl_clf_copy = copy.deepcopy(nl_clf)

@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import copy
+import mvpa.misc.copy as copy
 
 import numpy as N
 

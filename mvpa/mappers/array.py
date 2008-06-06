@@ -82,7 +82,7 @@ class DenseArrayMapper(MetricMapper):
 #        # XXX memo does not seem to be used
 #        if memo is None:
 #            memo = {}
-#        from copy import deepcopy
+#        from mvpa.misc.copy import deepcopy
 #        # XXX might be necessary to deepcopy 'self.metric' as well
 #        # to some degree reimplement the constructor to prevent calling the
 #        # expensive _initMask() again

@@ -11,7 +11,7 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
-import copy
+import mvpa.misc.copy as copy
 from sets import Set
 from re import sub as re_sub
 from mvpa.misc import warning

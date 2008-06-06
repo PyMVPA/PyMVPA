@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA classifier cross-validation"""
 
-from copy import copy
+from mvpa.misc.copy import copy
 
 from mvpa.datasets import Dataset
 from mvpa.clfs.transerror import \
