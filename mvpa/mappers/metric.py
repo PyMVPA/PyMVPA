@@ -11,22 +11,22 @@
 __docformat__ = 'restructuredtext'
 
 
-from mvpa.mappers.base import Mapper
+from mvpa.mappers.base import MaskMapper
 from mvpa.datasets.metric import Metric
 from mvpa.base.dochelpers import enhancedDocString
 
 
 
-class MetricMapper(Mapper, Metric):
+class MetricMapper(MaskMapper, Metric):
     """Mapper which has information about the metrics of the dataspace it is
     mapping.
     """
-    def __init__(self, metric):
+    def __init__(self, mask, metric):
         """Cheap initialisation.
 
         'metric' is a subclass of Metric.
         """
-        Mapper.__init__(self)
+        MaskMapper.__init__(self, mask)
         Metric.__init__(self)
 
         if not isinstance(metric, Metric):
@@ -36,7 +36,7 @@ class MetricMapper(Mapper, Metric):
         self.__metric = metric
 
 
-    __doc__ = enhancedDocString('MetricMapper', locals(), Mapper, Metric)
+    __doc__ = enhancedDocString('MetricMapper', locals(), MaskMapper, Metric)
 
 
     def getMetric(self):
