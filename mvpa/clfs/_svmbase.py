@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from copy import deepcopy
+from mvpa.misc.copy import deepcopy
 
 from mvpa.misc import warning
 from mvpa.clfs.base import Classifier

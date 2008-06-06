@@ -19,7 +19,7 @@ iterable container.
 
 __docformat__ = 'restructuredtext'
 
-import copy
+import mvpa.misc.copy as copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs

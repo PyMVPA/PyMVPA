@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from copy import copy
+from mvpa.misc.copy import copy
 
 from mvpa.measures.base import DatasetMeasure
 from mvpa.datasets.splitter import NoneSplitter

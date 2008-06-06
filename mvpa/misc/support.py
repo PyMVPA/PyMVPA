@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re
 
-from copy import copy, deepcopy
+from mvpa.misc.copy import copy, deepcopy
 from operator import isSequenceType
 
 if __debug__:

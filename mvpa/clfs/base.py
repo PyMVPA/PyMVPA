@@ -29,7 +29,7 @@ import numpy as N
 # copy sensitivity analyzers with assigned combiners which are just
 # functions not functors
 if sys.version_info[0] > 2 or sys.version_info[1] > 4:
-    from copy import deepcopy
+    from mvpa.misc.copy import deepcopy
 else:
     from mvpa.misc.copy import deepcopy
 

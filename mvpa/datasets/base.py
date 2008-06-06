@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import operator
 import random
-import copy
+import mvpa.misc.copy as copy
 import numpy as N
 
 from sets import Set
