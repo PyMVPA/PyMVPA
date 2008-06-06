@@ -946,6 +946,8 @@ class Stateful(object):
 
     def __str__(self):
         s = "%s:" % (self.__class__.__name__)
+        if self.__descr is not None:
+            s += "/%s " % self.__descr
         if hasattr(self, "_collections"):
             for col, collection in self._collections.iteritems():
                 s += " %d %s:%s" %(len(collection.items), col, str(collection))
@@ -983,6 +985,9 @@ class Stateful(object):
                         res += sep + "%s_states=%s" % (name, str(states))
             else:
                 raise RuntimeError, "Unknown type of collection %s" % col
+        descr = self.__descr
+        if descr is not None:
+            res += "%sdescr='%s'" % (sep, descr)
         res += ")"
         return res
 
