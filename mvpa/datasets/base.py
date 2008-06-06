@@ -301,6 +301,7 @@ class Dataset(object):
 
     def idsonboundaries(self, prior=0, post=0,
                         attributes_to_track=['labels', 'chunks'],
+                        affected_labels=None,
                         revert=False):
         """Find samples which are on the boundaries of the blocks
 
@@ -315,6 +316,8 @@ class Dataset(object):
             how many samples post the transition sample to include
           attributes_to_track : list of basestring
             which attributes to track to decide on the boundary condition
+          affected_labels : list of basestring
+            for which labels to perform selection. If None - for all
           revert : bool
             either to revert the meaning and provide ids of samples which are found
             to not to be boundary samples
@@ -328,6 +331,9 @@ class Dataset(object):
                 # transition point
                 new_transitions = range(max(0, i-prior),
                                         min(nsamples-1, i+post)+1)
+                if affected_labels is not None:
+                    new_transitions = filter(lambda i: self.labels[i] in affected_labels,
+                                             new_transitions)
                 transitions += new_transitions
                 lastseen = current
 
@@ -534,9 +540,9 @@ class Dataset(object):
 
         if stats:
             # TODO -- avg per chunk?
-            s += " stats: mean=%g std=%g var=%g" % \
+            s += " stats: mean=%g std=%g var=%g min=%g max=%g" % \
                  (N.mean(self.samples), N.std(self.samples),
-                  N.var(self.samples))
+                  N.var(self.samples), N.min(self.samples), N.max(self.samples))
         return s
 
 
@@ -805,7 +811,7 @@ class Dataset(object):
                                        assure_permute=assure_permute-1)
 
 
-    def getRandomSamples( self, nperlabel ):
+    def getRandomSamples(self, nperlabel):
         """Select a random set of samples.
 
         If 'nperlabel' is an integer value, the specified number of samples is
