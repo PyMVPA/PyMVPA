@@ -12,14 +12,21 @@ import unittest
 import os.path
 import numpy as N
 
-#from mvpa.datasets.eepdataset import *
+from mvpa.datasets.eep import EEPDataset
 from mvpa.misc.eepbin import EEPBin
 
 
 class EEPDatasetTests(unittest.TestCase):
 
     def testLoad(self):
-        pass
+        eb = EEPBin(os.path.join('..', 'data', 'eep.bin'))
+
+        ds = [ EEPDataset(source, labels=[1, 2]) for source in
+                (eb, os.path.join('..', 'data', 'eep.bin')) ]
+
+        for d in ds:
+            self.failUnless(d.nsamples == 2)
+            self.failUnless(d.nfeatures == 128)
 
 
     def testEEPBin(self):
