@@ -400,7 +400,7 @@ __known_chunking_methods = {
     'alllabels': 'Each chunk must contain instances of all labels'
     }
 
-def labels2chunks(labels, method="alllabels"):
+def labels2chunks(labels, method="alllabels", ignore_labels=None):
     """Automagically decide on chunks based on labels
 
     :Parameters:
@@ -408,12 +408,17 @@ def labels2chunks(labels, method="alllabels"):
         labels to base chunking on
       method : basestring
         codename for method to use. Known are %s
+      ignore_labels : list of basestring
+        depends on the method. If method ``alllabels``, then don't
+        seek for such labels in chunks. E.g. some 'reject' samples
 
     :rtype: list
     """ % __known_chunking_methods.keys()
 
     chunks = []
-    alllabels = Set(labels)
+    if ignore_labels is None:
+        ignore_labels = []
+    alllabels = Set(labels).difference(Set(ignore_labels))
     if method == 'alllabels':
         seenlabels = Set()
         lastlabel = None
@@ -424,7 +429,8 @@ def labels2chunks(labels, method="alllabels"):
                     chunk += 1
                     seenlabels = Set()
                 lastlabel = label
-                seenlabels.union_update([label])
+                if not label in ignore_labels:
+                    seenlabels.union_update([label])
             chunks.append(chunk)
         import numpy as N
         chunks = N.array(chunks)
