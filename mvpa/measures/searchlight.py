@@ -76,10 +76,9 @@ class Searchlight(DatasetMeasure):
         """Perform the spheresearch.
         """
         if not isinstance(dataset, MappedDataset) \
-           or not isinstance(dataset.mapper, MetricMapper):
+               or dataset.mapper.metric is None:
             raise ValueError, "Searchlight only works with MappedDatasets " \
-                              "that make use of a mapper with information " \
-                              "about the dataspace metrics."
+                              "that has metric assigned."
 
         if self.states.isEnabled('spheresizes'):
             self.spheresizes = []
