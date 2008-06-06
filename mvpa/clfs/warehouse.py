@@ -314,21 +314,21 @@ clfs += \
            FixedNElementTailSelector(50, mode='select', tail='upper')),
         descr="LinSVM on 50(ANOVA)")
 
-sample_linear_svm = clfs['linear', 'svm'][0]
+_sample_linear_svm = clfs['linear', 'svm'][0]
 
 clfs += \
     FeatureSelectionClassifier(
-        sample_linear_svm,
+        _sample_linear_svm,
         SensitivityBasedFeatureSelection(
-           sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
+           _sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
            FractionTailSelector(0.05, mode='select', tail='upper')),
         descr="LinSVM on 5%(SVM)")
 
 clfs += \
     FeatureSelectionClassifier(
-        sample_linear_svm,
+        _sample_linear_svm,
         SensitivityBasedFeatureSelection(
-           sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
+           _sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
            FixedNElementTailSelector(50, mode='select', tail='upper')),
         descr="LinSVM on 50(SVM)")
 
@@ -337,83 +337,82 @@ clfs += \
 # other terms leave-1-out error on the same dataset
 # Has to be bound outside of the RFE definition since both analyzer and
 # error should use the same instance.
-rfesvm_split = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
+_rfesvm_split = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
 
 # "Almost" classical RFE. If this works it would differ only that
 # our transfer_error is based on internal splitting and classifier used
 # within RFE is a split classifier and its sensitivities per split will get
 # averaged
 #
+rfesvm_sa = \
+  FeatureSelectionClassifier(
+    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
+    feature_selection = RFE(             # on features selected via RFE
+        # based on sensitivity of a clf which does splitting internally
+        sensitivity_analyzer=_rfesvm_split.getSensitivityAnalyzer(transformer=Absolute),
+        transfer_error=ConfusionBasedError(
+           _rfesvm_split,
+           confusion_state="training_confusions"),
+           # and whose internal error we use
+        feature_selector=FractionTailSelector(
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=True),
+        # update sensitivity at each step
+    descr='LinSVM+RFE(splits_avg)' )
 
-#clfs += \
-#  FeatureSelectionClassifier(
-#    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
-#    feature_selection = RFE(             # on features selected via RFE
-#        # based on sensitivity of a clf which does splitting internally
-#        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
-#        transfer_error=ConfusionBasedError(
-#           rfesvm_split,
-#           confusion_state="training_confusions"),
-#           # and whose internal error we use
-#        feature_selector=FractionTailSelector(
-#                           0.2, mode='discard', tail='lower'),
-#                           # remove 20% of features at each step
-#        update_sensitivity=True),
-#        # update sensitivity at each step
-#    descr='LinSVM+RFE(splits_avg)' )
-#
-#clfs += \
-#  FeatureSelectionClassifier(
-#    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
-#    feature_selection = RFE(             # on features selected via RFE
-#        # based on sensitivity of a clf which does splitting internally
-#        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
-#        transfer_error=ConfusionBasedError(
-#           rfesvm_split,
-#           confusion_state="training_confusions"),
-#           # and whose internal error we use
-#        feature_selector=FractionTailSelector(
-#                           0.2, mode='discard', tail='lower'),
-#                           # remove 20% of features at each step
-#        update_sensitivity=False),
-#        # update sensitivity at each step
-#    descr='LinSVM+RFE(splits_avg,static)' )
+rfesvm_sa_static = \
+  FeatureSelectionClassifier(
+    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
+    feature_selection = RFE(             # on features selected via RFE
+        # based on sensitivity of a clf which does splitting internally
+        sensitivity_analyzer=_rfesvm_split.getSensitivityAnalyzer(transformer=Absolute),
+        transfer_error=ConfusionBasedError(
+           _rfesvm_split,
+           confusion_state="training_confusions"),
+           # and whose internal error we use
+        feature_selector=FractionTailSelector(
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=False),
+        # update sensitivity at each step
+    descr='LinSVM+RFE(splits_avg,static)' )
 
-rfesvm = LinearCSVMC()
+_rfesvm = LinearCSVMC()
 
 # This classifier will do RFE while taking transfer error to testing
 # set of that split. Resultant classifier is voted classifier on top
 # of all splits, let see what that would do ;-)
-#clfs += \
-#  SplitClassifier(                      # which does splitting internally
-#   FeatureSelectionClassifier(
-#    clf = LinearCSVMC(),
-#    feature_selection = RFE(             # on features selected via RFE
-#        sensitivity_analyzer=\
-#            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
-#        transfer_error=TransferError(rfesvm),
-#        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
-#        feature_selector=FractionTailSelector(
-#                           0.2, mode='discard', tail='lower'),
-#                           # remove 20% of features at each step
-#        update_sensitivity=True)),
-#        # update sensitivity at each step
-#    descr='LinSVM+RFE(N-Fold)')
-#
-#
-#clfs += \
-#  SplitClassifier(                      # which does splitting internally
-#   FeatureSelectionClassifier(
-#    clf = LinearCSVMC(),
-#    feature_selection = RFE(             # on features selected via RFE
-#        sensitivity_analyzer=\
-#            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
-#        transfer_error=TransferError(rfesvm),
-#        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
-#        feature_selector=FractionTailSelector(
-#                           0.2, mode='discard', tail='lower'),
-#                           # remove 20% of features at each step
-#        update_sensitivity=True)),
-#        # update sensitivity at each step
-#   splitter = OddEvenSplitter(),
-#   descr='LinSVM+RFE(OddEven)')
+rfesvm_nfold = \
+  SplitClassifier(                      # which does splitting internally
+   FeatureSelectionClassifier(
+    clf = LinearCSVMC(),
+    feature_selection = RFE(             # on features selected via RFE
+        sensitivity_analyzer=\
+            _rfesvm.getSensitivityAnalyzer(transformer=Absolute),
+        transfer_error=TransferError(_rfesvm),
+        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
+        feature_selector=FractionTailSelector(
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=True)),
+        # update sensitivity at each step
+    descr='LinSVM+RFE(N-Fold)')
+
+
+rfesvm_oe = \
+  SplitClassifier(                      # which does splitting internally
+   FeatureSelectionClassifier(
+    clf = LinearCSVMC(),
+    feature_selection = RFE(             # on features selected via RFE
+        sensitivity_analyzer=\
+            _rfesvm.getSensitivityAnalyzer(transformer=Absolute),
+        transfer_error=TransferError(_rfesvm),
+        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
+        feature_selector=FractionTailSelector(
+                           0.2, mode='discard', tail='lower'),
+                           # remove 20% of features at each step
+        update_sensitivity=True)),
+        # update sensitivity at each step
+   splitter = OddEvenSplitter(),
+   descr='LinSVM+RFE(OddEven)')
