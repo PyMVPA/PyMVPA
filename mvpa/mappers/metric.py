@@ -6,26 +6,28 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""Metric mapper -- obsolete. Any mapper now have optional metric assigned"""
 
 __docformat__ = 'restructuredtext'
 
 
-from mvpa.mappers.base import MaskMapper
+from mvpa.mappers.base import Mapper
+from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.metric import Metric
 from mvpa.base.dochelpers import enhancedDocString
 
 
-
-class MetricMapper(MaskMapper, Metric):
+class MetricMapper(Mapper):
     """Mapper which has information about the metrics of the dataspace it is
     mapping.
     """
-    def __init__(self, mask, metric):
+    def __init__(self, *args, **kwargs):
         """Cheap initialisation.
 
         'metric' is a subclass of Metric.
         """
+        raise RuntimeError, "Obsolete class"
+
         MaskMapper.__init__(self, mask)
         Metric.__init__(self)
 
@@ -39,14 +41,3 @@ class MetricMapper(MaskMapper, Metric):
     __doc__ = enhancedDocString('MetricMapper', locals(), MaskMapper, Metric)
 
 
-    def getMetric(self):
-        """To make pylint happy"""
-        return self.__metric
-
-
-    def setMetric(self, metric):
-        """To make pylint happy"""
-        self.__metric = metric
-
-
-    metric = property(fget=getMetric, fset=setMetric)

@@ -152,6 +152,7 @@ if __debug__:
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
     debug.register('CHECK_DS_SORTED',"Additional checking in datasets for sorted")
+    debug.register('CHECK_IDS_SORTED',"Additional checking for ids being sorted in mappers")
     debug.register('CHECK_RETRAIN', "Additional checking in retraining/retesting")
 
     debug.register('COL',  "Generic Collectable debugging")
