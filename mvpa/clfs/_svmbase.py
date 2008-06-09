@@ -188,7 +188,7 @@ class _SVM(Classifier):
         self._kernel_type = self._KERNELS[kernel_type][0]
         if __debug__:
             debug("SVM", "Initialized %s with kernel %s:%s" % 
-                  (id(self), kernel_type, self._kernel_type))
+                  (self, kernel_type, self._kernel_type))
 
 
     def __repr__(self):
