@@ -40,6 +40,7 @@ class Logger(object):
         if handlers == None:
             handlers = [stdout]
         self.__close_handlers = []
+        self.__handlers = []            # pylint friendliness
         self._setHandlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
@@ -116,7 +117,11 @@ class Logger(object):
             self.__crprev = 0           # nothing to clear
 
         for handler in self.__handlers:
-            handler.write(msg)
+            try:
+                handler.write(msg)
+            except:
+                print "Failed writing on handler %s" % handler
+                raise
             try:
                 handler.flush()
             except:
