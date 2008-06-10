@@ -140,6 +140,7 @@ class MaskMapper(Mapper):
     def reverse(self, data):
         """Reverse map data from featurespace into the original dataspace.
         """
+        data = N.asanyarray(data)
         datadim = len(data.shape)
         if not datadim in [1, 2]:
             raise ValueError, \
