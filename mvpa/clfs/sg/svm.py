@@ -509,12 +509,8 @@ class SVM(_SVM):
                         debug("SG__", "cachesize pre free features %s" %
                                (self.__svm.get_kernel().get_cache_size()))
                         self.__traindata.free_features()
-                        debug("SG__", "deling traindata")
                         del self.__traindata
-                        debug("SG__", "Noning traindata")
                         self.__traindata = None
-                        debug("SG__", "cachesize post free features %s" %
-                              (self.__svm.get_kernel().get_cache_size()))
 
                     if __debug__:
                         if 'CHECK_RETRAIN' in debug.active:
