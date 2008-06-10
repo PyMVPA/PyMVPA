@@ -19,10 +19,12 @@ from mvpa.datasets import Dataset
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import ConfusionMatrix
-"""
 
 from mvpa.misc import debug
-debug.active.append('SMLR_')
+"""
+
+if __debug__:
+    debug.active.append('SMLR_')
 
 # features of sample data
 print "Generating samples..."

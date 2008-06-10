@@ -31,7 +31,8 @@ from mvpa.misc import debug
 """
 
 # enable debug output for searchlight call
-debug.active += ["SLC"]
+if __debug__:
+    debug.active += ["SLC"]
 
 
 #

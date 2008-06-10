@@ -55,7 +55,7 @@ class ConfusionMatrix(object):
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
-        ('# of sets', 'number of target/prediction sets which were provided')
+        ('# of sets', 'number of target/prediction sets which were provided', None)
         )
 
     # XXX Michael: - How do multiple sets work and what are they there for?

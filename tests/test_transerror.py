@@ -69,6 +69,9 @@ class ErrorsTests(unittest.TestCase):
 
         # check pretty print
         # just a silly test to make sure that printing works
+        self.failUnless(len(cm.asstring(
+            header=True, percents=True, summary=True,
+            print_empty=True, description=True))>100)
         self.failUnless(len(str(cm))>100)
         # and that it knows some parameters for printing
         self.failUnless(len(cm.asstring(summary=True, percents=True,

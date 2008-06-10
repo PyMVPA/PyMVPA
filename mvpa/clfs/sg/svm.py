@@ -188,6 +188,7 @@ class SVM(_SVM):
         # internal SG swig proxies
         self.__traindata = None
         self.__kernel = None
+        self.__kernel_test = None
         self.__testdata = None
 
         # if we do retraining -- store hashes
@@ -233,6 +234,7 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
+
         # XXX might get up in hierarchy
         if self.params.retrainable:
             changed_params = self.params.whichSet()
@@ -400,9 +402,6 @@ class SVM(_SVM):
         """Predict values for the data
         """
 
-        if __debug__:
-            debug("SG_", "Initializing kernel with training/testing data")
-
         if self.params.retrainable:
             changed_testdata = self.__wasChanged('test_samples', 2, data) or \
                                self.__kernel_test is None
@@ -411,6 +410,10 @@ class SVM(_SVM):
             testdata = _tosg(data)
 
         if not self.params.retrainable:
+            if __debug__:
+                debug("SG__",
+                      "Initializing SVMs kernel of %s with training/testing samples"
+                      % self)
             # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
         else:
@@ -424,7 +427,7 @@ class SVM(_SVM):
                                                 *self.__kernel_args)
                 _setdebug(kernel_test, 'Kernels')
                 kernel_test_custom = shogun.Kernel.CustomKernel(self.__traindata, testdata)
-                _setdebug(kernel_test, 'Kernels')
+                _setdebug(kernel_test_custom, 'Kernels')
                 self.__kernel_test = kernel_test_custom
                 self.__kernel_test.set_full_kernel_matrix_from_full(
                     kernel_test.get_kernel_matrix())
@@ -440,9 +443,9 @@ class SVM(_SVM):
         # doesn't do any good imho although on unittests helps tiny bit... hm
         #self.__svm.init_kernel_optimization()
         values_ = self.__svm.classify()
-        #if self.params.retrainable and not changed_testdata:
-        #    import pydb
-        #    pydb.debugger()
+        if values_ is None:
+            raise RuntimeError, "We got empty list of values from %s" % self
+
         values = values_.get_labels()
 
         if self.params.retrainable:
@@ -500,24 +503,34 @@ class SVM(_SVM):
             # to avoid leaks with not yet properly fixed shogun
             # XXX make it nice... now it is just stable ;-)
             if not self.__traindata is None:
-                try:
-                    try:
+                if True:
+                # try:
+                    if self.__traindata is not None:
+                        debug("SG__", "cachesize pre free features %s" %
+                               (self.__svm.get_kernel().get_cache_size()))
                         self.__traindata.free_features()
-                    except:
-                        pass
+                        del self.__traindata
+                        self.__traindata = None
+
                     if __debug__:
                         if 'CHECK_RETRAIN' in debug.active:
                             self.__trained = [None, None, None]
+
                     self.__traindataset = None
-                    del self.__kernel
-                    self.__kernel = None
-                    self.__kernel_test = None
-                    del self.__traindata
-                    self.__traindata = None
-                    del self.__svm
-                    self.__svm = None
-                except:
-                    pass
+
+                    if self.__kernel is not None:
+                        del self.__kernel
+                        self.__kernel = None
+
+                    if self.__kernel_test is not None:
+                        del __kernel_test
+                        self.__kernel_test = None
+
+                    if self.__svm is not None:
+                        del self.__svm
+                        self.__svm = None
+                #except:
+                #    pass
 
             if __debug__:
                 debug("SG__",

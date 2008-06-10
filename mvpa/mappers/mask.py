@@ -111,6 +111,7 @@ class MaskMapper(Mapper):
     def forward(self, data):
         """Map data from the original dataspace into featurespace.
         """
+        data = N.asanyarray(data)          # assure it is an array
         datadim = len(data.shape)
         datashape = data.shape[(-1)*self.__maskdim:]
         if not datashape == self.__mask.shape:
@@ -139,6 +140,7 @@ class MaskMapper(Mapper):
     def reverse(self, data):
         """Reverse map data from featurespace into the original dataspace.
         """
+        data = N.asanyarray(data)
         datadim = len(data.shape)
         if not datadim in [1, 2]:
             raise ValueError, \
