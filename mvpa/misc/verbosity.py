@@ -435,6 +435,9 @@ if __debug__:
             else:
                 level = 1
 
+            if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
+                tb = traceback.extract_stack(limit=2)
+                msg += "  !!!2LONG!!!. From %s" % str(tb[0])
             SetLogger.__call__(self, setid, "DBG%s:%s%s" %
                                (msg_, " "*level, msg),
                                *args, **kwargs)
