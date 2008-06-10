@@ -32,7 +32,8 @@ from mvpa.mappers import SVDMapper
 from mvpa.misc import debug
 """
 
-debug.active += ["CROSSC"]
+if __debug__:
+    debug.active += ["CROSSC"]
 
 # plotting helper function
 def makeBarPlot(data, labels=None, title=None, ylim=None, ylabel=None):
