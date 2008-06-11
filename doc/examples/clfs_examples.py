@@ -20,7 +20,7 @@ import time
 from mvpa.datasets import Dataset
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.datasets.splitter import *
-from mvpa.datasets.misc import zscore, detrend
+from mvpa.datasets.miscfx import zscore, detrend
 
 # Helpers
 from mvpa.clfs.transerror import *

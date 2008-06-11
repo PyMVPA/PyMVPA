@@ -14,7 +14,7 @@ import numpy as N
 
 from scipy import linalg
 from mvpa.datasets import Dataset
-from mvpa.datasets.misc import detrend
+from mvpa.datasets.miscfx import detrend
 
 class SignalTests(unittest.TestCase):
 

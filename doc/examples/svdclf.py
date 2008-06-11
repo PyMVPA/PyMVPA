@@ -20,7 +20,7 @@ import pylab as P
 # local imports
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.misc import zscore, detrend
+from mvpa.datasets.miscfx import zscore, detrend
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError

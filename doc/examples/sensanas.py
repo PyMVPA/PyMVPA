@@ -28,7 +28,7 @@ from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.measures.anova import OneWayAnova
 from mvpa.clfs.svm import LinearNuSVMC
-from mvpa.datasets.misc import zscore, detrend
+from mvpa.datasets.miscfx import zscore, detrend
 from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
 from mvpa.datasets.splitter import OddEvenSplitter, NFoldSplitter
 """

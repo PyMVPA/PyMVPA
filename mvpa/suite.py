@@ -40,7 +40,7 @@ from mvpa.datasets.base import *
 from mvpa.datasets import *
 from mvpa.datasets.maskeddataset import *
 from mvpa.datasets.metric import *
-from mvpa.datasets.misc import *
+from mvpa.datasets.miscfx import *
 if externals.exists('nifti'):
     from mvpa.datasets.niftidataset import *
 from mvpa.datasets.splitter import *
