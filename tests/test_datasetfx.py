@@ -127,7 +127,7 @@ class MiscDatasetFxTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(SignalTests)
+    return unittest.makeSuite(MiscDatasetFxTests)
 
 
 if __name__ == '__main__':
