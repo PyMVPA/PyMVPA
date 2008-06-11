@@ -19,8 +19,7 @@ import pylab as P
 # local imports
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.misc import zscore
-from mvpa.misc.signal import detrend
+from mvpa.datasets.misc import zscore, detrend
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
