@@ -122,6 +122,13 @@ def aggregateFeatures(dataset, fx):
 
 
 
+def removeInvariantFeatures(dataset):
+    """Returns a new dataset with all invariant features removed.
+    """
+    return dataset.selectFeatures(dataset.samples.std(axis=0).nonzero()[0])
+
+
+
 def detrend(dataset, perchunk=False, model='linear',
             polyord=None, opt_reg=None):
     """
