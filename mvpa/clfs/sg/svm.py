@@ -505,11 +505,23 @@ class SVM(_SVM):
             if not self.__traindata is None:
                 if True:
                 # try:
+                    if self.__kernel is not None:
+                    #    del self.__kernel
+                        self.__kernel = None
+
+                    if self.__kernel_test is not None:
+                    #    del __kernel_test
+                        self.__kernel_test = None
+
+                    if self.__svm is not None:
+                    #    del self.__svm
+                        self.__svm = None
+
                     if self.__traindata is not None:
-                        debug("SG__", "cachesize pre free features %s" %
-                              (self.__svm.get_kernel().get_cache_size()))
-                        self.__traindata.free_features()
-                        del self.__traindata
+                        #debug("SG__", "cachesize pre free features %s" %
+                        #      (self.__svm.get_kernel().get_cache_size()))
+                        #self.__traindata.free_features()
+                    #    del self.__traindata
                         self.__traindata = None
 
                     if __debug__:
@@ -518,17 +530,7 @@ class SVM(_SVM):
 
                     self.__traindataset = None
 
-                    if self.__kernel is not None:
-                        del self.__kernel
-                        self.__kernel = None
 
-                    if self.__kernel_test is not None:
-                        del __kernel_test
-                        self.__kernel_test = None
-
-                    if self.__svm is not None:
-                        del self.__svm
-                        self.__svm = None
                 #except:
                 #    pass
 
