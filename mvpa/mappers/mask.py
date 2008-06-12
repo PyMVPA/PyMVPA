@@ -48,7 +48,7 @@ class MaskMapper(Mapper):
 
     def __repr__(self):
         s = super(MaskMapper, self).__repr__()
-        return s.replace("(", "mask=%s", 1)
+        return s.replace("(", "(mask=%s," % self.__mask, 1)
 
 # XXX
 # XXX HAS TO TAKE CARE OF SUBCLASSES!!!
@@ -67,8 +67,8 @@ class MaskMapper(Mapper):
 #        out.__masknonzero = deepcopy(self.__masknonzero)
 #        out.__masknonzerosize = self.__masknonzerosize
 #        out.__forwardmap = self.__forwardmap.copy()
-
-        return out
+#
+#        return out
 
 
     def _initMask(self, mask):
