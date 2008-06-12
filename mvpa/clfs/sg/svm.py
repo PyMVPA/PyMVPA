@@ -98,7 +98,7 @@ class SVM(_SVM):
                             descr='Number of threads to utilize')
 
     # NOTE: gamma is width in SG notation for RBF(Gaussian)
-    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   (), LinearSVMWeights),
+    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ('scale',), LinearSVMWeights),
                  "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
                  "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step'), None),
                  "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0'), None),
@@ -493,10 +493,10 @@ class SVM(_SVM):
 
     def untrain(self):
         super(SVM, self).untrain()
-
         if not self.params.retrainable:
             if __debug__:
-                debug("SG__", "Untraining %s and destroying sg's SVM" % self)
+                debug("SG__", "Untraining %(clf)s and destroying sg's SVM",
+                      msgargs={'clf':self})
 
             self.__idhash = [None, None, None]  # samples, labels
 
@@ -507,7 +507,7 @@ class SVM(_SVM):
                 # try:
                     if self.__traindata is not None:
                         debug("SG__", "cachesize pre free features %s" %
-                               (self.__svm.get_kernel().get_cache_size()))
+                              (self.__svm.get_kernel().get_cache_size()))
                         self.__traindata.free_features()
                         del self.__traindata
                         self.__traindata = None
