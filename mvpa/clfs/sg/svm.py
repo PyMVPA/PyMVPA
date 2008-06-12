@@ -98,7 +98,7 @@ class SVM(_SVM):
                             descr='Number of threads to utilize')
 
     # NOTE: gamma is width in SG notation for RBF(Gaussian)
-    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   (), LinearSVMWeights),
+    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ('scale',), LinearSVMWeights),
                  "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
                  "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step'), None),
                  "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0'), None),
@@ -493,10 +493,10 @@ class SVM(_SVM):
 
     def untrain(self):
         super(SVM, self).untrain()
-
         if not self.params.retrainable:
             if __debug__:
-                debug("SG__", "Untraining %s and destroying sg's SVM" % self)
+                debug("SG__", "Untraining %(clf)s and destroying sg's SVM",
+                      msgargs={'clf':self})
 
             self.__idhash = [None, None, None]  # samples, labels
 
@@ -505,11 +505,23 @@ class SVM(_SVM):
             if not self.__traindata is None:
                 if True:
                 # try:
+                    if self.__kernel is not None:
+                    #    del self.__kernel
+                        self.__kernel = None
+
+                    if self.__kernel_test is not None:
+                    #    del __kernel_test
+                        self.__kernel_test = None
+
+                    if self.__svm is not None:
+                    #    del self.__svm
+                        self.__svm = None
+
                     if self.__traindata is not None:
-                        debug("SG__", "cachesize pre free features %s" %
-                               (self.__svm.get_kernel().get_cache_size()))
-                        self.__traindata.free_features()
-                        del self.__traindata
+                        #debug("SG__", "cachesize pre free features %s" %
+                        #      (self.__svm.get_kernel().get_cache_size()))
+                        #self.__traindata.free_features()
+                    #    del self.__traindata
                         self.__traindata = None
 
                     if __debug__:
@@ -518,17 +530,7 @@ class SVM(_SVM):
 
                     self.__traindataset = None
 
-                    if self.__kernel is not None:
-                        del self.__kernel
-                        self.__kernel = None
 
-                    if self.__kernel_test is not None:
-                        del __kernel_test
-                        self.__kernel_test = None
-
-                    if self.__svm is not None:
-                        del self.__svm
-                        self.__svm = None
                 #except:
                 #    pass
 
