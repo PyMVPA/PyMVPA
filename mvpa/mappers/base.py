@@ -54,7 +54,7 @@ class Mapper(object):
 
     def __repr__(self):
         if self.__metric is not None:
-            s = "metric=%s" % `self.__metric`
+            s = "metric=%s" % repr(self.__metric)
         else:
             s = ''
         return "%s(%s)" % (self.__class__.__name__, s)
