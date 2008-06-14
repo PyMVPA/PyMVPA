@@ -59,6 +59,7 @@ distclean:
 		 -o -name '.coverage' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
+		 -o -iname '*.[ao]' -o -iname '*.gch' \
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
