@@ -265,9 +265,11 @@ Binary packages
 '''''''''''''''
 
 The easiest way to obtain PyMVPA is to use pre-built binary packages.
-Currently the Debian/Ubuntu family is the only environment for which
-binary packages are available (see below). If you manage to build PyMVPA
-on Windows or OS X, we would be glad to hear from you.
+Currently the Debian/Ubuntu family is the only environment for which binary
+packages are available (see below). However, we received reports that PyMVPA
+successfully builds on recently RedHat releases and MacOS X (seel below for
+instructions). If you manage to build PyMVPA on Windows, we would be glad to
+hear from you.
 
 .. index:: Debian
 
@@ -362,6 +364,26 @@ option. You also might want to consider :command:`--optimize`.
 Now you should be ready to use PyMVPA on your system.
 
 .. index:: libsvm, SWIG
+
+
+Build under Windows
+~~~~~~~~~~~~~~~~~~~
+
+Python 2.5.2 (with Tcl/tk; install under C:\Python25) add to PATH
+install NumPy (1.1 for Python 2.5)
+install SciPy (0.6 for Python 2.5)
+maybe matplotlib (0.98 for Python 2.5) [msvcp71.dll!]
+install mingw using the installer (with g++ compiler and Make)
+	add C:\MinGW\bin to PATH
+configure Python 2.5 distutils to use mingw
+	c:\Python25\lib\distutils\distutils.cfg
+
+	[build]
+	compiler = mingw32
+
+download PyMVPA release source tarball (or snapshot) and extract (7zip can do)
+install pynifti (needs zlib from gnuwin32 project)
+
 
 Build with enabled libsvm bindings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
