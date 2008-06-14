@@ -15,11 +15,17 @@ if __debug__:
 import numpy as N
 import ctypes as C
 import os
+import sys
 
 from mvpa.clfs.libsmlr.ctypes_helper import extend_args, c_darray
 
 # connect to library that's in this directory
-smlrlib = N.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
+if sys.platform == 'win32':
+    # on windows things get tricky as we compile this lib as an extension
+    # so it get a .pyd name suffix instead of .dll
+    smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.pyd')]
+else:
+    smlrlib = N.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
 
 # wrap the stepwise function
 def stepwise_regression(*args):
