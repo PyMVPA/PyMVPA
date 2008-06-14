@@ -200,6 +200,22 @@ debsrc:
 fetch-data:
 	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
 
+# THIS IS ONLY FOR WINDOWS!
+# consider this to be more of a sketch than an actually working target
+bdist_wininst:
+# build static libsvm first
+	cd 3rd\\libsvm & g++ -c svm.cpp svm.h & ar cur libsvm.a svm.o
+
+# build pymvpa extensions including libsvm
+	set PYMVPA_LIBSVM=1 & set PYTHON_INCLUDE="C:\\Python25\\include" \
+		& python setup.py build_ext -c mingw32 \
+			--swig-opts="-c++ -noproxy" \
+			-I3rd\\libsvm -L3rd\\libsvm
+
+# now build the installer
+	python setup.py bdist_wininst
+
+
 #
 # Trailer
 #
