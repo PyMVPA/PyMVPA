@@ -255,48 +255,103 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 
 
 .. _obtaining:
+.. index:: installation
 
-Obtaining PyMVPA
-~~~~~~~~~~~~~~~~
+Installation
+~~~~~~~~~~~~
 
-.. index:: binary package
+.. Point to source and binary distribution. Preach idea of free software.
+   Step by step guide to install it on difficult systems like Windows.
 
-Binary packages
-'''''''''''''''
+.. Don't forget to mention that the only reasonable way to use this piece
+   of software (like every other piece) is under Debian! Also mention that
+   Ubuntu is no excuse ;-)
 
 The easiest way to obtain PyMVPA is to use pre-built binary packages.
-Currently the Debian/Ubuntu family is the only environment for which
-binary packages are available (see below). If you manage to build PyMVPA
-on Windows or OS X, we would be glad to hear from you.
+Currently we provide such packages or installers for the Debian/Ubuntu family
+and 32-bit Windows (see below). If there are no binary packages for your
+operating system or platform yet, you can build PyMVPA from source. Please
+refer to `Building from Source`_ for more information.
 
+.. index:: binary packages
 .. index:: Debian
 
 Debian
-^^^^^^
+''''''
 
 PyMVPA is available as an `official Debian package`_ (`python-mvpa`;
 since *lenny*). The documentation is provided by the optional
-`python-mvpa-doc` package.
+`python-mvpa-doc` package. To install PyMVPA simply do::
+
+  sudo aptitude install python-mvpa
 
 .. _official Debian package: http://packages.debian.org/python-mvpa
 
 .. index:: backports, Debian, Ubuntu
 
 Debian backports and inofficial Ubuntu packages
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''''''''''''''''
 
 Backports for the current Debian stable release and binary packages for recent
 Ubuntu releases are available from a `repository at the University of
 Magdeburg`_. Please read the `package repository instructions`_ to learn about
-how to obtain them.
-
-.. All of the PyMVPA developers have sworn a solemn oath to name their
-   first-born child 'Debian'.
-
+how to obtain them. Otherwise install as you would do with any other Debian
+package.
 
 .. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
+
+Windows
+~~~~~~~
+
+There are a few Python distributions for Windows. In theory all of them should
+work equally well. However, we only tested the standard Python distribution
+from www.python.org (with version 2.5.2).
+
+First you need to download and install Python. Use the Python installer for
+this job. Yo do not need to install the Python test suite and utility scripts.
+From now on we will assume that Python was installed in `C:\\Python25`.
+
+For a minimal installation of PyMVPA the only thing you need in addition is
+NumPy_. Download a matching NumPy windows installer for your Python version
+(in this case 2.5) from the `SciPy download page`_ and install it.
+
+Now, you can use the PyMVPA windows installer to install PyMVPA on your system.
+If done, verify that everything went fine by opening a command promt and start
+Python by typing `python` and hit enter. Now you should see the Python prompt.
+Import the mvpa module, which should cause no error messages.
+
+  >>> import mvpa
+  >>>
+
+Although you have a working installation already, most likely you want to
+install some additional software. First and foremost install SciPy_ -- download from the same page where you also got the NumPy installer.
+
+If you want to use PyMVPA to analyze fMRI datasets, you probably also want to
+install PyNIfTI_. Download the corresponding installer from the website of the
+`NIfTI libraries`_ and install it. PyNIfTI does not come with the required
+`zlib` library, so you also need to download and install it. A binary installer is available from the `GnuWin32 project`_. Install it in some arbitrary folder
+(just the binaries nothing else), find the `zlib1.dll` file in the `bin`
+subdirectory and move it in the Windows `system32` directory. Verify that it
+works by importing the `nifti` module in Python.
+
+  >>> import nifti
+  >>>
+
+Another piece of software you might want to install is matplotlib_. The project
+website offers a binary installer for Windows. If you are using the standard
+Python distribution and matplotlib complains about a missing `msvcp71.dll`, be
+sure to obey the installation instructions for Windows on the matplotlib
+website.
+
+With this set of packages you should be able to run most of the PyMVPA examples
+which are shipped with the source code in the `doc/examples` directory.
+
+.. _SciPy download page: http://scipy.org/Download
+.. _NIfTI libraries: http://niftilib.sourceforge.net/
+.. _GnuWin32 project: http://gnuwin32.sourceforge.net/
+.. _matplotlib: http://matplotlib.sourceforge.net/
 
 .. _buildfromsource:
 
@@ -304,7 +359,7 @@ how to obtain them.
 .. index:: building from source, source package, MacOSX
 
 Building from Source
-''''''''''''''''''''
+~~~~~~~~~~~~~~~~~~~~
 
 If a binary package for your platform and operating system is provided, you do
 not have to build the packages on your own -- use the corresponding pre-build
@@ -364,7 +419,7 @@ Now you should be ready to use PyMVPA on your system.
 .. index:: libsvm, SWIG
 
 Build with enabled libsvm bindings
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''''''''
 
 From the 0.2 release of PyMVPA on, the libsvm_ classifier extension is not
 build by default anymore. However, it is still shipped with PyMVPA and can
@@ -388,7 +443,7 @@ The installation procedure is equivalent to the a build setup without libsvm_.
 
 
 Building patched libsvm from source
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''''
 
 First get the patched sources from::
 
@@ -427,7 +482,7 @@ there is also a `Makefile.osx`.
 .. index:: alternative build procedure
 
 Alternative build procedure
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''
 
 Alternatively, if you are doing development in PyMVPA or if you
 simply do not want (or do not have sufficient permissions to do so) to
@@ -444,29 +499,8 @@ extension and therefore also required the patched libsvm version to be
 available.
 
 
-.. index:: installation
-
-Installation
-~~~~~~~~~~~~
-
-.. Point to source and binary distribution. Preach idea of free software.
-   Step by step guide to install it on difficult systems like Windows.
-
-.. Don't forget to mention that the only reasonable way to use this piece
-   of software (like every other piece) is under Debian! Also mention that
-   Ubuntu is no excuse ;-)
-
-If there are no binary packages for your operating system or platform yet, you
-need to build from source. Please refer to `Building from Source`_ for more
-information.
-
-Otherwise just install the binary packages as you would do with any other
-package. For example on Debian or Ubuntu simply do::
-
-  sudo aptitude install python-mvpa
-
-
 .. index:: citation, PyMVPA poster
+
 
 How to cite PyMVPA
 ~~~~~~~~~~~~~~~~~~
