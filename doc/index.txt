@@ -69,13 +69,20 @@ Download
 Binary packages
 ---------------
 
-PyMVPA is available as an `official Debian package`_ (`python-mvpa`).
-Additionally backports for some Debian and Ubuntu releases are also available.
-Please read the `package repository instructions`_ to learn about how to obtain
-them.
+Binary packages are available for:
 
-Currently, there are no binary packages for other operating systems. If you
-manage to build PyMVPA on Windows or OS X, we would be glad to hear from you.
+* Debian and Ubuntu
+    PyMVPA is an `official Debian package`_ (`python-mvpa`).
+    Additionally backports for some Debian and Ubuntu releases are also
+    available. Please read the `package repository instructions`_ to learn
+    about how to obtain them.
+
+* Windows
+    An installer for Python 2.5 is available from the `file release system`_.
+
+Currently, there are no binary packages for other operating systems. However,
+we received reports that PyMVPA successfully builds on recent RedHat releases
+and MacOS X (see below for instructions).
 
 .. _official Debian package: http://packages.debian.org/python-mvpa
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
