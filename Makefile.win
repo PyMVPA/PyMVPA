@@ -14,7 +14,9 @@ all: build configure-inplace-use
 
 libsvm:
 # build static libsvm first
-	cd 3rd\\libsvm & g++ -c svm.cpp svm.h & ar cur libsvm.a svm.o
+	cd 3rd\\libsvm \
+		& g++ -O2 -c svm.cpp svm.h \
+		& ar cur libsvm.a svm.o
 
 build: libsvm
 # build pymvpa extensions including libsvm

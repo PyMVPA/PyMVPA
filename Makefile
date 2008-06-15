@@ -21,21 +21,31 @@ mkdir-%:
 
 all: build
 
+# build included LIBSVM as a static library
+libsvm: libsvm-stamp
+libsvm-stamp:
+	cd 3rd/libsvm && g++ -O2 -c svm.cpp
+	cd 3rd/libsvm && ar cur libsvm.a svm.o
+	touch $@
+
+
 debian-build:
 # reuse is better than duplication (yoh)
 	debian/rules build
 
 
 build: build-stamp
-build-stamp:
+build-stamp: libsvm
 	python setup.py config --noisy
-	PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy"
+	PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy" \
+		-I3rd/libsvm -L3rd/libsvm
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
 		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
 		mvpa/clfs/lib$$ext/; done
 	touch $@
+
 
 #
 # Cleaning
@@ -63,7 +73,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp libsvm-stamp
 
 
 debian-clean:
