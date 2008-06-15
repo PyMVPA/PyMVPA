@@ -29,6 +29,13 @@ Unreleased changes
 Releases
 ~~~~~~~~
 
+* 0.2.1 (Sun, 15 Jun 2008)
+
+  * Several improvements to make building PyMVPA on Windows systems easy
+    (e.g. added dedicated Makefile.win to build a binary installer).
+  * Improved and extended documentation for building and installing PyMVPA.
+
+
 * 0.2.0 (Wed, 29 May 2008)
 
   * New Splitter class (HalfSplitter) to split into first and second half.
