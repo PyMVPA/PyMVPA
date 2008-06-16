@@ -468,7 +468,10 @@ directory)::
   PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy" \
     -I3rd/libsvm -L3rd/libsvm
 
-The installation procedure is equivalent to the a build setup without LIBSVM_.
+The installation procedure is equivalent to the build setup without LIBSVM_,
+except that the `PYMVPA_LIBSVM` variable also has to be set when installing::
+
+  PYMVPA_LIBSVM=1 python setup.py install
 
 .. _SWIG: http://www.swig.org/
 
@@ -538,6 +541,28 @@ as described :ref:`above <install_win>`.
 
 .. _MinGW project website: http://www.mingw.org/
 .. _MSYS: http://www.mingw.org/msys.shtml
+
+
+OpenSUSE
+''''''''
+
+Building PyMVPA on OpenSUSE involves the following steps (tested with 10.3):
+First add the OpenSUSE science repository, that contains most of the required
+packages (e.g. NumPy, SciPy, matplotlib), to the Yast configuration. The URL
+for OpenSUSE 10.3 is::
+
+  http://download.opensuse.org/repositories/science/openSUSE_10.3/
+
+Now, install the following required packages: 
+
+  * a recent C and C++ compiler (e.g. GCC 4.1)
+  * `python-devel` (Python development package)
+  * `python-numpy` (NumPy)
+  * `swig` (SWIG is only necessary, if you want to make use of LIBSVM)
+
+Now you can simply compile and install PyMVPA, as outlined above, in the
+general build instructions (or alternatively using the method with LIBSVM).
+
 
 
 How to cite PyMVPA
