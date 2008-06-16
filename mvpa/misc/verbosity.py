@@ -250,7 +250,11 @@ class SetLogger(Logger):
                     self.__active = registered_keys
                     break
                 # try to match item as it is regexp
-                regexp = re.compile("^%s$" % item)
+                try:
+                    regexp = re.compile("^%s$" % item)
+                except:
+                    raise ValueError, \
+                          "Unable to create regular expression out of  %s" % item
                 matching_keys = filter(regexp.match, registered_keys)
                 toactivate = matching_keys
             else:
