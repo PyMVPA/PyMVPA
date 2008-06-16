@@ -253,3 +253,20 @@ def wr1996(size=200):
     x = N.hstack([x, x34, x56])
     return Dataset(samples=x, labels=y)
 
+
+def sin_modulated(n_instances, n_features, flat=False, noise=0.4):
+    """
+    Generate a (quite) complex multidimensional dataset.
+    """
+    data = None
+    if flat:
+        data = (N.arange(0.0, 1.0, 1.0/n_instances)*N.pi)
+        data.resize(n_instances, n_features)
+    else:
+        data = N.random.rand(n_instances, n_features)*N.pi
+        pass
+    label = N.sin((data**2).sum(1)).round()
+    label += N.random.rand(label.size)*noise
+    return data, label
+
+
