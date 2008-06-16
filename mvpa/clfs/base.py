@@ -167,7 +167,7 @@ class Classifier(Parametrized):
         self._setRetrainable(self.params.retrainable)
 
         if self.params.regression:
-            for statevar in [ "trained_labels", "training_confusion" ]:
+            for statevar in [ "trained_labels"]: #, "training_confusion" ]:
                 if self.states.isEnabled(statevar):
                     if __debug__:
                         debug("CLF",

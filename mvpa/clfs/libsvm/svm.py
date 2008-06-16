@@ -144,10 +144,10 @@ class SVM(_SVM):
                       debug('SVM', 'Assign C_SVC "by default"')
         kwargs['svm_impl'] = svm_impl
 
-        self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
-
         # init base class
         _SVM.__init__(self, kernel_type, **kwargs)
+
+        self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
 
         if 'nu' in self._KNOWN_PARAMS and 'epsilon' in self._KNOWN_PARAMS:
             # overwrite eps param with new default value (information taken from libSVM
