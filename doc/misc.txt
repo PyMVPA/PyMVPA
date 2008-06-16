@@ -248,7 +248,7 @@ can be used to perform motion-aware data detrending:
   >>> mc.plot()
   >>>
   >>> # detrend some dataset with mc params as additonal regressors
-  >>> from mvpa.misc.signal import detrend
+  >>> from mvpa.datasets.miscfx import detrend
   >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
   >>> # 'res' contains all regressors and their associated weights
 

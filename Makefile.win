@@ -1,0 +1,62 @@
+# Makefile to build PyMVPA under Windows using a standard Python
+# distribution and MinGW
+#
+# Adjust this path to match the version and location of your Python
+# installation
+PYTHON_VERSION=2.5
+PYTHON_PATH=C:\\Python25
+
+#
+# Building
+#
+
+all: build configure-inplace-use
+
+libsvm:
+# build static libsvm first
+	cd 3rd\\libsvm \
+		& g++ -O2 -c svm.cpp svm.h \
+		& ar cur libsvm.a svm.o
+
+build: libsvm
+# build pymvpa extensions including libsvm
+	set PYMVPA_LIBSVM=1 & set PYTHON_INCLUDE="$(PYTHON_PATH)\\include" \
+		& python setup.py build_ext -c mingw32 \
+			--swig-opts="-c++ -noproxy" \
+			-I3rd\\libsvm -L3rd\\libsvm
+
+installer: build
+# now build the installer
+	python setup.py bdist_wininst
+
+
+configure-inplace-use:
+	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsmlr\\smlrc.pyd \
+		mvpa\\clfs\\libsmlr
+	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsvm\\svmc.pyd \
+		mvpa\\clfs\\libsvm
+
+#
+# Cleaning
+#
+
+clean:
+	-rmdir /S /Q build
+	-del /S *.a *.o *.gch *.pyd
+
+#
+# Testing
+#
+
+ut-%: build configure-inplace-use
+	@set PYTHONPATH=$(CURDIR) & cd tests & python test_$*.py
+
+unittest: build configure-inplace-use
+	@set PYTHONPATH=$(CURDIR) & cd tests & python main.py
+
+
+#
+# Trailer
+#
+
+.PHONY: all
