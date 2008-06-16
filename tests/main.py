@@ -35,7 +35,7 @@ tests = [
     'test_support',
     'test_verbosity',
     'test_iohelpers',
-    'test_signal',
+    'test_datasetfx',
     'test_cmdline',
     'test_eepdataset',
     # Classifiers (longer tests)

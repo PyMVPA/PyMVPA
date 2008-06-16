@@ -14,9 +14,9 @@ import numpy as N
 
 from scipy import linalg
 from mvpa.datasets import Dataset
-from mvpa.misc.signal import detrend
+from mvpa.datasets.miscfx import detrend, removeInvariantFeatures
 
-class SignalTests(unittest.TestCase):
+class MiscDatasetFxTests(unittest.TestCase):
 
     def testDetrend(self):
         thr = 1e-10;                    # threshold for comparison
@@ -112,8 +112,22 @@ class SignalTests(unittest.TestCase):
                     "0 followed by opt_reg the same as a 1st order.")
 
 
+    def testInvarFeaturesRemoval(self):
+        r = N.random.normal(size=(3,1))
+        ds = Dataset(samples=N.hstack((N.zeros((3,2)), r)),
+                     labels=1)
+
+        self.failUnless(ds.nfeatures == 3)
+
+        dsc = removeInvariantFeatures(ds)
+
+        self.failUnless(dsc.nfeatures == 1)
+        self.failUnless((dsc.samples == r).all())
+
+
+
 def suite():
-    return unittest.makeSuite(SignalTests)
+    return unittest.makeSuite(MiscDatasetFxTests)
 
 
 if __name__ == '__main__':
