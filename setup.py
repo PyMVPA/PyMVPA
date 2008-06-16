@@ -34,10 +34,7 @@ smlrc_ext = Extension(
     # extra_compile_args = ['-O0'],
     language = 'c')
 
-ext_modules = [smlrc_ext]
-
-if 'PYMVPA_LIBSVM' in os.environ.keys():
-    ext_modules.append(libsvmc_ext)
+ext_modules = [libsvmc_ext, smlrc_ext]
 
 # Notes on the setup
 # Version scheme is: major.minor.patch<suffix>

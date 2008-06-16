@@ -6,7 +6,7 @@ PDF_DIR=build/pdf
 LATEX_DIR=build/latex
 WWW_DIR=build/website
 
-
+# should be made conditional, as pyversions id Debian specific
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
 
@@ -21,11 +21,13 @@ mkdir-%:
 
 all: build
 
-# build included LIBSVM as a static library
-libsvm: libsvm-stamp
-libsvm-stamp:
-	cd 3rd/libsvm && g++ -O2 -c svm.cpp
-	cd 3rd/libsvm && ar cur libsvm.a svm.o
+# build included 3rd party pieces (if present)
+3rd: 3rd-stamp
+3rd-stamp:
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && make -C "$$d"; \
+     done
 	touch $@
 
 
@@ -35,10 +37,9 @@ debian-build:
 
 
 build: build-stamp
-build-stamp: libsvm
+build-stamp: 3rd
 	python setup.py config --noisy
-	PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy" \
-		-I3rd/libsvm -L3rd/libsvm
+	python setup.py build_ext
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
@@ -53,6 +54,12 @@ build-stamp: libsvm
 
 # Full clean
 clean:
+# clean 3rd party pieces
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && make -C "$$d" clean; \
+     done
+
 # if we are on debian system - we might have left-overs from build
 	-@$(MAKE) debian-clean
 # if not on debian -- just distclean
@@ -73,7 +80,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp libsvm-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
 
 
 debian-clean:
@@ -194,7 +201,7 @@ orig-src: distclean debian-clean
 	fi
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	PYMVPA_LIBSVM=1 python setup.py sdist --formats=gztar
+	python setup.py sdist --formats=gztar
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
