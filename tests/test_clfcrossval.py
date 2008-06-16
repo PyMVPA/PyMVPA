@@ -99,7 +99,9 @@ class CrossValidationTests(unittest.TestCase):
                                                         'training_confusion'])
 
         results = cv(data)
-        self.failUnless( results < 0.2 and results >= 0.0 )
+        self.failUnless(results < 0.2 and results >= 0.0,
+                        msg="We should generalize while working with "
+                        "metadataset. Got %s error" % results)
 
         # TODO: test accessibility of {training_,}confusion{,s} of CrossValidatedTransferError
 
