@@ -563,6 +563,37 @@ Now, install the following required packages:
 Now you can simply compile and install PyMVPA, as outlined above, in the
 general build instructions (or alternatively using the method with LIBSVM).
 
+If you have problems compiling the NIfTI libraries and PyNIfTI on OpenSUSE, try
+the following: Download the `nifticlib` source tarball, extract it and run
+`make` in the top-level source directory. Be sure to install the `zlib-devel`
+package before. Now, download the `pynifti` source tarball extract it, and edit
+`setup.py`. Change the line::
+
+  libraries = [ 'niftiio' ],
+
+to::
+
+  libraries = [ 'niftiio', 'znz', 'z' ],
+
+as mentioned in the PyNIfTI installation instructions. This is necessary, as
+the above approach does only generate static NIfTI libraries which are not
+properly linked with all dependencies. Now, compile PyNIfTI with::
+
+  python setup.py build_ext -I <path_to_nifti>/include \
+      -L <path_to_nifti>/lib --swig-opts="-I<path_to_nifti>/include"
+
+where `<path_to_nifti>` is the directory that contains the extracted
+`nifticlibs` sources. Finally, install PyNIfTI with::
+
+  sudo python setup.py install
+
+If you want to run the PyMVPA examples including the ones that make use of the
+plotting capabilities of `matplotlib` you need to install of few more packages
+(mostly due to broken dependencies in the corresponding OpenSUSE packages):
+
+  * `python-scipy`
+  * `python-gobject2`
+  * `python-gtk`
 
 
 How to cite PyMVPA
