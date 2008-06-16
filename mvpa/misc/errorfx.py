@@ -16,17 +16,15 @@ import numpy as N
 from scipy import trapz
 from scipy.stats import pearsonr
 
-class ErrorFunctionBase(object):
-    """
-    Dummy error function base class
-    """
-    pass
-
-
-class ErrorFunction(ErrorFunctionBase):
+class ErrorFunction(object):
     """Common error function interface, computing the difference between
     some desired and some predicted values.
     """
+
+    """XXX there is no reason to keep this class around imho -- it is
+    just the skeleton for all the ErrorFunctions -- interface they
+    must conform"""
+
     def __call__(self, predicted, desired):
         """Compute some error value from the given desired and predicted
         values (both sequences).
@@ -86,4 +84,5 @@ class CorrErrorFx(ErrorFunction):
     def __call__(self, predicted, desired):
         """Requires all arguments."""
         return pearsonr(predicted, desired)[0]
+
 
