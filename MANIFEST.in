@@ -1,4 +1,4 @@
-include AUTHOR COPYING MANIFEST.in
+include AUTHOR COPYING MANIFEST.in setup.cfg
 include Changelog TODO Makefile
 recursive-include doc *
 recursive-include tools *
