@@ -435,7 +435,7 @@ class ClassifiersTests(unittest.TestCase):
             clf_re.kernel_params.gamma = 0.1
             # retest is false since kernel got recomputed thus
             # can't expect to use the same kernel
-            batch_test(retest=False)
+            batch_test(retest=not('gamma' in clf.kernel_params.names))
 
         # should retrain nicely if we change labels
         oldlabels = dstrain.labels[:]
