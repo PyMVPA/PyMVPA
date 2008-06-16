@@ -249,12 +249,11 @@ class SVM(_SVM):
             changed_samples = self.__wasChanged('samples', 0, dataset.samples)
             changed_labels = self.__wasChanged('labels', 1, dataset.labels)
 
-        ul = dataset.uniquelabels
-        ul.sort()
+        # LABELS
 
+        ul = None
         self.__traindataset = dataset
 
-        # LABELS
 
         # OK -- we have to map labels since
         #  binary ones expect -1/+1
@@ -266,6 +265,9 @@ class SVM(_SVM):
         if 'regression' in self._clf_internals:
             labels_ = N.asarray(dataset.labels, dtype='double')
         else:
+            ul = dataset.uniquelabels
+            ul.sort()
+
             if len(ul) == 2:
                 # assure that we have -1/+1
                 self._labels_dict = {ul[0]:-1.0,
@@ -326,11 +328,14 @@ class SVM(_SVM):
                                               *kargs)
             newkernel = True
             self.kernel_params.reset()  # mark them as not-changed
+            _setdebug(self.__kernel, 'Kernels')
+
             if self.params.retrainable:
                 self.__kernel.set_precompute_matrix(True, True)
+                if __debug__:
+                    debug("SG_", "Resetting test kernel for retrainable SVM")
                 self.__kernel_test = None
                 self.__kernel_args = kargs
-            _setdebug(self.__kernel, 'Kernels')
 
         # TODO -- handle changed_params correctly, ie without recreating
         # whole SVM
@@ -344,7 +349,7 @@ class SVM(_SVM):
                           (self.params.C, C))
 
             # Choose appropriate implementation
-            svm_impl_class = self.__get_implementation(len(ul))
+            svm_impl_class = self.__get_implementation(ul)
 
             if __debug__:
                 debug("SG", "Creating SVM instance of %s" % `svm_impl_class`)
@@ -389,14 +394,29 @@ class SVM(_SVM):
         self.__svm.train()
 
         # Report on training
+        if (__debug__ and 'SG__' in debug.active) or \
+           self.states.isEnabled('training_confusion'):
+            trained_labels = self.__svm.classify().get_labels()
+        else:
+            trained_labels = None
+
         if __debug__:
             debug("SG_", "Done training SG_SVM %s on data with labels %s" %
                   (self._kernel_type, dataset.uniquelabels))
             if "SG__" in debug.active:
-                trained_labels = self.__svm.classify().get_labels()
                 debug("SG__", "Original labels: %s, Trained labels: %s" %
                               (dataset.labels, trained_labels))
 
+        # Assign training confusion right away here since we are ready
+        # to do so.
+        # XXX TODO use some other state variable like 'trained_labels' and
+        #     use it within base Classifier._posttrain to assign predictions
+        #     instead of duplicating code here
+        if self.states.isEnabled('training_confusion'):
+            from mvpa.clfs.transerror import ConfusionMatrix
+            self.states.training_confusion = ConfusionMatrix(
+                labels=dataset.uniquelabels, targets=dataset.labels,
+                predictions=trained_labels)
 
     def _predict(self, data):
         """Predict values for the data
@@ -506,22 +526,24 @@ class SVM(_SVM):
                 if True:
                 # try:
                     if self.__kernel is not None:
-                    #    del self.__kernel
+                        del self.__kernel
                         self.__kernel = None
 
                     if self.__kernel_test is not None:
-                    #    del __kernel_test
+                        del __kernel_test
                         self.__kernel_test = None
 
                     if self.__svm is not None:
-                    #    del self.__svm
+                        del self.__svm
                         self.__svm = None
 
                     if self.__traindata is not None:
-                        #debug("SG__", "cachesize pre free features %s" %
-                        #      (self.__svm.get_kernel().get_cache_size()))
-                        #self.__traindata.free_features()
-                    #    del self.__traindata
+                        # Let in for easy demonstration of the memory leak in shogun
+                        #for i in xrange(10):
+                        #    debug("SG__", "cachesize pre free features %s" %
+                        #          (self.__svm.get_kernel().get_cache_size()))
+                        self.__traindata.free_features()
+                        del self.__traindata
                         self.__traindata = None
 
                     if __debug__:
@@ -543,8 +565,10 @@ class SVM(_SVM):
                   msgargs=locals())
 
 
-    def __get_implementation(self, nl):
-        if nl > 2:
+    def __get_implementation(self, ul):
+        if 'regression' in self._clf_internals or len(ul) == 2:
+            svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
+        else:
             if self._svm_impl == 'libsvm':
                 svm_impl_class = shogun.Classifier.LibSVMMultiClass
             elif self._svm_impl == 'gmnp':
@@ -557,8 +581,7 @@ class SVM(_SVM):
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))
-        else:
-                svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
+
         return svm_impl_class
 
 
