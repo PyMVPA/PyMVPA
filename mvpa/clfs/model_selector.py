@@ -129,10 +129,10 @@ if __name__ == "__main__":
     test_size = 100
     F = 1
 
-    data_train, label_train = gpr.gen_data(train_size, F)
+    data_train, label_train = data_generators.sin_modulated(train_size, F)
     # print label_train
 
-    data_test, label_test = gpr.gen_data(test_size, F, flat=True)
+    data_test, label_test = data_generators.sin_modulated(test_size, F, flat=True)
     # print label_test
 
     dataset = Dataset(samples=data_train, labels=label_train)
@@ -166,9 +166,8 @@ if __name__ == "__main__":
 
     print
     print "GPR ARD on dataset from Williams and Rasmussen 1996:"
-    data, labels = data_generators.wr1996()
     # data = N.hstack([data]*10) # test a larger set of dimensions: reduce ftol!
-    dataset = Dataset(samples=data, labels=labels)
+    dataset =  data_generators.wr1996()
     k = kernel.KernelSquaredExponential(length_scale=N.ones(dataset.samples.shape[1]))
     g = gpr.GPR(k, regression=regression)
     ms = ModelSelector(g, dataset)
