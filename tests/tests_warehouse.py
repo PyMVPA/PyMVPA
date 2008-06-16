@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+from os import environ
+
 import unittest
 import numpy as N
 
@@ -69,12 +71,12 @@ def sweepargs(**kwargs):
                         untrain_clf(argvalue) # untrain classifier
                         if __debug__:
                             debug('TEST', 'Failed #%d' % len(failed_tests_str))
-                    if __debug__:
-                        if '_QUICKTEST_' in debug.active:
-                            # on TESTQUICK just run test for 1st entry in the list,
-                            # the rest are omitted
-                            # TODO: proper partitioning of unittests
-                            break
+                    # TODO: handle different levels of unittests properly
+                    if environ.has_key('MVPA_QUICKTEST'):
+                        # on TESTQUICK just run test for 1st entry in the list,
+                        # the rest are omitted
+                        # TODO: proper partitioning of unittests
+                        break
             if exception is not None:
                 exception.__init__('\n'.join(failed_tests_str))
                 raise
