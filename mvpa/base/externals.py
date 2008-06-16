@@ -37,6 +37,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'rpy': "import rpy",
           'lars': "import rpy; rpy.r.library('lars')",
           'pylab': "import pylab as __",
+          'openopt': "import scikits.openopt as __",
           'sg_fixedcachesize': "__check_shogun(3043)",
           }
 
@@ -50,7 +51,7 @@ try:
 except:
     pass
 
-def exists(dep, force=False):
+def exists(dep, force=False, raiseException=False):
     """
     Test whether a known dependency is installed on the system.
 
@@ -64,14 +65,16 @@ def exists(dep, force=False):
       force : boolean
         Whether to force the test even if it has already been
         performed.
+      raiseException : boolean
+        Whether to raise RintimeError if dependency is missing.
 
     """
     if _VERIFIED.has_key(dep) and not force:
         # we have already tested for it, so return our previous result
-        return _VERIFIED[dep]
+        result = _VERIFIED[dep]
     elif not _KNOWN.has_key(dep):
         warning("%s is not a known dependency key." % (dep))
-        return False
+        result = False
     else:
         # try and load the specific dependency
         # default to false
@@ -90,7 +93,12 @@ def exists(dep, force=False):
             debug('EXT', "Presence of %s is%s verified" %
                   (dep, {True:'', False:' NOT'}[_VERIFIED[dep]]))
 
-        return _VERIFIED[dep]
+        result = _VERIFIED[dep]
+
+    if not result and raiseException:
+        raise RuntimeError, "Required external '%s' was not found" % dep
+
+    return result
 
 
 def testAllDependencies(force=False):
