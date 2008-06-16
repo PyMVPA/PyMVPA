@@ -6,7 +6,7 @@ PDF_DIR=build/pdf
 LATEX_DIR=build/latex
 WWW_DIR=build/website
 
-
+# should be made conditional, as pyversions id Debian specific
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
 
@@ -37,8 +37,7 @@ debian-build:
 build: build-stamp
 build-stamp: libsvm
 	python setup.py config --noisy
-	PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy" \
-		-I3rd/libsvm -L3rd/libsvm
+	python setup.py build_ext
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
@@ -191,7 +190,7 @@ orig-src: distclean debian-clean
 	fi
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	PYMVPA_LIBSVM=1 python setup.py sdist --formats=gztar
+	python setup.py sdist --formats=gztar
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
