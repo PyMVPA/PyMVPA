@@ -144,8 +144,7 @@ if __debug__:
     debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
-    # TODO: handle levels of unittests properly
-    debug.register('_QUICKTEST_', "Quick unittests")
+
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
