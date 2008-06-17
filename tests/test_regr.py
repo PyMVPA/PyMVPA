@@ -43,13 +43,21 @@ class RegressionsTests(unittest.TestCase):
         cve = CrossValidatedTransferError(
             TransferError(regr, CorrErrorFx()),
             splitter=NFoldSplitter(),
-            enable_states=['training_confusion'])
+            enable_states=['training_confusion', 'confusion'])
         corr = cve(ds)
+        #TODO: test confusion statistics
         self.failUnless(corr>0.9,
                         msg="Regressions should perform well on a simple "
                         "dataset. Got mean correlation of %s " % corr)
-        #TODO: test confusion statistics
-        #print cve.training_confusion
+
+        s0 = cve.confusion.asstring(short=True)
+        s1 = cve.confusion.asstring(short=False)
+        for s in [s0, s1]:
+            self.failUnless(len(s) > 10,
+                            msg="We should get some string representation "
+                            "of regression summary. Got %s" % s)
+
+
 
 def suite():
     return unittest.makeSuite(RegressionsTests)

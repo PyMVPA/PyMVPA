@@ -127,6 +127,23 @@ class SummaryStatistics(object):
         self.__sets.append( (targets, predictions) )
         self._computed = False
 
+    def asstring(self, short=False, header=True, summary=True,
+                 description=False):
+        """'Pretty print' the matrix
+
+        :Parameters:
+          short : bool
+            if True, ignores the rest of the parameters and provides consise
+            1 line summary
+          header : bool
+            print header of the table
+          summary : bool
+            print summary (accuracy)
+          description : bool
+            print verbose description of presented statistics
+        """
+        raise NotImplementedError
+
 
     def __str__(self):
         """String summary over the `SummaryStatistics`
@@ -138,8 +155,7 @@ class SummaryStatistics(object):
             description = ('CM' in debug.active)
         else:
             description = False
-        return self.asstring(header=True, percents=True,
-                             summary=True, print_empty=False,
+        return self.asstring(short=False, header=True, summary=True,
                              description=description)
 
     def __iadd__(self, other):
@@ -305,9 +321,11 @@ class ConfusionMatrix(SummaryStatistics):
 
         TP = N.diag(self.__matrix)
         offdiag = self.__matrix - N.diag(TP)
-        stats = {'TP' : TP,
-                 'FP' : N.sum(offdiag, axis=1),
-                 'FN' : N.sum(offdiag, axis=0)}
+        stats = {
+            '# of labels' : Nlabels,
+            'TP' : TP,
+            'FP' : N.sum(offdiag, axis=1),
+            'FN' : N.sum(offdiag, axis=0)}
 
         stats['CORR']  = N.sum(TP)
         stats['TN']  = stats['CORR'] - stats['TP']
@@ -330,9 +348,21 @@ class ConfusionMatrix(SummaryStatistics):
         self._stats.update(stats)
 
 
-    def asstring(self, header=True, percents=True, summary=True,
-                  print_empty=False, description=False):
-        """'Pretty print' the matrix"""
+    def asstring(self, short=False, header=True, summary=True,
+                 description=False):
+        """'Pretty print' the matrix
+
+        :Parameters:
+          short : bool
+            if True, ignores the rest of the parameters and provides consise
+            1 line summary
+          header : bool
+            print header of the table
+          summary : bool
+            print summary (accuracy)
+          description : bool
+            print verbose description of presented statistics
+        """
         self.compute()
 
         # some shortcuts
@@ -343,6 +373,12 @@ class ConfusionMatrix(SummaryStatistics):
         # numbers of different entries
         Nlabels = len(labels)
         Nsamples = self.__Nsamples.astype(int)
+
+        stats = self._stats
+        if short:
+            return "%(# of sets)d sets %(# of labels)d labels " \
+                   " ACC:%(ACC).2f" \
+                   % stats
 
         if len(self.sets) == 0:
             return "Empty confusion matrix"
@@ -385,18 +421,18 @@ class ConfusionMatrix(SummaryStatistics):
             printed.append(
                 [labels[i]] +
                 [ str(x) for x in line ] +
-                [ _p2(self._stats[x][i]) for x in stats_perpredict])
+                [ _p2(stats[x][i]) for x in stats_perpredict])
 
         if summary:
             printed.append(['Per target:'] + underscores)
             for stat in stats_pertarget:
                 printed.append([stat] + [
-                    _p2(self._stats[stat][i]) for i in xrange(Nlabels)])
+                    _p2(stats[stat][i]) for i in xrange(Nlabels)])
 
             printed.append(['SUMMARY:'] + underscores)
 
             for stat in stats_summary:
-                printed.append([stat] + [_p2(self._stats[stat])])
+                printed.append([stat] + [_p2(stats[stat])])
 
         _equalizedTable(out, printed)
 
@@ -446,6 +482,9 @@ class RegressionStatistics(SummaryStatistics):
     _STATS_DESCRIPTION = (
         ('CC', 'Correlation coefficient', None),
         ('RMSE', 'Root mean squared error', None),
+        ('STD', 'Standard deviation', None),
+        ('RMP', 'Root mean power (compare to RMSE of results)',
+         'sqrt(mean( data**2 ))'),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -470,8 +509,30 @@ class RegressionStatistics(SummaryStatistics):
         Nsets = len(sets)
 
         stats = {}
-        funcs = {'CC': CorrErrorFx(),
-                 'RMSE':RMSErrorFx()}
+
+        def MeanPowerFx(data):
+            """Returns mean power
+
+            so similar to var but without demeaning
+            """
+            return N.mean( N.asanyarray(data)**2 )
+
+        def RootMeanPowerFx(data):
+            """Returns root mean power
+
+            to be compared against RMSE
+            """
+            return N.sqrt(MeanPowerFx(data))
+
+        funcs = {
+            'RMP_t': lambda t,p:RootMeanPowerFx(t),
+            'STD_t': lambda t,p:N.std(t),
+            'RMP_p': lambda t,p:RootMeanPowerFx(p),
+            'STD_p': lambda t,p:N.std(p),
+            'CC': CorrErrorFx(),
+            'RMSE': RMSErrorFx(),
+            'RMSE/RMP_t': lambda t,p:RMSErrorFx()(t,p)/RootMeanPowerFx(t)
+            }
 
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
@@ -487,18 +548,27 @@ class RegressionStatistics(SummaryStatistics):
         self._stats.update(stats)
 
 
-    def asstring(self, header=True,  summary=True,
-                  print_empty=False, description=False, **kwargs):
+    def asstring(self, short=False, header=True,  summary=True,
+                 description=False):
         """'Pretty print' the statistics"""
         self.compute()
 
-        out = StringIO()
         if len(self.sets) == 0:
             return "Empty summary"
 
         stats = self.stats
-        stats_ = ['CC', 'RMSE']
+
+        if short:
+            return "%(# of sets)d sets CC:%(CC).2f+-%(CC_std).3f" \
+                   " RMSE:%(RMSE).2f+-%(RMSE_std).3f" \
+                   " RMSE/RMP_t:%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
+                   % stats
+
+        stats_data = ['RMP_t', 'STD_t', 'RMP_p', 'STD_p']
+        stats_ = ['CC', 'RMSE', 'RMSE/RMP_t']
         stats_summary = ['# of sets']
+
+        out = StringIO()
 
         printed = []
         if header:
@@ -507,12 +577,18 @@ class RegressionStatistics(SummaryStatistics):
             # underscores
             printed.append(['----------', '-----', '-----', '-----', '-----'])
 
-        # Statistics itself
-        for stat in stats_:
-            s = [stat]
-            for suffix in ['', '_std', '_min', '_max']:
-                s += [ _p2(stats[stat+suffix], 3) ]
-            printed.append(s)
+        def print_stats(printed, stats_):
+            # Statistics itself
+            for stat in stats_:
+                s = [stat]
+                for suffix in ['', '_std', '_min', '_max']:
+                    s += [ _p2(stats[stat+suffix], 3) ]
+                printed.append(s)
+
+        printed.append(["Data:     "])
+        print_stats(printed, stats_data)
+        printed.append(["Results:  "])
+        print_stats(printed, stats_)
 
         if summary:
             for stat in stats_summary:
@@ -521,6 +597,9 @@ class RegressionStatistics(SummaryStatistics):
         _equalizedTable(out, printed)
 
         if description:
+            out.write("\nDescription of printed statistics.\n"
+                      " Suffixes: _t - targets, _p - predictions\n")
+
             for d, val, eq in self._STATS_DESCRIPTION:
                 out.write(" %-3s: %s\n" % (d, val))
                 if eq is not None:
