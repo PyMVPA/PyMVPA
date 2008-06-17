@@ -14,13 +14,11 @@ from mvpa.datasets import Dataset
 from mvpa.mappers import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
+from mvpa.misc.errorfx import CorrErrorFx, RMSErrorFx
+
+from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
 
-from mvpa.clfs.base import Classifier, CombinedClassifier, \
-     BinaryClassifier, MulticlassClassifier, \
-     SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
-     _deepcopyclf
-from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
 from tests_warehouse import *
@@ -40,9 +38,15 @@ class RegressionsTests(unittest.TestCase):
     def testRegressions(self, regr):
         """Simple tests on regressions
         """
-        print regr
-        pass
+        ds = datasets['chirp_linear']
 
+        cve = CrossValidatedTransferError(
+            TransferError(regr, CorrErrorFx()),
+            splitter=NFoldSplitter())
+        corr = cve(ds)
+        self.failUnless(corr>0.9,
+                        msg="Regressions should perform well on a simple "
+                        "dataset. Got mean correlation of %s " % corr)
 
 def suite():
     return unittest.makeSuite(RegressionsTests)
