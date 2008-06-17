@@ -39,11 +39,11 @@ ext_modules = [smlrc_ext]
 
 # only do libsvm if forced or libsvm.a is available
 if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \
-   or sys.argv.count('--with-pymvpa-libsvm'):
+   or sys.argv.count('--with-libsvm'):
     ext_modules.append(libsvmc_ext)
     # clean argv if necessary (or distutils will complain)
-    if sys.argv.count('--with-pymvpa-libsvm'):
-        sys.argv.remove('--with-pymvpa-libsvm')
+    if sys.argv.count('--with-libsvm'):
+        sys.argv.remove('--with-libsvm')
 
 
 # Notes on the setup
