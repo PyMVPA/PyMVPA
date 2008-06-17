@@ -129,10 +129,10 @@ if __name__ == "__main__":
     test_size = 100
     F = 1
 
-    data_train, label_train = data_generators.sin_modulated(train_size, F)
+    data_train, label_train = data_generators.sinModulated(train_size, F)
     # print label_train
 
-    data_test, label_test = data_generators.sin_modulated(test_size, F, flat=True)
+    data_test, label_test = data_generators.sinModulated(test_size, F, flat=True)
     # print label_test
 
     dataset = Dataset(samples=data_train, labels=label_train)

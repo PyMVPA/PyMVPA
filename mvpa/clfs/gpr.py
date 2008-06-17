@@ -211,19 +211,17 @@ if __name__ == "__main__":
     pylab.ion()
 
     from mvpa.datasets import Dataset
-    from mvpa.misc.data_generators import sin_modulated
+    from mvpa.misc.data_generators import sinModulated
 
     train_size = 40
     test_size = 100
     F = 1
 
-    data_train, label_train = sin_modulated(train_size, F)
-    # print label_train
+    dataset = sinModulated(train_size, F)
+    # print dataset.labels
 
-    data_test, label_test = sin_modulated(test_size, F, flat=True)
-    # print label_test
-
-    dataset = Dataset(samples=data_train, labels=label_train)
+    dataset_test = sinModulated(test_size, F, flat=True)
+    # print dataset_test.labels
 
     regression = True
     logml = True
@@ -278,4 +276,6 @@ if __name__ == "__main__":
 
 
 
-    compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F,logml)
+    compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,
+                       dataset_test.samples, dataset_test.labels,F,logml)
+    pylab.show()
