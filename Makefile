@@ -21,11 +21,13 @@ mkdir-%:
 
 all: build
 
-# build included LIBSVM as a static library
-libsvm: libsvm-stamp
-libsvm-stamp:
-	cd 3rd/libsvm && g++ -O2 -c svm.cpp
-	cd 3rd/libsvm && ar cur libsvm.a svm.o
+# build included 3rd party pieces (if present)
+3rd: 3rd-stamp
+3rd-stamp:
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && make -C "$$d"; \
+     done
 	touch $@
 
 
@@ -35,7 +37,7 @@ debian-build:
 
 
 build: build-stamp
-build-stamp: libsvm
+build-stamp: 3rd
 	python setup.py config --noisy
 	python setup.py build_ext
 	python setup.py build_py
@@ -52,6 +54,12 @@ build-stamp: libsvm
 
 # Full clean
 clean:
+# clean 3rd party pieces
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && make -C "$$d" clean; \
+     done
+
 # if we are on debian system - we might have left-overs from build
 	-@$(MAKE) debian-clean
 # if not on debian -- just distclean
@@ -72,7 +80,7 @@ distclean:
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp libsvm-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
 
 
 debian-clean:
