@@ -41,7 +41,7 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
 from mvpa.misc.param import Parameter
 
-from mvpa.clfs.transerror import ConfusionMatrix
+from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer
@@ -174,10 +174,13 @@ class Classifier(Parametrized):
                               "Disabling state %s since doing regression, " %
                               statevar + "not classification")
                     self.states.disable(statevar)
-        elif 'regression' in self._clf_internals:
-            # regressions are used as binary classifiers if not asked to perform
-            # regression explicitely
-            self._clf_internals.append('binary')
+            self._summaryClass = RegressionStatistics
+        else:
+            self._summaryClass = ConfusionMatrix
+            if 'regression' in self._clf_internals:
+                # regressions are used as binary classifiers if not asked to perform
+                # regression explicitely
+                self._clf_internals.append('binary')
 
 
         self.__trainedidhash = None
@@ -239,8 +242,8 @@ class Classifier(Parametrized):
                 disable_states=["predictions"])
             predictions = self.predict(dataset.samples)
             self.states._resetEnabledTemporarily()
-            self.training_confusion = ConfusionMatrix(
-                labels=dataset.uniquelabels, targets=dataset.labels,
+            self.training_confusion = self._summaryClass(
+                targets=dataset.labels,
                 predictions=predictions)
 
         if self.states.isEnabled('feature_ids'):
@@ -1202,7 +1205,8 @@ class SplitClassifier(CombinedClassifier):
         bclfs = []
         if self.states.isEnabled('training_confusions'):
             self.training_confusions = \
-                ConfusionMatrix(labels=dataset.uniquelabels)
+                                     self.__clf._summaryClass()
+                #ConfusionMatrix(labels=dataset.uniquelabels)
 
         # for proper and easier debugging - first define classifiers and then
         # train them

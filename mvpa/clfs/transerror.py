@@ -18,13 +18,51 @@ from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
 
-from mvpa.misc.errorfx import MeanMismatchErrorFx
+from mvpa.misc.errorfx import MeanMismatchErrorFx, CorrErrorFx, RMSErrorFx
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.misc import debug
+
+def _equalizedTable(out, printed):
+    """Given list of lists figure out their common widths and print to out
+
+    """
+    # equalize number of elements in each row
+    Nelements_max = max(len(x) for x in printed)
+    for i,printed_ in enumerate(printed):
+        printed[i] += [''] * (Nelements_max - len(printed_))
+
+    # figure out lengths within each column
+    aprinted = N.asarray(printed)
+    col_width = [ max( [len(x) for x in column] ) for column in aprinted.T ]
+
+    for i, printed_ in enumerate(printed):
+        for j, item in enumerate(printed_):
+            item = str(item)
+            NspacesL = ceil((col_width[j] - len(item))/2.0)
+            NspacesR = col_width[j] - NspacesL - len(item)
+            out.write("%%%ds%%s%%%ds " \
+                      % (NspacesL, NspacesR) % ('', item, ''))
+        out.write("\n")
+    pass
+
+
+def _p2(x, prec=2):
+    """Helper to print depending on the type nicely. For some
+    reason %.2g for 100 prints exponential form which is ugly
+    """
+    if isinstance(x, int):
+        return "%d" % x
+    elif isinstance(x, float):
+        s = ("%%.%df" % prec % x).rstrip('0.').lstrip()
+        if s == '':
+            s = '0'
+        return s
+    else:
+        return "%s" % x
 
 
 class SummaryStatistics(object):
@@ -36,6 +74,10 @@ class SummaryStatistics(object):
     computation and display. No real MVC is implemented, but if there
     was we had M here
     """
+
+    _STATS_DESCRIPTION = (
+        ('# of sets', 'number of target/prediction sets which were provided', None),
+        )
 
     def __init__(self, targets=None, predictions=None):
         """Initialize SummaryStatistics
@@ -128,7 +170,14 @@ class SummaryStatistics(object):
         self._computed = True
 
     def _compute(self):
-        raise NotImplementedError
+        self._stats = {'# of sets' : len(self.sets)}
+
+
+    @property
+    def summaries(self):
+        """Return a list of separate summaries per each stored set"""
+        return [ self.__class__(targets=x[0],
+                                predictions=x[1]) for x in self.sets ]
 
     @property
     def error(self):
@@ -137,7 +186,8 @@ class SummaryStatistics(object):
     @property
     def stats(self):
         self.compute()
-        return self.__stats
+        return self._stats
+
 
     sets = property(lambda self:self.__sets)
 
@@ -169,8 +219,8 @@ class ConfusionMatrix(SummaryStatistics):
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
-        ('# of sets', 'number of target/prediction sets which were provided', None)
-        )
+        ) + SummaryStatistics._STATS_DESCRIPTION
+
 
     def __init__(self, labels=None, **kwargs):
         """Initialize ConfusionMatrix with optional list of `labels`
@@ -193,6 +243,8 @@ class ConfusionMatrix(SummaryStatistics):
         self.__matrix = None
         """Resultant confusion matrix"""
 
+    # XXX might want to remove since summaries does the same, just without
+    #     supplying labels
     @property
     def matrices(self):
         """Return a list of separate confusion matrix per each stored set"""
@@ -202,6 +254,8 @@ class ConfusionMatrix(SummaryStatistics):
 
     def _compute(self):
         """Actually compute the confusion matrix based on all the sets"""
+
+        super(ConfusionMatrix, self)._compute()
 
         if __debug__:
             if not self.__matrix is None:
@@ -272,10 +326,8 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
-        stats['# of sets'] = len(self.sets)
 
-        self.__stats = stats
-        self._computed = True
+        self._stats.update(stats)
 
 
     def asstring(self, header=True, percents=True, summary=True,
@@ -317,20 +369,6 @@ class ConfusionMatrix(SummaryStatistics):
                   "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (Nlabels, matrix.shape)
 
-        def p2(x):
-            """Helper to print depending on the type nicely. For some
-            reason %.2g for 100 prints exponential form which is ugly
-            """
-            if isinstance(x, int):
-                return "%d" % x
-            elif isinstance(x, float):
-                s = ("%.2f" % x).rstrip('0.').lstrip()
-                if s == '':
-                    s = '0'
-                return s
-            else:
-                return "%s" % x
-
         # list of lists of what is printed
         printed = []
         underscores = [" %s" % ("-" * L)] * Nlabels
@@ -347,37 +385,20 @@ class ConfusionMatrix(SummaryStatistics):
             printed.append(
                 [labels[i]] +
                 [ str(x) for x in line ] +
-                [ p2(self.__stats[x][i]) for x in stats_perpredict])
+                [ _p2(self._stats[x][i]) for x in stats_perpredict])
 
         if summary:
             printed.append(['Per target:'] + underscores)
             for stat in stats_pertarget:
                 printed.append([stat] + [
-                    p2(self.__stats[stat][i]) for i in xrange(Nlabels)])
+                    _p2(self._stats[stat][i]) for i in xrange(Nlabels)])
 
             printed.append(['SUMMARY:'] + underscores)
 
             for stat in stats_summary:
-                printed.append([stat] + [p2(self.__stats[stat])])
+                printed.append([stat] + [_p2(self._stats[stat])])
 
-        # equalize number of elements in each row
-        Nelements_max = max(len(x) for x in printed)
-        for i,printed_ in enumerate(printed):
-            printed[i] += [''] * (Nelements_max - len(printed_))
-
-        # figure out lengths within each column
-        aprinted = N.asarray(printed)
-        col_width = [ max( [len(x) for x in column] ) for column in aprinted.T ]
-
-        for i, printed_ in enumerate(printed):
-            for j, item in enumerate(printed_):
-                item = str(item)
-                NspacesL = ceil((col_width[j] - len(item))/2.0)
-                NspacesR = col_width[j] - NspacesL - len(item)
-                out.write("%%%ds%%s%%%ds " \
-                          % (NspacesL, NspacesR) % ('', item, ''))
-            out.write("\n")
-
+        _equalizedTable(out, printed)
 
         if description:
             out.write("\nStatistics computed in 1-vs-rest fashion per each " \
@@ -416,6 +437,103 @@ class ConfusionMatrix(SummaryStatistics):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
+
+class RegressionStatistics(SummaryStatistics):
+    """Class to contain information and display on regression results.
+
+    """
+
+    _STATS_DESCRIPTION = (
+        ('CC', 'Correlation coefficient', None),
+        ('RMSE', 'Root mean squared error', None),
+        ) + SummaryStatistics._STATS_DESCRIPTION
+
+
+    def __init__(self, **kwargs):
+        """Initialize RegressionStatistics
+
+        :Parameters:
+         targets
+           Optional set of targets
+         predictions
+           Optional set of predictions
+           """
+
+        SummaryStatistics.__init__(self, **kwargs)
+
+
+    def _compute(self):
+        """Actually compute the confusion matrix based on all the sets"""
+
+        super(RegressionStatistics, self)._compute()
+        sets = self.sets
+        Nsets = len(sets)
+
+        stats = {}
+        funcs = {'CC': CorrErrorFx(),
+                 'RMSE':RMSErrorFx()}
+
+        for funcname, func in funcs.iteritems():
+            funcname_all = funcname + '_all'
+            stats[funcname_all] = []
+            for i, (target, predictions) in enumerate(sets):
+                stats[funcname_all] += [func(target, predictions)]
+            stats[funcname_all] = N.array(stats[funcname_all])
+            stats[funcname] = N.mean(stats[funcname_all])
+            stats[funcname+'_std'] = N.std(stats[funcname_all])
+            stats[funcname+'_max'] = N.max(stats[funcname_all])
+            stats[funcname+'_min'] = N.min(stats[funcname_all])
+
+        self._stats.update(stats)
+
+
+    def asstring(self, header=True,  summary=True,
+                  print_empty=False, description=False, **kwargs):
+        """'Pretty print' the statistics"""
+        self.compute()
+
+        out = StringIO()
+        if len(self.sets) == 0:
+            return "Empty summary"
+
+        stats = self.stats
+        stats_ = ['CC', 'RMSE']
+        stats_summary = ['# of sets']
+
+        printed = []
+        if header:
+            # labels
+            printed.append(['Statistics', 'Mean', 'Std', 'Min', 'Max'])
+            # underscores
+            printed.append(['----------', '-----', '-----', '-----', '-----'])
+
+        # Statistics itself
+        for stat in stats_:
+            s = [stat]
+            for suffix in ['', '_std', '_min', '_max']:
+                s += [ _p2(stats[stat+suffix], 3) ]
+            printed.append(s)
+
+        if summary:
+            for stat in stats_summary:
+                printed.append([stat] + [_p2(stats[stat])])
+
+        _equalizedTable(out, printed)
+
+        if description:
+            for d, val, eq in self._STATS_DESCRIPTION:
+                out.write(" %-3s: %s\n" % (d, val))
+                if eq is not None:
+                    out.write("      " + eq + "\n")
+
+        result = out.getvalue()
+        out.close()
+        return result
+
+    @property
+    def error(self):
+        self.compute()
+        return self.stats['RMSE']
 
 
 class ClassifierError(Stateful):
@@ -605,8 +723,9 @@ class TransferError(ClassifierError):
         #  `ConfusionBasedError`, where confusion is simply
         #  bound to classifiers confusion matrix
         if self.states.isEnabled('confusion'):
-            self.confusion = ConfusionMatrix(
-                labels=self.labels, targets=testdataset.labels,
+            self.confusion = self.clf._summaryClass(
+                #labels=self.labels,
+                targets=testdataset.labels,
                 predictions=predictions)
 
         # compute error from desired and predicted values

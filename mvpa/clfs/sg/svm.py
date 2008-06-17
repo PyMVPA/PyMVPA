@@ -413,9 +413,8 @@ class SVM(_SVM):
         #     use it within base Classifier._posttrain to assign predictions
         #     instead of duplicating code here
         if self.states.isEnabled('training_confusion'):
-            from mvpa.clfs.transerror import ConfusionMatrix
-            self.states.training_confusion = ConfusionMatrix(
-                labels=dataset.uniquelabels, targets=dataset.labels,
+            self.states.training_confusion = self._summaryClass(
+                targets=dataset.labels,
                 predictions=trained_labels)
 
     def _predict(self, data):
