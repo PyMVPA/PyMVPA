@@ -2,7 +2,7 @@
 LIB=libsvm.a
 MISC=svm.cpp
 
-LIBFLAGS=-fPIC
+LIBFLAGS=
 CFLAGS=-Wall -O2
 
 all: $(LIB)
