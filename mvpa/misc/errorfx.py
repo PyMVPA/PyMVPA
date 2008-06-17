@@ -11,7 +11,6 @@
 __docformat__ = 'restructuredtext'
 
 
-from cmath import sqrt
 import numpy as N
 from scipy import trapz
 from scipy.stats import pearsonr
@@ -40,9 +39,7 @@ class RMSErrorFx(ErrorFunction):
         """Both 'predicted' and 'desired' can be either scalars or sequences,
         but have to be of the same length.
         """
-        difference = N.subtract(predicted, desired)
-
-        return sqrt(N.dot(difference, difference))
+        return N.sqrt(N.mean(N.subtract(predicted, desired)**2))
 
 
 class MeanMismatchErrorFx(ErrorFunction):
