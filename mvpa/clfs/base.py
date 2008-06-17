@@ -174,6 +174,11 @@ class Classifier(Parametrized):
                               "Disabling state %s since doing regression, " %
                               statevar + "not classification")
                     self.states.disable(statevar)
+        elif 'regression' in self._clf_internals:
+            # regressions are used as binary classifiers if not asked to perform
+            # regression explicitely
+            self._clf_internals.append('binary')
+
 
         self.__trainedidhash = None
         """Stores id of the dataset on which it was trained to signal

@@ -17,7 +17,7 @@ from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.knn import *
 
-from mvpa.clfs.warehouse import clfs
+from mvpa.clfs.warehouse import clfs, regrs
 from mvpa.base import externals
 
 # if have ANY svm implementation
