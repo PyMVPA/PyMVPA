@@ -104,7 +104,7 @@ class SVM(_SVM):
                  "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0'), None),
                 }
 
-    _KNOWN_PARAMS = [ 'C', 'epsilon' ]
+    _KNOWN_PARAMS = [ 'epsilon' ]
     _KNOWN_KERNEL_PARAMS = [ ]
 
     _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
@@ -137,11 +137,11 @@ class SVM(_SVM):
     however all SVMs can be evaluated in parallel.
     """
     _KNOWN_IMPLEMENTATIONS = {
-        "libsvm" : (shogun.Classifier.LibSVM, (), ('multiclass', 'binary'), ''),
-        "gmnp" : (shogun.Classifier.GMNPSVM, (), ('multiclass', 'binary'), ''),
-        "mpd"  : (shogun.Classifier.MPDSVM, (), ('binary',), ''),
-        "gpbt" : (shogun.Classifier.GPBTSVM, (), ('binary',), ''),
-        "gnpp" : (shogun.Classifier.GNPPSVM, (), ('binary',), ''),
+        "libsvm" : (shogun.Classifier.LibSVM, ('C',), ('multiclass', 'binary'), ''),
+        "gmnp" : (shogun.Classifier.GMNPSVM, ('C',), ('multiclass', 'binary'), ''),
+        "mpd"  : (shogun.Classifier.MPDSVM, ('C',), ('binary',), ''),
+        "gpbt" : (shogun.Classifier.GPBTSVM, ('C',), ('binary',), ''),
+        "gnpp" : (shogun.Classifier.GNPPSVM, ('C',), ('binary',), ''),
 
         ## TODO: Needs sparse features...
         # "svmlin" : (shogun.Classifier.SVMLin, ''),
@@ -152,7 +152,7 @@ class SVM(_SVM):
         # "sgd" : ( shogun.Classifier.SVMSGD, ''),
 
         # regressions
-        "libsvr": (shogun.Regression.LibSVR, ('tube_epsilon',), ('regression',), ''),
+        "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',), ('regression',), ''),
         "krr": (shogun.Regression.KRR, ('tau',), ('regression',), ''),
         }
 
@@ -341,12 +341,13 @@ class SVM(_SVM):
         # whole SVM
         if not self.params.retrainable or self.__svm is None or changed_params:
             # SVM
-            C = self.params.C
-            if C<0:
-                C = self._getDefaultC(dataset.samples)*abs(C)
-                if __debug__:
-                    debug("SG_", "Default C for %s was computed to be %s" %
-                          (self.params.C, C))
+            if self.params.isKnown('C'):
+                C = self.params.C
+                if C<0:
+                    C = self._getDefaultC(dataset.samples)*abs(C)
+                    if __debug__:
+                        debug("SG_", "Default C for %s was computed to be %s" %
+                              (self.params.C, C))
 
             # Choose appropriate implementation
             svm_impl_class = self.__get_implementation(ul)
@@ -597,9 +598,9 @@ class SVM(_SVM):
 # Conditionally make some of the implementations available if they are
 # present in the present shogun
 for name, item, params, descr in \
-        [('lightsvm', "shogun.Classifier.SVMLight", "(), ('binary',)",
+        [('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
           "SVMLight classification http://svmlight.joachims.org/"),
-         ('svrlight', "shogun.Regression.SVRLight", "('tube_epsilon',), ('regression',)",
+         ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
           "SVMLight regression http://svmlight.joachims.org/")]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
