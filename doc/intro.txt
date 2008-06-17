@@ -446,12 +446,9 @@ Build with enabled LIBSVM bindings
 ''''''''''''''''''''''''''''''''''
 
 From the 0.2 release of PyMVPA on, the LIBSVM_ classifier extension is not
-build by default anymore. However, it is still shipped with PyMVPA and can
-be enabled at build time. To be able to do this you need to have SWIG_ and
-the development files of LIBSVM_ (headers and library) installed on your
-system. Depending on where you installed them, it might be necessary to
-specify the full path to them with the `--include-dirs`, `--library-dirs`
-and `--swig` options.
+build by default anymore. However, it is still shipped with PyMVPA and can be
+enabled at build time. To be able to do this you need to have SWIG_installed on
+your system.
 
 PyMVPA needs a patched LIBSVM version, as the original distribution generates
 a huge amount of debugging messages and therefore makes the console and PyMVPA
@@ -459,23 +456,26 @@ output almost unusable. Debian (since lenny: 2.84.0-1) and Ubuntu (since gutsy)
 already include the patched version. For all other systems a minimal copy of
 the patched sources is included in the PyMVPA source package (`3rd/libsvm`).
 
-Building the patched LIBSVM library from the included sources is simply::
+If you do not have a proper LIBSVM_ package, you can build the library from 
+the copy of the code that is shipped with PyMVPA. To do this, simply invoke::
 
-  cd 3rd/libsvm
-  g++ -O2 -c svm.cpp
-  ar cur libsvm.a svm.o
+  make 3rd
 
-The following command builds PyMVPA with all extentions including the LIBSVM_
-wrapper using the freshly build libsvm.a (execute in toplevel source
-directory)::
+Now build PyMVPA as described above. The build script will automatically
+detect that LIBSVM_ is available and builds the LIBSVM wrapper module for you.
 
-  PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy" \
-    -I3rd/libsvm -L3rd/libsvm
+If your system provides an appropriate LIBSVM_ version, you need to have the
+development files (headers and library) installed. Depending on where you
+installed them, it might be necessary to specify the full path to that location
+with the `--include-dirs`, `--library-dirs` and `--swig` options. Now add the '--with-libsvm' flag when building PyMVPA::
+
+  python setup.py build_ext --with-libsvm \
+      [ -I<LIBSVM_INCLUDEDIR> -L<LIBSVM_LIBDIR> ]
 
 The installation procedure is equivalent to the build setup without LIBSVM_,
-except that the `PYMVPA_LIBSVM` variable also has to be set when installing::
+except that the '--with--libsvm' flag also has to be set when installing::
 
-  PYMVPA_LIBSVM=1 python setup.py install
+  python setup.py install --with-libsvm
 
 .. _SWIG: http://www.swig.org/
 
