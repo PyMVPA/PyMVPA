@@ -957,6 +957,8 @@ class Stateful(object):
         """Definition of the object summary over Parametrized object
         """
         res = ""
+        if __debug__ and 'MODULE_IN_REPR' in debug.active:
+            fullname = True
         if fullname:
             modulename = '%s' % self.__class__.__module__
             if modulename != "__main__":
