@@ -14,4 +14,4 @@ $(LIB): $(MISC:.cpp=.o)
 	ar cur $@ $^
 
 clean:
-	rm -f $(LIB) $(MISC:.cpp=.o)
+	-del $(LIB) $(MISC:.cpp=.o)
