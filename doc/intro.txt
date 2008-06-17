@@ -274,9 +274,10 @@ Installation
 
 The easiest way to obtain PyMVPA is to use pre-built binary packages.
 Currently we provide such packages or installers for the Debian/Ubuntu family
-and 32-bit Windows (see below). If there are no binary packages for your
-operating system or platform yet, you can build PyMVPA from source. Please
-refer to `Building from Source`_ for more information.
+and 32-bit Windows (see below). Since version 0.2.2 there is also an initial
+version of a RPM package for OpenSUSE 10.3. If there are no binary packages
+for your operating system or platform yet, you can build PyMVPA from source.
+Please refer to `Building from Source`_ for more information.
 
 .. index:: binary packages
 .. index:: Debian
@@ -363,6 +364,20 @@ which are shipped with the source code in the `doc/examples` directory.
 .. _NIfTI libraries: http://niftilib.sourceforge.net/
 .. _GnuWin32 project: http://gnuwin32.sourceforge.net/
 
+
+.. _install_suse:
+
+OpenSUSE
+''''''''
+
+To install the provided RPM package for OpenSUSE, simply download it, open a
+console and invoke (the example command refers to PyMVPA 0.2.2 and OpenSUSE
+10.3)::
+
+  rpm -i pymvpa-0.2.2-1suse10_3.i586.rpm
+
+Please refer to the section about :ref:`building on OpenSUSE <build_suse>` for
+notes about the installation of the dependencies.
 
 
 .. _buildfromsource:
@@ -530,6 +545,12 @@ be installed, just unzip the file you downloaded and add the root directory of
 the extracted sources to the `PATH` environment variable (make sure that this
 directory contains `swig.exe`, if not, you haven't downloaded `swigwin`).
 
+PyMVPA comes with a specific build setup configuration for Windows
+-- `setup.cfg.win` in the root of the source tarball. Please rename this file
+to `setup.cfg` (and overwrite the existing one). This is only necessary, if you
+have *not* configured your Python distutils installation to always use MinGW
+instead of the Mircrosoft compilers.
+
 Now, we are ready to build PyMVPA. The easiest way to do this, is to make use
 of the `Makefile.win` that is shipped with PyMVPA to build a binary installer
 package (`.exe`). Make sure, that the settings at the top of `Makefile.win`
@@ -546,6 +567,8 @@ as described :ref:`above <install_win>`.
 .. _MinGW project website: http://www.mingw.org/
 .. _MSYS: http://www.mingw.org/msys.shtml
 
+
+.. _build_suse:
 
 OpenSUSE
 ''''''''
