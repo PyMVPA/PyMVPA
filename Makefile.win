@@ -15,16 +15,15 @@ all: build configure-inplace-use
 # build included 3rd party pieces (if present)
 3rd: 3rd-stamp
 3rd-stamp:
-	$(MAKE) -f 3rd/libsvm/Makefile.win
-	touch $@
+	cd 3rd\libsvm & $(MAKE) -f Makefile.win
 
 
 build: 3rd
 # build pymvpa extensions including libsvm
 	set PYTHON_INCLUDE="$(PYTHON_PATH)\\include" \
-		& python setup.py build_ext -c mingw32
+		& python setup.py build_ext
 
-installer: build
+installer: 3rd build
 # now build the installer
 	python setup.py bdist_wininst
 
