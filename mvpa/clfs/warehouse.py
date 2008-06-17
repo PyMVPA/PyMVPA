@@ -143,8 +143,8 @@ class Warehouse(object):
     def items(self):
         return self.__items
 
-clfs = Warehouse(known_tags=_KNOWN_INTERNALS,
-                 matches={'binary':['regression']})
+clfs = Warehouse(known_tags=_KNOWN_INTERNALS) # classifiers
+regrs = Warehouse(known_tags=_KNOWN_INTERNALS) # regressions
 
 # NB:
 #  - Nu-classifiers are turned off since for haxby DS default nu
@@ -185,6 +185,13 @@ if externals.exists('libsvm'):
              #               descr='libsvm.SigmoidSVM()'),
              ]
 
+    # regressions
+    regrs._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
+    regrs += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR',
+                         regression=True),
+              libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR',
+                         regression=True)]
+
 if externals.exists('shogun'):
     from mvpa.clfs import sg
     clfs._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
@@ -224,6 +231,10 @@ if externals.exists('shogun'):
 #           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
+    for impl in ['libsvr', 'krr']:
+        regrs._known_tags.union_update([impl])
+        regrs += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
+                          regression=True) ]
 
 if len(clfs['svm', 'linear']) > 0:
     # if any SVM implementation is known, import default ones
