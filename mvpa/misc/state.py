@@ -912,7 +912,7 @@ class Stateful(object):
 
         if __debug__:
             debug("ST", "Stateful.__init__ was done for %s id %s with descr=%s" \
-                % (self.__class__, id(self), descr))
+                % (self.__class__.__name__, id(self), descr))
 
 
     #__doc__ = enhancedDocString('Stateful', locals())
@@ -957,8 +957,12 @@ class Stateful(object):
         """Definition of the object summary over Parametrized object
         """
         res = ""
-        if __debug__ and 'MODULE_IN_REPR' in debug.active:
-            fullname = True
+        id_str = ""
+        if __debug__:
+            if 'MODULE_IN_REPR' in debug.active:
+                fullname = True
+            if 'ID_IN_REPR' in debug.active:
+                id_str = '#%s' % id(self)
         if fullname:
             modulename = '%s' % self.__class__.__module__
             if modulename != "__main__":
@@ -990,7 +994,7 @@ class Stateful(object):
         descr = self.__descr
         if descr is not None:
             res += "%sdescr='%s'" % (sep, descr)
-        res += ")"
+        res += ")%s" % id_str
         return res
 
 
