@@ -169,11 +169,6 @@ class SVM(_SVM):
         svm_impl = kwargs.get('svm_impl', 'libsvm').lower()
         kwargs['svm_impl'] = svm_impl
 
-        #if svm_impl == 'krr':
-        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
-        #if svm_impl in ['svrlight', 'libsvr']:
-        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tube_epsilon']
-
         # init base class
         _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
 
@@ -229,6 +224,13 @@ class SVM(_SVM):
                       % (descr, self.__idhash[i], idhash_))
         self.__idhash[i] = idhash_
         return changed
+
+    def __condition_kernel(self, kernel):
+        # XXX I thought that it is needed only for retrainable classifier,
+        #     but then krr gets confused, and svrlight needs it to provide
+        #     meaningful results even without 'retraining'
+        if self._svm_impl in ['svrlight', 'lightsvm']:
+            kernel.set_precompute_matrix(True, True)
 
 
     def _train(self, dataset):
@@ -330,8 +332,8 @@ class SVM(_SVM):
             self.kernel_params.reset()  # mark them as not-changed
             _setdebug(self.__kernel, 'Kernels')
 
+            self.__condition_kernel(self.__kernel)
             if self.params.retrainable:
-                self.__kernel.set_precompute_matrix(True, True)
                 if __debug__:
                     debug("SG_", "Resetting test kernel for retrainable SVM")
                 self.__kernel_test = None
@@ -375,12 +377,12 @@ class SVM(_SVM):
             if __debug__:
                 debug("SG_", "SVM instance is not re-created")
             if changed_labels:          # labels were changed
+                if __debug__: debug("SG__", "Assigning new labels")
                 self.__svm.set_labels(labels)
             if newkernel:               # kernel was replaced
+                if __debug__: debug("SG__", "Assigning new kernel")
                 self.__svm.set_kernel(self.__kernel)
-            if changed_params:
-                raise NotImplementedError, \
-                      "Implement handling of changing params of SVM"
+            assert(not changed_params)  # we should never get here
 
         if self.params.retrainable:
             # we must assign it only if it is retrainable
@@ -394,6 +396,9 @@ class SVM(_SVM):
 
         self.__svm.train()
 
+        if __debug__:
+            debug("SG_", "Done training SG_SVM %s" % self._kernel_type)
+
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
            self.states.isEnabled('training_confusion'):
@@ -401,10 +406,7 @@ class SVM(_SVM):
         else:
             trained_labels = None
 
-        if __debug__:
-            debug("SG_", "Done training SG_SVM %s on data with labels %s" %
-                  (self._kernel_type, dataset.uniquelabels))
-            if "SG__" in debug.active:
+        if __debug__ and "SG__" in debug.active:
                 debug("SG__", "Original labels: %s, Trained labels: %s" %
                               (dataset.labels, trained_labels))
 
@@ -413,7 +415,10 @@ class SVM(_SVM):
         # XXX TODO use some other state variable like 'trained_labels' and
         #     use it within base Classifier._posttrain to assign predictions
         #     instead of duplicating code here
-        if self.states.isEnabled('training_confusion'):
+        # XXX For now it can be done only for regressions since labels need to
+        #     be remapped and that becomes even worse if we use regression
+        #     as a classifier so mapping happens upstairs
+        if self.regression and self.states.isEnabled('training_confusion'):
             self.states.training_confusion = self._summaryClass(
                 targets=dataset.labels,
                 predictions=trained_labels)
@@ -436,6 +441,8 @@ class SVM(_SVM):
                       % self)
             # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
+            self.__condition_kernel(self.__kernel)
+
         else:
             if changed_testdata:
                 if __debug__:
@@ -530,7 +537,7 @@ class SVM(_SVM):
                         self.__kernel = None
 
                     if self.__kernel_test is not None:
-                        del __kernel_test
+                        del self.__kernel_test
                         self.__kernel_test = None
 
                     if self.__svm is not None:
