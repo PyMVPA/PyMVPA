@@ -827,6 +827,34 @@ class MaximalVote(PredictionsCombiner):
 
 
 
+class MeanPrediction(PredictionsCombiner):
+    """Provides a decision by taking mean of the results
+    """
+
+    predictions = StateVariable(enabled=True,
+        doc="Mean predictions")
+
+    def __call__(self, clfs, dataset):
+        """Actuall callable - perform meaning
+
+        """
+        if len(clfs)==0:
+            return []                   # to don't even bother
+
+        all_predictions = []
+        for clf in clfs:
+            # Lets check first if necessary state variable is enabled
+            if not clf.states.isEnabled("predictions"):
+                raise ValueError, "MeanPrediction needs classifiers (such as " + \
+                      "%s) with state 'predictions' enabled" % clf
+            all_predictions.append(clf.predictions)
+
+        # compute mean
+        predictions = N.mean(N.asarray(all_predictions), axis=0)
+        self.predictions = predictions
+        return predictions
+
+
 class ClassifierCombiner(PredictionsCombiner):
     """Provides a decision using training a classifier on predictions/values
 
@@ -879,7 +907,7 @@ class CombinedClassifier(BoostedClassifier):
     `PredictionsCombiner` functor.
     """
 
-    def __init__(self, clfs=None, combiner=MaximalVote(), **kwargs):
+    def __init__(self, clfs=None, combiner=None, **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -887,7 +915,8 @@ class CombinedClassifier(BoostedClassifier):
             list of classifier instances to use
           combiner : PredictionsCombiner
             callable which takes care about combining multiple
-            results into a single one (e.g. maximal vote)
+            results into a single one (e.g. maximal vote for
+            classification, MeanPrediction for regression))
           kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
@@ -902,6 +931,9 @@ class CombinedClassifier(BoostedClassifier):
 
         BoostedClassifier.__init__(self, clfs, **kwargs)
 
+        # assign default combiner
+        if combiner is None:
+            combiner = (MaximalVote, MeanPrediction)[self.regression]()
         self.__combiner = combiner
         """Functor destined to combine results of multiple classifiers"""
 
@@ -1185,7 +1217,8 @@ class SplitClassifier(CombinedClassifier):
           splitter : Splitter
             `Splitter` to use to split the dataset prior training
           """
-        CombinedClassifier.__init__(self, **kwargs)
+
+        CombinedClassifier.__init__(self, regression=clf.regression, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
 
