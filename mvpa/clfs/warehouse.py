@@ -231,10 +231,16 @@ if externals.exists('shogun'):
 #           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
-    for impl in ['libsvr', 'krr']:
+    for impl in ['libsvr', 'krr']:# \
+        # XXX svrlight sucks in SG -- dont' have time to figure it out
+        #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
         regrs._known_tags.union_update([impl])
         regrs += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
-                          regression=True) ]
+                          regression=True),
+                   #sg.SVM(svm_impl=impl, kernel_type='RBF',
+                   #       descr='sg.RBFSVMR()/%s' % impl,
+                   #       regression=True),
+                   ]
 
 if len(clfs['svm', 'linear']) > 0:
     # if any SVM implementation is known, import default ones
