@@ -37,7 +37,10 @@ debian-build:
 
 
 build: build-stamp
-build-stamp: 3rd
+# Do not build 3rd party software for Debian, but use corresponding Debian
+# packages instead
+#build-stamp: 3rd
+build-stamp:
 	python setup.py config --noisy
 	python setup.py build_ext
 	python setup.py build_py

@@ -1,3 +1,12 @@
+pymvpa (0.2.2-1) unstable; urgency=low
+
+  * New upstream maintenance release (missed 0.2.1). This release contains
+    a minimal copy of LIBSVM. The Debian package does not build it, but makes
+    use of the corresponding Debian package.
+  * Shrink Debian diff and move the enabling of LIBSVM into debian/rules.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Wed, 18 Jun 2008 10:25:37 +0200
+
 pymvpa (0.2.0-1) unstable; urgency=low
 
   * New upstream release.
