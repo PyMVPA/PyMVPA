@@ -33,8 +33,8 @@ if sys.version_info[0] > 2 or sys.version_info[1] > 4:
 else:
     from mvpa.misc.copy import deepcopy
 
+import time
 from sets import Set
-from time import time
 
 from mvpa.mappers import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
@@ -283,7 +283,7 @@ class Classifier(Parametrized):
         self._pretrain(dataset)
 
         # remember the time when started training
-        t0 = time()
+        t0 = time.time()
 
         if dataset.nfeatures > 0:
             result = self._train(dataset)
@@ -295,7 +295,7 @@ class Classifier(Parametrized):
                       "is called")
             result = None
 
-        self.training_time = time() - t0
+        self.training_time = time.time() - t0
         self._posttrain(dataset)
         return result
 
@@ -348,7 +348,7 @@ class Classifier(Parametrized):
                 debug("CLF_TB", "Traceback: %s" % tb)
 
         # remember the time when started computing predictions
-        t0 = time()
+        t0 = time.time()
 
         self._prepredict(data)
         if self.__trainednfeatures > 0 \
@@ -362,7 +362,7 @@ class Classifier(Parametrized):
                       "bogus")
             result = [None]*data.shape[0]
 
-        self.predicting_time = time() - t0
+        self.predicting_time = time.time() - t0
 
         if 'regression' in self._clf_internals and not self.params.regression:
             # We need to convert regression values into labels
