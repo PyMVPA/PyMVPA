@@ -137,9 +137,9 @@ class ClassifiersTests(unittest.TestCase):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'])
+                enable_states=['confusion', 'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.training_confusions.error
+        error = clf.confusion.error
 
         clf2 = _deepcopyclf(clf)
         cv = CrossValidatedTransferError(
@@ -153,10 +153,10 @@ class ClassifiersTests(unittest.TestCase):
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (error, cverror))
 
-        self.failUnlessEqual(clf.training_confusions.percentCorrect,
+        self.failUnlessEqual(clf.confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.training_confusions.sets),
+        self.failUnlessEqual(len(clf.confusion.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -181,9 +181,9 @@ class ClassifiersTests(unittest.TestCase):
         ds = datasets['uni2medium']#self.data_bin_1
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'])
+                enable_states=['confusion', 'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.training_confusions.error
+        error = clf.confusion.error
 
         cv = CrossValidatedTransferError(
             TransferError(clf2),
@@ -199,7 +199,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless( error < 0.25,
                          msg="clf should generalize more or less fine. "
                          "Got error %s" % error)
-        self.failUnlessEqual(len(clf.training_confusions.sets),
+        self.failUnlessEqual(len(clf.confusion.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -215,7 +215,7 @@ class ClassifiersTests(unittest.TestCase):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'],
+                enable_states=['confusion', 'feature_ids'],
                 harvest_attribs=['clf.feature_ids',
                                  'clf.training_time'],
                 descr="DESCR")
