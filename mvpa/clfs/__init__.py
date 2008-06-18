@@ -22,3 +22,11 @@ mvpa.clfs module contains various classifiers
 """
 
 __docformat__ = 'restructuredtext'
+
+
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.clfs')
+
+if __debug__:
+    debug('INIT', 'mvpa.clfs end')

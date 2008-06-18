@@ -60,17 +60,18 @@ class PCAMapper(Mapper):
         if memo is None:
             memo = {}
         out = PCAMapper()
-        out.mix = self.mix.copy()
-        out.sv = self.sv.copy()
+        if self.mix is not None:
+            out.mix = self.mix.copy()
+            out.sv = self.sv.copy()
 
         return out
 
 
-    def train(self, data):
+    def train(self, dataset):
         """Determine the projection matrix onto the PCA components from
         a 2D samples x feature data matrix.
         """
-        X = N.matrix(data)
+        X = N.asmatrix(dataset.samples)
 
         # demean the training data
         X = X - X.mean(axis=0)
@@ -104,10 +105,10 @@ class PCAMapper(Mapper):
         :Returns:
           NumPy array
         """
-        if self.mix == None:
+        if self.mix is None:
             raise RuntimeError, "PCAMapper needs to be train before used."
 
-        return N.array(self.mix * N.matrix(data).T).T
+        return N.asarray(self.mix * N.asmatrix(data).T).T
 
 
     def reverse(self, data):
@@ -117,9 +118,9 @@ class PCAMapper(Mapper):
         :Returns:
           NumPy array
         """
-        if self.unmix == None:
+        if self.unmix is None:
             self.unmix = self.mix.I
-        return (self.unmix * N.matrix(data).T).T.A
+        return (self.unmix * N.asmatrix(data).T).T.A
 
 
     def getInShape(self):

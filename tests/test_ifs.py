@@ -8,10 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA incremental feature search."""
 
-import unittest
-import numpy as N
-
-from mvpa.datasets.dataset import Dataset
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -34,7 +30,10 @@ class IFSTests(unittest.TestCase):
         return MaskedDataset(samples=data, labels=labels, chunks=chunks)
 
 
-    @sweepargs(svm=clfs['clfs_with_sens'])
+    # XXX just testing based on a single classifier. Not sure if
+    # should test for every known classifier since we are simply
+    # testing IFS algorithm - not sensitivities
+    @sweepargs(svm=clfs['has_sensitivity', '!meta'][:1])
     def testIFS(self, svm):
 
         # data measure and transfer error quantifier use the SAME clf!
@@ -67,7 +66,7 @@ class IFSTests(unittest.TestCase):
 
 
         # repeat with dataset where selection order is known
-        signal = dumbFeatureDataset()
+        signal = datasets['dumb2']
         sdata, stdata = ifs(signal, signal)
         self.failUnless((sdata.samples[:,0] == signal.samples[:,0]).all())
 

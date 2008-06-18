@@ -8,9 +8,13 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
+.. index:: misc
+
 *************
 Miscellaneous
 *************
+
+.. index:: progress tracking, verbosity, debug, warning
 
 Progress Tracking
 =================
@@ -28,10 +32,45 @@ There are 3 types of messages PyMVPA can produce:
     messages which are reported by mvpa if something goes a little
     unexpected but not critical
 
+
 .. _verbose: api/mvpa.misc-module.html#verbose
 .. _debug: api/mvpa.misc-module.html#debug
 .. _warning: api/mvpa.misc-module.html#warning
 
+
+.. index:: redirecting output
+
+Redirecting Output
+------------------
+
+By default, all types of messages are printed by PyMVPA to the standard
+output. It is possible to redirect them to standard error, or a file, or a
+list of multiple such targets, by using environment variable
+``MVPA_?_OUTPUT``, where X is either ``VERBOSE``, ``DEBUG``, or ``WARNING``
+correspondingly. E.g.::
+
+  export MVPA_VERBOSE_OUTPUT=stdout,/tmp/1 MVPA_WARNING_OUTPUT=/tmp/3 MVPA_DEBUG_OUTPUT=stderr,/tmp/2
+
+would direct verbose messages to standard output as well as to ``/tmp/1``
+file, warnings will be stored only in ``/tmp/3``, and debug output would
+appear on standard error output, as well as in the file ``/tmp/2``.
+
+PyMVPA output redirection though has no effect on external libraries debug
+output if corresponding debug_ target is enabled
+
+ shogun
+   debug output (if any of internal ``SG_`` debug_ targets is enabled)
+   appears on standard output
+
+ SMLR
+   debug output (if ``SMLR_`` debug_ target is enabled) appears on standard
+   output
+
+ libsvm
+   debug output (if ``LIBSVM`` debug_ target is enabled) appears on
+   standard error
+
+.. index:: verbosity
 
 Verbose Messages
 ----------------
@@ -57,6 +96,8 @@ The following verbosity levels are supported:
   :4: computation/algorithm relevant thing
 
 
+.. index:: warning
+
 Warning Messages
 ----------------
 
@@ -79,6 +120,8 @@ enforces printout of traceback whenever warning tracebacks are
 disabled by default.
 
 
+.. index:: debug
+
 Debug Messages
 --------------
 
@@ -98,7 +141,9 @@ ids to be enabled (reported):
   line if optDebug_ is used, ``-d list`` is given, PyMVPA will print
   out list of known ids.
 * environment: variable ``MVPA_DEBUG`` can contain comma-separated
-  list of ids.
+  list of ids or python regular expressions to match multiple ids. Thus
+  specifying ``MVPA_DEBUG=CLF.*`` would enable all ids which start with
+  ``CLF``, and ``MVPA_DEBUG=.*`` would enable all known ids.
 * code: debug.active property (e.g. ``debug.active = [ 'RFEC', 'CLF' ]``)
 
 Besides printing debug messages, it is also possible to print some
@@ -112,6 +157,12 @@ non-optimized python invocation. That was done to eliminate any
 slowdown introduced by such 'debugging' output, which might appear at
 some computational bottleneck places in the code.
 
+Some of the debug ids are defined to facilitate additional checking of the
+validity of the analysis. Their debug ids a prefixed by
+``CHECK_``. E.g. ``CHECK_RETRAIN`` id would cause additional checking of the
+data in retraining phase. Such additional testing might spot out some bugs in
+the internal logic, thus enabled when full test suite is ran.
+
 .. TODO: Unify loggers behind verbose and debug. imho debug should have
    also way to specify the level for the message so we could provide
    more debugging information if desired.
@@ -119,19 +170,90 @@ some computational bottleneck places in the code.
 .. _optVerbose: api/mvpa.misc.cmdline-module.html#optVerbose
 .. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
 .. _misc module sources: api/mvpa.misc-pysrc.html
-.. _Recursive Feature Elimination call: api/mvpa.algorithms.rfe.RFE-class.html#__call__
+.. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__
 
 
 Additional Little Helpers
 =========================
 
+.. index:: random number generation, RNG
+
+Random Number Generation
+------------------------
+
+To facilitate reproducible troubleshooting, a seed value of random generator
+of NumPy can be provided in debug mode (python is called without ``-O``) via
+environment variable ``MVPA_SEED=<int>``. Otherwise it gets seeded with random
+integer which can be displayed with debug id ``RANDOM`` e.g.::
+
+  > MVPA_SEED=123 MVPA_DEBUG=RANDOM python test_clf.py
+  [RANDOM] DBG: Seeding RNG with 123
+  ...
+  > MVPA_DEBUG=RANDOM python test_clf.py
+  [RANDOM] DBG: Seeding RNG with 1447286079
+  ...
+
+
+Unittests at a Grasp
+--------------------
+
+.. index:: unittests
+
+If it is needed to just quickly grasp through all unittests without making
+them to test multiple classifiers (implemented with sweeparg), define
+environmental variable ``MVPA_QUICKTEST`` e.g.::
+
+  > MVPA_NO_WARNINGS=0 MVPA_QUICKTEST=1 python test_clf.py
+  ...............
+  ----------------------------------------------------------------------
+  Ran 15 tests in 0.845s
+
+
+Others
+------
 (to be written)
 
 .. put information about IO helpers, external bindings, etc here
 
 
+.. index:: FSL
+
 FSL Bindings
 ============
 
-(to be written)
+PyMVPA contains a few little helpers to make interfacing with FSL_ easier.
+The purpose of these helpers is to increase the efficiency when doing an
+analysis by (re)using useful information that is already available from some
+FSL output. FSL usually stores most interesting information in the NIfTI
+format. Therefore it can be easily imported into PyMVPA using PyNIfTI. However,
+some information is stored in textfiles, e.g. estimated motion correction
+parameters and *FEAT's three-column custom EV* files. PyMVPA provides import
+and export helpers for both of them (among other stuff like a *MELODIC*
+results import helper). Here is an example how the *McFlirt* parameter output
+can be used to perform motion-aware data detrending:
+
+  >>> from os import path
+  >>> import numpy as N
+  >>>
+  >>> # some dummy dataset
+  >>> from mvpa.datasets import Dataset
+  >>> ds = Dataset(samples=N.random.normal(size=(19, 3)), labels=1)
+  >>>
+  >>> # load motion correction output
+  >>> from mvpa.misc.fsl.base import McFlirtParams
+  >>> mc = McFlirtParams(path.join('data', 'bold_mc.par'))
+  >>>
+  >>> # simple plot using pylab (use pylab.show() or pylab.savefig()
+  >>> # afterwards)
+  >>> mc.plot()
+  >>>
+  >>> # detrend some dataset with mc params as additonal regressors
+  >>> from mvpa.datasets.miscfx import detrend
+  >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
+  >>> # 'res' contains all regressors and their associated weights
+
+All FSL bindings are located in the `mvpa.misc.fsl`_ module. 
+
+.. _FSL: http://www.fmrib.ox.ac.uk
+.. _mvpa.misc.fsl: api/mvpa.misc.fsl-module.html
 

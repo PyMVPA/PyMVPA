@@ -13,6 +13,8 @@
 Introduction
 ************
 
+.. index:: MVPA
+
 PyMVPA is a Python_ module intended to ease pattern classification
 analysis of large datasets. It provides high-level abstraction of typical
 processing steps and a number of implementations of some popular algorithms.
@@ -26,19 +28,11 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 .. _Python: http://www.python.org
 
-PyMVPA is free-software (beer and speech) and covered by the `MIT License`_.
-This applies to all source code, documentation, examples and snippets inside
-the source distribution (including this manual).
-
-Please see the `License`_ section for the copyright statement and the
-full text of the license.
-
-.. _MIT License: http://www.opensource.org/licenses/mit-license.php
-
-
 
 What this Manual is NOT
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+.. index:: textbook, review, API reference, examples
 
 This manual does not make an attempt to be a comprehensive introduction into
 machine learning theory or pattern recognition techniques. There is a wealth
@@ -46,8 +40,8 @@ of high-quality text books about this field available. A very good example is:
 `Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
 
 A good starting point to learn about the application of machine learning
-algorithms to (f)MRI data are two recent reviews by Norman et al. NPD06_ and
-Haynes and Rees HR07_.
+algorithms to (f)MRI data are two recent reviews by Norman et al. [1]_ and
+Haynes and Rees [2]_.
 
 This manual also does not describe every bit and piece of the PyMVPA package.
 For more information, please have a look at the `API documentation`_, which is a
@@ -62,14 +56,16 @@ or even the unit test battery, also part of the source distribution
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
 
-.. .. [HR07] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
-..           activity in humans. Nature Reviews Neuroscience, 7, 523–534.
-.. .. [NPD06] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
-..            mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
-..            Cognitive Science 10, 424–430.
+.. [1] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
+       mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
+       Cognitive Science 10, 424–430.
+.. [2] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
+       activity in humans. Nature Reviews Neuroscience, 7, 523–534.
 
 
 .. _history:
+
+.. index:: history, MVPA toolbox for Matlab, license, free software
 
 A bit of History
 ~~~~~~~~~~~~~~~~
@@ -81,7 +77,7 @@ problems.
 
 During a visit to `Princeton University`_ in spring 2005, Michael Hanke
 was introduced to the `MVPA toolbox`_ for `Matlab
-<http://buchholz.hs-bremen.de/aes/aes_matlab.gif>`_, which has several
+<http://buchholz.hs-bremen.de/aes/aes_matlab.gif>`_, which had several
 advantages over a C++ library. Most importantly it was easier to use. While a
 user of a C++ library is forced to write a significant amount of front-end
 code, users of the MVPA toolbox could simply load their data and start
@@ -113,6 +109,8 @@ development goal. Python is a very powerful language that magically combines
 the possibility to write really fast code and a simplicity that allows one to
 learn the basic concepts within a few days.
 
+.. index:: RPy, PyMatlab
+
 One of the major advantages of Python is the availability of a huge amount of
 so called *modules*. Modules can include extensions written in a hardcore
 language like C (or even FORTRAN) and therefore allow one to incorporate
@@ -132,6 +130,8 @@ the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
 with EEG/MEG data (3d) or even non-neuroimaging datasets.
 
+.. index:: NIfTI
+
 By September 2007 PyMVPA included support for reading and writing datasets
 from and to the `NIfTI format`_, kNN and Support Vector Machine classifiers,
 as well as several analysis algorithms (e.g. searchlight and incremental
@@ -150,6 +150,7 @@ faster and easier than it has ever been before.
 
 
 .. _requirements:
+.. index:: requirements
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -166,6 +167,7 @@ As PyMVPA is about pattern recognition a basic understanding about machine
 learning principles is necessary to correctly apply methods with PyMVPA to
 ensure interpretability of the results.
 
+.. index:: dependencies, Python, NumPy
 
 Dependencies
 ''''''''''''
@@ -183,12 +185,14 @@ The following software packages are required or PyMVPA will not work at all.
 .. _NumPy: http://numpy.scipy.org/
 
 
+.. index:: recommendations, SciPy, PyNIfTI, Shogun, R, RPy
+
 Strong Recommendations
 ''''''''''''''''''''''
 
 While most parts of PyMVPA will work without any additional software, some
 functionality makes use of additional software packages. It is strongly
-recommend to install these packages as well.
+recommended to install these packages as well.
 
   SciPy_: linear algebra, standard distributions
     SciPy_ is mainly used by the statistical testing and the logistic
@@ -202,12 +206,16 @@ recommend to install these packages as well.
     PyMVPA currently can make use of several SVM implementations of the
     Shogun_ toolbox. It requires the modular python interface of Shogun to be
     installed. Any version from 0.6 on should work.
+  R_ and RPy_: more classifiers
+    Currently PyMVPA provides a wrapper around the LARS library.
 
 .. _SciPy: http://www.scipy.org/
-.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _LIBSVM: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti/
 .. _Shogun: http://www.shogun-toolbox.org
 
+
+.. index:: suggestions, IPython, FSL, AFNI, LIBSVM
 
 Suggestions
 ''''''''''''
@@ -230,15 +238,20 @@ life a lot easier and leads to more efficiency when using PyMVPA.
     Similar to FSL, AFNI is a free package for processing (f)MRI data.
     Though its primary data file format is BRIK files, it has the ability
     to read and write NIFTI files, which easily integrate with PyMVPA.
-  libsvm_: fast SVM classifier
+  LIBSVM_: fast SVM classifier
     Only the C library is required and none of the Python bindings that are
     available on the upstream website. PyMVPA provides its own Python wrapper
-    for libsvm which is a fork based on the one included in the libsvm package.
-    Additionally the upstream libsvm distribution causes flooding of the console
+    for LIBSVM which is a fork based on the one included in the LIBSVM package.
+    Additionally the upstream LIBSVM distribution causes flooding of the console
     with a huge amount of debugging messages. Please see the `Building from
     Source`_ section for information on how to build an alternative version that
     does not have this problem.
+  matplotlib_: Matlab-style plotting library for Python
+    This is a very powerful plotting library that allows you to export into
+    a large variety of raster and vector formats, and thus, is ideal to
+    produce publication quality figures.
 
+.. _matplotlib: http://matplotlib.sourceforge.net/
 .. _IPython: http://ipython.scipy.org
 .. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
 .. _showmedo.com: http://showmedo.com
@@ -247,56 +260,157 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 
 
 .. _obtaining:
+.. index:: installation
 
-Obtaining PyMVPA
-~~~~~~~~~~~~~~~~
+Installation
+~~~~~~~~~~~~
 
-Binary packages
-'''''''''''''''
+.. Point to source and binary distribution. Preach idea of free software.
+   Step by step guide to install it on difficult systems like Windows.
+
+.. Don't forget to mention that the only reasonable way to use this piece
+   of software (like every other piece) is under Debian! Also mention that
+   Ubuntu is no excuse ;-)
 
 The easiest way to obtain PyMVPA is to use pre-built binary packages.
-Currently the Debian/Ubuntu family is the only environment for which
-binary packages are available (see below). If you manage to build PyMVPA
-on Windows or OS X, we would be glad to hear from you.
+Currently we provide such packages or installers for the Debian/Ubuntu family
+and 32-bit Windows (see below). Since version 0.2.2 there is also an initial
+version of a RPM package for OpenSUSE 10.3. If there are no binary packages
+for your operating system or platform yet, you can build PyMVPA from source.
+Please refer to `Building from Source`_ for more information.
 
+.. index:: binary packages
+.. index:: Debian
+
+.. _install_debian:
 
 Debian
-^^^^^^
+''''''
 
-PyMVPA is available in Debian_ (since *lenny*) as `python-mvpa` package. The
-documentation is provided by the optional `python-mvpa-doc` package.
+PyMVPA is available as an `official Debian package`_ (`python-mvpa`;
+since *lenny*). The documentation is provided by the optional
+`python-mvpa-doc` package. To install PyMVPA simply do::
 
+  sudo aptitude install python-mvpa
+
+.. _official Debian package: http://packages.debian.org/python-mvpa
+
+.. index:: backports, Debian, Ubuntu
+.. _install_debianbackports:
 
 Debian backports and inofficial Ubuntu packages
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''''''''''''''''
 
 Backports for the current Debian stable release and binary packages for recent
 Ubuntu releases are available from a `repository at the University of
 Magdeburg`_. Please read the `package repository instructions`_ to learn about
-how to obtain them.
-
-.. All of the PyMVPA developers have sworn a solemn oath to name their
-   first-born child 'Debian'.
-
+how to obtain them. Otherwise install as you would do with any other Debian
+package.
 
 .. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
 
+.. _install_win:
+
+Windows
+'''''''
+
+There are a few Python distributions for Windows. In theory all of them should
+work equally well. However, we only tested the standard Python distribution
+from www.python.org (with version 2.5.2).
+
+First you need to download and install Python. Use the Python installer for
+this job. Yo do not need to install the Python test suite and utility scripts.
+From now on we will assume that Python was installed in `C:\\Python25` and that
+this directory has been added to the `PATH` environment variable.
+
+For a minimal installation of PyMVPA the only thing you need in addition is
+NumPy_. Download a matching NumPy windows installer for your Python version
+(in this case 2.5) from the `SciPy download page`_ and install it.
+
+Now, you can use the PyMVPA windows installer to install PyMVPA on your system.
+If done, verify that everything went fine by opening a command promt and start
+Python by typing `python` and hit enter. Now you should see the Python prompt.
+Import the mvpa module, which should cause no error messages.
+
+  >>> import mvpa
+  >>>
+
+Although you have a working installation already, most likely you want to
+install some additional software. First and foremost install SciPy_ -- download from the same page where you also got the NumPy installer.
+
+If you want to use PyMVPA to analyze fMRI datasets, you probably also want to
+install PyNIfTI_. Download the corresponding installer from the website of the
+`NIfTI libraries`_ and install it. PyNIfTI does not come with the required
+`zlib` library, so you also need to download and install it. A binary installer is available from the `GnuWin32 project`_. Install it in some arbitrary folder
+(just the binaries nothing else), find the `zlib1.dll` file in the `bin`
+subdirectory and move it in the Windows `system32` directory. Verify that it
+works by importing the `nifti` module in Python.
+
+  >>> import nifti
+  >>>
+
+Another piece of software you might want to install is matplotlib_. The project
+website offers a binary installer for Windows. If you are using the standard
+Python distribution and matplotlib complains about a missing `msvcp71.dll`, be
+sure to obey the installation instructions for Windows on the matplotlib
+website.
+
+With this set of packages you should be able to run most of the PyMVPA examples
+which are shipped with the source code in the `doc/examples` directory.
+
+.. _SciPy download page: http://scipy.org/Download
+.. _NIfTI libraries: http://niftilib.sourceforge.net/
+.. _GnuWin32 project: http://gnuwin32.sourceforge.net/
+
+
+.. _install_suse:
+
+OpenSUSE
+''''''''
+
+To install the provided RPM package for OpenSUSE, simply download it, open a
+console and invoke (the example command refers to PyMVPA 0.2.2 and OpenSUSE
+10.3)::
+
+  rpm -i pymvpa-0.2.2-1suse10_3.i586.rpm
+
+Please refer to the section about :ref:`building on OpenSUSE <build_suse>` for
+notes about the installation of the dependencies.
+
+
 .. _buildfromsource:
+.. index:: building from source, source package, MacOSX
 
 Building from Source
-''''''''''''''''''''
+~~~~~~~~~~~~~~~~~~~~
 
 If a binary package for your platform and operating system is provided, you do
 not have to build the packages on your own -- use the corresponding pre-build
-packages instead. However, if there are no binary packages for your system you
-can easily build PyMVPA on your own. Any recent linux distribution should be
-capable of doing it. Additionally, we are aware of successful builds on Mac
-OSX.
+packages instead. However, if there are no binary packages for your system, or
+you want to try a new (unreleased) version of PyMVPA, you can easily build
+PyMVPA on your own. Any recent linux distribution should be capable of doing it
+(e.g. RedHat). Additionally, building PyMVPA also works on Mac OSX and Windows
+systems.
+
+.. _PyMVPA project website: http://pkg-exppsy.alioth.debian.org/pymvpa/
+
+
+.. index:: releases, development snapshot
+
+Three Ways to Obtain the Sources
+''''''''''''''''''''''''''''''''
 
 The first step is obtaining the sources. The source code tarballs of all
 PyMVPA releases are available from the `PyMVPA project website`_.
+Alternatively, one can also download a tarball of the latest development
+snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
+code repository).
+
+.. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
+.. index:: Git repository
+
 If you want to have access to both, the full PyMVPA history and the latest
 development code, you can use the PyMVPA Git_ repository, which is publicly
 available. To view the repository, please point your web browser to gitweb:
@@ -313,6 +427,15 @@ After a short while you will have a `pymvpa` directory below your current
 working directory, that contains the PyMVPA repository.
 
 .. _Git: http://git.or.cz/
+
+
+Build it (General instructions)
+'''''''''''''''''''''''''''''''
+
+In general you can build PyMVPA like any other Python module (using the Python
+*distutils*). This general method will be outline first. However, in some
+situations or on some platforms alternative ways of building PyMVPA might be
+more covenient -- alternative approaches are listed at the end of this section.
 
 To build PyMVPA from source simply enter the root of the source tree (obtained
 by either extracting the source package or cloning the repository) and run:
@@ -332,70 +455,49 @@ option. You also might want to consider :command:`--optimize`.
 
 Now you should be ready to use PyMVPA on your system.
 
+.. index:: LIBSVM, SWIG
 
-Build with enabled libsvm bindings
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Build with enabled LIBSVM bindings
+''''''''''''''''''''''''''''''''''
 
-From the 0.2 release of PyMVPA on, the libsvm_ classifier extension is not
-build by default anymore. However, it is still shipped with PyMVPA and can
-be enabled at build time. To be able to do this you need to have SWIG_ and
-the development files of libsvm_ (headers and library) installed on your
-system. Depending on where you installed them, it might be necessary to
-specify the full path to them with the `--include-dirs`, `--library-dirs`
-and `--swig` options.
+From the 0.2 release of PyMVPA on, the LIBSVM_ classifier extension is not
+build by default anymore. However, it is still shipped with PyMVPA and can be
+enabled at build time. To be able to do this you need to have SWIG_installed on
+your system.
 
-PyMVPA needs a patched libsvm version, as the original distribution generates
+PyMVPA needs a patched LIBSVM version, as the original distribution generates
 a huge amount of debugging messages and therefore makes the console and PyMVPA
 output almost unusable. Debian (since lenny: 2.84.0-1) and Ubuntu (since gutsy)
-already include the patched version. For all other systems it is easy to build
-patched libsvm (see `Building patched libsvm from Source`_).
+already include the patched version. For all other systems a minimal copy of
+the patched sources is included in the PyMVPA source package (`3rd/libsvm`).
 
-The command to build all extentions including the libsvm wrapper is::
+If you do not have a proper LIBSVM_ package, you can build the library from 
+the copy of the code that is shipped with PyMVPA. To do this, simply invoke::
 
-  PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy"
+  make 3rd
 
-The installation procedure is equivalent to the a build setup without libsvm_.
+Now build PyMVPA as described above. The build script will automatically
+detect that LIBSVM_ is available and builds the LIBSVM wrapper module for you.
 
+If your system provides an appropriate LIBSVM_ version, you need to have the
+development files (headers and library) installed. Depending on where you
+installed them, it might be necessary to specify the full path to that location
+with the `--include-dirs`, `--library-dirs` and `--swig` options. Now add the '--with-libsvm' flag when building PyMVPA::
 
-Building patched libsvm from source
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  python setup.py build_ext --with-libsvm \
+      [ -I<LIBSVM_INCLUDEDIR> -L<LIBSVM_LIBDIR> ]
 
-First get the patched sources from::
+The installation procedure is equivalent to the build setup without LIBSVM_,
+except that the '--with--libsvm' flag also has to be set when installing::
 
-  http://packages.debian.org/source/sid/libsvm
+  python setup.py install --with-libsvm
 
-Download the `diff.gz` and the `orig.tar.gz` files offered at the bottom of the
-page. Once downloaded extract the `tar.gz` file and patch it. The following
-example refers to *libsvm* version 2.85.0, please adjust the filenames and
-versions if you use a later version::
+.. _SWIG: http://www.swig.org/
 
-  tar xvzf libsvm_2.85.0.orig.tar.gz
-  cd libsvm-2.85
-  zcat ../libsvm_2.85.0-1.diff.gz | patch -p1
-
-If `zcat` does not work for you (which might happen on Mac OSX), simply
-decompress the diff manually and do::
-
-  patch -p1 < ../libsvm_2.85.0-1.diff
-
-instead to patch the sources. If this is done build the library and install
-it::
-
-  make libsvm.so.2.85.0
-  DESTDIR=/usr/local make install
-
-Set `DESTDIR` to your prefered installation path. For those running Mac OSX,
-there is also a `Makefile.osx`.
-
-.. _SWIG: http://www.swig.org
-.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
-
-.. Actually, AFAIK upstream libsvm does not easily allow for compiling a libsvm
-   static or shared lib. Or am I wrong?
-
+.. index:: alternative build procedure
 
 Alternative build procedure
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''
 
 Alternatively, if you are doing development in PyMVPA or if you
 simply do not want (or do not have sufficient permissions to do so) to
@@ -407,42 +509,138 @@ previous commands from):
 
   export PYTHONPATH=$PWD
 
-However, please note that this procedure also always builds the libsvm_
-extension and therefore also required the patched libsvm version to be
+However, please note that this procedure also always builds the LIBSVM_
+extension and therefore also requires the patched LIBSVM version and SWIG to be
 available.
 
 
-Installation
-~~~~~~~~~~~~
+.. index:: citation, PyMVPA poster
 
-.. Point to source and binary distribution. Preach idea of free software.
-   Step by step guide to install it on difficult systems like Windows.
 
-.. Don't forget to mention that the only reasonable way to use this piece
-   of software (like every other piece) is under Debian! Also mention that
-   Ubuntu is no excuse ;-)
+Building on Windows Systems
+'''''''''''''''''''''''''''
 
-If there are no binary packages for your operating system or platform yet, you
-need to build from source. Please refer to `Building from Source`_ for more
-information.
+On Windows the whole situation is a little more tricky, as the system doesn't
+come with a compiler by default. Nevertheless, it is easily possible to build
+PyMVPA from source. Although, one could use the Microsoft compiler that comes
+with Visual Studio to do it, but as this is commercial software and not
+everybody has access to it, we will outline a way that exclusively involves
+free and open source software.
 
-Otherwise just install the binary packages as you would do with any other
-package. For example on Debian or Ubuntu simply do::
+First one needs to install the packages required to run PyMVPA as explained
+:ref:`above <install_win>`.
 
-  sudo aptitude install python-mvpa
+Next we need to obtain and install the MinGW compiler collection. Download the
+*Automated MinGW Installer* from the `MinGW project website`_. Now, run it and
+choose to install the `current` package. You will need the *MinGW base tools*,
+*g++* compiler and *MinGW Make*. For the remaining parts of the section, we
+will assume that MinGW got installed in `C:\\MinGW` and the directory
+`C:\\MinGW\\bin` has been added to the `PATH` environment variable, to be able
+to easily access all MinGW tools. Note, that it is not necessary to install
+`MSYS`_ to build PyMVPA, but it might handy to have it.
+
+If you want to build the LIBSVM wrapper for PyMVPA, you also need to download
+SWIG_ (actually *swigwin*, the distribution for Windows). SWIG does not have to
+be installed, just unzip the file you downloaded and add the root directory of
+the extracted sources to the `PATH` environment variable (make sure that this
+directory contains `swig.exe`, if not, you haven't downloaded `swigwin`).
+
+PyMVPA comes with a specific build setup configuration for Windows
+-- `setup.cfg.win` in the root of the source tarball. Please rename this file
+to `setup.cfg` (and overwrite the existing one). This is only necessary, if you
+have *not* configured your Python distutils installation to always use MinGW
+instead of the Mircrosoft compilers.
+
+Now, we are ready to build PyMVPA. The easiest way to do this, is to make use
+of the `Makefile.win` that is shipped with PyMVPA to build a binary installer
+package (`.exe`). Make sure, that the settings at the top of `Makefile.win`
+(the file is located in the root directory of the source distribution)
+correspond to your Python installation -- if not, first adjust them accordingly
+before your proceed. When everything is set, do::
+
+  mingw32-make -f Makefile.win installer
+
+Upon success you can find the installer in the `dist` subdirectory. Install it
+as described :ref:`above <install_win>`.
+
+
+.. _MinGW project website: http://www.mingw.org/
+.. _MSYS: http://www.mingw.org/msys.shtml
+
+
+.. _build_suse:
+
+OpenSUSE
+''''''''
+
+Building PyMVPA on OpenSUSE involves the following steps (tested with 10.3):
+First add the OpenSUSE science repository, that contains most of the required
+packages (e.g. NumPy, SciPy, matplotlib), to the Yast configuration. The URL
+for OpenSUSE 10.3 is::
+
+  http://download.opensuse.org/repositories/science/openSUSE_10.3/
+
+Now, install the following required packages: 
+
+  * a recent C and C++ compiler (e.g. GCC 4.1)
+  * `python-devel` (Python development package)
+  * `python-numpy` (NumPy)
+  * `swig` (SWIG is only necessary, if you want to make use of LIBSVM)
+
+Now you can simply compile and install PyMVPA, as outlined above, in the
+general build instructions (or alternatively using the method with LIBSVM).
+
+If you have problems compiling the NIfTI libraries and PyNIfTI on OpenSUSE, try
+the following: Download the `nifticlib` source tarball, extract it and run
+`make` in the top-level source directory. Be sure to install the `zlib-devel`
+package before. Now, download the `pynifti` source tarball extract it, and edit
+`setup.py`. Change the line::
+
+  libraries = [ 'niftiio' ],
+
+to::
+
+  libraries = [ 'niftiio', 'znz', 'z' ],
+
+as mentioned in the PyNIfTI installation instructions. This is necessary, as
+the above approach does only generate static NIfTI libraries which are not
+properly linked with all dependencies. Now, compile PyNIfTI with::
+
+  python setup.py build_ext -I <path_to_nifti>/include \
+      -L <path_to_nifti>/lib --swig-opts="-I<path_to_nifti>/include"
+
+where `<path_to_nifti>` is the directory that contains the extracted
+`nifticlibs` sources. Finally, install PyNIfTI with::
+
+  sudo python setup.py install
+
+If you want to run the PyMVPA examples including the ones that make use of the
+plotting capabilities of `matplotlib` you need to install of few more packages
+(mostly due to broken dependencies in the corresponding OpenSUSE packages):
+
+  * `python-scipy`
+  * `python-gobject2`
+  * `python-gtk`
 
 
 How to cite PyMVPA
 ~~~~~~~~~~~~~~~~~~
 
-(almost there)
+The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
+*German Society for Psychophysiology and its Application* in Magdeburg,
+2008. This is currently the prefered way to cite PyMVPA. However, we submitted
+a paper introducing the toolbox, which should become replace the poster soon.
+
+.. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
 
 
 Credits
 ~~~~~~~
 
+(needs some more words, for now just a list)
+
   * NumPy, SciPy
-  * libsvm
+  * LIBSVM
   * Shogun
   * IPython
   * Debian (for hosting, environment, ...)
@@ -451,17 +649,3 @@ Credits
 
 .. Please add some notes when you think that you should give credits to someone
    that enables or motivates you to work on PyMVPA ;-)
-
-
-Manual Conventions
-~~~~~~~~~~~~~~~~~~
-
-In all examples the NumPy package is assumed to be imported using the alias N
-throughout this manual.
-
-  >>> import numpy as N
-
-Some examples might need to access sample dataset available under
-`data/` directory within root of PyMVPA hierarchy, thus they have to
-be invoked directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
-

@@ -12,11 +12,13 @@ __docformat__ = 'restructuredtext'
 
 import operator
 import random
-import copy
-
+import mvpa.misc.copy as copy
 import numpy as N
 
+from sets import Set
+
 from mvpa.misc.exceptions import DatasetError
+from mvpa.misc.support import idhash as idhash_
 
 if __debug__:
     from mvpa.misc import debug, warning
@@ -197,16 +199,14 @@ class Dataset(object):
             self._resetallunique(force=True)
 
     @property
-    def _id(self):
+    def idhash(self):
         """To verify if dataset is in the same state as when smth else was done
 
         Like if classifier was trained on the same dataset as in question"""
 
-        res = id(self._data)
+        res = idhash_(self._data)
         for val in self._data.values():
-            res += id(val)
-            if isinstance(val, N.ndarray):
-                res += hash(buffer(val))
+            res += idhash_(val)
         return res
 
 
@@ -220,7 +220,7 @@ class Dataset(object):
         # I guess we better checked if dictname is known  but...
         for k in self._uniqueattributes:
             if __debug__:
-                debug("DS", "Reset attribute %s" % k)
+                debug("DS_", "Reset attribute %s" % k)
             self._dsattr[k] = None
         self._dsattr['__uniquereseted'] = True
 
@@ -232,8 +232,8 @@ class Dataset(object):
         """
         if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
             if __debug__:
-                debug("DS", "Recomputing unique set for attrib %s within %s" %
-                      (attrib, self.__repr__(False)))
+                debug("DS_", "Recomputing unique set for attrib %s within %s" %
+                      (attrib, self.summary(uniq=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
             self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
@@ -251,7 +251,7 @@ class Dataset(object):
             raise ValueError, \
                   "Provided %s have %d entries while there is %d samples" % \
                   (attrib, len(value), self.nsamples)
-        self._data[attrib] = N.array(value)
+        self._data[attrib] = N.asarray(value)
         uniqueattr = "unique" + attrib
 
         if self._dsattr.has_key(uniqueattr):
@@ -282,7 +282,8 @@ class Dataset(object):
         """Return indecies of samples given a list of attributes
         """
 
-        if not operator.isSequenceType(values):
+        if not operator.isSequenceType(values) \
+               or isinstance(values, basestring):
             values = [ values ]
 
         # TODO: compare to plain for loop through the labels
@@ -296,6 +297,54 @@ class Dataset(object):
         sel.sort()
 
         return sel
+
+
+    def idsonboundaries(self, prior=0, post=0,
+                        attributes_to_track=['labels', 'chunks'],
+                        affected_labels=None,
+                        revert=False):
+        """Find samples which are on the boundaries of the blocks
+
+        Such samples might need to be removed.  By default (with
+        prior=0, post=0) ids of the first samples in a 'block' are
+        reported
+
+        :Parameters:
+          prior : int
+            how many samples prior to transition sample to include
+          post : int
+            how many samples post the transition sample to include
+          attributes_to_track : list of basestring
+            which attributes to track to decide on the boundary condition
+          affected_labels : list of basestring
+            for which labels to perform selection. If None - for all
+          revert : bool
+            either to revert the meaning and provide ids of samples which are found
+            to not to be boundary samples
+        """
+        lastseen = [None for attr in attributes_to_track]
+        transitions = []
+        nsamples = self.nsamples
+        for i in xrange(nsamples):
+            current = [self._data[attr][i] for attr in attributes_to_track]
+            if lastseen != current:
+                # transition point
+                new_transitions = range(max(0, i-prior),
+                                        min(nsamples-1, i+post)+1)
+                if affected_labels is not None:
+                    new_transitions = filter(lambda i: self.labels[i] in affected_labels,
+                                             new_transitions)
+                transitions += new_transitions
+                lastseen = current
+
+        transitions = Set(transitions)
+        if revert:
+            transitions = Set(range(nsamples)).difference(transitions)
+
+        # postprocess
+        transitions = N.array(list(transitions))
+        transitions.sort()
+        return list(transitions)
 
 
     def _shapeSamples(self, samples, dtype, copy):
@@ -368,8 +417,6 @@ class Dataset(object):
         Creates property assigning getters/setters depending on the
         availability of corresponding _get, _set functions.
         """
-        #import pydb
-        #pydb.debugger()
         classdict = cls.__dict__
         if not classdict.has_key(key):
             if __debug__:
@@ -445,27 +492,58 @@ class Dataset(object):
                     'such capability is not present')
 
 
-    def __repr__(self, full=True):
+    def __str__(self):
         """String summary over the object
         """
-        s = """<Dataset / %s %d x %d""" % \
-                   (self.samples.dtype, self.nsamples, self.nfeatures)
+        return self.summary(uniq=True,
+                            idhash=__debug__ and ('DS_ID' in debug.active),
+                            stats=__debug__ and ('DS_STATS' in debug.active),
+                            )
 
-        if not full:
-            return s                    # enough is enough
+    def __repr__(self):
+        return "<%s>" % str(self)
 
-        s +=  " uniq:"
-        for uattr in self._dsattr.keys():
-            if not uattr.startswith("unique"):
-                continue
-            attr = uattr[6:]
-            try:
-                value = self._getuniqueattr(attrib=uattr,
-                                            dict_=self._data)
-                s += " %d %s" % (len(value), attr)
-            except:
-                pass
-        return s + '>'
+    def summary(self, uniq=True, stats=True, idhash=False):
+        """String summary over the object
+
+        :Parameters:
+          uniq : bool
+             include summary over data attributes which have unique
+          idhash : bool
+             include idhash value for dataset and samples
+          stats : bool
+             include some basic statistics (mean, std, var) over dataset samples
+        """
+        if idhash:
+            idhash_ds = "{%s}" % self.idhash
+            idhash_samples = "{%s}" % idhash_(self.samples)
+        else:
+            idhash_ds = ""
+            idhash_samples = ""
+
+        s = """Dataset %s/ %s %d%s x %d""" % \
+            (idhash_ds, self.samples.dtype,
+             self.nsamples, idhash_samples, self.nfeatures)
+
+        if uniq:
+            s +=  " uniq:"
+            for uattr in self._dsattr.keys():
+                if not uattr.startswith("unique"):
+                    continue
+                attr = uattr[6:]
+                try:
+                    value = self._getuniqueattr(attrib=uattr,
+                                                dict_=self._data)
+                    s += " %d %s" % (len(value), attr)
+                except:
+                    pass
+
+        if stats:
+            # TODO -- avg per chunk?
+            s += " stats: mean=%g std=%g var=%g min=%g max=%g" % \
+                 (N.mean(self.samples), N.std(self.samples),
+                  N.var(self.samples), N.min(self.samples), N.max(self.samples))
+        return s
 
 
     def __iadd__( self, other ):
@@ -535,11 +613,11 @@ class Dataset(object):
         # disabled and warning is not necessary anymore
         if sort:
             ids.sort()
-#        elif __debug__:
-#            from mvpa.misc.support import isSorted
-#            if not isSorted(ids):
-#                warning("IDs for selectFeatures must be provided " +
-#                       "in sorted order, otherwise major headache might occur")
+        elif __debug__ and 'CHECK_DS_SORTED' in debug.active:
+            from mvpa.misc.support import isSorted
+            if not isSorted(ids):
+                warning("IDs for selectFeatures must be provided " +
+                       "in sorted order, otherwise major headache might occur")
 
         # shallow-copy all stuff from current data dict
         new_data = self._data.copy()
@@ -662,22 +740,34 @@ class Dataset(object):
 
 
 
-    def permuteLabels(self, status, perchunk = True):
+    def permuteLabels(self, status, perchunk=True, assure_permute=False):
         """Permute the labels.
 
-        Calling this method with 'status' set to True, the labels are
-        permuted among all samples.
+        TODO: rename status into something closer in semantics.
 
-        If 'perorigin' is True permutation is limited to samples sharing the
-        same chunk value. Therefore only the association of a certain sample
-        with a label is permuted while keeping the absolute number of
-        occurences of each label value within a certain chunk constant.
-
-        If 'status' is False the original labels are restored.
+        :Parameters:
+          status : bool
+            Calling this method with set to True, the labels are
+            permuted among all samples. If 'status' is False the
+            original labels are restored.
+          perchunk : bool
+            If True permutation is limited to samples sharing the same
+            chunk value. Therefore only the association of a certain
+            sample with a label is permuted while keeping the absolute
+            number of occurences of each label value within a certain
+            chunk constant.
+          assure_permute : bool
+            If True, assures that labels are permutted, ie any one is
+            different from the original one
         """
+        if len(self.uniquelabels)<2:
+            raise RuntimeError, \
+                  "Call to permuteLabels is bogus since there is insuficient" \
+                  " number of labels: %s" % self.uniquelabels
+
         if not status:
             # restore originals
-            if self._data['origlabels'] == None:
+            if self._data.get('origlabels', None) is None:
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'permuteLabels() has never been ' \
                                     'called with status == True.'
@@ -688,23 +778,40 @@ class Dataset(object):
             # calls with status == True will destroy the original labels
             if not self._data.has_key('origlabels') \
                 or self._data['origlabels'] == None:
-                # rebind old labels to origlabels
+                # bind old labels to origlabels
                 self._data['origlabels'] = self._data['labels']
-                # assign a copy so modifications do not impact original data
-                self._data['labels'] = self._data['labels'].copy()
+                # copy labels
+                self._data['labels'] = copy.copy(self._data['labels'])
 
-            # now scramble the rest
+            labels = self._data['labels']
+            # now scramble
             if perchunk:
                 for o in self.uniquechunks:
-                    self._data['labels'][self.chunks == o ] = \
-                        N.random.permutation( self.labels[ self.chunks == o ] )
-                # to recompute uniquelabels
-                self.labels = self._data['labels']
+                    labels[self.chunks == o] = \
+                        N.random.permutation(labels[self.chunks == o])
             else:
-                self.labels = N.random.permutation(self._data['labels'])
+                labels = N.random.permutation(labels)
+
+            self.labels = labels
+
+            if assure_permute:
+                if not (self._data['labels'] != self._data['origlabels']).any():
+                    if not (assure_permute is True):
+                        if assure_permute == 1:
+                            raise RuntimeError, \
+                                  "Cannot assure permutation of labels %s for " \
+                                  "some reason with chunks %s and while " \
+                                  "perchunk=%s . Should not happen" % \
+                                  (self.labels, self.chunks, perchunk)
+                    else:
+                        assure_permute = 11 # make 10 attempts
+                    if __debug__:
+                        debug("DS",  "Recalling permute to assure different labels")
+                    self.permuteLabels(status, perchunk=perchunk,
+                                       assure_permute=assure_permute-1)
 
 
-    def getRandomSamples( self, nperlabel ):
+    def getRandomSamples(self, nperlabel):
         """Select a random set of samples.
 
         If 'nperlabel' is an integer value, the specified number of samples is

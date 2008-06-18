@@ -8,17 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
-import unittest
-
-import numpy as N
-
 from mvpa.misc.support import *
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
+from tests_warehouse import *
 from tests_warehouse import getMVPattern
-from mvpa.clfs.knn import kNN
+from tests_warehouse_clfs import *
 
-
+from mvpa.misc.copy import deepcopy
 
 class SupportFxTests(unittest.TestCase):
 
@@ -27,22 +24,22 @@ class SupportFxTests(unittest.TestCase):
         sp = N.arange(10)
 
         # check if stupid thing don't work
-        self.failUnlessRaises(ValueError, 
+        self.failUnlessRaises(ValueError,
                               transformWithBoxcar,
                               data,
                               sp,
                               0 )
 
         # now do an identity transformation
-        trans = transformWithBoxcar( data, sp, 1)
+        trans = transformWithBoxcar(data, sp, 1)
         self.failUnless( (trans == data).all() )
 
         # now check for illegal boxes
-        self.failUnlessRaises( ValueError,
-                               transformWithBoxcar,
-                               data,
-                               sp,
-                               2 )
+        self.failUnlessRaises(ValueError,
+                              transformWithBoxcar,
+                              data,
+                              sp,
+                              2)
 
         # now something that should work
         sp = N.arange(9)
@@ -115,7 +112,7 @@ class SupportFxTests(unittest.TestCase):
 
         # do clf cross-validation on a dataset with a very high SNR
         cv = Harvester(NFoldSplitter(cvtype=1),
-                       [HarvesterCall(TransferError(kNN()), argfilter=[1,0])])
+                       [HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0])])
         data = getMVPattern(10)
         err = N.array(cv(data))
 
@@ -125,14 +122,14 @@ class SupportFxTests(unittest.TestCase):
 
         # now same stuff but two classifiers at once
         cv = Harvester(NFoldSplitter(cvtype=1),
-                  [HarvesterCall(TransferError(kNN()), argfilter=[1,0]),
-                   HarvesterCall(TransferError(kNN()), argfilter=[1,0])])
+                  [HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0]),
+                   HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0])])
         err = N.array(cv(data))
         self.failUnlessEqual(err.shape, (2,len(data.uniquechunks)))
 
         # only one again, but this time remember confusion matrix
         cv = Harvester(NFoldSplitter(cvtype=1),
-                  [HarvesterCall(TransferError(kNN(),
+                  [HarvesterCall(TransferError(sample_clf_nl,
                                                enable_states=['confusion']),
                                  argfilter=[1,0], attribs=['confusion'])])
         res = cv(data)
@@ -141,6 +138,26 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(res.has_key('confusion') and res.has_key('result'))
         self.failUnless(len(res['result']) == len(data.uniquechunks))
 
+
+    @sweepargs(pair=[(N.random.normal(size=(10,20)), N.random.normal(size=(10,20))),
+                     ([1,2,3,0], [1,3,2,0]),
+                     ((1,2,3,1), (1,3,2,1))])
+    def testIdHash(self, pair):
+        a, b = pair
+        a1 = deepcopy(a)
+        a_1 = idhash(a)
+        self.failUnless(a_1 == idhash(a),  msg="Must be of the same idhash")
+        self.failUnless(a_1 != idhash(b), msg="Must be of different idhash")
+        if isinstance(a, N.ndarray):
+            self.failUnless(a_1 != idhash(a.T), msg=".T must be of different idhash")
+        if not isinstance(a, tuple):
+            self.failUnless(a_1 != idhash(a1), msg="Must be of different idhash")
+            a[2] += 1; a_2 = idhash(a)
+            self.failUnless(a_1 != a_2, msg="Idhash must change")
+        else:
+            a_2 = a_1
+        a = a[2:]; a_3 = idhash(a)
+        self.failUnless(a_2 != a_3, msg="Idhash must change after slicing")
 
 
 def suite():

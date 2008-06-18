@@ -13,10 +13,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.clfs.classifier import Classifier
-from mvpa.algorithms.datameasure import Sensitivity
+from mvpa.clfs.base import Classifier
+from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import StateVariable, Parametrized
+from mvpa.misc.param import Parameter
 from mvpa.misc import warning
 
 # Uber-fast C-version of the stepwise regression
@@ -51,63 +52,64 @@ class SMLR(Classifier):
     use this for your work.
     """
 
-    def __init__(self, lm=.1, convergence_tol=1e-3, resamp_decay=.5,
-                 min_resamp=.001, maxiter=10000, has_bias=True,
-                 fit_all_weights=False, implementation="C", 
-                 seed=None, **kwargs):
-        """
-        Initialize an SMLR classifier.
+    _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
+                       'multiclass', 'does_feature_selection' ] # later 'kernel-based'?
 
-        :Parameters:
-          lm : float
-            The penalty term lambda.  Larger values will give rise
-            to more sparsification.
-          covergence_tol : float
-            When the weight change for each cycle drops below this value
-            the regression is considered converged.  Smaller values
-            lead to tighter convergence.
-          resamp_decay : float
-            Rate of decay in the probability of resampling a zero weight.
-            1.0 will immediately decrease to the min_resamp from 1.0,
-            0.0 will never decrease from 1.0.
-          min_resamp : float
-            Minimum resampling probability for zeroed weights.
-          maxiter : int
-            Maximum number of iterations before stopping if not converged.
-          has_bias : bool
-            Whether to add a bias term to allow fits to data not through
-            zero.
-          fit_all_weights : bool
-            Whether to fit weights for all classes or to the number of 
+    lm = Parameter(.1, min=1e-10, allowedtype='float',
+             doc="""The penalty term lambda.  Larger values will give rise to
+             more sparsification.""")
+
+    convergence_tol = Parameter(1e-3, min=1e-10, max=1.0, allowedtype='float',
+             doc="""When the weight change for each cycle drops below this value
+             the regression is considered converged.  Smaller values
+             lead to tighter convergence.""")
+
+    resamp_decay = Parameter(0.5, allowedtype='float', min=0.0, max=1.0,
+             doc="""Rate of decay in the probability of resampling a zero weight.
+             1.0 will immediately decrease to the min_resamp from 1.0, 0.0
+             will never decrease from 1.0.""")
+
+    min_resamp = Parameter(0.001, allowedtype='float', min=1e-10, max=1.0,
+             doc="Minimum resampling probability for zeroed weights")
+
+    maxiter = Parameter(10000, allowedtype='int', min=1,
+             doc="""Maximum number of iterations before stopping if not
+             converged.""")
+
+    has_bias = Parameter(True, allowedtype='bool',
+             doc="""Whether to add a bias term to allow fits to data not through
+             zero""")
+
+    fit_all_weights = Parameter(True, allowedtype='bool',
+             doc="""Whether to fit weights for all classes or to the number of
             classes minus one.  Both should give nearly identical results, but
             if you set fit_all_weights to True it will take a little longer
             and yield weights that are fully analyzable for each class.  Also,
             note that the convergence rate may be different, but convergence
-            point is the same.
-          implementation : basestr
-            Use C (default) or Python as the implementation of
-            stepwise_regression. C version brings significant speedup thus
-            is the default one.
-          seed : int or None
-            Seed to be used to initialize random generator, might be used to
-            replicate the run
+            point is the same.""")
 
+    implementation = Parameter("C", allowedtype='basestring',
+             choices=["C", "Python"],
+             doc="""Use C or Python as the implementation of
+             stepwise_regression. C version brings significant speedup thus is
+             the default one.""")
+
+    seed = Parameter(None, allowedtype='None or int',
+             doc="""Seed to be used to initialize random generator, might be
+             used to replicate the run""")
+
+
+    def __init__(self, **kwargs):
+        """Initialize an SMLR classifier.
+        """
+
+        """
         TODO:
          # Add in likelihood calculation
          # Add kernels, not just direct methods.
-        """
+         """
         # init base class first
         Classifier.__init__(self, **kwargs)
-
-        # set the parameters
-        self.__lm = lm
-        self.__convergence_tol = convergence_tol
-        self.__resamp_decay = resamp_decay
-        self.__min_resamp = min_resamp
-        self.__maxiter = maxiter
-        self.__has_bias = has_bias
-        self.__fit_all_weights = fit_all_weights
-        self.__seed = seed
 
         # pylint friendly initializations
         self.__ulabels = None
@@ -118,26 +120,6 @@ class SMLR(Classifier):
         """Just the weights, without the biases"""
         self.__biases = None
         """The biases, will remain none if has_bias is False"""
-
-        if not implementation.upper() in ['C', 'PYTHON']:
-            raise ValueError, \
-                  "Unknown implementation %s of stepwise_regression" % \
-                  implementation
-
-        self.__implementation = implementation
-
-
-    def __repr__(self):
-        """String representation of the object
-        """
-        return "SMLR(lm=%f, convergence_tol=%g, " % \
-               (self.__lm, self.__convergence_tol) + \
-               "resamp_decay=%f, min_resamp=%f, maxiter=%d, " % \
-               (self.__resamp_decay, self.__min_resamp, self.__maxiter) + \
-               "has_bias=%s, fit_all_weights=%s, implementation='%s', " % \
-               (self.__has_bias, self.__fit_all_weights, self.__implementation) + \
-               "seed=%s, enabled_states=%s)" % \
-               (self.__seed, str(self.states.enabled))
 
 
     def _pythonStepwiseRegression(self, w, X, XY, Xw, E,
@@ -301,14 +283,14 @@ class SMLR(Classifier):
         X = dataset.samples
 
         # see if we are adding a bias term
-        if self.__has_bias:
+        if self.params.has_bias:
             if __debug__:
                 debug("SMLR_", "hstacking 1s for bias")
 
             # append the bias term to the features
             X = N.hstack((X, N.ones((X.shape[0], 1), dtype=X.dtype)))
 
-        if self.__implementation.upper() == 'C':
+        if self.params.implementation.upper() == 'C':
             _stepwise_regression = _cStepwiseRegression
             #
             # TODO: avoid copying to non-contig arrays, use strides in ctypes?
@@ -326,18 +308,18 @@ class SMLR(Classifier):
                 X = X.astype(N.double)
 
         # set the feature dimensions
-        elif self.__implementation.upper() == 'PYTHON':
+        elif self.params.implementation.upper() == 'PYTHON':
             _stepwise_regression = self._pythonStepwiseRegression
         else:
             raise ValueError, \
                   "Unknown implementation %s of stepwise_regression" % \
-                  self.__implementation
+                  self.params.implementation
 
         # set the feature dimensions
         ns, nd = X.shape
 
         # decide the size of weights based on num classes estimated
-        if self.__fit_all_weights:
+        if self.params.fit_all_weights:
             c_to_fit = M
         else:
             c_to_fit = M-1
@@ -345,7 +327,7 @@ class SMLR(Classifier):
         # Precompute what we can
         auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X, 0))
         XY = N.dot(X.T, Y[:, :c_to_fit])
-        lambda_over_2_auto_corr = (self.__lm/2.)/auto_corr
+        lambda_over_2_auto_corr = (self.params.lm/2.)/auto_corr
 
         # set starting values
         w = N.zeros((nd, c_to_fit), dtype=N.double)
@@ -356,7 +338,7 @@ class SMLR(Classifier):
         # set verbosity
         if __debug__:
             verbosity = int( "SMLR_" in debug.active )
-            debug('SMLR_', 'Calling stepwise_regression. Seed %s' % self.__seed)
+            debug('SMLR_', 'Calling stepwise_regression. Seed %s' % self.params.seed)
         else:
             verbosity = 0
 
@@ -370,18 +352,18 @@ class SMLR(Classifier):
                                       lambda_over_2_auto_corr,
                                       S,
                                       M,
-                                      self.__maxiter,
-                                      self.__convergence_tol,
-                                      self.__resamp_decay,
-                                      self.__min_resamp,
+                                      self.params.maxiter,
+                                      self.params.convergence_tol,
+                                      self.params.resamp_decay,
+                                      self.params.min_resamp,
                                       verbosity,
-                                      self.__seed)
+                                      self.params.seed)
 
-        if cycles >= self.__maxiter:
+        if cycles >= self.params.maxiter:
             # did not converge
             raise ConvergenceError, \
                   "More than %d Iterations without convergence" % \
-                  (self.__maxiter)
+                  (self.params.maxiter)
 
         # save the weights
         self.__weights_all = w
@@ -391,7 +373,7 @@ class SMLR(Classifier):
             self.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures,:]), axis=1)>0)[0]
 
         # and a bias
-        if self.__has_bias:
+        if self.params.has_bias:
             self.__biases = w[-1, :]
 
         if __debug__:
@@ -410,16 +392,16 @@ class SMLR(Classifier):
         Predict the output for the provided data.
         """
         # see if we are adding a bias term
-        if self.__has_bias:
+        if self.params.has_bias:
             # append the bias term to the features
-            data = N.hstack((data, 
+            data = N.hstack((data,
                              N.ones((data.shape[0], 1), dtype=data.dtype)))
 
         # append the zeros column to the weights if necessary
-        if self.__fit_all_weights:
+        if self.params.fit_all_weights:
             w = self.__weights_all
         else:
-            w = N.hstack((self.__weights_all, 
+            w = N.hstack((self.__weights_all,
                           N.zeros((self.__weights_all.shape[0], 1))))
 
         # determine the probability values for making the prediction
@@ -451,7 +433,6 @@ class SMLR(Classifier):
         return SMLRWeights(self, **kwargs)
 
 
-    has_bias = property(lambda self: self.__has_bias)
     biases = property(lambda self: self.__biases)
     weights = property(lambda self: self.__weights)
 
@@ -486,9 +467,9 @@ class SMLRWeights(Sensitivity):
         """Extract weights from Linear SVM classifier.
         """
         if self.clf.weights.shape[1] != 1:
-            warning("You are estimating sensitivity for SMLR %s trained on %d" %
-                    (`self.clf`, self.clf.weights.shape[1]+1) +
-                    " classes. Make sure that it is what you intended to do" )
+            warning("You are estimating sensitivity for SMLR %s with multiple"
+                    " sensitivities available. Make sure that it is what you"
+                    " intended to do" % self )
 
         weights = self.clf.weights
 

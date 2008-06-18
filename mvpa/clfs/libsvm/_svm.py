@@ -21,7 +21,8 @@ from mvpa.clfs.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
                                   PRECOMPUTED
 
-from mvpa.misc import debug
+if __debug__:
+    from mvpa.misc import debug
 
 def intArray(seq):
     size = len(seq)
@@ -284,9 +285,12 @@ class SVMModel:
         and some statistics
         """
         ret = '<SVMModel:'
-        ret += ' type = %s, ' % `self.svm_type`
-        ret += ' number of classes = %d (%s), ' \
-                % ( self.nr_class, `self.labels` )
+        try:
+            ret += ' type = %s, ' % `self.svm_type`
+            ret += ' number of classes = %d (%s), ' \
+                   % ( self.nr_class, `self.labels` )
+        except:
+            pass
         return ret+'>'
 
 

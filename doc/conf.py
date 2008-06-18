@@ -36,15 +36,15 @@ master_doc = 'contents'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2008, Michael Hanke'
+copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.2'
+version = '0.2.2'
 # The full version, including alpha/beta/rc tags.
-release = '0.2'
+release = '0.2.2'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -138,7 +138,7 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = os.path.join('_static', 'logo.pdf')
 
 # Additional stuff for the LaTeX preamble.
 #latex_preamble = ''

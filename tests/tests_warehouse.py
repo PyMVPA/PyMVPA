@@ -10,15 +10,23 @@
 
 __docformat__ = 'restructuredtext'
 
+from os import environ
+
+import unittest
 import numpy as N
 
-from mvpa.datasets.dataset import Dataset
-from mvpa.clfs.classifier import Classifier
+from mvpa.datasets import Dataset
+from mvpa.datasets.splitter import OddEvenSplitter
+from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.clfs.base import Classifier
 from mvpa.misc.state import Stateful
 from mvpa.misc.data_generators import *
 
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
+
 if __debug__:
     from mvpa.misc import debug
+    __all__.append('debug')
 
 
 def sweepargs(**kwargs):
@@ -33,6 +41,13 @@ def sweepargs(**kwargs):
     """
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):
+            def untrain_clf(argvalue):
+                if isinstance(argvalue, Classifier):
+                    # clear classifier after its use -- just to be sure ;-)
+                    argvalue.retrainable = False
+                    argvalue.untrain()
+            failed_tests_str = []
+            exception = None
             for argname in kwargs.keys():
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
@@ -48,14 +63,24 @@ def sweepargs(**kwargs):
                             debug('TEST', 'Running %s on args=%s and kwargs=%s' %
                                   (method.__name__, `args_`, `kwargs_`))
                         method(*args_, **kwargs_)
-                        if isinstance(argvalue, Classifier):
-                            # clear classifier after its use -- just to be sure ;-)
-                            argvalue.untrain()
+                        untrain_clf(argvalue)
                     except Exception, e:
+                        exception = e
                         # Adjust message making it more informative
-                        e.__init__("%s on %s = %s" % (str(e), argname, `argvalue`))
-                        # Reraise bloody exception ;-)
-                        raise
+                        failed_tests_str.append("%s on %s = %s" % (str(e), argname, `argvalue`))
+                        untrain_clf(argvalue) # untrain classifier
+                        if __debug__:
+                            debug('TEST', 'Failed #%d' % len(failed_tests_str))
+                    # TODO: handle different levels of unittests properly
+                    if environ.has_key('MVPA_QUICKTEST'):
+                        # on TESTQUICK just run test for 1st entry in the list,
+                        # the rest are omitted
+                        # TODO: proper partitioning of unittests
+                        break
+            if exception is not None:
+                exception.__init__('\n'.join(failed_tests_str))
+                raise
+
         do_sweep.func_name = method.func_name
         return do_sweep
 
@@ -63,3 +88,57 @@ def sweepargs(**kwargs):
         raise NotImplementedError
     return unittest_method
 
+# Define datasets to be used all over. Split-half later on is used to
+# split into training/testing
+#
+specs = { 'large' : { 'perlabel' : 99, 'nchunks' : 11, 'nfeatures' : 20, 'snr' : 8 },
+          'medium' : { 'perlabel' : 24, 'nchunks' : 6, 'nfeatures' : 14, 'snr' : 8 },
+          'small' : { 'perlabel' : 12,  'nchunks' : 4, 'nfeatures' : 6, 'snr' : 14} }
+nonbogus_pool = [0, 1, 3, 5]
+datasets = {}
+
+for kind, spec in specs.iteritems():
+    # set of univariate datasets
+    for nlabels in [ 2, 3, 4 ]:
+        basename = 'uni%d%s' % (nlabels, kind)
+        dataset = normalFeatureDataset(
+            nlabels=nlabels,
+            nonbogus_features=nonbogus_pool[:nlabels],
+            **spec)
+        oes = OddEvenSplitter()
+        splits = [(train, test) for (train, test) in oes(dataset)]
+        for i, replication in enumerate( ['test', 'train'] ):
+            dataset_ = splits[0][i]
+            dataset_.nonbogus_features = nonbogus_pool[:nlabels]
+            datasets["%s_%s" % (basename, replication)] = dataset_
+
+        # full dataset
+        datasets[basename] = dataset
+
+    # sample 3D
+    total = 2*spec['perlabel']
+    nchunks = spec['nchunks']
+    data = N.random.standard_normal(( total, 3, 6, 6 ))
+    labels = N.concatenate( ( N.repeat( 0, spec['perlabel'] ),
+                              N.repeat( 1, spec['perlabel'] ) ) )
+    chunks = N.asarray(range(nchunks)*(total/nchunks))
+    mask = N.ones( (3, 6, 6) )
+    mask[0,0,0] = 0
+    mask[1,3,2] = 0
+    datasets['3d%s' % kind] = MaskedDataset(samples=data, labels=labels,
+                                            chunks=chunks, mask=mask)
+
+# some additional datasets
+datasets['dumb2'] = dumbFeatureBinaryDataset()
+datasets['dumb'] = dumbFeatureDataset()
+
+# Datasets for regressions testing
+datasets['sin_modulated'] = multipleChunks(sinModulated, 4, 30, 1)
+datasets['sin_modulated_test'] = sinModulated(30, 1, flat=True)
+
+# simple signal for linear regressors
+datasets['chirp_linear'] = multipleChunks(chirpLinear, 6, 50, 10, 2, 0.3, 0.1)
+datasets['chirp_linear_test'] = chirpLinear(20, 5, 2, 0.4, 0.1)
+
+datasets['wr1996'] = multipleChunks(wr1996, 4, 50)
+datasets['wr1996_test'] = wr1996(50)

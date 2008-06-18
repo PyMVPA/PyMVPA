@@ -12,31 +12,79 @@ __docformat__ = 'restructuredtext'
 
 # take care of conditional import of external classifiers
 import mvpa.base.externals as externals
+from mvpa.misc import warning
 
+from _svmbase import _SVM
+
+# default SVM implementation
+SVM = None
+_NuSVM = None
+if externals.exists('shogun'):
+    from mvpa.clfs import sg
+    SVM = sg.SVM
+    #if not 'LinearCSVMC' in locals():
+    #    from mvpa.clfs.sg.svm import *
 
 if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
     from mvpa.clfs import libsvm
-    from mvpa.clfs.libsvm.svm import *
+    _NuSVM = libsvm.SVM
+    SVM = libsvm.SVM
+    #from mvpa.clfs.libsvm.svm import *
 
-if externals.exists('shogun'):
-    from mvpa.clfs import sg
-    if not 'LinearCSVMC' in locals():
-        from mvpa.clfs.sg.svm import *
 
-if not 'LinearCSVMC' in locals():
-    raise RuntimeError, "None of SVM implementions libraries was found"
+if SVM is None:
+    warning("None of SVM implementions libraries was found")
+else:
+    _defaultC = _SVM._SVM_PARAMS['C'].default
+    _defaultNu = _SVM._SVM_PARAMS['nu'].default
 
-#try:
-#    from sg.svm import *
-#
-#    # Nu-SVMs are not provided by SG thus reverting to libsvm-wrappers
-#    from libsvm.svm import LinearNuSVMC, RbfNuSVMC
-#
-#    # Or just bind them to C-SVMs ;)
-#    #LinearNuSVMC = LinearCSVMC
-#    #RbfNuSVMC = RbfCSVMC
-#except:
-#    from mvpa.misc import warning
-#    warning("Cannot import shogun libraries. Reverting back to LibSVM wrappers")
-#    from libsvm.svm import *
+    # Define some convinience classes
+    class LinearCSVMC(SVM):
+        """C-SVM classifier using linear kernel.
+
+        See help for %s for more details
+        """ % SVM.__class__.__name__
+
+        def __init__(self, C=_defaultC, **kwargs):
+            """
+            """
+            # init base class
+            SVM.__init__(self, C=C, kernel_type='linear', **kwargs)
+
+
+    class RbfCSVMC(SVM):
+        """C-SVM classifier using a radial basis function kernel.
+
+        See help for %s for more details
+        """ % SVM.__class__.__name__
+
+        def __init__(self, C=_defaultC, **kwargs):
+            """
+            """
+            # init base class
+            SVM.__init__(self, C=C, kernel_type='RBF', **kwargs)
+
+    if _NuSVM is not None:
+        class LinearNuSVMC(_NuSVM):
+            """Nu-SVM classifier using linear kernel.
+
+            See help for %s for more details
+            """ % _NuSVM.__class__.__name__
+
+            def __init__(self, nu=_defaultNu, **kwargs):
+                """
+                """
+                # init base class
+                _NuSVM.__init__(self, nu=nu, kernel_type='linear', **kwargs)
+
+        class RbfNuSVMC(SVM):
+            """Nu-SVM classifier using a radial basis function kernel.
+
+            See help for %s for more details
+            """ % SVM.__class__.__name__
+
+            def __init__(self, nu=_defaultNu, **kwargs):
+                # init base class
+                SVM.__init__(self, nu=nu, kernel_type='RBF', **kwargs)
+

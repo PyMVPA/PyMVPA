@@ -8,9 +8,15 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
+.. index:: feature selection
+.. _featsel:
+
 *****************
 Feature Selection
 *****************
+
+.. index:: recursive feature selection, RFE
+.. _recursive_feature_elimination:
 
 Recursive Feature Elimination
 =============================
@@ -19,8 +25,11 @@ RFE_
 
 (to be written)
 
-.. _RFE: api/mvpa.algorithms.rfe.RFE-class.html
+.. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
+
+.. index:: incremental feature search, IFS
+.. _incremental_feature_search:
 
 Incremental Feature Search
 ==========================
@@ -29,7 +38,7 @@ IFS_
 
 (to be written)
 
-.. _IFS: api/mvpa.algorithms.ifs.IFS-class.html
+.. _IFS: api/mvpa.featsel.ifs.IFS-class.html
 
 .. What are the practical differences (besides speed) between RFE and IFS?
 

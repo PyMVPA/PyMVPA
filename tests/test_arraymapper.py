@@ -6,19 +6,19 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA mask mapper"""
+"""Unit tests for PyMVPA dense array mapper"""
 
 
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.array import DenseArrayMapper
 from mvpa.datasets.metric import *
 import unittest
 import numpy as N
 
-class MaskMapperTests(unittest.TestCase):
+class DenseArrayMapperTests(unittest.TestCase):
 
-    def testForwardMaskMapper(self):
+    def testForwardDenseArrayMapper(self):
         mask = N.ones((3,2))
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
 
         # test shape reports
         self.failUnless( map_.dsshape == mask.shape )
@@ -38,7 +38,7 @@ class MaskMapperTests(unittest.TestCase):
 
         # check incomplete masks
         mask[1,1] = 0
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
         self.failUnless( map_.nfeatures == 5 )
         self.failUnless( ( map_.forward( N.arange(6).reshape(3,2) ) \
                            == [0,1,2,4,5]).all() )
@@ -49,10 +49,10 @@ class MaskMapperTests(unittest.TestCase):
                                N.arange(4).reshape(2,2) )
 
 
-    def testReverseMaskMapper(self):
+    def testReverseDenseArrayMapper(self):
         mask = N.ones((3,2))
         mask[1,1] = 0
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
 
         rmapped = map_.reverse(N.arange(1,6))
         self.failUnless( rmapped.shape == (3,2) )
@@ -73,15 +73,15 @@ class MaskMapperTests(unittest.TestCase):
         self.failUnless( rmapped2[1,2,1] == 10 )
 
 
-    def testMaskMapperMetrics(self):
-        """ Test MaskMetricMapper
+    def testDenseArrayMapperMetrics(self):
+        """ Test DenseArrayMapperMetric
         """
         mask = N.ones((3,2))
         mask[1,1] = 0
 
         # take space with non-square elements
         neighborFinder = DescreteMetric([0.5, 2])
-        map_ = MaskMapper(mask, neighborFinder)
+        map_ = DenseArrayMapper(mask, neighborFinder)
 
         # test getNeighbors
         # now it returns list of arrays
@@ -95,19 +95,20 @@ class MaskMapperTests(unittest.TestCase):
         result = map_.getNeighbors(0, 2.1)
         self.failUnless( result == target )
 
-        map__ = MaskMapper(mask, elementsize=[0.5, 2])
+        map__ = DenseArrayMapper(mask, elementsize=[0.5, 2])
         self.failUnless( map__.getNeighbors(0, 2.1) == target,
-                         msg="MaskMapper must accept elementsize parameter and set" +
+                         msg="DenseArrayMapper must accept elementsize parameter and set" +
                          " DescreteMetric accordingly")
 
-        self.failUnlessRaises(ValueError, MaskMapper, mask, elementsize=[0.5]*3)
-        """MaskMapper must raise exception when not appropriatly sized
+        self.failUnlessRaises(ValueError, DenseArrayMapper,
+                                          mask, elementsize=[0.5]*3)
+        """DenseArrayMapper must raise exception when not appropriatly sized
         elementsize was provided"""
 
 
 
     def testMapperAliases(self):
-        mm=MaskMapper(N.ones((3,4,2)))
+        mm=DenseArrayMapper(N.ones((3,4,2)))
         # We decided to don't have alias for reverse
         #self.failUnless((mm(N.arange(24)) == mm.reverse(N.arange(24))).all())
         self.failUnless((mm(N.ones((3,4,2))) \
@@ -120,7 +121,7 @@ class MaskMapperTests(unittest.TestCase):
         mask[2,1,0]=1
         mask[0,3,1]=1
 
-        mm=MaskMapper(mask)
+        mm=DenseArrayMapper(mask)
 
         self.failUnless(mm.nfeatures==3)
 
@@ -146,7 +147,7 @@ class MaskMapperTests(unittest.TestCase):
         mask[1,1] = 0
         mask0 = mask.copy()
         data = N.arange(6).reshape(mask.shape)
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
 
         # check if any exception is thrown if we get
         # out of the outIds
@@ -163,7 +164,7 @@ class MaskMapperTests(unittest.TestCase):
         self.failUnless((mask == mask0).all())
 
         # do the same but using discardOut
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
         map_.discardOut([1,2])
         self.failUnless((map_.forward(data)==[0, 4, 5]).all())
         map_.discardOut([1])
@@ -182,7 +183,7 @@ class MaskMapperTests(unittest.TestCase):
         mask[1,1] = 0
 
         data = N.arange(9).reshape(mask.shape)
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
         oldneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
 
         # just do place changes
@@ -204,10 +205,10 @@ class MaskMapperTests(unittest.TestCase):
         mask[1,1] = 0
 
         data = N.arange(9).reshape(mask.shape)
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
         oldneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
 
-        map_ = MaskMapper(mask)
+        map_ = DenseArrayMapper(mask)
         map_.selectOut([7, 1, 2, 3, 4, 5, 6, 0], sort=True)
         # we check if an item new outId==0 still has proper neighbors
         newneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
@@ -215,7 +216,7 @@ class MaskMapperTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(MaskMapperTests)
+    return unittest.makeSuite(DenseArrayMapperTests)
 
 
 if __name__ == '__main__':

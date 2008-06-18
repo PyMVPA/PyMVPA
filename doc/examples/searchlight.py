@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -9,6 +9,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Example demonstrating a searchlight analysis on an fMRI dataset"""
 
+from mvpa.suite import *
+
+"""
+# Command above substitutes the following list
+
 import sys
 
 import numpy as N
@@ -18,7 +23,7 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.datasets.misc import zscore
+from mvpa.datasets.miscfx import zscore
 from mvpa.measures.searchlight import Searchlight
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.iohelpers import SampleAttributes
@@ -27,6 +32,7 @@ from mvpa.misc.cmdline import \
      parser, \
      optsCommon, optClf, optsSVM, optRadius, optsKNN, \
      optsGener, optZScore
+"""
 
 def main():
     """ Wrapped into a function call for easy profiling later on
@@ -41,8 +47,12 @@ def main():
     % sys.argv[0]
 
     parser.option_groups = [optsSVM, optsKNN, optsGener, optsCommon]
-    parser.options = [optClf, optRadius, optZScore]
 
+    # Set a set of available classifiers for this example
+    optClf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
+    optClf.default='lin_nu_svmc'
+
+    parser.add_options([optClf, optRadius, optZScore])
 
     (options, files) = parser.parse_args()
 
@@ -90,11 +100,11 @@ def main():
     if options.clf == 'knn':
         clf = kNN(k=options.knearestdegree)
     elif options.clf == 'lin_nu_svmc':
-        clf = LinearNuSVMC(options.svm_nu)
+        clf = LinearNuSVMC(nu=options.svm_nu)
     elif options.clf == 'rbf_nu_svmc':
-        clf = RbfNuSVMC(options.svm_nu)
+        clf = RbfNuSVMC(nu=options.svm_nu)
     else:
-        raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
+        raise ValueError, 'Unknown classifier type: %s' % `options.clf`
     verbose(3, "Using '%s' classifier" % options.clf)
 
     verbose(1, "Computing")

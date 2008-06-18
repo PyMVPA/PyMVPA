@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.clfs.transerror import ClassifierError
-from mvpa.algorithms.datameasure import Sensitivity
+from mvpa.measures.base import Sensitivity
 from mvpa.featsel.base import FeatureSelection
 from mvpa.featsel.helpers import BestDetector, \
                                  NBackHistoryStopCrit, \

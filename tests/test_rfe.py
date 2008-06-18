@@ -8,12 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA recursive feature elimination"""
 
-import unittest
-import numpy as N
 from sets import Set
 
 from mvpa.datasets.maskeddataset import MaskedDataset
-from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
      SensitivityBasedFeatureSelection, \
@@ -28,7 +26,7 @@ from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
 
-from tests_warehouse import sweepargs
+from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
@@ -218,7 +216,7 @@ class RFETests(unittest.TestCase):
                          N.nonzero(data)[0]).all())
 
 
-    @sweepargs(clf=clfs['clfs_with_sens'])
+    @sweepargs(clf=clfs['has_sensitivity', '!meta'])
     def testSensitivityBasedFeatureSelection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
@@ -299,7 +297,7 @@ class RFETests(unittest.TestCase):
 
 
     # TODO: should later on work for any clfs_with_sens
-    @sweepargs(clf=clfs['clfs_with_sens'])
+    @sweepargs(clf=clfs['has_sensitivity', '!meta'][:1])
     def testRFE(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!

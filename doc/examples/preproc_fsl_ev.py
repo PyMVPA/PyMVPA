@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -24,6 +24,11 @@ the effect that linear detrending (--detrend) will perform a separate fit for
 this chunk and will not simply remove a global trend.
 """
 
+from mvpa.misc.fsl.base import FslEV3
+from mvpa.suite import *
+"""
+# Command above substitutes the following list
+
 import sys
 
 import numpy as N
@@ -31,14 +36,14 @@ import numpy as N
 from scipy.signal import detrend
 
 from nifti import NiftiImage
-from nifti.utils import time2vol
 
 from mvpa.misc.support import transformWithBoxcar
 from mvpa.misc.iohelpers import SampleAttributes, FslEV3
 from mvpa.misc import verbose
 from mvpa.misc.cmdline import parser, \
      optsCommon, optZScore, optTr, optsBox, optsChunk, optDetrend
-
+"""
+from nifti.utils import time2vol
 
 def main():
     """ Wrapped into a function call for easy profiling later on

@@ -8,30 +8,40 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA classifier cross-validation"""
 
-import unittest
-import numpy as N
-from copy import copy
+from mvpa.misc.copy import copy
 
-from mvpa.datasets.dataset import Dataset
+from mvpa.datasets import Dataset
 from mvpa.clfs.transerror import \
      TransferError, ConfusionMatrix, ConfusionBasedError
+from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from tests_warehouse import normalFeatureDataset, sweepargs
+from tests_warehouse import *
+from tests_warehouse import normalFeatureDataset
 from tests_warehouse_clfs import *
 
 class ErrorsTests(unittest.TestCase):
 
     def testConfusionMatrix(self):
         data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
-        reg = N.array([1,1,1,2,2,2,3,3,3])
+        reg = [1,1,1,2,2,2,3,3,3]
+        regl = [1,2,1,2,2,2,3,2,1]
+        correct_cm = [[2,0,1],[1,3,1],[0,0,1]]
+        # Check if we are ok with any input type - either list, or N.array, or tuple
+        for t in [reg, tuple(reg), list(reg), N.array(reg)]:
+            for p in [regl, tuple(regl), list(regl), N.array(regl)]:
+                cm = ConfusionMatrix(targets=t, predictions=p)
+                # check table content
+                self.failUnless((cm.matrix == correct_cm).all())
 
+
+        # Do a bit more thorough checking
         cm = ConfusionMatrix()
         self.failUnlessRaises(ZeroDivisionError, lambda x:x.percentCorrect, cm)
         """No samples -- raise exception"""
 
-        cm.add(reg, N.array([1,2,1,2,2,2,3,2,1]))
+        cm.add(reg, regl)
 
         self.failUnlessEqual(len(cm.sets), 1,
             msg="Should have a single set so far")
@@ -42,7 +52,7 @@ class ErrorsTests(unittest.TestCase):
         """ConfusionMatrix must complaint if number of samples different"""
 
         # check table content
-        self.failUnless((cm.matrix == [[2,1,0],[0,3,0],[1,1,1]]).all())
+        self.failUnless((cm.matrix == correct_cm).all())
 
         # lets add with new labels (not yet known)
         cm.add(reg, N.array([1,4,1,2,2,2,4,2,1]))
@@ -59,11 +69,13 @@ class ErrorsTests(unittest.TestCase):
 
         # check pretty print
         # just a silly test to make sure that printing works
+        self.failUnless(len(cm.asstring(
+            header=True, summary=True,
+            description=True))>100)
         self.failUnless(len(str(cm))>100)
         # and that it knows some parameters for printing
-        self.failUnless(len(cm.__str__(summary=True, percents=True,
-                                       header=False,
-                                       print_empty=True))>100)
+        self.failUnless(len(cm.asstring(summary=True,
+                                       header=False))>100)
 
         # lets check iadd -- just itself to itself
         cm += cm
@@ -80,7 +92,7 @@ class ErrorsTests(unittest.TestCase):
 
 
 
-    @sweepargs(l_clf=clfs.get('LinearSVMC', []))
+    @sweepargs(l_clf=clfs['linear', 'svm'])
     def testConfusionBasedError(self, l_clf):
         train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
                                      nonbogus_features=[0,1], snr=3, nchunks=1)
@@ -104,6 +116,28 @@ class ErrorsTests(unittest.TestCase):
 
         # try copying the beast
         terr_copy = copy(terr)
+
+
+    @sweepargs(l_clf=clfs['linear', 'svm'])
+    def testNullDistProb(self, l_clf):
+        train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
+                                     nonbogus_features=[0,1], snr=3, nchunks=1)
+
+        # define class to estimate NULL distribution of errors
+        # use left tail of the distribution since we use MeanMatchFx as error
+        # function and lower is better
+        terr = TransferError(clf=l_clf,
+                             null_dist=MCNullDist(permutations=10,
+                                                  tail='left'))
+
+        # check reasonable error range
+        err = terr(train, train)
+        self.failUnless(err < 0.4)
+
+        # check that the result is highly significant since we know that the
+        # data has signal
+        self.failUnless(terr.null_prob < 0.01)
+
 
 
 def suite():

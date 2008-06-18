@@ -11,13 +11,11 @@
 from distutils.core import setup, Extension
 import numpy as N
 import os
+import sys
 from glob import glob
 
 # find numpy headers
 numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
-
-# Notes on the setup
-# Version scheme is: major.minor.patch<suffix>
 
 # define the extension modules
 libsvmc_ext = Extension(
@@ -39,12 +37,21 @@ smlrc_ext = Extension(
 
 ext_modules = [smlrc_ext]
 
-if 'PYMVPA_LIBSVM' in os.environ.keys():
+# only do libsvm if forced or libsvm.a is available
+if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \
+   or sys.argv.count('--with-libsvm'):
     ext_modules.append(libsvmc_ext)
+    # clean argv if necessary (or distutils will complain)
+    if sys.argv.count('--with-libsvm'):
+        sys.argv.remove('--with-libsvm')
+
+
+# Notes on the setup
+# Version scheme is: major.minor.patch<suffix>
 
 # define the setup
 setup(name       = 'pymvpa',
-      version      = '0.2.0-pre1',
+      version      = '0.2.2',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -58,9 +65,11 @@ not limited to neuroimaging data it is eminently suited for such datasets.
 PyMVPA is truely free software (in every respect) and additonally requires
 nothing but free-software to run.""",
       packages     = [ 'mvpa',
+                       'mvpa.base',
                        'mvpa.datasets',
                        'mvpa.mappers',
                        'mvpa.clfs',
+                       'mvpa.clfs.sg',
                        'mvpa.clfs.libsvm',
                        'mvpa.clfs.libsmlr',
                        'mvpa.algorithms',

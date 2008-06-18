@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re
 
-from copy import copy, deepcopy
+from mvpa.misc.copy import copy, deepcopy
 from operator import isSequenceType
 
 if __debug__:
@@ -113,6 +113,23 @@ def indentDoc(v):
     """
     return re.sub('\n', '\n  ', str(v))
 
+
+
+def idhash(val):
+    """Craft unique id+hash for an object
+    """
+    res = "%s" % id(val)
+    if isinstance(val, list):
+        val = tuple(val)
+    try:
+        res += ":%s" % hash(buffer(val))
+    except:
+        try:
+            res += ":%s" % hash(val)
+        except:
+            pass
+        pass
+    return res
 
 def isSorted(items):
     """Check if listed items are in sorted order.

@@ -22,10 +22,10 @@ module-rgx=(([a-z][a-z0-9]*)|([A-Z][a-zA-Z0-9]+))$
 attr-rgx=[a-z_][a-zA-Z0-9_]{2,30}
 
 # Regular expression which should only match correct class names
-class-rgx=[A-Z][a-zA-Z0-9]+$
+class-rgx=[A-Z_]+[a-zA-Z0-9]+$
 
 # Regular expression which should only match correct function names
-function-rgx=[a-z_][a-zA-Z0-9]*$
+function-rgx=[a-z_]+[a-z_][a-zA-Z0-9]*$
 
 # Regular expression which should only match correct method names
 method-rgx=([a-z_]|__)[a-zA-Z0-9]*(__)?$
@@ -34,11 +34,11 @@ method-rgx=([a-z_]|__)[a-zA-Z0-9]*(__)?$
 argument-rgx=[a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?$
 
 # Regular expression which should only match correct variable names
-variable-rgx=([a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?||(__.*__))$
+variable-rgx=([a-z_]+[a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?||(__.*__))$||[A-Z]
 
 # Regular expression which should only match correct module level names
 # Default: (([A-Z_][A-Z1-9_]*)|(__.*__))$
-const-rgx=([a-z][a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?|__.*__)$
+const-rgx=([a-z_]+[a-zA-Z0-9]*_*[a-zA-Z0-9]*_*[a-zA-Z0-9]*_?|__.*__)$||[A-Z]
 
 
 [FORMAT]

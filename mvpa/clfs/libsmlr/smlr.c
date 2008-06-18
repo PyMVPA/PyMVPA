@@ -7,15 +7,10 @@
 #include <math.h>
 #include <float.h>
 
-/*
-compile with:
+#include <Python.h>
 
-gcc -c -fPIC smlr.c
-gcc -shared -o smlr.so smlr.o -lm
-
-*/
-
-int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
+DL_EXPORT(int)
+stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 			int X_rows, int X_cols, double X[X_rows][X_cols],
 			int XY_rows, int XY_cols, double XY[XY_rows][XY_cols],
 			int Xw_rows, int Xw_cols, double Xw[Xw_rows][Xw_cols],
@@ -239,3 +234,13 @@ int stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 
   return cycle;
 }
+
+/* make dummy module definition to satisfy distutils on win32
+ * which cannot compile non-extension libraries
+ */
+PyMODINIT_FUNC initsmlrc(void)
+{
+        Py_InitModule3("smlrc", NULL, "");
+}
+
+

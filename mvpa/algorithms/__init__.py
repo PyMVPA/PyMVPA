@@ -7,3 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Import helper for PyMVPA algorithms."""
+
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.algorithms')
+
+if __debug__:
+    debug('INIT', 'mvpa.algorithms end')
