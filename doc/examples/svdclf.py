@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -7,8 +7,12 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a how to use data projection onto PCA components
+"""Example demonstrating a how to use data projection onto SVD components
 for *any* clasifier"""
+
+from mvpa.suite import *
+"""
+# Command above substitutes commands below
 
 import numpy as N
 import pylab as P
@@ -16,18 +20,19 @@ import pylab as P
 # local imports
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.misc import zscore
-from mvpa.misc.signal import detrend
+from mvpa.datasets.miscfx import zscore, detrend
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.svm import LinearCSVMC
-from mvpa.clfs.classifier import MappedClassifier
-from mvpa.mappers import PCAMapper
+from mvpa.clfs.base import MappedClassifier
+from mvpa.mappers import SVDMapper
 
 from mvpa.misc import debug
-debug.active += ["CROSSC"]
+"""
 
+if __debug__:
+    debug.active += ["CROSSC"]
 
 # plotting helper function
 def makeBarPlot(data, labels=None, title=None, ylim=None, ylabel=None):
@@ -87,16 +92,22 @@ zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
                                         dtype='bool'))
 
+# Specify the base classifier to be used
+# To parametrize the classifier to be used
+#   Clf = lambda *args:LinearCSVMC(C=-10, *args)
+# Just to assign a particular classifier class
+Clf = LinearCSVMC
+
 # define some classifiers: a simple one and several classifiers with built-in
-# PCAs
-clfs = [('All orig. features', LinearCSVMC()),
-        ('All PCs', MappedClassifier(LinearCSVMC(), PCAMapper())),
-        ('First 3 PCs', MappedClassifier(LinearCSVMC(),
-                        PCAMapper(selector=range(5)))),
-        ('First 50 PCs', MappedClassifier(LinearCSVMC(),
-                        PCAMapper(selector=range(50)))),
-        ('PCs 3-50', MappedClassifier(LinearCSVMC(),
-                        PCAMapper(selector=range(3,50))))]
+# SVDs
+clfs = [('All orig. features', Clf()),
+        ('All PCs', MappedClassifier(Clf(), SVDMapper())),
+        ('First 3 PCs', MappedClassifier(Clf(),
+                        SVDMapper(selector=range(5)))),
+        ('First 50 PCs', MappedClassifier(Clf(),
+                        SVDMapper(selector=range(50)))),
+        ('PCs 3-50', MappedClassifier(Clf(),
+                        SVDMapper(selector=range(3,50))))]
 
 
 # run and visualize in barplot

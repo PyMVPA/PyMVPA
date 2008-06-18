@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets.mappeddataset import MappedDataset
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.array import DenseArrayMapper
 
 if __debug__:
     from mvpa.misc import debug
@@ -59,7 +59,7 @@ class MaskedDataset(MappedDataset):
             # mapping stuff
             MappedDataset.__init__(self,
                                    samples=samples,
-                                   mapper=MaskMapper(mask),
+                                   mapper=DenseArrayMapper(mask),
                                    **(kwargs))
 
         else:

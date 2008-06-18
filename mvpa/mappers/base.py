@@ -10,8 +10,15 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
+from mvpa.datasets.metric import Metric
+
 from mvpa.misc.vproperty import VProperty
 from mvpa.base.dochelpers import enhancedDocString
+
+if __debug__:
+    from mvpa.misc import warning
 
 
 class Mapper(object):
@@ -29,13 +36,28 @@ class Mapper(object):
     done in the baseclass as standard Python properties would still point to
     the baseclass methods.
     """
-    def __init__(self):
-        """Does nothing."""
-        pass
+    def __init__(self, metric=None):
+        """Initialize a Mapper.
+
+        :Parameters:
+          metric : Metric
+            Optional metric
+        """
+        self.__metric = None
+        """Pylint happiness"""
+        self.setMetric(metric)
+        """Actually assign the metric"""
 
 
     __doc__ = enhancedDocString('Mapper', locals())
 
+
+    def __repr__(self):
+        if self.__metric is not None:
+            s = "metric=%s" % repr(self.__metric)
+        else:
+            s = ''
+        return "%s(%s)" % (self.__class__.__name__, s)
 
     def forward(self, data):
         """Map data from the original dataspace into featurespace.
@@ -55,7 +77,7 @@ class Mapper(object):
         raise NotImplementedError
 
 
-    def train(self, data):
+    def train(self, dataset):
         """Sub-classes have to override this method if the mapper need
         training.
         """
@@ -94,4 +116,85 @@ class Mapper(object):
         raise NotImplementedError
 
 
+    def getMetric(self):
+        """To make pylint happy"""
+        return self.__metric
+
+
+    def isValidOutId(self, outId):
+        """Validate if OutId is valid
+
+        Override if Out space is not simly a 1D vector
+        """
+        return(outId>=0 and outId<self.getOutSize())
+
+
+    def isValidInId(self, inId):
+        """Validate if InId is valid
+
+        Override if In space is not simly a 1D vector
+        """
+        return(inId>=0 and inId<self.getInSize())
+
+
+    def setMetric(self, metric):
+        """To make pylint happy"""
+        if metric is not None and not isinstance(metric, Metric):
+            raise ValueError, "metric for Mapper must be an " \
+                              "instance of a Metric class . Got %s" \
+                                % `type(metric)`
+        self.__metric = metric
+
+
+    def getNeighborIn(self, inId, *args, **kwargs):
+        """Return the list of coordinates for the neighbors.
+
+        :Parameters:
+          inId
+            id (index) of input element
+          **kwargs : dict
+            would be passed to assigned metric
+
+        XXX See TODO below: what to return -- list of arrays or list
+        of tuples?
+        """
+        if self.metric is None:
+            raise RuntimeError, "No metric was assigned to %s, thus no " \
+                  "neighboring information is present" % self
+
+        isValidInId = self.isValidInId
+        if isValidInId(inId):
+            for neighbor in self.metric.getNeighbor(inId, *args, **kwargs):
+                if isValidInId(neighbor):
+                    yield neighbor
+
+
+    def getNeighbor(self, outId, *args, **kwargs):
+        """Return the list of Ids for the neighbors.
+
+        Returns a list of outIds
+        """
+        if self.metric is None:
+            raise RuntimeError, "No metric was assigned to %s, thus no " \
+                  "neighboring information is present" % self
+
+        if self.isValidOutId(outId):
+            inId = self.getInId(outId)
+            for inId in self.getNeighborIn(inId, *args, **kwargs):
+                yield self.getOutId(inId)
+
+
+    def getNeighbors(self, outId, *args, **kwargs):
+        """Return the list of coordinates for the neighbors.
+
+        By default it simply constracts the list based on
+        the generator getNeighbor
+        """
+        return [ x for x in self.getNeighbor(outId, *args, **kwargs) ]
+
+
+    metric = property(fget=getMetric, fset=setMetric)
     nfeatures = VProperty(fget=getOutSize)
+
+
+

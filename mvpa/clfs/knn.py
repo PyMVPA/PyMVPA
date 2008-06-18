@@ -15,7 +15,7 @@ import numpy as N
 
 from mvpa.misc import warning
 from mvpa.misc.support import indentDoc
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 
 class kNN(Classifier):
@@ -27,18 +27,24 @@ class kNN(Classifier):
 
     __warned = False
 
+    _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
+
     def __init__(self, k=2, **kwargs):
         """
         :Parameters:
           k
             number of nearest neighbours to be used for voting
         """
+
         # init base class first
-        Classifier.__init__(self, train2predict=False, **kwargs)
+        Classifier.__init__(self, **kwargs)
 
         self.__k = k
         # XXX So is the voting function fixed forever?
-        self.__votingfx = self.getWeightedVote
+        # YYY assignment of bound method breakes deepcopying, for now
+        #     since there is no alternative yet -- just call method
+        #     explicitely
+        #self.__votingfx = self.getWeightedVote
         self.__data = None
 
 
@@ -83,7 +89,7 @@ class kNN(Classifier):
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = N.array(data)
+        data = N.asarray(data)
 
         if not data.ndim == 2:
             raise ValueError, "Data array must be two-dimensional."
@@ -109,7 +115,9 @@ class kNN(Classifier):
             knn = dists.argsort()[:self.__k]
 
             # finally get the class label
-            prediction, vote = self.__votingfx(knn)
+            # XXX call getWeightedVote for now explicitely
+            #prediction, vote = self.__votingfx(knn)
+            prediction, vote = self.getWeightedVote(knn)
             predicted.append(prediction)
             votes.append(vote)
 
@@ -137,7 +145,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.array(votes).argmax()], \
+        return uniquelabels[N.asarray(votes).argmax()], \
                votes
 
 
@@ -178,7 +186,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.array(votes).argmax()], \
+        return uniquelabels[N.asarray(votes).argmax()], \
                votes
 
 

@@ -13,10 +13,20 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import Stateful, StateVariable
+from mvpa.misc.state import Stateful, StateVariable, Parametrized, ParameterCollection
+from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
+class TestClassEmpty(Stateful):
+    pass
+
 class TestClassBlank(Stateful):
+    # We can force to have 'states' present even though we don't have
+    # any StateVariable defined here -- it might be added later on at run time
+    _ATTRIBUTE_COLLECTIONS = ['states']
+    pass
+
+class TestClassBlankNoExplicitStates(Stateful):
     pass
 
 class TestClassProper(Stateful):
@@ -30,16 +40,30 @@ class TestClassProperChild(TestClassProper):
     state4 = StateVariable(enabled=False, doc="state4 doc")
 
 
+class TestClassParametrized(TestClassProper, Parametrized):
+    p1 = Parameter(0)
+    state0 = StateVariable(enabled=False)
+
+    def __init__(self, **kwargs):
+        # XXX make such example when we actually need to invoke
+        # constructor
+        # TestClassProper.__init__(self, **kwargs)
+        Parametrized.__init__(self, **kwargs)
+
+
 class StateTests(unittest.TestCase):
 
     def testBlankState(self):
+        empty  = TestClassEmpty()
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
+
+        self.failUnlessRaises(AttributeError, empty.__getattribute__, 'states')
 
         self.failUnlessEqual(blank.states.items, {})
         self.failUnless(blank.states.enabled == [])
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'dummy')
-        self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, '_')
 
         # we shouldn't use _registerState now since metaclass statecollector wouldn't
         # update the states... may be will be implemented in the future if necessity comes
@@ -107,7 +131,7 @@ class StateTests(unittest.TestCase):
 
         # if documentary on the state is appropriate
         self.failUnlessEqual(proper2.states.listing,
-                             ['state1[enabled]: state1 doc',
+                             ['state1+: state1 doc',
                               'state2: state2 doc'])
 
         # if __str__ lists correct number of states
@@ -220,6 +244,38 @@ class StateTests(unittest.TestCase):
             self.fail("Should have puked since values were not enabled yet")
         except:
             pass
+
+
+    def testParametrized(self):
+
+        self.failUnlessRaises(TypeError, TestClassParametrized,
+            p2=34, enable_states=['state1'],
+            msg="Should raise an exception if argument doesn't correspond to"
+                "any parameter")
+        a = TestClassParametrized(p1=123, enable_states=['state1'])
+        self.failUnlessEqual(a.p1, 123, msg="We must have assigned value to instance")
+        self.failUnless('state1' in a.states.enabled,
+                        msg="state1 must have been enabled")
+
+        # validate that string representation of the object is valid and consistent
+        a_str = `a`
+        try:
+            import test_state
+            exec "a2=%s" % a_str
+        except Exception, e:
+            self.fail(msg="Failed to generate an instance out of "
+                      "representation %s. Got exception: %s" % (a_str, e))
+
+        self.failUnless(`a2` == a_str, msg="Generated object must have the same repr")
+
+        # Test at least that repr of collection is of correct syntax
+        aparams_str = `a.params`
+        try:
+            import test_state
+            exec "aparams2=%s" % aparams_str
+        except Exception, e:
+            self.fail(msg="Failed to generate an instance out of "
+                      "representation  %s of params. Got exception: %s" % (aparams_str, e))
 
 
 def suite():

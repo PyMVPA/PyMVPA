@@ -9,11 +9,12 @@
 /html
 */html
 */*/html
-/html
 build
 *.prof
 *.kcache
 *.so
+*.o
+*.a
 build-arch*
 svmc_wrap.cpp
 doc/examples/dump.*
@@ -25,10 +26,10 @@ debian/*.debhelper
 debian/*.substvars
 debian/files
 *-stamp
-*.html
 *.dot
 *.ps
 profile.out
 data/haxby8x6
 .nfs*
 *.valgrind.out*
+*.kcache.*

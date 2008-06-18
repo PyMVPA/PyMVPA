@@ -15,11 +15,11 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa.misc import debug
 
-from copy import deepcopy
+from mvpa.misc.copy import deepcopy
 
 import numpy as N
 
-from mvpa.algorithms.datameasure import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseDatasetMeasure
 
 
 class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):

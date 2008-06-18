@@ -8,17 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA logistic regression classifier"""
 
-import unittest
-from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.plr import PLR
-import numpy as N
-from mvpa.misc.data_generators import dumbFeatureBinaryDataset
+from tests_warehouse import *
 
 
 class PLRTests(unittest.TestCase):
 
     def testPLR(self):
-        data = dumbFeatureBinaryDataset()
+        data = datasets['dumb2']
 
         clf = PLR()
 
@@ -28,7 +25,7 @@ class PLRTests(unittest.TestCase):
         self.failUnless((clf.predict(data.samples) == data.labels).all())
 
     def testPLRState(self):
-        data = dumbFeatureBinaryDataset()
+        data = datasets['dumb2']
 
         clf = PLR()
 

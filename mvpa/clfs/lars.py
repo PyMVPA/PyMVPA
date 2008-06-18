@@ -27,7 +27,7 @@ import rpy
 rpy.r.library('lars')
 
 # local imports
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
 
@@ -64,6 +64,9 @@ class LARS(Classifier):
     install.packages()
 
     """
+
+    # XXX from yoh: it is linear, isn't it?
+    _clf_internals = [ 'lars', 'regression', 'linear' ]
 
     def __init__(self, model_type="lasso", trace=False, normalize=True,
                  intercept=True, max_steps=None, use_Gram=False, **kwargs):
@@ -119,7 +122,7 @@ class LARS(Classifier):
     def __repr__(self):
         """String summary of the object
         """
-        return """LARS(type=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, use_Gram=%s, enabled_states=%s)""" % \
+        return """LARS(type=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, use_Gram=%s, enable_states=%s)""" % \
                (self.__type,
                 self.__normalize,
                 self.__intercept,
@@ -165,7 +168,11 @@ class LARS(Classifier):
                                  mode='step',
                                  s=self.__trained_model['beta'].shape[0])
 
-        return N.asarray(res['fit'])
+        fit = N.asarray(res['fit'])
+        if len(fit.shape) == 0:
+            # if we just got 1 sample with a scalar
+            fit = fit.reshape( (1,) )
+        return fit
 
     weights = property(lambda self: self.__weights)
 

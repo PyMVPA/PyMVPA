@@ -8,12 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kNN classifier"""
 
-import unittest
-
-import numpy as N
-
 from mvpa.clfs.knn import kNN
-
+from tests_warehouse import *
 from tests_warehouse import pureMultivariateSignal
 
 

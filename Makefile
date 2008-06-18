@@ -6,7 +6,7 @@ PDF_DIR=build/pdf
 LATEX_DIR=build/latex
 WWW_DIR=build/website
 
-
+# should be made conditional, as pyversions id Debian specific
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
 
@@ -21,15 +21,25 @@ mkdir-%:
 
 all: build
 
+# build included 3rd party pieces (if present)
+3rd: 3rd-stamp
+3rd-stamp:
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d"; \
+     done
+	touch $@
+
+
 debian-build:
 # reuse is better than duplication (yoh)
 	debian/rules build
 
 
 build: build-stamp
-build-stamp:
+build-stamp: 3rd
 	python setup.py config --noisy
-	PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy"
+	python setup.py build_ext
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
@@ -37,12 +47,19 @@ build-stamp:
 		mvpa/clfs/lib$$ext/; done
 	touch $@
 
+
 #
 # Cleaning
 #
 
 # Full clean
 clean:
+# clean 3rd party pieces
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean; \
+     done
+
 # if we are on debian system - we might have left-overs from build
 	-@$(MAKE) debian-clean
 # if not on debian -- just distclean
@@ -59,10 +76,11 @@ distclean:
 		 -o -name '.coverage' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
+		 -o -iname '*.[ao]' -o -iname '*.gch' \
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
 
 
 debian-clean:
@@ -77,9 +95,11 @@ doc: website
 htmldoc:
 	cd doc && $(MAKE) html
 
-pdfdoc:
+pdfdoc: pdfdoc-stamp
+pdfdoc-stamp:
 	cd doc && $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
+	touch $@
 
 apidoc: apidoc-stamp
 apidoc-stamp: build
@@ -94,7 +114,7 @@ apidoc-stamp: build
 	touch $@
 
 website: website-stamp
-website-stamp: mkdir-WWW_DIR htmldoc pdfdoc apidoc
+website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
 	touch $@
@@ -102,17 +122,52 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc apidoc
 upload-website: website
 	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
 
+upload-htmldoc: htmldoc
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+
 
 # this takes some minutes !!
 profile: build tests/main.py
 	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
 
-test-%: build
+ut-%: build
 	@cd tests && PYTHONPATH=.. python test_$*.py
 
-test: build
+unittest: build
 	@cd tests && PYTHONPATH=.. python main.py
 
+te-%: build
+	PYTHONPATH=. python doc/examples/$*.py
+
+testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d
+
+tm-%: build
+	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
+	                       --doctest-tests doc/$*.txt
+
+testmanual: build
+	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
+	                       --doctest-tests doc/
+
+# Check if everything imported in unitests is known to the
+# mvpa.suite()
+testsuite:
+	@git grep -h '^\W*from mvpa.*import' tests | \
+	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
+	 sort | uniq | \
+	while read i; do \
+	 grep -q "^ *$$i" mvpa/suite.py || \
+	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
+	 done
+
+# Check if links to api/ within documentation are broken.
+testapiref: apidoc
+	@for tf in doc/*.txt; do \
+	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
+	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
+	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
+
+test: unittest testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \
@@ -138,15 +193,34 @@ orig-src: distclean debian-clean
 	# clean existing dist dir first to have a single source tarball to process
 	-rm -rf dist
 
-	if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
-			printf "WARNING: Changelog version does not match tarball version!\n" ;\
-			exit 1; \
+	if [ -f debian/changelog ]; then \
+		if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
+				printf "WARNING: Changelog version does not match tarball version!\n" ;\
+				exit 1; \
+		fi \
 	fi
 	# let python create the source tarball
-	python setup.py sdist --formats=gztar
+	# enable libsvm to get all sources!
+	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
+	# clean leftover
+	rm MANIFEST
+
+# make Debian source package
+# # DO NOT depend on orig-src here as it would generate a source tarball in a
+# Debian branch and might miss patches!
+debsrc:
+	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
+
+
+bdist_rpm: 3rd
+	python setup.py bdist_rpm --with-libsvm \
+	  --doc-files "doc data" \
+	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
+	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
+
 
 #
 # Data
@@ -159,4 +233,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual profile website
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all

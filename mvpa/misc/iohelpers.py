@@ -11,9 +11,9 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
-import copy
+import mvpa.misc.copy as copy
 from sets import Set
-
+from re import sub as re_sub
 from mvpa.misc import warning
 
 if __debug__:
@@ -33,31 +33,44 @@ class ColumnData(dict):
     Because data is read into a dictionary no two columns can have the same
     name in the header! Each column is stored as a list in the dictionary.
     """
-    def __init__(self, source, header=True, sep=None, dtype=float):
+    def __init__(self, source, header=True, sep=None, headersep=None,
+                 dtype=float, skiplines=0):
         """Read data from file into a dictionary.
 
-        Parameters
-        ----------
-         - `source`: Can be a filename or a dictionary. In the case of the
-                     first all data is read from that file and additonal
-                     keyword arguments can be sued to customize the read
-                     procedure. If a dictionary is passed a deepcopy is
-                     performed.
-         - `header`: Indicates whether the column names should be read from the
-                     first line (`header=True`). If `header=False` unique
-                     column names will be generated (see class docs). If
-                     `header` is a python list, it's content is used as column
-                     header names and its length has to match the number of
-                     columns in the file.
-         - `sep`: Separator string. The actual meaning depends on the output
-                  format (see class docs).
-         - `dtype`: Desired datatype.
+        :Parameters:
+          source : basestring or dict
+            If values is given as a string all data is read from the
+            file and additonal keyword arguments can be sued to
+            customize the read procedure. If a dictionary is passed
+            a deepcopy is performed.
+          header : bool or list of basestring
+            Indicates whether the column names should be read from the
+            first line (`header=True`). If `header=False` unique
+            column names will be generated (see class docs). If
+            `header` is a python list, it's content is used as column
+            header names and its length has to match the number of
+            columns in the file.
+          sep : basestring or None
+            Separator string. The actual meaning depends on the output
+            format (see class docs).
+          headersep : basestring or None
+            Separator string used in the header. The actual meaning
+            depends on the output format (see class docs).
+          dtype : type or list(types)
+            Desired datatype(s). Datatype per column get be specified by
+            passing a list of types.
+          skiplines : int
+            Number of lines to skip at the beginning of the file.
         """
         # init base class
         dict.__init__(self)
 
+        # intialize with default
+        self._header_order = None
+
         if isinstance(source, str):
-            self._fromFile(source, header=header, sep=sep, dtype=dtype)
+            self._fromFile(source, header=header, sep=sep, headersep=headersep,
+                           dtype=dtype, skiplines=skiplines)
 
         elif isinstance(source, dict):
             for k, v in source.iteritems():
@@ -74,10 +87,22 @@ class ColumnData(dict):
         for k in self.keys():
             if not classdict.has_key(k):
                 getter = "lambda self: self._getAttrib('%s')" % (k)
+                # Sanitarize the key, substitute ' []' with '_'
+                k_ = re_sub('[[\] ]', '_', k)
+                # replace multipe _s
+                k_ = re_sub('__+', '_', k_)
+                # remove quotes
+                k_ = re_sub('["\']', '', k_)
                 if __debug__:
-                    debug("IOH", "Registering property %s for ColumnData" % `k`)
+                    debug("IOH", "Registering property %s for ColumnData key %s"
+                          % (k_, k))
+                # make sure to import class directly into local namespace
+                # otherwise following does not work for classes defined
+                # elsewhere
+                exec 'from %s import %s' % (self.__module__,
+                                            self.__class__.__name__)
                 exec "%s.%s = property(fget=%s)"  % \
-                     (self.__class__.__name__, k, getter)
+                     (self.__class__.__name__, k_, getter)
                 # TODO!!! Check if it is safe actually here to rely on value of
                 #         k in lambda. May be it is treated as continuation and
                 #         some local space would override it????
@@ -125,7 +150,8 @@ class ColumnData(dict):
                                       "have equal length."
 
 
-    def _fromFile(self, filename, header, sep, dtype):
+    def _fromFile(self, filename, header, sep, headersep,
+                  dtype, skiplines):
         """Loads column data from file -- clears object first.
         """
         # make a clean table
@@ -134,10 +160,15 @@ class ColumnData(dict):
         file_ = open(filename, 'r')
 
         self._header_order = None
+
+        [ file_.readline() for x in range(skiplines) ]
+        """Simply skip some lines"""
         # make column names, either take header or generate
         if header == True:
             # read first line and split by 'sep'
-            hdr = file_.readline().split(sep)
+            hdr = file_.readline().split(headersep)
+            # remove bogus empty header titles
+            hdr = filter(lambda x:len(x.strip()), hdr)
             self._header_order = hdr
         elif isinstance(header, list):
             hdr = header
@@ -145,9 +176,15 @@ class ColumnData(dict):
             hdr = [ str(i) for i in xrange(len(file_.readline().split(sep))) ]
             # reset file to not miss the first line
             file_.seek(0)
+            [ file_.readline() for x in range(skiplines) ]
+
 
         # string in lists: one per column
         tbl = [ [] for i in xrange(len(hdr)) ]
+
+        # do per column dtypes
+        if not isinstance(dtype, list):
+            dtype = [dtype] * len(hdr)
 
         # parse line by line and feed into the lists
         for line in file_:
@@ -164,9 +201,9 @@ class ColumnData(dict):
                       "of columns in header [%i]." % (len(l), len(hdr))
 
             for i, v in enumerate(l):
-                if not dtype is None:
+                if not dtype[i] is None:
                     try:
-                        v = dtype(v)
+                        v = dtype[i](v)
                     except ValueError:
                         warning("Can't convert %s to desired datatype %s." %
                                 (`v`, `dtype`) + " Leaving original type")
@@ -281,58 +318,8 @@ class ColumnData(dict):
         else:
             return len(self[self.keys()[0]])
 
-
-
-class FslEV3(ColumnData):
-    """IO helper to read FSL's EV3 files.
-
-    This is a three-column textfile format that is used to specify stimulation
-    protocols for fMRI data analysis in FSL's FEAT module.
-
-    Data is always read as `float`.
-    """
-    def __init__(self, source):
-        """Read and write FSL EV3 files.
-
-        Parameter
-        ---------
-
-        - `source`: filename of an EV3 file
-        """
-        # init data from known format
-        ColumnData.__init__(self, source,
-                            header=['onsets', 'durations', 'intensities'],
-                            sep=None, dtype=float)
-
-
-    def getNEVs(self):
-        """Returns the number of EVs in the file.
-        """
-        return self.getNRows()
-
-
-    def getEV(self, evid):
-        """Returns a tuple of (onset time, simulus duration, intensity) for a
-        certain EV.
-        """
-        return (self['onsets'][evid],
-                self['durations'][evid],
-                self['intensities'][evid])
-
-
-    def tofile(self, filename):
-        """Write data to a FSL EV3 file.
-        """
-        ColumnData.tofile(self, filename,
-                          header=False,
-                          header_order=['onsets', 'durations', 'intensities'],
-                          sep=' ')
-
-
-    onsets = property(fget=lambda self: self['onsets'])
-    durations = property(fget=lambda self: self['durations'])
-    intensities = property(fget=lambda self: self['intensities'])
-    nevs = property(fget=getNEVs)
+    ncolumns = property(fget=getNColumns)
+    nrows = property(fget=getNRows)
 
 
 
@@ -372,28 +359,124 @@ class SampleAttributes(ColumnData):
 
 
 
-class McFlirtParams(ColumnData):
-    """Read and write McFlirt's motion estimation parameters from and to text
-    files.
+class SensorLocations(ColumnData):
+    """Read sensor location definitions from a text file.
+
+    File layout is assumed to be 5 columns:
+
+      1. sensor name
+      2. some useless integer
+      3. position on x-axis (left-right)
+      4. position on y-axis (anterior-posterior)
+      5. position on z-axis (superior-inferior)
+
+    XXX: Need to support much more formats and column orders.
     """
-    header_def = ['rot1', 'rot2', 'rot3', 'x', 'y', 'z']
-
     def __init__(self, source):
-        """
-        :Parameter:
+        """Read sensor locations from file.
 
-            source: str
-                Filename of a parameter file.
+        Parameter
+        ---------
+
+          source : filename of an atrribute file
         """
         ColumnData.__init__(self, source,
-                            header=McFlirtParams.header_def,
-                            sep=None, dtype=float)
+                            header=['names', 'some_number', 'pos_x', 'pos_y', 'pos_z'],
+                            sep=None, dtype=[str, int, float, float, float])
 
 
-    def tofile(self, filename):
-        """Write motion parameters to file.
-        """
-        ColumnData.tofile(self, filename,
-                          header=False,
-                          header_order=McFlirtParams.header_def,
-                          sep=' ')
+
+
+def design2labels(columndata, baseline_label=0,
+                  func=lambda x:x>0.0):
+    """Helper to convert design matrix into a list of labels
+
+    Given a design, assign a single label to any given sample
+
+    TODO: fix description/naming
+
+    :Parameters:
+      columndata : ColumnData
+        Attributes where each known will be considered as a separate
+        explanatory variable (EV) in the design.
+      baseline_label
+        What label to assign for samples where none of EVs was given a value
+      func : functor
+        Function which decides either a value should be considered
+
+    :Output:
+      list of labels which are taken from column names in
+      ColumnData and baseline_label
+
+    """
+    # doing it simple naive way but it should be of better control if
+    # we decide to process columndata with non-numeric entries etc
+    keys = columndata.keys()
+    labels = []
+    for row in xrange(columndata.nrows):
+        entries = [ columndata[key][row] for key in keys ]
+        # which entries get selected
+        selected = filter(lambda x: func(x[1]), zip(keys, entries))
+        nselected = len(selected)
+
+        if nselected > 1:
+            # if there is more than a single one -- we are in problem
+            raise ValueError, "Row #%i with items %s has multiple entries " \
+                  "meeting the criterion. Cannot decide on the label" % \
+                  (row, entries)
+        elif nselected == 1:
+            label = selected[0][0]
+        else:
+            label = baseline_label
+        labels.append(label)
+    return labels
+
+
+__known_chunking_methods = {
+    'alllabels': 'Each chunk must contain instances of all labels'
+    }
+
+def labels2chunks(labels, method="alllabels", ignore_labels=None):
+    """Automagically decide on chunks based on labels
+
+    :Parameters:
+      labels
+        labels to base chunking on
+      method : basestring
+        codename for method to use. Known are %s
+      ignore_labels : list of basestring
+        depends on the method. If method ``alllabels``, then don't
+        seek for such labels in chunks. E.g. some 'reject' samples
+
+    :rtype: list
+    """ % __known_chunking_methods.keys()
+
+    chunks = []
+    if ignore_labels is None:
+        ignore_labels = []
+    alllabels = Set(labels).difference(Set(ignore_labels))
+    if method == 'alllabels':
+        seenlabels = Set()
+        lastlabel = None
+        chunk = 0
+        for label in labels:
+            if label != lastlabel:
+                if seenlabels == alllabels:
+                    chunk += 1
+                    seenlabels = Set()
+                lastlabel = label
+                if not label in ignore_labels:
+                    seenlabels.union_update([label])
+            chunks.append(chunk)
+        import numpy as N
+        chunks = N.array(chunks)
+        # fix up a bit the trailer
+        if seenlabels != alllabels:
+            chunks[chunks == chunk] = chunk-1
+        chunks = list(chunks)
+    else:
+        errmsg = "Unknown method to derive chunks is requested. Known are:\n"
+        for method, descr in __known_chunking_methods.iteritems():
+            errmsg += "  %s : %s\n" % (method, descr)
+        raise ValueError, errmsg
+    return chunks

@@ -22,3 +22,12 @@ PyMVPA code, and are generic building blocks
 
 __docformat__ = 'restructuredtext'
 
+
+if __debug__:
+    from mvpa.misc import debug
+    debug('INIT', 'mvpa.base')
+
+import externals
+
+if __debug__:
+    debug('INIT', 'mvpa.base end')

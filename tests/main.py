@@ -11,25 +11,36 @@
 import unittest
 from mvpa.base import externals
 
+if __debug__:
+    from mvpa.misc import debug
+    # Lets add some targets which provide additional testing
+    debug.active += ['CHECK_.*']
+    # NOTE: it had to be done here instead of test_clf.py for
+    # instance, since for CHECK_RETRAIN it has to be set before object
+    # gets created, ie while importing clfs.warehouse
+
 # list all test modules (without .py extension)
 tests = [
     # Basic data structures/manipulators
     'test_dataset',
-    'test_maskmapper',
+    'test_arraymapper',
     'test_pcamapper',
     'test_neighbor',
     'test_maskeddataset',
-    'test_niftidataset',
     'test_splitter',
     'test_state',
+    'test_eepdataset',
     # Misc supporting utilities
     'test_stats',
     'test_support',
     'test_verbosity',
     'test_iohelpers',
-    'test_signal',
+    'test_datasetfx',
+    'test_cmdline',
+    'test_eepdataset',
     # Classifiers (longer tests)
     'test_clf',
+    'test_regr',
     'test_knn',
     'test_svm',
     'test_plr',
@@ -46,17 +57,22 @@ tests = [
     'test_perturbsensana',
     'test_splitsensana',
     'test_anova',
-    'test_nullhyptest'
+    # And the suite (all-in-1)
+    'test_suite',
     ]
 
 # fully test of externals
 externals.testAllDependencies()
 
+__optional_tests = ( ('lars', 'lars'),
+                     ('nifti', 'niftidataset') )
+
 # and now for the optional tests
 optional_tests = []
 
-if externals.exists('lars'):
-    optional_tests.append('test_lars')
+for external, testname in __optional_tests:
+    if externals.exists(external):
+        optional_tests.append('test_%s' % testname)
 
 
 # finally merge all of them

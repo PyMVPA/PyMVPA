@@ -8,37 +8,25 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA searchlight algorithm"""
 
-import unittest
-
-import numpy as N
-
 from mvpa.datasets.maskeddataset import MaskedDataset
 from mvpa.measures.searchlight import Searchlight
-from mvpa.clfs.knn import kNN
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.stats import chisquare
 
+from tests_warehouse import *
+from tests_warehouse_clfs import *
 
 class SearchlightTests(unittest.TestCase):
 
     def setUp(self):
-        data = N.random.standard_normal(( 100, 3, 6, 6 ))
-        labels = N.concatenate( ( N.repeat( 0, 50 ),
-                                  N.repeat( 1, 50 ) ) )
-        chunks = N.repeat( range(5), 10 )
-        chunks = N.concatenate( (chunks, chunks) )
-        mask = N.ones( (3, 6, 6) )
-        mask[0,0,0] = 0
-        mask[1,3,2] = 0
-        self.dataset = MaskedDataset(samples=data, labels=labels,
-                                     chunks=chunks, mask=mask)
+        self.dataset = datasets['3dlarge']
 
 
     def testSearchlight(self):
         # compute N-1 cross-validation for each sphere
-        transerror = TransferError(kNN(k=5))
+        transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
@@ -66,7 +54,7 @@ class SearchlightTests(unittest.TestCase):
 
     def testPartialSearchlightWithFullReport(self):
         # compute N-1 cross-validation for each sphere
-        transerror = TransferError(kNN(k=5))
+        transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),
@@ -79,12 +67,12 @@ class SearchlightTests(unittest.TestCase):
         results = sl(self.dataset)
 
         # only two spheres but error for all CV-folds
-        self.failUnlessEqual(results.shape, (2,5))
+        self.failUnlessEqual(results.shape, (2, len(self.dataset.uniquechunks)))
 
 
     def testChiSquareSearchlight(self):
         # only do partial to save time
-        transerror = TransferError(kNN(k=5))
+        transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),

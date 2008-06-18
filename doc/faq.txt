@@ -12,9 +12,40 @@
 Frequently Asked Questions
 **************************
 
-=======
-General
-=======
+.. use later on for subheadings
+ =======
+ General
+ =======
+
+I am tired of writing these endless import blocks. Any alternative?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Sure. Instead of individually importing all pieces that are required
+  by a script, you can import them all at once. A simple::
+
+    import mvpa.suite as mvpa
+
+  makes everything directly accessible through the mvpa namespace, e.g.
+  `mvpa.datasets.base.Dataset` becomes `mvpa.Dataset`. Really lazy people
+  can even do::
+
+    from mvpa.suite import *
+
+  However, as always there is a price to pay for this convenience. In contrast
+  to the individual imports there is some intial performance and memory cost. In
+  the worst case you'll get all external dependencies loaded (e.g. a full R
+  session), just because you have them installed. Therefore, it might be better
+  to limit this use to case where individual key presses matter and use
+  individual imports for production scripts.
+
+
+Is there an easy way to remove invariant features from a dataset?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  You might have to deal with invariant features in case like an fMRI dataset,
+  where the *brain mask* is slightly larger than the thresholded fMRI
+  timeseries image. Such invariant features (i.e. features with zero variance)
+  are sometime a problem, e.g. they will lead to numerical difficulties when
+  z-scoring the features of a dataset (i.e. division by zero).
+
 
 I feel like I want to contribute something, do you mind?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

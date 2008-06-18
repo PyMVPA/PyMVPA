@@ -13,9 +13,6 @@
 PyMVPA Developer Guidelines
 ***************************
 
-.. contents:: Table of Contents
-
-
 
 Documentation
 =============
@@ -119,7 +116,7 @@ dataset vs data
   Such convention should be enforced in all ``*train``,
   ``*predict`` functions of classifiers.
 
-.. _Dataset: api/mvpa.datasets.dataset.Dataset-class.html
+.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _NumPy: http://numpy.scipy.org/
 
 
@@ -187,20 +184,27 @@ With this minimal implementation the classifier provides some useful
 functionality, by automatically storing some relevant information upon request
 in state variables.
 
-.. IncludeStates: clfs.classifier Classifier
+.. IncludeStates: clfs.base Classifier
 
 Supported states:
 
-================== ==============================================   =========
+================== ===============================================  =========
     State Name      Description                                      Default
------------------- ----------------------------------------------   ---------
-trained_labels      Set of unique labels it has been trained on.     Enabled
-trained_dataset     The dataset it has been trained on.              Disabled
-trained_confusion   Confusion matrix of learning performance.        Disabled
+------------------ -----------------------------------------------  ---------
+feature_ids         Feature IDS which were used for the actual       Disabled
+                    training. Some classifiers might internally do
+                    feature selection (SMLR).
+predicting_time     Time (in seconds) which took classifier to       Enabled
+                    predict.
 predictions         Most recent set of predictions.                  Enabled
+trained_dataset     The dataset it has been trained on.              Disabled
+trained_labels      Set of unique labels it has been trained on.     Enabled
+training_confusion  Confusion matrix of learning performance.        Disabled
+training_time       Time (in seconds) which took classifier to       Enabled
+                    train.
 values              Internal classifier values the most recent       Disabled
                     predictions are based on.
-================== ==============================================   =========
+================== ===============================================  =========
 
 If any intended functionality cannot be realized be implementing above methods.
 The Classifier_ class offers some additionals methods that might be overriden
@@ -228,7 +232,7 @@ to preserve the full functionality.
 Source code files of all classifier implementations go into `mvpa/clfs/`.
 
 
-.. _Classifier: api/mvpa.clfs.classifier.Classifier-class.html
+.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 
 
 Outstanding Questions:
@@ -236,44 +240,50 @@ Outstanding Questions:
     * when states and when properties?
 
 
-Adding a new Sensitivity Analyzer
----------------------------------
+Adding a new DatasetMeasure
+---------------------------
 
-There are two possible base-classes for new sensitivity analyzers.
-First, SensitivityAnalyzer_ can directly be sub-classed. This is the more
-generic approach. However, for sensitivity analyzers that make use of some
-classifier and extract the sensitivities from it,
-Sensitivity_ is a more appropriate base-class, as it
-provides some additional useful functionality for this use case.
+There are few possible base-classes for new measures (former sensitivity
+analyzers).  First, DatasetMeasure_ can directly be sub-classed. It is a base
+class for any measure to be computed on a Dataset_. This is the more generic
+approach. In the most of the cases, measures are to be reported per each
+feature, thus FeaturewiseDatasetMeasure_ should serve as a base class in those
+cases. Furthermore, for measures that make use of some classifier and extract
+the sensitivities from it, Sensitivity_ (derived from
+FeaturewiseDatasetMeasure_) is a more appropriate base-class, as it provides
+some additional useful functionality for this use case (e.g. training a
+classifier if needed).
 
-All sensitivity analyzers (actually all objects based on DatasetMeasure_)
+All measures (actually all objects based on DatasetMeasure_)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
 
-If a sensitivity analyzer computes sensitivities, were both large positive and
-large negative values indicate high sensitivity, it should nevertheless *not*
+If a DatasetMeasure_ computes a characteristic, were both large positive and
+large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
-the absolute.
+the absolute (e.g. plain `N.absolute` or a convinience wrapper Absolute_).
 
-To add a new sensitivity analyzer implementation it is sufficient to create a
-new sub-class of SensitivityAnalyzer_ and add an implementation of the
-`_call(dataset)` method. It will be called with an instance of Dataset_ and has
-to return a vector of featurewise sensitivity scores.
+To add a new measure implementation it is sufficient to create a new sub-class
+of DatasetMeasure_ (or FeaturewiseDatasetMeasure_, or Sensitivity_) and add an
+implementation of the `_call(dataset)` method. It will be called with an
+instance of Dataset_. FeaturewiseDatasetMeasure_ (e.g. Sensitivity_ as well)
+has to return a vector of featurewise sensitivity scores.
 
-.. IncludeStates: algorithms.datameasure DatasetMeasure
+.. IncludeStates: measures.base DatasetMeasure
 
-Supported state:
+Supported states:
 
 ================== ==============================================   =========
     State Name      Description                                      Default
 ------------------ ----------------------------------------------   ---------
+null_prob           State variable.                                  Enabled
 raw_result          Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
 
 Source code files of all sensitivity analyzer implementations go into
-`mvpa/algorithms/`.
+`mvpa/measures/`.
 
 
 Classifier-independent Sensitivity Analyzers
@@ -291,7 +301,19 @@ the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
-.. IncludeStates: algorithms.datameasure Sensitivity
+.. IncludeStates: measures.base Sensitivity
+
+Supported states:
+
+================== ==============================================   =========
+    State Name      Description                                      Default
+------------------ ----------------------------------------------   ---------
+base_sensitivities  Stores basic sensitivities if the sensitivity    Disabled
+                    relies on combining multiple ones.
+null_prob           State variable.                                  Enabled
+raw_result          Computed results before applying any             Disabled
+                    transformation algorithm.
+================== ==============================================   =========
 
 
 Outstanding Questions:
@@ -300,10 +322,11 @@ Outstanding Questions:
   * Shouldn't there be a `sensitivities` state?
 
 
-.. _DatasetMeasure: api/mvpa.algorithms.datameasure.DatasetMeasure-class.html
-.. _SensitivityAnalyzer: api/mvpa.algorithms.datameasure.SensitivityAnalyzer-class.html
-.. _Sensitivity: api/mvpa.algorithms.datameasure.Sensitivity-class.html
-.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.algorithms.datameasure.ProxyClassifierSensitivityAnalyzer-class.html
+.. _Absolute: api/mvpa.misc.transformers-module.html#Absolute
+.. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
+.. _FeaturewiseDatasetMeasure: api/mvpa.measures.base.FeaturewiseDatasetMeasure-class.html
+.. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
+.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.measures.base.ProxyClassifierSensitivityAnalyzer-class.html
 
 
 
@@ -411,6 +434,10 @@ Developer-TODO
 Things to implement for the next release (Release goals)
 --------------------------------------------------------
 
+ * A part of below restructuring TODO but is separate due to it importance:
+   come up with cleaner hierarchy and tagging of classifiers and regressions --
+   now they are all ``Classifier``s
+
  * Unify parameter naming across all classifiers and come up with a labeling
    guideline for future classifier implementations and wrappers::
 
@@ -443,8 +470,10 @@ Things to implement for the next release (Release goals)
         * meta-algorithms (splitting)   -> mvpa.measures
 
      DatasetMeasure -> Measure (transformers)
+
      FeaturewiseDatasetMeasure?
-       combiners to be absorbed withing transformers? and then gone?
+
+     combiners to be absorbed withing transformers? and then gone?
      {Classifier?}Sensitivity?
 
     * Mappers::
@@ -473,10 +502,6 @@ Things to implement for the next release (Release goals)
 
     * several base classes with framework infrastructure (Harvester,
       Stateful, virtual properties, ...)
-
-    * Classifiers
-
-    * Regressions
 
     * Transfer error calculation
     * Cross-validation support

@@ -2,6 +2,8 @@
 
 .. _changelog:
 
+.. index:: changelog
+
 PyMVPA Development Changelog
 -----------------------------
 
@@ -20,32 +22,66 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
+  * Import of binary EEP files (used by EEProbe) and EEPDataset class.
+  * Initial version of a meta dataset class (MetaDataset). This is a container
+    for multiple datasets, which behaves like a dataset itself.
+
+
+
+Releases
+~~~~~~~~
+
+* 0.2.2 (Tue, 17 Jun 2008)
+
+  * Extended build instructions: Added section on OpenSUSE.
+  * Replaced ugly PYMVPA_LIBSVM environment variable to trigger compiling the
+    LIBSVM wrapper with a proper '--with-libsvm' switch in setup.py.
+    Additionally, setup.py now detects if included LIBSVM has been built and
+    enables LIBSVM wrapper automatically in this case.
+  * Added proper Makefiles for LIBSVM copy, with configurable compiler flags.
+  * Added 'setup.cfg' to remove the need to manually specify swig-opts
+    (Windows specific configuration is in 'setup.cfg.win').
+
+* 0.2.1 (Sun, 15 Jun 2008)
+
+  * Several improvements to make building PyMVPA on Windows systems easy
+    (e.g. added dedicated Makefile.win to build a binary installer).
+  * Improved and extended documentation for building and installing PyMVPA.
+  * Include a minimal copy of the required (patched) LIBSVM library (currently
+    version 2.85.0) for convenience. This copy is automatically compiled and
+    used for the LIBSVM wrapper when PyMVPA built using the `Make` approach.
+
+
+* 0.2.0 (Wed, 29 May 2008)
+
   * New Splitter class (HalfSplitter) to split into first and second half.
   * New Splitter class (CustomSplitter) to allow for splits with an arbitrary
     number of datasets per split and the ability to specify the association
     of samples with any of those datasets (not just the validation set).
   * New sparse multinomial logistic regression (SMLR) classifier and
     associated sensitivity analyzer.
-  * New least angle regression classifier.
+  * New least angle regression classifier (LARS).
+  * New gaussian process regression classifier (GPR).
   * Initial documentation on extending PyMVPA.
+  * Switch to Sphinx for documentation handling.
   * New example comparing the performance of all classifiers on some
     artificial datasets.
+  * New data mapper performing singular value decomposition (SVDMapper) and an
+    example showing its usage.
   * More sophisticated data preprocessing: removal of non-linear trends and
     other arbitrary confounding regressors.
   * New `Harvester` class to feed data from arbitrary generators into multiple
     objects and store results of returned values and arbitrary properties.
   * Added documentation about how to build patched libsvm version with sane
     debug output.
-  * Important bugfix in RFE, which reported incorrect feature ids in some
-    cases.
-  * New wrapper from SVM implementation of the Shogun toolbox.
   * libsvm bindings are not build by default anymore. Instructions on how to
     reenable them are available in the manual.
-  * Switch to Sphinx for documentation handling.
+  * New wrapper from SVM implementation of the Shogun toolbox.
+  * Important bugfix in RFE, which reported incorrect feature ids in some
+    cases.
+  * Added ability to compute stats/probabilities for all measures and transfer
+    errors.
 
-
-Releases
-~~~~~~~~
 
 * 0.1.0 (Wed, 20 Feb 2008)
 

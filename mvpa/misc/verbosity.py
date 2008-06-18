@@ -15,7 +15,7 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 
 __docformat__ = 'restructuredtext'
 
-from sys import stdout
+from sys import stdout, stderr
 from sets import Set
 # GOALS
 #  any logger should be able
@@ -39,18 +39,44 @@ class Logger(object):
         """
         if handlers == None:
             handlers = [stdout]
+        self.__close_handlers = []
+        self.__handlers = []            # pylint friendliness
         self._setHandlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
 
+    def __del__(self):
+        self._closeOpenedHandlers()
 
     def _setHandlers(self, handlers):
         """Set list of handlers for the log.
 
-        Handlers can be logfiles, stdout, stderr, etc
+        A handler can be opened files, stdout, stderr, or a string, which
+        will be considered a filename to be opened for writing
         """
-        self.__handlers = handlers
+        handlers_ = []
+        self._closeOpenedHandlers()
+        for handler in handlers:
+            if isinstance(handler, basestring):
+                try:
+                    handler = {'stdout' : stdout,
+                               'stderr' : stderr}[handler.lower()]
+                except:
+                    try:
+                        handler = open(handler, 'w')
+                        self.__close_handlers.append(handler)
+                    except:
+                        raise RuntimeError, \
+                              "Cannot open file %s for writing by the logger" \
+                              % handler
+            handlers_.append(handler)
+        self.__handlers = handlers_
 
+    def _closeOpenedHandlers(self):
+        """Close opened handlers (such as opened logfiles
+        """
+        for handler in self.__close_handlers:
+            handler.close()
 
     def _getHandlers(self):
         """Return active handlers
@@ -69,6 +95,9 @@ class Logger(object):
         it appends a newline (lf = Line Feed) since most commonly each
         call is a separate message
         """
+        if kwargs.has_key('msgargs'):
+            msg = msg % kwargs['msgargs']
+
         if cr:
             msg_ = ""
             if self.__crprev > 0:
@@ -88,7 +117,11 @@ class Logger(object):
             self.__crprev = 0           # nothing to clear
 
         for handler in self.__handlers:
-            handler.write(msg)
+            try:
+                handler.write(msg)
+            except:
+                print "Failed writing on handler %s" % handler
+                raise
             try:
                 handler.flush()
             except:
@@ -217,11 +250,22 @@ class SetLogger(Logger):
                     self.__active = registered_keys
                     break
                 # try to match item as it is regexp
-                regexp = re.compile("^%s$" % item)
+                try:
+                    regexp = re.compile("^%s$" % item)
+                except:
+                    raise ValueError, \
+                          "Unable to create regular expression out of  %s" % item
                 matching_keys = filter(regexp.match, registered_keys)
-                self.__active += matching_keys
+                toactivate = matching_keys
             else:
-                self.__active.append(item)
+                toactivate = [item]
+            # Lets check if asked items are known
+            for item_ in toactivate:
+                if not (item_ in registered_keys):
+                    raise ValueError, \
+                          "Unknown debug ID %s was asked to become active" \
+                          % item_
+            self.__active += toactivate
 
         self.__active = list(Set(self.__active)) # select just unique ones
         self.__maxstrlength = max([len(str(x)) for x in self.__active] + [0])
@@ -241,8 +285,6 @@ class SetLogger(Logger):
         It appends a newline since most commonly each call is a separate
         message
         """
-        if not self.__registered.has_key(setid):
-            self.__registered[setid] = "No Description"
 
         if setid in self.__active:
             if self.__printsetid:
@@ -374,6 +416,10 @@ if __debug__:
 
 
         def __call__(self, setid, msg, *args, **kwargs):
+
+            if not self.registered.has_key(setid):
+                raise ValueError, "Not registered debug ID %s" % setid
+
             if not setid in self.active:
                 # don't even compute the metrics, since they might
                 # be statefull as RelativeTime
@@ -393,6 +439,9 @@ if __debug__:
             else:
                 level = 1
 
+            if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
+                tb = traceback.extract_stack(limit=2)
+                msg += "  !!!2LONG!!!. From %s" % str(tb[0])
             SetLogger.__call__(self, setid, "DBG%s:%s%s" %
                                (msg_, " "*level, msg),
                                *args, **kwargs)

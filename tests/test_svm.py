@@ -8,23 +8,23 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
 
-import unittest
-
-import numpy as N
 from sets import Set
 
-from tests_warehouse import dumbFeatureDataset, pureMultivariateSignal, sweepargs
+from tests_warehouse import pureMultivariateSignal
+from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
-    @sweepargs(l_clf=clfs.get('LinearSVMC', []))
-    def testMultivariate(self, l_clf):
+#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
+#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
+    def testMultivariate(self):
         mv_perf = []
         mv_lin_perf = []
         uv_perf = []
 
-        nl_clf = RbfCSVMC()
+        l_clf = clfs['linear', 'svm'][0]
+        nl_clf = clfs['non-linear', 'svm'][0]
 
         #orig_keys = nl_clf.param._params.keys()
         #nl_param_orig = nl_clf.param._params.copy()
@@ -44,11 +44,12 @@ class SVMTests(unittest.TestCase):
         #   msg="New instance doesn't change set of parameters in original")
 
         # We must be able to deepcopy not yet trained SVMs now
-        import copy
+        import mvpa.misc.copy as copy
         try:
+            nl_clf.untrain()
             nl_clf_copy = copy.deepcopy(nl_clf)
         except:
-            self.fail(msg="Failed to deepcopy not-yet trained SVM")
+            self.fail(msg="Failed to deepcopy not-yet trained SVM %s" % nl_clf)
 
         for i in xrange(20):
             train = pureMultivariateSignal( 20, 3 )
@@ -81,21 +82,21 @@ class SVMTests(unittest.TestCase):
         self.failUnless( mean_uv_perf < mean_mv_perf )
 
 
-#    def testFeatureBenchmark(self):
-#        pat = dumbFeatureDataset()
-#        clf = SVM()
-#        clf.train(pat)
-#        rank = clf.getFeatureBenchmark()
-#
-#        # has to be 1d array
-#        self.failUnless(len(rank.shape) == 1)
-#
-#        # has to be one value per feature
-#        self.failUnless(len(rank) == pat.nfeatures)
-#
-#        # first feature is discriminative, second is not
-#        self.failUnless(rank[0] > rank[1])
-#
+    def testSillyness(self):
+        """Test if we raise exceptions on incorrect specifications
+        """
+
+        if externals.exists('libsvm') or externals.exists('shogun'):
+            self.failUnlessRaises(TypeError, SVM,  C=1.0, nu=2.3)
+
+        if externals.exists('libsvm'):
+            self.failUnlessRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)
+            self.failUnlessRaises(TypeError, LinearNuSVMC, C=2.3)
+            self.failUnlessRaises(TypeError, LinearCSVMC, nu=2.3)
+
+        if externals.exists('shogun'):
+            self.failUnlessRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
+                                  coef0=3)
 
 def suite():
     return unittest.makeSuite(SVMTests)

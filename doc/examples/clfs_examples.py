@@ -9,47 +9,41 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Examples demonstrating varioius classifiers on different datasets"""
 
-import os
-from time import time
-import numpy as N
+from mvpa.suite import *
+"""
+# Command above substitutes commands below
 
-from mvpa.datasets.dataset import Dataset
+import os
+import numpy as N
+import time
+
+from mvpa.datasets import Dataset
 from mvpa.datasets.niftidataset import NiftiDataset
 from mvpa.datasets.splitter import *
-from mvpa.datasets.misc import zscore
+from mvpa.datasets.miscfx import zscore, detrend
 
 # Helpers
 from mvpa.clfs.transerror import *
 from mvpa.misc.data_generators import *
 from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.misc.signal import detrend
+from mvpa.clfs.warehouse import clfs
 
 # Misc tools
 #
-# no MVPA warnings during whole testsuite
 from mvpa.misc import warning
+"""
+
+# no MVPA warnings during whole testsuite
 warning.handlers = []
 
-
-# Define groups of classifiers.
-#
-# TODO: Should be moved somewhere in mvpa -- all those duplicate
-#       list of classifiers within tests/tests_warehouse_clfs
-# DONE:
-from mvpa.clfs.warehouse import clfs
-
-
-#clfs['all'] = clfs['SVM+RFE']
-#clfs['all'] = clfs['SVM/Multiclass+RFE']
-
-if __name__ == "__main__":
+def main():
 
     # fix seed or set to None for new each time
     N.random.seed(44)
 
 
     # Load Haxby dataset example
-    haxby1path = '../../data'
+    haxby1path = 'data'
     attrs = SampleAttributes(os.path.join(haxby1path, 'attributes.txt'))
     haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
                           labels=attrs.labels,
@@ -67,15 +61,13 @@ if __name__ == "__main__":
                                   nchunks=6, nonbogus_features=[11, 10],
                                   snr=3.0)
 
-
     for (dataset, datasetdescr), clfs_ in \
         [
-        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 400"), clfs['all']),
-        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['all_multi']),
-        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['all_multi']),
+        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 100"), clfs[:]),
+        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['non-linear']),
+        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['multiclass']),
         ]:
-
-        print "%s: %s" % (datasetdescr, `dataset`)
+        print "%s\n %s" % (datasetdescr, dataset.summary(idhash=False))
         print " Classifier                                  %corr  #features\t train predict  full"
         for clf in clfs_:
             print "  %-40s: "  % clf.descr,
@@ -92,7 +84,7 @@ if __name__ == "__main__":
             confusion = ConfusionMatrix()
             times = []
             nf = []
-            t0 = time()
+            t0 = time.time()
             clf.states.enable('feature_ids')
             for nfold, (training_ds, validation_ds) in \
                     enumerate(NFoldSplitter()(dataset)):
@@ -106,10 +98,12 @@ if __name__ == "__main__":
             if nf[-1] == 0:
                 print "no features were selected. skipped"
                 continue
-            tfull = time() - t0
+            tfull = time.time() - t0
             times = N.mean(times, axis=0)
             nf = N.mean(nf)
             print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
                   (confusion.percentCorrect, nf, times[0], times[1], tfull)
 
 
+if __name__ == "__main__":
+    main()

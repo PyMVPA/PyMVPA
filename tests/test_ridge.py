@@ -8,19 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA ridge regression classifier"""
 
-import unittest
-from mvpa.datasets.dataset import Dataset
 from mvpa.clfs.ridge import RidgeReg
-import numpy as N
 from scipy.stats import pearsonr
-from mvpa.misc.data_generators import dumbFeatureDataset
+from tests_warehouse import *
 
 class RidgeRegTests(unittest.TestCase):
 
     def testRidgeReg(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
-        data = dumbFeatureDataset()
+        data = datasets['dumb']
 
         clf = RidgeReg()
 
@@ -33,7 +30,7 @@ class RidgeRegTests(unittest.TestCase):
         self.failUnless(cor[0] > .8)
 
     def testRidgeRegState(self):
-        data = dumbFeatureDataset()
+        data = datasets['dumb']
 
         clf = RidgeReg()
 

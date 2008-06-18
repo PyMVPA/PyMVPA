@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -9,14 +9,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Example demonstrating a searchlight analysis on an fMRI dataset"""
 
+from mvpa.suite import *
+"""
+# Command above substitutes commands below
+
 import numpy as N
 import pylab as P
 
 # local imports
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.misc import zscore
-from mvpa.misc.signal import detrend
+from mvpa.datasets.miscfx import zscore, detrend
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import TransferError
@@ -24,9 +27,11 @@ from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.searchlight import Searchlight
 from mvpa.misc import debug
+"""
 
 # enable debug output for searchlight call
-debug.active += ["SLC"]
+if __debug__:
+    debug.active += ["SLC"]
 
 
 #

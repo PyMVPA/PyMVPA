@@ -39,7 +39,7 @@ class NiftiDataset(MaskedDataset):
             dsattr = {}
 
         # we have to handle the nifti elementsize at the end if
-        # mask is not already a MaskMapper
+        # mask is not already a Mapper
         set_elementsize = False
         if not dsattr.has_key('mapper'):
             set_elementsize = True
@@ -85,7 +85,7 @@ class NiftiDataset(MaskedDataset):
                 mask = mask.asarray()
 
         # by default init the dataset now
-        # if mask is a MaskMapper already, this is a cheap init. This is
+        # if mask is a Mapper already, this is a cheap init. This is
         # important as this is the default mode for the copy constructor
         # and might be called really often!!
         MaskedDataset.__init__(self,
@@ -96,11 +96,11 @@ class NiftiDataset(MaskedDataset):
 
 
         if set_elementsize:
-            # in case the MaskMapper wasn't already passed to the constructor
+            # in case the Mapper wasn't already passed to the constructor
             # overwrite the default metric of it here to take the NIfTI element
             # properties into account
 
-            # NiftiDataset uses a MaskMapper with DescreteMetric with cartesian
+            # NiftiDataset uses a MetricMapper with DescreteMetric with cartesian
             # distance and element size from the NIfTI header 
 
             # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)

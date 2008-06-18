@@ -15,7 +15,7 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
-from copy import copy
+from mvpa.misc.copy import copy
 
 from mvpa.featsel.base import FeatureSelection
 from mvpa.featsel.helpers import NBackHistoryStopCrit, \
