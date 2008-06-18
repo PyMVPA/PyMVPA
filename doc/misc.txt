@@ -193,6 +193,22 @@ integer which can be displayed with debug id ``RANDOM`` e.g.::
   [RANDOM] DBG: Seeding RNG with 1447286079
   ...
 
+
+Unittests at a Grasp
+--------------------
+
+.. index:: unittests
+
+If it is needed to just quickly grasp through all unittests without making
+them to test multiple classifiers (implemented with sweeparg), define
+environmental variable ``MVPA_QUICKTEST`` e.g.::
+
+  > MVPA_NO_WARNINGS=0 MVPA_QUICKTEST=1 python test_clf.py
+  ...............
+  ----------------------------------------------------------------------
+  Ran 15 tests in 0.845s
+
+
 Others
 ------
 (to be written)

@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+from os import environ
+
 import unittest
 import numpy as N
 
@@ -69,12 +71,12 @@ def sweepargs(**kwargs):
                         untrain_clf(argvalue) # untrain classifier
                         if __debug__:
                             debug('TEST', 'Failed #%d' % len(failed_tests_str))
-                    if __debug__:
-                        if '_QUICKTEST_' in debug.active:
-                            # on TESTQUICK just run test for 1st entry in the list,
-                            # the rest are omitted
-                            # TODO: proper partitioning of unittests
-                            break
+                    # TODO: handle different levels of unittests properly
+                    if environ.has_key('MVPA_QUICKTEST'):
+                        # on TESTQUICK just run test for 1st entry in the list,
+                        # the rest are omitted
+                        # TODO: proper partitioning of unittests
+                        break
             if exception is not None:
                 exception.__init__('\n'.join(failed_tests_str))
                 raise
@@ -130,3 +132,13 @@ for kind, spec in specs.iteritems():
 datasets['dumb2'] = dumbFeatureBinaryDataset()
 datasets['dumb'] = dumbFeatureDataset()
 
+# Datasets for regressions testing
+datasets['sin_modulated'] = multipleChunks(sinModulated, 4, 30, 1)
+datasets['sin_modulated_test'] = sinModulated(30, 1, flat=True)
+
+# simple signal for linear regressors
+datasets['chirp_linear'] = multipleChunks(chirpLinear, 6, 50, 10, 2, 0.3, 0.1)
+datasets['chirp_linear_test'] = chirpLinear(20, 5, 2, 0.4, 0.1)
+
+datasets['wr1996'] = multipleChunks(wr1996, 4, 50)
+datasets['wr1996_test'] = wr1996(50)
