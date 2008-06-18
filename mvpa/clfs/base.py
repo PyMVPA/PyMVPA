@@ -235,7 +235,8 @@ class Classifier(Parametrized):
         self.__trainednfeatures = dataset.nfeatures
         self.__trainedidhash = dataset.idhash
 
-        if self.states.isEnabled('training_confusion'):
+        if self.states.isEnabled('training_confusion') and \
+               not self.states.isSet('training_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
             self.states._changeTemporarily(
