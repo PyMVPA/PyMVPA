@@ -133,13 +133,16 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(cve < 0.25,
              msg="Got transfer error %g" % (cve))
 
+    # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['confusion', 'feature_ids'])
+                enable_states=['confusion', 'training_confusions',
+                               'feature_ids'])
         clf.train(ds)                   # train the beast
         error = clf.confusion.error
+        tr_error = clf.training_confusions.error
 
         clf2 = _deepcopyclf(clf)
         cv = CrossValidatedTransferError(
@@ -147,11 +150,17 @@ class ClassifiersTests(unittest.TestCase):
             NFoldSplitter(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds)
+        tr_cverror = cv.training_confusion.error
 
         self.failUnlessEqual(error, cverror,
                 msg="We should get the same error using split classifier as"
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (error, cverror))
+
+        self.failUnlessEqual(tr_error, tr_cverror,
+                msg="We should get the same training error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (tr_error, tr_cverror))
 
         self.failUnlessEqual(clf.confusion.percentCorrect,
                              100,
@@ -215,12 +224,13 @@ class ClassifiersTests(unittest.TestCase):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['confusion', 'feature_ids'],
+                enable_states=['confusion', 'training_confusions',
+                               'feature_ids'],
                 harvest_attribs=['clf.feature_ids',
                                  'clf.training_time'],
                 descr="DESCR")
         clf.train(ds)                   # train the beast
-        # Number of harvested items should be equial to number of chunks
+        # Number of harvested items should be equal to number of chunks
         self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
                              len(ds.uniquechunks))
         # if we can blame multiple inheritance and Statefull.__init__
