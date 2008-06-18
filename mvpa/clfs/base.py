@@ -16,7 +16,7 @@ Base Classifiers can be grouped according to their function as
 :group ProxyClassifiers: BinaryClassifier MappedClassifier
   FeatureSelectionClassifier
 :group PredictionsCombiners for CombinedClassifier: PredictionsCombiner
-  MaximalVote
+  MaximalVote MeanPrediction
 
 """
 
@@ -933,7 +933,7 @@ class CombinedClassifier(BoostedClassifier):
 
         # assign default combiner
         if combiner is None:
-            combiner = (MaximalVote, MeanPrediction)[self.regression]()
+            combiner = (MaximalVote, MeanPrediction)[int(self.regression)]()
         self.__combiner = combiner
         """Functor destined to combine results of multiple classifiers"""
 
@@ -1210,8 +1210,14 @@ class SplitClassifier(CombinedClassifier):
     # XXX couldn't be training_confusion since it has other meaning
     #     here, BUT it is named so within CrossValidatedTransferError
     #     -- unify
-    training_confusions = StateVariable(enabled=False,
-        doc="Summary over training confusions acquired at each split")
+    # YYY decided to go with overriding semantics tiny bit. For split
+    #     classifier training_confusion would correspond to summary
+    #     over training errors across all splits. Later on if need comes
+    #     we might want to implement global_training_confusion which would
+    #     correspond to overall confusion on full training dataset as it is
+    #     done in base Classifier
+    #global_training_confusion = StateVariable(enabled=False,
+    #    doc="Summary over training confusions acquired at each split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
@@ -1244,9 +1250,9 @@ class SplitClassifier(CombinedClassifier):
 
         if self.states.isEnabled('confusion'):
             self.states.confusion = self.__clf._summaryClass()
-        if self.states.isEnabled('training_confusions'):
+        if self.states.isEnabled('training_confusion'):
             self.__clf.states.enable(['training_confusion'])
-            self.states.training_confusions = self.__clf._summaryClass()
+            self.states.training_confusion = self.__clf._summaryClass()
 
 
         # for proper and easier debugging - first define classifiers and then
@@ -1275,8 +1281,8 @@ class SplitClassifier(CombinedClassifier):
             if self.states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions)
-            if self.states.isEnabled("training_confusions"):
-                self.states.training_confusions += \
+            if self.states.isEnabled("training_confusion"):
+                self.states.training_confusion += \
                                                clf.states.training_confusion
 
 

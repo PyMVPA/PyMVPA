@@ -138,11 +138,11 @@ class ClassifiersTests(unittest.TestCase):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['confusion', 'training_confusions',
+                enable_states=['confusion', 'training_confusion',
                                'feature_ids'])
         clf.train(ds)                   # train the beast
         error = clf.confusion.error
-        tr_error = clf.training_confusions.error
+        tr_error = clf.training_confusion.error
 
         clf2 = _deepcopyclf(clf)
         cv = CrossValidatedTransferError(
@@ -224,7 +224,7 @@ class ClassifiersTests(unittest.TestCase):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['confusion', 'training_confusions',
+                enable_states=['confusion', 'training_confusion',
                                'feature_ids'],
                 harvest_attribs=['clf.feature_ids',
                                  'clf.training_time'],
