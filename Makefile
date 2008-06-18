@@ -26,7 +26,7 @@ all: build
 3rd-stamp:
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
 	 while read d; do \
-	  [ -f "$$d/Makefile" ] && make -C "$$d"; \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d"; \
      done
 	touch $@
 
@@ -57,7 +57,7 @@ clean:
 # clean 3rd party pieces
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
 	 while read d; do \
-	  [ -f "$$d/Makefile" ] && make -C "$$d" clean; \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean; \
      done
 
 # if we are on debian system - we might have left-overs from build
@@ -201,7 +201,7 @@ orig-src: distclean debian-clean
 	fi
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	python setup.py sdist --formats=gztar
+	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
@@ -213,6 +213,14 @@ orig-src: distclean debian-clean
 # Debian branch and might miss patches!
 debsrc:
 	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
+
+
+bdist_rpm: 3rd
+	python setup.py bdist_rpm --with-libsvm \
+	  --doc-files "doc data" \
+	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
+	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
+
 
 #
 # Data
