@@ -45,18 +45,19 @@ class RegressionsTests(unittest.TestCase):
             splitter=NFoldSplitter(),
             enable_states=['training_confusion', 'confusion'])
         corr = cve(ds)
-        #TODO: test confusion statistics
-        self.failUnless(corr>0.9,
-                        msg="Regressions should perform well on a simple "
-                        "dataset. Got mean correlation of %s " % corr)
 
+        #TODO: test confusion statistics
         s0 = cve.confusion.asstring(short=True)
         s1 = cve.confusion.asstring(short=False)
+
         for s in [s0, s1]:
             self.failUnless(len(s) > 10,
                             msg="We should get some string representation "
                             "of regression summary. Got %s" % s)
 
+        self.failUnless(corr>0.9,
+                        msg="Regressions should perform well on a simple "
+                        "dataset. Got mean correlation of %s " % corr)
 
 
 def suite():

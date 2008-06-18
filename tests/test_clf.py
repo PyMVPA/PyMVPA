@@ -306,10 +306,11 @@ class ClassifiersTests(unittest.TestCase):
 
         svm2.train(datasets['uni2small_train'])
         mclf.train(datasets['uni2small_train'])
-        self.failUnlessEqual(str(mclf.training_confusion),
-                             str(svm2.training_confusion),
-            msg="Multiclass clf should provide same results as built-in libsvm's %s" %
-                             svm2)
+        s1 = str(mclf.training_confusion)
+        s2 = str(svm2.training_confusion)
+        self.failUnlessEqual(s1, s2,
+            msg="Multiclass clf should provide same results as built-in "
+                "libsvm's %s. Got %s and %s" % (svm2, s1, s2))
 
         svm2.untrain()
 
