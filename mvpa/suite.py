@@ -33,7 +33,8 @@ from mvpa.clfs.ridge import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.gpr import *
 from mvpa.clfs.stats import *
-from mvpa.clfs.svm import *
+if externals.exists('libsvm') or externals.exists('shogun'):
+    from mvpa.clfs.svm import *
 from mvpa.clfs.transerror import *
 from mvpa.clfs.warehouse import *
 from mvpa.datasets.base import *
@@ -41,7 +42,8 @@ from mvpa.datasets import *
 from mvpa.datasets.maskeddataset import *
 from mvpa.datasets.metric import *
 from mvpa.datasets.misc import *
-from mvpa.datasets.niftidataset import *
+if externals.exists('nifti'):
+    from mvpa.datasets.niftidataset import *
 from mvpa.datasets.splitter import *
 from mvpa.featsel.base import *
 from mvpa.featsel.helpers import *
@@ -53,6 +55,7 @@ from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *
 from mvpa.measures.splitmeasure import *
+from mvpa.misc.errorfx import *
 from mvpa.misc.cmdline import *
 from mvpa.misc.copy import *
 from mvpa.misc.data_generators import *

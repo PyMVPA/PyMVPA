@@ -2,8 +2,8 @@
 # need to pass swig options here to trick distutils, which cannot build
 # C (smlr) and C++ extensions (libsvm) at the same time
 swig-opts = -c++ -noproxy
+compiler = mingw32
 
 # configure paths for libsvm
-# Use system libsvm on Debian!
-#include-dirs = 3rd/libsvm
-#library-dirs = 3rd/libsvm
+include-dirs = 3rd/libsvm
+library-dirs = 3rd/libsvm

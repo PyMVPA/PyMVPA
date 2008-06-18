@@ -11,6 +11,7 @@
 from distutils.core import setup, Extension
 import numpy as N
 import os
+import sys
 from glob import glob
 
 # find numpy headers
@@ -36,15 +37,21 @@ smlrc_ext = Extension(
 
 ext_modules = [smlrc_ext, libsvmc_ext]
 
-if 'PYMVPA_LIBSVM' in os.environ.keys():
+# only do libsvm if forced or libsvm.a is available
+if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \
+   or sys.argv.count('--with-libsvm'):
     ext_modules.append(libsvmc_ext)
+    # clean argv if necessary (or distutils will complain)
+    if sys.argv.count('--with-libsvm'):
+        sys.argv.remove('--with-libsvm')
+
 
 # Notes on the setup
 # Version scheme is: major.minor.patch<suffix>
 
 # define the setup
 setup(name       = 'pymvpa',
-      version      = '0.2.0',
+      version      = '0.2.2',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
