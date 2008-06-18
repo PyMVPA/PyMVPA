@@ -35,7 +35,7 @@ smlrc_ext = Extension(
     # extra_compile_args = ['-O0'],
     language = 'c')
 
-ext_modules = [smlrc_ext, libsvmc_ext]
+ext_modules = [smlrc_ext]
 
 # only do libsvm if forced or libsvm.a is available
 if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \

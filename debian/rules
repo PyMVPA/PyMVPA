@@ -4,11 +4,16 @@
 include /usr/share/cdbs/1/rules/debhelper.mk
 DEB_PYTHON_SYSTEM = pysupport
 DEB_PYTHON_MODULE_PACKAGE = python-mvpa
+DEB_PYTHON_BUILD_ARGS = --with-libsvm
+DEB_PYTHON_INSTALL_ARGS_ALL = --with-libsvm
 include /usr/share/cdbs/1/class/python-distutils.mk
 
 clean::
 	$(MAKE) distclean
 
+# this will cause local LIBSVM to be build as well, however it is not used
+# as include and library dirs are not set for 3rd/libsvm (commented out in
+# Debian diff in setup.cfg
 build/python-mvpa-doc::
 	$(MAKE) doc
 
