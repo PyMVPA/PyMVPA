@@ -22,12 +22,25 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  (currently none)
+  * Import of binary EEP files (used by EEProbe) and EEPDataset class.
+  * Initial version of a meta dataset class (MetaDataset). This is a container
+    for multiple datasets, which behaves like a dataset itself.
 
 
 
 Releases
 ~~~~~~~~
+
+* 0.2.2 (Tue, 17 Jun 2008)
+
+  * Extended build instructions: Added section on OpenSUSE.
+  * Replaced ugly PYMVPA_LIBSVM environment variable to trigger compiling the
+    LIBSVM wrapper with a proper '--with-libsvm' switch in setup.py.
+    Additionally, setup.py now detects if included LIBSVM has been built and
+    enables LIBSVM wrapper automatically in this case.
+  * Added proper Makefiles for LIBSVM copy, with configurable compiler flags.
+  * Added 'setup.cfg' to remove the need to manually specify swig-opts
+    (Windows specific configuration is in 'setup.cfg.win').
 
 * 0.2.1 (Sun, 15 Jun 2008)
 
