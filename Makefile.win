@@ -12,20 +12,18 @@ PYTHON_PATH=C:\\Python25
 
 all: build configure-inplace-use
 
-libsvm:
-# build static libsvm first
-	cd 3rd\\libsvm \
-		& g++ -O2 -c svm.cpp svm.h \
-		& ar cur libsvm.a svm.o
+# build included 3rd party pieces (if present)
+3rd: 3rd-stamp
+3rd-stamp:
+	cd 3rd\libsvm & $(MAKE) -f Makefile.win
 
-build: libsvm
+
+build: 3rd
 # build pymvpa extensions including libsvm
-	set PYMVPA_LIBSVM=1 & set PYTHON_INCLUDE="$(PYTHON_PATH)\\include" \
-		& python setup.py build_ext -c mingw32 \
-			--swig-opts="-c++ -noproxy" \
-			-I3rd\\libsvm -L3rd\\libsvm
+	set PYTHON_INCLUDE="$(PYTHON_PATH)\\include" \
+		& python setup.py build_ext
 
-installer: build
+installer: 3rd build
 # now build the installer
 	python setup.py bdist_wininst
 
