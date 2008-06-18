@@ -18,7 +18,8 @@ from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
 
-from mvpa.misc.errorfx import MeanMismatchErrorFx, CorrErrorFx, RMSErrorFx
+from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
+     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString
@@ -481,6 +482,7 @@ class RegressionStatistics(SummaryStatistics):
 
     _STATS_DESCRIPTION = (
         ('CC', 'Correlation coefficient', None),
+        ('CC-p', 'Correlation coefficient (p-value)', None),
         ('RMSE', 'Root mean squared error', None),
         ('STD', 'Standard deviation', None),
         ('RMP', 'Root mean power (compare to RMSE of results)',
@@ -510,35 +512,22 @@ class RegressionStatistics(SummaryStatistics):
 
         stats = {}
 
-        def MeanPowerFx(data):
-            """Returns mean power
-
-            so similar to var but without demeaning
-            """
-            return N.mean( N.asanyarray(data)**2 )
-
-        def RootMeanPowerFx(data):
-            """Returns root mean power
-
-            to be compared against RMSE
-            """
-            return N.sqrt(MeanPowerFx(data))
-
         funcs = {
-            'RMP_t': lambda t,p:RootMeanPowerFx(t),
-            'STD_t': lambda t,p:N.std(t),
-            'RMP_p': lambda t,p:RootMeanPowerFx(p),
-            'STD_p': lambda t,p:N.std(p),
+            'RMP_t': lambda p,t:rootMeanPowerFx(t),
+            'STD_t': lambda p,t:N.std(t),
+            'RMP_p': lambda p,t:rootMeanPowerFx(p),
+            'STD_p': lambda p,t:N.std(p),
             'CC': CorrErrorFx(),
+            'CC-p': CorrErrorPFx(),
             'RMSE': RMSErrorFx(),
-            'RMSE/RMP_t': lambda t,p:RMSErrorFx()(t,p)/RootMeanPowerFx(t)
+            'RMSE/RMP_t': RelativeRMSErrorFx()
             }
 
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
             stats[funcname_all] = []
-            for i, (target, predictions) in enumerate(sets):
-                stats[funcname_all] += [func(target, predictions)]
+            for i, (targets, predictions) in enumerate(sets):
+                stats[funcname_all] += [func(predictions, targets)]
             stats[funcname_all] = N.array(stats[funcname_all])
             stats[funcname] = N.mean(stats[funcname_all])
             stats[funcname+'_std'] = N.std(stats[funcname_all])
@@ -565,7 +554,7 @@ class RegressionStatistics(SummaryStatistics):
                    % stats
 
         stats_data = ['RMP_t', 'STD_t', 'RMP_p', 'STD_p']
-        stats_ = ['CC', 'RMSE', 'RMSE/RMP_t']
+        stats_ = ['CC', 'RMSE', 'RMSE/RMP_t'] # CC-p needs tune up of format so excluded
         stats_summary = ['# of sets']
 
         out = StringIO()
@@ -808,8 +797,7 @@ class TransferError(ClassifierError):
                 predictions=predictions)
 
         # compute error from desired and predicted values
-        error = self.__errorfx(predictions,
-                               testdataset.labels)
+        error = self.__errorfx(predictions, testdataset.labels)
 
         return error
 
