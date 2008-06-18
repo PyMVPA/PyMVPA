@@ -653,13 +653,11 @@ class ProxyClassifier(Classifier):
           clf : Classifier
             classifier based on which mask classifiers is created
           """
-        Classifier.__init__(self, **kwargs)
+
+        Classifier.__init__(self, regression=clf.regression, **kwargs)
 
         self.__clf = clf
         """Store the classifier to use."""
-
-        self.params.regression = clf.regression
-        """Do regression if base classifier does"""
 
         # adhere to slave classifier capabilities
         # XXX test test test
