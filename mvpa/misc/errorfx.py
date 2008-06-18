@@ -136,3 +136,20 @@ class RelativeRMSErrorFx(_ErrorFx):
     """
     def __call__(self, predicted, target):
         return RMSErrorFx()(predicted, target) / rootMeanPowerFx(target)
+
+
+class Variance1SVFx(_ErrorFx):
+    """Ratio of variance described by the first singular value component.
+
+    Of limited use -- left for the sake of not wasting it
+    """
+
+    def __call__(self, predicted, target):
+        data = N.vstack( (predicted, target) ).T
+        # demean
+        data_demeaned = data - N.mean(data, axis=0)
+        u,s,vh = N.linalg.svd(data_demeaned, full_matrices=0)
+        # assure sorting
+        s.sort(); s=s[::-1]
+        cvar = s[0]**2 / N.sum(s**2)
+        return cvar
