@@ -19,6 +19,9 @@ from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.misc.transformers import Absolute
 
+from mvpa.measures.anova import OneWayAnova
+from mvpa.measures.corrcoef import CorrCoef
+
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -27,6 +30,20 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     def setUp(self):
         self.dataset = datasets['uni2large']
+
+
+    @sweepargs(saclass=[OneWayAnova, CorrCoef])
+    def testBasic(self, saclass):
+        data = datasets['dumb']
+        dsm = saclass()
+
+        # compute scores
+        f = dsm(data)
+
+        self.failUnless(f.shape == (2,))
+        self.failUnless(f[1] == 0.0)
+        self.failUnless(f[0] > 0.0)
+
 
     # XXX meta should work too but doesn't
     @sweepargs(clf=clfs['has_sensitivity', '!meta'])

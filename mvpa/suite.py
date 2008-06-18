@@ -51,6 +51,7 @@ from mvpa.featsel.ifs import *
 from mvpa.featsel.rfe import *
 from mvpa.mappers import *
 from mvpa.measures.anova import *
+from mvpa.measures.corrcoef import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *
