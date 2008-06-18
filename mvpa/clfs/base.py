@@ -1207,6 +1207,12 @@ class SplitClassifier(CombinedClassifier):
         doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
 
+    # XXX couldn't be training_confusion since it has other meaning
+    #     here, BUT it is named so within CrossValidatedTransferError
+    #     -- unify
+    training_confusions = StateVariable(enabled=False,
+        doc="Summary over training confusions acquired at each split")
+
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
 
@@ -1235,10 +1241,13 @@ class SplitClassifier(CombinedClassifier):
         """
         # generate pairs and corresponding classifiers
         bclfs = []
+
         if self.states.isEnabled('confusion'):
-            self.confusion = \
-                           self.__clf._summaryClass()
-                #ConfusionMatrix(labels=dataset.uniquelabels)
+            self.states.confusion = self.__clf._summaryClass()
+        if self.states.isEnabled('training_confusions'):
+            self.__clf.states.enable(['training_confusion'])
+            self.states.training_confusions = self.__clf._summaryClass()
+
 
         # for proper and easier debugging - first define classifiers and then
         # train them
@@ -1252,8 +1261,7 @@ class SplitClassifier(CombinedClassifier):
             bclfs.append(clf)
         self.clfs = bclfs
 
-        i = 0
-        for split in self.__splitter(dataset):
+        for i,split in enumerate(self.__splitter(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
@@ -1267,7 +1275,9 @@ class SplitClassifier(CombinedClassifier):
             if self.states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions)
-            i += 1
+            if self.states.isEnabled("training_confusions"):
+                self.states.training_confusions += \
+                                               clf.states.training_confusion
 
 
     def getSensitivityAnalyzer(self, **kwargs):
