@@ -13,6 +13,8 @@ build
 *.prof
 *.kcache
 *.so
+*.o
+*.a
 build-arch*
 svmc_wrap.cpp
 doc/examples/dump.*

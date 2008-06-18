@@ -55,6 +55,7 @@ from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *
 from mvpa.measures.splitmeasure import *
+from mvpa.misc.errorfx import *
 from mvpa.misc.cmdline import *
 from mvpa.misc.copy import *
 from mvpa.misc.data_generators import *

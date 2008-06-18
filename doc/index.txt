@@ -80,9 +80,12 @@ Binary packages are available for:
 * Windows (:ref:`installation instructions <install_win>`)
     An installer for Python 2.5 is available from the `file release system`_.
 
+* OpenSUSE (:ref:`installation instructions <install_suse>`)
+   Initial version of a binary RPM package, built for OpenSUSE_ 10.3.
+
 Currently, there are no binary packages for other operating systems. However,
-we know that PyMVPA successfully builds on recent RedHat_ and OpenSUSE_
-releases, as well as MacOS X (see below for instructions).
+we know that PyMVPA successfully builds on recent RedHat_ releases, as well as
+MacOS X (see below for instructions).
 
 .. _official Debian package: http://packages.debian.org/python-mvpa
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
