@@ -6,7 +6,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Error functions"""
+"""Error functions helpers.
+
+PyMVPA can use arbitrary function which takes 2 arguments: predictions
+and targets and spits out a scalar value. Functions below are for the
+convinience"""
 
 __docformat__ = 'restructuredtext'
 
