@@ -14,7 +14,6 @@ from mvpa.misc.copy import copy
 
 from mvpa.measures.base import DatasetMeasure
 from mvpa.datasets.splitter import NoneSplitter
-from mvpa.clfs.transerror import ConfusionMatrix
 from mvpa.misc import warning
 from mvpa.misc.state import StateVariable, Harvestable
 from mvpa.misc.transformers import GrandMean
@@ -111,8 +110,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 terr_enable += [state_var]
 
         # charge states with initial values
-        self.confusion = ConfusionMatrix()
-        self.training_confusion = ConfusionMatrix()
+        summaryClass = self.__transerror.clf._summaryClass
+        self.confusion = summaryClass()
+        self.training_confusion = summaryClass()
         self.transerrors = []
 
         # enable requested states in child TransferError instance (restored

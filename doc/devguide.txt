@@ -434,6 +434,10 @@ Developer-TODO
 Things to implement for the next release (Release goals)
 --------------------------------------------------------
 
+ * A part of below restructuring TODO but is separate due to it importance:
+   come up with cleaner hierarchy and tagging of classifiers and regressions --
+   now they are all ``Classifier``s
+
  * Unify parameter naming across all classifiers and come up with a labeling
    guideline for future classifier implementations and wrappers::
 
@@ -498,10 +502,6 @@ Things to implement for the next release (Release goals)
 
     * several base classes with framework infrastructure (Harvester,
       Stateful, virtual properties, ...)
-
-    * Classifiers
-
-    * Regressions
 
     * Transfer error calculation
     * Cross-validation support

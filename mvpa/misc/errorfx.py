@@ -11,61 +11,83 @@
 __docformat__ = 'restructuredtext'
 
 
-from cmath import sqrt
 import numpy as N
 from scipy import trapz
 from scipy.stats import pearsonr
 
-class ErrorFunctionBase(object):
+# Various helper functions
+def meanPowerFx(data):
+    """Returns mean power
+
+    Similar to var but without demeaning
     """
-    Dummy error function base class
+    return N.mean(N.asanyarray(data)**2)
+
+def rootMeanPowerFx(data):
+    """Returns root mean power
+
+    to be comparable against RMSE
     """
-    pass
+    return N.sqrt(meanPowerFx(data))
 
 
-class ErrorFunction(ErrorFunctionBase):
+class _ErrorFx(object):
     """Common error function interface, computing the difference between
-    some desired and some predicted values.
+    some target and some predicted values.
     """
-    def __call__(self, predicted, desired):
-        """Compute some error value from the given desired and predicted
+
+    """XXX there is no reason to keep this class around imho -- it is
+    just the skeleton for all the _ErrorFxs -- interface they
+    must conform... and there is no reason to have all those ErrorFx
+    as classes... may be they should be just functions?"""
+
+    def __str__(self):
+        """Print class name when asked for string
+        """
+        return self.__class__.__name__
+
+    def __repr__(self):
+        """Proper repr for _ErrorFx
+        """
+        return self.__class__.__name__ + "()"
+
+    def __call__(self, predicted, target):
+        """Compute some error value from the given target and predicted
         values (both sequences).
         """
         raise NotImplemented
 
 
-class RMSErrorFx(ErrorFunction):
-    """Computes the root mean squared error of some desired and some
+class RMSErrorFx(_ErrorFx):
+    """Computes the root mean squared error of some target and some
     predicted values.
     """
-    def __call__(self, predicted, desired):
-        """Both 'predicted' and 'desired' can be either scalars or sequences,
+    def __call__(self, predicted, target):
+        """Both 'predicted' and 'target' can be either scalars or sequences,
         but have to be of the same length.
         """
-        difference = N.subtract(predicted, desired)
-
-        return sqrt(N.dot(difference, difference))
+        return N.sqrt(N.mean(N.subtract(predicted, target)**2))
 
 
-class MeanMismatchErrorFx(ErrorFunction):
-    """Computes the percentage of mismatches between some desired and some
+class MeanMismatchErrorFx(_ErrorFx):
+    """Computes the percentage of mismatches between some target and some
     predicted values.
     """
-    def __call__(self, predicted, desired):
-        """Both 'predicted' and 'desired' can be either scalars or sequences,
+    def __call__(self, predicted, target):
+        """Both 'predicted' and 'target' can be either scalars or sequences,
         but have to be of the same length.
         """
-        return 1 - N.mean( predicted == desired )
+        return 1 - N.mean( predicted == target )
 
 
-class AUCErrorFx(ErrorFunction):
+class AUCErrorFx(_ErrorFx):
     """Computes the area under the ROC for the given the
-    desired and predicted to make the prediction."""
-    def __call__(self, predicted, desired):
+    target and predicted to make the prediction."""
+    def __call__(self, predicted, target):
         """Requires all arguments."""
-        # sort the desired in descending order based on the predicted and
+        # sort the target in descending order based on the predicted and
         # set to boolean
-        t = desired[N.argsort(predicted)[::-1]] > 0
+        t = target[N.argsort(predicted)[::-1]] > 0
 
         # calculate the true positives
         tp = N.concatenate(([0],
@@ -80,10 +102,33 @@ class AUCErrorFx(ErrorFunction):
         return trapz(tp, fp)
 
 
-class CorrErrorFx(ErrorFunction):
-    """Computes the correlation between the desired and the predicted
-    values."""
-    def __call__(self, predicted, desired):
-        """Requires all arguments."""
-        return pearsonr(predicted, desired)[0]
+class CorrErrorFx(_ErrorFx):
+    """Computes the correlation between the target and the predicted
+    values.
 
+    """
+    def __call__(self, predicted, target):
+        """Requires all arguments."""
+        return pearsonr(predicted, target)[0]
+
+
+class CorrErrorPFx(_ErrorFx):
+    """Computes p-value of correlation between the target and the predicted
+    values.
+
+    """
+    def __call__(self, predicted, target):
+        """Requires all arguments."""
+        return pearsonr(predicted, target)[1]
+
+
+class RelativeRMSErrorFx(_ErrorFx):
+    """Ratio between RMSE and root mean power of target output.
+
+    So it can be considered as a scaled RMSE -- perfect reconstruction
+    has values near 0, while no reconstruction has values around 1.0.
+    Word of caution -- it is not commutative, ie exchange of predicted
+    and target might lead to completely different answers
+    """
+    def __call__(self, predicted, target):
+        return RMSErrorFx()(predicted, target) / rootMeanPowerFx(target)

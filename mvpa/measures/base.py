@@ -125,10 +125,13 @@ class DatasetMeasure(Stateful):
         return result
 
 
-    def __str__(self):
-        return "%s(transformer=%s, enable_states=%s)" % \
-               (self.__class__.__name__, self.__transformer,
-                str(self.states.enabled))
+    def __repr__(self, prefixes=None):
+        if prefixes is None: prefixes = []
+        if self.__transformer is not None:
+            prefixes.append("transformer=%s" % self.__transformer)
+        if self.__null_dist is not None:
+            prefixes.append("null_dist=%s" % self.__null_dist)
+        return super(DatasetMeasure, self).__repr__(prefix=", ".join(prefixes))
 
 
 
@@ -142,7 +145,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         doc="Stores basic sensitivities if the sensitivity " +
             "relies on combining multiple ones")
 
-    def __init__(self, combiner=SecondAxisSumOfAbs, *args, **kwargs):
+    def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs):
         """Initialize
 
         :Parameters:
@@ -151,9 +154,15 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             dimension as well as sets base_sensitivities
             TODO change combiner's default
         """
-        DatasetMeasure.__init__(self, *(args), **(kwargs))
+        DatasetMeasure.__init__(self, **(kwargs))
 
         self.__combiner = combiner
+
+    def __repr__(self, prefixes=None):
+        if prefixes is None: prefixes = []
+        if self.__combiner != SecondAxisSumOfAbs:
+            prefixes.append("combiner=%s" % self.__combiner)
+        return super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _call(self, dataset):
@@ -265,10 +274,12 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         self._force_training = force_training
         """Either to force it to train"""
 
-    def __repr__(self):
-        return \
-            "<%s on %s, force_training=%s>" % \
-               (str(self), `self.__clf`, str(self._force_training))
+    def __repr__(self, prefixes=None):
+        if prefixes is None: prefixes = []
+        prefixes.append("clf=%s" % repr(self.clf))
+        if not self._force_training:
+            prefixes.append("force_training=%s" % self._force_training)
+        return super(Sensitivity, self).__repr__(prefixes=prefixes)
 
 
     def __call__(self, dataset):
