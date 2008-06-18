@@ -22,7 +22,9 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  (currently none)
+  * Import of binary EEP files (used by EEProbe) and EEPDataset class.
+  * Initial version of a meta dataset class (MetaDataset). This is a container
+    for multiple datasets, which behaves like a dataset itself.
 
 
 
