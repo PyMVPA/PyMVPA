@@ -37,9 +37,7 @@
 #
 #-----------------\____________________________________/------------------
 
-sed -i \
-	-e 's,getDataspaceShape,getInShape,g' \
-	-e 's,getNMappedFeatures,getOutSize,g' \
-	-e 's,getFeatureCoordinate,getInId,g' \
-	-e 's,getFeatureId,getOutId,g' \
-	mvpa/*.py tests/*.py
+git grep -l mvpa | grep -v refactor | \
+	xargs sed -i \
+	-e 's,training_confusions,confusion,g'
+

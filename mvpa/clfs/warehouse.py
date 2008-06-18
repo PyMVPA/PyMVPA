@@ -375,7 +375,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
-    #           confusion_state="training_confusions"),
+    #           confusion_state="confusion"),
     #           # and whose internal error we use
     #        feature_selector=FractionTailSelector(
     #                           0.2, mode='discard', tail='lower'),
@@ -392,7 +392,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
-    #           confusion_state="training_confusions"),
+    #           confusion_state="confusion"),
     #           # and whose internal error we use
     #        feature_selector=FractionTailSelector(
     #                           0.2, mode='discard', tail='lower'),

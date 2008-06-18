@@ -1203,8 +1203,8 @@ class SplitClassifier(CombinedClassifier):
 
     # TODO: unify with CrossValidatedTransferError which now uses
     # harvest_attribs to expose gathered attributes
-    training_confusions = StateVariable(enabled=False,
-        doc="Resultant confusion matrices whenever classifier trained " +
+    confusion = StateVariable(enabled=False,
+        doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
@@ -1235,9 +1235,9 @@ class SplitClassifier(CombinedClassifier):
         """
         # generate pairs and corresponding classifiers
         bclfs = []
-        if self.states.isEnabled('training_confusions'):
-            self.training_confusions = \
-                                     self.__clf._summaryClass()
+        if self.states.isEnabled('confusion'):
+            self.confusion = \
+                           self.__clf._summaryClass()
                 #ConfusionMatrix(labels=dataset.uniquelabels)
 
         # for proper and easier debugging - first define classifiers and then
@@ -1264,9 +1264,9 @@ class SplitClassifier(CombinedClassifier):
                 clf.testdataset = split[1]
 
             clf.train(split[0])
-            if self.states.isEnabled("training_confusions"):
+            if self.states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
-                self.training_confusions.add(split[1].labels, predictions)
+                self.confusion.add(split[1].labels, predictions)
             i += 1
 
 
