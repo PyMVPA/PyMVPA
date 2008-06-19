@@ -253,3 +253,46 @@ def wr1996(size=200):
     x = N.hstack([x, x34, x56])
     return Dataset(samples=x, labels=y)
 
+
+def multidimensional_sin(n_instances, n_features=2, period=1.0, noise_y=0.1, regression=True, flat=False):
+    """
+    Generate a (quite) complex 'n_features'-dimensional dataset.
+    Useful for testing regression or classification.
+
+    n_instances : int
+      number of pattern instances in the dataset
+
+    n_features : int
+      dimension of each pattern instance
+
+    period : float
+      frequency of the oscillation of the dataset
+
+    noise_x : float or numpy.narray
+      amplitude (sigma) of gaussian white noise to be added to the
+      instances after computing labels. Can be a vector.
+
+    noise_y : float
+      amplitude (sigma) of gaussian white noise to be added to the
+      labels, after their computation
+
+    regression : bool
+      do not round class labels when regression==True
+
+    flat : bool
+      if True and in 1-D, generate instances regularly (for
+      testing/demos). Otherwise generate randomly
+    """
+    data = None
+    if flat and n_features==1:
+        data = (N.arange(0.0, 2.0, 2.0/n_instances)*N.pi)
+        data.resize(n_instances, n_features)
+        # print data
+    else:
+        data = N.random.rand(n_instances, n_features)*2.0*N.pi
+        pass
+    labels = N.sin(N.sqrt((data**2).sum(1))/period)
+    if not regression:
+        labels = labels.round()
+    labels += N.random.randn(labels.size)*noise_y
+    return Dataset(samples=data, labels=labels)
