@@ -13,7 +13,7 @@ import numpy as N
 import os.path
 from mvpa.datasets import Dataset
 from mvpa.datasets.meta import MetaDataset
-from mvpa.datasets.niftidataset import NiftiDataset
+from mvpa.datasets.nifti import NiftiDataset
 from mvpa.datasets.eep import EEPDataset
 
 class MetaDatasetTests(unittest.TestCase):

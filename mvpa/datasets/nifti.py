@@ -10,11 +10,18 @@
 
 __docformat__ = 'restructuredtext'
 
+# little trick to be able to import 'nifti' package (which has same name)
+oldname = __name__
+# crazy name with close to zero possibility to cause whatever
+__name__ = 'iaugf9zrkjsbdv89' 
 from nifti import NiftiImage
+# restore old settings
+__name__ = oldname
 
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 from mvpa.misc import warning
+
 
 class NiftiDataset(MaskedDataset):
     """Dataset based on NiftiImage provided by pynifti.
