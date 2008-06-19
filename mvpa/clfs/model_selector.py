@@ -116,6 +116,7 @@ if __name__ == "__main__":
     pylab.ion()
 
     from mvpa.datasets import Dataset
+    from mvpa.misc import data_generators
 
     print "GPR:",
 
@@ -134,8 +135,8 @@ if __name__ == "__main__":
     regression = True
     logml = True
 
-    k = kernel.KernelLinear(coefficient=N.ones(1))
-    # k = kernel.KernelConstant()
+    # k = kernel.KernelLinear(coefficient=N.ones(1))
+    k = kernel.KernelConstant(coefficient=1.0)
     g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
     # g.train_fv = dataset.samples
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     sigma_noise_initial = 1.0
     length_scale_initial = 1.0
 
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-4)
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-2)
     lml = ms.solve()
     sigma_noise_best, length_scale_best = ms.hyperparameters_best
     print
@@ -160,16 +161,15 @@ if __name__ == "__main__":
 
     print
     print "GPR ARD on dataset from Williams and Rasmussen 1996:"
-    data, labels = kernel.generate_dataset_wr1996()
-    # data = N.hstack([data]*10) # test a larger set of dimensions: reduce ftol!
-    dataset = Dataset(samples=data, labels=labels)
+    dataset = data_generators.wr1996()
+    # dataset.samples = N.hstack([dataset.samples]*10) # test a larger set of dimensions: remember to reduce ftol!
     k = kernel.KernelSquaredExponential(length_scale=N.ones(dataset.samples.shape[1]))
     g = gpr.GPR(k, regression=regression)
     ms = ModelSelector(g, dataset)
-
+    
     sigma_noise_initial = 0.01
     length_scales_initial = 0.5*N.ones(dataset.samples.shape[1])
-
+    
     problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.hstack([sigma_noise_initial,length_scales_initial]), optimization_algorithm="ralg")
     lml = ms.solve()
     sigma_noise_best = ms.hyperparameters_best[0]
