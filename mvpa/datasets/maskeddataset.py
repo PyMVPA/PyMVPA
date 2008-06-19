@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.mappeddataset import MappedDataset
+from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.array import DenseArrayMapper
 
 if __debug__:
