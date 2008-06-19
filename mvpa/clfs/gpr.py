@@ -82,9 +82,6 @@ class GPR(Classifier):
         """
         Compute log marginal likelihood using self.train_fv and self.labels.
         """
-        # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
-        # but preliminary tests show them to be slower.
-
         log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
                                   N.log(self.L.diagonal()).sum() - \
                                   self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
@@ -104,6 +101,9 @@ class GPR(Classifier):
             debug("GPR", "Computing train train kernel matrix")
 
         self.km_train_train = self.__kernel.compute(self.train_fv)
+
+        # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
+        # but preliminary tests show them to be slower and less stable.
 
         self.L = N.linalg.cholesky(self.km_train_train +
               self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
@@ -205,8 +205,8 @@ def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,dat
     if F == 1:
         pylab.figure()
         pylab.plot(data_train, label_train, "ro", label="train")
-        pylab.plot(data_test, prediction, "b+-", label="prediction")
-        pylab.plot(data_test, label_test, "gx-", label="test (true)")
+        pylab.plot(data_test, prediction, "b-", label="prediction")
+        pylab.plot(data_test, label_test, "g+", label="test")
         if regression:
             pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
             pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
@@ -231,18 +231,24 @@ if __name__ == "__main__":
     pylab.ion()
 
     from mvpa.datasets import Dataset
+    from mvpa.misc import data_generators
 
-    train_size = 40
+    train_size = 20
     test_size = 100
     F = 1
 
-    data_train, label_train = gen_data(train_size, F)
-    # print label_train
+    # data_train, label_train = gen_data(train_size, F)
+    # # print label_train
+    # 
+    # data_test, label_test = gen_data(test_size, F, flat=True)
+    # # print label_test
+    # 
+    # dataset = Dataset(samples=data_train, labels=label_train)
 
-    data_test, label_test = gen_data(test_size, F, flat=True)
-    # print label_test
-
-    dataset = Dataset(samples=data_train, labels=label_train)
+    dataset = data_generators.multidimensional_sin(train_size,F)
+    dataset_test = data_generators.multidimensional_sin(test_size,F,noise_y=0.2,flat=True)
+    data_test = dataset_test.samples
+    label_test = dataset_test.labels
 
     regression = True
     logml = True
@@ -250,8 +256,8 @@ if __name__ == "__main__":
     if logml :
         print "Looking for better hyperparameters: grid search"
 
-        sigma_noise_steps = N.linspace(0.1, 0.6, num=20)
-        length_scale_steps = N.linspace(0.01, 1.0, num=20)
+        sigma_noise_steps = N.linspace(0.06, 0.2, num=20)
+        length_scale_steps = N.linspace(0.8, 2.5, num=20)
         lml = N.zeros((len(sigma_noise_steps), len(length_scale_steps)))
         lml_best = -N.inf
         length_scale_best = 0.0
