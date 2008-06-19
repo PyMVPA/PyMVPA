@@ -213,7 +213,7 @@ if __name__ == "__main__":
     from mvpa.datasets import Dataset
     from mvpa.misc.data_generators import sinModulated
 
-    train_size = 20
+    train_size = 40
     test_size = 100
     F = 1
 
@@ -229,8 +229,8 @@ if __name__ == "__main__":
     if logml :
         print "Looking for better hyperparameters: grid search"
 
-        sigma_noise_steps = N.linspace(0.06, 0.2, num=20)
-        length_scale_steps = N.linspace(0.8, 2.5, num=20)
+        sigma_noise_steps = N.linspace(0.1, 0.5, num=20)
+        length_scale_steps = N.linspace(0.05, 0.6, num=20)
         lml = N.zeros((len(sigma_noise_steps), len(length_scale_steps)))
         lml_best = -N.inf
         length_scale_best = 0.0

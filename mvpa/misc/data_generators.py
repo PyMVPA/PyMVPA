@@ -282,6 +282,7 @@ def sinModulated(n_instances, n_features,
 
 def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2, data_noise=0.4, noise=0.1):
     """ Generates simple dataset for linear regressions
+
     Generates chirp signal, populates n_nonbogus_features out of
     n_features with it with different noise level and then provides
     signal itself with additional noise as labels
@@ -292,6 +293,9 @@ def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2, data_noise=0.4
     data = N.random.normal(size=(n_instances, n_features ))*data_noise
     for i in xrange(n_nonbogus_features):
         data[:, i] += y[:]
+
     labels = y + N.random.normal(size=(n_instances,))*noise
 
     return Dataset(samples=data, labels=labels)
+
+

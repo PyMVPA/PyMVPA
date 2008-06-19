@@ -176,7 +176,6 @@ class KernelConstant(Kernel):
             pass
         # self.kernel_matrix = (self.coefficient**2)*N.ones((data1.shape[0],data2.shape[0]))
         self.kernel_matrix = N.dot(N.dot(data1,(self.coefficient**2)*N.eye(data1.shape[1])),data2.T)
-        print "ciao"
         return self.kernel_matrix
 
 
