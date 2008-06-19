@@ -174,7 +174,7 @@ Dependencies
 
 The following software packages are required or PyMVPA will not work at all.
 
-  Python_ 2.4 (or later)
+  Python_ 2.4 with ctypes_ 1.0.1 or a later Python 2.X release
     With some modifications PyMVPA could probably work with Python 2.3, but as
     it is quite old already and Python 2.4 is widely available there should be
     no need to do this.
@@ -183,7 +183,7 @@ The following software packages are required or PyMVPA will not work at all.
     way around it.
 
 .. _NumPy: http://numpy.scipy.org/
-
+.. _ctypes: http://python.net/crew/theller/ctypes/
 
 .. index:: recommendations, SciPy, PyNIfTI, Shogun, R, RPy
 
