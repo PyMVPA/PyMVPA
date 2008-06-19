@@ -133,13 +133,16 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(cve < 0.25,
              msg="Got transfer error %g" % (cve))
 
+    # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'])
+                enable_states=['confusion', 'training_confusion',
+                               'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.training_confusions.error
+        error = clf.confusion.error
+        tr_error = clf.training_confusion.error
 
         clf2 = _deepcopyclf(clf)
         cv = CrossValidatedTransferError(
@@ -147,16 +150,22 @@ class ClassifiersTests(unittest.TestCase):
             NFoldSplitter(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds)
+        tr_cverror = cv.training_confusion.error
 
         self.failUnlessEqual(error, cverror,
                 msg="We should get the same error using split classifier as"
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (error, cverror))
 
-        self.failUnlessEqual(clf.training_confusions.percentCorrect,
+        self.failUnlessEqual(tr_error, tr_cverror,
+                msg="We should get the same training error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (tr_error, tr_cverror))
+
+        self.failUnlessEqual(clf.confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.training_confusions.sets),
+        self.failUnlessEqual(len(clf.confusion.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -181,9 +190,9 @@ class ClassifiersTests(unittest.TestCase):
         ds = datasets['uni2medium']#self.data_bin_1
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'])
+                enable_states=['confusion', 'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.training_confusions.error
+        error = clf.confusion.error
 
         cv = CrossValidatedTransferError(
             TransferError(clf2),
@@ -199,7 +208,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless( error < 0.25,
                          msg="clf should generalize more or less fine. "
                          "Got error %s" % error)
-        self.failUnlessEqual(len(clf.training_confusions.sets),
+        self.failUnlessEqual(len(clf.confusion.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -215,12 +224,13 @@ class ClassifiersTests(unittest.TestCase):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'],
+                enable_states=['confusion', 'training_confusion',
+                               'feature_ids'],
                 harvest_attribs=['clf.feature_ids',
                                  'clf.training_time'],
                 descr="DESCR")
         clf.train(ds)                   # train the beast
-        # Number of harvested items should be equial to number of chunks
+        # Number of harvested items should be equal to number of chunks
         self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
                              len(ds.uniquechunks))
         # if we can blame multiple inheritance and Statefull.__init__

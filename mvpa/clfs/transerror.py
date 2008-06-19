@@ -548,10 +548,16 @@ class RegressionStatistics(SummaryStatistics):
         stats = self.stats
 
         if short:
-            return "%(# of sets)d sets CC:%(CC).2f+-%(CC_std).3f" \
-                   " RMSE:%(RMSE).2f+-%(RMSE_std).3f" \
-                   " RMSE/RMP_t:%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
-                   % stats
+            if short == 'very':
+                return "%(# of sets)d sets CC:%(CC).2f CC-p:%(CC-p).2g" \
+                       " RMSE:%(RMSE).2f" \
+                       " RMSE/RMP_t:%(RMSE/RMP_t).2f" \
+                       % stats
+            else:
+                return "%(# of sets)d sets CC:%(CC).2f+-%(CC_std).3f" \
+                       " RMSE:%(RMSE).2f+-%(RMSE_std).3f" \
+                       " RMSE/RMP_t:%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
+                       % stats
 
         stats_data = ['RMP_t', 'STD_t', 'RMP_p', 'STD_p']
         stats_ = ['CC', 'RMSE', 'RMSE/RMP_t'] # CC-p needs tune up of format so excluded
