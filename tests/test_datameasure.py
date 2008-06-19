@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
+from mvpa.base import externals
 from mvpa.featsel.base import FeatureSelectionPipeline
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector
@@ -20,11 +21,14 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.transformers import Absolute
 
 from mvpa.measures.anova import OneWayAnova
-from mvpa.measures.corrcoef import CorrCoef
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
+_MEASURES_2_SWEEP = [ OneWayAnova ]
+if externals.exists('scipy'):
+    from mvpa.measures.corrcoef import CorrCoef
+    _MEASURES_2_SWEEP += [ CorrCoef ]
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -32,7 +36,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.dataset = datasets['uni2large']
 
 
-    @sweepargs(saclass=[OneWayAnova, CorrCoef])
+    @sweepargs(saclass=_MEASURES_2_SWEEP)
     def testBasic(self, saclass):
         data = datasets['dumb']
         dsm = saclass()

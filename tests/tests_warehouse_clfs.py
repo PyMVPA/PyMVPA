@@ -14,7 +14,6 @@ __docformat__ = 'restructuredtext'
 # first deal with classifiers which do not have external deps
 #
 from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.knn import *
 
 from mvpa.clfs.warehouse import clfs, regrs

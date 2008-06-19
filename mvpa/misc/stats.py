@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.base import externals
+externals.exists('scipy', raiseException=True)
+
 import scipy.stats as stats
 import numpy as N
 

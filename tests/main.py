@@ -44,7 +44,6 @@ tests = [
     'test_knn',
     'test_svm',
     'test_plr',
-    'test_ridge',
     'test_smlr',
     # Various algorithms
     'test_transformers',
@@ -63,8 +62,11 @@ tests = [
 # fully test of externals
 externals.testAllDependencies()
 
-__optional_tests = ( ('lars', 'lars'),
-                     ('nifti', 'niftidataset') )
+__optional_tests = ( ('scipy', 'ridge'),
+                     ('scipy', 'datasetfx_sp'),
+                     (['lars','scipy'], 'lars'),
+                     ('nifti', 'niftidataset')
+                     )
 
 # and now for the optional tests
 optional_tests = []
