@@ -60,8 +60,8 @@ def exists(dep, force=False, raiseException=False):
     for a dependency once.
 
     :Parameters:
-      dep : string
-        The dependency key to test.
+      dep : string or list of string
+        The dependency key(s) to test.
       force : boolean
         Whether to force the test even if it has already been
         performed.
@@ -69,6 +69,11 @@ def exists(dep, force=False, raiseException=False):
         Whether to raise RintimeError if dependency is missing.
 
     """
+    # if we are provided with a list of deps - go through all of them
+    if isinstance(dep, list) or isinstance(dep, tuple):
+        results = [ exists(dep_, force, raiseException) for dep_ in dep ]
+        return bool(reduce(lambda x,y: x and y, results, True))
+
     if _VERIFIED.has_key(dep) and not force:
         # we have already tested for it, so return our previous result
         result = _VERIFIED[dep]
