@@ -121,7 +121,7 @@ class KernelSquaredExponential(Kernel):
             data
             (Defaults to None)
         """
-        self.kernel_matrix = N.exp(-self.euclidean_distance(data1, data2, weight=(0.5/self.length_scale**2)))
+        self.kernel_matrix = N.exp(-self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2)))
         return self.kernel_matrix
 
     def gradient(self,data1,data2):
@@ -174,7 +174,9 @@ class KernelConstant(Kernel):
         if data2 == None:
             data2 = data1
             pass
-        self.kernel_matrix = (self.coefficient**2)*N.ones((data1.shape[0],data2.shape[0]))
+        # self.kernel_matrix = (self.coefficient**2)*N.ones((data1.shape[0],data2.shape[0]))
+        self.kernel_matrix = N.dot(N.dot(data1,(self.coefficient**2)*N.eye(data1.shape[1])),data2.T)
+        print "ciao"
         return self.kernel_matrix
 
 
@@ -212,6 +214,7 @@ class KernelMatern(Kernel):
     # TODO
     def __init__(self):
         raise NotImplementedError
+    pass
 
 
 if __name__ == "__main__":
