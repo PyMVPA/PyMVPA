@@ -24,7 +24,7 @@ import numpy as N
 import pylab as P
 
 # local imports
-from mvpa.datasets.niftidataset import NiftiDataset
+from mvpa.datasets.nifti import NiftiDataset
 from mvpa.misc.iohelpers import SampleAttributes
 from mvpa.measures.anova import OneWayAnova
 from mvpa.clfs.svm import LinearNuSVMC

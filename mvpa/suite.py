@@ -43,7 +43,7 @@ from mvpa.datasets.masked import *
 from mvpa.datasets.metric import *
 from mvpa.datasets.miscfx import *
 if externals.exists('nifti'):
-    from mvpa.datasets.niftidataset import *
+    from mvpa.datasets.nifti import *
 from mvpa.datasets.splitter import *
 from mvpa.featsel.base import *
 from mvpa.featsel.helpers import *
