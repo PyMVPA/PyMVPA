@@ -1,0 +1,17 @@
+# Minimalistic makefile for libsvm
+LIB=libsvm.a
+MISC=svm.cpp
+
+LIBFLAGS=
+CFLAGS=-Wall -O2
+
+all: $(LIB)
+
+.cpp.o:
+	g++ $(CFLAGS) $(LIBFLAGS) -c $^
+
+$(LIB): $(MISC:.cpp=.o)
+	ar cur $@ $^
+
+clean:
+	-del $(LIB) $(MISC:.cpp=.o)

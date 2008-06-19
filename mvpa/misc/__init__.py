@@ -23,16 +23,20 @@ class _SingletonType(type):
     """Simple singleton implementation adjusted from
     http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/412551
     """
-    def __init__(self, *args):
-        type.__init__(self, *args)
-        self._instances = {}
+    def __init__(mcs, *args):
+        type.__init__(mcs, *args)
+        mcs._instances = {}
 
-    def __call__(self, sid, instance, *args):
-        if not sid in self._instances:
-            self._instances[sid] = instance
-        return self._instances[sid]
+    def __call__(mcs, sid, instance, *args):
+        if not sid in mcs._instances:
+            mcs._instances[sid] = instance
+        return mcs._instances[sid]
 
 class __Singleton:
+    """To ensure single instance of a class instantiation (object)
+
+    """
+
     __metaclass__ = _SingletonType
     def __init__(self, *args):
         pass
@@ -41,7 +45,7 @@ class __Singleton:
         raise NotImplementedError
 
 verbose = __Singleton("verbose", LevelLogger(
-    handlers=environ.get('MVPA_VERBOSE_OUTPUT', 'stdout').split(',')))
+    handlers = environ.get('MVPA_VERBOSE_OUTPUT', 'stdout').split(',')))
 
 # Not supported/explained/used by now since verbose(0, is to print errors
 #error = __Singleton("error", LevelLogger(
@@ -59,8 +63,10 @@ if environ.has_key('MVPA_VERBOSE'):
     verbose.level = int(environ['MVPA_VERBOSE'])
 
 
-# Define Warning class so it is printed just once per each message
 class WarningLog(OnceLogger):
+    """Logging class of messsages to be printed just once per each message
+
+    """
 
     def __init__(self, btlevels=10, btdefault=False,
                  maxcount=1, *args, **kwargs):
@@ -85,7 +91,7 @@ class WarningLog(OnceLogger):
         if bt is None:
             bt = self.__btdefault
         tb = traceback.extract_stack(limit=2)
-        msgid = `tb[-2]`                # take parent as the source of ID
+        msgid = repr(tb[-2])         # take parent as the source of ID
         fullmsg = "WARNING: %s.\n\t(Please note: this warning is " % msg + \
                   "printed only once, but underlying problem might " + \
                   "occur many times.\n"
@@ -111,12 +117,14 @@ if environ.has_key('MVPA_WARNINGS_COUNT'):
 else:
     warnings_maxcount = 1
 
-warning = WarningLog(handlers={False: environ.get('MVPA_WARNING_OUTPUT', 'stdout').split(','),
-                               True: []}[environ.has_key('MVPA_NO_WARNINGS')],
-                     btlevels=warnings_btlevels,
-                     btdefault=warnings_bt,
-                     maxcount=warnings_maxcount
-                     )
+warning = WarningLog(
+    handlers={
+        False: environ.get('MVPA_WARNING_OUTPUT', 'stdout').split(','),
+        True: []}[environ.has_key('MVPA_NO_WARNINGS')],
+    btlevels=warnings_btlevels,
+    btdefault=warnings_bt,
+    maxcount=warnings_maxcount
+    )
 
 
 if __debug__:
@@ -136,7 +144,9 @@ if __debug__:
     debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
     debug.register('TEST', "Debug unittests")
-    debug.register('_QUICKTEST_', "Quick unittests") # TODO: handle levels of unittests properly
+    debug.register('MODULE_IN_REPR', "Include module path in __repr__")
+    debug.register('ID_IN_REPR', "Include id in __repr__")
+
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
@@ -151,9 +161,11 @@ if __debug__:
     debug.register('DS_',  "*Dataset (verbose)")
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
-    debug.register('CHECK_DS_SORTED',"Additional checking in datasets for sorted")
-    debug.register('CHECK_IDS_SORTED',"Additional checking for ids being sorted in mappers")
-    debug.register('CHECK_RETRAIN', "Additional checking in retraining/retesting")
+    # CHECKs
+    debug.register('CHECK_DS_SORTED', "Checking in datasets for sorted")
+    debug.register('CHECK_IDS_SORTED',
+                   "Checking for ids being sorted in mappers")
+    debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
 
     debug.register('COL',  "Generic Collectable debugging")
 
@@ -197,7 +209,8 @@ if __debug__:
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")
     debug.register('SG_KERNELS', "Internal shogun debug output for kernels")
-    debug.register('SG_PROGRESS', "Internal shogun progress bar during computation")
+    debug.register('SG_PROGRESS',
+                   "Internal shogun progress bar during computation")
 
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")

@@ -156,23 +156,6 @@ class GPR(Classifier):
     pass
 
 
-def gen_data(n_instances, n_features, flat=False, noise=0.4):
-    """
-    Generate a (quite) complex multidimensional dataset.
-    """
-    data = None
-    if flat:
-        data = (N.arange(0.0, 1.0, 1.0/n_instances)*N.pi)
-        data.resize(n_instances, n_features)
-        # print data
-    else:
-        data = N.random.rand(n_instances, n_features)*N.pi
-        pass
-    label = N.sin((data**2).sum(1)).round()
-    label += N.random.rand(label.size)*noise
-    return data, label
-
-
 def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F,logml=True):
     data_train = dataset.samples
     label_train = dataset.labels
@@ -216,39 +199,29 @@ def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,dat
             pass
         pylab.legend()
         pass
-    
+
     print "LML:",g.log_marginal_likelihood
 
 
 
 
 if __name__ == "__main__":
-
-    N.random.seed(1)
-
     import pylab
     pylab.close("all")
     pylab.ion()
 
     from mvpa.datasets import Dataset
-    from mvpa.misc import data_generators
+    from mvpa.misc.data_generators import sinModulated
 
     train_size = 20
     test_size = 100
     F = 1
 
-    # data_train, label_train = gen_data(train_size, F)
-    # # print label_train
-    # 
-    # data_test, label_test = gen_data(test_size, F, flat=True)
-    # # print label_test
-    # 
-    # dataset = Dataset(samples=data_train, labels=label_train)
+    dataset = sinModulated(train_size, F)
+    # print dataset.labels
 
-    dataset = data_generators.multidimensional_sin(train_size,F)
-    dataset_test = data_generators.multidimensional_sin(test_size,F,noise_y=0.2,flat=True)
-    data_test = dataset_test.samples
-    label_test = dataset_test.labels
+    dataset_test = sinModulated(test_size, F, flat=True)
+    # print dataset_test.labels
 
     regression = True
     logml = True
@@ -303,4 +276,6 @@ if __name__ == "__main__":
 
 
 
-    compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F,logml)
+    compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,
+                       dataset_test.samples, dataset_test.labels,F,logml)
+    pylab.show()

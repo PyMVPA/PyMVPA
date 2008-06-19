@@ -144,10 +144,10 @@ class SVM(_SVM):
                       debug('SVM', 'Assign C_SVC "by default"')
         kwargs['svm_impl'] = svm_impl
 
-        self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
-
         # init base class
         _SVM.__init__(self, kernel_type, **kwargs)
+
+        self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
 
         if 'nu' in self._KNOWN_PARAMS and 'epsilon' in self._KNOWN_PARAMS:
             # overwrite eps param with new default value (information taken from libSVM
@@ -216,7 +216,7 @@ class SVM(_SVM):
         predictions = [ self.model.predict(p) for p in src ]
 
         if self.states.isEnabled("values"):
-            if len(self.trained_labels) > 2:
+            if not self.regression and len(self.trained_labels) > 2:
                 warning("'Values' for multiclass SVM classifier are ambiguous. You " +
                         "are adviced to wrap your classifier with " +
                         "MulticlassClassifier for explicit handling of  " +
@@ -230,7 +230,8 @@ class SVM(_SVM):
             #
             #try:
             values = [ self.model.predictValuesRaw(p) for p in src ]
-            if len(values)>0 and len(self.trained_labels) == 2:
+
+            if len(values)>0 and (not self.regression) and len(self.trained_labels) == 2:
                 if __debug__:
                     debug("SVM","Forcing values to be ndarray and reshaping " +
                           "them to be 1D vector")

@@ -23,7 +23,7 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.datasets.misc import zscore
+from mvpa.datasets.miscfx import zscore
 from mvpa.measures.searchlight import Searchlight
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.iohelpers import SampleAttributes

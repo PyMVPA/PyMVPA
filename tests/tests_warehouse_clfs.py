@@ -17,7 +17,7 @@ from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.knn import *
 
-from mvpa.clfs.warehouse import clfs
+from mvpa.clfs.warehouse import clfs, regrs
 from mvpa.base import externals
 
 # if have ANY svm implementation
@@ -65,9 +65,9 @@ class Less1Classifier(SameSignClassifier):
 # happening with kNN...
 sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 
-if externals.exists('shogun'):
-    sample_clf_nl = sg.SVM(kernel_type='RBF', svm_impl='libsvm')
-else:
-    #classical one which was used for a while
-    #and surprisingly it is not bad at all for the unittests
-    sample_clf_nl = kNN(k=5)
+#if externals.exists('shogun'):
+#    sample_clf_nl = sg.SVM(kernel_type='RBF', svm_impl='libsvm')
+#else:
+#classical one which was used for a while
+#and surprisingly it is not bad at all for the unittests
+sample_clf_nl = kNN(k=5)
