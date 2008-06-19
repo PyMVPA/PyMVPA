@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
-from mvpa.misc.stats import chisquare
+from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
@@ -18,6 +18,11 @@ from mvpa.misc.data_generators import normalFeatureDataset
 class StatsTests(unittest.TestCase):
 
     def testChiSquare(self):
+        if not externals.exists('scipy'):
+            return
+
+        from mvpa.misc.stats import chisquare
+
         # test equal distribution
         tbl = N.array([[5,5],[5,5]])
         chi, p = chisquare(tbl)
