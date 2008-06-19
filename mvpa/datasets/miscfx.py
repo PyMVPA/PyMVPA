@@ -25,7 +25,7 @@ from mvpa.misc.support import getBreakPoints
 
 
 
-def zscore(dataset, mean = None, std = None,
+def zscore(dataset, mean=None, std=None,
            perchunk=True, baselinelabels=None,
            pervoxel=True, targetdtype='float64'):
     """Z-Score the samples of a `Dataset` (in-place).
@@ -61,14 +61,14 @@ def zscore(dataset, mean = None, std = None,
             axisarg = {}
 
         # calculate mean if necessary
-        if not mean:
+        if mean is None:
             mean = statsamples.mean(**axisarg)
 
         # de-mean
         samples -= mean
 
         # calculate std-deviation if necessary
-        if not std:
+        if std is None:
             std = statsamples.std(**axisarg)
 
         # do the z-scoring
