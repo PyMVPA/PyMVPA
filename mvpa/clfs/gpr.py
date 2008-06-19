@@ -82,9 +82,6 @@ class GPR(Classifier):
         """
         Compute log marginal likelihood using self.train_fv and self.labels.
         """
-        # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
-        # but preliminary tests show them to be slower.
-
         log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
                                   N.log(self.L.diagonal()).sum() - \
                                   self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
@@ -104,6 +101,9 @@ class GPR(Classifier):
             debug("GPR", "Computing train train kernel matrix")
 
         self.km_train_train = self.__kernel.compute(self.train_fv)
+
+        # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
+        # but preliminary tests show them to be slower and less stable.
 
         self.L = N.linalg.cholesky(self.km_train_train +
               self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
@@ -188,8 +188,8 @@ def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,dat
     if F == 1:
         pylab.figure()
         pylab.plot(data_train, label_train, "ro", label="train")
-        pylab.plot(data_test, prediction, "b+-", label="prediction")
-        pylab.plot(data_test, label_test, "gx-", label="test (true)")
+        pylab.plot(data_test, prediction, "b-", label="prediction")
+        pylab.plot(data_test, label_test, "g+", label="test")
         if regression:
             pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
             pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
@@ -229,8 +229,8 @@ if __name__ == "__main__":
     if logml :
         print "Looking for better hyperparameters: grid search"
 
-        sigma_noise_steps = N.linspace(0.1, 0.6, num=20)
-        length_scale_steps = N.linspace(0.01, 1.0, num=20)
+        sigma_noise_steps = N.linspace(0.1, 0.5, num=20)
+        length_scale_steps = N.linspace(0.05, 0.6, num=20)
         lml = N.zeros((len(sigma_noise_steps), len(length_scale_steps)))
         lml_best = -N.inf
         length_scale_best = 0.0
