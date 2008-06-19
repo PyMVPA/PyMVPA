@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from nifti import NiftiImage
 
-from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.datasets.masked import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 from mvpa.misc import warning
 

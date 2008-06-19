@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA pattern handling"""
 
-from mvpa.datasets.maskeddataset import *
+from mvpa.datasets.masked import *
 from mvpa.misc.exceptions import DatasetError
 
 import unittest

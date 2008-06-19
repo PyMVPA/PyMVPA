@@ -39,7 +39,7 @@ from mvpa.clfs.transerror import *
 from mvpa.clfs.warehouse import *
 from mvpa.datasets.base import *
 from mvpa.datasets import *
-from mvpa.datasets.maskeddataset import *
+from mvpa.datasets.masked import *
 from mvpa.datasets.metric import *
 from mvpa.datasets.miscfx import *
 if externals.exists('nifti'):
