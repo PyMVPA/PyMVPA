@@ -14,6 +14,10 @@ import numpy as N
 
 from sets import Set
 
+from mvpa.datasets.mappeddataset import MappedDataset
+
+
+
 if __debug__:
     from mvpa.misc import debug, warning
 
@@ -162,6 +166,35 @@ class MetaDataset(object):
         for ds in self.__datasets:
             if ds.samples.dtype != dtype:
                 ds.samples = ds.samples.astype(dtype)
+
+
+    def mapReverse(self, val):
+        """
+        """
+        # assure array and transpose for easy slicing
+        # i.e. transpose of 1D does nothing, but of 2D puts features
+        # along first dimension
+        val = N.asanyarray(val).T
+
+        # do we have multiple or just one
+        mflag = len(val.shape) > 1
+
+        result = []
+        fsum = 0
+        for ds in self.__datasets:
+            # calculate upper border
+            fsum_new = fsum + ds.nfeatures
+
+            # now map back if mapper is present, otherwise just store
+            # need to pass transposed!!
+            if isinstance(ds, MappedDataset):
+                result.append(ds.mapReverse(val[fsum:fsum_new].T))
+            else:
+                result.append(val[fsum:fsum_new].T)
+
+            fsum = fsum_new
+
+        return result
 
 
     # read-only class properties
