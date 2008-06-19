@@ -142,7 +142,8 @@ if __name__ == "__main__":
     logml = True
 
     # k = kernel.KernelLinear(coefficient=N.ones(1))
-    k = kernel.KernelConstant(coefficient=1.0)
+    # k = kernel.KernelConstant(coefficient=1.0)
+    k = kernel.KernelSquaredExponential()
     g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
     # g.train_fv = dataset.samples
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     sigma_noise_initial = 1.0
     length_scale_initial = 1.0
 
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-2)
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-3)
     lml = ms.solve()
     sigma_noise_best, length_scale_best = ms.hyperparameters_best
     print
@@ -172,10 +173,10 @@ if __name__ == "__main__":
     k = kernel.KernelSquaredExponential(length_scale=N.ones(dataset.samples.shape[1]))
     g = gpr.GPR(k, regression=regression)
     ms = ModelSelector(g, dataset)
-    
+
     sigma_noise_initial = 0.01
     length_scales_initial = 0.5*N.ones(dataset.samples.shape[1])
-    
+
     problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.hstack([sigma_noise_initial,length_scales_initial]), optimization_algorithm="ralg")
     lml = ms.solve()
     sigma_noise_best = ms.hyperparameters_best[0]
