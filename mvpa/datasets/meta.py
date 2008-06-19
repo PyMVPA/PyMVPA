@@ -14,7 +14,7 @@ import numpy as N
 
 from sets import Set
 
-from mvpa.datasets.mappeddataset import MappedDataset
+from mvpa.datasets.mapped import MappedDataset
 
 
 

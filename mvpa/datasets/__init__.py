@@ -22,7 +22,7 @@ The mvpa.datasets module contains the following modules:
 .. packagetree::
    :style: UML
 
-:group Datasets: dataset, mappeddataset, maskeddataset, niftidataset
+:group Datasets: dataset, mapped, maskeddataset, niftidataset
 :group Mappers: mapper, maskmapper
 :group Metrics: metric
 :group Splitters: splitter, nfoldsplitter
