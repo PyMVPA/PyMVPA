@@ -193,6 +193,22 @@ integer which can be displayed with debug id ``RANDOM`` e.g.::
   [RANDOM] DBG: Seeding RNG with 1447286079
   ...
 
+
+Unittests at a Grasp
+--------------------
+
+.. index:: unittests
+
+If it is needed to just quickly grasp through all unittests without making
+them to test multiple classifiers (implemented with sweeparg), define
+environmental variable ``MVPA_QUICKTEST`` e.g.::
+
+  > MVPA_NO_WARNINGS=0 MVPA_QUICKTEST=1 python test_clf.py
+  ...............
+  ----------------------------------------------------------------------
+  Ran 15 tests in 0.845s
+
+
 Others
 ------
 (to be written)
@@ -232,7 +248,7 @@ can be used to perform motion-aware data detrending:
   >>> mc.plot()
   >>>
   >>> # detrend some dataset with mc params as additonal regressors
-  >>> from mvpa.misc.signal import detrend
+  >>> from mvpa.datasets.miscfx import detrend
   >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
   >>> # 'res' contains all regressors and their associated weights
 

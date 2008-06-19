@@ -38,6 +38,15 @@ I am tired of writing these endless import blocks. Any alternative?
   individual imports for production scripts.
 
 
+Is there an easy way to remove invariant features from a dataset?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  You might have to deal with invariant features in case like an fMRI dataset,
+  where the *brain mask* is slightly larger than the thresholded fMRI
+  timeseries image. Such invariant features (i.e. features with zero variance)
+  are sometime a problem, e.g. they will lead to numerical difficulties when
+  z-scoring the features of a dataset (i.e. division by zero).
+
+
 I feel like I want to contribute something, do you mind?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Not at all! If you think there is something that is not well explained in

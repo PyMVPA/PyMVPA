@@ -48,7 +48,7 @@ class MaskMapper(Mapper):
 
     def __repr__(self):
         s = super(MaskMapper, self).__repr__()
-        return s.replace("(", "mask=%s", 1)
+        return s.replace("(", "(mask=%s," % self.__mask, 1)
 
 # XXX
 # XXX HAS TO TAKE CARE OF SUBCLASSES!!!
@@ -67,8 +67,8 @@ class MaskMapper(Mapper):
 #        out.__masknonzero = deepcopy(self.__masknonzero)
 #        out.__masknonzerosize = self.__masknonzerosize
 #        out.__forwardmap = self.__forwardmap.copy()
-
-        return out
+#
+#        return out
 
 
     def _initMask(self, mask):
@@ -111,6 +111,7 @@ class MaskMapper(Mapper):
     def forward(self, data):
         """Map data from the original dataspace into featurespace.
         """
+        data = N.asanyarray(data)          # assure it is an array
         datadim = len(data.shape)
         datashape = data.shape[(-1)*self.__maskdim:]
         if not datashape == self.__mask.shape:
@@ -139,6 +140,7 @@ class MaskMapper(Mapper):
     def reverse(self, data):
         """Reverse map data from featurespace into the original dataspace.
         """
+        data = N.asanyarray(data)
         datadim = len(data.shape)
         if not datadim in [1, 2]:
             raise ValueError, \

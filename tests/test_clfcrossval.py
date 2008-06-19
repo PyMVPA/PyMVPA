@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA classifier cross-validation"""
 
 from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.meta import MetaDataset
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
@@ -77,6 +78,33 @@ class CrossValidationTests(unittest.TestCase):
         result = cv(data)
         self.failUnless(cv.harvested.has_key('transerror.clf.training_time'))
         self.failUnless(len(cv.harvested['transerror.clf.training_time'])>1)
+
+
+    def testNMinusOneCVWithMetaDataset(self):
+        # simple datasets with decreasing SNR
+        data = MetaDataset([getMVPattern(3), getMVPattern(2), getMVPattern(1)])
+
+        self.failUnless( data.nsamples == 120 )
+        self.failUnless( data.nfeatures == 6 )
+        self.failUnless(
+            (data.labels == [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0]*6 ).all() )
+        self.failUnless(
+            (data.chunks == \
+                [ k for k in range(1,7) for i in range(20) ] ).all() )
+
+        transerror = TransferError(sample_clf_nl)
+        cv = CrossValidatedTransferError(transerror,
+                                         NFoldSplitter(cvtype=1),
+                                         enable_states=['confusion',
+                                                        'training_confusion'])
+
+        results = cv(data)
+        self.failUnless(results < 0.2 and results >= 0.0,
+                        msg="We should generalize while working with "
+                        "metadataset. Got %s error" % results)
+
+        # TODO: test accessibility of {training_,}confusion{,s} of CrossValidatedTransferError
+
 
 
 def suite():

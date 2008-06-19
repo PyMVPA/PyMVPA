@@ -62,12 +62,13 @@ class _SVM(Classifier):
         'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
         'degree': Parameter(3, descr='Degree of polynomial kernel'),
             # init the parameter interface
-        'tube_epsilon': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression (SVR)'),
+        'tube_epsilon': Parameter(0.01, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression (SVR)'),
         'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
         'tau': Parameter(1e-6, descr='TAU parameter of KRR regression in shogun'),
-        'max_shift': Parameter(10.0, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
-        'shift_step': Parameter(1.0, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
+        'max_shift': Parameter(10, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
+        'shift_step': Parameter(1, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
         'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),
+        'scale': Parameter(1.0, descr='Scale factor for linear kernel. (0 triggers automagic rescaling by SG'),
         'shrinking': Parameter(1, descr='Either shrinking is to be conducted'),
         'weight_label': Parameter([], descr='???'),
         'weight': Parameter([], descr='???'),
@@ -188,7 +189,7 @@ class _SVM(Classifier):
         self._kernel_type = self._KERNELS[kernel_type][0]
         if __debug__:
             debug("SVM", "Initialized %s with kernel %s:%s" % 
-                  (id(self), kernel_type, self._kernel_type))
+                  (self, kernel_type, self._kernel_type))
 
 
     def __repr__(self):

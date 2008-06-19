@@ -98,13 +98,13 @@ class SVM(_SVM):
                             descr='Number of threads to utilize')
 
     # NOTE: gamma is width in SG notation for RBF(Gaussian)
-    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   (), LinearSVMWeights),
+    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ('scale',), LinearSVMWeights),
                  "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
                  "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step'), None),
                  "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0'), None),
                 }
 
-    _KNOWN_PARAMS = [ 'C', 'epsilon' ]
+    _KNOWN_PARAMS = [ 'epsilon' ]
     _KNOWN_KERNEL_PARAMS = [ ]
 
     _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
@@ -137,11 +137,11 @@ class SVM(_SVM):
     however all SVMs can be evaluated in parallel.
     """
     _KNOWN_IMPLEMENTATIONS = {
-        "libsvm" : (shogun.Classifier.LibSVM, (), ('multiclass', 'binary'), ''),
-        "gmnp" : (shogun.Classifier.GMNPSVM, (), ('multiclass', 'binary'), ''),
-        "mpd"  : (shogun.Classifier.MPDSVM, (), ('binary',), ''),
-        "gpbt" : (shogun.Classifier.GPBTSVM, (), ('binary',), ''),
-        "gnpp" : (shogun.Classifier.GNPPSVM, (), ('binary',), ''),
+        "libsvm" : (shogun.Classifier.LibSVM, ('C',), ('multiclass', 'binary'), ''),
+        "gmnp" : (shogun.Classifier.GMNPSVM, ('C',), ('multiclass', 'binary'), ''),
+        "mpd"  : (shogun.Classifier.MPDSVM, ('C',), ('binary',), ''),
+        "gpbt" : (shogun.Classifier.GPBTSVM, ('C',), ('binary',), ''),
+        "gnpp" : (shogun.Classifier.GNPPSVM, ('C',), ('binary',), ''),
 
         ## TODO: Needs sparse features...
         # "svmlin" : (shogun.Classifier.SVMLin, ''),
@@ -152,7 +152,7 @@ class SVM(_SVM):
         # "sgd" : ( shogun.Classifier.SVMSGD, ''),
 
         # regressions
-        "libsvr": (shogun.Regression.LibSVR, ('tube_epsilon',), ('regression',), ''),
+        "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',), ('regression',), ''),
         "krr": (shogun.Regression.KRR, ('tau',), ('regression',), ''),
         }
 
@@ -169,11 +169,6 @@ class SVM(_SVM):
         svm_impl = kwargs.get('svm_impl', 'libsvm').lower()
         kwargs['svm_impl'] = svm_impl
 
-        #if svm_impl == 'krr':
-        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tau']
-        #if svm_impl in ['svrlight', 'libsvr']:
-        #    self._KNOWN_PARAMS = self._KNOWN_PARAMS[:] + ['tube_epsilon']
-
         # init base class
         _SVM.__init__(self, kernel_type=kernel_type, **kwargs)
 
@@ -188,6 +183,7 @@ class SVM(_SVM):
         # internal SG swig proxies
         self.__traindata = None
         self.__kernel = None
+        self.__kernel_test = None
         self.__testdata = None
 
         # if we do retraining -- store hashes
@@ -229,10 +225,18 @@ class SVM(_SVM):
         self.__idhash[i] = idhash_
         return changed
 
+    def __condition_kernel(self, kernel):
+        # XXX I thought that it is needed only for retrainable classifier,
+        #     but then krr gets confused, and svrlight needs it to provide
+        #     meaningful results even without 'retraining'
+        if self._svm_impl in ['svrlight', 'lightsvm']:
+            kernel.set_precompute_matrix(True, True)
+
 
     def _train(self, dataset):
         """Train SVM
         """
+
         # XXX might get up in hierarchy
         if self.params.retrainable:
             changed_params = self.params.whichSet()
@@ -247,12 +251,11 @@ class SVM(_SVM):
             changed_samples = self.__wasChanged('samples', 0, dataset.samples)
             changed_labels = self.__wasChanged('labels', 1, dataset.labels)
 
-        ul = dataset.uniquelabels
-        ul.sort()
+        # LABELS
 
+        ul = None
         self.__traindataset = dataset
 
-        # LABELS
 
         # OK -- we have to map labels since
         #  binary ones expect -1/+1
@@ -264,6 +267,9 @@ class SVM(_SVM):
         if 'regression' in self._clf_internals:
             labels_ = N.asarray(dataset.labels, dtype='double')
         else:
+            ul = dataset.uniquelabels
+            ul.sort()
+
             if len(ul) == 2:
                 # assure that we have -1/+1
                 self._labels_dict = {ul[0]:-1.0,
@@ -324,25 +330,29 @@ class SVM(_SVM):
                                               *kargs)
             newkernel = True
             self.kernel_params.reset()  # mark them as not-changed
+            _setdebug(self.__kernel, 'Kernels')
+
+            self.__condition_kernel(self.__kernel)
             if self.params.retrainable:
-                self.__kernel.set_precompute_matrix(True, True)
+                if __debug__:
+                    debug("SG_", "Resetting test kernel for retrainable SVM")
                 self.__kernel_test = None
                 self.__kernel_args = kargs
-            _setdebug(self.__kernel, 'Kernels')
 
         # TODO -- handle changed_params correctly, ie without recreating
         # whole SVM
         if not self.params.retrainable or self.__svm is None or changed_params:
             # SVM
-            C = self.params.C
-            if C<0:
-                C = self._getDefaultC(dataset.samples)*abs(C)
-                if __debug__:
-                    debug("SG_", "Default C for %s was computed to be %s" %
-                          (self.params.C, C))
+            if self.params.isKnown('C'):
+                C = self.params.C
+                if C<0:
+                    C = self._getDefaultC(dataset.samples)*abs(C)
+                    if __debug__:
+                        debug("SG_", "Default C for %s was computed to be %s" %
+                              (self.params.C, C))
 
             # Choose appropriate implementation
-            svm_impl_class = self.__get_implementation(len(ul))
+            svm_impl_class = self.__get_implementation(ul)
 
             if __debug__:
                 debug("SG", "Creating SVM instance of %s" % `svm_impl_class`)
@@ -367,12 +377,12 @@ class SVM(_SVM):
             if __debug__:
                 debug("SG_", "SVM instance is not re-created")
             if changed_labels:          # labels were changed
+                if __debug__: debug("SG__", "Assigning new labels")
                 self.__svm.set_labels(labels)
             if newkernel:               # kernel was replaced
+                if __debug__: debug("SG__", "Assigning new kernel")
                 self.__svm.set_kernel(self.__kernel)
-            if changed_params:
-                raise NotImplementedError, \
-                      "Implement handling of changing params of SVM"
+            assert(not changed_params)  # we should never get here
 
         if self.params.retrainable:
             # we must assign it only if it is retrainable
@@ -386,22 +396,36 @@ class SVM(_SVM):
 
         self.__svm.train()
 
-        # Report on training
         if __debug__:
-            debug("SG_", "Done training SG_SVM %s on data with labels %s" %
-                  (self._kernel_type, dataset.uniquelabels))
-            if "SG__" in debug.active:
-                trained_labels = self.__svm.classify().get_labels()
+            debug("SG_", "Done training SG_SVM %s" % self._kernel_type)
+
+        # Report on training
+        if (__debug__ and 'SG__' in debug.active) or \
+           self.states.isEnabled('training_confusion'):
+            trained_labels = self.__svm.classify().get_labels()
+        else:
+            trained_labels = None
+
+        if __debug__ and "SG__" in debug.active:
                 debug("SG__", "Original labels: %s, Trained labels: %s" %
                               (dataset.labels, trained_labels))
 
+        # Assign training confusion right away here since we are ready
+        # to do so.
+        # XXX TODO use some other state variable like 'trained_labels' and
+        #     use it within base Classifier._posttrain to assign predictions
+        #     instead of duplicating code here
+        # XXX For now it can be done only for regressions since labels need to
+        #     be remapped and that becomes even worse if we use regression
+        #     as a classifier so mapping happens upstairs
+        if self.regression and self.states.isEnabled('training_confusion'):
+            self.states.training_confusion = self._summaryClass(
+                targets=dataset.labels,
+                predictions=trained_labels)
 
     def _predict(self, data):
         """Predict values for the data
         """
-
-        if __debug__:
-            debug("SG_", "Initializing kernel with training/testing data")
 
         if self.params.retrainable:
             changed_testdata = self.__wasChanged('test_samples', 2, data) or \
@@ -411,8 +435,14 @@ class SVM(_SVM):
             testdata = _tosg(data)
 
         if not self.params.retrainable:
+            if __debug__:
+                debug("SG__",
+                      "Initializing SVMs kernel of %s with training/testing samples"
+                      % self)
             # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
+            self.__condition_kernel(self.__kernel)
+
         else:
             if changed_testdata:
                 if __debug__:
@@ -424,7 +454,7 @@ class SVM(_SVM):
                                                 *self.__kernel_args)
                 _setdebug(kernel_test, 'Kernels')
                 kernel_test_custom = shogun.Kernel.CustomKernel(self.__traindata, testdata)
-                _setdebug(kernel_test, 'Kernels')
+                _setdebug(kernel_test_custom, 'Kernels')
                 self.__kernel_test = kernel_test_custom
                 self.__kernel_test.set_full_kernel_matrix_from_full(
                     kernel_test.get_kernel_matrix())
@@ -440,9 +470,9 @@ class SVM(_SVM):
         # doesn't do any good imho although on unittests helps tiny bit... hm
         #self.__svm.init_kernel_optimization()
         values_ = self.__svm.classify()
-        #if self.params.retrainable and not changed_testdata:
-        #    import pydb
-        #    pydb.debugger()
+        if values_ is None:
+            raise RuntimeError, "We got empty list of values from %s" % self
+
         values = values_.get_labels()
 
         if self.params.retrainable:
@@ -490,34 +520,48 @@ class SVM(_SVM):
 
     def untrain(self):
         super(SVM, self).untrain()
-
         if not self.params.retrainable:
             if __debug__:
-                debug("SG__", "Untraining %s and destroying sg's SVM" % self)
+                debug("SG__", "Untraining %(clf)s and destroying sg's SVM",
+                      msgargs={'clf':self})
 
             self.__idhash = [None, None, None]  # samples, labels
 
             # to avoid leaks with not yet properly fixed shogun
             # XXX make it nice... now it is just stable ;-)
             if not self.__traindata is None:
-                try:
-                    try:
+                if True:
+                # try:
+                    if self.__kernel is not None:
+                        del self.__kernel
+                        self.__kernel = None
+
+                    if self.__kernel_test is not None:
+                        del self.__kernel_test
+                        self.__kernel_test = None
+
+                    if self.__svm is not None:
+                        del self.__svm
+                        self.__svm = None
+
+                    if self.__traindata is not None:
+                        # Let in for easy demonstration of the memory leak in shogun
+                        #for i in xrange(10):
+                        #    debug("SG__", "cachesize pre free features %s" %
+                        #          (self.__svm.get_kernel().get_cache_size()))
                         self.__traindata.free_features()
-                    except:
-                        pass
+                        del self.__traindata
+                        self.__traindata = None
+
                     if __debug__:
                         if 'CHECK_RETRAIN' in debug.active:
                             self.__trained = [None, None, None]
+
                     self.__traindataset = None
-                    del self.__kernel
-                    self.__kernel = None
-                    self.__kernel_test = None
-                    del self.__traindata
-                    self.__traindata = None
-                    del self.__svm
-                    self.__svm = None
-                except:
-                    pass
+
+
+                #except:
+                #    pass
 
             if __debug__:
                 debug("SG__",
@@ -528,8 +572,10 @@ class SVM(_SVM):
                   msgargs=locals())
 
 
-    def __get_implementation(self, nl):
-        if nl > 2:
+    def __get_implementation(self, ul):
+        if 'regression' in self._clf_internals or len(ul) == 2:
+            svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
+        else:
             if self._svm_impl == 'libsvm':
                 svm_impl_class = shogun.Classifier.LibSVMMultiClass
             elif self._svm_impl == 'gmnp':
@@ -542,8 +588,7 @@ class SVM(_SVM):
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))
-        else:
-                svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
+
         return svm_impl_class
 
 
@@ -560,9 +605,9 @@ class SVM(_SVM):
 # Conditionally make some of the implementations available if they are
 # present in the present shogun
 for name, item, params, descr in \
-        [('lightsvm', "shogun.Classifier.SVMLight", "(), ('binary',)",
+        [('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
           "SVMLight classification http://svmlight.joachims.org/"),
-         ('svrlight', "shogun.Regression.SVRLight", "('tube_epsilon',), ('regression',)",
+         ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
           "SVMLight regression http://svmlight.joachims.org/")]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)

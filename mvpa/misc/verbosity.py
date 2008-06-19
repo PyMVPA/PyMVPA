@@ -40,6 +40,7 @@ class Logger(object):
         if handlers == None:
             handlers = [stdout]
         self.__close_handlers = []
+        self.__handlers = []            # pylint friendliness
         self._setHandlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
@@ -116,7 +117,11 @@ class Logger(object):
             self.__crprev = 0           # nothing to clear
 
         for handler in self.__handlers:
-            handler.write(msg)
+            try:
+                handler.write(msg)
+            except:
+                print "Failed writing on handler %s" % handler
+                raise
             try:
                 handler.flush()
             except:
@@ -245,7 +250,11 @@ class SetLogger(Logger):
                     self.__active = registered_keys
                     break
                 # try to match item as it is regexp
-                regexp = re.compile("^%s$" % item)
+                try:
+                    regexp = re.compile("^%s$" % item)
+                except:
+                    raise ValueError, \
+                          "Unable to create regular expression out of  %s" % item
                 matching_keys = filter(regexp.match, registered_keys)
                 toactivate = matching_keys
             else:
@@ -430,6 +439,9 @@ if __debug__:
             else:
                 level = 1
 
+            if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
+                tb = traceback.extract_stack(limit=2)
+                msg += "  !!!2LONG!!!. From %s" % str(tb[0])
             SetLogger.__call__(self, setid, "DBG%s:%s%s" %
                                (msg_, " "*level, msg),
                                *args, **kwargs)

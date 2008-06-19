@@ -6,7 +6,7 @@ PDF_DIR=build/pdf
 LATEX_DIR=build/latex
 WWW_DIR=build/website
 
-
+# should be made conditional, as pyversions id Debian specific
 PYVER := $(shell pyversions -vd)
 ARCH := $(shell uname -m)
 
@@ -21,15 +21,25 @@ mkdir-%:
 
 all: build
 
+# build included 3rd party pieces (if present)
+3rd: 3rd-stamp
+3rd-stamp:
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d"; \
+     done
+	touch $@
+
+
 debian-build:
 # reuse is better than duplication (yoh)
 	debian/rules build
 
 
 build: build-stamp
-build-stamp:
+build-stamp: 3rd
 	python setup.py config --noisy
-	PYMVPA_LIBSVM=1 python setup.py build_ext --swig-opts="-c++ -noproxy"
+	python setup.py build_ext
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
@@ -37,12 +47,19 @@ build-stamp:
 		mvpa/clfs/lib$$ext/; done
 	touch $@
 
+
 #
 # Cleaning
 #
 
 # Full clean
 clean:
+# clean 3rd party pieces
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean; \
+     done
+
 # if we are on debian system - we might have left-overs from build
 	-@$(MAKE) debian-clean
 # if not on debian -- just distclean
@@ -59,10 +76,11 @@ distclean:
 		 -o -name '.coverage' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
+		 -o -iname '*.[ao]' -o -iname '*.gch' \
 		 -o -iname '#*#' | xargs -l10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
 
 
 debian-clean:
@@ -183,7 +201,7 @@ orig-src: distclean debian-clean
 	fi
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	PYMVPA_LIBSVM=1 python setup.py sdist --formats=gztar
+	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
@@ -195,6 +213,14 @@ orig-src: distclean debian-clean
 # Debian branch and might miss patches!
 debsrc:
 	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
+
+
+bdist_rpm: 3rd
+	python setup.py bdist_rpm --with-libsvm \
+	  --doc-files "doc data" \
+	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
+	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
+
 
 #
 # Data
