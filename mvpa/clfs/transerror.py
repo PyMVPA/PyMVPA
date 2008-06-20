@@ -18,6 +18,8 @@ from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
 
+from mvpa.base import externals
+
 from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
 from mvpa.misc import warning

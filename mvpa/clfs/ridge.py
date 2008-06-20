@@ -24,6 +24,8 @@ class RidgeReg(Classifier):
     have to be zero-centered.
     """
 
+    _clf_internals = ['ridge']
+
     def __init__(self, lm=None, **kwargs):
         """
         Initialize a ridge regression analysis.

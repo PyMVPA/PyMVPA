@@ -28,8 +28,6 @@ from mvpa.clfs.base import *
 from mvpa.clfs.knn import *
 if externals.exists('lars'):
     from mvpa.clfs.lars import *
-from mvpa.clfs.plr import *
-from mvpa.clfs.ridge import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.gpr import *
 from mvpa.clfs.stats import *
@@ -51,7 +49,6 @@ from mvpa.featsel.ifs import *
 from mvpa.featsel.rfe import *
 from mvpa.mappers import *
 from mvpa.measures.anova import *
-from mvpa.measures.corrcoef import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *
@@ -67,10 +64,15 @@ from mvpa.misc.fsl import *
 from mvpa.misc.bv import *
 from mvpa.misc.param import *
 from mvpa.misc.state import *
-from mvpa.misc.stats import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
 from mvpa.misc.verbosity import *
+
+if externals.exists("scipy"):
+    from mvpa.measures.corrcoef import *
+    from mvpa.clfs.ridge import *
+    from mvpa.clfs.plr import *
+    from mvpa.misc.stats import *
 
 if externals.exists("pylab"):
 	import pylab as P
