@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA verbose and debug output"""
 
-import unittest
+import unittest, re
 from StringIO import StringIO
 
 from mvpa.misc.verbosity import OnceLogger
@@ -136,8 +136,12 @@ class VerboseOutputTest(unittest.TestCase):
             debug('SLC', self.msg, lf=False)
             self.failUnlessRaises(ValueError, debug, 3, 'bugga')
             #Should complain about unknown debug id
-            self.failUnlessEqual(self.sout.getvalue(),
-                                 "[SLC] DBG: %s" % self.msg)
+            svalue = self.sout.getvalue()
+            regexp = "\[SLC\] DBG(?:{.*})?: %s" % self.msg
+            rematch = re.match(regexp, svalue)
+            self.failUnless(rematch, msg="Cannot match %s with regexp %s" %
+                            (svalue, regexp))
+
 
         def testDebugRgexp(self):
             verbose.handlers = []           # so debug doesn't spoil it
