@@ -9,6 +9,8 @@
 """Main unit test interface for PyMVPA"""
 
 import unittest
+
+from mvpa import _random_seed
 from mvpa.base import externals
 
 if __debug__:
@@ -96,10 +98,20 @@ def main():
     suites = [ eval(t + '.suite()') for t in tests ]
 
     # and make global test suite
-    ts = unittest.TestSuite( suites )
+    ts = unittest.TestSuite(suites)
+
+
+    class TextTestRunnerPyMVPA(unittest.TextTestRunner):
+        """Extend TextTestRunner to print out random seed which was
+        used in the case of failure"""
+        def run(self, test):
+            result = super(TextTestRunnerPyMVPA, self).run(test)
+            if not result.wasSuccessful():
+                print "MVPA_SEED=%s" % _random_seed
+            return result
 
     # finally run it
-    unittest.TextTestRunner().run( ts )
+    TextTestRunnerPyMVPA().run(ts)
 
 if __name__ == '__main__':
     main()
