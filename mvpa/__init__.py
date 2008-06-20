@@ -58,13 +58,13 @@ else:
     debug('INIT', 'mvpa')
 
 if os.environ.has_key('MVPA_SEED'):
-    __random_seed = int(os.environ['MVPA_SEED'])
+    _random_seed = int(os.environ['MVPA_SEED'])
 else:
-    __random_seed = int(N.random.uniform()*(2**31-1))
+    _random_seed = int(N.random.uniform()*(2**31-1))
 
-N.random.seed(__random_seed)
-random.seed(__random_seed)
+N.random.seed(_random_seed)
+random.seed(_random_seed)
 
 if __debug__:
-    debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
+    debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
     debug('INIT', 'mvpa end')
