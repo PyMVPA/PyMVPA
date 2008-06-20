@@ -22,11 +22,12 @@ The mvpa.datasets module contains the following modules:
 .. packagetree::
    :style: UML
 
-:group Datasets: dataset, mapped, masked, nifti
+:group Generic Datasets: base, mapped, masked, meta
+:group Specialized Datasets: nifti, eep
 :group Mappers: mapper, maskmapper
 :group Metrics: metric
 :group Splitters: splitter, nfoldsplitter
-:group Miscellaneous TODO: should be gone somewhere else: misc
+:group Miscellaneous: miscfx
 
 
 """
