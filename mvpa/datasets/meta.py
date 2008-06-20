@@ -25,21 +25,20 @@ if __debug__:
 class MetaDataset(object):
     """Dataset container
 
-    The class is useful to combine several Datasets with different origin
-    and type and bind them together. Such a combined dataset can then by used
-    to e.g. pass it to a classifier.
+    The class is useful to combine several Datasets with different origin and
+    type and bind them together. Such a combined dataset can then by used to
+    e.g. pass it to a classifier.
 
-    MetaDataset does not duplicate data stored in the dataset it contains. The
-    combined samples matrix is build on demand and samples attribute access is
-    redirected to the first dataset in the container..
+    MetaDataset does not permanently duplicate data stored in the dataset it
+    contains. The combined samples matrix is build on demand and samples
+    attribute access is redirected to the first dataset in the container.
 
-    Currently operations other than samples or feature selection are not
-    fully supported, e.g. passing a MetaDataset to detrend() will initially
-    result in a detrended MetaDataset, but the combined and detrended samples
-    matrix will be lost after the next call to selectSamples() or
-    selectFeatures(), which freshly pulls samples from all datasets in the
-    container.
-    """
+    Currently operations other than samples or feature selection are not fully
+    supported, e.g. passing a MetaDataset to detrend() will initially result in
+    a detrended MetaDataset, but the combined and detrended samples matrix will
+    be lost after the next call to selectSamples() or selectFeatures(), which
+    freshly pulls samples from all datasets in the container.  """
+
     # This class is intentionally _not_ implemented as a subclass of Dataset.
     # IMHO Dataset contains to much logic unecessary logic.
     # XXX implement MappedMetaDataset along with a MetaMapper that simply calls
@@ -62,6 +61,7 @@ class MetaDataset(object):
     def rebuildSamples(self):
         """Update the combined samples matrix from all underlying datasets.
         """
+        # note, that hstack will do a copy of _all_ data
         self.__samples = N.hstack([ds.samples for ds in self.__datasets])
 
 
