@@ -148,3 +148,44 @@ class Config(SafeConfigParser):
         f = open(filename, 'w')
         self.write(f)
         f.close()
+
+
+    def get(self, section, option, default=None, **kwargs):
+        """Wrapper around SafeConfigParser.get() with a custom default value.
+
+        This method simply wraps the base class method, but adds a `default`
+        keyword argument. The value of `default` is returned whenever the
+        config parser does not have the requested option and/or section.
+        """
+        if not self.has_option(section, option):
+            return default
+
+        return SafeConfigParser.get(self, section, option, **kwargs)
+
+
+    def getboolean(self, section, option, default=None):
+        """Wrapper around SafeConfigParser.getboolean() with a custom default.
+
+        This method simply wraps the base class method, but adds a `default`
+        keyword argument. The value of `default` is returned whenever the
+        config parser does not have the requested option and/or section.
+        """
+        if not self.has_option(section, option):
+            return default
+
+        return SafeConfigParser.getboolean(self, section, option)
+
+
+    def getAsDType(self, section, option, dtype, default=None):
+        """Convenience method to query options with a custom default and type
+
+        This method simply wraps the base class method, but adds a `default`
+        keyword argument. The value of `default` is returned whenever the
+        config parser does not have the requested option and/or section.
+
+        In addition, the returned value is converted into the specified `dtype`.
+        """
+        if not self.has_option(section, option):
+            return default
+
+        return SafeConfigParser._get(self, section, dtype, option)

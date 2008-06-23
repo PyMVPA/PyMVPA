@@ -20,6 +20,11 @@ class ConfigTests(unittest.TestCase):
         # does nothing so far, but will be used to test the default
         # configuration from doc/examples/pymvpa.cfg
 
+        # query for some non-existing option and check if default is returned
+        query = cfg.get('dasgibtsdochnicht', 'neegarnicht', default='required')
+        self.failUnless(query == 'required')
+
+
 
 def suite():
     return unittest.makeSuite(ConfigTests)
