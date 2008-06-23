@@ -1207,6 +1207,9 @@ class SplitClassifier(CombinedClassifier):
         doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
 
+    splits = StateVariable(enabled=False, doc=
+       """Store the actual splits of the data. Can be memory expensive""")
+
     # XXX couldn't be training_confusion since it has other meaning
     #     here, BUT it is named so within CrossValidatedTransferError
     #     -- unify
@@ -1267,9 +1270,14 @@ class SplitClassifier(CombinedClassifier):
             bclfs.append(clf)
         self.clfs = bclfs
 
+        self.splits = []
+
         for i,split in enumerate(self.__splitter(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
+
+            if self.states.isEnabled("splits"):
+                self.splits.append(split)
 
             clf = self.clfs[i]
 
