@@ -17,7 +17,7 @@ from mvpa.mappers.base import Mapper
 from mvpa.featsel.helpers import ElementSelector
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class SVDMapper(Mapper):
     """Mapper to project data onto SVD components estimated from some dataset.

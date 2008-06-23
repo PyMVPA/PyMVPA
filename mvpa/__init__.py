@@ -34,6 +34,7 @@ The mvpa package contains the following subpackages and modules:
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Per B. Sederberg <persed@princeton.edu>`__
+:contributor: `Yaroslav O. Halchenko <debian@onerussian.com>`__
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
@@ -43,28 +44,29 @@ __docformat__ = 'restructuredtext'
 import os
 import random
 import numpy as N
+from mvpa.base import cfg
 
 if not __debug__:
     try:
         import psyco
         psyco.profile()
     except:
-        from mvpa.misc import verbose
+        from mvpa.base import verbose
         verbose(2, "Psyco online compilation is not enabled")
 else:
     # Controllable seeding of random number generator
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
     debug('INIT', 'mvpa')
 
-if os.environ.has_key('MVPA_SEED'):
-    __random_seed = int(os.environ['MVPA_SEED'])
+if cfg.has_option('general', 'seed'):
+    _random_seed = cfg.getint('general', 'seed')
 else:
-    __random_seed = int(N.random.uniform()*(2**31-1))
+    _random_seed = int(N.random.uniform()*(2**31-1))
 
-N.random.seed(__random_seed)
-random.seed(__random_seed)
+N.random.seed(_random_seed)
+random.seed(_random_seed)
 
 if __debug__:
-    debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
+    debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
     debug('INIT', 'mvpa end')

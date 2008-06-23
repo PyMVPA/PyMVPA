@@ -19,7 +19,7 @@ from mvpa.clfs.base import Classifier
 from mvpa.clfs.kernel import KernelSquaredExponential
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class GPR(Classifier):

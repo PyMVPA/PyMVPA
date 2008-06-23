@@ -18,7 +18,7 @@ from mvpa.misc.state import StateVariable
 from mvpa.measures.base import Sensitivity
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class LinearSVMWeights(Sensitivity):

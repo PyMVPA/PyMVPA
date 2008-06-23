@@ -19,11 +19,11 @@ from textwrap import TextWrapper
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.base.dochelpers import enhancedClassDocString, enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class CollectableAttribute(object):
     """Base class for any custom behaving attribute intended to become part of a collection

@@ -21,7 +21,7 @@ from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
 
 if __debug__:
-    from mvpa.misc import debug, warning
+    from mvpa.base import debug, warning
 
 class Dataset(object):
     """This class provides a container to store all necessary data to perform

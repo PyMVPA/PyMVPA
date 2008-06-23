@@ -23,7 +23,7 @@ import shogun.Library
 
 
 from mvpa.misc.param import Parameter
-from mvpa.misc import warning
+from mvpa.base import warning
 
 from mvpa.clfs.base import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
@@ -36,7 +36,7 @@ from mvpa.base import externals
 from sens import *
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 

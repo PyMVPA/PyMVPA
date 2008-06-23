@@ -14,28 +14,31 @@ import numpy as N
 
 from sets import Set
 
+from mvpa.datasets.mapped import MappedDataset
+
+
+
 if __debug__:
-    from mvpa.misc import debug, warning
+    from mvpa.base import debug, warning
 
 
 class MetaDataset(object):
     """Dataset container
 
-    The class is useful to combine several Datasets with different origin
-    and type and bind them together. Such a combined dataset can then by used
-    to e.g. pass it to a classifier.
+    The class is useful to combine several Datasets with different origin and
+    type and bind them together. Such a combined dataset can then by used to
+    e.g. pass it to a classifier.
 
-    MetaDataset does not duplicate data stored in the dataset it contains. The
-    combined samples matrix is build on demand and samples attribute access is
-    redirected to the first dataset in the container..
+    MetaDataset does not permanently duplicate data stored in the dataset it
+    contains. The combined samples matrix is build on demand and samples
+    attribute access is redirected to the first dataset in the container.
 
-    Currently operations other than samples or feature selection are not
-    fully supported, e.g. passing a MetaDataset to detrend() will initially
-    result in a detrended MetaDataset, but the combined and detrended samples
-    matrix will be lost after the next call to selectSamples() or
-    selectFeatures(), which freshly pulls samples from all datasets in the
-    container.
-    """
+    Currently operations other than samples or feature selection are not fully
+    supported, e.g. passing a MetaDataset to detrend() will initially result in
+    a detrended MetaDataset, but the combined and detrended samples matrix will
+    be lost after the next call to selectSamples() or selectFeatures(), which
+    freshly pulls samples from all datasets in the container.  """
+
     # This class is intentionally _not_ implemented as a subclass of Dataset.
     # IMHO Dataset contains to much logic unecessary logic.
     # XXX implement MappedMetaDataset along with a MetaMapper that simply calls
@@ -58,6 +61,7 @@ class MetaDataset(object):
     def rebuildSamples(self):
         """Update the combined samples matrix from all underlying datasets.
         """
+        # note, that hstack will do a copy of _all_ data
         self.__samples = N.hstack([ds.samples for ds in self.__datasets])
 
 
@@ -162,6 +166,35 @@ class MetaDataset(object):
         for ds in self.__datasets:
             if ds.samples.dtype != dtype:
                 ds.samples = ds.samples.astype(dtype)
+
+
+    def mapReverse(self, val):
+        """
+        """
+        # assure array and transpose for easy slicing
+        # i.e. transpose of 1D does nothing, but of 2D puts features
+        # along first dimension
+        val = N.asanyarray(val).T
+
+        # do we have multiple or just one
+        mflag = len(val.shape) > 1
+
+        result = []
+        fsum = 0
+        for ds in self.__datasets:
+            # calculate upper border
+            fsum_new = fsum + ds.nfeatures
+
+            # now map back if mapper is present, otherwise just store
+            # need to pass transposed!!
+            if isinstance(ds, MappedDataset):
+                result.append(ds.mapReverse(val[fsum:fsum_new].T))
+            else:
+                result.append(val[fsum:fsum_new].T)
+
+            fsum = fsum_new
+
+        return result
 
 
     # read-only class properties

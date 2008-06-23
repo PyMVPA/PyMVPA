@@ -18,7 +18,7 @@ import numpy as N
 import time
 
 from mvpa.datasets import Dataset
-from mvpa.datasets.niftidataset import NiftiDataset
+from mvpa.datasets.nifti import NiftiDataset
 from mvpa.datasets.splitter import *
 from mvpa.datasets.miscfx import zscore, detrend
 
@@ -30,7 +30,7 @@ from mvpa.clfs.warehouse import clfs
 
 # Misc tools
 #
-from mvpa.misc import warning
+from mvpa.base import warning
 """
 
 # no MVPA warnings during whole testsuite
