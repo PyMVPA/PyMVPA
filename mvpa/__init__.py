@@ -43,7 +43,7 @@ __docformat__ = 'restructuredtext'
 import os
 import random
 import numpy as N
-from mvpa.base.config import Config
+from mvpa.base import cfg
 
 if not __debug__:
     try:
@@ -57,9 +57,6 @@ else:
     from mvpa.base import debug
 
     debug('INIT', 'mvpa')
-
-# read all configuration settings
-cfg = Config()
 
 if cfg.has_option('general', 'seed'):
     __random_seed = cfg.getint('general', 'seed')

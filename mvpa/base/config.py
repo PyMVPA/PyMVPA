@@ -13,9 +13,6 @@ __docformat__ = 'restructuredtext'
 from ConfigParser import SafeConfigParser
 import os.path
 
-if __debug__:
-    from mvpa.base import debug
-
 
 class Config(SafeConfigParser):
     """Central configuration registry for PyMVPA.
@@ -108,9 +105,6 @@ class Config(SafeConfigParser):
 
         # no look for variables in the environment 
         for var in [v for v in os.environ.keys() if v.startswith('MVPA_')]:
-            if __debug__:
-                debug('INIT', "Found env. variable '%s'" % var)
-
             # strip leading 'MVPA_'
             svar = var[5:]
 
@@ -128,10 +122,6 @@ class Config(SafeConfigParser):
 
             # set value
             self.set(sec, svar, os.environ[var])
-
-
-        if __debug__:
-            debug('INIT', "Read config files '%s'" % str(files))
 
 
     def __repr__(self):
