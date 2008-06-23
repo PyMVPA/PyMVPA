@@ -25,8 +25,6 @@ __docformat__ = 'restructuredtext'
 
 from sys import stdout, stderr
 
-from os import environ
-
 from mvpa.base.config import Config
 from mvpa.base.verbosity import LevelLogger, OnceLogger, Logger
 
@@ -65,7 +63,7 @@ class __Singleton:
 cfg = __Singleton('cfg', Config())
 
 verbose = __Singleton("verbose", LevelLogger(
-    handlers = environ.get('MVPA_VERBOSE_OUTPUT', 'stdout').split(',')))
+    handlers = cfg.get('verbose', 'output', default='stdout').split(',')))
 
 # Not supported/explained/used by now since verbose(0, is to print errors
 #error = __Singleton("error", LevelLogger(
@@ -79,8 +77,8 @@ verbose = __Singleton("verbose", LevelLogger(
 # 4 -- computation/algorithm relevant thingies
 
 # Lets check if environment can tell us smth
-if environ.has_key('MVPA_VERBOSE'):
-    verbose.level = int(environ['MVPA_VERBOSE'])
+if cfg.has_option('general', 'verbose'):
+    verbose.level = cfg.getint('general', 'verbose')
 
 
 class WarningLog(OnceLogger):
@@ -125,22 +123,23 @@ class WarningLog(OnceLogger):
         OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
 
-if environ.has_key('MVPA_WARNINGS_BT'):
-    warnings_btlevels = int(environ['MVPA_WARNINGS_BT'])
+# XXX what is 'bt'? Maybe more verbose name?
+if cfg.has_option('warnings', 'bt'):
+    warnings_btlevels = cfg.getint('warnings', 'bt')
     warnings_bt = True
 else:
     warnings_btlevels = 10
     warnings_bt = False
 
-if environ.has_key('MVPA_WARNINGS_COUNT'):
-    warnings_maxcount = int(environ['MVPA_WARNINGS_COUNT'])
+if cfg.has_option('warnings', 'count'):
+    warnings_maxcount = cfg.getint('warnings', 'count')
 else:
     warnings_maxcount = 1
 
 warning = WarningLog(
     handlers={
-        False: environ.get('MVPA_WARNING_OUTPUT', 'stdout').split(','),
-        True: []}[environ.has_key('MVPA_NO_WARNINGS')],
+        False: cfg.get('warnings', 'output', default='stdout').split(','),
+        True: []}[cfg.getboolean('warnings', 'suppress', default='no')],
     btlevels=warnings_btlevels,
     btdefault=warnings_bt,
     maxcount=warnings_maxcount
@@ -153,7 +152,7 @@ if __debug__:
     # if __debug__:
 
     debug = __Singleton("debug", DebugLogger(
-        handlers=environ.get('MVPA_DEBUG_OUTPUT', 'stdout').split(',')))
+        handlers=cfg.get('debug', 'output', default='stdout').split(',')))
 
     # set some debugging matricses to report
     # debug.registerMetric('vmem')
@@ -238,12 +237,12 @@ if __debug__:
     debug.register('CERR', "Various ClassifierErrors")
 
     # Lets check if environment can tell us smth
-    if environ.has_key('MVPA_DEBUG'):
-        debug.setActiveFromString(environ['MVPA_DEBUG'])
+    if cfg.has_option('general', 'debug'):
+        debug.setActiveFromString(cfg.get('general', 'debug'))
 
     # Lets check if environment can tell us smth
-    if environ.has_key('MVPA_DEBUG_METRICS'):
-        debug.registerMetric(environ['MVPA_DEBUG_METRICS'].split(","))
+    if cfg.has_option('debug', 'metrics'):
+        debug.registerMetric(cfg.get('debug', 'metric').split(","))
 
 
 import externals
