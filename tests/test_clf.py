@@ -124,7 +124,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: gune up default GPR?
-    @sweepargs(clf=clfs['binary', '!gpr'])
+    @sweepargs(clf=clfs['binary'])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
@@ -184,7 +184,7 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
 
-    @sweepargs(clf_=clfs['binary', '!gpr', '!meta'])
+    @sweepargs(clf_=clfs['binary', '!meta'])
     def testSplitClassifierExtended(self, clf_):
         clf2 = _deepcopyclf(clf_)
         ds = datasets['uni2medium']#self.data_bin_1
@@ -493,8 +493,9 @@ class ClassifiersTests(unittest.TestCase):
 
         # TODO: unify str and repr for all classifiers
 
-    # XXX TODO: should work on smlr and knn as well! but now they fail to train
-    @sweepargs(clf=clfs['!smlr', '!knn', '!meta'])
+    # XXX TODO: should work on smlr, knn, ridgereg as well! but now
+    #     they fail to train
+    @sweepargs(clf=clfs['!smlr', '!knn', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
@@ -509,9 +510,7 @@ class ClassifiersTests(unittest.TestCase):
                                         [1, 0, 0] ]), labels=[-1, 1]),
             Dataset(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
-        if isinstance(clf, RidgeReg):
-            # TODO: figure out why default RidgeReg doesn't learn properly
-            return
+
         clf.states._changeTemporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
             clf.train(traindata)

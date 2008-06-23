@@ -14,12 +14,12 @@ from mvpa.misc.copy import copy
 
 from mvpa.measures.base import DatasetMeasure
 from mvpa.datasets.splitter import NoneSplitter
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Harvestable
 from mvpa.misc.transformers import GrandMean
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 

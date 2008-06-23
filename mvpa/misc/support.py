@@ -17,7 +17,7 @@ from mvpa.misc.copy import copy, deepcopy
 from operator import isSequenceType
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """This function transforms a dataset by calculating the mean of a set of

@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.base import Classifier
 

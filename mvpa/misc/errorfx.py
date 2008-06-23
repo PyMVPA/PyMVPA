@@ -16,8 +16,9 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as N
-from scipy import trapz
-from scipy.stats import pearsonr
+from numpy import trapz
+
+from mvpa.base import externals
 
 # Various helper functions
 def meanPowerFx(data):
@@ -106,24 +107,55 @@ class AUCErrorFx(_ErrorFx):
         return trapz(tp, fp)
 
 
-class CorrErrorFx(_ErrorFx):
-    """Computes the correlation between the target and the predicted
-    values.
+if externals.exists('scipy'):
+    from scipy.stats import pearsonr
 
-    """
-    def __call__(self, predicted, target):
-        """Requires all arguments."""
-        return pearsonr(predicted, target)[0]
+    class CorrErrorFx(_ErrorFx):
+        """Computes the correlation between the target and the predicted
+        values.
+
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            return pearsonr(predicted, target)[0]
 
 
-class CorrErrorPFx(_ErrorFx):
-    """Computes p-value of correlation between the target and the predicted
-    values.
+    class CorrErrorPFx(_ErrorFx):
+        """Computes p-value of correlation between the target and the predicted
+        values.
 
-    """
-    def __call__(self, predicted, target):
-        """Requires all arguments."""
-        return pearsonr(predicted, target)[1]
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            return pearsonr(predicted, target)[1]
+
+else:
+    # slower(?) and bogus(p-value) implementations for non-scipy users
+    # TODO: implement them more or less correcly with numpy
+    #       functionality
+    class CorrErrorFx(_ErrorFx):
+        """Computes the correlation between the target and the predicted
+        values.
+
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            l = len(predicted)
+            return N.corrcoef(N.reshape(predicted, l),
+                              N.reshape(target, l))[0,1]
+
+
+    class CorrErrorPFx(_ErrorFx):
+        """Computes p-value of correlation between the target and the predicted
+        values.
+
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            from mvpa.base import warning
+            warning("p-value for correlation is implemented only when scipy is "
+                    "available. Bogus value -1.0 is returned otherwise")
+            return -1.0
 
 
 class RelativeRMSErrorFx(_ErrorFx):

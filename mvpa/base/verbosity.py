@@ -238,7 +238,7 @@ class SetLogger(Logger):
         """
         # just unique entries... we could have simply stored Set I guess,
         # but then smth like debug.active += ["BLAH"] would not work
-        from mvpa.misc import verbose
+        from mvpa.base import verbose
         self.__active = []
         registered_keys = self.__registered.keys()
         for item in list(Set(active)):
@@ -408,7 +408,7 @@ if __debug__:
 
             if not func in self.__metrics:
                 try:
-                    from mvpa.misc import debug
+                    from mvpa.base import debug
                     debug("DBG", "Registering metric %s" % func)
                     self.__metrics.append(func)
                 except:

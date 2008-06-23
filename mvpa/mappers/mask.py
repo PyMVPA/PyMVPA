@@ -16,7 +16,7 @@ from mvpa.mappers.base import Mapper
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug, warning
+    from mvpa.base import debug, warning
     from mvpa.misc.support import isSorted
 
 

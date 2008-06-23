@@ -18,7 +18,7 @@ import pylab as P
 
 # local imports
 from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.datasets.niftidataset import NiftiDataset
+from mvpa.datasets.nifti import NiftiDataset
 from mvpa.datasets.miscfx import zscore, detrend
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC
@@ -26,7 +26,7 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.searchlight import Searchlight
-from mvpa.misc import debug
+from mvpa.base import debug
 """
 
 # enable debug output for searchlight call

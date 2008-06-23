@@ -20,7 +20,7 @@ from numpy import arange
 from mvpa.misc.state import StateVariable
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 # TODO: Abs value of sensitivity should be able to rule RFE
 # Often it is what abs value of the sensitivity is what matters.

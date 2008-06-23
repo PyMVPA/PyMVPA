@@ -18,7 +18,7 @@ import sys
 
 import numpy as N
 
-from mvpa.datasets.niftidataset import NiftiDataset
+from mvpa.datasets.nifti import NiftiDataset
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC

@@ -14,7 +14,7 @@ from mvpa.featsel.helpers import FractionTailSelector
 from mvpa.misc.state import StateVariable, Stateful
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class FeatureSelection(Stateful):
     """Base class for any feature selection

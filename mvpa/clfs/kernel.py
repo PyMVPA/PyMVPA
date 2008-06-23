@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class Kernel(object):
     """Kernel function base class.
@@ -92,7 +92,7 @@ class KernelSquaredExponential(Kernel):
     Automtic Relevance Determination.
 
     """
-    def __init__(self, length_scale=0.01, **kwargs):
+    def __init__(self, length_scale=1.0, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
         :Parameters:

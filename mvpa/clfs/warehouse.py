@@ -42,7 +42,7 @@ _KNOWN_INTERNALS=[ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
-        'notrain2predict','blr']
+        'notrain2predict', 'ridge', 'blr']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
