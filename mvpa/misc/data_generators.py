@@ -17,7 +17,7 @@ from sets import Set
 from mvpa.datasets import Dataset
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def multipleChunks(func, n_chunks, *args, **kwargs):
     """Replicate datasets multiple times raising different chunks

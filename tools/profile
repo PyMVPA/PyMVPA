@@ -16,7 +16,7 @@ import sys, os
 from optparse import OptionParser
 from os import environ, path
 
-from mvpa.misc.verbosity import LevelLogger
+from mvpa.base.verbosity import LevelLogger
 from mvpa.misc.cmdline import optVerbose
 
 if __name__ == "__main__":

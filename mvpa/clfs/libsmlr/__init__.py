@@ -9,7 +9,7 @@
 """Wraper for the stepwise_regression function for SMLR."""
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     debug('INIT', 'mvpa.clfs.libsmlr')
 
 import numpy as N

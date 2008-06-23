@@ -16,7 +16,7 @@ from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.array import DenseArrayMapper
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class MaskedDataset(MappedDataset):
     """Helper class which is `MappedDataset` with using `MaskMapper`.

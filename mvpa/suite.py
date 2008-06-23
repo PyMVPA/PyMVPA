@@ -24,6 +24,7 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.algorithms.cvtranserror import *
 from mvpa.base import *
+from mvpa.base.verbosity import *
 from mvpa.clfs.base import *
 from mvpa.clfs.knn import *
 if externals.exists('lars'):
@@ -66,7 +67,6 @@ from mvpa.misc.param import *
 from mvpa.misc.state import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
-from mvpa.misc.verbosity import *
 
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *

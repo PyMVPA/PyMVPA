@@ -19,7 +19,7 @@ from mvpa.datasets.mapped import MappedDataset
 
 
 if __debug__:
-    from mvpa.misc import debug, warning
+    from mvpa.base import debug, warning
 
 
 class MetaDataset(object):

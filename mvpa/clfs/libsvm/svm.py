@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.param import Parameter
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 
 from mvpa.clfs.base import Classifier
@@ -24,7 +24,7 @@ import _svm as svm
 from sens import *
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 # we better expose those since they are mentioned in docstrings
 from svmc import \

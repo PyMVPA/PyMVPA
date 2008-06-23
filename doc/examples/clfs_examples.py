@@ -30,7 +30,7 @@ from mvpa.clfs.warehouse import clfs
 
 # Misc tools
 #
-from mvpa.misc import warning
+from mvpa.base import warning
 """
 
 # no MVPA warnings during whole testsuite

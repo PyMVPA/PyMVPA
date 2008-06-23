@@ -25,7 +25,7 @@ from mvpa.misc.data_generators import *
 __all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     __all__.append('debug')
 
 

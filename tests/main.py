@@ -14,7 +14,7 @@ from mvpa import _random_seed
 from mvpa.base import externals
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     # Lets add some targets which provide additional testing
     debug.active += ['CHECK_.*']
     # NOTE: it had to be done here instead of test_clf.py for
@@ -90,7 +90,7 @@ for t in tests:
     exec 'import ' + t
 
 # no MVPA warnings during whole testsuite
-from mvpa.misc import warning
+from mvpa.base import warning
 warning.handlers = []
 
 def main():

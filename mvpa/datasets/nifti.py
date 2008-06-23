@@ -20,7 +20,7 @@ __name__ = oldname
 
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
-from mvpa.misc import warning
+from mvpa.base import warning
 
 
 class NiftiDataset(MaskedDataset):

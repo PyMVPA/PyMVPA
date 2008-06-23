@@ -11,10 +11,10 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.misc import warning
+from mvpa.base import warning
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def __check_shogun(bottom_version, custom_versions=[2456]):
     """Check if version of shogun is high enough (or custom known) to

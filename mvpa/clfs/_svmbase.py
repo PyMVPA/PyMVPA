@@ -14,12 +14,12 @@ import numpy as N
 
 from mvpa.misc.copy import deepcopy
 
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class _SVM(Classifier):
     """Support Vector Machine Classifier.

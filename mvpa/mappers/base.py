@@ -18,7 +18,7 @@ from mvpa.misc.vproperty import VProperty
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import warning
+    from mvpa.base import warning
 
 
 class Mapper(object):
