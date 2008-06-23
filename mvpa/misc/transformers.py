@@ -55,9 +55,14 @@ def GrandMean(x):
     return N.mean(x)
 
 
-def UnitNorm(x, norm=1.0, reverse=False):
+def L2Normed(x, norm=1.0, reverse=False):
     """Norm the values so that regular vector norm becomes `norm`"""
     xnorm = N.linalg.norm(x)
+    return x * (norm/xnorm)
+
+def L1Normed(x, norm=1.0, reverse=False):
+    """Norm the values so that L_1 norm (sum|x|) becomes `norm`"""
+    xnorm = N.sum(N.abs(x))
     return x * (norm/xnorm)
 
 def RankOrder(x, reverse=False):

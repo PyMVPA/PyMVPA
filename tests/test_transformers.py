@@ -11,9 +11,10 @@
 import unittest
 import numpy as N
 
-from mvpa.misc.transformers import Absolute, OneMinus, RankOrder, UnitNorm, \
-     ReverseRankOrder
+from mvpa.misc.transformers import Absolute, OneMinus, RankOrder, \
+     ReverseRankOrder, L1Normed, L2Normed
 
+from tests_warehouse import sweepargs
 
 class TransformerTests(unittest.TestCase):
 
@@ -46,10 +47,13 @@ class TransformerTests(unittest.TestCase):
         self.failUnless((out+outr+1 == nelements).all())
         self.failUnless((out == [ 0,  3,  4,  1,  5,  2]).all())
 
-
-    def testUnitNorm(self):
-        out = UnitNorm(self.d2)
+    def testL2Norm(self):
+        out = L2Normed(self.d2)
         self.failUnless(N.abs(N.sum(out*out)-1.0) < 1e-10)
+
+    def testL1Norm(self):
+        out = L1Normed(self.d2)
+        self.failUnless(N.abs(N.sum(N.abs(out))-1.0) < 1e-10)
 
 
 def suite():
