@@ -366,6 +366,9 @@ class ConfusionMatrix(SummaryStatistics):
           description : bool
             print verbose description of presented statistics
         """
+        if len(self.sets) == 0:
+            return "Empty"
+
         self.compute()
 
         # some shortcuts
@@ -382,9 +385,6 @@ class ConfusionMatrix(SummaryStatistics):
             return "%(# of sets)d sets %(# of labels)d labels " \
                    " ACC:%(ACC).2f" \
                    % stats
-
-        if len(self.sets) == 0:
-            return "Empty confusion matrix"
 
         Ndigitsmax = int(ceil(log10(max(Nsamples))))
         Nlabelsmax = max( [len(str(x)) for x in labels] )
@@ -542,10 +542,11 @@ class RegressionStatistics(SummaryStatistics):
     def asstring(self, short=False, header=True,  summary=True,
                  description=False):
         """'Pretty print' the statistics"""
-        self.compute()
 
         if len(self.sets) == 0:
-            return "Empty summary"
+            return "Empty"
+
+        self.compute()
 
         stats = self.stats
 

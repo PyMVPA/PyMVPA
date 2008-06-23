@@ -136,6 +136,20 @@ ut-%: build
 unittest: build
 	@cd tests && PYTHONPATH=.. python main.py
 
+# Runs unittests in few additional modes:
+# * with optimization on -- helps to catch unconditional debug calls
+# * with all debug ids and some metrics (crossplatform ones) on.
+#   That does:
+#     additional checking,
+#     debug() calls validation, etc
+unittests: unittest
+	@cd tests && PYTHONPATH=.. python -O main.py
+	@echo "Running unittests with debug output. No progress output."
+	@cd tests && \
+      PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=asctime,reltime \
+       python main.py 2>&1 \
+       |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
+
 te-%: build
 	PYTHONPATH=. python doc/examples/$*.py
 
@@ -167,7 +181,7 @@ testapiref: apidoc
 	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
-test: unittest testmanual testsuite testapiref testexamples
+test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \
@@ -233,4 +247,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests

@@ -47,13 +47,22 @@ import sys
 
 from os import environ
 
+from mvpa import _random_seed
 profilelevel = None
 
 if environ.has_key('PROFILELEVEL'):
     profilelevel = int(environ['PROFILELEVEL'])
 
+# Extend TestProgram to print out the seed which was used
+class TestProgramPyMVPA(unittest.TestProgram):
+    def runTests(self):
+        if self.verbosity:
+            print "MVPA_SEED=%s:" % _random_seed,
+            sys.stdout.flush()
+        super(TestProgramPyMVPA, self).runTests()
+
 if profilelevel is None:
-    unittest.main()
+    TestProgramPyMVPA()
 else:
     profilelines = environ.has_key('PROFILELINES')
 

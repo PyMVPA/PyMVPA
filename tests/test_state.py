@@ -266,7 +266,14 @@ class StateTests(unittest.TestCase):
             self.fail(msg="Failed to generate an instance out of "
                       "representation %s. Got exception: %s" % (a_str, e))
 
-        self.failUnless(`a2` == a_str, msg="Generated object must have the same repr")
+        if (__debug__ and 'ID_IN_REPR' in debug.active):
+            # next tests would fail due to ID in the tails
+            return
+
+        a2_str = `a2`
+        self.failUnless(a2_str == a_str,
+            msg="Generated object must have the same repr. Got %s and %s" %
+            (a_str, a2_str))
 
         # Test at least that repr of collection is of correct syntax
         aparams_str = `a.params`
