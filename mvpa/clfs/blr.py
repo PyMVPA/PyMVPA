@@ -33,7 +33,7 @@ class BLR(Classifier):
         doc="Log Marginal Likelihood")
 
 
-    _clf_internals = [ 'gpr', 'regression', 'non-linear' ]
+    _clf_internals = [ 'blr', 'regression', 'non-linear' ]
 
     def __init__(self, sigma_p = None, sigma_noise=1.0, **kwargs):
         """Initialize a BLR regression analysis.
@@ -51,7 +51,7 @@ class BLR(Classifier):
         self.w = None
 
         # It does not make sense to calculate a confusion matrix for a
-        # GPR:
+        # BLR:
         self.states.enable('training_confusion', False)
 
         # set the prior on w: N(0,sigma_p) , specifying the covariance
