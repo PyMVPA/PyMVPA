@@ -92,7 +92,7 @@ class KernelSquaredExponential(Kernel):
     Automtic Relevance Determination.
 
     """
-    def __init__(self, length_scale=0.01, **kwargs):
+    def __init__(self, length_scale=1.0, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
         :Parameters:

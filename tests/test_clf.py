@@ -124,7 +124,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: gune up default GPR?
-    @sweepargs(clf=clfs['binary', '!gpr'])
+    @sweepargs(clf=clfs['binary'])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
@@ -184,7 +184,7 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
 
-    @sweepargs(clf_=clfs['binary', '!gpr', '!meta'])
+    @sweepargs(clf_=clfs['binary', '!meta'])
     def testSplitClassifierExtended(self, clf_):
         clf2 = _deepcopyclf(clf_)
         ds = datasets['uni2medium']#self.data_bin_1
