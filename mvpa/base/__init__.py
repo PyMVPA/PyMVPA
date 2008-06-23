@@ -139,7 +139,7 @@ else:
 warning = WarningLog(
     handlers={
         False: cfg.get('warnings', 'output', default='stdout').split(','),
-        True: []}[cfg.getboolean('warnings', 'suppress', default='no')],
+        True: []}[cfg.getboolean('warnings', 'suppress', default=False)],
     btlevels=warnings_btlevels,
     btdefault=warnings_bt,
     maxcount=warnings_maxcount
