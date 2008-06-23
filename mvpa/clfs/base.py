@@ -1257,7 +1257,7 @@ class SplitClassifier(CombinedClassifier):
 
         # for proper and easier debugging - first define classifiers and then
         # train them
-        for split in self.__splitter(dataset):
+        for split in self.__splitter.splitcfg(dataset):
             if __debug__:
                 debug("CLFSPL",
                       "Deepcopying %(clf)s for %(sclf)s",
