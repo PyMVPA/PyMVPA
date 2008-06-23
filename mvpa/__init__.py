@@ -34,6 +34,7 @@ The mvpa package contains the following subpackages and modules:
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Per B. Sederberg <persed@princeton.edu>`__
+:contributor: `Yaroslav O. Halchenko <debian@onerussian.com>`__
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
@@ -59,7 +60,7 @@ else:
     debug('INIT', 'mvpa')
 
 if cfg.has_option('general', 'seed'):
-    __random_seed = cfg.getint('general', 'seed')
+    _random_seed = cfg.getint('general', 'seed')
 else:
     _random_seed = int(N.random.uniform()*(2**31-1))
 
