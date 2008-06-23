@@ -21,7 +21,7 @@ Option name should be camelbacked version of .dest for the option.
 from optparse import OptionParser, Option, OptionGroup
 
 # needed for verboseCallback
-from mvpa.misc import verbose
+from mvpa.base import verbose
 
 
 # TODO: try to make groups definition somewhat lazy, since now
@@ -66,7 +66,7 @@ optsCommon.add_options([optVerbose, optHelp])
 
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
     def debugCallback(option, optstr, value, parser):
         """Callback for -d|--debug cmdline option

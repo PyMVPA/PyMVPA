@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class Kernel(object):
     """Kernel function base class.

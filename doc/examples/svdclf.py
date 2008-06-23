@@ -28,7 +28,7 @@ from mvpa.clfs.svm import LinearCSVMC
 from mvpa.clfs.base import MappedClassifier
 from mvpa.mappers import SVDMapper
 
-from mvpa.misc import debug
+from mvpa.base import debug
 """
 
 if __debug__:

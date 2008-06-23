@@ -20,7 +20,7 @@ from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.svm import LinearNuSVMC
 from mvpa.clfs.transerror import ConfusionMatrix
 
-from mvpa.misc import debug
+from mvpa.base import debug
 """
 
 if __debug__:

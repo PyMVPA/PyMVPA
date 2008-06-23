@@ -14,7 +14,7 @@ from ConfigParser import SafeConfigParser
 import os.path
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class Config(SafeConfigParser):

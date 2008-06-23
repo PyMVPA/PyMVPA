@@ -17,7 +17,7 @@ from mvpa.misc.exceptions import ConvergenceError
 from mvpa.clfs.base import Classifier
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class PLR(Classifier):

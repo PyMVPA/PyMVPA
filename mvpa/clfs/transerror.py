@@ -22,12 +22,12 @@ from mvpa.base import externals
 
 from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def _equalizedTable(out, printed):
     """Given list of lists figure out their common widths and print to out

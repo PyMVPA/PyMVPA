@@ -45,11 +45,11 @@ from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer
-from mvpa.misc import warning
+from mvpa.base import warning
 
 if __debug__:
     import traceback
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 def _deepcopyclf(clf):

@@ -26,7 +26,7 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.searchlight import Searchlight
-from mvpa.misc import debug
+from mvpa.base import debug
 """
 
 # enable debug output for searchlight call

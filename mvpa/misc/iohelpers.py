@@ -14,10 +14,10 @@ __docformat__ = 'restructuredtext'
 import mvpa.misc.copy as copy
 from sets import Set
 from re import sub as re_sub
-from mvpa.misc import warning
+from mvpa.base import warning
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class ColumnData(dict):
     """Read data that is stored in columns of text files.

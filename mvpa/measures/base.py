@@ -26,7 +26,7 @@ from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class DatasetMeasure(Stateful):

@@ -152,7 +152,7 @@ else:
         """
         def __call__(self, predicted, target):
             """Requires all arguments."""
-            from mvpa.misc import warning
+            from mvpa.base import warning
             warning("p-value for correlation is implemented only when scipy is "
                     "available. Bogus value -1.0 is returned otherwise")
             return -1.0

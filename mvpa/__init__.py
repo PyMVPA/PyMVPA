@@ -50,11 +50,11 @@ if not __debug__:
         import psyco
         psyco.profile()
     except:
-        from mvpa.misc import verbose
+        from mvpa.base import verbose
         verbose(2, "Psyco online compilation is not enabled")
 else:
     # Controllable seeding of random number generator
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
     debug('INIT', 'mvpa')
 

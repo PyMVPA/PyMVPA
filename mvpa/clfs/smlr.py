@@ -18,13 +18,13 @@ from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.state import StateVariable, Parametrized
 from mvpa.misc.param import Parameter
-from mvpa.misc import warning
+from mvpa.base import warning
 
 # Uber-fast C-version of the stepwise regression
 from mvpa.clfs.libsmlr import stepwise_regression as _cStepwiseRegression
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def _label2oneofm(labels, ulabels):
     """Convert labels to one-of-M form.
