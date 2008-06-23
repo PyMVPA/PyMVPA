@@ -17,7 +17,7 @@ PyMVPA code, and are generic building blocks
 .. packagetree::
    :style: UML
 
-:group Basic: externals
+:group Basic: externals, config, verbosity, dochelpers
 """
 
 __docformat__ = 'restructuredtext'
@@ -27,6 +27,7 @@ from sys import stdout, stderr
 
 from os import environ
 
+from mvpa.base.config import Config
 from mvpa.base.verbosity import LevelLogger, OnceLogger, Logger
 
 #
@@ -56,6 +57,12 @@ class __Singleton:
     # Provided __call__ just to make silly pylint happy
     def __call__(self):
         raise NotImplementedError
+
+#
+# As the very first step: Setup configuration registry instance and
+# read all configuration settings from files and env variables
+#
+cfg = __Singleton('cfg', Config())
 
 verbose = __Singleton("verbose", LevelLogger(
     handlers = environ.get('MVPA_VERBOSE_OUTPUT', 'stdout').split(',')))
