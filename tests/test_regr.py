@@ -57,9 +57,9 @@ class RegressionsTests(unittest.TestCase):
                             msg="We should get some string representation "
                             "of regression summary. Got %s" % s)
 
-        self.failUnless(corr>0.8,
+        self.failUnless(corr<0.2,
                         msg="Regressions should perform well on a simple "
-                        "dataset. Got correlation of %s " % corr)
+                        "dataset. Got correlation error of %s " % corr)
 
 
 def suite():

@@ -483,8 +483,9 @@ class RegressionStatistics(SummaryStatistics):
     """
 
     _STATS_DESCRIPTION = (
-        ('CC', 'Correlation coefficient', None),
-        ('CC-p', 'Correlation coefficient (p-value)', None),
+        ('CCe', 'Error based on correlation coefficient',
+         '1 - corr_coef'),
+        ('CCp', 'Correlation coefficient (p-value)', None),
         ('RMSE', 'Root mean squared error', None),
         ('STD', 'Standard deviation', None),
         ('RMP', 'Root mean power (compare to RMSE of results)',
@@ -519,8 +520,8 @@ class RegressionStatistics(SummaryStatistics):
             'STD_t': lambda p,t:N.std(t),
             'RMP_p': lambda p,t:rootMeanPowerFx(p),
             'STD_p': lambda p,t:N.std(p),
-            'CC': CorrErrorFx(),
-            'CC-p': CorrErrorPFx(),
+            'CCe': CorrErrorFx(),
+            'CCp': CorrErrorPFx(),
             'RMSE': RMSErrorFx(),
             'RMSE/RMP_t': RelativeRMSErrorFx()
             }
@@ -552,18 +553,18 @@ class RegressionStatistics(SummaryStatistics):
 
         if short:
             if short == 'very':
-                return "%(# of sets)d sets CC:%(CC).2f CC-p:%(CC-p).2g" \
+                return "%(# of sets)d sets CCe:%(CCe).2f CCp:%(CCp).2g" \
                        " RMSE:%(RMSE).2f" \
                        " RMSE/RMP_t:%(RMSE/RMP_t).2f" \
                        % stats
             else:
-                return "%(# of sets)d sets CC:%(CC).2f+-%(CC_std).3f" \
+                return "%(# of sets)d sets CCe:%(CCe).2f+-%(CCe_std).3f" \
                        " RMSE:%(RMSE).2f+-%(RMSE_std).3f" \
                        " RMSE/RMP_t:%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
                        % stats
 
         stats_data = ['RMP_t', 'STD_t', 'RMP_p', 'STD_p']
-        stats_ = ['CC', 'RMSE', 'RMSE/RMP_t'] # CC-p needs tune up of format so excluded
+        stats_ = ['CCe', 'RMSE', 'RMSE/RMP_t'] # CCp needs tune up of format so excluded
         stats_summary = ['# of sets']
 
         out = StringIO()
