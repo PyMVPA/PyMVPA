@@ -27,6 +27,7 @@ tests = [
     'test_dataset',
     'test_arraymapper',
     'test_pcamapper',
+    'test_boxcarmapper',
     'test_neighbor',
     'test_maskeddataset',
     'test_splitter',
