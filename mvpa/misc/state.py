@@ -213,7 +213,8 @@ class Collection(object):
         res += "}"
         if __debug__:
             if "ST" in debug.active:
-                res += " owner:%s" % `self.owner`
+                res += " owner:%s#%s" % (self.owner.__class__.__name__,
+                                         id(self.owner))
         return res
 
     def __repr__(self):
