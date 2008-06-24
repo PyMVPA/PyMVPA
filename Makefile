@@ -146,7 +146,7 @@ unittests: unittest
 	@cd tests && PYTHONPATH=.. python -O main.py
 	@echo "Running unittests with debug output. No progress output."
 	@cd tests && \
-      PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=asctime,reltime \
+      PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
        python main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
