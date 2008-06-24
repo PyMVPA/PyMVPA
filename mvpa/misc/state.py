@@ -44,6 +44,7 @@ class CollectableAttribute(object):
         self.__doc__ = doc
         self.__name = name
         self._value = None
+        self._isset = False
         self.reset()
         if __debug__:
             debug("COL",
@@ -73,7 +74,7 @@ class CollectableAttribute(object):
 
     def reset(self):
         """Simply reset the flag"""
-        if __debug__:
+        if __debug__ and self._isset:
             debug("COL", "Reset %s to being non-modified" % self.name)
         self._isset = False
 
@@ -126,17 +127,15 @@ class StateVariable(CollectableAttribute):
         return CollectableAttribute._get(self)
 
     def _set(self, val):
-        if __debug__:
-            # Since this call is quite often, don't convert
-            # values to strings here, rely on passing them
-            # withing msgargs
-            debug("COL",
-                  "Setting %(self)s to %(val)s ",
-                  msgargs={'self':self, 'val':val})
         if self.isEnabled:
             # XXX may be should have left simple assignment
             # self._value = val
             CollectableAttribute._set(self, val)
+        elif __debug__:
+            debug("COL",
+                  "Not setting disabled %(self)s to %(val)s ",
+                  msgargs={'self':self, 'val':val})
+
 
     def reset(self):
         """Simply detach the value, and reset the flag"""
