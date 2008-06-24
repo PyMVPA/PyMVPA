@@ -402,6 +402,7 @@ if __debug__:
                           func + " Known metrics are " + \
                           `DebugLogger._known_metrics.keys()`
             elif isinstance(func, list):
+                self.__metrics = []     # reset
                 for item in func:
                     self.registerMetric(item)
                 return
@@ -452,3 +453,6 @@ if __debug__:
 
         offsetbydepth = property(fget=lambda x:x._offsetbydepth,
                                  fset=_setOffsetByDepth)
+
+        metrics = property(fget=lambda x:x.__metrics,
+                           fset=registerMetric)
