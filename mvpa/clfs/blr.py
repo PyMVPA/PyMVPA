@@ -85,11 +85,17 @@ class BLR(Classifier):
     def _train(self, data):
         """Train regression using `data` (`Dataset`).
         """
-        # provide a basic (and correct) sigma_p if not provided before
-        if self.sigma_p == None:
+        # provide a basic (i.e. identity matrix) and correct prior
+        # sigma_p, if not provided before or not compliant to 'data':
+        if self.sigma_p == None: # case: not provided
             self.sigma_p = N.eye(data.samples.shape[1]+1)
+        elif self.sigma_p.shape[1] != (data.samples.shape[1]+1): # case: wrong dimensions
+            self.sigma_p = N.eye(data.samples.shape[1]+1)
+        else:
+            # ...then everything is OK :)
             pass
-        
+
+        # add one fake column of '1.0' to model the intercept:
         self.samples_train = N.hstack([data.samples,N.ones((data.samples.shape[0],1))])
         if type(self.sigma_p)!=type(self.samples_train): # if sigma_p is a number...
             self.sigma_p = N.eye(self.samples_train.shape[1])*self.sigma_p # convert in matrix
