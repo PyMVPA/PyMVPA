@@ -263,7 +263,7 @@ class Dataset(object):
                       (attrib, self.summary(uniq=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
-            self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
+            self._dsattr[attrib] = N.unique( N.asanyarray(dict_[attrib[6:]]) )
             assert(not self._dsattr[attrib] is None)
             self._dsattr['__uniquereseted'] = False
 
