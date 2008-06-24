@@ -350,11 +350,43 @@ if __debug__:
             base = basename(dirname(s)) + '.' + base
         return base
 
-    def tb():
-        ftb = traceback.extract_stack(limit=6)
-        sftb = ','.join(['%s:%d' % (mbasename(x[0]),
-                                    x[1]) for x in ftb[:-2]])
-        return sftb
+    class TraceBack(object):
+        def __init__(self, collide=False):
+            """Initialize TrackBack metric
+
+            :Parameters:
+              collide : bool
+                if True then prefix common with previous invocation gets
+                replaced with ...
+            """
+            self.__prev = ""
+            self.__collide = collide
+
+        def __call__(self):
+            ftb = traceback.extract_stack(limit=100)[:-2]
+            entries = [[mbasename(x[0]), str(x[1])] for x in ftb]
+            entries = filter(lambda x:x[0] != 'unittest', entries)
+
+            # lets make it more consize
+            entries_out = [entries[0]]
+            for entry in entries[1:]:
+                if entry[0] == entries_out[-1][0]:
+                    entries_out[-1][1] += ',%s' % entry[1]
+                else:
+                    entries_out.append(entry)
+            sftb = '>'.join(['%s:%s' % (mbasename(x[0]),
+                                        x[1]) for x in entries_out])
+            if self.__collide:
+                # lets remove part which is common with previous invocation
+                prev_next = sftb
+                common_prefix = os.path.commonprefix((self.__prev, sftb))
+                common_prefix2 = re.sub('>[^>]*$', '', common_prefix)
+
+                if common_prefix2 != "":
+                    sftb = '...' + sftb[len(common_prefix2):]
+                self.__prev = prev_next
+
+            return sftb
 
 
     class RelativeTime(object):
@@ -386,7 +418,8 @@ if __debug__:
             'vmem' : lambda : parseStatus(field='VmSize'),
             'pid' : lambda : parseStatus(field='Pid'),
             'asctime' : time.asctime,
-            'tb' : tb,
+            'tb' : TraceBack(),
+            'tbc' : TraceBack(collide=True),
             }
 
 
