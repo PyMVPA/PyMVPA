@@ -105,8 +105,8 @@ class Config(SafeConfigParser):
 
         # no look for variables in the environment 
         for var in [v for v in os.environ.keys() if v.startswith('MVPA_')]:
-            # strip leading 'MVPA_'
-            svar = var[5:]
+            # strip leading 'MVPA_' and lower case entries
+            svar = var[5:].lower()
 
             # section is next element in name (or 'general' if simple name)
             if not svar.count('_'):
