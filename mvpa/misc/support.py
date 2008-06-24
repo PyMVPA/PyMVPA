@@ -148,6 +148,19 @@ def isSorted(items):
     return equality
 
 
+def isInVolume(coord, shape):
+    """For given coord check if it is within a specified volume size.
+
+    Returns True/False. Assumes that volume coordinates start at 0.
+    No more generalization (arbitrary minimal coord) is done to save
+    on performance
+    """
+    for i in xrange(len(coord)):
+        if coord[i] < 0 or coord[i] >= shape[i]:
+            return False
+    return True
+
+
 def getBreakPoints(items, contiguous=True):
     """Return a list of break points.
 

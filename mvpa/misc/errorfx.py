@@ -10,7 +10,7 @@
 
 PyMVPA can use arbitrary function which takes 2 arguments: predictions
 and targets and spits out a scalar value. Functions below are for the
-convinience"""
+convinience, and they confirm the agreement that 'smaller' is 'better'"""
 
 __docformat__ = 'restructuredtext'
 
@@ -111,13 +111,14 @@ if externals.exists('scipy'):
     from scipy.stats import pearsonr
 
     class CorrErrorFx(_ErrorFx):
-        """Computes the correlation between the target and the predicted
-        values.
+        """Computes the correlation between the target and the
+        predicted values. Resultant value is the 1 - correlation
+        coefficient, so minimization leads to the best value (at 0)
 
         """
         def __call__(self, predicted, target):
             """Requires all arguments."""
-            return pearsonr(predicted, target)[0]
+            return 1.0-pearsonr(predicted, target)[0]
 
 
     class CorrErrorPFx(_ErrorFx):
@@ -135,14 +136,14 @@ else:
     #       functionality
     class CorrErrorFx(_ErrorFx):
         """Computes the correlation between the target and the predicted
-        values.
+        values. Return 1-CC
 
         """
         def __call__(self, predicted, target):
             """Requires all arguments."""
             l = len(predicted)
-            return N.corrcoef(N.reshape(predicted, l),
-                              N.reshape(target, l))[0,1]
+            return 1.0 - N.corrcoef(N.reshape(predicted, l),
+                                N.reshape(target, l))[0,1]
 
 
     class CorrErrorPFx(_ErrorFx):

@@ -17,6 +17,7 @@ if __debug__:
 from mvpa.mappers.mask import MaskMapper
 from mvpa.mappers.pca import PCAMapper
 from mvpa.mappers.svd import SVDMapper
+from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.mappers.array import DenseArrayMapper
 
 if __debug__:
