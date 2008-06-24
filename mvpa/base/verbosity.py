@@ -322,6 +322,8 @@ if __debug__:
     import os, re
     import traceback
     import time
+    from os import getpid
+    from os.path import basename, dirname
 
     def parseStatus(field='VmSize'):
         """Return stat information on current process.
@@ -331,10 +333,28 @@ if __debug__:
         TODO: Spit out multiple fields. Use some better way than parsing proc
         """
 
-        fd = open('/proc/%d/status'%os.getpid())
+        fd = open('/proc/%d/status' % getpid())
         lines = fd.readlines()
         fd.close()
-        return filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
+        match = filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
+        match = re.sub('[ \t]+', ' ', match)
+        return match
+
+    def mbasename(s):
+        """Custom function to include directory name if filename is too common
+
+        Also strip .py at the end
+        """
+        base = basename(s).rstrip('py').rstrip('.')
+        if base in Set(['base', '__init__']):
+            base = basename(dirname(s)) + '.' + base
+        return base
+
+    def tb():
+        ftb = traceback.extract_stack(limit=6)
+        sftb = ','.join(['%s:%d' % (mbasename(x[0]),
+                                    x[1]) for x in ftb[:-2]])
+        return sftb
 
 
     class RelativeTime(object):
@@ -365,7 +385,8 @@ if __debug__:
         _known_metrics = {
             'vmem' : lambda : parseStatus(field='VmSize'),
             'pid' : lambda : parseStatus(field='Pid'),
-            'asctime' : time.asctime
+            'asctime' : time.asctime,
+            'tb' : tb,
             }
 
 
@@ -426,10 +447,7 @@ if __debug__:
                 # be statefull as RelativeTime
                 return
 
-            msg_ = ""
-
-            for metric in self.__metrics:
-                msg_ += " %s" % `metric()`
+            msg_ = ' / '.join([str(x()) for x in self.__metrics])
 
             if len(msg_)>0:
                 msg_ = "{%s}" % msg_
