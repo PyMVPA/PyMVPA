@@ -384,8 +384,6 @@ class MaskMapper(Mapper):
 
 
     # Read-only props
-    # TODO: refactor the property names? make them vproperty?
-    dsshape = property(fget=getInShape)
     mask = property(fget=lambda self:self.getMask(False))
 
 
