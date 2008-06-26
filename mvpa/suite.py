@@ -49,7 +49,13 @@ from mvpa.featsel.base import *
 from mvpa.featsel.helpers import *
 from mvpa.featsel.ifs import *
 from mvpa.featsel.rfe import *
-from mvpa.mappers import *
+from mvpa.mappers.mask import *
+from mvpa.mappers.pca import *
+from mvpa.mappers.svd import *
+from mvpa.mappers.boxcar import *
+from mvpa.mappers.array import *
+if externals.exists('mdp'):
+    from mvpa.mappers.ica import *
 from mvpa.measures.anova import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *

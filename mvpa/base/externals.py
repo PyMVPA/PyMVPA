@@ -39,6 +39,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'lars': "import rpy; rpy.r.library('lars')",
           'pylab': "import pylab as __",
           'openopt': "import scikits.openopt as __",
+          'mdp': "import mdp as __",
           'sg_fixedcachesize': "__check_shogun(3043)",
           }
 
