@@ -13,89 +13,47 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import Mapper
+from mvpa.mappers.base import ProjectionMapper
 
 from mdp.nodes import FastICANode
 
 
-class ICAMapper(Mapper):
+class ICAMapper(ProjectionMapper):
     """Mapper to project data onto ICA components estimated from some dataset.
 
     After the mapper has been instantiated, it has to be train first. The ICA
     mapper only handles 2D data matrices.
     """
-    def __init__(self, selector=None):
-        Mapper.__init__(self)
+    def __init__(self, algorithm='fastica', transpose=False, **kwargs):
+        ProjectionMapper.__init__(self, **kwargs)
 
-        self.__selector = selector
-        self.proj = None
-        self.recon = None
+        self._algorithm = algorithm
 
-    __doc__ = enhancedDocString('ICAMapper', locals(), Mapper)
+    __doc__ = enhancedDocString('ICAMapper', locals(), ProjectionMapper)
 
 
-    def train(self, dataset):
+    def _train(self, dataset):
         """Determine the projection matrix onto the components from
         a 2D samples x feature data matrix.
         """
-        node = FastICANode(dtype='float')
+        white_param = {}
 
-        # more features than samples?
-        if dataset.samples.shape[1] > dataset.samples.shape[0]:
-            node.train(dataset.samples.T)
-            raise NotImplementedError
-            #self.proj = (N.asmatrix(node.get_projmatrix()) * dataset.samples).T
-            #self.recon = N.asmatrix(node.get_recmatrix()) * dataset.samples
+        # more features than samples? -> rank deficiancy
+        # if not tranposing the data, MDP has to do SVD prior to ICA
+        if dataset.samples.shape[1] > dataset.samples.shape[0] \
+           and not transpose:
+            white_param['svd'] = True
+
+        if self._algorithm == 'fastica':
+            node = FastICANode(white_parm=white_param,
+                               dtype=dataset.samples.dtype)
         else:
-            node.train(dataset.samples)
-            self.proj = N.asmatrix(node.get_projmatrix())
-            self.recon = N.asmatrix(node.get_recmatrix())
+            raise NotImplementedError
 
-
-    def forward(self, data):
-        """Project a 2D samples x features matrix onto the PCA components.
-
-        :Returns:
-          NumPy array
-        """
-        if self.proj is None:
-            raise RuntimeError, \
-                  "ProjectionMapper needs to be train before used."
-
-        return (N.asmatrix(data) * self.proj).A
-
-
-    def reverse(self, data):
-        """Projects feature vectors or matrices with feature vectors back
-        onto the original features.
-
-        :Returns:
-          NumPy array
-        """
-        return (N.asmatrix(data) * self.recon).A
-
-
-    def getInShape(self):
-        """Returns a one-tuple with the number of original features."""
-        return (self.mix.shape[0], )
-
-
-    def getOutShape(self):
-        """Returns a one-tuple with the number of components."""
-        return (self.mix.shape[1], )
-
-
-    def getInSize(self):
-        """Returns the number of original features."""
-        return self.mix.shape[0]
-
-
-    def getOutSize(self):
-        """Returns the number of components."""
-        return self.mix.shape[1]
-
-
-    def selectOut(self, outIds):
-        """Choose a subset of PCA components (and remove all others)."""
-        self.proj = self.proj[:, outIds]
-        self.recon = self.recon[outIds]
+#            node.train(dataset.samples.T)
+#            self._proj = dataset.samples.T * N.asmatrix(node.get_projmatrix())
+#            print self._proj.shape
+#        else:
+        node.train(dataset.samples)
+        self._proj = N.asmatrix(node.get_projmatrix())
+        self._recon = N.asmatrix(node.get_recmatrix())
