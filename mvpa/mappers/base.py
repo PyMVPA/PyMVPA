@@ -31,11 +31,6 @@ class Mapper(object):
         in   ---------> out
              <--------/
                reverse
-
-    Subclasses should define 'dsshape' and 'nfeatures' properties that
-    point to `getInShape` and `getOutSize` respectively. This cannot be
-    done in the baseclass as standard Python properties would still
-    point to the baseclass methods.
     """
     def __init__(self, metric=None):
         """Initialize a Mapper.
@@ -196,6 +191,7 @@ class Mapper(object):
 
     metric = property(fget=getMetric, fset=setMetric)
     nfeatures = VProperty(fget=getOutSize)
+    dsshape = VProperty(fget=getInShape)
 
 
 
