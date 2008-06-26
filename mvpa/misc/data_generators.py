@@ -299,7 +299,7 @@ def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2, data_noise=0.4
     return Dataset(samples=data, labels=labels)
 
 
-def linear_awgn(size=10,intercept=0.0,slope=0.4,noise_std=0.01,flat=False):
+def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
     """
     Generate a dataset from a linear function with Added White
     Gaussian Noise (AWGN).  It can be multidimensional if 'slope' is a
@@ -307,18 +307,39 @@ def linear_awgn(size=10,intercept=0.0,slope=0.4,noise_std=0.01,flat=False):
     samples instead of random ones. This is useful for the test phase.
     """
     dimensions = 1
-    if type(slope) == type(N.array([])):
+    if isinstance(slope, N.ndarray):
         dimensions = slope.size
-        pass
-    
-    if flat and dimensions==1:
-        x = N.linspace(0,1,size)[:,N.newaxis]
+
+    if flat and dimensions == 1:
+        x = N.linspace(0, 1, size)[:, N.newaxis]
     else:
-        x = N.random.rand(size,dimensions)
-        pass
-    
-    y = N.dot(x,slope)[:,N.newaxis]+(N.random.randn(*(x.shape[0],1))*noise_std)+intercept
+        x = N.random.rand(size, dimensions)
+
+    y = N.dot(x, slope)[:, N.newaxis] \
+        + (N.random.randn(*(x.shape[0], 1)) * noise_std) + intercept
+
     return Dataset(samples=x, labels=y)
-    
 
 
+def noisy_cross(size=20, slopes=(1.0, 0.2), center=(5, 7), noise_std=0.01):
+    """
+    """
+    b = int(size/2)
+    x = N.random.normal(size=size, scale=1)
+    fx = x.copy()
+
+    fx[:b] *= slopes[0]
+    fx[b:] *= slopes[1]
+
+    class_boundary = x * slopes[0] + center[1]
+
+    x += center[0]
+    fx += center[1]
+
+
+    # noise
+    fx_noise = fx + N.random.normal(size=fx.shape, scale=noise_std)
+
+    labels = N.array(fx_noise < class_boundary, dtype='int')
+
+    return Dataset(samples=N.array([x, fx_noise]).T, labels=labels)
