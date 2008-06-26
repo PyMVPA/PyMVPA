@@ -36,7 +36,7 @@ class SVDMapper(ProjectionMapper):
                 determine the to be selected features, based on the singular
                 values of each component.
         """
-        ProjectionMapper.__init__(self)
+        ProjectionMapper.__init__(self, **kwargs)
 
         self._sv = None
         """Singular values of the training matrix."""
