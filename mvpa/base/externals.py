@@ -45,7 +45,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
 
 _VERIFIED = {}
 
-_caught_exceptions = [ImportError, AttributeError]
+_caught_exceptions = [ImportError, AttributeError, RuntimeError]
 """Exceptions which are silently caught while running tests for externals"""
 try:
     import rpy
