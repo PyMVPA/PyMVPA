@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import ProjectionMapper
 
-from mdp.nodes import FastICANode
+from mdp.nodes import FastICANode, CuBICANode
 
 
 class ICAMapper(ProjectionMapper):
@@ -24,7 +24,7 @@ class ICAMapper(ProjectionMapper):
     After the mapper has been instantiated, it has to be train first. The ICA
     mapper only handles 2D data matrices.
     """
-    def __init__(self, algorithm='fastica', transpose=False, **kwargs):
+    def __init__(self, algorithm='cubica', transpose=False, **kwargs):
         ProjectionMapper.__init__(self, **kwargs)
 
         self._algorithm = algorithm
@@ -47,6 +47,9 @@ class ICAMapper(ProjectionMapper):
         if self._algorithm == 'fastica':
             node = FastICANode(white_parm=white_param,
                                dtype=dataset.samples.dtype)
+        elif self._algorithm == 'cubica':
+            node = CuBICANode(white_parm=white_param,
+                              dtype=dataset.samples.dtype)
         else:
             raise NotImplementedError
 
