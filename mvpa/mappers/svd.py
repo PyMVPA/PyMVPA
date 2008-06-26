@@ -52,7 +52,6 @@ class SVDMapper(ProjectionMapper):
 
         if self._demean:
             # demean the training data
-            self._mean = X.mean(axis=0)
             X = X - self._mean
 
             if __debug__:

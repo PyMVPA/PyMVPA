@@ -200,7 +200,7 @@ class ProjectionMapper(Mapper):
 
     This class cannot be used directly. Sub-classes have to implement
     the `_train()` method, which has to compute the projection matrix
-    given a dataset (matrix has to be assigned to `self._proj`).
+    given a dataset (see `_train()` docstring for more information).
 
     Once the projection matrix is available, this class provides
     functionality to perform forward and backwards mapping of data, the
@@ -250,6 +250,8 @@ class ProjectionMapper(Mapper):
 
     def train(self, dataset):
         """Determine the projection matrix."""
+        # store the feature wise mean
+        self._mean = dataset.samples.mean(axis=0)
         # compute projection matrix with subclass logic
         self._train(dataset)
 
@@ -259,7 +261,11 @@ class ProjectionMapper(Mapper):
 
 
     def _train(self, dataset):
-        """Worker method. Needs to be implemented by subclass."""
+        """Worker method. Needs to be implemented by subclass.
+
+        This method has to train the mapper and store the resulting
+        transformation matrix in `self._proj`.
+        """
         raise NotImplementedError
 
 
@@ -303,6 +309,8 @@ class ProjectionMapper(Mapper):
             if self._demean:
                 if self._mean_out is None:
                     # forward project mean and cache result
+                    print 'FANCY'
+                    print self._mean.shape
                     self._mean_out = self.forward(self._mean, demean=False)
                     if __debug__:
                         debug("MAP_",
