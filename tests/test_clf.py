@@ -11,7 +11,7 @@
 from mvpa.misc.copy import deepcopy
 
 from mvpa.datasets import Dataset
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.misc.exceptions import UnknownStateError

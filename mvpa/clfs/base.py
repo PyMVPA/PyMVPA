@@ -36,7 +36,7 @@ else:
 import time
 from sets import Set
 
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
 from mvpa.misc.param import Parameter
