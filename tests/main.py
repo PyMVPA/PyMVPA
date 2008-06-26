@@ -69,7 +69,8 @@ externals.testAllDependencies()
 __optional_tests = ( ('scipy', 'ridge'),
                      ('scipy', 'datasetfx_sp'),
                      (['lars','scipy'], 'lars'),
-                     ('nifti', 'niftidataset')
+                     ('nifti', 'niftidataset'),
+                     ('mdp', 'icamapper'),
                      )
 
 # and now for the optional tests
