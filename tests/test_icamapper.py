@@ -36,38 +36,32 @@ class ICAMapperTests(unittest.TestCase):
         self.pm = ICAMapper()
 
 
-#    def testSimpleICA(self):
-#        # train
-#        self.pm.train(self.ndlin)
-#
-#        self.failUnlessEqual(self.pm.proj.shape, (2, 2))
-#
-#        # now project data into ICA space
-#        p = self.pm.forward(self.ndlin.samples)
-#
-#        print self.pm.proj
-#        print self.pm.recon
-#        print p
-#
-##        P.scatter(p[:20,0], p[:20,1],color='green')
-##        P.scatter(p[20:,0], p[20:,1], color='red')
-##        P.show()
-#
-#        # check that the mapped data can be fully recovered by 'reverse()'
-#        self.failUnless(N.abs(self.pm.reverse(p) - self.ndlin.samples).mean() \
-#                        < 0.0001)
-
-
-    def testAutoOptimzeICA(self):
+    def testSimpleICA(self):
         # train
-        self.pm.train(self.largefeat)
+        self.pm.train(self.ndlin)
 
-        self.failUnlessEqual(self.pm.proj.shape, (50, 40))
+        self.failUnlessEqual(self.pm.proj.shape, (2, 2))
 
         # now project data into ICA space
-        p = self.pm.forward(self.largefeat.samples)
+        p = self.pm.forward(self.ndlin.samples)
 
-        self.failUnless(p.shape[1] == 40)
+        self.failUnlessEqual(p.shape, (40, 2))
+
+        # check that the mapped data can be fully recovered by 'reverse()'
+        self.failUnless(N.abs(self.pm.reverse(p) - self.ndlin.samples).mean() \
+                        < 0.0001)
+
+
+#    def testAutoOptimzeICA(self):
+#        # train
+#        self.pm.train(self.largefeat)
+#
+ #       self.failUnlessEqual(self.pm.proj.shape, (50, 40))
+#
+ #       # now project data into ICA space
+ ##       p = self.pm.forward(self.largefeat.samples)
+#
+#        self.failUnless(p.shape[1] == 40)
 #        print self.pm.proj
 #        print self.pm.recon
 #        print p
@@ -75,8 +69,8 @@ class ICAMapperTests(unittest.TestCase):
 #        P.scatter(p[:20,0], p[:20,1],color='green')
 #        P.scatter(p[20:,0], p[20:,1], color='red')
 #        P.show()
-        self.failUnless(N.abs(self.pm.reverse(p) - self.largefeat.samples).mean() \
-                        < 0.0001)
+#        self.failUnless(N.abs(self.pm.reverse(p) - self.largefeat.samples).mean() \
+ #                       < 0.0001)
 
 def suite():
     return unittest.makeSuite(ICAMapperTests)
