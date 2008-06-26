@@ -26,7 +26,6 @@ tests = [
     # Basic data structures/manipulators
     'test_dataset',
     'test_arraymapper',
-    'test_pcamapper',
     'test_boxcarmapper',
     'test_neighbor',
     'test_maskeddataset',
@@ -71,6 +70,7 @@ __optional_tests = ( ('scipy', 'ridge'),
                      (['lars','scipy'], 'lars'),
                      ('nifti', 'niftidataset'),
                      ('mdp', 'icamapper'),
+                     ('mdp', 'pcamapper'),
                      )
 
 # and now for the optional tests
