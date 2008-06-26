@@ -51,6 +51,6 @@ def doubleGammaHRF(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     Parameters A, W and K exists individually for each of both gamma
     functions.
     """
-    return gammaHRF(t, A1, W1, K1) - gammaHRF(t, A2, W2, K1)
+    return singleGammaHRF(t, A1, W1, K1) - singleGammaHRF(t, A2, W2, K1)
 
 
