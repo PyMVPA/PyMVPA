@@ -321,25 +321,24 @@ def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
     return Dataset(samples=x, labels=y)
 
 
-def noisy_cross(size=20, slopes=(1.0, 0.2), center=(5, 7), noise_std=0.01):
+def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
     """
     """
-    b = int(size/2)
-    x = N.random.normal(size=size, scale=1)
-    fx = x.copy()
+    x = []
+    y = []
+    labels = []
+    for fx in sfx:
+        nx = N.random.normal(size=size_per_fx)
+        ny = fx(nx) + N.random.normal(size=nx.shape, scale=noise_std)
+        x.append(nx)
+        y.append(ny)
 
-    fx[:b] *= slopes[0]
-    fx[b:] *= slopes[1]
+        # whenever larger than first function value
+        labels.append(N.array(ny < dfx(nx), dtype='int'))
 
-    class_boundary = x * slopes[0] + center[1]
+    samples = N.array((N.hstack(x), N.hstack(y))).squeeze().T
+    labels = N.hstack(labels).squeeze().T
 
-    x += center[0]
-    fx += center[1]
+    samples += N.array(center)
 
-
-    # noise
-    fx_noise = fx + N.random.normal(size=fx.shape, scale=noise_std)
-
-    labels = N.array(fx_noise < class_boundary, dtype='int')
-
-    return Dataset(samples=N.array([x, fx_noise]).T, labels=labels)
+    return Dataset(samples=samples, labels=labels)
