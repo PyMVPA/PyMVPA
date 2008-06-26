@@ -302,20 +302,19 @@ class ProjectionMapper(Mapper):
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be trained before used."
 
+        # get feature-wise mean in out-space
+        if self._demean and self._mean_out is None:
+            # forward project mean and cache result
+            self._mean_out = self.forward(self._mean, demean=False)
+            if __debug__:
+                debug("MAP_",
+                      "Mean of data in input space %s became %s in " \
+                      "outspace" % (self._mean, self._mean_out))
+
+
         # (re)build reconstruction matrix
         if self._recon is None:
             self._recon = self._proj.H
-
-            if self._demean:
-                if self._mean_out is None:
-                    # forward project mean and cache result
-                    print 'FANCY'
-                    print self._mean.shape
-                    self._mean_out = self.forward(self._mean, demean=False)
-                    if __debug__:
-                        debug("MAP_",
-                              "Mean of data in input space %s became %s in " \
-                              "outspace" % (self._mean, self._mean_out))
 
         if self._demean:
             return ((N.asmatrix(data) + self._mean_out) * self._recon).A
