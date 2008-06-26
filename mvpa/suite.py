@@ -38,6 +38,7 @@ from mvpa.clfs.transerror import *
 from mvpa.clfs.warehouse import *
 from mvpa.datasets.base import *
 from mvpa.datasets import *
+from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
 from mvpa.datasets.metric import *
 from mvpa.datasets.miscfx import *
