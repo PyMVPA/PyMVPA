@@ -134,7 +134,7 @@ class GPR(Classifier):
             # do computation only if state variable was enabled
             v = N.linalg.solve(self.L, km_train_test)
             self.predicted_variances = \
-                           N.diag(km_test_test-N.dot(v.transpose(), v))
+                           N.diag(km_test_test-N.dot(v.transpose(), v)) + self.sigma_noise**2
 
         return predictions
 
