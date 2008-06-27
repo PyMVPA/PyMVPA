@@ -300,12 +300,11 @@ if externals.exists('shogun') or externals.exists('libsvm'):
          FeatureSelectionClassifier(
              LinearCSVMC(),
              SensitivityBasedFeatureSelection(
-                SMLRWeights(SMLR(lm=1.0, implementation="C")),
+                SMLRWeights(SMLR(lm=0.1, implementation="C")),
                 RangeElementSelector(mode='select')),
-             descr="LinSVM on SMLR(lm=1) non-0")
+             descr="LinSVM on SMLR(lm=0.1) non-0")
 
 
-    # "Interesting" classifiers
     clfs += \
         FeatureSelectionClassifier(
             LinearCSVMC(),
