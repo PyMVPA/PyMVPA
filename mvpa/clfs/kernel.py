@@ -348,7 +348,7 @@ class KernelMatern_3_2(Kernel):
             raise NotImplementedError
 
     def __repr__(self):
-        return "%s(length_scale=%s, ni=%f/2)" % (self.__class__.__name__, str(self.length_scale), self.numerator)
+        return "%s(length_scale=%s, ni=%d/2)" % (self.__class__.__name__, str(self.length_scale), self.numerator)
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
