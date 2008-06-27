@@ -62,8 +62,8 @@ class Kernel(object):
 
         euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
                                             'd')
-        # In the following you can find faster implementations of the
-        # following code:
+        # In the following you can find faster implementations of this
+        # basic code:
         #
         # for i in range(size1):
         #     for j in range(size2):
@@ -137,29 +137,30 @@ class KernelSquaredExponential(Kernel):
         """
         self.length_scale = N.array(length_scale)
         return
+
     pass
 
 
 class KernelConstant(Kernel):
     """The constant kernel class.
     """
-    def __init__(self, coefficient=None, **kwargs):
+    def __init__(self, sigma_0=1.0, **kwargs):
         """Initialize the constant kernel instance.
 
         :Parameters:
-          coefficient : numpy.ndarray
-            the coefficients of the linear kernel
-            (Defaults to None)
+          sigma_0 : float
+            standard deviation of the Gaussian prior probability
+            N(0,sigma_0**2) of the intercept of the constant regression.
+            (Defaults to 1.0)
         """
         # init base class first
         Kernel.__init__(self, **kwargs)
 
-        self.coefficient = coefficient
+        self.sigma_0 = sigma_0
         self.kernel_matrix = None
 
-
     def __repr__(self):
-        return "%s(coefficient=%s)" % (self.__class__.__name__, str(self.coefficient))
+        return "%s(sigma_0=%s)" % (self.__class__.__name__, str(self.sigma_0))
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -174,22 +175,45 @@ class KernelConstant(Kernel):
         if data2 == None:
             data2 = data1
             pass
-        # self.kernel_matrix = (self.coefficient**2)*N.ones((data1.shape[0],data2.shape[0]))
-        self.kernel_matrix = N.dot(N.dot(data1,(self.coefficient**2)*N.eye(data1.shape[1])),data2.T)
+        self.kernel_matrix = (self.sigma_0**2)*N.ones((data1.shape[0],data2.shape[0]))
         return self.kernel_matrix
 
-
-    def set_hyperparameters(self,*coefficient):
-        self.coefficient = N.array(coefficient)
+    def set_hyperparameters(self,*sigma_0):
+        self.sigma_0 = N.array(sigma_0)
         return
+
     pass
 
 
 class KernelLinear(KernelConstant):
     """The linear kernel class.
     """
+    def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
+        """Initialize the linear kernel instance.
+
+        :Parameters:
+          Sigma_p : numpy.ndarray
+            Covariance matrix of the Gaussian prior probability N(0,Sigma_p)
+            on the weights of the linear regression.
+            (Defaults to None)
+          sigma_0 : float
+            the standard deviation of the Gaussian prior N(0,sigma_0**2)
+            of the intercept of the linear regression.
+            (Deafults to 1.0)
+        """
+        # init base class first
+        Kernel.__init__(self, **kwargs)
+
+        self.Sigma_p = Sigma_p
+        self.sigma_0 = sigma_0
+        self.kernel_matrix = None
+
+    def __repr__(self):
+        return "%s(Sigma_p=%s, sigma_0=%s)" % (self.__class__.__name__, str(self.Sigma_p), str(self.sigma_0))
+
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
+        Set Sigma_p to correct dimensions and default value if necessary.
 
         :Parameters:
           data1 : numpy.ndarray
@@ -201,7 +225,20 @@ class KernelLinear(KernelConstant):
         if data2 == None:
             data2 = data1
             pass
-        self.kernel_matrix = N.dot(data1*(self.coefficient**2),data2.T)
+
+        # if Sigma_p is not set use Identity matrix instead:
+        if self.Sigma_p == None:
+            self.Sigma_p = N.eye(data1.shape[1])
+        elif N.isscalar(self.Sigma_p): # if scalar use Identitiy matrix times scalar
+            self.Sigma_p =  N.diagflat(N.ones(data.shape[1]*self.Sigma_p))
+        elif len(self.Sigma_p.shape)==1 and self.Sigma_p.shape[1]==data1.shape[1]: # if vector use it as diagonal matrix
+            self.Sigma_p == N.diagflat(self.Sigma_p)
+            pass
+        # XXX if Sigma_p is changed a warning should be issued!
+        # XXX other cases of incorrect Sigma_p could be catched
+        
+        self.kernel_matrix = N.dot(data1, N.dot(self.Sigma_p,data2.T)) \
+                             +self.sigma_0**2
         return self.kernel_matrix
 
     pass
@@ -236,9 +273,9 @@ if __name__ == "__main__":
     data = dataset.samples
     labels = dataset.labels
 
-    kl = KernelLinear(coefficient=N.ones(data.shape[1]))
+    kl = KernelLinear(Sigma_p=N.eye(data.shape[1]))
     print kl
 
-    kc = KernelConstant(coefficient=1.0)
+    kc = KernelConstant(sigma_0=1.0)
     print kc
 
