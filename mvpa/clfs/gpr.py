@@ -98,7 +98,8 @@ class GPR(Classifier):
         self.train_labels = data.labels
 
         if __debug__:
-            debug("GPR", "Computing train train kernel matrix")
+            debug("GPR", "Computing train train kernel matrix. sigma_noise=%g"
+                  % self.sigma_noise)
 
         self.km_train_train = self.__kernel.compute(self.train_fv)
 
@@ -153,6 +154,7 @@ class GPR(Classifier):
             pass
         return
 
+    kernel = property(fget=lambda self:self.__kernel)
     pass
 
 
