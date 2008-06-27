@@ -26,12 +26,12 @@ tests = [
     # Basic data structures/manipulators
     'test_dataset',
     'test_arraymapper',
-    'test_pcamapper',
     'test_boxcarmapper',
     'test_neighbor',
     'test_maskeddataset',
     'test_splitter',
     'test_state',
+    'test_params',
     'test_eepdataset',
     # Misc supporting utilities
     'test_stats',
@@ -68,7 +68,9 @@ externals.testAllDependencies()
 __optional_tests = ( ('scipy', 'ridge'),
                      ('scipy', 'datasetfx_sp'),
                      (['lars','scipy'], 'lars'),
-                     ('nifti', 'niftidataset')
+                     ('nifti', 'niftidataset'),
+                     ('mdp', 'icamapper'),
+                     ('mdp', 'pcamapper'),
                      )
 
 # and now for the optional tests

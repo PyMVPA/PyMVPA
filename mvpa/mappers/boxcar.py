@@ -123,7 +123,11 @@ class BoxcarMapper(Mapper):
         # scale output
         if self.__collision_resolution == 'mean':
             g1 = output_counts>1
-            output[g1] /= output_counts[g1]
+            # XXX couldn't broadcast if we have multiple columns...
+            # need to operate on transposed output, so that last running dimensions are the same
+            output_ = output.T
+            output_[:,g1] /= output_counts[g1]
+            output = output_.T
 
         return output
 

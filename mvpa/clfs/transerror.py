@@ -207,6 +207,11 @@ class SummaryStatistics(object):
         self.compute()
         return self._stats
 
+    def reset(self):
+        """Cleans summary -- all data/sets are wiped out
+        """
+        self.__sets = []
+        self._computed = False
 
     sets = property(lambda self:self.__sets)
 

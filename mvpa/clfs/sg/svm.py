@@ -389,10 +389,14 @@ class SVM(_SVM):
             self.states.retrained = not newsvm or not newkernel
 
         # Train
-        if __debug__:
-            debug("SG", "%sTraining %s on data with labels %s" %
-                  (("","Re-")[self.params.retrainable and self.states.retrained], self,
-                   dataset.uniquelabels))
+        if __debug__ and 'SG' in debug.active:
+            if not self.regression:
+                lstr = " with labels %s" % dataset.uniquelabels
+            else:
+                lstr = ""
+            debug("SG", "%sTraining %s on data%s" %
+                  (("","Re-")[self.params.retrainable and self.states.retrained],
+                   self, lstr))
 
         self.__svm.train()
 
