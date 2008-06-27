@@ -85,62 +85,6 @@ class Kernel(object):
     pass
 
 
-class KernelSquaredExponential(Kernel):
-    """The Squared Exponential kernel class.
-
-    Note that it can handle a length scale for each dimension for
-    Automtic Relevance Determination.
-
-    """
-    def __init__(self, length_scale=1.0, **kwargs):
-        """Initialize a Squared Exponential kernel instance.
-
-        :Parameters:
-          length_scale : float OR numpy.ndarray
-            the characteristic length-scale (or length-scales) of the
-            phenomenon under investigation.
-            (Defaults to 0.01)
-        """
-        # init base class first
-        Kernel.__init__(self, **kwargs)
-
-        self.length_scale = length_scale
-        self.kernel_matrix = None
-
-
-    def __repr__(self):
-        return "%s(length_scale=%s)" % (self.__class__.__name__, str(self.length_scale))
-
-    def compute(self, data1, data2=None):
-        """Compute kernel matrix.
-
-        :Parameters:
-          data1 : numpy.ndarray
-            data
-          data2 : numpy.ndarray
-            data
-            (Defaults to None)
-        """
-        self.kernel_matrix = N.exp(-self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2)))
-        return self.kernel_matrix
-
-    def gradient(self,data1,data2):
-        """Compute gradient of the kernel matrix. A must for fast
-        model selection with high-dimensional data.
-        """
-        # TODO SOON
-        grad = None
-        return grad
-
-    def set_hyperparameters(self,*length_scale):
-        """Facility to set lengthscales. Used model selection.
-        """
-        self.length_scale = N.array(length_scale)
-        return
-
-    pass
-
-
 class KernelConstant(Kernel):
     """The constant kernel class.
     """
@@ -240,6 +184,62 @@ class KernelLinear(KernelConstant):
         self.kernel_matrix = N.dot(data1, N.dot(self.Sigma_p,data2.T)) \
                              +self.sigma_0**2
         return self.kernel_matrix
+
+    pass
+
+
+class KernelSquaredExponential(Kernel):
+    """The Squared Exponential kernel class.
+
+    Note that it can handle a length scale for each dimension for
+    Automtic Relevance Determination.
+
+    """
+    def __init__(self, length_scale=1.0, **kwargs):
+        """Initialize a Squared Exponential kernel instance.
+
+        :Parameters:
+          length_scale : float OR numpy.ndarray
+            the characteristic length-scale (or length-scales) of the
+            phenomenon under investigation.
+            (Defaults to 0.01)
+        """
+        # init base class first
+        Kernel.__init__(self, **kwargs)
+
+        self.length_scale = length_scale
+        self.kernel_matrix = None
+
+
+    def __repr__(self):
+        return "%s(length_scale=%s)" % (self.__class__.__name__, str(self.length_scale))
+
+    def compute(self, data1, data2=None):
+        """Compute kernel matrix.
+
+        :Parameters:
+          data1 : numpy.ndarray
+            data
+          data2 : numpy.ndarray
+            data
+            (Defaults to None)
+        """
+        self.kernel_matrix = N.exp(-self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2)))
+        return self.kernel_matrix
+
+    def gradient(self,data1,data2):
+        """Compute gradient of the kernel matrix. A must for fast
+        model selection with high-dimensional data.
+        """
+        # TODO SOON
+        grad = None
+        return grad
+
+    def set_hyperparameters(self,*length_scale):
+        """Facility to set lengthscales. Used model selection.
+        """
+        self.length_scale = N.array(length_scale)
+        return
 
     pass
 
