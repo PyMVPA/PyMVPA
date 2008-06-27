@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base import warning
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import ProjectionMapper
 
@@ -37,8 +38,18 @@ class PCAMapper(ProjectionMapper):
         """Determine the projection matrix onto the components from
         a 2D samples x feature data matrix.
         """
-        node = NIPALSNode(dtype=dataset.samples.dtype)
-        node.train(dataset.samples)
+        samples = dataset.samples
+        dtype = samples.dtype
+        if str(samples.dtype).startswith('uint') \
+               or str(samples.dtype).startswith('int'):
+                warning("PCA: input data is in integers. " + \
+                        "MDP's NIPALSNode operates only on floats, thus "+\
+                        "coercing to double")
+                dtype = N.double
+                samples = samples.astype(N.double)
+
+        node = NIPALSNode(dtype=dtype)
+        node.train(samples)
         self._proj = N.asmatrix(node.get_projmatrix())
         self._recon = N.asmatrix(node.get_recmatrix())
 
