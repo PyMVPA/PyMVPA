@@ -200,6 +200,63 @@ class KernelLinear(Kernel):
     pass
 
 
+class KernelExponential(Kernel):
+    """The Exponential kernel class.
+
+    Note that it can handle a length scale for each dimension for
+    Automtic Relevance Determination.
+
+    """
+    def __init__(self, length_scale=1.0, **kwargs):
+        """Initialize an Exponential kernel instance.
+
+        :Parameters:
+          length_scale : float OR numpy.ndarray
+            the characteristic length-scale (or length-scales) of the
+            phenomenon under investigation.
+            (Defaults to 0.01)
+        """
+        # init base class first
+        Kernel.__init__(self, **kwargs)
+
+        self.length_scale = length_scale
+        self.kernel_matrix = None
+
+
+    def __repr__(self):
+        return "%s(length_scale=%s)" % (self.__class__.__name__, str(self.length_scale))
+
+    def compute(self, data1, data2=None):
+        """Compute kernel matrix.
+
+        :Parameters:
+          data1 : numpy.ndarray
+            data
+          data2 : numpy.ndarray
+            data
+            (Defaults to None)
+        """
+        self.kernel_matrix = N.exp(-N.sqrt(self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))))
+        return self.kernel_matrix
+
+    def gradient(self,data1,data2):
+        """Compute gradient of the kernel matrix. A must for fast
+        model selection with high-dimensional data.
+        """
+        # TODO SOON
+        # grad = ...
+        # return grad
+        raise NotImplementedError
+
+    def set_hyperparameters(self,*length_scale):
+        """Facility to set lengthscales. Used model selection.
+        """
+        self.length_scale = N.array(length_scale)
+        return
+
+    pass
+
+
 class KernelSquaredExponential(Kernel):
     """The Squared Exponential kernel class.
 
@@ -244,8 +301,9 @@ class KernelSquaredExponential(Kernel):
         model selection with high-dimensional data.
         """
         # TODO SOON
-        grad = None
-        return grad
+        # grad = ...
+        # return grad
+        raise NotImplementedError
 
     def set_hyperparameters(self,*length_scale):
         """Facility to set lengthscales. Used model selection.
@@ -266,9 +324,10 @@ class KernelMatern(Kernel):
 
 
 # dictionary of avalable kernels with names as keys:
-kernel_dictionary = {'squared exponential':KernelSquaredExponential,
-                     'constant':KernelConstant,
-                     'linear':KernelLinear}
+kernel_dictionary = {'constant':KernelConstant,
+                     'linear':KernelLinear,
+                     'exponential':KernelExponential,
+                     'squared exponential':KernelSquaredExponential}
 
 if __name__ == "__main__":
 
@@ -281,20 +340,22 @@ if __name__ == "__main__":
     print k
     edm = k.euclidean_distance(data)
 
+    kc = KernelConstant(sigma_0=1.0)
+    print kc
+    kcm = kc.compute(data)
+
+    kl = KernelLinear(Sigma_p=N.eye(data.shape[1]))
+    print kl
+    klm = kl.compute(data)
+
+    ke = KernelExponential()
+    print ke
+    kem = ke.compute(data)
+
     kse = KernelSquaredExponential()
     print kse
     ksem = kse.compute(data)
 
-    dataset = data_generators.wr1996()
-    print dataset
-    data = dataset.samples
-    labels = dataset.labels
-
-    kl = KernelLinear(Sigma_p=N.eye(data.shape[1]))
-    print kl
-
-    kc = KernelConstant(sigma_0=1.0)
-    print kc
 
     # In the following we draw some 2D functions at random from the
     # distribution N(O,kernel) defined by each available kernel and
