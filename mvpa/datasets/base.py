@@ -258,12 +258,12 @@ class Dataset(object):
         XXX `dict_` can be simply replaced now with self._dsattr
         """
         if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
-            if __debug__:
+            if __debug__ and 'DS_' in debug.active:
                 debug("DS_", "Recomputing unique set for attrib %s within %s" %
                       (attrib, self.summary(uniq=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
-            self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
+            self._dsattr[attrib] = N.unique( N.asanyarray(dict_[attrib[6:]]) )
             assert(not self._dsattr[attrib] is None)
             self._dsattr['__uniquereseted'] = False
 

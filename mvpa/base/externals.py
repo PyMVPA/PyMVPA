@@ -39,12 +39,13 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'lars': "import rpy; rpy.r.library('lars')",
           'pylab': "import pylab as __",
           'openopt': "import scikits.openopt as __",
+          'mdp': "import mdp as __",
           'sg_fixedcachesize': "__check_shogun(3043)",
           }
 
 _VERIFIED = {}
 
-_caught_exceptions = [ImportError, AttributeError]
+_caught_exceptions = [ImportError, AttributeError, RuntimeError]
 """Exceptions which are silently caught while running tests for externals"""
 try:
     import rpy

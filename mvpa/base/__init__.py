@@ -242,7 +242,7 @@ if __debug__:
 
     # Lets check if environment can tell us smth
     if cfg.has_option('debug', 'metrics'):
-        debug.registerMetric(cfg.get('debug', 'metric').split(","))
+        debug.registerMetric(cfg.get('debug', 'metrics').split(","))
 
 
 import externals
