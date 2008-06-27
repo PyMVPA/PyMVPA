@@ -253,11 +253,16 @@ class KernelMatern(Kernel):
     pass
 
 
+# dictionary of avalable kernels with names as keys:
+kernel_dictionary = {'squared exponential':KernelSquaredExponential,
+                     'constant':KernelConstant,
+                     'linear':KernelLinear}
+
 if __name__ == "__main__":
 
     from mvpa.misc import data_generators
 
-    N.random.seed(1)
+    # N.random.seed(1)
     data = N.random.rand(4, 2)
 
     k = Kernel()
@@ -279,3 +284,33 @@ if __name__ == "__main__":
     kc = KernelConstant(sigma_0=1.0)
     print kc
 
+    # In the following we draw some 2D functions at random from the
+    # distribution N(O,kernel) defined by each available kernel and
+    # plot them. These plots shows the flexibility of a given kernel
+    # (with default parameters) when doing interpolation. The choice
+    # of a kernel defines a prior probability over the function space
+    # used for regression/classfication with GPR/GPC.
+    import pylab
+    pylab.ion()
+    count = 1
+    for k in kernel_dictionary.keys():
+        pylab.subplot(3,4,count)
+        pylab.ioff()
+        # X = N.random.rand(size)*12.0-6.0
+        # X.sort()
+        X = N.arange(-1,1,.02)
+        X = X[:,N.newaxis]
+        ker = kernel_dictionary[k]()
+        K = ker.compute(X,X)
+        for i in range(10):
+            f = N.random.multivariate_normal(N.zeros(X.shape[0]),K)
+            pylab.plot(X[:,0],f,"b-")
+            pass
+        pylab.ion()
+        pylab.title(k)
+        pylab.axis('tight')
+        count += 1
+        pass
+
+    
+    
