@@ -70,7 +70,7 @@ __optional_tests = ( ('scipy', 'ridge'),
                      (['lars','scipy'], 'lars'),
                      ('nifti', 'niftidataset'),
                      ('mdp', 'icamapper'),
-                     ('mdp', 'pcamapper'),
+#                     ('mdp', 'pcamapper'),
                      )
 
 # and now for the optional tests
