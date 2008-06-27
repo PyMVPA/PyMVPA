@@ -70,6 +70,31 @@ output if corresponding debug_ target is enabled
    debug output (if ``LIBSVM`` debug_ target is enabled) appears on
    standard error
 
+One of the possible redirections is Python's ``StringIO`` class. Instance of
+such class can be added to the ``handlers`` and queried later on for the
+information to be dumped to a file later on. It is useful if output path is
+specified at run time, thus it is impossible to redirect verbose or debug from
+the start of the program:
+
+  >>> import sys
+  >>> from mvpa.base import verbose
+  >>> from StringIO import StringIO
+  >>> stringout = StringIO()
+  >>> verbose.handlers = [sys.stdout, stringout]
+  >>> verbose.level = 3
+  >>>
+  >>> verbose(1, 'msg1')
+   msg1
+  >>> out_prefix='/tmp/'
+  >>>
+  >>> verbose(2, 'msg2')
+    msg2
+  >>> # open('%sverbose.log' % out_prefix, 'w').write(stringout.getvalue())
+  >>> print stringout.getvalue(),
+   msg1
+    msg2
+  >>>
+
 .. index:: verbosity
 
 Verbose Messages
@@ -268,7 +293,7 @@ can be used to perform motion-aware data detrending:
   >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
   >>> # 'res' contains all regressors and their associated weights
 
-All FSL bindings are located in the `mvpa.misc.fsl`_ module. 
+All FSL bindings are located in the `mvpa.misc.fsl`_ module.
 
 .. _FSL: http://www.fmrib.ox.ac.uk
 .. _mvpa.misc.fsl: api/mvpa.misc.fsl-module.html
