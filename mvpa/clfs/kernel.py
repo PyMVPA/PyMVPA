@@ -129,7 +129,7 @@ class KernelConstant(Kernel):
     pass
 
 
-class KernelLinear(KernelConstant):
+class KernelLinear(Kernel):
     """The linear kernel class.
     """
     def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
@@ -169,7 +169,7 @@ class KernelLinear(KernelConstant):
         if data2 == None:
             data2 = data1
             pass
-
+        
         # if Sigma_p is not set use Identity matrix instead:
         if self.Sigma_p == None:
             self.Sigma_p = N.eye(data1.shape[1])
@@ -180,10 +180,22 @@ class KernelLinear(KernelConstant):
             pass
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched
-        
+
         self.kernel_matrix = N.dot(data1, N.dot(self.Sigma_p,data2.T)) \
                              +self.sigma_0**2
         return self.kernel_matrix
+
+    def set_hyperparameters(self,*sigmas):
+        # XXX in the next line we assume that the values we want to
+        # assign to Sigma_p are a constant or a vector (the diagonal
+        # of Sigma_p actually). This is a limitation since these
+        # values could be in general an hermitian matrix (i.e., a
+        # covariance matrix)... but how to tell ModelSelector/OpenOpt
+        # to proved just "hermitian" set of values? So for now we skip
+        # the general case, which seems not to useful indeed.
+        self.Sigma_p = N.diagflat(sigmas[:-1])
+        self.sigma_0 = N.array(sigmas[-1])
+        return
 
     pass
 
