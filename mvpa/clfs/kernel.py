@@ -214,7 +214,7 @@ class KernelExponential(Kernel):
           length_scale : float OR numpy.ndarray
             the characteristic length-scale (or length-scales) of the
             phenomenon under investigation.
-            (Defaults to 0.01)
+            (Defaults to 1.0)
         """
         # init base class first
         Kernel.__init__(self, **kwargs)
@@ -236,6 +236,9 @@ class KernelExponential(Kernel):
             data
             (Defaults to None)
         """
+        # XXX the following computation can be (maybe) made more
+        # efficient since length_scale is squared and then
+        # square-rooted uselessly.
         self.kernel_matrix = N.exp(-N.sqrt(self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))))
         return self.kernel_matrix
 
@@ -271,7 +274,7 @@ class KernelSquaredExponential(Kernel):
           length_scale : float OR numpy.ndarray
             the characteristic length-scale (or length-scales) of the
             phenomenon under investigation.
-            (Defaults to 0.01)
+            (Defaults to 1.0)
         """
         # init base class first
         Kernel.__init__(self, **kwargs)
@@ -314,20 +317,101 @@ class KernelSquaredExponential(Kernel):
     pass
 
 
-class KernelMatern(Kernel):
-    """The Matern kernel class.
+class KernelMatern_3_2(Kernel):
+    """The Matern kernel class for the case ni=3/2 or ni=5/2.
+
+    Note that it can handle a length scale for each dimension for
+    Automtic Relevance Determination.
+
     """
-    # TODO
-    def __init__(self):
+    def __init__(self, length_scale=1.0, numerator=3.0, **kwargs):
+        """Initialize a Squared Exponential kernel instance.
+
+        :Parameters:
+          length_scale : float OR numpy.ndarray
+            the characteristic length-scale (or length-scales) of the
+            phenomenon under investigation.
+            (Defaults to 1.0)
+          numerator: float
+            the numerator of parameter ni of Matern covariance functions.
+            Currently only numerator=3.0 and numerator=5.0 are implemented.
+            (Defaults to 3.0)
+        """
+        # init base class first
+        Kernel.__init__(self, **kwargs)
+
+        self.length_scale = length_scale
+        self.kernel_matrix = None
+        if numerator==3.0 or numerator==5.0:
+            self.numerator = numerator
+        else:
+            raise NotImplementedError
+
+    def __repr__(self):
+        return "%s(length_scale=%s, ni=%f/2)" % (self.__class__.__name__, str(self.length_scale), self.numerator)
+
+    def compute(self, data1, data2=None):
+        """Compute kernel matrix.
+
+        :Parameters:
+          data1 : numpy.ndarray
+            data
+          data2 : numpy.ndarray
+            data
+            (Defaults to None)
+        """
+        tmp = self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))
+        if self.numerator == 3.0:
+            tmp = N.sqrt(tmp)
+            self.kernel_matrix = (1.0+N.sqrt(3.0)*tmp)*N.exp(-N.sqrt(3.0)*tmp)
+        elif self.numerator == 5.0:
+            tmp2 = N.sqrt(tmp)
+            self.kernel_matrix = (1.0+N.sqrt(5.0)*tmp2+5.0/3.0*tmp)*N.exp(-N.sqrt(5.0)*tmp2)
+        return self.kernel_matrix
+
+    def gradient(self,data1,data2):
+        """Compute gradient of the kernel matrix. A must for fast
+        model selection with high-dimensional data.
+        """
+        # TODO SOON
+        # grad = ...
+        # return grad
         raise NotImplementedError
+
+    def set_hyperparameters(self,*length_scale):
+        """Facility to set lengthscales. Used model selection.
+        """
+        self.length_scale = N.array(length_scale)
+        return
+
     pass
 
+
+class KernelMatern_5_2(KernelMatern_3_2):
+    """The Matern kernel class for the case ni=5/2.
+
+    This kernel is just KernelMatern_3_2(numerator=5.0).
+    """
+    def __init__(self, **kwargs):
+        """Initialize a Squared Exponential kernel instance.
+
+        :Parameters:
+          length_scale : float OR numpy.ndarray
+            the characteristic length-scale (or length-scales) of the
+            phenomenon under investigation.
+            (Defaults to 1.0)
+        """
+        KernelMatern_3_2.__init__(self, numerator=5.0,**kwargs)
+        pass
+    
 
 # dictionary of avalable kernels with names as keys:
 kernel_dictionary = {'constant':KernelConstant,
                      'linear':KernelLinear,
                      'exponential':KernelExponential,
-                     'squared exponential':KernelSquaredExponential}
+                     'squared exponential':KernelSquaredExponential,
+                     'Matern ni=3/2':KernelMatern_3_2,
+                     'Matern ni=5/2':KernelMatern_5_2}
 
 if __name__ == "__main__":
 
@@ -355,6 +439,14 @@ if __name__ == "__main__":
     kse = KernelSquaredExponential()
     print kse
     ksem = kse.compute(data)
+
+    km3 = KernelMatern_3_2()
+    print km3
+    km3m = km3.compute(data)
+
+    km5 = KernelMatern_5_2()
+    print km5
+    km5m = km5.compute(data)
 
 
     # In the following we draw some 2D functions at random from the
