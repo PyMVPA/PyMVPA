@@ -53,18 +53,17 @@ class Kernel(object):
             symmetric = True
             pass
 
-        size1 = data1.shape[0]
+        size1, F = data1.shape[0:2]
         size2 = data2.shape[0]
-        F = data1.shape[1]
         if weight is None:
             weight = N.ones(F,'d') # unitary weight
             pass
 
-        euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
-                                            'd')
         # In the following you can find faster implementations of this
         # basic code:
         #
+        # euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
+        #                                    'd')
         # for i in range(size1):
         #     for j in range(size2):
         #         euclidean_distance_matrix[i,j] = ((data1[i,:]-data2[j,:])**2*weight).sum()
@@ -116,7 +115,7 @@ class KernelConstant(Kernel):
             data
             (Defaults to None)
         """
-        if data2 == None:
+        if data2 is None:
             data2 = data1
             pass
         self.kernel_matrix = (self.sigma_0**2)*N.ones((data1.shape[0],data2.shape[0]))
@@ -166,12 +165,12 @@ class KernelLinear(Kernel):
             data
             (Defaults to None)
         """
-        if data2 == None:
+        if data2 is None:
             data2 = data1
             pass
-        
+
         # if Sigma_p is not set use Identity matrix instead:
-        if self.Sigma_p == None:
+        if self.Sigma_p is None:
             self.Sigma_p = N.eye(data1.shape[1])
         elif N.isscalar(self.Sigma_p): # if scalar use Identitiy matrix times scalar
             self.Sigma_p =  N.diagflat(N.ones(data.shape[1]*self.Sigma_p))
@@ -378,7 +377,7 @@ class KernelMatern_3_2(Kernel):
         # return grad
         raise NotImplementedError
 
-    def set_hyperparameters(self,*length_scale):
+    def set_hyperparameters(self, *length_scale):
         """Facility to set lengthscales. Used model selection.
         """
         self.length_scale = N.array(length_scale)
@@ -401,9 +400,9 @@ class KernelMatern_5_2(KernelMatern_3_2):
             phenomenon under investigation.
             (Defaults to 1.0)
         """
-        KernelMatern_3_2.__init__(self, numerator=5.0,**kwargs)
+        KernelMatern_3_2.__init__(self, numerator=5.0, **kwargs)
         pass
-    
+
 
 # dictionary of avalable kernels with names as keys:
 kernel_dictionary = {'constant':KernelConstant,
