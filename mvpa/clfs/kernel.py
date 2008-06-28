@@ -173,7 +173,7 @@ class KernelLinear(Kernel):
         if self.Sigma_p is None:
             self.Sigma_p = N.eye(data1.shape[1])
         elif N.isscalar(self.Sigma_p): # if scalar use Identitiy matrix times scalar
-            self.Sigma_p =  N.diagflat(N.ones(data.shape[1]*self.Sigma_p))
+            self.Sigma_p = N.eye([self.Sigma_p]*data.shape[1])
         elif len(self.Sigma_p.shape)==1 and self.Sigma_p.shape[1]==data1.shape[1]: # if vector use it as diagonal matrix
             self.Sigma_p == N.diagflat(self.Sigma_p)
             pass
