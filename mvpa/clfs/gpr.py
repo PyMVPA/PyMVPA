@@ -132,16 +132,17 @@ class GPR(Classifier):
         if __debug__:
             debug('GPR', "Computing train test kernel matrix")
         km_train_test = self.__kernel.compute(self.train_fv, data)
-        if __debug__:
-            debug('GPR', "Computing test test kernel matrix")
-        km_test_test = self.__kernel.compute(data)
 
         predictions = N.dot(km_train_test.transpose(), self.alpha)
 
         if self.states.isEnabled('predicted_variances'):
+            # do computation only if state variable was enabled
+            if __debug__:
+                debug('GPR', "Computing test test kernel matrix")
+            km_test_test = self.__kernel.compute(data)
+
             if __debug__:
                 debug("GPR", "Computing predicted variances")
-            # do computation only if state variable was enabled
             v = N.linalg.solve(self.L, km_train_test)
             self.predicted_variances = \
                            N.diag(km_test_test-N.dot(v.transpose(), v)) + self.sigma_noise**2
