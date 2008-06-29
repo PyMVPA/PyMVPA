@@ -1301,6 +1301,8 @@ class SplitClassifier(CombinedClassifier):
                 analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
                 **kwargs)
 
+    splitter = property(fget=lambda x:x.__splitter,
+                        doc="Splitter user by SplitClassifier")
 
 
 class MappedClassifier(ProxyClassifier):

@@ -25,8 +25,6 @@ class kNN(Classifier):
     calling predict().
     """
 
-    __warned = False
-
     _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
 
     def __init__(self, k=2, **kwargs):
@@ -67,10 +65,8 @@ class kNN(Classifier):
         """
         self.__data = data
         if __debug__:
-            if not kNN.__warned and \
-                str(data.samples.dtype).startswith('uint') \
+            if str(data.samples.dtype).startswith('uint') \
                 or str(data.samples.dtype).startswith('int'):
-                kNN.__warned = True
                 warning("kNN: input data is in integers. " + \
                         "Overflow on arithmetic operations might result in"+\
                         " errors. Please convert dataset's samples into" +\

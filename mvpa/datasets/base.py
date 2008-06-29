@@ -258,7 +258,7 @@ class Dataset(object):
         XXX `dict_` can be simply replaced now with self._dsattr
         """
         if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
-            if __debug__:
+            if __debug__ and 'DS_' in debug.active:
                 debug("DS_", "Recomputing unique set for attrib %s within %s" %
                       (attrib, self.summary(uniq=False)))
             # uff... might come up with better strategy to keep relevant

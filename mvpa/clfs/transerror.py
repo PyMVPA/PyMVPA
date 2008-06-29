@@ -207,6 +207,11 @@ class SummaryStatistics(object):
         self.compute()
         return self._stats
 
+    def reset(self):
+        """Cleans summary -- all data/sets are wiped out
+        """
+        self.__sets = []
+        self._computed = False
 
     sets = property(lambda self:self.__sets)
 
@@ -341,9 +346,13 @@ class ConfusionMatrix(SummaryStatistics):
         stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
         stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
-        stats['MCC'] = \
-            (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN']) \
-            / N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+
+        MCC_denom = N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+        nz = MCC_denom!=0.0
+        stats['MCC'] = N.zeros(stats['TP'].shape)
+        stats['MCC'][nz] = \
+                     (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz] \
+                     / MCC_denom[nz]
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0

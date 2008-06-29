@@ -36,7 +36,7 @@ class MaskedDataset(MappedDataset):
         """
         # need if clause here as N.array(None) != None
         if not samples is None:
-            samples = N.array(samples)
+            samples = N.asarray(samples)  # XXX should be asanyarray? but then smth segfaults on unittests
             if mask is None:
                 # make full dataspace mask if nothing else is provided
                 mask = N.ones(samples.shape[1:], dtype='bool')
