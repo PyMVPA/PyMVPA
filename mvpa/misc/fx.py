@@ -11,7 +11,6 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-from scipy.optimize import leastsq
 
 
 def singleGammaHRF(t, A=5.4, W=5.2, K=1.0):
@@ -99,6 +98,9 @@ def leastSqFit(fx, params, y, x=None, **kwargs):
       or failure of the fitting procedure (see leastsq docs for more
       information).
     """
+    # import here to not let the whole module depend on SciPy
+    from scipy.optimize import leastsq
+
     y = N.asanyarray(y)
 
     if len(y.shape) > 1:
