@@ -82,6 +82,7 @@ class GPR(Classifier):
         """
         Compute log marginal likelihood using self.train_fv and self.labels.
         """
+        if __debug__: debug("GPR", "Computing log_marginal_likelihood")
         log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
                                   N.log(self.L.diagonal()).sum() - \
                                   self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
@@ -99,20 +100,27 @@ class GPR(Classifier):
 
         if __debug__:
             debug("GPR", "Computing train train kernel matrix")
-
         self.km_train_train = self.__kernel.compute(self.train_fv)
 
         # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
         # but preliminary tests show them to be slower and less stable.
 
+        if __debug__:
+            debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
         self.L = N.linalg.cholesky(self.km_train_train +
               self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
+
+        if __debug__:
+            debug("GPR", "Computing alpha")
         self.alpha = N.linalg.solve(self.L.transpose(),
                                     N.linalg.solve(self.L, self.train_labels))
 
         # compute only if the state is enabled
         if self.states.isEnabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
+
+        if __debug__:
+            debug("GPR", "Done training")
 
         pass
 
@@ -124,18 +132,23 @@ class GPR(Classifier):
         if __debug__:
             debug('GPR', "Computing train test kernel matrix")
         km_train_test = self.__kernel.compute(self.train_fv, data)
-        if __debug__:
-            debug('GPR', "Computing test test kernel matrix")
-        km_test_test = self.__kernel.compute(data)
 
         predictions = N.dot(km_train_test.transpose(), self.alpha)
 
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
+            if __debug__:
+                debug('GPR', "Computing test test kernel matrix")
+            km_test_test = self.__kernel.compute(data)
+
+            if __debug__:
+                debug("GPR", "Computing predicted variances")
             v = N.linalg.solve(self.L, km_train_test)
             self.predicted_variances = \
-                           N.diag(km_test_test-N.dot(v.transpose(), v))
+                           N.diag(km_test_test-N.dot(v.transpose(), v)) + self.sigma_noise**2
 
+        if __debug__:
+            debug("GPR", "Done predicting")
         return predictions
 
 
@@ -153,6 +166,7 @@ class GPR(Classifier):
             pass
         return
 
+    kernel = property(fget=lambda self:self.__kernel)
     pass
 
 
