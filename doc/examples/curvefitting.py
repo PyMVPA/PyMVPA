@@ -15,7 +15,6 @@ import pylab as P
 from mvpa.misc.plot import errLinePlot
 from mvpa.misc.fx import singleGammaHRF, leastSqFit
 
-
 # make dataset
 # 40 identical 'trial time courses' generated from a simple gamma function
 #   time-to-peak: 6s
@@ -43,5 +42,6 @@ errLinePlot(a, curves=curves, linestyle='-')
 # add legend to plot
 P.legend(('original', 'fit'))
 
-# show the cool figure
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    # show the cool figure
+    P.show()
