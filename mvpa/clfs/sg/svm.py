@@ -437,10 +437,10 @@ class SVM(_SVM):
 
         if retrainable:
             # we must assign it only if it is retrainable
-            self.states.retested = not changed_testdata
+            self.states.repredicted = not changed_testdata
             if __debug__:
-                debug("SG__", "Re-assigning learing kernel. Retested is %s"
-                      % self.states.retested)
+                debug("SG__", "Re-assigning learing kernel. Repredicted is %s"
+                      % self.states.repredicted)
             # return back original kernel
             self.__svm.set_kernel(self.__kernel)
 

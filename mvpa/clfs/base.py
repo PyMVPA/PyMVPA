@@ -204,13 +204,14 @@ class Classifier(Parametrized):
         """
         # So we reset all state variables and may be free up some memory
         # explicitely
-        if not self.params.retrainable:
+        params = self.params
+        if not params.retrainable:
             self.untrain()
         else:
             # just reset the states, do not untrain
             self.states.reset()
             if not self.__changedData_isset:
-                self.__resetWasChanged()
+                self.__resetChangedData()
                 _changedData = self._changedData
                 # if we don't know what was changed we need to figure
                 # them out
@@ -225,7 +226,7 @@ class Classifier(Parametrized):
                 if __debug__:
                     debug('CLF_', "Obtained _changedData is %s" % (self._changedData))
 
-        if not self.params.regression and 'regression' in self._clf_internals \
+        if not params.regression and 'regression' in self._clf_internals \
            and not self.states.isEnabled('trained_labels'):
             # if classifier internally does regression we need to have
             # labels it was trained on
@@ -339,7 +340,7 @@ class Classifier(Parametrized):
 
         if self.params.retrainable:
             if not self.__changedData_isset:
-                self.__resetWasChanged()
+                self.__resetChangedData()
                 _changedData = self._changedData
                 _changedData['testdata'] = self.__wasDataChanged('testdata', data)
                 if __debug__:
@@ -455,6 +456,7 @@ class Classifier(Parametrized):
         """Reset trained state"""
         self.__trainednfeatures = None
         # probably not needed... retrainable shouldn't be fully untrained
+        # XXX or should be??
         #if self.params.retrainable:
         #    # XXX don't duplicate the code ;-)
         #    self.__idhashes = {'traindata': None, 'labels': None,
@@ -468,29 +470,40 @@ class Classifier(Parametrized):
         raise NotImplementedError
 
 
+    #
+    # Methods which are needed for retrainable classifiers
+    #
     def _setRetrainable(self, value):
-        """Assign value of retrainable
+        """Assign value of retrainable parameter
 
-        If retrainable flag is to be changed, classifier has to be untrained
+        If retrainable flag is to be changed, classifier has to be
+        untrained.  Also internal attributes such as __changedData,
+        __changedData_isset, and __idhashes should be initialized if
+        it becomes retrainable
         """
         pretrainable = self.params['retrainable']
         if value != pretrainable.value:
+            if 'meta' in self._clf_internals:
+                warning("Retrainability is not yet crafted/tested for "
+                        "meta classifiers. Unpredictable behavior might occur")
             # assure that we don't drag anything behind
             self.untrain()
             states = self.states
             if not value and states.isKnown('retrained'):
                 states.remove('retrained')
-                states.remove('retested')
+                states.remove('repredicted')
             if value:
                 if not 'retrainable' in self._clf_internals:
                     warning("Setting of flag retrainable for %s has no effect"
-                            " since classifier has no such capability" % self)
+                            " since classifier has no such capability. It would"
+                            " just lead to resources consumption and slowdown"
+                            % self)
                 states.add(StateVariable(enabled=True,
                         name='retrained',
                         doc="Either retrainable classifier was retrained"))
                 states.add(StateVariable(enabled=True,
-                        name='retested',
-                        doc="Either retrainable classifier was retested"))
+                        name='repredicted',
+                        doc="Either retrainable classifier was repredicted"))
 
             pretrainable.value = value
 
@@ -504,20 +517,21 @@ class Classifier(Parametrized):
                     # but if we like to get rid of __traineddataset then we should
                     # use idhash anyways
                     self.__trained = self.__idhashes.copy() # just the same Nones ;-)
-                self.__resetWasChanged()
+                self.__resetChangedData()
             elif 'retrainable' in self._clf_internals:
-                self.__resetWasChanged()
+                self.__resetChangedData()
                 self.__idhashes = None
                 if __debug__ and 'CHECK_RETRAIN' in debug.active:
                     self.__trained = None
 
-    def __resetWasChanged(self):
+    def __resetChangedData(self):
         """For retrainable classifier we keep track of what was changed
         This function resets that dictionary
         """
         if __debug__:
             debug('CLF_', 'Resetting flags on either data was changed (for retrainable)')
         keys = self.__idhashes.keys() + self._paramscols
+        # XXX we might like just to reinit values to False
         self._changedData = dict(zip(keys, [False]*len(keys)))
         self.__changedData_isset = False
 
@@ -551,7 +565,17 @@ class Classifier(Parametrized):
         return changed
 
 
-    def retrain(self, **kwargs):
+    #
+    # Additional API which is specific only for retrainable classifiers.
+    # For now it would just puke if asked from not retrainable one XXX
+    #
+    # Might come useful and efficient for statistics testing, so if just
+    # labels of dataset changed, then
+    #  self.retrain(dataset, labels=True)
+    # would cause efficient retraining (no kernels recomputed etc)
+    # and subsequent self.repredict(data) should be also quite fase ;-)
+
+    def retrain(self, dataset, **kwargs):
         """Helper to avoid check if data was changed actually changed
 
         :Parameters:
@@ -562,25 +586,39 @@ class Classifier(Parametrized):
         """
         # Note that it also demolishes anything for repredicting,
         # which should be ok in most of the cases
-        self.__resetWasChanged()
+        if __debug__ and not self.params.retrainable:
+            raise RuntimeError, \
+                  "Do not use retrain/repredict on non-retrainable classifiers"
+        self.__resetChangedData()
         self._changedData.update(kwargs)
         self.__changedData_isset = True
-        self.train(self.traindataset)
+        self.train(dataset)
 
 
-    def repredict(self, **kwargs):
+    def repredict(self, data, **kwargs):
         """Helper to avoid check if data was changed actually changed
 
         :Parameters:
+          data
+            data which is conventionally given to predict
           kwargs
             that is what _changedData gets updated with. So, smth like
             ``(params=['C'], labels=True)`` if parameter C and labels
             got changed
         """
-        self.__resetWasChanged()
+        if len(kwargs)>0:
+            raise RuntimeError, \
+                  "repredict for now should be used without params since " \
+                  "it makes little sense to repredict if anything got changed"
+        if __debug__ and not self.params.retrainable:
+            raise RuntimeError, \
+                  "Do not use retrain/repredict on non-retrainable classifiers"
+
+        self.__resetChangedData()
         self._changedData.update(kwargs)
         self.__changedData_isset = True
-        return self.predict(self.traindataset)
+
+        return self.predict(data)
 
 
     # TODO: callback into retrainable parameter
