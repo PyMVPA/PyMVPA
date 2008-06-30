@@ -414,6 +414,7 @@ class KernelMatern_3_2(Kernel):
         """Set hyperaparmeters from a vector.
 
         Used by model selection.
+        Note: 'numerator' is not considered as an hyperparameter.
         """
         if N.any(hyperparameter<0):
             raise InvalidHyperparameter()
@@ -442,13 +443,85 @@ class KernelMatern_5_2(KernelMatern_3_2):
         pass
 
 
+class KernelRationalQuadratic(Kernel):
+    """The Rational Quadratic (RQ) kernel class.
+
+    Note that it can handle a length scale for each dimension for
+    Automtic Relevance Determination.
+
+    """
+    def __init__(self, length_scale=1.0, sigma_f=1.0, alpha=0.5, **kwargs):
+        """Initialize a Squared Exponential kernel instance.
+
+        :Parameters:
+          length_scale : float OR numpy.ndarray
+            the characteristic length-scale (or length-scales) of the
+            phenomenon under investigation.
+            (Defaults to 1.0)
+          sigma_f : float
+            Signal standard deviation.
+            (Defaults to 1.0)
+          alpha: float
+            The parameter of the RQ functions family.
+            (Defaults to 2.0)
+        """
+        # init base class first
+        Kernel.__init__(self, **kwargs)
+
+        self.length_scale = length_scale
+        self.sigma_f = sigma_f
+        self.kernel_matrix = None
+        self.alpha = alpha
+
+    def __repr__(self):
+        return "%s(length_scale=%s, alpha=%f)" % (self.__class__.__name__, str(self.length_scale), self.alpha)
+
+    def compute(self, data1, data2=None):
+        """Compute kernel matrix.
+
+        :Parameters:
+          data1 : numpy.ndarray
+            data
+          data2 : numpy.ndarray
+            data
+            (Defaults to None)
+        """
+        tmp = self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))
+        self.kernel_matrix = self.sigma_f*(1.0+tmp/(2.0*self.alpha))**-self.alpha
+        return self.kernel_matrix
+
+    def gradient(self,data1,data2):
+        """Compute gradient of the kernel matrix. A must for fast
+        model selection with high-dimensional data.
+        """
+        # TODO SOON
+        # grad = ...
+        # return grad
+        raise NotImplementedError
+
+    def set_hyperparameters(self, hyperparameter):
+        """Set hyperaparmeters from a vector.
+
+        Used by model selection.
+        Note: 'alpha' is not considered as an hyperparameter.
+        """
+        if N.any(hyperparameter<0):
+            raise InvalidHyperparameter()
+        self.sigma_f = hyperparameter[0]
+        self.length_scale = hyperparameter[1:]
+        return
+
+    pass
+
+
 # dictionary of avalable kernels with names as keys:
 kernel_dictionary = {'constant':KernelConstant,
                      'linear':KernelLinear,
                      'exponential':KernelExponential,
                      'squared exponential':KernelSquaredExponential,
                      'Matern ni=3/2':KernelMatern_3_2,
-                     'Matern ni=5/2':KernelMatern_5_2}
+                     'Matern ni=5/2':KernelMatern_5_2,
+                     'rational quadratic':KernelRationalQuadratic}
 
 if __name__ == "__main__":
 
