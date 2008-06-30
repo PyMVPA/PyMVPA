@@ -102,13 +102,26 @@ class GPR(Classifier):
             debug("GPR", "Computing train train kernel matrix")
         self.km_train_train = self.__kernel.compute(self.train_fv)
 
-        # note scipy.cho_factor and scipy.cho_solve seems to be more appropriate
-        # but preliminary tests show them to be slower and less stable.
-
         if __debug__:
             debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
-        self.L = N.linalg.cholesky(self.km_train_train +
-              self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd'))
+
+        tmp = self.km_train_train + self.sigma_noise**2*N.identity(self.km_train_train.shape[0],'d')
+        # The following line could raise N.linalg.linalg.LinAlgError
+        # because of numerical reasons due to the too rapid decay of
+        # 'tmp' eigenvalues. In that case we try adding a small
+        # constant to tmp, e.g. epsilon=1.0e-20. It should be a form
+        # of Tikhonov regularization. This is equivalent to adding
+        # little white gaussian noise.
+        try:
+            self.L = N.linalg.cholesky(tmp)
+        except N.linalg.linalg.LinAlgError:
+            epsilon = 1.0e-20
+            self.L = N.linalg.cholesky(tmp+epsilon)
+            pass
+        # Note: scipy.cho_factor and scipy.cho_solve seems to be more
+        # appropriate to perform Cholesky decomposition and the
+        # 'solve' step of the following lines, but preliminary tests
+        # show them to be slower and less stable than NumPy's way.
 
         if __debug__:
             debug("GPR", "Computing alpha")
@@ -152,17 +165,18 @@ class GPR(Classifier):
         return predictions
 
 
-    def set_hyperparameters(self,*args):
+    def set_hyperparameters(self,hyperparameter):
         """
         Set hyperparameters' values.
 
-        Note that this is a list so the order of the values is
-        important.
+        Note that 'hyperparameter' is a sequence so the order of its
+        values is important. First value must be sigma_noise, then
+        other kernel's hyperparameters values follow in the exact
+        order the kernel expect them to be.
         """
-        args=args[0]
-        self.sigma_noise = args[0]
-        if len(args)>1:
-            self.__kernel.set_hyperparameters(*args[1:])
+        self.sigma_noise = hyperparameter[0]
+        if hyperparameter.size>1:
+            self.__kernel.set_hyperparameters(hyperparameter[1:])
             pass
         return
 
