@@ -818,8 +818,10 @@ class collector(type):
                                   initial_indent="    ",
                                   width=70)
 
+        paramscols = []
         for col in ('params', 'kernel_params'):
             if collections.has_key(col):
+                paramscols.append(col)
                 for param, parameter in collections[col].items.iteritems():
                     paramsdoc += "  %s" % param
                     try:
@@ -837,6 +839,7 @@ class collector(type):
                     except Exception, e:
                         pass
 
+        setattr(cls, "_paramscols", paramscols)
         if paramsdoc != "":
             if __debug__:
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)

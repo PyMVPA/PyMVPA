@@ -36,6 +36,7 @@ else:
 import time
 from sets import Set
 
+from mvpa.misc.support import idhash
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
@@ -182,10 +183,10 @@ class Classifier(Parametrized):
                 # regression explicitely
                 self._clf_internals.append('binary')
 
-
-        self.__trainedidhash = None
-        """Stores id of the dataset on which it was trained to signal
-        in trained() if it was trained already on the same dataset"""
+        # deprecate
+        #self.__trainedidhash = None
+        #"""Stores id of the dataset on which it was trained to signal
+        #in trained() if it was trained already on the same dataset"""
 
 
     def __str__(self):
@@ -206,8 +207,23 @@ class Classifier(Parametrized):
         if not self.params.retrainable:
             self.untrain()
         else:
-            # just reset the states
+            # just reset the states, do not untrain
             self.states.reset()
+            if not self._changedData_isset:
+                self.__resetWasChanged()
+                _changedData = self._changedData
+                # if we don't know what was changed we need to figure
+                # them out
+                if __debug__:
+                    debug('CLF_', "IDHashes are %s" % (self.__idhashes))
+                _changedData['traindata'] = self.__wasDataChanged('traindata', dataset.samples)
+                _changedData['labels'] = self.__wasDataChanged('labels', dataset.labels)
+                for col in self._paramscols:
+                    changedParams = self._collections[col].whichSet()
+                    if len(changedParams):
+                        _changedData[col] = changedParams
+                if __debug__:
+                    debug('CLF_', "Obtained _changedData is %s" % (self._changedData))
 
         if not self.params.regression and 'regression' in self._clf_internals \
            and not self.states.isEnabled('trained_labels'):
@@ -233,7 +249,9 @@ class Classifier(Parametrized):
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
-        self.__trainedidhash = dataset.idhash
+
+        if __debug__ and 'CHECK_TRAINED' in debug.active:
+            self.__trainedidhash = dataset.idhash
 
         if self.states.isEnabled('training_confusion') and \
                not self.states.isSet('training_confusion'):
@@ -319,6 +337,16 @@ class Classifier(Parametrized):
                       "thus can't predict for %d features" % nfeatures
 
 
+        if self.params.retrainable:
+            # XXX we need repredict(), right?
+            if not self._changedData_isset:
+                self.__resetWasChanged() # XXX???
+                _changedData = self._changedData
+                _changedData['testdata'] = self.__wasDataChanged('testdata', data)
+                if __debug__:
+                    debug('CLF_', "prepredict: Obtained _changedData is %s" % (_changedData))
+
+
     def _postpredict(self, data, result):
         """Functionality after prediction is computed
         """
@@ -390,6 +418,7 @@ class Classifier(Parametrized):
         self._postpredict(data, result)
         return result
 
+    # XXX deprecate ?
     def isTrained(self, dataset=None):
         """Either classifier was already trained.
 
@@ -398,8 +427,18 @@ class Classifier(Parametrized):
             # simply return if it was trained on anything
             return not self.__trainednfeatures is None
         else:
-            return (self.__trainednfeatures == dataset.nfeatures) \
-                   and (self.__trainedidhash == dataset.idhash)
+            res = (self.__trainednfeatures == dataset.nfeatures)
+            if __debug__ and 'CHECK_TRAINED' in debug.active:
+                res2 = (self.__trainedidhash == dataset.idhash)
+                if res2 != res:
+                    raise RuntimeError, \
+                          "isTrained is weak and shouldn't be relied upon. " \
+                          "Got result %b although comparing of idhash says %b" \
+                          % (res, res2)
+            return res
+        # XXX it was weak checking... we better just add CHECK_ debug id
+        # to make sure that we are somewhat correct
+        #\ and (self.__trainedidhash == dataset.idhash)
 
 
     def _regressionIsBogus(self):
@@ -419,6 +458,11 @@ class Classifier(Parametrized):
     def untrain(self):
         """Reset trained state"""
         self.__trainednfeatures = None
+        # probably not needed... retrainable shouldn't be fully untrained
+        #if self.params.retrainable:
+        #    # XXX don't duplicate the code ;-)
+        #    self.__idhashes = {'traindata': None, 'labels': None,
+        #                       'testdata': None, 'testtraindata': None}
         super(Classifier, self).reset()
 
 
@@ -433,10 +477,10 @@ class Classifier(Parametrized):
 
         If retrainable flag is to be changed, classifier has to be untrained
         """
-        if value != self.params.retrainable:
+        pretrainable = self.params['retrainable']
+        if value != pretrainable.value:
             # assure that we don't drag anything behind
-            if self.trained:
-                self.untrain()
+            self.untrain()
             states = self.states
             if not value and states.isKnown('retrained'):
                 states.remove('retrained')
@@ -452,7 +496,94 @@ class Classifier(Parametrized):
                         name='retested',
                         doc="Either retrainable classifier was retested"))
 
-            self.params.retrainable = value
+            pretrainable.value = value
+
+            # if retrainable we need to keep track of things
+            if value:
+                self.__idhashes = {'traindata': None, 'labels': None,
+                                   'testdata': None, 'testtraindata': None}
+                if __debug__ and 'CHECK_RETRAIN' in debug.active:
+                    # XXX it is not clear though if idhash is faster than
+                    # simple comparison of (dataset != __traineddataset).any(),
+                    # but if we like to get rid of __traineddataset then we should
+                    # use idhash anyways
+                    self.__trained = self.__idhashes.copy() # just the same Nones ;-)
+                self.__resetWasChanged()
+            elif 'retrainable' in self._clf_internals:
+                self.__resetWasChanged()
+                self.__idhashes = None
+                if __debug__ and 'CHECK_RETRAIN' in debug.active:
+                    self.__trained = None
+
+    def __resetWasChanged(self):
+        """For retrainable classifier we keep track of what was changed
+        This function resets that dictionary
+        """
+        if __debug__:
+            debug('CLF_', 'Resetting flags on either data was changed (for retrainable)')
+        keys = self.__idhashes.keys() + self._paramscols
+        self._changedData = dict(zip(keys, [False]*len(keys)))
+        self._changedData_isset = False
+
+
+    def __wasDataChanged(self, key, entry):
+        """Check if given entry was changed from what known prior. If so -- store
+
+        needed only for retrainable beastie
+        """
+        idhash_ = idhash(entry)
+        __idhashes = self.__idhashes
+
+        changed = __idhashes[key] != idhash_
+        if __debug__ and 'CHECK_RETRAIN' in debug.active:
+            __trained = self.__trained
+            changed2 = entry != __trained[key]
+            if isinstance(changed2, N.ndarray):
+                changed2 = changed2.any()
+            if changed != changed2 and not changed:
+                raise RuntimeError, \
+                  'idhash found to be weak for %s. Though hashid %s!=%s %s, '\
+                  'values %s!=%s %s' % \
+                  (key, idhash_, __idhashes[key], changed,
+                   entry, __trained[key], changed2)
+            __trained[key] = entry
+
+        if __debug__ and changed:
+            debug('CLF_', "Changed %s from %s to %s"
+                      % (key, __idhashes[key], idhash_))
+        __idhashes[key] = idhash_
+        return changed
+
+
+    def retrain(self, **kwargs):
+        """Helper to avoid check if data was changed actually changed
+
+        :Parameters:
+          kwargs
+            that is what _changedData gets updated with. So, smth like
+            ``(params=['C'], labels=True)`` if parameter C and labels
+            got changed
+        """
+        self.__resetWasChanged()        # XXX so we demolish anything for repredicting which should be ok in most of the cases
+        self._changedData.update(kwargs)
+        self._changedData_isset = True
+        self.train(self.traindataset)
+
+
+    def repredict(self, **kwargs):
+        """Helper to avoid check if data was changed actually changed
+
+        :Parameters:
+          kwargs
+            that is what _changedData gets updated with. So, smth like
+            ``(params=['C'], labels=True)`` if parameter C and labels
+            got changed
+        """
+        self.__resetWasChanged()        # XXX so we demolish anything for repredicting which should be ok in most of the cases
+        self._changedData.update(kwargs)
+        self._changedData_isset = True
+        return self.predict(self.traindataset)
+
 
     # TODO: callback into retrainable parameter
     #retrainable = property(fget=_getRetrainable, fset=_setRetrainable,
