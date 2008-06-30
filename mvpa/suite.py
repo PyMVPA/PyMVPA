@@ -32,6 +32,7 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.gpr import *
+from mvpa.clfs.blr import *
 from mvpa.clfs.stats import *
 if externals.exists('libsvm') or externals.exists('shogun'):
     from mvpa.clfs.svm import *

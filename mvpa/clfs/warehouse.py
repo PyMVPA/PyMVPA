@@ -287,6 +287,7 @@ clfs += \
 
 # GPR
 clfs += GPR(descr="GPR()")
+clfs += BLR(descr="BLR()")
 
 # BLR
 clfs += BLR(descr="BLR()")
