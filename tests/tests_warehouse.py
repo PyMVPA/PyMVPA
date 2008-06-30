@@ -95,21 +95,29 @@ specs = { 'large' : { 'perlabel' : 99, 'nchunks' : 11, 'nfeatures' : 20, 'snr' :
           'medium' : { 'perlabel' : 24, 'nchunks' : 6, 'nfeatures' : 14, 'snr' : 8 },
           'small' : { 'perlabel' : 12,  'nchunks' : 4, 'nfeatures' : 6, 'snr' : 14} }
 nonbogus_pool = [0, 1, 3, 5]
+
 datasets = {}
 
 for kind, spec in specs.iteritems():
     # set of univariate datasets
     for nlabels in [ 2, 3, 4 ]:
         basename = 'uni%d%s' % (nlabels, kind)
+        nonbogus_features=nonbogus_pool[:nlabels]
+        bogus_features = filter(lambda x:not x in nonbogus_features,
+                                range(spec['nfeatures']))
+
         dataset = normalFeatureDataset(
             nlabels=nlabels,
-            nonbogus_features=nonbogus_pool[:nlabels],
+            nonbogus_features=nonbogus_features,
             **spec)
+        dataset.nonbogus_features = nonbogus_features
+        dataset.bogus_features = bogus_features
         oes = OddEvenSplitter()
         splits = [(train, test) for (train, test) in oes(dataset)]
         for i, replication in enumerate( ['test', 'train'] ):
             dataset_ = splits[0][i]
-            dataset_.nonbogus_features = nonbogus_pool[:nlabels]
+            dataset_.nonbogus_features = nonbogus_features
+            dataset_.bogus_features = bogus_features
             datasets["%s_%s" % (basename, replication)] = dataset_
 
         # full dataset
