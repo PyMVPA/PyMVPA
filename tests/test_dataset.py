@@ -333,8 +333,8 @@ class DatasetTests(unittest.TestCase):
                         msg="Permutation also changes idhash")
 
         dataset.permuteLabels(False)
-        self.failUnless(origid != dataset.idhash,
-                        msg="Permutation also changes idhash even on restore")
+        self.failUnless(origid == dataset.idhash,
+                        msg="idhash should be restored after permuteLabels(False)")
 
 
     def testFeatureMaskConversion(self):

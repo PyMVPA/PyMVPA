@@ -799,7 +799,7 @@ class Dataset(object):
                                     'permuteLabels() has never been ' \
                                     'called with status == True.'
             self.labels = self._data['origlabels']
-            self._data['origlabels'] = None
+            self._data.pop('origlabels')
         else:
             # store orig labels, but only if not yet done, otherwise multiple
             # calls with status == True will destroy the original labels
