@@ -184,6 +184,8 @@ if __debug__:
     debug.register('CHECK_DS_SORTED', "Checking in datasets for sorted")
     debug.register('CHECK_IDS_SORTED',
                    "Checking for ids being sorted in mappers")
+    debug.register('CHECK_TRAINED',
+                   "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
 
     debug.register('COL',  "Generic Collectable debugging")
