@@ -558,6 +558,9 @@ if __name__ == "__main__":
     print km5
     km5m = km5.compute(data)
 
+    krq = KernelRationalQuadratic()
+    print krq
+    krqm = krq.compute(data)
 
     # In the following we draw some 2D functions at random from the
     # distribution N(O,kernel) defined by each available kernel and
