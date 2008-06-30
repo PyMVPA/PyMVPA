@@ -178,19 +178,39 @@ class KernelLinear(Kernel):
             data2 = data1
             pass
 
-        # if Sigma_p is not set use Identity matrix instead:
+        # if Sigma_p is not set use a scalar 1.0
         if self.Sigma_p is None:
-            self.Sigma_p = N.eye(data1.shape[1])
-        elif N.isscalar(self.Sigma_p): # if scalar use Identitiy matrix times scalar
-            self.Sigma_p = N.eye([self.Sigma_p]*data.shape[1])
-        elif len(self.Sigma_p.shape)==1 and self.Sigma_p.shape[1]==data1.shape[1]: # if vector use it as diagonal matrix
-            self.Sigma_p == N.diagflat(self.Sigma_p)
+            self.Sigma_p = 1.0
+
+        # it is better to use separate lines of computation, to don't
+        # incure computation cost without need (otherwise
+        # N.dot(self.Sigma_p, data2.T) can take forever for relatively
+        # large number of features)
+
+        #if scalar - scale second term appropriately
+        if N.isscalar(self.Sigma_p):
+            if self.Sigma_p == 1.0:
+                data2_sc = data2.T
+            else:
+                data2_sc = self.Sigma_p * data2.T
+
+        # if vector use it as diagonal matrix -- ie scale each row by
+        # the given value
+        elif len(self.Sigma_p.shape) == 1 and \
+                 self.Sigma_p.shape[0] == data1.shape[1]:
+            # which due to numpy broadcasting is the same as product
+            # with scalar above
+            data2_sc = (self.Sigma_p * data1).T
+
+        # if it is a full matrix -- full-featured and lengthy
+        # matrix product
+        else:
+            data2_sc = N.dot(self.Sigma_p, data2.T)
             pass
+
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched
-
-        self.kernel_matrix = N.dot(data1, N.dot(self.Sigma_p,data2.T)) \
-                             +self.sigma_0**2
+        self.kernel_matrix = N.dot(data1, data2_sc) + self.sigma_0**2
         return self.kernel_matrix
 
     def set_hyperparameters(self, hyperparameter):
@@ -534,33 +554,23 @@ if __name__ == "__main__":
     print k
     edm = k.euclidean_distance(data)
 
-    kc = KernelConstant(sigma_0=1.0)
-    print kc
-    kcm = kc.compute(data)
-
-    kl = KernelLinear(Sigma_p=N.eye(data.shape[1]))
-    print kl
-    klm = kl.compute(data)
-
-    ke = KernelExponential()
-    print ke
-    kem = ke.compute(data)
-
-    kse = KernelSquaredExponential()
-    print kse
-    ksem = kse.compute(data)
-
-    km3 = KernelMatern_3_2()
-    print km3
-    km3m = km3.compute(data)
-
-    km5 = KernelMatern_5_2()
-    print km5
-    km5m = km5.compute(data)
-
-    krq = KernelRationalQuadratic()
-    print krq
-    krqm = krq.compute(data)
+    for kernel_class, kernel_args in (
+        (KernelConstant, {'sigma_0':1.0}),
+        (KernelConstant, {'sigma_0':1.0}),
+        (KernelLinear, {'Sigma_p':N.eye(data.shape[1])}),
+        (KernelLinear, {'Sigma_p':N.ones(data.shape[1])}),
+        (KernelLinear, {'Sigma_p':2.0}),
+        (KernelLinear, {}),
+        (KernelExponential, {}),
+        (KernelSquaredExponential, {}),
+        (KernelMatern_3_2, {}),
+        (KernelMatern_5_2, {}),
+        (KernelRationalQuadratic, {}),
+        ):
+        kernel = kernel_class(**kernel_args)
+        print kernel
+        result = kernel.compute(data)
+        pass
 
     # In the following we draw some 2D functions at random from the
     # distribution N(O,kernel) defined by each available kernel and
@@ -590,5 +600,4 @@ if __name__ == "__main__":
         count += 1
         pass
 
-    
-    
+
