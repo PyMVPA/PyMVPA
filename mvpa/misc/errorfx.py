@@ -6,14 +6,19 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Error functions"""
+"""Error functions helpers.
+
+PyMVPA can use arbitrary function which takes 2 arguments: predictions
+and targets and spits out a scalar value. Functions below are for the
+convinience, and they confirm the agreement that 'smaller' is 'better'"""
 
 __docformat__ = 'restructuredtext'
 
 
 import numpy as N
-from scipy import trapz
-from scipy.stats import pearsonr
+from numpy import trapz
+
+from mvpa.base import externals
 
 # Various helper functions
 def meanPowerFx(data):
@@ -102,24 +107,56 @@ class AUCErrorFx(_ErrorFx):
         return trapz(tp, fp)
 
 
-class CorrErrorFx(_ErrorFx):
-    """Computes the correlation between the target and the predicted
-    values.
+if externals.exists('scipy'):
+    from scipy.stats import pearsonr
 
-    """
-    def __call__(self, predicted, target):
-        """Requires all arguments."""
-        return pearsonr(predicted, target)[0]
+    class CorrErrorFx(_ErrorFx):
+        """Computes the correlation between the target and the
+        predicted values. Resultant value is the 1 - correlation
+        coefficient, so minimization leads to the best value (at 0)
+
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            return 1.0-pearsonr(predicted, target)[0]
 
 
-class CorrErrorPFx(_ErrorFx):
-    """Computes p-value of correlation between the target and the predicted
-    values.
+    class CorrErrorPFx(_ErrorFx):
+        """Computes p-value of correlation between the target and the predicted
+        values.
 
-    """
-    def __call__(self, predicted, target):
-        """Requires all arguments."""
-        return pearsonr(predicted, target)[1]
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            return pearsonr(predicted, target)[1]
+
+else:
+    # slower(?) and bogus(p-value) implementations for non-scipy users
+    # TODO: implement them more or less correcly with numpy
+    #       functionality
+    class CorrErrorFx(_ErrorFx):
+        """Computes the correlation between the target and the predicted
+        values. Return 1-CC
+
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            l = len(predicted)
+            return 1.0 - N.corrcoef(N.reshape(predicted, l),
+                                N.reshape(target, l))[0,1]
+
+
+    class CorrErrorPFx(_ErrorFx):
+        """Computes p-value of correlation between the target and the predicted
+        values.
+
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            from mvpa.base import warning
+            warning("p-value for correlation is implemented only when scipy is "
+                    "available. Bogus value -1.0 is returned otherwise")
+            return -1.0
 
 
 class RelativeRMSErrorFx(_ErrorFx):
@@ -132,3 +169,20 @@ class RelativeRMSErrorFx(_ErrorFx):
     """
     def __call__(self, predicted, target):
         return RMSErrorFx()(predicted, target) / rootMeanPowerFx(target)
+
+
+class Variance1SVFx(_ErrorFx):
+    """Ratio of variance described by the first singular value component.
+
+    Of limited use -- left for the sake of not wasting it
+    """
+
+    def __call__(self, predicted, target):
+        data = N.vstack( (predicted, target) ).T
+        # demean
+        data_demeaned = data - N.mean(data, axis=0)
+        u,s,vh = N.linalg.svd(data_demeaned, full_matrices=0)
+        # assure sorting
+        s.sort(); s=s[::-1]
+        cvar = s[0]**2 / N.sum(s**2)
+        return cvar

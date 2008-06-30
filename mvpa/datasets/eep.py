@@ -13,9 +13,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.mappeddataset import MappedDataset
+from mvpa.datasets.mapped import MappedDataset
 from mvpa.misc.eepbin import EEPBin
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.mask import MaskMapper
 
 
 

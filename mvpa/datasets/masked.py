@@ -12,11 +12,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.mappeddataset import MappedDataset
+from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.array import DenseArrayMapper
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class MaskedDataset(MappedDataset):
     """Helper class which is `MappedDataset` with using `MaskMapper`.
@@ -36,7 +36,7 @@ class MaskedDataset(MappedDataset):
         """
         # need if clause here as N.array(None) != None
         if not samples is None:
-            samples = N.array(samples)
+            samples = N.asarray(samples)  # XXX should be asanyarray? but then smth segfaults on unittests
             if mask is None:
                 # make full dataspace mask if nothing else is provided
                 mask = N.ones(samples.shape[1:], dtype='bool')

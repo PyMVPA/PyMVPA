@@ -11,28 +11,6 @@
 
 from mvpa.suite import *
 
-"""
-# Command above substitutes the following list
-
-import sys
-
-import numpy as N
-
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.knn import kNN
-from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
-from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.datasets.miscfx import zscore
-from mvpa.measures.searchlight import Searchlight
-from mvpa.clfs.transerror import TransferError
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.misc import verbose
-from mvpa.misc.cmdline import \
-     parser, \
-     optsCommon, optClf, optsSVM, optRadius, optsKNN, \
-     optsGener, optZScore
-"""
 
 def main():
     """ Wrapped into a function call for easy profiling later on

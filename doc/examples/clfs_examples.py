@@ -10,28 +10,6 @@
 """Examples demonstrating varioius classifiers on different datasets"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes commands below
-
-import os
-import numpy as N
-import time
-
-from mvpa.datasets import Dataset
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.splitter import *
-from mvpa.datasets.miscfx import zscore, detrend
-
-# Helpers
-from mvpa.clfs.transerror import *
-from mvpa.misc.data_generators import *
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.clfs.warehouse import clfs
-
-# Misc tools
-#
-from mvpa.misc import warning
-"""
 
 # no MVPA warnings during whole testsuite
 warning.handlers = []

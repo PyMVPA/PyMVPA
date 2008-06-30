@@ -238,7 +238,7 @@ class SetLogger(Logger):
         """
         # just unique entries... we could have simply stored Set I guess,
         # but then smth like debug.active += ["BLAH"] would not work
-        from mvpa.misc import verbose
+        from mvpa.base import verbose
         self.__active = []
         registered_keys = self.__registered.keys()
         for item in list(Set(active)):
@@ -322,6 +322,8 @@ if __debug__:
     import os, re
     import traceback
     import time
+    from os import getpid
+    from os.path import basename, dirname
 
     def parseStatus(field='VmSize'):
         """Return stat information on current process.
@@ -331,10 +333,60 @@ if __debug__:
         TODO: Spit out multiple fields. Use some better way than parsing proc
         """
 
-        fd = open('/proc/%d/status'%os.getpid())
+        fd = open('/proc/%d/status' % getpid())
         lines = fd.readlines()
         fd.close()
-        return filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
+        match = filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
+        match = re.sub('[ \t]+', ' ', match)
+        return match
+
+    def mbasename(s):
+        """Custom function to include directory name if filename is too common
+
+        Also strip .py at the end
+        """
+        base = basename(s).rstrip('py').rstrip('.')
+        if base in Set(['base', '__init__']):
+            base = basename(dirname(s)) + '.' + base
+        return base
+
+    class TraceBack(object):
+        def __init__(self, collide=False):
+            """Initialize TrackBack metric
+
+            :Parameters:
+              collide : bool
+                if True then prefix common with previous invocation gets
+                replaced with ...
+            """
+            self.__prev = ""
+            self.__collide = collide
+
+        def __call__(self):
+            ftb = traceback.extract_stack(limit=100)[:-2]
+            entries = [[mbasename(x[0]), str(x[1])] for x in ftb]
+            entries = filter(lambda x:x[0] != 'unittest', entries)
+
+            # lets make it more consize
+            entries_out = [entries[0]]
+            for entry in entries[1:]:
+                if entry[0] == entries_out[-1][0]:
+                    entries_out[-1][1] += ',%s' % entry[1]
+                else:
+                    entries_out.append(entry)
+            sftb = '>'.join(['%s:%s' % (mbasename(x[0]),
+                                        x[1]) for x in entries_out])
+            if self.__collide:
+                # lets remove part which is common with previous invocation
+                prev_next = sftb
+                common_prefix = os.path.commonprefix((self.__prev, sftb))
+                common_prefix2 = re.sub('>[^>]*$', '', common_prefix)
+
+                if common_prefix2 != "":
+                    sftb = '...' + sftb[len(common_prefix2):]
+                self.__prev = prev_next
+
+            return sftb
 
 
     class RelativeTime(object):
@@ -365,7 +417,9 @@ if __debug__:
         _known_metrics = {
             'vmem' : lambda : parseStatus(field='VmSize'),
             'pid' : lambda : parseStatus(field='Pid'),
-            'asctime' : time.asctime
+            'asctime' : time.asctime,
+            'tb' : TraceBack(),
+            'tbc' : TraceBack(collide=True),
             }
 
 
@@ -402,13 +456,14 @@ if __debug__:
                           func + " Known metrics are " + \
                           `DebugLogger._known_metrics.keys()`
             elif isinstance(func, list):
+                self.__metrics = []     # reset
                 for item in func:
                     self.registerMetric(item)
                 return
 
             if not func in self.__metrics:
                 try:
-                    from mvpa.misc import debug
+                    from mvpa.base import debug
                     debug("DBG", "Registering metric %s" % func)
                     self.__metrics.append(func)
                 except:
@@ -425,10 +480,7 @@ if __debug__:
                 # be statefull as RelativeTime
                 return
 
-            msg_ = ""
-
-            for metric in self.__metrics:
-                msg_ += " %s" % `metric()`
+            msg_ = ' / '.join([str(x()) for x in self.__metrics])
 
             if len(msg_)>0:
                 msg_ = "{%s}" % msg_
@@ -452,3 +504,6 @@ if __debug__:
 
         offsetbydepth = property(fget=lambda x:x._offsetbydepth,
                                  fset=_setOffsetByDepth)
+
+        metrics = property(fget=lambda x:x.__metrics,
+                           fset=registerMetric)

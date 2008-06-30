@@ -13,7 +13,7 @@ selective noise perturbation to compute a sensitivity map.
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 from mvpa.misc.copy import deepcopy
 

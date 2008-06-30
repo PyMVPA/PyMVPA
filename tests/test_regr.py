@@ -8,13 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Regressions"""
 
+from mvpa.base import externals
 from mvpa.misc.copy import deepcopy
 
 from mvpa.datasets import Dataset
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
-from mvpa.misc.errorfx import CorrErrorFx, RMSErrorFx
+from mvpa.misc.errorfx import RMSErrorFx, RelativeRMSErrorFx, \
+     CorrErrorFx, CorrErrorPFx
 
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
@@ -55,9 +57,9 @@ class RegressionsTests(unittest.TestCase):
                             msg="We should get some string representation "
                             "of regression summary. Got %s" % s)
 
-        self.failUnless(corr>0.9,
+        self.failUnless(corr<0.2,
                         msg="Regressions should perform well on a simple "
-                        "dataset. Got mean correlation of %s " % corr)
+                        "dataset. Got correlation error of %s " % corr)
 
 
 def suite():

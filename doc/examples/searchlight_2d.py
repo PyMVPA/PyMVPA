@@ -10,24 +10,6 @@
 """Example demonstrating a searchlight analysis on an fMRI dataset"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes commands below
-
-import numpy as N
-import pylab as P
-
-# local imports
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.miscfx import zscore, detrend
-from mvpa.clfs.knn import kNN
-from mvpa.clfs.svm import LinearNuSVMC
-from mvpa.clfs.transerror import TransferError
-from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.measures.searchlight import Searchlight
-from mvpa.misc import debug
-"""
 
 # enable debug output for searchlight call
 if __debug__:
@@ -107,6 +89,7 @@ for radius in [1,5,10]:
     P.colorbar(shrink=0.6)
 
 
-# show all the cool figures
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()
 

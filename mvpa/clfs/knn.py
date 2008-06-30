@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.base import Classifier
 
@@ -24,8 +24,6 @@ class kNN(Classifier):
     If enabled it stores the votes per class in the 'values' state after
     calling predict().
     """
-
-    __warned = False
 
     _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
 
@@ -67,10 +65,8 @@ class kNN(Classifier):
         """
         self.__data = data
         if __debug__:
-            if not kNN.__warned and \
-                str(data.samples.dtype).startswith('uint') \
+            if str(data.samples.dtype).startswith('uint') \
                 or str(data.samples.dtype).startswith('int'):
-                kNN.__warned = True
                 warning("kNN: input data is in integers. " + \
                         "Overflow on arithmetic operations might result in"+\
                         " errors. Please convert dataset's samples into" +\

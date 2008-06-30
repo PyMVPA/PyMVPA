@@ -22,7 +22,7 @@ from mvpa.clfs.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   PRECOMPUTED
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def intArray(seq):
     size = len(seq)

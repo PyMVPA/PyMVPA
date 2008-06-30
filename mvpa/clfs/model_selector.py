@@ -122,6 +122,7 @@ if __name__ == "__main__":
     pylab.ion()
 
     from mvpa.datasets import Dataset
+    from mvpa.misc import data_generators
 
     print "GPR:",
 
@@ -129,19 +130,20 @@ if __name__ == "__main__":
     test_size = 100
     F = 1
 
-    data_train, label_train = data_generators.sinModulated(train_size, F)
+    dataset = data_generators.sinModulated(train_size, F)
     # print label_train
 
-    data_test, label_test = data_generators.sinModulated(test_size, F, flat=True)
+    dataset_test = data_generators.sinModulated(test_size, F, flat=True)
+    data_test = dataset_test.samples
+    label_test = dataset_test.labels
     # print label_test
-
-    dataset = Dataset(samples=data_train, labels=label_train)
 
     regression = True
     logml = True
 
-    k = kernel.KernelLinear(coefficient=N.ones(1))
-    # k = kernel.KernelConstant()
+    # k = kernel.KernelLinear(coefficient=N.ones(1))
+    # k = kernel.KernelConstant(coefficient=1.0)
+    k = kernel.KernelSquaredExponential()
     g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
     # g.train_fv = dataset.samples
@@ -154,7 +156,7 @@ if __name__ == "__main__":
     sigma_noise_initial = 1.0
     length_scale_initial = 1.0
 
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-4)
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-3)
     lml = ms.solve()
     sigma_noise_best, length_scale_best = ms.hyperparameters_best
     print

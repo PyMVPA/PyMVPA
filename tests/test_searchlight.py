@@ -8,12 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA searchlight algorithm"""
 
-from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.base import externals
+from mvpa.datasets.masked import MaskedDataset
 from mvpa.measures.searchlight import Searchlight
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
-from mvpa.misc.stats import chisquare
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -72,11 +72,17 @@ class SearchlightTests(unittest.TestCase):
 
     def testChiSquareSearchlight(self):
         # only do partial to save time
+        if not externals.exists('scipy'):
+            return
+
+        from mvpa.misc.stats import chisquare
+
         transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),
                 enable_states=['confusion'])
+
 
         def getconfusion(data):
             cv(data)

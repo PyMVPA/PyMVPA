@@ -13,23 +13,42 @@ __docformat__ = 'restructuredtext'
 import mvpa.misc.copy as copy
 
 from mvpa.datasets import Dataset
+from mvpa.base.dochelpers import enhancedDocString
 
 
 class MappedDataset(Dataset):
     """A `Dataset` which is created by applying a `Mapper` to the data.
 
-    It uses a mapper to transform samples from their original
-    dataspace into the feature space. Various mappers can be used. The
-    "easiest" one is `MaskMapper` which allows to select the features
-    (voxels) to be used in the analysis: see `MaskedDataset`
+    Upon contruction `MappedDataset` uses a `Mapper` to transform the
+    samples from their original into the two-dimensional matrix
+    representation that is required by the `Dataset` class.
+
+    This class enhanced the `Dataset` interface with two additional
+    methods: `mapForward()` and `mapReverse()`. Both take arbitrary data
+    arrays (with matching shape) and transform them using the embedded
+    mapper from the original dataspace into a one- or two-dimensional
+    representation (for arrays corresponding to the shape of a single or
+    multiple samples respectively) or vice versa.
+
+    Most likely, this class will not be used directly, but rather
+    indirectly through one of its subclasses (e.g. `MaskedDataset).
     """
 
     def __init__(self, samples=None, mapper=None, dsattr=None, **kwargs):
         """Initialize `MaskedDataset`
 
-        :Parameters:
-          - `mapper`: Instance of `Mapper` used to map input data
+        If `samples` and `mapper` arguments are not `None` the mapper is
+        used to forward-map the samples array and the result is passed
+        to the `Dataset` constructor.
 
+        :Parameters:
+          mapper: Instance of `Mapper`
+            This mapper will be embedded in the dataset and is used and
+            updated, by all subsequent mapping or feature selection
+            procedures.
+          **kwargs:
+            All other arguments are simply passed to and handled by
+            the constructor of `Dataset`.
         """
         # there are basically two mode for the constructor:
         # 1. internal mode - only data and dsattr dict
@@ -61,6 +80,8 @@ class MappedDataset(Dataset):
             Dataset.__init__(self, dsattr=dsattr, **(kwargs))
 
 
+    __doc__ = enhancedDocString('MappedDataset', locals(), Dataset)
+
 
     def mapForward(self, data):
         """Map data from the original dataspace into featurespace.
@@ -77,10 +98,17 @@ class MappedDataset(Dataset):
     def selectFeatures(self, ids, plain=False, sort=False):
         """Select features given their ids.
 
+        The methods behaves similar to Dataset.selectFeatures(), but
+        additionally takes care of adjusting the embedded mapper
+        appropriately.
+
         :Parameters:
-          - `ids`: iterable container to select ids
-          - `plain`: `bool`, if to return MappedDataset (or just Dataset)
-          - `sort`: `bool`, if to sort Ids. Order matters and selectFeatures
+          ids: sequence
+            Iterable container to select ids
+          plain: boolean
+            Flag whether to return MappedDataset (or just Dataset)
+          sort: boolean
+            Flag whether to sort Ids. Order matters and selectFeatures
             assumes incremental order. If not such, in non-optimized
             code selectFeatures would verify the order and sort
         """

@@ -19,27 +19,32 @@ from sets import Set
 
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug, warning
+    from mvpa.base import debug, warning
 
 class Dataset(object):
-    """This class provides a container to store all necessary data to perform
-    MVPA analyses. These are the data samples, as well as the labels
-    associated with these patterns. Additionally samples can be grouped into
-    chunks.
+    """*The* Dataset.
+
+    This class provides a container to store all necessary data to
+    perform MVPA analyses. These are the data samples, as well as the
+    labels associated with the samples. Additionally, samples can be
+    grouped into chunks.
 
     :Groups:
-      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`, `applyMapper`
+      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`,
+                    `applyMapper`
       - `Mutators`: `permuteLabels`
 
-    Important: labels assumed to be immutable, ie noone should modify
+    Important: labels assumed to be immutable, i.e. noone should modify
     them externally by accessing indexed items, ie something like
     ``dataset.labels[1] += "_bad"`` should not be used. If a label has
-    to be modified, full copy of labels should be obtained, operated
-    on, and assigned back to the dataset, otherwise
-    dataset.uniquelabels would not work.  The same applies to any
-    other attribute which has corresponding unique* access property.
+    to be modified, full copy of labels should be obtained, operated on,
+    and assigned back to the dataset, otherwise dataset.uniquelabels
+    would not work.  The same applies to any other attribute which has
+    corresponding unique* access property.
+
     """
 
     # static definition to track which unique attributes
@@ -63,20 +68,38 @@ class Dataset(object):
                  copy_samples=False, copy_data=True, copy_dsattr=True):
         """Initialize dataset instance
 
+        There are basically two different way to create a dataset:
+
+        1. Create a new dataset from samples and sample attributes.  In
+           this mode a two-dimensional `ndarray` has to be passed to the
+           `samples` keyword argument and the corresponding samples
+           attributes are provided via the `labels` and `chunks`
+           arguments.
+
+        2. Copy contructor mode
+            The second way is used internally to perform quick coyping
+            of datasets, e.g. when performing feature selection. In this
+            mode and the two dictionaries (`data` and `dsattr`) are
+            required. For performance reasons this mode bypasses most of
+            the sanity check performed by the previous mode, as for
+            internal operations data integrity is assumed.
+
+
         :Parameters:
           data : dict
             Dictionary with an arbitrary number of entries. The value for
             each key in the dict has to be an ndarray with the
             same length as the number of rows in the samples array.
-            A special entry in theis dictionary is 'samples', a 2d array
+            A special entry in this dictionary is 'samples', a 2d array
             (samples x features). A shallow copy is stored in the object.
           dsattr : dict
             Dictionary of dataset attributes. An arbitrary number of
             arbitrarily named and typed objects can be stored here. A
             shallow copy of the dictionary is stored in the object.
-          dtype
+          dtype: type | None
             If None -- do not change data type if samples
             is an ndarray. Otherwise convert samples to dtype.
+
 
         :Keywords:
           samples : ndarray
@@ -198,6 +221,10 @@ class Dataset(object):
             self._dsattr['__uniquereseted'] = False
             self._resetallunique(force=True)
 
+
+    __doc__ = enhancedDocString('Dataset', locals())
+
+
     @property
     def idhash(self):
         """To verify if dataset is in the same state as when smth else was done
@@ -231,12 +258,12 @@ class Dataset(object):
         XXX `dict_` can be simply replaced now with self._dsattr
         """
         if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
-            if __debug__:
+            if __debug__ and 'DS_' in debug.active:
                 debug("DS_", "Recomputing unique set for attrib %s within %s" %
                       (attrib, self.summary(uniq=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
-            self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
+            self._dsattr[attrib] = N.unique( N.asanyarray(dict_[attrib[6:]]) )
             assert(not self._dsattr[attrib] is None)
             self._dsattr['__uniquereseted'] = False
 

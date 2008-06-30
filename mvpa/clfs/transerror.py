@@ -18,14 +18,16 @@ from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
 
+from mvpa.base import externals
+
 from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def _equalizedTable(out, printed):
     """Given list of lists figure out their common widths and print to out
@@ -205,6 +207,11 @@ class SummaryStatistics(object):
         self.compute()
         return self._stats
 
+    def reset(self):
+        """Cleans summary -- all data/sets are wiped out
+        """
+        self.__sets = []
+        self._computed = False
 
     sets = property(lambda self:self.__sets)
 
@@ -339,9 +346,13 @@ class ConfusionMatrix(SummaryStatistics):
         stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
         stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
-        stats['MCC'] = \
-            (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN']) \
-            / N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+
+        MCC_denom = N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+        nz = MCC_denom!=0.0
+        stats['MCC'] = N.zeros(stats['TP'].shape)
+        stats['MCC'][nz] = \
+                     (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz] \
+                     / MCC_denom[nz]
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
@@ -364,6 +375,9 @@ class ConfusionMatrix(SummaryStatistics):
           description : bool
             print verbose description of presented statistics
         """
+        if len(self.sets) == 0:
+            return "Empty"
+
         self.compute()
 
         # some shortcuts
@@ -380,9 +394,6 @@ class ConfusionMatrix(SummaryStatistics):
             return "%(# of sets)d sets %(# of labels)d labels " \
                    " ACC:%(ACC).2f" \
                    % stats
-
-        if len(self.sets) == 0:
-            return "Empty confusion matrix"
 
         Ndigitsmax = int(ceil(log10(max(Nsamples))))
         Nlabelsmax = max( [len(str(x)) for x in labels] )
@@ -481,8 +492,9 @@ class RegressionStatistics(SummaryStatistics):
     """
 
     _STATS_DESCRIPTION = (
-        ('CC', 'Correlation coefficient', None),
-        ('CC-p', 'Correlation coefficient (p-value)', None),
+        ('CCe', 'Error based on correlation coefficient',
+         '1 - corr_coef'),
+        ('CCp', 'Correlation coefficient (p-value)', None),
         ('RMSE', 'Root mean squared error', None),
         ('STD', 'Standard deviation', None),
         ('RMP', 'Root mean power (compare to RMSE of results)',
@@ -517,8 +529,8 @@ class RegressionStatistics(SummaryStatistics):
             'STD_t': lambda p,t:N.std(t),
             'RMP_p': lambda p,t:rootMeanPowerFx(p),
             'STD_p': lambda p,t:N.std(p),
-            'CC': CorrErrorFx(),
-            'CC-p': CorrErrorPFx(),
+            'CCe': CorrErrorFx(),
+            'CCp': CorrErrorPFx(),
             'RMSE': RMSErrorFx(),
             'RMSE/RMP_t': RelativeRMSErrorFx()
             }
@@ -540,21 +552,28 @@ class RegressionStatistics(SummaryStatistics):
     def asstring(self, short=False, header=True,  summary=True,
                  description=False):
         """'Pretty print' the statistics"""
-        self.compute()
 
         if len(self.sets) == 0:
-            return "Empty summary"
+            return "Empty"
+
+        self.compute()
 
         stats = self.stats
 
         if short:
-            return "%(# of sets)d sets CC:%(CC).2f+-%(CC_std).3f" \
-                   " RMSE:%(RMSE).2f+-%(RMSE_std).3f" \
-                   " RMSE/RMP_t:%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
-                   % stats
+            if short == 'very':
+                return "%(# of sets)d sets CCe:%(CCe).2f CCp:%(CCp).2g" \
+                       " RMSE:%(RMSE).2f" \
+                       " RMSE/RMP_t:%(RMSE/RMP_t).2f" \
+                       % stats
+            else:
+                return "%(# of sets)d sets CCe:%(CCe).2f+-%(CCe_std).3f" \
+                       " RMSE:%(RMSE).2f+-%(RMSE_std).3f" \
+                       " RMSE/RMP_t:%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
+                       % stats
 
         stats_data = ['RMP_t', 'STD_t', 'RMP_p', 'STD_p']
-        stats_ = ['CC', 'RMSE', 'RMSE/RMP_t'] # CC-p needs tune up of format so excluded
+        stats_ = ['CCe', 'RMSE', 'RMSE/RMP_t'] # CCp needs tune up of format so excluded
         stats_summary = ['# of sets']
 
         out = StringIO()

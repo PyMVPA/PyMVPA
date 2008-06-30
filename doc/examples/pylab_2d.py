@@ -10,19 +10,6 @@
 """Example demonstrating a simple classifiction of a 2-D dataset"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes the following list
-
-import numpy as N
-import pylab as P
-
-# local imports
-from mvpa.datasets import Dataset
-from mvpa.clfs.plr import PLR
-from mvpa.clfs.ridge import RidgeReg
-from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
-from mvpa.clfs.knn import kNN
-"""
 
 
 # set up the labeled data
@@ -111,5 +98,6 @@ for c in clfs:
     # add the title
     P.title(c)
 
-# show all the cool figures
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()

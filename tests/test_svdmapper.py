@@ -34,7 +34,7 @@ class SVDMapperTests(unittest.TestCase):
         # train SVD
         pm.train(self.ndlin)
 
-        self.failUnlessEqual(pm.mix.shape, (20, 20))
+        self.failUnlessEqual(pm.proj.shape, (20, 20))
 
         # now project data into PCA space
         p = pm.forward(self.ndlin.samples)
@@ -63,7 +63,7 @@ class SVDMapperTests(unittest.TestCase):
         pm.train(self.largefeat)
 
         # mixing matrix cannot be square
-        self.failUnlessEqual(pm.mix.shape, (40, 10))
+        self.failUnlessEqual(pm.proj.shape, (40, 10))
 
         # only first singular value significant
         self.failUnless(pm.sv[:1] > 10)

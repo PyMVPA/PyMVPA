@@ -25,6 +25,10 @@ Unreleased changes
   * Import of binary EEP files (used by EEProbe) and EEPDataset class.
   * Initial version of a meta dataset class (MetaDataset). This is a container
     for multiple datasets, which behaves like a dataset itself.
+  * Regression performance is summarized now within RegressionStatistics.
+  * Error functions: CorrErrorPFx, RelativeRMSErrorFx.
+  * Measures: CorrCoef.
+  * Data generators: chirp, wr1996
 
 
 
