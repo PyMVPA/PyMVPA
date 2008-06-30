@@ -411,7 +411,7 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnless(clf_re.states.retrained == retrain,
                             ("Must fully train",
                              "Must retrain instead of full training")[retrain])
-            self.failUnless(clf_re.states.retested == retest,
+            self.failUnless(clf_re.states.repredicted == retest,
                             ("Must fully test",
                              "Must retest instead of full testing")[retest])
             self.failUnless(corr > corrcoef_eps,
@@ -469,6 +469,21 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless((oldsamples != dstrain.samples).any())
         batch_test(retest=False)
         clf.states._resetEnabledTemporarily()
+
+        # test retrain()
+        # TODO XXX  -- check validity
+        clf_re.retrain(dstrain); self.failUnless(clf_re.states.retrained)
+        clf_re.retrain(dstrain, labels=True);  self.failUnless(clf_re.states.retrained)
+        clf_re.retrain(dstrain, traindataset=True);  self.failUnless(clf_re.states.retrained)
+
+        # test repredict()
+        clf_re.repredict(dstest.samples);
+        self.failUnless(clf_re.states.repredicted)
+        self.failUnlessRaises(RuntimeError, clf_re.repredict,
+                              dstest.samples, labels=True,
+             msg="for now retesting with anything changed makes no sense")
+        clf_re._setRetrainable(False)
+
 
     def testGenericTests(self):
         """Test all classifiers for conformant behavior
