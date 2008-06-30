@@ -16,7 +16,7 @@ import numpy as N
 
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier
-from mvpa.clfs.kernel import KernelSquaredExponential
+from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 
 if __debug__:
     from mvpa.base import debug
@@ -34,8 +34,10 @@ class GPR(Classifier):
         doc="Log Marginal Likelihood")
 
 
-    _clf_internals = [ 'gpr', 'regression', 'non-linear' ]
+    _clf_internals = [ 'gpr', 'regression' ]
 
+    # TODO: don't initialize kernel with an instance here since it gets shared
+    #       among all instances of GPR
     def __init__(self, kernel=KernelSquaredExponential(),
                  sigma_noise=0.001, **kwargs):
         """Initialize a GPR regression analysis.
@@ -51,6 +53,12 @@ class GPR(Classifier):
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
+
+        # append proper clf_internal depending on the kernel
+        # TODO: unify finally all kernel-based machines.
+        #       make SMLR to use kernels
+        self._clf_internals.append(
+            ( 'non-linear', 'linear' )[int(isinstance(kernel, KernelLinear))])
 
         # pylint happiness
         self.w = None

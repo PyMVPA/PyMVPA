@@ -22,6 +22,7 @@ from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
                                  MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
+from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
 from mvpa.clfs.gpr import GPR
 from mvpa.clfs.blr import BLR
 
@@ -286,7 +287,8 @@ clfs += \
 
 
 # GPR
-clfs += GPR(descr="GPR()")
+clfs += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
+clfs += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
 clfs += BLR(descr="BLR()")
 
 # BLR
