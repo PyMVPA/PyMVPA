@@ -17,7 +17,7 @@ from mvpa.misc.copy import copy, deepcopy
 from operator import isSequenceType
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """This function transforms a dataset by calculating the mean of a set of
@@ -146,6 +146,19 @@ def isSorted(items):
     if hasattr(equality, '__iter__'):
         equality = N.all(equality)
     return equality
+
+
+def isInVolume(coord, shape):
+    """For given coord check if it is within a specified volume size.
+
+    Returns True/False. Assumes that volume coordinates start at 0.
+    No more generalization (arbitrary minimal coord) is done to save
+    on performance
+    """
+    for i in xrange(len(coord)):
+        if coord[i] < 0 or coord[i] >= shape[i]:
+            return False
+    return True
 
 
 def getBreakPoints(items, contiguous=True):

@@ -12,7 +12,7 @@ import unittest
 from mvpa.misc.cmdline import *
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class CmdlineHelpersTest(unittest.TestCase):
 

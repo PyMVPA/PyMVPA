@@ -17,7 +17,7 @@ import numpy as N
 
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitter import OddEvenSplitter
-from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.datasets.masked import MaskedDataset
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import Stateful
 from mvpa.misc.data_generators import *
@@ -25,7 +25,7 @@ from mvpa.misc.data_generators import *
 __all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     __all__.append('debug')
 
 

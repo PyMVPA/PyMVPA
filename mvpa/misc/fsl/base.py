@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.misc.iohelpers import ColumnData
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class FslEV3(ColumnData):

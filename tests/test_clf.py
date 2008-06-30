@@ -11,7 +11,7 @@
 from mvpa.misc.copy import deepcopy
 
 from mvpa.datasets import Dataset
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
@@ -124,7 +124,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: gune up default GPR?
-    @sweepargs(clf=clfs['binary', '!gpr'])
+    @sweepargs(clf=clfs['binary'])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
@@ -133,13 +133,16 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(cve < 0.25,
              msg="Got transfer error %g" % (cve))
 
+    # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'])
+                enable_states=['confusion', 'training_confusion',
+                               'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.training_confusions.error
+        error = clf.confusion.error
+        tr_error = clf.training_confusion.error
 
         clf2 = _deepcopyclf(clf)
         cv = CrossValidatedTransferError(
@@ -147,16 +150,22 @@ class ClassifiersTests(unittest.TestCase):
             NFoldSplitter(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds)
+        tr_cverror = cv.training_confusion.error
 
         self.failUnlessEqual(error, cverror,
                 msg="We should get the same error using split classifier as"
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (error, cverror))
 
-        self.failUnlessEqual(clf.training_confusions.percentCorrect,
+        self.failUnlessEqual(tr_error, tr_cverror,
+                msg="We should get the same training error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (tr_error, tr_cverror))
+
+        self.failUnlessEqual(clf.confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.training_confusions.sets),
+        self.failUnlessEqual(len(clf.confusion.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -175,15 +184,15 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
 
-    @sweepargs(clf_=clfs['binary', '!gpr', '!meta'])
+    @sweepargs(clf_=clfs['binary', '!meta'])
     def testSplitClassifierExtended(self, clf_):
         clf2 = _deepcopyclf(clf_)
         ds = datasets['uni2medium']#self.data_bin_1
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'])
+                enable_states=['confusion', 'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.training_confusions.error
+        error = clf.confusion.error
 
         cv = CrossValidatedTransferError(
             TransferError(clf2),
@@ -199,7 +208,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless( error < 0.25,
                          msg="clf should generalize more or less fine. "
                          "Got error %s" % error)
-        self.failUnlessEqual(len(clf.training_confusions.sets),
+        self.failUnlessEqual(len(clf.confusion.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -215,12 +224,13 @@ class ClassifiersTests(unittest.TestCase):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'],
+                enable_states=['confusion', 'training_confusion',
+                               'feature_ids'],
                 harvest_attribs=['clf.feature_ids',
                                  'clf.training_time'],
                 descr="DESCR")
         clf.train(ds)                   # train the beast
-        # Number of harvested items should be equial to number of chunks
+        # Number of harvested items should be equal to number of chunks
         self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
                              len(ds.uniquechunks))
         # if we can blame multiple inheritance and Statefull.__init__
@@ -483,8 +493,9 @@ class ClassifiersTests(unittest.TestCase):
 
         # TODO: unify str and repr for all classifiers
 
-    # XXX TODO: should work on smlr and knn as well! but now they fail to train
-    @sweepargs(clf=clfs['!smlr', '!knn', '!meta'])
+    # XXX TODO: should work on smlr, knn, ridgereg as well! but now
+    #     they fail to train
+    @sweepargs(clf=clfs['!smlr', '!knn', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
@@ -499,9 +510,7 @@ class ClassifiersTests(unittest.TestCase):
                                         [1, 0, 0] ]), labels=[-1, 1]),
             Dataset(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
-        if isinstance(clf, RidgeReg):
-            # TODO: figure out why default RidgeReg doesn't learn properly
-            return
+
         clf.states._changeTemporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
             clf.train(traindata)

@@ -16,7 +16,7 @@ Base Classifiers can be grouped according to their function as
 :group ProxyClassifiers: BinaryClassifier MappedClassifier
   FeatureSelectionClassifier
 :group PredictionsCombiners for CombinedClassifier: PredictionsCombiner
-  MaximalVote
+  MaximalVote MeanPrediction
 
 """
 
@@ -33,10 +33,10 @@ if sys.version_info[0] > 2 or sys.version_info[1] > 4:
 else:
     from mvpa.misc.copy import deepcopy
 
+import time
 from sets import Set
-from time import time
 
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
 from mvpa.misc.param import Parameter
@@ -45,11 +45,11 @@ from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer
-from mvpa.misc import warning
+from mvpa.base import warning
 
 if __debug__:
     import traceback
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 def _deepcopyclf(clf):
@@ -283,7 +283,7 @@ class Classifier(Parametrized):
         self._pretrain(dataset)
 
         # remember the time when started training
-        t0 = time()
+        t0 = time.time()
 
         if dataset.nfeatures > 0:
             result = self._train(dataset)
@@ -295,7 +295,7 @@ class Classifier(Parametrized):
                       "is called")
             result = None
 
-        self.training_time = time() - t0
+        self.training_time = time.time() - t0
         self._posttrain(dataset)
         return result
 
@@ -348,7 +348,7 @@ class Classifier(Parametrized):
                 debug("CLF_TB", "Traceback: %s" % tb)
 
         # remember the time when started computing predictions
-        t0 = time()
+        t0 = time.time()
 
         self._prepredict(data)
         if self.__trainednfeatures > 0 \
@@ -362,7 +362,7 @@ class Classifier(Parametrized):
                       "bogus")
             result = [None]*data.shape[0]
 
-        self.predicting_time = time() - t0
+        self.predicting_time = time.time() - t0
 
         if 'regression' in self._clf_internals and not self.params.regression:
             # We need to convert regression values into labels
@@ -653,13 +653,11 @@ class ProxyClassifier(Classifier):
           clf : Classifier
             classifier based on which mask classifiers is created
           """
-        Classifier.__init__(self, **kwargs)
+
+        Classifier.__init__(self, regression=clf.regression, **kwargs)
 
         self.__clf = clf
         """Store the classifier to use."""
-
-        self.params.regression = clf.regression
-        """Do regression if base classifier does"""
 
         # adhere to slave classifier capabilities
         # XXX test test test
@@ -829,6 +827,34 @@ class MaximalVote(PredictionsCombiner):
 
 
 
+class MeanPrediction(PredictionsCombiner):
+    """Provides a decision by taking mean of the results
+    """
+
+    predictions = StateVariable(enabled=True,
+        doc="Mean predictions")
+
+    def __call__(self, clfs, dataset):
+        """Actuall callable - perform meaning
+
+        """
+        if len(clfs)==0:
+            return []                   # to don't even bother
+
+        all_predictions = []
+        for clf in clfs:
+            # Lets check first if necessary state variable is enabled
+            if not clf.states.isEnabled("predictions"):
+                raise ValueError, "MeanPrediction needs classifiers (such as " + \
+                      "%s) with state 'predictions' enabled" % clf
+            all_predictions.append(clf.predictions)
+
+        # compute mean
+        predictions = N.mean(N.asarray(all_predictions), axis=0)
+        self.predictions = predictions
+        return predictions
+
+
 class ClassifierCombiner(PredictionsCombiner):
     """Provides a decision using training a classifier on predictions/values
 
@@ -881,7 +907,7 @@ class CombinedClassifier(BoostedClassifier):
     `PredictionsCombiner` functor.
     """
 
-    def __init__(self, clfs=None, combiner=MaximalVote(), **kwargs):
+    def __init__(self, clfs=None, combiner=None, **kwargs):
         """Initialize the instance.
 
         :Parameters:
@@ -889,7 +915,8 @@ class CombinedClassifier(BoostedClassifier):
             list of classifier instances to use
           combiner : PredictionsCombiner
             callable which takes care about combining multiple
-            results into a single one (e.g. maximal vote)
+            results into a single one (e.g. maximal vote for
+            classification, MeanPrediction for regression))
           kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
@@ -904,6 +931,9 @@ class CombinedClassifier(BoostedClassifier):
 
         BoostedClassifier.__init__(self, clfs, **kwargs)
 
+        # assign default combiner
+        if combiner is None:
+            combiner = (MaximalVote, MeanPrediction)[int(self.regression)]()
         self.__combiner = combiner
         """Functor destined to combine results of multiple classifiers"""
 
@@ -1173,9 +1203,24 @@ class SplitClassifier(CombinedClassifier):
 
     # TODO: unify with CrossValidatedTransferError which now uses
     # harvest_attribs to expose gathered attributes
-    training_confusions = StateVariable(enabled=False,
-        doc="Resultant confusion matrices whenever classifier trained " +
+    confusion = StateVariable(enabled=False,
+        doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
+
+    splits = StateVariable(enabled=False, doc=
+       """Store the actual splits of the data. Can be memory expensive""")
+
+    # XXX couldn't be training_confusion since it has other meaning
+    #     here, BUT it is named so within CrossValidatedTransferError
+    #     -- unify
+    # YYY decided to go with overriding semantics tiny bit. For split
+    #     classifier training_confusion would correspond to summary
+    #     over training errors across all splits. Later on if need comes
+    #     we might want to implement global_training_confusion which would
+    #     correspond to overall confusion on full training dataset as it is
+    #     done in base Classifier
+    #global_training_confusion = StateVariable(enabled=False,
+    #    doc="Summary over training confusions acquired at each split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
@@ -1187,7 +1232,8 @@ class SplitClassifier(CombinedClassifier):
           splitter : Splitter
             `Splitter` to use to split the dataset prior training
           """
-        CombinedClassifier.__init__(self, **kwargs)
+
+        CombinedClassifier.__init__(self, regression=clf.regression, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
 
@@ -1204,14 +1250,17 @@ class SplitClassifier(CombinedClassifier):
         """
         # generate pairs and corresponding classifiers
         bclfs = []
-        if self.states.isEnabled('training_confusions'):
-            self.training_confusions = \
-                                     self.__clf._summaryClass()
-                #ConfusionMatrix(labels=dataset.uniquelabels)
+
+        if self.states.isEnabled('confusion'):
+            self.states.confusion = self.__clf._summaryClass()
+        if self.states.isEnabled('training_confusion'):
+            self.__clf.states.enable(['training_confusion'])
+            self.states.training_confusion = self.__clf._summaryClass()
+
 
         # for proper and easier debugging - first define classifiers and then
         # train them
-        for split in self.__splitter(dataset):
+        for split in self.__splitter.splitcfg(dataset):
             if __debug__:
                 debug("CLFSPL",
                       "Deepcopying %(clf)s for %(sclf)s",
@@ -1221,10 +1270,14 @@ class SplitClassifier(CombinedClassifier):
             bclfs.append(clf)
         self.clfs = bclfs
 
-        i = 0
-        for split in self.__splitter(dataset):
+        self.splits = []
+
+        for i,split in enumerate(self.__splitter(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
+
+            if self.states.isEnabled("splits"):
+                self.splits.append(split)
 
             clf = self.clfs[i]
 
@@ -1233,10 +1286,12 @@ class SplitClassifier(CombinedClassifier):
                 clf.testdataset = split[1]
 
             clf.train(split[0])
-            if self.states.isEnabled("training_confusions"):
+            if self.states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
-                self.training_confusions.add(split[1].labels, predictions)
-            i += 1
+                self.confusion.add(split[1].labels, predictions)
+            if self.states.isEnabled("training_confusion"):
+                self.states.training_confusion += \
+                                               clf.states.training_confusion
 
 
     def getSensitivityAnalyzer(self, **kwargs):
@@ -1246,6 +1301,8 @@ class SplitClassifier(CombinedClassifier):
                 analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
                 **kwargs)
 
+    splitter = property(fget=lambda x:x.__splitter,
+                        doc="Splitter user by SplitClassifier")
 
 
 class MappedClassifier(ProxyClassifier):

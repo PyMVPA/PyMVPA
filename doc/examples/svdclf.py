@@ -11,25 +11,6 @@
 for *any* clasifier"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes commands below
-
-import numpy as N
-import pylab as P
-
-# local imports
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.miscfx import zscore, detrend
-from mvpa.clfs.transerror import TransferError
-from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.svm import LinearCSVMC
-from mvpa.clfs.base import MappedClassifier
-from mvpa.mappers import SVDMapper
-
-from mvpa.misc import debug
-"""
 
 if __debug__:
     debug.active += ["CROSSC"]
@@ -126,4 +107,6 @@ for desc, clf in clfs:
     labels.append(desc)
 
 makeBarPlot(results,labels=labels, title='Linear C-SVM classification')
-P.show()
+
+if cfg.getboolean('examples', 'interactive', True):
+    P.show()

@@ -23,7 +23,7 @@ import shogun.Library
 
 
 from mvpa.misc.param import Parameter
-from mvpa.misc import warning
+from mvpa.base import warning
 
 from mvpa.clfs.base import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
@@ -36,7 +36,7 @@ from mvpa.base import externals
 from sens import *
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 
@@ -389,10 +389,14 @@ class SVM(_SVM):
             self.states.retrained = not newsvm or not newkernel
 
         # Train
-        if __debug__:
-            debug("SG", "%sTraining %s on data with labels %s" %
-                  (("","Re-")[self.params.retrainable and self.states.retrained], self,
-                   dataset.uniquelabels))
+        if __debug__ and 'SG' in debug.active:
+            if not self.regression:
+                lstr = " with labels %s" % dataset.uniquelabels
+            else:
+                lstr = ""
+            debug("SG", "%sTraining %s on data%s" %
+                  (("","Re-")[self.params.retrainable and self.states.retrained],
+                   self, lstr))
 
         self.__svm.train()
 

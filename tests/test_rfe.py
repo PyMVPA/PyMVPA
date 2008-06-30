@@ -10,7 +10,7 @@
 
 from sets import Set
 
-from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.datasets.masked import MaskedDataset
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \

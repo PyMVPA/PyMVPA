@@ -23,6 +23,7 @@ from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.gpr import GPR
+from mvpa.clfs.blr import BLR
 
 # Helpers
 from mvpa.clfs.transerror import TransferError
@@ -41,7 +42,7 @@ _KNOWN_INTERNALS=[ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
-        'notrain2predict']
+        'notrain2predict', 'ridge', 'blr']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -287,6 +288,9 @@ clfs += \
 # GPR
 clfs += GPR(descr="GPR()")
 
+# BLR
+clfs += BLR(descr="BLR()")
+
 
 # SVM stuff
 
@@ -296,12 +300,11 @@ if externals.exists('shogun') or externals.exists('libsvm'):
          FeatureSelectionClassifier(
              LinearCSVMC(),
              SensitivityBasedFeatureSelection(
-                SMLRWeights(SMLR(lm=1.0, implementation="C")),
+                SMLRWeights(SMLR(lm=0.1, implementation="C")),
                 RangeElementSelector(mode='select')),
-             descr="LinSVM on SMLR(lm=1) non-0")
+             descr="LinSVM on SMLR(lm=0.1) non-0")
 
 
-    # "Interesting" classifiers
     clfs += \
         FeatureSelectionClassifier(
             LinearCSVMC(),
@@ -375,7 +378,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
-    #           confusion_state="training_confusions"),
+    #           confusion_state="confusion"),
     #           # and whose internal error we use
     #        feature_selector=FractionTailSelector(
     #                           0.2, mode='discard', tail='lower'),
@@ -392,7 +395,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
-    #           confusion_state="training_confusions"),
+    #           confusion_state="confusion"),
     #           # and whose internal error we use
     #        feature_selector=FractionTailSelector(
     #                           0.2, mode='discard', tail='lower'),

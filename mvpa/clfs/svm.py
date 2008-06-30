@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 # take care of conditional import of external classifiers
 import mvpa.base.externals as externals
-from mvpa.misc import warning
+from mvpa.base import warning
 
 from _svmbase import _SVM
 

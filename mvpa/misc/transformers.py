@@ -55,15 +55,32 @@ def GrandMean(x):
     return N.mean(x)
 
 
+def L2Normed(x, norm=1.0, reverse=False):
+    """Norm the values so that regular vector norm becomes `norm`"""
+    xnorm = N.linalg.norm(x)
+    return x * (norm/xnorm)
+
+def L1Normed(x, norm=1.0, reverse=False):
+    """Norm the values so that L_1 norm (sum|x|) becomes `norm`"""
+    xnorm = N.sum(N.abs(x))
+    return x * (norm/xnorm)
+
 def RankOrder(x, reverse=False):
     """Rank-order by value. Highest gets 0"""
+
+    # XXX was Yarik on drugs? please simplify this beast
     nelements = len(x)
     indexes = N.arange(nelements)
+    t_indexes = indexes
     if not reverse:
-        indexes = indexes[::-1]
+        t_indexes = indexes[::-1]
     tosort = zip(x, indexes)
     tosort.sort()
-    return [x[1] for x in tosort]
+    ztosort = zip(tosort, t_indexes)
+    rankorder = N.empty(nelements, dtype=int)
+    rankorder[ [x[0][1] for x in ztosort] ] = \
+               [x[1] for x in ztosort]
+    return rankorder
 
 
 def ReverseRankOrder(x):

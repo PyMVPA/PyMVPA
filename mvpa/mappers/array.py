@@ -18,7 +18,7 @@ from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import warning
+    from mvpa.base import warning
     from mvpa.misc.support import isSorted
 
 

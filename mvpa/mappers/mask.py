@@ -14,9 +14,10 @@ import numpy as N
 
 from mvpa.mappers.base import Mapper
 from mvpa.base.dochelpers import enhancedDocString
+from mvpa.misc.support import isInVolume
 
 if __debug__:
-    from mvpa.misc import debug, warning
+    from mvpa.base import debug, warning
     from mvpa.misc.support import isSorted
 
 
@@ -383,8 +384,6 @@ class MaskMapper(Mapper):
 
 
     # Read-only props
-    # TODO: refactor the property names? make them vproperty?
-    dsshape = property(fget=getInShape)
     mask = property(fget=lambda self:self.getMask(False))
 
 
@@ -392,20 +391,5 @@ class MaskMapper(Mapper):
     #      for easy reference, arrays are needed when doing computation on
     #      coordinates: for some reason numpy doesn't handle casting into
     #      array from tuples while performing arithm operations...
-
-
-def isInVolume(coord, shape):
-    """For given coord check if it is within a specified volume size.
-
-    Returns True/False. Assumes that volume coordinates start at 0.
-    No more generalization (arbitrary minimal coord) is done to save
-    on performance
-
-    XXX: should move somewhere else.
-    """
-    for i in xrange(len(coord)):
-        if coord[i] < 0 or coord[i] >= shape[i]:
-            return False
-    return True
 
 

@@ -362,8 +362,7 @@ in PyMVPA. Such collection can be queried by any set of known keywords/tags
 with tags prefixed with ``!`` being excluded::
 
   >>> from mvpa.clfs.warehouse import clfs
-  >>> print len(clfs['multiclass', '!svm'])
-  8
+  >>> tryme = clfs['multiclass', '!svm']
 
 to simply sweep through classifiers which are capable of multiclass
 classification and are not SVM based.

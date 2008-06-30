@@ -11,13 +11,15 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     debug('INIT', 'mvpa.mappers')
 
-from mvpa.mappers.mask import MaskMapper
-from mvpa.mappers.pca import PCAMapper
-from mvpa.mappers.svd import SVDMapper
-from mvpa.mappers.array import DenseArrayMapper
+# do not pull them all -- we have mvpa.suite for that
+#from mvpa.mappers.mask import MaskMapper
+#from mvpa.mappers.pca import PCAMapper
+#from mvpa.mappers.svd import SVDMapper
+#from mvpa.mappers.boxcar import BoxcarMapper
+#from mvpa.mappers.array import DenseArrayMapper
 
 if __debug__:
     debug('INIT', 'mvpa.mappers end')

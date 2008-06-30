@@ -70,6 +70,31 @@ output if corresponding debug_ target is enabled
    debug output (if ``LIBSVM`` debug_ target is enabled) appears on
    standard error
 
+One of the possible redirections is Python's ``StringIO`` class. Instance of
+such class can be added to the ``handlers`` and queried later on for the
+information to be dumped to a file later on. It is useful if output path is
+specified at run time, thus it is impossible to redirect verbose or debug from
+the start of the program:
+
+  >>> import sys
+  >>> from mvpa.base import verbose
+  >>> from StringIO import StringIO
+  >>> stringout = StringIO()
+  >>> verbose.handlers = [sys.stdout, stringout]
+  >>> verbose.level = 3
+  >>>
+  >>> verbose(1, 'msg1')
+   msg1
+  >>> out_prefix='/tmp/'
+  >>>
+  >>> verbose(2, 'msg2')
+    msg2
+  >>> # open('%sverbose.log' % out_prefix, 'w').write(stringout.getvalue())
+  >>> print stringout.getvalue(),
+   msg1
+    msg2
+  >>>
+
 .. index:: verbosity
 
 Verbose Messages
@@ -147,10 +172,26 @@ ids to be enabled (reported):
 * code: debug.active property (e.g. ``debug.active = [ 'RFEC', 'CLF' ]``)
 
 Besides printing debug messages, it is also possible to print some
-metric. You can define new metrics or select predefined ones (vmem,
-asctime, pid). To enable list of metrics you can use
-``MVPA_DEBUG_METRICS`` environment variable to list desired metric
-names comma-separated.
+metric. You can define new metrics or select predefined ones:
+
+ vmem
+  (Linux specific): amount of virtual memory consumed by the task
+ pid
+  (Linux specific): PID of the process
+ reltime
+  How many seconds passed since previous debug printout
+ asctime
+  Time stamp
+ tb
+  Traceback (``module1:line_number1[,line_number2...]>module2:line_number..``)
+  where this debug statement was requested
+ tbc
+  Concise traceback printout -- prefix common with the previous
+  invocation is replaced with ``...``
+
+To enable list of metrics you can use ``MVPA_DEBUG_METRICS`` environment
+variable to list desired metric names comma-separated. If ``ALL`` is provided,
+it enables all the metrics.
 
 As it was mentioned earlier, debug messages are printed only in
 non-optimized python invocation. That was done to eliminate any
@@ -252,7 +293,7 @@ can be used to perform motion-aware data detrending:
   >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
   >>> # 'res' contains all regressors and their associated weights
 
-All FSL bindings are located in the `mvpa.misc.fsl`_ module. 
+All FSL bindings are located in the `mvpa.misc.fsl`_ module.
 
 .. _FSL: http://www.fmrib.ox.ac.uk
 .. _mvpa.misc.fsl: api/mvpa.misc.fsl-module.html

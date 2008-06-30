@@ -25,7 +25,7 @@ from mvpa.featsel.helpers import NBackHistoryStopCrit, \
 from mvpa.misc.state import StateVariable
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class IFS(FeatureSelection):
