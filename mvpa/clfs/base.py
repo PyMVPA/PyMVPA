@@ -209,7 +209,7 @@ class Classifier(Parametrized):
         else:
             # just reset the states, do not untrain
             self.states.reset()
-            if not self._changedData_isset:
+            if not self.__changedData_isset:
                 self.__resetWasChanged()
                 _changedData = self._changedData
                 # if we don't know what was changed we need to figure
@@ -338,9 +338,8 @@ class Classifier(Parametrized):
 
 
         if self.params.retrainable:
-            # XXX we need repredict(), right?
-            if not self._changedData_isset:
-                self.__resetWasChanged() # XXX???
+            if not self.__changedData_isset:
+                self.__resetWasChanged()
                 _changedData = self._changedData
                 _changedData['testdata'] = self.__wasDataChanged('testdata', data)
                 if __debug__:
@@ -436,9 +435,6 @@ class Classifier(Parametrized):
                           "Got result %b although comparing of idhash says %b" \
                           % (res, res2)
             return res
-        # XXX it was weak checking... we better just add CHECK_ debug id
-        # to make sure that we are somewhat correct
-        #\ and (self.__trainedidhash == dataset.idhash)
 
 
     def _regressionIsBogus(self):
@@ -523,7 +519,7 @@ class Classifier(Parametrized):
             debug('CLF_', 'Resetting flags on either data was changed (for retrainable)')
         keys = self.__idhashes.keys() + self._paramscols
         self._changedData = dict(zip(keys, [False]*len(keys)))
-        self._changedData_isset = False
+        self.__changedData_isset = False
 
 
     def __wasDataChanged(self, key, entry):
@@ -564,9 +560,11 @@ class Classifier(Parametrized):
             ``(params=['C'], labels=True)`` if parameter C and labels
             got changed
         """
-        self.__resetWasChanged()        # XXX so we demolish anything for repredicting which should be ok in most of the cases
+        # Note that it also demolishes anything for repredicting,
+        # which should be ok in most of the cases
+        self.__resetWasChanged()
         self._changedData.update(kwargs)
-        self._changedData_isset = True
+        self.__changedData_isset = True
         self.train(self.traindataset)
 
 
@@ -579,9 +577,9 @@ class Classifier(Parametrized):
             ``(params=['C'], labels=True)`` if parameter C and labels
             got changed
         """
-        self.__resetWasChanged()        # XXX so we demolish anything for repredicting which should be ok in most of the cases
+        self.__resetWasChanged()
         self._changedData.update(kwargs)
-        self._changedData_isset = True
+        self.__changedData_isset = True
         return self.predict(self.traindataset)
 
 
@@ -1024,7 +1022,7 @@ class ClassifierCombiner(PredictionsCombiner):
         if len(clfs)==0:
             return []                   # to don't even bother
 
-        # XXX What is it, Exception or Return?
+        # XXX TODO
         raise NotImplementedError
 
 
@@ -1261,10 +1259,10 @@ class MulticlassClassifier(CombinedClassifier):
         self.__clf = clf
         """Store sample instance of basic classifier"""
 
-        # XXX such logic below might go under train....
+        # Some checks on known ways to do multiclass
         if bclf_type == "1-vs-1":
             pass
-        elif bclf_type == "1-vs-all":
+        elif bclf_type == "1-vs-all": # TODO
             raise NotImplementedError
         else:
             raise ValueError, \
@@ -1461,6 +1459,7 @@ class MappedClassifier(ProxyClassifier):
         """
         # first train the mapper
         # XXX: should training be done using whole dataset or just samples
+        # YYY: in some cases labels might be needed, thus better full dataset
         self.__mapper.train(dataset)
 
         # for train() we have to provide dataset -- not just samples to train!
