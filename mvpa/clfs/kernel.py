@@ -17,6 +17,13 @@ import numpy as N
 if __debug__:
     from mvpa.base import debug
 
+
+class InvalidHyperparameter(Exception):
+    """Generic exception to be raised when setting improper values
+    as hyperparameters."""
+    pass
+
+
 class Kernel(object):
     """Kernel function base class.
 
@@ -121,8 +128,10 @@ class KernelConstant(Kernel):
         self.kernel_matrix = (self.sigma_0**2)*N.ones((data1.shape[0],data2.shape[0]))
         return self.kernel_matrix
 
-    def set_hyperparameters(self,*sigma_0):
-        self.sigma_0 = N.array(sigma_0)
+    def set_hyperparameters(self,sigma_0):
+        if sigma_0<0:
+            raise InvalidHyperparameter()
+        self.sigma_0 = sigma_0
         return
 
     pass
@@ -184,7 +193,7 @@ class KernelLinear(Kernel):
                              +self.sigma_0**2
         return self.kernel_matrix
 
-    def set_hyperparameters(self,*sigmas):
+    def set_hyperparameters(self,sigmas):
         # XXX in the next line we assume that the values we want to
         # assign to Sigma_p are a constant or a vector (the diagonal
         # of Sigma_p actually). This is a limitation since these
@@ -192,6 +201,9 @@ class KernelLinear(Kernel):
         # covariance matrix)... but how to tell ModelSelector/OpenOpt
         # to proved just "hermitian" set of values? So for now we skip
         # the general case, which seems not to useful indeed.
+        if N.any(sigmas<0):
+            raise InvalidHyperparameter()
+
         self.Sigma_p = N.diagflat(sigmas[:-1])
         self.sigma_0 = N.array(sigmas[-1])
         return
@@ -250,10 +262,12 @@ class KernelExponential(Kernel):
         # return grad
         raise NotImplementedError
 
-    def set_hyperparameters(self,*length_scale):
+    def set_hyperparameters(self,length_scale):
         """Facility to set lengthscales. Used model selection.
         """
-        self.length_scale = N.array(length_scale)
+        if N.any(length_scale<0):
+            raise InvalidHyperparameter()
+        self.length_scale = length_scale
         return
 
     pass
@@ -307,10 +321,12 @@ class KernelSquaredExponential(Kernel):
         # return grad
         raise NotImplementedError
 
-    def set_hyperparameters(self,*length_scale):
+    def set_hyperparameters(self,length_scale):
         """Facility to set lengthscales. Used model selection.
         """
-        self.length_scale = N.array(length_scale)
+        if N.any(length_scale<0):
+            raise InvalidHyperparameter()
+        self.length_scale = length_scale
         return
 
     pass
@@ -377,10 +393,12 @@ class KernelMatern_3_2(Kernel):
         # return grad
         raise NotImplementedError
 
-    def set_hyperparameters(self, *length_scale):
+    def set_hyperparameters(self, length_scale):
         """Facility to set lengthscales. Used model selection.
         """
-        self.length_scale = N.array(length_scale)
+        if N.any(length_scale<0):
+            raise InvalidHyperparameter()
+        self.length_scale = length_scale
         return
 
     pass
