@@ -13,17 +13,15 @@ from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
-from mvpa.misc.data_generators import normalFeatureDataset
 
 
 class SplitSensitivityAnalyserTests(unittest.TestCase):
 
-    def setUp(self):
-        self.dataset = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4)
-
     # XXX meta should work TODO
     @sweepargs(svm=clfs['linear', 'svm', '!meta'])
     def testAnalyzer(self, svm):
+        dataset = datasets['uni2small']
+
         svm_weigths = svm.getSensitivityAnalyzer()
 
         sana = SplitFeaturewiseMeasure(
@@ -31,13 +29,16 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
                     NFoldSplitter(cvtype=1),
                     enable_states=['maps'])
 
-        maps = sana(self.dataset)
-
-        self.failUnless(len(maps) == 4)
+        maps = sana(dataset)
+        nchunks = len(dataset.uniquechunks)
+        nfeatures = dataset.nfeatures
+        self.failUnless(len(maps) == nfeatures,
+            msg='Lengths of the map %d is different from number of features %d'
+                 % (len(maps), nfeatures))
         self.failUnless(sana.states.isKnown('maps'))
         allmaps = N.array(sana.maps)
         self.failUnless(allmaps[:,0].mean() == maps[0])
-        self.failUnless(allmaps.shape == (5,4))
+        self.failUnless(allmaps.shape == (nchunks, nfeatures))
 
 
 def suite():

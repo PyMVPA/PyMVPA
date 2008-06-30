@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA classifier cross-validation"""
 
+import unittest
 from mvpa.misc.copy import copy
 
 from mvpa.datasets import Dataset
@@ -17,8 +18,7 @@ from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from tests_warehouse import *
-from tests_warehouse import normalFeatureDataset
+from tests_warehouse import datasets, sweepargs
 from tests_warehouse_clfs import *
 
 class ErrorsTests(unittest.TestCase):
@@ -94,11 +94,9 @@ class ErrorsTests(unittest.TestCase):
 
     @sweepargs(l_clf=clfs['linear', 'svm'])
     def testConfusionBasedError(self, l_clf):
-        train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
-                                     nonbogus_features=[0,1], snr=3, nchunks=1)
+        train = datasets['uni2medium_train']
         # to check if we fail to classify for 3 labels
-        test3 = normalFeatureDataset(perlabel=50, nlabels=3, nfeatures=3,
-                                     nonbogus_features=[0,1,2], snr=3, nchunks=1)
+        test3 = datasets['uni3medium_train']
         err = ConfusionBasedError(clf=l_clf)
         terr = TransferError(clf=l_clf)
 
@@ -120,8 +118,7 @@ class ErrorsTests(unittest.TestCase):
 
     @sweepargs(l_clf=clfs['linear', 'svm'])
     def testNullDistProb(self, l_clf):
-        train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
-                                     nonbogus_features=[0,1], snr=3, nchunks=1)
+        train = datasets['uni2medium']
 
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
@@ -136,7 +133,11 @@ class ErrorsTests(unittest.TestCase):
 
         # check that the result is highly significant since we know that the
         # data has signal
-        self.failUnless(terr.null_prob < 0.01)
+        null_prob = terr.null_prob
+        self.failUnless(null_prob < 0.01,
+            msg="Failed to check that the result is highly significant "
+                "(got %f) since we know that the data has signal"
+                % null_prob)
 
 
 
