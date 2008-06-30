@@ -10,18 +10,6 @@
 """Example demonstrating a SMLR classifier"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes commands below
-
-import numpy as N
-
-from mvpa.datasets import Dataset
-from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.svm import LinearNuSVMC
-from mvpa.clfs.transerror import ConfusionMatrix
-
-from mvpa.base import debug
-"""
 
 if __debug__:
     debug.active.append('SMLR_')

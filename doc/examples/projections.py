@@ -13,6 +13,7 @@ from mvpa.misc.data_generators import noisy_2d_fx
 from mvpa.mappers.pca import PCAMapper
 from mvpa.mappers.svd import SVDMapper
 from mvpa.mappers.ica import ICAMapper
+from mvpa import cfg
 
 import pylab as P
 import numpy as N
@@ -70,5 +71,6 @@ for ds in datasets:
 #        fig += 1
 
 
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    P.show()
 

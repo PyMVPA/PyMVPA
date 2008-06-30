@@ -17,6 +17,13 @@ import numpy as N
 if __debug__:
     from mvpa.base import debug
 
+
+class InvalidHyperparameter(Exception):
+    """Generic exception to be raised when setting improper values
+    as hyperparameters."""
+    pass
+
+
 class Kernel(object):
     """Kernel function base class.
 
@@ -121,8 +128,10 @@ class KernelConstant(Kernel):
         self.kernel_matrix = (self.sigma_0**2)*N.ones((data1.shape[0],data2.shape[0]))
         return self.kernel_matrix
 
-    def set_hyperparameters(self,*sigma_0):
-        self.sigma_0 = N.array(sigma_0)
+    def set_hyperparameters(self, hyperparameter):
+        if hyperparameter<0:
+            raise InvalidHyperparameter()
+        self.sigma_0 = hyperparameter
         return
 
     pass
@@ -184,7 +193,7 @@ class KernelLinear(Kernel):
                              +self.sigma_0**2
         return self.kernel_matrix
 
-    def set_hyperparameters(self,*sigmas):
+    def set_hyperparameters(self, hyperparameter):
         # XXX in the next line we assume that the values we want to
         # assign to Sigma_p are a constant or a vector (the diagonal
         # of Sigma_p actually). This is a limitation since these
@@ -192,8 +201,10 @@ class KernelLinear(Kernel):
         # covariance matrix)... but how to tell ModelSelector/OpenOpt
         # to proved just "hermitian" set of values? So for now we skip
         # the general case, which seems not to useful indeed.
-        self.Sigma_p = N.diagflat(sigmas[:-1])
-        self.sigma_0 = N.array(sigmas[-1])
+        if N.any(hyperparameter<0):
+            raise InvalidHyperparameter()
+        self.sigma_0 = N.array(hyperparameter[0])
+        self.Sigma_p = N.diagflat(hyperparameter[1:])
         return
 
     pass
@@ -206,7 +217,7 @@ class KernelExponential(Kernel):
     Automtic Relevance Determination.
 
     """
-    def __init__(self, length_scale=1.0, **kwargs):
+    def __init__(self, length_scale=1.0, sigma_f = 1.0, **kwargs):
         """Initialize an Exponential kernel instance.
 
         :Parameters:
@@ -214,16 +225,20 @@ class KernelExponential(Kernel):
             the characteristic length-scale (or length-scales) of the
             phenomenon under investigation.
             (Defaults to 1.0)
+          sigma_f : float
+            Signal standard deviation.
+            (Defaults to 1.0)
         """
         # init base class first
         Kernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
+        self.sigma_f = sigma_f
         self.kernel_matrix = None
 
 
     def __repr__(self):
-        return "%s(length_scale=%s)" % (self.__class__.__name__, str(self.length_scale))
+        return "%s(length_scale=%s, sigma_f=%s)" % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -238,7 +253,7 @@ class KernelExponential(Kernel):
         # XXX the following computation can be (maybe) made more
         # efficient since length_scale is squared and then
         # square-rooted uselessly.
-        self.kernel_matrix = N.exp(-N.sqrt(self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))))
+        self.kernel_matrix = self.sigma_f*N.exp(-N.sqrt(self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))))
         return self.kernel_matrix
 
     def gradient(self,data1,data2):
@@ -250,10 +265,15 @@ class KernelExponential(Kernel):
         # return grad
         raise NotImplementedError
 
-    def set_hyperparameters(self,*length_scale):
-        """Facility to set lengthscales. Used model selection.
+    def set_hyperparameters(self, hyperparameter):
+        """Set hyperaparmeters from a vector.
+
+        Used by model selection.
         """
-        self.length_scale = N.array(length_scale)
+        if N.any(hyperparameter<0):
+            raise InvalidHyperparameter()
+        self.sigma_f = hyperparameter[0]
+        self.length_scale = hyperparameter[1:]
         return
 
     pass
@@ -266,7 +286,7 @@ class KernelSquaredExponential(Kernel):
     Automtic Relevance Determination.
 
     """
-    def __init__(self, length_scale=1.0, **kwargs):
+    def __init__(self, length_scale=1.0, sigma_f=1.0, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
         :Parameters:
@@ -274,16 +294,20 @@ class KernelSquaredExponential(Kernel):
             the characteristic length-scale (or length-scales) of the
             phenomenon under investigation.
             (Defaults to 1.0)
+          sigma_f : float
+            Signal standard deviation.
+            (Defaults to 1.0)
         """
         # init base class first
         Kernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
+        self.sigma_f = sigma_f
         self.kernel_matrix = None
 
 
     def __repr__(self):
-        return "%s(length_scale=%s)" % (self.__class__.__name__, str(self.length_scale))
+        return "%s(length_scale=%s, sigma_f=%s)" % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -295,7 +319,7 @@ class KernelSquaredExponential(Kernel):
             data
             (Defaults to None)
         """
-        self.kernel_matrix = N.exp(-self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2)))
+        self.kernel_matrix = self.sigma_f*N.exp(-self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2)))
         return self.kernel_matrix
 
     def gradient(self,data1,data2):
@@ -307,10 +331,15 @@ class KernelSquaredExponential(Kernel):
         # return grad
         raise NotImplementedError
 
-    def set_hyperparameters(self,*length_scale):
-        """Facility to set lengthscales. Used model selection.
+    def set_hyperparameters(self, hyperparameter):
+        """Set hyperaparmeters from a vector.
+
+        Used by model selection.
         """
-        self.length_scale = N.array(length_scale)
+        if N.any(hyperparameter<0):
+            raise InvalidHyperparameter()
+        self.sigma_f = hyperparameter[0]
+        self.length_scale = hyperparameter[1:]
         return
 
     pass
@@ -323,13 +352,16 @@ class KernelMatern_3_2(Kernel):
     Automtic Relevance Determination.
 
     """
-    def __init__(self, length_scale=1.0, numerator=3.0, **kwargs):
+    def __init__(self, length_scale=1.0, sigma_f=1.0, numerator=3.0, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
         :Parameters:
           length_scale : float OR numpy.ndarray
             the characteristic length-scale (or length-scales) of the
             phenomenon under investigation.
+            (Defaults to 1.0)
+          sigma_f : float
+            Signal standard deviation.
             (Defaults to 1.0)
           numerator: float
             the numerator of parameter ni of Matern covariance functions.
@@ -340,6 +372,7 @@ class KernelMatern_3_2(Kernel):
         Kernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
+        self.sigma_f = sigma_f
         self.kernel_matrix = None
         if numerator==3.0 or numerator==5.0:
             self.numerator = numerator
@@ -362,10 +395,10 @@ class KernelMatern_3_2(Kernel):
         tmp = self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))
         if self.numerator == 3.0:
             tmp = N.sqrt(tmp)
-            self.kernel_matrix = (1.0+N.sqrt(3.0)*tmp)*N.exp(-N.sqrt(3.0)*tmp)
+            self.kernel_matrix = self.sigma_f*(1.0+N.sqrt(3.0)*tmp)*N.exp(-N.sqrt(3.0)*tmp)
         elif self.numerator == 5.0:
             tmp2 = N.sqrt(tmp)
-            self.kernel_matrix = (1.0+N.sqrt(5.0)*tmp2+5.0/3.0*tmp)*N.exp(-N.sqrt(5.0)*tmp2)
+            self.kernel_matrix = self.sigma_f*(1.0+N.sqrt(5.0)*tmp2+5.0/3.0*tmp)*N.exp(-N.sqrt(5.0)*tmp2)
         return self.kernel_matrix
 
     def gradient(self,data1,data2):
@@ -377,10 +410,16 @@ class KernelMatern_3_2(Kernel):
         # return grad
         raise NotImplementedError
 
-    def set_hyperparameters(self, *length_scale):
-        """Facility to set lengthscales. Used model selection.
+    def set_hyperparameters(self, hyperparameter):
+        """Set hyperaparmeters from a vector.
+
+        Used by model selection.
+        Note: 'numerator' is not considered as an hyperparameter.
         """
-        self.length_scale = N.array(length_scale)
+        if N.any(hyperparameter<0):
+            raise InvalidHyperparameter()
+        self.sigma_f = hyperparameter[0]
+        self.length_scale = hyperparameter[1:]
         return
 
     pass
@@ -404,13 +443,85 @@ class KernelMatern_5_2(KernelMatern_3_2):
         pass
 
 
+class KernelRationalQuadratic(Kernel):
+    """The Rational Quadratic (RQ) kernel class.
+
+    Note that it can handle a length scale for each dimension for
+    Automtic Relevance Determination.
+
+    """
+    def __init__(self, length_scale=1.0, sigma_f=1.0, alpha=0.5, **kwargs):
+        """Initialize a Squared Exponential kernel instance.
+
+        :Parameters:
+          length_scale : float OR numpy.ndarray
+            the characteristic length-scale (or length-scales) of the
+            phenomenon under investigation.
+            (Defaults to 1.0)
+          sigma_f : float
+            Signal standard deviation.
+            (Defaults to 1.0)
+          alpha: float
+            The parameter of the RQ functions family.
+            (Defaults to 2.0)
+        """
+        # init base class first
+        Kernel.__init__(self, **kwargs)
+
+        self.length_scale = length_scale
+        self.sigma_f = sigma_f
+        self.kernel_matrix = None
+        self.alpha = alpha
+
+    def __repr__(self):
+        return "%s(length_scale=%s, alpha=%f)" % (self.__class__.__name__, str(self.length_scale), self.alpha)
+
+    def compute(self, data1, data2=None):
+        """Compute kernel matrix.
+
+        :Parameters:
+          data1 : numpy.ndarray
+            data
+          data2 : numpy.ndarray
+            data
+            (Defaults to None)
+        """
+        tmp = self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))
+        self.kernel_matrix = self.sigma_f*(1.0+tmp/(2.0*self.alpha))**-self.alpha
+        return self.kernel_matrix
+
+    def gradient(self,data1,data2):
+        """Compute gradient of the kernel matrix. A must for fast
+        model selection with high-dimensional data.
+        """
+        # TODO SOON
+        # grad = ...
+        # return grad
+        raise NotImplementedError
+
+    def set_hyperparameters(self, hyperparameter):
+        """Set hyperaparmeters from a vector.
+
+        Used by model selection.
+        Note: 'alpha' is not considered as an hyperparameter.
+        """
+        if N.any(hyperparameter<0):
+            raise InvalidHyperparameter()
+        self.sigma_f = hyperparameter[0]
+        self.length_scale = hyperparameter[1:]
+        return
+
+    pass
+
+
 # dictionary of avalable kernels with names as keys:
 kernel_dictionary = {'constant':KernelConstant,
                      'linear':KernelLinear,
                      'exponential':KernelExponential,
                      'squared exponential':KernelSquaredExponential,
                      'Matern ni=3/2':KernelMatern_3_2,
-                     'Matern ni=5/2':KernelMatern_5_2}
+                     'Matern ni=5/2':KernelMatern_5_2,
+                     'rational quadratic':KernelRationalQuadratic}
 
 if __name__ == "__main__":
 
@@ -447,6 +558,9 @@ if __name__ == "__main__":
     print km5
     km5m = km5.compute(data)
 
+    krq = KernelRationalQuadratic()
+    print krq
+    krqm = krq.compute(data)
 
     # In the following we draw some 2D functions at random from the
     # distribution N(O,kernel) defined by each available kernel and
