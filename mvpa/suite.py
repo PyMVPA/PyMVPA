@@ -22,6 +22,7 @@ or
 __docformat__ = 'restructuredtext'
 
 
+from mvpa import *
 from mvpa.algorithms.cvtranserror import *
 from mvpa.base import *
 from mvpa.base.verbosity import *
