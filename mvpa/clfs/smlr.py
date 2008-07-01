@@ -446,40 +446,25 @@ class SMLRWeights(Sensitivity):
     biases = StateVariable(enabled=True,
                            doc="A 1-d ndarray of biases")
 
-    def __init__(self, clf, **kwargs):
-        """Initialize the analyzer with the classifier it shall use.
-
-        :Parameters:
-          clf: SMLR
-            classifier to use. Only classifiers sub-classed from
-            `SMLR` may be used.
-        """
-        if not isinstance(clf, SMLR):
-            raise ValueError, \
-                  "Classifier %s has to be a SMLR, but is [%s]" \
-                              % (`clf`, `type(clf)`)
-
-        # init base classes first
-        Sensitivity.__init__(self, clf, **kwargs)
-
+    _LEGAL_CLFS = [ SMLR ]
 
     def _call(self, dataset):
         """Extract weights from Linear SVM classifier.
         """
-        if self.clf.weights.shape[1] != 1:
+        clf = self.clf
+        weights = clf.weights
+        if weights.shape[1] != 1:
             warning("You are estimating sensitivity for SMLR %s with multiple"
                     " sensitivities available. Make sure that it is what you"
                     " intended to do" % self )
 
-        weights = self.clf.weights
-
-        if self.clf.has_bias:
-            self.biases = self.clf.biases
+        if clf.has_bias:
+            self.biases = clf.biases
 
         if __debug__:
             debug('SVM',
                   "Extracting weights for %d-class SMLR" %
-                  (self.clf.weights.shape[1]+1) +
+                  (weights.shape[1]+1) +
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 

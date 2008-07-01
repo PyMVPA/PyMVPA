@@ -352,6 +352,10 @@ class LinearSVMWeights(Sensitivity):
     biases = StateVariable(enabled=True,
                            doc="Offsets of separating hyperplanes")
 
+
+    _LEGAL_CLFS = [ SVM ]
+
+
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 

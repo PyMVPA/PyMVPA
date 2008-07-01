@@ -253,6 +253,11 @@ class StaticDatasetMeasure(DatasetMeasure):
 
 class Sensitivity(FeaturewiseDatasetMeasure):
 
+    _LEGAL_CLFS = []
+    """If Sensitivity is classifier specific, classes of classifiers
+    should be listed in the list
+    """
+
     def __init__(self, clf, force_training=True, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
@@ -266,6 +271,18 @@ class Sensitivity(FeaturewiseDatasetMeasure):
 
         """Does nothing special."""
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+
+        _LEGAL_CLFS = self._LEGAL_CLFS
+        if len(_LEGAL_CLFS) > 0:
+            found = False
+            for clf_class in _LEGAL_CLFS:
+                if isinstance(clf, clf_class):
+                    found = True
+                    break
+            if not found:
+                raise ValueError, \
+                  "Classifier %s has to be of allowed class (%s), but is %s" \
+                              % (clf, _LEGAL_CLFS, `type(clf)`)
 
         self.__clf = clf
         """Classifier used to computed sensitivity"""
