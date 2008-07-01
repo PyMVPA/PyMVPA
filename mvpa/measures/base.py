@@ -125,14 +125,13 @@ class DatasetMeasure(Stateful):
         return result
 
 
-    def __repr__(self, prefixes=None):
-        if prefixes is None: prefixes = []
+    def __repr__(self, prefixes=[]):
+        prefixes = prefixes[:]
         if self.__transformer is not None:
             prefixes.append("transformer=%s" % self.__transformer)
         if self.__null_dist is not None:
             prefixes.append("null_dist=%s" % self.__null_dist)
-        return super(DatasetMeasure, self).__repr__(prefix=", ".join(prefixes))
-
+        return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
