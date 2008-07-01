@@ -33,6 +33,11 @@ class GPR(Classifier):
     log_marginal_likelihood = StateVariable(enabled=False,
         doc="Log Marginal Likelihood")
 
+    linear_weights = StateVariable(enabled=False,
+        doc="Weights of the linear regression (for KernelLinear)")
+
+    linear_weights_variances = StateVariable(enabled=False,
+        doc="Variances of the linear weights (for KernelLinear)")
 
     _clf_internals = [ 'gpr', 'regression' ]
 
@@ -99,6 +104,28 @@ class GPR(Classifier):
         return log_marginal_likelihood
 
 
+    def compute_linear_weights(self):
+        """In case of KernelLinear compute explicitly the coefficients
+        of the linear regression, together with their variances (if
+        requested).
+
+        Note that the intercept is not computed.
+        """
+        # XXX The following two lines does not work since
+        # self.__kernel is instance of kernel.KernelLinear and not
+        # just KernelLinear. How to fix?
+        # if not isinstance(self.__kernel, KernelLinear):
+        #    raise NotImplementedError
+        self.linear_weights = N.dot(self.__kernel.Sigma_p,
+                                    N.dot(self.train_fv.T, self.alpha))
+        if self.states.isEnabled('linear_weights_variances'):
+            # super ugly formulas that can be quite surely improved:
+            tmp = N.linalg.inv(self.L)
+            Kyinv = N.dot(tmp.T,tmp)
+            self.linear_weights_variances = N.diag(self.__kernel.Sigma_p - N.dot(self.__kernel.Sigma_p, N.dot(self.train_fv.T,N.dot(Kyinv, N.dot(self.train_fv, self.__kernel.Sigma_p)))))
+        return self.linear_weights
+
+
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
@@ -139,7 +166,12 @@ class GPR(Classifier):
         # compute only if the state is enabled
         if self.states.isEnabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
+            pass
 
+        if self.states.isEnabled('linear_weights'):
+            self.compute_linear_weights()
+            pass
+            
         if __debug__:
             debug("GPR", "Done training")
 
