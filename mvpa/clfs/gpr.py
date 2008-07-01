@@ -96,13 +96,17 @@ class GPR(Classifier):
         Compute log marginal likelihood using self.train_fv and self.labels.
         """
         if __debug__: debug("GPR", "Computing log_marginal_likelihood")
-        log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
+        self.log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
                                   N.log(self.L.diagonal()).sum() - \
                                   self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
-        self.log_marginal_likelihood = log_marginal_likelihood
+        return self.log_marginal_likelihood
 
-        return log_marginal_likelihood
 
+    def compute_log_marginal_likelihood_gradient(self):
+        """Compute gradient of the log marginal likelihood.
+        """
+        raise NotImplementedError
+    
 
     def compute_linear_weights(self):
         """In case of KernelLinear compute explicitly the coefficients
