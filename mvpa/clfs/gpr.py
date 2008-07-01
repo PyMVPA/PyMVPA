@@ -16,6 +16,7 @@ import numpy as N
 
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier
+from mvpa.misc.param import Parameter
 from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 from mvpa.measures.base import Sensitivity
 
@@ -36,27 +37,36 @@ class GPR(Classifier):
 
     _clf_internals = [ 'gpr', 'regression' ]
 
-    def __init__(self, kernel=None, sigma_noise=0.001, **kwargs):
+    # NOTE XXX Parameters of the classifier. Values available as
+    # clf.parameter or clf.params.parameter, or as
+    # clf.params['parameter'] (as the full Parameter object)
+    #
+    # __doc__ and __repr__ for class is conviniently adjusted to
+    # reflect values of those params
+
+    # Kernel machines/classifiers should be refactored also to behave
+    # the same and define kernel parameter appropriately... TODO, but SVMs
+    # already kinda do it nicely ;-)
+
+    sigma_noise = Parameter(0.001, allowedtype='float', min=1e-10,
+        doc="the standard deviation of the gaussian noise.")
+
+    # XXX For now I don't introduce kernel parameter since yet to unify
+    # kernel machines
+    #kernel = Parameter(None, allowedtype='Kernel',
+    #    doc="Kernel object defining the covariance between instances. "
+    #        "(Defaults to KernelSquaredExponential if None in arguments)")
+
+    def __init__(self, kernel=None, **kwargs):
         """Initialize a GPR regression analysis.
 
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
             (Defaults to KernelSquaredExponential if None in argumetns)
-          sigma_noise : float
-            the standard deviation of the gaussian noise.
-            (Defaults to 0.001)
-
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
-
-        # append proper clf_internal depending on the kernel
-        # TODO: unify finally all kernel-based machines.
-        #       make SMLR to use kernels
-        self._clf_internals = self._clf_internals + \
-            (['non-linear'],
-             ['linear', 'has_sensitivity'])[int(isinstance(kernel, KernelLinear))]
 
         # pylint happiness
         self.w = None
@@ -65,14 +75,16 @@ class GPR(Classifier):
         self.states.enable('training_confusion', False)
 
         # set kernel:
-        if kernel == None:
-            self.__kernel = KernelSquaredExponential()
-        else:
-            self.__kernel = kernel
-            pass
+        if kernel is None:
+            kernel = KernelSquaredExponential()
+        self.__kernel = kernel
 
-        # set noise level:
-        self.sigma_noise = sigma_noise
+        # append proper clf_internal depending on the kernel
+        # TODO: unify finally all kernel-based machines.
+        #       make SMLR to use kernels
+        self._clf_internals = self._clf_internals + \
+            (['non-linear'],
+             ['linear', 'has_sensitivity'])[int(isinstance(kernel, KernelLinear))]
 
         self.predicted_variances = None
         self.log_marginal_likelihood = None
@@ -86,8 +98,7 @@ class GPR(Classifier):
         """String summary of the object
         """
         return super(GPR, self).__repr__(
-            prefixes=['kernel=%s' % self.__kernel,
-                      'sigma_noise=%s' % self.sigma_noise])
+            prefixes=['kernel=%s' % self.__kernel])
 
 
     def compute_log_marginal_likelihood(self):
