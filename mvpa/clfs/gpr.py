@@ -43,14 +43,13 @@ class GPR(Classifier):
 
     # TODO: don't initialize kernel with an instance here since it gets shared
     #       among all instances of GPR
-    def __init__(self, kernel=KernelSquaredExponential(),
-                 sigma_noise=0.001, **kwargs):
+    def __init__(self, kernel=None, sigma_noise=0.001, **kwargs):
         """Initialize a GPR regression analysis.
 
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
-            (Defaults to KernelSquaredExponential())
+            (Defaults to None)
           sigma_noise : float
             the standard deviation of the gaussian noise.
             (Defaults to 0.001)
@@ -72,8 +71,12 @@ class GPR(Classifier):
         self.states.enable('training_confusion', False)
 
         # set kernel:
-        self.__kernel = kernel
-
+        if kernel == None:
+            self.__kernel = KernelSquaredExponential()
+        else:
+            self.__kernel = kernel
+            pass
+            
         # set noise level:
         self.sigma_noise = sigma_noise
 
