@@ -68,11 +68,10 @@ class GPR(Classifier):
         # init base class first
         Classifier.__init__(self, **kwargs)
 
-        # pylint happiness
-        self.w = None
-
         # It does not make sense to calculate a confusion matrix for a GPR
-        self.states.enable('training_confusion', False)
+        # XXX it does ;) it will be a RegressionStatistics actually ;-)
+        # So if someone desires -- let him have it
+        # self.states.enable('training_confusion', False)
 
         # set kernel:
         if kernel is None:
@@ -86,11 +85,13 @@ class GPR(Classifier):
             (['non-linear'],
              ['linear', 'has_sensitivity'])[int(isinstance(kernel, KernelLinear))]
 
-        self.predicted_variances = None
-        self.log_marginal_likelihood = None
-        self.train_fv = None
-        self.labels = None
-        self.km_train_train = None
+        # No need to initialize state variables. Unless they got set
+        # they would raise an exception
+        # self.predicted_variances = None
+        # self.log_marginal_likelihood = None
+        self._train_fv = None
+        self._labels = None
+        self._km_train_train = None
         pass
 
 
@@ -107,9 +108,9 @@ class GPR(Classifier):
         """
         if __debug__: debug("GPR", "Computing log_marginal_likelihood")
         self.log_marginal_likelihood = \
-                                 -0.5*N.dot(self.train_labels, self.alpha) - \
-                                  N.log(self.L.diagonal()).sum() - \
-                                  self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
+                                 -0.5*N.dot(self._train_labels, self._alpha) - \
+                                  N.log(self._L.diagonal()).sum() - \
+                                  self._km_train_train.shape[0]*0.5*N.log(2*N.pi)
         return self.log_marginal_likelihood
 
 
@@ -138,18 +139,18 @@ class GPR(Classifier):
         """Train the classifier using `data` (`Dataset`).
         """
 
-        self.train_fv = data.samples
-        self.train_labels = data.labels
+        self._train_fv = train_fv = data.samples
+        self._train_labels = train_labels = data.labels
 
         if __debug__:
             debug("GPR", "Computing train train kernel matrix")
-        self.km_train_train = self.__kernel.compute(self.train_fv)
+        self._km_train_train = km_train_train = self.__kernel.compute(train_fv)
 
         if __debug__:
             debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
 
-        tmp = self.km_train_train + \
-              self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd')
+        tmp = km_train_train + \
+              self.sigma_noise**2*N.identity(km_train_train.shape[0], 'd')
         # The following line could raise N.linalg.linalg.LinAlgError
         # because of numerical reasons due to the too rapid decay of
         # 'tmp' eigenvalues. In that case we try adding a small
@@ -157,10 +158,10 @@ class GPR(Classifier):
         # of Tikhonov regularization. This is equivalent to adding
         # little white gaussian noise.
         try:
-            self.L = N.linalg.cholesky(tmp)
+            self._L = L = N.linalg.cholesky(tmp)
         except N.linalg.linalg.LinAlgError:
             epsilon = 1.0e-20
-            self.L = N.linalg.cholesky(tmp+epsilon)
+            self._L = L = N.linalg.cholesky(tmp+epsilon)
             pass
         # Note: scipy.cho_factor and scipy.cho_solve seems to be more
         # appropriate to perform Cholesky decomposition and the
@@ -169,8 +170,8 @@ class GPR(Classifier):
 
         if __debug__:
             debug("GPR", "Computing alpha")
-        self.alpha = N.linalg.solve(self.L.transpose(),
-                                    N.linalg.solve(self.L, self.train_labels))
+        self._alpha = N.linalg.solve(L.transpose(),
+                                    N.linalg.solve(L, train_labels))
 
         # compute only if the state is enabled
         if self.states.isEnabled('log_marginal_likelihood'):
@@ -189,9 +190,9 @@ class GPR(Classifier):
         """
         if __debug__:
             debug('GPR', "Computing train test kernel matrix")
-        km_train_test = self.__kernel.compute(self.train_fv, data)
+        km_train_test = self.__kernel.compute(self._train_fv, data)
 
-        predictions = N.dot(km_train_test.transpose(), self.alpha)
+        predictions = N.dot(km_train_test.transpose(), self._alpha)
 
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
@@ -201,7 +202,7 @@ class GPR(Classifier):
 
             if __debug__:
                 debug("GPR", "Computing predicted variances")
-            v = N.linalg.solve(self.L, km_train_test)
+            v = N.linalg.solve(self._L, km_train_test)
             self.predicted_variances = \
                 N.diag(km_test_test-N.dot(v.transpose(), v)) \
                 + self.sigma_noise**2
@@ -254,14 +255,14 @@ class GPRLinearWeights(Sensitivity):
 
         clf = self.clf
         kernel = clf.kernel
-        train_fv = clf.train_fv
+        train_fv = clf._train_fv
 
         weights = N.dot(kernel.Sigma_p,
-                        N.dot(train_fv.T, clf.alpha))
+                        N.dot(train_fv.T, clf._alpha))
 
         if self.states.isEnabled('variances'):
             # super ugly formulas that can be quite surely improved:
-            tmp = N.linalg.inv(self.L)
+            tmp = N.linalg.inv(self._L)
             Kyinv = N.dot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
             #     using N.matrix where * is a matrix product
