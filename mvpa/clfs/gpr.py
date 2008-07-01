@@ -17,6 +17,7 @@ import numpy as N
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier
 from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
+from mvpa.measures.base import Sensitivity
 
 if __debug__:
     from mvpa.base import debug
@@ -32,12 +33,6 @@ class GPR(Classifier):
 
     log_marginal_likelihood = StateVariable(enabled=False,
         doc="Log Marginal Likelihood")
-
-    linear_weights = StateVariable(enabled=False,
-        doc="Weights of the linear regression (for KernelLinear)")
-
-    linear_weights_variances = StateVariable(enabled=False,
-        doc="Variances of the linear weights (for KernelLinear)")
 
     _clf_internals = [ 'gpr', 'regression' ]
 
@@ -59,8 +54,9 @@ class GPR(Classifier):
         # append proper clf_internal depending on the kernel
         # TODO: unify finally all kernel-based machines.
         #       make SMLR to use kernels
-        self._clf_internals.append(
-            ( 'non-linear', 'linear' )[int(isinstance(kernel, KernelLinear))])
+        self._clf_internals = self._clf_internals + \
+            (['non-linear'],
+             ['linear', 'has_sensitivity'])[int(isinstance(kernel, KernelLinear))]
 
         # pylint happiness
         self.w = None
@@ -84,6 +80,7 @@ class GPR(Classifier):
         self.labels = None
         self.km_train_train = None
         pass
+
 
     def __repr__(self):
         """String summary of the object
@@ -111,12 +108,9 @@ class GPR(Classifier):
         raise NotImplementedError
 
 
-    def compute_linear_weights(self):
-        """In case of KernelLinear compute explicitly the coefficients
-        of the linear regression, together with their variances (if
-        requested).
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns a sensitivity analyzer for GPR.
 
-        Note that the intercept is not computed.
         """
         # XXX The following two lines does not work since
         # self.__kernel is instance of kernel.KernelLinear and not
@@ -125,23 +119,8 @@ class GPR(Classifier):
         #     kernel.KernelLinear so everything shoudl be ok
         if not isinstance(self.__kernel, KernelLinear):
             raise NotImplementedError
-        self.linear_weights = N.dot(self.__kernel.Sigma_p,
-                                    N.dot(self.train_fv.T, self.alpha))
 
-        if self.states.isEnabled('linear_weights_variances'):
-            # super ugly formulas that can be quite surely improved:
-            tmp = N.linalg.inv(self.L)
-            Kyinv = N.dot(tmp.T, tmp)
-            # XXX in such lengthy matrix manipulations you might better off
-            #     using N.matrix where * is a matrix product
-            self.linear_weights_variances = N.diag(
-                self.__kernel.Sigma_p -
-                N.dot(self.__kernel.Sigma_p,
-                      N.dot(self.train_fv.T,
-                            N.dot(Kyinv,
-                                  N.dot(self.train_fv,
-                                        self.__kernel.Sigma_p)))))
-        return self.linear_weights
+        return GPRLinearWeights(self, **kwargs)
 
 
     def _train(self, data):
@@ -185,10 +164,6 @@ class GPR(Classifier):
         # compute only if the state is enabled
         if self.states.isEnabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
-            pass
-
-        if self.states.isEnabled('linear_weights'):
-            self.compute_linear_weights()
             pass
 
         if __debug__:
@@ -243,6 +218,49 @@ class GPR(Classifier):
 
     kernel = property(fget=lambda self:self.__kernel)
     pass
+
+
+class GPRLinearWeights(Sensitivity):
+    """`SensitivityAnalyzer` that reports the weights GPR trained
+    on a given `Dataset`.
+
+    In case of KernelLinear compute explicitly the coefficients
+    of the linear regression, together with their variances (if
+    requested).
+
+    Note that the intercept is not computed.
+    """
+
+    variances = StateVariable(enabled=False,
+        doc="Variances of the weights (for KernelLinear)")
+
+    _LEGAL_CLFS = [ GPR ]
+
+
+    def _call(self, dataset):
+        """Extract weights from GPR
+        """
+
+        clf = self.clf
+        kernel = clf.kernel
+        train_fv = clf.train_fv
+
+        weights = N.dot(kernel.Sigma_p,
+                        N.dot(train_fv.T, clf.alpha))
+
+        if self.states.isEnabled('variances'):
+            # super ugly formulas that can be quite surely improved:
+            tmp = N.linalg.inv(self.L)
+            Kyinv = N.dot(tmp.T, tmp)
+            # XXX in such lengthy matrix manipulations you might better off
+            #     using N.matrix where * is a matrix product
+            self.states.variances = N.diag(
+                kernel.Sigma_p -
+                N.dot(kernel.Sigma_p,
+                      N.dot(train_fv.T,
+                            N.dot(Kyinv,
+                                  N.dot(train_fv, kernel.Sigma_p)))))
+        return weights
 
 
 def compute_prediction(sigma_noise_best, length_scale_best, regression,
