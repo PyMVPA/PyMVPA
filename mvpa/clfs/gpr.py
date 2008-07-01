@@ -41,15 +41,13 @@ class GPR(Classifier):
 
     _clf_internals = [ 'gpr', 'regression' ]
 
-    # TODO: don't initialize kernel with an instance here since it gets shared
-    #       among all instances of GPR
     def __init__(self, kernel=None, sigma_noise=0.001, **kwargs):
         """Initialize a GPR regression analysis.
 
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
-            (Defaults to None)
+            (Defaults to KernelSquaredExponential if None in argumetns)
           sigma_noise : float
             the standard deviation of the gaussian noise.
             (Defaults to 0.001)
@@ -76,7 +74,7 @@ class GPR(Classifier):
         else:
             self.__kernel = kernel
             pass
-            
+
         # set noise level:
         self.sigma_noise = sigma_noise
 
@@ -90,8 +88,9 @@ class GPR(Classifier):
     def __repr__(self):
         """String summary of the object
         """
-        return """GPR(kernel=%s, sigma_noise=%f, enable_states=%s)""" % \
-               (self.__kernel, self.sigma_noise, str(self.states.enabled))
+        return super(GPR, self).__repr__(
+            prefixes=['kernel=%s' % self.__kernel,
+                      'sigma_noise=%s' % self.sigma_noise])
 
 
     def compute_log_marginal_likelihood(self):
@@ -99,7 +98,8 @@ class GPR(Classifier):
         Compute log marginal likelihood using self.train_fv and self.labels.
         """
         if __debug__: debug("GPR", "Computing log_marginal_likelihood")
-        self.log_marginal_likelihood = -0.5*N.dot(self.train_labels, self.alpha) - \
+        self.log_marginal_likelihood = \
+                                 -0.5*N.dot(self.train_labels, self.alpha) - \
                                   N.log(self.L.diagonal()).sum() - \
                                   self.km_train_train.shape[0]*0.5*N.log(2*N.pi)
         return self.log_marginal_likelihood
@@ -109,7 +109,7 @@ class GPR(Classifier):
         """Compute gradient of the log marginal likelihood.
         """
         raise NotImplementedError
-    
+
 
     def compute_linear_weights(self):
         """In case of KernelLinear compute explicitly the coefficients
@@ -121,15 +121,26 @@ class GPR(Classifier):
         # XXX The following two lines does not work since
         # self.__kernel is instance of kernel.KernelLinear and not
         # just KernelLinear. How to fix?
-        # if not isinstance(self.__kernel, KernelLinear):
-        #    raise NotImplementedError
+        # YYY yoh is not sure what is the problem... KernelLinear is actually
+        #     kernel.KernelLinear so everything shoudl be ok
+        if not isinstance(self.__kernel, KernelLinear):
+            raise NotImplementedError
         self.linear_weights = N.dot(self.__kernel.Sigma_p,
                                     N.dot(self.train_fv.T, self.alpha))
+
         if self.states.isEnabled('linear_weights_variances'):
             # super ugly formulas that can be quite surely improved:
             tmp = N.linalg.inv(self.L)
-            Kyinv = N.dot(tmp.T,tmp)
-            self.linear_weights_variances = N.diag(self.__kernel.Sigma_p - N.dot(self.__kernel.Sigma_p, N.dot(self.train_fv.T,N.dot(Kyinv, N.dot(self.train_fv, self.__kernel.Sigma_p)))))
+            Kyinv = N.dot(tmp.T, tmp)
+            # XXX in such lengthy matrix manipulations you might better off
+            #     using N.matrix where * is a matrix product
+            self.linear_weights_variances = N.diag(
+                self.__kernel.Sigma_p -
+                N.dot(self.__kernel.Sigma_p,
+                      N.dot(self.train_fv.T,
+                            N.dot(Kyinv,
+                                  N.dot(self.train_fv,
+                                        self.__kernel.Sigma_p)))))
         return self.linear_weights
 
 
@@ -147,7 +158,8 @@ class GPR(Classifier):
         if __debug__:
             debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
 
-        tmp = self.km_train_train + self.sigma_noise**2*N.identity(self.km_train_train.shape[0],'d')
+        tmp = self.km_train_train + \
+              self.sigma_noise**2*N.identity(self.km_train_train.shape[0],'d')
         # The following line could raise N.linalg.linalg.LinAlgError
         # because of numerical reasons due to the too rapid decay of
         # 'tmp' eigenvalues. In that case we try adding a small
@@ -178,7 +190,7 @@ class GPR(Classifier):
         if self.states.isEnabled('linear_weights'):
             self.compute_linear_weights()
             pass
-            
+
         if __debug__:
             debug("GPR", "Done training")
 
@@ -205,7 +217,9 @@ class GPR(Classifier):
                 debug("GPR", "Computing predicted variances")
             v = N.linalg.solve(self.L, km_train_test)
             self.predicted_variances = \
-                           N.diag(km_test_test-N.dot(v.transpose(), v)) + self.sigma_noise**2
+                N.diag(km_test_test-N.dot(v.transpose(), v)) \
+                + self.sigma_noise**2
+            pass
 
         if __debug__:
             debug("GPR", "Done predicting")
@@ -231,7 +245,14 @@ class GPR(Classifier):
     pass
 
 
-def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,data_test,label_test,F,logml=True):
+def compute_prediction(sigma_noise_best, length_scale_best, regression,
+                       dataset, data_test, label_test, F, logml=True):
+    """XXX Function which seems to be valid only for __main__...
+
+    TODO: remove reimporting of pylab etc. See pylint output for more
+          information
+    """
+
     data_train = dataset.samples
     label_train = dataset.labels
     import pylab
@@ -256,7 +277,8 @@ def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,dat
         accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
         print "RMSE:",accuracy
     else:
-        accuracy = (prediction.astype('l')==label_test.astype('l')).sum()/float(prediction.size)
+        accuracy = (prediction.astype('l')==label_test.astype('l')).sum() \
+                   / float(prediction.size)
         print "accuracy:", accuracy
         pass
 
@@ -266,8 +288,10 @@ def compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,dat
         pylab.plot(data_test, prediction, "b-", label="prediction")
         pylab.plot(data_test, label_test, "g+", label="test")
         if regression:
-            pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances), "b--", label=None)
-            pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances), "b--", label=None)
+            pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances),
+                       "b--", label=None)
+            pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances),
+                       "b--", label=None)
             pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))
         else:
             pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
@@ -334,11 +358,15 @@ if __name__ == "__main__":
             i += 1
             pass
         pylab.figure()
-        X = N.repeat(sigma_noise_steps[:,N.newaxis],sigma_noise_steps.size,axis=1)
-        Y = N.repeat(length_scale_steps[N.newaxis,:],length_scale_steps.size,axis=0)
+        X = N.repeat(sigma_noise_steps[:,N.newaxis], sigma_noise_steps.size,
+                     axis=1)
+        Y = N.repeat(length_scale_steps[N.newaxis,:], length_scale_steps.size,
+                     axis=0)
         step = (lml.max()-lml.min())/30
-        pylab.contour(X,Y, lml, N.arange(lml.min(), lml.max()+step, step),colors='k')
-        pylab.plot([sigma_noise_best],[length_scale_best],"k+",markeredgewidth=2, markersize=8)
+        pylab.contour(X, Y, lml, N.arange(lml.min(), lml.max()+step, step),
+                      colors='k')
+        pylab.plot([sigma_noise_best], [length_scale_best], "k+",
+                   markeredgewidth=2, markersize=8)
         pylab.xlabel("noise standard deviation")
         pylab.ylabel("characteristic length_scale")
         pylab.title("log marginal likelihood")
@@ -346,7 +374,8 @@ if __name__ == "__main__":
         print "lml_best",lml_best
         print "sigma_noise_best",sigma_noise_best
         print "length_scale_best",length_scale_best
-        print "number of expected upcrossing on the unitary intervale:",1.0/(2*N.pi*length_scale_best)
+        print "number of expected upcrossing on the unitary intervale:", \
+              1.0/(2*N.pi*length_scale_best)
         pass
 
 
