@@ -159,7 +159,7 @@ class GPR(Classifier):
             debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
 
         tmp = self.km_train_train + \
-              self.sigma_noise**2*N.identity(self.km_train_train.shape[0],'d')
+              self.sigma_noise**2*N.identity(self.km_train_train.shape[0], 'd')
         # The following line could raise N.linalg.linalg.LinAlgError
         # because of numerical reasons due to the too rapid decay of
         # 'tmp' eigenvalues. In that case we try adding a small
@@ -226,7 +226,7 @@ class GPR(Classifier):
         return predictions
 
 
-    def set_hyperparameters(self,hyperparameter):
+    def set_hyperparameters(self, hyperparameter):
         """
         Set hyperparameters' values.
 
@@ -236,7 +236,7 @@ class GPR(Classifier):
         order the kernel expect them to be.
         """
         self.sigma_noise = hyperparameter[0]
-        if hyperparameter.size>1:
+        if hyperparameter.size > 1:
             self.__kernel.set_hyperparameters(hyperparameter[1:])
             pass
         return
@@ -257,7 +257,7 @@ def compute_prediction(sigma_noise_best, length_scale_best, regression,
     label_train = dataset.labels
     import pylab
     kse = KernelSquaredExponential(length_scale=length_scale_best)
-    g = GPR(kse, sigma_noise=sigma_noise_best,regression=regression)
+    g = GPR(kse, sigma_noise=sigma_noise_best, regression=regression)
     print g
     if regression:
         g.states.enable("predicted_variances")
@@ -275,7 +275,7 @@ def compute_prediction(sigma_noise_best, length_scale_best, regression,
     accuracy = None
     if regression:
         accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
-        print "RMSE:",accuracy
+        print "RMSE:", accuracy
     else:
         accuracy = (prediction.astype('l')==label_test.astype('l')).sum() \
                    / float(prediction.size)
@@ -299,7 +299,7 @@ def compute_prediction(sigma_noise_best, length_scale_best, regression,
         pylab.legend()
         pass
 
-    print "LML:",g.log_marginal_likelihood
+    print "LML:", g.log_marginal_likelihood
 
 
 
@@ -309,7 +309,6 @@ if __name__ == "__main__":
     pylab.close("all")
     pylab.ion()
 
-    from mvpa.datasets import Dataset
     from mvpa.misc.data_generators import sinModulated
 
     train_size = 40
@@ -339,16 +338,16 @@ if __name__ == "__main__":
             j = 0
             for y in length_scale_steps:
                 kse = KernelSquaredExponential(length_scale=y)
-                g = GPR(kse, sigma_noise=x,regression=regression)
+                g = GPR(kse, sigma_noise=x, regression=regression)
                 g.states.enable("log_marginal_likelihood")
                 g.train(dataset)
-                lml[i,j] = g.log_marginal_likelihood
+                lml[i, j] = g.log_marginal_likelihood
                 # print x,y,g.log_marginal_likelihood
                 # g.train_fv = dataset.samples
                 # g.train_labels = dataset.labels
-                # lml[i,j] = g.compute_log_marginal_likelihood()
-                if lml[i,j] > lml_best:
-                    lml_best = lml[i,j]
+                # lml[i, j] = g.compute_log_marginal_likelihood()
+                if lml[i, j] > lml_best:
+                    lml_best = lml[i, j]
                     length_scale_best = y
                     sigma_noise_best = x
                     # print x,y,lml_best
@@ -358,9 +357,9 @@ if __name__ == "__main__":
             i += 1
             pass
         pylab.figure()
-        X = N.repeat(sigma_noise_steps[:,N.newaxis], sigma_noise_steps.size,
+        X = N.repeat(sigma_noise_steps[:, N.newaxis], sigma_noise_steps.size,
                      axis=1)
-        Y = N.repeat(length_scale_steps[N.newaxis,:], length_scale_steps.size,
+        Y = N.repeat(length_scale_steps[N.newaxis, :], length_scale_steps.size,
                      axis=0)
         step = (lml.max()-lml.min())/30
         pylab.contour(X, Y, lml, N.arange(lml.min(), lml.max()+step, step),
@@ -371,15 +370,15 @@ if __name__ == "__main__":
         pylab.ylabel("characteristic length_scale")
         pylab.title("log marginal likelihood")
         pylab.axis("tight")
-        print "lml_best",lml_best
-        print "sigma_noise_best",sigma_noise_best
-        print "length_scale_best",length_scale_best
+        print "lml_best", lml_best
+        print "sigma_noise_best", sigma_noise_best
+        print "length_scale_best", length_scale_best
         print "number of expected upcrossing on the unitary intervale:", \
               1.0/(2*N.pi*length_scale_best)
         pass
 
 
 
-    compute_prediction(sigma_noise_best,length_scale_best,regression,dataset,
-                       dataset_test.samples, dataset_test.labels,F,logml)
+    compute_prediction(sigma_noise_best, length_scale_best, regression, dataset,
+                       dataset_test.samples, dataset_test.labels, F, logml)
     pylab.show()
