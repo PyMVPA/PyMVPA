@@ -615,3 +615,6 @@ for name, item, params, descr in \
           "SVMLight regression http://svmlight.joachims.org/")]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
+
+# Assign SVM class to limited set of LinearSVMWeights
+LinearSVMWeights._LEGAL_CLFS = [SVM]
