@@ -194,8 +194,8 @@ class Classifier(Parametrized):
         else:
             return repr(self)
 
-    def __repr__(self, prefix=""):
-        return super(Classifier, self).__repr__(prefix=prefix)
+    def __repr__(self, prefixes=[]):
+        return super(Classifier, self).__repr__(prefixes=prefixes)
 
 
     def _pretrain(self, dataset):
@@ -516,15 +516,13 @@ class BoostedClassifier(Classifier, Harvestable):
         """Store the list of classifiers"""
 
 
-    def __repr__(self, prefix=""):
+    def __repr__(self, prefixes=[]):
         if self.__clfs is None or len(self.__clfs)==0:
-            prefix_ = "clfs=%s" % repr(self.__clfs)
+            #prefix_ = "clfs=%s" % repr(self.__clfs)
+            prefix_ = []
         else:
-            prefix_ = "clfs=[%s,...]" % repr(self.__clfs[0])
-        if prefix != "":
-            prefix += ", "
-        prefix += prefix_
-        return super(BoostedClassifier, self).__repr__(prefix)
+            prefix_ = ["clfs=[%s,...]" % repr(self.__clfs[0])]
+        return super(BoostedClassifier, self).__repr__(prefix_ + prefixes)
 
 
     def _train(self, dataset):
@@ -666,11 +664,9 @@ class ProxyClassifier(Classifier):
             self._clf_internals += clf._clf_internals
 
 
-    def __repr__(self, prefix=""):
-        if prefix != "":
-            prefix += ", "
-        prefix += "clf=%s" % repr(self.__clf)
-        return super(ProxyClassifier, self).__repr__(prefix)
+    def __repr__(self, prefixes=[]):
+        return super(ProxyClassifier, self).__repr__(
+            ["clf=%s" % repr(self.__clf)] + prefixes)
 
     def _train(self, dataset):
         """Train `ProxyClassifier`
@@ -938,11 +934,9 @@ class CombinedClassifier(BoostedClassifier):
         """Functor destined to combine results of multiple classifiers"""
 
 
-    def __repr__(self, prefix=""):
-        if prefix != "":
-            prefix += ", "
-        prefix += "combiner=%s" % repr(self.__combiner)
-        return super(CombinedClassifier, self).__repr__(prefix)
+    def __repr__(self, prefixes=[]):
+        return super(CombinedClassifier, self).__repr__(
+            ["combiner=%s" % repr(self.__combiner)] + prefixes)
 
     def untrain(self):
         """Untrain `CombinedClassifier`
@@ -1038,12 +1032,10 @@ class BinaryClassifier(ProxyClassifier):
             self.__predictneg = self.__neglabels[0]
 
 
-    def __repr__(self, prefix=""):
-        if prefix != "":
-            prefix += ", "
-        prefix += "poslabels=%s, neglabels=%s" % (
+    def __repr__(self, prefixes=[]):
+        prefix = "poslabels=%s, neglabels=%s" % (
             repr(self.__poslabels), repr(self.__neglabels))
-        return super(BinaryClassifier, self).__repr__(prefix)
+        return super(BinaryClassifier, self).__repr__([prefix] + prefixes)
 
 
     def _train(self, dataset):
@@ -1151,12 +1143,10 @@ class MulticlassClassifier(CombinedClassifier):
 
     # XXX fix it up a bit... it seems that MulticlassClassifier should
     # be actually ProxyClassifier and use BoostedClassifier internally
-    def __repr__(self, prefix=""):
-        if prefix != "":
-            prefix += ", "
-        prefix += "bclf_type=%s, clf=%s" % (repr(self.__bclf_type),
+    def __repr__(self, prefixes=[]):
+        prefix = "bclf_type=%s, clf=%s" % (repr(self.__bclf_type),
                                             repr(self.__clf))
-        return super(MulticlassClassifier, self).__repr__(prefix)
+        return super(MulticlassClassifier, self).__repr__([prefix] + prefixes)
 
 
     def _train(self, dataset):

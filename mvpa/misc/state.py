@@ -953,49 +953,53 @@ class Stateful(object):
                 s += " %d %s:%s" %(len(collection.items), col, str(collection))
         return s
 
-    def __repr__(self, fullname=False, prefix=""):
+    def __repr__(self, prefixes=[], fullname=False):
         """Definition of the object summary over Parametrized object
+
+        :Parameters:
+          fullname : bool
+            Either to include full name of the module
+          prefixes : list of strings
+            What other prefixes to prepend to list of arguments
         """
-        res = ""
+        prefixes = prefixes[:]          # copy list
         id_str = ""
+        module_str = ""
         if __debug__:
             if 'MODULE_IN_REPR' in debug.active:
                 fullname = True
             if 'ID_IN_REPR' in debug.active:
                 id_str = '#%s' % id(self)
+
         if fullname:
             modulename = '%s' % self.__class__.__module__
             if modulename != "__main__":
-                res = "%s." % modulename
-        res += "%s(%s" % (self.__class__.__name__, prefix)
-        if prefix != "":
-            sep = ", "
-        else:
-            sep = ""
+                module_str = "%s." % modulename
+
         collections = self._collections
         # we want them in this particular order
         for col in _collections_order:
-            if not collections.has_key(col):
+            collection = collections.get(col, None)
+            if collection is None:
                 continue
-            collection = collections[col]
             if isinstance(collection, ParameterCollection):
                 for k in collection.names:
                     # list only params with not default values
                     if collection[k].isDefault: continue
-                    res += "%s%s=%s" % (sep, k, collection[k].value)
-                    sep = ', '
+                    prefixes.append("%s=%s" % (k, collection[k].value))
             elif isinstance(collection, StateCollection):
                 for name, invert in ( ('enable', False), ('disable', True) ):
                     states = collection._getEnabled(nondefault=False, invert=invert)
                     if len(states):
-                        res += sep + "%s_states=%s" % (name, str(states))
+                        prefixes.append("%s_states=%s" % (name, str(states)))
             else:
                 raise RuntimeError, "Unknown type of collection %s" % col
         descr = self.__descr
         if descr is not None:
-            res += "%sdescr='%s'" % (sep, descr)
-        res += ")%s" % id_str
-        return res
+            prefixes.append("descr='%s'" % (descr))
+
+        return "%s%s(%s)%s" % (module_str, self.__class__.__name__,
+                               ', '.join(prefixes), id_str)
 
 
     descr = property(lambda self: self.__descr,
