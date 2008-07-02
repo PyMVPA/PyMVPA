@@ -165,7 +165,7 @@ class Classifier(Parametrized):
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
 
-        self._setRetrainable(self.params.retrainable)
+        self._setRetrainable(self.params.retrainable, force=True)
 
         if self.params.regression:
             for statevar in [ "trained_labels"]: #, "training_confusion" ]:
@@ -473,7 +473,7 @@ class Classifier(Parametrized):
     #
     # Methods which are needed for retrainable classifiers
     #
-    def _setRetrainable(self, value):
+    def _setRetrainable(self, value, force=False):
         """Assign value of retrainable parameter
 
         If retrainable flag is to be changed, classifier has to be
@@ -482,12 +482,15 @@ class Classifier(Parametrized):
         it becomes retrainable
         """
         pretrainable = self.params['retrainable']
-        if value != pretrainable.value:
+        if (force or value != pretrainable.value) and 'retrainable' in self._clf_internals:
+            if __debug__:
+                debug("CLF_", "Setting retrainable to %s" % value)
             if 'meta' in self._clf_internals:
                 warning("Retrainability is not yet crafted/tested for "
                         "meta classifiers. Unpredictable behavior might occur")
             # assure that we don't drag anything behind
-            self.untrain()
+            if self.trained:
+                self.untrain()
             states = self.states
             if not value and states.isKnown('retrained'):
                 states.remove('retrained')
@@ -519,7 +522,9 @@ class Classifier(Parametrized):
                     self.__trained = self.__idhashes.copy() # just the same Nones ;-)
                 self.__resetChangedData()
             elif 'retrainable' in self._clf_internals:
-                self.__resetChangedData()
+                #self.__resetChangedData()
+                self.__changedData_isset = False
+                self.__changedData = None
                 self.__idhashes = None
                 if __debug__ and 'CHECK_RETRAIN' in debug.active:
                     self.__trained = None
@@ -532,6 +537,10 @@ class Classifier(Parametrized):
             debug('CLF_', 'Resetting flags on either data was changed (for retrainable)')
         keys = self.__idhashes.keys() + self._paramscols
         # XXX we might like just to reinit values to False
+        #_changedData = self._changedData
+        #if isinstance(_changedData, dict):
+        #    for key in _changedData.keys():
+        #        _changedData[key] = False
         self._changedData = dict(zip(keys, [False]*len(keys)))
         self.__changedData_isset = False
 
