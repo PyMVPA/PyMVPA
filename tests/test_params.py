@@ -13,7 +13,7 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.datasets.base import Dataset
+from mvpa.datasets import Dataset
 from mvpa.misc.state import Stateful, StateVariable
 from mvpa.misc.param import Parameter, KernelParameter
 

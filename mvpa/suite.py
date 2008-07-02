@@ -25,7 +25,10 @@ __docformat__ = 'restructuredtext'
 from mvpa import *
 from mvpa.algorithms.cvtranserror import *
 from mvpa.base import *
+from mvpa.base.config import *
 from mvpa.base.verbosity import *
+from mvpa.clfs.distance import *
+from mvpa.clfs.kernel import *
 from mvpa.clfs.base import *
 from mvpa.clfs.knn import *
 if externals.exists('lars'):
@@ -38,12 +41,12 @@ if externals.exists('libsvm') or externals.exists('shogun'):
     from mvpa.clfs.svm import *
 from mvpa.clfs.transerror import *
 from mvpa.clfs.warehouse import *
-from mvpa.datasets.base import *
 from mvpa.datasets import *
 from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
 from mvpa.datasets.metric import *
 from mvpa.datasets.miscfx import *
+from mvpa.datasets.eep import *
 if externals.exists('nifti'):
     from mvpa.datasets.nifti import *
 from mvpa.datasets.splitter import *
@@ -51,6 +54,7 @@ from mvpa.featsel.base import *
 from mvpa.featsel.helpers import *
 from mvpa.featsel.ifs import *
 from mvpa.featsel.rfe import *
+from mvpa.mappers import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.boxcar import *
@@ -71,7 +75,9 @@ from mvpa.misc.exceptions import *
 from mvpa.misc import *
 from mvpa.misc.iohelpers import *
 from mvpa.misc.fsl import *
+from mvpa.misc.eepbin import *
 from mvpa.misc.bv import *
+from mvpa.misc.bv.base import *
 from mvpa.misc.param import *
 from mvpa.misc.state import *
 from mvpa.misc.support import *
