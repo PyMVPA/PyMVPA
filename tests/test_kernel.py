@@ -8,18 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kernels"""
 
-
-from mvpa.clfs.kernel import Kernel
 import unittest
 import numpy as N
+
+from mvpa.clfs.distance import squared_euclidean_distance
+# from mvpa.clfs.kernel import Kernel
 
 class KernelTests(unittest.TestCase):
 
     def testEuclidDist(self):
-        k = Kernel()
 
         data = N.random.normal(size=(5,8))
-        ed = k.euclidean_distance(data)
+        ed = squared_euclidean_distance(data)
 
         # XXX not sure if that is right: 'weight' seems to be given by
         # feature (i.e. column), but distance is between samples (i.e. rows)
