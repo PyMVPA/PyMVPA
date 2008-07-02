@@ -278,7 +278,7 @@ class GPR(Classifier):
         other kernel's hyperparameters values follow in the exact
         order the kernel expect them to be.
         """
-        if hyperparameter[0]<0:
+        if hyperparameter[0]<GPR.sigma_noise.min:
             raise InvalidHyperparameter()
         self.sigma_noise = hyperparameter[0]
         if hyperparameter.size > 1:
