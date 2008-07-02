@@ -42,6 +42,7 @@ tests = [
     'test_cmdline',
     'test_eepdataset',
     # Classifiers (longer tests)
+    'test_kernel',
     'test_clf',
     'test_regr',
     'test_knn',
