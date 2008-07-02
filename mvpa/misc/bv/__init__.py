@@ -12,7 +12,7 @@ if __debug__:
     from mvpa.base import debug
     debug('INIT', 'mvpa.misc.bv')
 
-from base import *
+from mvpa.misc.bv.base import *
 
 if __debug__:
     debug('INIT', 'mvpa.misc.bv end')
