@@ -20,6 +20,7 @@ from mvpa.clfs.base import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      _deepcopyclf
+from mvpa.clfs.gpr import GPR
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
@@ -435,6 +436,10 @@ class ClassifiersTests(unittest.TestCase):
             clf.params.C *= 0.1
             clf_re.params.C *= 0.1
             batch_test()
+        elif 'sigma_noise' in clf.params.names:
+            clf.params.sigma_noise *= 100
+            clf_re.params.sigma_noise *= 100
+            batch_test()
         else:
             raise RuntimeError, \
                   'Please implement testing while changing some of the ' \
@@ -464,10 +469,11 @@ class ClassifiersTests(unittest.TestCase):
 
         # should re-train if we change data
         # reuse trained SVM and its 'final' optimization point
-        oldsamples = dstrain.samples.copy()
-        dstrain.samples[:] += dstrain.samples*0.05
-        self.failUnless((oldsamples != dstrain.samples).any())
-        batch_test(retest=False)
+        if not isinstance(clf, GPR):    # on GPR everything depends on the data ;-)
+            oldsamples = dstrain.samples.copy()
+            dstrain.samples[:] += dstrain.samples*0.05
+            self.failUnless((oldsamples != dstrain.samples).any())
+            batch_test(retest=False)
         clf.states._resetEnabledTemporarily()
 
         # test retrain()
