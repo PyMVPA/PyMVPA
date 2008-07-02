@@ -213,16 +213,34 @@ class Classifier(Parametrized):
             if not self.__changedData_isset:
                 self.__resetChangedData()
                 _changedData = self._changedData
+                __idhashes = self.__idhashes
+                __invalidatedChangedData = self.__invalidatedChangedData
+
                 # if we don't know what was changed we need to figure
                 # them out
                 if __debug__:
-                    debug('CLF_', "IDHashes are %s" % (self.__idhashes))
-                _changedData['traindata'] = self.__wasDataChanged('traindata', dataset.samples)
-                _changedData['labels'] = self.__wasDataChanged('labels', dataset.labels)
+                    debug('CLF_', "IDHashes are %s" % (__idhashes))
+
+                # Look at the data if any was changed
+                for key, data_ in (('traindata', dataset.samples),
+                                   ('labels', dataset.labels)):
+                    _changedData[key] = self.__wasDataChanged(key, data_)
+                    # if those idhashes were invalidated by retraining
+                    # we need to adjust _changedData accordingly
+                    if __invalidatedChangedData.get(key, False):
+                        if __debug__ and not _changedData[key]:
+                            debug('CLF_', 'Found that idhash for %s was '
+                                  'invalidated by retraining' % key)
+                        _changedData[key] = True
+
+                # Look at the parameters
                 for col in self._paramscols:
                     changedParams = self._collections[col].whichSet()
                     if len(changedParams):
                         _changedData[col] = changedParams
+
+                self.__invalidatedChangedData = {} # reset it on training
+
                 if __debug__:
                     debug('CLF_', "Obtained _changedData is %s" % (self._changedData))
 
@@ -349,7 +367,8 @@ class Classifier(Parametrized):
             if not self.__changedData_isset:
                 self.__resetChangedData()
                 _changedData = self._changedData
-                _changedData['testdata'] = self.__wasDataChanged('testdata', data)
+                _changedData['testdata'] = \
+                                        self.__wasDataChanged('testdata', data)
                 if __debug__:
                     debug('CLF_', "prepredict: Obtained _changedData is %s" % (_changedData))
 
@@ -529,6 +548,7 @@ class Classifier(Parametrized):
                     # use idhash anyways
                     self.__trained = self.__idhashes.copy() # just the same Nones ;-)
                 self.__resetChangedData()
+                self.__invalidatedChangedData = {}
             elif 'retrainable' in self._clf_internals:
                 #self.__resetChangedData()
                 self.__changedData_isset = False
@@ -553,7 +573,7 @@ class Classifier(Parametrized):
         self.__changedData_isset = False
 
 
-    def __wasDataChanged(self, key, entry):
+    def __wasDataChanged(self, key, entry, update=True):
         """Check if given entry was changed from what known prior. If so -- store
 
         needed only for retrainable beastie
@@ -573,32 +593,36 @@ class Classifier(Parametrized):
                   'values %s!=%s %s' % \
                   (key, idhash_, __idhashes[key], changed,
                    entry, __trained[key], changed2)
-            __trained[key] = entry
+            if update:
+                __trained[key] = entry
 
         if __debug__ and changed:
-            debug('CLF_', "Changed %s from %s to %s"
-                      % (key, __idhashes[key], idhash_))
-        __idhashes[key] = idhash_
+            debug('CLF_', "Changed %s from %s to %s.%s"
+                      % (key, __idhashes[key], idhash_,
+                         ('','updated')[int(update)]))
+        if update:
+            __idhashes[key] = idhash_
+
         return changed
 
 
-    def __updateHashIds(self, key, data):
-        """Is twofold operation: updates hashid if was said that it changed.
-
-        or if it wasn't said that data changed, but CHECK_RETRAIN and it found
-        to be changed -- raise Exception
-        """
-
-        check_retrain = __debug__ and 'CHECK_RETRAIN' in debug.active
-        chd = self._changedData
-
-        # we need to updated idhashes
-        if chd[key] or check_retrain:
-            keychanged = self.__wasDataChanged(key, data)
-        if check_retrain and keychanged and not chd[key]:
-            raise RuntimeError, \
-                  "Data %s found changed although wasn't " \
-                  "labeled as such" % key
+    # def __updateHashIds(self, key, data):
+    #     """Is twofold operation: updates hashid if was said that it changed.
+    #
+    #     or if it wasn't said that data changed, but CHECK_RETRAIN and it found
+    #     to be changed -- raise Exception
+    #     """
+    #
+    #     check_retrain = __debug__ and 'CHECK_RETRAIN' in debug.active
+    #     chd = self._changedData
+    #
+    #     # we need to updated idhashes
+    #     if chd[key] or check_retrain:
+    #         keychanged = self.__wasDataChanged(key, data)
+    #     if check_retrain and keychanged and not chd[key]:
+    #         raise RuntimeError, \
+    #               "Data %s found changed although wasn't " \
+    #               "labeled as such" % key
 
 
     #
@@ -614,6 +638,17 @@ class Classifier(Parametrized):
     def retrain(self, dataset, **kwargs):
         """Helper to avoid check if data was changed actually changed
 
+        Useful if just some aspects of classifier were changed since
+        its previous training. For instance if dataset wasn't changed
+        but only classifier parameters, then kernel matrix does not
+        have to be computed.
+
+        Words of caution: classifier must be previousely trained,
+        results always should first be compared to the results on not
+        'retrainable' classifier (without calling retrain). Some
+        additional checks are enabled if debug id 'CHECK_RETRAIN' is
+        enabled, to guard against obvious mistakes.
+
         :Parameters:
           kwargs
             that is what _changedData gets updated with. So, smth like
@@ -622,19 +657,43 @@ class Classifier(Parametrized):
         """
         # Note that it also demolishes anything for repredicting,
         # which should be ok in most of the cases
-        if __debug__ and not self.params.retrainable:
-            raise RuntimeError, \
-                  "Do not use retrain/repredict on non-retrainable classifiers"
+        if __debug__:
+            if not self.params.retrainable:
+                raise RuntimeError, \
+                      "Do not use retrain/repredict on non-retrainable classifiers"
+
+            if kwargs.has_key('params') or kwargs.has_key('kernel_params'):
+                raise ValueError, "Retraining for changed params yet not working"
+
         self.__resetChangedData()
-        self._changedData.update(kwargs)
+
+        # local bindings
+        chd = self._changedData
+        ichd = self.__invalidatedChangedData
+
+        chd.update(kwargs)
+        # mark for future 'train()' items which are explicitely
+        # mentioned as changed
+        for key, value in kwargs.iteritems():
+            if value: ichd[key] = True
         self.__changedData_isset = True
 
-        # To checks or refresh of hashids
-        for key, data_ in (('traindata', dataset.samples),
-                           ('labels', dataset.labels)):
-            self.__updateHashIds(key, data_)
+        # To check if we are not fooled
+        if __debug__ and 'CHECK_RETRAIN' in debug.active:
+            for key, data_ in (('traindata', dataset.samples),
+                               ('labels', dataset.labels)):
+                # so it wasn't told to be invalid
+                if not chd[key] and not ichd.get(key, False):
+                    if self.__wasDataChanged(key, data_, update=False):
+                        raise RuntimeError, \
+                              "Data %s found changed although wasn't " \
+                              "labeled as such" % key
 
-        # TODO: parameters of classifiers
+        # TODO: parameters of classifiers... for now there is explicit
+        # 'forbidance' above
+
+        # Below check should be superseeded by check above, thus never occur.
+        # XXX remove later on
         if __debug__ and 'CHECK_RETRAIN' in debug.active and self.trained \
                and not self._changedData['traindata'] \
                and self.__trained['traindata'].shape != dataset.samples.shape:
@@ -647,10 +706,14 @@ class Classifier(Parametrized):
     def repredict(self, data, **kwargs):
         """Helper to avoid check if data was changed actually changed
 
-        Useful if classifier was retrained but with the same data (so
-        just parameters were changed), so that it could be repredicted
-        easily without recomputing for instance train/test kernel
-        matrix
+        Useful if classifier was (re)trained but with the same data
+        (so just parameters were changed), so that it could be
+        repredicted easily (on the same data as before) without
+        recomputing for instance train/test kernel matrix. Should be
+        used with caution and always compared to the results on not
+        'retrainable' classifier. Some additional checks are enabled
+        if debug id 'CHECK_RETRAIN' is enabled, to guard against
+        obvious mistakes.
 
         :Parameters:
           data
@@ -669,15 +732,23 @@ class Classifier(Parametrized):
                   "Do not use retrain/repredict on non-retrainable classifiers"
 
         self.__resetChangedData()
-        self._changedData.update(**kwargs)
+        chd = self._changedData
+        chd.update(**kwargs)
         self.__changedData_isset = True
 
-        # We shouldn't do it here... we should only check if the data we are getting
-        # is the same as it was predicted before on... just in CHECK_RETRAIN
-        #
-        # # To checks or refresh of hashids
-        # self.__updateHashIds('testdata', data)
 
+        # check if we are attempted to perform on the same data
+        if __debug__ and 'CHECK_RETRAIN' in debug.active:
+            for key, data_ in (('testdata', data),):
+                # so it wasn't told to be invalid
+                #if not chd[key]:# and not ichd.get(key, False):
+                    if self.__wasDataChanged(key, data_, update=False):
+                        raise RuntimeError, \
+                              "Data %s found changed although wasn't " \
+                              "labeled as such" % key
+
+        # Should be superseeded by above
+        # XXX remove in future
         if __debug__ and 'CHECK_RETRAIN' in debug.active \
                and not self._changedData['testdata'] \
                and self.__trained['testdata'].shape != data.shape:
