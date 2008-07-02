@@ -24,6 +24,7 @@ class UnknownStateError(Exception):
     def __str__(self):
         return "Exception: " + self.__msg
 
+
 class DatasetError(Exception):
     """Thrown if there is an internal problem with a Dataset.
 
@@ -45,3 +46,9 @@ class ConvergenceError(Exception):
     def __init__(self):
         Exception.__init__(self)
 
+
+class InvalidHyperparameterError(Exception):
+    """Generic exception to be raised when setting improper values
+    as hyperparameters."""
+    def __init__(self):
+        Exception.__init__(self)

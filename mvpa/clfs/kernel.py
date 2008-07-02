@@ -14,14 +14,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.misc.exceptions import InvalidHyperparameterError
+
 if __debug__:
-    from mvpa.base import debug
-
-
-class InvalidHyperparameter(Exception):
-    """Generic exception to be raised when setting improper values
-    as hyperparameters."""
-    pass
+    from mvpa.base import debug, warning
 
 
 class Kernel(object):
@@ -35,8 +31,7 @@ class Kernel(object):
     def __repr__(self):
         return "Kernel()"
 
-    def euclidean_distance(self, data1, data2=None, weight=None,
-                           symmetric=False):
+    def euclidean_distance(self, data1, data2=None, weight=None):
         """Compute weighted euclidean distance matrix between two datasets.
 
 
@@ -44,27 +39,25 @@ class Kernel(object):
           data1 : numpy.ndarray
               first dataset
           data2 : numpy.ndarray
-              second dataset. If None set symmetric to True.
+              second dataset. If None, compute the euclidean distance between
+              the first dataset versus itself.
               (Defaults to None)
           weight : numpy.ndarray
               vector of weights, each one associated to each dimension of the
               dataset (Defaults to None)
-          symmetric : bool
-              compute the euclidean distance between the first dataset versus
-              itself (True) or the second one (False). Note that
-              (Defaults to False)
         """
+        if __debug__:
+            # check if both datasets are floating point
+            if not N.issubdtype(data1.dtype, 'f') \
+               or (data2 is not None and not N.issubdtype(data2.dtype, 'f')):
+                warning('Computing euclidean distance on integer data ' \
+                        'is not supported.')
 
         if data2 is None:
             data2 = data1
-            symmetric = True
-            pass
 
-        size1, F = data1.shape[0:2]
-        size2 = data2.shape[0]
         if weight is None:
-            weight = N.ones(F,'d') # unitary weight
-            pass
+            weight = N.ones(data1.shape[1], 'd') # unitary weight
 
         # In the following you can find faster implementations of this
         # basic code:
@@ -73,19 +66,21 @@ class Kernel(object):
         #                                    'd')
         # for i in range(size1):
         #     for j in range(size2):
-        #         euclidean_distance_matrix[i,j] = ((data1[i,:]-data2[j,:])**2*weight).sum()
+        #         euclidean_distance_matrix[i,j] = \
+        #           ((data1[i,:]-data2[j,:])**2*weight).sum()
         #         pass
         #     pass
 
         # Fast computation of distance matrix in Python+NumPy,
         # adapted from Bill Baxter's post on [numpy-discussion].
         # Basically: (x-y)**2*w = x*w*x - 2*x*w*y + y*y*w
-        data1w = data1*weight
-        euclidean_distance_matrix = (data1w*data1).sum(1)[:,None] \
-                                    -2*N.dot(data1w,data2.T)+ \
-                                    (data2*data2*weight).sum(1)
+        data1w = data1 * weight
+        euclidean_distance_matrix = \
+            (data1w * data1).sum(1)[:, None] \
+            -2 * N.dot(data1w, data2.T) \
+            + (data2 * data2 * weight).sum(1)
         # correction to some possible numerical instabilities:
-        euclidean_distance_matrix[euclidean_distance_matrix<0] = 0
+        euclidean_distance_matrix[euclidean_distance_matrix < 0] = 0
         self.euclidean_distance_matrix = euclidean_distance_matrix
         return self.euclidean_distance_matrix
     pass
@@ -125,12 +120,13 @@ class KernelConstant(Kernel):
         if data2 is None:
             data2 = data1
             pass
-        self.kernel_matrix = (self.sigma_0**2)*N.ones((data1.shape[0],data2.shape[0]))
+        self.kernel_matrix = \
+            (self.sigma_0 ** 2) * N.ones((data1.shape[0], data2.shape[0]))
         return self.kernel_matrix
 
     def set_hyperparameters(self, hyperparameter):
-        if hyperparameter<0:
-            raise InvalidHyperparameter()
+        if hyperparameter < 0:
+            raise InvalidHyperparameterError()
         self.sigma_0 = hyperparameter
         return
 
@@ -161,7 +157,8 @@ class KernelLinear(Kernel):
         self.kernel_matrix = None
 
     def __repr__(self):
-        return "%s(Sigma_p=%s, sigma_0=%s)" % (self.__class__.__name__, str(self.Sigma_p), str(self.sigma_0))
+        return "%s(Sigma_p=%s, sigma_0=%s)" \
+            % (self.__class__.__name__, str(self.Sigma_p), str(self.sigma_0))
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -210,7 +207,7 @@ class KernelLinear(Kernel):
 
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched
-        self.kernel_matrix = N.dot(data1, data2_sc) + self.sigma_0**2
+        self.kernel_matrix = N.dot(data1, data2_sc) + self.sigma_0 ** 2
         return self.kernel_matrix
 
     def set_hyperparameters(self, hyperparameter):
@@ -221,8 +218,8 @@ class KernelLinear(Kernel):
         # covariance matrix)... but how to tell ModelSelector/OpenOpt
         # to proved just "hermitian" set of values? So for now we skip
         # the general case, which seems not to useful indeed.
-        if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+        if N.any(hyperparameter < 0):
+            raise InvalidHyperparameterError()
         self.sigma_0 = N.array(hyperparameter[0])
         self.Sigma_p = N.diagflat(hyperparameter[1:])
         return
@@ -258,7 +255,8 @@ class KernelExponential(Kernel):
 
 
     def __repr__(self):
-        return "%s(length_scale=%s, sigma_f=%s)" % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
+        return "%s(length_scale=%s, sigma_f=%s)" \
+          % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -273,10 +271,13 @@ class KernelExponential(Kernel):
         # XXX the following computation can be (maybe) made more
         # efficient since length_scale is squared and then
         # square-rooted uselessly.
-        self.kernel_matrix = self.sigma_f*N.exp(-N.sqrt(self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))))
+        self.kernel_matrix = \
+            self.sigma_f * N.exp(-N.sqrt(
+                self.euclidean_distance(
+                    data1, data2, weight=0.5 / (self.length_scale ** 2))))
         return self.kernel_matrix
 
-    def gradient(self,data1,data2):
+    def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
         model selection with high-dimensional data.
         """
@@ -290,8 +291,8 @@ class KernelExponential(Kernel):
 
         Used by model selection.
         """
-        if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+        if N.any(hyperparameter < 0):
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
@@ -327,7 +328,8 @@ class KernelSquaredExponential(Kernel):
 
 
     def __repr__(self):
-        return "%s(length_scale=%s, sigma_f=%s)" % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
+        return "%s(length_scale=%s, sigma_f=%s)" \
+          % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -339,10 +341,12 @@ class KernelSquaredExponential(Kernel):
             data
             (Defaults to None)
         """
-        self.kernel_matrix = self.sigma_f*N.exp(-self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2)))
+        self.kernel_matrix = \
+            self.sigma_f * N.exp(-self.euclidean_distance(
+                data1, data2, weight=0.5 / (self.length_scale ** 2)))
         return self.kernel_matrix
 
-    def gradient(self,data1,data2):
+    def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
         model selection with high-dimensional data.
         """
@@ -356,8 +360,8 @@ class KernelSquaredExponential(Kernel):
 
         Used by model selection.
         """
-        if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+        if N.any(hyperparameter < 0):
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
@@ -394,13 +398,14 @@ class KernelMatern_3_2(Kernel):
         self.length_scale = length_scale
         self.sigma_f = sigma_f
         self.kernel_matrix = None
-        if numerator==3.0 or numerator==5.0:
+        if numerator == 3.0 or numerator == 5.0:
             self.numerator = numerator
         else:
             raise NotImplementedError
 
     def __repr__(self):
-        return "%s(length_scale=%s, ni=%d/2)" % (self.__class__.__name__, str(self.length_scale), self.numerator)
+        return "%s(length_scale=%s, ni=%d/2)" \
+            % (self.__class__.__name__, str(self.length_scale), self.numerator)
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -412,16 +417,21 @@ class KernelMatern_3_2(Kernel):
             data
             (Defaults to None)
         """
-        tmp = self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))
+        tmp = self.euclidean_distance(
+                data1, data2, weight=0.5 / (self.length_scale ** 2))
         if self.numerator == 3.0:
             tmp = N.sqrt(tmp)
-            self.kernel_matrix = self.sigma_f*(1.0+N.sqrt(3.0)*tmp)*N.exp(-N.sqrt(3.0)*tmp)
+            self.kernel_matrix = \
+                self.sigma_f * (1.0 + N.sqrt(3.0) * tmp) \
+                * N.exp(-N.sqrt(3.0) * tmp)
         elif self.numerator == 5.0:
             tmp2 = N.sqrt(tmp)
-            self.kernel_matrix = self.sigma_f*(1.0+N.sqrt(5.0)*tmp2+5.0/3.0*tmp)*N.exp(-N.sqrt(5.0)*tmp2)
+            self.kernel_matrix = \
+                self.sigma_f * (1.0 + N.sqrt(5.0) * tmp2 + 5.0 / 3.0 * tmp) \
+                * N.exp(-N.sqrt(5.0) * tmp2)
         return self.kernel_matrix
 
-    def gradient(self,data1,data2):
+    def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
         model selection with high-dimensional data.
         """
@@ -436,8 +446,8 @@ class KernelMatern_3_2(Kernel):
         Used by model selection.
         Note: 'numerator' is not considered as an hyperparameter.
         """
-        if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+        if N.any(hyperparameter < 0):
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
@@ -494,7 +504,8 @@ class KernelRationalQuadratic(Kernel):
         self.alpha = alpha
 
     def __repr__(self):
-        return "%s(length_scale=%s, alpha=%f)" % (self.__class__.__name__, str(self.length_scale), self.alpha)
+        return "%s(length_scale=%s, alpha=%f)" \
+            % (self.__class__.__name__, str(self.length_scale), self.alpha)
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -506,11 +517,13 @@ class KernelRationalQuadratic(Kernel):
             data
             (Defaults to None)
         """
-        tmp = self.euclidean_distance(data1, data2, weight=0.5/(self.length_scale**2))
-        self.kernel_matrix = self.sigma_f*(1.0+tmp/(2.0*self.alpha))**-self.alpha
+        tmp = self.euclidean_distance(
+                data1, data2, weight=0.5 / (self.length_scale ** 2))
+        self.kernel_matrix = \
+            self.sigma_f * (1.0 + tmp / (2.0 * self.alpha)) ** -self.alpha
         return self.kernel_matrix
 
-    def gradient(self,data1,data2):
+    def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
         model selection with high-dimensional data.
         """
@@ -525,8 +538,8 @@ class KernelRationalQuadratic(Kernel):
         Used by model selection.
         Note: 'alpha' is not considered as an hyperparameter.
         """
-        if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+        if N.any(hyperparameter < 0):
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
@@ -535,69 +548,10 @@ class KernelRationalQuadratic(Kernel):
 
 
 # dictionary of avalable kernels with names as keys:
-kernel_dictionary = {'constant':KernelConstant,
-                     'linear':KernelLinear,
-                     'exponential':KernelExponential,
-                     'squared exponential':KernelSquaredExponential,
-                     'Matern ni=3/2':KernelMatern_3_2,
-                     'Matern ni=5/2':KernelMatern_5_2,
-                     'rational quadratic':KernelRationalQuadratic}
-
-if __name__ == "__main__":
-
-    from mvpa.misc import data_generators
-
-    # N.random.seed(1)
-    data = N.random.rand(4, 2)
-
-    k = Kernel()
-    print k
-    edm = k.euclidean_distance(data)
-
-    for kernel_class, kernel_args in (
-        (KernelConstant, {'sigma_0':1.0}),
-        (KernelConstant, {'sigma_0':1.0}),
-        (KernelLinear, {'Sigma_p':N.eye(data.shape[1])}),
-        (KernelLinear, {'Sigma_p':N.ones(data.shape[1])}),
-        (KernelLinear, {'Sigma_p':2.0}),
-        (KernelLinear, {}),
-        (KernelExponential, {}),
-        (KernelSquaredExponential, {}),
-        (KernelMatern_3_2, {}),
-        (KernelMatern_5_2, {}),
-        (KernelRationalQuadratic, {}),
-        ):
-        kernel = kernel_class(**kernel_args)
-        print kernel
-        result = kernel.compute(data)
-        pass
-
-    # In the following we draw some 2D functions at random from the
-    # distribution N(O,kernel) defined by each available kernel and
-    # plot them. These plots shows the flexibility of a given kernel
-    # (with default parameters) when doing interpolation. The choice
-    # of a kernel defines a prior probability over the function space
-    # used for regression/classfication with GPR/GPC.
-    import pylab
-    pylab.ion()
-    count = 1
-    for k in kernel_dictionary.keys():
-        pylab.subplot(3,4,count)
-        pylab.ioff()
-        # X = N.random.rand(size)*12.0-6.0
-        # X.sort()
-        X = N.arange(-1,1,.02)
-        X = X[:,N.newaxis]
-        ker = kernel_dictionary[k]()
-        K = ker.compute(X,X)
-        for i in range(10):
-            f = N.random.multivariate_normal(N.zeros(X.shape[0]),K)
-            pylab.plot(X[:,0],f,"b-")
-            pass
-        pylab.ion()
-        pylab.title(k)
-        pylab.axis('tight')
-        count += 1
-        pass
-
-
+kernel_dictionary = {'constant': KernelConstant,
+                     'linear': KernelLinear,
+                     'exponential': KernelExponential,
+                     'squared exponential': KernelSquaredExponential,
+                     'Matern ni=3/2': KernelMatern_3_2,
+                     'Matern ni=5/2': KernelMatern_5_2,
+                     'rational quadratic': KernelRationalQuadratic}
