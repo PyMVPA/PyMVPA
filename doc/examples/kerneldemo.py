@@ -61,4 +61,6 @@ for k in kernel_dictionary.keys():
     P.axis('tight')
     count += 1
 
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()
