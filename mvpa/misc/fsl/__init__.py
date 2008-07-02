@@ -12,8 +12,8 @@ if __debug__:
     from mvpa.base import debug
     debug('INIT', 'mvpa.misc.fsl')
 
-from base import *
-from flobs import *
+from mvpa.misc.fsl.base import *
+from mvpa.misc.fsl.flobs import *
 
 if __debug__:
     debug('INIT', 'mvpa.misc.fsl end')
