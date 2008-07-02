@@ -47,8 +47,8 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     # In the following you can find faster implementations of this
     # basic code:
     #
-    # squared_euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
-    #                                    'd')
+    # squared_euclidean_distance_matrix = \
+    #           N.zeros((data1.shape[0], data2.shape[0]), 'd')
     # for i in range(size1):
     #     for j in range(size2):
     #         squared_euclidean_distance_matrix[i,j] = \
@@ -88,9 +88,9 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
             norm0 = N.linalg.norm(squared_euclidean_distance_matrix[less0])
             totalnorm = N.linalg.norm(squared_euclidean_distance_matrix)
             if totalnorm !=0 and norm0 / totalnorm > 1e-8:
-                warning("Found %d elements out of %d unstable (<0) in computation "
-                        "of squared_euclidean_distance_matrix. "
-                        "Their norm is %s when total norm is %s" %
+                warning("Found %d elements out of %d unstable (<0) in " \
+                        "computation of squared_euclidean_distance_matrix. " \
+                        "Their norm is %s when total norm is %s" % \
                         (less0num, N.sum(less0.shape), norm0, totalnorm))
     squared_euclidean_distance_matrix[less0] = 0
     return squared_euclidean_distance_matrix
