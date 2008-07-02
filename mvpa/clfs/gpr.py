@@ -35,7 +35,7 @@ class GPR(Classifier):
     log_marginal_likelihood = StateVariable(enabled=False,
         doc="Log Marginal Likelihood")
 
-    _clf_internals = [ 'gpr', 'regression' ]
+    _clf_internals = [ 'gpr', 'regression', 'retrainable' ]
 
     # NOTE XXX Parameters of the classifier. Values available as
     # clf.parameter or clf.params.parameter, or as
@@ -139,44 +139,72 @@ class GPR(Classifier):
         """Train the classifier using `data` (`Dataset`).
         """
 
+        # local bindings for faster lookup
+        retrainable = self.params.retrainable
+        if retrainable:
+            newkernel = False
+            newL = False
+            _changedData = self._changedData
+
         self._train_fv = train_fv = data.samples
         self._train_labels = train_labels = data.labels
 
-        if __debug__:
-            debug("GPR", "Computing train train kernel matrix")
-        self._km_train_train = km_train_train = self.__kernel.compute(train_fv)
+        if not retrainable or _changedData['traindata'] or _changedData.get('kernel_params', False):
+            if __debug__:
+                debug("GPR", "Computing train train kernel matrix")
+            self._km_train_train = km_train_train = self.__kernel.compute(train_fv)
+            newkernel = True
+            if retrainable:
+                self._km_train_test = None # reset to facilitate recomputation
+        else:
+            if __debug__:
+                debug("GPR", "Not recomputing kernel since retrainable and nothing changed")
+            km_train_train = self._km_train_train # reuse
 
-        if __debug__:
-            debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
+        if not retrainable or newkernel or _changedData['params']:
+            if __debug__:
+                debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
+            tmp = km_train_train + \
+                  self.sigma_noise**2*N.identity(km_train_train.shape[0], 'd')
+            # The following line could raise N.linalg.linalg.LinAlgError
+            # because of numerical reasons due to the too rapid decay of
+            # 'tmp' eigenvalues. In that case we try adding a small
+            # constant to tmp, e.g. epsilon=1.0e-20. It should be a form
+            # of Tikhonov regularization. This is equivalent to adding
+            # little white gaussian noise.
+            try:
+                self._L = L = N.linalg.cholesky(tmp)
+            except N.linalg.linalg.LinAlgError:
+                epsilon = 1.0e-20
+                self._L = L = N.linalg.cholesky(tmp+epsilon)
+                pass
+            newL = True
+        else:
+            if __debug__:
+                debug("GPR", "Not computing L since kernel, data and params stayed the same")
+            L = self._L                 # reuse
 
-        tmp = km_train_train + \
-              self.sigma_noise**2*N.identity(km_train_train.shape[0], 'd')
-        # The following line could raise N.linalg.linalg.LinAlgError
-        # because of numerical reasons due to the too rapid decay of
-        # 'tmp' eigenvalues. In that case we try adding a small
-        # constant to tmp, e.g. epsilon=1.0e-20. It should be a form
-        # of Tikhonov regularization. This is equivalent to adding
-        # little white gaussian noise.
-        try:
-            self._L = L = N.linalg.cholesky(tmp)
-        except N.linalg.linalg.LinAlgError:
-            epsilon = 1.0e-20
-            self._L = L = N.linalg.cholesky(tmp+epsilon)
-            pass
+        # XXX we leave _alpha being recomputed, although we could check
+        #   if newL or _changedData['labels']
+        #
         # Note: scipy.cho_factor and scipy.cho_solve seems to be more
         # appropriate to perform Cholesky decomposition and the
         # 'solve' step of the following lines, but preliminary tests
         # show them to be slower and less stable than NumPy's way.
-
         if __debug__:
             debug("GPR", "Computing alpha")
+
         self._alpha = N.linalg.solve(L.transpose(),
-                                    N.linalg.solve(L, train_labels))
+                                     N.linalg.solve(L, train_labels))
 
         # compute only if the state is enabled
         if self.states.isEnabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
             pass
+
+        if retrainable:
+            # we must assign it only if it is retrainable
+            self.states.retrained = not newkernel or not newL
 
         if __debug__:
             debug("GPR", "Done training")
@@ -188,29 +216,57 @@ class GPR(Classifier):
         """
         Predict the output for the provided data.
         """
-        if __debug__:
-            debug('GPR', "Computing train test kernel matrix")
-        km_train_test = self.__kernel.compute(self._train_fv, data)
+        retrainable = self.params.retrainable
+
+        if not retrainable or self._changedData['testdata'] or self._km_train_test is None:
+            if __debug__:
+                debug('GPR', "Computing train test kernel matrix")
+            km_train_test = self.__kernel.compute(self._train_fv, data)
+            if retrainable:
+                self._km_train_test = km_train_test
+                self.states.repredicted = False
+        else:
+            if __debug__:
+                debug('GPR', "Not recomputing train test kernel matrix")
+            km_train_test = self._km_train_test
+            self.states.repredicted = True
+
 
         predictions = N.dot(km_train_test.transpose(), self._alpha)
 
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
-            if __debug__:
-                debug('GPR', "Computing test test kernel matrix")
-            km_test_test = self.__kernel.compute(data)
+            if not retrainable or self._km_test_test is None \
+                   or self._changedData['testdata']:
+                if __debug__:
+                    debug('GPR', "Computing test test kernel matrix")
+                km_test_test = self.__kernel.compute(data)
+                if retrainable:
+                    self._km_test_test = km_test_test
+            else:
+                if __debug__:
+                    debug('GPR', "Not recomputing test test kernel matrix")
+                km_test_test = self._km_test_test
 
             if __debug__:
                 debug("GPR", "Computing predicted variances")
             v = N.linalg.solve(self._L, km_train_test)
             self.predicted_variances = \
-                N.diag(km_test_test-N.dot(v.transpose(), v)) \
+                N.diag(km_test_test - N.dot(v.transpose(), v)) \
                 + self.sigma_noise**2
             pass
 
         if __debug__:
             debug("GPR", "Done predicting")
         return predictions
+
+
+    def _setRetrainable(self, value, force=False):
+        """Internal function : need to set _km_test_test
+        """
+        super(GPR, self)._setRetrainable(value, force)
+        if force or (value and value != self.params.retrainable):
+            self._km_test_test = None
 
 
     def set_hyperparameters(self, hyperparameter):
