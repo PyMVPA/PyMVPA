@@ -17,7 +17,7 @@ import numpy as N
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
-from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
+from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear, InvalidHyperparameter
 from mvpa.measures.base import Sensitivity
 
 if __debug__:
@@ -63,7 +63,7 @@ class GPR(Classifier):
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
-            (Defaults to KernelSquaredExponential if None in argumetns)
+            (Defaults to KernelSquaredExponential if None in arguments)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -278,6 +278,8 @@ class GPR(Classifier):
         other kernel's hyperparameters values follow in the exact
         order the kernel expect them to be.
         """
+        if hyperparameter[0]<0:
+            raise InvalidHyperparameter()
         self.sigma_noise = hyperparameter[0]
         if hyperparameter.size > 1:
             self.__kernel.set_hyperparameters(hyperparameter[1:])
