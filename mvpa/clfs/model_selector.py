@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 from mvpa.base import externals
+from mvpa.misc.exceptions import InvalidHyperparameterError
 
 # no sense to import this module if openopt is not available
 if externals.exists("openopt", raiseException=True):
@@ -61,18 +62,25 @@ class ModelSelector(object):
         """
         self.optimization_algorithm = optimization_algorithm
 
-        def f(*args):
+        def f(x):
             """
             Wrapper to the log_marginal_likelihood to be
             maximized. Necessary for OpenOpt since it performs
             minimization only.
             """
-            self.parametric_model.set_hyperparameters(*args)
+            # since some OpenOpen MLP solvers does not implement lower bounds
+            # the hyperparameters bounds are implemented inside PyMVPA:
+            # (see dmitrey post on [SciPy-user] 20080628)
+            try:
+                self.parametric_model.set_hyperparameters(x)
+            except InvalidHyperparameterError:
+                # print "WARNING: invalid hyperparameters!"
+                return +N.inf
             self.parametric_model.train(self.dataset)
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
             return -log_marginal_likelihood # minus sign because optimizers do _minimization_.
 
-        def df(*args):
+        def df(x):
             """
             Proxy to the log_marginal_likelihood first
             derivative. Necessary for OpenOpt when using derivatives.
@@ -81,8 +89,9 @@ class ModelSelector(object):
             return
 
         x0 = hyp_initial_guess # vector of hyperparameters' values where to start the search
-        self.problem = NLP(f,x0) # actual instance of the OpenOpt non-linear problem
-        self.problem.lb = N.zeros(self.problem.n) # set lower bound for hyperparameters: avoid negative hyperparameters. Note: problem.n is the size of hyperparameters' vector
+        contol = 1.0e-6
+        self.problem = NLP(f,x0, contol=contol) # actual instance of the OpenOpt non-linear problem
+        self.problem.lb = N.zeros(self.problem.n)+contol # set lower bound for hyperparameters: avoid negative hyperparameters. Note: problem.n is the size of hyperparameters' vector
         self.problem.maxiter = maxiter # max number of iterations for the optimizer.
         self.problem.checkdf = True # check whether the derivative of log_marginal_likelihood converged to zero before ending optimization
         self.problem.ftol = ftol # set increment of log_marginal_likelihood under which the optimizer stops
@@ -141,8 +150,6 @@ if __name__ == "__main__":
     regression = True
     logml = True
 
-    # k = kernel.KernelLinear(coefficient=N.ones(1))
-    # k = kernel.KernelConstant(coefficient=1.0)
     k = kernel.KernelSquaredExponential()
     g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
@@ -154,13 +161,18 @@ if __name__ == "__main__":
     ms = ModelSelector(g,dataset)
 
     sigma_noise_initial = 1.0
+    sigma_f_initial = 1.0
     length_scale_initial = 1.0
 
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-3)
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,sigma_f_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-3)
+    # problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[1.0,1.0], optimization_algorithm="ralg", ftol=1.0e-3)
+    
     lml = ms.solve()
-    sigma_noise_best, length_scale_best = ms.hyperparameters_best
+    print ms.hyperparameters_best
+    sigma_noise_best, sigma_f_best, length_scale_best = ms.hyperparameters_best
     print
     print "Best sigma_noise:",sigma_noise_best
+    print "Best sigma_f:",sigma_f_best
     print "Best length_scale:",length_scale_best
     print "Best log_marginal_likelihood:",lml
 
@@ -170,14 +182,25 @@ if __name__ == "__main__":
     print "GPR ARD on dataset from Williams and Rasmussen 1996:"
     # data = N.hstack([data]*10) # test a larger set of dimensions: reduce ftol!
     dataset =  data_generators.wr1996()
-    k = kernel.KernelSquaredExponential(length_scale=N.ones(dataset.samples.shape[1]))
+    # k = kernel.KernelConstant()
+    # k = kernel.KernelLinear()
+    k = kernel.KernelSquaredExponential()
+    # k = kernel.KernelExponential()
+    # k = kernel.KernelMatern_3_2()
+    # k = kernel.KernelMatern_5_2()
     g = gpr.GPR(k, regression=regression)
+    g.states.enable("log_marginal_likelihood")
+    # if isinstance(k, kernel.KernelLinear):
+    #     g.states.enable("linear_weights")
+    #     pass
     ms = ModelSelector(g, dataset)
 
     sigma_noise_initial = 0.01
     length_scales_initial = 0.5*N.ones(dataset.samples.shape[1])
 
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.hstack([sigma_noise_initial,length_scales_initial]), optimization_algorithm="ralg")
+    # problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.ones(2)*0.1, optimization_algorithm="ralg")
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.ones(dataset.samples.shape[1]+2)*1.0e-1, optimization_algorithm="ralg")
+    # problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.hstack([sigma_noise_initial,length_scales_initial]), optimization_algorithm="ralg")
     lml = ms.solve()
     sigma_noise_best = ms.hyperparameters_best[0]
     length_scales_best = ms.hyperparameters_best[1:]
@@ -186,3 +209,8 @@ if __name__ == "__main__":
     print "Best length_scale:",length_scales_best
     print "Best log_marginal_likelihood:",lml
 
+    # g.states.enable("linear_weights")
+    # g.states.enable("linear_weights_variances")    
+    # g.compute_linear_weights()
+    # print g.linear_weights
+    # print g.linear_weights_variances
