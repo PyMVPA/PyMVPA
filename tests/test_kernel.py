@@ -18,19 +18,20 @@ class KernelTests(unittest.TestCase):
     def testEuclidDist(self):
         k = Kernel()
 
-        data = N.random.normal(size=(20,30))
+        data = N.random.normal(size=(5,8))
         ed = k.euclidean_distance(data)
 
         # XXX not sure if that is right: 'weight' seems to be given by
         # feature (i.e. column), but distance is between samples (i.e. rows)
         # current behavior is:
-        true_size = (20, 20)
+        true_size = (5, 5)
         self.failUnless(ed.shape == true_size)
 
         # slow version to compute distance matrix
         ed_manual = N.zeros(true_size, 'd')
         for i in range(true_size[0]):
             for j in range(true_size[1]):
+                #ed_manual[i,j] = N.sqrt(((data[i,:] - data[j,:] )** 2).sum())
                 ed_manual[i,j] = ((data[i,:] - data[j,:] )** 2).sum()
         ed_manual[ed_manual < 0] = 0
 
@@ -38,7 +39,7 @@ class KernelTests(unittest.TestCase):
         self.failUnless(N.diag(ed).sum() < 0.0000000001)
 
         # let see whether Kernel does the same
-        self.failUnless((ed_manual == ed).all())
+        self.failUnless((ed - ed_manual).sum() < 0.0000001)
 
 
 
