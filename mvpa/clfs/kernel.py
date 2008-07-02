@@ -15,6 +15,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.exceptions import InvalidHyperparameterError
+from mvpa.clfs.distance import squared_euclidean_distance
 
 if __debug__:
     from mvpa.base import debug, warning
@@ -26,65 +27,15 @@ class Kernel(object):
     """
 
     def __init__(self):
-        self.euclidean_distance_matrix = None
+        pass
 
     def __repr__(self):
         return "Kernel()"
 
-    def euclidean_distance(self, data1, data2=None, weight=None):
-        """Compute weighted euclidean distance matrix between two datasets.
+    def compute(self, data1, data2=None):
+        raise NotImplementedError
 
-
-        :Parameters:
-          data1 : numpy.ndarray
-              first dataset
-          data2 : numpy.ndarray
-              second dataset. If None, compute the euclidean distance between
-              the first dataset versus itself.
-              (Defaults to None)
-          weight : numpy.ndarray
-              vector of weights, each one associated to each dimension of the
-              dataset (Defaults to None)
-        """
-        if __debug__:
-            # check if both datasets are floating point
-            if not N.issubdtype(data1.dtype, 'f') \
-               or (data2 is not None and not N.issubdtype(data2.dtype, 'f')):
-                warning('Computing euclidean distance on integer data ' \
-                        'is not supported.')
-
-        if data2 is None:
-            data2 = data1
-
-        if weight is None:
-            weight = N.ones(data1.shape[1], 'd') # unitary weight
-
-        # In the following you can find faster implementations of this
-        # basic code:
-        #
-        # euclidean_distance_matrix = N.zeros((data1.shape[0], data2.shape[0]),
-        #                                    'd')
-        # for i in range(size1):
-        #     for j in range(size2):
-        #         euclidean_distance_matrix[i,j] = \
-        #           ((data1[i,:]-data2[j,:])**2*weight).sum()
-        #         pass
-        #     pass
-
-        # Fast computation of distance matrix in Python+NumPy,
-        # adapted from Bill Baxter's post on [numpy-discussion].
-        # Basically: (x-y)**2*w = x*w*x - 2*x*w*y + y*y*w
-        data1w = data1 * weight
-        euclidean_distance_matrix = \
-            (data1w * data1).sum(1)[:, None] \
-            -2 * N.dot(data1w, data2.T) \
-            + (data2 * data2 * weight).sum(1)
-        # correction to some possible numerical instabilities:
-        euclidean_distance_matrix[euclidean_distance_matrix < 0] = 0
-        self.euclidean_distance_matrix = euclidean_distance_matrix
-        return self.euclidean_distance_matrix
     pass
-
 
 class KernelConstant(Kernel):
     """The constant kernel class.
@@ -273,7 +224,7 @@ class KernelExponential(Kernel):
         # square-rooted uselessly.
         self.kernel_matrix = \
             self.sigma_f * N.exp(-N.sqrt(
-                self.euclidean_distance(
+                squared_euclidean_distance(
                     data1, data2, weight=0.5 / (self.length_scale ** 2))))
         return self.kernel_matrix
 
@@ -342,7 +293,7 @@ class KernelSquaredExponential(Kernel):
             (Defaults to None)
         """
         self.kernel_matrix = \
-            self.sigma_f * N.exp(-self.euclidean_distance(
+            self.sigma_f * N.exp(-squared_euclidean_distance(
                 data1, data2, weight=0.5 / (self.length_scale ** 2)))
         return self.kernel_matrix
 
@@ -417,7 +368,7 @@ class KernelMatern_3_2(Kernel):
             data
             (Defaults to None)
         """
-        tmp = self.euclidean_distance(
+        tmp = squared_euclidean_distance(
                 data1, data2, weight=0.5 / (self.length_scale ** 2))
         if self.numerator == 3.0:
             tmp = N.sqrt(tmp)
@@ -517,7 +468,7 @@ class KernelRationalQuadratic(Kernel):
             data
             (Defaults to None)
         """
-        tmp = self.euclidean_distance(
+        tmp = squared_euclidean_distance(
                 data1, data2, weight=0.5 / (self.length_scale ** 2))
         self.kernel_matrix = \
             self.sigma_f * (1.0 + tmp / (2.0 * self.alpha)) ** -self.alpha
