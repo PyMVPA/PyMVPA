@@ -13,6 +13,8 @@ __docformat__ = 'restructuredtext'
 import pylab as P
 import numpy as N
 
+from mvpa.datasets.splitter import NFoldSplitter
+
 
 def errLinePlot(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
     """Make a line plot with errorbars on the data points.
@@ -84,3 +86,62 @@ def errLinePlot(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
 
     # plot datapoints with error bars
     P.errorbar(x, md, err, fmt=fmt, linestyle=linestyle)
+
+
+def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
+                    **kwargs):
+    """Plot histograms of feature values for each labels.
+
+    :Parameters:
+      dataset: Dataset
+      xlim: None | 2-tuple
+        Common x-axis limits for all histograms.
+      noticks: boolean
+        If True, no axis ticks will be plotted. This is useful to save
+        space in large plots.
+      perchunk: boolean
+        If True, one histogramm will be plotted per each label and each
+        chunk, resulting is a histogram grid (labels x chunks).
+      **kwargs:
+        Any additional arguments are passed to matplotlib's hist().
+    """
+    lsplit = NFoldSplitter(1, attr='labels')
+    csplit = NFoldSplitter(1, attr='chunks')
+
+    nrows = len(dataset.uniquelabels)
+    ncols = len(dataset.uniquechunks)
+
+    def doplot(data):
+        P.hist(data, **kwargs)
+
+        if xlim is not None:
+            P.xlim(xlim)
+
+        if noticks:
+            P.yticks([])
+            P.xticks([])
+
+    fig = 1
+
+    # for all labels
+    for row, (ignore, ds) in enumerate(lsplit(dataset)):
+        if perchunk:
+            for col, (alsoignore, d) in enumerate(csplit(ds)):
+
+                P.subplot(nrows, ncols, fig)
+                doplot(d.samples)
+
+                if row == 0:
+                    P.title('C:' + str(d.uniquechunks[0]))
+                if col == 0:
+                    P.ylabel('L:' + str(d.uniquelabels[0]))
+
+                fig += 1
+        else:
+            P.subplot(1, nrows, fig)
+            doplot(ds.samples)
+
+            P.title('L:' + str(ds.uniquelabels[0]))
+
+            fig += 1
+
