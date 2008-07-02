@@ -17,8 +17,9 @@ import numpy as N
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
-from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear, InvalidHyperparameter
+from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 from mvpa.measures.base import Sensitivity
+from mvpa.misc.exceptions import InvalidHyperparameterError
 
 if __debug__:
     from mvpa.base import debug
@@ -279,7 +280,7 @@ class GPR(Classifier):
         order the kernel expect them to be.
         """
         if hyperparameter[0]<GPR.sigma_noise.min:
-            raise InvalidHyperparameter()
+            raise InvalidHyperparameterError()
         self.sigma_noise = hyperparameter[0]
         if hyperparameter.size > 1:
             self.__kernel.set_hyperparameters(hyperparameter[1:])
