@@ -14,14 +14,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.misc.exceptions import InvalidHyperparameterError
+
 if __debug__:
     from mvpa.base import debug
-
-
-class InvalidHyperparameter(Exception):
-    """Generic exception to be raised when setting improper values
-    as hyperparameters."""
-    pass
 
 
 class Kernel(object):
@@ -130,7 +126,7 @@ class KernelConstant(Kernel):
 
     def set_hyperparameters(self, hyperparameter):
         if hyperparameter<0:
-            raise InvalidHyperparameter()
+            raise InvalidHyperparameterError()
         self.sigma_0 = hyperparameter
         return
 
@@ -222,7 +218,7 @@ class KernelLinear(Kernel):
         # to proved just "hermitian" set of values? So for now we skip
         # the general case, which seems not to useful indeed.
         if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+            raise InvalidHyperparameterError()
         self.sigma_0 = N.array(hyperparameter[0])
         self.Sigma_p = N.diagflat(hyperparameter[1:])
         return
@@ -291,7 +287,7 @@ class KernelExponential(Kernel):
         Used by model selection.
         """
         if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
@@ -357,7 +353,7 @@ class KernelSquaredExponential(Kernel):
         Used by model selection.
         """
         if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
@@ -437,7 +433,7 @@ class KernelMatern_3_2(Kernel):
         Note: 'numerator' is not considered as an hyperparameter.
         """
         if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
@@ -526,7 +522,7 @@ class KernelRationalQuadratic(Kernel):
         Note: 'alpha' is not considered as an hyperparameter.
         """
         if N.any(hyperparameter<0):
-            raise InvalidHyperparameter()
+            raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
