@@ -17,7 +17,7 @@ import numpy as N
 from mvpa.misc.exceptions import InvalidHyperparameterError
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa.base import debug, warning
 
 
 class Kernel(object):
@@ -31,8 +31,7 @@ class Kernel(object):
     def __repr__(self):
         return "Kernel()"
 
-    def euclidean_distance(self, data1, data2=None, weight=None,
-                           symmetric=False):
+    def euclidean_distance(self, data1, data2=None, weight=None):
         """Compute weighted euclidean distance matrix between two datasets.
 
 
@@ -40,27 +39,25 @@ class Kernel(object):
           data1 : numpy.ndarray
               first dataset
           data2 : numpy.ndarray
-              second dataset. If None set symmetric to True.
+              second dataset. If None, compute the euclidean distance between
+              the first dataset versus itself.
               (Defaults to None)
           weight : numpy.ndarray
               vector of weights, each one associated to each dimension of the
               dataset (Defaults to None)
-          symmetric : bool
-              compute the euclidean distance between the first dataset versus
-              itself (True) or the second one (False). Note that
-              (Defaults to False)
         """
+        if __debug__:
+            # check if both datasets are floating point
+            if not N.issubdtype(data1.dtype, 'f') \
+               or (data2 is not None and not N.issubdtype(data2.dtype, 'f')):
+                warning('Computing euclidean distance on integer data ' \
+                        'is not supported.')
 
         if data2 is None:
             data2 = data1
-            symmetric = True
-            pass
 
-        size1, F = data1.shape[0:2]
-        size2 = data2.shape[0]
         if weight is None:
-            weight = N.ones(F, 'd') # unitary weight
-            pass
+            weight = N.ones(data1.shape[1], 'd') # unitary weight
 
         # In the following you can find faster implementations of this
         # basic code:
