@@ -260,6 +260,13 @@ class Classifier(Parametrized):
             # it is confusing imho (yoh)
             self.states._changeTemporarily(
                 disable_states=["predictions"])
+            if self.params.retrainable:
+                # we would need to recheck if data is the same,
+                # XXX think if there is a way to make this all
+                # efficient. For now, probably, retrainable
+                # classifiers have no chance but not to use
+                # training_confusion... sad
+                self.__changedData_isset = False
             predictions = self.predict(dataset.samples)
             self.states._resetEnabledTemporarily()
             self.training_confusion = self._summaryClass(
@@ -351,7 +358,8 @@ class Classifier(Parametrized):
         """Functionality after prediction is computed
         """
         self.predictions = result
-
+        if self.params.retrainable:
+            self.__changedData_isset = False
 
     def _predict(self, data):
         """Actual prediction
@@ -477,7 +485,7 @@ class Classifier(Parametrized):
         """Assign value of retrainable parameter
 
         If retrainable flag is to be changed, classifier has to be
-        untrained.  Also internal attributes such as __changedData,
+        untrained.  Also internal attributes such as _changedData,
         __changedData_isset, and __idhashes should be initialized if
         it becomes retrainable
         """
@@ -513,7 +521,7 @@ class Classifier(Parametrized):
             # if retrainable we need to keep track of things
             if value:
                 self.__idhashes = {'traindata': None, 'labels': None,
-                                   'testdata': None, 'testtraindata': None}
+                                   'testdata': None} #, 'testtraindata': None}
                 if __debug__ and 'CHECK_RETRAIN' in debug.active:
                     # XXX it is not clear though if idhash is faster than
                     # simple comparison of (dataset != __traineddataset).any(),
@@ -524,7 +532,7 @@ class Classifier(Parametrized):
             elif 'retrainable' in self._clf_internals:
                 #self.__resetChangedData()
                 self.__changedData_isset = False
-                self.__changedData = None
+                self._changedData = None
                 self.__idhashes = None
                 if __debug__ and 'CHECK_RETRAIN' in debug.active:
                     self.__trained = None
@@ -574,6 +582,25 @@ class Classifier(Parametrized):
         return changed
 
 
+    def __updateHashIds(self, key, data):
+        """Is twofold operation: updates hashid if was said that it changed.
+
+        or if it wasn't said that data changed, but CHECK_RETRAIN and it found
+        to be changed -- raise Exception
+        """
+
+        check_retrain = __debug__ and 'CHECK_RETRAIN' in debug.active
+        chd = self._changedData
+
+        # we need to updated idhashes
+        if chd[key] or check_retrain:
+            keychanged = self.__wasDataChanged(key, data)
+        if check_retrain and keychanged and not chd[key]:
+            raise RuntimeError, \
+                  "Data %s found changed although wasn't " \
+                  "labeled as such" % key
+
+
     #
     # Additional API which is specific only for retrainable classifiers.
     # For now it would just puke if asked from not retrainable one XXX
@@ -601,11 +628,29 @@ class Classifier(Parametrized):
         self.__resetChangedData()
         self._changedData.update(kwargs)
         self.__changedData_isset = True
+
+        # To checks or refresh of hashids
+        for key, data_ in (('traindata', dataset.samples),
+                           ('labels', dataset.labels)):
+            self.__updateHashIds(key, data_)
+
+        # TODO: parameters of classifiers
+        if __debug__ and 'CHECK_RETRAIN' in debug.active and self.trained \
+               and not self._changedData['traindata'] \
+               and self.__trained['traindata'].shape != dataset.samples.shape:
+            raise ValueError, "In retrain got dataset with %s size, " \
+                  "whenever previousely was trained on %s size" \
+                  % (dataset.samples.shape, self.__trained['traindata'].shape)
         self.train(dataset)
 
 
     def repredict(self, data, **kwargs):
         """Helper to avoid check if data was changed actually changed
+
+        Useful if classifier was retrained but with the same data (so
+        just parameters were changed), so that it could be repredicted
+        easily without recomputing for instance train/test kernel
+        matrix
 
         :Parameters:
           data
@@ -624,8 +669,21 @@ class Classifier(Parametrized):
                   "Do not use retrain/repredict on non-retrainable classifiers"
 
         self.__resetChangedData()
-        self._changedData.update(kwargs)
+        self._changedData.update(**kwargs)
         self.__changedData_isset = True
+
+        # We shouldn't do it here... we should only check if the data we are getting
+        # is the same as it was predicted before on... just in CHECK_RETRAIN
+        #
+        # # To checks or refresh of hashids
+        # self.__updateHashIds('testdata', data)
+
+        if __debug__ and 'CHECK_RETRAIN' in debug.active \
+               and not self._changedData['testdata'] \
+               and self.__trained['testdata'].shape != data.shape:
+            raise ValueError, "In repredict got dataset with %s size, " \
+                  "whenever previousely was trained on %s size" \
+                  % (data.shape, self.__trained['testdata'].shape)
 
         return self.predict(data)
 
@@ -717,6 +775,8 @@ class BoostedClassifier(Classifier, Harvestable):
         if self.states.isEnabled('harvested'):
             for clf in self.__clfs:
                 self._harvest(locals())
+        if self.params.retrainable:
+            self.__changedData_isset = False
 
 
     def _getFeatureIds(self):
