@@ -154,7 +154,7 @@ te-%: build
 	MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py
 
 testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
-              te-curvefitting te-projections
+              te-curvefitting te-projections te-kerneldemo
 
 tm-%: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
