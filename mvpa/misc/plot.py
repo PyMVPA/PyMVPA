@@ -14,6 +14,8 @@ import pylab as P
 import numpy as N
 
 from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.clfs.distance import squared_euclidean_distance
+
 
 
 def errLinePlot(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
@@ -145,3 +147,30 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
 
             fig += 1
 
+
+def plotSamplesDistance(dataset, sortbyattr=None):
+    """Plot the euclidean distances between all samples of a dataset.
+
+    :Parameters:
+      dataset: Dataset
+        Providing the samples.
+      sortbyattr: None | str
+        If None, the samples distances will be in the same order as their
+        appearance in the dataset. Alternatively, the name of a samples
+        attribute can be given, which wil then be used to sort/group the
+        samples, e.g. to investigate the similarity samples by label or by
+        chunks.
+    """
+    if sortbyattr is not None:
+        slicer = []
+        for attr in dataset.__getattribute__('unique' + sortbyattr):
+            slicer += \
+                dataset.__getattribute__('idsby' + sortbyattr)(attr).tolist()
+        samples = dataset.samples[slicer]
+    else:
+        samples = dataset.samples
+
+    ed = N.sqrt(squared_euclidean_distance(samples))
+
+    P.imshow(ed)
+    P.colorbar()
