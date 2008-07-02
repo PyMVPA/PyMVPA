@@ -187,6 +187,7 @@ if __debug__:
     debug.register('CHECK_TRAINED',
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
+    debug.register('CHECK_STABILITY', "Checking for numerical stability")
 
     debug.register('COL',  "Generic Collectable debugging")
 
