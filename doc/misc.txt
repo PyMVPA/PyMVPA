@@ -226,7 +226,7 @@ behavior of warnings:
   specific warning it gets printed (default behavior is 1 for
   once). Specification of negative count results in all invocations
   being printed, and value of 0 obviously suppresses the warnings
-* ``MVPA_NO_WARNINGS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
+* ``MVPA_WARNINGS_SUPPRESS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
   resultant behavior
 * ``MVPA_WARNINGS_BT=<int>`` controls up to how many lines of traceback
   is printed for the warnings
@@ -335,7 +335,7 @@ If it is needed to just quickly grasp through all unittests without making
 them to test multiple classifiers (implemented with sweeparg), define
 environmental variable ``MVPA_QUICKTEST`` e.g.::
 
-  > MVPA_NO_WARNINGS=0 MVPA_QUICKTEST=1 python test_clf.py
+  > MVPA_WARNINGS_SUPPRESS=no MVPA_QUICKTEST=1 python test_clf.py
   ...............
   ----------------------------------------------------------------------
   Ran 15 tests in 0.845s
