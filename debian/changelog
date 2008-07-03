@@ -4,8 +4,9 @@ pymvpa (0.2.2-1) unstable; urgency=low
     a minimal copy of LIBSVM. The Debian package does not build it, but makes
     use of the corresponding Debian package.
   * Shrink Debian diff and move the enabling of LIBSVM into debian/rules.
+  * Convert debian/copyright into machine readable format.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Wed, 18 Jun 2008 10:25:37 +0200
+ -- Michael Hanke <michael.hanke@gmail.com>  Thu, 03 Jul 2008 09:59:53 +0200
 
 pymvpa (0.2.0-1) unstable; urgency=low
 
