@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Michael Hanke <michael.hanke@gmail.com>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.3), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-sphinx, python-ctypes (>= 1.0.1), texlive, texlive-latex-extra
-Standards-Version: 3.7.3
+Standards-Version: 3.8.0
 Homepage: http://pkg-exppsy.alioth.debian.org/pymvpa
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
@@ -12,11 +12,11 @@ Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
 Package: python-mvpa
 Architecture: any
-Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-scipy
+Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nifti, python-psyco
-Suggests: fslview, fsl
+Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular
+Suggests: fslview, fsl, python-matplotlib
 Description: multivariate pattern analysis with Python
  Python module to ease pattern classification analyses of large
  datasets. It provides high-level abstraction of typical processing
@@ -26,7 +26,7 @@ Description: multivariate pattern analysis with Python
  Regression), and bindings to external machine learning libraries (libsvm,
  shogun).
  .
- While it is not limited to neuroimaging data (e.g. fMRI) it
+ While it is not limited to neuroimaging data (e.g. fMRI, or EEG) it
  is eminently suited for such datasets.
 
 
