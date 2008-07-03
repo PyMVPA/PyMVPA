@@ -8,9 +8,9 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
-********
-Overview
-********
+****************
+Toolbox Overview
+****************
 
 The PyMVPA package consists of three major parts: :ref:`Data handling
 <datasets>`, :ref:`Classifiers <classifiers>` and various algorithms and
