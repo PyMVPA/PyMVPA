@@ -8,9 +8,9 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
-****************
-Toolbox Overview
-****************
+***************
+Module Overview
+***************
 
 The PyMVPA package consists of three major parts: :ref:`Data handling
 <datasets>`, :ref:`Classifiers <classifiers>` and various algorithms and
@@ -22,3 +22,9 @@ given.
 .. image:: misc/pics/design.png
    :alt: PyMVPA architecture
 
+
+The manual does not cover all bits and pieces of PyMVPA. Detailed information
+about the module layout and additional documentation about all included
+functionality is available from the `API Reference`_.
+
+.. _API Reference: api/index.html
