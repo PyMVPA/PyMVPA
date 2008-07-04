@@ -48,9 +48,10 @@ For more information, please have a look at the `API documentation`_, which is a
 comprehensive and up-to-date description of the whole package.
 
 More examples and usage patterns extending the ones described here can be taken
-from the examples shipped with the PyMVPA source distribution (`doc/examples/`)
-or even the unit test battery, also part of the source distribution
-(in the `tests/` directory).
+from the examples shipped with the PyMVPA source distribution (`doc/examples/`;
+some of them are also available in the :ref:`examples` chapter of this manual)
+or even the unit test battery, also part of the source distribution (in the
+`tests/` directory).
 
 .. _API Documentation: api/index.html
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
@@ -87,7 +88,7 @@ of libraries.
 .. _Princeton University: http://www.princeton.edu
 .. _MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
 
-However, there are some disadvantages to writing a toolbox in Matlab. While
+However, there are some disadvantages when writing a toolbox in Matlab. While
 users in general benefit from the powers of Matlab, they are at the same time
 bound to the goodwill of a commercial company. That this is indeed a problem
 becomes obvious when one considers the time when the vendor of Matlab was not
