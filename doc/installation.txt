@@ -13,6 +13,10 @@
 Installation
 ************
 
+This section covers the necessary steps to install and run PyMVPA. It contains
+a comprehensive list of software dependencies, as well as recommendation for
+additional software packages that further enhance the functionality provided by PyMVPA.
+
 
 Dependencies
 ~~~~~~~~~~~~
@@ -44,7 +48,7 @@ While most parts of PyMVPA will work without any additional software, some
 functionality makes use of additional software packages. It is strongly
 recommended to install these packages as well.
 
-  SciPy_: linear algebra, standard distributions
+  SciPy_: linear algebra, standard distributions, signal processing
     SciPy_ is mainly used by the statistical testing and the logistic
     regression classifier code. However, in the long run SciPy might be used a
     lot more and could become a required dependency of PyMVPA.
@@ -84,9 +88,9 @@ life a lot easier and leads to more efficiency when using PyMVPA.
     are missing.
   FSL_: preprocessing and analysis of (f)MRI data
     PyMVPA provides some simple bindings to FSL output and filetypes (e.g. EV
-    files and MELODIC output directories). This makes it fairly easy to e.g.
-    use FSL's implementation of ICA for data reduction and proceed with
-    analyzing the estimated ICs in PyMVPA.
+    files, estimated motion correct parameters and MELODIC output directories).
+    This makes it fairly easy to e.g.  use FSL's implementation of ICA for data
+    reduction and proceed with analyzing the estimated ICs in PyMVPA.
   AFNI_: preprocessing and analysis of (f)MRI data
     Similar to FSL, AFNI is a free package for processing (f)MRI data.
     Though its primary data file format is BRIK files, it has the ability
@@ -94,15 +98,17 @@ life a lot easier and leads to more efficiency when using PyMVPA.
   LIBSVM_: fast SVM classifier
     Only the C library is required and none of the Python bindings that are
     available on the upstream website. PyMVPA provides its own Python wrapper
-    for LIBSVM which is a fork based on the one included in the LIBSVM package.
-    Additionally the upstream LIBSVM distribution causes flooding of the console
-    with a huge amount of debugging messages. Please see the `Building from
-    Source`_ section for information on how to build an alternative version that
-    does not have this problem.
+    for LIBSVM which is a fork based on the one included in the LIBSVM
+    package.  Additionally the upstream LIBSVM distribution causes flooding of
+    the console with a huge amount of debugging messages. Please see the
+    `Building from Source`_ section for information on how to build an
+    alternative version that does not have this problem.
+    Since version 0.2.2, PyMVPA contains a minimal copy of LIBSVM in its
+    source distribution.
   matplotlib_: Matlab-style plotting library for Python
     This is a very powerful plotting library that allows you to export into
-    a large variety of raster and vector formats, and thus, is ideal to
-    produce publication quality figures.
+    a large variety of raster and vector formats (e.g. SVG), and thus, is ideal
+    to produce publication quality figures.
 
 .. _matplotlib: http://matplotlib.sourceforge.net/
 .. _IPython: http://ipython.scipy.org
@@ -112,9 +118,9 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 .. _AFNI: http://afni.nimh.nih.gov/afni/
 
 
-.. _obtaining:
-.. index:: installation
+.. index:: installation, binary packages
 
+.. _obtaining:
 
 Installing Binary Packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
