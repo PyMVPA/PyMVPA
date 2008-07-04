@@ -65,8 +65,7 @@ class ModelSelector(object):
         def f(x):
             """
             Wrapper to the log_marginal_likelihood to be
-            maximized. Necessary for OpenOpt since it performs
-            minimization only.
+            maximized.
             """
             # since some OpenOpen MLP solvers does not implement lower bounds
             # the hyperparameters bounds are implemented inside PyMVPA:
@@ -75,10 +74,10 @@ class ModelSelector(object):
                 self.parametric_model.set_hyperparameters(x)
             except InvalidHyperparameterError:
                 # print "WARNING: invalid hyperparameters!"
-                return +N.inf
+                return -N.inf
             self.parametric_model.train(self.dataset)
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
-            return -log_marginal_likelihood # minus sign because optimizers do _minimization_.
+            return log_marginal_likelihood
 
         def df(x):
             """
@@ -90,7 +89,7 @@ class ModelSelector(object):
 
         x0 = hyp_initial_guess # vector of hyperparameters' values where to start the search
         contol = 1.0e-6
-        self.problem = NLP(f,x0, contol=contol) # actual instance of the OpenOpt non-linear problem
+        self.problem = NLP(f,x0, contol=contol, goal='maximum') # actual instance of the OpenOpt non-linear problem
         self.problem.lb = N.zeros(self.problem.n)+contol # set lower bound for hyperparameters: avoid negative hyperparameters. Note: problem.n is the size of hyperparameters' vector
         self.problem.maxiter = maxiter # max number of iterations for the optimizer.
         self.problem.checkdf = True # check whether the derivative of log_marginal_likelihood converged to zero before ending optimization
@@ -100,7 +99,7 @@ class ModelSelector(object):
 
 
     def solve(self, problem=None):
-        """Solve the minimization problem, check outcome and collect results.
+        """Solve the maximization problem, check outcome and collect results.
         """
         result = self.problem.solve(self.optimization_algorithm) # perform optimization!
         if result.stopcase == -1:
