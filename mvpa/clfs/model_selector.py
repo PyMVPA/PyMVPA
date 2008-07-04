@@ -37,7 +37,7 @@ class ModelSelector(object):
         pass
 
 
-    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedVars=None):
+    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None):
         """
         Set up the optimization problem in order to maximize
         the log_marginal_likelihood.
@@ -62,7 +62,7 @@ class ModelSelector(object):
             which is mapped in OpenOpt NLP.ftol
             (Defaults to 1.0e-3)
 
-          fixedVars : numpy.ndarray (boolean array)
+          fixedHypers : numpy.ndarray (boolean array)
             boolean vector of the same size of hyp_initial_guess;
             'False' means that the corresponding hyperparameter must
             be kept fixed (so not optimized).
@@ -75,10 +75,10 @@ class ModelSelector(object):
         self.optimization_algorithm = optimization_algorithm
 
         self.hyp_initial_guess = N.array(hyp_initial_guess)
-        if fixedVars is None:
-            fixedVars = N.zeros(self.hyp_initial_guess.shape[0],dtype=bool)
+        if fixedHypers is None:
+            fixedHypers = N.zeros(self.hyp_initial_guess.shape[0],dtype=bool)
             pass
-        self.freeVars = -fixedVars
+        self.freeVars = -fixedHypers
 
         self.hyp_running_guess = self.hyp_initial_guess.copy()
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     sigma_f_initial = 1.0
     length_scale_initial = 1.0
 
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,sigma_f_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-3,fixedVars=N.array([0,1,0],dtype=bool))
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,sigma_f_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-3,fixedHypers=N.array([0,1,0],dtype=bool))
     # problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[1.0,1.0], optimization_algorithm="ralg", ftol=1.0e-3)
     
     lml = ms.solve()
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     length_scales_initial = 0.5*N.ones(dataset.samples.shape[1])
 
     # problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.ones(2)*0.1, optimization_algorithm="ralg")
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.ones(dataset.samples.shape[1]+2)*1.0e-1, optimization_algorithm="ralg", fixedVars = N.array([0,0,0,0,0,0,0,0],dtype=bool))
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.ones(dataset.samples.shape[1]+2)*1.0e-1, optimization_algorithm="ralg", fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool))
     # problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=N.hstack([sigma_noise_initial,length_scales_initial]), optimization_algorithm="ralg")
     lml = ms.solve()
     sigma_noise_best = ms.hyperparameters_best[0]
