@@ -1,0 +1,143 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[english]{babel}
+\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\newcommand\R{{\mathbb R}}
+\newcommand\x{{\mathbf x}}
+\newcommand\X{{\mathbf X}}
+\newcommand\K{{\mathbf K}}
+\newcommand\J{{\mathbf J}}
+%%\newcommand\L{{\mathbf L}}
+%%\DeclareMathOperator*{\argmax}{arg\,max}
+%% \DeclareMathOperator*{\argmax}{argmax} %% (argmax wihtouth mid space)
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\var}{var}
+\newcommand{\Rvec}[1]{{\bf #1}}
+\newcommand{\Ivec}[1]{\mbox{\boldmath $#1$}}
+
+\title{Kernels}
+\author{Emanuele Olivetti}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document gives a detailed description of kernels implemented in
+PyMVPA together with derivation of their gradients. Gradients are
+useful when computing and maximizing the log marginal likelihood of a
+Gaussian process approximating data.
+
+The following notation is be used:
+\begin{itemize}
+\item $\x \in \R^D$ : a $D$-dimensional column vector, $\x =
+  \{x_1,\ldots,x_D\}$.
+\item $\X = \{\x_1^{\top},\ldots,\x_N^{\top}\}$ : a $n \times D$
+  matrix where each row is a $D$-dimensional vector. $\X$ is also
+  called set of \emph{samples}. $\X_{* i}$ indicates the $i$-th
+  column of $\X$ (column vector), and $\X_{j *}$ indicates the
+  $j$-th row of $\X$ (row vector).
+\item $k: \R^D \times \R^D \rightarrow \R$ : a covariance function.
+\item $\K$ : the matrix extension of $k$.
+\item $\J_{n,m}$ : the $n \times m$ matrix of ones, i.e., a matrix
+  where each element is 1. When $n = m$ it can be denoted as $\J_n$.
+\item $\|\mathbf{z}\|$ : the norm of vector $\mathbf{z}$. In case of
+  Euclidean norm $\|\mathbf{z}\| =
+  \sqrt{\mathbf{z}^{\top}\mathbf{z}}$.
+\item $\|\X-\X'\|$ : the \emph{distance matrix} between $\X$ and $\X'$
+  defined element by element as $\|\X-\X'\|_{pq} = \|\X_{p *} -
+  \X'_{q *}\|$.
+\item $\X \bullet \mathbf{Y}$ : the matrix Hadamard (or Schur)
+  product, i.e. the entrywise product between matrices of the same
+  size. Let $\mathbf{Z} = \X \bullet \mathbf{Y}$, then $z_{ij} =
+  x_{ij} y_{ij}$.
+\end{itemize}
+
+\section{Constant kernel}
+$$k(\x,\x') = \sigma_0^2$$
+where $\sigma_0 \ge 0$ is the standard deviation of the Gaussian prior
+probability $\mathcal{N}(0,\sigma_0^2)$ of the value of the constant.
+$$\K(\X,\X') = \sigma_0^2 \J_{n,m}$$
+$$\mathbf{\Theta} = \{\sigma_0\}$$
+$$\frac{\partial k}{\partial \sigma_0}(\x,\x') = 2\sigma_0$$
+$$\frac{\partial \K}{\partial \sigma_0} = 2\sigma_0 \J_{n,m}$$
+$$A = \sigma_0^2$$
+$$A \ge 0$$
+$$k(\x,\x') = A$$
+$$\K(\X,\X') = A \J_{n,m}$$
+$$\frac{\partial k}{\partial A} = 1$$
+$$\nabla \K_A = \frac{\partial \K}{\partial A} = \J_{n,m}$$
+
+\section{Linear kernel}
+Let $\Ivec{\Sigma}_p$ be the $D \times D$ covariance matrix of the Gaussian
+prior probability $\mathcal{N}(\Ivec{0},\Ivec{\Sigma}_p)$ of the weights of
+the Bayesian linear regression.
+$$k(\x,\x') = \x^{\top} \Ivec{\Sigma}_p \x'$$
+$$\K(\X,\X') = \X \Ivec{\Sigma}_p \X'^{\top}$$
+In order to simplify formulas we assume $\Ivec{\Sigma}_p$ is diagonal, i.e.,
+$\Ivec{\Sigma}_p = \Ivec{\sigma}^2_p I$ where $\Ivec{\sigma}^2_p =
+\{{\sigma^2_p}_1,\ldots,{\sigma^2_p}_D\}$:
+$$k(\x,\x') = \sum_{i=1}^D {\sigma^2_p}_i x_i x'_i$$
+$$\mathbf{\Theta} = \{{\sigma_p}_1,\ldots,{\sigma_p}_D\}$$
+$$\frac{\partial k}{\partial {\sigma_p}_i} = 2 {\sigma_p}_i x_i x'_i$$
+$$A_i = {\sigma_p^2}_i$$
+$$A_i \ge 0$$
+$$\mathbf{A} = (A_1,\ldots,A_D)^{\top}$$
+$$k(\x,\x') = \x^{\top} \mathbf{A}I \x'$$
+$$\K(\X,\X') = \X \mathbf{A}I \X'^{\top}$$
+$$\frac{\partial k}{\partial A_i} = x_i x'_i$$
+$$\frac{\partial \K}{\partial A_i} = \X_{* i} {\X'_{* i}}^{\top}$$
+$$\nabla_{\mathbf{A}} \K = ( \X_{* 1} {\X'_{* 1}}^{\top}, \ldots, \X_{* D} {\X'_{* D}}^{\top})$$
+As expected the gradient is independent of the hyperparameters values
+and can be computed one at the beginning.
+
+\section{Polynomial kernel}
+$k(\x,\x') = (\x^{\top} \Ivec{\Sigma}_p \x')^p$
+
+\section{Exponential kernel}
+\subsection{Scalar Lengthscale $\ell$}
+$$k(\x,\x') = \sigma_f^2 e^{-\frac{\|\x-\x'\|}{2\ell}}$$
+$$\ell \ge 0$$
+$$\sigma_f \ge 0$$
+$$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{2\ell}\|\X-\X'\|}$$
+$$A = \sigma_f^2$$
+$$A \ge 0$$
+$$B = -\frac{1}{2\ell}$$
+$$B \le 0$$
+$$k(\x,\x') = A e^{B\|\x-\x'\|}$$
+$$\K(\X,\X') = A e^{B\|\X-\X'\|}$$
+$$\frac{\partial k}{\partial A} = e^{B\|\x-\x'\|} = \frac{1}{A}k(\x,\x')$$
+$$\frac{\partial \K}{\partial A} = e^{B\|\X-\X'\|} = \frac{1}{A} \K(\X,\X')$$
+$$\frac{\partial k}{\partial B} = \|\x-\x'\| A e^{B\|\x-\x'\|} =
+\|\x-\x'\| k(\x,\x')$$
+$$\frac{\partial \K}{\partial B} = \|\X-\X'\| \bullet \K(\X,\X')$$
+$$\nabla_{A,B} \K = (\frac{1}{A} \K(\X,\X'), \|\X-\X'\| \bullet
+\K(\X,\X'))$$
+
+Note that when $\K(\X,\X')$ is already computed, the gradient requires
+just two element-by-element products to be computed, the second being
+against a constant matrix independent of the hyperparameters. So a
+mechanism that stores the precomputed kernel matrix related to a given
+gradient will reduce greatly the number of computations
+(memoization?).
+
+\subsection{Vector of Lengthscales $\Ivec{\ell}$}
+$$k(\x,\x') = \sigma_f^2 e^{-\frac{\|\x-\x'\|^2}{2\Ivec{\ell}}}$$
+
+
+
+$$k(\x,\x') = \sigma_f^2 e^{-\frac{(\x-\x')^{\top} \mathbf{L}^{-1} (\x-\x')}{2}}$$
+
+
+\section{Squared Exponential kernel}
+
+\section{$\gamma$-Exponential kernels}
+
+\section{Mat\'ern kernels}
+
+\section{Rational Quadratic kernels}
+
+\end{document}
