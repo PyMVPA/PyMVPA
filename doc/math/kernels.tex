@@ -10,6 +10,7 @@
 \newcommand\X{{\mathbf X}}
 \newcommand\K{{\mathbf K}}
 \newcommand\J{{\mathbf J}}
+\newcommand\LL{{\mathbf L}}
 %%\newcommand\L{{\mathbf L}}
 %%\DeclareMathOperator*{\argmax}{arg\,max}
 %% \DeclareMathOperator*{\argmax}{argmax} %% (argmax wihtouth mid space)
@@ -34,14 +35,15 @@ Gaussian process approximating data.
 The following notation is be used:
 \begin{itemize}
 \item $\x \in \R^D$ : a $D$-dimensional column vector, $\x =
-  \{x_1,\ldots,x_D\}$.
-\item $\X = \{\x_1^{\top},\ldots,\x_N^{\top}\}$ : a $n \times D$
+  (x_1,\ldots,x_D)$.
+\item $\X = (\x_1^{\top},\ldots,\x_N^{\top})$ : a $N \times D$
   matrix where each row is a $D$-dimensional vector. $\X$ is also
   called set of \emph{samples}. $\X_{* i}$ indicates the $i$-th
   column of $\X$ (column vector), and $\X_{j *}$ indicates the
   $j$-th row of $\X$ (row vector).
 \item $k: \R^D \times \R^D \rightarrow \R$ : a covariance function.
-\item $\K$ : the matrix extension of $k$.
+\item $\K(\X,\X')$ : the matrix extension of $k$.\, i.e., $\K_{pq} =
+  k(\x_p,\x'_q)$.
 \item $\J_{n,m}$ : the $n \times m$ matrix of ones, i.e., a matrix
   where each element is 1. When $n = m$ it can be denoted as $\J_n$.
 \item $\|\mathbf{z}\|$ : the norm of vector $\mathbf{z}$. In case of
@@ -50,7 +52,7 @@ The following notation is be used:
 \item $\|\X-\X'\|$ : the \emph{distance matrix} between $\X$ and $\X'$
   defined element by element as $\|\X-\X'\|_{pq} = \|\X_{p *} -
   \X'_{q *}\|$.
-\item $\X \bullet \mathbf{Y}$ : the matrix Hadamard (or Schur)
+\item $\X \bullet \mathbf{Y}$ : the Hadamard (or Schur) matrix
   product, i.e. the entrywise product between matrices of the same
   size. Let $\mathbf{Z} = \X \bullet \mathbf{Y}$, then $z_{ij} =
   x_{ij} y_{ij}$.
@@ -125,14 +127,14 @@ gradient will reduce greatly the number of computations
 (memoization?).
 
 \subsection{Vector of Lengthscales $\Ivec{\ell}$}
-$$k(\x,\x') = \sigma_f^2 e^{-\frac{\|\x-\x'\|^2}{2\Ivec{\ell}}}$$
-
-
-
-$$k(\x,\x') = \sigma_f^2 e^{-\frac{(\x-\x')^{\top} \mathbf{L}^{-1} (\x-\x')}{2}}$$
+Given $\Ivec{\ell} = (\ell_1,\ldots,\ell_D)$, $\ell_i \ge 0$, and $\LL
+= \Ivec{\ell}I$
+$$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2}\|\x-{\LL^{-1}\x'}\|}$$
+$$K(\X,\X') = \sigma_f^2 e^{-\frac{(\x-\x')^{\top} \LL^{-1} (\x-\x')}{2}}$$
 
 
 \section{Squared Exponential kernel}
+$$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2}(\x-\x')^{\top} \LL^{-1} (\x-\x')}$$
 
 \section{$\gamma$-Exponential kernels}
 
