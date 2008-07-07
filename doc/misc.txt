@@ -14,6 +14,97 @@
 Miscellaneous
 *************
 
+.. index:: settings, configuration, cfg
+
+
+Managing (Custom) Configurations
+================================
+
+PyMVPA provides a facility to handle arbitrary configuration settings. This
+facility can be used to control some aspects of the behavior of PyMVPA
+itself, as well as to store and query custom configuration items, e.g. to
+control one's own analysis scripts.
+
+An instance of this configuration manager is loaded whenever the `mvpa` module
+is imported. It can be used from any script like this:
+
+  >>> from mvpa import cfg
+
+By default the config manager reads settings from two config files (if any of
+them exists). The first is a file named `.pymvpa.cfg` and located in the
+user's home directory.  The second is `pymvpa.cfg` in the current directory.
+Please note, that settings found in the second file override the ones in the
+first.
+
+The syntax of both files is the one also known from the Windows INI files.
+Basically, `Python's ConfigParser`_ is used to read those file and the config
+supports whatever this parser can read. A minimal example config file might
+look like this::
+
+    [general]
+    verbose = 1
+
+It consists of a section `general` containing a single setting `verbose`,
+which is set to `1`. PyMVPA recognizes a number of such sections and
+configuration variables. A full list is shown at the end of this section and
+is also available in the source package (`doc/examples/pymvpa.cfg`).
+
+.. _Python's ConfigParser: http://docs.python.org/lib/module-ConfigParser.html
+
+In addition to configuration files, the config manager also looks for special
+environment variables to read settings from. Names of such variables have to
+start with `MVPA_` following by the an optional section name and the variable
+name itself (with `_` as delimiter). If no section name is provided, the
+variables will be associated with section `general`. Some examples::
+
+    MVPA_VERBOSE=1
+
+will become::
+
+    [general]
+    verbose = 1
+
+However, `MVPA_VERBOSE_OUTPUT=stdout` becomes::
+
+    [verbose]
+    output = stdout
+
+Any lenght of variable name is allowed, e.g. `MVPA_SEC1_LONG_VARIABLE_NAME=1`
+becomes::
+
+    [sec1]
+    long variable name = 1
+
+Settings read from environment variables have the highest priority and
+override settings found in the config files. Therefore environment variables
+can be used to quickly adjust some setting without having to edit the config
+files.
+
+The config manager can easily be queried from inside scripts. In addition to
+the interface of `Python's ConfigParser`_ it has a few convenience functions
+mostly to allow for a default value in case no setting was found. For example:
+
+  >>> cfg.getboolean('warnings', 'suppress', default=False)
+  False
+
+queries the config manager whether warnings should be suppressed (i.e. if
+there is a variable `suppress` in section `warnings`). In case, there is now
+such setting, i.e. neither config files nor environment variables defined it,
+the `default` values is returned. Please see the documentation of
+`ConfigManager`_ for its full functionality.
+
+.. _ConfigManager: api/mvpa.base.config.ConfigManager-class.html
+
+
+.. index:: config file
+
+This is an example configuration file with the comprehensive list of settings
+recognized by PyMVPA:
+
+.. literalinclude:: examples/pymvpa.cfg
+   :language: ini
+
+
 .. index:: progress tracking, verbosity, debug, warning
 
 Progress Tracking
@@ -135,7 +226,7 @@ behavior of warnings:
   specific warning it gets printed (default behavior is 1 for
   once). Specification of negative count results in all invocations
   being printed, and value of 0 obviously suppresses the warnings
-* ``MVPA_NO_WARNINGS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
+* ``MVPA_WARNINGS_SUPPRESS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
   resultant behavior
 * ``MVPA_WARNINGS_BT=<int>`` controls up to how many lines of traceback
   is printed for the warnings
@@ -244,7 +335,7 @@ If it is needed to just quickly grasp through all unittests without making
 them to test multiple classifiers (implemented with sweeparg), define
 environmental variable ``MVPA_QUICKTEST`` e.g.::
 
-  > MVPA_NO_WARNINGS=0 MVPA_QUICKTEST=1 python test_clf.py
+  > MVPA_WARNINGS_SUPPRESS=no MVPA_QUICKTEST=1 python test_clf.py
   ...............
   ----------------------------------------------------------------------
   Ran 15 tests in 0.845s

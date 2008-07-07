@@ -17,6 +17,19 @@ Frequently Asked Questions
  General
  =======
 
+It is sloooooow. What can I do?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Have you tried running the Python interpreter with `-O`? PyMVPA provides
+  lots of debug messages with information that is computed in addition to the
+  work that really has to be done. However, if Python is running in
+  *optimized* mode, PyMVPA will not waste time on this and really tries to be
+  fast.
+
+  If you are already running it optimized, then maybe you are doing something
+  really demanding...
+
+
 I am tired of writing these endless import blocks. Any alternative?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Sure. Instead of individually importing all pieces that are required
@@ -46,6 +59,9 @@ Is there an easy way to remove invariant features from a dataset?
   are sometime a problem, e.g. they will lead to numerical difficulties when
   z-scoring the features of a dataset (i.e. division by zero).
 
+  The `mvpa.datasets.miscfx` module provides a convenience function
+  `removeInvariantFeatures()` that strips such features from a dataset.
+
 
 I feel like I want to contribute something, do you mind?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,8 +79,9 @@ The manual is quite insufficient. When will you improve it?
   Writing a manual can be a tricky task if you already know the details and
   have to imagine what might be the most interesting information for someone
   who is just starting. If you feel that something is missing which has cost
-  you some time to figure out, please drop us a note and we will add it as soon
-  as possible. If you have developed some code snippets to demonstrate some
-  feature or non-trivial behaviour, please consider sharing this snippet with
+  you some time to figure out, please drop us a note and we will add it as
+  soon as possible. If you have developed some code snippets to demonstrate
+  some feature or non-trivial behaviour (maybe even trivial ones, which are
+  not as obvious as they should be), please consider sharing this snippet with
   us and we will put it into the example collection or the manual. Thanks!
 

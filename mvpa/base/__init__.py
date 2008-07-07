@@ -25,7 +25,7 @@ __docformat__ = 'restructuredtext'
 
 from sys import stdout, stderr
 
-from mvpa.base.config import Config
+from mvpa.base.config import ConfigManager
 from mvpa.base.verbosity import LevelLogger, OnceLogger, Logger
 
 #
@@ -60,7 +60,7 @@ class __Singleton:
 # As the very first step: Setup configuration registry instance and
 # read all configuration settings from files and env variables
 #
-cfg = __Singleton('cfg', Config())
+cfg = __Singleton('cfg', ConfigManager())
 
 verbose = __Singleton("verbose", LevelLogger(
     handlers = cfg.get('verbose', 'output', default='stdout').split(',')))
