@@ -16,6 +16,7 @@ import numpy as N
 from mvpa.datasets.mapped import MappedDataset
 from mvpa.misc.eepbin import EEPBin
 from mvpa.mappers.mask import MaskMapper
+from mvpa.base.dochelpers import enhancedDocString
 
 
 
@@ -71,3 +72,8 @@ class EEPDataset(MappedDataset):
                                mapper=mapper,
                                dsattr=dsattr,
                                **(kwargs))
+
+
+    __doc__ = enhancedDocString('EEPDataset', locals(), MappedDataset)
+
+
