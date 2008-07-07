@@ -56,8 +56,9 @@ The following notation is be used:
 \item $\|\mathbf{z},\mathbf{w}\|_p$ : the \emph{weighted} $p$-norm of
   vector $\mathbf{z}$ defined as $\|\mathbf{z},\mathbf{w}\|_p =
   (\sum_{i=1}^D w_i^p|z_i|^p)^{\frac{1}{p}}$.  Euclidean norm is
-  $p=2$, then $\|\mathbf{z},\mathbf{w}\|_2 = \sqrt{\sum_{i=1}^D w_i^2
-    z_i^2}$.
+  $p=2$, then $\|\mathbf{z},\mathbf{w}\|_2 = \sqrt{\mathbf{z}^{\top}
+    \mathbf{W}^{-1} \mathbf{z}} = \sqrt{\sum_{i=1}^D w_i^2 z_i^2}$,
+  where $\mathbf{W} = diag(\mathbf{w})$.
 \item $\dm(\X,\X')$ : the \emph{Euclidean distance matrix} between
   $\X$ and $\X'$ defined element by element as $\dm((\X,\X')_{pq} =
   \|\X_{p *} - \X'_{q *}\|_2 = \sqrt{\sum_{i=1}^D (\X_{p i} - \X'_{q
@@ -103,12 +104,14 @@ $$\mathbf{\Theta} = \{{\sigma_p}_1,\ldots,{\sigma_p}_D\}$$
 $$\frac{\partial k}{\partial {\sigma_p}_i} = 2 {\sigma_p}_i x_i x'_i$$
 $$A_i = {\sigma_p^2}_i$$
 $$A_i \ge 0$$
+$$\mathbf{\Theta}^* = \{ \mathbf{A} \}$$
 $$\mathbf{A} = (A_1,\ldots,A_D)^{\top}$$
 $$k(\x,\x') = \x^{\top} \mathbf{A}I \x'$$
 $$\K(\X,\X') = \X \mathbf{A}I \X'^{\top}$$
 $$\frac{\partial k}{\partial A_i} = x_i x'_i$$
 $$\frac{\partial \K}{\partial A_i} = \X_{* i} {\X'_{* i}}^{\top}$$
-$$\nabla_{\mathbf{A}} \K = ( \X_{* 1} {\X'_{* 1}}^{\top}, \ldots, \X_{* D} {\X'_{* D}}^{\top})$$
+$$\nabla_{\mathbf{A}} \K = ( \X_{* 1} {\X'_{* 1}}^{\top}, \ldots,
+\X_{* D} {\X'_{* D}}^{\top})$$
 As expected the gradient is independent of the hyperparameters values
 and can be computed one at the beginning.
 
@@ -120,11 +123,13 @@ $k(\x,\x') = (\x^{\top} \Ivec{\Sigma}_p \x')^p$
 $$k(\x,\x') = \sigma_f^2 e^{-\frac{\|\x-\x'\|_2}{\ell}}$$
 $$\ell \ge 0$$
 $$\sigma_f \ge 0$$
+$$\mathbf{\Theta} = \{ \sigma_f, \ell \}$$
 $$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{\ell}\dm(\X,\X')}$$
 $$A = \sigma_f^2$$
 $$A \ge 0$$
 $$B = -\frac{1}{\ell}$$
 $$B \le 0$$
+$$\mathbf{\Theta}^* = \{ A, B \}$$
 $$k(\x,\x') = A e^{B\|\x-\x'\|_2}$$
 $$\K(\X,\X') = A e^{B \dm(\X-\X')}$$
 $$\frac{\partial k}{\partial A} = e^{B\|\x-\x'\|_2} = \frac{1}{A}k(\x,\x')$$
@@ -149,23 +154,89 @@ diag(\ELL) = \Ivec{\ell}I$ and $\ELL^{-1} =
 $$k(\x,\x') = \sigma_f^2 e^{-\|\x-\x',\ELL^{-1}\|_2}= \sigma_f^2
   e^{-\sqrt{\sum_{i=1}^D \left(\frac{x_i - x'_i}{\ell_i}\right)^2}}$$
 $$K(\X,\X') = \sigma_f^2 e^{-\dm(\X,\X',\ELL^{-1})}$$
+$$\mathbf{\Theta} = \{ \sigma_f, \ELL\}$$
 $$A = \sigma_f^2$$
-$$B = \ELL^{-2}$$
-$$k(\x,\x') = A e^{-\|\x-\x',\sqrt{B}\|_2} = A e^{-\sqrt{\sum_{i=1}^D
+$$\mathbf{B} = \ELL^{-2}$$
+$$\mathbf{\Theta}^* = \{ A, \mathbf{B}\}$$
+$$k(\x,\x') = A e^{-\|\x-\x',\sqrt{\mathbf{B}}\|_2} = A e^{-\sqrt{\sum_{i=1}^D
     B_i(x_i - x'_i)^2}}$$  
-$$K(\X,\X') = A e^{-\dm(\X,\X',\sqrt{B})}$$
+$$K(\X,\X') = A e^{-\dm(\X,\X',\sqrt{\mathbf{B}})}$$
 $$\frac{\partial k}{\partial A} = e^{-\sqrt{\sum_{i=1}^D B_i(x_i -
     x'_i)^2}} = \frac{k(\x,\x')}{A}$$
-$$\frac{\partial \K}{\partial A} = e^{-\dm(\X,\X',\sqrt{B})} =
+$$\frac{\partial \K}{\partial A} = e^{-\dm(\X,\X',\sqrt{\mathbf{B}})} =
 \frac{\K(\X,\X')}{A}$$ 
-$$\frac{\partial k}{\partial B_i} = A e^{-\|\x-\x',\sqrt{B}\|_2}
-\left( -\frac{1}{2} \|\x-\x',\sqrt{B}\|_2^3 \right) (x_i - x'_i)^2 =
--\frac{1}{2} k(\x,\x') \|\x-\x',\sqrt{B}\|_2^3 (x_i - x'_i)^2 $$
+$$\frac{\partial k}{\partial B_i} = A e^{-\|\x-\x',\sqrt{\mathbf{B}}\|_2}
+\left( -\frac{1}{2} \|\x-\x',\sqrt{\mathbf{B}}\|_2^3 \right) (x_i - x'_i)^2 =
+-\frac{1}{2} k(\x,\x') \|\x-\x',\sqrt{\mathbf{B}}\|_2^3 (x_i - x'_i)^2 $$
 $$\frac{\partial \K}{\partial B_i} = -\frac{1}{2} K(\X,\X')
-\bullet \dm(\X-\X',\sqrt{B})^3 \bullet (\X_{*i} - \X'_{*i})^2??$$ 
+\bullet \dm(\X-\X',\sqrt{\mathbf{B}})^3 \bullet (\X_{*i}
+(-\X'_{*i})^{\top})^2$$ 
+$$\nabla_{A,\mathbf{B}} \K = \left(\frac{\K(\X,\X')}{A}, \left\{-\frac{1}{2}
+  K(\X,\X') \bullet \dm(\X-\X',\sqrt{\mathbf{B}})^3 \bullet (\X_{*i}
+  (-\X'_{*i})^{\top})^2 \right\}_{i=1 \ldots D} \right)$$
+
+Note that $\frac{\partial \K}{\partial A}$ requires just the
+multiplication of a constant by the kernel matrix $\K(\X,\X')$ (kernel
+is usually already available). Instead $\frac{\partial \K}{\partial
+  B_i}$ is a entrywise product of 3 matrices: $\K(\X,\X')$ (usually
+already available), $\dm(\X-\X',\sqrt{\mathbf{B}})^3$ (which is,
+except for the cube, part of the computation of $\K(\X,\X')$), and
+$(\X_{*i} (-\X'_{*i})^{\top})^2$ which does not depend upon $A$ and
+$\mathbf{B}$ so it can be computed once for all.
 
 \section{Squared Exponential kernel}
-$$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2}(\x-\x')^{\top} \LL^{-1} (\x-\x')}$$
+
+\subsection{Scalar Lengthscale $\ell$}
+$$k(\x,\x') = \sigma_f e^{-\frac{1}{2\ell^2} (\x-\x')^{\top}(\x-\x')}
+  = \sigma_f e^{-\frac{1}{2\ell^2} \sum_{i=1}^D (x_i - x'_i)^2} =
+  \sigma_f e^{-\frac{1}{2\ell^2} \|\x-\x'\|_2^2}$$ 
+$$\K(\X,\X') = \sigma_f e^{-\frac{1}{2\ell^2} \dm(\X,\X')^2}$$
+$$\ell \ge 0$$
+$$\sigma_f \ge 0$$
+$$\mathbf{\Theta} = \{ \sigma_f, \ell \}$$
+$$A = \sigma_f^2$$
+$$B = \ell^{-2}$$
+$$\mathbf{\Theta}^* = \{ A, B\}$$
+$$k(\x,\x') = A e^{B (\x-\x')^{\top}(\x-\x')}$$
+$$\K(\X,\X') = A e^{B \dm(\X,\X')^2}$$
+$$\frac{\partial k}{\partial A} = \frac{k(\x,\x')}{A}$$
+$$\frac{\partial \K}{\partial A} = \frac{\K(\X,\X')}{A}$$
+$$\frac{\partial k}{\partial B} = k(\x,\x') \|\x-\x'\|_2^2$$
+$$\frac{\partial \K}{\partial B} = K(\X,\X') \bullet \dm(\X,\X')^2$$
+$$\nabla_{A,B} \K = (\frac{1}{A} \K(\X,\X'), \dm(\X-\X')^2 \bullet
+\K(\X,\X'))$$
+
+Note that $\nabla_{A,B} \K$ is similar to that of the exponential
+kernel so all comments over there applies here almost as well.
+
+
+\subsection{Vector of Lengthscales $\ELL$}
+Let $\mathbf{L} = diag(\ELL)$:
+$$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2}(\x-\x')^{\top} \LL^{-2}
+  (\x-\x')} = \sigma_f e^{-\frac{1}{2}\sum_{i=1}^D \frac{(x_i - x'_i)^2}{\ell_i^2}}$$
+$$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{2} \dm(\X,\X',\ELL^{-1})^2}$$
+$$\sigma_f \ge 0$$
+$$\ell_i \ge 0$$
+$$\mathbf{\Theta} = \{ \sigma_f, \ELL\}$$
+$$A = \sigma_f$$
+$$\mathbf{B} = -\frac{1}{2}\ELL^{-2} =
+\left(-\frac{1}{2\ell_1^2},\ldots,-\frac{1}{2\ell_D^2} \right)$$
+$$\mathbf{\Theta}^* = \{ A, \mathbf{B}\}$$
+$$k(\x,\x') = A e^{(\x-\x')^{\top} diag(\mathbf{B}) (\x-\x')} = A
+e^{\sum_{i=1}^D B_i (x_i - x'_i)^2}$$ 
+$$\K(\X,\X') = A e^{\dm(\X,\X',\mathbf{B})}$$
+$$\frac{\partial k}{\partial A} = \frac{k(\x,x')}{A}$$
+$$\frac{\partial \K}{\partial A} = \frac{\K(\X,X')}{A}$$
+$$\frac{\partial k}{\partial B} = k(\x,\x') (x_i -x'_i)^2$$
+$$\frac{\partial \K}{\partial B} = \K(\X,\X') \bullet (\X_{*i}
+(-\X'_{*i})^{\top})^2$$
+$$\nabla_{A,\mathbf{B}} \K = \left(\frac{\K(\X,\X')}{A}, \left\{ K(\X,\X')
+  \bullet (\X_{*i} (-\X'_{*i})^{\top})^2 \right\}_{i=1 \ldots D} \right)$$
+
+Note that $\nabla_{A,\mathbf{B}} \K$ requires to compute $K(\X,\X')$
+(which is usually already available), and its entrywise product with
+$(\X_{*i} (-\X'_{*i})^{\top})^2$ which is independent of the value of
+the hyperparameters and can be precomputed once for all. 
 
 \section{$\gamma$-Exponential kernels}
 
