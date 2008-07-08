@@ -17,7 +17,7 @@ from mvpa.base.dochelpers import enhancedDocString
 if __debug__:
     from mvpa.base import debug
 
-# WaveletPacket and WaveletDecomposition mappers share lots of common
+# WaveletPacket and WaveletTransformation mappers share lots of common
 # functionality at the moment
 
 class _WaveletMapper(Mapper):
@@ -202,7 +202,7 @@ class WaveletPacketMapper(_WaveletMapper):
         raise NotImplementedError
 
 
-class WaveletDecompositionMapper(_WaveletMapper):
+class WaveletTransformationMapper(_WaveletMapper):
     """Convert signal into wavelet representaion
     """
 
