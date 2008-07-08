@@ -10,15 +10,14 @@
 
 import pylab as P
 import numpy as N
-import scipy as sp
-import scipy.stats as sps
 import matplotlib as mpl
 
 from mvpa.mappers.boxcar import BoxcarMapper
 
 #
 # Original code was borrowed from
-# http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net/msg05669.html
+# http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net \
+#   /msg05669.html
 # It sustained heavy refactoring/extension
 #
 
@@ -89,38 +88,46 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
                 verticalalignment=verticalalignment, *coor)
 
 
-def plot_erp(data, SR=1.0, onsets=None, pre=0.2, post=0.6, pre_mean=0.2, color='r',
-              errtype='ste', plot_args=[], plot_kwargs={}, ax=P):
+def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
+            color='r', errcolor=None, errtype='ste', ax=P,
+            *args, **kwargs):
     """Plot single ERP on existing canvas
 
     :Parameters:
-      data
-        1D ndarray = samples x channels
-      onsets
-        list of onsets (in samples not in seconds)
-      SR
-        sampling rate of the signal
-      pre
-        duration (seconds) to be plotted prior to onset
-      post
-        duration (seconds) to be plotted after the onset
-      pre_mean
-        duration at the beginning of the window which is used
-        for deriving the mean of the signal
+      data: 1D or 2D ndarray
+        The data array can either be 1D (samples over time) or 2D
+        (trials x samples). In the first case a boxcar mapper is used to
+        extract the respective trial timecourses given a list of trial onsets.
+        In the latter case, each row of the data array is taken as the EEG
+        signal timecourse of a particular trial.
+      onsets: list(int)
+        List of onsets (in samples not in seconds).
+      SR: int
+        Sampling rate (1/s) of the signal.
+      pre: float
+        Duration (in seconds) to be plotted prior to onset.
+      post: float
+        Duration (in seconds) to be plotted after the onset.
+      pre_mean: float
+        Duration (in seconds) at the beginning of the window which is used
+        for deriving the mean of the signal.
       errtype: 'ste' | 'std'
         Type of error value to be computed per datapoint.
           'ste': standard error of the mean
           'std': standard deviation
-      color
-        color to be used
-      plot_args
-        additional arguments to plots
-      plot_kwargs
-        additional keyword arguments to plots
-      ax
-        target where to draw
+      color: matplotlib color code
+        Color to be used for plotting the mean signal timecourse.
+      errcolor: matplotlib color code
+        Color to be used for plotting the error margin. If None, use main color
+        but with weak alpha level
+      ax:
+        Target where to draw.
+      *args, **kwargs
+        Additional arguments to plot().
     """
+    # trial timecourse duration
     duration = pre + post
+
     if onsets is not None: # if we need to extract ERPs
         # We are working with a full timeline
         bcm = BoxcarMapper(onsets,
@@ -130,18 +137,21 @@ def plot_erp(data, SR=1.0, onsets=None, pre=0.2, post=0.6, pre_mean=0.2, color='
     else:
         erp_data = data
 
-    # validity check -- we should have 2D matrix
+    # validity check -- we should have 2D matrix (trials x samples)
     if len(erp_data.shape) != 2:
         raise RuntimeError, \
-              "erp_plot supports either 1D data with onsets, or 2D data " \
+              "plotERP() supports either 1D data with onsets, or 2D data " \
               "(trials x sample_points). Shape of the data at the point " \
               "is %s" % erp_data.shape
 
+ #   if erp_data.shape[1] <
+
+    # mean of pre-onset signal accross trials
     erp_baseline = N.mean(erp_data[:,:int(pre_mean*SR)])
+    # center data on pre-onset mean
     erp_data -= erp_baseline
+    # compute mean signal timecourse accross trials
     erp_mean = N.mean(erp_data, axis=0)
-    # scipy way... disabled for generality
-    #erp_stderr = sps.stderr(erp_data, axis=0)
 
     # compute error per datapoint
     if errtype == 'ste':
@@ -151,25 +161,33 @@ def plot_erp(data, SR=1.0, onsets=None, pre=0.2, post=0.6, pre_mean=0.2, color='
     else:
         raise ValueError, "Unknown error type '%s'" % errtype
 
-    time_points = N.arange(len(erp_mean))*1.0/SR - pre
+    # generate timepoints and error ranges to plot filled error area
+    # top ->
+    # bottom <-
+    time_points = N.arange(len(erp_mean)) * 1.0 / SR - pre
     time_points2w = N.hstack((time_points, time_points[::-1]))
 
     error_top = -erp_mean-erp_stderr
     error_bottom = -erp_mean+erp_stderr
     error2w = N.hstack((error_top, error_bottom[::-1]))
 
+    if errcolor is None:
+        errcolor = color
+
+    # plot error margin
     pfill = ax.fill(time_points2w, error2w,
-                   facecolor=color, alpha=0.2,
+                    facecolor=errcolor, alpha=0.2,
                     zorder=3)
 
+    # plot mean signal timecourse
     ax.plot(time_points, -erp_mean, lw=2, color=color, zorder=4,
-            *plot_args, **plot_kwargs)
+            *args, **kwargs)
 
 
 
-def plot_erps(erps, data=None, ax=None, pre=0.2, post=0.6,
-              xlabel = 'time (s)', ylabel='$\mu V$',
-              ylim=None, **kwargs):
+def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
+             xlabel = 'time (s)', ylabel='$\mu V$',
+             ylim=None, **kwargs):
     """Plot multiple ERPs on a new figure.
 
     :Parameters:
@@ -239,10 +257,10 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=0.6,
         if plot_data is None:
             raise ValueError, "Channel %s got not data provided" % label
 
-        plot_erp(plot_data,
-                 onsets=onsets, pre=pre, post=post,
-                 color=color, ax=ax,
-                 **kwargs)
+        plotERP(plot_data,
+                onsets=onsets, pre=pre, post=post,
+                color=color, ax=ax,
+                **kwargs)
         #             plot_kwargs={'label':label})
 
     # legend obscures plotting a bit... disabled for now

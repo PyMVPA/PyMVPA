@@ -71,6 +71,7 @@ __optional_tests = ( ('scipy', 'ridge'),
                      (['lars','scipy'], 'lars'),
                      ('nifti', 'niftidataset'),
                      ('mdp', 'icamapper'),
+                     ('pywt', 'waveletmapper'),
 #                     ('mdp', 'pcamapper'),
                      )
 

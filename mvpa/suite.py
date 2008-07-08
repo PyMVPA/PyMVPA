@@ -91,5 +91,8 @@ if externals.exists("scipy"):
     from mvpa.clfs.plr import *
     from mvpa.misc.stats import *
 
+if externals.exists("pywt"):
+    from mvpa.mappers.wavelet import *
+
 if externals.exists("pylab"):
 	import pylab as P
