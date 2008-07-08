@@ -89,7 +89,7 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
 
 
 def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
-            color='r', errcolor='grey', errtype='ste', ax=P,
+            color='r', errcolor=None, errtype='ste', ax=P,
             *args, **kwargs):
     """Plot single ERP on existing canvas
 
@@ -118,7 +118,8 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
       color: matplotlib color code
         Color to be used for plotting the mean signal timecourse.
       errcolor: matplotlib color code
-        Color to be used for plotting the error margin.
+        Color to be used for plotting the error margin. If None, use main color
+        but with weak alpha level
       ax:
         Target where to draw.
       *args, **kwargs
@@ -169,6 +170,9 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
     error_top = -erp_mean-erp_stderr
     error_bottom = -erp_mean+erp_stderr
     error2w = N.hstack((error_top, error_bottom[::-1]))
+
+    if errcolor is None:
+        errcolor = color
 
     # plot error margin
     pfill = ax.fill(time_points2w, error2w,
