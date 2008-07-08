@@ -60,14 +60,12 @@ class WaveletMappersTests(unittest.TestCase):
         for wdm, wdm_ in ((WaveletDecompositionMapper(),
                            wavelet_.WaveletDecompositionMapper()),
                           (WaveletPacketMapper(),
-                           wavelet_.WaveletPacketMapper())):
+                           wavelet_.WaveletPacketMapper()),):
             d3d_wd = wdm(d3d)
             d3d_wd_ = wdm_(d3d)
 
             self.failUnless((d3d_wd == d3d_wd_).all(),
                             msg="We should have got same result with old and new code. Got %s and %s" % (d3d_wd, d3d_wd_))
-
-        print "regression ok"
 
 
 def suite():
