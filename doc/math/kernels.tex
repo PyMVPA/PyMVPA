@@ -68,9 +68,9 @@ The following notation is be used:
   root of what it is usually called ``distance matrix''.
 \item $\dm(\X,\X',\mathbf{w})$ : the \emph{weighted} Euclidean
   distance matrix between $\X$ and $\X'$ defined element by element as
-  $\dm(\X,\X',\mathbf{w})_{pq} = \|\X_{p i} - \X'_{q i}, \mathbf{w}\|_2
-  = \sqrt{\sum_{i=1}^D w_i^2(\X_{p i} - \X'_{q i})^2}$ through the
-  weight vector $\mathbf{w} \in \R^D$.
+  $\dm(\X,\X',\mathbf{w})_{pq} = \|(\X_{p *} - \X'_{q *})^{\top},
+  \mathbf{w}\|_2 = \sqrt{\sum_{i=1}^D w_i^2(\X_{p i} - \X'_{q i})^2}$
+  through the weight vector $\mathbf{w} \in \R^D$.
 \item $\X \bullet \mathbf{Y}$ : the Hadamard (or Schur) matrix
   product, i.e. the entrywise product between matrices of the same
   size. Let $\mathbf{Z} = \X \bullet \mathbf{Y}$, then $z_{ij} =
