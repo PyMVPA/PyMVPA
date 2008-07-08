@@ -144,8 +144,6 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
               "(trials x sample_points). Shape of the data at the point " \
               "is %s" % erp_data.shape
 
- #   if erp_data.shape[1] <
-
     # mean of pre-onset signal accross trials
     erp_baseline = N.mean(erp_data[:,:int(pre_mean*SR)])
     # center data on pre-onset mean
@@ -182,7 +180,6 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
     # plot mean signal timecourse
     ax.plot(time_points, -erp_mean, lw=2, color=color, zorder=4,
             *args, **kwargs)
-
 
 
 def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
