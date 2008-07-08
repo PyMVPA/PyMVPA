@@ -15,17 +15,34 @@
 Datasets
 ********
 
-The foundation of PyMVPA's data handling is the Dataset_
-class. Basically, this class stores data samples, sample attributes
-and dataset attributes.  Sample attributes assign a value to each data
-sample and dataset attributes are additional information or
-functionality that applies to the whole dataset.
+The first step of any analysis in PyMVPA involves reading the data and putting
+it into the necessary shape for the intended analysis. But even after the
+initial setup, many algorithms have to modify datasets, e.g. by selecting a
+subset of it, or simple transformations of the data (e.g. z-scoring), or more
+complex things like projections into alternative representations/spaces.
+
+This section introduces the basic concepts of a dataset in PyMVPA and shows
+useful operations typically performed on datasets.
+
+
+The Basic Concepts
+==================
+
+A minimal dataset in PyMVPA consists of a number of `samples`, where each
+individual sample is nothing more than a vector of values. Each sample is
+associated with a `label`, which defines the category the respective sample
+belongs to, or in more general terms, defines the model that should be learned
+by a classifier.  Moreover, samples can be grouped into so-called `chunks`,
+where each chunk is assumed to be statistically independent from all other data
+chunks.
+
+The foundation of PyMVPA's data handling is the Dataset_ class. Basically, this
+class stores data samples, sample attributes and dataset attributes.  By
+definition, sample attributes assign a value to each data sample (e.g. labels,
+or chunks) and dataset attributes are additional information or functionality
+that apply to the whole dataset.
 
 .. _Dataset: api/mvpa.datasets.base.Dataset-class.html
-
-.. <gjd> i had a hard time making sense of the above
-   paragraph on first reading. add an example to get
-   first-time users thinking in the right direction
 
 Most likely the Dataset_ class will not be used directly, but through one
 of the derived classes. However, it is perfectly possible to use it directly.
@@ -92,14 +109,12 @@ sample elements.
 
 In PyMVPA this is done by mappers that transform data samples from their
 original *dataspace* into the so-called *features space*. In the above
-neuro-imaging example the *dataspace* is three-dimensional and the
-*feature space* always refers to the 2d `samples x features` representation
-that is required by the Dataset_ class. In the context of mappers the
-dataspace is sometimes also referred to as *in-space* while the feature space
-is labeled as *out-space*.
-
-.. <gjd> is there any mnemonic i can use to try and remember why 'in' vs
-   'out' makes sense in this context?
+neuro-imaging example the *dataspace* is three-dimensional and the *feature
+space* always refers to the 2d `samples x features` representation that is
+required by the Dataset_ class. In the context of mappers the dataspace is
+sometimes also referred to as *in-space* (i.e. the initial data that goes into
+the mapper) while the feature space is labeled as *out-space* (i.e. the mapper
+output when doing forward mapping).
 
 The task of a mapper, besides transforming samples into 1d vectors, is to
 retain as much information of the dataspace as possible. Some mappers provide
@@ -184,6 +199,53 @@ is therefore both memory efficient and relatively fast. All other
 information like class labels and chunks are maintained. By calling
 `mapReverse()` on the new dataset one can see that the remaining four features
 are precisely mapped back onto their original locations in the data space.
+
+
+.. index:: data formats
+.. _data_formats:
+
+Data Formats
+============
+
+The concept of mappers in conjuction with the functionality provided by the
+Dataset_ class, makes it very easy to create new dataset types with support
+for specialized data types and formats. The following list shows the data
+formats currently supported by PyMVPA:
+
+* NumPy arrays
+
+  PyMVPA builds its dataset facilities on NumPy arrays. Basically, anything
+  that can be converted into a NumPy array can also be converted into a
+  dataset. Together with the corresponding labels, NumPy arrays can simply be
+  passed to the Dataset_ constructor to create a dataset. With arrays it is
+  possible to use the classes Dataset_, MappedDataset_ (to combine the samples
+  with any custom mapping algorithm) or MaskedDataset_ (readily provides a
+  DenseArrayMapper_). 
+
+* Plain text
+
+  Using the NumPy function `fromfile()` a variety of text file formats (e.g.
+  CSV) can be read and converted into NumPy arrays.
+
+* NIfTI/Analyze images
+
+  PyMVPA provides a specialized dataset for MRI data in the NIfTI format.
+  NiftiDataset_ uses PyNIfTI_ to read the data and automatically configures an
+  appropriate DenseArrayMapper_ with metric information read from the NIfTI
+  file header.
+
+* EEP binary files
+
+  Another special dataset type is EEPDataset_. It reads data from binary EEP
+  file (written by eeprobe_)
+
+
+.. _DenseArrayMapper: api/mvpa.mappers.array.DenseArrayMapper-class.html
+.. _MappedDataset: api/mvpa.datasets.mapped.MappedDataset-class.html
+.. _NiftiDataset: api/mvpa.datasets.nifti.NiftiDataset-class.html
+.. _EEPDataset: api/mvpa.datasets.eep.EEPDataset-class.html
+.. _PyNIfTI: http://niftilib.sf.net/pynifti
+.. _eeprobe: http://http://www.ant-neuro.com/products/eeprobe
 
 
 .. index:: data splitting, splitter, leave-one-out
