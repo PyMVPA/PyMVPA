@@ -82,6 +82,8 @@ from mvpa.misc.param import *
 from mvpa.misc.state import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
+from mvpa.misc.plot import *
+from mvpa.misc.plot.erp import *
 
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *

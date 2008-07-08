@@ -5,12 +5,12 @@
 Pie ... what?
 =============
 
-PyMVPA is a Python_ module intended to ease pattern classification
-analyses of large datasets. It provides high-level abstraction of typical
-processing steps and a number of implementations of some popular algorithms.
-While it is not limited to neuroimaging data it is eminently suited for such
-datasets. PyMVPA is truely free software (in every respect) and additonally
-requires nothing but free-software to run.
+PyMVPA is a Python_ module intended to ease pattern classification analyses of
+large datasets. It provides high-level abstraction of typical processing steps
+and a number of implementations of some popular algorithms.  While it is not
+limited to the neuroimaging domain, it is eminently suited for such datasets.
+PyMVPA is truely free software (in every respect) and additionally requires
+nothing but free-software to run.
 
 .. _Python: http://www.python.org
 
@@ -31,6 +31,7 @@ Documentation
 =============
 
 * :ref:`User Documentation <contents>` (**the** documentation)
+* :ref:`Installation Instructions <installation>`
 * :ref:`Development Changelog <changelog>` (see what has changed)
 * :ref:`Developer Guidelines <devguide>` (information for people contributing
   code)
