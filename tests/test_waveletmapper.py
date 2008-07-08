@@ -26,9 +26,9 @@ class WaveletMappersTests(unittest.TestCase):
     def testSimpleWDM(self):
         """
         """
-        ds = datasets['uni2small']
+        ds = datasets['uni2medium']
         d2d = ds.samples
-        ws = 9                          # size of timeline for wavelet
+        ws = 15                          # size of timeline for wavelet
         sp = N.arange(ds.nsamples-ws*2) + ws
 
         # create 3D instance (samples x timepoints x channels)
@@ -38,6 +38,22 @@ class WaveletMappersTests(unittest.TestCase):
         # use wavelet mapper
         wdm = WaveletDecompositionMapper()
         d3d_wd = wdm(d3d)
+
+        d3d_swap = d3d.swapaxes(1,2)
+
+        # use wavelet mapper
+        for wdm, wdm_swap in ((WaveletDecompositionMapper(),
+                           WaveletDecompositionMapper(dim=2)),
+                              (WaveletPacketMapper(),
+                               WaveletPacketMapper(dim=2))):
+            d3d_wd = wdm(d3d)
+            d3d_wd_swap = wdm_swap(d3d_swap)
+
+            self.failUnless((d3d_wd == d3d_wd_swap.swapaxes(1,2)).all(),
+                            msg="We should have got same result with swapped "
+                            "dimensions and explicit mentioining of it. "
+                            "Got %s and %s" % (d3d_wd, d3d_wd_swap))
+
 
         print d2d.shape, d3d.shape, d3d_wd.shape
 
