@@ -16,6 +16,9 @@ from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import isInVolume
 
+if __debug__:
+    from mvpa.base import debug
+
 class BoxcarMapper(Mapper):
     """Mapper to combine multiple samples into a single sample.
 
@@ -41,7 +44,14 @@ class BoxcarMapper(Mapper):
         """
         Mapper.__init__(self)
 
-        self.startpoints = startpoints
+        startpoints = N.asanyarray(startpoints)
+        if N.issubdtype(startpoints.dtype, 'i'):
+            self.startpoints = startpoints
+        else:
+            if __debug__:
+                debug('MAP', "Boxcar: obtained startpoints are not of int type."
+                      " Rounding and changing dtype")
+            self.startpoints = N.asanyarray(N.round(startpoints), dtype='i')
 
         if boxlength < 1:
             raise ValueError, "Boxlength lower than 1 makes no sense."

@@ -232,6 +232,9 @@ class NoneSplitter(Splitter):
         self.__mode = mode
 
 
+    __doc__ = enhancedDocString('NoneSplitter', locals(), Splitter)
+
+
     def _getSplitConfig(self, uniqueattrs):
         """Return just one full split: no first or second dataset.
         """
@@ -271,6 +274,9 @@ class OddEvenSplitter(Splitter):
         self.__usevalues = usevalues
 
 
+    __doc__ = enhancedDocString('OddEvenSplitter', locals(), Splitter)
+
+
     def _getSplitConfig(self, uniqueattrs):
         """Huka chaka!
         """
@@ -300,6 +306,9 @@ class HalfSplitter(Splitter):
         """Cheap init.
         """
         Splitter.__init__(self, **(kwargs))
+
+
+    __doc__ = enhancedDocString('HalfSplitter', locals(), Splitter)
 
 
     def _getSplitConfig(self, uniqueattrs):
@@ -388,6 +397,9 @@ class CustomSplitter(Splitter):
         Splitter.__init__(self, **(kwargs))
 
         self.__splitrule = splitrule
+
+
+    __doc__ = enhancedDocString('CustomSplitter', locals(), Splitter)
 
 
     def _getSplitConfig(self, uniqueattrs):

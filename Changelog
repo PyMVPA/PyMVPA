@@ -29,6 +29,24 @@ Unreleased changes
   * Error functions: CorrErrorPFx, RelativeRMSErrorFx.
   * Measures: CorrCoef.
   * Data generators: chirp, wr1996
+  * Few more examples: curvefitting, kerneldemo, smellit, projections
+  * Some initial convenience functions for plotting typical results and data
+    exploration.
+  * Unified configuration handling with support for user-specific and
+    analysis-specific config files, as well as the ability to override all
+    config settings via environment variables. The configuration handling is
+    used for PyMVPA internal settings, but can also be easily used for
+    custom (user-)settings.
+  * Improved modularity, e.g. SciPy is not required anymore, but still very
+    useful.
+  * Initial implementations of ICA and PCA mapper using functionality provided
+    by MDP. These mappers are more or less untested and should be used with
+    great care.
+  * Further improved docstrings of some classes, but still a long way to go.
+  * New 'boxcar' mapper, which is the similar to the already present
+    transformWithBoxCar() function, but implemented as a mapper.
+  * Stripped redundant suffixes from module names, e.g.
+    mvpa.datasets.niftidataset -> mvpa.datasets.nifti
 
 
 
