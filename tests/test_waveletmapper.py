@@ -36,18 +36,18 @@ class WaveletMappersTests(unittest.TestCase):
         d3d = bcm(d2d)
 
         # use wavelet mapper
-        wdm = WaveletDecompositionMapper()
+        wdm = WaveletTransformationMapper()
         d3d_wd = wdm(d3d)
         d3d_swap = d3d.swapaxes(1,2)
 
-        self.failUnlessRaises(ValueError, WaveletDecompositionMapper,
+        self.failUnlessRaises(ValueError, WaveletTransformationMapper,
                               wavelet='bogus')
-        self.failUnlessRaises(ValueError, WaveletDecompositionMapper,
+        self.failUnlessRaises(ValueError, WaveletTransformationMapper,
                               mode='bogus')
 
         # use wavelet mapper
-        for wdm, wdm_swap in ((WaveletDecompositionMapper(),
-                               WaveletDecompositionMapper(dim=2)),
+        for wdm, wdm_swap in ((WaveletTransformationMapper(),
+                               WaveletTransformationMapper(dim=2)),
                               (WaveletPacketMapper(),
                                WaveletPacketMapper(dim=2))):
           for dd, dd_swap in ((d3d, d3d_swap),
@@ -102,8 +102,8 @@ class WaveletMappersTests(unittest.TestCase):
         d3d = bcm(d2d)
 
         # use wavelet mapper
-        for wdm, wdm_ in ((WaveletDecompositionMapper(),
-                           wavelet_.WaveletDecompositionMapper()),
+        for wdm, wdm_ in ((WaveletTransformationMapper(),
+                           wavelet_.WaveletTransformationMapper()),
                           (WaveletPacketMapper(),
                            wavelet_.WaveletPacketMapper()),):
             d3d_wd = wdm(d3d)
