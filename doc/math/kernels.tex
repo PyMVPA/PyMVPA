@@ -56,9 +56,9 @@ The following notation is be used:
   \sqrt{\mathbf{z}^{\top}\mathbf{z}} = \sqrt{\sum_{i=1}^D z_i^2}$.
 \item $\|\mathbf{z},\mathbf{w}\|_p$ : the \emph{weighted} $p$-norm of
   vector $\mathbf{z}$ defined as $\|\mathbf{z},\mathbf{w}\|_p =
-  (\sum_{i=1}^D w_i^p|z_i|^p)^{\frac{1}{p}}$.  Euclidean norm is
+  (\sum_{i=1}^D w_i|z_i|^p)^{\frac{1}{p}}$.  Euclidean norm is
   $p=2$, then $\|\mathbf{z},\mathbf{w}\|_2 = \sqrt{\mathbf{z}^{\top}
-    \mathbf{W}^{-1} \mathbf{z}} = \sqrt{\sum_{i=1}^D w_i^2 z_i^2}$,
+    \mathbf{W}^{-1} \mathbf{z}} = \sqrt{\sum_{i=1}^D w_i z_i^2}$,
   where $\mathbf{W} = diag(\mathbf{w})$.
 \item $\dm(\X,\X')$ : the \emph{Euclidean distance matrix} between
   $\X$ and $\X'$ defined element by element as $\dm((\X,\X')_{pq} =
@@ -69,7 +69,7 @@ The following notation is be used:
 \item $\dm(\X,\X',\mathbf{w})$ : the \emph{weighted} Euclidean
   distance matrix between $\X$ and $\X'$ defined element by element as
   $\dm(\X,\X',\mathbf{w})_{pq} = \|(\X_{p *} - \X'_{q *})^{\top},
-  \mathbf{w}\|_2 = \sqrt{\sum_{i=1}^D w_i^2(\X_{p i} - \X'_{q i})^2}$
+  \mathbf{w}\|_2 = \sqrt{\sum_{i=1}^D w_i(\X_{p i} - \X'_{q i})^2}$
   through the weight vector $\mathbf{w} \in \R^D$.
 \item $\X \bullet \mathbf{Y}$ : the Hadamard (or Schur) matrix
   product, i.e. the entrywise product between matrices of the same
@@ -151,28 +151,28 @@ number of computations.
 \subsection{Vector of Lengthscales $\Ivec{\ell}$}
 Given $\Ivec{\ell} = (\ell_1,\ldots,\ell_D)$, $\ell_i \ge 0$ and
 $\ELL^{-1} = (1/\ell_1,\ldots,1/\ell_D)$
-$$k(\x,\x') = \sigma_f^2 e^{-\|\x-\x',\ELL^{-1}\|_2}= \sigma_f^2
+$$k(\x,\x') = \sigma_f^2 e^{-\|\x-\x',\ELL^{-2}\|_2}= \sigma_f^2
   e^{-\sqrt{\sum_{i=1}^D \left(\frac{x_i - x'_i}{\ell_i}\right)^2}}$$
-$$K(\X,\X') = \sigma_f^2 e^{-\dm(\X,\X',\ELL^{-1})}$$
+$$K(\X,\X') = \sigma_f^2 e^{-\dm(\X,\X',\ELL^{-2})}$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ELL\}$$
 $$A = \sigma_f^2$$
 $$\mathbf{B} = \ELL^{-2}$$
 $$\mathbf{\Theta}^* = \{ A, \mathbf{B}\}$$
-$$k(\x,\x') = A e^{-\|\x-\x',\sqrt{\mathbf{B}}\|_2} = A e^{-\sqrt{\sum_{i=1}^D
+$$k(\x,\x') = A e^{-\|\x-\x',\mathbf{B}\|_2} = A e^{-\sqrt{\sum_{i=1}^D
     B_i(x_i - x'_i)^2}}$$  
-$$K(\X,\X') = A e^{-\dm(\X,\X',\sqrt{\mathbf{B}})}$$
+$$K(\X,\X') = A e^{-\dm(\X,\X',\mathbf{B})}$$
 $$\frac{\partial k}{\partial A} = e^{-\sqrt{\sum_{i=1}^D B_i(x_i -
     x'_i)^2}} = \frac{k(\x,\x')}{A}$$
-$$\frac{\partial \K}{\partial A} = e^{-\dm(\X,\X',\sqrt{\mathbf{B}})} =
+$$\frac{\partial \K}{\partial A} = e^{-\dm(\X,\X',\mathbf{B})} =
 \frac{\K(\X,\X')}{A}$$ 
-$$\frac{\partial k}{\partial B_i} = A e^{-\|\x-\x',\sqrt{\mathbf{B}}\|_2}
-\left( -\frac{1}{2} \|\x-\x',\sqrt{\mathbf{B}}\|_2^3 \right) (x_i - x'_i)^2 =
--\frac{1}{2} k(\x,\x') \|\x-\x',\sqrt{\mathbf{B}}\|_2^3 (x_i - x'_i)^2 $$
+$$\frac{\partial k}{\partial B_i} = A e^{-\|\x-\x',\mathbf{B}\|_2}
+\left( -\frac{1}{2} \|\x-\x',\mathbf{B}\|_2^3 \right) (x_i - x'_i)^2 =
+-\frac{1}{2} k(\x,\x') \|\x-\x',\mathbf{B}\|_2^3 (x_i - x'_i)^2 $$
 $$\frac{\partial \K}{\partial B_i} = -\frac{1}{2} K(\X,\X')
-\bullet \dm(\X-\X',\sqrt{\mathbf{B}})^3 \bullet (\X_{*i}J_{1,N'}-
+\bullet \dm(\X-\X',\mathbf{B})^3 \bullet (\X_{*i}J_{1,N'}-
 (\X'_{*i}J_{1,N})^{\top})^2$$
 $$\nabla_{A,\mathbf{B}} \K = \left(\frac{\K(\X,\X')}{A}, \left\{-\frac{1}{2}
-    K(\X,\X') \bullet \dm(\X-\X',\sqrt{\mathbf{B}})^3 \bullet
+    K(\X,\X') \bullet \dm(\X-\X',\mathbf{B})^3 \bullet
     (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2 \right\}_{i=1 \ldots
     D} \right)$$
 
@@ -180,7 +180,7 @@ Note that $\frac{\partial \K}{\partial A}$ requires just the
 multiplication of a constant by the kernel matrix $\K(\X,\X')$ (kernel
 is usually already available). Instead $\frac{\partial \K}{\partial
   B_i}$ is a entrywise product of 3 matrices: $\K(\X,\X')$ (usually
-already available), $\dm(\X-\X',\sqrt{\mathbf{B}})^3$ (which is,
+already available), $\dm(\X-\X',\mathbf{B})^3$ (which is,
 except for the cube, part of the computation of $\K(\X,\X')$), and
 $(\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$ which does not depend
 upon $A$ and $\mathbf{B}$ so it can be computed once for all. Note
@@ -218,8 +218,8 @@ Let $\mathbf{L} = diag(\ELL)$:
 $$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2}(\x-\x')^{\top} \LL^{-2}
   (\x-\x')} = \sigma_f e^{-\frac{1}{2}\sum_{i=1}^D \frac{(x_i -
     x'_i)^2}{\ell_i^2}} = \sigma_f^2
-e^{-\frac{1}{2}\|\x-\x',\ELL^{-1}\|_2^2}$$
-$$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{2} \dm(\X,\X',\ELL^{-1})^2}$$
+e^{-\frac{1}{2}\|\x-\x',\ELL^{-2}\|_2^2}$$
+$$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{2} \dm(\X,\X',\ELL^{-2})^2}$$
 $$\sigma_f \ge 0$$
 $$\ell_i \ge 0$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ELL\}$$
