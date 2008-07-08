@@ -15,6 +15,7 @@ from os import environ
 import unittest
 import numpy as N
 
+from mvpa import cfg
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitter import OddEvenSplitter
 from mvpa.datasets.masked import MaskedDataset
@@ -72,7 +73,7 @@ def sweepargs(**kwargs):
                         if __debug__:
                             debug('TEST', 'Failed #%d' % len(failed_tests_str))
                     # TODO: handle different levels of unittests properly
-                    if environ.has_key('MVPA_QUICKTEST'):
+                    if cfg.getboolean('general', 'quicktest', False):
                         # on TESTQUICK just run test for 1st entry in the list,
                         # the rest are omitted
                         # TODO: proper partitioning of unittests
