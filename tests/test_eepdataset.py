@@ -27,6 +27,11 @@ class EEPDatasetTests(unittest.TestCase):
         for d in ds:
             self.failUnless(d.nsamples == 2)
             self.failUnless(d.nfeatures == 128)
+            self.failUnless(d.channelids[23] == 'Pz')
+            self.failUnless(N.round(d.t0 + 0.002, decimals=3) == 0)
+            self.failUnless(N.round(d.dt - 0.002, decimals=3) == 0)
+            self.failUnless(N.round(d.samplingrate) == 500)
+
 
 
     def testEEPBin(self):

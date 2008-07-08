@@ -17,10 +17,6 @@ import pylab as P
 # N.random.seed(1)
 data = N.random.rand(4, 2)
 
-k = Kernel()
-print k
-edm = k.squared_euclidean_distance(data)
-
 for kernel_class, kernel_args in (
     (KernelConstant, {'sigma_0':1.0}),
     (KernelConstant, {'sigma_0':1.0}),
