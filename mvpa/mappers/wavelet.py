@@ -12,6 +12,7 @@ import pywt
 import numpy as N
 
 from mvpa.mappers.base import Mapper
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.base import debug
@@ -60,11 +61,51 @@ class _WaveletMapper(Mapper):
         self._mode = mode
         """Periodization mode"""
 
-    def forward(self, *args):
+    def forward(self, data):
+        data = N.asanyarray(data)
+        self._inshape = data.shape
+        return self._forward(data)
+
+    def inverse(self, data):
+        data = N.asanyarray(data)
+        self._outshape = data.shape
+        return self._inverse(data)
+
+    def _forward(self, *args):
         raise NotImplementedError
 
-    def inverse(self, *args):
+    def _inverse(self, *args):
         raise NotImplementedError
+
+
+    def getInShape(self):
+        """Returns a one-tuple with the number of original features."""
+        return self._inshape[1:]
+
+
+    def getOutShape(self):
+        """Returns a tuple with the shape of output components."""
+        return self._outshape[1:]
+
+
+    def getInSize(self):
+        """Returns the number of original features."""
+        return self._inshape[1:]
+
+
+    def getOutSize(self):
+        """Returns the number of wavelet components."""
+        return self._outshape[1:]
+
+
+    def selectOut(self, outIds):
+        """Choose a subset of components...
+
+        just use MaskMapper on top?"""
+        raise NotImplementedError, "Please use in conjunction with MaskMapper"
+
+
+    __doc__ = enhancedDocString('_WaveletMapper', locals(), Mapper)
 
 
 def _getIndexes(shape, dim):
@@ -97,7 +138,7 @@ class WaveletPacketMapper(_WaveletMapper):
     """Convert signal into an overcomplete representaion using Wavelet packet
     """
 
-    def forward(self, data):
+    def _forward(self, data):
         if __debug__:
             debug('MAP', "Converting signal using DWP")
 
@@ -155,7 +196,7 @@ class WaveletPacketMapper(_WaveletMapper):
             debug('MAP', "Done convertion into wp. Total size %s" % str(wp.shape))
         return wp
 
-    def reverse(self, data):
+    def _reverse(self, data):
         raise NotImplementedError
 
 
@@ -163,7 +204,7 @@ class WaveletDecompositionMapper(_WaveletMapper):
     """Convert signal into wavelet representaion
     """
 
-    def forward(self, data):
+    def _forward(self, data):
         """Decompose signal into wavelets's coefficients via dwt
         """
         if __debug__:
@@ -210,7 +251,7 @@ class WaveletDecompositionMapper(_WaveletMapper):
         self.lengths = coeff_lengths
         return wd
 
-    def reverse(self, wd):
+    def _reverse(self, wd):
         if __debug__:
             debug('MAP', "Performing iDWT")
         signal = None
