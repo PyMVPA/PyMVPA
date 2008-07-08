@@ -78,7 +78,17 @@ class EEPDataset(MappedDataset):
                                dsattr=dsattr,
                                **(kwargs))
 
-
     __doc__ = enhancedDocString('EEPDataset', locals(), MappedDataset)
 
 
+    channelids = property(fget=lambda self: self._dsattr['eb_channels'],
+                          doc='List of channel IDs')
+    t0 = property(fget=lambda self: self._dsattr['eb_t0'],
+                          doc='Location of first sample relative to stimulus ' \
+                              'onset (in seconds).')
+    dt = property(fget=lambda self: self._dsattr['eb_dt'],
+                          doc='Time difference between two samples ' \
+                              '(in seconds).')
+    samplingrate = property(fget=lambda self: 1.0 / self._dsattr['eb_dt'],
+                          doc='Time difference between two samples ' \
+                              '(in seconds).')
