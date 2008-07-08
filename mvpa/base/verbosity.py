@@ -102,8 +102,8 @@ class Logger(object):
             msg_ = ""
             if self.__crprev > 0:
                 # wipe out older line to make sure to see no ghosts
-                msg_ = "\r%s\r" % (" "*self.__crprev)
-            msg_ += msg
+                msg_ = "\r%s" % (" "*self.__crprev)
+            msg_ += "\r" + msg
             self.__crprev = len(msg)
             msg = msg_
             # since it makes no sense this days for cr and lf,
@@ -287,7 +287,7 @@ class SetLogger(Logger):
         """
 
         if setid in self.__active:
-            if self.__printsetid:
+            if len(msg)>0 and self.__printsetid:
                 msg = "[%%-%ds] " % self.__maxstrlength % (setid) + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
@@ -480,23 +480,25 @@ if __debug__:
                 # be statefull as RelativeTime
                 return
 
-            msg_ = ' / '.join([str(x()) for x in self.__metrics])
+            if len(msg) > 0:
+                msg_ = ' / '.join([str(x()) for x in self.__metrics])
 
-            if len(msg_)>0:
-                msg_ = "{%s}" % msg_
+                if len(msg_)>0:
+                    msg_ = "{%s}" % msg_
 
-            # determine blank offset using backstacktrace
-            if self._offsetbydepth:
-                level = len(traceback.extract_stack())-2
-            else:
-                level = 1
+                # determine blank offset using backstacktrace
+                if self._offsetbydepth:
+                    level = len(traceback.extract_stack())-2
+                else:
+                    level = 1
 
-            if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
-                tb = traceback.extract_stack(limit=2)
-                msg += "  !!!2LONG!!!. From %s" % str(tb[0])
-            SetLogger.__call__(self, setid, "DBG%s:%s%s" %
-                               (msg_, " "*level, msg),
-                               *args, **kwargs)
+                if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
+                    tb = traceback.extract_stack(limit=2)
+                    msg += "  !!!2LONG!!!. From %s" % str(tb[0])
+
+                msg = "DBG%s:%s%s" % (msg_, " "*level, msg)
+
+            SetLogger.__call__(self, setid, msg, *args, **kwargs)
 
 
         def _setOffsetByDepth(self, b):
