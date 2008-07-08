@@ -112,9 +112,9 @@ class VerboseOutputTest(unittest.TestCase):
         verbose(1, "rewrite 2", cr=True)
         verbose(1, " add", cr=False, lf=False)
         verbose(1, " finish")
-        self.failUnlessEqual(self.sout.getvalue(),
-                             '  %s\r              \rrewrite' % self.msg +\
-                             '\r       \rrewrite 2 add finish\n')
+        target = '\r  %s\r              \rrewrite' % self.msg + \
+                 '\r       \rrewrite 2 add finish\n'
+        self.failUnlessEqual(self.sout.getvalue(), target)
 
     def testOnceLogger(self):
         """Test once logger"""
