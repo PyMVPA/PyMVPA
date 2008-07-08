@@ -58,6 +58,11 @@ class EEPDataset(MappedDataset):
                       "EEPDataset constructor takes the filename of an " \
                       "EEP file or a EEPBin object as 'samples' argument."
             samples = eb.data
+            # TODO: make proper properties for base Dataset based on _dsattr
+            # update dsattr with some information from EEPBin
+            dsattr['eb_dt'] = eb.dt
+            dsattr['eb_channels'] = eb.channels
+            dsattr['eb_t0'] = eb.t0
 
         # come up with mapper if fresh samples were provided
         if not samples is None:
