@@ -14,6 +14,7 @@ import pylab as P
 
 from mvpa.misc.plot import errLinePlot
 from mvpa.misc.fx import singleGammaHRF, leastSqFit
+from mvpa import cfg
 
 # make dataset
 # 40 identical 'trial time courses' generated from a simple gamma function

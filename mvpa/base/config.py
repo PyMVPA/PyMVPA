@@ -14,7 +14,7 @@ from ConfigParser import SafeConfigParser
 import os.path
 
 
-class Config(SafeConfigParser):
+class ConfigManager(SafeConfigParser):
     """Central configuration registry for PyMVPA.
 
     The purpose of this class is to collect all configurable settings used by
@@ -83,7 +83,7 @@ class Config(SafeConfigParser):
             self.__cfg_filenames = []
 
         # set critical defaults
-        for sec, vars in Config._DEFAULTS.iteritems():
+        for sec, vars in ConfigManager._DEFAULTS.iteritems():
             self.add_section(sec)
             for key, value in vars.iteritems():
                 self.set(sec, key, value)

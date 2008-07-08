@@ -18,6 +18,7 @@ from mvpa.misc.plot import plotFeatureHist, plotSamplesDistance
 from mvpa import cfg
 from mvpa.datasets.nifti import NiftiDataset
 from mvpa.misc.iohelpers import SampleAttributes
+from mvpa.datasets.miscfx import zscore, detrend
 
 # load example fmri dataset
 attr = SampleAttributes('data/attributes.txt')
@@ -42,19 +43,34 @@ ds.setSamplesDType('float')
 # look at sample similiarity
 # Note, the decreasing similarity with increasing temporal distance
 # of the samples
+P.subplot(121)
 plotSamplesDistance(ds, sortbyattr='chunks')
 P.title('Sample distances (sorted by chunks)')
-if cfg.getboolean('examples', 'interactive', True):
-    P.show()
 
 # similar distance plot, but now samples sorted by their respective labels,
 # i.e. samples with same labels are plotted in adjacent columns/rows.
 # Note, that the first and largest group corresponds to the 'rest' condition
 # in the dataset
+P.subplot(122)
 plotSamplesDistance(ds, sortbyattr='labels')
 P.title('Sample distances (sorted by labels)')
 if cfg.getboolean('examples', 'interactive', True):
     P.show()
 
+
+# z-score features individually per chunk
+print 'Detrending data'
+detrend(ds, perchunk=True, model='regress', polyord=2)
+print 'Z-Scoring data'
+zscore(ds)
+
+P.subplot(121)
+plotSamplesDistance(ds, sortbyattr='chunks')
+P.title('Distances: z-scored, detrended (sorted by chunks)')
+P.subplot(122)
+plotSamplesDistance(ds, sortbyattr='labels')
+P.title('Distances: z-scored, detrended (sorted by labels)')
+if cfg.getboolean('examples', 'interactive', True):
+    P.show()
 
 # XXX add some more, maybe show effect of preprocessing

@@ -16,6 +16,7 @@ import numpy as N
 from mvpa.datasets.mapped import MappedDataset
 from mvpa.misc.eepbin import EEPBin
 from mvpa.mappers.mask import MaskMapper
+from mvpa.base.dochelpers import enhancedDocString
 
 
 
@@ -57,6 +58,11 @@ class EEPDataset(MappedDataset):
                       "EEPDataset constructor takes the filename of an " \
                       "EEP file or a EEPBin object as 'samples' argument."
             samples = eb.data
+            # TODO: make proper properties for base Dataset based on _dsattr
+            # update dsattr with some information from EEPBin
+            dsattr['eb_dt'] = eb.dt
+            dsattr['eb_channels'] = eb.channels
+            dsattr['eb_t0'] = eb.t0
 
         # come up with mapper if fresh samples were provided
         if not samples is None:
@@ -71,3 +77,18 @@ class EEPDataset(MappedDataset):
                                mapper=mapper,
                                dsattr=dsattr,
                                **(kwargs))
+
+    __doc__ = enhancedDocString('EEPDataset', locals(), MappedDataset)
+
+
+    channelids = property(fget=lambda self: self._dsattr['eb_channels'],
+                          doc='List of channel IDs')
+    t0 = property(fget=lambda self: self._dsattr['eb_t0'],
+                          doc='Location of first sample relative to stimulus ' \
+                              'onset (in seconds).')
+    dt = property(fget=lambda self: self._dsattr['eb_dt'],
+                          doc='Time difference between two samples ' \
+                              '(in seconds).')
+    samplingrate = property(fget=lambda self: 1.0 / self._dsattr['eb_dt'],
+                          doc='Time difference between two samples ' \
+                              '(in seconds).')
