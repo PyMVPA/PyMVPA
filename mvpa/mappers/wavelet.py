@@ -67,7 +67,7 @@ class WaveletPacketMapper(_WaveletMapper):
 
     def forward(self, data):
         if __debug__:
-            debug('MAP', "Converting signal into wavelet packets")
+            debug('MAP', "Converting signal using DWP")
         Nsamples, Ntimepoints, Nchans = data.shape
         wp = None
         levels_length = None                # total length at each level
@@ -75,7 +75,7 @@ class WaveletPacketMapper(_WaveletMapper):
         for sample_id in xrange(data.shape[0]):
             for chan_id in xrange(data.shape[2]):
                 if __debug__:
-                    debug('MAP_', " %d/%d" % (sample_id, chan_id), lf=False)
+                    debug('MAP_', " %d/%d" % (sample_id, chan_id), lf=False, cr=True)
                 WP = pywt.WaveletPacket(
                     data[sample_id, :, chan_id],
                     wavelet=self._wavelet,
@@ -115,11 +115,10 @@ class WaveletPacketMapper(_WaveletMapper):
                 if wp is None:
                     wp = N.empty( (Nsamples, N.sum(levels_length),  Nchans) )
                 wp[sample_id, :, chan_id] = N.hstack(levels_datas)
-                if __debug__:
-                    debug('MAP_', "")
 
         self.levels_lengths, self.levels_length = levels_lengths, levels_length
         if __debug__:
+            debug('MAP_', "")
             debug('MAP', "Done convertion into wp. Total size %s" % str(wp.shape))
         return wp
 
@@ -135,7 +134,7 @@ class WaveletDecompositionMapper(_WaveletMapper):
         """Decompose signal into wavelets's coefficients via dwt
         """
         if __debug__:
-            debug('MAP', "Converting signal into wavelet packets")
+            debug('MAP', "Converting signal using DWT")
         if len(data.shape) != 3:
             raise ValueError, \
                   "For now only 3D datasets (samples x timepoints x channels) are supported"
@@ -145,7 +144,7 @@ class WaveletDecompositionMapper(_WaveletMapper):
         for sample_id in xrange(Nsamples):
             for chan_id in xrange(Nchans):
                 if __debug__:
-                    debug('MAP_', " %d/%d" % (sample_id, chan_id), lf=False)
+                    debug('MAP_', " %d/%d" % (sample_id, chan_id), lf=False, cr=True)
                 coeffs = pywt.wavedec(
                     data[sample_id, :, chan_id],
                     wavelet=self._wavelet,
@@ -173,6 +172,7 @@ class WaveletDecompositionMapper(_WaveletMapper):
                 coeff = N.hstack(coeffs)
                 wd[sample_id, :, chan_id] = coeff
         if __debug__:
+            debug('MAP_', "")
             debug('MAP', "Done DWT. Total size %s" % str(wd.shape))
         self.lengths = coeff_lengths    # XXX move under some proper attrib
         return wd
@@ -187,7 +187,7 @@ class WaveletDecompositionMapper(_WaveletMapper):
         for sample_id in xrange(Nsamples):
             for chan_id in xrange(Nchans):
                 if __debug__:
-                    debug('MAP_', " %d/%d" % (sample_id, chan_id), lf=False)
+                    debug('MAP_', " %d/%d" % (sample_id, chan_id), lf=False, cr=True)
                 wd_sample = wd[sample_id, :, chan_id]
                 wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(Nlevels)]
                 # need to compose original list
@@ -198,6 +198,7 @@ class WaveletDecompositionMapper(_WaveletMapper):
                     signal = N.empty( (Nsamples, Ntime_points, Nchans) )
                 signal[sample_id, :, chan_id] = time_points
         if __debug__:
+            debug('MAP_', "")
             debug('MAP', "Done iDWT. Total size %s" % (signal.shape, ))
         return signal
 
