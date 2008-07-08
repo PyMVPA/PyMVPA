@@ -23,7 +23,6 @@ if __debug__:
 class _WaveletMapper(Mapper):
     """Generic class for Wavelet mappers (decomposition and packet)
     """
-    # heavy TODO to make proper mapper
 
     def __init__(self, dim=1, wavelet='sym4', mode='per', maxlevel=None):
         """Initialize WaveletPacket mapper
@@ -64,17 +63,20 @@ class _WaveletMapper(Mapper):
     def forward(self, data):
         data = N.asanyarray(data)
         self._inshape = data.shape
-        return self._forward(data)
+        self._intimepoints = data.shape[self._dim]
+        res = self._forward(data)
+        self._outshape = res.shape
+        return res
 
-    def inverse(self, data):
+
+    def reverse(self, data):
         data = N.asanyarray(data)
-        self._outshape = data.shape
-        return self._inverse(data)
+        return self._reverse(data)
 
     def _forward(self, *args):
         raise NotImplementedError
 
-    def _inverse(self, *args):
+    def _reverse(self, *args):
         raise NotImplementedError
 
 
@@ -209,9 +211,6 @@ class WaveletDecompositionMapper(_WaveletMapper):
         """
         if __debug__:
             debug('MAP', "Converting signal using DWT")
-        if len(data.shape) != 3:
-            raise ValueError, \
-                  "For now only 3D datasets (samples x timepoints x channels) are supported"
         wd = None
         coeff_lengths = None
         for indexes in _getIndexes(data.shape, self._dim):
@@ -257,7 +256,11 @@ class WaveletDecompositionMapper(_WaveletMapper):
         signal = None
         wd_offsets = [0] + list(N.cumsum(self.lengths))
         Nlevels = len(self.lengths)
-        for indexes in _getIndexes(data.shape, self._dim):
+        Ntime_points = self._intimepoints #len(time_points)
+        # unfortunately sometimes due to padding iDWT would return longer
+        # sequences, thus we just limit to the right ones
+
+        for indexes in _getIndexes(wd.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             wd_sample = wd[indexes]
@@ -265,12 +268,11 @@ class WaveletDecompositionMapper(_WaveletMapper):
             # need to compose original list
             time_points = pywt.waverec(
                 wd_coeffs, wavelet=self._wavelet, mode=self._mode)
-            Ntime_points = len(time_points)
             if signal is None:
                 newdim = list(wd.shape)
                 newdim[self._dim] = Ntime_points
                 signal = N.empty(newdim)
-            signal[indexes] = time_points
+            signal[indexes] = time_points[:Ntime_points]
         if __debug__:
             debug('MAP_', "")
             debug('MAP', "Done iDWT. Total size %s" % (signal.shape, ))

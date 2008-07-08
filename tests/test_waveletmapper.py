@@ -38,26 +38,55 @@ class WaveletMappersTests(unittest.TestCase):
         # use wavelet mapper
         wdm = WaveletDecompositionMapper()
         d3d_wd = wdm(d3d)
-
         d3d_swap = d3d.swapaxes(1,2)
+
+        self.failUnlessRaises(ValueError, WaveletDecompositionMapper,
+                              wavelet='bogus')
+        self.failUnlessRaises(ValueError, WaveletDecompositionMapper,
+                              mode='bogus')
 
         # use wavelet mapper
         for wdm, wdm_swap in ((WaveletDecompositionMapper(),
-                           WaveletDecompositionMapper(dim=2)),
+                               WaveletDecompositionMapper(dim=2)),
                               (WaveletPacketMapper(),
                                WaveletPacketMapper(dim=2))):
-            d3d_wd = wdm(d3d)
-            d3d_wd_swap = wdm_swap(d3d_swap)
+          for dd, dd_swap in ((d3d, d3d_swap),
+                              (d2d, None)):
+            dd_wd = wdm(dd)
+            if dd_swap is not None:
+                dd_wd_swap = wdm_swap(dd_swap)
 
-            self.failUnless((d3d_wd == d3d_wd_swap.swapaxes(1,2)).all(),
-                            msg="We should have got same result with swapped "
-                            "dimensions and explicit mentioining of it. "
-                            "Got %s and %s" % (d3d_wd, d3d_wd_swap))
+                self.failUnless((dd_wd == dd_wd_swap.swapaxes(1,2)).all(),
+                                msg="We should have got same result with swapped "
+                                "dimensions and explicit mentioining of it. "
+                                "Got %s and %s" % (dd_wd, dd_wd_swap))
+
+                self.failUnless(wdm_swap.getInShape() ==
+                                (dd.shape[2], dd.shape[1]))
+                self.failUnless(wdm_swap.getOutShape() ==
+                                (dd_wd.shape[2], dd_wd.shape[1]))
+
+            # some sanity checks
+            self.failUnless(dd_wd.shape[0] == dd.shape[0])
+            self.failUnless(wdm.getInShape() == dd.shape[1:])
+            self.failUnless(wdm.getOutShape() == dd_wd.shape[1:])
+
+            if not isinstance(wdm, WaveletPacketMapper):
+                # we can do reverse only for DWT
+                dd_rev = wdm.reverse(dd_wd)
+                # inverse transform might be not exactly as the
+                # input... but should be very close ;-)
+                self.failUnlessEqual(dd_rev.shape, dd.shape,
+                                     msg="Shape should be the same after iDWT")
+
+                diff = N.linalg.norm(dd - dd_rev)
+                ornorm = N.linalg.norm(dd)
+                self.failUnless(diff/ornorm < 1e-10)
 
 
-        print d2d.shape, d3d.shape, d3d_wd.shape
 
-    def testCompareToOld(self):
+
+    def _testCompareToOld(self):
         """Good just to compare if I didn't screw up anything... treat
         it as a regression test
         """
