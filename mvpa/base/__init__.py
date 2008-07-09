@@ -200,10 +200,10 @@ if __debug__:
 
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")
-    debug.register('CLF_TB',
-        "Report traceback in train/predict. Helps to resolve WTF calls it")
+    #debug.register('CLF_TB',
+    #    "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
-    debug.register('CLFBST_TB', "BoostClassifier traceback")
+    #debug.register('CLFBST_TB', "BoostClassifier traceback")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
