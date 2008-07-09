@@ -14,7 +14,7 @@ import numpy as N
 
 from mvpa.base import externals
 from mvpa.datasets import Dataset
-from mvpa.datasets.miscfx import removeInvariantFeatures
+from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks
 
 class MiscDatasetFxTests(unittest.TestCase):
 
@@ -30,6 +30,21 @@ class MiscDatasetFxTests(unittest.TestCase):
         self.failUnless(dsc.nfeatures == 1)
         self.failUnless((dsc.samples == r).all())
 
+
+    def testCoarsenChunks(self):
+        """Just basic testing for now"""
+        chunks = [1,1,2,2,3,3,4,4]
+        ds = Dataset(samples=N.arange(len(chunks)).reshape(
+            (len(chunks),1)), labels=[1]*8, chunks=chunks)
+        coarsenChunks(ds, nchunks=2)
+        chunks1 = coarsenChunks(chunks, nchunks=2)
+        self.failUnless((chunks1 == ds.chunks).all())
+        self.failUnless((chunks1 == N.asarray([0,0,0,0,1,1,1,1])).all())
+
+        ds2 = Dataset(samples=N.arange(len(chunks)).reshape(
+            (len(chunks),1)), labels=[1]*8)
+        coarsenChunks(ds2, nchunks=2)
+        self.failUnless((chunks1 == ds.chunks).all())
 
 
 def suite():

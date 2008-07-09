@@ -19,7 +19,10 @@ import numpy as N
 from mvpa.datasets import Dataset
 from mvpa.misc.support import getBreakPoints
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
+
+if __debug__:
+    from mvpa.base import debug
 
 if externals.exists('scipy'):
     from mvpa.datasets.miscfx_sp import detrend
@@ -125,4 +128,88 @@ def removeInvariantFeatures(dataset):
     """Returns a new dataset with all invariant features removed.
     """
     return dataset.selectFeatures(dataset.samples.std(axis=0).nonzero()[0])
+
+def coarsenChunks(source, nchunks=4):
+    """Change chunking of the dataset
+
+    Group chunks into groups to match desired number of chunks. Makes
+    sense if originally there were no strong groupping into chunks or
+    each sample was independent, thus belonged to its own chunk
+
+    :Parameters:
+      source : Dataset or list of chunk ids
+        dataset or list of chunk ids to operate on. If Dataset, then its chunks
+        get modified
+      nchunks : int
+        desired number of chunks
+    """
+
+    if isinstance(source, Dataset):
+        chunks = source.chunks
+    else:
+        chunks = source
+    chunks_unique = N.unique(chunks)
+    nchunks_orig = len(chunks_unique)
+
+    if nchunks_orig < nchunks:
+        raise ValueError, \
+              "Original number of chunks is %d. Cannot coarse them " \
+              "to get %d chunks" % (nchunks_orig, nchunks)
+
+    # figure out number of samples per each chunk
+    counts = dict(zip(chunks_unique, [ 0 ] * len(chunks_unique)))
+    for c in chunks:
+        counts[c] += 1
+
+    # now we need to group chunks to get more or less equalized number
+    # of samples per chunk. No sophistication is done -- just
+    # consecutively group to get close to desired number of samples
+    # per chunk
+    avg_chunk_size = N.sum(counts.values())*1.0/nchunks
+    chunks_groups = []
+    cur_chunk = []
+    nchunks = 0
+    cur_chunk_nsamples = 0
+    samples_counted = 0
+    for i,c in enumerate(chunks_unique):
+        cc = counts[c]
+
+        cur_chunk += [c]
+        cur_chunk_nsamples += cc
+
+        # time to get a new chunk?
+        if (samples_counted + cur_chunk_nsamples
+            >= (nchunks+1)*avg_chunk_size) or i==nchunks_orig-1:
+            chunks_groups.append(cur_chunk)
+            samples_counted += cur_chunk_nsamples
+            cur_chunk_nsamples = 0
+            cur_chunk = []
+            nchunks += 1
+
+    if len(chunks_groups) != nchunks:
+        warning("Apparently logic in coarseChunks is wrong. "
+                "It was desired to get %d chunks, got %d"
+                % (nchunks, len(chunks_groups)))
+
+    # remap using groups
+    # create dictionary
+    chunks_map = {}
+    for i, group in enumerate(chunks_groups):
+        for c in group:
+            chunks_map[c] = i
+
+    chunks_new = [chunks_map[x] for x in chunks]
+
+    if __debug__:
+        debug("DS_", "Using dictionary %s to remap old chunks %s into new %s"
+              % (chunks_map, chunks, chunks_new))
+
+    if isinstance(source, Dataset):
+        if __debug__:
+            debug("DS", "Coarsing %d chunks into %d chunks for %s"
+                  %(nchunks_orig, len(chunks_new), source))
+        source.chunks = chunks_new
+        return
+    else:
+        return chunks_new
 
