@@ -320,9 +320,9 @@ class Classifier(Parametrized):
         if __debug__:
             debug("CLF", "Training classifier %(clf)s on dataset %(dataset)s",
                   msgargs={'clf':self, 'dataset':dataset})
-            if 'CLF_TB' in debug.active:
-                tb = traceback.extract_stack(limit=5)
-                debug("CLF_TB", "Traceback: %s" % tb)
+            #if 'CLF_TB' in debug.active:
+            #    tb = traceback.extract_stack(limit=5)
+            #    debug("CLF_TB", "Traceback: %s" % tb)
 
         self._pretrain(dataset)
 
@@ -398,9 +398,9 @@ class Classifier(Parametrized):
         if __debug__:
             debug("CLF", "Predicting classifier %(clf)s on data %(data)s",
                 msgargs={'clf':self, 'data':data.shape})
-            if 'CLF_TB' in debug.active:
-                tb = traceback.extract_stack(limit=5)
-                debug("CLF_TB", "Traceback: %s" % tb)
+            #if 'CLF_TB' in debug.active:
+            #    tb = traceback.extract_stack(limit=5)
+            #    debug("CLF_TB", "Traceback: %s" % tb)
 
         # remember the time when started computing predictions
         t0 = time.time()
