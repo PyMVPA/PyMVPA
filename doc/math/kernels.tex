@@ -45,7 +45,7 @@ The following notation and definitions are used:
   and is a row vector.
 \item $k: \R^D \times \R^D \rightarrow \R$ : a covariance (or kernel)
   function.
-\item $\K(\X,\X')$ : the matrix extension of $k$.\, i.e., $\K_{pq} =
+\item $\K(\X,\X')$ : the matrix extension of $k$, i.e., $\K_{pq} =
   k(\X_{*p},\X'_{*q})$. If $\X$ is a $N \times D$ matrix and $\X'$ is
   $N' \times D$ then $\K(\X,\X')$ is a $N \times N'$ matrix.
 \item $\J_{n,m}$ : the $n \times m$ matrix of ones, i.e., a matrix
@@ -156,14 +156,14 @@ $$\nabla_{A,\mathbf{B},p} \K = \left(p\mathbf{M}^{p-1},\left\{p\mathbf{M}^{p-1} 
 \section{Exponential kernel}
 \subsection{Scalar Lengthscale $\ell$}
 $$k(\x,\x') = \sigma_f^2 e^{-\frac{\|\x-\x'\|_2}{\ell}}$$
-$$\ell \ge 0$$
+$$\ell > 0$$
 $$\sigma_f \ge 0$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ell \}$$
 $$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{\ell}\dm(\X,\X')}$$
 $$A = \sigma_f^2$$
 $$A \ge 0$$
 $$B = -\frac{1}{\ell}$$
-$$B \le 0$$
+$$B < 0$$
 $$\mathbf{\Theta}^* = \{ A, B \}$$
 $$k(\x,\x') = A e^{B\|\x-\x'\|_2}$$
 $$\K(\X,\X') = A e^{B \dm(\X-\X')}$$
@@ -174,11 +174,9 @@ k(\x,\x') \|\x-\x'\|_2$$
 $$\frac{\partial \K}{\partial B} = \K(\X,\X') \bullet \dm(\X-\X')$$
 $$\nabla_{A,B} \K = (\frac{1}{A} \K(\X,\X'), \K(\X,\X') \bullet \dm(\X-\X'))$$
 
-Note that when $\K(\X,\X')$ is already computed, the gradient consists
-just two element-by-element products, the second being against a
-constant matrix independent of the hyperparameters. So a mechanism
-that stores the precomputed kernel matrix will reduce greatly the
-number of computations.
+Note that if $\K(\X,\X')$ is precomputed, then the gradient consists
+in just two element-by-element products, the second being against a
+constant matrix independent of the hyperparameters.
 
 \subsection{Vector of Lengthscales $\Ivec{\ell}$}
 Given $\Ivec{\ell} = (\ell_1,\ldots,\ell_D)$, $\ell_i \ge 0$ and
@@ -187,8 +185,12 @@ $$k(\x,\x') = \sigma_f^2 e^{-\|\x-\x',\ELL^{-2}\|_2}= \sigma_f^2
   e^{-\sqrt{\sum_{i=1}^D \left(\frac{x_i - x'_i}{\ell_i}\right)^2}}$$
 $$K(\X,\X') = \sigma_f^2 e^{-\dm(\X,\X',\ELL^{-2})}$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ELL\}$$
+$$\sigma_f \ge 0$$
+$$\ell_i > 0$$
 $$A = \sigma_f^2$$
 $$\mathbf{B} = \ELL^{-2}$$
+$$A \ge 0$$
+$$B_i > 0$$
 $$\mathbf{\Theta}^* = \{ A, \mathbf{B}\}$$
 $$k(\x,\x') = A e^{-\|\x-\x',\mathbf{B}\|_2} = A e^{-\sqrt{\sum_{i=1}^D
     B_i(x_i - x'_i)^2}}$$  
@@ -196,28 +198,29 @@ $$K(\X,\X') = A e^{-\dm(\X,\X',\mathbf{B})}$$
 $$\frac{\partial k}{\partial A} = e^{-\sqrt{\sum_{i=1}^D B_i(x_i -
     x'_i)^2}} = \frac{k(\x,\x')}{A}$$
 $$\frac{\partial \K}{\partial A} = e^{-\dm(\X,\X',\mathbf{B})} =
-\frac{\K(\X,\X')}{A}$$ 
+\frac{1}{A}\K(\X,\X')$$ 
 $$\frac{\partial k}{\partial B_i} = A e^{-\|\x-\x',\mathbf{B}\|_2}
 \left( -\frac{1}{2} \|\x-\x',\mathbf{B}\|_2^3 \right) (x_i - x'_i)^2 =
 -\frac{1}{2} k(\x,\x') \|\x-\x',\mathbf{B}\|_2^3 (x_i - x'_i)^2 $$
 $$\frac{\partial \K}{\partial B_i} = -\frac{1}{2} K(\X,\X')
 \bullet \dm(\X-\X',\mathbf{B})^3 \bullet (\X_{*i}J_{1,N'}-
 (\X'_{*i}J_{1,N})^{\top})^2$$
-$$\nabla_{A,\mathbf{B}} \K = \left(\frac{\K(\X,\X')}{A}, \left\{-\frac{1}{2}
+$$\nabla_{A,\mathbf{B}} \K = \left(\frac{1}{A}\K(\X,\X'), \left\{-\frac{1}{2}
     K(\X,\X') \bullet \dm(\X-\X',\mathbf{B})^3 \bullet
     (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2 \right\}_{i=1 \ldots
     D} \right)$$
 
 Note that $\frac{\partial \K}{\partial A}$ requires just the
-multiplication of a constant by the kernel matrix $\K(\X,\X')$ (kernel
-is usually already available). Instead $\frac{\partial \K}{\partial
+multiplication of a constant by the kernel matrix $\K(\X,\X')$ whose
+values usually already available. Instead $\frac{\partial \K}{\partial
   B_i}$ is a entrywise product of 3 matrices: $\K(\X,\X')$ (usually
-already available), $\dm(\X-\X',\mathbf{B})^3$ (which is,
-except for the cube, part of the computation of $\K(\X,\X')$), and
-$(\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$ which does not depend
-upon $A$ and $\mathbf{B}$ so it can be computed once for all. Note
-that in NumPy $(\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$ can be
-computed as {\ttfamily numpy.subtract.outer($X_{*i}-X'_{*i}$)**2}.
+already available), $\dm(\X-\X',\mathbf{B})^3$ (which is, apart the
+cube, part of the computation of $\K(\X,\X')$ so it can be stored in
+advance), and $(\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$ which
+does not depend upon $A$ and $\mathbf{B}$ so it can be computed once
+for all. Note that in NumPy $(\X_{*i}J_{1,N'}-
+(\X'_{*i}J_{1,N})^{\top})^2$ can be computed as {\ttfamily
+  numpy.subtract.outer($X_{*i}-X'_{*i}$)**2}.
 
 \section{Squared Exponential kernel}
 
@@ -226,23 +229,25 @@ $$k(\x,\x') = \sigma_f e^{-\frac{1}{2\ell^2} (\x-\x')^{\top}(\x-\x')}
   = \sigma_f e^{-\frac{1}{2\ell^2} \sum_{i=1}^D (x_i - x'_i)^2} =
   \sigma_f e^{-\frac{1}{2\ell^2} \|\x-\x'\|_2^2}$$ 
 $$\K(\X,\X') = \sigma_f e^{-\frac{1}{2\ell^2} \dm(\X,\X')^2}$$
-$$\ell \ge 0$$
 $$\sigma_f \ge 0$$
+$$\ell > 0$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ell \}$$
 $$A = \sigma_f^2$$
 $$B = -\frac{1}{\ell^2}$$
+$$A \ge 0$$
+$$B < 0$$
 $$\mathbf{\Theta}^* = \{ A, B\}$$
 $$k(\x,\x') = A e^{B (\x-\x')^{\top}(\x-\x')}$$
 $$\K(\X,\X') = A e^{B \dm(\X,\X')^2}$$
 $$\frac{\partial k}{\partial A} = \frac{k(\x,\x')}{A}$$
-$$\frac{\partial \K}{\partial A} = \frac{\K(\X,\X')}{A}$$
+$$\frac{\partial \K}{\partial A} = \frac{1}{A}\K(\X,\X')$$
 $$\frac{\partial k}{\partial B} = k(\x,\x') \|\x-\x'\|_2^2$$
 $$\frac{\partial \K}{\partial B} = K(\X,\X') \bullet \dm(\X,\X')^2$$
 $$\nabla_{A,B} \K = (\frac{1}{A} \K(\X,\X'), \dm(\X-\X')^2 \bullet
 \K(\X,\X'))$$
 
 Note that $\nabla_{A,B} \K$ is similar to that of the exponential
-kernel so all comments over there applies here almost as well.
+kernel so almost all comments made before applies here as well.
 
 
 \subsection{Vector of Lengthscales $\ELL$}
@@ -253,19 +258,21 @@ $$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2}(\x-\x')^{\top} \LL^{-2}
 e^{-\frac{1}{2}\|\x-\x',\ELL^{-2}\|_2^2}$$
 $$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{2} \dm(\X,\X',\ELL^{-2})^2}$$
 $$\sigma_f \ge 0$$
-$$\ell_i \ge 0$$
+$$\ell_i > 0$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ELL\}$$
 $$A = \sigma_f$$
 $$\mathbf{B} = -\frac{1}{2}\ELL^{-2} =
 \left(-\frac{1}{2\ell_1^2},\ldots,-\frac{1}{2\ell_D^2} \right)$$
+$$A \ge 0$$
+$$B_i < 0$$
 $$\mathbf{\Theta}^* = \{ A, \mathbf{B}\}$$
 $$k(\x,\x') = A e^{(\x-\x')^{\top} diag(\mathbf{B}) (\x-\x')} = A
 e^{\sum_{i=1}^D B_i (x_i - x'_i)^2}$$ 
 $$\K(\X,\X') = A e^{\dm(\X,\X',\mathbf{B})}$$
 $$\frac{\partial k}{\partial A} = \frac{k(\x,x')}{A}$$
-$$\frac{\partial \K}{\partial A} = \frac{\K(\X,X')}{A}$$
-$$\frac{\partial k}{\partial B} = k(\x,\x') (x_i -x'_i)^2$$
-$$\frac{\partial \K}{\partial B} = \K(\X,\X') \bullet
+$$\frac{\partial \K}{\partial A} = \frac{1}{A}\K(\X,X')$$
+$$\frac{\partial k}{\partial B_i} = k(\x,\x') (x_i -x'_i)^2$$
+$$\frac{\partial \K}{\partial B_i} = \K(\X,\X') \bullet
 (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$$
 $$\nabla_{A,\mathbf{B}} \K = \left(\frac{\K(\X,\X')}{A}, \left\{ K(\X,\X')
   \bullet (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2 \right\}_{i=1
@@ -278,9 +285,39 @@ of the value of the hyperparameters and can be precomputed once for
 all.
 
 \section{$\gamma$-Exponential kernels}
+$$k(\x,\x') = \sigma_f^2 e^{-(\frac{\x-\x'}{\ell})^\gamma}$$
+$$k(\x,\x') = \sigma_f^2 e^{-(\frac{\x-\x'}{\ELL})^\gamma}$$
 
 \section{Mat\'ern kernels}
+%% $$k_{\mbox{Mat\'ern}}(\x,\x') = \frac{2^{1-\nu}}{\Gamma(\nu)} \left(\sqrt{2\nu} \frac{\|\x-\x'\|_2}{\ell}\right)^{\nu} \K_{\nu}\left(\sqrt{2}\nu \frac{\|\x-\x'\|_2}{\ell} \right)$$
+%% $$\ell > 0$$
+%% $$\nu > 0$$
+%% where $K_{\nu}$ is a modified Bessel function (REMOVE?).
+Let $\nu$ be half integer, i.e., $\nu = p + 1/2$ ($p \in
+\mathbb{Z}^+$), then
+$$k_{\nu=p+1/2}(\x,\x') = e^{-\sqrt{2\nu}\frac{\|\x-\x'\|}{\ell}}
+\frac{\Gamma(p+1)}{\Gamma(2p+1)} \sum_{i=0}^p
+\frac{(p+i)!}{i!(p-i)!}\left(\sqrt{8\nu}\frac{\|\x-\x'\|}{\ell}\right)^{p-i}$$
+is the class of Mat\'ern covariance functions with half-integer $\nu$.
+$$\nu > 0$$
+$$\ell > 0$$
+When $\nu \rightarrow \infty$ we obtain the squared exponential
+covariance function. Most popular cases of the Mat\'ern functions are
+$p=0$ (exponential kernel), $p=1$ and $p=2$:
+$$k_{\nu=1/2}(\x,\x') = e^{-\frac{\|\x-\x'\|_2}{\ell}}$$
+$$k_{\nu=3/2}(\x,\x') = \left(1+\sqrt{3}\frac{\|\x-\x'\|_2}{\ell}
+\right) e^{-\sqrt{3}\frac{\|\x-\x'\|_2}{\ell}}$$ 
+$$k_{\nu=5/2}(\x,\x') = \left(1+\sqrt{5}\frac{\|\x-\x'\|_2}{\ell}
+ + \frac{5\|\x-\x'\|_2^2}{3\ell^2}\right)
+e^{-\sqrt{5}\frac{\|\x-\x'\|_2}{\ell}}$$
+
 
 \section{Rational Quadratic kernels}
+$$k_{RQ} = \left(1+\frac{\|\x-\x'\|_2^2}{2\alpha\ell^2}
+\right)^{-\alpha}$$
+$$\alpha > 0$$
+$$\ell > 0$$
+
+
 
 \end{document}
