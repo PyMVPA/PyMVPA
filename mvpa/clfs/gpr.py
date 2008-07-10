@@ -24,6 +24,17 @@ from mvpa.misc.exceptions import InvalidHyperparameterError
 if __debug__:
     from mvpa.base import debug
 
+# Some local bindings for bits of speed up
+Nlog = N.log
+Ndot = N.dot
+Ndiag = N.diag
+NLAcholesky = N.linalg.cholesky
+NLAsolve = N.linalg.solve
+NLAError = N.linalg.linalg.LinAlgError
+
+# Some precomputed items. log is relatively expensive
+_halflog2pi = 0.5 * Nlog(2*N.pi)
+
 
 class GPR(Classifier):
     """Gaussian Process Regression (GPR).
@@ -37,6 +48,7 @@ class GPR(Classifier):
         doc="Log Marginal Likelihood")
 
     _clf_internals = [ 'gpr', 'regression', 'retrainable' ]
+
 
     # NOTE XXX Parameters of the classifier. Values available as
     # clf.parameter or clf.params.parameter, or as
@@ -109,9 +121,9 @@ class GPR(Classifier):
         """
         if __debug__: debug("GPR", "Computing log_marginal_likelihood")
         self.log_marginal_likelihood = \
-                                 -0.5*N.dot(self._train_labels, self._alpha) - \
-                                  N.log(self._L.diagonal()).sum() - \
-                                  self._km_train_train.shape[0]*0.5*N.log(2*N.pi)
+                                 -0.5*Ndot(self._train_labels, self._alpha) - \
+                                  Nlog(self._L.diagonal()).sum() - \
+                                  self._km_train_train.shape[0] * _halflog2pi
         return self.log_marginal_likelihood
 
 
@@ -174,10 +186,10 @@ class GPR(Classifier):
             # of Tikhonov regularization. This is equivalent to adding
             # little white gaussian noise.
             try:
-                self._L = L = N.linalg.cholesky(tmp)
-            except N.linalg.linalg.LinAlgError:
+                self._L = L = NLAcholesky(tmp)
+            except NLAError:
                 epsilon = 1.0e-20
-                self._L = L = N.linalg.cholesky(tmp+epsilon)
+                self._L = L = NLAcholesky(tmp+epsilon)
                 pass
             newL = True
         else:
@@ -195,8 +207,8 @@ class GPR(Classifier):
         if __debug__:
             debug("GPR", "Computing alpha")
 
-        self._alpha = N.linalg.solve(L.transpose(),
-                                     N.linalg.solve(L, train_labels))
+        self._alpha = NLAsolve(L.transpose(),
+                                     NLAsolve(L, train_labels))
 
         # compute only if the state is enabled
         if self.states.isEnabled('log_marginal_likelihood'):
@@ -233,7 +245,7 @@ class GPR(Classifier):
             self.states.repredicted = True
 
 
-        predictions = N.dot(km_train_test.transpose(), self._alpha)
+        predictions = Ndot(km_train_test.transpose(), self._alpha)
 
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
@@ -251,9 +263,9 @@ class GPR(Classifier):
 
             if __debug__:
                 debug("GPR", "Computing predicted variances")
-            v = N.linalg.solve(self._L, km_train_test)
+            v = NLAsolve(self._L, km_train_test)
             self.predicted_variances = \
-                N.diag(km_test_test - N.dot(v.transpose(), v)) \
+                Ndiag(km_test_test - Ndot(v.transpose(), v)) \
                 + self.sigma_noise**2
             pass
 
@@ -316,21 +328,21 @@ class GPRLinearWeights(Sensitivity):
         kernel = clf.kernel
         train_fv = clf._train_fv
 
-        weights = N.dot(kernel.Sigma_p,
-                        N.dot(train_fv.T, clf._alpha))
+        weights = Ndot(kernel.Sigma_p,
+                        Ndot(train_fv.T, clf._alpha))
 
         if self.states.isEnabled('variances'):
             # super ugly formulas that can be quite surely improved:
             tmp = N.linalg.inv(self._L)
-            Kyinv = N.dot(tmp.T, tmp)
+            Kyinv = Ndot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
             #     using N.matrix where * is a matrix product
-            self.states.variances = N.diag(
+            self.states.variances = Ndiag(
                 kernel.Sigma_p -
-                N.dot(kernel.Sigma_p,
-                      N.dot(train_fv.T,
-                            N.dot(Kyinv,
-                                  N.dot(train_fv, kernel.Sigma_p)))))
+                Ndot(kernel.Sigma_p,
+                      Ndot(train_fv.T,
+                            Ndot(Kyinv,
+                                  Ndot(train_fv, kernel.Sigma_p)))))
         return weights
 
 
