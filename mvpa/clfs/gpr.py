@@ -87,9 +87,8 @@ class GPR(Classifier):
              ['linear', 'has_sensitivity'])[int(isinstance(kernel, KernelLinear))]
 
         # No need to initialize state variables. Unless they got set
-        # they would raise an exception
-        # self.predicted_variances = None
-        # self.log_marginal_likelihood = None
+        # they would raise an exception self.predicted_variances =
+        # None self.log_marginal_likelihood = None
         self._train_fv = None
         self._labels = None
         self._km_train_train = None
@@ -115,10 +114,27 @@ class GPR(Classifier):
         return self.log_marginal_likelihood
 
 
-    def compute_log_marginal_likelihood_gradient(self):
+    def compute_gradient_log_marginal_likelihood(self):
         """Compute gradient of the log marginal likelihood.
         """
-        raise NotImplementedError
+        # raise NotImplementedError
+
+        # XXX check whether the precomputed self.alpha self.Kinv are
+        # actually the ones corresponding to the hyperparameters used
+        # to compute this gradient!
+        
+        # Do some memoizing since it could happen that some
+        # hyperparameters are kept constant by user request, so we
+        # don't need (somtimes) to recompute the corresponding
+        # gradient again.
+        tmp = N.dot(self.alpha[:,None],self.alpha)-self.Kinv # self.Kinv is not yet available!!
+        # pass tmp to __kernel and let it compute its gradient terms!
+        result = self.__kernel.compute_gradient(tmp)
+        # Add the term related to sigma_noise^2:
+        # XXX be careful between sigma_noise and sigma_noise^2, that
+        # has different partial derivative!!!
+        self.lml_gradient = N.hstack[result,0.5 * N.trace(tmp)]
+        return self.lml_gradient
 
 
     def getSensitivityAnalyzer(self, **kwargs):
