@@ -34,6 +34,16 @@ def FirstAxisMean(x):
     return N.mean(x, axis=0)
 
 
+def SecondAxisMean(x):
+    """Mean across 2nd axis
+
+    Use cases:
+     - to combine multiple sensitivities to get sense about
+       mean sensitivity across splits
+    """
+    return N.mean(x, axis=1)
+
+
 def SecondAxisSumOfAbs(x):
     """Sum of absolute values along the 2nd axis
 
