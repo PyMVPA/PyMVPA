@@ -92,6 +92,8 @@ class DatasetMeasure(Stateful):
         result = self._postcall(dataset, result)
         self.raw_result = result
         if not self.__transformer is None:
+            if __debug__:
+                debug("SA_", "Applying transformer %s" % self.__transformer)
             result = self.__transformer(result)
         return result
 
