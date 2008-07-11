@@ -139,7 +139,8 @@ class GPR(Classifier):
         # hyperparameters are kept constant by user request, so we
         # don't need (somtimes) to recompute the corresponding
         # gradient again.
-        tmp = N.dot(self.alpha[:,None],self.alpha)-self.Kinv # self.Kinv is not yet available!!
+        self.Kinv = N.linalg.inv(self._km_train_train)
+        tmp = N.dot(self._alpha[:,None],self._alpha)-self.Kinv # self.Kinv is not yet available!!
         # pass tmp to __kernel and let it compute its gradient terms!
         result = self.__kernel.compute_gradient(tmp)
         # Add the term related to sigma_noise^2:
