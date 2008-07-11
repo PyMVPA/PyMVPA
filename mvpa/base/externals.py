@@ -32,6 +32,7 @@ def __check_shogun(bottom_version, custom_versions=[2456]):
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'nifti':'from nifti import NiftiImage as __',
           'shogun':'import shogun as __',
+          'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
           'scipy': "import scipy as __",

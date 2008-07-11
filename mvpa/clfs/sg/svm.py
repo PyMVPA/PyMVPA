@@ -138,7 +138,6 @@ class SVM(_SVM):
     _KNOWN_IMPLEMENTATIONS = {
         "libsvm" : (shogun.Classifier.LibSVM, ('C',), ('multiclass', 'binary'), ''),
         "gmnp" : (shogun.Classifier.GMNPSVM, ('C',), ('multiclass', 'binary'), ''),
-        "mpd"  : (shogun.Classifier.MPDSVM, ('C',), ('binary',), ''),
         "gpbt" : (shogun.Classifier.GPBTSVM, ('C',), ('binary',), ''),
         "gnpp" : (shogun.Classifier.GNPPSVM, ('C',), ('binary',), ''),
 
@@ -559,7 +558,9 @@ class SVM(_SVM):
 # Conditionally make some of the implementations available if they are
 # present in the present shogun
 for name, item, params, descr in \
-        [('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
+        [('mpd', "shogun.Classifier.MPDSVM", "('C',), ('binary',)",
+          "MPD classifier from shogun"),
+         ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
           "SVMLight classification http://svmlight.joachims.org/"),
          ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
           "SVMLight regression http://svmlight.joachims.org/")]:
