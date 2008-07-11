@@ -21,7 +21,7 @@ Option name should be camelbacked version of .dest for the option.
 from optparse import OptionParser, Option, OptionGroup
 
 # needed for verboseCallback
-from mvpa.base import verbose
+from mvpa.base import verbose, externals
 
 
 # TODO: try to make groups definition somewhat lazy, since now
@@ -176,6 +176,59 @@ optDetrend = \
 
 optsPreproc = OptionGroup(parser, "Preprocessing options")
 optsPreproc.add_options([optZScore, optTr, optDetrend])
+
+# Wavelets options
+if externals.exists('pywt'):
+    import pywt
+    def waveletFamilyCallback(option, optstr, value, parser):
+        """Callback for -w|--wavelet-family cmdline option
+        """
+        wl_list = pywt.wavelist()
+        wl_list_str = ", ".join(
+                ['-1: None'] + ['%d:%s' % w for w in enumerate(wl_list)])
+        if value == "list":
+            print "Available wavelet families: " + wl_list_str
+            raise SystemExit, 0
+
+        wl_family = value
+        try:
+            # may be int? ;-)
+            wl_family_index = int(value)
+            if wl_family_index >= 0:
+                try:
+                    wl_family = wl_list[wl_family_index]
+                except IndexError:
+                    print "Index is out of range. " + \
+                          "Following indexes with names are known: " + \
+                          wl_list_str
+                    raise SystemExit, -1
+            else:
+                wl_family = 'None'
+        except ValueError:
+            pass
+        # Check the value
+        wl_family = wl_family.lower()
+        if wl_family == 'none':
+            wl_family = None
+        elif not wl_family in wl_list:
+            print "Uknown family '%s'. Known are %s" % (wl_family, ', '.join(wl_list))
+            raise SystemExit, -1
+        # Store it in the parser
+        setattr(parser.values, option.dest, wl_family)
+
+
+    optWaveletFamily = \
+            Option("-w", "--wavelet-family", callback=waveletFamilyCallback,
+                   action="callback", type="string", dest="wavelet_family",
+                   default='-1',
+                   help="Wavelet family: string or index among the available. " +
+                   "Run with '-w list' to see available families")
+
+
+    # No sense for a single option
+    # optsWavelets = OptionGroup(parser, "Options for wavelets mappers")
+    # optsWavelets.add_options([optWaveletFamily])
+
 
 # Box options
 
