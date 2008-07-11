@@ -72,9 +72,13 @@ def errLinePlot(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
     # plot highres line if present
     if curves is not None:
         curves = N.array(curves, ndmin=2).T
+        xaxis = N.linspace(0, len(md), len(curves))
 
-        # scales line array to same range as datapoints
-        P.plot(N.linspace(0, len(md), len(curves)), curves, linestyle=linestyle)
+        # Since older matplotlib versions cannot plot multiple plots
+        # for the same axis, lets plot each column separately
+        for c in xrange(curves.shape[1]):
+            # scales line array to same range as datapoints
+            P.plot(xaxis, curves[:, c], linestyle=linestyle)
         # no line between data points
         linestyle='None'
 
