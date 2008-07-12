@@ -13,7 +13,7 @@ import os.path
 import numpy as N
 
 from mvpa.datasets.eep import EEPDataset
-from mvpa.misc.eepbin import EEPBin
+from mvpa.misc.io.eepbin import EEPBin
 
 
 class EEPDatasetTests(unittest.TestCase):

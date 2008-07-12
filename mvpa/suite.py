@@ -73,9 +73,9 @@ from mvpa.misc.copy import *
 from mvpa.misc.data_generators import *
 from mvpa.misc.exceptions import *
 from mvpa.misc import *
-from mvpa.misc.iohelpers import *
+from mvpa.misc.io import *
+from mvpa.misc.io.eepbin import *
 from mvpa.misc.fsl import *
-from mvpa.misc.eepbin import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *
 from mvpa.misc.param import *

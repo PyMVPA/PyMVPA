@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.misc.iohelpers import ColumnData
+from mvpa.misc.io import ColumnData
 
 if __debug__:
     from mvpa.base import debug
