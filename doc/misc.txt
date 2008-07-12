@@ -197,7 +197,7 @@ level specified as the first parameter to verbose_ function call is
 less than specified. There are two easy ways to specify verbosity
 level:
 
-* command line: you can use optVerbose_ for precrafted command
+* command line: you can use opt.verbose_ for precrafted command
   line option for to give facility to change it from your script (see
   examples)
 * environment variable ``MVPA_VERBOSE``
@@ -299,7 +299,7 @@ the internal logic, thus enabled when full test suite is ran.
    also way to specify the level for the message so we could provide
    more debugging information if desired.
 
-.. _optVerbose: api/mvpa.misc.cmdline-module.html#optVerbose
+.. _opt.verbose: api/mvpa.misc.cmdline-module.html#opt.verbose
 .. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
 .. _misc module sources: api/mvpa.misc-pysrc.html
 .. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__

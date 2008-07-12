@@ -24,13 +24,13 @@ def main():
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
 
-    parser.option_groups = [optsSVM, optsKNN, optsGener, optsCommon]
+    parser.option_groups = [opts.SVM, opts.KNN, opts.general, opts.common]
 
     # Set a set of available classifiers for this example
-    optClf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
-    optClf.default='lin_nu_svmc'
+    opt.clf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
+    opt.clf.default='lin_nu_svmc'
 
-    parser.add_options([optClf, optRadius, optZScore])
+    parser.add_options([opt.clf, opt.radius, opt.zscore])
 
     (options, files) = parser.parse_args()
 

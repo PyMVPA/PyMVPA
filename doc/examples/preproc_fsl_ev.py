@@ -37,8 +37,8 @@ def main():
     """ \
     % sys.argv[0]
 
-    parser.option_groups += [ optsCommon, optsBox, optsChunk]
-    parser.option_list += [optTr, optDetrend]
+    parser.option_groups += [ opts.common, opts.box, opts.chunk]
+    parser.option_list += [opt.tr, opt.detrend]
 
     (options, args) = parser.parse_args()
 
