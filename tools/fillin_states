@@ -21,10 +21,10 @@ from os import environ, path
 from textwrap import wrap
 
 from mvpa.misc import verbose
-from mvpa.misc.cmdline import parser, optsCommon
+from mvpa.misc.cmdline import parser, opts.common
 
 parser.usage = """Usage: %s [options] infile outfile...""" % sys.argv[0]
-parser.option_groups = [optsCommon]
+parser.option_groups = [opts.common]
 
 (options, files) = parser.parse_args()
 if len(files)!=2:
