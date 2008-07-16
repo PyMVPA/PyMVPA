@@ -114,7 +114,6 @@ def indentDoc(v):
     return re.sub('\n', '\n  ', str(v))
 
 
-
 def idhash(val):
     """Craft unique id+hash for an object
     """
