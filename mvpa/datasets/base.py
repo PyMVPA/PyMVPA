@@ -63,9 +63,22 @@ class Dataset(object):
     no default values would be assumed and construction of the
     instance would fail"""
 
-    def __init__(self, data=None, dsattr=None, dtype=None, \
-                 samples=None, labels=None, chunks=None, check_data=True,
-                 copy_samples=False, copy_data=True, copy_dsattr=True):
+    def __init__(self,
+                 # for copy constructor
+                 data=None,
+                 dsattr=None,
+                 # automatic dtype conversion
+                 dtype=None,
+                 # new instances
+                 samples=None,
+                 labels=None,
+                 chunks=None,
+                 origids=None,
+                 # flags
+                 check_data=True,
+                 copy_samples=False,
+                 copy_data=True,
+                 copy_dsattr=True):
         """Initialize dataset instance
 
         There are basically two different way to create a dataset:
@@ -171,6 +184,7 @@ class Dataset(object):
 
         # TODO? we might want to have the same logic for chunks and labels
         #       ie if no labels present -- assign arange
+        #   MH: don't think this is necessary -- or is there a use case?
         # labels
         if not labels == None:
             if __debug__:
@@ -198,6 +212,19 @@ class Dataset(object):
             # if no chunk information is given assume that every pattern
             # is its own chunk
             self._data['chunks'] = N.arange(self.nsamples)
+
+        # samples origids
+        if not origids is None:
+            # simply assign if provided
+            self._data['origids'] = origids
+        elif not self._data.has_key('origids'):
+            # otherwise contruct unqiue ones
+            self._data['origids'] = N.arange(len(self._data['labels']))
+        else:
+            # assume origids have been specified already (copy constructor
+            # mode) leave them as they are, e.g. to make origids survive
+            # selectSamples()
+            pass
 
         # Initialize attributes which are registered but were not setup
         for attr in self._registeredattributes:
@@ -311,8 +338,6 @@ class Dataset(object):
         return result
 
 
-
-
     def _getSampleIdsByAttr(self, values, attrib="labels"):
         """Return indecies of samples given a list of attributes
         """
@@ -416,12 +441,26 @@ class Dataset(object):
     def _checkData(self):
         """Checks `_data` members to have the same # of samples.
         """
+        #
+        # XXX: Maybe just run this under __debug__ and remove the `check_data`
+        #      from the constructor, which is too complicated anyway?
+        #
         for k, v in self._data.iteritems():
             if not len(v) == self.nsamples:
                 raise DatasetError, \
                       "Length of sample attribute '%s' [%i] does not " \
                       "match the number of samples in the dataset [%i]." \
                       % (k, len(v), self.nsamples)
+
+        # check for unique origids
+        uniques = N.unique(self._data['origids'])
+        uniques.sort()
+        # need to copy to prevent sorting the original array
+        sorted_ids = self._data['origids'].copy()
+        sorted_ids.sort()
+
+        if not (uniques == sorted_ids).all():
+            raise DatasetError, "Samples IDs are not unique."
 
 
     def _expandSampleAttribute(self, attr, attr_name):
@@ -535,8 +574,10 @@ class Dataset(object):
                             stats=__debug__ and ('DS_STATS' in debug.active),
                             )
 
+
     def __repr__(self):
         return "<%s>" % str(self)
+
 
     def summary(self, uniq=True, stats=True, idhash=False):
         """String summary over the object
@@ -584,7 +625,8 @@ class Dataset(object):
     def __iadd__( self, other ):
         """Merge the samples of one Dataset object to another (in-place).
 
-        No dataset attributes will be merged!
+        No dataset attributes will be merged! Additionally, a new set of
+        unique `origids` will be generated.
         """
         if not self.nfeatures == other.nfeatures:
             raise DatasetError, "Cannot add Dataset, because the number of " \
@@ -592,7 +634,13 @@ class Dataset(object):
 
         # concatenate all sample attributes
         for k, v in self._data.iteritems():
-            self._data[k] = N.concatenate((v, other._data[k]), axis=0)
+            if k == 'origids':
+                # special case samples origids: for now just regenerate unique
+                # ones could also check if concatenation is unique, but it
+                # would be costly performance-wise
+                self._data[k] = N.arange(len(v) + len(other._data[k]))
+            else:
+                self._data[k] = N.concatenate((v, other._data[k]), axis=0)
 
         # might be more sophisticated but for now just reset -- it is safer ;)
         self._resetallunique()
@@ -774,7 +822,6 @@ class Dataset(object):
         return dataset
 
 
-
     def permuteLabels(self, status, perchunk=True, assure_permute=False):
         """Permute the labels.
 
@@ -894,7 +941,6 @@ class Dataset(object):
         return self._data['samples'].shape[1]
 
 
-
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
         """
@@ -933,13 +979,15 @@ class Dataset(object):
         return mask.nonzero()[0]
 
 
-
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
+
 
 
 # Following attributes adherent to the basic dataset
 Dataset._registerAttribute("samples", "_data", hasunique=False)
 Dataset._registerAttribute("labels",  "_data", hasunique=True)
 Dataset._registerAttribute("chunks",  "_data", hasunique=True)
+# samples ids (already unique by definition)
+Dataset._registerAttribute("origids",  "_data", hasunique=False)
