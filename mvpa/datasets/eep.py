@@ -67,7 +67,7 @@ class EEPDataset(MappedDataset):
         # come up with mapper if fresh samples were provided
         if not samples is None:
             mapper = MaskMapper(N.ones((eb.nchannels,
-                                        eb.nsamples), dtype='bool'))
+                                        eb.ntimepoints), dtype='bool'))
         else:
             mapper = None
 
