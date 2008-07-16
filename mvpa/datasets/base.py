@@ -232,8 +232,14 @@ class Dataset(object):
         Like if classifier was trained on the same dataset as in question"""
 
         res = idhash_(self._data)
-        for val in self._data.values():
-            res += idhash_(val)
+
+        # we cannot count on the order the values in the dict will show up
+        # with `self._data.value()` and since idhash will be order-dependent
+        # we have to make it deterministic
+        keys = self._data.keys()
+        keys.sort()
+        for k in keys:
+            res += idhash_(self._data[k])
         return res
 
 
