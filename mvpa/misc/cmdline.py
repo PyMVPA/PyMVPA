@@ -267,8 +267,15 @@ if externals.exists('pywt'):
                    help="Wavelet family: string or index among the available. " +
                    "Run with '-w list' to see available families")
 
+    opt.wavelet_decomposition = \
+            Option("-W", "--wavelet-decomposition",
+                   action="store", type="choice", dest="wavelet_decomposition",
+                   default='dwt', choices=['dwt', 'dwp'],
+                   help="Wavelet decomposition: discrete wavelet transform "+
+                   "(dwt) or packet (dwp)")
 
-    opts.add('wavelet', [opt.wavelet_family], "Wavelets mappers")
+    opts.add('wavelet', [opt.wavelet_family, opt.wavelet_decomposition],
+             "Wavelets mappers")
 
 
 # Box options
