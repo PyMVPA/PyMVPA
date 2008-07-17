@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets.mapped import MappedDataset
-from mvpa.misc.eepbin import EEPBin
+from mvpa.misc.io.eepbin import EEPBin
 from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -67,7 +67,7 @@ class EEPDataset(MappedDataset):
         # come up with mapper if fresh samples were provided
         if not samples is None:
             mapper = MaskMapper(N.ones((eb.nchannels,
-                                        eb.nsamples), dtype='bool'))
+                                        eb.ntimepoints), dtype='bool'))
         else:
             mapper = None
 

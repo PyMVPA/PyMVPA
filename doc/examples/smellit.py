@@ -17,7 +17,7 @@ import pylab as P
 from mvpa.misc.plot import plotFeatureHist, plotSamplesDistance
 from mvpa import cfg
 from mvpa.datasets.nifti import NiftiDataset
-from mvpa.misc.iohelpers import SampleAttributes
+from mvpa.misc.io import SampleAttributes
 from mvpa.datasets.miscfx import zscore, detrend
 
 # load example fmri dataset
