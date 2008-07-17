@@ -231,7 +231,7 @@ Basic Supervised Learning Methods
 =================================
 
 
-.. index:: gassian process regression, GPR
+.. index:: gaussian process regression, GPR
 
 Gaussian Process Regression
 ---------------------------
