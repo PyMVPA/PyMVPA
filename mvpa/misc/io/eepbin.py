@@ -14,9 +14,10 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+from mvpa.misc.io import DataReader
 
 
-class EEPBin(object):
+class EEPBin(DataReader):
     """Read-access to binary EEP files.
 
     EEP files are used by eeprobe_ a software for analysing even-related
@@ -52,10 +53,14 @@ class EEPBin(object):
           source : str
             Filename.
         """
-        infile = open(source, "r")
+        # init base class
+        DataReader.__init__(self)
+        # temp storage of number of samples
+        nsamples = None
+        # non-critical header components stored in temp dict
+        hdr = {}
 
-        # non-critical header components stored in dict
-        self.__hdr = {}
+        infile = open(source, "r")
 
         # read file the end of header of EOF
         while True:
@@ -74,43 +79,41 @@ class EEPBin(object):
                 # top header
                 l = line.split()
                 # extract critical information
-                self.__nchannels = int(l[0][1:])
-                self.__nsamples = int(l[1])
-                self.__ntrials = int(l[2])
-                self.__t0 = float(l[3])
-                self.__dt = float(l[4])
+                self._props['nchannels'] = int(l[0][1:])
+                self._props['ntimepoints'] = int(l[1])
+                self._props['t0'] = float(l[3])
+                self._props['dt'] = float(l[4])
+                nsamples = int(l[2])
             else:
                 # simply store non-critical extras
                 l = line.split(':')
                 key = l[0].lstrip(';')
                 value = ':'.join(l[1:])
-                self.__hdr[key] = value
+                hdr[key] = value
 
         # post process channel name info -> list
-        if self.__hdr.has_key('channels'):
-            self.__hdr['channels'] = self.__hdr['channels'].split()
+        if hdr.has_key('channels'):
+            self._props['channels'] = hdr['channels'].split()
 
-        self.__data = \
+        self._data = \
             N.reshape(N.fromfile(infile, dtype='f'), \
-                (self.__ntrials,
-                 self.__nchannels,
-                 self.__nsamples))
+                (nsamples,
+                 self._props['nchannels'],
+                 self._props['ntimepoints']))
 
         # cleanup
         infile.close()
 
 
-    nchannels = property(fget=lambda self: self.__nchannels,
+    nchannels = property(fget=lambda self: self._props['nchannels'],
                          doc="Number of channels")
-    nsamples  = property(fget=lambda self: self.__nsamples,
-                         doc="Number of data samples")
-    ntrials   = property(fget=lambda self: self.__ntrials,
-                         doc="Number of trials")
-    t0        = property(fget=lambda self: self.__t0,
+    ntimepoints  = property(fget=lambda self: self._props['ntimepoints'],
+                         doc="Number of data timepoints")
+    nsamples   = property(fget=lambda self: self._data.shape[0],
+                         doc="Number of trials/samples")
+    t0        = property(fget=lambda self: self._props['t0'],
                          doc="Relative start time of sampling interval")
-    dt        = property(fget=lambda self: self.__dt,
+    dt        = property(fget=lambda self: self._props['dt'],
                          doc="Time difference between two adjacent samples")
-    channels  = property(fget=lambda self: self.__hdr['channels'],
+    channels  = property(fget=lambda self: self._props['channels'],
                          doc="List of channel names")
-    data      = property(fget=lambda self: self.__data,
-                         doc="Data array (trials x channels x samples)")

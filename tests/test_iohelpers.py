@@ -13,7 +13,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from mvpa.misc.iohelpers import *
+from mvpa.misc.io import *
 from mvpa.misc.fsl import FslEV3
 from mvpa.misc.bv import BrainVoyagerRTC
 

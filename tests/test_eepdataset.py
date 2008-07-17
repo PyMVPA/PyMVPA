@@ -13,7 +13,7 @@ import os.path
 import numpy as N
 
 from mvpa.datasets.eep import EEPDataset
-from mvpa.misc.eepbin import EEPBin
+from mvpa.misc.io.eepbin import EEPBin
 
 
 class EEPDatasetTests(unittest.TestCase):
@@ -38,8 +38,8 @@ class EEPDatasetTests(unittest.TestCase):
         eb = EEPBin(os.path.join('..', 'data', 'eep.bin'))
 
         self.failUnless(eb.nchannels == 32)
-        self.failUnless(eb.ntrials == 2)
-        self.failUnless(eb.nsamples == 4)
+        self.failUnless(eb.nsamples == 2)
+        self.failUnless(eb.ntimepoints == 4)
         self.failUnless(eb.t0 - eb.dt < 0.00000001)
         self.failUnless(len(eb.channels) == 32)
         self.failUnless(eb.data.shape == (2, 32, 4))

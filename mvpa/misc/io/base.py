@@ -19,6 +19,45 @@ from mvpa.base import warning
 if __debug__:
     from mvpa.base import debug
 
+
+class DataReader(object):
+    """Base class for data readers.
+
+    Every subclass has to put all information into to variable:
+
+    `self._data`: ndarray
+        The data array has to have the samples separating dimension along the
+        first axis.
+    `self._props`: dict
+        All other meaningful information has to be stored in a dictionary.
+
+    This class provides two methods (and associated properties) to retrieve
+    this information.
+    """
+    def __init__(self):
+        """Cheap init.
+        """
+        self._props = {}
+        self._data = None
+
+
+    def getPropsAsDict(self):
+        """Return the dictionary with the data properties.
+        """
+        return self._props
+
+
+    def getData(self):
+        """Return the data array.
+        """
+        return self._data
+
+
+    data  = property(fget=getData, doc="Data array")
+    props = property(fget=getPropsAsDict, doc="Property dict")
+
+
+
 class ColumnData(dict):
     """Read data that is stored in columns of text files.
 
