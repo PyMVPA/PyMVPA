@@ -203,19 +203,19 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
       post
         duration (seconds) to be plotted after the onset
       **kwargs
-        Additional arguments provided to plot_erp
+        Additional arguments provided to plotERP()
 
 
     :Examples:
         kwargs  = {'SR' : eeg.SR, 'pre_mean' : 0.2}
-        fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
+        fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
                          ('80db', 'r', eeg.erp_onsets['80db'])),
                         data[:, eeg.sensor_mapping['Cz']],
                         ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
                         post=0.6, **kwargs)
 
         or
-        fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
+        fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
                           {'color': 'r',
                            'onsets': eeg.erp_onsets['80db'],
                            'data' : data[:, eeg.sensor_mapping['Cz']]}
