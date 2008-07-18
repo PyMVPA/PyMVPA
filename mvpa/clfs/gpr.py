@@ -129,8 +129,6 @@ class GPR(Classifier):
     def compute_gradient_log_marginal_likelihood(self):
         """Compute gradient of the log marginal likelihood.
         """
-        # raise NotImplementedError
-
         # XXX check whether the precomputed self.alpha self.Kinv are
         # actually the ones corresponding to the hyperparameters used
         # to compute this gradient!
@@ -139,16 +137,92 @@ class GPR(Classifier):
         # hyperparameters are kept constant by user request, so we
         # don't need (somtimes) to recompute the corresponding
         # gradient again.
-        self.Kinv = N.linalg.inv(self._km_train_train)
-        tmp = N.dot(self._alpha[:,None],self._alpha)-self.Kinv # self.Kinv is not yet available!!
-        # pass tmp to __kernel and let it compute its gradient terms!
-        result = self.__kernel.compute_gradient(tmp)
-        # Add the term related to sigma_noise^2:
-        # XXX be careful between sigma_noise and sigma_noise^2, that
-        # has different partial derivative!!!
-        self.lml_gradient = N.hstack[result,0.5 * N.trace(tmp)]
+        #
+        # XXX These inversions are all numerically unstable:
+        # self.Kinv = SL.pinv2(self._km_train_train)
+        #
+        # self.Kinv = N.linalg.inv(self._km_train_train)
+        #
+        # self.Kinv = N.linalg.pinv(self._km_train_train)
+        #
+        # This inversion is numerically stable:
+        L = self._L
+        self.Kinv = NLAsolve(L.transpose(),NLAsolve(L, N.eye(L.shape[0])))
+        #
+        # Another option for inversion, numerically stable:
+        # L = self._L
+        # Linv = SL.pinv2(L)
+        # self.Kinv = N.linalg.dot(Linv,Linv.T)
+        #
+        y = self._train_labels
+        # Pass tmp to __kernel and let it compute its gradient terms,
+        # since this scales up to huge number of hyperparameters:
+        grad_LML_hypers = self.__kernel.compute_lml_gradient(self._alpha,self.Kinv,y)
+        grad_K_sigma_n = 2.0*self.sigma_noise*N.eye(self.Kinv.shape[0])
+        # Add the term related to sigma_noise:
+        grad_LML_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_sigma_n,self._alpha[:,None]))) - N.trace(N.dot(self.Kinv,grad_K_sigma_n)))
+        # Faster formula: tr(AB) = (A*B.T).sum()
+        # grad_LML_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_sigma_n,self._alpha[:,None]))) - (self.Kinv*(grad_K_sigma_n).T).sum())
+        self.lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers[:,0]])
         return self.lml_gradient
 
+    def compute_gradient_log_marginal_likelihood2(self):
+        """Compute gradient of the log marginal likelihood.
+        """
+        # XXX check whether the precomputed self.alpha self.Kinv are
+        # actually the ones corresponding to the hyperparameters used
+        # to compute this gradient!
+        
+        # Do some memoizing since it could happen that some
+        # hyperparameters are kept constant by user request, so we
+        # don't need (somtimes) to recompute the corresponding
+        # gradient again.
+        #
+        # XXX These inversions are all numerically unstable:
+        # self.Kinv = SL.pinv2(self._km_train_train)
+        #
+        # self.Kinv = N.linalg.inv(self._km_train_train)
+        #
+        # self.Kinv = N.linalg.pinv(self._km_train_train)
+        #
+        # This inversion is numerically stable:
+        L = self._L
+        self.Kinv = NLAsolve(L.transpose(),NLAsolve(L, N.eye(L.shape[0])))
+        #
+        # Another option for inversion, numerically stable:
+        # L = self._L
+        # Linv = SL.pinv2(L)
+        # self.Kinv = N.linalg.dot(Linv,Linv.T)
+        #
+        alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
+        tmp = alphalphaT - self.Kinv
+        # Pass tmp to __kernel and let it compute its gradient terms,
+        # since this scales up to huge number of hyperparameters:
+        grad_LML_hypers = self.__kernel.compute_lml_gradient2(tmp)
+        grad_K_sigma_n = 2.0*self.sigma_noise*N.eye(tmp.shape[0])
+        # Add the term related to sigma_noise:
+        # grad_K_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
+        # Faster formula: tr(AB) = (A*B.T).sum()
+        grad_LML_sigma_n = 0.5 * (tmp * (grad_K_sigma_n).T).sum()
+        self.lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
+        return self.lml_gradient
+
+    def compute_gradient_log_marginal_likelihood_logscale(self):
+        # Note: inverting self._km_train_train seems very unstable in
+        # almost all methods, except using Cholesky decomposition!
+        # self.Kinv = N.linalg.pinv(self._km_train_train) is UNSTABLE
+        # This is a numerically stable way to compute the inverse:
+        L = self._L
+        self.Kinv = NLAsolve(L.transpose(),NLAsolve(L, N.eye(L.shape[0])))
+        y = self._train_labels
+        grad_LML_log_hypers = self.__kernel.compute_lml_gradient_logscale(self._alpha,self.Kinv,y)
+        grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(self.Kinv.shape[0])
+        # grad_LML_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_log_sigma_n,self._alpha[:,None]))) - N.trace(N.dot(self.Kinv,grad_K_log_sigma_n)))
+        # Using faster formula: tr(AB) = (A*B.T).sum()
+        grad_LML_log_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_log_sigma_n,self._alpha[:,None]))) - (self.Kinv*(grad_K_log_sigma_n).T).sum())
+        self.LML_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers[:,0]])
+        return self.LML_gradient
+    
 
     def getSensitivityAnalyzer(self, **kwargs):
         """Returns a sensitivity analyzer for GPR.
@@ -201,12 +275,13 @@ class GPR(Classifier):
             # 'tmp' eigenvalues. In that case we try adding a small
             # constant to tmp, e.g. epsilon=1.0e-20. It should be a form
             # of Tikhonov regularization. This is equivalent to adding
-            # little white gaussian noise.
+            # little white gaussian noise to data.
+            # XXX EO: how to choose epsilon?
             try:
                 self._L = L = NLAcholesky(tmp)
             except NLAError:
                 epsilon = 1.0e-20
-                self._L = L = NLAcholesky(tmp+epsilon)
+                self._L = L = NLAcholesky(tmp+N.eye(tmp.shape[0])*epsilon)
                 pass
             newL = True
         else:
@@ -221,6 +296,7 @@ class GPR(Classifier):
         # appropriate to perform Cholesky decomposition and the
         # 'solve' step of the following lines, but preliminary tests
         # show them to be slower and less stable than NumPy's way.
+        # XXX EO: New tests reveals that they are faster!
         if __debug__:
             debug("GPR", "Computing alpha")
 
@@ -363,7 +439,7 @@ class GPRLinearWeights(Sensitivity):
         return weights
 
 
-def compute_prediction(sigma_noise_best, length_scale_best, regression,
+def compute_prediction(sigma_noise_best, sigma_f, length_scale_best, regression,
                        dataset, data_test, label_test, F, logml=True):
     """XXX Function which seems to be valid only for __main__...
 
@@ -374,7 +450,7 @@ def compute_prediction(sigma_noise_best, length_scale_best, regression,
     data_train = dataset.samples
     label_train = dataset.labels
     import pylab
-    kse = KernelSquaredExponential(length_scale=length_scale_best)
+    kse = KernelSquaredExponential(length_scale=length_scale_best, sigma_f=sigma_f)
     g = GPR(kse, sigma_noise=sigma_noise_best, regression=regression)
     print g
     if regression:
@@ -497,6 +573,6 @@ if __name__ == "__main__":
 
 
 
-    compute_prediction(sigma_noise_best, length_scale_best, regression, dataset,
+    compute_prediction(sigma_noise_best, 1.0, length_scale_best, regression, dataset,
                        dataset_test.samples, dataset_test.labels, F, logml)
     pylab.show()
