@@ -335,7 +335,7 @@ class KernelSquaredExponential(Kernel):
         self.lml_gradient = N.array([0.5*(N.dot(y,N.dot(Kinv,N.dot(grad_log,alpha[:,None]))) - (Kinv*grad_log.T).sum()) for grad_log in [grad_sigma_f, grad_l]])
         return self.lml_gradient
 
-    def compute_lml_gradient2(self,alphaalphaT_Kinv):
+    def compute_lml_gradient_compact(self,alphaalphaT_Kinv):
         """Compute grandient of the kernel and return the portion of
         log marginal likelihood gradient due to the kernel.
         Shorter formula.
@@ -360,6 +360,19 @@ class KernelSquaredExponential(Kernel):
         self.lml_gradient = N.array([0.5*(N.dot(y,N.dot(Kinv,N.dot(grad_log,alpha[:,None]))) - (Kinv*grad_log.T).sum()) for grad_log in [grad_log_sigma_f, grad_log_l]])
         return self.lml_gradient
 
+    def compute_lml_gradient_logscale_compact(self,alphaalphaT_Kinv):
+        """Compute grandient of the kernel and return the portion of
+        log marginal likelihood gradient due to the kernel.
+        Hyperparameters are in log scale which is sometimes more
+        stable. Shorter formula.
+        """
+        grad_log_sigma_f = 2.0*self.kernel_matrix
+        grad_log_l = self.wdm2*self.kernel_matrix
+        # self.lml_gradient = N.array([0.5*N.trace(N.dot(alphaalphaT_Kinv,grad_log_sigma_f)),0.5*N.trace(N.dot(alphaalphaT_Kinv,grad_log_l))])
+        # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+        self.lml_gradient = 0.5*N.array([(alphaalphaT_Kinv*(grad_log_sigma_f).T).sum(),(alphaalphaT_Kinv*(grad_log_l.T)).sum()])
+        return self.lml_gradient
+        
     pass
 
 
