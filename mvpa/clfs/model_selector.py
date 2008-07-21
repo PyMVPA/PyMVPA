@@ -39,7 +39,7 @@ class ModelSelector(object):
         self.problem = None
         pass
 
-    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None, use_gradient=True):
+    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None, use_gradient=False):
         """
         Set up the optimization problem in order to maximize
         the log_marginal_likelihood.
