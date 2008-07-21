@@ -168,7 +168,7 @@ class ModelSelector(object):
             if self.logscale:
                 gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood_logscale()
             else:
-                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood()
+                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood_compact()
                 pass
             return gradient_log_marginal_likelihood[self.freeHypers]
 
@@ -307,10 +307,21 @@ if __name__ == "__main__":
 
     gpr.compute_prediction(sigma_noise_best,sigma_f_best,length_scale_best,regression,dataset,data_test,label_test,F)
 
-    ## print
-    ## print "GPR ARD on dataset from Williams and Rasmussen 1996:"
-    ## # data = N.hstack([data]*10) # test a larger set of dimensions: reduce ftol!
-    ## dataset =  data_generators.wr1996()
-    ## # k = kernel.KernelConstant()
-    ## # k = kernel.KernelLinear()
-    ##
+
+    print
+    print "GPR ARD on dataset from Williams and Rasmussen 1996:"
+    dataset =  data_generators.wr1996()
+    k = kernel.KernelSquaredExponential()
+    g = gpr.GPR(k,regression=regression)
+    g.states.enable("log_marginal_likelihood")
+    ms = ModelSelector(g,dataset)
+
+    sigma_noise_initial = 1.0e-0
+    sigma_f_initial = 1.0e-0
+    length_scale_initial = N.ones(6)*1.0e-0
+
+    hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
+
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-8,fixedHypers=N.array([0,0,0,0,0,0,0,0],dtype=bool),use_gradient=True)
+    lml = ms.solve()
+    print ms.hyperparameters_best

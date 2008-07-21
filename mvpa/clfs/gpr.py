@@ -182,7 +182,7 @@ class GPR(Classifier):
         tmp = alphalphaT - self.Kinv
         # Pass tmp to __kernel and let it compute its gradient terms.
         # This scales up to huge number of hyperparameters:
-        grad_LML_hypers = self.__kernel.compute_lml_gradient2(tmp)
+        grad_LML_hypers = self.__kernel.compute_lml_gradient_compact(tmp,self._train_fv)
         grad_K_sigma_n = 2.0*self.sigma_noise*N.eye(tmp.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
