@@ -89,6 +89,7 @@ class ModelSelector(object):
         else:
             self.hyp_running_guess = self.hyp_initial_guess.copy()
             pass
+        self.f_last_x = None
 
         def f(x):
             """
@@ -106,6 +107,7 @@ class ModelSelector(object):
             # XXX EO: OpenOpt does not implement logrithmic scale of
             # the hyperparameters (to enhance numerical stability), so
             # it is implemented here.
+            self.f_last_x = x.copy()
             self.hyp_running_guess[self.freeHypers] = x
             # REMOVE print "guess:",self.hyp_running_guess,x
             try:
@@ -148,18 +150,25 @@ class ModelSelector(object):
             except InvalidHyperparameterError:
                 if __debug__: debug("GPR", "WARNING: invalid hyperparameters!")
                 return -N.inf
-            try:
-                self.parametric_model.train(self.dataset)
-            except N.linalg.linalg.LinAlgError:
-                if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
-                # XXX EO: which value for the gradient to return to
-                # OpenOpt when hyperparameters are wrong?
-                return N.zeros(x.size)
-            log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood() # recompute what's needed (to be safe) REMOVE IN FUTURE!
+            # Check if it is possible to avoid useless computations
+            # already done in f(). According to tests and information
+            # collected from OpenOpt people, it is sufficiently
+            # unexpected that the following test succeed:
+            if N.any(x!=self.f_last_x):
+                if __debug__: debug("GPR","UNEXPECTED: recomputing train+log_marginal_likelihood.")
+                try:
+                    self.parametric_model.train(self.dataset)
+                except N.linalg.linalg.LinAlgError:
+                    if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
+                    # XXX EO: which value for the gradient to return to
+                    # OpenOpt when hyperparameters are wrong?
+                    return N.zeros(x.size)
+                log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood() # recompute what's needed (to be safe) REMOVE IN FUTURE!
+                pass
             if self.logscale:
                 gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood_logscale()
             else:
-                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood2()
+                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood()
                 pass
             return gradient_log_marginal_likelihood[self.freeHypers]
 
