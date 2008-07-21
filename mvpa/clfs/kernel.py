@@ -342,9 +342,9 @@ class KernelSquaredExponential(Kernel):
         """
         self.lml_gradient = []
         def lml_grad(k_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,k_grad))
+            # return N.trace(N.dot(alphaalphaT_Kinv,k_grad_i))
             # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-            return (alphaalphaT_Kinv*(k_grad.T)).sum()
+            return (alphaalphaT_Kinv*(k_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
         for i in range(self.length_scale.size):
