@@ -76,7 +76,7 @@ class ModelSelector(object):
         """
         self.problem = None
         self.use_gradient = use_gradient
-        self.logscale = False # use log-scale on hyperparameters to enhance numerical stability
+        self.logscale = True # use log-scale on hyperparameters to enhance numerical stability
         self.optimization_algorithm = optimization_algorithm
         self.hyp_initial_guess = N.array(hyp_initial_guess)
         self.hyp_initial_guess_log = N.log(self.hyp_initial_guess)        
@@ -168,7 +168,7 @@ class ModelSelector(object):
             if self.logscale:
                 gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood_logscale()
             else:
-                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood_compact()
+                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood()
                 pass
             return gradient_log_marginal_likelihood[self.freeHypers]
 
@@ -315,13 +315,15 @@ if __name__ == "__main__":
     g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
     ms = ModelSelector(g,dataset)
-
+    
     sigma_noise_initial = 1.0e-0
     sigma_f_initial = 1.0e-0
     length_scale_initial = N.ones(6)*1.0e-0
-
+    
     hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
-
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-8,fixedHypers=N.array([0,0,0,0,0,0,0,0],dtype=bool),use_gradient=True)
+    fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
+    
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-5,fixedHypers=fixedHypers,use_gradient=True)
     lml = ms.solve()
     print ms.hyperparameters_best
+    
