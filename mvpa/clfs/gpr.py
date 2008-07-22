@@ -131,7 +131,9 @@ class GPR(Classifier):
 
 
     def compute_gradient_log_marginal_likelihood(self):
-        """Compute gradient of the log marginal likelihood.
+        """Compute gradient of the log marginal likelihood. This
+        version use a more compact formula provided by Williams and
+        Rasmussen book.
         """
         # XXX EO: check whether the precomputed self.alpha self.Kinv
         # are actually the ones corresponding to the hyperparameters
@@ -147,42 +149,11 @@ class GPR(Classifier):
         # Faster:
         self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
 
-        y = self._train_labels
-        # Pass tmp to __kernel and let it compute its gradient terms,
-        # since this scales up to huge number of hyperparameters:
-        grad_LML_hypers = self.__kernel.compute_lml_gradient(self._alpha,self.Kinv,y)
-        grad_K_sigma_n = 2.0*self.sigma_noise*N.eye(self.Kinv.shape[0])
-        # Add the term related to sigma_noise:
-        grad_LML_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_sigma_n,self._alpha[:,None]))) - N.trace(N.dot(self.Kinv,grad_K_sigma_n)))
-        # Faster formula: tr(AB) = (A*B.T).sum()
-        # grad_LML_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_sigma_n,self._alpha[:,None]))) - (self.Kinv*(grad_K_sigma_n).T).sum())
-        self.lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers[:,0]])
-        return self.lml_gradient
-
-
-    def compute_gradient_log_marginal_likelihood_compact(self):
-        """Compute gradient of the log marginal likelihood. This
-        version use a more compact formula provided by Williams and
-        Rasmussen book.
-        """
-        # XXX check whether the precomputed self.alpha self.Kinv are
-        # actually the ones corresponding to the hyperparameters used
-        # to compute this gradient!
-        
-        # Do some memoizing since it could happen that some
-        # hyperparameters are kept constant by user request, so we
-        # don't need (somtimes) to recompute the corresponding
-        # gradient again.
-
-        # self.Kinv = N.linalg.inv(self._C)
-        # Faster:
-        self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
-
         alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
         tmp = alphalphaT - self.Kinv
         # Pass tmp to __kernel and let it compute its gradient terms.
         # This scales up to huge number of hyperparameters:
-        grad_LML_hypers = self.__kernel.compute_lml_gradient_compact(tmp,self._train_fv)
+        grad_LML_hypers = self.__kernel.compute_lml_gradient(tmp,self._train_fv)
         grad_K_sigma_n = 2.0*self.sigma_noise*N.eye(tmp.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
@@ -190,26 +161,9 @@ class GPR(Classifier):
         grad_LML_sigma_n = 0.5 * (tmp * (grad_K_sigma_n).T).sum()
         self.lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
         return self.lml_gradient
-
-
-    def compute_gradient_log_marginal_likelihood_logscale(self):
-        """Compute gradient of the log marginal likelihood when
-        hyperparameters are in logscale.
-        """
-        # self.Kinv = N.linalg.inv(self._C)
-        # Faster:
-        self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
-        y = self._train_labels
-        grad_LML_log_hypers = self.__kernel.compute_lml_gradient_logscale(self._alpha,self.Kinv,y)
-        grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(self.Kinv.shape[0])
-        # grad_LML_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_log_sigma_n,self._alpha[:,None]))) - N.trace(N.dot(self.Kinv,grad_K_log_sigma_n)))
-        # Using faster formula: tr(AB) = (A*B.T).sum()
-        grad_LML_log_sigma_n = 0.5*(N.dot(y,N.dot(self.Kinv,N.dot(grad_K_log_sigma_n,self._alpha[:,None]))) - (self.Kinv*(grad_K_log_sigma_n).T).sum())
-        self.LML_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers[:,0]])
-        return self.LML_gradient
     
 
-    def compute_gradient_log_marginal_likelihood_logscale_compact(self):
+    def compute_gradient_log_marginal_likelihood_logscale(self):
         """Compute gradient of the log marginal likelihood when
         hyperparameters are in logscale. This version use a more
         compact formula provided by Williams and Rasmussen book.
@@ -219,7 +173,7 @@ class GPR(Classifier):
         self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
         alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
         tmp = alphalphaT - self.Kinv
-        grad_LML_log_hypers = self.__kernel.compute_lml_gradient_logscale2(tmp)
+        grad_LML_log_hypers = self.__kernel.compute_lml_gradient_logscale(tmp,self._train_fv)
         grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(self.Kinv.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_log_sigma_n))

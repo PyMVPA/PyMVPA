@@ -324,18 +324,7 @@ class KernelSquaredExponential(Kernel):
         self.length_scale = hyperparameter[1:]
         return
 
-    def compute_lml_gradient(self,alpha,Kinv,y):
-        """Compute grandient of the kernel and return the portion of
-        log marginal likelihood gradient due to the kernel.
-        """
-        grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
-        grad_l = self.wdm2*self.kernel_matrix*(1.0/self.length_scale)
-        # self.lml_gradient = N.array([0.5*N.trace(N.dot(alphaalphaT_Kinv,grad_sigma_f)),0.5*N.trace(N.dot(alphaalphaT_Kinv,grad_l))])
-        # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-        self.lml_gradient = N.array([0.5*(N.dot(y,N.dot(Kinv,N.dot(grad_log,alpha[:,None]))) - (Kinv*grad_log.T).sum()) for grad_log in [grad_sigma_f, grad_l]])
-        return self.lml_gradient
-
-    def compute_lml_gradient_compact(self,alphaalphaT_Kinv,data):
+    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
         """Compute grandient of the kernel and return the portion of
         log marginal likelihood gradient due to the kernel.
         Shorter formula. Allows vector of lengthscales (ARD).
@@ -347,41 +336,48 @@ class KernelSquaredExponential(Kernel):
             return (alphaalphaT_Kinv*(k_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
-        for i in range(self.length_scale.size):
-            k_grad_i = 1.0/(self.length_scale[i]**3)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
-            self.lml_gradient.append(lml_grad(k_grad_i))
+        if self.length_scale.size==1:
+            # use the same length_scale for all dimensions:
+            K_grad_l = self.wdm2*self.kernel_matrix*(1.0/self.length_scale)
+            self.lml_gradient.append(lml_grad(K_grad_l))
+        else:
+            # use one length_scale for each dimension:
+            for i in range(self.length_scale.size):
+                k_grad_i = 1.0/(self.length_scale[i]**3)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                self.lml_gradient.append(lml_grad(k_grad_i))
+                pass
             pass
         self.lml_gradient = 0.5*N.array(self.lml_gradient)
         return self.lml_gradient
 
-    def compute_lml_gradient_logscale(self,alpha,Kinv,y):
+    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
         """Compute grandient of the kernel and return the portion of
         log marginal likelihood gradient due to the kernel.
         Hyperparameters are in log scale which is sometimes more
-        stable.
+        stable. Shorter formula. Allows vector of lengthscales (ARD).
         """
-        grad_log_sigma_f = 2.0*self.kernel_matrix
-        grad_log_l = self.wdm2*self.kernel_matrix
-        # self.lml_gradient = N.array([0.5*(N.dot(y,N.dot(Kinv,N.dot(grad_log,alpha[:,None]))) - N.trace(N.dot(Kinv,grad_log))) for grad_log in [grad_log_sigma_f, grad_log_l]])
-        # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-        self.lml_gradient = N.array([0.5*(N.dot(y,N.dot(Kinv,N.dot(grad_log,alpha[:,None]))) - (Kinv*grad_log.T).sum()) for grad_log in [grad_log_sigma_f, grad_log_l]])
+        self.lml_gradient = []
+        def lml_grad(k_grad_i):
+            # return N.trace(N.dot(alphaalphaT_Kinv,k_grad_i))
+            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            return (alphaalphaT_Kinv*(k_grad_i.T)).sum()
+        K_grad_log_sigma_f = 2.0*self.kernel_matrix
+        self.lml_gradient.append(lml_grad(K_grad_log_sigma_f))
+        if self.length_scale.size==1:
+            # use the same length_scale for all dimensions:
+            K_grad_log_l = self.wdm2*self.kernel_matrix
+            self.lml_gradient.append(lml_grad(K_grad_log_l))
+        else:
+            # use one length_scale for each dimension:
+            for i in range(self.length_scale.size):
+                k_grad_log_l_i = 1.0/(self.length_scale[i]**2)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                self.lml_gradient.append(lml_grad(k_grad_log_l_i))
+                pass
+            pass
+        self.lml_gradient = 0.5*N.array(self.lml_gradient)
         return self.lml_gradient
 
-    def compute_lml_gradient_logscale_compact(self,alphaalphaT_Kinv):
-        """Compute grandient of the kernel and return the portion of
-        log marginal likelihood gradient due to the kernel.
-        Hyperparameters are in log scale which is sometimes more
-        stable. Shorter formula.
-        """
-        grad_log_sigma_f = 2.0*self.kernel_matrix
-        grad_log_l = self.wdm2*self.kernel_matrix
-        # self.lml_gradient = N.array([0.5*N.trace(N.dot(alphaalphaT_Kinv,grad_log_sigma_f)),0.5*N.trace(N.dot(alphaalphaT_Kinv,grad_log_l))])
-        # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-        self.lml_gradient = 0.5*N.array([(alphaalphaT_Kinv*(grad_log_sigma_f).T).sum(),(alphaalphaT_Kinv*(grad_log_l.T)).sum()])
-        return self.lml_gradient
-        
     pass
-
 
 class KernelMatern_3_2(Kernel):
     """The Matern kernel class for the case ni=3/2 or ni=5/2.
