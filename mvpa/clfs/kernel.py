@@ -98,6 +98,11 @@ class KernelConstant(Kernel):
         self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
         return self.lml_gradient
     
+    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
+        K_grad_sigma_0 = 2*self.sigma_0**2
+        self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
+        return self.lml_gradient
+    
     pass
 
 
@@ -200,8 +205,27 @@ class KernelLinear(Kernel):
         self.lml_gradient = []
         self.lml_gradient.append(2*self.sigma_0*alphaalphaT_Kinv.sum())
         for i in range(self.Sigma_p.shape[0]):
+            # Note that Sigma_p is not squared in compute() so it
+            # disappears in the partial derivative:
             K_grad_i = N.multiply.outer(data[:,i],data[:,i])
             self.lml_gradient.append(lml_grad(K_grad_i))
+            pass
+        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        # print self.lml_gradient
+        return self.lml_gradient
+
+    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
+        def lml_grad(K_grad_i):
+            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
+        self.lml_gradient = []
+        self.lml_gradient.append(2*self.sigma_0**2*alphaalphaT_Kinv.sum())
+        for i in range(self.Sigma_p.shape[0]):
+            # Note that Sigma_p is not squared in compute() so it
+            # disappears in the partial derivative:
+            K_grad_log_i = self.Sigma_p[i,i]*N.multiply.outer(data[:,i],data[:,i])
+            self.lml_gradient.append(lml_grad(K_grad_log_i))
             pass
         self.lml_gradient = 0.5*N.array(self.lml_gradient)
         # print self.lml_gradient
