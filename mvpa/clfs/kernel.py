@@ -38,6 +38,12 @@ class Kernel(object):
     def compute_gradient(self,alphaalphaTK):
         raise NotImplementedError
 
+    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
+        raise NotImplementedError
+        
+    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
+        raise NotImplementedError
+
     pass
 
 class KernelConstant(Kernel):
@@ -84,6 +90,14 @@ class KernelConstant(Kernel):
         self.sigma_0 = hyperparameter
         return
 
+    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
+        K_grad_sigma_0 = 2*self.sigma_0
+        # self.lml_gradient = 0.5*(N.trace(N.dot(alphaalphaT_Kinv,K_grad_sigma_0*N.ones(alphaalphaT_Kinv.shape)))
+        # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+        # Fastest when B is a constant: B*A.sum()
+        self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
+        return self.lml_gradient
+    
     pass
 
 
@@ -177,6 +191,21 @@ class KernelLinear(Kernel):
         self.sigma_0 = N.array(hyperparameter[0])
         self.Sigma_p = N.diagflat(hyperparameter[1:])
         return
+
+    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
+        def lml_grad(K_grad_i):
+            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
+        self.lml_gradient = []
+        self.lml_gradient.append(2*self.sigma_0*alphaalphaT_Kinv.sum())
+        for i in range(self.Sigma_p.shape[0]):
+            K_grad_i = N.multiply.outer(data[:,i],data[:,i])
+            self.lml_gradient.append(lml_grad(K_grad_i))
+            pass
+        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        # print self.lml_gradient
+        return self.lml_gradient
 
     pass
 
@@ -304,15 +333,6 @@ class KernelSquaredExponential(Kernel):
         #         data1, data2, weight=0.5 / (self.length_scale ** 2)))
         return self.kernel_matrix
 
-    def gradient(self, data1, data2):
-        """Compute gradient of the kernel matrix. A must for fast
-        model selection with high-dimensional data.
-        """
-        # TODO SOON
-        # grad = ...
-        # return grad
-        raise NotImplementedError
-
     def set_hyperparameters(self, hyperparameter):
         """Set hyperaparmeters from a vector.
 
@@ -330,10 +350,10 @@ class KernelSquaredExponential(Kernel):
         Shorter formula. Allows vector of lengthscales (ARD).
         """
         self.lml_gradient = []
-        def lml_grad(k_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,k_grad_i))
+        def lml_grad(K_grad_i):
+            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
             # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-            return (alphaalphaT_Kinv*(k_grad_i.T)).sum()
+            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
         if self.length_scale.size==1:
@@ -343,8 +363,8 @@ class KernelSquaredExponential(Kernel):
         else:
             # use one length_scale for each dimension:
             for i in range(self.length_scale.size):
-                k_grad_i = 1.0/(self.length_scale[i]**3)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
-                self.lml_gradient.append(lml_grad(k_grad_i))
+                K_grad_i = 1.0/(self.length_scale[i]**3)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                self.lml_gradient.append(lml_grad(K_grad_i))
                 pass
             pass
         self.lml_gradient = 0.5*N.array(self.lml_gradient)
@@ -357,10 +377,10 @@ class KernelSquaredExponential(Kernel):
         stable. Shorter formula. Allows vector of lengthscales (ARD).
         """
         self.lml_gradient = []
-        def lml_grad(k_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,k_grad_i))
+        def lml_grad(K_grad_i):
+            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
             # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-            return (alphaalphaT_Kinv*(k_grad_i.T)).sum()
+            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         K_grad_log_sigma_f = 2.0*self.kernel_matrix
         self.lml_gradient.append(lml_grad(K_grad_log_sigma_f))
         if self.length_scale.size==1:
@@ -370,8 +390,8 @@ class KernelSquaredExponential(Kernel):
         else:
             # use one length_scale for each dimension:
             for i in range(self.length_scale.size):
-                k_grad_log_l_i = 1.0/(self.length_scale[i]**2)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
-                self.lml_gradient.append(lml_grad(k_grad_log_l_i))
+                K_grad_log_l_i = 1.0/(self.length_scale[i]**2)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                self.lml_gradient.append(lml_grad(K_grad_log_l_i))
                 pass
             pass
         self.lml_gradient = 0.5*N.array(self.lml_gradient)
