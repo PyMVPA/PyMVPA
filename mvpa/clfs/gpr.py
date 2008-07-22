@@ -251,7 +251,7 @@ class GPR(Classifier):
                 self._L = SLcholesky(self._C, lower=True)
                 self._LL = (self._L,True)
             except NLAError:
-                epsilon = 1.0e-20*N.eye(tmp.shape[0])
+                epsilon = 1.0e-20*N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C+epsilon, lower=True)
                 self._LL = (self._L,True)
                 pass
