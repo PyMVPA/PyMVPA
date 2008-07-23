@@ -211,7 +211,6 @@ class KernelLinear(Kernel):
             self.lml_gradient.append(lml_grad(K_grad_i))
             pass
         self.lml_gradient = 0.5*N.array(self.lml_gradient)
-        # print self.lml_gradient
         return self.lml_gradient
 
     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
@@ -228,7 +227,6 @@ class KernelLinear(Kernel):
             self.lml_gradient.append(lml_grad(K_grad_log_i))
             pass
         self.lml_gradient = 0.5*N.array(self.lml_gradient)
-        # print self.lml_gradient
         return self.lml_gradient
 
     pass
@@ -278,19 +276,16 @@ class KernelExponential(Kernel):
         # XXX the following computation can be (maybe) made more
         # efficient since length_scale is squared and then
         # square-rooted uselessly.
+        # Weighted euclidean distance matrix:
+        self.wdm = N.sqrt(squared_euclidean_distance(data1, data2, weight=(self.length_scale**-2)))
         self.kernel_matrix = \
-            self.sigma_f * N.exp(-N.sqrt(
-                squared_euclidean_distance(
-                    data1, data2, weight=0.5 / (self.length_scale ** 2))))
+            self.sigma_f**2 * N.exp(-self.wdm)
         return self.kernel_matrix
 
     def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
         model selection with high-dimensional data.
         """
-        # TODO SOON
-        # grad = ...
-        # return grad
         raise NotImplementedError
 
     def set_hyperparameters(self, hyperparameter):
@@ -303,6 +298,62 @@ class KernelExponential(Kernel):
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
         return
+
+    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
+        """Compute grandient of the kernel and return the portion of
+        log marginal likelihood gradient due to the kernel.
+        Shorter formula. Allows vector of lengthscales (ARD)
+        BUT THIS LAST OPTION SEEMS NOT TO WORK FOR (CURRENTLY)
+        UNKNOWN REASONS.
+        """
+        self.lml_gradient = []
+        def lml_grad(K_grad_i):
+            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
+        grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
+        self.lml_gradient.append(lml_grad(grad_sigma_f))
+        if self.length_scale.size==1:
+            # use the same length_scale for all dimensions:
+            K_grad_l = self.wdm*self.kernel_matrix*(self.length_scale**-1)
+            self.lml_gradient.append(lml_grad(K_grad_l))
+        else:
+            # use one length_scale for each dimension:
+            for i in range(self.length_scale.size):
+                K_grad_i = (self.length_scale[i]**-3)*(self.wdm**-1)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                self.lml_gradient.append(lml_grad(K_grad_i))
+                pass
+            pass
+        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        return self.lml_gradient
+
+    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
+        """Compute grandient of the kernel and return the portion of
+        log marginal likelihood gradient due to the kernel.
+        Shorter formula. Allows vector of lengthscales (ARD).
+        BUT THIS LAST OPTION SEEMS NOT TO WORK FOR (CURRENTLY)
+        UNKNOWN REASONS.
+        """
+        self.lml_gradient = []
+        def lml_grad(K_grad_i):
+            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
+        grad_log_sigma_f = 2.0*self.kernel_matrix
+        self.lml_gradient.append(lml_grad(grad_log_sigma_f))
+        if self.length_scale.size==1:
+            # use the same length_scale for all dimensions:
+            K_grad_l = self.wdm*self.kernel_matrix
+            self.lml_gradient.append(lml_grad(K_grad_l))
+        else:
+            # use one length_scale for each dimension:
+            for i in range(self.length_scale.size):
+                K_grad_i = (self.length_scale[i]**-2)*(self.wdm**-1)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                self.lml_gradient.append(lml_grad(K_grad_i))
+                pass
+            pass
+        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        return self.lml_gradient
 
     pass
 
