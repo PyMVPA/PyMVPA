@@ -236,6 +236,11 @@ class RFE(FeatureSelection):
                 results = (wdataset, wtestdataset)
                 result_selected_ids = orig_feature_ids
 
+            if __debug__:
+                debug('RFEC',
+                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d " %
+                      (step, nfeatures, error, isthebest, stop))
+
             # stop if it is time to finish
             if nfeatures == 1 or stop:
                 break
@@ -244,14 +249,9 @@ class RFE(FeatureSelection):
             selected_ids = self.__feature_selector(sensitivity)
 
             if __debug__:
-                debug('RFEC',
-                      "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d "
-                      "nfeatures_selected=%d" %
-                      (step, nfeatures, error, isthebest, stop,
-                       len(selected_ids)))
                 debug('RFEC_',
-                      "Sensitivity: %s, selected_ids: %s" %
-                      (sensitivity, selected_ids))
+                      "Sensitivity: %s, nfeatures_selected=%d, selected_ids: %s" %
+                      (sensitivity, len(selected_ids), selected_ids))
 
 
             # Create a dataset only with selected features
