@@ -79,10 +79,11 @@ Binary packages are available for:
     about how to obtain them.
 
 * Windows (:ref:`installation instructions <install_win>`)
-    An installer for Python 2.5 is available from the `file release system`_.
+    An installer for Python 2.5 is available from the `download area`_.
 
 * OpenSUSE (:ref:`installation instructions <install_suse>`)
-   Initial version of a binary RPM package, built for OpenSUSE_ 10.3.
+   Initial version of a binary RPM package, built for OpenSUSE_ 10.3
+   -- available in the `download area`_.
 
 Currently, there are no binary packages for other operating systems. However,
 we know that PyMVPA successfully builds on recent RedHat_ releases, as well as
@@ -98,8 +99,8 @@ MacOS X (see below for instructions).
 Source code
 -----------
 
-Source code tarballs of PyMVPA releases are available from the `file release
-system`_. Alternatively, one can also download a tarball of the latest
+Source code tarballs of PyMVPA releases are available from the `download
+area`_. Alternatively, one can also download a tarball of the latest
 development snapshot_ (i.e. the current state of the *master* branch of the
 PyMVPA source code repository).
 
@@ -122,7 +123,7 @@ and on how to :ref:`build PyMVPA from source <buildfromsource>` are provided
 in the manual.
 
 
-.. _file release system: http://alioth.debian.org/frs/?group_id=30954
+.. _download area: http://alioth.debian.org/frs/?group_id=30954
 .. _Git: http://git.or.cz/
 .. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
 
