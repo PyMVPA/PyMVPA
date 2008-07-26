@@ -26,7 +26,7 @@ The mvpa package contains the following subpackages and modules:
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
 :version: 0.2.2
-:see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
+:see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
 :license: The MIT License
