@@ -62,7 +62,7 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
 # do chunkswise linear detrending on dataset
 detrend(dataset, perchunk=True, model='linear')
 
-# only use 'rest', 'face' and 'house' samples from dataset
+# only use 'rest', 'cats' and 'scissors' samples from dataset
 dataset = dataset.selectSamples(
                 N.array([ l in [0,4,5] for l in dataset.labels], dtype='bool'))
 
@@ -72,6 +72,7 @@ zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 # remove baseline samples from dataset for final analysis
 dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
                                         dtype='bool'))
+print dataset
 
 # Specify the base classifier to be used
 # To parametrize the classifier to be used
@@ -81,14 +82,16 @@ Clf = LinearCSVMC
 
 # define some classifiers: a simple one and several classifiers with built-in
 # SVDs
-clfs = [('All orig. features', Clf()),
-        ('All PCs', MappedClassifier(Clf(), SVDMapper())),
-        ('First 3 PCs', MappedClassifier(Clf(),
+clfs = [('All orig.\nfeatures (%i)' % dataset.nfeatures, Clf()),
+        ('All Comps\n(%i)' % (dataset.nsamples \
+                 - (dataset.nsamples / len(dataset.uniquechunks)),),
+                        MappedClassifier(Clf(), SVDMapper())),
+        ('First 5\nComp.', MappedClassifier(Clf(),
                         SVDMapper(selector=range(5)))),
-        ('First 50 PCs', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(50)))),
-        ('PCs 3-50', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(3,50))))]
+        ('First 30\nComp.', MappedClassifier(Clf(),
+                        SVDMapper(selector=range(30)))),
+        ('Comp.\n6-30', MappedClassifier(Clf(),
+                        SVDMapper(selector=range(5,30))))]
 
 
 # run and visualize in barplot
@@ -106,7 +109,9 @@ for desc, clf in clfs:
     results.append(cv.results)
     labels.append(desc)
 
-makeBarPlot(results,labels=labels, title='Linear C-SVM classification')
+makeBarPlot(results, labels=labels,
+            title='Linear C-SVM classification (cats vs. scissors)',
+            ylabel='Mean classification error (N-1 cross-validation, 12-fold)')
 
 if cfg.getboolean('examples', 'interactive', True):
     P.show()
