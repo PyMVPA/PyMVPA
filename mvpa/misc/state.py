@@ -25,8 +25,10 @@ from mvpa.base.dochelpers import enhancedClassDocString, enhancedDocString
 if __debug__:
     from mvpa.base import debug
 
+
 class CollectableAttribute(object):
-    """Base class for any custom behaving attribute intended to become part of a collection
+    """Base class for any custom behaving attribute intended to become
+    part of a collection.
 
     Derived classes will have specific semantics:
     * StateVariable: conditional storage
@@ -36,8 +38,8 @@ class CollectableAttribute(object):
      - KernelParameter: --//-- to become a part of Kernel Classifier's
        kernel_params collection
 
-    Those CollectableAttributes are to be groupped into corresponding groups for each class
-    by statecollector metaclass
+    Those CollectableAttributes are to be groupped into corresponding groups
+    for each class by statecollector metaclass.
     """
 
     def __init__(self, name=None, doc=None):
@@ -50,12 +52,19 @@ class CollectableAttribute(object):
             debug("COL",
                   "Initialized new collectable %s " % name + `self`)
 
+
     # Instead of going for VProperty lets make use of virtual method
-    def _getVirtual(self): return self._get()
-    def _setVirtual(self, value): return self._set(value)
+    def _getVirtual(self):
+        return self._get()
+
+
+    def _setVirtual(self, value):
+        return self._set(value)
+
 
     def _get(self):
         return self._value
+
 
     def _set(self, val):
         if __debug__:
@@ -68,15 +77,18 @@ class CollectableAttribute(object):
         self._value = val
         self._isset = True
 
+
     @property
     def isSet(self):
         return self._isset
+
 
     def reset(self):
         """Simply reset the flag"""
         if __debug__ and self._isset:
             debug("COL", "Reset %s to being non-modified" % self.name)
         self._isset = False
+
 
     # TODO XXX unify all bloody __str__
     def __str__(self):
@@ -85,23 +97,29 @@ class CollectableAttribute(object):
             res += '*'          # so we have the value already
         return res
 
+
     def _getName(self):
         return self.__name
+
 
     def _setName(self, name):
         if name is not None:
             if isinstance(name, basestring):
                 if name[0] == '_':
                     raise ValueError, \
-                          "Collectable attribute name must not start with _. Got %s" % name
+                          "Collectable attribute name must not start " \
+                          "with _. Got %s" % name
             else:
                 raise ValueError, \
-                      "Collectable attribute name must be a string. Got %s" % `name`
+                      "Collectable attribute name must be a string. " \
+                      "Got %s" % `name`
         self.__name = name
+
 
     # XXX should become vproperty?
     value = property(_getVirtual, _setVirtual)
     name = property(_getName, _setName)
+
 
 
 class StateVariable(CollectableAttribute):
@@ -126,6 +144,7 @@ class StateVariable(CollectableAttribute):
             raise UnknownStateError("Unknown yet value of %s" % (self.name))
         return CollectableAttribute._get(self)
 
+
     def _set(self, val):
         if self.isEnabled:
             # XXX may be should have left simple assignment
@@ -142,9 +161,11 @@ class StateVariable(CollectableAttribute):
         CollectableAttribute.reset(self)
         self._value = None
 
+
     @property
     def isEnabled(self):
         return self._isenabled
+
 
     def enable(self, value=False):
         if self._isenabled == value:
@@ -163,6 +184,7 @@ class StateVariable(CollectableAttribute):
         return res
 
 
+
 class Collection(object):
     """Container of some CollectableAttributes.
 
@@ -172,7 +194,8 @@ class Collection(object):
      - `Mutators`: `__init__`
      - `R/O Properties`: `listing`, `names`, `items`
 
-     XXX Seems to be not used and duplicating functionality: `_getListing` (thus `listing` property)
+     XXX Seems to be not used and duplicating functionality: `_getListing`
+     (thus `listing` property)
     """
 
     def __init__(self, items=None, owner=None):
@@ -217,6 +240,7 @@ class Collection(object):
                                          id(self.owner))
         return res
 
+
     def __repr__(self):
         s = "%s(" % self.__class__.__name__
         items_s = ""
@@ -236,6 +260,7 @@ class Collection(object):
             s += "%sowner=%s" % (sep, `self.owner`)
         s += ")"
         return s
+
 
     #
     # XXX TODO: figure out if there is a way to define proper
@@ -271,14 +296,17 @@ class Collection(object):
 #            if fromstate.isKnown(name):
 #                self._items[name] = operation(fromstate._items[name])
 
+
     def isKnown(self, index):
         """Returns `True` if state `index` is known at all"""
         return self._items.has_key(index)
+
 
     def isSet(self, index):
         """Returns `True` if state `index` has value set"""
         self._checkIndex(index)
         return self._items[index].isSet
+
 
     def _checkIndex(self, index):
         """Verify that given `index` is a known/registered state.
@@ -291,6 +319,7 @@ class Collection(object):
                   % (self.__class__.__name__,
                      self.__owner.__class__.__name__,
                      index)
+
 
     def add(self, item):
         """Add a new CollectableAttribute to the collection
@@ -316,6 +345,7 @@ class Collection(object):
 
         if not self.owner is None:
             self._updateOwner(item.name)
+
 
     def remove(self, index):
         """Remove item from the collection
@@ -351,7 +381,9 @@ class Collection(object):
             self._checkIndex(index)
             return self._items[index]
         else:
-            raise AttributeError("State collection %s has no %s attribute" % (self, index))
+            raise AttributeError("State collection %s has no %s attribute" 
+                                 % (self, index))
+
 
     # Probably not needed -- enable if need arises
     #
@@ -368,6 +400,7 @@ class Collection(object):
         """Returns the value by index"""
         self._checkIndex(index)
         return self._items[index].value
+
 
     def setvalue(self, index, value):
         """Sets the value by index"""
@@ -405,6 +438,7 @@ class Collection(object):
             raise ValueError, \
                   "Don't know how to handle  variable given by %s" % index
 
+
     def reset(self, index=None):
         """Reset the state variable defined by `index`"""
 
@@ -437,6 +471,7 @@ class Collection(object):
     def _getOwner(self):
         return self.__owner
 
+
     def _setOwner(self, owner):
         if not isinstance(owner, Stateful):
             raise ValueError, \
@@ -463,7 +498,8 @@ class Collection(object):
            register : bool
              Register if True or unregister if False
 
-         XXX Needs refactoring since we duplicate the logic of expansion of index value
+         XXX Needs refactoring since we duplicate the logic of expansion of
+         index value
         """
         if not index is None:
             if not index in self._items:
@@ -505,6 +541,7 @@ class Collection(object):
     listing = VProperty(fget=_getListing)
 
 
+
 class ParameterCollection(Collection):
     """Container of Parameters for a stateful object.
     """
@@ -534,6 +571,7 @@ class ParameterCollection(Collection):
                 return True
         return False
 
+
     def whichSet(self):
         """Return list of indexes which were set"""
         result = []
@@ -542,6 +580,7 @@ class ParameterCollection(Collection):
             if Collection.isSet(self, index):
                 result.append(index)
         return result
+
 
 
 class StateCollection(Collection):
@@ -581,6 +620,7 @@ class StateCollection(Collection):
     #
     #def __copy__(self):
 
+
     def _copy_states_(self, fromstate, deep=False):
         """Copy known here states from `fromstate` object into current object
 
@@ -614,6 +654,7 @@ class StateCollection(Collection):
         self._checkIndex(index)
         return self._items[index].isEnabled
 
+
     def isActive(self, index):
         """Returns `True` if state `index` is known and is enabled"""
         return self.isKnown(index) and self.isEnabled(index)
@@ -623,6 +664,7 @@ class StateCollection(Collection):
         """Enable  state variable given in `index`"""
         self._action(index, StateVariable.enable, missingok=missingok,
                      value=value)
+
 
     def disable(self, index):
         """Disable state variable defined by `index` id"""
@@ -698,7 +740,8 @@ class StateCollection(Collection):
         if nondefault:
             ffunc = fmatch
         else:
-            ffunc = lambda y: fmatch(y) and self._items[y]._defaultenabled != self.isEnabled(y)
+            ffunc = lambda y: fmatch(y) and \
+                        self._items[y]._defaultenabled != self.isEnabled(y)
         return filter(ffunc, self.names)
 
 
@@ -729,10 +772,13 @@ _known_collections = {
     'Parameter': ("params", ParameterCollection),
     'KernelParameter': ("kernel_params", ParameterCollection)}
 
+
 _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
+
 _collections_order = ['params', 'kernel_params', 'states']
+
 
 class collector(type):
     """Intended to collect and compose StateCollection for any child
@@ -762,7 +808,8 @@ class collector(type):
                 if value.name is None:
                     value.name = name
 
-        # XXX can we first collect parent's states and then populate with ours? TODO
+        # XXX can we first collect parent's states and then populate with ours?
+        # TODO
 
         for base in bases:
             if hasattr(base, "__metaclass__") and \
@@ -799,8 +846,9 @@ class collector(type):
                 if not col in collections:
                     collections[col] = None
 
-        # TODO: check on conflict in names of Collections' items!
-        # since otherwise even order is not definite since we use dict for collections.
+        # TODO: check on conflict in names of Collections' items!  since
+        # otherwise even order is not definite since we use dict for
+        # collections.
         # XXX should we switch to tuple?
 
         for col, colitems in collections.iteritems():
@@ -848,6 +896,7 @@ class collector(type):
             cls.__doc__ = enhancedClassDocString(cls, *bases)
 
 
+
 class Stateful(object):
     """Base class for stateful objects.
 
@@ -884,10 +933,10 @@ class Stateful(object):
         if not hasattr(self, '_collections'):
             # need to check to avoid override of enabled states in the case
             # of multiple inheritance, like both Statefull and Harvestable
-            object.__setattr__(self, '_collections',
-                               copy.deepcopy( \
-                                object.__getattribute__(self,
-                                                        '_collections_template')))
+            object.__setattr__(
+                self, '_collections',
+                copy.deepcopy(
+                    object.__getattribute__(self, '_collections_template')))
 
             # Assign owner to all collections
             for col, collection in self._collections.iteritems():
@@ -914,8 +963,9 @@ class Stateful(object):
             self.__descr = descr
 
         if __debug__:
-            debug("ST", "Stateful.__init__ was done for %s id %s with descr=%s" \
-                % (self.__class__.__name__, id(self), descr))
+            debug("ST",
+                  "Stateful.__init__ was done for %s id %s with descr=%s" \
+                  % (self.__class__.__name__, id(self), descr))
 
 
     #__doc__ = enhancedDocString('Stateful', locals())
@@ -926,26 +976,31 @@ class Stateful(object):
         # queried by copy before instance is __init__ed
         if index[0] == '_':
             return object.__getattribute__(self, index)
-        for col, collection in object.__getattribute__(self, '_collections').iteritems():
+        for col, collection in \
+          object.__getattribute__(self, '_collections').iteritems():
             if index in [col]:
                 return collection
             if collection.items.has_key(index):
                 return collection.getvalue(index)
         return object.__getattribute__(self, index)
 
+
     def __setattr__(self, index, value):
         if index[0] == '_':
             return object.__setattr__(self, index, value)
-        for col, collection in object.__getattribute__(self, '_collections').iteritems():
+        for col, collection in \
+          object.__getattribute__(self, '_collections').iteritems():
             if collection.items.has_key(index):
                 collection.setvalue(index, value)
                 return
         object.__setattr__(self, index, value)
 
+
     # XXX not sure if we shouldn't implement anything else...
     def reset(self):
         for collection in self._collections.values():
             collection.reset()
+
 
     def __str__(self):
         s = "%s:" % (self.__class__.__name__)
@@ -955,6 +1010,7 @@ class Stateful(object):
             for col, collection in self._collections.iteritems():
                 s += " %d %s:%s" %(len(collection.items), col, str(collection))
         return s
+
 
     def __repr__(self, prefixes=[], fullname=False):
         """Definition of the object summary over Parametrized object
@@ -992,7 +1048,8 @@ class Stateful(object):
                     prefixes.append("%s=%s" % (k, collection[k].value))
             elif isinstance(collection, StateCollection):
                 for name, invert in ( ('enable', False), ('disable', True) ):
-                    states = collection._getEnabled(nondefault=False, invert=invert)
+                    states = collection._getEnabled(nondefault=False,
+                                                    invert=invert)
                     if len(states):
                         prefixes.append("%s_states=%s" % (name, str(states)))
             else:
@@ -1028,6 +1085,7 @@ class Harvestable(Stateful):
 
     _KNOWN_COPY_METHODS = [ None, 'copy', 'deepcopy' ]
 
+
     def __init__(self, attribs=None, copy_attribs='copy', **kwargs):
         """Initialize state of harvestable
 
@@ -1047,6 +1105,7 @@ class Harvestable(Stateful):
         self.__copy_attribs = copy_attribs
 
         self._setAttribs(attribs)
+
 
     def _setAttribs(self, attribs):
         """Set attributes to harvest
@@ -1106,7 +1165,8 @@ class Harvestable(Stateful):
 
 
     def _harvest(self, vars):
-        """The harvesting function: must obtain dictionary of variables from the caller.
+        """The harvesting function: must obtain dictionary of variables
+        from the caller.
 
         :Parameters:
             vars : dict
@@ -1141,6 +1201,7 @@ class Harvestable(Stateful):
 
     harvest_attribs = property(fget=lambda self:self.__attribs,
                                fset=_setAttribs)
+
 
 
 class Parametrized(Stateful):
@@ -1179,9 +1240,11 @@ class Parametrized(Stateful):
             if set:
                 trash = kwargs.pop(arg)
             #if not set:
-            #    known_params = reduce(lambda x,y:x+y, [x.items.keys() for x in collections], [])
+            #    known_params = reduce(
+            #       lambda x,y:x+y, [x.items.keys() for x in collections], [])
             #    raise TypeError, \
-            #          "Unknown parameter %s=%s for %s." % (arg, argument, self) \
+            #          "Unknown parameter %s=%s for %s." \
+            #           % (arg, argument, self) \
             #          + " Valid parameters are %s" % known_params
 
         # Initialize other base classes
@@ -1193,7 +1256,8 @@ class Parametrized(Stateful):
                 cls.__init__(self, **kwargs)
         else:
             if len(kwargs)>0:
-                known_params = reduce(lambda x,y:x+y, [x.items.keys() for x in collections], [])
+                known_params = reduce(lambda x, y: x + y, \
+                                    [x.items.keys() for x in collections], [])
                 raise TypeError, \
                       "Unknown parameters %s for %s." % (kwargs.keys(), self) \
                       + " Valid parameters are %s" % known_params
