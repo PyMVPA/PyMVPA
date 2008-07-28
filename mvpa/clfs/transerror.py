@@ -29,6 +29,7 @@ from mvpa.base.dochelpers import enhancedDocString
 if __debug__:
     from mvpa.base import debug
 
+
 def _equalizedTable(out, printed):
     """Given list of lists figure out their common widths and print to out
 
@@ -53,6 +54,7 @@ def _equalizedTable(out, printed):
     pass
 
 
+
 def _p2(x, prec=2):
     """Helper to print depending on the type nicely. For some
     reason %.2g for 100 prints exponential form which is ugly
@@ -68,6 +70,7 @@ def _p2(x, prec=2):
         return "%s" % x
 
 
+
 class SummaryStatistics(object):
     """Basic class to collect targets/predictions and report summary statistics
 
@@ -79,8 +82,10 @@ class SummaryStatistics(object):
     """
 
     _STATS_DESCRIPTION = (
-        ('# of sets', 'number of target/prediction sets which were provided', None),
-        )
+        ('# of sets',
+         'number of target/prediction sets which were provided',
+         None), )
+
 
     def __init__(self, targets=None, predictions=None):
         """Initialize SummaryStatistics
@@ -130,6 +135,7 @@ class SummaryStatistics(object):
         self.__sets.append( (targets, predictions) )
         self._computed = False
 
+
     def asstring(self, short=False, header=True, summary=True,
                  description=False):
         """'Pretty print' the matrix
@@ -161,6 +167,7 @@ class SummaryStatistics(object):
         return self.asstring(short=False, header=True, summary=True,
                              description=description)
 
+
     def __iadd__(self, other):
         """Add the sets from `other` s `SummaryStatistics` to current one
         """
@@ -180,6 +187,7 @@ class SummaryStatistics(object):
         result += other
         return result
 
+
     def compute(self):
         """Actually compute the confusion matrix based on all the sets"""
         if self._computed:
@@ -187,6 +195,7 @@ class SummaryStatistics(object):
 
         self._compute()
         self._computed = True
+
 
     def _compute(self):
         self._stats = {'# of sets' : len(self.sets)}
@@ -198,14 +207,17 @@ class SummaryStatistics(object):
         return [ self.__class__(targets=x[0],
                                 predictions=x[1]) for x in self.sets ]
 
+
     @property
     def error(self):
         raise NotImplementedError
+
 
     @property
     def stats(self):
         self.compute()
         return self._stats
+
 
     def reset(self):
         """Cleans summary -- all data/sets are wiped out
@@ -213,7 +225,9 @@ class SummaryStatistics(object):
         self.__sets = []
         self._computed = False
 
+
     sets = property(lambda self:self.__sets)
+
 
 
 class ConfusionMatrix(SummaryStatistics):
@@ -267,6 +281,7 @@ class ConfusionMatrix(SummaryStatistics):
         self.__matrix = None
         """Resultant confusion matrix"""
 
+
     # XXX might want to remove since summaries does the same, just without
     #     supplying labels
     @property
@@ -276,6 +291,7 @@ class ConfusionMatrix(SummaryStatistics):
                                 targets=x[0],
                                 predictions=x[1]) for x in self.sets]
 
+
     def _compute(self):
         """Actually compute the confusion matrix based on all the sets"""
 
@@ -283,7 +299,9 @@ class ConfusionMatrix(SummaryStatistics):
 
         if __debug__:
             if not self.__matrix is None:
-                debug("LAZY", "Have to recompute %s#%s" % (self.__class__.__name__, id(self)))
+                debug("LAZY",
+                      "Have to recompute %s#%s" \
+                        % (self.__class__.__name__, id(self)))
 
 
         # TODO: BinaryClassifier might spit out a list of predictions for each
@@ -351,8 +369,8 @@ class ConfusionMatrix(SummaryStatistics):
         nz = MCC_denom!=0.0
         stats['MCC'] = N.zeros(stats['TP'].shape)
         stats['MCC'][nz] = \
-                     (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz] \
-                     / MCC_denom[nz]
+                 (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz] \
+                  / MCC_denom[nz]
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
@@ -463,10 +481,12 @@ class ConfusionMatrix(SummaryStatistics):
         out.close()
         return result
 
+
     @property
     def error(self):
         self.compute()
         return 1.0-self.__Ncorrect*1.0/sum(self.__Nsamples)
+
 
     @property
     def labels(self):
@@ -484,6 +504,7 @@ class ConfusionMatrix(SummaryStatistics):
     def percentCorrect(self):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
+
 
 
 class RegressionStatistics(SummaryStatistics):
@@ -573,7 +594,8 @@ class RegressionStatistics(SummaryStatistics):
                        % stats
 
         stats_data = ['RMP_t', 'STD_t', 'RMP_p', 'STD_p']
-        stats_ = ['CCe', 'RMSE', 'RMSE/RMP_t'] # CCp needs tune up of format so excluded
+        # CCp needs tune up of format so excluded
+        stats_ = ['CCe', 'RMSE', 'RMSE/RMP_t']
         stats_summary = ['# of sets']
 
         out = StringIO()
@@ -617,10 +639,12 @@ class RegressionStatistics(SummaryStatistics):
         out.close()
         return result
 
+
     @property
     def error(self):
         self.compute()
         return self.stats['RMSE']
+
 
 
 class ClassifierError(Stateful):
@@ -686,7 +710,8 @@ class ClassifierError(Stateful):
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
                 if self.states.isEnabled('training_confusion'):
-                    self.__clf.states._changeTemporarily(enable_states=['training_confusion'])
+                    self.__clf.states._changeTemporarily(
+                        enable_states=['training_confusion'])
                 self.__clf.train(trainingdataset)
                 if self.states.isEnabled('training_confusion'):
                     self.training_confusion = self.__clf.training_confusion
@@ -694,7 +719,8 @@ class ClassifierError(Stateful):
 
         if self.__clf.states.isEnabled('trained_labels') and \
                not testdataset is None:
-            newlabels = Set(testdataset.uniquelabels) - self.__clf.trained_labels
+            newlabels = Set(testdataset.uniquelabels) \
+                                - self.__clf.trained_labels
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (`self.__clf`, `newlabels`) +
