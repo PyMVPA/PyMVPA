@@ -190,11 +190,11 @@ if __debug__:
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
 
-    debug.register('COL',  "Generic Collectable debugging")
-
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
 
+    debug.register('COL',  "Generic Collectable")
+    debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
     debug.register('COLR', "Collector for states and classifier parameters")
