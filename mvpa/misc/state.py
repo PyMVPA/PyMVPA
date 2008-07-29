@@ -1079,11 +1079,6 @@ class ClassWithCollections(object):
 
     __metaclass__ = AttributesCollector
 
-    _INITARGS = [ 'descr' ]
-    """Initialization parameters which should be passed to this class,
-       thus shouldn't be treated by some derived classes suchas
-       Parametrized"""
-
     def __init__(self, descr=None, **kwargs):
         """Initialize ClassWithCollections object
 
@@ -1132,6 +1127,7 @@ class ClassWithCollections(object):
                           + " Valid parameters are %s" % known_params
 
             ## Initialize other base classes
+            ##  commented out since it seems to be of no use for now
             #if init_classes is not None:
             #    # return back stateful arguments since they might be
             #    # processed by underlying classes
@@ -1242,55 +1238,11 @@ class ClassWithCollections(object):
                      doc="Description of the object if any")
 
 
-class Stateful(ClassWithCollections):
-    """Base class for stateful objects (ie which have states collection).
-    """
-    pass
 
-
-class Stateful_OLD(ClassWithCollections):
-    """Base class for stateful objects (ie which have states collection).
-    """
-
-    _INITARGS = ClassWithCollections._INITARGS \
-                + [ 'enable_states', 'disable_states']
-
-    def __init___(self,
-                 enable_states=None,
-                 disable_states=None,
-                 descr=None):
-        """Initialize Stateful object
-
-        :Parameters:
-          enable_states : None or list of basestring
-            Names of the state variables which should be enabled additionally
-            to default ones
-          disable_states : None or list of basestring
-            Names of the state variables which should be disabled
-          descr : basestring
-            Description of the instance
-        """
-        ClassWithCollections.__init__(self, descr=descr)
-        if self._collections.has_key('states'):
-            if enable_states == None:
-                enable_states = []
-            if disable_states == None:
-                disable_states = []
-            states = self._collections['states']
-            states.enable(enable_states, missingok=True)
-            states.disable(disable_states)
-        else:
-            #if not (enable_states is None and disable_states is None):
-            #warning("Provided enable_states and disable_states are " + \
-            #        "ignored since object %s has no states"  % `self`)
-            warning("Yarik expects all Stateful derived classes to have states")
-
-        if __debug__:
-            debug("ST",
-                  "Stateful.__init__ was done for %s id %s with descr=%s" \
-                  % (self.__class__.__name__, id(self), descr))
-
-    #__doc__ = enhancedDocString('Stateful', locals())
+# No actual separation is needed now between ClassWithCollections
+# and a specific usecase.
+Stateful = ClassWithCollections
+Parametrized = ClassWithCollections
 
 
 
@@ -1429,68 +1381,5 @@ class Harvestable(Stateful):
     harvest_attribs = property(fget=lambda self:self.__attribs,
                                fset=_setAttribs)
 
-
-
-class Parametrized(Stateful):
-    pass
-
-
-class Parametrized_OLD(Stateful):
-    """Base class for all classes which have collected parameters
-    """
-
-    def __init__(self, init_classes=None, **kwargs):
-        """Initialize Parametrized class instance
-
-        :Parameters:
-          init_classes : list of class
-            List of classes which should be called with arguments which
-            were not handled by Parametrized
-        """
-        # compose kwargs to be passed to Stateful and remove them from kwargs
-        kwargs_stateful = {}
-        for arg in Stateful._INITARGS:
-            if kwargs.has_key(arg):
-                kwargs_stateful[arg] = kwargs.pop(arg)
-
-        # initialize Stateful with only needed parameters
-        Stateful.__init__(self, **kwargs_stateful)
-
-        # take only relevant collections
-        collections = filter(lambda x:isinstance(x, ParameterCollection),
-                             self._collections.values())
-
-        # assign given parameters
-        for arg, argument in kwargs.items():
-            set = False
-            for collection in collections:
-                if collection.items.has_key(arg):
-                    collection.setvalue(arg, argument)
-                    set = True
-                    break
-            if set:
-                trash = kwargs.pop(arg)
-            #if not set:
-            #    known_params = reduce(
-            #       lambda x,y:x+y, [x.items.keys() for x in collections], [])
-            #    raise TypeError, \
-            #          "Unknown parameter %s=%s for %s." \
-            #           % (arg, argument, self) \
-            #          + " Valid parameters are %s" % known_params
-
-        # Initialize other base classes
-        if init_classes is not None:
-            # return back stateful arguments since they might be
-            # processed by underlying classes
-            kwargs.update(kwargs_stateful)
-            for cls in init_classes:
-                cls.__init__(self, **kwargs)
-        else:
-            if len(kwargs)>0:
-                known_params = reduce(lambda x, y: x + y, \
-                                    [x.items.keys() for x in collections], [])
-                raise TypeError, \
-                      "Unknown parameters %s for %s." % (kwargs.keys(), self) \
-                      + " Valid parameters are %s" % known_params
 
 
