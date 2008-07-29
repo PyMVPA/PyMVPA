@@ -7,7 +7,9 @@ LATEX_DIR=build/latex
 WWW_DIR=build/website
 
 # should be made conditional, as pyversions id Debian specific
-PYVER := $(shell pyversions -vd)
+#PYVER := $(shell pyversions -vd)
+# try generic variant instead
+PYVER := $(shell python -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
 ARCH := $(shell uname -m)
 
 
@@ -44,7 +46,10 @@ build-stamp: 3rd
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
 		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/; done
+		mvpa/clfs/lib$$ext/; \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
+		mvpa/clfs/lib$$ext/$${ext}c.dylib; \
+		done
 	touch $@
 
 
@@ -68,7 +73,8 @@ clean:
 distclean:
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
-        mvpa/clfs/lib*/*_wrap.* \
+		mvpa/clfs/lib*/*.dylib \
+		mvpa/clfs/lib*/*_wrap.* \
 		mvpa/clfs/lib*/*c.py \
 		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
 	@find . -name '*.py[co]' \
@@ -77,7 +83,7 @@ distclean:
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '*.[ao]' -o -iname '*.gch' \
-		 -o -iname '#*#' | xargs -l10 rm -f
+		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
 	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp

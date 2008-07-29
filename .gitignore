@@ -13,6 +13,7 @@ build
 *.prof
 *.kcache
 *.so
+*.dylib
 *.o
 *.a
 build-arch*
