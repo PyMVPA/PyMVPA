@@ -1,4 +1,4 @@
-#Emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -26,20 +26,26 @@ if __debug__:
     from mvpa.base import debug
 
 
+##################################################################
+# Various attributes which will be collected into collections
+#
 class CollectableAttribute(object):
     """Base class for any custom behaving attribute intended to become
     part of a collection.
 
     Derived classes will have specific semantics:
     * StateVariable: conditional storage
+    * AttributeWithUnique: easy access to a set of unique values
+      within a container
     * Parameter: attribute with validity ranges.
      - ClassifierParameter: specialization to become a part of
        Classifier's params collection
      - KernelParameter: --//-- to become a part of Kernel Classifier's
        kernel_params collection
 
-    Those CollectableAttributes are to be groupped into corresponding groups
-    for each class by statecollector metaclass.
+    Those CollectableAttributes are to be groupped into corresponding
+    collections for each class by statecollector metaclass, ie it
+    would be done on a class creation (ie not per each object)
     """
 
     def __init__(self, name=None, doc=None):
@@ -124,6 +130,7 @@ class CollectableAttribute(object):
     name = property(_getName, _setName)
 
 
+
 # XXX think that may be discard hasunique and just devise top
 #     class DatasetAttribute
 class AttributeWithUnique(CollectableAttribute):
@@ -153,16 +160,20 @@ class AttributeWithUnique(CollectableAttribute):
             debug("UATTR",
                   "Initialized new AttributeWithUnique %s " % name + `self`)
 
+
     def reset(self):
-        super(self, AttributeWithUnique).reset()
+        super(AttributeWithUnique, self).reset()
         self._resetUnique()
+
 
     def _resetUnique(self):
         self._uniqueValues = None
 
+
     def _set(self, *args, **kwargs):
         self._resetUnique()
         CollectableAttribute._set(self, *args, **kwargs)
+
 
     def _getUniqueValues(self):
         if self.value is None:
@@ -179,12 +190,9 @@ class AttributeWithUnique(CollectableAttribute):
     hasunique = property(fget=lambda self:self._hasunique)
 
 
+
 class StateVariable(CollectableAttribute):
     """Simple container intended to conditionally store the value
-
-    Statefull class provides easy interfact to access the variable
-    (simply through an attribute), or modifying internal state
-    (enable/disable) via .states attribute of type StateCollection.
     """
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
@@ -240,7 +248,8 @@ class StateVariable(CollectableAttribute):
             res += '+'          # it is enabled but no value is assigned yet
         return res
 
-#
+
+###################################################################
 # Collections
 #
 # TODO: refactor into attributes.py and collections.py. state.py now has
@@ -265,11 +274,8 @@ class Collection(object):
         :Parameters:
           items : dict of CollectableAttribute's
             items to initialize with
-          enable_states : list
-            list of states to enable. If it contains 'all' (in any casing),
-            then all states (besides the ones in disable_states) will be enabled
-          disable_states : list
-            list of states to disable
+          owner : object
+            an object to which collection belongs
         """
 
         self.__owner = owner
@@ -309,10 +315,38 @@ class Collection(object):
         :Return:
           list of items to be appended within __repr__ after a .join()
         """
-        # For now we do not expect any pure non-specialized
+        # XXX For now we do not expect any pure non-specialized
         # collection , thus just override in derived classes
         raise NotImplementedError, "Class %s should override _cls_repr" \
               % self.__class__.__name__
+
+    def _is_initializable(self, index):
+        """Checks if index could be assigned within collection via
+        _initialize
+
+        :Return: bool value for a given `index`
+
+        It is to facilitate dynamic assignment of collections' items
+        within derived classes' __init__ depending on the present
+        collections in the class.
+        """
+        # XXX Each collection has to provide what indexes it allows
+        #     to be set within constructor. Custom handling of some
+        #     arguments (like (dis|en)able_states) is to be performed
+        #     in _initialize
+        # raise NotImplementedError, \
+        #      "Class %s should override _is_initializable" \
+        #      % self.__class__.__name__
+
+        # YYY lets just check if it is in the keys
+        return index in self._items.keys()
+
+
+    def _initialize(self, index, value):
+        """Initialize `index` (no check performed) with `value`
+        """
+        # by default we just set corresponding value
+        self.setvalue(index, value)
 
 
     def __repr__(self):
@@ -680,6 +714,7 @@ class ParameterCollection(Collection):
         self._action(index, Parameter.resetvalue, missingok=False)
 
 
+
 class StateCollection(Collection):
     """Container of StateVariables for a stateful object.
 
@@ -727,6 +762,26 @@ class StateCollection(Collection):
             if len(states):
                 prefixes.append("%s_states=%s" % (name, str(states)))
         return prefixes
+
+
+    def _is_initializable(self, index):
+        """Checks if index could be assigned within collection via
+        setvalue
+        """
+        return index in ['enable_states', 'disable_states']
+
+
+    def _initialize(self, index, value):
+        if value is None:
+            value = []
+        if index == 'enable_states':
+            self.enable(value, missingok=True)
+        elif index == 'disable_states':
+            self.disable(value)
+        else:
+            raise ValueError, "StateCollection can accept only enable_states " \
+                  "and disable_states arguments for the initialization. " \
+                  "Got %s" % index
 
 
     def _copy_states_(self, fromstate, deep=False):
@@ -872,13 +927,13 @@ class StateCollection(Collection):
     enabled = property(fget=_getEnabled, fset=_setEnabled)
 
 
-#
+##################################################################
 # Base classes (and metaclass) which use collections
 #
 
 
 #
-# Helper dictionaries for collector
+# Helper dictionaries for AttributesCollector
 #
 _known_collections = {
     'StateVariable': ("states", StateCollection),
@@ -893,7 +948,7 @@ _col2class = dict(_known_collections.values())
 _COLLECTIONS_ORDER = ['params', 'kernel_params', 'states']
 
 
-class collector(type):
+class AttributesCollector(type):
     """Intended to collect and compose StateCollection for any child
     class of this metaclass
     """
@@ -903,10 +958,10 @@ class collector(type):
 
         if __debug__:
             debug("COLR",
-                  "Collector call for %s.%s, where bases=%s, dict=%s " \
+                  "AttributesCollector call for %s.%s, where bases=%s, dict=%s " \
                   % (cls, name, bases, dict))
 
-        super(collector, cls).__init__(name, bases, dict)
+        super(AttributesCollector, cls).__init__(name, bases, dict)
 
         collections = {}
         for name, value in dict.iteritems():
@@ -926,7 +981,7 @@ class collector(type):
 
         for base in bases:
             if hasattr(base, "__metaclass__") and \
-                   base.__metaclass__ == collector:
+                   base.__metaclass__ == AttributesCollector:
                 # TODO take care about overriding one from super class
                 # for state in base.states:
                 #    if state[0] =
@@ -1022,15 +1077,14 @@ class ClassWithCollections(object):
           be 'doc' -- no need to drag classes docstring imho.
     """
 
-    __metaclass__ = collector
+    __metaclass__ = AttributesCollector
 
     _INITARGS = [ 'descr' ]
     """Initialization parameters which should be passed to this class,
        thus shouldn't be treated by some derived classes suchas
        Parametrized"""
 
-    def __init__(self,
-                 descr=None):
+    def __init__(self, descr=None, **kwargs):
         """Initialize ClassWithCollections object
 
         :Parameters:
@@ -1045,16 +1099,53 @@ class ClassWithCollections(object):
                 copy.deepcopy(
                     object.__getattribute__(self, '_collections_template')))
 
+            collections = self._collections
+
             # Assign owner to all collections
-            for col, collection in self._collections.iteritems():
+            for col, collection in collections.iteritems():
                 if col in self.__dict__:
                     raise ValueError, \
-                          "Stateful object %s has already attribute %s" % \
+                          "Object %s has already attribute %s" % \
                           (self, col)
                 self.__dict__[col] = collection
                 collection.owner = self
 
             self.__descr = descr
+
+            # Assign attributes values if they are given among
+            # **kwargs
+            for arg, argument in kwargs.items():
+                set = False
+                for collection in collections.itervalues():
+                    if collection._is_initializable(arg):
+                        collection._initialize(arg, argument)
+                        set = True
+                        break
+                if set:
+                    trash = kwargs.pop(arg)
+                else:
+                    known_params = reduce(
+                       lambda x,y:x+y, [x.items.keys() for x in collections.itervalues()], [])
+                    raise TypeError, \
+                          "Unexpected keyword argument %s=%s for %s." \
+                           % (arg, argument, self) \
+                          + " Valid parameters are %s" % known_params
+
+            ## Initialize other base classes
+            #if init_classes is not None:
+            #    # return back stateful arguments since they might be
+            #    # processed by underlying classes
+            #    kwargs.update(kwargs_stateful)
+            #    for cls in init_classes:
+            #        cls.__init__(self, **kwargs)
+            #else:
+            #    if len(kwargs)>0:
+            #        known_params = reduce(lambda x, y: x + y, \
+            #                            [x.items.keys() for x in collections], [])
+            #        raise TypeError, \
+            #              "Unknown parameters %s for %s." % (kwargs.keys(), self) \
+            #              + " Valid parameters are %s" % known_params
+
 
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
@@ -1151,17 +1242,20 @@ class ClassWithCollections(object):
                      doc="Description of the object if any")
 
 
-
 class Stateful(ClassWithCollections):
     """Base class for stateful objects (ie which have states collection).
     """
+    pass
 
-    __metaclass__ = collector
+
+class Stateful_OLD(ClassWithCollections):
+    """Base class for stateful objects (ie which have states collection).
+    """
 
     _INITARGS = ClassWithCollections._INITARGS \
                 + [ 'enable_states', 'disable_states']
 
-    def __init__(self,
+    def __init___(self,
                  enable_states=None,
                  disable_states=None,
                  descr=None):
@@ -1338,6 +1432,10 @@ class Harvestable(Stateful):
 
 
 class Parametrized(Stateful):
+    pass
+
+
+class Parametrized_OLD(Stateful):
     """Base class for all classes which have collected parameters
     """
 
