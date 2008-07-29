@@ -117,9 +117,11 @@ class CollectableAttribute(object):
 
 
     # XXX should become vproperty?
+    # YYY yoh: not sure... someone has to do performance testing
+    #     to see which is more effective. My wild guess is that
+    #     _[gs]etVirtual would be faster
     value = property(_getVirtual, _setVirtual)
     name = property(_getName, _setName)
-
 
 
 class StateVariable(CollectableAttribute):
@@ -183,8 +185,12 @@ class StateVariable(CollectableAttribute):
             res += '+'          # it is enabled but no value is assigned yet
         return res
 
-
-
+#
+# Collections
+#
+# TODO: refactor into attributes.py and collections.py. state.py now has
+#       little in common with the main part of this file
+#
 class Collection(object):
     """Container of some CollectableAttributes.
 
@@ -302,10 +308,43 @@ class Collection(object):
         return self._items.has_key(index)
 
 
-    def isSet(self, index):
+    def __isSet1(self, index):
         """Returns `True` if state `index` has value set"""
         self._checkIndex(index)
         return self._items[index].isSet
+
+
+    def isSet(self, index=None):
+        """If item (or any in the present or listed) was set
+
+        :Parameters:
+          index : None or basestring or list of basestring
+            What items to check if they were set in the collection
+        """
+        if not (index is None):
+            if isinstance(index, basestring):
+                 self._checkIndex(index) # process just that single index
+                 return self._items[index].isSet
+            else:
+                items = index           # assume that we got some list
+        else:
+            items = self._items         # go through all the items
+
+        for index in items:
+            self._checkIndex(index)
+            if self._items[index].isSet:
+                return True
+        return False
+
+
+    def whichSet(self):
+        """Return list of indexes which were set"""
+        result = []
+        # go through all members and if any isSet -- return True
+        for index in self._items:
+            if self.isSet(index):
+                result.append(index)
+        return result
 
 
     def _checkIndex(self, index):
@@ -560,27 +599,6 @@ class ParameterCollection(Collection):
         """Reset all parameters to default values"""
         from param import Parameter
         self._action(index, Parameter.resetvalue, missingok=False)
-
-
-    def isSet(self, index=None):
-        if not index is None:
-            return Collection.isSet(self, index)
-        # go through all members and if any isSet -- return True
-        for index in self._items:
-            if Collection.isSet(self, index):
-                return True
-        return False
-
-
-    def whichSet(self):
-        """Return list of indexes which were set"""
-        result = []
-        # go through all members and if any isSet -- return True
-        for index in self._items:
-            if Collection.isSet(self, index):
-                result.append(index)
-        return result
-
 
 
 class StateCollection(Collection):
