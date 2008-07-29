@@ -124,6 +124,61 @@ class CollectableAttribute(object):
     name = property(_getName, _setName)
 
 
+# XXX think that may be discard hasunique and just devise top
+#     class DatasetAttribute
+class AttributeWithUnique(CollectableAttribute):
+    """Container which also takes care about recomputing unique values
+
+    XXX may be we could better link original attribute to additional
+    attribute which actually stores the values (and do reverse there
+    as well).
+
+    Pros:
+      * don't need to mess with getattr since it would become just another
+        attribute
+
+    Cons:
+      * might be worse design in terms of comprehension
+      * take care about _set, since we shouldn't allow
+        change it externally
+
+    For now lets do it within a single class and tune up getattr
+    """
+
+    def __init__(self, name=None, hasunique=True, doc="Attribute with unique"):
+        CollectableAttribute.__init__(self, name, doc)
+        self._hasunique = hasunique
+        self._resetUnique()
+        if __debug__:
+            debug("UATTR",
+                  "Initialized new AttributeWithUnique %s " % name + `self`)
+
+    def reset(self):
+        super(self, AttributeWithUnique).reset()
+        self._resetUnique()
+
+    def _resetUnique(self):
+        self._uniqueValues = None
+
+    def _set(self, *args, **kwargs):
+        self._resetUnique()
+        CollectableAttribute._set(self, *args, **kwargs)
+
+    def _getUniqueValues(self):
+        if self.value is None:
+            return None
+        if self._uniqueValues is None:
+            # XXX we might better use Set, but yoh recalls that
+            #     N.unique was more efficient. May be we should check
+            #     on the the class and use Set only if we are not
+            #     dealing with ndarray (or lists/tuples)
+            self._uniqueValues = N.unique(N.asanyarray(self.value))
+        return self._uniqueValues
+
+    uniqueValues = property(fget=_getUniqueValues)
+    hasunique = property(fget=lambda self:self._hasunique)
+
+
 class StateVariable(CollectableAttribute):
     """Simple container intended to conditionally store the value
 
@@ -245,6 +300,19 @@ class Collection(object):
                 res += " owner:%s#%s" % (self.owner.__class__.__name__,
                                          id(self.owner))
         return res
+
+
+    def _cls_repr(self):
+        """Collection specific part of __repr__ for a class containing
+        it, ie a part of __repr__ for the owner object
+
+        :Return:
+          list of items to be appended within __repr__ after a .join()
+        """
+        # For now we do not expect any pure non-specialized
+        # collection , thus just override in derived classes
+        raise NotImplementedError, "Class %s should override _cls_repr" \
+              % self.__class__.__name__
 
 
     def __repr__(self):
@@ -595,6 +663,17 @@ class ParameterCollection(Collection):
 #        Collection.__init__(self, items, owner, name)
 #
 
+    def _cls_repr(self):
+        """Part of __repr__ for the owner object
+        """
+        prefixes = []
+        for k in self.names:
+            # list only params with not default values
+            if self[k].isDefault: continue
+            prefixes.append("%s=%s" % (k, self[k].value))
+        return prefixes
+
+
     def resetvalue(self, index, missingok=False):
         """Reset all parameters to default values"""
         from param import Parameter
@@ -637,6 +716,17 @@ class StateCollection(Collection):
     #           to define __getinitargs__, etc... read more...
     #
     #def __copy__(self):
+
+    def _cls_repr(self):
+        """Part of __repr__ for the owner object
+        """
+        prefixes = []
+        for name, invert in ( ('enable', False), ('disable', True) ):
+            states = self._getEnabled(nondefault=False,
+                                      invert=invert)
+            if len(states):
+                prefixes.append("%s_states=%s" % (name, str(states)))
+        return prefixes
 
 
     def _copy_states_(self, fromstate, deep=False):
@@ -783,6 +873,11 @@ class StateCollection(Collection):
 
 
 #
+# Base classes (and metaclass) which use collections
+#
+
+
+#
 # Helper dictionaries for collector
 #
 _known_collections = {
@@ -795,7 +890,7 @@ _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
 
-_collections_order = ['params', 'kernel_params', 'states']
+_COLLECTIONS_ORDER = ['params', 'kernel_params', 'states']
 
 
 class collector(type):
@@ -915,36 +1010,30 @@ class collector(type):
 
 
 
-class Stateful(object):
-    """Base class for stateful objects.
+class ClassWithCollections(object):
+    """Base class for objects which contain any known collection
 
-    Classes inherited from this class gain ability to provide state
-    variables, accessed as simple properties. Access to state variables
-    "internals" is done via states property and interface of
-    `StateCollection`.
+    Classes inherited from this class gain ability to access
+    collections and their items as simple attributes. Access to
+    collection items "internals" is done via <collection_name> attribute
+    and interface of a corresponding `Collection`.
 
-    NB This one is to replace old State base class
     TODO: rename 'descr'? -- it should simply
           be 'doc' -- no need to drag classes docstring imho.
     """
 
     __metaclass__ = collector
 
-    _initargs = [ 'enable_states', 'disable_states', 'descr' ]
-    """Initialization parameters which should be passed to Statefull"""
+    _INITARGS = [ 'descr' ]
+    """Initialization parameters which should be passed to this class,
+       thus shouldn't be treated by some derived classes suchas
+       Parametrized"""
 
     def __init__(self,
-                 enable_states=None,
-                 disable_states=None,
                  descr=None):
-        """Initialize Stateful object
+        """Initialize ClassWithCollections object
 
         :Parameters:
-          enable_states : None or list of basestring
-            Names of the state variables which should be enabled additionally
-            to default ones
-          disable_states : None or list of basestring
-            Names of the state variables which should be disabled
           descr : basestring
             Description of the instance
         """
@@ -965,24 +1054,11 @@ class Stateful(object):
                 self.__dict__[col] = collection
                 collection.owner = self
 
-            if self._collections.has_key('states'):
-                if enable_states == None:
-                    enable_states = []
-                if disable_states == None:
-                    disable_states = []
-
-                states = self._collections['states']
-                states.enable(enable_states, missingok=True)
-                states.disable(disable_states)
-            elif not (enable_states is None and disable_states is None):
-                warning("Provided enable_states and disable_states are " + \
-                        "ignored since object %s has no states"  % `self`)
-
             self.__descr = descr
 
         if __debug__:
-            debug("ST",
-                  "Stateful.__init__ was done for %s id %s with descr=%s" \
+            debug("COL", "ClassWithCollections.__init__ was done "
+                  "for %s id %s with descr=%s" \
                   % (self.__class__.__name__, id(self), descr))
 
 
@@ -1031,7 +1107,7 @@ class Stateful(object):
 
 
     def __repr__(self, prefixes=[], fullname=False):
-        """Definition of the object summary over Parametrized object
+        """String definition of the object of ClassWithCollections object
 
         :Parameters:
           fullname : bool
@@ -1053,25 +1129,16 @@ class Stateful(object):
             if modulename != "__main__":
                 module_str = "%s." % modulename
 
+        # Collections' attributes
         collections = self._collections
         # we want them in this particular order
-        for col in _collections_order:
+        for col in _COLLECTIONS_ORDER:
             collection = collections.get(col, None)
             if collection is None:
                 continue
-            if isinstance(collection, ParameterCollection):
-                for k in collection.names:
-                    # list only params with not default values
-                    if collection[k].isDefault: continue
-                    prefixes.append("%s=%s" % (k, collection[k].value))
-            elif isinstance(collection, StateCollection):
-                for name, invert in ( ('enable', False), ('disable', True) ):
-                    states = collection._getEnabled(nondefault=False,
-                                                    invert=invert)
-                    if len(states):
-                        prefixes.append("%s_states=%s" % (name, str(states)))
-            else:
-                raise RuntimeError, "Unknown type of collection %s" % col
+            prefixes += collection._cls_repr()
+
+        # Description if present
         descr = self.__descr
         if descr is not None:
             prefixes.append("descr='%s'" % (descr))
@@ -1082,6 +1149,54 @@ class Stateful(object):
 
     descr = property(lambda self: self.__descr,
                      doc="Description of the object if any")
+
+
+
+class Stateful(ClassWithCollections):
+    """Base class for stateful objects (ie which have states collection).
+    """
+
+    __metaclass__ = collector
+
+    _INITARGS = ClassWithCollections._INITARGS \
+                + [ 'enable_states', 'disable_states']
+
+    def __init__(self,
+                 enable_states=None,
+                 disable_states=None,
+                 descr=None):
+        """Initialize Stateful object
+
+        :Parameters:
+          enable_states : None or list of basestring
+            Names of the state variables which should be enabled additionally
+            to default ones
+          disable_states : None or list of basestring
+            Names of the state variables which should be disabled
+          descr : basestring
+            Description of the instance
+        """
+        ClassWithCollections.__init__(self, descr=descr)
+        if self._collections.has_key('states'):
+            if enable_states == None:
+                enable_states = []
+            if disable_states == None:
+                disable_states = []
+            states = self._collections['states']
+            states.enable(enable_states, missingok=True)
+            states.disable(disable_states)
+        else:
+            #if not (enable_states is None and disable_states is None):
+            #warning("Provided enable_states and disable_states are " + \
+            #        "ignored since object %s has no states"  % `self`)
+            warning("Yarik expects all Stateful derived classes to have states")
+
+        if __debug__:
+            debug("ST",
+                  "Stateful.__init__ was done for %s id %s with descr=%s" \
+                  % (self.__class__.__name__, id(self), descr))
+
+    #__doc__ = enhancedDocString('Stateful', locals())
 
 
 
@@ -1236,7 +1351,7 @@ class Parametrized(Stateful):
         """
         # compose kwargs to be passed to Stateful and remove them from kwargs
         kwargs_stateful = {}
-        for arg in Stateful._initargs:
+        for arg in Stateful._INITARGS:
             if kwargs.has_key(arg):
                 kwargs_stateful[arg] = kwargs.pop(arg)
 
