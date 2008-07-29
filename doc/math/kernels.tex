@@ -220,18 +220,34 @@ advance), and $(\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$ which
 does not depend upon $A$ and $\mathbf{B}$ so it can be computed once
 for all. Note that in NumPy $(\X_{*i}J_{1,N'}-
 (\X'_{*i}J_{1,N})^{\top})^2$ can be computed as {\ttfamily
-  numpy.subtract.outer($X_{*i}-X'_{*i}$)**2}.
+  numpy.subtract.outer($X_{*i},X'_{*i}$)**2}.
 
 \section{Squared Exponential kernel}
 
 \subsection{Scalar Lengthscale $\ell$}
-$$k(\x,\x') = \sigma_f e^{-\frac{1}{2\ell^2} (\x-\x')^{\top}(\x-\x')}
-  = \sigma_f e^{-\frac{1}{2\ell^2} \sum_{i=1}^D (x_i - x'_i)^2} =
-  \sigma_f e^{-\frac{1}{2\ell^2} \|\x-\x'\|_2^2}$$ 
-$$\K(\X,\X') = \sigma_f e^{-\frac{1}{2\ell^2} \dm(\X,\X')^2}$$
+$$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2\ell^2} (\x-\x')^{\top}(\x-\x')}
+  = \sigma_f^2 e^{-\frac{1}{2\ell^2} \sum_{i=1}^D (x_i - x'_i)^2} =
+  \sigma_f^2 e^{-\frac{1}{2\ell^2} \|\x-\x'\|_2^2}$$ 
+$$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{2\ell^2} \dm(\X,\X')^2}$$
 $$\sigma_f \ge 0$$
 $$\ell > 0$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ell \}$$
+$$\frac{\partial k}{\partial \sigma_f} = \frac{2}{\sigma_f}k$$
+$$\frac{\partial \K}{\partial \sigma_f} = \frac{2}{\sigma_f}\K$$
+$$\frac{\partial k}{\partial \ell} = \ell^{-3} k \|\x-\x'\|_2^2 $$
+$$\frac{\partial \K}{\partial \ell} = \ell^{-3} \K \bullet \dm(\X,\X')^2$$
+$$\nabla_{\sigma_f,\ell} \K = \left(\frac{2}{\sigma_f}K(\X,\X'), \ell^{-3} \K \bullet \dm(\X-\X')^2 \right)$$
+Logscale:
+$$A = \ln{\sigma_f}$$
+$$\sigma_f = e^A$$
+$$\frac{\partial k}{\partial A} = 2k$$
+$$\frac{\partial \K}{\partial \sigma_f} = 2\K$$
+$$B = \ln{\ell}$$
+$$\ell = e^B$$
+$$\frac{\partial k}{\partial B} = \ell^{-2} k \|\x-\x'\|_2^2$$
+$$\frac{\partial \K}{\partial B} = \ell^{-2} \K \bullet \dm(\X,\X')^2 = \K \bullet \dm(\X,\X',\ell^{-2}\J_N)^2$$
+$$\nabla_{A,B} \K = \left( 2\K(\X,\X'), \ell^{-2} \K \bullet \dm(\X-\X')^2 \right)$$
+Another mapping:
 $$A = \sigma_f^2$$
 $$B = -\frac{1}{\ell^2}$$
 $$A \ge 0$$
@@ -260,6 +276,22 @@ $$\K(\X,\X') = \sigma_f^2 e^{-\frac{1}{2} \dm(\X,\X',\ELL^{-2})^2}$$
 $$\sigma_f \ge 0$$
 $$\ell_i > 0$$
 $$\mathbf{\Theta} = \{ \sigma_f, \ELL\}$$
+$$\frac{\partial k}{\partial \sigma_f} = \frac{2}{\sigma_f}k$$
+$$\frac{\partial \K}{\partial \sigma_f} = \frac{2}{\sigma_f}\K$$
+$$\frac{\partial k}{\partial \ell_i} = \ell_i^{-3} k \|\x_i-\x_i'\|_2^2 $$
+$$\frac{\partial \K}{\partial \ell_i} = \ell_i^{-3} \K \bullet (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$$
+$$\nabla_{\sigma_f,\ell} \K = \left(\frac{2}{\sigma_f}K(\X,\X'), \ell_i^{-3} \K \bullet (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2 \right)$$
+Logscale:
+$$A = \ln{\sigma_f}$$
+$$\sigma_f = e^A$$
+$$\frac{\partial k}{\partial A} = 2k$$
+$$\frac{\partial \K}{\partial \sigma_f} = 2\K$$
+$$B_i = \ln{\ell_i}$$
+$$\ell_i = e^B_i$$
+$$\frac{\partial k}{\partial B_i} = \ell_i^{-2} k \|\x_i-\x'_i\|_2^2$$
+$$\frac{\partial \K}{\partial B_i} = \ell^{-2} \K \bullet \dm(\X,\X')^2 = \ell_i^{-2} \K \bullet (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$$
+$$\nabla_{A,\mathbf{B}} \K = \left( 2\K(\X,\X'), \left\{ \ell_i^{-2} \K \bullet (\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2 \right\}_{i=1 \ldots D} \right)$$
+Another mapping:
 $$A = \sigma_f$$
 $$\mathbf{B} = -\frac{1}{2}\ELL^{-2} =
 \left(-\frac{1}{2\ell_1^2},\ldots,-\frac{1}{2\ell_D^2} \right)$$

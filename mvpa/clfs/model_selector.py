@@ -39,7 +39,7 @@ class ModelSelector(object):
         self.problem = None
         pass
 
-    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None, use_gradient=True):
+    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None, use_gradient=False):
         """
         Set up the optimization problem in order to maximize
         the log_marginal_likelihood.
@@ -76,7 +76,7 @@ class ModelSelector(object):
         """
         self.problem = None
         self.use_gradient = use_gradient
-        self.logscale = False # use log-scale on hyperparameters to enhance numerical stability
+        self.logscale = True # use log-scale on hyperparameters to enhance numerical stability
         self.optimization_algorithm = optimization_algorithm
         self.hyp_initial_guess = N.array(hyp_initial_guess)
         self.hyp_initial_guess_log = N.log(self.hyp_initial_guess)        
@@ -89,6 +89,7 @@ class ModelSelector(object):
         else:
             self.hyp_running_guess = self.hyp_initial_guess.copy()
             pass
+        self.f_last_x = None
 
         def f(x):
             """
@@ -106,6 +107,7 @@ class ModelSelector(object):
             # XXX EO: OpenOpt does not implement logrithmic scale of
             # the hyperparameters (to enhance numerical stability), so
             # it is implemented here.
+            self.f_last_x = x.copy()
             self.hyp_running_guess[self.freeHypers] = x
             # REMOVE print "guess:",self.hyp_running_guess,x
             try:
@@ -148,18 +150,25 @@ class ModelSelector(object):
             except InvalidHyperparameterError:
                 if __debug__: debug("GPR", "WARNING: invalid hyperparameters!")
                 return -N.inf
-            try:
-                self.parametric_model.train(self.dataset)
-            except N.linalg.linalg.LinAlgError:
-                if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
-                # XXX EO: which value for the gradient to return to
-                # OpenOpt when hyperparameters are wrong?
-                return N.zeros(x.size)
-            log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood() # recompute what's needed (to be safe) REMOVE IN FUTURE!
+            # Check if it is possible to avoid useless computations
+            # already done in f(). According to tests and information
+            # collected from OpenOpt people, it is sufficiently
+            # unexpected that the following test succeed:
+            if N.any(x!=self.f_last_x):
+                if __debug__: debug("GPR","UNEXPECTED: recomputing train+log_marginal_likelihood.")
+                try:
+                    self.parametric_model.train(self.dataset)
+                except N.linalg.linalg.LinAlgError:
+                    if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
+                    # XXX EO: which value for the gradient to return to
+                    # OpenOpt when hyperparameters are wrong?
+                    return N.zeros(x.size)
+                log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood() # recompute what's needed (to be safe) REMOVE IN FUTURE!
+                pass
             if self.logscale:
                 gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood_logscale()
             else:
-                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood2()
+                gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood()
                 pass
             return gradient_log_marginal_likelihood[self.freeHypers]
 
@@ -298,10 +307,23 @@ if __name__ == "__main__":
 
     gpr.compute_prediction(sigma_noise_best,sigma_f_best,length_scale_best,regression,dataset,data_test,label_test,F)
 
-    ## print
-    ## print "GPR ARD on dataset from Williams and Rasmussen 1996:"
-    ## # data = N.hstack([data]*10) # test a larger set of dimensions: reduce ftol!
-    ## dataset =  data_generators.wr1996()
-    ## # k = kernel.KernelConstant()
-    ## # k = kernel.KernelLinear()
-    ##
+
+    print
+    print "GPR ARD on dataset from Williams and Rasmussen 1996:"
+    dataset =  data_generators.wr1996()
+    k = kernel.KernelSquaredExponential()
+    g = gpr.GPR(k,regression=regression)
+    g.states.enable("log_marginal_likelihood")
+    ms = ModelSelector(g,dataset)
+    
+    sigma_noise_initial = 1.0e-0
+    sigma_f_initial = 1.0e-0
+    length_scale_initial = N.ones(6)*1.0e-0
+    
+    hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
+    fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
+    
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-5,fixedHypers=fixedHypers,use_gradient=True)
+    lml = ms.solve()
+    print ms.hyperparameters_best
+    
