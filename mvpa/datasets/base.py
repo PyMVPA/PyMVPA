@@ -484,8 +484,7 @@ class Dataset(object):
 
 
     @classmethod
-    def _registerAttribute(cls, key, dictname="_data", hasunique=False,
-                           default_setter=True):
+    def _registerAttribute(cls, key, dictname="_data", hasunique=False):
         """Register an attribute for any Dataset class.
 
         Creates property assigning getters/setters depending on the
@@ -508,7 +507,7 @@ class Dataset(object):
             setter = '_set%s' % key
             if classdict.has_key(setter):
                 setter =  '%s.%s' % (cls.__name__, setter)
-            elif default_setter and dictname=="_data":
+            elif dictname=="_data":
                 setter = "lambda self,x: self._setdataattr" + \
                          "(attrib='%s', value=x)" % (key)
             else:
