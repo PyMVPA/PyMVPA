@@ -770,8 +770,8 @@ class Dataset(object):
         return dataset
 
 
-    def selectSamples(self, mask):
-        """Choose a subset of samples.
+    def selectSamples(self, ids):
+        """Choose a subset of samples defined by samples IDs.
 
         Returns a new dataset object containing the selected sample
         subset.
@@ -782,8 +782,8 @@ class Dataset(object):
         """
         # without having a sequence a index the masked sample array would
         # loose its 2d layout
-        if not operator.isSequenceType( mask ):
-            mask = [mask]
+        if not operator.isSequenceType( ids ):
+            ids = [ids]
         # TODO: Reconsider crafting a slice if it can be done to don't copy
         #       the data
         #try:
@@ -804,7 +804,7 @@ class Dataset(object):
         # mask all sample attributes
         data = {}
         for k, v in self._data.iteritems():
-            data[k] = v[mask, ]
+            data[k] = v[ids, ]
 
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
