@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import re, textwrap
 
 def rstUnderline(text, markup):
     """Add and underline RsT string matching the length of the given string.
@@ -28,7 +29,14 @@ def handleDocString(text):
         #  return '\n'.join(['>%s<' % x for x in text.split('\n')])
         # function posixpath.commonprefix might be used to detect
         # common prefix, or just textwrap.dedent
-        return text
+        # Problem is that first line might often have no offset, so might
+        # need to be ignored from dedent call
+        if not text.startswith(' '):
+            lines = text.split('\n')
+            text2 = '\n'.join(lines[1:])
+            return lines[0] + "\n" + textwrap.dedent(text2)
+        else:
+            return textwrap.dedent(text)
 
 
 def enhancedDocString(name, lcl, *args):
@@ -55,7 +63,7 @@ def enhancedDocString(name, lcl, *args):
 def enhancedClassDocString(cls, *args):
     """Generate enhanced doc strings but given a class, not just a name.
 
-    It is to be used from a collector, it whenever class is already created
+    It is to be used from a collector, ie whenever class is already created
     """
     name = cls.__name__
     lcl = cls.__dict__
@@ -80,7 +88,7 @@ def enhancedClassDocString(cls, *args):
         initdoc_therest = initdoc[nl_index+1:]
         nspaces = len(initdoc_therest) - len(initdoc_therest.lstrip())
         initdoc = initdoc[:nl_index+1] + '\n'.join(
-                  [' '*nspaces + x for x in cls._paramsdoc.split('\n')]) + \
+                  [' '*(nspaces-2) + x for x in cls._paramsdoc.rstrip().split('\n')]) + \
                   initdoc[nl_index:]
 
     docs = []
@@ -97,4 +105,8 @@ def enhancedClassDocString(cls, *args):
                                rst_lvlmarkup[1]),
                   handleDocString(i.__doc__) ]
 
-    return '\n\n'.join(docs)
+    result = '\n\n'.join(docs)
+    # remove some bogus new lines -- never 3 empty lines in doc are useful
+    result = re.sub("\s*\n\s*\n\s*\n", "\n\n", result)
+
+    return result
