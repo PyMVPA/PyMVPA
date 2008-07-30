@@ -1029,16 +1029,22 @@ class AttributesCollector(type):
         # parameters an if it is stateful
         #
         # TODO -- figure nice way on how to alter __init__ doc directly...
-        paramsdoc = ""
         textwrapper = TextWrapper(subsequent_indent="    ",
                                   initial_indent="    ",
                                   width=70)
 
+        # Parameters
+        paramsdoc = ""
         paramscols = []
         for col in ('params', 'kernel_params'):
             if collections.has_key(col):
                 paramscols.append(col)
-                for param, parameter in collections[col].items.iteritems():
+                # lets at least sort the parameters for consistent output
+                col_items = collections[col].items
+                params = col_items.keys()
+                params.sort()
+                for param in params:
+                    parameter = col_items[param]
                     paramsdoc += "  %s" % param
                     try:
                         paramsdoc += " : %s" % parameter.allowedtype
@@ -1056,6 +1062,15 @@ class AttributesCollector(type):
                         pass
 
         setattr(cls, "_paramscols", paramscols)
+
+        # States doc
+        if collections.has_key('states'):
+            paramsdoc += """  enable_states : None or list of basestring
+    Names of the state variables which should be enabled additionally
+    to default ones
+  disable_states : None or list of basestring
+    Names of the state variables which should be disabled
+"""
         if paramsdoc != "":
             if __debug__:
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
