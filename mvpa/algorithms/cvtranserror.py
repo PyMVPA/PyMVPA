@@ -138,6 +138,11 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             if self.states.isEnabled("transerrors"):
                 self.transerrors.append(copy(self.__transerror))
 
+            # XXX: zip labels and per sample errors into a dict here
+            # and charge state with it, whihc in turn uses a class that
+            # can add dict elements into a list
+
+            # pull in child states
             for state_var in ['confusion', 'training_confusion']:
                 if self.states.isEnabled(state_var):
                     self.states.getvalue(state_var).__iadd__(

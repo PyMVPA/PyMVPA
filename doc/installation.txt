@@ -256,7 +256,7 @@ PyMVPA on your own. Any recent linux distribution should be capable of doing
 it (e.g. RedHat). Additionally, building PyMVPA also works on Mac OSX and
 Windows systems.
 
-.. _PyMVPA project website: http://pkg-exppsy.alioth.debian.org/pymvpa/
+.. _PyMVPA project website: http://www.pymvpa.org
 
 
 .. index:: releases, development snapshot

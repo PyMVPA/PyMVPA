@@ -656,9 +656,9 @@ class ClassifierError(Stateful):
        be indicies of the array
     """
 
-    training_confusion = StateVariable(enabled=False)
-    """Proxy training_confusion from underlying classifier
-    """
+    training_confusion = StateVariable(enabled=False,
+        doc="Proxy training_confusion from underlying classifier.")
+
 
     def __init__(self, clf, labels=None, train=True, **kwargs):
         """Initialization.
@@ -781,8 +781,12 @@ class TransferError(ClassifierError):
     training dataset to the __call__() method.
     """
 
-    null_prob = StateVariable(enabled=True)
-    """Stores the probability of an error result under the NULL hypothesis"""
+    null_prob = StateVariable(enabled=True,
+                    doc="Stores the probability of an error result under "
+                         "the NULL hypothesis")
+    samples_error = StateVariable(enabled=False,
+                        doc="Per sample errors computed by invoking the "
+                            "error function for each sample individually.")
 
     def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
                  null_dist=None, **kwargs):
@@ -840,6 +844,13 @@ class TransferError(ClassifierError):
                 #labels=self.labels,
                 targets=testdataset.labels,
                 predictions=predictions)
+
+        if self.states.isEnabled('samples_error'):
+            samples_error = []
+            for i, p in enumerate(predictions):
+                samples_error.append(self.__errorfx(p, testdataset.labels[i]))
+
+            self.samples_error = samples_error
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.labels)
