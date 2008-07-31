@@ -140,6 +140,21 @@ class ErrorsTests(unittest.TestCase):
                 % null_prob)
 
 
+    @sweepargs(l_clf=clfs['linear', 'svm'])
+    def testPerSampleError(self, l_clf):
+        train = datasets['uni2medium']
+        terr = TransferError(clf=l_clf, enable_states=['samples_error'])
+        err = terr(train, train)
+        se = terr.samples_error
+
+        # one error per sample
+        self.failUnless(len(se) == train.nsamples)
+        # for this simple test it can only be correct or misclassified
+        # (boolean)
+        self.failUnless(
+            N.sum(N.array(se, dtype='float') - N.array(se, dtype='b'))
+                == 0)
+
 
 def suite():
     return unittest.makeSuite(ErrorsTests)
