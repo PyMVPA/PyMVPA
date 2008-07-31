@@ -250,15 +250,25 @@ class SetLogger(Logger):
                     self.__active = registered_keys
                     break
                 # try to match item as it is regexp
+                regexp_str = "^%s$" % item
                 try:
-                    regexp = re.compile("^%s$" % item)
+                    regexp = re.compile(regexp_str)
                 except:
                     raise ValueError, \
                           "Unable to create regular expression out of  %s" % item
                 matching_keys = filter(regexp.match, registered_keys)
                 toactivate = matching_keys
+                if len(toactivate) == 0:
+                    ids = self.registered.keys()
+                    ids.sort()
+                    raise ValueError, \
+                          "Unknown debug ID '%s' was asked to become active," \
+                          " or regular expression '%s' did not get any match" \
+                          " among known ids: %s" \
+                          % (item, regexp_str, ids)
             else:
                 toactivate = [item]
+
             # Lets check if asked items are known
             for item_ in toactivate:
                 if not (item_ in registered_keys):
