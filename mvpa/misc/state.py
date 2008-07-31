@@ -189,6 +189,15 @@ class AttributeWithUnique(CollectableAttribute):
     uniqueValues = property(fget=_getUniqueValues)
     hasunique = property(fget=lambda self:self._hasunique)
 
+# Hooks for comprehendable semantics and automatic collection generation
+class SampleAttribute(AttributeWithUnique):
+    pass
+
+class FeatureAttribute(AttributeWithUnique):
+    pass
+
+class DatasetAttribute(AttributeWithUnique):
+    pass
 
 
 class StateVariable(CollectableAttribute):
@@ -714,6 +723,26 @@ class ParameterCollection(Collection):
         self._action(index, Parameter.resetvalue, missingok=False)
 
 
+class SampleAttributesCollection(Collection):
+    """Container for data and attributes of samples (ie data/labels/chunks/...)
+    """
+
+#    def __init__(self, items=None, owner=None, name=None):
+#        """Initialize the state variables of a derived class
+#
+#        :Parameters:
+#          items : dict
+#            dictionary of states
+#        """
+#        Collection.__init__(self, items, owner, name)
+#
+
+    def _cls_repr(self):
+        """Part of __repr__ for the owner object
+        """
+        return [] # TODO: return I guess samples/labels/chunks
+
+
 
 class StateCollection(Collection):
     """Container of StateVariables for a stateful object.
@@ -936,16 +965,25 @@ class StateCollection(Collection):
 # Helper dictionaries for AttributesCollector
 #
 _known_collections = {
+    # Quite a generic one but mostly in classifiers
     'StateVariable': ("states", StateCollection),
+    # For classifiers only
     'Parameter': ("params", ParameterCollection),
-    'KernelParameter': ("kernel_params", ParameterCollection)}
+    'KernelParameter': ("kernel_params", ParameterCollection),
+    # For datasets
+    # XXX custom collections needed?
+    'SampleAttribute':  ("s_attr", SampleAttributesCollection),
+    'FeatureAttribute': ("f_attr", SampleAttributesCollection),
+    'DatasetAttribute': ("ds_attr", SampleAttributesCollection),
+    }
 
 
 _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
 
-_COLLECTIONS_ORDER = ['params', 'kernel_params', 'states']
+_COLLECTIONS_ORDER = ['s_attr', 'f_attr', 'ds_attr',
+                      'params', 'kernel_params', 'states']
 
 
 class AttributesCollector(type):
@@ -1002,7 +1040,8 @@ class AttributesCollector(type):
 
         if __debug__:
             debug("COLR",
-                  "Creating StateCollection template %s" % cls)
+                  "Creating StateCollection template %s with collections %s"
+                  % (cls, collections.keys()))
 
         # if there is an explicit
         if hasattr(cls, "_ATTRIBUTE_COLLECTIONS"):
@@ -1061,6 +1100,8 @@ class AttributesCollector(type):
                     except Exception, e:
                         pass
 
+        # Parameters collection could be taked hash of to decide if
+        # any were changed? XXX may be not needed at all?
         setattr(cls, "_paramscols", paramscols)
 
         # States doc
