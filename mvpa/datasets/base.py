@@ -17,6 +17,7 @@ import numpy as N
 
 from sets import Set
 
+from mvpa.misc.state import ClassWithCollections, SampleAttribute
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
 from mvpa.base.dochelpers import enhancedDocString
@@ -24,7 +25,7 @@ from mvpa.base.dochelpers import enhancedDocString
 if __debug__:
     from mvpa.base import debug, warning
 
-class Dataset(object):
+class Dataset(ClassWithCollections):
     """*The* Dataset.
 
     This class provides a container to store all necessary data to
@@ -45,6 +46,14 @@ class Dataset(object):
     would not work.  The same applies to any other attribute which has
     corresponding unique* access property.
 
+    XXX Notes about migration to use Collections to store data and
+    attributes for samples, features, and dataset itself:
+
+    changes:
+      _data  ->  s_attr collection (samples attributes)
+      _dsattr -> ds_attr collection
+                 f_attr collection (features attributes)
+
     """
 
     # static definition to track which unique attributes
@@ -62,6 +71,16 @@ class Dataset(object):
     """Attributes which have to be provided to __init__, or otherwise
     no default values would be assumed and construction of the
     instance would fail"""
+
+    _ATTRIBUTE_COLLECTIONS = [ 's_attr', 'f_attr', 'ds_attr' ]
+    """Assure those 3 collections to be present in all datasets"""
+    # XXX may be don't do that? ;-)
+
+    samples__ = SampleAttribute(doc="Samples data. 0th index is time", hasunique=False) # XXX
+    labels__ = SampleAttribute(doc="Labels for the samples", hasunique=True)
+    chunks__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=True)
+    # samples ids (already unique by definition)
+    origids__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=False)
 
     def __init__(self,
                  # for copy constructor
@@ -126,6 +145,9 @@ class Dataset(object):
         already in the `data` container.
 
         """
+
+        ClassWithCollections.__init__(self)
+
         # see if data and dsattr are none, if so, make them empty dicts
         if data is None:
             data = {}
