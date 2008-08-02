@@ -527,12 +527,12 @@ class KernelMatern_3_2(Kernel):
         if self.numerator == 3.0:
             tmp = N.sqrt(tmp)
             self.kernel_matrix = \
-                self.sigma_f * (1.0 + N.sqrt(3.0) * tmp) \
+                self.sigma_f**2 * (1.0 + N.sqrt(3.0) * tmp) \
                 * N.exp(-N.sqrt(3.0) * tmp)
         elif self.numerator == 5.0:
             tmp2 = N.sqrt(tmp)
             self.kernel_matrix = \
-                self.sigma_f * (1.0 + N.sqrt(5.0) * tmp2 + 5.0 / 3.0 * tmp) \
+                self.sigma_f**2 * (1.0 + N.sqrt(5.0) * tmp2 + 5.0 / 3.0 * tmp) \
                 * N.exp(-N.sqrt(5.0) * tmp2)
         return self.kernel_matrix
 
@@ -623,9 +623,9 @@ class KernelRationalQuadratic(Kernel):
             (Defaults to None)
         """
         tmp = squared_euclidean_distance(
-                data1, data2, weight=0.5 / (self.length_scale ** 2))
+                data1, data2, weight=1.0 / (self.length_scale ** 2))
         self.kernel_matrix = \
-            self.sigma_f * (1.0 + tmp / (2.0 * self.alpha)) ** -self.alpha
+            self.sigma_f**2 * (1.0 + tmp / (2.0 * self.alpha)) ** -self.alpha
         return self.kernel_matrix
 
     def gradient(self, data1, data2):
