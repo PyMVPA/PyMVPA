@@ -76,6 +76,9 @@ nothing but free-software to run.""",
                        'mvpa.measures',
                        'mvpa.featsel',
                        'mvpa.misc',
+                       'mvpa.misc.bv',
+                       'mvpa.misc.io',
+                       'mvpa.misc.plot',
                        'mvpa.misc.fsl' ],
       ext_modules  = ext_modules
       )
