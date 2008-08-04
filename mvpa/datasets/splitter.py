@@ -97,7 +97,12 @@ class Splitter(object):
         # local bindings to methods to gain some speedup
         ds_class = dataset.__class__
         DS_permuteLabels = ds_class.permuteLabels
-        DS_getNSamplesPerLabel = ds_class._getNSamplesPerAttr
+        try:
+            DS_getNSamplesPerLabel = ds_class._getNSamplesPerAttr
+        except AttributeError:
+            # Some "not-real" datasets e.g. MetaDataset, might not
+            # have it
+            pass
         DS_getRandomSamples = ds_class.getRandomSamples
 
         # for each split
