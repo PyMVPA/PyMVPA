@@ -1144,23 +1144,23 @@ class ClassWithCollections(object):
         """
         self = super(ClassWithCollections, cls).__new__(cls)
 
-        if not hasattr(self, '_collections'):
-            # need to check to avoid override of enabled states in the case
-            # of multiple inheritance, like both Statefull and Harvestable
-            object.__setattr__(
-                self, '_collections',
-                copy.deepcopy(
-                    object.__getattribute__(self, '_collections_template')))
+        s__dict__ = self.__dict__
 
-            collections = self._collections
+        # need to check to avoid override of enabled states in the case
+           # of multiple inheritance, like both Statefull and Harvestable
+        if not s__dict__.has_key('_collections'):
+            s__class__ = self.__class__
+
+            collections = copy.deepcopy(s__class__._collections_template)
+            s__dict__['_collections'] = collections
 
             # Assign owner to all collections
             for col, collection in collections.iteritems():
-                if col in self.__dict__:
+                if col in s__dict__:
                     raise ValueError, \
                           "Object %s has already attribute %s" % \
                           (self, col)
-                self.__dict__[col] = collection
+                s__dict__[col] = collection
                 collection.owner = self
 
             self.__params_set = False
@@ -1169,7 +1169,7 @@ class ClassWithCollections(object):
             descr = kwargs.get('descr', None)
             debug("COL", "ClassWithCollections.__new__ was done "
                   "for %s id %s with descr=%s" \
-                  % (self.__class__.__name__, id(self), descr))
+                  % (s__class__.__name__, id(self), descr))
 
         return self
 
