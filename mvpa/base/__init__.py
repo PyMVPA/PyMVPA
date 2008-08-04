@@ -123,6 +123,11 @@ class WarningLog(OnceLogger):
         OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
 
+    def _setMaxCount(self, value):
+        self.__maxcount = value
+
+    maxcount = property(fget=lambda x:x.__maxcount, fset=_setMaxCount)
+
 # XXX what is 'bt'? Maybe more verbose name?
 if cfg.has_option('warnings', 'bt'):
     warnings_btlevels = cfg.getint('warnings', 'bt')
