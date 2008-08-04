@@ -299,15 +299,19 @@ class Dataset(ClassWithCollections):
         """Set to None all unique* attributes of corresponding dictionary
         """
         _dsattr = self._dsattr
+
         if not force and _dsattr['__uniquereseted']:
             return
 
+        _uniqueattributes = self._uniqueattributes
+
+        if __debug__ and "DS_" in debug.active:
+            debug("DS_", "Reseting all attributes %s for dataset %s"
+                  % (_uniqueattributes,
+                     self.summary(uniq=False, idhash=False, stats=False)))
+
         # I guess we better checked if dictname is known  but...
-        for k in self._uniqueattributes:
-            if __debug__:
-                debug("DS_", "Reset attribute %s for dataset %s"
-                      % (k,
-                         self.summary(uniq=False, idhash=False, stats=False)))
+        for k in _uniqueattributes:
             _dsattr[k] = None
         _dsattr['__uniquereseted'] = True
 
