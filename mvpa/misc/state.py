@@ -26,6 +26,9 @@ if __debug__:
     from mvpa.base import debug
 
 
+_object_getattribute = object.__getattribute__
+_object_setattr = object.__setattr__
+
 ##################################################################
 # Various attributes which will be collected into collections
 #
@@ -277,7 +280,7 @@ class Collection(object):
      (thus `listing` property)
     """
 
-    def __init__(self, items=None, owner=None):
+    def __init__(self, items=None, owner=None, name=None):
         """Initialize the Collection
 
         :Parameters:
@@ -285,6 +288,8 @@ class Collection(object):
             items to initialize with
           owner : object
             an object to which collection belongs
+          name : basestring
+            name of the collection (as seen in the owner, e.g. 'states')
         """
 
         self.__owner = owner
@@ -295,7 +300,10 @@ class Collection(object):
         """Dictionary to contain registered states as keys and
         values signal either they are enabled
         """
+        self.__name = name
 
+    def _setName(self, name):
+        self.__name = name
 
     def __str__(self):
         num = len(self._items)
@@ -303,7 +311,11 @@ class Collection(object):
             maxnumber = 1000            # I guess all
         else:
             maxnumber = 4
-        res = "{"
+        if self.__name is not None:
+            res = self.__name
+        else:
+            res = ""
+        res += "{"
         for i in xrange(min(num, maxnumber)):
             if i>0: res += " "
             res += "%s" % str(self._items.values()[i])
@@ -511,19 +523,19 @@ class Collection(object):
         #return all private and protected ones first since we will not have
         # collectable's with _ (we should not have!)
         if index[0] == '_':
-            return object.__getattribute__(self, index)
+            return _object_getattribute(self, index)
         if self._items.has_key(index):
             return self._items[index].value
-        return object.__getattribute__(self, index)
+        return _object_getattribute(self, index)
 
 
     def __setattr__(self, index, value):
         if index[0] == '_':
-            return object.__setattr__(self, index, value)
+            return _object_setattr(self, index, value)
         if self._items.has_key(index):
             self._items[index].value = value
             return
-        object.__setattr__(self, index, value)
+        _object_setattr(self, index, value)
 
 
     def __getitem__(self, index):
@@ -543,7 +555,7 @@ class Collection(object):
     #        self._items[index] = value
     #        self._updateOwner(index, register=True)
     #
-    #    object.__setattr__(self, index, value)
+    #    _object_setattr(self, index, value)
 
 
     def getvalue(self, index):
@@ -661,7 +673,7 @@ class Collection(object):
 
         ownerdict = self.owner.__dict__
         selfdict = self.__dict__
-
+        owner_known = ownerdict['_known_attribs']
         for index_ in indexes:
             if register:
                 if index_ in ownerdict:
@@ -674,10 +686,12 @@ class Collection(object):
                           "Cannot register attribute %s within %s " % \
                           (index_, self) + "since it has one already"
                 selfdict[index_] = self._items[index_]
+                owner_known[index_] = self.__name
             else:
                 if index_ in ownerdict:
                     # yoh doesn't think that we need to complain if False
                     ownerdict.pop(index_)
+                    owner_known.pop(index_)
                 if index_ in selfdict:
                     selfdict.pop(index_)
 
@@ -686,6 +700,7 @@ class Collection(object):
     names = property(fget=_getNames)
     items = property(fget=lambda x:x._items)
     owner = property(fget=_getOwner, fset=_setOwner)
+    name = property(fget=lambda x:x.__name, fset=_setName)
 
     # Virtual properties
     listing = VProperty(fget=_getListing)
@@ -1153,6 +1168,11 @@ class ClassWithCollections(object):
 
             collections = copy.deepcopy(s__class__._collections_template)
             s__dict__['_collections'] = collections
+            s__dict__['_known_attribs'] = {}
+            """Dictionary to contain 'links' to the collections from each
+            known attribute. Is used to gain some speed up in lookup within
+            __getattribute__ and __setattr__
+            """
 
             # Assign owner to all collections
             for col, collection in collections.iteritems():
@@ -1161,6 +1181,7 @@ class ClassWithCollections(object):
                           "Object %s has already attribute %s" % \
                           (self, col)
                 s__dict__[col] = collection
+                collection.name = col
                 collection.owner = self
 
             self.__params_set = False
@@ -1232,25 +1253,34 @@ class ClassWithCollections(object):
         # return all private ones first since smth like __dict__ might be
         # queried by copy before instance is __init__ed
         if index[0] == '_':
-            return object.__getattribute__(self, index)
-        for col, collection in \
-          object.__getattribute__(self, '_collections').iteritems():
-            if index in [col]:
-                return collection
-            if collection.items.has_key(index):
-                return collection.getvalue(index)
-        return object.__getattribute__(self, index)
+            return _object_getattribute(self, index)
+
+        # check if it is a known collection
+        collections = _object_getattribute(self, '_collections')
+        if index in collections:
+            return collections[index]
+
+        # check if it is a part of any collection
+        known_attribs = _object_getattribute(self, '_known_attribs')
+        if index in known_attribs:
+            return collections[known_attribs[index]].getvalue(index)
+
+        # just a generic return
+        return _object_getattribute(self, index)
 
 
     def __setattr__(self, index, value):
         if index[0] == '_':
-            return object.__setattr__(self, index, value)
-        for col, collection in \
-          object.__getattribute__(self, '_collections').iteritems():
-            if collection.items.has_key(index):
-                collection.setvalue(index, value)
-                return
-        object.__setattr__(self, index, value)
+            return _object_setattr(self, index, value)
+
+        # Check if a part of a collection, and set appropriately
+        known_attribs = _object_getattribute(self, '_known_attribs')
+        if index in known_attribs:
+            collections = _object_getattribute(self, '_collections')
+            return collections[known_attribs[index]].setvalue(index, value)
+
+        # Generic setattr
+        return _object_setattr(self, index, value)
 
 
     # XXX not sure if we shouldn't implement anything else...
