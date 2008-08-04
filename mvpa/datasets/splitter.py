@@ -94,6 +94,12 @@ class Splitter(object):
         This method behaves like a generator.
         """
 
+        # local bindings to methods to gain some speedup
+        ds_class = dataset.__class__
+        DS_permuteLabels = ds_class.permuteLabels
+        DS_getNSamplesPerLabel = ds_class._getNSamplesPerAttr
+        DS_getRandomSamples = ds_class.getRandomSamples
+
         # for each split
         for split in self.splitcfg(dataset):
 
@@ -116,7 +122,7 @@ class Splitter(object):
                 for i, ds in enumerate(split_ds):
                     # permute the labels
                     if self.__permute:
-                        ds.permuteLabels(True, perchunk=True)
+                        DS_permuteLabels(ds, True, perchunk=True)
 
                     # select subset of samples if requested
                     if nperlabel[i] == 'all':
@@ -130,13 +136,14 @@ class Splitter(object):
                             # by each label in this dataset
                             if nperlabel[i] == 'equal':
                                 # determine number number of samples per class
-                                npl = N.array(ds.samplesperlabel.values()).min()
+                                npl = N.array(DS_getNSamplesPerLabel(
+                                    ds, attrib='labels').values()).min()
                             else:
                                 npl = nperlabel[i]
 
                             # finally select the patterns
                             finalized_datasets.append(
-                                ds.getRandomSamples(npl))
+                                DS_getRandomSamples(ds, npl))
 
                 yield finalized_datasets
 
@@ -158,13 +165,15 @@ class Splitter(object):
         filters = []
         none_specs = 0
         cum_filter = None
+
+        splitattr_data = eval('dataset.' + self.__splitattr)
         for spec in specs:
             if spec == None:
                 filters.append(None)
                 none_specs += 1
             else:
                 filter_ = N.array([ i in spec \
-                    for i in eval('dataset.' + self.__splitattr)])
+                                    for i in splitattr_data])
                 filters.append(filter_)
                 if cum_filter == None:
                     cum_filter = filter_
@@ -184,11 +193,14 @@ class Splitter(object):
         # XXX: Maybe it should simply return an empty dataset instead, but
         #      keeping it this way for now, to maintain current behavior
         split_datasets = []
+
+        # local bindings
+        dataset_selectSamples = dataset.selectSamples
         for filter_ in filters:
             if (filter_ == False).all():
                 split_datasets.append(None)
             else:
-                split_datasets.append(dataset.selectSamples(filter_))
+                split_datasets.append(dataset_selectSamples(filter_))
 
         return split_datasets
 
