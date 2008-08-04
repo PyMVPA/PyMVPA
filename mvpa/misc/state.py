@@ -1135,13 +1135,15 @@ class ClassWithCollections(object):
 
     __metaclass__ = AttributesCollector
 
-    def __init__(self, descr=None, **kwargs):
+    def __new__(cls, *args, **kwargs):
         """Initialize ClassWithCollections object
 
         :Parameters:
           descr : basestring
             Description of the instance
         """
+        self = super(ClassWithCollections, cls).__new__(cls)
+
         if not hasattr(self, '_collections'):
             # need to check to avoid override of enabled states in the case
             # of multiple inheritance, like both Statefull and Harvestable
@@ -1161,8 +1163,27 @@ class ClassWithCollections(object):
                 self.__dict__[col] = collection
                 collection.owner = self
 
-            self.__descr = descr
+            self.__params_set = False
 
+        if __debug__:
+            descr = kwargs.get('descr', None)
+            debug("COL", "ClassWithCollections.__new__ was done "
+                  "for %s id %s with descr=%s" \
+                  % (self.__class__.__name__, id(self), descr))
+
+        return self
+
+
+    def __init__(self, descr=None, **kwargs):
+
+        if not self.__params_set:
+            self.__descr = descr
+            """Set humane description for the object"""
+
+            # To avoid double initialization in case of multiple inheritance
+            self.__params_set = True
+
+            collections = self._collections
             # Assign attributes values if they are given among
             # **kwargs
             for arg, argument in kwargs.items():
@@ -1176,7 +1197,8 @@ class ClassWithCollections(object):
                     trash = kwargs.pop(arg)
                 else:
                     known_params = reduce(
-                       lambda x,y:x+y, [x.items.keys() for x in collections.itervalues()], [])
+                       lambda x,y:x+y,
+                       [x.items.keys() for x in collections.itervalues()], [])
                     raise TypeError, \
                           "Unexpected keyword argument %s=%s for %s." \
                            % (arg, argument, self) \
@@ -1197,8 +1219,6 @@ class ClassWithCollections(object):
             #        raise TypeError, \
             #              "Unknown parameters %s for %s." % (kwargs.keys(), self) \
             #              + " Valid parameters are %s" % known_params
-
-
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
                   "for %s id %s with descr=%s" \
