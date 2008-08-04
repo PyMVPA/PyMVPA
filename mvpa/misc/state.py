@@ -524,24 +524,27 @@ class Collection(object):
         # collectable's with _ (we should not have!)
         if index[0] == '_':
             return _object_getattribute(self, index)
-        if self._items.has_key(index):
-            return self._items[index].value
+        _items = _object_getattribute(self, '_items')
+        if index in _items:
+            return _items[index].value
         return _object_getattribute(self, index)
 
 
     def __setattr__(self, index, value):
         if index[0] == '_':
             return _object_setattr(self, index, value)
-        if self._items.has_key(index):
-            self._items[index].value = value
-            return
-        _object_setattr(self, index, value)
+        _items = _object_getattribute(self, '_items')
+        if index in _items:
+            _items[index].value = value
+        else:
+            _object_setattr(self, index, value)
 
 
     def __getitem__(self, index):
-        if self._items.has_key(index):
+        _items = _object_getattribute(self, '_items')
+        if index in _items:
             self._checkIndex(index)
-            return self._items[index]
+            return _items[index]
         else:
             raise AttributeError("State collection %s has no %s attribute" 
                                  % (self, index))
