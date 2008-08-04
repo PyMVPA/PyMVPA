@@ -1255,13 +1255,14 @@ class ClassWithCollections(object):
         if index[0] == '_':
             return _object_getattribute(self, index)
 
+        s_dict = _object_getattribute(self, '__dict__')
         # check if it is a known collection
-        collections = _object_getattribute(self, '_collections')
+        collections = s_dict['_collections']
         if index in collections:
             return collections[index]
 
         # check if it is a part of any collection
-        known_attribs = _object_getattribute(self, '_known_attribs')
+        known_attribs = s_dict['_known_attribs']
         if index in known_attribs:
             return collections[known_attribs[index]].getvalue(index)
 
@@ -1274,9 +1275,10 @@ class ClassWithCollections(object):
             return _object_setattr(self, index, value)
 
         # Check if a part of a collection, and set appropriately
-        known_attribs = _object_getattribute(self, '_known_attribs')
+        s_dict = _object_getattribute(self, '__dict__')
+        known_attribs = s_dict['_known_attribs']
         if index in known_attribs:
-            collections = _object_getattribute(self, '_collections')
+            collections = s_dict['_collections']
             return collections[known_attribs[index]].setvalue(index, value)
 
         # Generic setattr
