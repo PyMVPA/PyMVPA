@@ -147,11 +147,12 @@ class SMLR(Classifier):
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
         p_resamp = N.ones(w.shape, dtype=N.float)
 
-        # set the random seed
-        N.random.seed(seed)
+        if seed is not None:
+            # set the random seed
+            N.random.seed(seed)
 
-        if __debug__:
-            debug("SMLR_", "random seed=%s" % seed)
+            if __debug__:
+                debug("SMLR_", "random seed=%s" % seed)
 
         # perform the optimization
         while not converged and cycles < maxiter:
