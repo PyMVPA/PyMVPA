@@ -102,6 +102,7 @@ class WarningLog(OnceLogger):
         self.__btlevels = btlevels
         self.__btdefault = btdefault
         self.__maxcount = maxcount
+        self.__explanation_seen = False
 
 
     def __call__(self, msg, bt=None):
@@ -110,9 +111,12 @@ class WarningLog(OnceLogger):
             bt = self.__btdefault
         tb = traceback.extract_stack(limit=2)
         msgid = repr(tb[-2])         # take parent as the source of ID
-        fullmsg = "WARNING: %s.\n\t(Please note: this warning is " % msg + \
+        fullmsg = "WARNING: %s" % msg
+        if not self.__explanation_seen:
+            self.__explanation_seen = True
+            fullmsg += "\n * Please note: warnings are "  + \
                   "printed only once, but underlying problem might " + \
-                  "occur many times.\n"
+                  "occur many times *"
         if bt and self.__btlevels > 0:
             fullmsg += "Top-most backtrace:\n"
             fullmsg += reduce(lambda x, y: x + "\t%s:%d in %s where '%s'\n" % \
