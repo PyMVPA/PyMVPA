@@ -39,7 +39,7 @@ class ModelSelector(object):
         self.problem = None
         pass
 
-    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None, use_gradient=False):
+    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None, use_gradient=False, logscale=False):
         """
         Set up the optimization problem in order to maximize
         the log_marginal_likelihood.
@@ -76,7 +76,7 @@ class ModelSelector(object):
         """
         self.problem = None
         self.use_gradient = use_gradient
-        self.logscale = True # use log-scale on hyperparameters to enhance numerical stability
+        self.logscale = logscale # use log-scale on hyperparameters to enhance numerical stability
         self.optimization_algorithm = optimization_algorithm
         self.hyp_initial_guess = N.array(hyp_initial_guess)
         self.hyp_initial_guess_log = N.log(self.hyp_initial_guess)        
@@ -134,6 +134,7 @@ class ModelSelector(object):
             derivative. Necessary for OpenOpt when using derivatives.
             """
             self.hyp_running_guess[self.freeHypers] = x
+            # REMOVE print "df guess:",self.hyp_running_guess,x
             # XXX EO: Most of the following lines can be skipped if
             # df() is computed just after f() with the same
             # hyperparameters. The partial results obtained during f()
@@ -170,6 +171,7 @@ class ModelSelector(object):
             else:
                 gradient_log_marginal_likelihood = self.parametric_model.compute_gradient_log_marginal_likelihood()
                 pass
+            # REMOVE print "grad:",gradient_log_marginal_likelihood
             return gradient_log_marginal_likelihood[self.freeHypers]
 
 
@@ -311,19 +313,79 @@ if __name__ == "__main__":
     print
     print "GPR ARD on dataset from Williams and Rasmussen 1996:"
     dataset =  data_generators.wr1996()
+    # dataset.samples = N.hstack([dataset.samples]*10) # enlarge dataset's dimensionality, for testing high dimensions
+
+    # Uncomment the kernel you like:
+
+    # Squared Exponential kernel:
     k = kernel.KernelSquaredExponential()
+    sigma_noise_initial = 1.0e-0
+    sigma_f_initial = 1.0e-0
+    length_scale_initial = N.ones(dataset.samples.shape[1])*1.0e-0
+    hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
+    # fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
+    fixedHypers = N.array([0]*(hyp_initial_guess.size),dtype=bool)
+
+    # k = kernel.KernelLinear()
+    # sigma_noise_initial = 1.0e-0
+    # sigma_0_initial = 1.0e-0
+    # Sigma_p_initial = N.ones(dataset.samples.shape[1])*1.0e-3
+    # hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_0_initial,Sigma_p_initial])
+    # # fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
+    # fixedHypers = N.array([0]*hyp_initial_guess.size,dtype=bool)
+
+    # k = kernel.KernelConstant()
+    # sigma_noise_initial = 1.0e-0
+    # sigma_0_initial = 1.0e-0
+    # hyp_initial_guess = N.array([sigma_noise_initial, sigma_0_initial])
+    # # fixedHypers = N.array([0,0],dtype=bool)
+    # fixedHypers = N.array([0]*hyp_initial_guess.size,dtype=bool)
+
+    # # Exponential kernel:
+    # k = kernel.KernelExponential()
+    # sigma_noise_initial = 1.0e0
+    # sigma_f_initial = 1.0e0
+    # length_scale_initial = N.ones(dataset.samples.shape[1])*1.0e0
+    # # length_scale_initial = 1.0
+    # hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
+    # print "hyp_initial_guess:",hyp_initial_guess
+    # # fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
+    # fixedHypers = N.array([0]*(hyp_initial_guess.size),dtype=bool)
+    # # expected results (compute with use_gradient=False):
+    # # objFunValue: 161.97952 (feasible, max constraint =  0)
+    # # [  6.72069299e-04   3.16515151e-01   3.11122154e+00   1.54833211e+00
+    # #    1.94703461e+00   3.11122835e+00   4.37916189e+01   2.65398676e+01]
+
+
+    # # Matern_3_2 kernel:
+    # k = kernel.KernelMatern_3_2()
+    # sigma_noise_initial = 1.0e0
+    # sigma_f_initial = 1.0e0
+    # length_scale_initial = N.ones(dataset.samples.shape[1])*1.0e0
+    # # length_scale_initial = 1.0
+    # hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
+    # print "hyp_initial_guess:",hyp_initial_guess
+    # # fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
+    # fixedHypers = N.array([0]*(hyp_initial_guess.size),dtype=bool)
+
+
+    # # Rational Quadratic kernel:
+    # k = kernel.KernelRationalQuadratic(alpha=0.5)
+    # sigma_noise_initial = 1.0e0
+    # sigma_f_initial = 1.0e0
+    # length_scale_initial = N.ones(dataset.samples.shape[1])*1.0e0
+    # # length_scale_initial = 1.0
+    # hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
+    # print "hyp_initial_guess:",hyp_initial_guess
+    # # fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
+    # fixedHypers = N.array([0]*(hyp_initial_guess.size),dtype=bool)
+
+
     g = gpr.GPR(k,regression=regression)
     g.states.enable("log_marginal_likelihood")
     ms = ModelSelector(g,dataset)
-    
-    sigma_noise_initial = 1.0e-0
-    sigma_f_initial = 1.0e-0
-    length_scale_initial = N.ones(6)*1.0e-0
-    
-    hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
-    fixedHypers = N.array([0,0,0,0,0,0,0,0],dtype=bool)
-    
-    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-5,fixedHypers=fixedHypers,use_gradient=True)
+
+    # Note that some kernels does not have gradient yet!
+    problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-5,fixedHypers=fixedHypers,use_gradient=True, logscale=True)
     lml = ms.solve()
     print ms.hyperparameters_best
-    
