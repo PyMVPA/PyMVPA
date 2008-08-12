@@ -51,6 +51,9 @@ Unreleased changes
     opt and optss class instances. Also names of the options were
     changed to match 'dest' of the options. Use tools/refactor.py to
     quickly fix your custom code.
+  * Change all references to PyMVPA website to www.pymvpa.org.
+  * Make website stylesheet compatible with sphinx 0.4.
+  * Several minor improvements of the compatibilty with MacOS.
 
 
 Releases
