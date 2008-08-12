@@ -11,7 +11,7 @@
 import unittest
 
 from mvpa import _random_seed
-from mvpa.base import externals
+from mvpa.base import externals, warning
 
 if __debug__:
     from mvpa.base import debug
@@ -63,8 +63,11 @@ tests = [
     'test_suite',
     ]
 
+# So we could see all warnings about missing dependencies
+warning.maxcount = 1000
 # fully test of externals
 externals.testAllDependencies()
+
 
 __optional_tests = ( ('scipy', 'ridge'),
                      ('scipy', 'datasetfx_sp'),

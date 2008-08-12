@@ -65,6 +65,8 @@ class Parameter(CollectableAttribute):
         return res
 
 
+    # XXX should be named reset2default? correspondingly in
+    #     ParameterCollection as well
     def resetvalue(self):
         """Reset value to the default"""
         #CollectableAttribute.reset(self)

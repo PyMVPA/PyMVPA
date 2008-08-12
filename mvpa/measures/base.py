@@ -303,14 +303,16 @@ class Sensitivity(FeaturewiseDatasetMeasure):
     def __call__(self, dataset):
         """Train classifier on `dataset` and then compute actual sensitivity.
         """
-        if not self.clf.trained or self._force_training:
+        # local bindings
+        clf = self.__clf
+        if not clf.trained or self._force_training:
             if __debug__:
                 debug("SA", "Training classifier %s %s" %
-                      (`self.clf`,
+                      (`clf`,
                        {False: "since it wasn't yet trained",
                         True:  "although it was trained previousely"}
-                       [self.clf.trained]))
-            self.clf.train(dataset)
+                       [clf.trained]))
+            clf.train(dataset)
 
         return FeaturewiseDatasetMeasure.__call__(self, dataset)
 
