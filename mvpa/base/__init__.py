@@ -102,6 +102,7 @@ class WarningLog(OnceLogger):
         self.__btlevels = btlevels
         self.__btdefault = btdefault
         self.__maxcount = maxcount
+        self.__explanation_seen = False
 
 
     def __call__(self, msg, bt=None):
@@ -110,9 +111,12 @@ class WarningLog(OnceLogger):
             bt = self.__btdefault
         tb = traceback.extract_stack(limit=2)
         msgid = repr(tb[-2])         # take parent as the source of ID
-        fullmsg = "WARNING: %s.\n\t(Please note: this warning is " % msg + \
+        fullmsg = "WARNING: %s" % msg
+        if not self.__explanation_seen:
+            self.__explanation_seen = True
+            fullmsg += "\n * Please note: warnings are "  + \
                   "printed only once, but underlying problem might " + \
-                  "occur many times.\n"
+                  "occur many times *"
         if bt and self.__btlevels > 0:
             fullmsg += "Top-most backtrace:\n"
             fullmsg += reduce(lambda x, y: x + "\t%s:%d in %s where '%s'\n" % \
@@ -122,6 +126,11 @@ class WarningLog(OnceLogger):
 
         OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
+
+    def _setMaxCount(self, value):
+        self.__maxcount = value
+
+    maxcount = property(fget=lambda x:x.__maxcount, fset=_setMaxCount)
 
 # XXX what is 'bt'? Maybe more verbose name?
 if cfg.has_option('warnings', 'bt'):
@@ -190,11 +199,11 @@ if __debug__:
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
 
-    debug.register('COL',  "Generic Collectable debugging")
-
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
 
+    debug.register('COL',  "Generic Collectable")
+    debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
     debug.register('COLR', "Collector for states and classifier parameters")
