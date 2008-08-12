@@ -17,7 +17,11 @@ import numpy as N
 
 from sets import Set
 
-from mvpa.misc.state import ClassWithCollections, SampleAttribute
+# Sooner or later Dataset would become ClassWithCollections as well, but for
+# now just an object -- thus commenting out tentative changes
+#
+#XXX from mvpa.misc.state import ClassWithCollections, SampleAttribute
+
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
 from mvpa.base.dochelpers import enhancedDocString
@@ -25,7 +29,8 @@ from mvpa.base.dochelpers import enhancedDocString
 if __debug__:
     from mvpa.base import debug, warning
 
-class Dataset(ClassWithCollections):
+#XXX class Dataset(ClassWithCollections):
+class Dataset(object):
     """*The* Dataset.
 
     This class provides a container to store all necessary data to
@@ -72,15 +77,14 @@ class Dataset(ClassWithCollections):
     no default values would be assumed and construction of the
     instance would fail"""
 
-    _ATTRIBUTE_COLLECTIONS = [ 's_attr', 'f_attr', 'ds_attr' ]
-    """Assure those 3 collections to be present in all datasets"""
-    # XXX may be don't do that? ;-)
-
-    samples__ = SampleAttribute(doc="Samples data. 0th index is time", hasunique=False) # XXX
-    labels__ = SampleAttribute(doc="Labels for the samples", hasunique=True)
-    chunks__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=True)
-    # samples ids (already unique by definition)
-    origids__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=False)
+    #XXX _ATTRIBUTE_COLLECTIONS = [ 's_attr', 'f_attr', 'ds_attr' ]
+    #XXX """Assure those 3 collections to be present in all datasets"""
+    #XXX
+    #XXX samples__ = SampleAttribute(doc="Samples data. 0th index is time", hasunique=False) # XXX
+    #XXX labels__ = SampleAttribute(doc="Labels for the samples", hasunique=True)
+    #XXX chunks__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=True)
+    #XXX # samples ids (already unique by definition)
+    #XXX origids__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=False)
 
     def __init__(self,
                  # for copy constructor
@@ -146,7 +150,7 @@ class Dataset(ClassWithCollections):
 
         """
 
-        ClassWithCollections.__init__(self)
+        #XXX ClassWithCollections.__init__(self)
 
         # see if data and dsattr are none, if so, make them empty dicts
         if data is None:
