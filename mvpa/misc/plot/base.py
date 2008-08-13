@@ -135,7 +135,7 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
             for col, (alsoignore, d) in enumerate(csplit(ds)):
 
                 P.subplot(nrows, ncols, fig)
-                doplot(d.samples)
+                doplot(d.samples.ravel())
 
                 if row == 0:
                     P.title('C:' + str(d.uniquechunks[0]))
