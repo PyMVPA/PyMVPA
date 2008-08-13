@@ -152,8 +152,8 @@ class ErrorsTests(unittest.TestCase):
         # for this simple test it can only be correct or misclassified
         # (boolean)
         self.failUnless(
-            N.sum(N.array(se, dtype='float') - N.array(se, dtype='b'))
-                == 0)
+            N.sum(N.array(se.values(), dtype='float') \
+                  - N.array(se.values(), dtype='b')) == 0)
 
 
 def suite():

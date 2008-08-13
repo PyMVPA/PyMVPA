@@ -26,20 +26,31 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( data.nsamples == 120 )
         self.failUnless( data.nfeatures == 2 )
         self.failUnless(
-            (data.labels == [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0]*6 ).all() )
+            (data.labels == \
+                [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0] * 6).all())
         self.failUnless(
             (data.chunks == \
-                [ k for k in range(1,7) for i in range(20) ] ).all() )
+                [k for k in range(1, 7) for i in range(20)]).all())
 
         transerror = TransferError(sample_clf_nl)
-        cv = CrossValidatedTransferError(transerror,
-                                         NFoldSplitter(cvtype=1),
-                                         enable_states=['confusion', 'training_confusion'])
+        cv = CrossValidatedTransferError(
+                transerror,
+                NFoldSplitter(cvtype=1),
+                enable_states=['confusion', 'training_confusion',
+                               'samples_error'])
 
         results = cv(data)
         self.failUnless( results < 0.2 and results >= 0.0 )
 
-        # TODO: test accessibility of {training_,}confusion{,s} of CrossValidatedTransferError
+        # TODO: test accessibility of {training_,}confusion{,s} of
+        # CrossValidatedTransferError
+
+        self.failUnless(isinstance(cv.samples_error, dict))
+        self.failUnless(len(cv.samples_error) == data.nsamples)
+        # one value for each origid
+        self.failUnless(sorted(cv.samples_error.keys()) == sorted(data.origids))
+        for k, v in cv.samples_error.iteritems():
+            self.failUnless(len(v) == 1)
 
 
     def testNoiseClassification(self):
@@ -72,9 +83,10 @@ class CrossValidationTests(unittest.TestCase):
 
         # do crossval with default errorfx and 'mean' combiner
         transerror = TransferError(clfs['linear'][0])
-        cv = CrossValidatedTransferError(transerror,
-                                         NFoldSplitter(cvtype=1),
-                                         harvest_attribs=['transerror.clf.training_time'])
+        cv = CrossValidatedTransferError(
+                transerror,
+                NFoldSplitter(cvtype=1),
+                harvest_attribs=['transerror.clf.training_time'])
         result = cv(data)
         self.failUnless(cv.harvested.has_key('transerror.clf.training_time'))
         self.failUnless(len(cv.harvested['transerror.clf.training_time'])>1)
@@ -87,7 +99,8 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( data.nsamples == 120 )
         self.failUnless( data.nfeatures == 6 )
         self.failUnless(
-            (data.labels == [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0]*6 ).all() )
+            (data.labels == \
+                [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0] * 6).all())
         self.failUnless(
             (data.chunks == \
                 [ k for k in range(1,7) for i in range(20) ] ).all() )
@@ -103,7 +116,8 @@ class CrossValidationTests(unittest.TestCase):
                         msg="We should generalize while working with "
                         "metadataset. Got %s error" % results)
 
-        # TODO: test accessibility of {training_,}confusion{,s} of CrossValidatedTransferError
+        # TODO: test accessibility of {training_,}confusion{,s} of
+        # CrossValidatedTransferError
 
 
 
