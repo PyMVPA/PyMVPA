@@ -42,6 +42,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
        """Store total confusion matrix (if available)""")
     training_confusion = StateVariable(enabled=False, doc=
        """Store total training confusion matrix (if available)""")
+    samples_error = StateVariable(enabled=False,
+                        doc="Per sample errors.")
 
 
     def __init__(self,
@@ -104,7 +106,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
         # what states to enable in terr
         terr_enable = []
-        for state_var in ['confusion', 'training_confusion']:
+        for state_var in ['confusion', 'training_confusion', 'samples_error']:
             if self.states.isEnabled(state_var):
                 terr_enable += [state_var]
 
@@ -113,6 +115,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         self.confusion = summaryClass()
         self.training_confusion = summaryClass()
         self.transerrors = []
+        self.samples_error = dict([(id, []) for id in dataset.origids])
 
         # enable requested states in child TransferError instance (restored
         # again below)
@@ -138,9 +141,12 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             if self.states.isEnabled("transerrors"):
                 self.transerrors.append(copy(self.__transerror))
 
-            # XXX: zip labels and per sample errors into a dict here
-            # and charge state with it, whihc in turn uses a class that
-            # can add dict elements into a list
+            # XXX: could be merged with next for loop using a utility class
+            # that can add dict elements into a list
+            if self.states.isEnabled("samples_error"):
+                for k, v in \
+                  self.__transerror.states.getvalue("samples_error").iteritems():
+                    self.samples_error[k].append(v)
 
             # pull in child states
             for state_var in ['confusion', 'training_confusion']:

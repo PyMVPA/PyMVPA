@@ -786,7 +786,9 @@ class TransferError(ClassifierError):
                          "the NULL hypothesis")
     samples_error = StateVariable(enabled=False,
                         doc="Per sample errors computed by invoking the "
-                            "error function for each sample individually.")
+                            "error function for each sample individually. "
+                            "Errors are available in a dictionary with each "
+                            "samples origid as key.")
 
     def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
                  null_dist=None, **kwargs):
@@ -834,8 +836,8 @@ class TransferError(ClassifierError):
         predictions = self.clf.predict(testdataset.samples)
 
         # compute confusion matrix
-        # XXX should migrate into ClassifierError.__postcall?
-        # YYY probably not because other childs could estimate it
+        # Should it migrate into ClassifierError.__postcall?
+        # -> Probably not because other childs could estimate it
         #  not from test/train datasets explicitely, see
         #  `ConfusionBasedError`, where confusion is simply
         #  bound to classifiers confusion matrix
@@ -850,7 +852,7 @@ class TransferError(ClassifierError):
             for i, p in enumerate(predictions):
                 samples_error.append(self.__errorfx(p, testdataset.labels[i]))
 
-            self.samples_error = samples_error
+            self.samples_error = dict(zip(testdataset.origids,samples_error))
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.labels)
