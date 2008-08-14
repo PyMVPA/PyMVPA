@@ -60,7 +60,7 @@ def doubleGammaHRF(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     A2 = float(A2)
     W2 = float(W2)
     K2 = float(K2)
-    return singleGammaHRF(t, A1, W1, K1) - singleGammaHRF(t, A2, W2, K1)
+    return singleGammaHRF(t, A1, W1, K1) - singleGammaHRF(t, A2, W2, K2)
 
 
 def leastSqFit(fx, params, y, x=None, **kwargs):
