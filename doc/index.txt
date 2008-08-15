@@ -37,6 +37,7 @@ Documentation
   code)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
+* :ref:`FAQ <faq>`
 * :ref:`genindex` (access by keywords)
 * :ref:`search` (online and offline full-text search)
 
