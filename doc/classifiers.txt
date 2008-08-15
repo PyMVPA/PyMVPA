@@ -121,10 +121,10 @@ any other operation on the state (e.g. enabling, disabling) has to be carried
 out through the `StateCollection` '.states'.
 
   >>> print clf.states
-  {trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
   >>> clf.states.enable('values')
   >>> print clf.states
-  {trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
   >>> clf.states.disable('values')
 
 A string representation of the state collection mentioned above lists
