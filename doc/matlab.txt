@@ -13,7 +13,16 @@
 PyMVPA for Matlab Users
 ***********************
 
-(to be written)
+If you are coming from Matlab, you will soon notice a lot of similarities
+between Matlab and Python (besides the huge advantages of Python over Matlab).
+For an easy transition you might want to have a look at a `basic comparison of
+Matlab and NumPy`_.
 
-.. Greg? Per?
+.. _basic comparison of Matlab and NumPy: http://www.scipy.org/NumPy_for_Matlab_Users
 
+
+It would be nice to have some guidelines on how to use PyMVPA for users who are
+already familiar with the `Matlab MVPA toolbox`_. If you are using both
+packages and could compile a few tips, your contribution would be most welcome.
+
+.. _Matlab MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
