@@ -28,7 +28,8 @@ class BoxcarMapper(Mapper):
 
     _COLLISION_RESOLUTIONS = ['mean']
 
-    def __init__(self, startpoints, boxlength, offset=0, collision_resolution='mean'):
+    def __init__(self, startpoints, boxlength, offset=0,
+                 collision_resolution='mean'):
         """Initialize the PCAMapper
 
         Parameters:
@@ -64,6 +65,9 @@ class BoxcarMapper(Mapper):
             raise ValueError, "Unknown method to resolve the collision." \
                   " Valid are %s" % self._COLLISION_RESOLUTIONS
         self.__collision_resolution = collision_resolution
+
+
+    __doc__ = enhancedDocString('BoxcarMapper', locals(), Mapper)
 
 
     def __repr__(self):
@@ -134,7 +138,8 @@ class BoxcarMapper(Mapper):
         if self.__collision_resolution == 'mean':
             g1 = output_counts>1
             # XXX couldn't broadcast if we have multiple columns...
-            # need to operate on transposed output, so that last running dimensions are the same
+            # need to operate on transposed output, so that last running
+            # dimensions are the same
             output_ = output.T
             output_[:,g1] /= output_counts[g1]
             output = output_.T
@@ -188,8 +193,8 @@ class BoxcarMapper(Mapper):
     def selectOut(self, outIds):
         """Just complain for now"""
         raise NotImplementedError, \
-              "For feature selection use MaskMapper on output of the %s mapper" \
-              % self.__class__.__name__
+            "For feature selection use MaskMapper on output of the %s mapper" \
+            % self.__class__.__name__
 
 
 
