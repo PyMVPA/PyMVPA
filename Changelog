@@ -45,6 +45,8 @@ Unreleased changes
   * Further improved docstrings of some classes, but still a long way to go.
   * New 'boxcar' mapper, which is the similar to the already present
     transformWithBoxCar() function, but implemented as a mapper.
+  * New SampleGroupMapper that can be used for e.g. block averaging of
+    samples. See new FAQ item.
   * Stripped redundant suffixes from module names, e.g.
     mvpa.datasets.niftidataset -> mvpa.datasets.nifti
   * mvpa.misc.cmdline variables opt* and opts* were groupped within
@@ -54,6 +56,7 @@ Unreleased changes
   * Change all references to PyMVPA website to www.pymvpa.org.
   * Make website stylesheet compatible with sphinx 0.4.
   * Several minor improvements of the compatibilty with MacOS.
+  * Bugfix: doubleGammaHRF() ignoring K2 argument.
 
 
 Releases
