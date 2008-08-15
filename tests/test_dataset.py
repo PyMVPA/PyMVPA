@@ -298,10 +298,11 @@ class DatasetTests(unittest.TestCase):
         seldataset = dataset.applyMapper(featuresmapper=mapper)
         self.failUnless( (dataset.selectFeatures([0, 2]).samples
                           == seldataset.samples).all() )
-        self.failUnlessRaises(NotImplementedError,
-                              dataset.applyMapper, None, [1])
-        """We don't yet have implementation for samplesmapper --
-        if we get one -- remove this check and place a test"""
+        # XXX: the intended test is added as SampleGroupMapper test
+#        self.failUnlessRaises(NotImplementedError,
+#                              dataset.applyMapper, None, [1])
+#        """We don't yet have implementation for samplesmapper --
+#        if we get one -- remove this check and place a test"""
 
 
     def testId(self):
