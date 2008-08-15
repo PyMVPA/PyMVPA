@@ -785,7 +785,8 @@ class Dataset(object):
         return dataset
 
 
-    def applyMapper(self, featuresmapper=None, samplesmapper=None):
+    def applyMapper(self, featuresmapper=None, samplesmapper=None,
+                    train=True):
         """Obtain new dataset by applying mappers over features and/or samples.
 
         :Parameters:
@@ -793,11 +794,15 @@ class Dataset(object):
             `Mapper` to somehow transform each sample's features
           samplesmapper : Mapper
             `Mapper` to transform each feature across samples
+          train : bool
+            Flag whether to train the mapper with this dataset before applying
+            it.
 
         WARNING: At the moment, handling of samplesmapper is not yet
         implemented since there were no real use case.
 
-        TODO: selectFeatures is pretty much applyMapper(featuresmapper=MaskMapper(...))
+        TODO: selectFeatures is pretty much 
+              applyMapper(featuresmapper=MaskMapper(...))
         """
 
         # shallow-copy all stuff from current data dict
@@ -809,6 +814,10 @@ class Dataset(object):
             raise NotImplementedError
 
         if featuresmapper:
+            if __debug__:
+                debug("DS", "Training featuresmapper %s" % `featuresmapper`)
+            featuresmapper.train(self)
+
             if __debug__:
                 debug("DS", "Applying featuresmapper %s" % `featuresmapper` +
                       " to samples of dataset `%s`" % `self`)
