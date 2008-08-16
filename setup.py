@@ -51,7 +51,7 @@ if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \
 
 # define the setup
 setup(name       = 'pymvpa',
-      version      = '0.2.2',
+      version      = '0.3.0',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
