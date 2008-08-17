@@ -60,6 +60,7 @@ Unreleased changes
   * Change all references to PyMVPA website to www.pymvpa.org.
   * Make website stylesheet compatible with sphinx 0.4.
   * Several minor improvements of the compatibilty with MacOS.
+  * Extended FAQ section of the manual.
   * Bugfix: doubleGammaHRF() ignoring K2 argument.
 
 

@@ -109,7 +109,11 @@ life a lot easier and leads to more efficiency when using PyMVPA.
     This is a very powerful plotting library that allows you to export into
     a large variety of raster and vector formats (e.g. SVG), and thus, is ideal
     to produce publication quality figures.
+  hcluster_: generating, visualizing, and analyzing hierarchical clusters
+    This module is a nice addition to SciPy_ and can be used to perform cluster
+    analyses and plot dendrograms of their results.
 
+.. _hcluster: http://code.google.com/p/scipy-cluster/
 .. _matplotlib: http://matplotlib.sourceforge.net/
 .. _IPython: http://ipython.scipy.org
 .. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
