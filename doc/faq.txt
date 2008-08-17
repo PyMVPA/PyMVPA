@@ -35,6 +35,7 @@ It is sloooooow. What can I do?
 
 I am tired of writing these endless import blocks. Any alternative?
 -------------------------------------------------------------------
+
   Sure. Instead of individually importing all pieces that are required
   by a script, you can import them all at once. A simple:
 
@@ -56,6 +57,7 @@ I am tired of writing these endless import blocks. Any alternative?
 
 I feel like I want to contribute something, do you mind?
 --------------------------------------------------------
+
   Not at all! If you think there is something that is not well explained in
   the documentation, send us an improvement. If you implemented a new algorithm
   using PyMVPA that you want to share, please share. If you have an idea for
@@ -66,6 +68,7 @@ I feel like I want to contribute something, do you mind?
 
 I want to develop a new feature for PyMVPA. How can I do it efficiently?
 ------------------------------------------------------------------------
+
   The best way is to use Git for both, getting the latest code from the
   repository and preparing the patch. Here is a quick sketch of the workflow.
 
@@ -138,6 +141,7 @@ Data preprocessing
 
 Is there an easy way to remove invariant features from a dataset?
 -----------------------------------------------------------------
+
   You might have to deal with invariant features in case like an fMRI dataset,
   where the *brain mask* is slightly larger than the thresholded fMRI
   timeseries image. Such invariant features (i.e. features with zero variance)
@@ -150,6 +154,7 @@ Is there an easy way to remove invariant features from a dataset?
 
 How can I do block-averaging of my block-design fMRI dataset?
 -------------------------------------------------------------
+
   The easiest way is to use a mapper to transform/average the respective
   samples. Suppose you have a dataset:
 
@@ -171,3 +176,37 @@ How can I do block-averaging of my block-design fMRI dataset?
   `SampleGroupMapper` applies a function to every group of samples in each
   chunk individually. Using `FirstAxisMean` as function, therefore yields
   one sample of each label per chunk.
+
+
+
+Data analysis
+=============
+
+
+How do I know which features were finally selected by a classifier doing feature selection?
+-------------------------------------------------------------------------------------------
+
+All classifier possess a state variable `feature_ids`. When enable, the
+classifier stores the ids of all features that were finally used to train
+the classifier.
+
+  >>> clf = FeatureSelectionClassifier(
+  ...           kNN(k=5),
+  ...           SensitivityBasedFeatureSelection(
+  ...               SMLRWeights(SMLR(lm=1.0), transformer=Absolute),
+  ...               FixedNElementTailSelector(1, tail='upper', mode='select')),
+  ...           enable_states = ['feature_ids'])
+  >>> clf.train(dataset)
+  >>> final_dataset = dataset.selectFeatures(clf.feature_ids)
+  >>> final_dataset
+  <Dataset / float64 100 x 1 uniq: 2 labels 5 chunks>
+
+In the above code snippet a kNN classifier is defined, that performs a feature
+selection step prior training. Features are selected according to the absolute
+magnitude of the weights of a SMLR classifier trained on the data (same training
+data that will also go into kNN). Absolute SMLR weights are used for feature
+selection as large negative values also indicate important information. Finally,
+the classifier is configured to select the single most important feature (given
+the SMLR weights). After enabling the `feature_ids` state, the classifier
+provides the desired information, that can e.g. be applied to generate a
+stripped dataset for an analysis of the similarity structure.
