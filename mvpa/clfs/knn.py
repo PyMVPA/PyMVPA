@@ -13,9 +13,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.base import warning
+from mvpa.base import warning, debug
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.base import Classifier
+from mvpa.base.dochelpers import enhancedDocString
+from mvpa.clfs.distance import squared_euclidean_distance
 
 
 class kNN(Classifier):
@@ -27,23 +29,34 @@ class kNN(Classifier):
 
     _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
 
-    def __init__(self, k=2, **kwargs):
+    def __init__(self, k=2, dfx=squared_euclidean_distance,
+                 **kwargs):
         """
         :Parameters:
-          k
-            number of nearest neighbours to be used for voting
+          k: unsigned integer
+            Number of nearest neighbours to be used for voting.
+          dfx: functor
+            Function to compute the distances between training and test samples.
+            Default: squared euclidean distance
+          **kwargs:
+            Additonal arguments are passed to the base class.
         """
 
         # init base class first
         Classifier.__init__(self, **kwargs)
 
         self.__k = k
+        self.__dfx = dfx
+
         # XXX So is the voting function fixed forever?
         # YYY assignment of bound method breakes deepcopying, for now
         #     since there is no alternative yet -- just call method
         #     explicitely
         #self.__votingfx = self.getWeightedVote
         self.__data = None
+
+
+    __doc__ = enhancedDocString('kNN', locals(), Classifier)
 
 
     def __repr__(self):
@@ -87,29 +100,28 @@ class kNN(Classifier):
         # make sure we're talking about arrays
         data = N.asarray(data)
 
-        if not data.ndim == 2:
-            raise ValueError, "Data array must be two-dimensional."
+        # checks only in debug mode
+        if __debug__:
+            if not data.ndim == 2:
+                raise ValueError, "Data array must be two-dimensional."
 
-        if not data.shape[1] == self.__data.nfeatures:
-            raise ValueError, "Length of data samples (features) does " \
-                              "not match the classifier."
+            if not data.shape[1] == self.__data.nfeatures:
+                raise ValueError, "Length of data samples (features) does " \
+                                  "not match the classifier."
+
+        # compute the distance matrix between training and test data with
+        # distances stored row-wise, ie. distances between test sample [0]
+        # and all training samples will end up in row 0
+        dists = self.__dfx(self.__data.samples, data).T
+
+        # determine the k nearest neighbors per test sample
+        knns = dists.argsort(axis=1)[:, :self.__k]
 
         # predicted class labels will go here
         predicted = []
         votes = []
 
-        # for all test pattern
-        for p in data:
-            # calc the euclidean distance of the pattern vector to all
-            # patterns in the training data
-            dists = N.sqrt(
-                        N.sum(
-                            (self.__data.samples - p )**2, axis=1
-                            )
-                        )
-            # get the k nearest neighbours from the sorted list of distances
-            knn = dists.argsort()[:self.__k]
-
+        for knn in knns:
             # finally get the class label
             # XXX call getWeightedVote for now explicitely
             #prediction, vote = self.__votingfx(knn)
@@ -190,4 +202,3 @@ class kNN(Classifier):
         """Reset trained state"""
         self.__data = None
         super(kNN, self).untrain()
-
