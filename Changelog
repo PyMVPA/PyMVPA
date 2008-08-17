@@ -4,8 +4,9 @@
 
 .. index:: changelog
 
+****************************
 PyMVPA Development Changelog
------------------------------
+****************************
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
@@ -63,7 +64,7 @@ Unreleased changes
 
 
 Releases
-~~~~~~~~
+========
 
 * 0.2.2 (Tue, 17 Jun 2008)
 

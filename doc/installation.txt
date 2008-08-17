@@ -19,10 +19,10 @@ additional software packages that further enhance the functionality provided by 
 
 
 Dependencies
-~~~~~~~~~~~~
+============
 
 Must Have
-'''''''''
+---------
 
 The following software packages are required or PyMVPA will not work at all.
 
@@ -42,7 +42,7 @@ The following software packages are required or PyMVPA will not work at all.
 
 
 Strong Recommendations
-''''''''''''''''''''''
+----------------------
 
 While most parts of PyMVPA will work without any additional software, some
 functionality makes use of additional software packages. It is strongly
@@ -75,7 +75,7 @@ recommended to install these packages as well.
 
 
 Suggestions
-''''''''''''
+-----------
 
 The following list of software is not required by PyMVPA, but it might make
 life a lot easier and leads to more efficiency when using PyMVPA.
@@ -123,7 +123,7 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 .. _obtaining:
 
 Installing Binary Packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+==========================
 
 .. Don't forget to mention that the only reasonable way to use this piece
    of software (like every other piece) is under Debian! Also mention that
@@ -143,7 +143,7 @@ Please refer to `Building from Source`_ for more information.
 
 
 Debian
-''''''
+------
 
 PyMVPA is available as an `official Debian package`_ (`python-mvpa`;
 since *lenny*). The documentation is provided by the optional
@@ -158,7 +158,7 @@ since *lenny*). The documentation is provided by the optional
 
 
 Debian backports and inofficial Ubuntu packages
-'''''''''''''''''''''''''''''''''''''''''''''''
+-----------------------------------------------
 
 Backports for the current Debian stable release and binary packages for recent
 Ubuntu releases are available from a `repository at the University of
@@ -174,7 +174,7 @@ package.
 
 
 Windows
-'''''''
+-------
 
 There are a few Python distributions for Windows. In theory all of them should
 work equally well. However, we only tested the standard Python distribution
@@ -229,7 +229,7 @@ which are shipped with the source code in the `doc/examples` directory.
 
 
 OpenSUSE
-''''''''
+--------
 
 To install the provided RPM package for OpenSUSE, simply download it, open a
 console and invoke (the example command refers to PyMVPA 0.2.2 and OpenSUSE
@@ -246,7 +246,7 @@ notes about the installation of the dependencies.
 
 
 Building from Source
-~~~~~~~~~~~~~~~~~~~~
+====================
 
 If a binary package for your platform and operating system is provided, you do
 not have to build the packages on your own -- use the corresponding pre-build
@@ -262,7 +262,7 @@ Windows systems.
 .. index:: releases, development snapshot
 
 Three Ways to Obtain the Sources
-''''''''''''''''''''''''''''''''
+--------------------------------
 
 The first step is obtaining the sources. The source code tarballs of all
 PyMVPA releases are available from the `PyMVPA project website`_.
@@ -292,7 +292,7 @@ working directory, that contains the PyMVPA repository.
 
 
 Build it (General instructions)
-'''''''''''''''''''''''''''''''
+-------------------------------
 
 In general you can build PyMVPA like any other Python module (using the Python
 *distutils*). This general method will be outline first. However, in some
@@ -321,7 +321,7 @@ Now you should be ready to use PyMVPA on your system.
 
 
 Build with enabled LIBSVM bindings
-''''''''''''''''''''''''''''''''''
+----------------------------------
 
 From the 0.2 release of PyMVPA on, the LIBSVM_ classifier extension is not
 build by default anymore. However, it is still shipped with PyMVPA and can be
@@ -361,7 +361,7 @@ except that the '--with--libsvm' flag also has to be set when installing::
 
 
 Alternative build procedure
-'''''''''''''''''''''''''''
+---------------------------
 
 Alternatively, if you are doing development in PyMVPA or if you
 simply do not want (or do not have sufficient permissions to do so) to
@@ -382,7 +382,7 @@ available.
 
 
 Building on Windows Systems
-'''''''''''''''''''''''''''
+---------------------------
 
 On Windows the whole situation is a little more tricky, as the system doesn't
 come with a compiler by default. Nevertheless, it is easily possible to build
@@ -436,7 +436,7 @@ as described :ref:`above <install_win>`.
 
 
 OpenSUSE
-''''''''
+--------
 
 Building PyMVPA on OpenSUSE involves the following steps (tested with 10.3):
 First add the OpenSUSE science repository, that contains most of the required
