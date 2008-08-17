@@ -8,15 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA verbose and debug output"""
 
-import unittest
+import unittest, re
 from StringIO import StringIO
 
-from mvpa.misc.verbosity import OnceLogger
+from mvpa.base.verbosity import OnceLogger
 
-from mvpa.misc import verbose
+from mvpa.base import verbose
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
+    debug.register('1', 'id 1')           # needed for testing
+    debug.register('2', 'id 2')
+
     from sets import Set
 
 ## XXX There must be smth analogous in python... don't know it yet
@@ -50,7 +53,7 @@ class VerboseOutputTest(unittest.TestCase):
         if __debug__:
             self.__olddebughandlers = debug.handlers
             self.__olddebugactive = debug.active
-            debug.active = [1, 2, 'SLC']
+            debug.active = ['1', '2', 'SLC']
             debug.handlers = [self.sout]
             debug.offsetbydepth = False
 
@@ -109,9 +112,9 @@ class VerboseOutputTest(unittest.TestCase):
         verbose(1, "rewrite 2", cr=True)
         verbose(1, " add", cr=False, lf=False)
         verbose(1, " finish")
-        self.failUnlessEqual(self.sout.getvalue(),
-                             '  %s\r              \rrewrite' % self.msg +\
-                             '\r       \rrewrite 2 add finish\n')
+        target = '\r  %s\r              \rrewrite' % self.msg + \
+                 '\r       \rrewrite 2 add finish\n'
+        self.failUnlessEqual(self.sout.getvalue(), target)
 
     def testOnceLogger(self):
         """Test once logger"""
@@ -128,11 +131,17 @@ class VerboseOutputTest(unittest.TestCase):
     if __debug__:
         def testDebug(self):
             verbose.handlers = []           # so debug doesn't spoil it
-            debug.active = [1, 2, 'SLC']
+            debug.active = ['1', '2', 'SLC']
             # do not offset for this test
             debug('SLC', self.msg, lf=False)
-            self.failUnlessEqual(self.sout.getvalue(),
-                                 "[SLC] DBG: %s" % self.msg)
+            self.failUnlessRaises(ValueError, debug, 3, 'bugga')
+            #Should complain about unknown debug id
+            svalue = self.sout.getvalue()
+            regexp = "\[SLC\] DBG(?:{.*})?: %s" % self.msg
+            rematch = re.match(regexp, svalue)
+            self.failUnless(rematch, msg="Cannot match %s with regexp %s" %
+                            (svalue, regexp))
+
 
         def testDebugRgexp(self):
             verbose.handlers = []           # so debug doesn't spoil it
@@ -143,8 +152,8 @@ class VerboseOutputTest(unittest.TestCase):
             self.failUnlessEqual(Set(debug.active),
                                  Set(filter(lambda x:x.startswith('S'),
                                             debug.registered.keys())+['CLF']))
-            debug.active = ['S*', 'CLF']
-            self.failUnlessEqual(Set(debug.active), Set(['CLF']),
+            debug.active = ['SG', 'CLF']
+            self.failUnlessEqual(Set(debug.active), Set(['SG', 'CLF']),
                                  msg="debug should do full line matching")
 
             debug.offsetbydepth = True

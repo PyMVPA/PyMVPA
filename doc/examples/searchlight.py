@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -11,28 +11,6 @@
 
 from mvpa.suite import *
 
-"""
-# Command above substitutes the following list
-
-import sys
-
-import numpy as N
-
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.knn import kNN
-from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
-from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.datasets.misc import zscore
-from mvpa.measures.searchlight import Searchlight
-from mvpa.clfs.transerror import TransferError
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.misc import verbose
-from mvpa.misc.cmdline import \
-     parser, \
-     optsCommon, optClf, optsSVM, optRadius, optsKNN, \
-     optsGener, optZScore
-"""
 
 def main():
     """ Wrapped into a function call for easy profiling later on
@@ -46,13 +24,13 @@ def main():
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
 
-    parser.option_groups = [optsSVM, optsKNN, optsGener, optsCommon]
+    parser.option_groups = [opts.SVM, opts.KNN, opts.general, opts.common]
 
     # Set a set of available classifiers for this example
-    optClf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
-    optClf.default='lin_nu_svmc'
+    opt.clf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
+    opt.clf.default='lin_nu_svmc'
 
-    parser.add_options([optClf, optRadius, optZScore])
+    parser.add_options([opt.clf, opt.radius, opt.zscore])
 
     (options, files) = parser.parse_args()
 

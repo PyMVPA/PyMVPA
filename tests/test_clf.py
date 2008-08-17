@@ -8,13 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
 
-import unittest
-import numpy as N
-
-from copy import deepcopy
+from mvpa.misc.copy import deepcopy
 
 from mvpa.datasets import Dataset
-from mvpa.mappers import MaskMapper
+from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
@@ -23,7 +20,10 @@ from mvpa.clfs.base import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      _deepcopyclf
+from mvpa.clfs.gpr import GPR
 from mvpa.clfs.transerror import TransferError
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -70,8 +70,8 @@ class ClassifiersTests(unittest.TestCase):
     def testBoosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
-        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
-                                        deepcopy(self.clf_sign)])
+        bclf = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
+                                        _deepcopyclf(self.clf_sign)])
 
         self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
                              list(self.data_bin_1.labels),
@@ -82,16 +82,16 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def testBoostedStatePropagation(self):
-        bclf = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
-                                        deepcopy(self.clf_sign)],
+        bclf = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
+                                        _deepcopyclf(self.clf_sign)],
                                   enable_states=['feature_ids'])
 
         # check states enabling propagation
         self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
         self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
 
-        bclf2 = CombinedClassifier(clfs=[deepcopy(self.clf_sign),
-                                        deepcopy(self.clf_sign)],
+        bclf2 = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
+                                        _deepcopyclf(self.clf_sign)],
                                   propagate_states=False,
                                   enable_states=['feature_ids'])
 
@@ -124,20 +124,49 @@ class ClassifiersTests(unittest.TestCase):
                         msg="BinaryClassifier should not alter labels")
 
 
-        # check by selecting just 
-        #self. fail
+    # TODO: gune up default GPR?
+    @sweepargs(clf=clfs['binary'])
+    def testClassifierGeneralization(self, clf):
+        """Simple test if classifiers can generalize ok on simple data
+        """
+        te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
+        cve = te(datasets['uni2medium'])
+        self.failUnless(cve < 0.25,
+             msg="Got transfer error %g" % (cve))
 
-
+    # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'])
+                enable_states=['confusion', 'training_confusion',
+                               'feature_ids'])
         clf.train(ds)                   # train the beast
-        self.failUnlessEqual(clf.training_confusions.percentCorrect,
+        error = clf.confusion.error
+        tr_error = clf.training_confusion.error
+
+        clf2 = _deepcopyclf(clf)
+        cv = CrossValidatedTransferError(
+            TransferError(clf2),
+            NFoldSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        cverror = cv(ds)
+        tr_cverror = cv.training_confusion.error
+
+        self.failUnlessEqual(error, cverror,
+                msg="We should get the same error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (error, cverror))
+
+        self.failUnlessEqual(tr_error, tr_cverror,
+                msg="We should get the same training error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (tr_error, tr_cverror))
+
+        self.failUnlessEqual(clf.confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.training_confusions.sets),
+        self.failUnlessEqual(len(clf.confusion.sets),
                              len(ds.uniquechunks),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
@@ -156,18 +185,53 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
 
+    @sweepargs(clf_=clfs['binary', '!meta'])
+    def testSplitClassifierExtended(self, clf_):
+        clf2 = _deepcopyclf(clf_)
+        ds = datasets['uni2medium']#self.data_bin_1
+        clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
+                splitter=NFoldSplitter(1),
+                enable_states=['confusion', 'feature_ids'])
+        clf.train(ds)                   # train the beast
+        error = clf.confusion.error
+
+        cv = CrossValidatedTransferError(
+            TransferError(clf2),
+            NFoldSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        cverror = cv(ds)
+
+        self.failUnless(abs(error-cverror)<0.01,
+                msg="We should get the same error using split classifier as"
+                    " using CrossValidatedTransferError. Got %s and %s"
+                    % (error, cverror))
+
+        self.failUnless( error < 0.25,
+                         msg="clf should generalize more or less fine. "
+                         "Got error %s" % error)
+        self.failUnlessEqual(len(clf.confusion.sets),
+                             len(ds.uniquechunks),
+                             msg="Should have 1 confusion per each split")
+        self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
+                             msg="Should have number of classifiers equal # of epochs")
+        #self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
+        #                     msg="Should classify correctly")
+
+
+
     def testHarvesting(self):
         """Basic testing of harvesting based on SplitClassifier
         """
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
-                enable_states=['training_confusions', 'feature_ids'],
+                enable_states=['confusion', 'training_confusion',
+                               'feature_ids'],
                 harvest_attribs=['clf.feature_ids',
                                  'clf.training_time'],
                 descr="DESCR")
         clf.train(ds)                   # train the beast
-        # Number of harvested items should be equial to number of chunks
+        # Number of harvested items should be equal to number of chunks
         self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
                              len(ds.uniquechunks))
         # if we can blame multiple inheritance and Statefull.__init__
@@ -245,7 +309,7 @@ class ClassifiersTests(unittest.TestCase):
             clf.C = 1.0                 # reset C to be 1
 
         svm = clf
-        svm2 = deepcopy(clf)
+        svm2 = _deepcopyclf(clf)
         svm2.states.enable(['training_confusion'])
 
         mclf = MulticlassClassifier(clf=svm,
@@ -253,10 +317,11 @@ class ClassifiersTests(unittest.TestCase):
 
         svm2.train(datasets['uni2small_train'])
         mclf.train(datasets['uni2small_train'])
-        self.failUnlessEqual(str(mclf.training_confusion),
-                             str(svm2.training_confusion),
-            msg="Multiclass clf should provide same results as built-in libsvm's %s" %
-                             svm2)
+        s1 = str(mclf.training_confusion)
+        s2 = str(svm2.training_confusion)
+        self.failUnlessEqual(s1, s2,
+            msg="Multiclass clf should provide same results as built-in "
+                "libsvm's %s. Got %s and %s" % (svm2, s1, s2))
 
         svm2.untrain()
 
@@ -298,12 +363,17 @@ class ClassifiersTests(unittest.TestCase):
                 self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
         clf.states._resetEnabledTemporarily()
 
+
     @sweepargs(clf=clfs['retrainable'])
     def testRetrainables(self, clf):
+        # we need a copy since will tune its internals later on
+        clf = _deepcopyclf(clf)
         clf.states._changeTemporarily(enable_states = ['values'])
         clf_re = _deepcopyclf(clf)
-        clf_re.retrainable = True
-        debug('SG', "Here with clf %s" % clf)
+        # TODO: .retrainable must have a callback to call smth like
+        # _setRetrainable
+        clf_re._setRetrainable(True)
+
         # need to have high snr so we don't 'cope' with problematic
         # datasets since otherwise unittests would fail.
         dsargs = {'perlabel':50, 'nlabels':2, 'nfeatures':5, 'nchunks':1,
@@ -342,14 +412,14 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnless(clf_re.states.retrained == retrain,
                             ("Must fully train",
                              "Must retrain instead of full training")[retrain])
-            self.failUnless(clf_re.states.retested == retest,
+            self.failUnless(clf_re.states.repredicted == retest,
                             ("Must fully test",
                              "Must retest instead of full testing")[retest])
             self.failUnless(corr > corrcoef_eps,
               msg="Result must be close to the one without retraining."
                   " Got corrcoef=%s" % (corr))
             if closer:
-                self.failUnless(corr > corr_old,
+                self.failUnless(corr >= corr_old,
                                 msg="Result must be closer to current without retraining"
                                 " than to old one. Got corrcoef=%s" % (corr_old))
 
@@ -366,6 +436,10 @@ class ClassifiersTests(unittest.TestCase):
             clf.params.C *= 0.1
             clf_re.params.C *= 0.1
             batch_test()
+        elif 'sigma_noise' in clf.params.names:
+            clf.params.sigma_noise *= 100
+            clf_re.params.sigma_noise *= 100
+            batch_test()
         else:
             raise RuntimeError, \
                   'Please implement testing while changing some of the ' \
@@ -377,36 +451,52 @@ class ClassifiersTests(unittest.TestCase):
             clf_re.kernel_params.gamma = 0.1
             # retest is false since kernel got recomputed thus
             # can't expect to use the same kernel
-            batch_test(retest=False)
+            batch_test(retest=not('gamma' in clf.kernel_params.names))
 
         # should retrain nicely if we change labels
         oldlabels = dstrain.labels[:]
-        dstrain.permuteLabels(status=True)
-        self.failUnless((oldlabels != dstrain.labels).any())
+        dstrain.permuteLabels(status=True, assure_permute=True)
+        self.failUnless((oldlabels != dstrain.labels).any(),
+            msg="We should succeed at permutting -- now got the same labels")
         batch_test()
 
         # Change labels in testing
         oldlabels = dstest.labels[:]
-        dstest.permuteLabels(status=True)
+        dstest.permuteLabels(status=True, assure_permute=True)
         self.failUnless((oldlabels != dstest.labels).any(),
-            msg="Should retest nicely if we change labels in testing data")
+            msg="We should succeed at permutting -- now got the same labels")
         batch_test()
 
         # should re-train if we change data
         # reuse trained SVM and its 'final' optimization point
-        oldsamples = dstrain.samples.copy()
-        dstrain.samples[:] += dstrain.samples*0.05
-        self.failUnless((oldsamples != dstrain.samples).any())
-        batch_test(retest=False)
+        if not isinstance(clf, GPR):    # on GPR everything depends on the data ;-)
+            oldsamples = dstrain.samples.copy()
+            dstrain.samples[:] += dstrain.samples*0.05
+            self.failUnless((oldsamples != dstrain.samples).any())
+            batch_test(retest=False)
         clf.states._resetEnabledTemporarily()
+
+        # test retrain()
+        # TODO XXX  -- check validity
+        clf_re.retrain(dstrain); self.failUnless(clf_re.states.retrained)
+        clf_re.retrain(dstrain, labels=True);  self.failUnless(clf_re.states.retrained)
+        clf_re.retrain(dstrain, traindataset=True);  self.failUnless(clf_re.states.retrained)
+
+        # test repredict()
+        clf_re.repredict(dstest.samples);
+        self.failUnless(clf_re.states.repredicted)
+        self.failUnlessRaises(RuntimeError, clf_re.repredict,
+                              dstest.samples, labels=True,
+             msg="for now retesting with anything changed makes no sense")
+        clf_re._setRetrainable(False)
+
 
     def testGenericTests(self):
         """Test all classifiers for conformant behavior
         """
         for clf_, traindata in \
-                [(clfs['multiclass'] + clfs['binary'],
-                  dumbFeatureBinaryDataset()),
-                 (clfs['multiclass'], dumbFeatureDataset())]:
+                [(clfs['binary'], datasets['dumb2']),
+                 (clfs['multiclass'], datasets['dumb'])]:
             traindata_copy = deepcopy(traindata) # full copy of dataset
             for clf in clf_:
                 clf.train(traindata)
@@ -424,8 +514,9 @@ class ClassifiersTests(unittest.TestCase):
 
         # TODO: unify str and repr for all classifiers
 
-    # XXX TODO: should work on smlr and knn as well! but now they fail to train
-    @sweepargs(clf=clfs['!smlr', '!knn', '!meta'])
+    # XXX TODO: should work on smlr, knn, ridgereg as well! but now
+    #     they fail to train
+    @sweepargs(clf=clfs['!smlr', '!knn', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
@@ -440,9 +531,7 @@ class ClassifiersTests(unittest.TestCase):
                                         [1, 0, 0] ]), labels=[-1, 1]),
             Dataset(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
-        if isinstance(clf, RidgeReg):
-            # TODO: figure out why default RidgeReg doesn't learn properly
-            return
+
         clf.states._changeTemporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
             clf.train(traindata)

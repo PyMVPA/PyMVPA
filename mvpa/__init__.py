@@ -25,8 +25,8 @@ The mvpa package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: 0.2.2
-:see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
+:version: 0.3.0
+:see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
 :license: The MIT License
@@ -34,31 +34,39 @@ The mvpa package contains the following subpackages and modules:
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Per B. Sederberg <persed@princeton.edu>`__
+:contributor: `Yaroslav O. Halchenko <debian@onerussian.com>`__
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
 
 __docformat__ = 'restructuredtext'
 
+import os
+import random
+import numpy as N
+from mvpa.base import cfg
 
 if not __debug__:
     try:
         import psyco
         psyco.profile()
     except:
-        from mvpa.misc import verbose
+        from mvpa.base import verbose
         verbose(2, "Psyco online compilation is not enabled")
 else:
     # Controllable seeding of random number generator
-    from mvpa.misc import debug
-    import numpy as N
-    from os import environ
+    from mvpa.base import debug
 
     debug('INIT', 'mvpa')
-    if environ.has_key('MVPA_SEED'):
-        __random_seed = int(environ['MVPA_SEED'])
-    else:
-        __random_seed = int(N.random.uniform()*(2**31-1))
-    debug('RANDOM', 'Seeding RNG with %d' % __random_seed)
-    N.random.seed(__random_seed)
+
+if cfg.has_option('general', 'seed'):
+    _random_seed = cfg.getint('general', 'seed')
+else:
+    _random_seed = int(N.random.uniform()*(2**31-1))
+
+N.random.seed(_random_seed)
+random.seed(_random_seed)
+
+if __debug__:
+    debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
     debug('INIT', 'mvpa end')

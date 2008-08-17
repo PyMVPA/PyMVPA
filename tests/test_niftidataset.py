@@ -12,7 +12,7 @@ import unittest
 import os.path
 import numpy as N
 
-from mvpa.datasets.niftidataset import *
+from mvpa.datasets.nifti import *
 
 class NiftiDatasetTests(unittest.TestCase):
 

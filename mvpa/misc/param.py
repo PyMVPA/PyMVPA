@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.misc.state import CollectableAttribute
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class Parameter(CollectableAttribute):
     """This class shall serve as a representation of a parameter.
@@ -65,6 +65,8 @@ class Parameter(CollectableAttribute):
         return res
 
 
+    # XXX should be named reset2default? correspondingly in
+    #     ParameterCollection as well
     def resetvalue(self):
         """Reset value to the default"""
         #CollectableAttribute.reset(self)

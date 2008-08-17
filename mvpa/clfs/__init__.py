@@ -25,7 +25,7 @@ __docformat__ = 'restructuredtext'
 
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     debug('INIT', 'mvpa.clfs')
 
 if __debug__:

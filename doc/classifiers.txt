@@ -121,10 +121,10 @@ any other operation on the state (e.g. enabling, disabling) has to be carried
 out through the `StateCollection` '.states'.
 
   >>> print clf.states
-  {trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
   >>> clf.states.enable('values')
   >>> print clf.states
-  {trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
   >>> clf.states.disable('values')
 
 A string representation of the state collection mentioned above lists
@@ -227,19 +227,14 @@ and some Dataset_ `data`.
 
 
 
-Boosted and Multi-class Classifiers
-===================================
-
-(to be written)
-
-.. Point to the special case of multi-class classification and how to deal with
-   it. Finally describe features of all available classifiers.
+Basic Supervised Learning Methods
+=================================
 
 
-.. index:: gassian process regression, GPR
+.. index:: gaussian process regression, GPR
 
 Gaussian Process Regression
-===========================
+---------------------------
 
 (`Wikipedia entry about gaussian process regression`_).
 
@@ -249,7 +244,7 @@ Gaussian Process Regression
 .. index:: k-nearest-neighbour, kNN
 
 k-Nearest-Neighbour
-===================
+-------------------
 
 The kNN_ classifier makes predictions based on the labels of nearby samples.
 It currently uses Euclidian distance to determine the nearest neighbours, but
@@ -261,7 +256,7 @@ future enhancements may include support for other kernels.
 .. index:: least angle regression, LARS
 
 Least Angle Regression
-======================
+----------------------
 
 [#]_
 
@@ -274,7 +269,7 @@ Least Angle Regression
 .. index:: logistic regression, penalized logistic regression
 
 Penalized Logistic Regression
-=============================
+-----------------------------
 
 The penalized logistic regression (PLR_) is similar to the ridge in that it
 has a penalty term, however, it is trained to predict a binary outcome by
@@ -288,7 +283,7 @@ means of the logistic function (`Wikipedia entry about logistic regression`_).
 .. index:: ridge regression
 
 Ridge Regression
-================
+----------------
 
 Ridge regression (aka Tikhonov regularization) is a variant of a linear regression
 (`Wikipedia entry about ridge regression`_).
@@ -304,7 +299,7 @@ intercept term so that you do not have to center your data.
 .. index:: sparse multinomial logistic regression, SMLR
 
 Sparse Multinomial Logistic Regression
-======================================
+--------------------------------------
 
 Sparse Multinomial Logistic Regression [#]_ is a fast multi-class classifier that
 can easily with high-dimensional problems (`research paper about SMLR`_). PyMVPA
@@ -321,7 +316,7 @@ of a C extension for the performance critical pieces of the code.
 .. index:: support vector machine, SVM
 
 Support Vector Machines
-=======================
+-----------------------
 
 Support vector machines [#]_ classifiers (and regressions) are popular
 since they can deal with very high dimensional problems (`Wikipedia
@@ -351,6 +346,51 @@ and RbfCSVMC_).
 .. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 
 
+Boosted and Multi-class Classifiers
+===================================
+
+(to be written)
+
+.. Point to the special case of multi-class classification and how to deal with
+   it. Finally describe features of all available classifiers.
+
+
+Retrainable Classifiers
+=======================
+
+Some classifiers have ability to provide quick (i.e in terms of performance)
+re-training if they were previously trained, and only part of their
+specification got changed. For instance, for kernel-based classifier
+(e.g. GPR) it makes no sense to recompute kernel matrix, if only a classifier
+(not kernel) parameter (e.g. ``sigma_noise``) was changed. Another similar
+usecase: for null-hypothesis testing it might be needed to train classifier
+multiple times on a randomized set of labels.
+
+Only classifiers which have ``retrainable`` in their ``_clf_internals`` are
+capable of efficient retraining. To enable retraining, just provide
+``retrainable=True`` to the constructor of the classifier. Internally
+retrainable classifiers will try to deduce what was changed in the
+specification of the classifier (e.g. training/testing datasets, parameters)
+and act accordingly. To reduce training/prediction time even more, classifier
+might directly be instructed with what aspects were changed. It must be
+previously trained / predicted, so later on retrain_ and repredict_
+methods could be called. repredict_ can be called only with the same data, for
+which it was earlier predicted. See API doc for more information.
+
+.. _retrain: api/mvpa.clfs.base.Classifier-class.html#retrain
+.. _repredict: api/mvpa.clfs.base.Classifier-class.html#repredict
+
+Implementation of efficient retraining is not straightforward, thus it is
+strongly advised to
+
+ * enable ``CHECK_RETRAIN`` debug target while developing the code for
+   analysis. That might guard you against obvious misuses of retraining
+   feature, as well as to spot bugs in the code
+ * validate on a simple dataset that analysis code provides the same results
+   if classifier was created retrainable or not
+
+
+
 
 Classifiers "Warehouse"
 =======================
@@ -362,8 +402,7 @@ in PyMVPA. Such collection can be queried by any set of known keywords/tags
 with tags prefixed with ``!`` being excluded::
 
   >>> from mvpa.clfs.warehouse import clfs
-  >>> print len(clfs['multiclass', '!svm'])
-  8
+  >>> tryme = clfs['multiclass', '!svm']
 
 to simply sweep through classifiers which are capable of multiclass
 classification and are not SVM based.

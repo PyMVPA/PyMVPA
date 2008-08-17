@@ -12,31 +12,44 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from copy import deepcopy
+from mvpa.misc.copy import deepcopy
 
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class _SVM(Classifier):
     """Support Vector Machine Classifier.
 
     Base class for all external SVM implementations.
+    """
 
+    """
     Derived classes should define:
 
     * _KERNELS: map(dict) should define assignment to a tuple containing
       implementation kernel type, list of parameters adherent to the
       kernel, and sensitivity analyzer e.g.::
 
-      _KERNELS = {
+        _KERNELS = {
              'linear': (shogun.Kernel.LinearKernel, (), LinearSVMWeights),
              'rbf' :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
              ...
              }
+
+    * _KNOWN_IMPLEMENTATIONS: map(dict) should define assignment to a
+      tuple containing implementation of the SVM, list of parameters
+      adherent to the implementation, additional internals, and
+      description e.g.::
+
+        _KNOWN_IMPLEMENTATIONS = {
+          'C_SVC' : (svm.svmc.C_SVC, ('C',),
+                   ('binary', 'multiclass'), 'C-SVM classification'),
+          ...
+          }
 
     """
 
@@ -49,12 +62,13 @@ class _SVM(Classifier):
         'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
         'degree': Parameter(3, descr='Degree of polynomial kernel'),
             # init the parameter interface
-        'tube_epsilon': Parameter(0.1, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression (SVR)'),
+        'tube_epsilon': Parameter(0.01, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression (SVR)'),
         'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
         'tau': Parameter(1e-6, descr='TAU parameter of KRR regression in shogun'),
-        'max_shift': Parameter(10.0, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
-        'shift_step': Parameter(1.0, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
+        'max_shift': Parameter(10, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
+        'shift_step': Parameter(1, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
         'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),
+        'scale': Parameter(1.0, descr='Scale factor for linear kernel. (0 triggers automagic rescaling by SG'),
         'shrinking': Parameter(1, descr='Either shrinking is to be conducted'),
         'weight_label': Parameter([], descr='???'),
         'weight': Parameter([], descr='???'),
@@ -81,20 +95,44 @@ class _SVM(Classifier):
         functionality to see how well it would fit.
         """
 
+        # Check if requested implementation is known
+        svm_impl = kwargs.get('svm_impl', None)
+        if not svm_impl in self._KNOWN_IMPLEMENTATIONS:
+            raise ValueError, \
+                  "Unknown SVM implementation '%s' is requested for %s." \
+                  "Known are: %s" % (svm_impl, self.__class__,
+                                     self._KNOWN_IMPLEMENTATIONS.keys())
+        self._svm_impl = svm_impl
+
+        # Check the kernel
         kernel_type = kernel_type.lower()
-        self._kernel_type_literal = kernel_type
         if not kernel_type in self._KERNELS:
             raise ValueError, "Unknown kernel " + kernel_type
+        self._kernel_type_literal = kernel_type
+
+        impl, add_params, add_internals, descr = \
+              self._KNOWN_IMPLEMENTATIONS[svm_impl]
+
+        # Add corresponding parameters to 'known' depending on the
+        # implementation chosen
+        if add_params is not None:
+            self._KNOWN_PARAMS = \
+                 self._KNOWN_PARAMS[:] + list(add_params)
 
         # Add corresponding kernel parameters to 'known' depending on what
-        # kernel was chosen
+        # kernel chosen
         if self._KERNELS[kernel_type][1] is not None:
-            # XXX need to do only if it is a class variable
             self._KNOWN_KERNEL_PARAMS = \
                  self._KNOWN_KERNEL_PARAMS[:] + list(self._KERNELS[kernel_type][1])
 
         # Assign per-instance _clf_internals
         self._clf_internals = self._clf_internals[:]
+
+        # Add corresponding internals
+        if add_internals is not None:
+            self._clf_internals += list(add_internals)
+        self._clf_internals.append(svm_impl)
+
         if kernel_type == 'linear':
             self._clf_internals += [ 'linear', 'has_sensitivity' ]
         else:
@@ -102,7 +140,7 @@ class _SVM(Classifier):
 
         # pop out all args from **kwargs which are known to be SVM parameters
         _args = {}
-        for param in self._KNOWN_KERNEL_PARAMS + self._KNOWN_PARAMS:
+        for param in self._KNOWN_KERNEL_PARAMS + self._KNOWN_PARAMS + ['svm_impl']:
             if param in kwargs:
                 _args[param] = kwargs.pop(param)
 
@@ -113,12 +151,13 @@ class _SVM(Classifier):
                 # TODO: make it even more specific -- if that argument is listed
                 # within _SVM_PARAMS
                 e.args = tuple( [e.args[0] +
-                                 "\n Given SVM instance knows following parameters: %s" %
-                                 self._KNOWN_PARAMS +
+                                 "\n Given SVM instance of class %s knows following parameters: %s" %
+                                 (self.__class__, self._KNOWN_PARAMS) +
                                  ", and kernel parameters: %s" %
                                  self._KNOWN_KERNEL_PARAMS] + list(e.args)[1:])
             raise e
 
+        # populate collections and add values from arguments
         for paramfamily, paramset in ( (self._KNOWN_PARAMS, self.params),
                                        (self._KNOWN_KERNEL_PARAMS, self.kernel_params)):
             for paramname in paramfamily:
@@ -133,6 +172,14 @@ class _SVM(Classifier):
 
                 paramset.add(param)
 
+        # tune up C if it has one and non-linear classifier is used
+        if self.params.isKnown('C') and kernel_type != "linear" \
+               and self.params['C'].isDefault:
+            if __debug__:
+                debug("SVM_", "Assigning default C value to be 1.0 for SVM "
+                      "%s with non-linear kernel" % self)
+            self.params['C'].default = 1.0
+
         # Some postchecks
         if self.params.isKnown('weight') and self.params.isKnown('weight_label'):
             if not len(self.weight_label) == len(self.weight):
@@ -142,13 +189,15 @@ class _SVM(Classifier):
         self._kernel_type = self._KERNELS[kernel_type][0]
         if __debug__:
             debug("SVM", "Initialized %s with kernel %s:%s" % 
-                  (id(self), kernel_type, self._kernel_type))
+                  (self, kernel_type, self._kernel_type))
 
 
     def __repr__(self):
         """Definition of the object summary over the object
         """
-        res = "%s(kernel_type='%s'" % (self.__class__.__name__, self._kernel_type_literal)
+        res = "%s(kernel_type='%s', svm_impl='%s'" % \
+              (self.__class__.__name__, self._kernel_type_literal,
+               self._svm_impl)
         sep = ", "
         for col in [self.params, self.kernel_params]:
             for k in col.names:

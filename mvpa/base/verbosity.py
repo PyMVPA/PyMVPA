@@ -40,6 +40,7 @@ class Logger(object):
         if handlers == None:
             handlers = [stdout]
         self.__close_handlers = []
+        self.__handlers = []            # pylint friendliness
         self._setHandlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
@@ -101,8 +102,8 @@ class Logger(object):
             msg_ = ""
             if self.__crprev > 0:
                 # wipe out older line to make sure to see no ghosts
-                msg_ = "\r%s\r" % (" "*self.__crprev)
-            msg_ += msg
+                msg_ = "\r%s" % (" "*self.__crprev)
+            msg_ += "\r" + msg
             self.__crprev = len(msg)
             msg = msg_
             # since it makes no sense this days for cr and lf,
@@ -116,7 +117,11 @@ class Logger(object):
             self.__crprev = 0           # nothing to clear
 
         for handler in self.__handlers:
-            handler.write(msg)
+            try:
+                handler.write(msg)
+            except:
+                print "Failed writing on handler %s" % handler
+                raise
             try:
                 handler.flush()
             except:
@@ -233,7 +238,7 @@ class SetLogger(Logger):
         """
         # just unique entries... we could have simply stored Set I guess,
         # but then smth like debug.active += ["BLAH"] would not work
-        from mvpa.misc import verbose
+        from mvpa.base import verbose
         self.__active = []
         registered_keys = self.__registered.keys()
         for item in list(Set(active)):
@@ -245,11 +250,32 @@ class SetLogger(Logger):
                     self.__active = registered_keys
                     break
                 # try to match item as it is regexp
-                regexp = re.compile("^%s$" % item)
+                regexp_str = "^%s$" % item
+                try:
+                    regexp = re.compile(regexp_str)
+                except:
+                    raise ValueError, \
+                          "Unable to create regular expression out of  %s" % item
                 matching_keys = filter(regexp.match, registered_keys)
-                self.__active += matching_keys
+                toactivate = matching_keys
+                if len(toactivate) == 0:
+                    ids = self.registered.keys()
+                    ids.sort()
+                    raise ValueError, \
+                          "Unknown debug ID '%s' was asked to become active," \
+                          " or regular expression '%s' did not get any match" \
+                          " among known ids: %s" \
+                          % (item, regexp_str, ids)
             else:
-                self.__active.append(item)
+                toactivate = [item]
+
+            # Lets check if asked items are known
+            for item_ in toactivate:
+                if not (item_ in registered_keys):
+                    raise ValueError, \
+                          "Unknown debug ID %s was asked to become active" \
+                          % item_
+            self.__active += toactivate
 
         self.__active = list(Set(self.__active)) # select just unique ones
         self.__maxstrlength = max([len(str(x)) for x in self.__active] + [0])
@@ -269,11 +295,9 @@ class SetLogger(Logger):
         It appends a newline since most commonly each call is a separate
         message
         """
-        if not self.__registered.has_key(setid):
-            self.__registered[setid] = "No Description"
 
         if setid in self.__active:
-            if self.__printsetid:
+            if len(msg)>0 and self.__printsetid:
                 msg = "[%%-%ds] " % self.__maxstrlength % (setid) + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
@@ -308,6 +332,8 @@ if __debug__:
     import os, re
     import traceback
     import time
+    from os import getpid
+    from os.path import basename, dirname
 
     def parseStatus(field='VmSize'):
         """Return stat information on current process.
@@ -317,10 +343,60 @@ if __debug__:
         TODO: Spit out multiple fields. Use some better way than parsing proc
         """
 
-        fd = open('/proc/%d/status'%os.getpid())
+        fd = open('/proc/%d/status' % getpid())
         lines = fd.readlines()
         fd.close()
-        return filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
+        match = filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
+        match = re.sub('[ \t]+', ' ', match)
+        return match
+
+    def mbasename(s):
+        """Custom function to include directory name if filename is too common
+
+        Also strip .py at the end
+        """
+        base = basename(s).rstrip('py').rstrip('.')
+        if base in Set(['base', '__init__']):
+            base = basename(dirname(s)) + '.' + base
+        return base
+
+    class TraceBack(object):
+        def __init__(self, collide=False):
+            """Initialize TrackBack metric
+
+            :Parameters:
+              collide : bool
+                if True then prefix common with previous invocation gets
+                replaced with ...
+            """
+            self.__prev = ""
+            self.__collide = collide
+
+        def __call__(self):
+            ftb = traceback.extract_stack(limit=100)[:-2]
+            entries = [[mbasename(x[0]), str(x[1])] for x in ftb]
+            entries = filter(lambda x:x[0] != 'unittest', entries)
+
+            # lets make it more consize
+            entries_out = [entries[0]]
+            for entry in entries[1:]:
+                if entry[0] == entries_out[-1][0]:
+                    entries_out[-1][1] += ',%s' % entry[1]
+                else:
+                    entries_out.append(entry)
+            sftb = '>'.join(['%s:%s' % (mbasename(x[0]),
+                                        x[1]) for x in entries_out])
+            if self.__collide:
+                # lets remove part which is common with previous invocation
+                prev_next = sftb
+                common_prefix = os.path.commonprefix((self.__prev, sftb))
+                common_prefix2 = re.sub('>[^>]*$', '', common_prefix)
+
+                if common_prefix2 != "":
+                    sftb = '...' + sftb[len(common_prefix2):]
+                self.__prev = prev_next
+
+            return sftb
 
 
     class RelativeTime(object):
@@ -351,7 +427,9 @@ if __debug__:
         _known_metrics = {
             'vmem' : lambda : parseStatus(field='VmSize'),
             'pid' : lambda : parseStatus(field='Pid'),
-            'asctime' : time.asctime
+            'asctime' : time.asctime,
+            'tb' : TraceBack(),
+            'tbc' : TraceBack(collide=True),
             }
 
 
@@ -388,13 +466,14 @@ if __debug__:
                           func + " Known metrics are " + \
                           `DebugLogger._known_metrics.keys()`
             elif isinstance(func, list):
+                self.__metrics = []     # reset
                 for item in func:
                     self.registerMetric(item)
                 return
 
             if not func in self.__metrics:
                 try:
-                    from mvpa.misc import debug
+                    from mvpa.base import debug
                     debug("DBG", "Registering metric %s" % func)
                     self.__metrics.append(func)
                 except:
@@ -402,28 +481,34 @@ if __debug__:
 
 
         def __call__(self, setid, msg, *args, **kwargs):
+
+            if not self.registered.has_key(setid):
+                raise ValueError, "Not registered debug ID %s" % setid
+
             if not setid in self.active:
                 # don't even compute the metrics, since they might
                 # be statefull as RelativeTime
                 return
 
-            msg_ = ""
+            if len(msg) > 0:
+                msg_ = ' / '.join([str(x()) for x in self.__metrics])
 
-            for metric in self.__metrics:
-                msg_ += " %s" % `metric()`
+                if len(msg_)>0:
+                    msg_ = "{%s}" % msg_
 
-            if len(msg_)>0:
-                msg_ = "{%s}" % msg_
+                # determine blank offset using backstacktrace
+                if self._offsetbydepth:
+                    level = len(traceback.extract_stack())-2
+                else:
+                    level = 1
 
-            # determine blank offset using backstacktrace
-            if self._offsetbydepth:
-                level = len(traceback.extract_stack())-2
-            else:
-                level = 1
+                if len(msg)>250 and 'DBG' in self.active and not setid.endswith('_TB'):
+                    tb = traceback.extract_stack(limit=2)
+                    msg += "  !!!2LONG!!!. From %s" % str(tb[0])
 
-            SetLogger.__call__(self, setid, "DBG%s:%s%s" %
-                               (msg_, " "*level, msg),
-                               *args, **kwargs)
+                msg = "DBG%s:%s%s" % (msg_, " "*level, msg)
+
+            SetLogger.__call__(self, setid, msg, *args, **kwargs)
 
 
         def _setOffsetByDepth(self, b):
@@ -431,3 +516,6 @@ if __debug__:
 
         offsetbydepth = property(fget=lambda x:x._offsetbydepth,
                                  fset=_setOffsetByDepth)
+
+        metrics = property(fget=lambda x:x.__metrics,
+                           fset=registerMetric)

@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.param import Parameter
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 
 from mvpa.clfs.base import Classifier
@@ -24,19 +24,13 @@ import _svm as svm
 from sens import *
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 # we better expose those since they are mentioned in docstrings
 from svmc import \
      C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
      PRECOMPUTED
-
-known_svm_impl = { 'C_SVC' : (svm.svmc.C_SVC, 'C-SVM classification'),
-                   'NU_SVC' : (svm.svmc.NU_SVC, 'nu-SVM classification'),
-                   'ONE_CLASS' : (svm.svmc.ONE_CLASS, 'one-class-SVM'),
-                   'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, 'epsilon-SVM regression'),
-                   'NU_SVR' : (svm.svmc.NU_SVR, 'nu-SVM regression') }
 
 
 class SVM(_SVM):
@@ -51,21 +45,35 @@ class SVM(_SVM):
         doc="Estimates of samples probabilities as provided by LibSVM")
 
     _KERNELS = { "linear":  (svm.svmc.LINEAR, None, LinearSVMWeights),
-                 "rbf" :    (svm.svmc.RBF,     ('gamma',), None),
-                 "poly":    (svm.svmc.POLY,    ('gamma', 'degree', 'coef0'), None),
+                 "rbf" :    (svm.svmc.RBF, ('gamma',), None),
+                 "poly":    (svm.svmc.POLY, ('gamma', 'degree', 'coef0'), None),
                  "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0'), None),
                  }
     # TODO: Complete the list ;-)
 
     # TODO p is specific for SVR
-    _KNOWN_PARAMS = [ 'epsilon', 'probability', 'shrinking', 'weight_label', 'weight']
+    _KNOWN_PARAMS = [ 'epsilon', 'probability', 'shrinking',
+                      'weight_label', 'weight']
 
     _KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
 
+    _KNOWN_IMPLEMENTATIONS = {
+        'C_SVC' : (svm.svmc.C_SVC, ('C',),
+                   ('binary', 'multiclass'), 'C-SVM classification'),
+        'NU_SVC' : (svm.svmc.NU_SVC, ('nu',),
+                    ('binary', 'multiclass'), 'nu-SVM classification'),
+        'ONE_CLASS' : (svm.svmc.ONE_CLASS, (),
+                       ('oneclass',), 'one-class-SVM'),
+        'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, ('tube_epsilon',),
+                         ('regression',), 'epsilon-SVM regression'),
+        'NU_SVR' : (svm.svmc.NU_SVR, ('nu',),
+                    ('regression',), 'nu-SVM regression')
+        }
+
+    _clf_internals = _SVM._clf_internals + [ 'libsvm' ]
 
     def __init__(self,
                  kernel_type='linear',
-                 svm_impl=None,
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
@@ -115,9 +123,8 @@ class SVM(_SVM):
         If you do not want to change penalty for any of the classes,
         just set nr_weight to 0.
         """
-        self._KNOWN_PARAMS = SVM._KNOWN_PARAMS[:]
-        self._KNOWN_KERNEL_PARAMS = SVM._KNOWN_KERNEL_PARAMS[:]
 
+        svm_impl = kwargs.get('svm_impl', None)
         # Depending on given arguments, figure out desired SVM
         # implementation
         if svm_impl is None:
@@ -135,38 +142,17 @@ class SVM(_SVM):
                 svm_impl = 'C_SVC'
                 if __debug__:
                       debug('SVM', 'Assign C_SVC "by default"')
-
-        svm_type_ = known_svm_impl.get(svm_impl, None)
-        if svm_type_ is None:
-            raise ValueError, \
-                  "Unknown SVM implementation '%s' is requested for libsvm." \
-                  "Known are: %s" % (svm_impl, known_svm_impl.keys())
-        svm_type = svm_type_[0]          # just implementation
-
-        if svm_type in [svm.svmc.C_SVC]:
-            self._KNOWN_PARAMS += ['C']
-        elif svm_type in [svm.svmc.NU_SVC, svm.svmc.NU_SVR]:
-            self._KNOWN_PARAMS += ['nu']
-
-        if svm_type in [svm.svmc.EPSILON_SVR]:
-            self._KNOWN_PARAMS += ['tube_epsilon']
-
+        kwargs['svm_impl'] = svm_impl
 
         # init base class
         _SVM.__init__(self, kernel_type, **kwargs)
 
-        # Set internal flags to signal abilities
-        self._clf_internals += [ 'multiclass', 'libsvm' ] # we can do multiclass internally
+        self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
 
-        if svm_type in [svm.svmc.EPSILON_SVR, svm.svmc.NU_SVR]:
-            self._clf_internals += [ 'regression' ]
-
-        if 'nu' in self._KNOWN_PARAMS:
+        if 'nu' in self._KNOWN_PARAMS and 'epsilon' in self._KNOWN_PARAMS:
             # overwrite eps param with new default value (information taken from libSVM
             # docs
             self.params['epsilon'].setDefault(0.001)
-
-        self._svm_type = svm_type
 
         self.__model = None
         """Holds the trained SVM."""
@@ -191,8 +177,13 @@ class SVM(_SVM):
         for paramname, param in self.params.items.items() + self.kernel_params.items.items():
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
-            else:
+            elif paramname in svm.SVMParameter.default_parameters:
                 argname = paramname
+            else:
+                if __debug__:
+                    debug("SVM_", "Skipping parameter %s since it is not known"
+                          "to libsvm" % paramname)
+                continue
             args.append( (argname, param.value) )
 
         # XXX All those parameters should be fetched if present from
@@ -225,7 +216,7 @@ class SVM(_SVM):
         predictions = [ self.model.predict(p) for p in src ]
 
         if self.states.isEnabled("values"):
-            if len(self.trained_labels) > 2:
+            if not self.regression and len(self.trained_labels) > 2:
                 warning("'Values' for multiclass SVM classifier are ambiguous. You " +
                         "are adviced to wrap your classifier with " +
                         "MulticlassClassifier for explicit handling of  " +
@@ -239,7 +230,8 @@ class SVM(_SVM):
             #
             #try:
             values = [ self.model.predictValuesRaw(p) for p in src ]
-            if len(values)>0 and len(self.trained_labels) == 2:
+
+            if len(values)>0 and (not self.regression) and len(self.trained_labels) == 2:
                 if __debug__:
                     debug("SVM","Forcing values to be ndarray and reshaping " +
                           "them to be 1D vector")
@@ -359,6 +351,10 @@ class LinearSVMWeights(Sensitivity):
 
     biases = StateVariable(enabled=True,
                            doc="Offsets of separating hyperplanes")
+
+
+    _LEGAL_CLFS = [ SVM ]
+
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.

@@ -17,22 +17,6 @@ This example assumes that the PyMVPA example dataset is located in data/.
 """
 
 from mvpa.suite import *
-"""
-# Command above substitutes commands below
-
-import numpy as N
-import pylab as P
-
-# local imports
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.measures.anova import OneWayAnova
-from mvpa.clfs.svm import LinearNuSVMC
-from mvpa.datasets.misc import zscore
-from mvpa.misc.signal import detrend
-from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
-from mvpa.datasets.splitter import OddEvenSplitter, NFoldSplitter
-"""
 
 # load PyMVPA example dataset
 attr = SampleAttributes('data/attributes.txt')
@@ -112,5 +96,6 @@ for s in keys:
     P.colorbar(shrink=0.6)
 
 
-# show all the cool figures
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()

@@ -10,9 +10,9 @@
 
 
 import unittest
-from copy import deepcopy
+from mvpa.misc.copy import deepcopy
 import numpy as N
-from mvpa.mappers import PCAMapper
+from mvpa.mappers.pca import PCAMapper
 
 from mvpa.datasets import Dataset
 

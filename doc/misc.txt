@@ -14,6 +14,97 @@
 Miscellaneous
 *************
 
+.. index:: settings, configuration, cfg
+
+
+Managing (Custom) Configurations
+================================
+
+PyMVPA provides a facility to handle arbitrary configuration settings. This
+facility can be used to control some aspects of the behavior of PyMVPA
+itself, as well as to store and query custom configuration items, e.g. to
+control one's own analysis scripts.
+
+An instance of this configuration manager is loaded whenever the `mvpa` module
+is imported. It can be used from any script like this:
+
+  >>> from mvpa import cfg
+
+By default the config manager reads settings from two config files (if any of
+them exists). The first is a file named `.pymvpa.cfg` and located in the
+user's home directory.  The second is `pymvpa.cfg` in the current directory.
+Please note, that settings found in the second file override the ones in the
+first.
+
+The syntax of both files is the one also known from the Windows INI files.
+Basically, `Python's ConfigParser`_ is used to read those file and the config
+supports whatever this parser can read. A minimal example config file might
+look like this::
+
+    [general]
+    verbose = 1
+
+It consists of a section `general` containing a single setting `verbose`,
+which is set to `1`. PyMVPA recognizes a number of such sections and
+configuration variables. A full list is shown at the end of this section and
+is also available in the source package (`doc/examples/pymvpa.cfg`).
+
+.. _Python's ConfigParser: http://docs.python.org/lib/module-ConfigParser.html
+
+In addition to configuration files, the config manager also looks for special
+environment variables to read settings from. Names of such variables have to
+start with `MVPA_` following by the an optional section name and the variable
+name itself (with `_` as delimiter). If no section name is provided, the
+variables will be associated with section `general`. Some examples::
+
+    MVPA_VERBOSE=1
+
+will become::
+
+    [general]
+    verbose = 1
+
+However, `MVPA_VERBOSE_OUTPUT=stdout` becomes::
+
+    [verbose]
+    output = stdout
+
+Any lenght of variable name is allowed, e.g. `MVPA_SEC1_LONG_VARIABLE_NAME=1`
+becomes::
+
+    [sec1]
+    long variable name = 1
+
+Settings read from environment variables have the highest priority and
+override settings found in the config files. Therefore environment variables
+can be used to quickly adjust some setting without having to edit the config
+files.
+
+The config manager can easily be queried from inside scripts. In addition to
+the interface of `Python's ConfigParser`_ it has a few convenience functions
+mostly to allow for a default value in case no setting was found. For example:
+
+  >>> cfg.getboolean('warnings', 'suppress', default=False)
+  False
+
+queries the config manager whether warnings should be suppressed (i.e. if
+there is a variable `suppress` in section `warnings`). In case, there is now
+such setting, i.e. neither config files nor environment variables defined it,
+the `default` values is returned. Please see the documentation of
+`ConfigManager`_ for its full functionality.
+
+.. _ConfigManager: api/mvpa.base.config.ConfigManager-class.html
+
+
+.. index:: config file
+
+This is an example configuration file with the comprehensive list of settings
+recognized by PyMVPA:
+
+.. literalinclude:: examples/pymvpa.cfg
+   :language: ini
+
+
 .. index:: progress tracking, verbosity, debug, warning
 
 Progress Tracking
@@ -70,6 +161,31 @@ output if corresponding debug_ target is enabled
    debug output (if ``LIBSVM`` debug_ target is enabled) appears on
    standard error
 
+One of the possible redirections is Python's ``StringIO`` class. Instance of
+such class can be added to the ``handlers`` and queried later on for the
+information to be dumped to a file later on. It is useful if output path is
+specified at run time, thus it is impossible to redirect verbose or debug from
+the start of the program:
+
+  >>> import sys
+  >>> from mvpa.base import verbose
+  >>> from StringIO import StringIO
+  >>> stringout = StringIO()
+  >>> verbose.handlers = [sys.stdout, stringout]
+  >>> verbose.level = 3
+  >>>
+  >>> verbose(1, 'msg1')
+   msg1
+  >>> out_prefix='/tmp/'
+  >>>
+  >>> verbose(2, 'msg2')
+    msg2
+  >>> # open('%sverbose.log' % out_prefix, 'w').write(stringout.getvalue())
+  >>> print stringout.getvalue(),
+   msg1
+    msg2
+  >>>
+
 .. index:: verbosity
 
 Verbose Messages
@@ -81,7 +197,7 @@ level specified as the first parameter to verbose_ function call is
 less than specified. There are two easy ways to specify verbosity
 level:
 
-* command line: you can use optVerbose_ for precrafted command
+* command line: you can use opt.verbose_ for precrafted command
   line option for to give facility to change it from your script (see
   examples)
 * environment variable ``MVPA_VERBOSE``
@@ -110,7 +226,7 @@ behavior of warnings:
   specific warning it gets printed (default behavior is 1 for
   once). Specification of negative count results in all invocations
   being printed, and value of 0 obviously suppresses the warnings
-* ``MVPA_NO_WARNINGS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
+* ``MVPA_WARNINGS_SUPPRESS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
   resultant behavior
 * ``MVPA_WARNINGS_BT=<int>`` controls up to how many lines of traceback
   is printed for the warnings
@@ -147,10 +263,26 @@ ids to be enabled (reported):
 * code: debug.active property (e.g. ``debug.active = [ 'RFEC', 'CLF' ]``)
 
 Besides printing debug messages, it is also possible to print some
-metric. You can define new metrics or select predefined ones (vmem,
-asctime, pid). To enable list of metrics you can use
-``MVPA_DEBUG_METRICS`` environment variable to list desired metric
-names comma-separated.
+metric. You can define new metrics or select predefined ones:
+
+ vmem
+  (Linux specific): amount of virtual memory consumed by the task
+ pid
+  (Linux specific): PID of the process
+ reltime
+  How many seconds passed since previous debug printout
+ asctime
+  Time stamp
+ tb
+  Traceback (``module1:line_number1[,line_number2...]>module2:line_number..``)
+  where this debug statement was requested
+ tbc
+  Concise traceback printout -- prefix common with the previous
+  invocation is replaced with ``...``
+
+To enable list of metrics you can use ``MVPA_DEBUG_METRICS`` environment
+variable to list desired metric names comma-separated. If ``ALL`` is provided,
+it enables all the metrics.
 
 As it was mentioned earlier, debug messages are printed only in
 non-optimized python invocation. That was done to eliminate any
@@ -158,15 +290,16 @@ slowdown introduced by such 'debugging' output, which might appear at
 some computational bottleneck places in the code.
 
 Some of the debug ids are defined to facilitate additional checking of the
-validity of the analysis. E.g. ``RETRAIN`` id would cause additional checking
-of the data in retraining phase. Such additional testing might spot out some
-bugs in the internal logic.
+validity of the analysis. Their debug ids a prefixed by
+``CHECK_``. E.g. ``CHECK_RETRAIN`` id would cause additional checking of the
+data in retraining phase. Such additional testing might spot out some bugs in
+the internal logic, thus enabled when full test suite is ran.
 
 .. TODO: Unify loggers behind verbose and debug. imho debug should have
    also way to specify the level for the message so we could provide
    more debugging information if desired.
 
-.. _optVerbose: api/mvpa.misc.cmdline-module.html#optVerbose
+.. _opt.verbose: api/mvpa.misc.cmdline-module.html#opt.verbose
 .. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
 .. _misc module sources: api/mvpa.misc-pysrc.html
 .. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__
@@ -192,6 +325,22 @@ integer which can be displayed with debug id ``RANDOM`` e.g.::
   [RANDOM] DBG: Seeding RNG with 1447286079
   ...
 
+
+Unittests at a Grasp
+--------------------
+
+.. index:: unittests
+
+If it is needed to just quickly grasp through all unittests without making
+them to test multiple classifiers (implemented with sweeparg), define
+environmental variable ``MVPA_QUICKTEST`` e.g.::
+
+  > MVPA_WARNINGS_SUPPRESS=no MVPA_QUICKTEST=1 python test_clf.py
+  ...............
+  ----------------------------------------------------------------------
+  Ran 15 tests in 0.845s
+
+
 Others
 ------
 (to be written)
@@ -204,5 +353,39 @@ Others
 FSL Bindings
 ============
 
-(to be written)
+PyMVPA contains a few little helpers to make interfacing with FSL_ easier.
+The purpose of these helpers is to increase the efficiency when doing an
+analysis by (re)using useful information that is already available from some
+FSL output. FSL usually stores most interesting information in the NIfTI
+format. Therefore it can be easily imported into PyMVPA using PyNIfTI. However,
+some information is stored in textfiles, e.g. estimated motion correction
+parameters and *FEAT's three-column custom EV* files. PyMVPA provides import
+and export helpers for both of them (among other stuff like a *MELODIC*
+results import helper). Here is an example how the *McFlirt* parameter output
+can be used to perform motion-aware data detrending:
+
+  >>> from os import path
+  >>> import numpy as N
+  >>>
+  >>> # some dummy dataset
+  >>> from mvpa.datasets import Dataset
+  >>> ds = Dataset(samples=N.random.normal(size=(19, 3)), labels=1)
+  >>>
+  >>> # load motion correction output
+  >>> from mvpa.misc.fsl.base import McFlirtParams
+  >>> mc = McFlirtParams(path.join('data', 'bold_mc.par'))
+  >>>
+  >>> # simple plot using pylab (use pylab.show() or pylab.savefig()
+  >>> # afterwards)
+  >>> mc.plot()
+  >>>
+  >>> # detrend some dataset with mc params as additonal regressors
+  >>> from mvpa.datasets.miscfx import detrend
+  >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
+  >>> # 'res' contains all regressors and their associated weights
+
+All FSL bindings are located in the `mvpa.misc.fsl`_ module.
+
+.. _FSL: http://www.fmrib.ox.ac.uk
+.. _mvpa.misc.fsl: api/mvpa.misc.fsl-module.html
 

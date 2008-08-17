@@ -8,14 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
-import unittest
-
-import numpy as N
-
 from mvpa.misc.support import *
 from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
-from tests_warehouse import getMVPattern, sweepargs
+from tests_warehouse import *
+from tests_warehouse import getMVPattern
 from tests_warehouse_clfs import *
 
 from mvpa.misc.copy import deepcopy

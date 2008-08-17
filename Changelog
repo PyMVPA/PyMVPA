@@ -4,8 +4,9 @@
 
 .. index:: changelog
 
+****************************
 PyMVPA Development Changelog
------------------------------
+****************************
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
@@ -22,12 +23,54 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  (currently none)
-
+  * None.
 
 
 Releases
-~~~~~~~~
+========
+
+* 0.3.0 (Mon, 18 Aug 2008)
+
+  * Import of binary EEP files (used by EEProbe) and EEPDataset class.
+  * Initial version of a meta dataset class (MetaDataset). This is a container
+    for multiple datasets, which behaves like a dataset itself.
+  * Regression performance is summarized now within RegressionStatistics.
+  * Error functions: CorrErrorPFx, RelativeRMSErrorFx.
+  * Measures: CorrCoef.
+  * Data generators: chirp, wr1996
+  * Few more examples: curvefitting, kerneldemo, smellit, projections
+  * Updated kNN classifier. kNN is now able to use custom distance function
+    to determine that nearest neighbors. It also (re)gained the ability to do
+    simple majority or weighted voting.
+  * Some initial convenience functions for plotting typical results and data
+    exploration.
+  * Unified configuration handling with support for user-specific and
+    analysis-specific config files, as well as the ability to override all
+    config settings via environment variables. The configuration handling is
+    used for PyMVPA internal settings, but can also be easily used for
+    custom (user-)settings.
+  * Improved modularity, e.g. SciPy is not required anymore, but still very
+    useful.
+  * Initial implementations of ICA and PCA mapper using functionality provided
+    by MDP. These mappers are more or less untested and should be used with
+    great care.
+  * Further improved docstrings of some classes, but still a long way to go.
+  * New 'boxcar' mapper, which is the similar to the already present
+    transformWithBoxCar() function, but implemented as a mapper.
+  * New SampleGroupMapper that can be used for e.g. block averaging of
+    samples. See new FAQ item.
+  * Stripped redundant suffixes from module names, e.g.
+    mvpa.datasets.niftidataset -> mvpa.datasets.nifti
+  * mvpa.misc.cmdline variables opt* and opts* were groupped within
+    opt and optss class instances. Also names of the options were
+    changed to match 'dest' of the options. Use tools/refactor.py to
+    quickly fix your custom code.
+  * Change all references to PyMVPA website to www.pymvpa.org.
+  * Make website stylesheet compatible with sphinx 0.4.
+  * Several minor improvements of the compatibilty with MacOS.
+  * Extended FAQ section of the manual.
+  * Bugfix: doubleGammaHRF() ignoring K2 argument.
+
 
 * 0.2.2 (Tue, 17 Jun 2008)
 
@@ -39,6 +82,7 @@ Releases
   * Added proper Makefiles for LIBSVM copy, with configurable compiler flags.
   * Added 'setup.cfg' to remove the need to manually specify swig-opts
     (Windows specific configuration is in 'setup.cfg.win').
+
 
 * 0.2.1 (Sun, 15 Jun 2008)
 

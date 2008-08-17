@@ -13,8 +13,8 @@ import random
 import numpy as N
 from sets import Set
 from mvpa.datasets import Dataset
-from mvpa.datasets.misc import zscore, aggregateFeatures
-from mvpa.mappers import MaskMapper
+from mvpa.datasets.miscfx import zscore, aggregateFeatures
+from mvpa.mappers.mask import MaskMapper
 from mvpa.misc.exceptions import DatasetError
 
 class DatasetTests(unittest.TestCase):
@@ -80,7 +80,7 @@ class DatasetTests(unittest.TestCase):
         # default must be no mask
         self.failUnless( data.nfeatures == 100 )
         # check selection with feature list
-        sel = data.selectFeatures( [0,20,79] )
+        sel = data.selectFeatures( [0,20,79], sort=False )
         self.failUnless(sel.nfeatures == 3)
 
         # check size of the masked patterns
@@ -100,13 +100,15 @@ class DatasetTests(unittest.TestCase):
         sel=data.selectSamples(5)
         self.failUnless( sel.nsamples == 1 )
         self.failUnless( data.nfeatures == 100 )
+        self.failUnless( sel.origids == [5] )
 
         # check duplicate selections
-        sel = data.selectSamples([5,5])
+        sel = data.selectSamples([5, 5])
         self.failUnless( sel.nsamples == 2 )
         self.failUnless( (sel.samples[0] == sel.samples[1]).all() )
         self.failUnless( len(sel.labels) == 2 )
         self.failUnless( len(sel.chunks) == 2 )
+        self.failUnless((sel.origids == [5, 5]).all())
 
         self.failUnless( sel.samples.shape == (2,100) )
 
@@ -130,6 +132,7 @@ class DatasetTests(unittest.TestCase):
         # select some samples removing some labels completely
         sel = data.selectSamples(data.idsbylabels([3, 4, 8, 9]))
         self.failUnlessEqual(Set(sel.uniquelabels), Set([3, 4, 8, 9]))
+        self.failUnless((sel.origids == [0, 1, 2, 3, 4, 5, 6, 8, 9]).all())
 
 
     def testCombinedPatternAndFeatureMasking(self):
@@ -245,6 +248,7 @@ class DatasetTests(unittest.TestCase):
         except:
             self.fail(msg="samples and labels are 2 required parameters")
 
+
     def testZScoring(self):
         # dataset: mean=2, std=1
         samples = N.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) ).\
@@ -284,6 +288,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(ag_data.nfeatures == 1)
         self.failUnless((ag_data.samples[:,0] == [2, 7, 12, 17]).all())
 
+
     def testApplyMapper(self):
         """Test creation of new dataset by applying a mapper"""
         mapper = MaskMapper(N.array([1,0,1]))
@@ -293,10 +298,12 @@ class DatasetTests(unittest.TestCase):
         seldataset = dataset.applyMapper(featuresmapper=mapper)
         self.failUnless( (dataset.selectFeatures([0, 2]).samples
                           == seldataset.samples).all() )
-        self.failUnlessRaises(NotImplementedError,
-                              dataset.applyMapper, None, [1])
-        """We don't yet have implementation for samplesmapper --
-        if we get one -- remove this check and place a test"""
+        # XXX: the intended test is added as SampleGroupMapper test
+#        self.failUnlessRaises(NotImplementedError,
+#                              dataset.applyMapper, None, [1])
+#        """We don't yet have implementation for samplesmapper --
+#        if we get one -- remove this check and place a test"""
+
 
     def testId(self):
         """Test Dataset.idhash() if it gets changed if any of the labels/chunks changes"""
@@ -333,8 +340,8 @@ class DatasetTests(unittest.TestCase):
                         msg="Permutation also changes idhash")
 
         dataset.permuteLabels(False)
-        self.failUnless(origid != dataset.idhash,
-                        msg="Permutation also changes idhash even on restore")
+        self.failUnless(origid == dataset.idhash,
+                        msg="idhash should be restored after permuteLabels(False)")
 
 
     def testFeatureMaskConversion(self):

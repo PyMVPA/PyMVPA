@@ -17,7 +17,25 @@ from sets import Set
 from mvpa.datasets import Dataset
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
+
+def multipleChunks(func, n_chunks, *args, **kwargs):
+    """Replicate datasets multiple times raising different chunks
+
+    Given some randomized (noisy) generator of a dataset with a single
+    chunk call generator multiple times and place results into a
+    distinct chunks
+    """
+    for chunk in xrange(n_chunks):
+        dataset_ = func(*args, **kwargs)
+        dataset_.chunks[:] = chunk + 1
+        if chunk == 0:
+            dataset = dataset_
+        else:
+            dataset += dataset_
+
+    return dataset
+
 
 def dumbFeatureDataset():
     """Create a very simple dataset with 2 features and 3 labels
@@ -199,17 +217,8 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
 
 def getMVPattern(s2n):
     """Simple multivariate dataset"""
-    
-    run1 = pureMultivariateSignal(5, s2n, 1)
-    run2 = pureMultivariateSignal(5, s2n, 2)
-    run3 = pureMultivariateSignal(5, s2n, 3)
-    run4 = pureMultivariateSignal(5, s2n, 4)
-    run5 = pureMultivariateSignal(5, s2n, 5)
-    run6 = pureMultivariateSignal(5, s2n, 6)
-
-    data = run1 + run2 + run3 + run4 + run5 + run6
-
-    return data
+    return multipleChunks(pureMultivariateSignal, 6,
+                          5, s2n, 1)
 
 
 def wr1996(size=200):
@@ -253,3 +262,83 @@ def wr1996(size=200):
     x = N.hstack([x, x34, x56])
     return Dataset(samples=x, labels=y)
 
+
+def sinModulated(n_instances, n_features,
+                  flat=False, noise=0.4):
+    """ Generate a (quite) complex multidimensional non-linear dataset
+
+    Used for regression testing. In the data label is a sin of a x^2 +
+    uniform noise
+    """
+    if flat:
+        data = (N.arange(0.0, 1.0, 1.0/n_instances)*N.pi)
+        data.resize(n_instances, n_features)
+    else:
+        data = N.random.rand(n_instances, n_features)*N.pi
+        pass
+    label = N.sin((data**2).sum(1)).round()
+    label += N.random.rand(label.size)*noise
+    return Dataset(samples=data, labels=label)
+
+def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2, data_noise=0.4, noise=0.1):
+    """ Generates simple dataset for linear regressions
+
+    Generates chirp signal, populates n_nonbogus_features out of
+    n_features with it with different noise level and then provides
+    signal itself with additional noise as labels
+    """
+    x = N.linspace(0, 1, n_instances)
+    y = N.sin((10 * N.pi * x **2))
+
+    data = N.random.normal(size=(n_instances, n_features ))*data_noise
+    for i in xrange(n_nonbogus_features):
+        data[:, i] += y[:]
+
+    labels = y + N.random.normal(size=(n_instances,))*noise
+
+    return Dataset(samples=data, labels=labels)
+
+
+def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
+    """
+    Generate a dataset from a linear function with Added White
+    Gaussian Noise (AWGN).  It can be multidimensional if 'slope' is a
+    vector. If flat is True (in 1 dimesion) generate equally spaces
+    samples instead of random ones. This is useful for the test phase.
+    """
+    dimensions = 1
+    if isinstance(slope, N.ndarray):
+        dimensions = slope.size
+
+    if flat and dimensions == 1:
+        x = N.linspace(0, 1, size)[:, N.newaxis]
+    else:
+        x = N.random.rand(size, dimensions)
+
+    y = N.dot(x, slope)[:, N.newaxis] \
+        + (N.random.randn(*(x.shape[0], 1)) * noise_std) + intercept
+
+    return Dataset(samples=x, labels=y)
+
+
+def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
+    """
+    """
+    x = []
+    y = []
+    labels = []
+    for fx in sfx:
+        nx = N.random.normal(size=size_per_fx)
+        ny = fx(nx) + N.random.normal(size=nx.shape, scale=noise_std)
+        x.append(nx)
+        y.append(ny)
+
+        # whenever larger than first function value
+        labels.append(N.array(ny < dfx(nx), dtype='int'))
+
+    samples = N.array((N.hstack(x), N.hstack(y))).squeeze().T
+    labels = N.hstack(labels).squeeze().T
+
+    samples += N.array(center)
+
+    return Dataset(samples=samples, labels=labels)

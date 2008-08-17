@@ -31,7 +31,7 @@ colleagues [1]_.
 A searchlight analysis is can be easily performed. The following code snippet
 shows a draft of a complete analysis.
 
-  >>> from mvpa.datasets.maskeddataset import MaskedDataset
+  >>> from mvpa.datasets.masked import MaskedDataset
   >>> from mvpa.datasets.splitter import OddEvenSplitter
   >>> from mvpa.clfs.svm import LinearCSVMC
   >>> from mvpa.clfs.transerror import TransferError

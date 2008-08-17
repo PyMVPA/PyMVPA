@@ -13,7 +13,9 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from mvpa.misc.iohelpers import ColumnData, FslEV3, SampleAttributes
+from mvpa.misc.io import *
+from mvpa.misc.fsl import FslEV3
+from mvpa.misc.bv import BrainVoyagerRTC
 
 
 class IOHelperTests(unittest.TestCase):
@@ -112,7 +114,7 @@ class IOHelperTests(unittest.TestCase):
         os.remove(fpath)
 
 
-    def testFslEV(self):
+    def testFslEV2(self):
         attr = SampleAttributes(os.path.join('..', 'data', 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
@@ -120,6 +122,60 @@ class IOHelperTests(unittest.TestCase):
             ['chunks','labels'])
 
         self.failUnless(attr.nsamples == 3)
+
+    def testBVRTC(self):
+        """Simple testing of reading RTC files from BrainVoyager"""
+
+        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        self.failUnlessEqual(attr.ncolumns, 4, "We must have 4 colums")
+        self.failUnlessEqual(attr.nrows, 147, "We must have 147 rows")
+
+        self.failUnlessEqual(attr._header_order,
+                ['l_60 B', 'r_60 B', 'l_80 B', 'r_80 B'],
+                "We must got column names correctly")
+        self.failUnless(len(attr.r_60_B) == attr.nrows,
+                "We must have got access to column by property")
+        self.failUnless(attr.toarray() != None,
+                "We must have got access to column by property")
+
+    def testdesign2labels(self):
+        """Simple testing of helper Design2Labels"""
+
+        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        labels0 = design2labels(attr, baseline_label='silence')
+        labels = design2labels(attr, baseline_label='silence',
+                                func=lambda x:x>0.5)
+        Nsilence = lambda x:len(N.where(N.array(x) == 'silence')[0])
+
+        nsilence0 = Nsilence(labels0)
+        nsilence = Nsilence(labels)
+        self.failUnless(nsilence0 < nsilence,
+                        "We must have more silence if thr is higher")
+        self.failUnlessEqual(len(labels), attr.nrows,
+                        "We must have the same number of labels as rows")
+        self.failUnlessRaises(ValueError, design2labels, attr,
+                        baseline_label='silence', func=lambda x:x>-1.0)
+
+
+    def testlabels2chunks(self):
+        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        labels = design2labels(attr, baseline_label='silence')
+        self.failUnlessRaises(ValueError, labels2chunks, labels, 'bugga')
+        chunks = labels2chunks(labels)
+        self.failUnlessEqual(len(labels), len(chunks))
+        # we must got them in sorted order
+        chunks_sorted = N.sort(chunks)
+        self.failUnless((chunks == chunks_sorted).all())
+        # for this specific one we must have just 4 chunks
+        self.failUnless((N.unique(chunks) == range(4)).all())
+
+
+    def testSensorLocations(self):
+        sl = SensorLocations(os.path.join('..', 'data', 'xavr1010.dat'))
+
+        for var in ['names', 'pos_x', 'pos_y', 'pos_z']:
+            self.failUnless(len(eval('sl.' + var)) == 31)
+
 
 
 def suite():

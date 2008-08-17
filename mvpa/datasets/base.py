@@ -12,33 +12,53 @@ __docformat__ = 'restructuredtext'
 
 import operator
 import random
-import copy
-
+import mvpa.misc.copy as copy
 import numpy as N
+
+from sets import Set
+
+# Sooner or later Dataset would become ClassWithCollections as well, but for
+# now just an object -- thus commenting out tentative changes
+#
+#XXX from mvpa.misc.state import ClassWithCollections, SampleAttribute
 
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
+from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug, warning
+    from mvpa.base import debug, warning
 
+#XXX class Dataset(ClassWithCollections):
 class Dataset(object):
-    """This class provides a container to store all necessary data to perform
-    MVPA analyses. These are the data samples, as well as the labels
-    associated with these patterns. Additionally samples can be grouped into
-    chunks.
+    """*The* Dataset.
+
+    This class provides a container to store all necessary data to
+    perform MVPA analyses. These are the data samples, as well as the
+    labels associated with the samples. Additionally, samples can be
+    grouped into chunks.
 
     :Groups:
-      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`, `applyMapper`
+      - `Creators`: `__init__`, `selectFeatures`, `selectSamples`,
+                    `applyMapper`
       - `Mutators`: `permuteLabels`
 
-    Important: labels assumed to be immutable, ie noone should modify
+    Important: labels assumed to be immutable, i.e. noone should modify
     them externally by accessing indexed items, ie something like
     ``dataset.labels[1] += "_bad"`` should not be used. If a label has
-    to be modified, full copy of labels should be obtained, operated
-    on, and assigned back to the dataset, otherwise
-    dataset.uniquelabels would not work.  The same applies to any
-    other attribute which has corresponding unique* access property.
+    to be modified, full copy of labels should be obtained, operated on,
+    and assigned back to the dataset, otherwise dataset.uniquelabels
+    would not work.  The same applies to any other attribute which has
+    corresponding unique* access property.
+
+    XXX Notes about migration to use Collections to store data and
+    attributes for samples, features, and dataset itself:
+
+    changes:
+      _data  ->  s_attr collection (samples attributes)
+      _dsattr -> ds_attr collection
+                 f_attr collection (features attributes)
+
     """
 
     # static definition to track which unique attributes
@@ -57,25 +77,65 @@ class Dataset(object):
     no default values would be assumed and construction of the
     instance would fail"""
 
-    def __init__(self, data=None, dsattr=None, dtype=None, \
-                 samples=None, labels=None, chunks=None, check_data=True,
-                 copy_samples=False, copy_data=True, copy_dsattr=True):
+    #XXX _ATTRIBUTE_COLLECTIONS = [ 's_attr', 'f_attr', 'ds_attr' ]
+    #XXX """Assure those 3 collections to be present in all datasets"""
+    #XXX
+    #XXX samples__ = SampleAttribute(doc="Samples data. 0th index is time", hasunique=False) # XXX
+    #XXX labels__ = SampleAttribute(doc="Labels for the samples", hasunique=True)
+    #XXX chunks__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=True)
+    #XXX # samples ids (already unique by definition)
+    #XXX origids__ = SampleAttribute(doc="Chunk identities for the samples", hasunique=False)
+
+    def __init__(self,
+                 # for copy constructor
+                 data=None,
+                 dsattr=None,
+                 # automatic dtype conversion
+                 dtype=None,
+                 # new instances
+                 samples=None,
+                 labels=None,
+                 chunks=None,
+                 origids=None,
+                 # flags
+                 check_data=True,
+                 copy_samples=False,
+                 copy_data=True,
+                 copy_dsattr=True):
         """Initialize dataset instance
+
+        There are basically two different way to create a dataset:
+
+        1. Create a new dataset from samples and sample attributes.  In
+           this mode a two-dimensional `ndarray` has to be passed to the
+           `samples` keyword argument and the corresponding samples
+           attributes are provided via the `labels` and `chunks`
+           arguments.
+
+        2. Copy contructor mode
+            The second way is used internally to perform quick coyping
+            of datasets, e.g. when performing feature selection. In this
+            mode and the two dictionaries (`data` and `dsattr`) are
+            required. For performance reasons this mode bypasses most of
+            the sanity check performed by the previous mode, as for
+            internal operations data integrity is assumed.
+
 
         :Parameters:
           data : dict
             Dictionary with an arbitrary number of entries. The value for
             each key in the dict has to be an ndarray with the
             same length as the number of rows in the samples array.
-            A special entry in theis dictionary is 'samples', a 2d array
+            A special entry in this dictionary is 'samples', a 2d array
             (samples x features). A shallow copy is stored in the object.
           dsattr : dict
             Dictionary of dataset attributes. An arbitrary number of
             arbitrarily named and typed objects can be stored here. A
             shallow copy of the dictionary is stored in the object.
-          dtype
+          dtype: type | None
             If None -- do not change data type if samples
             is an ndarray. Otherwise convert samples to dtype.
+
 
         :Keywords:
           samples : ndarray
@@ -89,6 +149,9 @@ class Dataset(object):
         already in the `data` container.
 
         """
+
+        #XXX ClassWithCollections.__init__(self)
+
         # see if data and dsattr are none, if so, make them empty dicts
         if data is None:
             data = {}
@@ -137,50 +200,66 @@ class Dataset(object):
         # store samples (and possibly transform/reshape/retype them)
         if not samples == None:
             if __debug__:
-                if self._data.has_key('samples'):
+                if lcl_data.has_key('samples'):
                     debug('DS',
                           "`Data` dict has `samples` (%s) but there is also" +
                           " __init__ parameter `samples` which overrides " +
-                          " stored in `data`" % (`self._data['samples'].shape`))
-            self._data['samples'] = self._shapeSamples(samples, dtype,
-                                                        copy_samples)
+                          " stored in `data`" % (`lcl_data['samples'].shape`))
+            lcl_data['samples'] = self._shapeSamples(samples, dtype,
+                                                     copy_samples)
 
         # TODO? we might want to have the same logic for chunks and labels
         #       ie if no labels present -- assign arange
+        #   MH: don't think this is necessary -- or is there a use case?
         # labels
         if not labels == None:
             if __debug__:
-                if self._data.has_key('labels'):
+                if lcl_data.has_key('labels'):
                     debug('DS',
                           "`Data` dict has `labels` (%s) but there is also" +
                           " __init__ parameter `labels` which overrides " +
-                          " stored in `data`" % (`self._data['labels']`))
-            if self._data.has_key('samples'):
-                self._data['labels'] = \
+                          " stored in `data`" % (`lcl_data['labels']`))
+            if lcl_data.has_key('samples'):
+                lcl_data['labels'] = \
                     self._expandSampleAttribute(labels, 'labels')
 
         # check if we got all required attributes
         for attr in self._requiredattributes:
-            if not self._data.has_key(attr):
+            if not lcl_data.has_key(attr):
                 raise DatasetError, \
                       "Attribute %s is required to initialize dataset" % \
                       attr
 
+        nsamples = self.nsamples
+
         # chunks
         if not chunks == None:
-            self._data['chunks'] = \
+            lcl_data['chunks'] = \
                 self._expandSampleAttribute(chunks, 'chunks')
-        elif not self._data.has_key('chunks'):
+        elif not lcl_data.has_key('chunks'):
             # if no chunk information is given assume that every pattern
             # is its own chunk
-            self._data['chunks'] = N.arange(self.nsamples)
+            lcl_data['chunks'] = N.arange(nsamples)
+
+        # samples origids
+        if not origids is None:
+            # simply assign if provided
+            lcl_data['origids'] = origids
+        elif not lcl_data.has_key('origids'):
+            # otherwise contruct unqiue ones
+            lcl_data['origids'] = N.arange(len(lcl_data['labels']))
+        else:
+            # assume origids have been specified already (copy constructor
+            # mode) leave them as they are, e.g. to make origids survive
+            # selectSamples()
+            pass
 
         # Initialize attributes which are registered but were not setup
         for attr in self._registeredattributes:
-            if not self._data.has_key(attr):
+            if not lcl_data.has_key(attr):
                 if __debug__:
                     debug("DS", "Initializing attribute %s" % attr)
-                self._data[attr] = N.zeros(self.nsamples)
+                lcl_data[attr] = N.zeros(nsamples)
 
         if check_data:
             self._checkData()
@@ -194,8 +273,12 @@ class Dataset(object):
         if not labels is None or not chunks is None:
             # for a speed up to don't go through all uniqueattributes
             # when no need
-            self._dsattr['__uniquereseted'] = False
+            lcl_dsattr['__uniquereseted'] = False
             self._resetallunique(force=True)
+
+
+    __doc__ = enhancedDocString('Dataset', locals())
+
 
     @property
     def idhash(self):
@@ -203,25 +286,38 @@ class Dataset(object):
 
         Like if classifier was trained on the same dataset as in question"""
 
-        res = id(self._data)
-        for val in self._data.values():
-            res += idhash_(val)
+        _data = self._data
+        res = idhash_(_data)
+
+        # we cannot count on the order the values in the dict will show up
+        # with `self._data.value()` and since idhash will be order-dependent
+        # we have to make it deterministic
+        keys = _data.keys()
+        keys.sort()
+        for k in keys:
+            res += idhash_(_data[k])
         return res
 
 
     def _resetallunique(self, force=False):
         """Set to None all unique* attributes of corresponding dictionary
         """
+        _dsattr = self._dsattr
 
-        if not force and self._dsattr['__uniquereseted']:
+        if not force and _dsattr['__uniquereseted']:
             return
 
+        _uniqueattributes = self._uniqueattributes
+
+        if __debug__ and "DS_" in debug.active:
+            debug("DS_", "Reseting all attributes %s for dataset %s"
+                  % (_uniqueattributes,
+                     self.summary(uniq=False, idhash=False, stats=False)))
+
         # I guess we better checked if dictname is known  but...
-        for k in self._uniqueattributes:
-            if __debug__:
-                debug("DS_", "Reset attribute %s" % k)
-            self._dsattr[k] = None
-        self._dsattr['__uniquereseted'] = True
+        for k in _uniqueattributes:
+            _dsattr[k] = None
+        _dsattr['__uniquereseted'] = True
 
 
     def _getuniqueattr(self, attrib, dict_):
@@ -229,17 +325,21 @@ class Dataset(object):
 
         XXX `dict_` can be simply replaced now with self._dsattr
         """
-        if not self._dsattr.has_key(attrib) or self._dsattr[attrib] is None:
-            if __debug__:
+
+        # local bindings
+        _dsattr = self._dsattr
+
+        if not _dsattr.has_key(attrib) or _dsattr[attrib] is None:
+            if __debug__ and 'DS_' in debug.active:
                 debug("DS_", "Recomputing unique set for attrib %s within %s" %
-                      (attrib, self.summary(uniq=False)))
+                      (attrib, self.summary(uniq=False, stats=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
-            self._dsattr[attrib] = N.unique( dict_[attrib[6:]] )
-            assert(not self._dsattr[attrib] is None)
-            self._dsattr['__uniquereseted'] = False
+            _dsattr[attrib] = N.unique( N.asanyarray(dict_[attrib[6:]]) )
+            assert(not _dsattr[attrib] is None)
+            _dsattr['__uniquereseted'] = False
 
-        return self._dsattr[attrib]
+        return _dsattr[attrib]
 
 
     def _setdataattr(self, attrib, value):
@@ -253,20 +353,24 @@ class Dataset(object):
         self._data[attrib] = N.asarray(value)
         uniqueattr = "unique" + attrib
 
-        if self._dsattr.has_key(uniqueattr):
-            self._dsattr[uniqueattr] = None
+        _dsattr = self._dsattr
+        if _dsattr.has_key(uniqueattr):
+            _dsattr[uniqueattr] = None
 
 
     def _getNSamplesPerAttr( self, attrib='labels' ):
         """Returns the number of samples per unique label.
         """
+        # local bindings
+        _data = self._data
+
         # XXX hardcoded dict_=self._data.... might be in self._dsattr
         uniqueattr = self._getuniqueattr(attrib="unique" + attrib,
-                                         dict_=self._data)
+                                         dict_=_data)
 
         # use dictionary to cope with arbitrary labels
         result = dict(zip(uniqueattr, [ 0 ] * len(uniqueattr)))
-        for l in self._data[attrib]:
+        for l in _data[attrib]:
             result[l] += 1
 
         # XXX only return values to mimic the old interface but we might want
@@ -275,26 +379,79 @@ class Dataset(object):
         return result
 
 
-
-
     def _getSampleIdsByAttr(self, values, attrib="labels"):
         """Return indecies of samples given a list of attributes
         """
 
-        if not operator.isSequenceType(values):
+        if not operator.isSequenceType(values) \
+               or isinstance(values, basestring):
             values = [ values ]
 
         # TODO: compare to plain for loop through the labels
         #       on a real data example
         sel = N.array([], dtype=N.int16)
+        _data = self._data
         for value in values:
             sel = N.concatenate((
-                sel, N.where(self._data[attrib]==value)[0]))
+                sel, N.where(_data[attrib]==value)[0]))
 
         # place samples in the right order
         sel.sort()
 
         return sel
+
+
+    def idsonboundaries(self, prior=0, post=0,
+                        attributes_to_track=['labels', 'chunks'],
+                        affected_labels=None,
+                        revert=False):
+        """Find samples which are on the boundaries of the blocks
+
+        Such samples might need to be removed.  By default (with
+        prior=0, post=0) ids of the first samples in a 'block' are
+        reported
+
+        :Parameters:
+          prior : int
+            how many samples prior to transition sample to include
+          post : int
+            how many samples post the transition sample to include
+          attributes_to_track : list of basestring
+            which attributes to track to decide on the boundary condition
+          affected_labels : list of basestring
+            for which labels to perform selection. If None - for all
+          revert : bool
+            either to revert the meaning and provide ids of samples which are found
+            to not to be boundary samples
+        """
+        # local bindings
+        _data = self._data
+        labels = self.labels
+        nsamples = self.nsamples
+
+        lastseen = [None for attr in attributes_to_track]
+        transitions = []
+
+        for i in xrange(nsamples):
+            current = [_data[attr][i] for attr in attributes_to_track]
+            if lastseen != current:
+                # transition point
+                new_transitions = range(max(0, i-prior),
+                                        min(nsamples-1, i+post)+1)
+                if affected_labels is not None:
+                    new_transitions = filter(lambda i: labels[i] in affected_labels,
+                                             new_transitions)
+                transitions += new_transitions
+                lastseen = current
+
+        transitions = Set(transitions)
+        if revert:
+            transitions = Set(range(nsamples)).difference(transitions)
+
+        # postprocess
+        transitions = N.array(list(transitions))
+        transitions.sort()
+        return list(transitions)
 
 
     def _shapeSamples(self, samples, dtype, copy):
@@ -331,12 +488,31 @@ class Dataset(object):
     def _checkData(self):
         """Checks `_data` members to have the same # of samples.
         """
-        for k, v in self._data.iteritems():
-            if not len(v) == self.nsamples:
+        #
+        # XXX: Maybe just run this under __debug__ and remove the `check_data`
+        #      from the constructor, which is too complicated anyway?
+        #
+
+        # local bindings
+        nsamples = self.nsamples
+        _data = self._data
+
+        for k, v in _data.iteritems():
+            if not len(v) == nsamples:
                 raise DatasetError, \
                       "Length of sample attribute '%s' [%i] does not " \
                       "match the number of samples in the dataset [%i]." \
-                      % (k, len(v), self.nsamples)
+                      % (k, len(v), nsamples)
+
+        # check for unique origids
+        uniques = N.unique(_data['origids'])
+        uniques.sort()
+        # need to copy to prevent sorting the original array
+        sorted_ids = _data['origids'].copy()
+        sorted_ids.sort()
+
+        if not (uniques == sorted_ids).all():
+            raise DatasetError, "Samples IDs are not unique."
 
 
     def _expandSampleAttribute(self, attr, attr_name):
@@ -360,15 +536,12 @@ class Dataset(object):
 
 
     @classmethod
-    def _registerAttribute(cls, key, dictname="_data", hasunique=False,
-                           default_setter=True):
+    def _registerAttribute(cls, key, dictname="_data", hasunique=False):
         """Register an attribute for any Dataset class.
 
         Creates property assigning getters/setters depending on the
         availability of corresponding _get, _set functions.
         """
-        #import pydb
-        #pydb.debugger()
         classdict = cls.__dict__
         if not classdict.has_key(key):
             if __debug__:
@@ -386,7 +559,7 @@ class Dataset(object):
             setter = '_set%s' % key
             if classdict.has_key(setter):
                 setter =  '%s.%s' % (cls.__name__, setter)
-            elif default_setter and dictname=="_data":
+            elif dictname=="_data":
                 setter = "lambda self,x: self._setdataattr" + \
                          "(attrib='%s', value=x)" % (key)
             else:
@@ -452,8 +625,10 @@ class Dataset(object):
                             stats=__debug__ and ('DS_STATS' in debug.active),
                             )
 
+
     def __repr__(self):
         return "<%s>" % str(self)
+
 
     def summary(self, uniq=True, stats=True, idhash=False):
         """String summary over the object
@@ -466,50 +641,66 @@ class Dataset(object):
           stats : bool
              include some basic statistics (mean, std, var) over dataset samples
         """
+        # local bindings
+        samples = self.samples
+        _data = self._data
+        _dsattr = self._dsattr
+
         if idhash:
             idhash_ds = "{%s}" % self.idhash
-            idhash_samples = "{%s}" % idhash_(self.samples)
+            idhash_samples = "{%s}" % idhash_(samples)
         else:
             idhash_ds = ""
             idhash_samples = ""
 
         s = """Dataset %s/ %s %d%s x %d""" % \
-            (idhash_ds, self.samples.dtype,
+            (idhash_ds, samples.dtype,
              self.nsamples, idhash_samples, self.nfeatures)
 
         if uniq:
             s +=  " uniq:"
-            for uattr in self._dsattr.keys():
+            for uattr in _dsattr.keys():
                 if not uattr.startswith("unique"):
                     continue
                 attr = uattr[6:]
                 try:
                     value = self._getuniqueattr(attrib=uattr,
-                                                dict_=self._data)
+                                                dict_=_data)
                     s += " %d %s" % (len(value), attr)
                 except:
                     pass
 
         if stats:
             # TODO -- avg per chunk?
-            s += " stats: mean=%g std=%g var=%g" % \
-                 (N.mean(self.samples), N.std(self.samples),
-                  N.var(self.samples))
+            s += " stats: mean=%g std=%g var=%g min=%g max=%g" % \
+                 (N.mean(samples), N.std(samples),
+                  N.var(samples), N.min(samples), N.max(samples))
         return s
 
 
     def __iadd__( self, other ):
         """Merge the samples of one Dataset object to another (in-place).
 
-        No dataset attributes will be merged!
+        No dataset attributes will be merged! Additionally, a new set of
+        unique `origids` will be generated.
         """
+        # local bindings
+        _data = self._data
+        other_data = other._data
+
         if not self.nfeatures == other.nfeatures:
             raise DatasetError, "Cannot add Dataset, because the number of " \
                                 "feature do not match."
 
         # concatenate all sample attributes
-        for k, v in self._data.iteritems():
-            self._data[k] = N.concatenate((v, other._data[k]), axis=0)
+        for k, v in _data.iteritems():
+            if k == 'origids':
+                # special case samples origids: for now just regenerate unique
+                # ones could also check if concatenation is unique, but it
+                # would be costly performance-wise
+                _data[k] = N.arange(len(v) + len(other_data[k]))
+            else:
+                _data[k] = N.concatenate((v, other_data[k]), axis=0)
 
         # might be more sophisticated but for now just reset -- it is safer ;)
         self._resetallunique()
@@ -565,11 +756,11 @@ class Dataset(object):
         # disabled and warning is not necessary anymore
         if sort:
             ids.sort()
-#        elif __debug__:
-#            from mvpa.misc.support import isSorted
-#            if not isSorted(ids):
-#                warning("IDs for selectFeatures must be provided " +
-#                       "in sorted order, otherwise major headache might occur")
+        elif __debug__ and 'CHECK_DS_SORTED' in debug.active:
+            from mvpa.misc.support import isSorted
+            if not isSorted(ids):
+                warning("IDs for selectFeatures must be provided " +
+                       "in sorted order, otherwise major headache might occur")
 
         # shallow-copy all stuff from current data dict
         new_data = self._data.copy()
@@ -594,19 +785,25 @@ class Dataset(object):
         return dataset
 
 
-    def applyMapper(self, featuresmapper=None, samplesmapper=None):
+    def applyMapper(self, featuresmapper=None, samplesmapper=None,
+                    train=True):
         """Obtain new dataset by applying mappers over features and/or samples.
+
+        While featuresmappers leave the sample attributes information
+        unchanged, as the number of samples in the dataset is invariant,
+        samplesmappers are also applied to the samples attributes themselves!
 
         :Parameters:
           featuresmapper : Mapper
             `Mapper` to somehow transform each sample's features
           samplesmapper : Mapper
             `Mapper` to transform each feature across samples
+          train : bool
+            Flag whether to train the mapper with this dataset before applying
+            it.
 
-        WARNING: At the moment, handling of samplesmapper is not yet
-        implemented since there were no real use case.
-
-        TODO: selectFeatures is pretty much applyMapper(featuresmapper=MaskMapper(...))
+        TODO: selectFeatures is pretty much 
+              applyMapper(featuresmapper=MaskMapper(...))
         """
 
         # shallow-copy all stuff from current data dict
@@ -615,9 +812,28 @@ class Dataset(object):
         # apply mappers
 
         if samplesmapper:
-            raise NotImplementedError
+            if __debug__:
+                debug("DS", "Training samplesmapper %s" % `samplesmapper`)
+            samplesmapper.train(self)
+
+            if __debug__:
+                debug("DS", "Applying samplesmapper %s" % `samplesmapper` +
+                      " to samples of dataset `%s`" % `self`)
+
+            # get rid of existing 'origids' as they are not valid anymore and
+            # applying a mapper to them is not really meaningful
+            if new_data.has_key('origids'):
+                del(new_data['origids'])
+
+            # apply mapper to all sample-wise data in dataset
+            for k in new_data.keys():
+                new_data[k] = samplesmapper.forward(self._data[k])
 
         if featuresmapper:
+            if __debug__:
+                debug("DS", "Training featuresmapper %s" % `featuresmapper`)
+            featuresmapper.train(self)
+
             if __debug__:
                 debug("DS", "Applying featuresmapper %s" % `featuresmapper` +
                       " to samples of dataset `%s`" % `self`)
@@ -636,11 +852,15 @@ class Dataset(object):
                          copy_dsattr=False
                          )
 
+        # samples attributes might have changed after applying samplesmapper
+        if samplesmapper:
+            dataset._resetallunique(force=True)
+
         return dataset
 
 
-    def selectSamples(self, mask):
-        """Choose a subset of samples.
+    def selectSamples(self, ids):
+        """Choose a subset of samples defined by samples IDs.
 
         Returns a new dataset object containing the selected sample
         subset.
@@ -651,8 +871,8 @@ class Dataset(object):
         """
         # without having a sequence a index the masked sample array would
         # loose its 2d layout
-        if not operator.isSequenceType( mask ):
-            mask = [mask]
+        if not operator.isSequenceType( ids ):
+            ids = [ids]
         # TODO: Reconsider crafting a slice if it can be done to don't copy
         #       the data
         #try:
@@ -673,7 +893,7 @@ class Dataset(object):
         # mask all sample attributes
         data = {}
         for k, v in self._data.iteritems():
-            data[k] = v[mask, ]
+            data[k] = v[ids, ]
 
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
@@ -691,52 +911,81 @@ class Dataset(object):
         return dataset
 
 
-
-    def permuteLabels(self, status, perchunk = True):
+    def permuteLabels(self, status, perchunk=True, assure_permute=False):
         """Permute the labels.
 
         TODO: rename status into something closer in semantics.
 
-        Calling this method with 'status' set to True, the labels are
-        permuted among all samples.
-
-        If 'perorigin' is True permutation is limited to samples sharing the
-        same chunk value. Therefore only the association of a certain sample
-        with a label is permuted while keeping the absolute number of
-        occurences of each label value within a certain chunk constant.
-
-        If 'status' is False the original labels are restored.
+        :Parameters:
+          status : bool
+            Calling this method with set to True, the labels are
+            permuted among all samples. If 'status' is False the
+            original labels are restored.
+          perchunk : bool
+            If True permutation is limited to samples sharing the same
+            chunk value. Therefore only the association of a certain
+            sample with a label is permuted while keeping the absolute
+            number of occurences of each label value within a certain
+            chunk constant.
+          assure_permute : bool
+            If True, assures that labels are permutted, ie any one is
+            different from the original one
         """
+        # local bindings
+        _data = self._data
+
+        if len(self.uniquelabels)<2:
+            raise RuntimeError, \
+                  "Call to permuteLabels is bogus since there is insuficient" \
+                  " number of labels: %s" % self.uniquelabels
+
         if not status:
             # restore originals
-            if self._data.get('origlabels', None) is None:
+            if _data.get('origlabels', None) is None:
                 raise RuntimeError, 'Cannot restore labels. ' \
                                     'permuteLabels() has never been ' \
                                     'called with status == True.'
-            self.labels = self._data['origlabels']
-            self._data['origlabels'] = None
+            self.labels = _data['origlabels']
+            _data.pop('origlabels')
         else:
             # store orig labels, but only if not yet done, otherwise multiple
             # calls with status == True will destroy the original labels
-            if not self._data.has_key('origlabels') \
-                or self._data['origlabels'] == None:
-                # rebind old labels to origlabels
-                self._data['origlabels'] = self._data['labels']
-                # assign a copy so modifications do not impact original data
-                self._data['labels'] = self._data['labels'].copy()
+            if not _data.has_key('origlabels') \
+                or _data['origlabels'] == None:
+                # bind old labels to origlabels
+                _data['origlabels'] = _data['labels']
+                # copy labels
+                _data['labels'] = copy.copy(_data['labels'])
 
-            # now scramble the rest
+            labels = _data['labels']
+            # now scramble
             if perchunk:
                 for o in self.uniquechunks:
-                    self._data['labels'][self.chunks == o ] = \
-                        N.random.permutation( self.labels[ self.chunks == o ] )
-                # to recompute uniquelabels
-                self.labels = self._data['labels']
+                    labels[self.chunks == o] = \
+                        N.random.permutation(labels[self.chunks == o])
             else:
-                self.labels = N.random.permutation(self._data['labels'])
+                labels = N.random.permutation(labels)
+
+            self.labels = labels
+
+            if assure_permute:
+                if not (_data['labels'] != _data['origlabels']).any():
+                    if not (assure_permute is True):
+                        if assure_permute == 1:
+                            raise RuntimeError, \
+                                  "Cannot assure permutation of labels %s for " \
+                                  "some reason with chunks %s and while " \
+                                  "perchunk=%s . Should not happen" % \
+                                  (self.labels, self.chunks, perchunk)
+                    else:
+                        assure_permute = 11 # make 10 attempts
+                    if __debug__:
+                        debug("DS",  "Recalling permute to assure different labels")
+                    self.permuteLabels(status, perchunk=perchunk,
+                                       assure_permute=assure_permute-1)
 
 
-    def getRandomSamples( self, nperlabel ):
+    def getRandomSamples(self, nperlabel):
         """Select a random set of samples.
 
         If 'nperlabel' is an integer value, the specified number of samples is
@@ -784,12 +1033,14 @@ class Dataset(object):
         return self._data['samples'].shape[1]
 
 
-
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
         """
-        if self._data['samples'].dtype != dtype:
-            self._data['samples'] = self._data['samples'].astype(dtype)
+        # local bindings
+        _data = self._data
+
+        if _data['samples'].dtype != dtype:
+            _data['samples'] = _data['samples'].astype(dtype)
 
 
     def convertFeatureIds2FeatureMask(self, ids):
@@ -823,13 +1074,15 @@ class Dataset(object):
         return mask.nonzero()[0]
 
 
-
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
+
 
 
 # Following attributes adherent to the basic dataset
 Dataset._registerAttribute("samples", "_data", hasunique=False)
 Dataset._registerAttribute("labels",  "_data", hasunique=True)
 Dataset._registerAttribute("chunks",  "_data", hasunique=True)
+# samples ids (already unique by definition)
+Dataset._registerAttribute("origids",  "_data", hasunique=False)

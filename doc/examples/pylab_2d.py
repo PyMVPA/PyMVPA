@@ -10,19 +10,6 @@
 """Example demonstrating a simple classifiction of a 2-D dataset"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes the following list
-
-import numpy as N
-import pylab as P
-
-# local imports
-from mvpa.datasets import Dataset
-from mvpa.clfs.plr import PLR
-from mvpa.clfs.ridge import RidgeReg
-from mvpa.clfs.svm import RbfNuSVMC,LinearNuSVMC
-from mvpa.clfs.knn import kNN
-"""
 
 
 # set up the labeled data
@@ -55,6 +42,7 @@ clfs = {'Ridge Regression': RidgeReg(),
                       enable_states=['probabilities']),
         'RBF SVM': RbfNuSVMC(probability=1,
                       enable_states=['probabilities']),
+        'SMLR': SMLR(lm=0.01),
         'Logistic Regression': PLR(criterion=0.00001),
         'k-Nearest-Neighbour': kNN(k=10)}
 
@@ -94,6 +82,8 @@ for c in clfs:
     elif c == 'Logistic Regression':
         # get out the values used for the prediction
         res = N.asarray(clf.values)
+    elif c == 'SMLR':
+        res = N.asarray(clf.values[:, 0])
     else:
         # get the probabilities from the svm
         res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
@@ -111,5 +101,6 @@ for c in clfs:
     # add the title
     P.title(c)
 
-# show all the cool figures
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()

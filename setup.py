@@ -51,11 +51,11 @@ if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \
 
 # define the setup
 setup(name       = 'pymvpa',
-      version      = '0.2.2',
+      version      = '0.3.0',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
-      url          = 'http://pkg-exppsy.alioth.debian.org/pymvpa',
+      url          = 'http://www.pymvpa.org',
       description  = 'Multivariate pattern analysis',
       long_description = """\
 PyMVPA is a Python module intended to ease pattern classification analyses
@@ -76,6 +76,9 @@ nothing but free-software to run.""",
                        'mvpa.measures',
                        'mvpa.featsel',
                        'mvpa.misc',
+                       'mvpa.misc.bv',
+                       'mvpa.misc.io',
+                       'mvpa.misc.plot',
                        'mvpa.misc.fsl' ],
       ext_modules  = ext_modules
       )

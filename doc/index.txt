@@ -5,12 +5,12 @@
 Pie ... what?
 =============
 
-PyMVPA is a Python_ module intended to ease pattern classification
-analyses of large datasets. It provides high-level abstraction of typical
-processing steps and a number of implementations of some popular algorithms.
-While it is not limited to neuroimaging data it is eminently suited for such
-datasets. PyMVPA is truely free software (in every respect) and additonally
-requires nothing but free-software to run.
+PyMVPA is a Python_ module intended to ease pattern classification analyses of
+large datasets. It provides high-level abstraction of typical processing steps
+and a number of implementations of some popular algorithms.  While it is not
+limited to the neuroimaging domain, it is eminently suited for such datasets.
+PyMVPA is truely free software (in every respect) and additionally requires
+nothing but free-software to run.
 
 .. _Python: http://www.python.org
 
@@ -31,11 +31,13 @@ Documentation
 =============
 
 * :ref:`User Documentation <contents>` (**the** documentation)
+* :ref:`Installation Instructions <installation>`
 * :ref:`Development Changelog <changelog>` (see what has changed)
 * :ref:`Developer Guidelines <devguide>` (information for people contributing
   code)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
+* :ref:`FAQ <faq>`
 * :ref:`genindex` (access by keywords)
 * :ref:`search` (online and offline full-text search)
 
@@ -78,10 +80,11 @@ Binary packages are available for:
     about how to obtain them.
 
 * Windows (:ref:`installation instructions <install_win>`)
-    An installer for Python 2.5 is available from the `file release system`_.
+    An installer for Python 2.5 is available from the `download area`_.
 
 * OpenSUSE (:ref:`installation instructions <install_suse>`)
-   Initial version of a binary RPM package, built for OpenSUSE_ 10.3.
+   Initial version of a binary RPM package, built for OpenSUSE_ 10.3
+   -- available in the `download area`_.
 
 Currently, there are no binary packages for other operating systems. However,
 we know that PyMVPA successfully builds on recent RedHat_ releases, as well as
@@ -97,8 +100,8 @@ MacOS X (see below for instructions).
 Source code
 -----------
 
-Source code tarballs of PyMVPA releases are available from the `file release
-system`_. Alternatively, one can also download a tarball of the latest
+Source code tarballs of PyMVPA releases are available from the `download
+area`_. Alternatively, one can also download a tarball of the latest
 development snapshot_ (i.e. the current state of the *master* branch of the
 PyMVPA source code repository).
 
@@ -121,7 +124,7 @@ and on how to :ref:`build PyMVPA from source <buildfromsource>` are provided
 in the manual.
 
 
-.. _file release system: http://alioth.debian.org/frs/?group_id=30954
+.. _download area: http://alioth.debian.org/frs/?group_id=30954
 .. _Git: http://git.or.cz/
 .. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
 
@@ -133,13 +136,16 @@ If you have problems installing the software or questions about usage,
 documentation or something else related to PyMVPA, you can post to the PyMVPA
 mailing list (prefered) or contact the authors on IRC:
 
-:Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_, archive_]
+:Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_,
+               archive_]
 :IRC: #exppsy on OTFC/Freenode
 
 All users should subscribe to the mailing list. PyMVPA is still a young project
 that is under heavy development. Significant modifications (hopefully
 improvements) are very likely to happen frequently. The mailing list is the
-prefered way to announce such changes.
+prefered way to announce such changes. The mailing list archive can also be
+searched using the *mailing list archive search* located in the sidebar of the
+PyMVPA home page.
 
 .. _subscription: http://lists.alioth.debian.org/mailman/listinfo/pkg-exppsy-pymvpa
 .. _archive: http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/

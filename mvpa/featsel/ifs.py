@@ -15,7 +15,7 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
-from copy import copy
+from mvpa.misc.copy import copy
 
 from mvpa.featsel.base import FeatureSelection
 from mvpa.featsel.helpers import NBackHistoryStopCrit, \
@@ -25,7 +25,7 @@ from mvpa.featsel.helpers import NBackHistoryStopCrit, \
 from mvpa.misc.state import StateVariable
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class IFS(FeatureSelection):

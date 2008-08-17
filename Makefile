@@ -7,7 +7,9 @@ LATEX_DIR=build/latex
 WWW_DIR=build/website
 
 # should be made conditional, as pyversions id Debian specific
-PYVER := $(shell pyversions -vd)
+#PYVER := $(shell pyversions -vd)
+# try generic variant instead
+PYVER := $(shell python -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
 ARCH := $(shell uname -m)
 
 
@@ -47,7 +49,10 @@ build-stamp:
 # to overcome the issue of not-installed svmc.so
 	for ext in svm smlr; do \
 		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/; done
+		mvpa/clfs/lib$$ext/; \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
+		mvpa/clfs/lib$$ext/$${ext}c.dylib; \
+		done
 	touch $@
 
 
@@ -71,7 +76,8 @@ clean:
 distclean:
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
-        mvpa/clfs/lib*/*_wrap.* \
+		mvpa/clfs/lib*/*.dylib \
+		mvpa/clfs/lib*/*_wrap.* \
 		mvpa/clfs/lib*/*c.py \
 		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
 	@find . -name '*.py[co]' \
@@ -80,7 +86,7 @@ distclean:
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '*.[ao]' -o -iname '*.gch' \
-		 -o -iname '#*#' | xargs -l10 rm -f
+		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
 	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
@@ -113,7 +119,7 @@ apidoc-stamp: build
 # the buildds, though.
 #apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
-	epydoc --config doc/api/epydoc.conf
+	LC_ALL=C epydoc --config doc/api/epydoc.conf
 	touch $@
 
 website: website-stamp
@@ -124,6 +130,9 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 
 upload-website: website
 	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+
+upload-htmldoc: htmldoc
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
 
 
 # this takes some minutes !!
@@ -136,10 +145,25 @@ ut-%: build
 unittest: build
 	@cd tests && PYTHONPATH=.. python main.py
 
-te-%: build
-	PYTHONPATH=. python doc/examples/$*.py
+# Runs unittests in few additional modes:
+# * with optimization on -- helps to catch unconditional debug calls
+# * with all debug ids and some metrics (crossplatform ones) on.
+#   That does:
+#     additional checking,
+#     debug() calls validation, etc
+unittests: unittest
+	@cd tests && PYTHONPATH=.. python -O main.py
+	@echo "Running unittests with debug output. No progress output."
+	@cd tests && \
+      PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
+       python main.py 2>&1 \
+       |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
-testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d
+te-%: build
+	MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py
+
+testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
+              te-curvefitting te-projections te-kerneldemo
 
 tm-%: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
@@ -167,7 +191,7 @@ testapiref: apidoc
 	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
-test: unittest testmanual testsuite testapiref testexamples
+test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@cd tests && { \
@@ -233,4 +257,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests

@@ -18,13 +18,13 @@ from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.state import StateVariable, Parametrized
 from mvpa.misc.param import Parameter
-from mvpa.misc import warning
+from mvpa.base import warning
 
 # Uber-fast C-version of the stepwise regression
 from mvpa.clfs.libsmlr import stepwise_regression as _cStepwiseRegression
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def _label2oneofm(labels, ulabels):
     """Convert labels to one-of-M form.
@@ -43,7 +43,7 @@ def _label2oneofm(labels, ulabels):
 
 
 
-class SMLR(Classifier, Parametrized):
+class SMLR(Classifier):
     """Sparse Multinomial Logistic Regression `Classifier`.
 
     This is an implementation of the SMLR algorithm published in
@@ -52,8 +52,8 @@ class SMLR(Classifier, Parametrized):
     use this for your work.
     """
 
-    _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'multiclass',
-                       'does_feature_selection' ] # later 'kernel-based'?
+    _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
+                       'multiclass', 'does_feature_selection' ] # later 'kernel-based'?
 
     lm = Parameter(.1, min=1e-10, allowedtype='float',
              doc="""The penalty term lambda.  Larger values will give rise to
@@ -80,7 +80,7 @@ class SMLR(Classifier, Parametrized):
              doc="""Whether to add a bias term to allow fits to data not through
              zero""")
 
-    fit_all_weights = Parameter(False, allowedtype='bool',
+    fit_all_weights = Parameter(True, allowedtype='bool',
              doc="""Whether to fit weights for all classes or to the number of
             classes minus one.  Both should give nearly identical results, but
             if you set fit_all_weights to True it will take a little longer
@@ -109,7 +109,7 @@ class SMLR(Classifier, Parametrized):
          # Add kernels, not just direct methods.
          """
         # init base class first
-        Parametrized.__init__(self, init_classes=[Classifier], **kwargs)
+        Classifier.__init__(self, **kwargs)
 
         # pylint friendly initializations
         self.__ulabels = None
@@ -147,11 +147,12 @@ class SMLR(Classifier, Parametrized):
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
         p_resamp = N.ones(w.shape, dtype=N.float)
 
-        # set the random seed
-        N.random.seed(seed)
+        if seed is not None:
+            # set the random seed
+            N.random.seed(seed)
 
-        if __debug__:
-            debug("SMLR_", "random seed=%s" % seed)
+            if __debug__:
+                debug("SMLR_", "random seed=%s" % seed)
 
         # perform the optimization
         while not converged and cycles < maxiter:
@@ -446,40 +447,25 @@ class SMLRWeights(Sensitivity):
     biases = StateVariable(enabled=True,
                            doc="A 1-d ndarray of biases")
 
-    def __init__(self, clf, **kwargs):
-        """Initialize the analyzer with the classifier it shall use.
-
-        :Parameters:
-          clf: SMLR
-            classifier to use. Only classifiers sub-classed from
-            `SMLR` may be used.
-        """
-        if not isinstance(clf, SMLR):
-            raise ValueError, \
-                  "Classifier %s has to be a SMLR, but is [%s]" \
-                              % (`clf`, `type(clf)`)
-
-        # init base classes first
-        Sensitivity.__init__(self, clf, **kwargs)
-
+    _LEGAL_CLFS = [ SMLR ]
 
     def _call(self, dataset):
         """Extract weights from Linear SVM classifier.
         """
-        if self.clf.weights.shape[1] != 1:
-            warning("You are estimating sensitivity for SMLR %s trained on %d" %
-                    (`self.clf`, self.clf.weights.shape[1]+1) +
-                    " classes. Make sure that it is what you intended to do" )
+        clf = self.clf
+        weights = clf.weights
+        if weights.shape[1] != 1:
+            warning("You are estimating sensitivity for SMLR %s with multiple"
+                    " sensitivities available. Make sure that it is what you"
+                    " intended to do" % self )
 
-        weights = self.clf.weights
-
-        if self.clf.has_bias:
-            self.biases = self.clf.biases
+        if clf.has_bias:
+            self.biases = clf.biases
 
         if __debug__:
             debug('SVM',
                   "Extracting weights for %d-class SMLR" %
-                  (self.clf.weights.shape[1]+1) +
+                  (weights.shape[1]+1) +
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 

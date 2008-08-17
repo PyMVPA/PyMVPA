@@ -8,11 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-import unittest
-
-import numpy as N
-
-from mvpa.datasets import Dataset
+from mvpa.base import externals
 from mvpa.featsel.base import FeatureSelectionPipeline
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector
@@ -24,14 +20,34 @@ from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.misc.transformers import Absolute
 
+from mvpa.measures.anova import OneWayAnova
+
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
+_MEASURES_2_SWEEP = [ OneWayAnova ]
+if externals.exists('scipy'):
+    from mvpa.measures.corrcoef import CorrCoef
+    _MEASURES_2_SWEEP += [ CorrCoef ]
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
     def setUp(self):
         self.dataset = datasets['uni2large']
+
+
+    @sweepargs(saclass=_MEASURES_2_SWEEP)
+    def testBasic(self, saclass):
+        data = datasets['dumb']
+        dsm = saclass()
+
+        # compute scores
+        f = dsm(data)
+
+        self.failUnless(f.shape == (2,))
+        self.failUnless(f[1] == 0.0)
+        self.failUnless(f[0] > 0.0)
+
 
     # XXX meta should work too but doesn't
     @sweepargs(clf=clfs['has_sensitivity', '!meta'])
@@ -40,7 +56,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         mclf = SplitClassifier(clf=clf,
                                enable_states=['training_confusion',
-                                              'training_confusions'])
+                                              'confusion'])
         sana = mclf.getSensitivityAnalyzer(transformer=Absolute, enable_states=["sensitivities"])
         # and lets look at all sensitivities
 
@@ -49,7 +65,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessEqual(len(map_), self.dataset.nfeatures)
 
         for conf_matrix in [sana.clf.training_confusion] \
-                          + sana.clf.training_confusions.matrices:
+                          + sana.clf.confusion.matrices:
             self.failUnless(conf_matrix.percentCorrect>75,
                             msg="We must have trained on each one more or " \
                                 "less correctly. Got %f%% correct on %d labels" %
@@ -57,7 +73,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                              len(self.dataset.uniquelabels)))
 
         errors = [x.percentCorrect
-                    for x in sana.clf.training_confusions.matrices]
+                    for x in sana.clf.confusion.matrices]
 
         # XXX
         # That is too much to ask if the dataset is easy - thus

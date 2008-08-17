@@ -33,6 +33,8 @@ Code must be documented in accordance to `epydoc + reST usage guidelines
 Parameter lists should be written as definition lists and not bulleted lists.
 For an example how to do it right, please see mvpa/datasets/dataset.py
 
+The textwidth of all docstrings should not exceed **72** characters, to ensure
+nicely looking docs on a 80 characters terminal in IPython.
 
 
 Code Formatting
@@ -434,6 +436,10 @@ Developer-TODO
 Things to implement for the next release (Release goals)
 --------------------------------------------------------
 
+ * A part of below restructuring TODO but is separate due to it importance:
+   come up with cleaner hierarchy and tagging of classifiers and regressions --
+   now they are all `Classifier`
+
  * Unify parameter naming across all classifiers and come up with a labeling
    guideline for future classifier implementations and wrappers::
 
@@ -498,10 +504,6 @@ Things to implement for the next release (Release goals)
 
     * several base classes with framework infrastructure (Harvester,
       Stateful, virtual properties, ...)
-
-    * Classifiers
-
-    * Regressions
 
     * Transfer error calculation
     * Cross-validation support

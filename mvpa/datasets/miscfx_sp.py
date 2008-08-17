@@ -6,28 +6,34 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Simple preprocessing utilities"""
+"""Misc function performing operations on datasets which are based on scipy
+"""
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.base import externals
+externals.exists('scipy', raiseException=True)
 
 import numpy as N
+
+from operator import isSequenceType
+
+from mvpa.datasets import Dataset
+from mvpa.misc.support import getBreakPoints
+
 from scipy import signal
 from scipy.linalg import lstsq
 from scipy.special import legendre
 
-from operator import isSequenceType
 
-from mvpa.misc.support import getBreakPoints
-
-def detrend(data, perchunk=False, model='linear',
+def detrend(dataset, perchunk=False, model='linear',
             polyord=None, opt_reg=None):
     """
     Given a dataset, detrend the data inplace either entirely
     or per each chunk
 
     :Parameters:
-      `data` : `Dataset`
+      `dataset` : `Dataset`
         dataset to operate on
       `perchunk` : bool
         either to operate on whole dataset at once or on each chunk
@@ -59,26 +65,28 @@ def detrend(data, perchunk=False, model='linear',
         bp = 0                              # no break points by default
 
         if perchunk:
-            bp = getBreakPoints(data.chunks)
+            bp = getBreakPoints(dataset.chunks)
 
-        data.samples[:] = signal.detrend(data.samples, axis=0,
+        dataset.samples[:] = signal.detrend(dataset.samples, axis=0,
                                          type=model, bp=bp)
     elif model in ['regress']:
         # perform regression-based detrend
-        return __detrend_regress(data, perchunk=perchunk,
+        return __detrend_regress(dataset, perchunk=perchunk,
                                  polyord=polyord, opt_reg=opt_reg)
     else:
         # raise exception because not found
         raise ValueError('Specified model type (%s) is unknown.'
                          % (model))
 
-def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
+
+
+def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
     """
     Given a dataset, perform a detrend inplace, regressing out polynomial
     terms as well as optional regressors, such as motion parameters.
 
     :Parameters:
-      `data`: `Dataset`
+      `dataset`: `Dataset`
         Dataset to operate on
       `perchunk` : bool
         Either to operate on whole dataset at once or on each chunk
@@ -105,22 +113,22 @@ def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
     if not polyord is None:
         if not isSequenceType(polyord):
             # repeat to be proper length
-            polyord = [polyord]*len(data.uniquechunks)
-        elif perchunk and len(polyord) != len(data.uniquechunks):
+            polyord = [polyord]*len(dataset.uniquechunks)
+        elif perchunk and len(polyord) != len(dataset.uniquechunks):
             raise ValueError("If you specify a sequence of polyord values " + \
                                  "they sequence length must match the " + \
-                                 "number of unique chunks in the data.")
+                                 "number of unique chunks in the dataset.")
 
     # loop over chunks if necessary
     if perchunk:
         # get the unique chunks
-        uchunks = data.uniquechunks
+        uchunks = dataset.uniquechunks
 
         # loop over each chunk
         reg = []
         for n, chunk in enumerate(uchunks):
             # get the indices for that chunk
-            cinds = data.chunks == chunk
+            cinds = dataset.chunks == chunk
 
             # see if add in polyord values    
             if not polyord is None:
@@ -128,7 +136,7 @@ def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
                 x = N.linspace(-1, 1, cinds.sum())
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
-                    newreg = N.zeros((data.nsamples, 1))
+                    newreg = N.zeros((dataset.nsamples, 1))
                     newreg[cinds, 0] = legendre(n)(x)
                     reg.append(newreg)
     else:
@@ -137,7 +145,7 @@ def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
         # see if add in polyord values    
         if not polyord is None:
             # create the timespan
-            x = N.linspace(-1, 1, data.nsamples)
+            x = N.linspace(-1, 1, dataset.nsamples)
             for n in range(polyord[0] + 1):
                 reg.append(legendre(n)(x)[:, N.newaxis])
 
@@ -158,11 +166,11 @@ def __detrend_regress(data, perchunk=True, polyord=None, opt_reg=None):
                              "regressor to regress out.")
 
     # perform the regression
-    res = lstsq(regs, data.samples)
+    res = lstsq(regs, dataset.samples)
 
     # remove all but the residuals
     yhat = N.dot(regs, res[0])
-    data.samples -= yhat
+    dataset.samples -= yhat
 
     # return the results
     return res, regs

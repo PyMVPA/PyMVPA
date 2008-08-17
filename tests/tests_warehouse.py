@@ -10,17 +10,24 @@
 
 __docformat__ = 'restructuredtext'
 
+from os import environ
+
+import unittest
 import numpy as N
 
+from mvpa import cfg
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitter import OddEvenSplitter
-from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.datasets.masked import MaskedDataset
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import Stateful
 from mvpa.misc.data_generators import *
 
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
+
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
+    __all__.append('debug')
 
 
 def sweepargs(**kwargs):
@@ -63,13 +70,14 @@ def sweepargs(**kwargs):
                         # Adjust message making it more informative
                         failed_tests_str.append("%s on %s = %s" % (str(e), argname, `argvalue`))
                         untrain_clf(argvalue) # untrain classifier
-                        debug('TEST', 'Failed #%d' % len(failed_tests_str))
-                    if __debug__:
-                        if '_QUICKTEST_' in debug.active:
-                            # on TESTQUICK just run test for 1st entry in the list,
-                            # the rest are omitted
-                            # TODO: proper partitioning of unittests
-                            break
+                        if __debug__:
+                            debug('TEST', 'Failed #%d' % len(failed_tests_str))
+                    # TODO: handle different levels of unittests properly
+                    if cfg.getboolean('general', 'quicktest', False):
+                        # on TESTQUICK just run test for 1st entry in the list,
+                        # the rest are omitted
+                        # TODO: proper partitioning of unittests
+                        break
             if exception is not None:
                 exception.__init__('\n'.join(failed_tests_str))
                 raise
@@ -85,30 +93,36 @@ def sweepargs(**kwargs):
 # split into training/testing
 #
 specs = { 'large' : { 'perlabel' : 99, 'nchunks' : 11, 'nfeatures' : 20, 'snr' : 8 },
+          'medium' : { 'perlabel' : 24, 'nchunks' : 6, 'nfeatures' : 14, 'snr' : 8 },
           'small' : { 'perlabel' : 12,  'nchunks' : 4, 'nfeatures' : 6, 'snr' : 14} }
 nonbogus_pool = [0, 1, 3, 5]
+
 datasets = {}
-#nfeatures = 6
 
 for kind, spec in specs.iteritems():
     # set of univariate datasets
     for nlabels in [ 2, 3, 4 ]:
         basename = 'uni%d%s' % (nlabels, kind)
+        nonbogus_features=nonbogus_pool[:nlabels]
+        bogus_features = filter(lambda x:not x in nonbogus_features,
+                                range(spec['nfeatures']))
+
         dataset = normalFeatureDataset(
             nlabels=nlabels,
-            #nfeatures=nfeatures,
-            nonbogus_features=nonbogus_pool[:nlabels],
+            nonbogus_features=nonbogus_features,
             **spec)
+        dataset.nonbogus_features = nonbogus_features
+        dataset.bogus_features = bogus_features
         oes = OddEvenSplitter()
         splits = [(train, test) for (train, test) in oes(dataset)]
         for i, replication in enumerate( ['test', 'train'] ):
             dataset_ = splits[0][i]
-            dataset_.nonbogus_features = nonbogus_pool[:nlabels]
+            dataset_.nonbogus_features = nonbogus_features
+            dataset_.bogus_features = bogus_features
             datasets["%s_%s" % (basename, replication)] = dataset_
 
-
-        # shortcut
-        datasets[basename] = datasets['%s_train' % basename]
+        # full dataset
+        datasets[basename] = dataset
 
     # sample 3D
     total = 2*spec['perlabel']
@@ -123,3 +137,17 @@ for kind, spec in specs.iteritems():
     datasets['3d%s' % kind] = MaskedDataset(samples=data, labels=labels,
                                             chunks=chunks, mask=mask)
 
+# some additional datasets
+datasets['dumb2'] = dumbFeatureBinaryDataset()
+datasets['dumb'] = dumbFeatureDataset()
+
+# Datasets for regressions testing
+datasets['sin_modulated'] = multipleChunks(sinModulated, 4, 30, 1)
+datasets['sin_modulated_test'] = sinModulated(30, 1, flat=True)
+
+# simple signal for linear regressors
+datasets['chirp_linear'] = multipleChunks(chirpLinear, 6, 50, 10, 2, 0.3, 0.1)
+datasets['chirp_linear_test'] = chirpLinear(20, 5, 2, 0.4, 0.1)
+
+datasets['wr1996'] = multipleChunks(wr1996, 4, 50)
+datasets['wr1996_test'] = wr1996(50)

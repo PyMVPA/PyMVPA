@@ -13,11 +13,11 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re
 
-from copy import copy, deepcopy
+from mvpa.misc.copy import copy, deepcopy
 from operator import isSequenceType
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
     """This function transforms a dataset by calculating the mean of a set of
@@ -114,18 +114,17 @@ def indentDoc(v):
     return re.sub('\n', '\n  ', str(v))
 
 
-
 def idhash(val):
     """Craft unique id+hash for an object
     """
-    res = id(val)
+    res = "%s" % id(val)
     if isinstance(val, list):
         val = tuple(val)
     try:
-        res += hash(buffer(val))
+        res += ":%s" % hash(buffer(val))
     except:
         try:
-            res += hash(val)
+            res += ":%s" % hash(val)
         except:
             pass
         pass
@@ -146,6 +145,19 @@ def isSorted(items):
     if hasattr(equality, '__iter__'):
         equality = N.all(equality)
     return equality
+
+
+def isInVolume(coord, shape):
+    """For given coord check if it is within a specified volume size.
+
+    Returns True/False. Assumes that volume coordinates start at 0.
+    No more generalization (arbitrary minimal coord) is done to save
+    on performance
+    """
+    for i in xrange(len(coord)):
+        if coord[i] < 0 or coord[i] >= shape[i]:
+            return False
+    return True
 
 
 def getBreakPoints(items, contiguous=True):

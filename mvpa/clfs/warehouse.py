@@ -22,7 +22,9 @@ from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
                                  MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
+from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
 from mvpa.clfs.gpr import GPR
+from mvpa.clfs.blr import BLR
 
 # Helpers
 from mvpa.clfs.transerror import TransferError
@@ -40,7 +42,8 @@ from mvpa.featsel.base import SensitivityBasedFeatureSelection
 _KNOWN_INTERNALS=[ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
-        'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr' ]
+        'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
+        'notrain2predict', 'ridge', 'blr']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -51,10 +54,22 @@ class Warehouse(object):
      capable of doing multiclass classification
      """
 
-    def __init__(self, known_tags=None):
-        self.__known_tags = Set(known_tags)
+    def __init__(self, known_tags=None, matches={}):
+        """Initialize warehouse
+
+        :Parameters:
+          known_tags : list of basestring
+            List of known tags
+          matches : dict
+            Optional dictionary of additional matches. E.g. since any
+            regression can be used as a binary classifier,
+            matches={'binary':['regression']}, would allow to provide
+            regressions also if 'binary' was requested
+            """
+        self._known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
+        self.__matches = matches
 
     def __getitem__(self, *args):
         if isinstance(args[0], tuple):
@@ -66,22 +81,34 @@ class Warehouse(object):
 
         # lets remove optional modifier '!'
         dargs = Set([x.lstrip('!') for x in args]).difference(
-            self.__known_tags)
+            self._known_tags)
 
         if len(dargs)>0:
             raise ValueError, "Unknown internals %s requested. Known are %s" % \
-                  (list(dargs), list(self.__known_tags))
+                  (list(dargs), list(self._known_tags))
 
         # dummy implementation for now
         result = []
+        # check every known item
         for item in self.__items:
             good = True
+            # by default each one counts
             for arg in args:
-                if (arg.startswith('!') and \
-                    (arg[1:] in item._clf_internals)) or \
-                    (not arg.startswith('!') and \
-                     (not (arg in item._clf_internals))):
-                    good = False
+                # check for rejection first
+                if arg.startswith('!'):
+                    if (arg[1:] in item._clf_internals):
+                        good = False
+                        break
+                    else:
+                        continue
+                # check for inclusion
+                found = False
+                for arg in [arg] + self.__matches.get(arg, []):
+                    if (arg in item._clf_internals):
+                        found = True
+                        break
+                good = found
+                if not good:
                     break
             if good:
                 result.append(item)
@@ -99,12 +126,12 @@ class Warehouse(object):
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty _clf_internals"
             clf_internals = Set(item._clf_internals)
-            if clf_internals.issubset(self.__known_tags):
+            if clf_internals.issubset(self._known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
             else:
                 raise ValueError, 'Unknown clf internal(s) %s' % \
-                      clf_internals.difference(self.__known_tags)
+                      clf_internals.difference(self._known_tags)
         return self
 
     @property
@@ -118,7 +145,8 @@ class Warehouse(object):
     def items(self):
         return self.__items
 
-clfs = Warehouse(known_tags=_KNOWN_INTERNALS)
+clfs = Warehouse(known_tags=_KNOWN_INTERNALS) # classifiers
+regrs = Warehouse(known_tags=_KNOWN_INTERNALS) # regressions
 
 # NB:
 #  - Nu-classifiers are turned off since for haxby DS default nu
@@ -128,7 +156,7 @@ clfs = Warehouse(known_tags=_KNOWN_INTERNALS)
 #
 clfs += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
           SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
-          SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
+          #SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
           #SMLR(lm=100.0, implementation="C", descr="SMLR(lm=100.0)"),
           #                         SMLR(implementation="Python", descr="SMLR(Python)")
           ]
@@ -140,6 +168,7 @@ clfs += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvm
+    clfs._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfs += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
@@ -158,8 +187,17 @@ if externals.exists('libsvm'):
              #               descr='libsvm.SigmoidSVM()'),
              ]
 
+    # regressions
+    regrs._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
+    regrs += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR',
+                         regression=True),
+              libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR',
+                         regression=True)]
+
 if externals.exists('shogun'):
     from mvpa.clfs import sg
+    clfs._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
+
     # some classifiers are not yet ready to be used out-of-the-box in
     # PyMVPA, thus we don't populate warehouse with their instances
     bad_classifiers = [
@@ -177,7 +215,7 @@ if externals.exists('shogun'):
         # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
         bad_classifiers.append('gnpp')
 
-    for impl in sg.svm.known_svm_impl:
+    for impl in sg.SVM._KNOWN_IMPLEMENTATIONS:
         # Uncomment the ones to disable
         if impl in bad_classifiers:
             continue
@@ -195,7 +233,16 @@ if externals.exists('shogun'):
 #           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
-
+    for impl in ['libsvr', 'krr']:# \
+        # XXX svrlight sucks in SG -- dont' have time to figure it out
+        #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
+        regrs._known_tags.union_update([impl])
+        regrs += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
+                          regression=True),
+                   #sg.SVM(svm_impl=impl, kernel_type='RBF',
+                   #       descr='sg.RBFSVMR()/%s' % impl,
+                   #       regression=True),
+                   ]
 
 if len(clfs['svm', 'linear']) > 0:
     # if any SVM implementation is known, import default ones
@@ -240,7 +287,12 @@ clfs += \
 
 
 # GPR
-clfs += GPR(descr="GPR()")
+clfs += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
+clfs += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
+clfs += BLR(descr="BLR()")
+
+# BLR
+clfs += BLR(descr="BLR()")
 
 
 # SVM stuff
@@ -251,12 +303,11 @@ if externals.exists('shogun') or externals.exists('libsvm'):
          FeatureSelectionClassifier(
              LinearCSVMC(),
              SensitivityBasedFeatureSelection(
-                SMLRWeights(SMLR(lm=1.0, implementation="C")),
+                SMLRWeights(SMLR(lm=0.1, implementation="C")),
                 RangeElementSelector(mode='select')),
-             descr="LinSVM on SMLR(lm=1) non-0")
+             descr="LinSVM on SMLR(lm=0.1) non-0")
 
 
-    # "Interesting" classifiers
     clfs += \
         FeatureSelectionClassifier(
             LinearCSVMC(),
@@ -330,7 +381,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
-    #           confusion_state="training_confusions"),
+    #           confusion_state="confusion"),
     #           # and whose internal error we use
     #        feature_selector=FractionTailSelector(
     #                           0.2, mode='discard', tail='lower'),
@@ -347,7 +398,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
-    #           confusion_state="training_confusions"),
+    #           confusion_state="confusion"),
     #           # and whose internal error we use
     #        feature_selector=FractionTailSelector(
     #                           0.2, mode='discard', tail='lower'),
@@ -394,4 +445,3 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     #        # update sensitivity at each step
     #   splitter = OddEvenSplitter(),
     #   descr='LinSVM+RFE(OddEven)')
-

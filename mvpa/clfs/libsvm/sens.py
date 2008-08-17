@@ -12,12 +12,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc import warning
+from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 from mvpa.measures.base import Sensitivity
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 class LinearSVMWeights(Sensitivity):
     """`SensitivityAnalyzer` for the LIBSVM implementation of a linear SVM.

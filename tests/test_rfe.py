@@ -8,11 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA recursive feature elimination"""
 
-import unittest
-import numpy as N
 from sets import Set
 
-from mvpa.datasets.maskeddataset import MaskedDataset
+from mvpa.datasets.masked import MaskedDataset
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
@@ -28,7 +26,7 @@ from mvpa.misc.transformers import Absolute
 
 from mvpa.misc.state import UnknownStateError
 
-from tests_warehouse import sweepargs
+from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
@@ -49,12 +47,10 @@ class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
 class RFETests(unittest.TestCase):
 
     def getData(self):
-        data = N.random.standard_normal(( 100, 3, 2, 4 ))
-        labels = N.concatenate( ( N.repeat( 0, 50 ),
-                                  N.repeat( 1, 50 ) ) )
-        chunks = N.repeat( range(5), 10 )
-        chunks = N.concatenate( (chunks, chunks) )
-        return MaskedDataset(samples=data, labels=labels, chunks=chunks)
+        return datasets['uni2medium_train']
+
+    def getDataT(self):
+        return datasets['uni2medium_test']
 
 
     def testBestDetector(self):
@@ -236,7 +232,7 @@ class RFETests(unittest.TestCase):
 
         wdata = self.getData()
         wdata_nfeatures = wdata.nfeatures
-        tdata = self.getData()
+        tdata = self.getDataT()
         tdata_nfeatures = tdata.nfeatures
 
         sdata, stdata = fe(wdata, tdata)
@@ -264,13 +260,14 @@ class RFETests(unittest.TestCase):
 
         wdata = self.getData()
         wdata_nfeatures = wdata.nfeatures
-        tdata = self.getData()
+        tdata = self.getDataT()
         tdata_nfeatures = tdata.nfeatures
 
         # test silly one first ;-)
         self.failUnlessEqual(sens_ana(wdata)[0], -int(wdata_nfeatures/2))
 
-        # first remove 25% == 6, and then 4, total removing 10
+        # OLD: first remove 25% == 6, and then 4, total removing 10
+        # NOW: test should be independent of the numerical number of features
         feature_selections = [SensitivityBasedFeatureSelection(
                                 sens_ana,
                                 FractionTailSelector(0.25)),
@@ -290,12 +287,15 @@ class RFETests(unittest.TestCase):
                              len(feature_selections),
                              msg="Test the property feature_selections")
 
+        desired_nfeatures = int(N.ceil(wdata_nfeatures*0.75))
         self.failUnlessEqual(feat_sel_pipeline.nfeatures,
-                             [wdata_nfeatures, wdata_nfeatures-6],
-                             msg="Test if nfeatures get assigned properly")
+                             [wdata_nfeatures, desired_nfeatures],
+                             msg="Test if nfeatures get assigned properly."
+                             " Got %s!=%s" % (feat_sel_pipeline.nfeatures,
+                                              [wdata_nfeatures, desired_nfeatures]))
 
         self.failUnlessEqual(list(feat_sel_pipeline.selected_ids),
-                             list(range(10, wdata_nfeatures)))
+                             range(int(wdata_nfeatures*0.25)+4, wdata_nfeatures))
 
 
     # TODO: should later on work for any clfs_with_sens
@@ -315,7 +315,7 @@ class RFETests(unittest.TestCase):
 
         wdata = self.getData()
         wdata_nfeatures = wdata.nfeatures
-        tdata = self.getData()
+        tdata = self.getDataT()
         tdata_nfeatures = tdata.nfeatures
 
         sdata, stdata = rfe(wdata, tdata)

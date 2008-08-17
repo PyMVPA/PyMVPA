@@ -13,7 +13,7 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.datasets.base import Dataset
+from mvpa.datasets import Dataset
 from mvpa.misc.state import Stateful, StateVariable
 from mvpa.misc.param import Parameter, KernelParameter
 
@@ -45,14 +45,14 @@ class ParamsTests(unittest.TestCase):
         blank  = BlankClass()
 
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'states')
-        self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
+        self.failUnlessRaises(IndexError, blank.__getattribute__, '')
 
     def testSimple(self):
         simple  = SimpleClass()
 
         self.failUnlessEqual(len(simple.params.items), 1)
         self.failUnlessRaises(AttributeError, simple.__getattribute__, 'dummy')
-        self.failUnlessRaises(AttributeError, simple.__getattribute__, '')
+        self.failUnlessRaises(IndexError, simple.__getattribute__, '')
 
         self.failUnlessEqual(simple.C, 1.0)
         self.failUnlessEqual(simple.params.isSet("C"), False)
@@ -97,11 +97,11 @@ class ParamsTests(unittest.TestCase):
 
     def testClassifier(self):
         clf  = ParametrizedClassifier()
-        self.failUnlessEqual(len(clf.params.items), 1)
+        self.failUnlessEqual(len(clf.params.items), 3) # + regression/retrainable
         self.failUnlessEqual(len(clf.kernel_params.items), 1)
 
         clfe  = ParametrizedClassifierExtended()
-        self.failUnlessEqual(len(clfe.params.items), 1)
+        self.failUnlessEqual(len(clfe.params.items), 3)
         self.failUnlessEqual(len(clfe.kernel_params.items), 2)
         self.failUnlessEqual(len(clfe.kernel_params.listing), 2)
 

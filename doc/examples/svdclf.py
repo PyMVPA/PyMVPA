@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -11,28 +11,9 @@
 for *any* clasifier"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes commands below
 
-import numpy as N
-import pylab as P
-
-# local imports
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.misc import zscore
-from mvpa.misc.signal import detrend
-from mvpa.clfs.transerror import TransferError
-from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.svm import LinearCSVMC
-from mvpa.clfs.base import MappedClassifier
-from mvpa.mappers import SVDMapper
-
-from mvpa.misc import debug
-"""
-
-debug.active += ["CROSSC"]
+if __debug__:
+    debug.active += ["CROSSC"]
 
 # plotting helper function
 def makeBarPlot(data, labels=None, title=None, ylim=None, ylabel=None):
@@ -81,7 +62,7 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
 # do chunkswise linear detrending on dataset
 detrend(dataset, perchunk=True, model='linear')
 
-# only use 'rest', 'face' and 'house' samples from dataset
+# only use 'rest', 'cats' and 'scissors' samples from dataset
 dataset = dataset.selectSamples(
                 N.array([ l in [0,4,5] for l in dataset.labels], dtype='bool'))
 
@@ -91,17 +72,26 @@ zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 # remove baseline samples from dataset for final analysis
 dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
                                         dtype='bool'))
+print dataset
+
+# Specify the base classifier to be used
+# To parametrize the classifier to be used
+#   Clf = lambda *args:LinearCSVMC(C=-10, *args)
+# Just to assign a particular classifier class
+Clf = LinearCSVMC
 
 # define some classifiers: a simple one and several classifiers with built-in
 # SVDs
-clfs = [('All orig. features', LinearCSVMC()),
-        ('All PCs', MappedClassifier(LinearCSVMC(), SVDMapper())),
-        ('First 3 PCs', MappedClassifier(LinearCSVMC(),
+clfs = [('All orig.\nfeatures (%i)' % dataset.nfeatures, Clf()),
+        ('All Comps\n(%i)' % (dataset.nsamples \
+                 - (dataset.nsamples / len(dataset.uniquechunks)),),
+                        MappedClassifier(Clf(), SVDMapper())),
+        ('First 5\nComp.', MappedClassifier(Clf(),
                         SVDMapper(selector=range(5)))),
-        ('First 50 PCs', MappedClassifier(LinearCSVMC(),
-                        SVDMapper(selector=range(50)))),
-        ('PCs 3-50', MappedClassifier(LinearCSVMC(),
-                        SVDMapper(selector=range(3,50))))]
+        ('First 30\nComp.', MappedClassifier(Clf(),
+                        SVDMapper(selector=range(30)))),
+        ('Comp.\n6-30', MappedClassifier(Clf(),
+                        SVDMapper(selector=range(5,30))))]
 
 
 # run and visualize in barplot
@@ -119,5 +109,9 @@ for desc, clf in clfs:
     results.append(cv.results)
     labels.append(desc)
 
-makeBarPlot(results,labels=labels, title='Linear C-SVM classification')
-P.show()
+makeBarPlot(results, labels=labels,
+            title='Linear C-SVM classification (cats vs. scissors)',
+            ylabel='Mean classification error (N-1 cross-validation, 12-fold)')
+
+if cfg.getboolean('examples', 'interactive', True):
+    P.show()

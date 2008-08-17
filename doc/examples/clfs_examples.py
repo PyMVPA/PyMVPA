@@ -10,29 +10,6 @@
 """Examples demonstrating varioius classifiers on different datasets"""
 
 from mvpa.suite import *
-"""
-# Command above substitutes commands below
-
-import os
-import numpy as N
-import time
-
-from mvpa.datasets import Dataset
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.datasets.splitter import *
-from mvpa.datasets.misc import zscore
-
-# Helpers
-from mvpa.clfs.transerror import *
-from mvpa.misc.data_generators import *
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.misc.signal import detrend
-from mvpa.clfs.warehouse import clfs
-
-# Misc tools
-#
-from mvpa.misc import warning
-"""
 
 # no MVPA warnings during whole testsuite
 warning.handlers = []
@@ -44,7 +21,7 @@ def main():
 
 
     # Load Haxby dataset example
-    haxby1path = '../../data'
+    haxby1path = 'data'
     attrs = SampleAttributes(os.path.join(haxby1path, 'attributes.txt'))
     haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
                           labels=attrs.labels,

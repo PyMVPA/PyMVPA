@@ -9,6 +9,11 @@
 """Import helper for FSL"""
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     debug('INIT', 'mvpa.misc.fsl')
+
+from mvpa.misc.fsl.base import *
+from mvpa.misc.fsl.flobs import *
+
+if __debug__:
     debug('INIT', 'mvpa.misc.fsl end')

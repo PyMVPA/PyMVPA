@@ -19,14 +19,14 @@ iterable container.
 
 __docformat__ = 'restructuredtext'
 
-import copy
+import mvpa.misc.copy as copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class DatasetMeasure(Stateful):
@@ -58,7 +58,7 @@ class DatasetMeasure(Stateful):
     null_prob = StateVariable(enabled=True)
     """Stores the probability of a measure under the NULL hypothesis"""
 
-    def __init__(self, transformer=None, null_dist=None, *args, **kwargs):
+    def __init__(self, transformer=None, null_dist=None, **kwargs):
         """Does nothing special.
 
         :Parameter:
@@ -92,6 +92,8 @@ class DatasetMeasure(Stateful):
         result = self._postcall(dataset, result)
         self.raw_result = result
         if not self.__transformer is None:
+            if __debug__:
+                debug("SA_", "Applying transformer %s" % self.__transformer)
             result = self.__transformer(result)
         return result
 
@@ -125,11 +127,13 @@ class DatasetMeasure(Stateful):
         return result
 
 
-    def __str__(self):
-        return "%s(transformer=%s, enable_states=%s)" % \
-               (self.__class__.__name__, self.__transformer,
-                str(self.states.enabled))
-
+    def __repr__(self, prefixes=[]):
+        prefixes = prefixes[:]
+        if self.__transformer is not None:
+            prefixes.append("transformer=%s" % self.__transformer)
+        if self.__null_dist is not None:
+            prefixes.append("null_dist=%s" % self.__null_dist)
+        return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -142,7 +146,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         doc="Stores basic sensitivities if the sensitivity " +
             "relies on combining multiple ones")
 
-    def __init__(self, combiner=SecondAxisSumOfAbs, *args, **kwargs):
+    def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs):
         """Initialize
 
         :Parameters:
@@ -151,9 +155,15 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             dimension as well as sets base_sensitivities
             TODO change combiner's default
         """
-        DatasetMeasure.__init__(self, *(args), **(kwargs))
+        DatasetMeasure.__init__(self, **(kwargs))
 
         self.__combiner = combiner
+
+    def __repr__(self, prefixes=None):
+        if prefixes is None: prefixes = []
+        if self.__combiner != SecondAxisSumOfAbs:
+            prefixes.append("combiner=%s" % self.__combiner)
+        return super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _call(self, dataset):
@@ -245,6 +255,11 @@ class StaticDatasetMeasure(DatasetMeasure):
 
 class Sensitivity(FeaturewiseDatasetMeasure):
 
+    _LEGAL_CLFS = []
+    """If Sensitivity is classifier specific, classes of classifiers
+    should be listed in the list
+    """
+
     def __init__(self, clf, force_training=True, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
@@ -259,29 +274,45 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         """Does nothing special."""
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
+        _LEGAL_CLFS = self._LEGAL_CLFS
+        if len(_LEGAL_CLFS) > 0:
+            found = False
+            for clf_class in _LEGAL_CLFS:
+                if isinstance(clf, clf_class):
+                    found = True
+                    break
+            if not found:
+                raise ValueError, \
+                  "Classifier %s has to be of allowed class (%s), but is %s" \
+                              % (clf, _LEGAL_CLFS, `type(clf)`)
+
         self.__clf = clf
         """Classifier used to computed sensitivity"""
 
         self._force_training = force_training
         """Either to force it to train"""
 
-    def __repr__(self):
-        return \
-            "<%s on %s, force_training=%s>" % \
-               (str(self), `self.__clf`, str(self._force_training))
+    def __repr__(self, prefixes=None):
+        if prefixes is None: prefixes = []
+        prefixes.append("clf=%s" % repr(self.clf))
+        if not self._force_training:
+            prefixes.append("force_training=%s" % self._force_training)
+        return super(Sensitivity, self).__repr__(prefixes=prefixes)
 
 
     def __call__(self, dataset):
         """Train classifier on `dataset` and then compute actual sensitivity.
         """
-        if not self.clf.trained or self._force_training:
+        # local bindings
+        clf = self.__clf
+        if not clf.trained or self._force_training:
             if __debug__:
                 debug("SA", "Training classifier %s %s" %
-                      (`self.clf`,
+                      (`clf`,
                        {False: "since it wasn't yet trained",
                         True:  "although it was trained previousely"}
-                       [self.clf.trained]))
-            self.clf.train(dataset)
+                       [clf.trained]))
+            clf.train(dataset)
 
         return FeaturewiseDatasetMeasure.__call__(self, dataset)
 
@@ -358,6 +389,8 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         """
         Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:
+            # sanitarize kwargs
+            kwargs.pop('force_training', None)
             combined_analyzer = CombinedFeaturewiseDatasetMeasure(**kwargs)
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""

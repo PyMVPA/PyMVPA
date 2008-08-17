@@ -11,9 +11,9 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
-from mvpa.datasets.mappeddataset import MappedDataset
+from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.metric import MetricMapper
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
@@ -76,10 +76,9 @@ class Searchlight(DatasetMeasure):
         """Perform the spheresearch.
         """
         if not isinstance(dataset, MappedDataset) \
-           or not isinstance(dataset.mapper, MetricMapper):
+               or dataset.mapper.metric is None:
             raise ValueError, "Searchlight only works with MappedDatasets " \
-                              "that make use of a mapper with information " \
-                              "about the dataspace metrics."
+                              "that has metric assigned."
 
         if self.states.isEnabled('spheresizes'):
             self.spheresizes = []

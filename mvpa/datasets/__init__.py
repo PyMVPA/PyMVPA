@@ -22,11 +22,12 @@ The mvpa.datasets module contains the following modules:
 .. packagetree::
    :style: UML
 
-:group Datasets: dataset, mappeddataset, maskeddataset, niftidataset
+:group Generic Datasets: base, mapped, masked, meta
+:group Specialized Datasets: nifti, eep
 :group Mappers: mapper, maskmapper
 :group Metrics: metric
 :group Splitters: splitter, nfoldsplitter
-:group Miscellaneous TODO: should be gone somewhere else: misc
+:group Miscellaneous: miscfx
 
 
 """
@@ -34,7 +35,7 @@ The mvpa.datasets module contains the following modules:
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
     debug('INIT', 'mvpa.datasets')
 
 # nothing in here that works without the base class

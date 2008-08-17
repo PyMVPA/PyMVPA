@@ -14,10 +14,9 @@ __docformat__ = 'restructuredtext'
 # first deal with classifiers which do not have external deps
 #
 from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.ridge import RidgeReg
 from mvpa.clfs.knn import *
 
-from mvpa.clfs.warehouse import clfs
+from mvpa.clfs.warehouse import clfs, regrs
 from mvpa.base import externals
 
 # if have ANY svm implementation
@@ -31,8 +30,9 @@ class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
+    _clf_internals = ['notrain2predict']
     def __init__(self, **kwargs):
-        Classifier.__init__(self, train2predict=False, **kwargs)
+        Classifier.__init__(self, **kwargs)
 
     def _train(self, data):
         # we don't need that ;-)
@@ -64,9 +64,9 @@ class Less1Classifier(SameSignClassifier):
 # happening with kNN...
 sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 
-if externals.exists('shogun'):
-    sample_clf_nl = sg.SVM(kernel_type='RBF', svm_impl='libsvm')
-else:
-    #classical one which was used for a while
-    #and surprisingly it is not bad at all for the unittests
-    sample_clf_nl = kNN(k=5)
+#if externals.exists('shogun'):
+#    sample_clf_nl = sg.SVM(kernel_type='RBF', svm_impl='libsvm')
+#else:
+#classical one which was used for a while
+#and surprisingly it is not bad at all for the unittests
+sample_clf_nl = kNN(k=5)
