@@ -33,6 +33,7 @@ Description: multivariate pattern analysis with Python
 Package: python-mvpa-doc
 Architecture: all
 Section: doc
+Depends: libjs-jquery
 Description: documention and examples for PyMVPA
  This package contains PyMVPA documentation in various formats
  (HTML, TXT, PDF) including

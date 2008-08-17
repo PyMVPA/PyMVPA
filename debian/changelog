@@ -2,8 +2,9 @@ pymvpa (0.3.0-1) unstable; urgency=low
 
   * New upstream release.
   * Added python-pywt as recommended package.
+  * Using jquery.js from corresponding Debian package.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Sun, 17 Aug 2008 19:40:13 +0200
+ -- Michael Hanke <michael.hanke@gmail.com>  Sun, 17 Aug 2008 20:56:26 +0200
 
 pymvpa (0.2.2-1) unstable; urgency=low
 
