@@ -30,6 +30,9 @@ Unreleased changes
   * Measures: CorrCoef.
   * Data generators: chirp, wr1996
   * Few more examples: curvefitting, kerneldemo, smellit, projections
+  * Updated kNN classifier. kNN is now able to use custom distance function
+    to determine that nearest neighbors. It also (re)gained the ability to do
+    simple majority or weighted voting.
   * Some initial convenience functions for plotting typical results and data
     exploration.
   * Unified configuration handling with support for user-specific and
