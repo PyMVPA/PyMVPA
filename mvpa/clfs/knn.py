@@ -23,14 +23,14 @@ from mvpa.clfs.distance import squared_euclidean_distance
 class kNN(Classifier):
     """k-nearest-neighbour classifier.
 
-    If enabled it stores the votes per class in the 'values' state after
+    If enabled, it stores the votes per class in the 'values' state after
     calling predict().
     """
 
     _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
 
     def __init__(self, k=2, dfx=squared_euclidean_distance,
-                 **kwargs):
+                 voting='weighted', **kwargs):
         """
         :Parameters:
           k: unsigned integer
@@ -38,6 +38,11 @@ class kNN(Classifier):
           dfx: functor
             Function to compute the distances between training and test samples.
             Default: squared euclidean distance
+          voting: str
+            Voting method used to derive predictions from the nearest neighbors.
+            Possible values are 'majority' (simple majority of classes
+            determines vote) and 'weighted' (votes are weighted according to the
+            relative frequencies of each class in the training data).
           **kwargs:
             Additonal arguments are passed to the base class.
         """
@@ -47,12 +52,7 @@ class kNN(Classifier):
 
         self.__k = k
         self.__dfx = dfx
-
-        # XXX So is the voting function fixed forever?
-        # YYY assignment of bound method breakes deepcopying, for now
-        #     since there is no alternative yet -- just call method
-        #     explicitely
-        #self.__votingfx = self.getWeightedVote
+        self.__voting = voting
         self.__data = None
 
 
@@ -121,18 +121,23 @@ class kNN(Classifier):
         predicted = []
         votes = []
 
-        for knn in knns:
-            # finally get the class label
-            # XXX call getWeightedVote for now explicitely
-            #prediction, vote = self.__votingfx(knn)
-            prediction, vote = self.getWeightedVote(knn)
-            predicted.append(prediction)
-            votes.append(vote)
+        if self.__voting == 'majority':
+            vfx = self.getMajorityVote
+        elif self.__voting == 'weighted':
+            vfx = self.getWeightedVote
+        else:
+            raise ValueError, "kNN told to perform unknown voting '%s'." % self.__voting
+
+        # perform voting
+        results = [vfx(knn) for knn in knns]
+
+        # extract predictions
+        predicted = [r[0] for r in results]
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
         self.predictions = predicted
-        self.values = votes
+        self.values = [r[1] for r in results]
 
         return predicted
 
