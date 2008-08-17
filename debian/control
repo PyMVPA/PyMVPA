@@ -15,7 +15,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular
+Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt
 Suggests: fslview, fsl, python-matplotlib
 Description: multivariate pattern analysis with Python
  Python module to ease pattern classification analyses of large
