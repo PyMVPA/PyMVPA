@@ -13,11 +13,14 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.base import warning, debug
+from mvpa.base import warning
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.base import Classifier
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.clfs.distance import squared_euclidean_distance
+
+if __debug__:
+    from mvpa.base import debug
 
 
 class kNN(Classifier):
