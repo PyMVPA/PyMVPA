@@ -83,7 +83,7 @@ for c in clfs:
         # get out the values used for the prediction
         res = N.asarray(clf.values)
     elif c == 'SMLR':
-        res = N.asarray(clf.values[:, 0])
+        res = N.asarray(clf.values[:, 1])
     else:
         # get the probabilities from the svm
         res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
