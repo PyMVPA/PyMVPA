@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Examples demonstrating varioius classifiers on different datasets"""
+"""Examples demonstrating various classifiers on different datasets"""
 
 from mvpa.suite import *
 

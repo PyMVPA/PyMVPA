@@ -43,6 +43,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
           'sg_fixedcachesize': "__check_shogun(3043)",
+          'hcluster': "import hcluster",
           }
 
 _VERIFIED = {}

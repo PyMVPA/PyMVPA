@@ -30,7 +30,7 @@ PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
 
 What this Manual is NOT
-~~~~~~~~~~~~~~~~~~~~~~~
+=======================
 
 .. index:: textbook, review, API reference, examples
 
@@ -69,7 +69,7 @@ or even the unit test battery, also part of the source distribution (in the
 .. index:: history, MVPA toolbox for Matlab, license, free software
 
 A bit of History
-~~~~~~~~~~~~~~~~
+================
 
 The roots of PyMVPA date back to early 2005. At that time it was a C++ library
 (no Python_ yet) developed by Michael Hanke and Sebastian Krüger, intended to
@@ -151,12 +151,10 @@ faster and easier than it has ever been before.
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
 
 
-.. _requirements:
-.. index:: requirements
-
+.. index:: citation, PyMVPA poster
 
 How to cite PyMVPA
-~~~~~~~~~~~~~~~~~~
+==================
 
 The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
 *German Society for Psychophysiology and its Application* in Magdeburg,
@@ -167,7 +165,7 @@ a paper introducing the toolbox, which should replace the poster soon.
 
 
 Credits
-~~~~~~~
+=======
 
 .. (needs some more words, for now just a list)
 
