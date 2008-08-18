@@ -26,6 +26,15 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 .. _Debian project: http://www.debian.org
 
 
+News
+====
+
+  PyMVPA 0.3 is out [18 Aug 2008]
+
+    It contains a number of new features (additional mappers, initial support
+    for plotting, more examples, ...), bugfixes and improved documentation. See
+    the :ref:`changelog <changelog>` for details.
+
 
 Documentation
 =============
@@ -37,7 +46,7 @@ Documentation
   code)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
-* :ref:`FAQ <faq>`
+* :ref:`FAQ <faq>` (short answers to common problems)
 * :ref:`genindex` (access by keywords)
 * :ref:`search` (online and offline full-text search)
 

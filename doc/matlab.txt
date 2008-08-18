@@ -20,6 +20,7 @@ Matlab and NumPy`_.
 
 .. _basic comparison of Matlab and NumPy: http://www.scipy.org/NumPy_for_Matlab_Users
 
+.. index:: MVPA toolbox for Matlab
 
 It would be nice to have some guidelines on how to use PyMVPA for users who are
 already familiar with the `Matlab MVPA toolbox`_. If you are using both

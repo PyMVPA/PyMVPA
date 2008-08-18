@@ -19,6 +19,7 @@ Frequently Asked Questions
 General
 =======
 
+.. index:: optimization
 
 It is sloooooow. What can I do?
 -------------------------------
@@ -65,6 +66,8 @@ I feel like I want to contribute something, do you mind?
   time/cannot/do not want to implement it yourself, please post your idea to
   the PyMVPA mailing list.
 
+
+.. index:: Git, development
 
 I want to develop a new feature for PyMVPA. How can I do it efficiently?
 ------------------------------------------------------------------------
@@ -138,6 +141,7 @@ The manual is quite insufficient. When will you improve it?
 Data preprocessing
 ==================
 
+.. index:: invariant features
 
 Is there an easy way to remove invariant features from a dataset?
 -----------------------------------------------------------------
@@ -151,6 +155,8 @@ Is there an easy way to remove invariant features from a dataset?
   The `mvpa.datasets.miscfx` module provides a convenience function
   `removeInvariantFeatures()` that strips such features from a dataset.
 
+
+.. index:: block-averaging
 
 How can I do block-averaging of my block-design fMRI dataset?
 -------------------------------------------------------------
@@ -182,6 +188,7 @@ How can I do block-averaging of my block-design fMRI dataset?
 Data analysis
 =============
 
+.. index:: feature selection, feature_ids
 
 How do I know which features were finally selected by a classifier doing feature selection?
 -------------------------------------------------------------------------------------------
