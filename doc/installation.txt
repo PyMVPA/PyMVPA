@@ -15,11 +15,15 @@ Installation
 
 This section covers the necessary steps to install and run PyMVPA. It contains
 a comprehensive list of software dependencies, as well as recommendation for
-additional software packages that further enhance the functionality provided by PyMVPA.
+additional software packages that further enhance the functionality provided by
+PyMVPA.
 
 
 Dependencies
 ============
+
+
+.. index:: required software, NumPy
 
 Must Have
 ---------
@@ -38,7 +42,7 @@ The following software packages are required or PyMVPA will not work at all.
 .. _NumPy: http://numpy.scipy.org/
 .. _ctypes: http://python.net/crew/theller/ctypes/
 
-.. index:: recommendations, SciPy, PyNIfTI, Shogun, R, RPy
+.. index:: recommended software, SciPy, PyNIfTI, Shogun, R, RPy
 
 
 Strong Recommendations
@@ -71,7 +75,7 @@ recommended to install these packages as well.
 .. _R: http://www.r-project.org
 
 
-.. index:: suggestions, IPython, FSL, AFNI, LIBSVM
+.. index:: suggested software, IPython, FSL, AFNI, LIBSVM, matplotlib, hlcuster
 
 
 Suggestions
@@ -173,7 +177,7 @@ package.
 .. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
-
+.. index:: Windows, Windows installer
 .. _install_win:
 
 
@@ -202,12 +206,14 @@ Import the mvpa module, which should cause no error messages.
   >>>
 
 Although you have a working installation already, most likely you want to
-install some additional software. First and foremost install SciPy_ -- download from the same page where you also got the NumPy installer.
+install some additional software. First and foremost install SciPy_ -- download
+from the same page where you also got the NumPy installer.
 
 If you want to use PyMVPA to analyze fMRI datasets, you probably also want to
 install PyNIfTI_. Download the corresponding installer from the website of the
 `NIfTI libraries`_ and install it. PyNIfTI does not come with the required
-`zlib` library, so you also need to download and install it. A binary installer is available from the `GnuWin32 project`_. Install it in some arbitrary folder
+`zlib` library, so you also need to download and install it. A binary installer
+is available from the `GnuWin32 project`_. Install it in some arbitrary folder
 (just the binaries nothing else), find the `zlib1.dll` file in the `bin`
 subdirectory and move it in the Windows `system32` directory. Verify that it
 works by importing the `nifti` module in Python.
@@ -228,7 +234,7 @@ which are shipped with the source code in the `doc/examples` directory.
 .. _NIfTI libraries: http://niftilib.sourceforge.net/
 .. _GnuWin32 project: http://gnuwin32.sourceforge.net/
 
-
+.. index:: OpenSUSE
 .. _install_suse:
 
 
@@ -275,7 +281,7 @@ snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
 code repository).
 
 .. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
-.. index:: Git repository
+.. index:: Git, Git repository
 
 If you want to have access to both, the full PyMVPA history and the latest
 development code, you can use the PyMVPA Git_ repository, which is publicly
@@ -293,6 +299,8 @@ After a short while you will have a `pymvpa` directory below your current
 working directory, that contains the PyMVPA repository.
 
 .. _Git: http://git.or.cz/
+
+.. index:: build instructions
 
 
 Build it (General instructions)
@@ -382,7 +390,7 @@ extension and therefore also requires the patched LIBSVM version and SWIG to be
 available.
 
 
-.. index:: citation, PyMVPA poster
+.. index:: building on Windows
 
 
 Building on Windows Systems
@@ -436,6 +444,7 @@ as described :ref:`above <install_win>`.
 .. _MSYS: http://www.mingw.org/msys.shtml
 
 
+.. index:: OpenSUSE
 .. _build_suse:
 
 
