@@ -151,9 +151,7 @@ faster and easier than it has ever been before.
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
 
 
-.. _requirements:
-.. index:: requirements
-
+.. index:: citation, PyMVPA poster
 
 How to cite PyMVPA
 ==================

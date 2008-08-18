@@ -289,7 +289,6 @@ clfs += \
 # GPR
 clfs += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
 clfs += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
-clfs += BLR(descr="BLR()")
 
 # BLR
 clfs += BLR(descr="BLR()")
