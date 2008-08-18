@@ -785,19 +785,25 @@ class Dataset(object):
         return dataset
 
 
-    def applyMapper(self, featuresmapper=None, samplesmapper=None):
+    def applyMapper(self, featuresmapper=None, samplesmapper=None,
+                    train=True):
         """Obtain new dataset by applying mappers over features and/or samples.
+
+        While featuresmappers leave the sample attributes information
+        unchanged, as the number of samples in the dataset is invariant,
+        samplesmappers are also applied to the samples attributes themselves!
 
         :Parameters:
           featuresmapper : Mapper
             `Mapper` to somehow transform each sample's features
           samplesmapper : Mapper
             `Mapper` to transform each feature across samples
+          train : bool
+            Flag whether to train the mapper with this dataset before applying
+            it.
 
-        WARNING: At the moment, handling of samplesmapper is not yet
-        implemented since there were no real use case.
-
-        TODO: selectFeatures is pretty much applyMapper(featuresmapper=MaskMapper(...))
+        TODO: selectFeatures is pretty much 
+              applyMapper(featuresmapper=MaskMapper(...))
         """
 
         # shallow-copy all stuff from current data dict
@@ -806,9 +812,28 @@ class Dataset(object):
         # apply mappers
 
         if samplesmapper:
-            raise NotImplementedError
+            if __debug__:
+                debug("DS", "Training samplesmapper %s" % `samplesmapper`)
+            samplesmapper.train(self)
+
+            if __debug__:
+                debug("DS", "Applying samplesmapper %s" % `samplesmapper` +
+                      " to samples of dataset `%s`" % `self`)
+
+            # get rid of existing 'origids' as they are not valid anymore and
+            # applying a mapper to them is not really meaningful
+            if new_data.has_key('origids'):
+                del(new_data['origids'])
+
+            # apply mapper to all sample-wise data in dataset
+            for k in new_data.keys():
+                new_data[k] = samplesmapper.forward(self._data[k])
 
         if featuresmapper:
+            if __debug__:
+                debug("DS", "Training featuresmapper %s" % `featuresmapper`)
+            featuresmapper.train(self)
+
             if __debug__:
                 debug("DS", "Applying featuresmapper %s" % `featuresmapper` +
                       " to samples of dataset `%s`" % `self`)
@@ -826,6 +851,10 @@ class Dataset(object):
                          copy_data=False,
                          copy_dsattr=False
                          )
+
+        # samples attributes might have changed after applying samplesmapper
+        if samplesmapper:
+            dataset._resetallunique(force=True)
 
         return dataset
 

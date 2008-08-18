@@ -8,17 +8,21 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
+.. _faq:
+
 **************************
 Frequently Asked Questions
 **************************
 
-.. use later on for subheadings
- =======
- General
- =======
+
+
+General
+=======
+
+.. index:: optimization
 
 It is sloooooow. What can I do?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
 
   Have you tried running the Python interpreter with `-O`? PyMVPA provides
   lots of debug messages with information that is computed in addition to the
@@ -31,17 +35,18 @@ It is sloooooow. What can I do?
 
 
 I am tired of writing these endless import blocks. Any alternative?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  Sure. Instead of individually importing all pieces that are required
-  by a script, you can import them all at once. A simple::
+-------------------------------------------------------------------
 
-    import mvpa.suite as mvpa
+  Sure. Instead of individually importing all pieces that are required
+  by a script, you can import them all at once. A simple:
+
+    >>> import mvpa.suite as mvpa
 
   makes everything directly accessible through the mvpa namespace, e.g.
   `mvpa.datasets.base.Dataset` becomes `mvpa.Dataset`. Really lazy people
-  can even do::
+  can even do:
 
-    from mvpa.suite import *
+    >>> from mvpa.suite import *
 
   However, as always there is a price to pay for this convenience. In contrast
   to the individual imports there is some intial performance and memory cost. In
@@ -51,20 +56,9 @@ I am tired of writing these endless import blocks. Any alternative?
   individual imports for production scripts.
 
 
-Is there an easy way to remove invariant features from a dataset?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  You might have to deal with invariant features in case like an fMRI dataset,
-  where the *brain mask* is slightly larger than the thresholded fMRI
-  timeseries image. Such invariant features (i.e. features with zero variance)
-  are sometime a problem, e.g. they will lead to numerical difficulties when
-  z-scoring the features of a dataset (i.e. division by zero).
-
-  The `mvpa.datasets.miscfx` module provides a convenience function
-  `removeInvariantFeatures()` that strips such features from a dataset.
-
-
 I feel like I want to contribute something, do you mind?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------
+
   Not at all! If you think there is something that is not well explained in
   the documentation, send us an improvement. If you implemented a new algorithm
   using PyMVPA that you want to share, please share. If you have an idea for
@@ -73,8 +67,65 @@ I feel like I want to contribute something, do you mind?
   the PyMVPA mailing list.
 
 
+.. index:: Git, development
+
+I want to develop a new feature for PyMVPA. How can I do it efficiently?
+------------------------------------------------------------------------
+
+  The best way is to use Git for both, getting the latest code from the
+  repository and preparing the patch. Here is a quick sketch of the workflow.
+
+  First get the latest code::
+
+    git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+
+  This will create a new `pymvpa` subdirectory, that contains the complete
+  repository. Enter this directory and run `gitk --all` to browse the full
+  history and *all* branches that have ever been published.
+
+  You can run::
+
+    git fetch origin
+
+  in this directory at any time to get the latest changes from the main
+  repository.
+
+  Next, you have to decide what you want to base your new feature on. In the
+  simplest case this is the `master` branch (the one that contains the code that
+  will become the next release). Creating a local branch based on the (remote)
+  `master` branch is::
+
+    git checkout -b my_hack origin/master
+
+  Now you are ready to start hacking. You are free to use all powers of Git
+  (and yours, of course). You can do multiple commits, fetch new stuff from the
+  repository, and merge it into your local branch, ... To get a feeling what can
+  be done, take a look `very short description of Git`_ or `a more
+  comprehensive Git tutorial`_.
+
+.. _very short description of Git: http://sysmonblog.co.uk/misc/git_by_example/
+.. _a more comprehensive Git tutorial: http://www-cs-students.stanford.edu/~blynn/gitmagic/
+
+  When you are done with the new feature, you can prepare the patch for
+  inclusion into PyMVPA. If you have done multiple commits you might want to
+  squash them into a single patch containing the new feature. You can do this
+  with `git-rebase`. In recent version `git-rebase` has an option
+  `--interactive`, which allows you to easily pick, squash or even further edit
+  any of the previous commits you have made. Rebase your local branch against
+  the remote branch you started hacking on (`origin/master` in this example)::
+
+    git rebase --interactive origin/master
+
+  When you are done, you can generate the final patch file::
+
+     git-format-patch origin/master
+
+  Above command will generate a file for each commit in you local branch that is
+  not yet part of `origin/master`. The patch files can then be easily emailed.
+
+
 The manual is quite insufficient. When will you improve it?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------------
 
   Writing a manual can be a tricky task if you already know the details and
   have to imagine what might be the most interesting information for someone
@@ -85,3 +136,84 @@ The manual is quite insufficient. When will you improve it?
   not as obvious as they should be), please consider sharing this snippet with
   us and we will put it into the example collection or the manual. Thanks!
 
+
+
+Data preprocessing
+==================
+
+.. index:: invariant features
+
+Is there an easy way to remove invariant features from a dataset?
+-----------------------------------------------------------------
+
+  You might have to deal with invariant features in case like an fMRI dataset,
+  where the *brain mask* is slightly larger than the thresholded fMRI
+  timeseries image. Such invariant features (i.e. features with zero variance)
+  are sometime a problem, e.g. they will lead to numerical difficulties when
+  z-scoring the features of a dataset (i.e. division by zero).
+
+  The `mvpa.datasets.miscfx` module provides a convenience function
+  `removeInvariantFeatures()` that strips such features from a dataset.
+
+
+.. index:: block-averaging
+
+How can I do block-averaging of my block-design fMRI dataset?
+-------------------------------------------------------------
+
+  The easiest way is to use a mapper to transform/average the respective
+  samples. Suppose you have a dataset:
+
+  >>> dataset = normalFeatureDataset()
+  >>> dataset
+  <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks>
+
+  Averaging all samples with the same label in each chunk individually is done
+  by applying a samples mapper to the dataset.
+
+  >>> from mvpa.mappers.samplegroup import SampleGroupMapper
+  >>> from mvpa.misc.transformers import FirstAxisMean
+  >>>
+  >>> m = SampleGroupMapper(fx=FirstAxisMean)
+  >>> mapped_dataset = dataset.applyMapper(samplesmapper=m)
+  >>> mapped_dataset
+  <Dataset / float64 10 x 4 uniq: 2 labels 5 chunks>
+
+  `SampleGroupMapper` applies a function to every group of samples in each
+  chunk individually. Using `FirstAxisMean` as function, therefore yields
+  one sample of each label per chunk.
+
+
+
+Data analysis
+=============
+
+.. index:: feature selection, feature_ids
+
+How do I know which features were finally selected by a classifier doing feature selection?
+-------------------------------------------------------------------------------------------
+
+All classifier possess a state variable `feature_ids`. When enable, the
+classifier stores the ids of all features that were finally used to train
+the classifier.
+
+  >>> clf = FeatureSelectionClassifier(
+  ...           kNN(k=5),
+  ...           SensitivityBasedFeatureSelection(
+  ...               SMLRWeights(SMLR(lm=1.0), transformer=Absolute),
+  ...               FixedNElementTailSelector(1, tail='upper', mode='select')),
+  ...           enable_states = ['feature_ids'])
+  >>> clf.train(dataset)
+  >>> final_dataset = dataset.selectFeatures(clf.feature_ids)
+  >>> final_dataset
+  <Dataset / float64 100 x 1 uniq: 2 labels 5 chunks>
+
+In the above code snippet a kNN classifier is defined, that performs a feature
+selection step prior training. Features are selected according to the absolute
+magnitude of the weights of a SMLR classifier trained on the data (same training
+data that will also go into kNN). Absolute SMLR weights are used for feature
+selection as large negative values also indicate important information. Finally,
+the classifier is configured to select the single most important feature (given
+the SMLR weights). After enabling the `feature_ids` state, the classifier
+provides the desired information, that can e.g. be applied to generate a
+stripped dataset for an analysis of the similarity structure.

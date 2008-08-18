@@ -15,14 +15,20 @@ Installation
 
 This section covers the necessary steps to install and run PyMVPA. It contains
 a comprehensive list of software dependencies, as well as recommendation for
-additional software packages that further enhance the functionality provided by PyMVPA.
+additional software packages that further enhance the functionality provided by
+PyMVPA.
 
+
+.. _requirements:
 
 Dependencies
-~~~~~~~~~~~~
+============
+
+
+.. index:: required software, NumPy
 
 Must Have
-'''''''''
+---------
 
 The following software packages are required or PyMVPA will not work at all.
 
@@ -38,11 +44,11 @@ The following software packages are required or PyMVPA will not work at all.
 .. _NumPy: http://numpy.scipy.org/
 .. _ctypes: http://python.net/crew/theller/ctypes/
 
-.. index:: recommendations, SciPy, PyNIfTI, Shogun, R, RPy
+.. index:: recommended software, SciPy, PyNIfTI, Shogun, R, RPy
 
 
 Strong Recommendations
-''''''''''''''''''''''
+----------------------
 
 While most parts of PyMVPA will work without any additional software, some
 functionality makes use of additional software packages. It is strongly
@@ -71,11 +77,11 @@ recommended to install these packages as well.
 .. _R: http://www.r-project.org
 
 
-.. index:: suggestions, IPython, FSL, AFNI, LIBSVM
+.. index:: suggested software, IPython, FSL, AFNI, LIBSVM, matplotlib, hlcuster
 
 
 Suggestions
-''''''''''''
+-----------
 
 The following list of software is not required by PyMVPA, but it might make
 life a lot easier and leads to more efficiency when using PyMVPA.
@@ -109,7 +115,11 @@ life a lot easier and leads to more efficiency when using PyMVPA.
     This is a very powerful plotting library that allows you to export into
     a large variety of raster and vector formats (e.g. SVG), and thus, is ideal
     to produce publication quality figures.
+  hcluster_: generating, visualizing, and analyzing hierarchical clusters
+    This module is a nice addition to SciPy_ and can be used to perform cluster
+    analyses and plot dendrograms of their results.
 
+.. _hcluster: http://code.google.com/p/scipy-cluster/
 .. _matplotlib: http://matplotlib.sourceforge.net/
 .. _IPython: http://ipython.scipy.org
 .. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
@@ -123,7 +133,7 @@ life a lot easier and leads to more efficiency when using PyMVPA.
 .. _obtaining:
 
 Installing Binary Packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+==========================
 
 .. Don't forget to mention that the only reasonable way to use this piece
    of software (like every other piece) is under Debian! Also mention that
@@ -143,7 +153,7 @@ Please refer to `Building from Source`_ for more information.
 
 
 Debian
-''''''
+------
 
 PyMVPA is available as an `official Debian package`_ (`python-mvpa`;
 since *lenny*). The documentation is provided by the optional
@@ -158,7 +168,7 @@ since *lenny*). The documentation is provided by the optional
 
 
 Debian backports and inofficial Ubuntu packages
-'''''''''''''''''''''''''''''''''''''''''''''''
+-----------------------------------------------
 
 Backports for the current Debian stable release and binary packages for recent
 Ubuntu releases are available from a `repository at the University of
@@ -169,12 +179,12 @@ package.
 .. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 
-
+.. index:: Windows, Windows installer
 .. _install_win:
 
 
 Windows
-'''''''
+-------
 
 There are a few Python distributions for Windows. In theory all of them should
 work equally well. However, we only tested the standard Python distribution
@@ -198,12 +208,14 @@ Import the mvpa module, which should cause no error messages.
   >>>
 
 Although you have a working installation already, most likely you want to
-install some additional software. First and foremost install SciPy_ -- download from the same page where you also got the NumPy installer.
+install some additional software. First and foremost install SciPy_ -- download
+from the same page where you also got the NumPy installer.
 
 If you want to use PyMVPA to analyze fMRI datasets, you probably also want to
 install PyNIfTI_. Download the corresponding installer from the website of the
 `NIfTI libraries`_ and install it. PyNIfTI does not come with the required
-`zlib` library, so you also need to download and install it. A binary installer is available from the `GnuWin32 project`_. Install it in some arbitrary folder
+`zlib` library, so you also need to download and install it. A binary installer
+is available from the `GnuWin32 project`_. Install it in some arbitrary folder
 (just the binaries nothing else), find the `zlib1.dll` file in the `bin`
 subdirectory and move it in the Windows `system32` directory. Verify that it
 works by importing the `nifti` module in Python.
@@ -224,12 +236,12 @@ which are shipped with the source code in the `doc/examples` directory.
 .. _NIfTI libraries: http://niftilib.sourceforge.net/
 .. _GnuWin32 project: http://gnuwin32.sourceforge.net/
 
-
+.. index:: OpenSUSE
 .. _install_suse:
 
 
 OpenSUSE
-''''''''
+--------
 
 To install the provided RPM package for OpenSUSE, simply download it, open a
 console and invoke (the example command refers to PyMVPA 0.2.2 and OpenSUSE
@@ -246,7 +258,7 @@ notes about the installation of the dependencies.
 
 
 Building from Source
-~~~~~~~~~~~~~~~~~~~~
+====================
 
 If a binary package for your platform and operating system is provided, you do
 not have to build the packages on your own -- use the corresponding pre-build
@@ -262,7 +274,7 @@ Windows systems.
 .. index:: releases, development snapshot
 
 Three Ways to Obtain the Sources
-''''''''''''''''''''''''''''''''
+--------------------------------
 
 The first step is obtaining the sources. The source code tarballs of all
 PyMVPA releases are available from the `PyMVPA project website`_.
@@ -271,7 +283,7 @@ snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
 code repository).
 
 .. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
-.. index:: Git repository
+.. index:: Git, Git repository
 
 If you want to have access to both, the full PyMVPA history and the latest
 development code, you can use the PyMVPA Git_ repository, which is publicly
@@ -290,9 +302,11 @@ working directory, that contains the PyMVPA repository.
 
 .. _Git: http://git.or.cz/
 
+.. index:: build instructions
+
 
 Build it (General instructions)
-'''''''''''''''''''''''''''''''
+-------------------------------
 
 In general you can build PyMVPA like any other Python module (using the Python
 *distutils*). This general method will be outline first. However, in some
@@ -321,7 +335,7 @@ Now you should be ready to use PyMVPA on your system.
 
 
 Build with enabled LIBSVM bindings
-''''''''''''''''''''''''''''''''''
+----------------------------------
 
 From the 0.2 release of PyMVPA on, the LIBSVM_ classifier extension is not
 build by default anymore. However, it is still shipped with PyMVPA and can be
@@ -361,7 +375,7 @@ except that the '--with--libsvm' flag also has to be set when installing::
 
 
 Alternative build procedure
-'''''''''''''''''''''''''''
+---------------------------
 
 Alternatively, if you are doing development in PyMVPA or if you
 simply do not want (or do not have sufficient permissions to do so) to
@@ -378,11 +392,11 @@ extension and therefore also requires the patched LIBSVM version and SWIG to be
 available.
 
 
-.. index:: citation, PyMVPA poster
+.. index:: building on Windows
 
 
 Building on Windows Systems
-'''''''''''''''''''''''''''
+---------------------------
 
 On Windows the whole situation is a little more tricky, as the system doesn't
 come with a compiler by default. Nevertheless, it is easily possible to build
@@ -432,11 +446,12 @@ as described :ref:`above <install_win>`.
 .. _MSYS: http://www.mingw.org/msys.shtml
 
 
+.. index:: OpenSUSE
 .. _build_suse:
 
 
 OpenSUSE
-''''''''
+--------
 
 Building PyMVPA on OpenSUSE involves the following steps (tested with 10.3):
 First add the OpenSUSE science repository, that contains most of the required

@@ -42,6 +42,7 @@ clfs = {'Ridge Regression': RidgeReg(),
                       enable_states=['probabilities']),
         'RBF SVM': RbfNuSVMC(probability=1,
                       enable_states=['probabilities']),
+        'SMLR': SMLR(lm=0.01),
         'Logistic Regression': PLR(criterion=0.00001),
         'k-Nearest-Neighbour': kNN(k=10)}
 
@@ -81,6 +82,8 @@ for c in clfs:
     elif c == 'Logistic Regression':
         # get out the values used for the prediction
         res = N.asarray(clf.values)
+    elif c == 'SMLR':
+        res = N.asarray(clf.values[:, 1])
     else:
         # get the probabilities from the svm
         res = N.asarray([(q[1][1] - q[1][0] + 1) / 2

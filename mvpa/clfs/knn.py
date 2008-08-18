@@ -16,34 +16,50 @@ import numpy as N
 from mvpa.base import warning
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.base import Classifier
+from mvpa.base.dochelpers import enhancedDocString
+from mvpa.clfs.distance import squared_euclidean_distance
+
+if __debug__:
+    from mvpa.base import debug
 
 
 class kNN(Classifier):
     """k-nearest-neighbour classifier.
 
-    If enabled it stores the votes per class in the 'values' state after
+    If enabled, it stores the votes per class in the 'values' state after
     calling predict().
     """
 
     _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
 
-    def __init__(self, k=2, **kwargs):
+    def __init__(self, k=2, dfx=squared_euclidean_distance,
+                 voting='weighted', **kwargs):
         """
         :Parameters:
-          k
-            number of nearest neighbours to be used for voting
+          k: unsigned integer
+            Number of nearest neighbours to be used for voting.
+          dfx: functor
+            Function to compute the distances between training and test samples.
+            Default: squared euclidean distance
+          voting: str
+            Voting method used to derive predictions from the nearest neighbors.
+            Possible values are 'majority' (simple majority of classes
+            determines vote) and 'weighted' (votes are weighted according to the
+            relative frequencies of each class in the training data).
+          **kwargs:
+            Additonal arguments are passed to the base class.
         """
 
         # init base class first
         Classifier.__init__(self, **kwargs)
 
         self.__k = k
-        # XXX So is the voting function fixed forever?
-        # YYY assignment of bound method breakes deepcopying, for now
-        #     since there is no alternative yet -- just call method
-        #     explicitely
-        #self.__votingfx = self.getWeightedVote
+        self.__dfx = dfx
+        self.__voting = voting
         self.__data = None
+
+
+    __doc__ = enhancedDocString('kNN', locals(), Classifier)
 
 
     def __repr__(self):
@@ -87,40 +103,44 @@ class kNN(Classifier):
         # make sure we're talking about arrays
         data = N.asarray(data)
 
-        if not data.ndim == 2:
-            raise ValueError, "Data array must be two-dimensional."
+        # checks only in debug mode
+        if __debug__:
+            if not data.ndim == 2:
+                raise ValueError, "Data array must be two-dimensional."
 
-        if not data.shape[1] == self.__data.nfeatures:
-            raise ValueError, "Length of data samples (features) does " \
-                              "not match the classifier."
+            if not data.shape[1] == self.__data.nfeatures:
+                raise ValueError, "Length of data samples (features) does " \
+                                  "not match the classifier."
+
+        # compute the distance matrix between training and test data with
+        # distances stored row-wise, ie. distances between test sample [0]
+        # and all training samples will end up in row 0
+        dists = self.__dfx(self.__data.samples, data).T
+
+        # determine the k nearest neighbors per test sample
+        knns = dists.argsort(axis=1)[:, :self.__k]
 
         # predicted class labels will go here
         predicted = []
         votes = []
 
-        # for all test pattern
-        for p in data:
-            # calc the euclidean distance of the pattern vector to all
-            # patterns in the training data
-            dists = N.sqrt(
-                        N.sum(
-                            (self.__data.samples - p )**2, axis=1
-                            )
-                        )
-            # get the k nearest neighbours from the sorted list of distances
-            knn = dists.argsort()[:self.__k]
+        if self.__voting == 'majority':
+            vfx = self.getMajorityVote
+        elif self.__voting == 'weighted':
+            vfx = self.getWeightedVote
+        else:
+            raise ValueError, "kNN told to perform unknown voting '%s'." % self.__voting
 
-            # finally get the class label
-            # XXX call getWeightedVote for now explicitely
-            #prediction, vote = self.__votingfx(knn)
-            prediction, vote = self.getWeightedVote(knn)
-            predicted.append(prediction)
-            votes.append(vote)
+        # perform voting
+        results = [vfx(knn) for knn in knns]
+
+        # extract predictions
+        predicted = [r[0] for r in results]
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
         self.predictions = predicted
-        self.values = votes
+        self.values = [r[1] for r in results]
 
         return predicted
 
@@ -190,4 +210,3 @@ class kNN(Classifier):
         """Reset trained state"""
         self.__data = None
         super(kNN, self).untrain()
-
