@@ -19,6 +19,8 @@ additional software packages that further enhance the functionality provided by
 PyMVPA.
 
 
+.. _requirements:
+
 Dependencies
 ============
 
