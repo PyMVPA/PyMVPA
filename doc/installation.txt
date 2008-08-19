@@ -311,7 +311,7 @@ Build it (General instructions)
 In general you can build PyMVPA like any other Python module (using the Python
 *distutils*). This general method will be outline first. However, in some
 situations or on some platforms alternative ways of building PyMVPA might be
-more covenient -- alternative approaches are listed at the end of this section.
+more convenient -- alternative approaches are listed at the end of this section.
 
 To build PyMVPA from source simply enter the root of the source tree (obtained
 by either extracting the source package or cloning the repository) and run:
@@ -339,7 +339,7 @@ Build with enabled LIBSVM bindings
 
 From the 0.2 release of PyMVPA on, the LIBSVM_ classifier extension is not
 build by default anymore. However, it is still shipped with PyMVPA and can be
-enabled at build time. To be able to do this you need to have SWIG_installed on
+enabled at build time. To be able to do this you need to have SWIG_ installed on
 your system.
 
 PyMVPA needs a patched LIBSVM version, as the original distribution generates
@@ -400,10 +400,10 @@ Windows
 
 On Windows the whole situation is a little more tricky, as the system doesn't
 come with a compiler by default. Nevertheless, it is easily possible to build
-PyMVPA from source. Although, one could use the Microsoft compiler that comes
-with Visual Studio to do it, but as this is commercial software and not
-everybody has access to it, we will outline a way that exclusively involves
-free and open source software.
+PyMVPA from source. One could use the Microsoft compiler that comes with Visual
+Studio to do it, but as this is commercial software and not everybody has
+access to it, we will outline a way that exclusively involves free and open
+source software.
 
 First one needs to install the packages required to run PyMVPA as explained
 :ref:`above <install_win>`.
@@ -515,7 +515,7 @@ packages, that are not installed by default. Simply do::
 
   yum install numpy gcc gcc-c++ python-devel swig
 
-You might also want to consider installing a few more packages, that will make
+You might also want to consider installing some more packages, that will make
 your life significantly easier::
 
   yum install scipy ipython python-matplotlib
