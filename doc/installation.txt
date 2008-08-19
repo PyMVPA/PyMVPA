@@ -393,10 +393,10 @@ available.
 
 
 .. index:: building on Windows
+.. _build_win:
 
-
-Building on Windows Systems
----------------------------
+Windows
+-------
 
 On Windows the whole situation is a little more tricky, as the system doesn't
 come with a compiler by default. Nevertheless, it is easily possible to build
@@ -501,3 +501,24 @@ plotting capabilities of `matplotlib` you need to install of few more packages
   * `python-scipy`
   * `python-gobject2`
   * `python-gtk`
+
+
+.. index:: Fedora
+.. _build_fedora:
+
+
+Fedora
+------
+
+On Fedora (tested with Fedora 9) you first have to install a few required
+packages, that are not installed by default. Simply do::
+
+  yum install numpy gcc gcc-c++ python-devel swig
+
+You might also want to consider installing a few more packages, that will make
+your life significantly easier::
+
+  yum install scipy ipython python-matplotlib
+
+Now, you are ready to compile and install PyMVPA as describe in the
+:ref:`general build instructions <buildfromsource>`.
