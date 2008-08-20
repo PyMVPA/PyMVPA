@@ -76,6 +76,7 @@ from mvpa.misc.exceptions import *
 from mvpa.misc import *
 from mvpa.misc.io import *
 from mvpa.misc.io.eepbin import *
+from mvpa.misc.io.meg import *
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *
