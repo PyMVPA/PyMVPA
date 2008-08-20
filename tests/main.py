@@ -41,6 +41,7 @@ tests = [
     'test_datasetfx',
     'test_cmdline',
     'test_eepdataset',
+    'test_meg',
     # Classifiers (longer tests)
     'test_kernel',
     'test_clf',
