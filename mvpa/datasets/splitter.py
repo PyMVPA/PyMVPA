@@ -70,7 +70,7 @@ class Splitter(object):
         self.setNPerLabel(nperlabel)
 
 
-    __doc__ = enhancedDocString('OddEvenSplitter', locals())
+    __doc__ = enhancedDocString('Splitter', locals())
 
 
     def setNPerLabel(self, value):
