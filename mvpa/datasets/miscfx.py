@@ -49,7 +49,7 @@ def zscore(dataset, mean=None, std=None,
     if __debug__ and perchunk \
       and N.array(dataset.samplesperchunk.values()).min() < 2:
         warning("Z-scoring chunk-wise and one chunk with less than two " \
-                "samples will lead to invariant features.")
+                "samples will set features in these samples to zero.")
 
     # cast to floating point datatype if necessary
     if str(dataset.samples.dtype).startswith('uint') \
