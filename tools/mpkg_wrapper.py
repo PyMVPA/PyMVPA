@@ -1,26 +1,27 @@
-#!/usr/bin/env python
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Simple wrapper to use setuptools extension bdist_mpkg with PyMVPA
+distutils setup.py.
 
-import sys, os
+This script is a minimal version of a wrapper script shipped with the
+bdist_mpkg packge.
+"""
 
+__docformat__ = 'restructuredtext'
+
+import sys
 import setuptools
 import bdist_mpkg
 
 def main():
     del sys.argv[0]
-    if not sys.argv:
-        sys.argv[:0] = ['setup.py', '--open']
-    elif sys.argv[0].startswith('-'):
-        sys.argv[:0] = ['setup.py']
-    elif len(sys.argv) == 1:
-        sys.argv[1:1] = ['--open']
     sys.argv.insert(1, 'bdist_mpkg')
-    if os.path.isdir(sys.argv[0]):
-        sys.argv[0] = os.path.join(sys.argv[0], 'setup.py')
-    path, name = os.path.split(os.path.abspath(sys.argv[0]))
-    if path:
-        os.chdir(path)
-    sys.path.insert(0, path)
-    sys.argv[0] = name
     g = dict(globals())
     g['__file__'] = sys.argv[0]
     g['__name__'] = '__main__'
