@@ -17,6 +17,12 @@ from glob import glob
 # find numpy headers
 numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
+extra_link_args = []
+
+# platform-specific settings
+if sys.platformi == "darwin":
+    extra_link_args.append("-bundle")
+
 # define the extension modules
 libsvmc_ext = Extension(
     'mvpa.clfs.libsvm.svmc',
@@ -24,6 +30,7 @@ libsvmc_ext = Extension(
     include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
     libraries    = [ 'svm' ],
     language     = 'c++',
+    extra_link_args = extra_link_args,
     swig_opts    = [ '-c++', '-noproxy',
                      '-I/usr/include/libsvm-2.0/libsvm',
                      '-I' + numpy_headers ] )
@@ -33,6 +40,7 @@ smlrc_ext = Extension(
     sources = [ 'mvpa/clfs/libsmlr/smlr.c' ],
     libraries = ['m'],
     # extra_compile_args = ['-O0'],
+    extra_link_args = extra_link_args,
     language = 'c')
 
 ext_modules = [smlrc_ext]
@@ -57,13 +65,14 @@ setup(name       = 'pymvpa',
       license      = 'MIT License',
       url          = 'http://www.pymvpa.org',
       description  = 'Multivariate pattern analysis',
-      long_description = """\
-PyMVPA is a Python module intended to ease pattern classification analyses
-of large datasets. It provides high-level abstraction of typical processing
-steps and a number of implementations of some popular algorithms. While it is
-not limited to neuroimaging data it is eminently suited for such datasets.
-PyMVPA is truely free software (in every respect) and additonally requires
-nothing but free-software to run.""",
+      long_description = \
+          "PyMVPA is a Python module intended to ease pattern classification " \
+          "analyses of large datasets. It provides high-level abstraction of " \
+          "typical processing steps and a number of implementations of some " \
+          "popular algorithms. While it is not limited to neuroimaging data " \
+          "it is eminently suited for such datasets.\n" \
+          "PyMVPA is truely free software (in every respect) and " \
+          "additionally requires nothing but free-software to run.",
       packages     = [ 'mvpa',
                        'mvpa.base',
                        'mvpa.datasets',
