@@ -18,15 +18,18 @@ class Distribution(object):
         """Cheap initialization.
 
         :Parameter:
-          tail: str ['left', 'right']
-            Which tail of the distribution to report.
+          tail: str ['left', 'right', 'any']
+            Which tail of the distribution to report. For 'any' it chooses 
+			the tail it belongs to based on the comparison to p=0.5
         """
         self._tail = tail
 
         # sanity check
-        if self._tail not in ['left', 'right']:
+        if self._tail not in ['left', 'right', 'any']:
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
 
+        if self._tail == 'any':
+            raise NotImplementedError, "The choise of 'any' tail is TODO"
 
     def fit(self, measure, wdata, vdata=None):
         """Implement to fit the distribution to the data."""
