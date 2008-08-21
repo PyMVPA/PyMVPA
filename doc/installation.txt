@@ -522,3 +522,16 @@ your life significantly easier::
 
 Now, you are ready to compile and install PyMVPA as describe in the
 :ref:`general build instructions <buildfromsource>`.
+
+
+.. index:: MacOS X
+.. _build_macos:
+
+MacOS X
+-------
+
+To be able to compile PyMVPA on a Mac you first have to install the XCode developer
+tools
+http://code.google.com/p/git-osx-installer/
+
+

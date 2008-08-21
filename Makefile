@@ -242,6 +242,10 @@ bdist_rpm: 3rd
 	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
 	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
 
+# build MacOS installer -- depends on patched bdist_mpkg for Leopard
+bdist_mpkg: build
+	python tools/mpkg_wrapper.py setup.py install
+
 
 #
 # Data
