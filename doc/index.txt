@@ -29,6 +29,12 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
+  New beta version of a binary installer for MacOS X 10.5 [21 Aug 2008]
+
+    The installer is built for the Enthought Python distribution (Python 2.5)
+    and contains the recently released PyMVPA 0.3.
+
+
   PyMVPA 0.3 is out [18 Aug 2008]
 
     It contains a number of new features (additional mappers, initial support
@@ -91,6 +97,10 @@ Binary packages are available for:
 * Windows (:ref:`installation instructions <install_win>`)
     An installer for Python 2.5 is available from the `download area`_.
 
+* MacOS X (:ref:`installation instructions <install_macos>`)
+    An installer built for the Enthought Python 2.5 distribution is available
+    from the `download area`_.
+
 * OpenSUSE (:ref:`installation instructions <install_suse>`)
    Initial version of a binary RPM package, built for OpenSUSE_ 10.3
    -- available in the `download area`_.
@@ -98,8 +108,7 @@ Binary packages are available for:
 Currently, there are no binary packages for other operating systems. However,
 the manual contains instructions to build PyMVPA on :ref:`build_suse`,
 :ref:`build_fedora` and :ref:`build_win`. Additionally, we know that PyMVPA
-successfully builds on recent RedHat_ releases, as well as MacOS X (see below
-for instructions).
+successfully builds on recent RedHat_ releases (see below for instructions).
 
 .. _official Debian package: http://packages.debian.org/python-mvpa
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
