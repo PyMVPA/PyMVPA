@@ -20,7 +20,7 @@ numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 extra_link_args = []
 
 # platform-specific settings
-if sys.platformi == "darwin":
+if sys.platform == "darwin":
     extra_link_args.append("-bundle")
 
 # define the extension modules
