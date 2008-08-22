@@ -191,9 +191,11 @@ if __debug__:
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
     # CHECKs
-    debug.register('CHECK_DS_SORTED', "Checking in datasets for sorted")
+    debug.register('CHECK_DS_SELECT',
+                   "Check in dataset.select() for sorted and unique indexes")
+    debug.register('CHECK_DS_SORTED', "Check in datasets for sorted")
     debug.register('CHECK_IDS_SORTED',
-                   "Checking for ids being sorted in mappers")
+                   "Check for ids being sorted in mappers")
     debug.register('CHECK_TRAINED',
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")

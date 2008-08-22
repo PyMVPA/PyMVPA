@@ -79,15 +79,22 @@ class DatasetTests(unittest.TestCase):
 
         # default must be no mask
         self.failUnless( data.nfeatures == 100 )
+
+        bsel = N.array([False]*100)
+        bsel[ [0,20,79] ] = True
         # check selection with feature list
-        sel = data.selectFeatures( [0,20,79], sort=False )
-        self.failUnless(sel.nfeatures == 3)
+        for sel in [ data.selectFeatures( [0,20,79], sort=False ),
+                     data.select(slice(None), [0,20,79]),
+                     data.select(slice(None), N.array([0,20,79])),
+                     data.select(slice(None), bsel),
+                     ]:
+            self.failUnless(sel.nfeatures == 3)
 
-        # check size of the masked patterns
-        self.failUnless( sel.samples.shape == (10,3) )
+            # check size of the masked patterns
+            self.failUnless( sel.samples.shape == (10,3) )
 
-        # check that the right features are selected
-        self.failUnless( (unmasked[:,[0,20,79]]==sel.samples).all() )
+            # check that the right features are selected
+            self.failUnless( (unmasked[:,[0,20,79]]==sel.samples).all() )
 
 
     def testSampleSelection(self):
@@ -97,33 +104,58 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( data.nsamples == 10 )
 
         # set single pattern to enabled
-        sel=data.selectSamples(5)
-        self.failUnless( sel.nsamples == 1 )
-        self.failUnless( data.nfeatures == 100 )
-        self.failUnless( sel.origids == [5] )
+        for sel in [ data.selectSamples(5),
+                     data.select(5),
+                     data.select(slice(5, 6)),
+                     ]:
+            self.failUnless( sel.nsamples == 1 )
+            self.failUnless( data.nfeatures == 100 )
+            self.failUnless( sel.origids == [5] )
 
         # check duplicate selections
-        sel = data.selectSamples([5, 5])
-        self.failUnless( sel.nsamples == 2 )
-        self.failUnless( (sel.samples[0] == sel.samples[1]).all() )
-        self.failUnless( len(sel.labels) == 2 )
-        self.failUnless( len(sel.chunks) == 2 )
-        self.failUnless((sel.origids == [5, 5]).all())
+        for sel in [ data.selectSamples([5, 5]),
+                     # Following ones would fail since select removes
+                     # repetitions (XXX)
+                     #data.select([5,5]),
+                     #data.select([5,5], 'all'),
+                     #data.select([5,5], slice(None)),
+                     ]:
+            self.failUnless( sel.nsamples == 2 )
+            self.failUnless( (sel.samples[0] == data.samples[5]).all() )
+            self.failUnless( (sel.samples[0] == sel.samples[1]).all() )
+            self.failUnless( len(sel.labels) == 2 )
+            self.failUnless( len(sel.chunks) == 2 )
+            self.failUnless((sel.origids == [5, 5]).all())
 
-        self.failUnless( sel.samples.shape == (2,100) )
+            self.failUnless( sel.samples.shape == (2,100) )
 
         # check selection by labels
-        sel = data.idsbylabels(2)
-        self.failUnless( len(sel) == data.nsamples )
+        for sel in [ data.selectSamples(data.idsbylabels(2)),
+                     data.select(labels=2),
+                     data.select('labels', 2),
+                     data.select('labels', [2]),
+                     data['labels', [2]]
+                     ]:
+            self.failUnless( sel.nsamples == data.nsamples )
+            self.failUnless( N.all(sel.samples == data.samples) )
 
         # not present label
-        sel = data.idsbylabels(3)
-        self.failUnless( len(sel) == 0 )
+        for sel in [ data.selectSamples(data.idsbylabels(3)),
+                     data.select(labels=3),
+                     data.select('labels', 3),
+                     data.select('labels', [3]),
+                     ]:
+            self.failUnless( sel.nsamples == 0 )
 
-        data = Dataset(samples=origdata, labels=[8, 9, 4, 3, 3, 3, 4, 2, 8, 9],
+        data = Dataset(samples=origdata,
+                       labels=[8, 9, 4, 3, 3, 3, 4, 2, 8, 9],
                        chunks=2)
-        self.failUnless( (data.idsbylabels([2, 3]) == \
-                          [ 3.,  4.,  5.,  7.]).all() )
+        for sel in [ data.selectSamples(data.idsbylabels([2, 3])),
+                     data.select('labels', [2, 3]),
+                     data.select('labels', [2, 3], labels=[1, 2, 3, 4]),
+                     data.select('labels', [2, 3], chunks=[1, 2, 3, 4])
+                     ]:
+            self.failUnless(N.all(sel.origids == [ 3.,  4.,  5.,  7.]))
 
         # lets cause it to compute unique labels
         self.failUnless( (data.uniquelabels == [2, 3, 4, 8, 9]).all() );
@@ -133,6 +165,53 @@ class DatasetTests(unittest.TestCase):
         sel = data.selectSamples(data.idsbylabels([3, 4, 8, 9]))
         self.failUnlessEqual(Set(sel.uniquelabels), Set([3, 4, 8, 9]))
         self.failUnless((sel.origids == [0, 1, 2, 3, 4, 5, 6, 8, 9]).all())
+
+
+    def testEvilSelects(self):
+        """Test some obscure selections of samples via select() or __getitem__
+        """
+        origdata = N.random.standard_normal((10,100))
+        data = Dataset(samples=origdata,
+                       #       0  1  2  3  4  5  6  7  8  9
+                       labels=[8, 9, 4, 3, 3, 3, 3, 2, 8, 9],
+                       chunks=[1, 2, 3, 2, 3, 1, 5, 6, 3, 6])
+
+        # malformed getitem
+        if __debug__:
+            # check is enforced only in __debug__
+            self.failUnlessRaises(ValueError, data.__getitem__,
+                                  'labels', 'featu')
+
+        # too many indicies
+        self.failUnlessRaises(ValueError, data.__getitem__, 1, 1, 1)
+
+        # various getitems which should carry the same result
+        for sel in [ data.select('chunks', [2, 6], labels=[3, 2],
+                                 features=slice(None)),
+                     data.select('all', 'all', labels=[2,3], chunks=[2, 6]),
+                     data['chunks', [2, 6], 'labels', [3, 2]],
+                     data[:, :, 'chunks', [2, 6], 'labels', [3, 2]],
+                     # get warnings but should work as the rest for now
+                     data[3:8, 'chunks', [2, 6, 2, 6], 'labels', [3, 2]],
+                     ]:
+            self.failUnless(N.all(sel.origids == [3,7]))
+            self.failUnless(sel.nfeatures == 100)
+            self.failUnless(N.all(sel.samples == origdata[ [3,7] ]))
+
+        target = origdata[ [3, 7] ]
+        target = target[:, [1,3] ]
+        # various getitems which should carry the same result
+        for sel in [ data.select('all', [1, 3],
+                                 'chunks', [2, 6], labels=[3, 2]),
+                     data[:, [1,3], 'chunks', [2, 6], 'labels', [3, 2]],
+                     data[:, [1,3], 'chunks', [2, 6], 'labels', [3, 2]],
+                     # get warnings but should work as the rest for now
+                     data[3:8, [1, 1, 3, 1],
+                          'chunks', [2, 6, 2, 6], 'labels', [3, 2]],
+                     ]:
+            self.failUnless(N.all(sel.origids == [3,7]))
+            self.failUnless(sel.nfeatures == 2)
+            self.failUnless(N.all(sel.samples == target))
 
 
     def testCombinedPatternAndFeatureMasking(self):

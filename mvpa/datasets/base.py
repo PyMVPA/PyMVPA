@@ -29,6 +29,19 @@ from mvpa.base.dochelpers import enhancedDocString
 if __debug__:
     from mvpa.base import debug, warning
 
+    def _validate_indexes_uniq_sorted(seq, fname, item):
+        if operator.isSequenceType(seq):
+            seq_unique = N.unique(seq)
+            if len(seq) != len(seq_unique):
+                warning("%s() operates only with indexes for %s without"
+                        " repetitions. Repetitions were removed."
+                        % (fname, item))
+            if N.any(N.sort(seq) != seq_unique):
+                warning("%s() does not guarantee the original order"
+                        " of selected %ss. Use selectSamples() and "
+                        " selectFeatures(sort=False) instead" % (fname, item))
+
+
 #XXX class Dataset(ClassWithCollections):
 class Dataset(object):
     """*The* Dataset.
@@ -379,7 +392,8 @@ class Dataset(object):
         return result
 
 
-    def _getSampleIdsByAttr(self, values, attrib="labels"):
+    def _getSampleIdsByAttr(self, values, attrib="labels",
+                            sort=True):
         """Return indecies of samples given a list of attributes
         """
 
@@ -395,8 +409,9 @@ class Dataset(object):
             sel = N.concatenate((
                 sel, N.where(_data[attrib]==value)[0]))
 
-        # place samples in the right order
-        sel.sort()
+        if sort:
+            # place samples in the right order
+            sel.sort()
 
         return sel
 
@@ -909,6 +924,177 @@ class Dataset(object):
 
         dataset._resetallunique(force=True)
         return dataset
+
+
+
+    def select(self, *args, **kwargs):
+        """Universal selector
+
+        WARNING: if you need to select duplicate samples
+        (e.g. samples=[5,5]) or order of selected samples of features
+        is important and has to be not ordered (e.g. samples=[3,2,1]),
+        please use selectFeatures or selectSamples functions directly
+
+        Examples:
+          Mimique plain selectSamples:
+            dataset.select([1,2,3])
+            dataset[[1,2,3]]
+
+          Mimique plain selectFeatures:
+            dataset.select(slice(None), [1,2,3])
+            dataset.select('all', [1,2,3])
+            dataset[:, [1,2,3]]
+
+          Mixed (select features and samples):
+            dataset.select([1,2,3], [1, 2])
+            dataset[[1,2,3], [1, 2]]
+
+          Select samples matching some attributes
+            dataset.select(labels=[1,2], chunks=[2,4])
+            dataset.select('labels', [1,2], 'chunks', [2,4])
+            dataset['labels', [1,2], 'chunks', [2,4]]
+
+          Mixed -- out of first 100 samples, select only those with
+          labels 1 or 2 and belonging to chunks 2 or 4, and select
+          features 2 and 3
+            dataset.select(slice(0,100), [2,3], labels=[1,2], chunks=[2,4])
+            dataset[:100, [2,3], 'labels', [1,2], 'chunks', [2,4]]
+
+        """
+
+        s_indx = []                     # selections for samples
+        f_indx = []                     # selections for features
+        largs = len(args)
+
+        args = list(args)               # so we could override
+        # Figure out number of positional
+        largs_nonstring = 0
+        # need to go with index since we might need to override internally
+        for i in xrange(largs):
+            l = args[i]
+            if isinstance(l, basestring):
+                if l.lower() == 'all':
+                    # override with a slice
+                    args[i] = slice(None)
+                else:
+                    break
+            largs_nonstring += 1
+
+        if largs_nonstring >= 1:
+            s_indx.append(args[0])
+            if __debug__ and 'CHECK_DS_SELECT' in debug.active:
+                _validate_indexes_uniq_sorted(args[0], 'select', 'samples')
+            if largs_nonstring == 2:
+                f_indx.append(args[1])
+                if __debug__ and 'CHECK_DS_SELECT' in debug.active:
+                    _validate_indexes_uniq_sorted(args[1], 'select', 'features')
+            elif largs_nonstring > 2:
+                raise ValueError, "Only two positional arguments are allowed" \
+                      ". 1st for samples, 2nd for features"
+
+        # process left positional arguments which must encode selections like
+        # ('labels', [1,2,3])
+
+        if (largs - largs_nonstring) % 2 != 0:
+            raise ValueError, "Positional selections must come in pairs:" \
+                  " e.g. ('labels', [1,2,3])"
+
+        for i in xrange(largs_nonstring, largs, 2):
+            k, v = args[i:i+2]
+            kwargs[k] = v
+
+        # process keyword parameters
+        data_ = self._data
+        for k, v in kwargs.iteritems():
+            if k == 'samples':
+                s_indx.append(v)
+            elif k == 'features':
+                f_indx.append(v)
+            elif data_.has_key(k):
+                # so it is an attribute for samples
+                # XXX may be do it not only if __debug__
+                if __debug__: # and 'CHECK_DS_SELECT' in debug.active:
+                    if not N.any([isinstance(v, cls) for cls in
+                                  [list, tuple, slice, int]]):
+                        raise ValueError, "Trying to specify selection for %s " \
+                              "based on unsupported '%s'" % (k, v)
+                s_indx.append(self._getSampleIdsByAttr(v, attrib=k, sort=False))
+            else:
+                raise ValueError, 'Keyword "%s" is not known, thus' \
+                      'select() failed' % k
+
+        def combine_indexes(indx, nelements):
+            """Helper function: intersect selections given in indx
+
+            :Parameters:
+              indxs : list of lists or slices
+                selections of elements
+              nelements : int
+                number of elements total for deriving indexes from slices
+            """
+            indx_sel = None                 # pure list of ids for selection
+            for s in indx:
+                if isinstance(s, slice) or \
+                   isinstance(s, N.ndarray) and s.dtype==bool:
+                    # XXX there might be a better way than reconstructing the full
+                    # index list. Also we are loosing ability to do simlpe slicing,
+                    # ie w.o making a copy of the selected data
+                    all_indexes = N.arange(nelements)
+                    s = all_indexes[s]
+                elif not operator.isSequenceType(s):
+                    s = [ s ]
+
+                if indx_sel is None:
+                    indx_sel = Set(s)
+                else:
+                    # To be consistent
+                    #if not isinstance(indx_sel, Set):
+                    #    indx_sel = Set(indx_sel)
+                    indx_sel = indx_sel.intersection(s)
+
+            # if we got Set -- convert
+            if isinstance(indx_sel, Set):
+                indx_sel = list(indx_sel)
+
+            # sort for the sake of sanity
+            indx_sel.sort()
+
+            return indx_sel
+
+        if len(s_indx) == 1 and isinstance(s_indx[0], slice) \
+               and s_indx[0] == slice(None):
+            # so no actual selection was requested among samples.
+            # thus proceed with original dataset
+            if __debug__:
+                debug('DS', 'in select() not selecting samples')
+            ds = self
+        else:
+            # else do selection
+            if __debug__:
+                debug('DS', 'in select() selecting samples given selections'
+                      + str(s_indx))
+            ds = self.selectSamples(combine_indexes(s_indx,
+                                                    self.nsamples))
+
+        if len(f_indx):
+            if __debug__:
+                debug('DS', 'in select() selecting features given selections'
+                      + str(f_indx))
+            ds = ds.selectFeatures(combine_indexes(f_indx,
+                                                     self.nfeatures))
+
+        return ds
+
+
+    def __getitem__(self, *args):
+        """Convinience dataset parts selection
+
+        See select for more information
+        """
+        # for cases like ['labels', 1]
+        if len(args) == 1 and isinstance(args[0], tuple):
+            args = list(args[0])
+        return self.select(*args)
 
 
     def permuteLabels(self, status, perchunk=True, assure_permute=False):
