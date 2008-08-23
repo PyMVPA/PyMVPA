@@ -29,20 +29,25 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
 sensanas = {'a) ANOVA': OneWayAnova(transformer=N.abs),
             'b) Linear SVM weights': LinearNuSVMC().getSensitivityAnalyzer(
                                                        transformer=N.abs),
-            'c) Splitting ANOVA (odd-even)':
+            'c) I-RELIEF (Exponential)': IterativeRelief(transformer=N.abs),
+            'd) Splitting ANOVA (odd-even)':
                 SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
                                              OddEvenSplitter()),
-            'd) Splitting SVM (odd-even)':
+            'e) Splitting SVM (odd-even)':
                 SplitFeaturewiseMeasure(
                     LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
                                      OddEvenSplitter()),
-            'e) Splitting ANOVA (nfold)':
+            'f) I-RELIEF (SquaredExponential)':
+                IterativeRelief(transformer=N.abs, kernel=KernelSquaredExponential),
+            'g) Splitting ANOVA (nfold)':
                 SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
                                              NFoldSplitter()),
-            'f) Splitting SVM (nfold)':
+            'h) Splitting SVM (nfold)':
                 SplitFeaturewiseMeasure(
                     LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
-                                     NFoldSplitter())
+                                     NFoldSplitter()),
+            'i) I-RELIEF (Matern_3_2)':
+                IterativeRelief(transformer=N.abs, kernel=KernelMatern_3_2),
            }
 
 # do chunkswise linear detrending on dataset
@@ -60,7 +65,7 @@ dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
                                         dtype='bool'))
 
 fig = 0
-P.figure(figsize=(8,8))
+P.figure(figsize=(14,8))
 
 keys = sensanas.keys()
 keys.sort()
@@ -70,7 +75,7 @@ for s in keys:
     print "Running %s ..." % (s)
 
     # compute sensitivies
-    smap = sensanas[s](dataset)
+    smap = sensanas[s](dataset)+0.00001 # I-RELIEF assigns zeros, which corrupts reverse mapping, so adding some epsilon :)
 
     # map sensitivity map into original dataspace
     orig_smap = dataset.mapReverse(smap)
@@ -78,7 +83,7 @@ for s in keys:
 
     # make a new subplot for each classifier
     fig += 1
-    P.subplot(3,2,fig)
+    P.subplot(3,3,fig)
 
     P.title(s)
 
@@ -90,11 +95,12 @@ for s in keys:
     # uniform scaling per base sensitivity analyzer
     if s.count('ANOVA'):
         P.clim(0, 0.4)
-    else:
+    elif s.count('SVM'):
         P.clim(0, 0.055)
+    else:
+        pass
 
     P.colorbar(shrink=0.6)
-
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
