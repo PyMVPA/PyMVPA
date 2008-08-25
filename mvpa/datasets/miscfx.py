@@ -129,11 +129,11 @@ def aggregateFeatures(dataset, fx):
                    chunks=dataset.chunks)
 
 
-
 def removeInvariantFeatures(dataset):
     """Returns a new dataset with all invariant features removed.
     """
     return dataset.selectFeatures(dataset.samples.std(axis=0).nonzero()[0])
+
 
 def coarsenChunks(source, nchunks=4):
     """Change chunking of the dataset
@@ -218,4 +218,26 @@ def coarsenChunks(source, nchunks=4):
         return
     else:
         return chunks_new
+
+
+def getSamplesPerChunkLabel(ds):
+    """Returns an array with the number of samples per label in each chunk.
+
+    Array shape is (chunks x labels).
+
+    :Parameters:
+      ds: Dataset
+        Source dataset.
+    """
+    ul = ds.uniquelabels
+    uc = ds.uniquechunks
+
+    count = N.zeros((len(uc), len(ul)), dtype='uint')
+
+    for cc, c in enumerate(uc):
+        for lc, l in enumerate(ul):
+            count[cc, lc] = N.sum(N.logical_and(ds.labels == l,
+                                                ds.chunks == c))
+
+    return count
 
