@@ -125,6 +125,9 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
         Target where to draw.
       *args, **kwargs
         Additional arguments to plot().
+
+      :Returns:
+        Mean ERP timeseries.
     """
     # trial timecourse duration
     duration = pre + post
@@ -183,6 +186,8 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
     # plot mean signal timecourse
     ax.plot(time_points, -erp_mean, lw=2, color=color, zorder=4,
             *args, **kwargs)
+
+    return erp_mean
 
 
 def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
