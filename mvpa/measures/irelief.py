@@ -68,9 +68,9 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
         H = {}
         for i in range(label.size):
             M[i] = N.where(label!=label[i])[0]
-            tmp = list(N.where(label==label[i])[0])
+            tmp = (N.where(label==label[i])[0]).tolist()
             tmp.remove(i)
-            assert(tmp!=[])
+            assert(tmp!=[]) # Assert that there are at least two exampls for class label[i]
             H[i] = N.array(tmp)
             pass
         return M,H
@@ -88,9 +88,13 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
         M, H = self.compute_M_H(dataset.labels)
 
         while True:
-            self.k = self.kernel(length_scale = 1.0/N.sqrt(self.w)) # ABS(w) ??
+            self.k = self.kernel(length_scale = 1.0/N.sqrt(self.w))
             d_w_k = self.k.compute(dataset.samples)
-            d_w_k[N.abs(d_w_k-1.0)<1.0e-10] = 0.0 # set d_w_k to zero where distance=0 (i.e. kernel == 1.0), otherwise I-RELIEF could not converge
+            # set d_w_k to zero where distance=0 (i.e. kernel ==
+            # 1.0), otherwise I-RELIEF could not converge.
+            # XXX Note that kernel==1 for distance=0 only for
+            # exponential kernels!!  IMPROVE
+            d_w_k[N.abs(d_w_k-1.0)<1.0e-15] = 0.0
             ni = N.zeros(dataset.samples.shape[1],'d')
             for n in range(dataset.samples.shape[0]):
                 gamma_n = 1.0 - N.nan_to_num(d_w_k[n,M[n]].sum() / (d_w_k[n,:].sum()-d_w_k[n,n]))
@@ -108,7 +112,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
             change = N.abs(w_new-self.w).sum()
             # print "change=%.4f max=%f min=%.4f mean=%.4f std=%.4f #nan=%d" % (change,w_new.max(),w_new.min(),w_new.mean(),w_new.std(),N.isnan(w_new).sum())
             
-            # update weights
+            # update weights:
             self.w = w_new
             if change<self.threshold:
                 break
