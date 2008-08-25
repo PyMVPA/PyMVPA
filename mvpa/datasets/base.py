@@ -551,7 +551,7 @@ class Dataset(object):
 
 
     @classmethod
-    def _registerAttribute(cls, key, dictname="_data", hasunique=False):
+    def _registerAttribute(cls, key, dictname="_data", abbr=None, hasunique=False):
         """Register an attribute for any Dataset class.
 
         Creates property assigning getters/setters depending on the
@@ -586,6 +586,10 @@ class Dataset(object):
             exec "%s.%s = property(fget=%s, fset=%s)"  % \
                  (cls.__name__, key, getter, setter)
 
+            if abbr is not None:
+                exec "%s.%s = property(fget=%s, fset=%s)"  % \
+                     (cls.__name__, abbr, getter, setter)
+
             if hasunique:
                 uniquekey = "unique%s" % key
                 getter = '_get%s' % uniquekey
@@ -601,6 +605,9 @@ class Dataset(object):
 
                 exec "%s.%s = property(fget=%s)" % \
                      (cls.__name__, uniquekey, getter)
+                if abbr is not None:
+                    exec "%s.U%s = property(fget=%s)" % \
+                         (cls.__name__, abbr, getter)
 
                 # create samplesper<ATTR> properties
                 sampleskey = "samplesper%s" % key[:-1] # remove ending 's' XXX
@@ -1264,11 +1271,16 @@ class Dataset(object):
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
 
+    # syntactic sugarings
+    #S = property(fget=lambda self:self.samples, doc="Concise access to samples")
+    #C = property(fget=lambda self:self.chunks, doc="Concise access to chunks")
+    #L = property(fget=lambda self:self.chunks, doc="Concise access to labels")
+    #I = property(fget=lambda self:self.origids, doc="Concise access to origids")
 
 
 # Following attributes adherent to the basic dataset
-Dataset._registerAttribute("samples", "_data", hasunique=False)
-Dataset._registerAttribute("labels",  "_data", hasunique=True)
-Dataset._registerAttribute("chunks",  "_data", hasunique=True)
+Dataset._registerAttribute("samples", "_data", abbr='S', hasunique=False)
+Dataset._registerAttribute("labels",  "_data", abbr='L', hasunique=True)
+Dataset._registerAttribute("chunks",  "_data", abbr='C', hasunique=True)
 # samples ids (already unique by definition)
-Dataset._registerAttribute("origids",  "_data", hasunique=False)
+Dataset._registerAttribute("origids",  "_data", abbr='I', hasunique=False)
