@@ -9,12 +9,13 @@
 """Base class for data measures: algorithms that quantify properties of
 datasets.
 
-Besides the `DatasetMeasure` base class this module also provides the (abstract)
-`FeaturewiseDatasetMeasure` class. The difference between a general measure and
-the output of the `FeaturewiseDatasetMeasure` is that the latter returns a 1d map
-(one value per feature in the dataset). In contrast there are no restrictions
-on the returned value of `DatasetMeasure` except for that it has to be in some
-iterable container.
+Besides the `DatasetMeasure` base class this module also provides the
+(abstract) `FeaturewiseDatasetMeasure` class. The difference between a general
+measure and the output of the `FeaturewiseDatasetMeasure` is that the latter
+returns a 1d map (one value per feature in the dataset). In contrast there are
+no restrictions on the returned value of `DatasetMeasure` except for that it
+has to be in some iterable container.
+
 """
 
 __docformat__ = 'restructuredtext'
@@ -151,9 +152,10 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
 
         :Parameters:
           combiner : Functor
-            If _call returned value is 2d -- combines along 2nd
-            dimension as well as sets base_sensitivities
-            TODO change combiner's default
+            The combiner is only applied if the computed featurewise dataset
+            measure is more than one-dimensional. This is different from a
+            `transformer`, which is always applied. By default, the sum of
+            absolute values along the second axis is computed.
         """
         DatasetMeasure.__init__(self, **(kwargs))
 
@@ -163,7 +165,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         if prefixes is None: prefixes = []
         if self.__combiner != SecondAxisSumOfAbs:
             prefixes.append("combiner=%s" % self.__combiner)
-        return super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
+        return \
+            super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _call(self, dataset):
@@ -183,6 +186,16 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
          CombinedSensitivityAnalyzer, thus this one might make use of
          CombinedSensitivityAnalyzer yoh thinks, and here
          base_sensitivities doesn't sound appropriate.
+         MH: There is indeed some overlap, but also significant differences.
+             This one operates on a single sensana and combines over second
+             axis, CombinedFeaturewiseDatasetMeasure uses first axis.
+             Additionally, 'Sensitivity' base class is
+             FeaturewiseDatasetMeasures which would have to be changed to
+             CombinedFeaturewiseDatasetMeasure to deal with stuff like
+             SMLRWeights that return multiple sensitivity values by default.
+             Not sure if unification of both (and/or removal of functionality
+             here does not lead to an overall more complicated situation,
+             without any real gain -- after all this one works ;-)
         """
         if len(result.shape)>1:
             n_base = result.shape[1]
@@ -195,8 +208,9 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                     biases = self.biases
                     if len(self.biases) != n_base:
                         raise ValueError, \
-                            "Number of biases %d is different" % len(self.biases)\
-                            + " from number of base sensitivities %d" % n_base
+                          "Number of biases %d is " % len(self.biases) \
+                          + "different from number of base sensitivities" \
+                          + "%d" % n_base
                 for i in xrange(n_base):
                     if not biases is None:
                         bias = biases[i]
@@ -366,7 +380,8 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         self.sensitivities = sensitivities
         if __debug__:
-            debug("SA", "Returning combined using %s sensitivity across %d items" %
+            debug("SA",
+                  "Returning combined using %s sensitivity across %d items" %
                   (`self.__combiner`, len(sensitivities)))
 
         return self.__combiner(sensitivities)
