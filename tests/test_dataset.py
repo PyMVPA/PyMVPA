@@ -223,6 +223,21 @@ class DatasetTests(unittest.TestCase):
             self.failUnless(sel.nfeatures == 2)
             self.failUnless(N.all(sel.samples == target))
 
+        # Check if we get empty selection if requesting impossible
+        self.failUnless(data.select(chunks=[23]).nsamples == 0)
+
+        # Check .where()
+        self.failUnless(N.all(data.where(chunks=[2,6]) == [1, 3, 7, 9]))
+        self.failUnless(N.all(data.where(chunks=[2,6], labels=[22, 3]) == [3]))
+        # both samples and features
+        idx = data.where('all', [1, 3, 10], labels=[2, 3, 4])
+        self.failUnless(N.all(idx[1] == [1, 3, 10]))
+        self.failUnless(N.all(idx[0] == range(2, 8)))
+        # empty query
+        self.failUnless(data.where() is None)
+        # empty result
+        self.failUnless(data.where(labels=[123]) == [])
+
 
     def testCombinedPatternAndFeatureMasking(self):
         data = Dataset(samples=N.arange( 20 ).reshape( (4,5) ),

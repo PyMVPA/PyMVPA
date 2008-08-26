@@ -200,6 +200,29 @@ information like class labels and chunks are maintained. By calling
 `mapReverse()` on the new dataset one can see that the remaining four features
 are precisely mapped back onto their original locations in the data space.
 
+.. index:: syntactic sugaring
+.. _data_sugaring:
+
+Data Access Sugaring
+====================
+
+Complementary to self-descriptive attribute names (e.g. `labels`, `samples`)
+datasets have a few concise shortcuts to get quick access to some attributes
+or perform some common action
+
+================ ============ ================
+Attribute        Abbreviation Definition class
+---------------- ------------ ----------------
+samples          S            Dataset_
+labels           L            Dataset_
+uniquelabels     UL           Dataset_
+chunks           O            Dataset_
+uniquechunks     UC           Dataset_
+origids          I            Dataset_
+samples_original O            MappedDataset_
+================ ============ ================
+
+
 
 .. index:: data formats
 .. _data_formats:
