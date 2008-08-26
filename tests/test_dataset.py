@@ -75,6 +75,9 @@ class DatasetTests(unittest.TestCase):
         origdata = N.random.standard_normal((10,100))
         data = Dataset(samples=origdata, labels=2, chunks=2 )
 
+        # define some feature groups
+        data.defineFeatureGroups(N.repeat(range(4), 25))
+
         unmasked = data.samples.copy()
 
         # default must be no mask
@@ -95,6 +98,13 @@ class DatasetTests(unittest.TestCase):
 
             # check that the right features are selected
             self.failUnless( (unmasked[:,[0,20,79]]==sel.samples).all() )
+
+            # check grouping information
+            self.failUnless((sel._dsattr['featuregroups'] == [0, 0, 3]).all())
+
+        # check selection by feature group id
+        gsel = data.selectFeatures(groups=[2,3])
+        self.failUnless(gsel.nfeatures == 50)
 
 
     def testSampleSelection(self):

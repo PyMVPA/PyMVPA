@@ -748,7 +748,7 @@ class Dataset(object):
         return out
 
 
-    def selectFeatures(self, ids, sort=True):
+    def selectFeatures(self, ids=None, sort=True, groups=None):
         """Select a number of features from the current set.
 
         :Parameters:
@@ -767,6 +767,21 @@ class Dataset(object):
         also cause major headaches! Order would is verified when
         running in non-optimized code (if __debug__)
         """
+        if ids is None and groups is None:
+            raise ValueError, "No feature selection specified."
+
+        # start with empty list if no ids where specified (so just groups)
+        if ids is None:
+            ids = []
+
+        if not groups is None:
+            if not self._dsattr.has_key('featuregroups'):
+                raise RuntimeError, \
+                "Dataset has no feature grouping information."
+
+            for g in groups:
+                ids += (self._dsattr['featuregroups'] == g).nonzero()[0].tolist()
+
         # XXX set sort default to True, now sorting has to be explicitely
         # disabled and warning is not necessary anymore
         if sort:
@@ -784,13 +799,20 @@ class Dataset(object):
         # current dataset
         new_data['samples'] = self._data['samples'][:, ids]
 
+        # apply selection to feature groups as well
+        if self._dsattr.has_key('featuregroups'):
+            new_dsattr = self._dsattr.copy()
+            new_dsattr['featuregroups'] = self._dsattr['featuregroups'][ids]
+        else:
+            new_dsattr = self._dsattr
+
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self._dsattr,
+                         dsattr=new_dsattr,
                          check_data=False,
                          copy_samples=False,
                          copy_data=False,
@@ -807,6 +829,8 @@ class Dataset(object):
         While featuresmappers leave the sample attributes information
         unchanged, as the number of samples in the dataset is invariant,
         samplesmappers are also applied to the samples attributes themselves!
+
+        Applying a featuresmapper will destroy any feature grouping information.
 
         :Parameters:
           featuresmapper : Mapper
@@ -854,13 +878,21 @@ class Dataset(object):
                       " to samples of dataset `%s`" % `self`)
             new_data['samples'] = featuresmapper.forward(self._data['samples'])
 
+            # remove feature grouping, who knows what the mapper did to the
+            # features
+            if self._dsattr.has_key('featuregroups'):
+                new_dsattr = self._dsattr.copy()
+                del(new_dsattr['featuregroups'])
+            else:
+                new_dsattr = self._dsattr
+
         # create a new object of the same type it is now and NOT only Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self._dsattr,
+                         dsattr=new_dsattr,
                          check_data=False,
                          copy_samples=False,
                          copy_data=False,
@@ -1227,6 +1259,18 @@ class Dataset(object):
 
         if _data['samples'].dtype != dtype:
             _data['samples'] = _data['samples'].astype(dtype)
+
+
+    def defineFeatureGroups(self, definition):
+        """
+        """
+        if not len(definition) == self.nfeatures:
+            raise ValueError, \
+                  "Length of feature group definition %i " \
+                  "does not match the number of features %i " \
+                  % (len(definition), self.nfeatures)
+
+        self._dsattr['featuregroups'] = N.array(definition)
 
 
     def convertFeatureIds2FeatureMask(self, ids):
