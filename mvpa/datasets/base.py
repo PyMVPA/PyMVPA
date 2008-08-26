@@ -875,6 +875,10 @@ class Dataset(object):
             for k in new_data.keys():
                 new_data[k] = samplesmapper.forward(self._data[k])
 
+        # feature mapping might affect dataset attributes
+        # XXX: might be obsolete when proper feature attributes are implemented
+        new_dsattr = self._dsattr
+
         if featuresmapper:
             if __debug__:
                 debug("DS", "Training featuresmapper %s" % `featuresmapper`)
