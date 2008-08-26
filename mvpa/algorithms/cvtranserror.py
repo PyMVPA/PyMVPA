@@ -130,9 +130,12 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             if self.states.isEnabled("splits"):
                 self.splits.append(split)
 
-            # copy first and then train, as some classifiers cannot be copied
-            # when already trained, e.g. SWIG'ed stuff
-            transerror = deepcopy(self.__transerror)
+            if self.states.isEnabled("transerrors"):
+                # copy first and then train, as some classifiers cannot be copied
+                # when already trained, e.g. SWIG'ed stuff
+                transerror = deepcopy(self.__transerror)
+            else:
+                transerror = self.__transerror
 
             # run the beast
             result = transerror(split[1], split[0])
@@ -162,6 +165,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 debug("CROSSC", "Split #%d: result %s" \
                       % (len(results), `result`))
             results.append(result)
+
+        # Since we could have operated with a copy -- bind the last used one back
+        self.__transerror = transerror
 
         # put states of child TransferError back into original config
         if len(terr_enable):

@@ -67,8 +67,11 @@ if cfg.has_option('general', 'seed'):
 else:
     _random_seed = int(N.random.uniform()*(2**31-1))
 
-N.random.seed(_random_seed)
-random.seed(_random_seed)
+def seed(random_seed):
+    N.random.seed(random_seed)
+    random.seed(random_seed)
+
+seed(_random_seed)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
