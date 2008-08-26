@@ -10,6 +10,7 @@
 
 from mvpa.clfs.smlr import SMLR
 from tests_warehouse import *
+from mvpa.misc.data_generators import normalFeatureDataset
 
 
 class SMLRTests(unittest.TestCase):
@@ -48,6 +49,20 @@ class SMLRTests(unittest.TestCase):
 
         self.failUnless((p == clf.predictions).all())
         self.failUnless(N.array(clf.values).shape[0] == N.array(p).shape[0])
+
+
+    def testSMLRSensitivities(self):
+        data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+
+        # use SMLR on binary problem, but not fitting all weights
+        clf = SMLR(fit_all_weights=False)
+        clf.train(data)
+
+        # now ask for the sensitivities WITHOUT having to pass the dataset
+        # again
+        sens = clf.getSensitivityAnalyzer(force_training=False)()
+
+        self.failUnless(sens.shape == (data.nfeatures,))
 
 
 def suite():

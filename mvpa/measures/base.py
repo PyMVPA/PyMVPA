@@ -300,12 +300,19 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         return super(Sensitivity, self).__repr__(prefixes=prefixes)
 
 
-    def __call__(self, dataset):
+    def __call__(self, dataset=None):
         """Train classifier on `dataset` and then compute actual sensitivity.
+
+        If the classifier is already trained it is possible to extract the
+        sensitivities without passing a dataset.
         """
         # local bindings
         clf = self.__clf
         if not clf.trained or self._force_training:
+            if dataset is None:
+                raise ValueError, \
+                      "Training classifier to compute sensitivities requires " \
+                      "a dataset."
             if __debug__:
                 debug("SA", "Training classifier %s %s" %
                       (`clf`,

@@ -449,15 +449,17 @@ class SMLRWeights(Sensitivity):
 
     _LEGAL_CLFS = [ SMLR ]
 
-    def _call(self, dataset):
+    def _call(self, dataset=None):
         """Extract weights from Linear SVM classifier.
+
+        SMLR always has weights available, so nothing has to be computed here.
         """
         clf = self.clf
         weights = clf.weights
         if weights.shape[1] != 1:
             warning("You are estimating sensitivity for SMLR %s with multiple"
-                    " sensitivities available. Make sure that it is what you"
-                    " intended to do" % self )
+                    " sensitivities available %s. Make sure that it is what you"
+                    " intended to do" % (self, weights.shape) )
 
         if clf.has_bias:
             self.biases = clf.biases
