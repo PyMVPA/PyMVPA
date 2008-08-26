@@ -64,6 +64,7 @@ if externals.exists('mdp'):
     from mvpa.mappers.pca import *
     from mvpa.mappers.ica import *
 from mvpa.measures.anova import *
+from mvpa.measures.irelief import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *

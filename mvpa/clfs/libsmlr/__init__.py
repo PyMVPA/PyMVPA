@@ -24,6 +24,9 @@ if sys.platform == 'win32':
     # on windows things get tricky as we compile this lib as an extension
     # so it get a .pyd name suffix instead of .dll
     smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.pyd')]
+elif sys.platform == 'darwin':
+    # look for .so extension on Mac (not .dylib this time)
+    smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.so')]
 else:
     smlrlib = N.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
 
