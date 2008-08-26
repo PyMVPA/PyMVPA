@@ -111,10 +111,11 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
       pre_mean: float
         Duration (in seconds) at the beginning of the window which is used
         for deriving the mean of the signal.
-      errtype: 'ste' | 'std'
+      errtype: 'ste' | 'std' | 'none'
         Type of error value to be computed per datapoint.
           'ste': standard error of the mean
           'std': standard deviation
+          'none': no error margin is plotted
       color: matplotlib color code
         Color to be used for plotting the mean signal timecourse.
       errcolor: matplotlib color code
@@ -124,6 +125,9 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
         Target where to draw.
       *args, **kwargs
         Additional arguments to plot().
+
+      :Returns:
+        Mean ERP timeseries.
     """
     # trial timecourse duration
     duration = pre + post
@@ -151,35 +155,39 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
     # compute mean signal timecourse accross trials
     erp_mean = N.mean(erp_data, axis=0)
 
-    # compute error per datapoint
-    if errtype == 'ste':
-        erp_stderr = erp_data.std(axis=0) / N.sqrt(len(erp_data))
-    elif errtype == 'std':
-        erp_stderr = erp_data.std(axis=0)
-    else:
-        raise ValueError, "Unknown error type '%s'" % errtype
-
     # generate timepoints and error ranges to plot filled error area
     # top ->
     # bottom <-
     time_points = N.arange(len(erp_mean)) * 1.0 / SR - pre
-    time_points2w = N.hstack((time_points, time_points[::-1]))
 
-    error_top = -erp_mean-erp_stderr
-    error_bottom = -erp_mean+erp_stderr
-    error2w = N.hstack((error_top, error_bottom[::-1]))
+    if not errtype is 'none':
+        # compute error per datapoint
+        if errtype == 'ste':
+            erp_stderr = erp_data.std(axis=0) / N.sqrt(len(erp_data))
+        elif errtype == 'std':
+            erp_stderr = erp_data.std(axis=0)
+        else:
+            raise ValueError, "Unknown error type '%s'" % errtype
 
-    if errcolor is None:
-        errcolor = color
+        time_points2w = N.hstack((time_points, time_points[::-1]))
 
-    # plot error margin
-    pfill = ax.fill(time_points2w, error2w,
-                    facecolor=errcolor, alpha=0.2,
-                    zorder=3)
+        error_top = -erp_mean-erp_stderr
+        error_bottom = -erp_mean+erp_stderr
+        error2w = N.hstack((error_top, error_bottom[::-1]))
+
+        if errcolor is None:
+            errcolor = color
+
+        # plot error margin
+        pfill = ax.fill(time_points2w, error2w,
+                        facecolor=errcolor, alpha=0.2,
+                        zorder=3)
 
     # plot mean signal timecourse
     ax.plot(time_points, -erp_mean, lw=2, color=color, zorder=4,
             *args, **kwargs)
+
+    return erp_mean
 
 
 def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
