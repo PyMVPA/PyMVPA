@@ -23,7 +23,8 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * None.
+  * New manual section about feature selection with a focus on RFE.
+    Contributed by James M. Hughes.
 
 
 Releases
