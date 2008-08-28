@@ -442,6 +442,11 @@ class SMLR(Classifier):
 class SMLRWeights(Sensitivity):
     """`SensitivityAnalyzer` that reports the weights SMLR trained
     on a given `Dataset`.
+
+    By default SMLR provides multiple weights per feature (one per label in
+    training dataset). By default, all weights are combined into a single
+    sensitivity value. Please, see the `FeaturewiseDatasetMeasure` constructor
+    arguments how to custmize this behavior.
     """
 
     biases = StateVariable(enabled=True,
@@ -449,15 +454,25 @@ class SMLRWeights(Sensitivity):
 
     _LEGAL_CLFS = [ SMLR ]
 
-    def _call(self, dataset):
+    def _call(self, dataset=None):
         """Extract weights from Linear SVM classifier.
+
+        SMLR always has weights available, so nothing has to be computed here.
         """
         clf = self.clf
         weights = clf.weights
-        if weights.shape[1] != 1:
-            warning("You are estimating sensitivity for SMLR %s with multiple"
-                    " sensitivities available. Make sure that it is what you"
-                    " intended to do" % self )
+        # XXX: MH: The following warning is inappropriate. In almost all cases
+        # SMLR will return more than one weight per feature. Even in the case of
+        # binary problem it will fit both weights by default. So unless you
+        # specify fit_all_weights=False manually this warning is always there.
+        # To much annoyance IMHO. I moved this information into the docstring,
+        # as there is no technical problem here, as FeaturewiseDatasetMeasure
+        # by default applies a combiner -- just that people should know...
+        # PLEASE ACKNOWLEDGE AND REMOVE
+        #if weights.shape[1] != 1:
+        #    warning("You are estimating sensitivity for SMLR %s with multiple"
+        #            " sensitivities available %s. Make sure that it is what you"
+        #            " intended to do" % (self, weights.shape) )
 
         if clf.has_bias:
             self.biases = clf.biases

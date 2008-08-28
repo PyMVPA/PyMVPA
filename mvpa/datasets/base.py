@@ -551,7 +551,7 @@ class Dataset(object):
 
 
     @classmethod
-    def _registerAttribute(cls, key, dictname="_data", hasunique=False):
+    def _registerAttribute(cls, key, dictname="_data", abbr=None, hasunique=False):
         """Register an attribute for any Dataset class.
 
         Creates property assigning getters/setters depending on the
@@ -586,6 +586,10 @@ class Dataset(object):
             exec "%s.%s = property(fget=%s, fset=%s)"  % \
                  (cls.__name__, key, getter, setter)
 
+            if abbr is not None:
+                exec "%s.%s = property(fget=%s, fset=%s)"  % \
+                     (cls.__name__, abbr, getter, setter)
+
             if hasunique:
                 uniquekey = "unique%s" % key
                 getter = '_get%s' % uniquekey
@@ -601,6 +605,9 @@ class Dataset(object):
 
                 exec "%s.%s = property(fget=%s)" % \
                      (cls.__name__, uniquekey, getter)
+                if abbr is not None:
+                    exec "%s.U%s = property(fget=%s)" % \
+                         (cls.__name__, abbr, getter)
 
                 # create samplesper<ATTR> properties
                 sampleskey = "samplesper%s" % key[:-1] # remove ending 's' XXX
@@ -748,7 +755,7 @@ class Dataset(object):
         return out
 
 
-    def selectFeatures(self, ids, sort=True):
+    def selectFeatures(self, ids=None, sort=True, groups=None):
         """Select a number of features from the current set.
 
         :Parameters:
@@ -767,6 +774,21 @@ class Dataset(object):
         also cause major headaches! Order would is verified when
         running in non-optimized code (if __debug__)
         """
+        if ids is None and groups is None:
+            raise ValueError, "No feature selection specified."
+
+        # start with empty list if no ids where specified (so just groups)
+        if ids is None:
+            ids = []
+
+        if not groups is None:
+            if not self._dsattr.has_key('featuregroups'):
+                raise RuntimeError, \
+                "Dataset has no feature grouping information."
+
+            for g in groups:
+                ids += (self._dsattr['featuregroups'] == g).nonzero()[0].tolist()
+
         # XXX set sort default to True, now sorting has to be explicitely
         # disabled and warning is not necessary anymore
         if sort:
@@ -784,13 +806,20 @@ class Dataset(object):
         # current dataset
         new_data['samples'] = self._data['samples'][:, ids]
 
+        # apply selection to feature groups as well
+        if self._dsattr.has_key('featuregroups'):
+            new_dsattr = self._dsattr.copy()
+            new_dsattr['featuregroups'] = self._dsattr['featuregroups'][ids]
+        else:
+            new_dsattr = self._dsattr
+
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self._dsattr,
+                         dsattr=new_dsattr,
                          check_data=False,
                          copy_samples=False,
                          copy_data=False,
@@ -807,6 +836,8 @@ class Dataset(object):
         While featuresmappers leave the sample attributes information
         unchanged, as the number of samples in the dataset is invariant,
         samplesmappers are also applied to the samples attributes themselves!
+
+        Applying a featuresmapper will destroy any feature grouping information.
 
         :Parameters:
           featuresmapper : Mapper
@@ -854,13 +885,21 @@ class Dataset(object):
                       " to samples of dataset `%s`" % `self`)
             new_data['samples'] = featuresmapper.forward(self._data['samples'])
 
+            # remove feature grouping, who knows what the mapper did to the
+            # features
+            if self._dsattr.has_key('featuregroups'):
+                new_dsattr = self._dsattr.copy()
+                del(new_dsattr['featuregroups'])
+            else:
+                new_dsattr = self._dsattr
+
         # create a new object of the same type it is now and NOT only Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self._dsattr,
+                         dsattr=new_dsattr,
                          check_data=False,
                          copy_samples=False,
                          copy_data=False,
@@ -927,43 +966,18 @@ class Dataset(object):
 
 
 
-    def select(self, *args, **kwargs):
-        """Universal selector
+    def index(self, *args, **kwargs):
+        """Universal indexer to obtain indexes of interesting samples/features.
+        See .select() for more information
 
-        WARNING: if you need to select duplicate samples
-        (e.g. samples=[5,5]) or order of selected samples of features
-        is important and has to be not ordered (e.g. samples=[3,2,1]),
-        please use selectFeatures or selectSamples functions directly
-
-        Examples:
-          Mimique plain selectSamples:
-            dataset.select([1,2,3])
-            dataset[[1,2,3]]
-
-          Mimique plain selectFeatures:
-            dataset.select(slice(None), [1,2,3])
-            dataset.select('all', [1,2,3])
-            dataset[:, [1,2,3]]
-
-          Mixed (select features and samples):
-            dataset.select([1,2,3], [1, 2])
-            dataset[[1,2,3], [1, 2]]
-
-          Select samples matching some attributes
-            dataset.select(labels=[1,2], chunks=[2,4])
-            dataset.select('labels', [1,2], 'chunks', [2,4])
-            dataset['labels', [1,2], 'chunks', [2,4]]
-
-          Mixed -- out of first 100 samples, select only those with
-          labels 1 or 2 and belonging to chunks 2 or 4, and select
-          features 2 and 3
-            dataset.select(slice(0,100), [2,3], labels=[1,2], chunks=[2,4])
-            dataset[:100, [2,3], 'labels', [1,2], 'chunks', [2,4]]
-
+        :Return: tuple of (samples indexes, features indexes). Each
+          item could be also None, if no selection on samples or
+          features was requested (to discriminate between no selected
+          items, and no selections)
         """
-
         s_indx = []                     # selections for samples
         f_indx = []                     # selections for features
+        return_dataset = kwargs.pop('return_dataset', False)
         largs = len(args)
 
         args = list(args)               # so we could override
@@ -1061,8 +1075,65 @@ class Dataset(object):
 
             return indx_sel
 
+        # Select samples
         if len(s_indx) == 1 and isinstance(s_indx[0], slice) \
                and s_indx[0] == slice(None):
+            # so no actual selection -- full slice
+            s_indx = s_indx[0]
+        else:
+            # else - get indexes
+            if len(s_indx) == 0:
+                s_indx = None
+            else:
+                s_indx = combine_indexes(s_indx, self.nsamples)
+
+        # Select features
+        if len(f_indx):
+            f_indx = combine_indexes(f_indx, self.nfeatures)
+        else:
+            f_indx = None
+
+        return s_indx, f_indx
+
+
+    def select(self, *args, **kwargs):
+        """Universal selector
+
+        WARNING: if you need to select duplicate samples
+        (e.g. samples=[5,5]) or order of selected samples of features
+        is important and has to be not ordered (e.g. samples=[3,2,1]),
+        please use selectFeatures or selectSamples functions directly
+
+        Examples:
+          Mimique plain selectSamples:
+            dataset.select([1,2,3])
+            dataset[[1,2,3]]
+
+          Mimique plain selectFeatures:
+            dataset.select(slice(None), [1,2,3])
+            dataset.select('all', [1,2,3])
+            dataset[:, [1,2,3]]
+
+          Mixed (select features and samples):
+            dataset.select([1,2,3], [1, 2])
+            dataset[[1,2,3], [1, 2]]
+
+          Select samples matching some attributes
+            dataset.select(labels=[1,2], chunks=[2,4])
+            dataset.select('labels', [1,2], 'chunks', [2,4])
+            dataset['labels', [1,2], 'chunks', [2,4]]
+
+          Mixed -- out of first 100 samples, select only those with
+          labels 1 or 2 and belonging to chunks 2 or 4, and select
+          features 2 and 3
+            dataset.select(slice(0,100), [2,3], labels=[1,2], chunks=[2,4])
+            dataset[:100, [2,3], 'labels', [1,2], 'chunks', [2,4]]
+
+        """
+        s_indx, f_indx = self.index(*args, **kwargs)
+
+        # Select samples
+        if s_indx == slice(None):
             # so no actual selection was requested among samples.
             # thus proceed with original dataset
             if __debug__:
@@ -1073,17 +1144,31 @@ class Dataset(object):
             if __debug__:
                 debug('DS', 'in select() selecting samples given selections'
                       + str(s_indx))
-            ds = self.selectSamples(combine_indexes(s_indx,
-                                                    self.nsamples))
+            ds = self.selectSamples(s_indx)
 
-        if len(f_indx):
+        # Select features
+        if f_indx is not None:
             if __debug__:
                 debug('DS', 'in select() selecting features given selections'
                       + str(f_indx))
-            ds = ds.selectFeatures(combine_indexes(f_indx,
-                                                     self.nfeatures))
+            ds = ds.selectFeatures(f_indx)
 
         return ds
+
+
+
+    def where(self, *args, **kwargs):
+        """Obtain indexes of interesting samples/features. See select() for more information
+
+        XXX somewhat obsoletes idsby...
+        """
+        s_indx, f_indx = self.index(*args, **kwargs)
+        if s_indx is not None and f_indx is not None:
+            return s_indx, f_indx
+        elif s_indx is not None:
+            return s_indx
+        else:
+            return f_indx
 
 
     def __getitem__(self, *args):
@@ -1229,6 +1314,18 @@ class Dataset(object):
             _data['samples'] = _data['samples'].astype(dtype)
 
 
+    def defineFeatureGroups(self, definition):
+        """
+        """
+        if not len(definition) == self.nfeatures:
+            raise ValueError, \
+                  "Length of feature group definition %i " \
+                  "does not match the number of features %i " \
+                  % (len(definition), self.nfeatures)
+
+        self._dsattr['featuregroups'] = N.array(definition)
+
+
     def convertFeatureIds2FeatureMask(self, ids):
         """Returns a boolean mask with all features in `ids` selected.
 
@@ -1264,11 +1361,16 @@ class Dataset(object):
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
 
+    # syntactic sugarings
+    #S = property(fget=lambda self:self.samples, doc="Concise access to samples")
+    #C = property(fget=lambda self:self.chunks, doc="Concise access to chunks")
+    #L = property(fget=lambda self:self.chunks, doc="Concise access to labels")
+    #I = property(fget=lambda self:self.origids, doc="Concise access to origids")
 
 
 # Following attributes adherent to the basic dataset
-Dataset._registerAttribute("samples", "_data", hasunique=False)
-Dataset._registerAttribute("labels",  "_data", hasunique=True)
-Dataset._registerAttribute("chunks",  "_data", hasunique=True)
+Dataset._registerAttribute("samples", "_data", abbr='S', hasunique=False)
+Dataset._registerAttribute("labels",  "_data", abbr='L', hasunique=True)
+Dataset._registerAttribute("chunks",  "_data", abbr='C', hasunique=True)
 # samples ids (already unique by definition)
-Dataset._registerAttribute("origids",  "_data", hasunique=False)
+Dataset._registerAttribute("origids",  "_data", abbr='I', hasunique=False)

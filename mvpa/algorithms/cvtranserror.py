@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.misc.copy import copy
+from mvpa.misc.copy import deepcopy
 
 from mvpa.measures.base import DatasetMeasure
 from mvpa.datasets.splitter import NoneSplitter
@@ -130,34 +130,44 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             if self.states.isEnabled("splits"):
                 self.splits.append(split)
 
-            result = self.__transerror(split[1], split[0])
+            if self.states.isEnabled("transerrors"):
+                # copy first and then train, as some classifiers cannot be copied
+                # when already trained, e.g. SWIG'ed stuff
+                transerror = deepcopy(self.__transerror)
+            else:
+                transerror = self.__transerror
+
+            # run the beast
+            result = transerror(split[1], split[0])
 
             # next line is important for 'self._harvest' call
-            transerror = self.__transerror
             self._harvest(locals())
 
             # XXX Look below -- may be we should have not auto added .?
             #     then transerrors also could be deprecated
             if self.states.isEnabled("transerrors"):
-                self.transerrors.append(copy(self.__transerror))
+                self.transerrors.append(transerror)
 
             # XXX: could be merged with next for loop using a utility class
             # that can add dict elements into a list
             if self.states.isEnabled("samples_error"):
                 for k, v in \
-                  self.__transerror.states.getvalue("samples_error").iteritems():
+                  transerror.states.getvalue("samples_error").iteritems():
                     self.samples_error[k].append(v)
 
             # pull in child states
             for state_var in ['confusion', 'training_confusion']:
                 if self.states.isEnabled(state_var):
                     self.states.getvalue(state_var).__iadd__(
-                        self.__transerror.states.getvalue(state_var))
+                        transerror.states.getvalue(state_var))
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" \
                       % (len(results), `result`))
             results.append(result)
+
+        # Since we could have operated with a copy -- bind the last used one back
+        self.__transerror = transerror
 
         # put states of child TransferError back into original config
         if len(terr_enable):
