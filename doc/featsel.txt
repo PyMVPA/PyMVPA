@@ -23,7 +23,7 @@ Recursive Feature Elimination
 
   *This section has been contributed by James M. Hughes.*
 
-Recursive feature elimination is a technique that falls under the larger
+Recursive feature elimination (RFE_) is a technique that falls under the larger
 umbrella of feature selection.  It is often the case in machine learning
 problems that we wish to reduce a feature space of high dimensionality into
 something more manageable by selecting only those features that contribute most
@@ -58,15 +58,15 @@ criterion the user chooses for a given application.  Examples of the
 code/classification algorithms presented here can be found in
 `mvpa/clfs/warehouse.py`.
 
-More formally, a FeatureSelectionClassifier is a meta-classifier.  That is, it
-is not a classifier itself -- it can take any *slave* Classifier, perform some
+More formally, a FeatureSelectionClassifier_ is a meta-classifier.  That is, it
+is not a classifier itself -- it can take any *slave* Classifier_, perform some
 feature selection in advance, select those features, and then train the
-provided *slave* Classifier on those features.  Externally, however, it looks
-like a Classifier, in that it fulfills the specialization of the Classifier
+provided *slave* Classifier_ on those features.  Externally, however, it looks
+like a Classifier_, in that it fulfills the specialization of the Classifier
 base class.  The following are the relevant arguments to the constructor of
-such a Classifier:
+such a Classifier_:
 
-clf: Classifier
+clf: Classifier_
   classifier based on which mask classifiers is created
 
 feature_selection: FeatureSelection
@@ -113,7 +113,7 @@ the selected features) and then test on a held-out testing dataset.  This
 results in an obvious positive bias in classification performance.  PyMVPA
 allows for easy dataset splitting, however, so creating independent training
 and testing datasets is easily accomplished, for instance using an
-NFoldSplitter, EvenOddSplitter, etc.
+NFoldSplitter_, OddEvenSplitter_, etc.
 
 .. fill in end of last paragraph with suggestions for how to take in an entire
    original dataset and split it:  should we just do a cross-validated outer
@@ -161,7 +161,7 @@ perform such an analysis:
 
 The code above introduces the SplitClassifier_, which in this case is yet
 another *meta-classifier* that takes in a Classifier_ (in this case a
-LinearCSMVC_) and an arbitrary Splitter_ object, so that the dataset can be
+LinearCSVMC_) and an arbitrary Splitter_ object, so that the dataset can be
 split in whatever way the user desires.  Prior to training, the
 SplitClassifier_ splits the training dataset, dedicates a separate classifier
 to each split, trains each on the training part of the split, and then computes
@@ -171,7 +171,7 @@ MaximalVote_ strategy to derive an answer.  A summary about the performance of
 a SplitClassifier_ internally on each split of the training dataset is
 available by accessing the `confusion` state variable.
 
-To summarize somewhat, RFE is just one method of feature selection, so we use a
+To summarize somewhat, RFE_ is just one method of feature selection, so we use a
 FeatureSelectionClassifier_ to facilitate this.  To parameterize the RFE
 process, we refer above to the following:
 
@@ -203,6 +203,8 @@ measures are most appropriate for the task at hand.
 .. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
+.. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
+.. _OddEvenSplitter: api/mvpa.datasets.splitter.OddEvenSplitter-class.html
 .. _MaximalVote: api/mvpa.clfs.base.MaximalVote-class.html
 .. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 .. _FeatureSelectionClassifier: api/mvpa.clfs.base.FeatureSelectionClassifier-class.html
