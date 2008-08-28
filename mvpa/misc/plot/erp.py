@@ -30,13 +30,15 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
      loc
        Value to center at
      offset
-       ralative offset for the labels
+       Relative offset for the labels
+     ai : int
+       Axis index: 0 for x, 1 for y
      mult
-       multiplier for the axis labels. ERPs for instance need to be
+       Multiplier for the axis labels. ERPs for instance need to be
        inverted, thus labels too manually here since there is no easy
        way in matplotlib to invert an axis
      **props
-       given to underlying plotting functions
+       Given to underlying plotting functions
     """
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
@@ -186,7 +188,7 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
 
         # plot error margin
         pfill = ax.fill(time_points2w, error2w,
-                        facecolor=errcolor, alpha=0.2,
+                        edgecolor=errcolor, facecolor=errcolor, alpha=0.2,
                         zorder=3)
 
     # plot mean signal timecourse
