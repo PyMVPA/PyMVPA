@@ -90,7 +90,7 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
 
 def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
             color='r', errcolor=None, errtype='ste', ax=P,
-            *args, **kwargs):
+            ymult=1.0, *args, **kwargs):
     """Plot single ERP on existing canvas
 
     :Parameters:
@@ -123,6 +123,9 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
         but with weak alpha level
       ax:
         Target where to draw.
+      ymult: float
+        Multiplier for the values. E.g. if negative-up ERP plot is needed:
+        provide ymult=-1.0
       *args, **kwargs
         Additional arguments to plot().
 
@@ -148,10 +151,13 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
               "(trials x sample_points). Shape of the data at the point " \
               "is %s" % erp_data.shape
 
-    # mean of pre-onset signal accross trials
-    erp_baseline = N.mean(erp_data[:,:int(pre_mean*SR)])
-    # center data on pre-onset mean
-    erp_data -= erp_baseline
+    if not (pre_mean == 0 or pre_mean is None):
+        # mean of pre-onset signal accross trials
+        erp_baseline = N.mean(erp_data[:, :int(pre_mean*SR)])
+        # center data on pre-onset mean
+        # NOTE: make sure that we make a copy of the data to don't
+        #       alter the original. Better be safe than sorry
+        erp_data = erp_data - erp_baseline
     # compute mean signal timecourse accross trials
     erp_mean = N.mean(erp_data, axis=0)
 
@@ -171,8 +177,8 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
 
         time_points2w = N.hstack((time_points, time_points[::-1]))
 
-        error_top = -erp_mean-erp_stderr
-        error_bottom = -erp_mean+erp_stderr
+        error_top = ymult * erp_mean + ymult * erp_stderr
+        error_bottom = ymult * erp_mean - ymult * erp_stderr
         error2w = N.hstack((error_top, error_bottom[::-1]))
 
         if errcolor is None:
@@ -184,15 +190,15 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
                         zorder=3)
 
     # plot mean signal timecourse
-    ax.plot(time_points, -erp_mean, lw=2, color=color, zorder=4,
+    ax.plot(time_points, ymult * erp_mean, lw=2, color=color, zorder=4,
             *args, **kwargs)
 
     return erp_mean
 
 
 def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
-             xlabel = 'time (s)', ylabel='$\mu V$',
-             ylim=None, **kwargs):
+             xlabel='time (s)', ylabel='$\mu V$',
+             ylim=None, ymult=1.0, **kwargs):
     """Plot multiple ERPs on a new figure.
 
     :Parameters:
@@ -207,9 +213,12 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
         Where to draw (e.g. subplot instance). If None, new figure is
         created
       pre
-        duration (seconds) to be plotted prior to onset
+        Duration (seconds) to be plotted prior to onset
       post
-        duration (seconds) to be plotted after the onset
+        Duration (seconds) to be plotted after the onset
+      ymult: float
+        Multiplier for the values. E.g. if negative-up ERP plot is needed:
+        provide ymult=-1.0
       **kwargs
         Additional arguments provided to plotERP()
 
@@ -235,8 +244,6 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
     :Returns: current fig handler
     """
 
-    props = dict(color='black', linewidth=2, markeredgewidth=2, zorder=1)
-
     if ax is None:
         fig = P.figure(facecolor='white')
         fig.clf()
@@ -248,24 +255,27 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
 
     for erp_def in erps:
         plot_data = data
-        color = None
-        onsets = None
+        params = {'ymult' : ymult}
 
+        # provide custom parameters per ERP
         if isinstance(erp_def, tuple) and len(erp_def) == 3:
-            label, color, onsets = erp_def
+            params.update(
+                {'label': erp_def[0],
+                 'color': erp_def[1],
+                 'onsets': erp_def[2]})
         elif isinstance(erp_def, dict):
-            label = erp_def.get('label', None)
-            plot_data = erp_def.get('data', None)
-            onsets = erp_def.get('onsets', None)
-            color = erp_def.get('color', None)
+            plot_data = erp_def.pop('data', None)
+            params.update(erp_def)
+
+        # absorb common parameters
+        params.update(kwargs)
 
         if plot_data is None:
-            raise ValueError, "Channel %s got not data provided" % label
+            raise ValueError, "Channel %s got no data provided" \
+                  % params.get('label', 'UNKNOWN')
 
-        plotERP(plot_data,
-                onsets=onsets, pre=pre, post=post,
-                color=color, ax=ax,
-                **kwargs)
+
+        plotERP(plot_data, pre=pre, post=post, ax=ax, **params)
         #             plot_kwargs={'label':label})
 
     # legend obscures plotting a bit... disabled for now
@@ -276,8 +286,9 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
     if ylabel is not None:
         P.ylabel(ylabel,  fontsize=16)
 
+    props = dict(color='black', linewidth=2, markeredgewidth=2, zorder=1)
     _make_centeredaxis(ax, 0, offset=0.3, ai=0, **props)
-    _make_centeredaxis(ax, 0, offset=0.3, ai=1, mult=-1.0, **props)
+    _make_centeredaxis(ax, 0, offset=0.3, ai=1, mult=ymult, **props)
 
     ax.yaxis.set_major_locator(P.NullLocator())
     ax.xaxis.set_major_locator(P.NullLocator())
