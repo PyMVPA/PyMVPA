@@ -288,6 +288,18 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failUnless(tuple( data.selectFeatures([1]).mapper.getInId(0) ) == (4,0) )
         self.failUnless( data.selectFeatures([1]).mapper.getMask().sum() == 1 )
 
+        # check sugarings
+        # Access to simple attributes and samples
+        self.failUnless(N.all(data.I == data.origids))
+        self.failUnless(N.all(data.C == data.chunks))
+        self.failUnless(N.all(data.L == data.labels))
+        self.failUnless(N.all(data.S == data.samples))
+        self.failUnless(N.all(data.O == data.mapper.reverse(data.samples)))
+
+        # Access to unique attributes
+        self.failUnless(N.all(data.UC == data.uniquechunks))
+        self.failUnless(N.all(data.UL == data.uniquelabels))
+
 
 #    def testROIMasking(self):
 #        mask=N.array([i/6 for i in range(60)], dtype='int').reshape(6,10)
