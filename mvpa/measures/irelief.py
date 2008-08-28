@@ -24,19 +24,26 @@ from mvpa.clfs.kernel import KernelSquaredExponential, KernelExponential, Kernel
 if __debug__:
     from mvpa.base import debug
 
+
 class IterativeRelief(FeaturewiseDatasetMeasure):
     """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
-    algorithm.
+    algorithm. Batch version.
 
     Batch I-RELIEF-2 feature weighting algorithm. Works for binary or
-    multiclass class-labels.
+    multiclass class-labels. Batch version with complexity O(T*N^2*I),
+    where T is the number of iterations, N the number of instances, I
+    the number of features.
 
     See: Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms,
     Theories, and Applications, IEEE Trans. on Pattern Analysis and
     Machine Intelligence (TPAMI), vol. 29, no. 6, pp. 1035-1051, June
     2007. http://plaza.ufl.edu/sunyijun/Paper/PAMI_1.pdf
+
+    Note that current implementation allows to use only
+    exponential-like kernels. Support for linear kernel will be
+    added later.
     """
-    def __init__(self, threshold = 1.0e-2, kernel = None, w_guess = None, **kwargs):
+    def __init__(self, threshold = 1.0e-2, kernel = None, kernel_width = 1.0, w_guess = None, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
@@ -51,6 +58,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
             pass
         self.w_guess = w_guess
         self.w = None
+        self.kernel_width = kernel_width
         pass
 
 
@@ -88,7 +96,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
         M, H = self.compute_M_H(dataset.labels)
 
         while True:
-            self.k = self.kernel(length_scale = 1.0/N.sqrt(self.w))
+            self.k = self.kernel(length_scale = 1.0/(N.sqrt(self.w*self.kernel_width)))
             d_w_k = self.k.compute(dataset.samples)
             # set d_w_k to zero where distance=0 (i.e. kernel ==
             # 1.0), otherwise I-RELIEF could not converge.
