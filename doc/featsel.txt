@@ -15,46 +15,19 @@
 Feature Selection
 *****************
 
-.. index:: recursive feature selection, RFE
-.. _recursive_feature_elimination:
-
-Recursive Feature Elimination
-=============================
-
   *This section has been contributed by James M. Hughes.*
 
-Recursive feature elimination (RFE_) is a technique that falls under the larger
-umbrella of feature selection.  It is often the case in machine learning
-problems that we wish to reduce a feature space of high dimensionality into
-something more manageable by selecting only those features that contribute most
-to classification performance.  Feature selection methods attempt to achieve
-this goal in an algorithmic fashion.
+It is often the case in machine learning problems that we wish to reduce a
+feature space of high dimensionality into something more manageable by
+selecting only those features that contribute most to classification
+performance.  Feature selection methods attempt to achieve this goal in an
+algorithmic fashion.
 
-Recursive feature elimination specifically attempts to reduce the number of
-selected features used for classification in the following way:
-
-* A classifier is trained on a subset of the data and features are ranked
-  according to an arbitrary metric.
-
-* Some amount of those features is either selected or discarded according to a
-  pre-selected rule.
-
-* The classifier is retrained and features are once again ranked; this process
-  continues until some criterion determined \textit{a priori} (such as
-  classification error) is reached.
-
-* One or more classifiers trained only on the final set of selected features
-  are used on a generalization dataset and performance is calculated.
-
-
-Feature selection in general
-----------------------------
-
-PyMVPA's flexible framework allows each of these steps to take place within a
-small block of code.  FeatureSelectionClassifiers extend the basic classifier
-framework to allow for the use of arbitrary methods of feature selection
-according to whatever ranking metric, feature selection criteria, and stopping
-criterion the user chooses for a given application.  Examples of the
+PyMVPA's flexible framework allows various feature selection methods to take
+place within a small block of code.  FeatureSelectionClassifier_ extends the
+basic classifier framework to allow for the use of arbitrary methods of feature
+selection according to whatever ranking metric, feature selection criteria, and
+stopping criterion the user chooses for a given application.  Examples of the
 code/classification algorithms presented here can be found in
 `mvpa/clfs/warehouse.py`.
 
@@ -122,11 +95,35 @@ NFoldSplitter_, OddEvenSplitter_, etc.
    these splits?
 
 
-Recursive Feature Elimination
------------------------------
 
-Now, to actually perform recursive feature elimination, we consider two
-separate analysis scenarios that deal with a pre-selected training dataset:
+.. index:: recursive feature selection, RFE
+.. _recursive_feature_elimination:
+
+Recursive Feature Elimination
+=============================
+
+Recursive feature elimination (RFE_) is a technique that falls under the larger
+umbrella of feature selection. Recursive feature elimination specifically
+attempts to reduce the number of selected features used for classification in
+the following way:
+
+* A classifier is trained on a subset of the data and features are ranked
+  according to an arbitrary metric.
+
+* Some amount of those features is either selected or discarded according to a
+  pre-selected rule.
+
+* The classifier is retrained and features are once again ranked; this process
+  continues until some criterion determined \textit{a priori} (such as
+  classification error) is reached.
+
+* One or more classifiers trained only on the final set of selected features
+  are used on a generalization dataset and performance is calculated.
+
+PyMVPA's flexible framework allows each of these steps to take place within a
+small block of code. To actually perform recursive feature elimination, we
+consider two separate analysis scenarios that deal with a pre-selected training
+dataset:
 
 * We split the training dataset into an arbitrary number of independent
   datasets and perform RFE on each of these; the sensitivity analysis of
