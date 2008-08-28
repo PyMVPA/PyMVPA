@@ -1365,11 +1365,18 @@ class Dataset(object):
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
 
-    # syntactic sugarings
-    #S = property(fget=lambda self:self.samples, doc="Concise access to samples")
-    #C = property(fget=lambda self:self.chunks, doc="Concise access to chunks")
-    #L = property(fget=lambda self:self.chunks, doc="Concise access to labels")
-    #I = property(fget=lambda self:self.origids, doc="Concise access to origids")
+
+def datasetmethod(func):
+    """Decorator to easily bind functions to a Dataset class
+    """
+    if __debug__:
+        debug("DS_",  "Binding function %s to Dataset class" % func.func_name)
+
+    # Bind the function
+    setattr(Dataset, func.func_name, func)
+
+    # return the original one
+    return func
 
 
 # Following attributes adherent to the basic dataset
