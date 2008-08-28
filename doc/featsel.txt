@@ -21,126 +21,193 @@ Feature Selection
 Recursive Feature Elimination
 =============================
 
-RFE_
+  *This section has been contributed by James M. Hughes.*
 
-(to be written)
+Recursive feature elimination is a technique that falls under the larger
+umbrella of feature selection.  It is often the case in machine learning
+problems that we wish to reduce a feature space of high dimensionality into
+something more manageable by selecting only those features that contribute most
+to classification performance.  Feature selection methods attempt to achieve
+this goal in an algorithmic fashion.
+
+Recursive feature elimination specifically attempts to reduce the number of
+selected features used for classification in the following way:
+
+* A classifier is trained on a subset of the data and features are ranked
+  according to an arbitrary metric.
+
+* Some amount of those features is either selected or discarded according to a
+  pre-selected rule.
+
+* The classifier is retrained and features are once again ranked; this process
+  continues until some criterion determined \textit{a priori} (such as
+  classification error) is reached.
+
+* One or more classifiers trained only on the final set of selected features
+  are used on a generalization dataset and performance is calculated.
+
+
+Feature selection in general
+----------------------------
+
+PyMVPA's flexible framework allows each of these steps to take place within a
+small block of code.  FeatureSelectionClassifiers extend the basic classifier
+framework to allow for the use of arbitrary methods of feature selection
+according to whatever ranking metric, feature selection criteria, and stopping
+criterion the user chooses for a given application.  Examples of the
+code/classification algorithms presented here can be found in
+`mvpa/clfs/warehouse.py`.
+
+More formally, a FeatureSelectionClassifier is a meta-classifier.  That is, it
+is not a classifier itself -- it can take any *slave* Classifier, perform some
+feature selection in advance, select those features, and then train the
+provided *slave* Classifier on those features.  Externally, however, it looks
+like a Classifier, in that it fulfills the specialization of the Classifier
+base class.  The following are the relevant arguments to the constructor of
+such a Classifier:
+
+clf: Classifier
+  classifier based on which mask classifiers is created
+
+feature_selection: FeatureSelection
+  whatever `FeatureSelection` is considered best
+
+testdataset: Dataset (optional)
+  dataset which would be given on call to feature_selection
+
+Let us turn out attention to the second argument, FeatureSelection.  As noted
+above, this feature selection can be arbitrary and should be chosen
+appropriately for the task at hand.  For example, we could perform a one-way
+ANOVA statistic to select features, then keep only the most important 5% of
+them.  It is crucial to note that, in PyMVPA, the way in which features are
+selected (in this example by keeping only 5% of them) is wholly independent of
+the way features are ranked (in this example, by using a one-way ANOVA).
+Feature selection using this method could be accomplished using the following
+code (from `mvpa/clfs/warehouse.py`):
+
+  >>> FeatureSelection = SensitivityBasedFeatureSelection(
+  ...     OneWayAnova(),
+  ...     FractionTailSelector(0.05, mode='select', tail='upper'))
+
+A more interesting analysis is one in which we use the weights (hyperplane
+coefficients) to rank features.  This allows us to use the same classifier to
+train the selected features as we used to select them:
+
+.. here we'll put the warehouse.py example of linear svm weights from yarik's
+   email
+
+  >>> sample_linear_svm = clfs['linear', 'svm'][0]
+  >>> clfs += \
+  ...  FeatureSelectionClassifier(
+  ...      sample_linear_svm,
+  ...      SensitivityBasedFeatureSelection(
+  ...         sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
+  ...         FractionTailSelector(0.05, mode='select', tail='upper')),
+  ...      descr="LinSVM on 5%(SVM)")
+
+It bears mentioning at this point that caution must be exercised when selecting
+features.  The process of feature selection must be performed on an independent
+training dataset:  it is not possible to select features using the entire
+dataset, re-train a classifier on a subset of the original data (but using only
+the selected features) and then test on a held-out testing dataset.  This
+results in an obvious positive bias in classification performance.  PyMVPA
+allows for easy dataset splitting, however, so creating independent training
+and testing datasets is easily accomplished, for instance using an
+NFoldSplitter, EvenOddSplitter, etc.
+
+.. fill in end of last paragraph with suggestions for how to take in an entire
+   original dataset and split it:  should we just do a cross-validated outer
+   loop that uses multiple training/testing splits and does RFE on each of
+   these splits?
+
+
+Recursive Feature Elimination
+-----------------------------
+
+Now, to actually perform recursive feature elimination, we consider two
+separate analysis scenarios that deal with a pre-selected training dataset:
+
+* We split the training dataset into an arbitrary number of independent
+  datasets and perform RFE on each of these; the sensitivity analysis of
+  features is performed independently for each split and features are selected
+  based on those independent measures.
+
+* We split the training dataset into an arbitrary number of independent
+  datasets (as before), but we average the feature sensitivities and select
+  which features to prune/select based on that one average measure.
+
+We will concentrate on the second approach.  The following code can be used to
+perform such an analysis:
+
+.. insert scenario 2 code from yarik's email
+
+  >>> rfesvm_split = SplitClassifier(LinearCSVMC())
+  >>> clfs += \
+  ...  FeatureSelectionClassifier(
+  ...   clf = LinearCSVMC(),
+  ...   feature_selection = RFE(             # on features selected via RFE
+  ...       # based on sensitivity of a clf which does splitting internally
+  ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+  ...       transfer_error=ConfusionBasedError(
+  ...          rfesvm_split,
+  ...          confusion_state="confusion"),
+  ...          # and whose internal error we use
+  ...       feature_selector=FractionTailSelector(
+  ...                          0.2, mode='discard', tail='lower'),
+  ...                          # remove 20% of features at each step
+  ...       update_sensitivity=True),
+  ...       # update sensitivity at each step
+  ...   descr='LinSVM+RFE(splits_avg)' )
+
+The code above introduces the SplitClassifier_, which in this case is yet
+another *meta-classifier* that takes in a Classifier_ (in this case a
+LinearCSMVC_) and an arbitrary Splitter_ object, so that the dataset can be
+split in whatever way the user desires.  Prior to training, the
+SplitClassifier_ splits the training dataset, dedicates a separate classifier
+to each split, trains each on the training part of the split, and then computes
+transfer error on the testing part of the split. If a SplitClassifier_ instance
+is later on asked to *predict* some new data, it uses (by default) the
+MaximalVote_ strategy to derive an answer.  A summary about the performance of
+a SplitClassifier_ internally on each split of the training dataset is
+available by accessing the `confusion` state variable.
+
+To summarize somewhat, RFE is just one method of feature selection, so we use a
+FeatureSelectionClassifier_ to facilitate this.  To parameterize the RFE
+process, we refer above to the following:
+
+sensitivity_analyzer
+  in this case just the default from a linear C-SVM (the SVM weights), taken as
+  an average over all splits (in accordance with scenario 2 as above)
+
+transfer_error
+  confusion-based error that relies on the confusion matrices computed during
+  splitting of the dataset by the SplitClassifier_; this is used to provide a
+  value that can be compared against a stopping criterion to stop eliminating
+  features
+
+feature_selector
+  in this example we simply discard the 20% of features deemed least important
+
+update_sensitivity
+  true to retrain the classifiers each time we eliminate features; should be
+  false if a non-classifier-based sensitivity measure (such as one-way ANOVA)
+  is used
+
+As has been shown, recursive feature elimination is an easy-to-implement,
+flexible, and powerful tool within the PyMVPA framework.  Various ranking
+methods for selecting features have been discussed.  Additionally, several
+analysis scenarios have been presented, along with enough requisite knowledge
+that the user can plug in whatever classifiers, error metrics, or sensitivity
+measures are most appropriate for the task at hand.
 
 .. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
-
-
-
-\documentclass[12pt]{amsart}
-\usepackage{geometry} % see geometry.pdf on how to lay out the page. There's lots.
-\geometry{letterpaper} % or letter or a5paper or ... etc
-% \geometry{landscape} % rotated page geometry
-
-% See the ``Article customise'' template for come common customisations
-
-\title{PyMVPA Documentation Examples}
-\author{James M. Hughes}
-
-%%% BEGIN DOCUMENT
-\begin{document}
-
-\maketitle
-
-\section{Recursive Feature Elimination}
-
-Recursive feature elimination is a technique that falls under the larger umbrella of feature selection.  It is often the case in machine learning problems that we wish to reduce a feature space of high dimensionality into something more manageable by selecting only those features that contribute most to classification performance.  Feature selection methods attempt to achieve this goal in an algorithmic fashion. \\
-
-\noindent Recursive feature elimination specifically attempts to reduce the number of selected features used for classification in the following way:
-
-\begin{enumerate}
-	\item A classifier is trained on a subset of the data and features are ranked according to an arbitrary metric.
-	\item Some amount of those features is either selected or discarded according to a pre-selected rule.
-	\item The classifier is retrained and features are once again ranked; this process continues until some criterion determined \textit{a priori} (such as classification error) is reached.
-	\item One or more classifiers trained only on the final set of selected features are used on a generalization dataset and performance is calculated.
-\end{enumerate}
-
-\subsection{Feature selection in general}
-PyMVPA's flexible framework allows each of these steps to take place within a small block of code.  FeatureSelectionClassifiers extend the basic classifier framework to allow for the use of arbitrary methods of feature selection according to whatever ranking metric, feature selection criteria, and stopping criterion the user chooses for a given application.  Examples of the code/classification algorithms presented here can be found in /mvpa/clfs/warehouse.py.
-
-More formally, a FeatureSelectionClassifier is a meta-classifier.  That is, it is not a classifier itself -- it can take any ``slave'' Classifier, perform some feature selection in advance, select those features, and then train the provided ``slave'' Classifier on those features.  Externally, however, it looks like a Classifier, in that it fulfills the specialization of the Classifier base class.  The following are the relevant arguments to the constructor of such a Classifier:
-
-\begin{itemize}
-\item clf : Classifier -- classifier based on which mask classifiers is created
-\item feature\_selection : FeatureSelection -- whatever `FeatureSelection' is considered best
-\item testdataset : Dataset -- (optional) dataset which would be given on call to feature\_selection
-\end{itemize}
-Let us turn out attention to the second argument, FeatureSelection.  As noted above, this feature selection can be arbitrary and should be chosen appropriately for the task at hand.  For example, we could perform a one-way ANOVA statistic to select features, then keep only the most important 5\% of them.  It is crucial to note that, in PyMVPA, the way in which features are selected (in this example by keeping only 5\% of them) is wholly independent of the way features are ranked (in this example, by using a one-way ANOVA).  Feature selection using this method could be accomplished using the following code (from /mvpa/clfs/warehouse.py):
-
-% center this
-\begin{verbatim}
-      FeatureSelection = SensitivityBasedFeatureSelection(\
-          OneWayAnova(),\
-          FractionTailSelector(0.05, mode='select', tail='upper'))\
-\end{verbatim}
-          
-A more interesting analysis is one in which we use the weights (hyperplane coefficients) to rank features.  This allows us to use the same classifier to train the selected features as we used to select them:
-
-% center this -- here we'll put the warehouse.py example of linear svm weights from yarik's email
-\begin{verbatim}
- sample_linear_svm = clfs['linear', 'svm'][0]
-
-   clfs += \
-       FeatureSelectionClassifier(
-           sample_linear_svm,
-           SensitivityBasedFeatureSelection(
-              sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
-              FractionTailSelector(0.05, mode='select', tail='upper')),
-           descr="LinSVM on 5%(SVM)")
-\end{verbatim}
-
-It bears mentioning at this point that caution must be exercised when selecting features.  The process of feature selection must be performed on an independent training dataset:  it is not possible to select features using the entire dataset, re-train a classifier on a subset of the original data (but using only the selected features) and then test on a held-out testing dataset.  This results in an obvious positive bias in classification performance.  PyMVPA allows for easy dataset splitting, however, so creating independent training and testing datasets is easily accomplished, for instance using an NFoldSplitter, EvenOddSplitter, etc.
-
-% TODO:  fill in end of last paragraph with suggestions for how to take in an entire original dataset and split it:  should we just do a cross-validated outer loop that uses multiple training/testing splits and does RFE on each of these splits?
-
-\subsection{Recursive Feature Elimination} Now, to actually perform recursive feature elimination, we consider two separate analysis scenarios that deal with a pre-selected training dataset:
-\begin{enumerate}
-	\item We split the training dataset into an arbitrary number of independent datasets and perform RFE on each of these; the sensitivity analysis of features is performed independently for each split and features are selected based on those independent measures.
-	\item We split the training dataset into an arbitrary number of independent datasets (as before), but we average the feature sensitivities and select which features to prune/select based on that one average measure.
-\end{enumerate}
-We will concentrate on the second approach.  The following code can be used to perform such an analysis:
-
-% insert scenario 2 code from yarik's email
-\begin{verbatim}
-rfesvm_split = SplitClassifier(LinearCSVMC())
-
- clfs += \
-   FeatureSelectionClassifier(
-     clf = LinearCSVMC(),
-     feature_selection = RFE(             # on features selected via RFE
-         # based on sensitivity of a clf which does splitting internally
-         sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
-         transfer_error=ConfusionBasedError(
-            rfesvm_split,
-            confusion_state="confusion"),
-            # and whose internal error we use
-         feature_selector=FractionTailSelector(
-                            0.2, mode='discard', tail='lower'),
-                            # remove 20% of features at each step
-         update_sensitivity=True),
-         # update sensitivity at each step
-     descr='LinSVM+RFE(splits_avg)' )
-\end{verbatim}
-
-The code above introduces the SplitClassifier, which in this case is yet another ``meta-classifier'' that takes in a Classifier (in this case a LinearCSMVC) and an arbitrary Splitter object, so that the dataset can be split in whatever way the user desires.  Prior to training, the SplitClassifier splits the training dataset, dedicates a separate classifier to each split, trains each on the training part of the split, and then computes transfer error on the testing part of the split. If a SplitClassifier instance is later on asked to ``predict'' some new data, it uses (by default) the MaximalVote strategy to derive an answer.  A summary about the performance of a SplitClassifier internally on each split of the training dataset is available by accessing the `confusion' state variable.
-
-To summarize somewhat, RFE is just one method of feature selection, so we use a FeatureSelection classifier to facilitate this.  To parameterize the RFE process, we refer above to the following:
-
-\begin{enumerate}
-	\item sensitivity\_analyzer -- in this case just the default from a linear C-SVM (the SVM weights), taken as an average over all splits (in accordance with scenario 2 as above)
-	\item transfer\_error -- confusion-based error that relies on the confusion matrices computed during splitting of the dataset by the SplitClassifier; this is used to provide a value that can be compared against a stopping criterion to stop eliminating features
-	\item feature\_selector -- in this example we simply discard the 20\% of features deemed least important
-	\item update\_sensitivity -- true to retrain the classifiers each time we eliminate features; should be false if a non-classifier-based sensitivity measure (such as one-way ANOVA) is used
-\end{enumerate}
-
-As has been shown, recursive feature elimination is an easy-to-implement, flexible, and powerful tool within the PyMVPA framework.  Various ranking methods for selecting features have been discussed.  Additionally, several analysis scenarios have been presented, along with enough requisite knowledge that the user can plug in whatever Classifiers, error metrics, or sensitivity measures are most appropriate for the task at hand.
-
-\end{document}
-
-
+.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
+.. _MaximalVote: api/mvpa.clfs.base.MaximalVote-class.html
+.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
+.. _FeatureSelectionClassifier: api/mvpa.clfs.base.FeatureSelectionClassifier-class.html
+.. _SplitClassifier: api/mvpa.clfs.base.SplitClassifier-class.html
+.. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. index:: incremental feature search, IFS
 .. _incremental_feature_search:
 
