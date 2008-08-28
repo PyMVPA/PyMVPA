@@ -23,6 +23,8 @@ selecting only those features that contribute most to classification
 performance.  Feature selection methods attempt to achieve this goal in an
 algorithmic fashion.
 
+.. index:: FeatureSelectionClassifier
+
 PyMVPA's flexible framework allows various feature selection methods to take
 place within a small block of code.  FeatureSelectionClassifier_ extends the
 basic classifier framework to allow for the use of arbitrary methods of feature
@@ -47,6 +49,8 @@ such a Classifier_:
 
 `testdataset`: Dataset_ (optional)
   dataset which would be given on call to feature_selection
+
+.. index:: FeatureSelection
 
 Let us turn out attention to the second argument, FeatureSelection_. As noted
 above, this feature selection can be arbitrary and should be chosen
@@ -133,6 +137,8 @@ dataset:
 * We split the training dataset into an arbitrary number of independent
   datasets (as before), but we average the feature sensitivities and select
   which features to prune/select based on that one average measure.
+
+.. index:: SplitClassifier
 
 We will concentrate on the second approach.  The following code can be used to
 perform such an analysis:
