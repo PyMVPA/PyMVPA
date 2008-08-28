@@ -75,7 +75,9 @@ for s in keys:
     print "Running %s ..." % (s)
 
     # compute sensitivies
-    smap = sensanas[s](dataset)+0.00001 # I-RELIEF assigns zeros, which corrupts reverse mapping, so adding some epsilon :)
+    # I-RELIEF assigns zeros, which corrupts voxel masking for pylab's imshow,
+    # so adding some epsilon :)
+    smap = sensanas[s](dataset)+0.00001 
 
     # map sensitivity map into original dataspace
     orig_smap = dataset.mapReverse(smap)
