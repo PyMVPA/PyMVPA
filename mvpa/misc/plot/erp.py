@@ -30,7 +30,7 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
      loc
        Value to center at
      offset
-       ralative offset for the labels
+       relative offset for the labels
      mult
        multiplier for the axis labels. ERPs for instance need to be
        inverted, thus labels too manually here since there is no easy
