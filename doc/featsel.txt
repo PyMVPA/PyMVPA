@@ -29,7 +29,7 @@ basic classifier framework to allow for the use of arbitrary methods of feature
 selection according to whatever ranking metric, feature selection criteria, and
 stopping criterion the user chooses for a given application.  Examples of the
 code/classification algorithms presented here can be found in
-`mvpa/clfs/warehouse.py`.
+`mvpa/clfs/warehouse.py`_.
 
 More formally, a FeatureSelectionClassifier_ is a meta-classifier.  That is, it
 is not a classifier itself -- it can take any *slave* Classifier_, perform some
@@ -39,16 +39,16 @@ like a Classifier_, in that it fulfills the specialization of the Classifier
 base class.  The following are the relevant arguments to the constructor of
 such a Classifier_:
 
-clf: Classifier_
+`clf`: Classifier_
   classifier based on which mask classifiers is created
 
-feature_selection: FeatureSelection
-  whatever `FeatureSelection` is considered best
+`feature_selection`: FeatureSelection_
+  whatever feature selection is considered best
 
-testdataset: Dataset (optional)
+`testdataset`: Dataset_ (optional)
   dataset which would be given on call to feature_selection
 
-Let us turn out attention to the second argument, FeatureSelection.  As noted
+Let us turn out attention to the second argument, FeatureSelection_. As noted
 above, this feature selection can be arbitrary and should be chosen
 appropriately for the task at hand.  For example, we could perform a one-way
 ANOVA statistic to select features, then keep only the most important 5% of
@@ -56,7 +56,7 @@ them.  It is crucial to note that, in PyMVPA, the way in which features are
 selected (in this example by keeping only 5% of them) is wholly independent of
 the way features are ranked (in this example, by using a one-way ANOVA).
 Feature selection using this method could be accomplished using the following
-code (from `mvpa/clfs/warehouse.py`):
+code (from `mvpa/clfs/warehouse.py`_):
 
   >>> from mvpa.suite import *
   >>> FeatureSelection = SensitivityBasedFeatureSelection(
@@ -137,13 +137,12 @@ dataset:
 We will concentrate on the second approach.  The following code can be used to
 perform such an analysis:
 
-.. insert scenario 2 code from yarik's email
-
   >>> rfesvm_split = SplitClassifier(LinearCSVMC())
   >>> clf = \
   ...  FeatureSelectionClassifier(
   ...   clf = LinearCSVMC(),
-  ...   feature_selection = RFE(             # on features selected via RFE
+  ...   # on features selected via RFE
+  ...   feature_selection = RFE(
   ...       # based on sensitivity of a clf which does splitting internally
   ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
   ...       transfer_error=ConfusionBasedError(
@@ -173,20 +172,20 @@ To summarize somewhat, RFE_ is just one method of feature selection, so we use a
 FeatureSelectionClassifier_ to facilitate this.  To parameterize the RFE
 process, we refer above to the following:
 
-sensitivity_analyzer
+`sensitivity_analyzer`
   in this case just the default from a linear C-SVM (the SVM weights), taken as
   an average over all splits (in accordance with scenario 2 as above)
 
-transfer_error
+`transfer_error`
   confusion-based error that relies on the confusion matrices computed during
   splitting of the dataset by the SplitClassifier_; this is used to provide a
   value that can be compared against a stopping criterion to stop eliminating
   features
 
-feature_selector
+`feature_selector`
   in this example we simply discard the 20% of features deemed least important
 
-update_sensitivity
+`update_sensitivity`
   true to retrain the classifiers each time we eliminate features; should be
   false if a non-classifier-based sensitivity measure (such as one-way ANOVA)
   is used
@@ -200,6 +199,7 @@ measures are most appropriate for the task at hand.
 
 .. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
+.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
 .. _OddEvenSplitter: api/mvpa.datasets.splitter.OddEvenSplitter-class.html
@@ -207,7 +207,11 @@ measures are most appropriate for the task at hand.
 .. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 .. _FeatureSelectionClassifier: api/mvpa.clfs.base.FeatureSelectionClassifier-class.html
 .. _SplitClassifier: api/mvpa.clfs.base.SplitClassifier-class.html
+.. _FeatureSelection: api/mvpa.featsel.base.FeatureSelection-class.html
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
+.. _mvpa/clfs/warehouse.py: api/mvpa.clfs.warehouse-pysrc.html
+
+
 .. index:: incremental feature search, IFS
 .. _incremental_feature_search:
 
