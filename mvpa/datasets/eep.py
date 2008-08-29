@@ -13,14 +13,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.mapped import MappedDataset
+from mvpa.datasets.channel import ChannelDataset
 from mvpa.misc.io.eepbin import EEPBin
-from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
 
-
-class EEPDataset(MappedDataset):
+class EEPDataset(ChannelDataset):
     """Dataset using a EEP binary file as source.
 
     EEP files are used by eeprobe_ a software for analysing even-related
@@ -29,16 +27,15 @@ class EEPDataset(MappedDataset):
 
     .. _eegprobe: http://http://www.ant-neuro.com/products/eeprobe
     """
-    def __init__(self, samples=None, dsattr=None, **kwargs):
+    def __init__(self, samples=None, **kwargs):
         """Initialize EEPDataset.
 
         :Parameters:
           samples: Filename (string) of a EEP binary file or an `EEPBin`
                    object
         """
-        # if dsattr is none, set it to an empty dict
-        if dsattr is None:
-            dsattr = {}
+        # dataset props defaults
+        dt = t0 = channelids = None
 
         # default way to use the constructor: with filename
         if not samples is None:
@@ -58,37 +55,15 @@ class EEPDataset(MappedDataset):
                       "EEPDataset constructor takes the filename of an " \
                       "EEP file or a EEPBin object as 'samples' argument."
             samples = eb.data
-            # TODO: make proper properties for base Dataset based on _dsattr
-            # update dsattr with some information from EEPBin
-            dsattr['eb_dt'] = eb.dt
-            dsattr['eb_channels'] = eb.channels
-            dsattr['eb_t0'] = eb.t0
-
-        # come up with mapper if fresh samples were provided
-        if not samples is None:
-            mapper = MaskMapper(N.ones((eb.nchannels,
-                                        eb.ntimepoints), dtype='bool'))
-        else:
-            mapper = None
+            dt = eb.dt
+            channelids = eb.channels
+            t0 = eb.t0
 
         # init dataset
-        MappedDataset.__init__(self,
-                               samples=samples,
-                               mapper=mapper,
-                               dsattr=dsattr,
-                               **(kwargs))
-
-    __doc__ = enhancedDocString('EEPDataset', locals(), MappedDataset)
+        ChannelDataset.__init__(self,
+                                samples=samples,
+                                dt=dt, t0=t0, channelids=channelids,
+                                **(kwargs))
 
 
-    channelids = property(fget=lambda self: self._dsattr['eb_channels'],
-                          doc='List of channel IDs')
-    t0 = property(fget=lambda self: self._dsattr['eb_t0'],
-                          doc='Location of first sample relative to stimulus ' \
-                              'onset (in seconds).')
-    dt = property(fget=lambda self: self._dsattr['eb_dt'],
-                          doc='Time difference between two samples ' \
-                              '(in seconds).')
-    samplingrate = property(fget=lambda self: 1.0 / self._dsattr['eb_dt'],
-                          doc='Time difference between two samples ' \
-                              '(in seconds).')
+    __doc__ = enhancedDocString('EEPDataset', locals(), ChannelDataset)

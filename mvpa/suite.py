@@ -46,6 +46,7 @@ from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
 from mvpa.datasets.metric import *
 from mvpa.datasets.miscfx import *
+from mvpa.datasets.channel import *
 from mvpa.datasets.eep import *
 if externals.exists('nifti'):
     from mvpa.datasets.nifti import *
