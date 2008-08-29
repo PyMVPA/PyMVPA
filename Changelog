@@ -25,6 +25,8 @@ Unreleased changes
 
   * New manual section about feature selection with a focus on RFE.
     Contributed by James M. Hughes.
+  * New dataset type `ChannelDataset` for data structured in channels. Might
+    be useful for data modalities like EEG and MEG.
 
 
 Releases
