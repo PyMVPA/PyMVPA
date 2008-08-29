@@ -24,53 +24,10 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhancedDocString, table2string
 
 if __debug__:
     from mvpa.base import debug
-
-
-def _equalizedTable(printed, out=None):
-    """Given list of lists figure out their common widths and print to out
-
-    :Parameters:
-      printed : list of lists of strings
-        What is aimed to be printed
-      out : None or stream
-        Where to print. If None -- will print and return string
-    """
-
-    print2string = out is None
-    if print2string:
-        out = StringIO()
-
-    # equalize number of elements in each row
-    Nelements_max = max(len(x) for x in printed)
-    for i,printed_ in enumerate(printed):
-        printed[i] += [''] * (Nelements_max - len(printed_))
-
-    # figure out lengths within each column
-    aprinted = N.asarray(printed)
-    col_width = [ max( [len(x) for x in column] ) for column in aprinted.T ]
-    string = ""
-    for i, printed_ in enumerate(printed):
-        string_ = ""
-        for j, item in enumerate(printed_):
-            item = str(item)
-            NspacesL = ceil((col_width[j] - len(item))/2.0)
-            NspacesR = col_width[j] - NspacesL - len(item)
-            string_ += "%%%ds%%s%%%ds " \
-                       % (NspacesL, NspacesR) % ('', item, '')
-        string += string_.rstrip() + '\n'
-    out.write(string)
-
-    if print2string:
-        value = out.getvalue()
-        out.close()
-        return value
-
-    pass
-
 
 
 def _p2(x, prec=2):
@@ -482,7 +439,7 @@ class ConfusionMatrix(SummaryStatistics):
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
 
-        _equalizedTable(printed, out)
+        table2string(printed, out)
 
         if description:
             out.write("\nStatistics computed in 1-vs-rest fashion per each " \
@@ -642,7 +599,7 @@ class RegressionStatistics(SummaryStatistics):
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
 
-        _equalizedTable(printed, out)
+        table2string(printed, out)
 
         if description:
             out.write("\nDescription of printed statistics.\n"
