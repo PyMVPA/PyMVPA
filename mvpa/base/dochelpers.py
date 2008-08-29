@@ -15,6 +15,7 @@ import re, textwrap
 # for table2string
 import numpy as N
 from math import ceil
+from StringIO import StringIO
 
 def rstUnderline(text, markup):
     """Add and underline RsT string matching the length of the given string.
