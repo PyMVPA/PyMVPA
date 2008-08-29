@@ -12,6 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import re, textwrap
 
+# for table2string
+import numpy as N
+from math import ceil
+
 def rstUnderline(text, markup):
     """Add and underline RsT string matching the length of the given string.
     """
@@ -110,3 +114,49 @@ def enhancedClassDocString(cls, *args):
     result = re.sub("\s*\n\s*\n\s*\n", "\n\n", result)
 
     return result
+
+
+def table2string(table, out=None):
+    """Given list of lists figure out their common widths and print to out
+
+    :Parameters:
+      table : list of lists of strings
+        What is aimed to be printed
+      out : None or stream
+        Where to print. If None -- will print and return string
+
+    :Returns:
+      string if out was None
+    """
+
+    print2string = out is None
+    if print2string:
+        out = StringIO()
+
+    # equalize number of elements in each row
+    Nelements_max = max(len(x) for x in table)
+    for i,table_ in enumerate(table):
+        table[i] += [''] * (Nelements_max - len(table_))
+
+    # figure out lengths within each column
+    atable = N.asarray(table)
+    col_width = [ max( [len(x) for x in column] ) for column in atable.T ]
+    string = ""
+    for i, table_ in enumerate(table):
+        string_ = ""
+        for j, item in enumerate(table_):
+            item = str(item)
+            NspacesL = ceil((col_width[j] - len(item))/2.0)
+            NspacesR = col_width[j] - NspacesL - len(item)
+            string_ += "%%%ds%%s%%%ds " \
+                       % (NspacesL, NspacesR) % ('', item, '')
+        string += string_.rstrip() + '\n'
+    out.write(string)
+
+    if print2string:
+        value = out.getvalue()
+        out.close()
+        return value
+
+    pass
+
