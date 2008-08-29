@@ -7,6 +7,9 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Misc function performing operations on datasets.
+
+All the functions defined in this module must accept dataset as the
+first argument since they are bound to Dataset class in the trailer.
 """
 
 __docformat__ = 'restructuredtext'
@@ -16,7 +19,7 @@ from operator import isSequenceType
 
 import numpy as N
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import Dataset, datasetmethod
 from mvpa.misc.support import getBreakPoints
 
 from mvpa.base import externals, warning
@@ -27,6 +30,8 @@ if __debug__:
 if externals.exists('scipy'):
     from mvpa.datasets.miscfx_sp import detrend
 
+
+@datasetmethod
 def zscore(dataset, mean=None, std=None,
            perchunk=True, baselinelabels=None,
            pervoxel=True, targetdtype='float64'):
@@ -35,7 +40,7 @@ def zscore(dataset, mean=None, std=None,
     `mean` and `std` can be used to pass custom values to the z-scoring.
     Both may be scalars or arrays.
 
-    All computations are done in place. Data upcasting is done
+    All computations are done *in place*. Data upcasting is done
     automatically if necessary into `targetdtype`
 
     If `baselinelabels` provided, and `mean` or `std` aren't provided, it would
@@ -113,14 +118,15 @@ def zscore(dataset, mean=None, std=None,
         doit(dataset.samples, mean, std, dataset.samples[list(statids)])
 
 
-
-def aggregateFeatures(dataset, fx):
+@datasetmethod
+def aggregateFeatures(dataset, fx=N.mean):
     """Apply a function to each row of the samples matrix of a dataset.
 
     The functor given as `fx` has to honour an `axis` keyword argument in the
     way that NumPy used it (e.g. NumPy.mean, var).
 
-    Returns a new `Dataset` object with the aggregated feature(s).
+    :Returns:
+       a new `Dataset` object with the aggregated feature(s).
     """
     agg = fx(dataset.samples, axis=1)
 
@@ -129,12 +135,14 @@ def aggregateFeatures(dataset, fx):
                    chunks=dataset.chunks)
 
 
+@datasetmethod
 def removeInvariantFeatures(dataset):
     """Returns a new dataset with all invariant features removed.
     """
     return dataset.selectFeatures(dataset.samples.std(axis=0).nonzero()[0])
 
 
+@datasetmethod
 def coarsenChunks(source, nchunks=4):
     """Change chunking of the dataset
 
@@ -220,24 +228,25 @@ def coarsenChunks(source, nchunks=4):
         return chunks_new
 
 
-def getSamplesPerChunkLabel(ds):
+@datasetmethod
+def getSamplesPerChunkLabel(dataset):
     """Returns an array with the number of samples per label in each chunk.
 
     Array shape is (chunks x labels).
 
     :Parameters:
-      ds: Dataset
+      dataset: Dataset
         Source dataset.
     """
-    ul = ds.uniquelabels
-    uc = ds.uniquechunks
+    ul = dataset.uniquelabels
+    uc = dataset.uniquechunks
 
     count = N.zeros((len(uc), len(ul)), dtype='uint')
 
     for cc, c in enumerate(uc):
         for lc, l in enumerate(ul):
-            count[cc, lc] = N.sum(N.logical_and(ds.labels == l,
-                                                ds.chunks == c))
+            count[cc, lc] = N.sum(N.logical_and(dataset.labels == l,
+                                                dataset.chunks == c))
 
     return count
 
