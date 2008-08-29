@@ -17,6 +17,8 @@ from mvpa.datasets.miscfx import zscore, aggregateFeatures
 from mvpa.mappers.mask import MaskMapper
 from mvpa.misc.exceptions import DatasetError
 
+from tests_warehouse import datasets
+
 class DatasetTests(unittest.TestCase):
 
     def testAddPatterns(self):
@@ -466,6 +468,12 @@ class DatasetTests(unittest.TestCase):
             (dataset.convertFeatureMask2FeatureIds(mask) == [0, 2]).all())
 
 
+    def testSummary(self):
+        """Dummy test"""
+        ds = datasets['uni2large']
+        ds = ds[N.random.permutation(range(ds.nsamples))[:20]]
+        summary = ds.summary()
+        self.failUnless(len(summary)>40)
 
 def suite():
     return unittest.makeSuite(DatasetTests)
