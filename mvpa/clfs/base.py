@@ -68,7 +68,11 @@ def _deepcopyclf(clf):
 
 class Classifier(Parametrized):
     """Abstract classifier class to be inherited by all classifiers
+    """
 
+    # Kept separate from doc to don't pollute help(clf), especially if
+    # we including help for the parent class
+    _DEV__doc__ = """
     Required behavior:
 
     For every classifier is has to be possible to be instanciated without
@@ -138,8 +142,7 @@ class Classifier(Parametrized):
         doc="Time (in seconds) which took classifier to predict")
 
     feature_ids = StateVariable(enabled=False,
-        doc="Feature IDS which were used for the actual training." +
-            " Some classifiers might internally do feature selection (SMLR)")
+        doc="Feature IDS which were used for the actual training.")
 
     _clf_internals = []
     """Describes some specifics about the classifier -- is that it is
