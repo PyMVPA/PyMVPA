@@ -24,35 +24,10 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhancedDocString, table2string
 
 if __debug__:
     from mvpa.base import debug
-
-
-def _equalizedTable(out, printed):
-    """Given list of lists figure out their common widths and print to out
-
-    """
-    # equalize number of elements in each row
-    Nelements_max = max(len(x) for x in printed)
-    for i,printed_ in enumerate(printed):
-        printed[i] += [''] * (Nelements_max - len(printed_))
-
-    # figure out lengths within each column
-    aprinted = N.asarray(printed)
-    col_width = [ max( [len(x) for x in column] ) for column in aprinted.T ]
-
-    for i, printed_ in enumerate(printed):
-        for j, item in enumerate(printed_):
-            item = str(item)
-            NspacesL = ceil((col_width[j] - len(item))/2.0)
-            NspacesR = col_width[j] - NspacesL - len(item)
-            out.write("%%%ds%%s%%%ds " \
-                      % (NspacesL, NspacesR) % ('', item, ''))
-        out.write("\n")
-    pass
-
 
 
 def _p2(x, prec=2):
@@ -464,7 +439,7 @@ class ConfusionMatrix(SummaryStatistics):
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
 
-        _equalizedTable(out, printed)
+        table2string(printed, out)
 
         if description:
             out.write("\nStatistics computed in 1-vs-rest fashion per each " \
@@ -624,7 +599,7 @@ class RegressionStatistics(SummaryStatistics):
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
 
-        _equalizedTable(out, printed)
+        table2string(printed, out)
 
         if description:
             out.write("\nDescription of printed statistics.\n"

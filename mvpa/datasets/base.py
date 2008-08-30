@@ -24,7 +24,7 @@ from sets import Set
 
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhancedDocString, table2string
 
 if __debug__:
     from mvpa.base import debug, warning
@@ -325,7 +325,8 @@ class Dataset(object):
         if __debug__ and "DS_" in debug.active:
             debug("DS_", "Reseting all attributes %s for dataset %s"
                   % (_uniqueattributes,
-                     self.summary(uniq=False, idhash=False, stats=False)))
+                     self.summary(uniq=False, idhash=False,
+                                  stats=False, lstats=False)))
 
         # I guess we better checked if dictname is known  but...
         for k in _uniqueattributes:
@@ -345,7 +346,8 @@ class Dataset(object):
         if not _dsattr.has_key(attrib) or _dsattr[attrib] is None:
             if __debug__ and 'DS_' in debug.active:
                 debug("DS_", "Recomputing unique set for attrib %s within %s" %
-                      (attrib, self.summary(uniq=False, stats=False)))
+                      (attrib, self.summary(uniq=False,
+                                            stats=False, lstats=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
             _dsattr[attrib] = N.unique( N.asanyarray(dict_[attrib[6:]]) )
@@ -645,6 +647,7 @@ class Dataset(object):
         return self.summary(uniq=True,
                             idhash=__debug__ and ('DS_ID' in debug.active),
                             stats=__debug__ and ('DS_STATS' in debug.active),
+                            lstats=__debug__ and ('DS_STATS' in debug.active),
                             )
 
 
@@ -652,16 +655,18 @@ class Dataset(object):
         return "<%s>" % str(self)
 
 
-    def summary(self, uniq=True, stats=True, idhash=False):
+    def summary(self, uniq=True, stats=True, idhash=False, lstats=True):
         """String summary over the object
 
         :Parameters:
           uniq : bool
-             include summary over data attributes which have unique
+             Include summary over data attributes which have unique
           idhash : bool
-             include idhash value for dataset and samples
+             Include idhash value for dataset and samples
           stats : bool
-             include some basic statistics (mean, std, var) over dataset samples
+             Include some basic statistics (mean, std, var) over dataset samples
+          lstats : bool
+             Include statistics on chunks/labels
         """
         # local bindings
         samples = self.samples
@@ -679,8 +684,9 @@ class Dataset(object):
             (idhash_ds, samples.dtype,
              self.nsamples, idhash_samples, self.nfeatures)
 
+        ssep = (' ', '\n')[lstats]
         if uniq:
-            s +=  " uniq:"
+            s +=  "%suniq:" % ssep
             for uattr in _dsattr.keys():
                 if not uattr.startswith("unique"):
                     continue
@@ -694,9 +700,63 @@ class Dataset(object):
 
         if stats:
             # TODO -- avg per chunk?
-            s += " stats: mean=%g std=%g var=%g min=%g max=%g" % \
-                 (N.mean(samples), N.std(samples),
+            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g" % \
+                 (ssep, N.mean(samples), N.std(samples),
                   N.var(samples), N.min(samples), N.max(samples))
+
+        if lstats:
+            s += self.summary_labels()
+
+        return s
+
+
+    def summary_labels(self, maxc=30, maxl=20):
+        """Provide summary statistics over the labels and chunks
+
+        :Parameters:
+          maxc : int
+            Maximal number of chunks when provide details
+          maxl : int
+            Maximal number of labels when provide details
+        """
+        spcl = self.getSamplesPerChunkLabel()
+        # XXX couldn't they be unordered?
+        ul = self.uniquelabels.tolist()
+        uc = self.uniquechunks.tolist()
+        s = ""
+        if len(ul) < maxl and len(uc) < maxc:
+            s += "\nCounts of labels in each chunk:"
+            # only in a resonable case do printing
+            table = [['  chunks\labels'] + ul]
+            table += [[''] + ['---'] * len(ul)]
+            for c, counts in zip(uc, spcl):
+                table.append([ str(c) ] + counts.tolist())
+            s += '\n' + table2string(table)
+        else:
+            s += "No details due to large number of labels or chunks. " \
+                 "Increase maxc and maxl if desired"
+
+        def cl_stats(axis, u, name1, name2):
+            # Compute statistics per label
+            stats = {'min': N.min(spcl, axis=axis),
+                     'max': N.max(spcl, axis=axis),
+                     'mean': N.mean(spcl, axis=axis),
+                     'std': N.std(spcl, axis=axis),
+                     '#%ss' % name2: N.sum(spcl>0, axis=axis)}
+            entries = ['  ' + name1, 'mean', 'std', 'min', 'max', '#%ss' % name2]
+            table = [ entries ]
+            for i, l in enumerate(u):
+                d = {'  ' + name1 : l}
+                d.update(dict([ (k, stats[k][i]) for k in stats.keys()]))
+                table.append( [ ('%.3g', '%s')[isinstance(d[e], basestring)]
+                                % d[e] for e in entries] )
+            return '\nSummary per %s across %ss\n' % (name1, name2) \
+                   + table2string(table)
+
+        if len(ul) < maxl:
+            s += cl_stats(0, ul, 'label', 'chunk')
+        if len(uc) < maxc:
+            s += cl_stats(1, uc, 'chunk', 'label')
         return s
 
 
