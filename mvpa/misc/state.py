@@ -1123,6 +1123,7 @@ class AttributesCollector(type):
         setattr(cls, "_paramscols", paramscols)
 
         # States doc
+        statesdoc = ""
         if collections.has_key('states'):
             paramsdoc += """  enable_states : None or list of basestring
     Names of the state variables which should be enabled additionally
@@ -1130,11 +1131,18 @@ class AttributesCollector(type):
   disable_states : None or list of basestring
     Names of the state variables which should be disabled
 """
+            statesdoc = "Enabled by default are listed with +\n  * "
+            statesdoc += '\n  * '.join(collections['states'].listing)
+            if __debug__:
+                debug("COLR", "Assigning __statesdoc to be %s" % statesdoc)
+            setattr(cls, "_statesdoc", statesdoc)
+
         if paramsdoc != "":
             if __debug__:
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
             setattr(cls, "_paramsdoc", paramsdoc)
 
+        if paramsdoc + statesdoc != "":
             cls.__doc__ = enhancedClassDocString(cls, *bases)
 
 
@@ -1146,7 +1154,9 @@ class ClassWithCollections(object):
     collections and their items as simple attributes. Access to
     collection items "internals" is done via <collection_name> attribute
     and interface of a corresponding `Collection`.
+    """
 
+    _DEV__doc__ = """
     TODO: rename 'descr'? -- it should simply
           be 'doc' -- no need to drag classes docstring imho.
     """
