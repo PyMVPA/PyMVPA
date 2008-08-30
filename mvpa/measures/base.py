@@ -223,7 +223,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
 
             # After we stored each sensitivity separately,
             # we can apply combiner
-            result = self.__combiner(result)
+            if self.__combiner is not None:
+                result = self.__combiner(result)
 
         # call base class postcall
         result = DatasetMeasure._postcall(self, dataset, result)
@@ -384,7 +385,9 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
                   "Returning combined using %s sensitivity across %d items" %
                   (`self.__combiner`, len(sensitivities)))
 
-        return self.__combiner(sensitivities)
+        if self.__combiner is not None:
+            sensitivities = self.__combiner(sensitivities)
+        return sensitivities
 
 
     def _setAnalyzers(self, analyzers):
