@@ -226,3 +226,93 @@ class IterativeReliefOnline(IterativeRelief):
             pass
         return self.w
 
+
+class IterativeReliefOnlineExponential1Norm(IterativeRelief):
+    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+    algorithm. Online version.
+
+    This algorithm is exactly the one in the referenced paper
+    (I-RELIEF-2 online), using weighted 1-norm and Exponential
+    Kernel. Note that this implementation does not use kernel.py.
+    """
+    
+    def __init__(self, a = 5.0, permute=True, max_iter = 3, **kwargs):
+        """Constructor of the IRELIEF class.
+
+        """
+        # init base classes first
+        IterativeRelief.__init__(self, **kwargs)
+
+        self.a = a # parameter of the learning rate
+        self.permute = permute # shuffle data when running I-RELIEF
+        self.max_iter = 3 # maximum number of iterations
+        pass
+    
+
+    def k(self,x_n,data):
+        """Exponential Kernel"""
+        return N.exp(-(N.abs(x_n-data)*self.w).sum(1)/self.kernel_width)
+
+    def _call(self, dataset):
+        """Computes featurewise I-RELIEF-2 weights. Online version."""
+
+        if self.w_guess==None:
+            self.w = N.ones(dataset.samples.shape[1],'d')
+            self.w = self.w/(self.w.sum()) # equal initial weights (sum up to 1.0)
+        else:
+            self.w = self.w_guess/self.w_guess.sum() # do normalization to be safe :)
+            pass
+        
+        M, H = self.compute_M_H(dataset.labels)
+
+        ni = N.zeros(dataset.samples.shape[1],'d')
+        pi = N.zeros(dataset.samples.shape[1],'d')
+
+        if self.permute:
+            random_sequence = N.random.permutation(dataset.samples.shape[0]) # indices to go through x in random order
+        else:
+            random_sequence = N.arange(dataset.samples.shape[0])
+            pass
+
+        change = self.threshold+1.0
+        iteration = 0
+        counter = 0.0
+        while change>self.threshold and iteration<self.max_iter:
+            print "Iteration",iteration
+            for t in range(dataset.samples.shape[0]):
+                counter += 1.0
+                n = random_sequence[t]
+
+                d_w_k_xn_Mn = self.k(dataset.samples[n,:],dataset.samples[M[n],:])
+                d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
+
+                d_w_k_xn_x = self.k(dataset.samples[n,:],dataset.samples)
+                gamma_n = 1.0 - d_w_k_xn_Mn_sum / d_w_k_xn_x.sum() 
+                alpha_n = d_w_k_xn_Mn / d_w_k_xn_Mn_sum
+
+                d_w_k_xn_Hn = self.k(dataset.samples[n,:],dataset.samples[H[n],:])
+                beta_n = d_w_k_xn_Hn / d_w_k_xn_Hn.sum()
+
+                m_n = (N.abs(dataset.samples[n,:]-dataset.samples[M[n],:])*alpha_n[:,None]).sum(0)
+                h_n = (N.abs(dataset.samples[n,:]-dataset.samples[H[n],:])*beta_n[:,None]).sum(0)
+                pi = gamma_n*(m_n-h_n)
+                learning_rate = 1.0/(counter*self.a+1.0)
+                ni_new = ni+learning_rate*(pi-ni)
+                ni = ni_new
+
+                ni_plus = N.clip(ni,0.0,N.inf) # set all negative elements to zero
+                w_new = N.nan_to_num(ni_plus/(N.sqrt((ni_plus**2).sum())))
+                change = N.abs(w_new-self.w).sum()
+                if t%10==0:
+                    # print "t=%d change=%.4f max=%f min=%.4f mean=%.4f std=%.4f #nan=%d" % (t,change,w_new.max(),w_new.min(),w_new.mean(),w_new.std(),N.isnan(w_new).sum())
+                    pass
+                
+                self.w = w_new
+
+                if change<self.threshold and iteration>0:
+                    break
+                pass
+            iteration += 1
+            pass
+        return self.w
+
