@@ -96,7 +96,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
         M, H = self.compute_M_H(dataset.labels)
 
         while True:
-            self.k = self.kernel(length_scale = 1.0/(N.sqrt(self.w*self.kernel_width)))
+            self.k = self.kernel(length_scale = self.kernel_width/self.w)
             d_w_k = self.k.compute(dataset.samples)
             # set d_w_k to zero where distance=0 (i.e. kernel ==
             # 1.0), otherwise I-RELIEF could not converge.
@@ -193,7 +193,7 @@ class IterativeReliefOnline(IterativeRelief):
                 counter += 1.0
                 n = random_sequence[t]
 
-                self.k = self.kernel(length_scale = 1.0/(N.sqrt(self.w*self.kernel_width)))
+                self.k = self.kernel(length_scale = self.kernel_width/self.w)
                 d_w_k_xn_Mn = self.k.compute(dataset.samples[None,n,:],dataset.samples[M[n],:]).squeeze()
                 d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
                 d_w_k_xn_x = self.k.compute(dataset.samples[None,n,:],dataset.samples).squeeze()
