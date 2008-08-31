@@ -33,7 +33,6 @@ class EEPDatasetTests(unittest.TestCase):
             self.failUnless(N.round(d.samplingrate) == 500)
 
 
-
     def testEEPBin(self):
         eb = EEPBin(os.path.join('..', 'data', 'eep.bin'))
 
@@ -43,6 +42,22 @@ class EEPDatasetTests(unittest.TestCase):
         self.failUnless(eb.t0 - eb.dt < 0.00000001)
         self.failUnless(len(eb.channels) == 32)
         self.failUnless(eb.data.shape == (2, 32, 4))
+
+
+    def testResampling(self):
+        ds = EEPDataset(os.path.join('..', 'data', 'eep.bin'), labels=[1, 2])
+
+        self.failUnless(N.round(ds.samplingrate) == 500.0)
+
+        # shoudl puke when called with nothing
+        self.failUnlessRaises(ValueError, ds.resample)
+
+        # now for real -- should divide nsamples into half
+        rds = ds.resample(sr=250)
+
+        self.failUnless(N.round(rds.samplingrate) == 250)
+        self.failUnless(rds.nsamples == 2)
+        self.failUnless(ds.channelids == rds.channelids)
 
 
 def suite():
