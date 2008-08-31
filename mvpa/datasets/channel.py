@@ -17,6 +17,11 @@ from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
+from mvpa.base import externals
+
+if externals.exists('scipy'):
+    from scipy import signal
+
 
 class ChannelDataset(MappedDataset):
     """Dataset handling data structured into channels.
@@ -76,6 +81,68 @@ class ChannelDataset(MappedDataset):
 
 
     __doc__ = enhancedDocString('ChannelDataset', locals(), MappedDataset)
+
+
+    if externals.exists('scipy'):
+        def resample(self, nt=None, sr=None, dt=None, window='ham', **kwargs):
+            """Convenience method to resample data sample channel-wise.
+
+            Resampling target can be specified by number of timepoint or temporal
+            distance or sampling rate.
+
+            Please note that this method only operates on `ChannelDataset` and always
+            returns such.
+
+            :Parameters:
+              nt: int
+                Number of timepoints to resample to.
+              dt: float
+                Temporal distance of samples after resampling.
+              sr: float
+                Target sampling rate.
+              **kwargs:
+                All additional arguments are passed to resample() from scipy.signal
+
+            :Return:
+              ChannelDataset
+            """
+            if nt is None and sr is None and dt is None:
+                raise ValueError, \
+                      "Required argument missing. Either needs ntimepoints, sr or dt."
+
+            # get data in original shape
+            orig_data = self.O
+
+            if len(orig_data.shape) != 3:
+                raise ValueError, "resample() only works with data from ChannelDataset."
+
+            orig_nt = orig_data.shape[2]
+            orig_length = self.dt * orig_nt
+
+            if nt is None:
+                # translate dt or sr into nt
+                if not dt is None:
+                    nt = orig_nt * float(self.dt) / dt
+                elif not sr is None:
+                    nt = orig_nt * float(sr) / self.samplingrate
+                else:
+                    raise RuntimeError, 'This should not happen!'
+            else:
+                raise RuntimeError, 'This should not happen!'
+
+
+            nt = N.round(nt)
+
+            # downsample data
+            data = signal.resample(orig_data, nt, axis=2, window=window, **kwargs)
+            new_dt = float(orig_length) / nt
+
+            return ChannelDataset(data=self._data,
+                                  samples=data,
+                                  t0=self.t0,
+                                  dt=new_dt,
+                                  channelids=self.channelids,
+                                  copy_data=True)
 
 
     channelids = property(fget=lambda self: self._dsattr['ch_ids'],
