@@ -181,6 +181,7 @@ if __debug__:
     debug.register('PLR',  "PLR call")
     debug.register('SLC',  "Searchlight call")
     debug.register('SA',   "Sensitivity analyzers")
+    debug.register('IRELIEF', "Various I-RELIEFs")
     debug.register('SA_',  "Sensitivity analyzers (verbose)")
     debug.register('PSA',  "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
