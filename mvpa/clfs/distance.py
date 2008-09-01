@@ -55,7 +55,7 @@ def mahalanobisDistance(x, y=None, w=None):
 
     Inverse covariance matrix can be calculated with the following
 
-      w = N.linalg.solve(N.cov(x.T),N.identity(x.shape[1]))
+      w = N.linalg.solve(N.cov(x.T), N.identity(x.shape[1]))
 
     or
 
@@ -132,13 +132,13 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
 
 
     :Parameters:
-      data1 : numpy.ndarray
+      data1 : N.ndarray
           first dataset
-      data2 : numpy.ndarray
+      data2 : N.ndarray
           second dataset. If None, compute the euclidean distance between
           the first dataset versus itself.
           (Defaults to None)
-      weight : numpy.ndarray
+      weight : N.ndarray
           vector of weights, each one associated to each dimension of the
           dataset (Defaults to None)
     """
@@ -160,8 +160,8 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     #           N.zeros((data1.shape[0], data2.shape[0]), 'd')
     # for i in range(size1):
     #     for j in range(size2):
-    #         squared_euclidean_distance_matrix[i,j] = \
-    #           ((data1[i,:]-data2[j,:])**2*weight).sum()
+    #         squared_euclidean_distance_matrix[i, j] = \
+    #           ((data1[i, :]-data2[j, :])**2*weight).sum()
     #         pass
     #     pass
 
@@ -196,7 +196,7 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
         if less0num > 0:
             norm0 = N.linalg.norm(squared_euclidean_distance_matrix[less0])
             totalnorm = N.linalg.norm(squared_euclidean_distance_matrix)
-            if totalnorm !=0 and norm0 / totalnorm > 1e-8:
+            if totalnorm != 0 and norm0 / totalnorm > 1e-8:
                 warning("Found %d elements out of %d unstable (<0) in " \
                         "computation of squared_euclidean_distance_matrix. " \
                         "Their norm is %s when total norm is %s" % \
@@ -211,10 +211,11 @@ def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
     ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
     """
     if p == 2 and python:
-        return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2, weight=weight**2))
+        return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
+                                                 weight=weight**2))
 
     if weight == None:
-        weight = numpy.ones(data.shape[1],'d')
+        weight = N.ones(data1.shape[1], 'd')
         pass
     size1 = data1.shape[0]
     F1 = data1.shape[1]
@@ -222,7 +223,7 @@ def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
     if data2 == None or id(data1)==id(data2):
         assert(F1==weight.size) # Assert correct dimensions
         F = F1
-        d = N.zeros((size1,size1),'d')
+        d = N.zeros((size1, size1), 'd')
         if p == 1.0:
             code = """
             int i,j,t;
@@ -271,18 +272,17 @@ def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
             """
             pass
         counter = weave.inline(code,
-                           ['data1','size1','F','weight','d','p'],
+                           ['data1', 'size1', 'F', 'weight', 'd', 'p'],
                            type_converters=converters.blitz,
                            compiler = 'gcc')
-        d = d+N.triu(d).T # copy upper part to lower part
+        d = d + N.triu(d).T # copy upper part to lower part
         return d**(1.0/p)
-    
-        pass
+
     size2 = data2.shape[0]
     F2 = data2.shape[1]
     assert(F1==F2==weight.size) # Assert correct dimensions
     F = F1
-    d = N.zeros((size1,size2),'d')
+    d = N.zeros((size1, size2), 'd')
     if p == 1.0:
         code = """
         int i,j,t;
@@ -315,7 +315,7 @@ def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
             }
         return_val = 0;
 
-        """        
+        """
     else:
         code = """
         int i,j,t;
@@ -333,7 +333,8 @@ def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
         """
         pass
     counter = weave.inline(code,
-                           ['data1','data2','size1','size2','F','weight','d','p'],
+                           ['data1', 'data2', 'size1', 'size2',
+                            'F', 'weight', 'd', 'p'],
                            type_converters=converters.blitz,
                            compiler = 'gcc')
     return d**(1.0/p)
