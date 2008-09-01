@@ -298,9 +298,41 @@ if externals.exists('scipy'):
 
 else:
 
-    def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
+    def pnorm_w(data1, data2=None, weight=None, p=2, python=True):
         """Weighted p-norm between two datasets (pure Python implementation)
 
         ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
         """
-        raise NotImplementedError
+        if p == 2 and python:
+            return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
+                                                     weight=weight**2))
+
+        if weight == None:
+            weight = N.ones(data1.shape[1], 'd')
+            pass
+
+        if data2 == None:
+            data2 = data1
+            pass
+        size1 = data1.shape[0]
+        F1 = data1.shape[1]
+        size2 = data2.shape[0]
+        F2 = data2.shape[1]
+        assert(F1==F2==weight.size)
+        d = N.zeros((size1, size2), 'd')
+        # XXX These implementations are efficient if the feature size is
+        # little.
+        if p == 1:
+            for i in range(F1):
+                d += N.abs(N.subtract.outer(data1[:,i],data2[:,i]))*weight[i]
+                pass
+            return d
+        else:
+            for i in range(F1):
+                d += (N.abs(N.subtract.outer(data1[:,i],data2[:,i]))*weight[i])**p
+                pass
+            return d**(1.0/p)
+        pass
+            
+    pass
+
