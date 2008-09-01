@@ -21,11 +21,12 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.transformers import Absolute
 
 from mvpa.measures.anova import OneWayAnova
+from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-_MEASURES_2_SWEEP = [ OneWayAnova ]
+_MEASURES_2_SWEEP = [ OneWayAnova, IterativeRelief, IterativeReliefOnline ]
 if externals.exists('scipy'):
     from mvpa.measures.corrcoef import CorrCoef
     _MEASURES_2_SWEEP += [ CorrCoef ]
@@ -45,8 +46,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         f = dsm(data)
 
         self.failUnless(f.shape == (2,))
-        self.failUnless(f[1] == 0.0)
-        self.failUnless(f[0] > 0.0)
+        self.failUnless(abs(f[1]) <= 1e-12, # some small value
+            msg="Failed test with value %g instead of != 0.0" % f[1])
+        self.failUnless(f[0] > 0.1)     # some reasonably large value
 
 
     # XXX meta should work too but doesn't
