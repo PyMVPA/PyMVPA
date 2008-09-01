@@ -29,7 +29,7 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
 sensanas = {'a) ANOVA': OneWayAnova(transformer=N.abs),
             'b) Linear SVM weights': LinearNuSVMC().getSensitivityAnalyzer(
                                                        transformer=N.abs),
-            'c) I-RELIEF (Exponential)': IterativeRelief(transformer=N.abs),
+            'c) I-RELIEF': IterativeRelief(transformer=N.abs),
             'd) Splitting ANOVA (odd-even)':
                 SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
                                              OddEvenSplitter()),
@@ -37,8 +37,8 @@ sensanas = {'a) ANOVA': OneWayAnova(transformer=N.abs),
                 SplitFeaturewiseMeasure(
                     LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
                                      OddEvenSplitter()),
-            'f) I-RELIEF (SquaredExponential)':
-                IterativeRelief(transformer=N.abs, kernel=KernelSquaredExponential),
+            'f) I-RELIEF Online':
+                IterativeReliefOnline(transformer=N.abs),
             'g) Splitting ANOVA (nfold)':
                 SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
                                              NFoldSplitter()),
@@ -46,8 +46,6 @@ sensanas = {'a) ANOVA': OneWayAnova(transformer=N.abs),
                 SplitFeaturewiseMeasure(
                     LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
                                      NFoldSplitter()),
-            'i) I-RELIEF (Matern_3_2)':
-                IterativeRelief(transformer=N.abs, kernel=KernelMatern_3_2),
            }
 
 # do chunkswise linear detrending on dataset
