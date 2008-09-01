@@ -83,6 +83,46 @@ class ChannelDataset(MappedDataset):
     __doc__ = enhancedDocString('ChannelDataset', locals(), MappedDataset)
 
 
+    def substractBaseline(self, t=None):
+        """Substract mean baseline signal from the each timepoint.
+
+        The baseline is determined by computing the mean over all timepoints
+        specified by `t`.
+
+        The samples of the dataset are modified in-place and nothing is
+        returned.
+
+        :Parameter:
+          t: int | float | None
+            If an integer, `t` denotes the number of timepoints in the from the
+            start of each sample to be used to compute the baseline signal.
+            If a floating point value, `t` is the duration of the baseline
+            window from the start of each sample in whatever unit
+            corresponding to the datasets `samplingrate`. Finally, if `None`
+            the `t0` property of the dataset is used to determine `t` as it
+            would have been specified as duration.
+        """
+        # if no baseline length is given, use t0
+        if t is None:
+            t = N.abs(self.t0)
+
+        # determine length of baseline in samples
+        if isinstance(t, float):
+            t = N.round(t * self.samplingrate)
+
+        # get original data
+        data = self.O
+
+        # compute baseline
+        # XXX: shouldn't this be done per chunk?
+        baseline = N.mean(data[:, :, :t], axis=2)
+        # remove baseline
+        data -= baseline[..., N.newaxis]
+
+        # put data back into dataset
+        self.samples[:] = self.mapForward(data)
+
+
     if externals.exists('scipy'):
         def resample(self, nt=None, sr=None, dt=None, window='ham', **kwargs):
             """Convenience method to resample data sample channel-wise.
