@@ -12,8 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-from scipy import weave
-from scipy.weave import converters
+from mvpa.base import externals
 
 if __debug__:
     from mvpa.base import debug, warning
@@ -204,40 +203,81 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     squared_euclidean_distance_matrix[less0] = 0
     return squared_euclidean_distance_matrix
 
+if externals.exists('scipy'):
+    from scipy import weave
+    from scipy.weave import converters
 
-def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
-    """Weighted p-norm between two datasets.
+    def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
+        """Weighted p-norm between two datasets (scipy.weave implementation)
 
-    ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
-    """
-    if p == 2 and python:
-        return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
-                                                 weight=weight**2))
+        ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
+        """
 
-    if weight == None:
-        weight = N.ones(data1.shape[1], 'd')
-        pass
-    size1 = data1.shape[0]
-    F1 = data1.shape[1]
-    code = ""
-    if data2 == None or id(data1)==id(data2):
-        assert(F1==weight.size) # Assert correct dimensions
+        if p == 2 and python:
+            return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
+                                                     weight=weight**2))
+
+        if weight == None:
+            weight = N.ones(data1.shape[1], 'd')
+            pass
+        size1 = data1.shape[0]
+        F1 = data1.shape[1]
+        code = ""
+        if data2 == None or id(data1)==id(data2):
+            assert(F1==weight.size) # Assert correct dimensions
+            F = F1
+            d = N.zeros((size1, size1), 'd')
+            try:
+                code_peritem = \
+                    {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data1(j,t))",
+                     # XXX fabs is not actually needed
+                     2.0 : "tmp2 = weight(t)*(data1(i,t)-data1(j,t));" \
+                     " tmp = tmp + tmp2*tmp2"}[p]
+            except KeyError:
+                code_peritem = "tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data1(j,t)),p)"
+
+            code = """
+            int i,j,t;
+            double tmp, tmp2;
+            for (i=0;i<size1-1;i++) {
+                for (j=i+1;j<size1;j++) {
+                    tmp = 0.0;
+                    for(t=0;t<F;t++) {
+                        %s;
+                        }
+                    d(i,j) = tmp;
+                    }
+                }
+            return_val = 0;
+            """ % code_peritem
+
+
+            counter = weave.inline(code,
+                               ['data1', 'size1', 'F', 'weight', 'd', 'p'],
+                               type_converters=converters.blitz,
+                               compiler = 'gcc')
+            d = d + N.triu(d).T # copy upper part to lower part
+            return d**(1.0/p)
+
+        size2 = data2.shape[0]
+        F2 = data2.shape[1]
+        assert(F1==F2==weight.size) # Assert correct dimensions
         F = F1
-        d = N.zeros((size1, size1), 'd')
+        d = N.zeros((size1, size2), 'd')
         try:
             code_peritem = \
-                {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data1(j,t))",
-                 # XXX fabs is not actually needed
-                 2.0 : "tmp2 = weight(t)*(data1(i,t)-data1(j,t));" \
+                {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data2(j,t))",
+                 2.0 : "tmp2 = weight(t)*(data1(i,t)-data2(j,t));" \
                  " tmp = tmp + tmp2*tmp2"}[p]
         except KeyError:
-            code_peritem = "tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data1(j,t)),p)"
+            code_peritem = "tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data2(j,t)),p)"
+            pass
 
         code = """
         int i,j,t;
         double tmp, tmp2;
-        for (i=0;i<size1-1;i++) {
-            for (j=i+1;j<size1;j++) {
+        for (i=0;i<size1;i++) {
+            for (j=0;j<size2;j++) {
                 tmp = 0.0;
                 for(t=0;t<F;t++) {
                     %s;
@@ -246,50 +286,21 @@ def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
                 }
             }
         return_val = 0;
+
         """ % code_peritem
 
-
         counter = weave.inline(code,
-                           ['data1', 'size1', 'F', 'weight', 'd', 'p'],
-                           type_converters=converters.blitz,
-                           compiler = 'gcc')
-        d = d + N.triu(d).T # copy upper part to lower part
+                               ['data1', 'data2', 'size1', 'size2',
+                                'F', 'weight', 'd', 'p'],
+                               type_converters=converters.blitz,
+                               compiler = 'gcc')
         return d**(1.0/p)
 
-    size2 = data2.shape[0]
-    F2 = data2.shape[1]
-    assert(F1==F2==weight.size) # Assert correct dimensions
-    F = F1
-    d = N.zeros((size1, size2), 'd')
-    try:
-        code_peritem = \
-            {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data2(j,t))",
-             2.0 : "tmp2 = weight(t)*(data1(i,t)-data2(j,t));" \
-             " tmp = tmp + tmp2*tmp2"}[p]
-    except KeyError:
-        code_peritem = "tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data2(j,t)),p)"
-        pass
+else:
 
-    code = """
-    int i,j,t;
-    double tmp, tmp2;
-    for (i=0;i<size1;i++) {
-        for (j=0;j<size2;j++) {
-            tmp = 0.0;
-            for(t=0;t<F;t++) {
-                %s;
-                }
-            d(i,j) = tmp;
-            }
-        }
-    return_val = 0;
+    def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
+        """Weighted p-norm between two datasets (pure Python implementation)
 
-    """ % code_peritem
-
-    counter = weave.inline(code,
-                           ['data1', 'data2', 'size1', 'size2',
-                            'F', 'weight', 'd', 'p'],
-                           type_converters=converters.blitz,
-                           compiler = 'gcc')
-    return d**(1.0/p)
-
+        ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
+        """
+        raise NotImplementedError
