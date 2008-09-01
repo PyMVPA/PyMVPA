@@ -12,6 +12,8 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+from scipy import weave
+from scipy.weave import converters
 
 if __debug__:
     from mvpa.base import debug, warning
@@ -201,4 +203,138 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
                         (less0num, N.sum(less0.shape), norm0, totalnorm))
     squared_euclidean_distance_matrix[less0] = 0
     return squared_euclidean_distance_matrix
+
+
+def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
+    """Weighted p-norm between two datasets.
+
+    ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
+    """
+    if p == 2 and python:
+        return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2, weight=weight**2))
+
+    if weight == None:
+        weight = numpy.ones(data.shape[1],'d')
+        pass
+    size1 = data1.shape[0]
+    F1 = data1.shape[1]
+    code = ""
+    if data2 == None or id(data1)==id(data2):
+        assert(F1==weight.size) # Assert correct dimensions
+        F = F1
+        d = N.zeros((size1,size1),'d')
+        if p == 1.0:
+            code = """
+            int i,j,t;
+            double tmp;
+            for (i=0;i<size1-1;i++) {
+                for (j=i+1;j<size1;j++) {
+                    tmp = 0.0;
+                    for(t=0;t<F;t++) {
+                        tmp = tmp+weight(t)*fabs(data1(i,t)-data1(j,t));
+                        }
+                    d(i,j) = tmp;
+                    }
+                }
+            return_val = 0;
+            """
+        elif p == 2.0:
+            code = """
+            int i,j,t;
+            double tmp, tmp2;
+            for (i=0;i<size1-1;i++) {
+                for (j=i+1;j<size1;j++) {
+                    tmp = 0.0;
+                    for(t=0;t<F;t++) {
+                        tmp2 = weight(t)*fabs(data1(i,t)-data1(j,t));
+                        tmp = tmp + tmp2*tmp2;
+                        }
+                    d(i,j) = tmp;
+                    }
+                }
+            return_val = 0;
+            """
+        else:
+            code = """
+            int i,j,t;
+            double tmp;
+            for (i=0;i<size1-1;i++) {
+                for (j=i+1;j<size1;j++) {
+                    tmp = 0.0;
+                    for(t=0;t<F;t++) {
+                        tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data1(j,t)),p);
+                        }
+                    d(i,j) = tmp;
+                    }
+                }
+            return_val = 0;
+            """
+            pass
+        counter = weave.inline(code,
+                           ['data1','size1','F','weight','d','p'],
+                           type_converters=converters.blitz,
+                           compiler = 'gcc')
+        d = d+N.triu(d).T # copy upper part to lower part
+        return d**(1.0/p)
+    
+        pass
+    size2 = data2.shape[0]
+    F2 = data2.shape[1]
+    assert(F1==F2==weight.size) # Assert correct dimensions
+    F = F1
+    d = N.zeros((size1,size2),'d')
+    if p == 1.0:
+        code = """
+        int i,j,t;
+        double tmp;
+        for (i=0;i<size1;i++) {
+            for (j=0;j<size2;j++) {
+                tmp = 0.0;
+                for(t=0;t<F;t++) {
+                    tmp = tmp+weight(t)*fabs(data1(i,t)-data2(j,t));
+                    }
+                d(i,j) = tmp;
+                }
+            }
+        return_val = 0;
+
+        """
+    elif p == 2.0:
+        code = """
+        int i,j,t;
+        double tmp, tmp2;
+        for (i=0;i<size1;i++) {
+            for (j=0;j<size2;j++) {
+                tmp = 0.0;
+                for(t=0;t<F;t++) {
+                    tmp2 = weight(t)*(data1(i,t)-data2(j,t));
+                    tmp = tmp+tmp2*tmp2;
+                    }
+                d(i,j) = tmp;
+                }
+            }
+        return_val = 0;
+
+        """        
+    else:
+        code = """
+        int i,j,t;
+        double tmp;
+        for (i=0;i<size1;i++) {
+            for (j=0;j<size2;j++) {
+                tmp = 0.0;
+                for(t=0;t<F;t++) {
+                    tmp = tmp+pow(weight(t)*fabs(data1(i,t)-data2(j,t)),p);
+                    }
+                d(i,j) = tmp;
+                }
+            }
+        return_val = 0;
+        """
+        pass
+    counter = weave.inline(code,
+                           ['data1','data2','size1','size2','F','weight','d','p'],
+                           type_converters=converters.blitz,
+                           compiler = 'gcc')
+    return d**(1.0/p)
 
