@@ -14,12 +14,16 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base import externals
+
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
+
+externals.exists("scipy", raiseException=True)
 from scipy.linalg import cho_factor as SLcho_factor
 from scipy.linalg import cho_solve as SLcho_solve
 from scipy.linalg import cholesky as SLcholesky
