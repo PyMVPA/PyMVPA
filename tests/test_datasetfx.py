@@ -54,7 +54,11 @@ class MiscDatasetFxTests(unittest.TestCase):
         ds_chunks = ds.chunks.copy()
         self.failUnless(N.all(ds.samples == ds_data)) # sanity check
 
-        for f in ['zscore', 'detrend', 'coarsenChunks']:
+        funcs = ['zscore', 'coarsenChunks']
+        if externals.exists('scipy'):
+            funcs.append('detrend')
+
+        for f in funcs:
             eval('ds.%s()' % f)
             self.failUnless(N.any(ds.samples != ds_data) or
                             N.any(ds.chunks != ds_chunks),
