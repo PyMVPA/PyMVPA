@@ -21,12 +21,16 @@ from mvpa.datasets.splitter import NFoldSplitter
 from mvpa.misc.transformers import Absolute
 
 from mvpa.measures.anova import OneWayAnova
-from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline
+from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
+     IterativeRelief_Devel, IterativeReliefOnline_Devel
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-_MEASURES_2_SWEEP = [ OneWayAnova, IterativeRelief, IterativeReliefOnline ]
+_MEASURES_2_SWEEP = [ OneWayAnova,
+                      IterativeRelief, IterativeReliefOnline,
+                      IterativeRelief_Devel, IterativeReliefOnline_Devel
+                      ]
 if externals.exists('scipy'):
     from mvpa.measures.corrcoef import CorrCoef
     _MEASURES_2_SWEEP += [ CorrCoef ]
