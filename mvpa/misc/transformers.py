@@ -66,7 +66,11 @@ def GrandMean(x):
 
 
 def L2Normed(x, norm=1.0, reverse=False):
-    """Norm the values so that regular vector norm becomes `norm`"""
+    """Norm the values so that regular vector norm becomes `norm`
+
+    More verbose: Norm that the sum of the squared elements of the
+    returned vector becomes `norm`.
+    """
     xnorm = N.linalg.norm(x)
     return x * (norm/xnorm)
 
