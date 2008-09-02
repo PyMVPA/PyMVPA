@@ -34,7 +34,6 @@ from mvpa.clfs.knn import *
 if externals.exists('lars'):
     from mvpa.clfs.lars import *
 from mvpa.clfs.smlr import *
-from mvpa.clfs.gpr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.stats import *
 if externals.exists('libsvm') or externals.exists('shogun'):
@@ -92,6 +91,7 @@ from mvpa.misc.plot.erp import *
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *
     from mvpa.clfs.ridge import *
+    from mvpa.clfs.gpr import *
     from mvpa.clfs.plr import *
     from mvpa.misc.stats import *
 

@@ -20,7 +20,6 @@ from mvpa.clfs.base import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      _deepcopyclf
-from mvpa.clfs.gpr import GPR
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
@@ -469,7 +468,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # should re-train if we change data
         # reuse trained SVM and its 'final' optimization point
-        if not isinstance(clf, GPR):    # on GPR everything depends on the data ;-)
+        if not clf.__class__.__name__ in ['GPR']: # on GPR everything depends on the data ;-)
             oldsamples = dstrain.samples.copy()
             dstrain.samples[:] += dstrain.samples*0.05
             self.failUnless((oldsamples != dstrain.samples).any())
