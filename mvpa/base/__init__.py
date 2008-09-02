@@ -236,6 +236,7 @@ if __debug__:
 
     debug.register('GPR',     "GPR")
     debug.register('KERNEL',  "Kernels module")
+    debug.register('MOD_SEL', "Model Selector")
 
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
