@@ -203,34 +203,122 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     squared_euclidean_distance_matrix[less0] = 0
     return squared_euclidean_distance_matrix
 
+
+def pnorm_w_python(data1, data2=None, weight=None, p=2,
+                   heuristic='auto', use_sq_euclidean=True):
+    """Weighted p-norm between two datasets (pure Python implementation)
+
+    ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
+
+    :Parameters:
+      data1 : N.ndarray
+        First dataset
+      data2 : N.ndarray or None
+        Optional second dataset
+      weight : N.ndarray or None
+        Optional weights per 2nd dimension (features)
+      p
+        Power
+      heuristic : basestring
+        Which heuristic to use:
+         * 'samples' -- python sweep over 0th dim
+         * 'features' -- python sweep over 1st dim
+         * 'auto' decides automatically. If # of features (shape[1]) is much
+           larger than # of samples (shape[0]) -- use 'samples', and use
+           'features' otherwise
+      use_sq_euclidean : bool
+        Either to use squared_euclidean_distance_matrix for computation if p==2
+    """
+    if weight == None:
+        weight = N.ones(data1.shape[1], 'd')
+        pass
+
+    if p == 2 and use_sq_euclidean:
+        return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
+                                                 weight=weight**2))
+
+    if data2 == None:
+        data2 = data1
+        pass
+
+    S1,F1 = data1.shape[:2]
+    S2,F2 = data2.shape[:2]
+    # sanity check
+    if not (F1==F2==weight.size):
+        raise ValueError, \
+              "Datasets should have same #columns == #weights. Got " \
+              "%d %d %d" % (F1, F2, weight.size)
+    d = N.zeros((S1, S2), 'd')
+
+    # Adjust local functions for specific p values
+    # pf - power function
+    # af - after function
+    if p == 1:
+        pf = lambda x:x
+        af = lambda x:x
+    else:
+        pf = lambda x:x ** p
+        af = lambda x:x ** (1.0/p)
+
+    # heuristic 'auto' might need to be adjusted
+    if heuristic == 'auto':
+        heuristic = {False: 'samples',
+                     True: 'features'}[(F1/S1) < 500]
+
+    if heuristic == 'features':
+        #  Efficient implementation if the feature size is little.
+        for NF in range(F1):
+            d += pf(N.abs(N.subtract.outer(data1[:,NF],
+                                           data2[:,NF]))*weight[NF])
+            pass
+    elif heuristic == 'samples':
+        #  Efficient implementation if the feature size is much larger
+        #  than number of samples
+        for NS in xrange(S1):
+            dfw = pf(N.abs(data1[NS] - data2) * weight)
+            d[NS] = N.sum(dfw, axis=1)
+            pass
+    else:
+        raise ValueError, "Unknown heuristic '%s'. Need one of " \
+              "'auto', 'samples', 'features'" % heuristic
+    return af(d)
+
+
 if externals.exists('scipy'):
     from scipy import weave
     from scipy.weave import converters
 
-    def pnorm_w(data1, data2=None, weight=None, p=2, python=False):
+    def pnorm_w(data1, data2=None, weight=None, p=2):
         """Weighted p-norm between two datasets (scipy.weave implementation)
 
         ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
-        """
 
-        if p == 2 and python:
-            return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
-                                                     weight=weight**2))
+        :Parameters:
+          data1 : N.ndarray
+            First dataset
+          data2 : N.ndarray or None
+            Optional second dataset
+          weight : N.ndarray or None
+            Optional weights per 2nd dimension (features)
+          p
+            Power
+        """
 
         if weight == None:
             weight = N.ones(data1.shape[1], 'd')
             pass
-        size1 = data1.shape[0]
-        F1 = data1.shape[1]
+        S1, F1 = data1.shape[:2]
         code = ""
         if data2 == None or id(data1)==id(data2):
-            assert(F1==weight.size) # Assert correct dimensions
+            if not (F1==weight.size):
+                raise ValueError, \
+                      "Dataset should have same #columns == #weights. Got " \
+                      "%d %d" % (F1, weight.size)
             F = F1
-            d = N.zeros((size1, size1), 'd')
+            d = N.zeros((S1, S1), 'd')
             try:
                 code_peritem = \
                     {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data1(j,t))",
-                     # XXX fabs is not actually needed
                      2.0 : "tmp2 = weight(t)*(data1(i,t)-data1(j,t));" \
                      " tmp = tmp + tmp2*tmp2"}[p]
             except KeyError:
@@ -239,10 +327,10 @@ if externals.exists('scipy'):
             code = """
             int i,j,t;
             double tmp, tmp2;
-            for (i=0;i<size1-1;i++) {
-                for (j=i+1;j<size1;j++) {
+            for (i=0; i<S1-1; i++) {
+                for (j=i+1; j<S1; j++) {
                     tmp = 0.0;
-                    for(t=0;t<F;t++) {
+                    for(t=0; t<F; t++) {
                         %s;
                         }
                     d(i,j) = tmp;
@@ -253,17 +341,19 @@ if externals.exists('scipy'):
 
 
             counter = weave.inline(code,
-                               ['data1', 'size1', 'F', 'weight', 'd', 'p'],
+                               ['data1', 'S1', 'F', 'weight', 'd', 'p'],
                                type_converters=converters.blitz,
                                compiler = 'gcc')
             d = d + N.triu(d).T # copy upper part to lower part
             return d**(1.0/p)
 
-        size2 = data2.shape[0]
-        F2 = data2.shape[1]
-        assert(F1==F2==weight.size) # Assert correct dimensions
+        S2,F2 = data2.shape[:2]
+        if not (F1==F2==weight.size):
+            raise ValueError, \
+                  "Datasets should have same #columns == #weights. Got " \
+                  "%d %d %d" % (F1, F2, weight.size)
         F = F1
-        d = N.zeros((size1, size2), 'd')
+        d = N.zeros((S1, S2), 'd')
         try:
             code_peritem = \
                 {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data2(j,t))",
@@ -276,10 +366,10 @@ if externals.exists('scipy'):
         code = """
         int i,j,t;
         double tmp, tmp2;
-        for (i=0;i<size1;i++) {
-            for (j=0;j<size2;j++) {
+        for (i=0; i<S1; i++) {
+            for (j=0; j<S2; j++) {
                 tmp = 0.0;
-                for(t=0;t<F;t++) {
+                for(t=0; t<F; t++) {
                     %s;
                     }
                 d(i,j) = tmp;
@@ -290,49 +380,14 @@ if externals.exists('scipy'):
         """ % code_peritem
 
         counter = weave.inline(code,
-                               ['data1', 'data2', 'size1', 'size2',
+                               ['data1', 'data2', 'S1', 'S2',
                                 'F', 'weight', 'd', 'p'],
                                type_converters=converters.blitz,
                                compiler = 'gcc')
         return d**(1.0/p)
 
 else:
-
-    def pnorm_w(data1, data2=None, weight=None, p=2, python=True):
-        """Weighted p-norm between two datasets (pure Python implementation)
-
-        ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
-        """
-        if p == 2 and python:
-            return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
-                                                     weight=weight**2))
-
-        if weight == None:
-            weight = N.ones(data1.shape[1], 'd')
-            pass
-
-        if data2 == None:
-            data2 = data1
-            pass
-        size1 = data1.shape[0]
-        F1 = data1.shape[1]
-        size2 = data2.shape[0]
-        F2 = data2.shape[1]
-        assert(F1==F2==weight.size)
-        d = N.zeros((size1, size2), 'd')
-        # XXX These implementations are efficient if the feature size is
-        # little.
-        if p == 1:
-            for i in range(F1):
-                d += N.abs(N.subtract.outer(data1[:,i],data2[:,i]))*weight[i]
-                pass
-            return d
-        else:
-            for i in range(F1):
-                d += (N.abs(N.subtract.outer(data1[:,i],data2[:,i]))*weight[i])**p
-                pass
-            return d**(1.0/p)
-        pass
-            
+    # Bind pure python implementation
+    pnrom_w = pnorm_w_python
     pass
 
