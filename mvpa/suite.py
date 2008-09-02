@@ -89,7 +89,8 @@ from mvpa.misc.transformers import *
 if externals.exists("pylab"):
     from mvpa.misc.plot import *
     from mvpa.misc.plot.erp import *
-    from mvpa.misc.plot.topo import *
+    if externals.exists(['griddata', 'scipy']):
+        from mvpa.misc.plot.topo import *
 
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *
