@@ -14,11 +14,11 @@
 
 __docformat__ = 'restructuredtext'
 
-from numpy import *
+import numpy as N
 
 from mvpa.base import externals
 externals.exists("pylab", raiseException=True)
-import pylab as p
+import pylab as P
 import matplotlib.numerix.ma as M
 
 externals.exists("griddata", raiseException=True)
@@ -58,8 +58,8 @@ def plotHead(topography,sensorlocations,channels=None,plotelectrodes=True):
     # remove EOG if needed
     if "EOG" in channels:
         EOG = channels.index("EOG")
-        i = arange(len(channels),dtype='i')
-        i = where(logical_not(i==EOG))
+        i = N.arange(len(channels),dtype='i')
+        i = N.where(logical_not(i==EOG))
         topography = topography[i]
         channels.pop(EOG)
         if not isinstance(sensorlocations,str):
@@ -73,34 +73,34 @@ def plotHead(topography,sensorlocations,channels=None,plotelectrodes=True):
                 continue
             key = l.split()[0]
             f[key] = [float(x) for x in l.split()[1:]]
-        nsensors = max(topography.shape)
-        sensorlocations = zeros((nsensors,3),'d')
+        nsensors = N.max(topography.shape)
+        sensorlocations = N.zeros((nsensors,3),'d')
         for k,ch in enumerate(channels):
             try:
-                sensorlocations[k,:] = array(f[ch],'d')
+                sensorlocations[k,:] = N.array(f[ch],'d')
             except IndexError:
                 print sensorlocations.shape,k,ch
                 raise IndexError
 
     # Generate a grid and interpolate using the griddata module
-    x = arange(65,dtype='d')-32
+    x = N.arange(65,dtype='d')-32
     x /= 32
-    x,y = p.meshgrid(x,x)
+    x,y = P.meshgrid(x,x)
     topo = griddata(sensorlocations[:,0],sensorlocations[:,1],\
-            ravel(array(topography)),x,y)
+            N.ravel(N.array(topography)),x,y)
 
     # Mask values outside the head
-    notinhead = fromfunction (
-            lambda k,l: greater_equal ((k-32)**2+(l-32)**2,1024 ),
+    notinhead = N.fromfunction (
+            lambda k,l: N.greater_equal ((k-32)**2+(l-32)**2,1024 ),
             (65,65) )
     topo_masked = M.masked_where(notinhead,topo)
 
     # Show everything
-    map = p.imshow(topo_masked,origin="lower")
+    map = P.imshow(topo_masked,origin="lower")
     head = genHead(scale=32,shift=(32,32))
-    p.axis('off')
+    P.axis('off')
     if plotelectrodes:
-        electrodes = p.plot(32*sensorlocations[:,0]+32,
+        electrodes = P.plot(32*sensorlocations[:,0]+32,
                 32*sensorlocations[:,1]+32,'wo')
         return map,head,electrodes
     else:
@@ -118,48 +118,48 @@ def genHead(scale=1, shift=(0,0)):
     rmax = 0.5
 
     # Koordinates for the ears
-    EarX1 =  -1*array (
+    EarX1 =  -1*N.array (
             [.497, .510, .518, .5299,
             .5419, .54, .547, .532, .510,
-            rmax*cos (2*pi*0.01*(54+42))])
-    EarY1 = array (
+            rmax*N.cos (2*N.pi*0.01*(54+42))])
+    EarY1 = N.array (
             [.0655, .0775, .0783, .0746, .0555,
             -.0055, -.0932, -.1313, -.1384,
-            rmax*sin(2*pi*0.01*(54+42))])
-    EarX2 = array (
-            [rmax*cos ( 2*pi*0.01*(54+42)),
+            rmax*N.sin(2*N.pi*0.01*(54+42))])
+    EarX2 = N.array (
+            [rmax*N.cos ( 2*N.pi*0.01*(54+42)),
             .510, .532, .547, .54, .5419,
             .5299, .518, .510, .497] )
-    EarY2 = array (
-            [rmax*sin ( 2*pi*0.01*(54+42)),
+    EarY2 = N.array (
+            [rmax*N.sin ( 2*N.pi*0.01*(54+42)),
             -.1384, -.1313, -.0932, -.0055,
             .0555, .0746, .0783, .0775, .0655] )
 
     # Coordinates for the Head
-    HeadX1 = fromfunction (
-            lambda x: rmax*cos (2*pi*0.01*(x+2)), (21,))
-    HeadY1 = fromfunction (
-            lambda y: rmax*sin (2*pi*0.01*(y+2)), (21,))
-    HeadX2 = fromfunction (
-            lambda x: rmax*cos (2*pi*0.01*(x+28)), (21,))
-    HeadY2 = fromfunction (
-            lambda y: rmax*sin (2*pi*0.01*(y+28)), (21,))
-    HeadX3 = fromfunction (
-            lambda x: rmax*cos ( 2*pi*0.01*(x+54)),(43,))
-    HeadY3 = fromfunction (
-            lambda y: rmax*sin ( 2*pi*0.01*(y+54)),(43,))
+    HeadX1 = N.fromfunction (
+            lambda x: rmax*N.cos (2*N.pi*0.01*(x+2)), (21,))
+    HeadY1 = N.fromfunction (
+            lambda y: rmax*N.sin (2*N.pi*0.01*(y+2)), (21,))
+    HeadX2 = N.fromfunction (
+            lambda x: rmax*N.cos (2*N.pi*0.01*(x+28)), (21,))
+    HeadY2 = N.fromfunction (
+            lambda y: rmax*N.sin (2*N.pi*0.01*(y+28)), (21,))
+    HeadX3 = N.fromfunction (
+            lambda x: rmax*N.cos ( 2*N.pi*0.01*(x+54)),(43,))
+    HeadY3 = N.fromfunction (
+            lambda y: rmax*N.sin ( 2*N.pi*0.01*(y+54)),(43,))
 
     # Coordinates for the Nose
-    NoseX = array ( [.18*rmax, 0, -.18*rmax] )
-    NoseY = array ( [rmax-0.004,rmax*1.15,rmax-0.004] )
+    NoseX = N.array ( [.18*rmax, 0, -.18*rmax] )
+    NoseY = N.array ( [rmax-0.004,rmax*1.15,rmax-0.004] )
 
     # Combine to one
-    X = concatenate ( (EarX2, HeadX1, NoseX, HeadX2, EarX1, HeadX3) )
-    Y = concatenate ( (EarY2, HeadY1, NoseY, HeadY2, EarY1, HeadY3) )
+    X = N.concatenate ( (EarX2, HeadX1, NoseX, HeadX2, EarX1, HeadX3) )
+    Y = N.concatenate ( (EarY2, HeadY1, NoseY, HeadY2, EarY1, HeadY3) )
 
     X *= 2*scale
     Y *= 2*scale
     X += shift[0]
     Y += shift[1]
 
-    return p.plot(X,Y,'k',linewidth=3)
+    return P.plot(X,Y,'k',linewidth=3)
