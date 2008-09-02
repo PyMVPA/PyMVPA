@@ -215,8 +215,8 @@ class Dataset(object):
             if __debug__:
                 if lcl_data.has_key('samples'):
                     debug('DS',
-                          "`Data` dict has `samples` (%s) but there is also" +
-                          " __init__ parameter `samples` which overrides " +
+                          "`Data` dict has `samples` (%s) but there is also" \
+                          " __init__ parameter `samples` which overrides " \
                           " stored in `data`" % (`lcl_data['samples'].shape`))
             lcl_data['samples'] = self._shapeSamples(samples, dtype,
                                                      copy_samples)
@@ -799,7 +799,7 @@ class Dataset(object):
         NOTE: This can be a costly operation (both memory and time). If
         performance is important consider the '+=' operator.
         """
-        # create a new object of the same type it is now and NOT onyl Dataset
+        # create a new object of the same type it is now and NOT only Dataset
         out = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
