@@ -1,18 +1,27 @@
-#!/usr/bin/env python
-# encoding: utf-8
+#encoding: utf-8
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+#   The initial version of the code was contributed by Ingo Fründ and is
+#   Coypright (c) 2008 by Ingo Fründ ingo.fruend@googlemail.com
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Plot parameter distributions on a head surface (topography plots)."""
 
-__doc__ = """
-This module contains a funcitons the plot the distribution of a parameter
-on the head
-
-(c) 2008 by Ingo Fründ ingo.fruend@googlemail.com
-"""
-
-__all__ = ["plotHead"]
+__docformat__ = 'restructuredtext'
 
 from numpy import *
+
+from mvpa.base import externals
+externals.exists("pylab", raiseException=True)
 import pylab as p
 import matplotlib.numerix.ma as M
+
+externals.exists("griddata", raiseException=True)
 from griddata import griddata
 
 
