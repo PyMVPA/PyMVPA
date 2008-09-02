@@ -11,6 +11,7 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
 import mvpa.misc.copy as copy
 from sets import Set
 from re import sub as re_sub
@@ -397,33 +398,84 @@ class SampleAttributes(ColumnData):
     nsamples = property(fget=getNSamples)
 
 
-
 class SensorLocations(ColumnData):
-    """Read sensor location definitions from a text file.
+    """Base class for sensor location readers.
+
+    Each subclass should provide x, y, z coordinates via the `pos_x`, `pos_y`,
+    and `pos_z` attrbibutes.
+
+    Axes should follow the following convention:
+
+      x-axis: left -> right
+      y-axis: anterior -> posterior
+      z-axis: superior -> inferior
+    """
+    def __init__(self, *args, **kwargs):
+        """Pass arguments to ColumnData.
+        """
+        ColumnData.__init__(self, *args, **kwargs)
+
+
+    def locations(self):
+        """Get the sensor locations as an array.
+
+        :Returns:
+          (nchannels x 3) array with coordinates in (x, y, z)
+        """
+        return N.array((self.pos_x, self.pos_y, self.pos_z)).T
+
+
+
+class XAVRSensorLocations(SensorLocations):
+    """Read sensor location definitions from a specific text file format.
 
     File layout is assumed to be 5 columns:
 
       1. sensor name
       2. some useless integer
-      3. position on x-axis (left-right)
-      4. position on y-axis (anterior-posterior)
-      5. position on z-axis (superior-inferior)
-
-    XXX: Need to support much more formats and column orders.
+      3. position on x-axis
+      4. position on y-axis
+      5. position on z-axis
     """
     def __init__(self, source):
         """Read sensor locations from file.
 
-        Parameter
-        ---------
-
-          source : filename of an atrribute file
+        :Parameter:
+          source : filename of an attribute file
         """
-        ColumnData.__init__(self, source,
-                            header=['names', 'some_number', 'pos_x', 'pos_y', 'pos_z'],
-                            sep=None, dtype=[str, int, float, float, float])
+        SensorLocations.__init__(
+            self, source,
+            header=['names', 'some_number', 'pos_x', 'pos_y', 'pos_z'],
+            sep=None, dtype=[str, int, float, float, float])
 
 
+class TuebingenMEGSensorLocations(SensorLocations):
+    """Read sensor location definitions from a specific text file format.
+
+    File layout is assumed to be 7 columns:
+
+      1:   sensor name
+      2:   position on y-axis
+      3:   position on x-axis
+      4:   position on z-axis
+      5-7: same as 2-4, but for some outer surface thingie. 
+
+    Note that x and y seem to be swapped, ie. y as defined by SensorLocations
+    conventions seems to be first axis and followed by x.
+
+    Only inner surface coordinates are reported by `locations()`.
+    """
+    def __init__(self, source):
+        """Read sensor locations from file.
+
+        :Parameter:
+          source : filename of an attribute file
+        """
+        SensorLocations.__init__(
+            self, source,
+            header=['names', 'pos_y', 'pos_x', 'pos_z',
+                    'pos_y2', 'pos_x2', 'pos_z2'],
+            sep=None, dtype=[str, float, float, float, float, float, float])
 
 
 def design2labels(columndata, baseline_label=0,
