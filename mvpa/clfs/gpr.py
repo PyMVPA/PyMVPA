@@ -22,6 +22,8 @@ from mvpa.misc.param import Parameter
 from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
+from mvpa.clfs.model_selector import ModelSelector
+from mvpa.datasets import Dataset
 
 externals.exists("scipy", raiseException=True)
 from scipy.linalg import cho_factor as SLcho_factor
@@ -39,6 +41,7 @@ Ndiag = N.diag
 NLAcholesky = N.linalg.cholesky
 NLAsolve = N.linalg.solve
 NLAError = N.linalg.linalg.LinAlgError
+SLAError = SL.basic.LinAlgError
 
 # Some precomputed items. log is relatively expensive
 _halflog2pi = 0.5 * Nlog(2*N.pi)
@@ -197,7 +200,7 @@ class GPR(Classifier):
         # YYY yoh is not sure what is the problem... KernelLinear is actually
         #     kernel.KernelLinear so everything shoudl be ok
         if not isinstance(self.__kernel, KernelLinear):
-            raise NotImplementedError
+            return GPRWeights(self, **kwargs)
 
         return GPRLinearWeights(self, **kwargs)
 
@@ -254,7 +257,7 @@ class GPR(Classifier):
             try:
                 self._L = SLcholesky(self._C, lower=True)
                 self._LL = (self._L,True)
-            except NLAError:
+            except SLAError:
                 epsilon = 1.0e-20*N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C+epsilon, lower=True)
                 self._LL = (self._L,True)
@@ -415,6 +418,44 @@ class GPRLinearWeights(Sensitivity):
                       Ndot(train_fv.T,
                             Ndot(Kyinv,
                                   Ndot(train_fv, kernel.Sigma_p)))))
+        return weights
+
+
+class GPRWeights(Sensitivity):
+    """`SensitivityAnalyzer` that reports the weights GPR trained
+    on a given `Dataset`.
+    """
+
+    _LEGAL_CLFS = [ GPR ]
+
+    def _call(self, dataset):
+        """Extract weights from GPR
+        """
+
+        clf = self.clf
+        # normalize data:
+        clf._train_labels = (clf._train_labels-clf._train_labels.mean())/clf._train_labels.std()
+        # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0))/clf._train_fv.std(0)
+        dataset = Dataset(samples=clf._train_fv, labels=clf._train_labels)
+        clf.states.enable("log_marginal_likelihood")
+        ms = ModelSelector(clf,dataset)
+        print clf
+        print clf._train_fv.shape
+        print N.unique(clf._train_labels)
+        print clf._train_fv.min(),clf._train_fv.max()
+        # Note that some kernels does not have gradient yet!
+        sigma_noise_initial = 1.0e-5
+        sigma_f_initial = 1.0
+        length_scale_initial = N.ones(dataset.samples.shape[1])*1.0e4
+        # length_scale_initial = N.random.rand(dataset.samples.shape[1])*1.0e4
+        hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
+        fixedHypers = N.array([0]*hyp_initial_guess.size),dtype=bool)
+        fixedHypers = None
+        problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-3,fixedHypers=fixedHypers,use_gradient=True, logscale=True)
+        lml = ms.solve()
+        weights = 1.0/ms.hyperparameters_best[2:] # weight = 1/length_scale
+        print "sigma_noise:",ms.hyperparameters_best[0]
+        print "sigma_f:",ms.hyperparameters_best[1]
         return weights
 
 
