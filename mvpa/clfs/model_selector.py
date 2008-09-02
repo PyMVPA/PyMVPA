@@ -117,12 +117,12 @@ class ModelSelector(object):
                     self.parametric_model.set_hyperparameters(self.hyp_running_guess)
                     pass
             except InvalidHyperparameterError:
-                if __debug__: debug("GPR","WARNING: invalid hyperparameters!")
+                if __debug__: debug("MOD_SEL","WARNING: invalid hyperparameters!")
                 return -N.inf
             try:
                 self.parametric_model.train(self.dataset)
             except N.linalg.linalg.LinAlgError:
-                if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
+                if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                 return -N.inf
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
             # REMOVE print log_marginal_likelihood
@@ -149,18 +149,18 @@ class ModelSelector(object):
                     self.parametric_model.set_hyperparameters(self.hyp_running_guess)
                     pass
             except InvalidHyperparameterError:
-                if __debug__: debug("GPR", "WARNING: invalid hyperparameters!")
+                if __debug__: debug("MOD_SEL", "WARNING: invalid hyperparameters!")
                 return -N.inf
             # Check if it is possible to avoid useless computations
             # already done in f(). According to tests and information
             # collected from OpenOpt people, it is sufficiently
             # unexpected that the following test succeed:
             if N.any(x!=self.f_last_x):
-                if __debug__: debug("GPR","UNEXPECTED: recomputing train+log_marginal_likelihood.")
+                if __debug__: debug("MOD_SEL","UNEXPECTED: recomputing train+log_marginal_likelihood.")
                 try:
                     self.parametric_model.train(self.dataset)
                 except N.linalg.linalg.LinAlgError:
-                    if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
+                    if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                     # XXX EO: which value for the gradient to return to
                     # OpenOpt when hyperparameters are wrong?
                     return N.zeros(x.size)
@@ -212,7 +212,7 @@ class ModelSelector(object):
             try:
                 self.parametric_model.set_hyperparameters(self.hyperparameters_best)
             except InvalidHyperparameterError:
-                if __debug__: debug("GPR", "WARNING: invalid hyperparameters!")
+                if __debug__: debug("MOD_SEL", "WARNING: invalid hyperparameters!")
                 self.log_marginal_likelihood_best = -N.inf
                 return self.log_marginal_likelihood_best
             self.parametric_model.train(self.dataset)
