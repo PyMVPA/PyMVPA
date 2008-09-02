@@ -17,6 +17,11 @@ from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
+from mvpa.base import externals
+
+if externals.exists('scipy'):
+    from scipy import signal
+
 
 class ChannelDataset(MappedDataset):
     """Dataset handling data structured into channels.
@@ -76,6 +81,108 @@ class ChannelDataset(MappedDataset):
 
 
     __doc__ = enhancedDocString('ChannelDataset', locals(), MappedDataset)
+
+
+    def substractBaseline(self, t=None):
+        """Substract mean baseline signal from the each timepoint.
+
+        The baseline is determined by computing the mean over all timepoints
+        specified by `t`.
+
+        The samples of the dataset are modified in-place and nothing is
+        returned.
+
+        :Parameter:
+          t: int | float | None
+            If an integer, `t` denotes the number of timepoints in the from the
+            start of each sample to be used to compute the baseline signal.
+            If a floating point value, `t` is the duration of the baseline
+            window from the start of each sample in whatever unit
+            corresponding to the datasets `samplingrate`. Finally, if `None`
+            the `t0` property of the dataset is used to determine `t` as it
+            would have been specified as duration.
+        """
+        # if no baseline length is given, use t0
+        if t is None:
+            t = N.abs(self.t0)
+
+        # determine length of baseline in samples
+        if isinstance(t, float):
+            t = N.round(t * self.samplingrate)
+
+        # get original data
+        data = self.O
+
+        # compute baseline
+        # XXX: shouldn't this be done per chunk?
+        baseline = N.mean(data[:, :, :t], axis=2)
+        # remove baseline
+        data -= baseline[..., N.newaxis]
+
+        # put data back into dataset
+        self.samples[:] = self.mapForward(data)
+
+
+    if externals.exists('scipy'):
+        def resample(self, nt=None, sr=None, dt=None, window='ham', **kwargs):
+            """Convenience method to resample data sample channel-wise.
+
+            Resampling target can be specified by number of timepoint or temporal
+            distance or sampling rate.
+
+            Please note that this method only operates on `ChannelDataset` and always
+            returns such.
+
+            :Parameters:
+              nt: int
+                Number of timepoints to resample to.
+              dt: float
+                Temporal distance of samples after resampling.
+              sr: float
+                Target sampling rate.
+              **kwargs:
+                All additional arguments are passed to resample() from scipy.signal
+
+            :Return:
+              ChannelDataset
+            """
+            if nt is None and sr is None and dt is None:
+                raise ValueError, \
+                      "Required argument missing. Either needs ntimepoints, sr or dt."
+
+            # get data in original shape
+            orig_data = self.O
+
+            if len(orig_data.shape) != 3:
+                raise ValueError, "resample() only works with data from ChannelDataset."
+
+            orig_nt = orig_data.shape[2]
+            orig_length = self.dt * orig_nt
+
+            if nt is None:
+                # translate dt or sr into nt
+                if not dt is None:
+                    nt = orig_nt * float(self.dt) / dt
+                elif not sr is None:
+                    nt = orig_nt * float(sr) / self.samplingrate
+                else:
+                    raise RuntimeError, 'This should not happen!'
+            else:
+                raise RuntimeError, 'This should not happen!'
+
+
+            nt = N.round(nt)
+
+            # downsample data
+            data = signal.resample(orig_data, nt, axis=2, window=window, **kwargs)
+            new_dt = float(orig_length) / nt
+
+            return ChannelDataset(data=self._data,
+                                  samples=data,
+                                  t0=self.t0,
+                                  dt=new_dt,
+                                  channelids=self.channelids,
+                                  copy_data=True)
 
 
     channelids = property(fget=lambda self: self._dsattr['ch_ids'],

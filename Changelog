@@ -27,6 +27,8 @@ Unreleased changes
     Contributed by James M. Hughes.
   * New dataset type `ChannelDataset` for data structured in channels. Might
     be useful for data modalities like EEG and MEG.
+  * Plotting of topographies on heads. Thanks to Ingo Fründ for contributing
+    this code. Additionally, a new example shows how to do such plots.
 
 
 Releases
