@@ -60,6 +60,9 @@ class GPR(Classifier):
     log_marginal_likelihood = StateVariable(enabled=False,
         doc="Log Marginal Likelihood")
 
+    log_marginal_likelihood_gradient = StateVariable(enabled=False,
+        doc="Log Marginal Likelihood Gradient")
+
     _clf_internals = [ 'gpr', 'regression', 'retrainable' ]
 
 
@@ -117,9 +120,23 @@ class GPR(Classifier):
         # No need to initialize state variables. Unless they got set
         # they would raise an exception self.predicted_variances =
         # None self.log_marginal_likelihood = None
+        self._init_internals()
+        pass
+
+
+    def _init_internals(self):
+        """Reset some internal variables to None.
+
+        To be used in constructor and untrain()
+        """
         self._train_fv = None
         self._labels = None
         self._km_train_train = None
+        self._train_labels = None
+        self._alpha = None
+        self._L = None
+        self._LL = None
+        self.__kernel.reset()
         pass
 
 
@@ -159,10 +176,10 @@ class GPR(Classifier):
 
         # self.Kinv = N.linalg.inv(self._C)
         # Faster:
-        self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
+        Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
 
         alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
-        tmp = alphalphaT - self.Kinv
+        tmp = alphalphaT - Kinv
         # Pass tmp to __kernel and let it compute its gradient terms.
         # This scales up to huge number of hyperparameters:
         grad_LML_hypers = self.__kernel.compute_lml_gradient(tmp,self._train_fv)
@@ -171,8 +188,9 @@ class GPR(Classifier):
         # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
         # Faster formula: tr(AB) = (A*B.T).sum()
         grad_LML_sigma_n = 0.5 * (tmp * (grad_K_sigma_n).T).sum()
-        self.lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
-        return self.lml_gradient
+        lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
+        self.log_marginal_likelihood_gradient = lml_gradient
+        return lml_gradient
 
 
     def compute_gradient_log_marginal_likelihood_logscale(self):
@@ -180,21 +198,21 @@ class GPR(Classifier):
         hyperparameters are in logscale. This version use a more
         compact formula provided by Williams and Rasmussen book.
         """
-        # self.Kinv = N.linalg.inv(self._C)
+        # Kinv = N.linalg.inv(self._C)
         # Faster:
-        self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
-        alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
-        tmp = alphalphaT - self.Kinv
+        Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
+        alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
+        tmp = alphalphaT - Kinv
         grad_LML_log_hypers = \
-            self.__kernel.compute_lml_gradient_logscale(tmp,self._train_fv)
-        grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(self.Kinv.shape[0])
+            self.__kernel.compute_lml_gradient_logscale(tmp, self._train_fv)
+        grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(Kinv.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_log_sigma_n))
         # Faster formula: tr(AB) = (A*B.T).sum()
         grad_LML_log_sigma_n = 0.5 * (tmp * (grad_K_log_sigma_n).T).sum()
-        self.LML_gradient = N.hstack([grad_LML_log_sigma_n,
-                                      grad_LML_log_hypers])
-        return self.LML_gradient
+        lml_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
+        self.log_marginal_likelihood_gradient = lml_gradient
+        return lml_gradient
 
 
     def getSensitivityAnalyzer(self, flavor='auto', **kwargs):
@@ -262,8 +280,10 @@ class GPR(Classifier):
         if not retrainable or newkernel or _changedData['params']:
             if __debug__:
                 debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
+            # XXX it seems that we do not need binding to object, but may be
+            # commented out code would return?
             self._C = km_train_train + \
-                  self.sigma_noise**2*N.identity(km_train_train.shape[0], 'd')
+                  self.sigma_noise**2 * N.identity(km_train_train.shape[0], 'd')
             # The following decomposition could raise
             # N.linalg.linalg.LinAlgError because of numerical
             # reasons, due to the too rapid decay of 'self._C'
@@ -287,7 +307,7 @@ class GPR(Classifier):
                 self._LL = (self._L,True)
             except SLAError:
                 epsilon = 1.0e-20*N.eye(self._C.shape[0])
-                self._L = SLcholesky(self._C+epsilon, lower=True)
+                self._L = SLcholesky(self._C + epsilon, lower=True)
                 self._LL = (self._L,True)
                 pass
             newL = True
@@ -385,6 +405,13 @@ class GPR(Classifier):
         super(GPR, self)._setRetrainable(value, force)
         if force or (value and value != self.params.retrainable):
             self._km_test_test = None
+
+
+    def untrain(self):
+        super(GPR, self).untrain()
+        # XXX might need to take special care for retrainable. later
+        self._init_internals()
+        pass
 
 
     def set_hyperparameters(self, hyperparameter):
