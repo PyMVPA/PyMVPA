@@ -29,11 +29,13 @@ tests = [
     'test_boxcarmapper',
     'test_neighbor',
     'test_maskeddataset',
+    'test_metadataset',
     'test_splitter',
     'test_state',
     'test_params',
     'test_eepdataset',
     # Misc supporting utilities
+    'test_config',
     'test_stats',
     'test_support',
     'test_verbosity',
@@ -51,6 +53,8 @@ tests = [
     'test_plr',
     'test_smlr',
     # Various algorithms
+    'test_svdmapper',
+    'test_samplegroupmapper',
     'test_transformers',
     'test_transerror',
     'test_clfcrossval',
