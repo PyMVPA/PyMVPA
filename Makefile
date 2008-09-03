@@ -191,9 +191,10 @@ testapiref: apidoc
 test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
+	@echo "Generating coverage data and report. Takes awhile. No progress output."
 	@cd tests && { \
-	  export PYTHONPATH=..; \
-	  python-coverage -x main.py; \
+	  export PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
+	  python-coverage -x main.py >/dev/null 2>&1; \
 	  python-coverage -r -i -o /usr,/var >| ../$(COVERAGE_REPORT); \
 	  grep -v '100%$$' ../$(COVERAGE_REPORT); \
 	  python-coverage -a -i -o /usr,/var ; }
