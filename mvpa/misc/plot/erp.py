@@ -91,7 +91,7 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
 
 
 def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
-            color='r', errcolor=None, errtype='ste', ax=P,
+            color='r', errcolor=None, errtype=None, ax=P,
             ymult=1.0, *args, **kwargs):
     """Plot single ERP on existing canvas
 
@@ -113,11 +113,14 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
       pre_mean: float
         Duration (in seconds) at the beginning of the window which is used
         for deriving the mean of the signal.
-      errtype: 'ste' | 'std' | 'none'
+      errtype: None | 'ste' | 'std' | 'ci95' | list of previous three
         Type of error value to be computed per datapoint.
           'ste': standard error of the mean
           'std': standard deviation
-          'none': no error margin is plotted
+          'ci95': 95% confidence interval (1.96 * ste)
+          None: no error margin is plotted (default)
+        Optionally, multiple error types can be specified in a list. In that
+        case all of them will be plotted.
       color: matplotlib color code
         Color to be used for plotting the mean signal timecourse.
       errcolor: matplotlib color code
@@ -168,11 +171,19 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
     # bottom <-
     time_points = N.arange(len(erp_mean)) * 1.0 / SR - pre
 
-    if not errtype is 'none':
+    # give sane default
+    if errtype is None:
+        errtype = []
+    if not isinstance(errtype, list):
+        errtype = [errtype]
+
+    for et in errtype:
         # compute error per datapoint
-        if errtype == 'ste':
+        if et in ['ste', 'ci95']:
             erp_stderr = erp_data.std(axis=0) / N.sqrt(len(erp_data))
-        elif errtype == 'std':
+            if et == 'ci95':
+                erp_stderr *= 1.96
+        elif et == 'std':
             erp_stderr = erp_data.std(axis=0)
         else:
             raise ValueError, "Unknown error type '%s'" % errtype
