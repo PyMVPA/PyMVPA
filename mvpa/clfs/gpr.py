@@ -60,7 +60,7 @@ class GPR(Classifier):
     log_marginal_likelihood = StateVariable(enabled=False,
         doc="Log Marginal Likelihood")
 
-    _clf_internals = [ 'gpr', 'regression', 'retrainable', 'has_sensitivity' ]
+    _clf_internals = [ 'gpr', 'regression', 'retrainable' ]
 
 
     # NOTE XXX Parameters of the classifier. Values available as
@@ -107,8 +107,12 @@ class GPR(Classifier):
         # append proper clf_internal depending on the kernel
         # TODO: unify finally all kernel-based machines.
         #       make SMLR to use kernels
-        self._clf_internals = self._clf_internals + \
-            (['non-linear'], ['linear'])[int(isinstance(kernel, KernelLinear))]
+        if isinstance(kernel, KernelLinear):
+            self._clf_internals += ['linear']
+        else:
+            self._clf_internals += ['non-linear']
+            if externals.exists('openopt'):
+                self._clf_internals += ['has_sensitivity']
 
         # No need to initialize state variables. Unless they got set
         # they would raise an exception self.predicted_variances =
@@ -214,6 +218,12 @@ class GPR(Classifier):
                      [int(isinstance(self.__kernel, KernelLinear))]
             if __debug__:
                 debug("GPR", "Returning '%s' sensitivity analyzer" % flavor)
+
+        if flavor == 'model_select' and not ('has_sensitivity' in self._clf_internals):
+            raise ValueError, \
+                  "model_select flavor is not available probably " \
+                  "due to not available 'openopt' module"
+
         try:
             return {'model_select' : GPRWeights,
                     'linear' : GPRLinearWeights}[flavor](self, **kwargs)
