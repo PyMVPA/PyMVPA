@@ -19,7 +19,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
-from mvpa.clfs.kernel import KernelSquaredExponential, KernelExponential, KernelMatern_3_2, KernelMatern_5_2
+from mvpa.clfs.kernel import KernelSquaredExponential, KernelExponential, \
+     KernelMatern_3_2, KernelMatern_5_2
 from mvpa.clfs.distance import pnorm_w
 
 if __debug__:
@@ -46,14 +47,16 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
     exponential-like kernels. Support for linear kernel will be
     added later.
     """
-    def __init__(self, threshold = 1.0e-2, kernel = None, kernel_width = 1.0, w_guess = None, **kwargs):
+    def __init__(self, threshold = 1.0e-2, kernel = None, kernel_width = 1.0,
+                 w_guess = None, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
-        self.threshold = threshold # Threshold in W changes (stopping criterion for irelief).
+        # Threshold in W changes (stopping criterion for irelief)
+        self.threshold = threshold
         if kernel == None:
             self.kernel = KernelExponential
         else:
@@ -65,7 +68,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
         pass
 
 
-    def compute_M_H(self,label):
+    def compute_M_H(self, label):
         """Compute hit/miss dictionaries.
 
         For each instance compute the set of indices having the same
@@ -78,21 +81,22 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
         M = {}
         H = {}
         for i in range(label.size):
-            M[i] = N.where(label!=label[i])[0]
-            tmp = (N.where(label==label[i])[0]).tolist()
+            M[i] = N.where(label != label[i])[0]
+            tmp = (N.where(label == label[i])[0]).tolist()
             tmp.remove(i)
-            assert(tmp!=[]) # Assert that there are at least two exampls for class label[i]
+            # There must be at least two exampls for class label[i]
+            assert(tmp != [])
             H[i] = N.array(tmp)
             pass
-        return M,H
+        return M, H
 
 
     def _call(self, dataset):
         """Computes featurewise I-RELIEF weights."""
-        samples_size = dataset.samples.shape[0]
-        features_size = dataset.samples.shape[1]
-        if self.w_guess==None:
-            self.w = N.ones(features_size,'d')
+        samples = dataset.samples
+        NS, NF = samples.shape[:2]
+        if self.w_guess == None:
+            self.w = N.ones(NF, 'd')
             pass
         self.w = self.w/(self.w**2).sum() # do normalization in all cases to be safe :)
 
@@ -100,25 +104,27 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
 
         while True:
             self.k = self.kernel(length_scale = self.kernel_width/self.w)
-            d_w_k = self.k.compute(dataset.samples)
+            d_w_k = self.k.compute(samples)
             # set d_w_k to zero where distance=0 (i.e. kernel ==
             # 1.0), otherwise I-RELIEF could not converge.
             # XXX Note that kernel==1 for distance=0 only for
             # exponential kernels!!  IMPROVE
-            d_w_k[N.abs(d_w_k-1.0)<1.0e-15] = 0.0
-            ni = N.zeros(features_size,'d')
-            for n in range(samples_size):
-                gamma_n = 1.0 - N.nan_to_num(d_w_k[n,M[n]].sum() / (d_w_k[n,:].sum()-d_w_k[n,n])) # d_w_k[n,n] could be omitted since == 0.0
-                alpha_n = N.nan_to_num(d_w_k[n,M[n]]/(d_w_k[n,M[n]].sum()))
-                beta_n = N.nan_to_num(d_w_k[n,H[n]]/(d_w_k[n,H[n]].sum()))
+            d_w_k[N.abs(d_w_k-1.0) < 1.0e-15] = 0.0
+            ni = N.zeros(NF, 'd')
+            for n in range(NS):
+                # d_w_k[n,n] could be omitted since == 0.0
+                gamma_n = 1.0 - N.nan_to_num(d_w_k[n, M[n]].sum() \
+                                / (d_w_k[n, :].sum()-d_w_k[n, n]))
+                alpha_n = N.nan_to_num(d_w_k[n, M[n]]/(d_w_k[n, M[n]].sum()))
+                beta_n = N.nan_to_num(d_w_k[n, H[n]]/(d_w_k[n, H[n]].sum()))
 
-                m_n = (N.abs(dataset.samples[n,:]-dataset.samples[M[n],:])*alpha_n[:,None]).sum(0)
-                h_n = (N.abs(dataset.samples[n,:]-dataset.samples[H[n],:])*beta_n[:,None]).sum(0)
+                m_n = (N.abs(samples[n, :]-samples[M[n], :])*alpha_n[:, None]).sum(0)
+                h_n = (N.abs(samples[n, :]-samples[H[n], :])*beta_n[:, None]).sum(0)
                 ni += gamma_n*(m_n-h_n)
                 pass
-            ni = ni/samples_size
+            ni = ni/NS
 
-            ni_plus = N.clip(ni,0.0,N.inf) # set all negative elements to zero
+            ni_plus = N.clip(ni, 0.0, N.inf) # set all negative elements to zero
             w_new = N.nan_to_num(ni_plus/(N.sqrt((ni_plus**2).sum())))
             change = N.abs(w_new-self.w).sum()
             if __debug__ and 'IRELIEF' in debug.active:
@@ -129,7 +135,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
 
             # update weights:
             self.w = w_new
-            if change<self.threshold:
+            if change < self.threshold:
                 break
             pass
 
@@ -158,7 +164,7 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
     computational complexity.
     """
 
-    def __init__(self, a = 5.0, permute=True, max_iter = 3, **kwargs):
+    def __init__(self, a=5.0, permute=True, max_iter=3, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
@@ -173,56 +179,56 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
 
     def _call(self, dataset):
         """Computes featurewise I-RELIEF-2 weights. Online version."""
-        samples_size = dataset.samples.shape[0]
-        features_size = dataset.samples.shape[1]
-        if self.w_guess==None:
-            self.w = N.ones(features_size,'d')
+        NS = dataset.samples.shape[0]
+        NF = dataset.samples.shape[1]
+        if self.w_guess == None:
+            self.w = N.ones(NF, 'd')
             pass
         self.w = self.w/(self.w**2).sum() # do normalization in all cases to be safe :)
 
         M, H = self.compute_M_H(dataset.labels)
 
-        ni = N.zeros(features_size,'d')
-        pi = N.zeros(features_size,'d')
+        ni = N.zeros(NF, 'd')
+        pi = N.zeros(NF, 'd')
 
         if self.permute:
-            random_sequence = N.random.permutation(samples_size) # indices to go through samples in random order
+            random_sequence = N.random.permutation(NS) # indices to go through samples in random order
         else:
-            random_sequence = N.arange(samples_size)
+            random_sequence = N.arange(NS)
             pass
 
         change = self.threshold+1.0
         iteration = 0
         counter = 0.0
-        while change>self.threshold and iteration<self.max_iter:
+        while change > self.threshold and iteration < self.max_iter:
             if __debug__:
                 debug('IRELIEF', "Iteration %d" % iteration)
                 pass
-            for t in range(samples_size):
+            for t in range(NS):
                 counter += 1.0
                 n = random_sequence[t]
 
                 self.k = self.kernel(length_scale = self.kernel_width/self.w)
-                d_w_k_xn_Mn = self.k.compute(dataset.samples[None,n,:],dataset.samples[M[n],:]).squeeze()
+                d_w_k_xn_Mn = self.k.compute(dataset.samples[None, n, :], dataset.samples[M[n], :]).squeeze()
                 d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
-                d_w_k_xn_x = self.k.compute(dataset.samples[None,n,:],dataset.samples).squeeze()
+                d_w_k_xn_x = self.k.compute(dataset.samples[None, n, :], dataset.samples).squeeze()
                 gamma_n = 1.0 - d_w_k_xn_Mn_sum / d_w_k_xn_x.sum()
                 alpha_n = d_w_k_xn_Mn / d_w_k_xn_Mn_sum
 
-                d_w_k_xn_Hn = self.k.compute(dataset.samples[None,n,:],dataset.samples[H[n],:]).squeeze()
+                d_w_k_xn_Hn = self.k.compute(dataset.samples[None, n, :], dataset.samples[H[n], :]).squeeze()
                 beta_n = d_w_k_xn_Hn / d_w_k_xn_Hn.sum()
 
-                m_n = (N.abs(dataset.samples[n,:]-dataset.samples[M[n],:])*alpha_n[:,N.newaxis]).sum(0)
-                h_n = (N.abs(dataset.samples[n,:]-dataset.samples[H[n],:])*beta_n[:,N.newaxis]).sum(0)
+                m_n = (N.abs(dataset.samples[n, :]-dataset.samples[M[n], :])*alpha_n[:, N.newaxis]).sum(0)
+                h_n = (N.abs(dataset.samples[n, :]-dataset.samples[H[n], :])*beta_n[:, N.newaxis]).sum(0)
                 pi = gamma_n*(m_n-h_n)
                 learning_rate = 1.0/(counter*self.a+1.0)
                 ni_new = ni+learning_rate*(pi-ni)
                 ni = ni_new
 
-                ni_plus = N.clip(ni,0.0,N.inf) # set all negative elements to zero
+                ni_plus = N.clip(ni, 0.0, N.inf) # set all negative elements to zero
                 w_new = N.nan_to_num(ni_plus/(N.sqrt((ni_plus**2).sum())))
                 change = N.abs(w_new-self.w).sum()
-                if t%10==0 and __debug__ and 'IRELIEF' in debug.active:
+                if t % 10 == 0 and __debug__ and 'IRELIEF' in debug.active:
                     debug('IRELIEF',
                           "t=%d change=%.4f max=%f min=%.4f mean=%.4f std=%.4f"
                           " #nan=%d" %
@@ -232,7 +238,7 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
 
                 self.w = w_new
 
-                if change<self.threshold and iteration>0:
+                if change < self.threshold and iteration > 0:
                     break
                 pass
             iteration += 1
@@ -259,21 +265,23 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
     exponential-like kernels. Support for linear kernel will be
     added later.
     """
-    def __init__(self, threshold = 1.0e-2, kernel_width = 1.0, w_guess = None, **kwargs):
+    def __init__(self, threshold = 1.0e-2, kernel_width = 1.0,
+                 w_guess = None, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
-        self.threshold = threshold # Threshold in W changes (stopping criterion for irelief).
+        # Threshold in W changes (stopping criterion for irelief).
+        self.threshold = threshold
         self.w_guess = w_guess
         self.w = None
         self.kernel_width = kernel_width
         pass
 
 
-    def compute_M_H(self,label):
+    def compute_M_H(self, label):
         """Compute hit/miss dictionaries.
 
         For each instance compute the set of indices having the same
@@ -281,56 +289,64 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
 
         Note that this computation is independent of the number of
         features.
+
+        XXX should it be some generic function since it doesn't use self
         """
 
         M = {}
         H = {}
         for i in range(label.size):
-            M[i] = N.where(label!=label[i])[0]
-            tmp = (N.where(label==label[i])[0]).tolist()
+            M[i] = N.where(label != label[i])[0]
+            tmp = (N.where(label == label[i])[0]).tolist()
             tmp.remove(i)
-            assert(tmp!=[]) # Assert that there are at least two exampls for class label[i]
+            # There must be least two exampls for class label[i]
+            assert(tmp != [])
             H[i] = N.array(tmp)
             pass
-        return M,H
+        return M, H
 
 
-    def k(self,distances):
+    def k(self, distances):
         """Exponential kernel."""
         kd = N.exp(-distances/self.kernel_width)
         # set kd to zero where distance=0 otherwise I-RELIEF could not converge.
-        kd[N.abs(distances)<1.0e-15] = 0.0
+        kd[N.abs(distances) < 1.0e-15] = 0.0
         return kd
 
 
     def _call(self, dataset):
         """Computes featurewise I-RELIEF weights."""
-        samples_size = dataset.samples.shape[0]
-        features_size = dataset.samples.shape[1]
-        if self.w_guess==None:
-            self.w = N.ones(features_size,'d')
+        samples = dataset.samples
+        NS, NF = samples.shape[:2]
+
+        if self.w_guess == None:
+            w = N.ones(NF, 'd')
             pass
-        self.w = self.w/(self.w**2).sum() # do normalization in all cases to be safe :)
+        w /= (w**2).sum() # do normalization in all cases to be safe :)
 
         M, H = self.compute_M_H(dataset.labels)
 
         while True:
-            d_w_k = self.k(pnorm_w(data1=dataset.samples, weight=self.w, p=1))
-            ni = N.zeros(features_size,'d')
-            for n in range(samples_size):
-                gamma_n = 1.0 - N.nan_to_num(d_w_k[n,M[n]].sum() / (d_w_k[n,:].sum()-d_w_k[n,n])) # d_w_k[n,n] could be omitted since == 0.0
-                alpha_n = N.nan_to_num(d_w_k[n,M[n]]/(d_w_k[n,M[n]].sum()))
-                beta_n = N.nan_to_num(d_w_k[n,H[n]]/(d_w_k[n,H[n]].sum()))
+            d_w_k = self.k(pnorm_w(data1=samples, weight=w, p=1))
+            ni = N.zeros(NF, 'd')
+            for n in range(NS):
+                 # d_w_k[n, n] could be omitted since == 0.0
+                gamma_n = 1.0 - N.nan_to_num(d_w_k[n, M[n]].sum() \
+                                / (d_w_k[n, :].sum() - d_w_k[n, n]))
+                alpha_n = N.nan_to_num(d_w_k[n, M[n]] / (d_w_k[n, M[n]].sum()))
+                beta_n = N.nan_to_num(d_w_k[n, H[n]] / (d_w_k[n, H[n]].sum()))
 
-                m_n = (N.abs(dataset.samples[n,:]-dataset.samples[M[n],:])*alpha_n[:,None]).sum(0)
-                h_n = (N.abs(dataset.samples[n,:]-dataset.samples[H[n],:])*beta_n[:,None]).sum(0)
-                ni += gamma_n*(m_n-h_n)
+                m_n = (N.abs(samples[n, :] - samples[M[n], :]) \
+                       * alpha_n[:, None]).sum(0)
+                h_n = (N.abs(samples[n, :] - samples[H[n], :]) \
+                       * beta_n[:, None]).sum(0)
+                ni += gamma_n*(m_n - h_n)
                 pass
-            ni = ni/samples_size
+            ni = ni / NS
 
-            ni_plus = N.clip(ni,0.0,N.inf) # set all negative elements to zero
-            w_new = N.nan_to_num(ni_plus/(N.sqrt((ni_plus**2).sum())))
-            change = N.abs(w_new-self.w).sum()
+            ni_plus = N.clip(ni, 0.0, N.inf) # set all negative elements to zero
+            w_new = N.nan_to_num(ni_plus / (N.sqrt((ni_plus**2).sum())))
+            change = N.abs(w_new - w).sum()
             if __debug__ and 'IRELIEF' in debug.active:
                 debug('IRELIEF',
                       "change=%.4f max=%f min=%.4f mean=%.4f std=%.4f #nan=%d" %
@@ -338,12 +354,13 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
                        N.isnan(w_new).sum()))
 
             # update weights:
-            self.w = w_new
-            if change<self.threshold:
+            w = w_new
+            if change < self.threshold:
                 break
             pass
 
-        return self.w
+        self.w = w
+        return w
 
 
 class IterativeReliefOnline(IterativeRelief):
@@ -370,37 +387,44 @@ class IterativeReliefOnline(IterativeRelief):
 
     def _call(self, dataset):
         """Computes featurewise I-RELIEF-2 weights. Online version."""
-        samples_size = dataset.samples.shape[0]
-        features_size = dataset.samples.shape[1]
-        if self.w_guess==None:
-            self.w = N.ones(features_size,'d')
+        # local bindings
+        samples = dataset.samples
+        NS, NF = samples.shape[:2]
+        threshold = self.threshold
+        a = self.a
+
+        if self.w_guess == None:
+            w = N.ones(NF, 'd')
             pass
-        self.w = self.w/(self.w**2).sum() # do normalization in all cases to be safe :)
+
+        # do normalization in all cases to be safe :)
+        w /= (w**2).sum()
 
         M, H = self.compute_M_H(dataset.labels)
 
-        ni = N.zeros(features_size,'d')
-        pi = N.zeros(features_size,'d')
+        ni = N.zeros(NF, 'd')
+        pi = N.zeros(NF, 'd')
 
         if self.permute:
-            random_sequence = N.random.permutation(samples_size) # indices to go through x in random order
+            # indices to go through x in random order
+            random_sequence = N.random.permutation(NS)
         else:
-            random_sequence = N.arange(samples_size)
+            random_sequence = N.arange(NS)
             pass
 
-        change = self.threshold+1.0
+        change = threshold + 1.0
         iteration = 0
         counter = 0.0
-        while change>self.threshold and iteration<self.max_iter:
+        while change > threshold and iteration < self.max_iter:
             if __debug__:
                 debug('IRELIEF', "Iteration %d" % iteration)
                 pass
-            for t in range(samples_size):
+            for t in range(NS):
                 counter += 1.0
                 n = random_sequence[t]
 
-                d_xn_x = N.abs(dataset.samples[n,:]-dataset.samples)
-                d_w_k_xn_x = self.k((d_xn_x*self.w).sum(1))
+                d_xn_x = N.abs(samples[n, :] - samples)
+                d_w_k_xn_x = self.k((d_xn_x*w).sum(1))
 
                 d_w_k_xn_Mn = d_w_k_xn_x[M[n]]
                 d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
@@ -411,29 +435,31 @@ class IterativeReliefOnline(IterativeRelief):
                 d_w_k_xn_Hn = d_w_k_xn_x[H[n]]
                 beta_n = d_w_k_xn_Hn / d_w_k_xn_Hn.sum()
 
-                m_n = (d_xn_x[M[n],:]*alpha_n[:,None]).sum(0)
-                h_n = (d_xn_x[H[n],:]*beta_n[:,None]).sum(0)
-                pi = gamma_n*(m_n-h_n)
-                learning_rate = 1.0/(counter*self.a+1.0)
-                ni_new = ni+learning_rate*(pi-ni)
+                m_n = (d_xn_x[M[n], :] * alpha_n[:, None]).sum(0)
+                h_n = (d_xn_x[H[n], :] * beta_n[:, None]).sum(0)
+                pi = gamma_n * (m_n - h_n)
+                learning_rate = 1.0 / (counter * a + 1.0)
+                ni_new = ni + learning_rate * (pi - ni)
                 ni = ni_new
 
-                ni_plus = N.clip(ni,0.0,N.inf) # set all negative elements to zero
+                # set all negative elements to zero
+                ni_plus = N.clip(ni, 0.0, N.inf)
                 w_new = N.nan_to_num(ni_plus/(N.sqrt((ni_plus**2).sum())))
-                change = N.abs(w_new-self.w).sum()
-                if t%10==0 and __debug__ and 'IRELIEF' in debug.active:
+                change = N.abs(w_new - w).sum()
+                if t % 10 == 0 and __debug__ and 'IRELIEF' in debug.active:
                     debug('IRELIEF',
                           "t=%d change=%.4f max=%f min=%.4f mean=%.4f std=%.4f"
                           " #nan=%d" %
                           (t, change, w_new.max(), w_new.min(), w_new.mean(),
                            w_new.std(), N.isnan(w_new).sum()))
                     pass
-                self.w = w_new
+                w = w_new
 
-                if change<self.threshold and iteration>0:
+                if change < threshold and iteration > 0:
                     break
                 pass
             iteration += 1
             pass
-        return self.w
+        self.w = w
+        return w
 
