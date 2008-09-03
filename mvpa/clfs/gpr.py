@@ -237,19 +237,15 @@ class GPR(Classifier):
             if __debug__:
                 debug("GPR", "Returning '%s' sensitivity analyzer" % flavor)
 
-        # break early if linear kernel
+        # Return proper sensitivity
         if flavor == 'linear':
             return GPRLinearWeights(self, **kwargs)
-
-        # sanity check
-        if flavor == 'model_select' \
-          and not ('has_sensitivity' in self._clf_internals):
-            raise ValueError, \
-                  "model_select flavor is not available probably " \
-                  "due to not available 'openopt' module"
-
-        # only model_select is left, explode otherwise
-        if flavor == 'model_select':
+        elif flavor == 'model_select':
+            # sanity check
+            if not ('has_sensitivity' in self._clf_internals):
+                raise ValueError, \
+                      "model_select flavor is not available probably " \
+                      "due to not available 'openopt' module"
             return GPRWeights(self, **kwargs)
         else:
             raise ValueError, "Flavor %s is not recognized" % flavor
