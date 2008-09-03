@@ -176,28 +176,13 @@ PyMVPA home page.
 Publications
 ============
 
-The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
-*German Society for Psychophysiology and its Application* in Magdeburg_,
-2008.
-
-.. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
-.. _Magdeburg: http://www.magdeburg.de/
+.. include:: publications.txt
 
 
-Authors
-=======
+Authors & Contributers
+======================
 
-The PyMVPA developers team currently consists of:
-
-* `Michael Hanke`_, University of Magdeburg, Germany
-* `Yaroslav O. Halchenko`_, Rutgers University Newark, USA
-* `Per B. Sederberg`_, Princeton University, USA
-* `Emanuele Olivetti`_, University of Trento, Italy
-
-.. _Michael Hanke: http://apsy.gse.uni-magdeburg.de/hanke
-.. _Yaroslav O. Halchenko: http://www.onerussian.com
-.. _Per B. Sederberg: http://www.princeton.edu/~persed/
-.. _Emanuele Olivetti: http://sra.itc.it/people/olivetti/
+.. include:: authors.txt
 
 
 Similar or Related Projects

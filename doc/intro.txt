@@ -153,15 +153,17 @@ faster and easier than it has ever been before.
 
 .. index:: citation, PyMVPA poster
 
+
+Authors & Contributors
+======================
+
+.. include:: authors.txt
+
+
 How to cite PyMVPA
 ==================
 
-The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
-*German Society for Psychophysiology and its Application* in Magdeburg,
-2008. This is currently the prefered way to cite PyMVPA. However, we submitted
-a paper introducing the toolbox, which should replace the poster soon.
-
-.. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
+.. include:: publications.txt
 
 
 Credits
