@@ -236,7 +236,8 @@ if __debug__:
 
     debug.register('GPR',     "GPR")
     debug.register('KERNEL',  "Kernels module")
-    debug.register('MOD_SEL', "Model Selector")
+    debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
+    debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
 
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
