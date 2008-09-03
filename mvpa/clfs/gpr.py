@@ -449,7 +449,7 @@ class GPRWeights(Sensitivity):
         length_scale_initial = N.ones(dataset.samples.shape[1])*1.0e4
         # length_scale_initial = N.random.rand(dataset.samples.shape[1])*1.0e4
         hyp_initial_guess = N.hstack([sigma_noise_initial,sigma_f_initial,length_scale_initial])
-        fixedHypers = N.array([0]*hyp_initial_guess.size),dtype=bool)
+        fixedHypers = N.array([0]*hyp_initial_guess.size,dtype=bool)
         fixedHypers = None
         problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=hyp_initial_guess, optimization_algorithm="ralg", ftol=1.0e-3,fixedHypers=fixedHypers,use_gradient=True, logscale=True)
         lml = ms.solve()
