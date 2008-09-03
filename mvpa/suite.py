@@ -97,8 +97,7 @@ if externals.exists("scipy"):
     from mvpa.clfs.ridge import *
     from mvpa.clfs.plr import *
     from mvpa.misc.stats import *
-    if externals.exists('openopt'):
-        from mvpa.clfs.gpr import *
+    from mvpa.clfs.gpr import *
 
 if externals.exists("pywt"):
     from mvpa.mappers.wavelet import *
