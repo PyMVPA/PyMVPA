@@ -16,6 +16,9 @@ import numpy as N
 from mvpa.base import externals
 from mvpa.misc.exceptions import InvalidHyperparameterError
 
+externals.exists("scipy", raiseException=True)
+import scipy.linalg as SL
+
 # no sense to import this module if openopt is not available
 if externals.exists("openopt", raiseException=True):
     from scikits.openopt import NLP
@@ -121,7 +124,7 @@ class ModelSelector(object):
                 return -N.inf
             try:
                 self.parametric_model.train(self.dataset)
-            except N.linalg.linalg.LinAlgError:
+            except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError):
                 if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                 return -N.inf
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
