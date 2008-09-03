@@ -13,7 +13,7 @@ import unittest
 from mvpa.misc.copy import deepcopy
 import numpy as N
 from mvpa.datasets import Dataset
-from mvpa.mappers import SVDMapper
+from mvpa.mappers.svd import SVDMapper
 
 
 class SVDMapperTests(unittest.TestCase):
@@ -121,7 +121,7 @@ class SVDMapperTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(PCAMapperTests)
+    return unittest.makeSuite(SVDMapperTests)
 
 
 if __name__ == '__main__':
