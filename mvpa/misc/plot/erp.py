@@ -15,6 +15,7 @@ import pylab as P
 import numpy as N
 import matplotlib as mpl
 
+from mvpa.base import warning
 from mvpa.mappers.boxcar import BoxcarMapper
 
 #
@@ -139,7 +140,8 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
         pass
 
 
-def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=None,
+def plotERP(data, SR=500, onsets=None,
+            pre=0.2, pre_onset=None, post=None, pre_mean=None,
             color='r', errcolor=None, errtype=None, ax=P,
             ymult=1.0, *args, **kwargs):
     """Plot single ERP on existing canvas
@@ -157,6 +159,10 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=None,
         Sampling rate (1/s) of the signal.
       pre: float
         Duration (in seconds) to be plotted prior to onset.
+      pre_onset : float or None
+        If data is already in epochs (2D) then pre_onset provides information
+        on how many seconds pre-stimulus were used to generate them. If None,
+        then pre_onset = pre
       post: float
         Duration (in seconds) to be plotted after the onset.
       pre_mean: float
@@ -201,14 +207,29 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=None,
                            boxlength = int(SR * duration),
                            offset = -int(SR * pre))
         erp_data = bcm(data)
+
+        # override values since we are using Boxcar
+        pre_discard = 0
+        pre_onset = pre
     else:
+        if pre_onset is None:
+            pre_onset = pre
+
+        if pre_onset < pre:
+            warning("Pre-stimulus interval to plot %g is smaller than provided "
+                    "pre-stimulus captured interval %g, thus plot interval was "
+                    "adjusted" % (pre, pre_onset))
+            pre = pre_onset
+
         if post is None:
             # figure out post
-            duration = float(data.shape[1]) / SR
+            duration = float(data.shape[1]) / SR - pre_discard
             post = duration - pre
         else:
             duration = pre + post
+
         erp_data = data
+        pre_discard = pre_onset - pre
 
     # Scale the data appropriately
     erp_data *= ymult
@@ -222,7 +243,8 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=None,
 
     if not (pre_mean == 0 or pre_mean is None):
         # mean of pre-onset signal accross trials
-        erp_baseline = N.mean(erp_data[:, :int(pre_mean*SR)])
+        erp_baseline = N.mean(
+            erp_data[:, int((pre_onset-pre_mean)*SR):int(pre_onset*SR)])
         # center data on pre-onset mean
         # NOTE: make sure that we make a copy of the data to don't
         #       alter the original. Better be safe than sorry
@@ -231,7 +253,13 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=None,
     # generate timepoints and error ranges to plot filled error area
     # top ->
     # bottom <-
-    time_points = N.arange(erp_data.shape[1]) * 1.0 / SR - pre
+    time_points = N.arange(erp_data.shape[1]) * 1.0 / SR - pre_onset
+
+    # if pre != pre_onset
+    if pre_discard > 0:
+        npoints = int(pre_discard * SR)
+        time_points = time_points[npoints:]
+        erp_data = erp_data[:, npoints:]
 
     # select only time points of interest (if post is provided)
     if post is not None:
@@ -281,6 +309,7 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=None,
 
 
 def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
+             pre_onset=None,
              xlabel='time (s)', ylabel='$\mu V$',
              ylim=None, ymult=1.0, legend=False,
              xlformat='%4g', ylformat='%4g',
@@ -298,8 +327,12 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
       ax
         Where to draw (e.g. subplot instance). If None, new figure is
         created
-      pre
+      pre : float
         Duration (seconds) to be plotted prior to onset
+      pre_onset : float or None
+        If data is already in epochs (2D) then pre_onset provides information
+        on how many seconds pre-stimulus were used to generate them. If None,
+        then pre_onset = pre
       post : float or None
         Duration (seconds) to be plotted after the onset. If any data is
         provided with onsets, it can't be None. If None -- plots all time
@@ -371,7 +404,7 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
                   % params.get('label', 'UNKNOWN')
 
 
-        plotERP(plot_data, pre=pre, post=post, ax=ax, **params)
+        plotERP(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax, **params)
         #             plot_kwargs={'label':label})
 
         if isinstance(erp_def, dict):
