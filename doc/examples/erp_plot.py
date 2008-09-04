@@ -37,6 +37,7 @@ cargs = {
     # Plot all 'errors' in different degrees of shadings
     'errtype' : ['ste', 'ci95', 'std'],
     'legend' : False, # legend manages to obscure the plot
+    'alinewidth' : 1  # assume that we like thin lines
     }
 
 # Create a new figure

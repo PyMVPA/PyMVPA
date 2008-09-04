@@ -313,6 +313,7 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
              xlabel='time (s)', ylabel='$\mu V$',
              ylim=None, ymult=1.0, legend=False,
              xlformat='%4g', ylformat='%4g',
+             loffset=10, alinewidth=2,
              **kwargs):
     """Plot multiple ERPs on a new figure.
 
@@ -344,6 +345,12 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
         Format of the x ticks
       yformat : basestring
         Format of the y ticks
+      loffset : int
+        Offset in voxels for axes and tick labels. Different
+        matplotlib frontends might have different opinions, thus
+        offset value might need to be tuned specifically per frontend
+      alinewidth : int
+        Axis and ticks line width
       **kwargs
         Additional arguments provided to plotERP()
 
@@ -410,7 +417,9 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
         if isinstance(erp_def, dict):
             erp_def['data'] = plot_data # return it back
 
-    props = dict(color='black', linewidth=2, markeredgewidth=2, zorder=1)
+    props = dict(color='black',
+                 linewidth=alinewidth, markeredgewidth=alinewidth,
+                 zorder=1, offset=loffset)
     _make_centeredaxis(ax, 0, ai=0, label=xlabel, **props)
     _make_centeredaxis(ax, 0, ai=1, mult=N.sign(ymult), label=ylabel, **props)
 
