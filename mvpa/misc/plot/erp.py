@@ -6,7 +6,10 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Basic ERP (here ERP = Event Related Plot ;-)) plotting"""
+"""Basic ERP (here ERP = Event Related Plot ;-)) plotting
+
+Can be used for plotting not only ERP but any event-locked data
+"""
 
 import pylab as P
 import numpy as N
@@ -15,13 +18,32 @@ import matplotlib as mpl
 from mvpa.mappers.boxcar import BoxcarMapper
 
 #
+# Original code borrowed from
+#  http://www.scipy.org/Cookbook/Matplotlib/Transformations
+#
+from matplotlib.transforms import blend_xy_sep_transform, identity_transform
+def _offset(ax, x, y):
+    """Provide offset in pixels
+
+    :Parameters:
+      x : int
+        Offset in pixels for x
+      y : int
+        Offset in pixels for y
+    """
+    trans = blend_xy_sep_transform(ax.transData, ax.transData)
+    # Now we set the offset in pixels
+    trans.set_offset((x, y), identity_transform())
+    return trans
+
+#
 # Original code was borrowed from
 # http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net \
 #   /msg05669.html
 # It sustained heavy refactoring/extension
 #
-
-def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
+def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
+                       format='%4g', label=None, **props):
     """Plot an axis which is centered at loc (e.g. 0)
 
     :Parameters:
@@ -30,13 +52,15 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
      loc
        Value to center at
      offset
-       Relative offset for the labels
+       Relative offset (in pixels) for the labels
      ai : int
        Axis index: 0 for x, 1 for y
      mult
        Multiplier for the axis labels. ERPs for instance need to be
        inverted, thus labels too manually here since there is no easy
        way in matplotlib to invert an axis
+     label : basestring or None
+       If not -- put a label outside of the axis
      **props
        Given to underlying plotting functions
     """
@@ -53,28 +77,41 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
         locs = xlocs
         vrange = [xmin, xmax]
         tdir = mpl.lines.TICKDOWN
-        horizontalalignment = 'center'
-        verticalalignment = 'top'
+        halignment = 'center'
+        valignment = 'top'
+        lhalignment = 'left'
+        lvalignment = 'center'
+        lx, ly = xmax, 0
+        ticklength = ax.xaxis.get_ticklines()[0]._markersize
     elif ai == 1:
         hlocs = xlocs
         locs = ylocs
         vrange = [ymin, ymax]
         tdir = mpl.lines.TICKLEFT
-        horizontalalignment = 'right'
-        verticalalignment = 'center'
+        halignment = 'right'
+        valignment = 'center'
+        lhalignment = 'center'
+        lvalignment = 'bottom'
+        lx, ly = 0, ymax
+        ticklength = ax.yaxis.get_ticklines()[0]._markersize
     else:
         raise ValueError, "Illegal ai=%s" % ai
 
-    # absolute offset
-    offset_abs = offset * float(hlocs[1]-hlocs[0])
-
     args = [ (locs, [loc]*len(locs)),
              (vrange, [loc, loc]),
-             [locs, (loc-offset_abs,)*len(locs)]]
+             [locs, (loc,)*len(locs)]
+             ]
 
+    offset_abs = offset + ticklength
     if ai == 1:
         # invert
         args = [ [x[1], x[0]] for x in args ]
+        # shift the tick labels labels
+        trans = _offset(ax, -offset_abs, 0)
+        transl = _offset(ax, 0, offset)
+    else:
+        trans = _offset(ax, 0, -offset_abs)
+        transl = _offset(ax, offset, 0)
 
     tickline, = ax.plot(linestyle='', marker=tdir, *args[0], **props)
     axline, = ax.plot(*args[1], **props)
@@ -82,15 +119,27 @@ def _make_centeredaxis(ax, loc, offset=0.5, ai=0, mult=1.0, **props):
     tickline.set_clip_on(False)
     axline.set_clip_on(False)
 
+
     for i,l in enumerate(locs):
         if l == 0:                    # no origin label
             continue
-        coor = [args[2][0][i], args[2][1][i], '%1.1f'%(mult*l)]
-        ax.text(horizontalalignment=horizontalalignment,
-                verticalalignment=verticalalignment, *coor)
+        coor = [args[2][0][i], args[2][1][i], format % (mult * l)]
+        ax.text(horizontalalignment=halignment,
+                verticalalignment=valignment, transform=trans, *coor)
 
 
-def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
+    if label is not None:
+        ax.text(
+            #max(args[2][0]), max(args[2][1]),
+            lx, ly,
+            label,
+            horizontalalignment=lhalignment,
+            verticalalignment=lvalignment, fontsize=14,
+            fontweight='bold', transform=transl)
+        pass
+
+
+def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=None,
             color='r', errcolor=None, errtype=None, ax=P,
             ymult=1.0, *args, **kwargs):
     """Plot single ERP on existing canvas
@@ -112,7 +161,7 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
         Duration (in seconds) to be plotted after the onset.
       pre_mean: float
         Duration (in seconds) at the beginning of the window which is used
-        for deriving the mean of the signal.
+        for deriving the mean of the signal. If None, pre_mean = pre
       errtype: None | 'ste' | 'std' | 'ci95' | list of previous three
         Type of error value to be computed per datapoint.
           'ste': standard error of the mean
@@ -137,17 +186,32 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
       :Returns:
         Mean ERP timeseries.
     """
-    # trial timecourse duration
-    duration = pre + post
+    if pre_mean is None:
+        pre_mean = pre
 
     if onsets is not None: # if we need to extract ERPs
+        if post is None:
+            raise ValueError, \
+                  "Duration post onsets must be provided if onsets are given"
+        # trial timecourse duration
+        duration = pre + post
+
         # We are working with a full timeline
         bcm = BoxcarMapper(onsets,
                            boxlength = int(SR * duration),
                            offset = -int(SR * pre))
         erp_data = bcm(data)
     else:
+        if post is None:
+            # figure out post
+            duration = float(data.shape[1]) / SR
+            post = duration - pre
+        else:
+            duration = pre + post
         erp_data = data
+
+    # Scale the data appropriately
+    erp_data *= ymult
 
     # validity check -- we should have 2D matrix (trials x samples)
     if len(erp_data.shape) != 2:
@@ -163,13 +227,20 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
         # NOTE: make sure that we make a copy of the data to don't
         #       alter the original. Better be safe than sorry
         erp_data = erp_data - erp_baseline
-    # compute mean signal timecourse accross trials
-    erp_mean = N.mean(erp_data, axis=0)
 
     # generate timepoints and error ranges to plot filled error area
     # top ->
     # bottom <-
-    time_points = N.arange(len(erp_mean)) * 1.0 / SR - pre
+    time_points = N.arange(erp_data.shape[1]) * 1.0 / SR - pre
+
+    # select only time points of interest (if post is provided)
+    if post is not None:
+        npoints = int(duration * SR)
+        time_points = time_points[:npoints]
+        erp_data = erp_data[:, :npoints]
+
+    # compute mean signal timecourse accross trials
+    erp_mean = N.mean(erp_data, axis=0)
 
     # give sane default
     if errtype is None:
@@ -190,8 +261,8 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
 
         time_points2w = N.hstack((time_points, time_points[::-1]))
 
-        error_top = ymult * erp_mean + ymult * erp_stderr
-        error_bottom = ymult * erp_mean - ymult * erp_stderr
+        error_top = erp_mean + erp_stderr
+        error_bottom = erp_mean - erp_stderr
         error2w = N.hstack((error_top, error_bottom[::-1]))
 
         if errcolor is None:
@@ -203,15 +274,17 @@ def plotERP(data, SR=500, onsets=None, pre=0.2, post=0.6, pre_mean=0.2,
                         zorder=3)
 
     # plot mean signal timecourse
-    ax.plot(time_points, ymult * erp_mean, lw=2, color=color, zorder=4,
+    ax.plot(time_points, erp_mean, lw=2, color=color, zorder=4,
             *args, **kwargs)
-
+#    ax.xaxis.set_major_locator(P.MaxNLocator(4))
     return erp_mean
 
 
-def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
+def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
              xlabel='time (s)', ylabel='$\mu V$',
-             ylim=None, ymult=1.0, **kwargs):
+             ylim=None, ymult=1.0, legend=False,
+             xlformat='%4g', ylformat='%4g',
+             **kwargs):
     """Plot multiple ERPs on a new figure.
 
     :Parameters:
@@ -227,11 +300,17 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
         created
       pre
         Duration (seconds) to be plotted prior to onset
-      post
-        Duration (seconds) to be plotted after the onset
-      ymult: float
+      post : float or None
+        Duration (seconds) to be plotted after the onset. If any data is
+        provided with onsets, it can't be None. If None -- plots all time
+        points after onsets
+      ymult : float
         Multiplier for the values. E.g. if negative-up ERP plot is needed:
         provide ymult=-1.0
+      xformat : basestring
+        Format of the x ticks
+      yformat : basestring
+        Format of the y ticks
       **kwargs
         Additional arguments provided to plotERP()
 
@@ -264,8 +343,10 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
     else:
         fig = P.gcf()
 
+    # We don't want original axis being on
     ax.axison = True
 
+    labels = []
     for erp_def in erps:
         plot_data = data
         params = {'ymult' : ymult}
@@ -280,6 +361,8 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
             plot_data = erp_def.pop('data', None)
             params.update(erp_def)
 
+        labels.append(params.get('label', ''))
+
         # absorb common parameters
         params.update(kwargs)
 
@@ -291,23 +374,24 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=0.6,
         plotERP(plot_data, pre=pre, post=post, ax=ax, **params)
         #             plot_kwargs={'label':label})
 
-    # legend obscures plotting a bit... disabled for now
-    #P.legend([x[0] for x in erps], loc='best')
-
-    if xlabel is not None:
-        P.xlabel(xlabel, fontsize=12)
-    if ylabel is not None:
-        P.ylabel(ylabel,  fontsize=16)
+        if isinstance(erp_def, dict):
+            erp_def['data'] = plot_data # return it back
 
     props = dict(color='black', linewidth=2, markeredgewidth=2, zorder=1)
-    _make_centeredaxis(ax, 0, offset=0.3, ai=0, **props)
-    _make_centeredaxis(ax, 0, offset=0.3, ai=1, mult=ymult, **props)
+    _make_centeredaxis(ax, 0, ai=0, label=xlabel, **props)
+    _make_centeredaxis(ax, 0, ai=1, mult=N.sign(ymult), label=ylabel, **props)
 
     ax.yaxis.set_major_locator(P.NullLocator())
     ax.xaxis.set_major_locator(P.NullLocator())
     ax.set_xlim( (-pre, post) )
     if ylim != None:
         ax.set_ylim(*ylim)
+
+    # legend obscures plotting a bit... seems to be plotting
+    # everything twice. Thus disabled by default
+    if legend and N.any(N.array(labels) != ''):
+        P.legend(labels, loc='best')
+
     fig.canvas.draw()
     return fig
 
