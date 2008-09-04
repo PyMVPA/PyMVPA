@@ -329,7 +329,7 @@ def plotERP(data, SR=500, onsets=None,
 def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
              pre_onset=None,
              xlabel='time (s)', ylabel='$\mu V$',
-             ylim=None, ymult=1.0, legend='auto',
+             ylim=None, ymult=1.0, legend=None,
              xlformat='%4g', ylformat='%4g',
              loffset=10, alinewidth=2,
              **kwargs):
@@ -359,9 +359,9 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
       ymult : float
         Multiplier for the values. E.g. if negative-up ERP plot is needed:
         provide ymult=-1.0
-      xformat : basestring
+      xlformat : basestring
         Format of the x ticks
-      yformat : basestring
+      ylformat : basestring
         Format of the y ticks
       legend : basestring or None
         If not None, legend will be plotted with position argument
