@@ -30,9 +30,6 @@ from scipy.linalg import cho_solve as SLcho_solve
 from scipy.linalg import cholesky as SLcholesky
 import scipy.linalg as SL
 
-if externals.exists('openopt'):
-    from mvpa.clfs.model_selector import ModelSelector
-
 if __debug__:
     from mvpa.base import debug
 
@@ -481,6 +478,9 @@ class GPRLinearWeights(Sensitivity):
 
 
 if externals.exists('openopt'):
+
+    from mvpa.clfs.model_selector import ModelSelector
+
     class GPRWeights(Sensitivity):
         """`SensitivityAnalyzer` that reports the weights GPR trained
         on a given `Dataset`.
