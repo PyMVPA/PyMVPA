@@ -1,13 +1,12 @@
-#encoding: utf-8
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil; encoding: utf-8 -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
 #   copyright and license terms.
 #
-#   The initial version of the code was contributed by Ingo Fründ and is
-#   Coypright (c) 2008 by Ingo Fründ ingo.fruend@googlemail.com
+#   The initial version of the code was contributed by Ingo FrÃ¼nd and is
+#   Coypright (c) 2008 by Ingo FrÃ¼nd ingo.fruend@googlemail.com
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Plot parameter distributions on a head surface (topography plots)."""
@@ -28,6 +27,7 @@ externals.exists("scipy", raiseException=True)
 from scipy.optimize import leastsq
 
 
+# TODO : add optional plotting labels for the sensors
 def plotHeadTopography(topography, sensorlocations, plotsensors=False,
                        resolution=51, masked=True, plothead=True,
                        plothead_kwargs=None, **kwargs):
@@ -123,7 +123,13 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
 
     if plotsensors:
         # plot projected sensor locations
-        sensors = P.plot(sproj[:, 0], sproj[:, 1], 'wo')
+
+        # reorder sensors so the ones below plotted first
+        # TODO: please fix with more elegant solution
+        zenum = [x[::-1] for x in enumerate(sproj[:, 2].tolist())]
+        zenum.sort()
+        indx = [ x[1] for x in zenum ]
+        sensors = P.plot(sproj[indx, 0], sproj[indx, 1], 'wo')
     else:
         sensors = None
 
