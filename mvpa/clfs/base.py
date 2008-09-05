@@ -316,6 +316,36 @@ class Classifier(Parametrized):
         return range(self.__trainednfeatures)
 
 
+    def summary(self):
+        """Providing summary over the classifier"""
+
+        s = "Classifier %s" % self
+        states = self.states
+        states_enabled = states.enabled
+
+        if self.trained:
+            s += "\n trained"
+            if states.isSet('training_time'):
+                s += ' in %.3g sec' % states.training_time
+            s += ' on data with'
+            if states.isSet('trained_labels'):
+                s += ' labels:%s' % list(states.trained_labels)
+            if states.isSet('trained_dataset'):
+                td = states.trained_dataset
+                s += ' #samples:%d #chunks:%d' % (td.nsamples, len(td.uniquechunks))
+            s += " #features:%d" % self.__trainednfeatures
+            if states.isSet('feature_ids'):
+                s += ", used #features:%d" % len(states.feature_ids)
+            if states.isSet('training_confusion'):
+                s += ", training error:%.3g" % states.training_confusion.error
+        else:
+            s += "\n not yet trained"
+
+        if len(states_enabled):
+            s += "\n enabled states:%s" % ', '.join([str(states[x]) for x in states_enabled])
+        return s
+
+
     def _train(self, dataset):
         """Function to be actually overriden in derived classes
         """
@@ -986,6 +1016,16 @@ class ProxyClassifier(Classifier):
         return super(ProxyClassifier, self).__repr__(
             ["clf=%s" % repr(self.__clf)] + prefixes)
 
+    def summary(self):
+        s = super(ProxyClassifier, self).summary()
+        if self.trained:
+            s += "\n Slave classifier summary:" + \
+                 '\n + %s' % \
+                 (self.__clf.summary().replace('\n', '\n |'))
+        return s
+
+
+
     def _train(self, dataset):
         """Train `ProxyClassifier`
         """
@@ -1255,6 +1295,17 @@ class CombinedClassifier(BoostedClassifier):
     def __repr__(self, prefixes=[]):
         return super(CombinedClassifier, self).__repr__(
             ["combiner=%s" % repr(self.__combiner)] + prefixes)
+
+
+    def summary(self):
+        s = super(CombinedClassifier, self).summary()
+        if self.trained:
+            s += "\n Slave classifiers summaries:"
+            for i, clf in enumerate(self.clfs):
+                s += '\n + %d clf: %s' % \
+                     (i, clf.summary().replace('\n', '\n |'))
+        return s
+
 
     def untrain(self):
         """Untrain `CombinedClassifier`

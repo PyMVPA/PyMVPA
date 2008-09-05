@@ -133,6 +133,15 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(cve < 0.25,
              msg="Got transfer error %g" % (cve))
 
+
+    @sweepargs(clf=clfs[:])
+    def testSummary(self, clf):
+        """Basic testing of the clf summary
+        """
+        clf.train(datasets['uni2small'])
+        summary = clf.summary()
+
+
     # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
@@ -183,6 +192,10 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
+
+        # Just check if we get it at all ;-)
+        summary = clf.summary()
+
 
     @sweepargs(clf_=clfs['binary', '!meta'])
     def testSplitClassifierExtended(self, clf_):
