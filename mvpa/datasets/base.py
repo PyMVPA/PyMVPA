@@ -594,6 +594,10 @@ class Dataset(object):
         length matching the number of samples in the dataset.
         """
         try:
+            # if we are initializing with a single string -- we should
+            # treat it as a single label
+            if isinstance(attr, basestring):
+                raise TypeError
             if len(attr) != self.nsamples:
                 raise DatasetError, \
                       "Length of sample attribute '%s' [%d]" \
@@ -829,11 +833,11 @@ class Dataset(object):
         return s
 
 
-    def __iadd__( self, other ):
+    def __iadd__(self, other):
         """Merge the samples of one Dataset object to another (in-place).
 
-        No dataset attributes will be merged! Additionally, a new set of
-        unique `origids` will be generated.
+        No dataset attributes, besides labels_map, will be merged!
+        Additionally, a new set of unique `origids` will be generated.
         """
         # local bindings
         _data = self._data
@@ -843,13 +847,62 @@ class Dataset(object):
             raise DatasetError, "Cannot add Dataset, because the number of " \
                                 "feature do not match."
 
+        # take care about labels_map and labels
+        slm = self.labels_map
+        olm = other.labels_map
+        if N.logical_xor(slm is None, olm is None):
+            raise ValueError, "Cannot add datasets where only one of them " \
+                  "has labels map assigned. If needed -- implement it"
+
         # concatenate all sample attributes
-        for k, v in _data.iteritems():
+        for k,v in _data.iteritems():
             if k == 'origids':
                 # special case samples origids: for now just regenerate unique
                 # ones could also check if concatenation is unique, but it
                 # would be costly performance-wise
                 _data[k] = N.arange(len(v) + len(other_data[k]))
+
+            elif k == 'labels' and slm is not None:
+                # special care about labels if mapping was in effect,
+                # we need to append 2nd map to the first one and
+                # relabel 2nd dataset
+                nlm = slm.copy()
+                # figure out maximal numerical label used now
+                nextid = N.sort(nlm.values())[-1] + 1
+                olabels = other.labels
+                olabels_remap = {}
+                for ol, olnum in olm.iteritems():
+                    if not nlm.has_key(ol):
+                        # check if we can preserve old numberic label
+                        # if not -- assign some new one not yet present
+                        # in any dataset
+                        if olnum in nlm.values():
+                            nextid = N.sort(nlm.values() + olm.values())[-1] + 1
+                        else:
+                            nextid = olnum
+                        olabels_remap[olnum] = nextid
+                        nlm[ol] = nextid
+                        nextid += 1
+                    else:
+                        olabels_remap[olnum] = nlm[ol]
+                olabels = [olabels_remap[x] for x in olabels]
+                # finally compose new labels
+                _data['labels'] = N.concatenate((v, olabels), axis=0)
+                # and reassign new mapping
+                self._dsattr['labels_map'] = nlm
+
+                if __debug__:
+                    # check if we are not dealing with colliding
+                    # mapping, since it is problematic and might lead
+                    # to various complications
+                    if (len(Set(slm.keys())) != len(Set(slm.values()))) or \
+                       (len(Set(olm.keys())) != len(Set(olm.values()))):
+                        warning("Adding datasets where multiple labels "
+                                "mapped to the same ID is not recommended. "
+                                "Please check the outcome. Original mappings "
+                                "were %s and %s. Resultant is %s"
+                                % (slm, olm, nlm))
+
             else:
                 _data[k] = N.concatenate((v, other_data[k]), axis=0)
 
