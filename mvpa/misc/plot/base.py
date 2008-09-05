@@ -178,3 +178,65 @@ def plotSamplesDistance(dataset, sortbyattr=None):
 
     P.imshow(ed)
     P.colorbar()
+
+
+def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
+               width=0.2, offset=0.2, color='0.6', distance=1.0):
+    """Make bar plots with automatically computed error bars.
+
+    Candlestick plot (multiple interleaved barplots) can be done,
+    by calling this function multiple time with appropriatly modified
+    `offset` argument.
+
+    :Parameters:
+      data: array (nbars x nobservations)
+        Source data for the barplot. Error measure is computed along the
+        second axis.
+      labels: list | None
+        If not None, a label from this list is placed on each bar.
+      title: str
+        An optional title of the barplot.
+      ylim: 2-tuple
+        Y-axis range.
+      ylabel: str
+        An optional label for the y-axis.
+      width: float
+        Width of a bar. The value should be in a reasonable relation to
+        `distance`.
+      offset: float
+        Constant offset of all bar along the x-axis. Can be used to create
+        candlestick plots.
+      color: matplotlib color spec
+        Color of the bars.
+      distance: float
+        Distance of two adjacent bars.
+    """
+    # determine location of bars
+    xlocations = (N.arange(len(data)) * distance) + offset
+
+    # work with arrays
+    data = N.array(data)
+
+    # plot bars
+    plot = P.bar(xlocations,
+                 data.mean(axis=1),
+                 yerr=data.std(axis=1) / N.sqrt(data.shape[1]),
+                 width=width,
+                 color=color,
+                 ecolor='black')
+
+    if ylim:
+        P.ylim(*(ylim))
+    if title:
+        P.title(title)
+
+    if labels:
+        P.xticks(xlocations + width / 2, labels)
+
+    if ylabel:
+        P.ylabel(ylabel)
+
+    # leave some space after last bar
+    P.xlim(0, xlocations[-1] + width + offset)
+
+    return plot
