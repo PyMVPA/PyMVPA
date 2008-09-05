@@ -36,7 +36,9 @@ cargs = {
     'pre' : 0.05, 'post' : 0.1,
     # Plot all 'errors' in different degrees of shadings
     'errtype' : ['ste', 'ci95', 'std'],
-    'legend' : False, # legend manages to obscure the plot
+    # Set to None if legend manages to obscure the plot
+    'legend' : 'best',
+    'alinewidth' : 1  # assume that we like thin lines
     }
 
 # Create a new figure
@@ -52,7 +54,7 @@ fig = P.figure(figsize=(12, 8))
 # frame_on=False guarantees abent outside rectangular axis with
 # labels. plotERP recreates its own axes centered at (0,0)
 ax = fig.add_subplot(2, 1, 1, frame_on=False)
-plotERPs(plots[:2], ylabel='pT', ymult=-1e12, ax=ax, **cargs)
+plotERPs(plots[:2], ylabel='$pT$', ymult=-1e12, ax=ax, **cargs)
 
 # Plot EEG sensor
 ax = fig.add_subplot(2, 1, 2, frame_on=False)

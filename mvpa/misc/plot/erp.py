@@ -19,10 +19,9 @@ from mvpa.base import warning
 from mvpa.mappers.boxcar import BoxcarMapper
 
 #
-# Original code borrowed from
-#  http://www.scipy.org/Cookbook/Matplotlib/Transformations
+# Few helper functions
 #
-from matplotlib.transforms import blend_xy_sep_transform, identity_transform
+import matplotlib.transforms as mlt
 def _offset(ax, x, y):
     """Provide offset in pixels
 
@@ -31,18 +30,31 @@ def _offset(ax, x, y):
         Offset in pixels for x
       y : int
         Offset in pixels for y
-    """
-    trans = blend_xy_sep_transform(ax.transData, ax.transData)
-    # Now we set the offset in pixels
-    trans.set_offset((x, y), identity_transform())
-    return trans
 
-#
-# Original code was borrowed from
-# http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net \
-#   /msg05669.html
-# It sustained heavy refactoring/extension
-#
+    Idea borrowed from
+     http://www.scipy.org/Cookbook/Matplotlib/Transformations
+    but then heavily extended to be compatible with many
+    reincarnations of matplotlib
+    """
+    d = dir(mlt)
+    if 'offset_copy' in d:
+        # XXX not tested but should work ;-)
+        return mlt.offset_copy(ax.transData, x=x, y=y, units='dots')
+    elif 'BlendedAffine2D' in d:
+        # some newer versions of matplotlib
+        return ax.transData + \
+               mlt.Affine2D().translate(x,y)
+    elif 'blend_xy_sep_transform' in d:
+        trans = mlt.blend_xy_sep_transform(ax.transData, ax.transData)
+        # Now we set the offset in pixels
+        trans.set_offset((x, y), mlt.identity_transform())
+        return trans
+    else:
+        raise RuntimeError, \
+              "Lacking needed functions in matplotlib.transform " \
+              "for _offset. Please upgrade"
+
+
 def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
                        format='%4g', label=None, **props):
     """Plot an axis which is centered at loc (e.g. 0)
@@ -64,6 +76,11 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
        If not -- put a label outside of the axis
      **props
        Given to underlying plotting functions
+
+    Idea borrowed from
+      http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net \
+      /msg05669.html
+    It sustained heavy refactoring/extension
     """
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
@@ -136,7 +153,8 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
             label,
             horizontalalignment=lhalignment,
             verticalalignment=lvalignment, fontsize=14,
-            fontweight='bold', transform=transl)
+            # fontweight='bold',
+            transform=transl)
         pass
 
 
@@ -311,8 +329,9 @@ def plotERP(data, SR=500, onsets=None,
 def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
              pre_onset=None,
              xlabel='time (s)', ylabel='$\mu V$',
-             ylim=None, ymult=1.0, legend=False,
+             ylim=None, ymult=1.0, legend=None,
              xlformat='%4g', ylformat='%4g',
+             loffset=10, alinewidth=2,
              **kwargs):
     """Plot multiple ERPs on a new figure.
 
@@ -340,10 +359,19 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
       ymult : float
         Multiplier for the values. E.g. if negative-up ERP plot is needed:
         provide ymult=-1.0
-      xformat : basestring
+      xlformat : basestring
         Format of the x ticks
-      yformat : basestring
+      ylformat : basestring
         Format of the y ticks
+      legend : basestring or None
+        If not None, legend will be plotted with position argument
+        provided in this argument
+      loffset : int
+        Offset in voxels for axes and tick labels. Different
+        matplotlib frontends might have different opinions, thus
+        offset value might need to be tuned specifically per frontend
+      alinewidth : int
+        Axis and ticks line width
       **kwargs
         Additional arguments provided to plotERP()
 
@@ -410,7 +438,9 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
         if isinstance(erp_def, dict):
             erp_def['data'] = plot_data # return it back
 
-    props = dict(color='black', linewidth=2, markeredgewidth=2, zorder=1)
+    props = dict(color='black',
+                 linewidth=alinewidth, markeredgewidth=alinewidth,
+                 zorder=1, offset=loffset)
     _make_centeredaxis(ax, 0, ai=0, label=xlabel, **props)
     _make_centeredaxis(ax, 0, ai=1, mult=N.sign(ymult), label=ylabel, **props)
 
@@ -422,8 +452,8 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
 
     # legend obscures plotting a bit... seems to be plotting
     # everything twice. Thus disabled by default
-    if legend and N.any(N.array(labels) != ''):
-        P.legend(labels, loc='best')
+    if legend is not None and N.any(N.array(labels) != ''):
+        P.legend(labels, loc=legend)
 
     fig.canvas.draw()
     return fig
