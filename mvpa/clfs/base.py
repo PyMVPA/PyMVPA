@@ -272,6 +272,9 @@ class Classifier(Parametrized):
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
 
+        # XXX seems to be not even needed
+        # self.__trained_labels_map = dataset.labels_map
+
         if __debug__ and 'CHECK_TRAINED' in debug.active:
             self.__trainedidhash = dataset.idhash
 
@@ -293,6 +296,11 @@ class Classifier(Parametrized):
             self.training_confusion = self._summaryClass(
                 targets=dataset.labels,
                 predictions=predictions)
+
+            try:
+                self.training_confusion.labels_map = dataset.labels_map
+            except:
+                pass
 
         if self.states.isEnabled('feature_ids'):
             self.feature_ids = self._getFeatureIds()
@@ -1551,11 +1559,14 @@ class SplitClassifier(CombinedClassifier):
         # generate pairs and corresponding classifiers
         bclfs = []
 
-        if self.states.isEnabled('confusion'):
-            self.states.confusion = self.__clf._summaryClass()
-        if self.states.isEnabled('training_confusion'):
+        # local binding
+        states = self.states
+
+        if states.isEnabled('confusion'):
+            states.confusion = self.__clf._summaryClass()
+        if states.isEnabled('training_confusion'):
             self.__clf.states.enable(['training_confusion'])
-            self.states.training_confusion = self.__clf._summaryClass()
+            states.training_confusion = self.__clf._summaryClass()
 
 
         # for proper and easier debugging - first define classifiers and then
@@ -1576,7 +1587,7 @@ class SplitClassifier(CombinedClassifier):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
-            if self.states.isEnabled("splits"):
+            if states.isEnabled("splits"):
                 self.splits.append(split)
 
             clf = self.clfs[i]
@@ -1586,12 +1597,20 @@ class SplitClassifier(CombinedClassifier):
                 clf.testdataset = split[1]
 
             clf.train(split[0])
-            if self.states.isEnabled("confusion"):
+            if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions)
-            if self.states.isEnabled("training_confusion"):
-                self.states.training_confusion += \
+            if states.isEnabled("training_confusion"):
+                states.training_confusion += \
                                                clf.states.training_confusion
+        # XXX hackish way -- so it should work only for ConfusionMatrix
+        try:
+            if states.isEnabled("confusion"):
+                states.confusion.labels_map = dataset.labels_map
+            if states.isEnabled("training_confusion"):
+                states.training_confusion.labels_map = dataset.labels_map
+        except:
+            pass
 
 
     def getSensitivityAnalyzer(self, **kwargs):
