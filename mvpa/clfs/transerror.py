@@ -868,18 +868,24 @@ class TransferError(ClassifierError):
         #  not from test/train datasets explicitely, see
         #  `ConfusionBasedError`, where confusion is simply
         #  bound to classifiers confusion matrix
-        if self.states.isEnabled('confusion'):
-            self.confusion = self.clf._summaryClass(
+        states = self.states
+        if states.isEnabled('confusion'):
+            confusion = self.clf._summaryClass(
                 #labels=self.labels,
                 targets=testdataset.labels,
                 predictions=predictions)
+            try:
+                confusion.labels_map = testdataset.labels_map
+            except:
+                pass
+            states.confusion = confusion
 
-        if self.states.isEnabled('samples_error'):
+        if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
                 samples_error.append(self.__errorfx(p, testdataset.labels[i]))
 
-            self.samples_error = dict(zip(testdataset.origids,samples_error))
+            states.samples_error = dict(zip(testdataset.origids, samples_error))
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.labels)
