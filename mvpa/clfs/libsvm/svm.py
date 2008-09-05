@@ -255,6 +255,26 @@ class SVM(_SVM):
         return predictions
 
 
+    def summary(self):
+        """Provide quick summary over the SVM classifier"""
+        s = super(SVM, self).summary()
+        if self.trained:
+            s += '\n # of SVs: %d' % self.__model.getTotalNSV()
+            try:
+                prm = svm.svmc.svm_model_param_get(self.__model.model)
+                C = svm.svmc.svm_parameter_C_get(prm)
+                # extract information of how many SVs sit inside the margin,
+                # i.e. so called 'bounded SVs'
+                inside_margin = N.sum(
+                    # take 0.99 to avoid rounding issues
+                    N.abs(self.__model.getSVCoef()) >= 0.99*svm.svmc.svm_parameter_C_get(prm))
+                s += ' #bounded SVs:%d' % inside_margin
+                s += ' used C:%5g' % C
+            except:
+                pass
+        return s
+
+
     def untrain(self):
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
