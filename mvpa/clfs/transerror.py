@@ -235,12 +235,15 @@ class ConfusionMatrix(SummaryStatistics):
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
-    def __init__(self, labels=None, **kwargs):
+    def __init__(self, labels=None, labels_map=None, **kwargs):
         """Initialize ConfusionMatrix with optional list of `labels`
 
         :Parameters:
          labels : list
            Optional set of labels to include in the matrix
+         labels_map : None or dict
+           Dictionary from original dataset to show mapping into
+           numerical labels
          targets
            Optional set of targets
          predictions
@@ -253,6 +256,8 @@ class ConfusionMatrix(SummaryStatistics):
             labels = []
         self.__labels = labels
         """List of known labels"""
+        self.__labels_map = labels_map
+        """Mapping from original into given labels"""
         self.__matrix = None
         """Resultant confusion matrix"""
 
@@ -263,6 +268,7 @@ class ConfusionMatrix(SummaryStatistics):
     def matrices(self):
         """Return a list of separate confusion matrix per each stored set"""
         return [ self.__class__(labels=self.labels,
+                                labels_map=self.labels_map,
                                 targets=x[0],
                                 predictions=x[1]) for x in self.sets]
 
@@ -289,6 +295,28 @@ class ConfusionMatrix(SummaryStatistics):
                             Set(self.__labels)))
         except:
             labels = self.__labels
+
+        # Check labels_map if it was provided if it covers all the labels
+        labels_map = self.__labels_map
+        if labels_map is not None:
+            labels_set = Set(labels)
+            map_labels_set = Set(labels_map.values())
+
+            if not map_labels_set.issuperset(labels_set):
+                warning("Provided labels_map %s is not coherent with labels "
+                        "provided to ConfusionMatrix. No reverse mapping "
+                        "will be provided" % labels_map)
+                labels_map = None
+
+        # Create reverse map
+        labels_map_rev = None
+        if labels_map is not None:
+            labels_map_rev = {}
+            for k,v in labels_map.iteritems():
+                v_mapping = labels_map_rev.get(v, [])
+                v_mapping.append(k)
+                labels_map_rev[v] = v_mapping
+        self.__labels_map_rev = labels_map_rev
 
         labels.sort()
         self.__labels = labels          # store the recomputed labels
@@ -375,7 +403,12 @@ class ConfusionMatrix(SummaryStatistics):
 
         # some shortcuts
         labels = self.__labels
+        labels_map_rev = self.__labels_map_rev
         matrix = self.__matrix
+
+        labels_rev = []
+        if labels_map_rev is not None:
+            labels_rev = [','.join(labels_map_rev[l]) for l in labels]
 
         out = StringIO()
         # numbers of different entries
@@ -415,7 +448,7 @@ class ConfusionMatrix(SummaryStatistics):
         underscores = [" %s" % ("-" * L)] * Nlabels
         if header:
             # labels
-            printed.append(['----------.        '])
+            printed.append(['----------.        '] + labels_rev)
             printed.append(['predictions\\targets'] + labels)
             # underscores
             printed.append(['            `------'] \
@@ -423,8 +456,11 @@ class ConfusionMatrix(SummaryStatistics):
 
         # matrix itself
         for i, line in enumerate(matrix):
+            l = labels[i]
+            if labels_rev != []:
+                l = '%10s / %s' % (labels_rev[i], l)
             printed.append(
-                [labels[i]] +
+                [l] +
                 [ str(x) for x in line ] +
                 [ _p2(stats[x][i]) for x in stats_perpredict])
 
@@ -469,6 +505,20 @@ class ConfusionMatrix(SummaryStatistics):
         return self.__labels
 
 
+    def getLabels_map(self):
+        return self.__labels_map
+
+
+    def setLabels_map(self, val):
+        if val is None or isinstance(val, dict):
+            self.__labels_map = val
+        else:
+            raise ValueError, "Cannot set labels_map to %s" % val
+        # reset it just in case
+        self.__labels_map_rev = None
+        self._computed = False
+
+
     @property
     def matrix(self):
         self.compute()
@@ -480,6 +530,7 @@ class ConfusionMatrix(SummaryStatistics):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
+    labels_map = property(fget=getLabels_map, fset=setLabels_map)
 
 
 class RegressionStatistics(SummaryStatistics):
