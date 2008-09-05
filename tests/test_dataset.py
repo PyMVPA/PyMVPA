@@ -475,6 +475,41 @@ class DatasetTests(unittest.TestCase):
         summary = ds.summary()
         self.failUnless(len(summary)>40)
 
+    def testLabelsMapping(self):
+        od = {'apple':0, 'orange':1}
+        samples = [[3],[2],[3]]
+        labels_l = ['apple', 'orange', 'apple']
+
+        # Test basic mapping of litteral labels
+        for ds in [Dataset(samples=samples, labels=labels_l, labels_map=od),
+                   # Figure out mapping
+                   Dataset(samples=samples, labels=labels_l, labels_map=True)]:
+            self.failUnless(N.all(ds.labels == [0, 1, 0]))
+            self.failUnless(ds.labels_map == od)
+            ds_ = ds[1]
+            self.failUnless(ds_.labels_map == od,
+                msg='selectSamples should provide full mapping preserved')
+
+        # We should complaint about insufficient mapping
+        self.failUnlessRaises(ValueError, Dataset, samples=samples,
+            labels=labels_l, labels_map = {'apple':0})
+
+        # Conformance to older behavior -- if labels are given in
+        # strings, no mapping occur by default
+        ds2 = Dataset(samples=samples, labels=labels_l)
+        self.failUnlessEqual(ds2.labels_map, None)
+
+        # We should label numerical labels if it was requested:
+        od3 = {1:100, 2:101, 3:100}
+        ds3 = Dataset(samples=samples, labels=[1,2,3],
+                      labels_map = od3)
+        self.failUnlessEqual(ds3.labels_map, od3)
+        self.failUnless(N.all(ds3.labels == [100, 101, 100]))
+
+        ds3_ = ds3[1]
+        self.failUnlessEqual(ds3.labels_map, od3)
+
+
 def suite():
     return unittest.makeSuite(DatasetTests)
 

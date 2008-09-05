@@ -108,6 +108,7 @@ class Dataset(object):
                  # new instances
                  samples=None,
                  labels=None,
+                 labels_map=None,
                  chunks=None,
                  origids=None,
                  # flags
@@ -152,11 +153,17 @@ class Dataset(object):
 
         :Keywords:
           samples : ndarray
-            a 2d array (samples x features)
+            2d array (samples x features)
           labels
-            array or scalar value defining labels for each samples
+            An array or scalar value defining labels for each samples
+          labels_map : None or bool or dict
+            Map from labels into literal names. If is None or True,
+            the mapping is computed, from labels which must be literal.
+            If is False, no mapping is computed. If dict -- mapping is
+            verified and taken, labels get remapped. Dict must map
+            literal -> number
           chunks
-            array or scalar value defining chunks for each sample
+            An array or scalar value defining chunks for each sample
 
         Each of the Keywords arguments overwrites what is/might be
         already in the `data` container.
@@ -273,6 +280,56 @@ class Dataset(object):
                 if __debug__:
                     debug("DS", "Initializing attribute %s" % attr)
                 lcl_data[attr] = N.zeros(nsamples)
+
+        # labels_map
+        labels_ = N.asarray(lcl_data['labels'])
+        labels_map_known = lcl_dsattr.has_key('labels_map')
+        if labels_map is True:
+            # need to composte labels_map
+            if labels_.dtype.char == 'S' or not labels_map_known:
+                # Create mapping
+                ulabels = list(Set(labels_))
+                ulabels.sort()
+                labels_map = dict([ (x[1], x[0]) for x in enumerate(ulabels) ])
+                if __debug__:
+                    debug('DS', 'Mapping for the labels computed to be %s'
+                          % labels_map)
+            else:
+                if __debug__:
+                    debug('DS', 'Mapping of labels was requested but labels '
+                          'are not strings. Skipped')
+                labels_map = None
+            pass
+        elif labels_map is False:
+            labels_map = None
+
+        if isinstance(labels_map, dict):
+            if labels_map_known:
+                if __debug__:
+                    debug('DS',
+                          "`dsattr` dict has `labels_map` (%s) but there is also" \
+                          " __init__ parameter `labels_map` (%s) which overrides " \
+                          " stored in `dsattr`" % (lcl_dsattr['labels_map'], labels_map))
+
+            lcl_dsattr['labels_map'] = labels_map
+            # map labels if needed (if strings or was explicitely requested)
+            if labels_.dtype.char == 'S' or not labels_map_known:
+                if __debug__:
+                    debug('DS_', "Remapping labels using mapping %s" % labels_map)
+                # need to remap
+                # !!! N.array is important here
+                try:
+                    lcl_data['labels'] = N.array(
+                        [labels_map[x] for x in lcl_data['labels']])
+                except KeyError, e:
+                    raise ValueError, "Provided labels_map %s is insufficient " \
+                          "to map all the labels. Mapping for label %s is " \
+                          "missing" % (labels_map, e)
+
+        elif not lcl_dsattr.has_key('labels_map'):
+            lcl_dsattr['labels_map'] = labels_map
+        elif __debug__:
+            debug('DS_', 'Not overriding labels_map in dsattr since it has one')
 
         if check_data:
             self._checkData()
@@ -698,6 +755,9 @@ class Dataset(object):
                 except:
                     pass
 
+        if isinstance(self.labels_map, dict):
+            s += ' labels_mapped'
+
         if stats:
             # TODO -- avg per chunk?
             s += "%sstats: mean=%g std=%g var=%g min=%g max=%g" % \
@@ -719,7 +779,10 @@ class Dataset(object):
           maxl : int
             Maximal number of labels when provide details
         """
-        spcl = self.getSamplesPerChunkLabel()
+        # We better avoid bound function since if people only
+        # imported Dataset without miscfx it would fail
+        from mvpa.datasets.miscfx import getSamplesPerChunkLabel
+        spcl = getSamplesPerChunkLabel(self)
         # XXX couldn't they be unordered?
         ul = self.uniquelabels.tolist()
         uc = self.uniquechunks.tolist()
@@ -735,6 +798,12 @@ class Dataset(object):
         else:
             s += "No details due to large number of labels or chunks. " \
                  "Increase maxc and maxl if desired"
+
+        labels_map = self.labels_map
+        if isinstance(labels_map, dict):
+            s += "\nOriginal labels were mapped using following mapping:"
+            s += '\n\t'+'\n\t'.join([':\t'.join(map(str, x))
+                                     for x in labels_map.items()]) + '\n'
 
         def cl_stats(axis, u, name1, name2):
             # Compute statistics per label
@@ -1367,6 +1436,11 @@ class Dataset(object):
         """
         return self._data['samples'].shape[1]
 
+    def getLabelsMap(self):
+        try:
+            return self._dsattr['labels_map']
+        except KeyError:
+            return None
 
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
@@ -1424,7 +1498,7 @@ class Dataset(object):
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
-
+    labels_map      = property( fget=getLabelsMap )
 
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
