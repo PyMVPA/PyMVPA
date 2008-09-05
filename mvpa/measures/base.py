@@ -147,6 +147,9 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         doc="Stores basic sensitivities if the sensitivity " +
             "relies on combining multiple ones")
 
+    # XXX should we may be default to combiner=None to avoid
+    # unexpected results? Also rethink if we need combiner here at
+    # all... May be combiners should be 'adjoint' with transformer
     def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs):
         """Initialize
 
@@ -197,7 +200,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
              here does not lead to an overall more complicated situation,
              without any real gain -- after all this one works ;-)
         """
-        if len(result.shape)>1:
+        rsshape = result.squeeze().shape
+        if len(result.squeeze().shape)>1:
             n_base = result.shape[1]
             """Number of base sensitivities"""
             if self.states.isEnabled('base_sensitivities'):
@@ -225,6 +229,10 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             # we can apply combiner
             if self.__combiner is not None:
                 result = self.__combiner(result)
+        else:
+            # remove bogus dimensions
+            # XXX we might need to come up with smth better. May be some naive combiner? :-)
+            result = result.squeeze()
 
         # call base class postcall
         result = DatasetMeasure._postcall(self, dataset, result)
