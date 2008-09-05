@@ -137,7 +137,8 @@ class ModelSelector(object):
                 return -N.inf
             try:
                 self.parametric_model.train(self.dataset)
-            except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError):
+            except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
+                # Note that ValueError could be raised when Cholesky gets Inf or Nan.
                 if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                 return -N.inf
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
@@ -175,7 +176,7 @@ class ModelSelector(object):
                 if __debug__: debug("MOD_SEL","UNEXPECTED: recomputing train+log_marginal_likelihood.")
                 try:
                     self.parametric_model.train(self.dataset)
-                except N.linalg.linalg.LinAlgError:
+                except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
                     if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                     # XXX EO: which value for the gradient to return to
                     # OpenOpt when hyperparameters are wrong?
