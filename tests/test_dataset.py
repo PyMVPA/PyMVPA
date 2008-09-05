@@ -475,10 +475,15 @@ class DatasetTests(unittest.TestCase):
         summary = ds.summary()
         self.failUnless(len(summary)>40)
 
+
     def testLabelsMapping(self):
         od = {'apple':0, 'orange':1}
         samples = [[3],[2],[3]]
         labels_l = ['apple', 'orange', 'apple']
+
+        # test broadcasting of the label
+        ds = Dataset(samples=samples, labels='orange')
+        self.failUnless(N.all(ds.labels == ['orange']*3))
 
         # Test basic mapping of litteral labels
         for ds in [Dataset(samples=samples, labels=labels_l, labels_map=od),
@@ -508,6 +513,45 @@ class DatasetTests(unittest.TestCase):
 
         ds3_ = ds3[1]
         self.failUnlessEqual(ds3.labels_map, od3)
+
+        ds4 = Dataset(samples=samples, labels=labels_l)
+
+
+    def testLabelsMappingAddDataset(self):
+        """Adding datasets needs special care whenever labels mapping
+        is used."""
+        samples = [[3],[2],[3]]
+        l1 = ['a', 'b', 'a']
+        l2 = ['b', 'a', 'c']
+        ds1 = Dataset(samples=samples, labels=l1,
+                      labels_map={'a':1, 'b':2})
+        ds2 = Dataset(samples=samples, labels=l2,
+                      labels_map={'c':1, 'a':4, 'b':2})
+
+        # some dataset without mapping
+        ds0 = Dataset(samples=samples, labels=l2)
+
+        # original mappings
+        lm1 = ds1.labels_map.copy()
+        lm2 = ds2.labels_map.copy()
+
+        ds3 = ds1 + ds2
+        self.failUnless(N.all(ds3.labels ==
+                              N.hstack((ds1.labels, [2, 1, 5]))))
+        self.failUnless(ds1.labels_map == lm1)
+        self.failUnless(ds2.labels_map == lm2)
+
+        # check iadd
+        ds1 += ds2
+        self.failUnless(N.all(ds1.labels == ds3.labels))
+
+        # it should be deterministic
+        self.failUnless(N.all(ds1.labels_map == ds3.labels_map))
+
+        # don't allow to add datasets where one of them doesn't have a labels_map
+        # whenever the other one does
+        self.failUnlessRaises(ValueError, ds1.__add__, ds0)
+        self.failUnlessRaises(ValueError, ds1.__iadd__, ds0)
 
 
 def suite():
