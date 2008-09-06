@@ -22,17 +22,19 @@ def main():
 
     # Load Haxby dataset example
     haxby1path = 'data'
-    attrs = SampleAttributes(os.path.join(haxby1path, 'attributes.txt'))
+    attrs = SampleAttributes(os.path.join(haxby1path, 'attributes_literal.txt'))
     haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
                           labels=attrs.labels,
+                          labels_map=True,
                           chunks=attrs.chunks,
                           mask=os.path.join(haxby1path, 'mask.nii.gz'),
                           dtype=N.float32)
 
     # preprocess slightly
+    rest_label = haxby8.labels_map['rest']
     detrend(haxby8, perchunk=True, model='linear')
-    zscore(haxby8, perchunk=True, baselinelabels=[0], targetdtype='float32')
-    haxby8_no0 = haxby8.selectSamples(haxby8.labels != 0)
+    zscore(haxby8, perchunk=True, baselinelabels=[rest_label], targetdtype='float32')
+    haxby8_no0 = haxby8.selectSamples(haxby8.labels != rest_label)
 
     dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
                                   nfeatures=100,
@@ -59,7 +61,7 @@ def main():
             #print cv.confusion
 
             # to report transfer error
-            confusion = ConfusionMatrix()
+            confusion = ConfusionMatrix(labels_map=dataset.labels_map)
             times = []
             nf = []
             t0 = time.time()
@@ -79,6 +81,7 @@ def main():
             tfull = time.time() - t0
             times = N.mean(times, axis=0)
             nf = N.mean(nf)
+            # print "\n", confusion
             print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
                   (confusion.percentCorrect, nf, times[0], times[1], tfull)
 

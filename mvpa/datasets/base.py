@@ -108,6 +108,7 @@ class Dataset(object):
                  # new instances
                  samples=None,
                  labels=None,
+                 labels_map=None,
                  chunks=None,
                  origids=None,
                  # flags
@@ -152,11 +153,17 @@ class Dataset(object):
 
         :Keywords:
           samples : ndarray
-            a 2d array (samples x features)
+            2d array (samples x features)
           labels
-            array or scalar value defining labels for each samples
+            An array or scalar value defining labels for each samples
+          labels_map : None or bool or dict
+            Map from labels into literal names. If is None or True,
+            the mapping is computed, from labels which must be literal.
+            If is False, no mapping is computed. If dict -- mapping is
+            verified and taken, labels get remapped. Dict must map
+            literal -> number
           chunks
-            array or scalar value defining chunks for each sample
+            An array or scalar value defining chunks for each sample
 
         Each of the Keywords arguments overwrites what is/might be
         already in the `data` container.
@@ -273,6 +280,56 @@ class Dataset(object):
                 if __debug__:
                     debug("DS", "Initializing attribute %s" % attr)
                 lcl_data[attr] = N.zeros(nsamples)
+
+        # labels_map
+        labels_ = N.asarray(lcl_data['labels'])
+        labels_map_known = lcl_dsattr.has_key('labels_map')
+        if labels_map is True:
+            # need to composte labels_map
+            if labels_.dtype.char == 'S' or not labels_map_known:
+                # Create mapping
+                ulabels = list(Set(labels_))
+                ulabels.sort()
+                labels_map = dict([ (x[1], x[0]) for x in enumerate(ulabels) ])
+                if __debug__:
+                    debug('DS', 'Mapping for the labels computed to be %s'
+                          % labels_map)
+            else:
+                if __debug__:
+                    debug('DS', 'Mapping of labels was requested but labels '
+                          'are not strings. Skipped')
+                labels_map = None
+            pass
+        elif labels_map is False:
+            labels_map = None
+
+        if isinstance(labels_map, dict):
+            if labels_map_known:
+                if __debug__:
+                    debug('DS',
+                          "`dsattr` dict has `labels_map` (%s) but there is also" \
+                          " __init__ parameter `labels_map` (%s) which overrides " \
+                          " stored in `dsattr`" % (lcl_dsattr['labels_map'], labels_map))
+
+            lcl_dsattr['labels_map'] = labels_map
+            # map labels if needed (if strings or was explicitely requested)
+            if labels_.dtype.char == 'S' or not labels_map_known:
+                if __debug__:
+                    debug('DS_', "Remapping labels using mapping %s" % labels_map)
+                # need to remap
+                # !!! N.array is important here
+                try:
+                    lcl_data['labels'] = N.array(
+                        [labels_map[x] for x in lcl_data['labels']])
+                except KeyError, e:
+                    raise ValueError, "Provided labels_map %s is insufficient " \
+                          "to map all the labels. Mapping for label %s is " \
+                          "missing" % (labels_map, e)
+
+        elif not lcl_dsattr.has_key('labels_map'):
+            lcl_dsattr['labels_map'] = labels_map
+        elif __debug__:
+            debug('DS_', 'Not overriding labels_map in dsattr since it has one')
 
         if check_data:
             self._checkData()
@@ -537,6 +594,10 @@ class Dataset(object):
         length matching the number of samples in the dataset.
         """
         try:
+            # if we are initializing with a single string -- we should
+            # treat it as a single label
+            if isinstance(attr, basestring):
+                raise TypeError
             if len(attr) != self.nsamples:
                 raise DatasetError, \
                       "Length of sample attribute '%s' [%d]" \
@@ -698,6 +759,9 @@ class Dataset(object):
                 except:
                     pass
 
+        if isinstance(self.labels_map, dict):
+            s += ' labels_mapped'
+
         if stats:
             # TODO -- avg per chunk?
             s += "%sstats: mean=%g std=%g var=%g min=%g max=%g" % \
@@ -719,7 +783,10 @@ class Dataset(object):
           maxl : int
             Maximal number of labels when provide details
         """
-        spcl = self.getSamplesPerChunkLabel()
+        # We better avoid bound function since if people only
+        # imported Dataset without miscfx it would fail
+        from mvpa.datasets.miscfx import getSamplesPerChunkLabel
+        spcl = getSamplesPerChunkLabel(self)
         # XXX couldn't they be unordered?
         ul = self.uniquelabels.tolist()
         uc = self.uniquechunks.tolist()
@@ -735,6 +802,12 @@ class Dataset(object):
         else:
             s += "No details due to large number of labels or chunks. " \
                  "Increase maxc and maxl if desired"
+
+        labels_map = self.labels_map
+        if isinstance(labels_map, dict):
+            s += "\nOriginal labels were mapped using following mapping:"
+            s += '\n\t'+'\n\t'.join([':\t'.join(map(str, x))
+                                     for x in labels_map.items()]) + '\n'
 
         def cl_stats(axis, u, name1, name2):
             # Compute statistics per label
@@ -760,11 +833,11 @@ class Dataset(object):
         return s
 
 
-    def __iadd__( self, other ):
+    def __iadd__(self, other):
         """Merge the samples of one Dataset object to another (in-place).
 
-        No dataset attributes will be merged! Additionally, a new set of
-        unique `origids` will be generated.
+        No dataset attributes, besides labels_map, will be merged!
+        Additionally, a new set of unique `origids` will be generated.
         """
         # local bindings
         _data = self._data
@@ -774,13 +847,62 @@ class Dataset(object):
             raise DatasetError, "Cannot add Dataset, because the number of " \
                                 "feature do not match."
 
+        # take care about labels_map and labels
+        slm = self.labels_map
+        olm = other.labels_map
+        if N.logical_xor(slm is None, olm is None):
+            raise ValueError, "Cannot add datasets where only one of them " \
+                  "has labels map assigned. If needed -- implement it"
+
         # concatenate all sample attributes
-        for k, v in _data.iteritems():
+        for k,v in _data.iteritems():
             if k == 'origids':
                 # special case samples origids: for now just regenerate unique
                 # ones could also check if concatenation is unique, but it
                 # would be costly performance-wise
                 _data[k] = N.arange(len(v) + len(other_data[k]))
+
+            elif k == 'labels' and slm is not None:
+                # special care about labels if mapping was in effect,
+                # we need to append 2nd map to the first one and
+                # relabel 2nd dataset
+                nlm = slm.copy()
+                # figure out maximal numerical label used now
+                nextid = N.sort(nlm.values())[-1] + 1
+                olabels = other.labels
+                olabels_remap = {}
+                for ol, olnum in olm.iteritems():
+                    if not nlm.has_key(ol):
+                        # check if we can preserve old numberic label
+                        # if not -- assign some new one not yet present
+                        # in any dataset
+                        if olnum in nlm.values():
+                            nextid = N.sort(nlm.values() + olm.values())[-1] + 1
+                        else:
+                            nextid = olnum
+                        olabels_remap[olnum] = nextid
+                        nlm[ol] = nextid
+                        nextid += 1
+                    else:
+                        olabels_remap[olnum] = nlm[ol]
+                olabels = [olabels_remap[x] for x in olabels]
+                # finally compose new labels
+                _data['labels'] = N.concatenate((v, olabels), axis=0)
+                # and reassign new mapping
+                self._dsattr['labels_map'] = nlm
+
+                if __debug__:
+                    # check if we are not dealing with colliding
+                    # mapping, since it is problematic and might lead
+                    # to various complications
+                    if (len(Set(slm.keys())) != len(Set(slm.values()))) or \
+                       (len(Set(olm.keys())) != len(Set(olm.values()))):
+                        warning("Adding datasets where multiple labels "
+                                "mapped to the same ID is not recommended. "
+                                "Please check the outcome. Original mappings "
+                                "were %s and %s. Resultant is %s"
+                                % (slm, olm, nlm))
+
             else:
                 _data[k] = N.concatenate((v, other_data[k]), axis=0)
 
@@ -1367,6 +1489,11 @@ class Dataset(object):
         """
         return self._data['samples'].shape[1]
 
+    def getLabelsMap(self):
+        try:
+            return self._dsattr['labels_map']
+        except KeyError:
+            return None
 
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
@@ -1424,7 +1551,7 @@ class Dataset(object):
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
-
+    labels_map      = property( fget=getLabelsMap )
 
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
