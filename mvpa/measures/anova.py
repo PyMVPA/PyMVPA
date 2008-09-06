@@ -59,6 +59,11 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         # N.nan_to_num(), but this might hide the problem.
         # Michael therefore thinks that it is best to let the user deal with
         # it prior to any analysis.
-        vgm /= mvw
+
+        # for features where there is no variance between the groups,
+        # we should simply leave 0 as is, and avoid that way NaNs for
+        # invariance features
+        vgm0 = vgm.nonzero()
+        vgm[vgm0] /= mvw[vgm0]
 
         return vgm
