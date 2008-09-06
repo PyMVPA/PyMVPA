@@ -37,7 +37,7 @@ def _p2(x, prec=2):
     if isinstance(x, int):
         return "%d" % x
     elif isinstance(x, float):
-        s = ("%%.%df" % prec % x).rstrip('0.').lstrip()
+        s = ("%%.%df" % prec % x).rstrip('0').rstrip('.').lstrip()
         if s == '':
             s = '0'
         return s
