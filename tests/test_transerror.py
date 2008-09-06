@@ -91,6 +91,22 @@ class ErrorsTests(unittest.TestCase):
                              msg="Test if we get proper error value")
 
 
+    def testConfusionMatrixWithMappings(self):
+        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        reg = [1,1,1,2,2,2,3,3,3]
+        regl = [1,2,1,2,2,2,3,2,1]
+        correct_cm = [[2,0,1], [1,3,1], [0,0,1]]
+        lm = {'apple':1, 'orange':2, 'shitty apple':1, 'candy':3}
+        cm = ConfusionMatrix(targets=reg, predictions=regl,
+                             labels_map=lm)
+        # check table content
+        self.failUnless((cm.matrix == correct_cm).all())
+        # assure that all labels are somewhere listed ;-)
+        s = str(cm)
+        for l in lm.keys():
+            self.failUnless(l in s)
+
+
 
     @sweepargs(l_clf=clfs['linear', 'svm'])
     def testConfusionBasedError(self, l_clf):
