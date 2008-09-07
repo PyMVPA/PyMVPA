@@ -27,13 +27,16 @@ from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-_MEASURES_2_SWEEP = [ OneWayAnova,
-                      IterativeRelief, IterativeReliefOnline,
-                      IterativeRelief_Devel, IterativeReliefOnline_Devel
+_MEASURES_2_SWEEP = [ OneWayAnova(),
+                      IterativeRelief(), IterativeReliefOnline(),
+                      IterativeRelief_Devel(), IterativeReliefOnline_Devel()
                       ]
 if externals.exists('scipy'):
     from mvpa.measures.corrcoef import CorrCoef
-    _MEASURES_2_SWEEP += [ CorrCoef ]
+    _MEASURES_2_SWEEP += [ CorrCoef(),
+                           # that one is good when small... handle later
+                           #CorrCoef(pvalue=True)
+                           ]
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -41,18 +44,24 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.dataset = datasets['uni2large']
 
 
-    @sweepargs(saclass=_MEASURES_2_SWEEP)
-    def testBasic(self, saclass):
-        data = datasets['dumb']
-        dsm = saclass()
+    @sweepargs(dsm=_MEASURES_2_SWEEP)
+    def testBasic(self, dsm):
+        data = datasets['dumbinv']
+
+        datass = data.samples.copy()
 
         # compute scores
         f = dsm(data)
 
-        self.failUnless(f.shape == (2,))
+        # check if nothing evil is done to dataset
+        self.failUnless(N.all(data.samples == datass))
+        self.failUnless(f.shape == (4,))
         self.failUnless(abs(f[1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f[1])
         self.failUnless(f[0] > 0.1)     # some reasonably large value
+
+        # we should not have NaNs
+        self.failUnless(not N.any(N.isnan(f)))
 
 
     # XXX meta should work too but doesn't

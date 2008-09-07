@@ -91,6 +91,13 @@ class ErrorsTests(unittest.TestCase):
                              msg="Test if we get proper error value")
 
 
+    def testConfusionMatrixACC(self):
+        reg  = [0,0,1,1]
+        regl = [1,0,1,0]
+        cm = ConfusionMatrix(targets=reg, predictions=regl)
+        self.failUnless('ACC%         50' in str(cm))
+
+
     def testConfusionMatrixWithMappings(self):
         data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
