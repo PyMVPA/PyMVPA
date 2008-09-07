@@ -29,6 +29,15 @@ Unreleased changes
     be useful for data modalities like EEG and MEG.
   * Plotting of topographies on heads. Thanks to Ingo Fründ for contributing
     this code. Additionally, a new example shows how to do such plots.
+  * New general purpose function for generating barplots and candlestick plots
+    with error bars (plotBars()).
+  * Dataset supports mapping of string labels onto numerical labels, removing
+    the need to perform this mapping manually in user code. 'clfs_examples.py'
+    is adjusted accordingly to demonstrate the new feature.
+  * New Classifier.summary() method to dump classifier settings.
+  * Improved and more flexible plotERPs().
+  * New I-RELIEF sensitivity analyzer.
+
 
 
 Releases
