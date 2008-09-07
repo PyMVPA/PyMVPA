@@ -181,7 +181,8 @@ def plotSamplesDistance(dataset, sortbyattr=None):
 
 
 def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
-               width=0.2, offset=0.2, color='0.6', distance=1.0):
+               width=0.2, offset=0.2, color='0.6', distance=1.0,
+               yerr='ste'):
     """Make bar plots with automatically computed error bars.
 
     Candlestick plot (multiple interleaved barplots) can be done,
@@ -189,7 +190,7 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
     `offset` argument.
 
     :Parameters:
-      data: array (nbars x nobservations)
+      data: array (nbars x nobservations) | other sequence type
         Source data for the barplot. Error measure is computed along the
         second axis.
       labels: list | None
@@ -210,17 +211,24 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         Color of the bars.
       distance: float
         Distance of two adjacent bars.
+      yerr: 'ste' | 'std' | None
+        Type of error for the errorbars. If `None` no errorbars are plotted.
     """
     # determine location of bars
     xlocations = (N.arange(len(data)) * distance) + offset
 
-    # work with arrays
-    data = N.array(data)
+    if yerr == 'ste':
+        yerr=[N.std(d)/N.sqrt(len(d)) for d in data],
+    elif yerr == 'std':
+        yerr=[N.std(d) for d in data],
+    else:
+        # if something that we do not know just pass on
+        pass
 
     # plot bars
     plot = P.bar(xlocations,
-                 data.mean(axis=1),
-                 yerr=data.std(axis=1) / N.sqrt(data.shape[1]),
+                 [N.mean(d) for d in data],
+                 yerr=yerr,
                  width=width,
                  color=color,
                  ecolor='black')
