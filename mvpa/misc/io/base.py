@@ -367,7 +367,7 @@ class SampleAttributes(ColumnData):
     """Read and write PyMVPA sample attribute definitions from and to text
     files.
     """
-    def __init__(self, source):
+    def __init__(self, source, literallabels=False):
         """Read PyMVPA sample attributes from disk.
 
         Parameter
@@ -375,9 +375,14 @@ class SampleAttributes(ColumnData):
 
         - `source`: filename of an atrribute file
         """
+        if literallabels:
+            dtypes = [str, float]
+        else:
+            dtypes = float
+
         ColumnData.__init__(self, source,
                             header=['labels', 'chunks'],
-                            sep=None, dtype=float)
+                            sep=None, dtype=dtypes)
 
 
     def tofile(self, filename):
