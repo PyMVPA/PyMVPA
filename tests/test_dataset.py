@@ -554,6 +554,37 @@ class DatasetTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, ds1.__iadd__, ds0)
 
 
+    def testCopy(self):
+        # lets use some instance of somewhat evolved dataset
+        ds = datasets['uni2small']
+        # Clone the beast
+        ds_ = ds.copy()
+        # verify that we have the same data
+        self.failUnless(N.all(ds.samples == ds_.samples))
+        self.failUnless(N.all(ds.labels == ds_.labels))
+        self.failUnless(N.all(ds.chunks == ds_.chunks))
+
+        # modify and see if we don't change data in the original one
+        ds_.samples[0,0] = 1234
+        self.failUnless(N.any(ds.samples != ds_.samples))
+        self.failUnless(N.all(ds.labels == ds_.labels))
+        self.failUnless(N.all(ds.chunks == ds_.chunks))
+
+        ds_.labels = N.hstack(([123], ds_.labels[1:]))
+        self.failUnless(N.any(ds.samples != ds_.samples))
+        self.failUnless(N.any(ds.labels != ds_.labels))
+        self.failUnless(N.all(ds.chunks == ds_.chunks))
+
+        ds_.chunks = N.hstack(([1234], ds_.chunks[1:]))
+        self.failUnless(N.any(ds.samples != ds_.samples))
+        self.failUnless(N.any(ds.labels != ds_.labels))
+        self.failUnless(N.any(ds.chunks != ds_.chunks))
+
+        self.failUnless(N.any(ds.uniquelabels != ds_.uniquelabels))
+        self.failUnless(N.any(ds.uniquechunks != ds_.uniquechunks))
+
+
+
 def suite():
     return unittest.makeSuite(DatasetTests)
 
