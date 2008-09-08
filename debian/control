@@ -12,7 +12,7 @@ Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
 Package: python-mvpa
 Architecture: any
-Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy
+Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-ctypes (>= 1.0.1) | python (>= 2.5)
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt
