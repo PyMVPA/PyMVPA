@@ -513,7 +513,7 @@ if externals.exists('openopt'):
             fixedHypers = None
             problem =  ms.max_log_marginal_likelihood(
                 hyp_initial_guess=hyp_initial_guess,
-                optimization_algorithm="ralg",
+                optimization_algorithm="scipy_lbfgsb",
                 ftol=1.0e-3, fixedHypers=fixedHypers,
                 use_gradient=True, logscale=True)
             lml = ms.solve()
