@@ -263,11 +263,6 @@ if __debug__:
         debug.registerMetric(cfg.get('debug', 'metrics').split(","))
 
 
-import externals
-
-
-
-
 
 if __debug__:
     debug('INIT', 'mvpa.base end')
