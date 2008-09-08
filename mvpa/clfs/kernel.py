@@ -336,7 +336,7 @@ class KernelExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm*self.kernel_matrix*(self.length_scale**-1)
             self.lml_gradient.append(lml_grad(K_grad_l))
@@ -364,7 +364,7 @@ class KernelExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_log_sigma_f = 2.0*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_log_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm*self.kernel_matrix
             self.lml_gradient.append(lml_grad(K_grad_l))
@@ -460,7 +460,7 @@ class KernelSquaredExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm2*self.kernel_matrix*(1.0/self.length_scale)
             self.lml_gradient.append(lml_grad(K_grad_l))
@@ -487,7 +487,7 @@ class KernelSquaredExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         K_grad_log_sigma_f = 2.0*self.kernel_matrix
         self.lml_gradient.append(lml_grad(K_grad_log_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_log_l = self.wdm2*self.kernel_matrix
             self.lml_gradient.append(lml_grad(K_grad_log_l))
