@@ -218,9 +218,9 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
     xlocations = (N.arange(len(data)) * distance) + offset
 
     if yerr == 'ste':
-        yerr=[N.std(d)/N.sqrt(len(d)) for d in data],
+        yerr = [N.std(d) / N.sqrt(len(d)) for d in data]
     elif yerr == 'std':
-        yerr=[N.std(d) for d in data],
+        yerr = [N.std(d) for d in data]
     else:
         # if something that we do not know just pass on
         pass
