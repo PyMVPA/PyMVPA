@@ -61,7 +61,7 @@ class Parameter(CollectableAttribute):
 
     def __str__(self):
         res = CollectableAttribute.__str__(self)
-        res += '=%s' % self.value # it is enabled but no value is assigned yet
+        res += '=%s' % (self.value,) # it is enabled but no value is assigned yet
         return res
 
 

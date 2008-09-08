@@ -937,6 +937,24 @@ class Dataset(object):
         return out
 
 
+    def copy(self):
+        """Create a copy (clone) of the dataset, by fully copying current one
+
+        """
+        # create a new object of the same type it is now and NOT only Dataset
+        out = super(Dataset, self).__new__(self.__class__)
+
+        # now init it: to make it work all Dataset contructors have to accept
+        # Class(data=Dict, dsattr=Dict)
+        out.__init__(data=self._data,
+                     dsattr=self._dsattr,
+                     copy_samples=True,
+                     copy_data=True,
+                     copy_dsattr=True)
+
+        return out
+
+
     def selectFeatures(self, ids=None, sort=True, groups=None):
         """Select a number of features from the current set.
 

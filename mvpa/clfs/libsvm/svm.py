@@ -12,6 +12,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+import operator
+
 from mvpa.misc.param import Parameter
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable
@@ -195,11 +197,31 @@ class SVM(_SVM):
         """Store SVM parameters in libSVM compatible format."""
 
         if self.params.isKnown('C'):#svm_type in [svm.svmc.C_SVC]:
-            if self.C < 0:
-                newC = self._getDefaultC(dataset.samples)*abs(self.C)
-                if __debug__:
-                    debug("SVM", "Computed C to be %s for C=%s" % (newC, self.C))
-                libsvm_param._setParameter('C', newC)
+            C = self.params.C
+            if not operator.isSequenceType(C):
+                # we were not given a tuple for balancing between classes
+                C = [C]
+
+            Cs = list(C[:])               # copy
+            for i in xrange(len(Cs)):
+                if Cs[i]<0:
+                    Cs[i] = self._getDefaultC(dataset.samples)*abs(Cs[i])
+                    if __debug__:
+                        debug("SVM", "Default C for %s was computed to be %s" %
+                              (C[i], Cs[i]))
+
+            libsvm_param._setParameter('C', Cs[0])
+
+            if len(Cs)>1:
+                C0 = abs(C[0])
+                scale = 1.0/(C0)#*N.sqrt(C0))
+                # so we got 1 C per label
+                if len(Cs) != len(dataset.uniquelabels):
+                    raise ValueError, "SVM was parametrized with %d Cs but " \
+                          "there are %d labels in the dataset" % \
+                          (len(Cs), len(dataset.uniquelabels))
+                weight = [ c*scale for c in Cs ]
+                libsvm_param._setParameter('weight', weight)
 
         self.__model = svm.SVMModel(svmprob, libsvm_param)
 
