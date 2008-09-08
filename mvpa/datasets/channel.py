@@ -17,6 +17,8 @@ from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
+import mvpa.misc.copy as copy
+
 from mvpa.base import externals
 
 if externals.exists('scipy'):
@@ -70,7 +72,8 @@ class ChannelDataset(MappedDataset):
         if not samples is None:
             mapper = MaskMapper(N.ones(samples.shape[1:], dtype='bool'))
         else:
-            mapper = None
+            # Doesn't make difference at the moment, but might come 'handy'?
+            mapper = dsattr.get('mapper', None)
 
         # init dataset
         MappedDataset.__init__(self,
@@ -124,14 +127,15 @@ class ChannelDataset(MappedDataset):
 
 
     if externals.exists('scipy'):
-        def resample(self, nt=None, sr=None, dt=None, window='ham', **kwargs):
+        def resample(self, nt=None, sr=None, dt=None, window='ham',
+                     inplace=True, **kwargs):
             """Convenience method to resample data sample channel-wise.
 
-            Resampling target can be specified by number of timepoint or temporal
-            distance or sampling rate.
+            Resampling target can be specified by number of timepoint
+            or temporal distance or sampling rate.
 
-            Please note that this method only operates on `ChannelDataset` and always
-            returns such.
+            Please note that this method only operates on
+            `ChannelDataset` and always returns such.
 
             :Parameters:
               nt: int
@@ -140,8 +144,12 @@ class ChannelDataset(MappedDataset):
                 Temporal distance of samples after resampling.
               sr: float
                 Target sampling rate.
+              inplace : bool
+                If inplace=False, it would create and return a new dataset
+                with new samples
               **kwargs:
-                All additional arguments are passed to resample() from scipy.signal
+                All additional arguments are passed to resample() from
+                scipy.signal
 
             :Return:
               ChannelDataset
@@ -177,13 +185,34 @@ class ChannelDataset(MappedDataset):
             data = signal.resample(orig_data, nt, axis=2, window=window, **kwargs)
             new_dt = float(orig_length) / nt
 
-            return ChannelDataset(data=self._data,
-                                  samples=data,
-                                  t0=self.t0,
-                                  dt=new_dt,
-                                  channelids=self.channelids,
-                                  copy_data=True)
+            dsattr = self._dsattr
 
+            # would be needed for not inplace generation
+            if inplace:
+                dsattr['ch_dt'] = new_dt
+                # XXX We could have resampled range(nsamples) and
+                #     rounded  it. and adjust then mapper's mask
+                #     accordingly instead of creating a new one.
+                #     It would give us opportunity to assess what
+                #     resampling did...
+                mapper = MaskMapper(N.ones(data.shape[1:], dtype='bool'))
+                # reassign a new mapper.
+                dsattr['mapper'] = mapper
+                self.samples = mapper.forward(data)
+                return self
+            else:
+                # we have to pass dsattr inside to don't loose
+                # some additional attributes such as
+                # labels_map
+                dsattr = copy.deepcopy(dsattr)
+                return ChannelDataset(data=self._data,
+                                      dsattr=dsattr,
+                                      samples=data,
+                                      t0=self.t0,
+                                      dt=new_dt,
+                                      channelids=self.channelids,
+                                      copy_data=True,
+                                      copy_dsattr=False)
 
     channelids = property(fget=lambda self: self._dsattr['ch_ids'],
                           doc='List of channel IDs')

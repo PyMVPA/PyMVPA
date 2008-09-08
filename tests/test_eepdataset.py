@@ -45,20 +45,31 @@ class EEPDatasetTests(unittest.TestCase):
 
 
     def testResampling(self):
-        ds = EEPDataset(os.path.join('..', 'data', 'eep.bin'), labels=[1, 2])
-
+        ds = EEPDataset(os.path.join('..', 'data', 'eep.bin'),
+                        labels=[1, 2], labels_map={1:100, 2:101})
+        channelids = N.array(ds.channelids).copy()
         self.failUnless(N.round(ds.samplingrate) == 500.0)
 
         # shoudl puke when called with nothing
         self.failUnlessRaises(ValueError, ds.resample)
 
         # now for real -- should divide nsamples into half
-        rds = ds.resample(sr=250)
+        rds = ds.resample(sr=250, inplace=False)
+        # We should have not changed anything
+        self.failUnless(N.round(ds.samplingrate) == 500.0)
 
-        self.failUnless(N.round(rds.samplingrate) == 250)
-        self.failUnless(rds.nsamples == 2)
-        self.failUnless(ds.channelids == rds.channelids)
-
+        # by default do 'inplace' resampling
+        ds.resample(sr=250)
+        for d in [rds, ds]:
+            self.failUnless(N.round(d.samplingrate) == 250)
+            self.failUnless(d.nsamples == 2)
+            self.failUnless(N.abs((d.dt - 1.0/250)/d.dt)<1e-5)
+            self.failUnless(N.all(d.channelids == channelids))
+            # lets now see if we still have a mapper
+            self.failUnless(d.O.shape == (2, len(channelids), 2))
+            # and labels_map
+            self.failUnlessEqual(d.labels_map, {1:100, 2:101})
+            #self.failUnless(d.labels_map)
 
 def suite():
     return unittest.makeSuite(EEPDatasetTests)
