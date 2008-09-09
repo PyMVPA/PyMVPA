@@ -408,7 +408,8 @@ class ConfusionMatrix(SummaryStatistics):
 
         labels_rev = []
         if labels_map_rev is not None:
-            labels_rev = [','.join(labels_map_rev[l]) for l in labels]
+            labels_rev = [','.join([str(x) for x in labels_map_rev[l]])
+                                   for l in labels]
 
         out = StringIO()
         # numbers of different entries
