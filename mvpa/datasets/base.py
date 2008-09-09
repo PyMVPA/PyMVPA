@@ -1382,7 +1382,19 @@ class Dataset(object):
         """
         # for cases like ['labels', 1]
         if len(args) == 1 and isinstance(args[0], tuple):
-            args = list(args[0])
+            args = args[0]
+
+        args_,args = args,()
+        for a in args_:
+            if isinstance(a, slice) and \
+                   isinstance(a.start, basestring):
+                    # for the constructs like ['labels':[1,2]]
+                    if a.stop is None or a.step is not None:
+                        raise ValueError, \
+                              "Selection must look like ['chunks':[2,3]]"
+                    args += (a.start, a.stop)
+            else:
+                args += (a,)
         return self.select(*args)
 
 

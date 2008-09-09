@@ -146,11 +146,12 @@ class DatasetTests(unittest.TestCase):
                      data.select(labels=2),
                      data.select('labels', 2),
                      data.select('labels', [2]),
-                     data['labels', [2]]
+                     data['labels', [2]],
+                     data['labels': [2], 'labels':2],
+                     data['labels': [2]],
                      ]:
             self.failUnless( sel.nsamples == data.nsamples )
             self.failUnless( N.all(sel.samples == data.samples) )
-
         # not present label
         for sel in [ data.selectSamples(data.idsbylabels(3)),
                      data.select(labels=3),
@@ -165,7 +166,9 @@ class DatasetTests(unittest.TestCase):
         for sel in [ data.selectSamples(data.idsbylabels([2, 3])),
                      data.select('labels', [2, 3]),
                      data.select('labels', [2, 3], labels=[1, 2, 3, 4]),
-                     data.select('labels', [2, 3], chunks=[1, 2, 3, 4])
+                     data.select('labels', [2, 3], chunks=[1, 2, 3, 4]),
+                     data['labels':[2, 3], 'chunks':[1, 2, 3, 4]],
+                     data['chunks':[1, 2, 3, 4], 'labels':[2, 3]],
                      ]:
             self.failUnless(N.all(sel.origids == [ 3.,  4.,  5.,  7.]))
 
