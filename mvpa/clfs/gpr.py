@@ -499,8 +499,7 @@ if externals.exists('openopt'):
             # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0))/clf._train_fv.std(0)
             dataset = Dataset(samples=clf._train_fv, labels=clf._train_labels)
             clf.states.enable("log_marginal_likelihood")
-            ms = ModelSelector(clf,dataset)
-
+            ms = ModelSelector(clf, dataset)
             # Note that some kernels does not have gradient yet!
             sigma_noise_initial = 1.0e-5
             sigma_f_initial = 1.0
@@ -516,6 +515,8 @@ if externals.exists('openopt'):
                 optimization_algorithm="scipy_lbfgsb",
                 ftol=1.0e-3, fixedHypers=fixedHypers,
                 use_gradient=True, logscale=True)
+            if __debug__ and 'GPR_WEIGHTS' in debug.active:
+                problem.iprint = 1
             lml = ms.solve()
             weights = 1.0/ms.hyperparameters_best[2:] # weight = 1/length_scale
             if __debug__:
