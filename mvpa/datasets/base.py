@@ -1519,11 +1519,27 @@ class Dataset(object):
         """
         return self._data['samples'].shape[1]
 
+
     def getLabelsMap(self):
-        try:
-            return self._dsattr['labels_map']
-        except KeyError:
-            return None
+        """Stored labels map (if any)
+        """
+        return self._dsattr.get('labels_map', None)
+
+
+    def setLabelsMap(self, lm):
+        """Set labels map.
+
+        Checks for the validity of the mapping -- values should cover
+        all existing labels in the dataset
+        """
+        values = Set(lm.values())
+        labels = Set(self.uniquelabels)
+        if not values.issuperset(labels):
+            raise ValueError, \
+                  "Provided mapping %s has some existing labels (out of %s) " \
+                  "missing from mapping" % (list(values), list(labels))
+        self._dsattr['labels_map'] = lm
+
 
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
@@ -1581,7 +1597,7 @@ class Dataset(object):
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
-    labels_map      = property( fget=getLabelsMap )
+    labels_map      = property( fget=getLabelsMap, fset=setLabelsMap )
 
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
