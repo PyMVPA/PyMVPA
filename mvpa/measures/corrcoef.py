@@ -18,13 +18,7 @@ from mvpa.measures.base import FeaturewiseDatasetMeasure
 class CorrCoef(FeaturewiseDatasetMeasure):
     """`FeaturewiseDatasetMeasure` that performs correlation with labels
 
-    F-scores are computed for each feature as the standard fraction of between
-    and within group variances. Groups are defined by samples with unique
-    labels.
-
-    No statistical testing is performed, but raw F-scores are returned as a
-    sensitivity map. As usual F-scores have a range of [0,inf] with greater
-    values indicating higher sensitivity.
+    XXX: Explain me!
     """
 
     def __init__(self, pvalue=False, attr='labels', **kwargs):
