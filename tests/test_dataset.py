@@ -519,6 +519,15 @@ class DatasetTests(unittest.TestCase):
 
         ds4 = Dataset(samples=samples, labels=labels_l)
 
+        # Lets check setting the labels map
+        ds = Dataset(samples=samples, labels=labels_l, labels_map=od)
+
+        self.failUnlessRaises(ValueError, ds.setLabelsMap,
+                              {'orange': 1, 'nonorange': 3})
+        new_map = {'tasty':0, 'crappy':1}
+        ds.labels_map = new_map.copy()
+        self.failUnlessEqual(ds.labels_map, new_map)
+
 
     def testLabelsMappingAddDataset(self):
         """Adding datasets needs special care whenever labels mapping
