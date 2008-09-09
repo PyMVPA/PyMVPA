@@ -20,7 +20,7 @@ class Distribution(object):
         :Parameter:
           tail: str ['left', 'right', 'any']
             Which tail of the distribution to report. For 'any' it chooses 
-			the tail it belongs to based on the comparison to p=0.5
+            the tail it belongs to based on the comparison to p=0.5
         """
         self._tail = tail
 
@@ -28,8 +28,6 @@ class Distribution(object):
         if self._tail not in ['left', 'right', 'any']:
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
 
-        if self._tail == 'any':
-            raise NotImplementedError, "The choise of 'any' tail is TODO"
 
     def fit(self, measure, wdata, vdata=None):
         """Implement to fit the distribution to the data."""
@@ -144,8 +142,48 @@ class MCNullDist(Distribution):
         """
         if self._tail == 'left':
             return (self.__dist_samples <= x).mean(axis=0)
-        else:
+        elif self._tail == 'right':
             return (self.__dist_samples >= x).mean(axis=0)
+        elif self._tail == 'any':
+            # easy if just scalar
+            if N.isscalar(x):
+                right_tail = N.median(self.__dist_samples) < x
+                if right_tail:
+                    return (self.__dist_samples >= x).mean(axis=0)
+                else:
+                    return (self.__dist_samples <= x).mean(axis=0)
+
+            # now handle case of 'x is sequence'
+            x = N.array(x)
+
+            # determine on which tail we are
+            # if critical is larger than median of distribution:
+            right_tail = N.array(N.median(self.__dist_samples) < x) #, axis=0))
+            # ancient numpy does not have axis kwarg for median
+
+            # generate container for results
+            res = N.zeros(right_tail.shape)
+
+            # catch special cases of all right and all left
+            right_tail_fraction = right_tail.mean()
+
+            # handle right tail cases
+            if right_tail_fraction > 0:
+                res[right_tail] = (
+                    self.__dist_samples[:, right_tail] >= x[right_tail]
+                        ).mean(axis=0)
+
+            # handle left tail cases
+            if right_tail_fraction < 1:
+                left_tail = right_tail == False
+                res[left_tail] = (
+                    self.__dist_samples[:, left_tail] <= x[left_tail]
+                        ).mean(axis=0)
+
+            return res
+
+        else:
+            raise RuntimeError, "This should not happen!"
 
 
 
