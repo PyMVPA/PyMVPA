@@ -525,7 +525,7 @@ class SVM(_SVM):
 
             # to avoid leaks with not yet properly fixed shogun
             # XXX make it nice... now it is just stable ;-)
-            if not self.__traindata is None:
+            if True: # not self.__traindata is None:
                 if True:
                 # try:
                     if self.__kernel is not None:
