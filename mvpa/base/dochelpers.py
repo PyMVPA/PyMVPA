@@ -146,14 +146,34 @@ def table2string(table, out=None):
 
     # figure out lengths within each column
     atable = N.asarray(table)
-    col_width = [ max( [len(x) for x in column] ) for column in atable.T ]
+    markup_strip = re.compile('^@[lrc]')
+    col_width = [ max( [len(markup_strip.sub('', x))
+                        for x in column] ) for column in atable.T ]
     string = ""
     for i, table_ in enumerate(table):
         string_ = ""
         for j, item in enumerate(table_):
             item = str(item)
+            if item.startswith('@'):
+                align = item[1]
+                item = item[2:]
+                if not align in ['l', 'r', 'c']:
+                    raise ValueError, 'Unknown alignment %s. Known are l,r,c'
+            else:
+                align = 'c'
+
             NspacesL = ceil((col_width[j] - len(item))/2.0)
             NspacesR = col_width[j] - NspacesL - len(item)
+
+            if align == 'c':
+                pass
+            elif align == 'l':
+                NspacesL, NspacesR = 0, NspacesL + NspacesR
+            elif align == 'r':
+                NspacesL, NspacesR = NspacesL + NspacesR, 0
+            else:
+                raise RuntimeError, 'Should not get here with align=%s' % align
+
             string_ += "%%%ds%%s%%%ds " \
                        % (NspacesL, NspacesR) % ('', item, '')
         string += string_.rstrip() + '\n'
