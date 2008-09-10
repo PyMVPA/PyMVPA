@@ -363,6 +363,9 @@ class ConfusionMatrix(SummaryStatistics):
         stats["P'"] = stats['TP'] + stats['FP']
         stats["N'"] = stats['TN'] + stats['FN']
         stats['TPR'] = stats['TP'] / (1.0*stats['P'])
+        # reset nans in TPRs to 0s whenever there is no entries
+        # for those labels among the targets
+        stats['TPR'][stats['P'] == 0] = 0
         stats['PPV'] = stats['TP'] / (1.0*stats["P'"])
         stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
@@ -377,6 +380,10 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
+
+        # compute mean stats
+        for k,v in stats.items():
+            stats['mean(%s)' % k] = N.mean(v)
 
         self._stats.update(stats)
 
@@ -449,29 +456,42 @@ class ConfusionMatrix(SummaryStatistics):
         underscores = [" %s" % ("-" * L)] * Nlabels
         if header:
             # labels
-            printed.append(['----------.        '] + labels_rev)
-            printed.append(['predictions\\targets'] + labels)
+            printed.append(['@l----------.        '] + labels_rev)
+            printed.append(['@lpredictions\\targets'] + labels)
             # underscores
-            printed.append(['            `------'] \
+            printed.append(['@l            `------'] \
                            + underscores + stats_perpredict)
 
         # matrix itself
         for i, line in enumerate(matrix):
             l = labels[i]
             if labels_rev != []:
-                l = '%10s / %s' % (labels_rev[i], l)
+                l = '@r%10s / %s' % (labels_rev[i], l)
             printed.append(
                 [l] +
                 [ str(x) for x in line ] +
                 [ _p2(stats[x][i]) for x in stats_perpredict])
 
         if summary:
-            printed.append(['Per target:'] + underscores)
+            ## Various alternative schemes ;-)
+            # printed.append([''] + underscores)
+            # printed.append(['@lPer target \ Means:'] + underscores + \
+            #               [_p2(x) for x in mean_stats])
+            # printed.append(['Means:'] + [''] * len(labels)
+            #                + [_p2(x) for x in mean_stats])
+            printed.append(['@lPer target:'] + underscores)
             for stat in stats_pertarget:
                 printed.append([stat] + [
                     _p2(stats[stat][i]) for i in xrange(Nlabels)])
 
-            printed.append(['SUMMARY:'] + underscores)
+            # compute mean stats
+            # XXX refactor to expose them in stats as well, as
+            #     mean(FCC)
+            mean_stats = N.mean(N.array([stats[k] for k in stats_perpredict]),
+                                axis=1)
+            printed.append(['@lSummary \ Means:'] + underscores
+                           + [_p2(stats['mean(%s)' % x])
+                              for x in stats_perpredict])
 
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
