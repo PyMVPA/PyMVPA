@@ -45,7 +45,8 @@ from mvpa.misc.param import Parameter
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
 from mvpa.measures.base import \
-    BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer
+    BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
+    MappedClassifierSensitivityAnalyzer
 from mvpa.base import warning
 
 if __debug__:
@@ -1724,6 +1725,15 @@ class MappedClassifier(ProxyClassifier):
         return ProxyClassifier._predict(self, self.__mapper.forward(data))
 
 
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer"""
+        print "HERE"
+        return MappedClassifierSensitivityAnalyzer(
+                self,
+                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                **kwargs)
+
+
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
 
 
@@ -1843,6 +1853,18 @@ class FeatureSelectionClassifier(ProxyClassifier):
     maskclf = property(lambda x:x.__maskclf, doc="Used `MappedClassifier`")
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer
+
+        TODO: had to clone from mapped classifier... XXX 
+        """
+        return MappedClassifierSensitivityAnalyzer(
+                self,
+                analyzer=self.clf.getSensitivityAnalyzer(**kwargs),
+                **kwargs)
+
 
 
     testdataset = property(fget=lambda x:x.__testdataset,

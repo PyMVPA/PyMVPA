@@ -559,6 +559,13 @@ Things to implement for the next release (Release goals)
 Long and medium term TODOs (aka stuff that has been here forever)
 -----------------------------------------------------------------
 
+ * Agree upon sensitivities returned by the classifiers. Now SMLR/libsvm.SVM
+   returns (nfeatures x X), (where X is either just 1 for binary problems, or
+   nclasses in full multiclass in SMLR, or nclasses-1 for libsvm(?) or not-full
+   SMLR). In case of  sg.SVM and GPR (I believe) it is just (nfeatures,).
+   MaskMapper puked on reverse in the first specification... think about
+   combiner -- should it or should not be there... etc
+
  * selected_ids -> implement via MaskMapper?
 
    yoh:
