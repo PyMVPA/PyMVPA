@@ -65,7 +65,14 @@ def detrend(dataset, perchunk=False, model='linear',
         bp = 0                              # no break points by default
 
         if perchunk:
-            bp = getBreakPoints(dataset.chunks)
+            try:
+                bp = getBreakPoints(dataset.chunks)
+            except ValueError, e:
+                raise ValueError, \
+                      "Failed to assess break points between chunks. Often " \
+                      "that is due to discontinuities within a chunk, which " \
+                      "ruins idea of per-chunk detrending. Original " \
+                      "exception was: %s" % str(e)
 
         dataset.samples[:] = signal.detrend(dataset.samples, axis=0,
                                          type=model, bp=bp)

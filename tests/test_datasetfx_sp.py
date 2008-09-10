@@ -29,9 +29,10 @@ class MiscDatasetFxSpTests(unittest.TestCase):
                             [-2.0, -4, -6, -6, -4, -2]], ndmin=2 ).T
 
         chunks = [0, 0, 0, 1, 1, 1]
-
+        chunks_bad = [ 0, 0, 1, 1, 1, 0]
         target_all = N.array( [[-1.0, 0, 1, 1, 0, -1],
                                [2, 0, -2, -2, 0, 2]], ndmin=2 ).T
+
 
         ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
                      copy_samples=True)
@@ -39,6 +40,12 @@ class MiscDatasetFxSpTests(unittest.TestCase):
 
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                 msg="Detrend should have detrended all the samples at once")
+
+
+        ds_bad = Dataset(samples=samples, labels=chunks, chunks=chunks_bad,
+                         copy_samples=True)
+        self.failUnlessRaises(ValueError, detrend, ds_bad, perchunk=True)
+
 
         ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
                      copy_samples=True)
