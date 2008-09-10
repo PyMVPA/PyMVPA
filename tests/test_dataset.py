@@ -407,6 +407,14 @@ class DatasetTests(unittest.TestCase):
         seldataset = dataset.applyMapper(featuresmapper=mapper)
         self.failUnless( (dataset.selectFeatures([0, 2]).samples
                           == seldataset.samples).all() )
+
+        # Lets do simple test on maskmapper reverse since it seems to
+        # do evil things. Those checks are done only in __debug__
+        if __debug__:
+            # should fail since in mask we have just 2 features now
+            self.failUnlessRaises(ValueError, mapper.reverse, [10,20,30])
+            self.failUnlessRaises(ValueError, mapper.forward, [10,20])
+
         # XXX: the intended test is added as SampleGroupMapper test
 #        self.failUnlessRaises(NotImplementedError,
 #                              dataset.applyMapper, None, [1])
