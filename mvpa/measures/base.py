@@ -500,3 +500,16 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         return self.__analyzer._call(dataset)
 
     analyzer = property(fget=lambda x:x.__analyzer)
+
+
+class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    """Set sensitivity analyzer output be reverse mapped using mapper of the slave classifier"""
+
+    def _call(self, dataset):
+        sens = super(MappedClassifierSensitivityAnalyzer,self)._call(dataset)
+        # So we have here the case that some sensitivities are given
+        #  as nfeatures x nclasses, thus we need to take .T for the
+        #  mapper and revert back afterwards
+        # devguide's TODO lists this point to 'disguss'
+        sens_mapped = self.clf.maskclf.mapper.reverse(sens.T)
+        return sens_mapped.T
