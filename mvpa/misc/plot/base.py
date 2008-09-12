@@ -182,7 +182,7 @@ def plotSamplesDistance(dataset, sortbyattr=None):
 
 def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
                width=0.2, offset=0.2, color='0.6', distance=1.0,
-               yerr='ste'):
+               yerr='ste', **kwargs):
     """Make bar plots with automatically computed error bars.
 
     Candlestick plot (multiple interleaved barplots) can be done,
@@ -213,6 +213,8 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         Distance of two adjacent bars.
       yerr: 'ste' | 'std' | None
         Type of error for the errorbars. If `None` no errorbars are plotted.
+      **kwargs:
+        Any additional arguments are passed to matplotlib's `bar()` function.
     """
     # determine location of bars
     xlocations = (N.arange(len(data)) * distance) + offset
@@ -231,7 +233,8 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
                  yerr=yerr,
                  width=width,
                  color=color,
-                 ecolor='black')
+                 ecolor='black',
+                 **kwargs)
 
     if ylim:
         P.ylim(*(ylim))
