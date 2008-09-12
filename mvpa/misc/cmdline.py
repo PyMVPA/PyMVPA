@@ -189,6 +189,11 @@ opt.svm_gamma = \
 
 opts.add('SVM', [opt.svm_nu, opt.svm_C, opt.svm_gamma], "SVM specification")
 
+opt.do_sweep = \
+             Option("--sweep",
+                    action="store_true", dest="do_sweep",
+                    default=False,
+                    help="Sweep through various classifiers")
 
 # Crossvalidation options
 

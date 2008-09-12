@@ -441,14 +441,19 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
     props = dict(color='black',
                  linewidth=alinewidth, markeredgewidth=alinewidth,
                  zorder=1, offset=loffset)
+
+    def set_limits():
+        ax.set_xlim( (-pre, post) )
+        if ylim != None:
+            ax.set_ylim(*ylim)
+
+    set_limits()
     _make_centeredaxis(ax, 0, ai=0, label=xlabel, **props)
+    set_limits()
     _make_centeredaxis(ax, 0, ai=1, mult=N.sign(ymult), label=ylabel, **props)
 
     ax.yaxis.set_major_locator(P.NullLocator())
     ax.xaxis.set_major_locator(P.NullLocator())
-    ax.set_xlim( (-pre, post) )
-    if ylim != None:
-        ax.set_ylim(*ylim)
 
     # legend obscures plotting a bit... seems to be plotting
     # everything twice. Thus disabled by default
