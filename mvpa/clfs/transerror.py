@@ -517,7 +517,7 @@ class ConfusionMatrix(SummaryStatistics):
         return result
 
 
-    def plot(self, labels=None, numbers=True, origin='upper',
+    def plot(self, labels=None, numbers=False, origin='upper',
              xlabels_vertical=True, text_kwargs={},
              **kwargs):
         """Provide presentation of confusion matrix in image
@@ -541,8 +541,7 @@ class ConfusionMatrix(SummaryStatistics):
             Additional arguments given to imshow (\eg me cmap)
 
         :Returns:
-           (ax, cb) -- plotted axis for the confusion matrix,
-           cb is for colorbar
+           (fig, im, cb) -- figure, imshow, colorbar
         """
 
         externals.exists("pylab", raiseException=True)
@@ -626,9 +625,21 @@ class ConfusionMatrix(SummaryStatistics):
         if P.matplotlib.get_backend() == 'TkAgg':
             P.ioff()
 
+        fig = P.gcf()
+        ax = P.gca()
+        ax.axis('off')
+
+        # some customization depending on the origin
+        xticks_position, yticks, ybottom = {
+            'upper': ('top', ticks[::-1], 0.1),
+            'lower': ('bottom', ticks, 0.2)
+            }[origin]
+
+
         # Plot
-        ax = P.imshow(confusionmatrix, interpolation="nearest", origin=origin,
-                      aspect='equal', **kwargs)
+        axi = fig.add_axes([0.15, ybottom, 0.7, 0.7])
+        im = axi.imshow(confusionmatrix, interpolation="nearest", origin=origin,
+                        aspect='equal', **kwargs)
 
         # plot numbers
         if numbers:
@@ -652,27 +663,22 @@ class ConfusionMatrix(SummaryStatistics):
         P.xlabel("targets")
         P.ylabel("predictions")
 
-        ax = P.gca()
-
-        # some customization depending on the origin
-        xticks_position, yticks = {'upper': ('top', ticks[::-1]),
-                                   'lower': ('bottom', ticks)}[origin]
-
-        P.setp(ax, xticks=ticks, yticks=yticks,
+        P.setp(axi, xticks=ticks, yticks=yticks,
                xticklabels=tick_labels, yticklabels=tick_labels)
 
-        ax.xaxis.set_ticks_position(xticks_position)
-        ax.xaxis.set_label_position(xticks_position)
+        axi.xaxis.set_ticks_position(xticks_position)
+        axi.xaxis.set_label_position(xticks_position)
 
         if xlabels_vertical:
-            P.setp(P.getp(ax,'xticklabels'), rotation='vertical')
+            P.setp(P.getp(axi, 'xticklabels'), rotation='vertical')
 
-        cb = P.colorbar(format='%d', ticks = boundaries)
+        axcb = fig.add_axes([0.8, ybottom, 0.02, 0.7])
+        cb = P.colorbar(im, cax=axcb, format='%d', ticks = boundaries)
 
         if P.matplotlib.get_backend() == 'TkAgg':
             P.ion()
         P.draw()
-        return ax, cb
+        return fig, im, cb
 
 
     @property
