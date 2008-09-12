@@ -518,7 +518,7 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     def plot(self, labels=None, numbers=False, origin='upper',
-             xlabels_vertical=True, text_kwargs={},
+             xlabels_vertical=True, numbers_kwargs={},
              **kwargs):
         """Provide presentation of confusion matrix in image
 
@@ -643,18 +643,20 @@ class ConfusionMatrix(SummaryStatistics):
 
         # plot numbers
         if numbers:
-            text_kwargs_ = {'fontsize': 10, 'color': 'white',
+            numbers_kwargs_ = {'fontsize': 10,
                             'horizontalalignment': 'center',
                             'verticalalignment': 'center'}
             alpha_power = 3
-            text_kwargs_.update(text_kwargs)
             maxv = float(N.max(confusionmatrix))
+            colors = [im.to_rgba(0), im.to_rgba(maxv)]
             for i,j in zip(*N.logical_not(mask).nonzero()):
                 v = confusionmatrix[j, i]
                 # scale alpha non-linearly
                 alpha = 1 - N.array(1 - v / maxv) ** alpha_power
                 y = {'lower':j, 'upper':Nlabels-j-1}[origin]
-                P.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **text_kwargs_)
+                numbers_kwargs_['color'] = colors[int(v<maxv/2)]
+                numbers_kwargs_.update(numbers_kwargs)
+                P.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
 
         maxv = N.max(confusionmatrix)
         boundaries = N.linspace(0, maxv, N.min(maxv, 10), True)
