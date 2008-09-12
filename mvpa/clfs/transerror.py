@@ -514,6 +514,151 @@ class ConfusionMatrix(SummaryStatistics):
         return result
 
 
+    def plot(self, labels=None, numbers=True, origin='upper',
+             xlabels_vertical=True, text_kwargs={},
+             **kwargs):
+        """Provide presentation of confusion matrix in image
+
+        :Parameters:
+          labels : list of int or basestring
+            Optionally provided labels guarantee the order of
+            presentation. Also value of None places empty column/row,
+            thus provides visual groupping of labels (Thanks Ingo)
+          numbers : bool
+            Place values inside of confusion matrix elements
+          origin : basestring
+            Which left corner diagonal should start
+          xlabels_vertical : bool
+            Either to plot xlabels vertical (benefitial if number of labels
+            is large)
+          numbers_kwargs : dict
+            Additional keyword parameters to be added to numbers (if numbers
+            is True)
+          **kwargs
+            Additional arguments given to imshow (\eg me cmap)
+
+        :Returns:
+           (ax, cb) -- plotted axis for the confusion matrix,
+           cb is for colorbar
+        """
+
+        externals.exists("pylab", raiseException=True)
+        import pylab as P
+
+        self.compute()
+        labels_order = labels
+
+        # some shortcuts
+        labels = self.__labels
+        labels_map_rev = self.__labels_map_rev
+        matrix = self.__matrix
+
+        # craft original mapping from a label into index in the matrix
+        labels_indexes = dict([(x,i) for i,x in enumerate(labels)])
+
+        labels_rev = []
+        if labels_map_rev is not None:
+            labels_rev = [','.join([str(x) for x in labels_map_rev[l]])
+                                   for l in labels]
+
+        if labels_order is not None:
+            labels_order_filtered = Set(filter(lambda x:x is not None, labels_order))
+            # Verify if all labels provided in labels
+            if Set(labels) == labels_order_filtered:
+                # We were provided numerical (most probably) set
+                labels_plot = labels_order
+            elif len(labels_rev) and  Set(labels_map.keys()) == labels_order_filtered:
+                # not clear if right whenever there were multiple labels
+                # mapped into the same
+                labels_plot = []
+                for l in labels_order_filtered:
+                    v = None
+                    if l is not None: v = labels_map[l]
+                    labels_plot += [v]
+            else:
+                raise ValueError, \
+                      "Provided labels %s do not match set of known " \
+                      "original labels (%s) or mapped labels (%s)" % \
+                      (labels_order, labels, labels_rev)
+        else:
+            labels_plot = labels
+
+        labelsNN = filter(lambda x:x is not None, labels_plot) # number of not None ones
+        skips = filter(lambda x:x is None, labels_plot) # where we need to skip
+        # numbers of different entries
+        NlabelsNN = len(labelsNN)
+        Nlabels = len(labels_plot)
+
+        if matrix.shape != (NlabelsNN, NlabelsNN):
+            raise ValueError, \
+                  "Number of labels %d doesn't correspond the size" + \
+                  " of a confusion matrix %s" % (NlabelsNN, matrix.shape)
+
+        confusionmatrix = N.zeros((Nlabels, Nlabels))
+        mask = confusionmatrix.copy()
+        ticks = []
+        tick_labels = []
+        # populate in a silly way
+        for i, l in enumerate(labels_plot):
+            if l is not None:
+                j = labels_indexes[l]
+                confusionmatrix[i, :] = matrix[j, :]
+                confusionmatrix[:, i] = matrix[:, j]
+                ticks += [i + 0.5]
+                if labels_map_rev is not None:
+                    tick_labels += ['/'.join(labels_map_rev[l])]
+                else:
+                    tick_labels += [str(l)]
+            else:
+                mask[i, :] = mask[:, i] = 1
+
+        confusionmatrix = N.ma.MaskedArray(confusionmatrix, mask=mask)
+
+        # Plot
+        ax = P.imshow(confusionmatrix, interpolation="nearest", origin=origin,
+                      aspect='equal', **kwargs)
+
+        # plot numbers
+        if numbers:
+            text_kwargs_ = {'fontsize': 10, 'color': 'white',
+                            'horizontalalignment': 'center',
+                            'verticalalignment': 'center'}
+            alpha_power = 2
+            text_kwargs_.update(text_kwargs)
+            maxv = float(N.max(confusionmatrix))
+            for i,j in zip(*N.logical_not(mask).nonzero()):
+                v = confusionmatrix[j, i]
+                # scale alpha non-linearly
+                alpha = 1 - N.array(1 - v / maxv) ** alpha_power
+                y = {'lower':j, 'upper':Nlabels-j-1}[origin]
+                P.text(i+0.5, y+0.5, str(v), alpha=alpha, **text_kwargs_)
+
+        maxv = N.max(confusionmatrix)
+        boundaries = N.linspace(0, maxv, N.min(maxv, 10), True)
+        cb = P.colorbar(format='%d', ticks = boundaries)
+        # Label axes
+        P.xlabel("targets")
+        P.ylabel("predictions")
+
+        ax = P.gca()
+
+        # some customization depending on the origin
+        xticks_position, yticks = {'upper': ('top', ticks[::-1]),
+                                   'lower': ('bottom', ticks)}[origin]
+
+        P.setp(ax, xticks=ticks, yticks=yticks,
+               xticklabels=tick_labels, yticklabels=tick_labels)
+
+        ax.xaxis.set_ticks_position(xticks_position)
+        ax.xaxis.set_label_position(xticks_position)
+
+        if xlabels_vertical:
+            P.setp(P.getp(ax,'xticklabels'), rotation='vertical')
+
+        P.draw()
+        return ax, cb
+
+
     @property
     def error(self):
         self.compute()
