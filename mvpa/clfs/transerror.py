@@ -62,7 +62,7 @@ class SummaryStatistics(object):
          None), )
 
 
-    def __init__(self, targets=None, predictions=None):
+    def __init__(self, targets=None, predictions=None, sets=None):
         """Initialize SummaryStatistics
 
         :Parameters:
@@ -70,10 +70,13 @@ class SummaryStatistics(object):
            Optional set of targets
          predictions
            Optional set of predictions
+         sets
+           Optional list of sets
         """
         self._computed = False
         """Flag either it was computed for a given set of data"""
-        self.__sets = []
+
+        self.__sets = (sets, [])[int(sets is None)]
         """Datasets (target, prediction) to compute confusion matrix on"""
 
         if not targets is None or not predictions is None:
@@ -550,6 +553,7 @@ class ConfusionMatrix(SummaryStatistics):
 
         # some shortcuts
         labels = self.__labels
+        labels_map = self.__labels_map
         labels_map_rev = self.__labels_map_rev
         matrix = self.__matrix
 
@@ -562,16 +566,18 @@ class ConfusionMatrix(SummaryStatistics):
                                    for l in labels]
 
         if labels_order is not None:
-            labels_order_filtered = Set(filter(lambda x:x is not None, labels_order))
+            labels_order_filtered = filter(lambda x:x is not None, labels_order)
+            labels_order_filtered_set = Set(labels_order_filtered)
             # Verify if all labels provided in labels
-            if Set(labels) == labels_order_filtered:
+            if Set(labels) == labels_order_filtered_set:
                 # We were provided numerical (most probably) set
                 labels_plot = labels_order
-            elif len(labels_rev) and  Set(labels_map.keys()) == labels_order_filtered:
+            elif len(labels_rev) \
+                     and Set(labels_map.keys()) == labels_order_filtered_set:
                 # not clear if right whenever there were multiple labels
                 # mapped into the same
                 labels_plot = []
-                for l in labels_order_filtered:
+                for l in labels_order:
                     v = None
                     if l is not None: v = labels_map[l]
                     labels_plot += [v]
@@ -583,10 +589,11 @@ class ConfusionMatrix(SummaryStatistics):
         else:
             labels_plot = labels
 
-        labelsNN = filter(lambda x:x is not None, labels_plot) # number of not None ones
-        skips = filter(lambda x:x is None, labels_plot) # where we need to skip
+        # where we have Nones?
+        isempty = N.array([l is None for l in labels_plot])
+        non_empty = N.where(N.logical_not(isempty))[0]
         # numbers of different entries
-        NlabelsNN = len(labelsNN)
+        NlabelsNN = len(non_empty)
         Nlabels = len(labels_plot)
 
         if matrix.shape != (NlabelsNN, NlabelsNN):
@@ -599,11 +606,12 @@ class ConfusionMatrix(SummaryStatistics):
         ticks = []
         tick_labels = []
         # populate in a silly way
+
         for i, l in enumerate(labels_plot):
             if l is not None:
                 j = labels_indexes[l]
-                confusionmatrix[i, :] = matrix[j, :]
-                confusionmatrix[:, i] = matrix[:, j]
+                confusionmatrix[i, non_empty] = matrix[j, :]
+                confusionmatrix[non_empty, i] = matrix[:, j]
                 ticks += [i + 0.5]
                 if labels_map_rev is not None:
                     tick_labels += ['/'.join(labels_map_rev[l])]
@@ -614,6 +622,10 @@ class ConfusionMatrix(SummaryStatistics):
 
         confusionmatrix = N.ma.MaskedArray(confusionmatrix, mask=mask)
 
+        # turn off automatic update if interactive
+        if P.matplotlib.get_backend() == 'TkAgg':
+            P.ioff()
+
         # Plot
         ax = P.imshow(confusionmatrix, interpolation="nearest", origin=origin,
                       aspect='equal', **kwargs)
@@ -623,7 +635,7 @@ class ConfusionMatrix(SummaryStatistics):
             text_kwargs_ = {'fontsize': 10, 'color': 'white',
                             'horizontalalignment': 'center',
                             'verticalalignment': 'center'}
-            alpha_power = 2
+            alpha_power = 3
             text_kwargs_.update(text_kwargs)
             maxv = float(N.max(confusionmatrix))
             for i,j in zip(*N.logical_not(mask).nonzero()):
@@ -631,11 +643,11 @@ class ConfusionMatrix(SummaryStatistics):
                 # scale alpha non-linearly
                 alpha = 1 - N.array(1 - v / maxv) ** alpha_power
                 y = {'lower':j, 'upper':Nlabels-j-1}[origin]
-                P.text(i+0.5, y+0.5, str(v), alpha=alpha, **text_kwargs_)
+                P.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **text_kwargs_)
 
         maxv = N.max(confusionmatrix)
         boundaries = N.linspace(0, maxv, N.min(maxv, 10), True)
-        cb = P.colorbar(format='%d', ticks = boundaries)
+
         # Label axes
         P.xlabel("targets")
         P.ylabel("predictions")
@@ -655,6 +667,10 @@ class ConfusionMatrix(SummaryStatistics):
         if xlabels_vertical:
             P.setp(P.getp(ax,'xticklabels'), rotation='vertical')
 
+        cb = P.colorbar(format='%d', ticks = boundaries)
+
+        if P.matplotlib.get_backend() == 'TkAgg':
+            P.ion()
         P.draw()
         return ax, cb
 
