@@ -518,7 +518,7 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     def plot(self, labels=None, numbers=False, origin='upper',
-             xlabels_vertical=True, numbers_kwargs={},
+             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs={},
              **kwargs):
         """Provide presentation of confusion matrix in image
 
@@ -529,6 +529,11 @@ class ConfusionMatrix(SummaryStatistics):
             thus provides visual groupping of labels (Thanks Ingo)
           numbers : bool
             Place values inside of confusion matrix elements
+          numbers_alpha : None or float
+            Controls textual output of numbers. If None -- all numbers
+            are plotted in the same intensity. If some float -- it controls
+            alpha level -- higher value would give higher contrast. (good
+            value is 2)
           origin : basestring
             Which left corner diagonal should start
           xlabels_vertical : bool
@@ -646,13 +651,16 @@ class ConfusionMatrix(SummaryStatistics):
             numbers_kwargs_ = {'fontsize': 10,
                             'horizontalalignment': 'center',
                             'verticalalignment': 'center'}
-            alpha_power = 3
             maxv = float(N.max(confusionmatrix))
             colors = [im.to_rgba(0), im.to_rgba(maxv)]
             for i,j in zip(*N.logical_not(mask).nonzero()):
                 v = confusionmatrix[j, i]
                 # scale alpha non-linearly
-                alpha = 1 - N.array(1 - v / maxv) ** alpha_power
+                if numbers_alpha is None:
+                    alpha = 1.0
+                else:
+                    # scale according to value
+                    alpha = 1 - N.array(1 - v / maxv) ** numbers_alpha
                 y = {'lower':j, 'upper':Nlabels-j-1}[origin]
                 numbers_kwargs_['color'] = colors[int(v<maxv/2)]
                 numbers_kwargs_.update(numbers_kwargs)
