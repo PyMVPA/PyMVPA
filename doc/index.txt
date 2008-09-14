@@ -29,17 +29,19 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
+
+  PyMVPA 0.3.1 is out [14 Sep 2008]
+
+    It features new plotting support, I-RELIEF sensitivity measure,
+    new Dataset types and readers, bugfixes and improved documentation. See
+    the :ref:`changelog <changelog>` for details.
+
+
   New beta version of a binary installer for MacOS X 10.5 [21 Aug 2008]
 
     The installer is built for the Enthought Python distribution (Python 2.5)
     and contains the recently released PyMVPA 0.3.
 
-
-  PyMVPA 0.3 is out [18 Aug 2008]
-
-    It contains a number of new features (additional mappers, initial support
-    for plotting, more examples, ...), bugfixes and improved documentation. See
-    the :ref:`changelog <changelog>` for details.
 
 
 Documentation
