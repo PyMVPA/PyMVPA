@@ -10,12 +10,12 @@
 
 
 import unittest
-from mvpa.base.config import Config
+from mvpa.base.config import ConfigManager
 
 class ConfigTests(unittest.TestCase):
 
     def testConfig(self):
-        cfg = Config()
+        cfg = ConfigManager()
 
         # does nothing so far, but will be used to test the default
         # configuration from doc/examples/pymvpa.cfg

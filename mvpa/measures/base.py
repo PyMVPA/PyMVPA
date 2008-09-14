@@ -9,12 +9,13 @@
 """Base class for data measures: algorithms that quantify properties of
 datasets.
 
-Besides the `DatasetMeasure` base class this module also provides the (abstract)
-`FeaturewiseDatasetMeasure` class. The difference between a general measure and
-the output of the `FeaturewiseDatasetMeasure` is that the latter returns a 1d map
-(one value per feature in the dataset). In contrast there are no restrictions
-on the returned value of `DatasetMeasure` except for that it has to be in some
-iterable container.
+Besides the `DatasetMeasure` base class this module also provides the
+(abstract) `FeaturewiseDatasetMeasure` class. The difference between a general
+measure and the output of the `FeaturewiseDatasetMeasure` is that the latter
+returns a 1d map (one value per feature in the dataset). In contrast there are
+no restrictions on the returned value of `DatasetMeasure` except for that it
+has to be in some iterable container.
+
 """
 
 __docformat__ = 'restructuredtext'
@@ -146,14 +147,18 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         doc="Stores basic sensitivities if the sensitivity " +
             "relies on combining multiple ones")
 
+    # XXX should we may be default to combiner=None to avoid
+    # unexpected results? Also rethink if we need combiner here at
+    # all... May be combiners should be 'adjoint' with transformer
     def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs):
         """Initialize
 
         :Parameters:
           combiner : Functor
-            If _call returned value is 2d -- combines along 2nd
-            dimension as well as sets base_sensitivities
-            TODO change combiner's default
+            The combiner is only applied if the computed featurewise dataset
+            measure is more than one-dimensional. This is different from a
+            `transformer`, which is always applied. By default, the sum of
+            absolute values along the second axis is computed.
         """
         DatasetMeasure.__init__(self, **(kwargs))
 
@@ -163,7 +168,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         if prefixes is None: prefixes = []
         if self.__combiner != SecondAxisSumOfAbs:
             prefixes.append("combiner=%s" % self.__combiner)
-        return super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
+        return \
+            super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _call(self, dataset):
@@ -183,8 +189,19 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
          CombinedSensitivityAnalyzer, thus this one might make use of
          CombinedSensitivityAnalyzer yoh thinks, and here
          base_sensitivities doesn't sound appropriate.
+         MH: There is indeed some overlap, but also significant differences.
+             This one operates on a single sensana and combines over second
+             axis, CombinedFeaturewiseDatasetMeasure uses first axis.
+             Additionally, 'Sensitivity' base class is
+             FeaturewiseDatasetMeasures which would have to be changed to
+             CombinedFeaturewiseDatasetMeasure to deal with stuff like
+             SMLRWeights that return multiple sensitivity values by default.
+             Not sure if unification of both (and/or removal of functionality
+             here does not lead to an overall more complicated situation,
+             without any real gain -- after all this one works ;-)
         """
-        if len(result.shape)>1:
+        rsshape = result.squeeze().shape
+        if len(result.squeeze().shape)>1:
             n_base = result.shape[1]
             """Number of base sensitivities"""
             if self.states.isEnabled('base_sensitivities'):
@@ -195,8 +212,9 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                     biases = self.biases
                     if len(self.biases) != n_base:
                         raise ValueError, \
-                            "Number of biases %d is different" % len(self.biases)\
-                            + " from number of base sensitivities %d" % n_base
+                          "Number of biases %d is " % len(self.biases) \
+                          + "different from number of base sensitivities" \
+                          + "%d" % n_base
                 for i in xrange(n_base):
                     if not biases is None:
                         bias = biases[i]
@@ -209,7 +227,12 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
 
             # After we stored each sensitivity separately,
             # we can apply combiner
-            result = self.__combiner(result)
+            if self.__combiner is not None:
+                result = self.__combiner(result)
+        else:
+            # remove bogus dimensions
+            # XXX we might need to come up with smth better. May be some naive combiner? :-)
+            result = result.squeeze()
 
         # call base class postcall
         result = DatasetMeasure._postcall(self, dataset, result)
@@ -300,12 +323,19 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         return super(Sensitivity, self).__repr__(prefixes=prefixes)
 
 
-    def __call__(self, dataset):
+    def __call__(self, dataset=None):
         """Train classifier on `dataset` and then compute actual sensitivity.
+
+        If the classifier is already trained it is possible to extract the
+        sensitivities without passing a dataset.
         """
         # local bindings
         clf = self.__clf
         if not clf.trained or self._force_training:
+            if dataset is None:
+                raise ValueError, \
+                      "Training classifier to compute sensitivities requires " \
+                      "a dataset."
             if __debug__:
                 debug("SA", "Training classifier %s %s" %
                       (`clf`,
@@ -359,10 +389,13 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         self.sensitivities = sensitivities
         if __debug__:
-            debug("SA", "Returning combined using %s sensitivity across %d items" %
+            debug("SA",
+                  "Returning combined using %s sensitivity across %d items" %
                   (`self.__combiner`, len(sensitivities)))
 
-        return self.__combiner(sensitivities)
+        if self.__combiner is not None:
+            sensitivities = self.__combiner(sensitivities)
+        return sensitivities
 
 
     def _setAnalyzers(self, analyzers):
@@ -467,3 +500,16 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         return self.__analyzer._call(dataset)
 
     analyzer = property(fget=lambda x:x.__analyzer)
+
+
+class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    """Set sensitivity analyzer output be reverse mapped using mapper of the slave classifier"""
+
+    def _call(self, dataset):
+        sens = super(MappedClassifierSensitivityAnalyzer,self)._call(dataset)
+        # So we have here the case that some sensitivities are given
+        #  as nfeatures x nclasses, thus we need to take .T for the
+        #  mapper and revert back afterwards
+        # devguide's TODO lists this point to 'disguss'
+        sens_mapped = self.clf.maskclf.mapper.reverse(sens.T)
+        return sens_mapped.T

@@ -10,6 +10,11 @@
 
 from sets import Set
 
+from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.clfs.base import ProxyClassifier
+from mvpa.clfs.transerror import TransferError
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+
 from tests_warehouse import pureMultivariateSignal
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -80,6 +85,71 @@ class SVMTests(unittest.TestCase):
         self.failUnless( mean_mv_perf > mean_mv_lin_perf )
         # univariate has insufficient information
         self.failUnless( mean_uv_perf < mean_mv_perf )
+
+
+    # XXX for now works only with linear... think it through -- should
+    # work non-linear, shouldn't it?
+    # now all non-linear have C>0 thus skipped anyways
+
+    # TODO: For some reason libsvm's weight assignment has no effect
+    # as well -- need to be fixed :-/
+    @sweepargs(clf=clfs['svm', 'sg', '!regression', '!gnpp', '!meta'])
+    def testCperClass(self, clf):
+        try:
+            if clf.C > 0:
+                # skip those with fixed C
+                return
+        except:
+            # classifier has no C
+            return
+
+        if clf.C < -5:
+            # too soft margin helps to fight disbalance, thus skip
+            # it in testing
+            return
+        #print clf
+        ds = datasets['uni2small'].copy()
+        ds__ = datasets['uni2small'].copy()
+        #
+        # ballanced set
+        # Lets add a bit of noise to drive classifier nuts. same
+        # should be done for disballanced set
+        ds__.samples = ds__.samples + 0.5 * N.random.normal(size=(ds__.samples.shape))
+        #
+        # disballanced set
+        # lets overpopulate label 0
+        times = 10
+        ds_ = ds.selectSamples(range(ds.nsamples) + range(ds.nsamples/2) * times)
+        ds_.samples = ds_.samples + 0.7 * N.random.normal(size=(ds_.samples.shape))
+        spl = ds_.samplesperlabel
+        #print ds_.labels, ds_.chunks
+
+        cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
+                                          enable_states='confusion')
+        e = cve(ds__)
+        # without disballance we should already have some hits
+        self.failUnless(cve.confusion.stats["P'"][1] > 0)
+
+        e = cve(ds_)
+        # with disballance we should have no hits
+        self.failUnless(cve.confusion.stats["P'"][1] == 0)
+        #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
+
+        # Set '1 C per label'
+        oldC = clf.C
+        ratio = N.sqrt(float(spl[0])/spl[1])
+        clf.C = (-1/ratio, -1*ratio)
+        try:
+            e_ = cve(ds_)
+            # reassign C
+            clf.C = oldC
+        except:
+            clf.C = oldC
+            raise
+        #print "B:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
+        # Finally test if we get any 'hit' for minor category. In the
+        # classifier, which has way to 'ballance' should be non-0
+        self.failUnless(cve.confusion.stats["P'"][1] > 0)
 
 
     def testSillyness(self):

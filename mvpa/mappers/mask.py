@@ -145,9 +145,17 @@ class MaskMapper(Mapper):
         datadim = len(data.shape)
         if not datadim in [1, 2]:
             raise ValueError, \
-                  "Only 2d or 1d data can be reverse mapped."
+                  "Only 2d or 1d data can be reverse mapped. "\
+                  "Got data of shape %s" % (data.shape,)
 
         if datadim == 1:
+            # Verify that we are trying to reverse data of proper dimension.
+            # In 1D case numpy would not complain and will broadcast
+            # the values
+            if __debug__ and  self.nfeatures != len(data):
+                raise ValueError, \
+                      "Cannot reverse map data with %d elements, whenever " \
+                      "mask knows only %d" % (len(data), self.nfeatures)
             mapped = N.zeros(self.__mask.shape, dtype=data.dtype)
             mapped[self.__mask] = data
         elif datadim == 2:

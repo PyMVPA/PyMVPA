@@ -181,6 +181,7 @@ if __debug__:
     debug.register('PLR',  "PLR call")
     debug.register('SLC',  "Searchlight call")
     debug.register('SA',   "Sensitivity analyzers")
+    debug.register('IRELIEF', "Various I-RELIEFs")
     debug.register('SA_',  "Sensitivity analyzers (verbose)")
     debug.register('PSA',  "Perturbation analyzer call")
     debug.register('RFEC', "Recursive Feature Elimination call")
@@ -191,9 +192,11 @@ if __debug__:
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
     # CHECKs
-    debug.register('CHECK_DS_SORTED', "Checking in datasets for sorted")
+    debug.register('CHECK_DS_SELECT',
+                   "Check in dataset.select() for sorted and unique indexes")
+    debug.register('CHECK_DS_SORTED', "Check in datasets for sorted")
     debug.register('CHECK_IDS_SORTED',
-                   "Checking for ids being sorted in mappers")
+                   "Check for ids being sorted in mappers")
     debug.register('CHECK_TRAINED',
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
@@ -232,7 +235,10 @@ if __debug__:
     debug.register('SMLR_',   "SMLR verbose")
 
     debug.register('GPR',     "GPR")
+    debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KERNEL',  "Kernels module")
+    debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
+    debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
 
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
@@ -256,11 +262,6 @@ if __debug__:
     # Lets check if environment can tell us smth
     if cfg.has_option('debug', 'metrics'):
         debug.registerMetric(cfg.get('debug', 'metrics').split(","))
-
-
-import externals
-
-
 
 
 

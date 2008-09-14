@@ -95,6 +95,11 @@ class MappedDataset(Dataset):
         return self.mapper.reverse(data)
 
 
+    def mapSelfReverse(self):
+        """Reverse samples from featurespace into the original dataspace.
+        """
+        return self.mapper.reverse(self.samples)
+
     def selectFeatures(self, ids, plain=False, sort=False):
         """Select features given their ids.
 
@@ -129,3 +134,7 @@ class MappedDataset(Dataset):
 
     # read-only class properties
     mapper = property(fget=lambda self: self._dsattr['mapper'])
+    samples_original = property(fget=mapSelfReverse, doc="Return samples in the original shape")
+
+    # syntactic sugarings
+    O = property(fget=mapSelfReverse, doc="Return samples in the original shape")

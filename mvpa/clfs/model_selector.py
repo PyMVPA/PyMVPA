@@ -16,12 +16,26 @@ import numpy as N
 from mvpa.base import externals
 from mvpa.misc.exceptions import InvalidHyperparameterError
 
+externals.exists("scipy", raiseException=True)
+import scipy.linalg as SL
+
 # no sense to import this module if openopt is not available
 if externals.exists("openopt", raiseException=True):
     from scikits.openopt import NLP
 
 if __debug__:
     from mvpa.base import debug
+
+def _openopt_debug():
+    # shut up or make verbose OpenOpt
+    # (-1 = no logs, 0 = small log, 1 = verbose)
+    if __debug__:
+        da = debug.active
+        if 'OPENOPT' in da:
+            return 1
+        elif 'MOD_SEL' in da:
+            return 0
+    return -1
 
 
 class ModelSelector(object):
@@ -39,7 +53,9 @@ class ModelSelector(object):
         self.problem = None
         pass
 
-    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1, optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None, use_gradient=False, logscale=False):
+    def max_log_marginal_likelihood(self, hyp_initial_guess, maxiter=1,
+            optimization_algorithm="scipy_cg", ftol=1.0e-3, fixedHypers=None,
+            use_gradient=False, logscale=False):
         """
         Set up the optimization problem in order to maximize
         the log_marginal_likelihood.
@@ -79,7 +95,7 @@ class ModelSelector(object):
         self.logscale = logscale # use log-scale on hyperparameters to enhance numerical stability
         self.optimization_algorithm = optimization_algorithm
         self.hyp_initial_guess = N.array(hyp_initial_guess)
-        self.hyp_initial_guess_log = N.log(self.hyp_initial_guess)        
+        self.hyp_initial_guess_log = N.log(self.hyp_initial_guess)
         if fixedHypers is None:
             fixedHypers = N.zeros(self.hyp_initial_guess.shape[0],dtype=bool)
             pass
@@ -117,12 +133,13 @@ class ModelSelector(object):
                     self.parametric_model.set_hyperparameters(self.hyp_running_guess)
                     pass
             except InvalidHyperparameterError:
-                if __debug__: debug("GPR","WARNING: invalid hyperparameters!")
+                if __debug__: debug("MOD_SEL","WARNING: invalid hyperparameters!")
                 return -N.inf
             try:
                 self.parametric_model.train(self.dataset)
-            except N.linalg.linalg.LinAlgError:
-                if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
+            except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
+                # Note that ValueError could be raised when Cholesky gets Inf or Nan.
+                if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                 return -N.inf
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
             # REMOVE print log_marginal_likelihood
@@ -149,18 +166,18 @@ class ModelSelector(object):
                     self.parametric_model.set_hyperparameters(self.hyp_running_guess)
                     pass
             except InvalidHyperparameterError:
-                if __debug__: debug("GPR", "WARNING: invalid hyperparameters!")
+                if __debug__: debug("MOD_SEL", "WARNING: invalid hyperparameters!")
                 return -N.inf
             # Check if it is possible to avoid useless computations
             # already done in f(). According to tests and information
             # collected from OpenOpt people, it is sufficiently
             # unexpected that the following test succeed:
             if N.any(x!=self.f_last_x):
-                if __debug__: debug("GPR","UNEXPECTED: recomputing train+log_marginal_likelihood.")
+                if __debug__: debug("MOD_SEL","UNEXPECTED: recomputing train+log_marginal_likelihood.")
                 try:
                     self.parametric_model.train(self.dataset)
-                except N.linalg.linalg.LinAlgError:
-                    if __debug__: debug("GPR", "WARNING: Cholesky failed! Invalid hyperparameters!")
+                except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
+                    if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                     # XXX EO: which value for the gradient to return to
                     # OpenOpt when hyperparameters are wrong?
                     return N.zeros(x.size)
@@ -176,7 +193,8 @@ class ModelSelector(object):
 
 
         if self.logscale:
-            x0 = self.hyp_initial_guess_log[self.freeHypers] # vector of hyperparameters' values where to start the search
+            # vector of hyperparameters' values where to start the search
+            x0 = self.hyp_initial_guess_log[self.freeHypers]
         else:
             x0 = self.hyp_initial_guess[self.freeHypers]
             pass
@@ -184,18 +202,26 @@ class ModelSelector(object):
         # XXX EO: is it necessary to use contol when self.logscale is
         # True and there is no lb? Ask dmitrey.
         if self.use_gradient:
-            self.problem = NLP(f, x0, df=df, contol=self.contol, goal='maximum') # actual instance of the OpenOpt non-linear problem
+            # actual instance of the OpenOpt non-linear problem
+            self.problem = NLP(f, x0, df=df, contol=self.contol, goal='maximum')
         else:
             self.problem = NLP(f, x0, contol=self.contol, goal='maximum')
             pass
         self.problem.name = "Max LogMargLikelihood"
         if not self.logscale:
-            self.problem.lb = N.zeros(self.problem.n)+self.contol # set lower bound for hyperparameters: avoid negative hyperparameters. Note: problem.n is the size of hyperparameters' vector
+             # set lower bound for hyperparameters: avoid negative
+             # hyperparameters. Note: problem.n is the size of
+             # hyperparameters' vector
+            self.problem.lb = N.zeros(self.problem.n)+self.contol
             pass
-        self.problem.maxiter = maxiter # max number of iterations for the optimizer.
-        self.problem.checkdf = True # check whether the derivative of log_marginal_likelihood converged to zero before ending optimization
-        self.problem.ftol = ftol # set increment of log_marginal_likelihood under which the optimizer stops
-        self.problem.iprint = 0 # shut up OpenOpt (note: -1 = no logs, 0 = small log, 1 = verbose)
+        # max number of iterations for the optimizer.
+        self.problem.maxiter = maxiter
+        # check whether the derivative of log_marginal_likelihood converged to
+        # zero before ending optimization
+        self.problem.checkdf = True
+         # set increment of log_marginal_likelihood under which the optimizer stops
+        self.problem.ftol = ftol
+        self.problem.iprint = _openopt_debug()
         return self.problem
 
 
@@ -206,19 +232,19 @@ class ModelSelector(object):
         # sense that it could work not only for
         # log_marginal_likelihood but other measures as well
         # (e.g. cross-valideted error).
-        
+
         if N.all(self.freeHypers==False): # no optimization needed
             self.hyperparameters_best = self.hyp_initial_guess.copy()
             try:
                 self.parametric_model.set_hyperparameters(self.hyperparameters_best)
             except InvalidHyperparameterError:
-                if __debug__: debug("GPR", "WARNING: invalid hyperparameters!")
+                if __debug__: debug("MOD_SEL", "WARNING: invalid hyperparameters!")
                 self.log_marginal_likelihood_best = -N.inf
                 return self.log_marginal_likelihood_best
             self.parametric_model.train(self.dataset)
             self.log_marginal_likelihood_best = self.parametric_model.compute_log_marginal_likelihood()
             return self.log_marginal_likelihood_best
-            
+
         result = self.problem.solve(self.optimization_algorithm) # perform optimization!
         if result.stopcase == -1:
             # XXX: should we use debug() for the following messages?
@@ -292,7 +318,7 @@ if __name__ == "__main__":
 
     problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[sigma_noise_initial,sigma_f_initial,length_scale_initial], optimization_algorithm="ralg", ftol=1.0e-8,fixedHypers=N.array([0,0,0],dtype=bool))
     # problem =  ms.max_log_marginal_likelihood(hyp_initial_guess=[1.0,1.0], optimization_algorithm="ralg", ftol=1.0e-3)
-    
+
     lml = ms.solve()
     # print ms.hyperparameters_best
     sigma_noise_best, sigma_f_best, length_scale_best = ms.hyperparameters_best

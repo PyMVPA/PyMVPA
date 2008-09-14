@@ -21,6 +21,7 @@ import shogun.Regression
 import shogun.Kernel
 import shogun.Library
 
+import operator
 
 from mvpa.misc.param import Parameter
 from mvpa.base import warning
@@ -225,25 +226,28 @@ class SVM(_SVM):
 
             if len(ul) == 2:
                 # assure that we have -1/+1
-                self._labels_dict = {ul[0]:-1.0,
-                                     ul[1]:+1.0}
+                _labels_dict = {ul[0]:-1.0, ul[1]:+1.0}
             elif len(ul) < 2:
                 raise ValueError, "we do not have 1-class SVM brought into SG yet"
             else:
                 # can't use plain enumerate since we need them swapped
-                self._labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
+                _labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
 
             # reverse labels dict for back mapping in _predict
-            self._labels_dict_rev = dict([(x[1], x[0])
-                                          for x in self._labels_dict.items()])
+            _labels_dict_rev = dict([(x[1], x[0])
+                                     for x in _labels_dict.items()])
+
+            # bind to instance as well
+            self._labels_dict = _labels_dict
+            self._labels_dict_rev = _labels_dict_rev
 
             # Map labels
             #
             # TODO: top level classifier should take care about labels
             # mapping if that is needed
             if __debug__:
-                debug("SG__", "Mapping labels using dict %s" % self._labels_dict)
-            labels_ = N.asarray([ self._labels_dict[x] for x in dataset.labels ], dtype='double')
+                debug("SG__", "Mapping labels using dict %s" % _labels_dict)
+            labels_ = N.asarray([ _labels_dict[x] for x in dataset.labels ], dtype='double')
 
         labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
@@ -294,15 +298,41 @@ class SVM(_SVM):
 
         # TODO -- handle _changedData['params'] correctly, ie without recreating
         # whole SVM
+        Cs = None
         if not retrainable or self.__svm is None or _changedData['params']:
             # SVM
             if self.params.isKnown('C'):
                 C = self.params.C
-                if C<0:
-                    C = self._getDefaultC(dataset.samples)*abs(C)
+                if not operator.isSequenceType(C):
+                    # we were not given a tuple for balancing between classes
+                    C = [C]
+
+                Cs = list(C[:])               # copy
+                for i in xrange(len(Cs)):
+                    if Cs[i]<0:
+                        Cs[i] = self._getDefaultC(dataset.samples)*abs(Cs[i])
                     if __debug__:
                         debug("SG_", "Default C for %s was computed to be %s" %
-                              (self.params.C, C))
+                              (C[i], Cs[i]))
+
+                # XXX do not jump over the head and leave it up to the user
+                #     ie do not rescale automagically by the number of samples
+                #if len(Cs) == 2 and not ('regression' in self._clf_internals) and len(ul) == 2:
+                #    # we were given two Cs
+                #    if N.max(C) < 0 and N.min(C) < 0:
+                #        # and both are requested to be 'scaled' TODO :
+                #        # provide proper 'features' to the parameters,
+                #        # so we could specify explicitely if to scale
+                #        # them by the number of samples here
+                #        nl = [N.sum(labels_ == _labels_dict[l]) for l in ul]
+                #        ratio = N.sqrt(float(nl[1]) / nl[0])
+                #        #ratio = (float(nl[1]) / nl[0])
+                #        Cs[0] *= ratio
+                #        Cs[1] /= ratio
+                #        if __debug__:
+                #            debug("SG_", "Rescaled Cs to %s to accomodate the "
+                #                  "difference in number of training samples" %
+                #                  Cs)
 
             # Choose appropriate implementation
             svm_impl_class = self.__get_implementation(ul)
@@ -312,12 +342,17 @@ class SVM(_SVM):
 
             if self._svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
-                self.__svm = svm_impl_class(C, self.params.epsilon, self.__kernel, labels)
+                self.__svm = svm_impl_class(Cs[0], self.params.epsilon, self.__kernel, labels)
             elif self._svm_impl in ['krr']:
                 self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
             else:
-                self.__svm = svm_impl_class(C, self.__kernel, labels)
+                self.__svm = svm_impl_class(Cs[0], self.__kernel, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
+            if Cs is not None and len(Cs) == 2:
+                if __debug__:
+                    debug("SG_", "Since multiple Cs are provided: %s, assign them" % Cs)
+                self.__svm.set_C(Cs[0], Cs[1])
+
             self.params.reset()  # mark them as not-changed
             newsvm = True
             _setdebug(self.__svm, 'SVM')
@@ -449,16 +484,20 @@ class SVM(_SVM):
         if ('regression' in self._clf_internals):
             predictions = values
         else:
-            if len(self._labels_dict) == 2:
+            # local bindings
+            _labels_dict = self._labels_dict
+            _labels_dict_rev = self._labels_dict_rev
+
+            if len(_labels_dict) == 2:
                 predictions = 1.0 - 2*N.signbit(values)
             else:
                 predictions = values
 
             # assure that we have the same type
-            label_type = type(self._labels_dict.values()[0])
+            label_type = type(_labels_dict.values()[0])
 
             # remap labels back adjusting their type
-            predictions = [self._labels_dict_rev[label_type(x)]
+            predictions = [_labels_dict_rev[label_type(x)]
                            for x in predictions]
 
             if __debug__:
@@ -486,7 +525,7 @@ class SVM(_SVM):
 
             # to avoid leaks with not yet properly fixed shogun
             # XXX make it nice... now it is just stable ;-)
-            if not self.__traindata is None:
+            if True: # not self.__traindata is None:
                 if True:
                 # try:
                     if self.__kernel is not None:

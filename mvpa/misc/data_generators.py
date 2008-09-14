@@ -91,10 +91,10 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     # bring it 'under 1', since otherwise some classifiers have difficulties
     # during optimization
     data = 1.0/(N.max(N.abs(data))) * data
-    labels = N.concatenate([N.repeat(i, perlabel) for i in range(nlabels)])
+    labels = N.concatenate([N.repeat('L%d' % i, perlabel) for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    ds = Dataset(samples=data, labels=labels, chunks=chunks)
+    ds = Dataset(samples=data, labels=labels, chunks=chunks, labels_map=True)
     ds.nonbogus_features = nonbogus_features
     return ds
 

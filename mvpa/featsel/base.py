@@ -129,6 +129,9 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         # dataset with selected features is returned
         return results
 
+    # make it accessible from outside
+    sensitivity_analyzer = property(fget=lambda self:self.__sensitivity_analyzer,
+                                    doc="Measure which was used to do selection")
 
 
 class FeatureSelectionPipeline(FeatureSelection):

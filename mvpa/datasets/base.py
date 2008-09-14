@@ -24,10 +24,23 @@ from sets import Set
 
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhancedDocString, table2string
 
 if __debug__:
     from mvpa.base import debug, warning
+
+    def _validate_indexes_uniq_sorted(seq, fname, item):
+        if operator.isSequenceType(seq):
+            seq_unique = N.unique(seq)
+            if len(seq) != len(seq_unique):
+                warning("%s() operates only with indexes for %s without"
+                        " repetitions. Repetitions were removed."
+                        % (fname, item))
+            if N.any(N.sort(seq) != seq_unique):
+                warning("%s() does not guarantee the original order"
+                        " of selected %ss. Use selectSamples() and "
+                        " selectFeatures(sort=False) instead" % (fname, item))
+
 
 #XXX class Dataset(ClassWithCollections):
 class Dataset(object):
@@ -95,6 +108,7 @@ class Dataset(object):
                  # new instances
                  samples=None,
                  labels=None,
+                 labels_map=None,
                  chunks=None,
                  origids=None,
                  # flags
@@ -139,11 +153,17 @@ class Dataset(object):
 
         :Keywords:
           samples : ndarray
-            a 2d array (samples x features)
+            2d array (samples x features)
           labels
-            array or scalar value defining labels for each samples
+            An array or scalar value defining labels for each samples
+          labels_map : None or bool or dict
+            Map from labels into literal names. If is None or True,
+            the mapping is computed, from labels which must be literal.
+            If is False, no mapping is computed. If dict -- mapping is
+            verified and taken, labels get remapped. Dict must map
+            literal -> number
           chunks
-            array or scalar value defining chunks for each sample
+            An array or scalar value defining chunks for each sample
 
         Each of the Keywords arguments overwrites what is/might be
         already in the `data` container.
@@ -202,8 +222,8 @@ class Dataset(object):
             if __debug__:
                 if lcl_data.has_key('samples'):
                     debug('DS',
-                          "`Data` dict has `samples` (%s) but there is also" +
-                          " __init__ parameter `samples` which overrides " +
+                          "`Data` dict has `samples` (%s) but there is also" \
+                          " __init__ parameter `samples` which overrides " \
                           " stored in `data`" % (`lcl_data['samples'].shape`))
             lcl_data['samples'] = self._shapeSamples(samples, dtype,
                                                      copy_samples)
@@ -261,6 +281,56 @@ class Dataset(object):
                     debug("DS", "Initializing attribute %s" % attr)
                 lcl_data[attr] = N.zeros(nsamples)
 
+        # labels_map
+        labels_ = N.asarray(lcl_data['labels'])
+        labels_map_known = lcl_dsattr.has_key('labels_map')
+        if labels_map is True:
+            # need to composte labels_map
+            if labels_.dtype.char == 'S' or not labels_map_known:
+                # Create mapping
+                ulabels = list(Set(labels_))
+                ulabels.sort()
+                labels_map = dict([ (x[1], x[0]) for x in enumerate(ulabels) ])
+                if __debug__:
+                    debug('DS', 'Mapping for the labels computed to be %s'
+                          % labels_map)
+            else:
+                if __debug__:
+                    debug('DS', 'Mapping of labels was requested but labels '
+                          'are not strings. Skipped')
+                labels_map = None
+            pass
+        elif labels_map is False:
+            labels_map = None
+
+        if isinstance(labels_map, dict):
+            if labels_map_known:
+                if __debug__:
+                    debug('DS',
+                          "`dsattr` dict has `labels_map` (%s) but there is also" \
+                          " __init__ parameter `labels_map` (%s) which overrides " \
+                          " stored in `dsattr`" % (lcl_dsattr['labels_map'], labels_map))
+
+            lcl_dsattr['labels_map'] = labels_map
+            # map labels if needed (if strings or was explicitely requested)
+            if labels_.dtype.char == 'S' or not labels_map_known:
+                if __debug__:
+                    debug('DS_', "Remapping labels using mapping %s" % labels_map)
+                # need to remap
+                # !!! N.array is important here
+                try:
+                    lcl_data['labels'] = N.array(
+                        [labels_map[x] for x in lcl_data['labels']])
+                except KeyError, e:
+                    raise ValueError, "Provided labels_map %s is insufficient " \
+                          "to map all the labels. Mapping for label %s is " \
+                          "missing" % (labels_map, e)
+
+        elif not lcl_dsattr.has_key('labels_map'):
+            lcl_dsattr['labels_map'] = labels_map
+        elif __debug__:
+            debug('DS_', 'Not overriding labels_map in dsattr since it has one')
+
         if check_data:
             self._checkData()
 
@@ -312,7 +382,8 @@ class Dataset(object):
         if __debug__ and "DS_" in debug.active:
             debug("DS_", "Reseting all attributes %s for dataset %s"
                   % (_uniqueattributes,
-                     self.summary(uniq=False, idhash=False, stats=False)))
+                     self.summary(uniq=False, idhash=False,
+                                  stats=False, lstats=False)))
 
         # I guess we better checked if dictname is known  but...
         for k in _uniqueattributes:
@@ -332,7 +403,8 @@ class Dataset(object):
         if not _dsattr.has_key(attrib) or _dsattr[attrib] is None:
             if __debug__ and 'DS_' in debug.active:
                 debug("DS_", "Recomputing unique set for attrib %s within %s" %
-                      (attrib, self.summary(uniq=False, stats=False)))
+                      (attrib, self.summary(uniq=False,
+                                            stats=False, lstats=False)))
             # uff... might come up with better strategy to keep relevant
             # attribute name
             _dsattr[attrib] = N.unique( N.asanyarray(dict_[attrib[6:]]) )
@@ -379,7 +451,8 @@ class Dataset(object):
         return result
 
 
-    def _getSampleIdsByAttr(self, values, attrib="labels"):
+    def _getSampleIdsByAttr(self, values, attrib="labels",
+                            sort=True):
         """Return indecies of samples given a list of attributes
         """
 
@@ -395,8 +468,9 @@ class Dataset(object):
             sel = N.concatenate((
                 sel, N.where(_data[attrib]==value)[0]))
 
-        # place samples in the right order
-        sel.sort()
+        if sort:
+            # place samples in the right order
+            sel.sort()
 
         return sel
 
@@ -520,6 +594,10 @@ class Dataset(object):
         length matching the number of samples in the dataset.
         """
         try:
+            # if we are initializing with a single string -- we should
+            # treat it as a single label
+            if isinstance(attr, basestring):
+                raise TypeError
             if len(attr) != self.nsamples:
                 raise DatasetError, \
                       "Length of sample attribute '%s' [%d]" \
@@ -536,7 +614,7 @@ class Dataset(object):
 
 
     @classmethod
-    def _registerAttribute(cls, key, dictname="_data", hasunique=False):
+    def _registerAttribute(cls, key, dictname="_data", abbr=None, hasunique=False):
         """Register an attribute for any Dataset class.
 
         Creates property assigning getters/setters depending on the
@@ -571,6 +649,10 @@ class Dataset(object):
             exec "%s.%s = property(fget=%s, fset=%s)"  % \
                  (cls.__name__, key, getter, setter)
 
+            if abbr is not None:
+                exec "%s.%s = property(fget=%s, fset=%s)"  % \
+                     (cls.__name__, abbr, getter, setter)
+
             if hasunique:
                 uniquekey = "unique%s" % key
                 getter = '_get%s' % uniquekey
@@ -586,6 +668,9 @@ class Dataset(object):
 
                 exec "%s.%s = property(fget=%s)" % \
                      (cls.__name__, uniquekey, getter)
+                if abbr is not None:
+                    exec "%s.U%s = property(fget=%s)" % \
+                         (cls.__name__, abbr, getter)
 
                 # create samplesper<ATTR> properties
                 sampleskey = "samplesper%s" % key[:-1] # remove ending 's' XXX
@@ -623,6 +708,7 @@ class Dataset(object):
         return self.summary(uniq=True,
                             idhash=__debug__ and ('DS_ID' in debug.active),
                             stats=__debug__ and ('DS_STATS' in debug.active),
+                            lstats=__debug__ and ('DS_STATS' in debug.active),
                             )
 
 
@@ -630,16 +716,18 @@ class Dataset(object):
         return "<%s>" % str(self)
 
 
-    def summary(self, uniq=True, stats=True, idhash=False):
+    def summary(self, uniq=True, stats=True, idhash=False, lstats=True):
         """String summary over the object
 
         :Parameters:
           uniq : bool
-             include summary over data attributes which have unique
+             Include summary over data attributes which have unique
           idhash : bool
-             include idhash value for dataset and samples
+             Include idhash value for dataset and samples
           stats : bool
-             include some basic statistics (mean, std, var) over dataset samples
+             Include some basic statistics (mean, std, var) over dataset samples
+          lstats : bool
+             Include statistics on chunks/labels
         """
         # local bindings
         samples = self.samples
@@ -657,8 +745,9 @@ class Dataset(object):
             (idhash_ds, samples.dtype,
              self.nsamples, idhash_samples, self.nfeatures)
 
+        ssep = (' ', '\n')[lstats]
         if uniq:
-            s +=  " uniq:"
+            s +=  "%suniq:" % ssep
             for uattr in _dsattr.keys():
                 if not uattr.startswith("unique"):
                     continue
@@ -670,19 +759,85 @@ class Dataset(object):
                 except:
                     pass
 
+        if isinstance(self.labels_map, dict):
+            s += ' labels_mapped'
+
         if stats:
             # TODO -- avg per chunk?
-            s += " stats: mean=%g std=%g var=%g min=%g max=%g" % \
-                 (N.mean(samples), N.std(samples),
+            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g" % \
+                 (ssep, N.mean(samples), N.std(samples),
                   N.var(samples), N.min(samples), N.max(samples))
+
+        if lstats:
+            s += self.summary_labels()
+
         return s
 
 
-    def __iadd__( self, other ):
+    def summary_labels(self, maxc=30, maxl=20):
+        """Provide summary statistics over the labels and chunks
+
+        :Parameters:
+          maxc : int
+            Maximal number of chunks when provide details
+          maxl : int
+            Maximal number of labels when provide details
+        """
+        # We better avoid bound function since if people only
+        # imported Dataset without miscfx it would fail
+        from mvpa.datasets.miscfx import getSamplesPerChunkLabel
+        spcl = getSamplesPerChunkLabel(self)
+        # XXX couldn't they be unordered?
+        ul = self.uniquelabels.tolist()
+        uc = self.uniquechunks.tolist()
+        s = ""
+        if len(ul) < maxl and len(uc) < maxc:
+            s += "\nCounts of labels in each chunk:"
+            # only in a resonable case do printing
+            table = [['  chunks\labels'] + ul]
+            table += [[''] + ['---'] * len(ul)]
+            for c, counts in zip(uc, spcl):
+                table.append([ str(c) ] + counts.tolist())
+            s += '\n' + table2string(table)
+        else:
+            s += "No details due to large number of labels or chunks. " \
+                 "Increase maxc and maxl if desired"
+
+        labels_map = self.labels_map
+        if isinstance(labels_map, dict):
+            s += "\nOriginal labels were mapped using following mapping:"
+            s += '\n\t'+'\n\t'.join([':\t'.join(map(str, x))
+                                     for x in labels_map.items()]) + '\n'
+
+        def cl_stats(axis, u, name1, name2):
+            # Compute statistics per label
+            stats = {'min': N.min(spcl, axis=axis),
+                     'max': N.max(spcl, axis=axis),
+                     'mean': N.mean(spcl, axis=axis),
+                     'std': N.std(spcl, axis=axis),
+                     '#%ss' % name2: N.sum(spcl>0, axis=axis)}
+            entries = ['  ' + name1, 'mean', 'std', 'min', 'max', '#%ss' % name2]
+            table = [ entries ]
+            for i, l in enumerate(u):
+                d = {'  ' + name1 : l}
+                d.update(dict([ (k, stats[k][i]) for k in stats.keys()]))
+                table.append( [ ('%.3g', '%s')[isinstance(d[e], basestring)]
+                                % d[e] for e in entries] )
+            return '\nSummary per %s across %ss\n' % (name1, name2) \
+                   + table2string(table)
+
+        if len(ul) < maxl:
+            s += cl_stats(0, ul, 'label', 'chunk')
+        if len(uc) < maxc:
+            s += cl_stats(1, uc, 'chunk', 'label')
+        return s
+
+
+    def __iadd__(self, other):
         """Merge the samples of one Dataset object to another (in-place).
 
-        No dataset attributes will be merged! Additionally, a new set of
-        unique `origids` will be generated.
+        No dataset attributes, besides labels_map, will be merged!
+        Additionally, a new set of unique `origids` will be generated.
         """
         # local bindings
         _data = self._data
@@ -692,13 +847,62 @@ class Dataset(object):
             raise DatasetError, "Cannot add Dataset, because the number of " \
                                 "feature do not match."
 
+        # take care about labels_map and labels
+        slm = self.labels_map
+        olm = other.labels_map
+        if N.logical_xor(slm is None, olm is None):
+            raise ValueError, "Cannot add datasets where only one of them " \
+                  "has labels map assigned. If needed -- implement it"
+
         # concatenate all sample attributes
-        for k, v in _data.iteritems():
+        for k,v in _data.iteritems():
             if k == 'origids':
                 # special case samples origids: for now just regenerate unique
                 # ones could also check if concatenation is unique, but it
                 # would be costly performance-wise
                 _data[k] = N.arange(len(v) + len(other_data[k]))
+
+            elif k == 'labels' and slm is not None:
+                # special care about labels if mapping was in effect,
+                # we need to append 2nd map to the first one and
+                # relabel 2nd dataset
+                nlm = slm.copy()
+                # figure out maximal numerical label used now
+                nextid = N.sort(nlm.values())[-1] + 1
+                olabels = other.labels
+                olabels_remap = {}
+                for ol, olnum in olm.iteritems():
+                    if not nlm.has_key(ol):
+                        # check if we can preserve old numberic label
+                        # if not -- assign some new one not yet present
+                        # in any dataset
+                        if olnum in nlm.values():
+                            nextid = N.sort(nlm.values() + olm.values())[-1] + 1
+                        else:
+                            nextid = olnum
+                        olabels_remap[olnum] = nextid
+                        nlm[ol] = nextid
+                        nextid += 1
+                    else:
+                        olabels_remap[olnum] = nlm[ol]
+                olabels = [olabels_remap[x] for x in olabels]
+                # finally compose new labels
+                _data['labels'] = N.concatenate((v, olabels), axis=0)
+                # and reassign new mapping
+                self._dsattr['labels_map'] = nlm
+
+                if __debug__:
+                    # check if we are not dealing with colliding
+                    # mapping, since it is problematic and might lead
+                    # to various complications
+                    if (len(Set(slm.keys())) != len(Set(slm.values()))) or \
+                       (len(Set(olm.keys())) != len(Set(olm.values()))):
+                        warning("Adding datasets where multiple labels "
+                                "mapped to the same ID is not recommended. "
+                                "Please check the outcome. Original mappings "
+                                "were %s and %s. Resultant is %s"
+                                % (slm, olm, nlm))
+
             else:
                 _data[k] = N.concatenate((v, other_data[k]), axis=0)
 
@@ -717,7 +921,7 @@ class Dataset(object):
         NOTE: This can be a costly operation (both memory and time). If
         performance is important consider the '+=' operator.
         """
-        # create a new object of the same type it is now and NOT onyl Dataset
+        # create a new object of the same type it is now and NOT only Dataset
         out = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
@@ -733,7 +937,25 @@ class Dataset(object):
         return out
 
 
-    def selectFeatures(self, ids, sort=True):
+    def copy(self):
+        """Create a copy (clone) of the dataset, by fully copying current one
+
+        """
+        # create a new object of the same type it is now and NOT only Dataset
+        out = super(Dataset, self).__new__(self.__class__)
+
+        # now init it: to make it work all Dataset contructors have to accept
+        # Class(data=Dict, dsattr=Dict)
+        out.__init__(data=self._data,
+                     dsattr=self._dsattr,
+                     copy_samples=True,
+                     copy_data=True,
+                     copy_dsattr=True)
+
+        return out
+
+
+    def selectFeatures(self, ids=None, sort=True, groups=None):
         """Select a number of features from the current set.
 
         :Parameters:
@@ -752,6 +974,21 @@ class Dataset(object):
         also cause major headaches! Order would is verified when
         running in non-optimized code (if __debug__)
         """
+        if ids is None and groups is None:
+            raise ValueError, "No feature selection specified."
+
+        # start with empty list if no ids where specified (so just groups)
+        if ids is None:
+            ids = []
+
+        if not groups is None:
+            if not self._dsattr.has_key('featuregroups'):
+                raise RuntimeError, \
+                "Dataset has no feature grouping information."
+
+            for g in groups:
+                ids += (self._dsattr['featuregroups'] == g).nonzero()[0].tolist()
+
         # XXX set sort default to True, now sorting has to be explicitely
         # disabled and warning is not necessary anymore
         if sort:
@@ -769,13 +1006,20 @@ class Dataset(object):
         # current dataset
         new_data['samples'] = self._data['samples'][:, ids]
 
+        # apply selection to feature groups as well
+        if self._dsattr.has_key('featuregroups'):
+            new_dsattr = self._dsattr.copy()
+            new_dsattr['featuregroups'] = self._dsattr['featuregroups'][ids]
+        else:
+            new_dsattr = self._dsattr
+
         # create a new object of the same type it is now and NOT onyl Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self._dsattr,
+                         dsattr=new_dsattr,
                          check_data=False,
                          copy_samples=False,
                          copy_data=False,
@@ -792,6 +1036,8 @@ class Dataset(object):
         While featuresmappers leave the sample attributes information
         unchanged, as the number of samples in the dataset is invariant,
         samplesmappers are also applied to the samples attributes themselves!
+
+        Applying a featuresmapper will destroy any feature grouping information.
 
         :Parameters:
           featuresmapper : Mapper
@@ -829,6 +1075,10 @@ class Dataset(object):
             for k in new_data.keys():
                 new_data[k] = samplesmapper.forward(self._data[k])
 
+        # feature mapping might affect dataset attributes
+        # XXX: might be obsolete when proper feature attributes are implemented
+        new_dsattr = self._dsattr
+
         if featuresmapper:
             if __debug__:
                 debug("DS", "Training featuresmapper %s" % `featuresmapper`)
@@ -839,13 +1089,21 @@ class Dataset(object):
                       " to samples of dataset `%s`" % `self`)
             new_data['samples'] = featuresmapper.forward(self._data['samples'])
 
+            # remove feature grouping, who knows what the mapper did to the
+            # features
+            if self._dsattr.has_key('featuregroups'):
+                new_dsattr = self._dsattr.copy()
+                del(new_dsattr['featuregroups'])
+            else:
+                new_dsattr = self._dsattr
+
         # create a new object of the same type it is now and NOT only Dataset
         dataset = super(Dataset, self).__new__(self.__class__)
 
         # now init it: to make it work all Dataset contructors have to accept
         # Class(data=Dict, dsattr=Dict)
         dataset.__init__(data=new_data,
-                         dsattr=self._dsattr,
+                         dsattr=new_dsattr,
                          check_data=False,
                          copy_samples=False,
                          copy_data=False,
@@ -909,6 +1167,235 @@ class Dataset(object):
 
         dataset._resetallunique(force=True)
         return dataset
+
+
+
+    def index(self, *args, **kwargs):
+        """Universal indexer to obtain indexes of interesting samples/features.
+        See .select() for more information
+
+        :Return: tuple of (samples indexes, features indexes). Each
+          item could be also None, if no selection on samples or
+          features was requested (to discriminate between no selected
+          items, and no selections)
+        """
+        s_indx = []                     # selections for samples
+        f_indx = []                     # selections for features
+        return_dataset = kwargs.pop('return_dataset', False)
+        largs = len(args)
+
+        args = list(args)               # so we could override
+        # Figure out number of positional
+        largs_nonstring = 0
+        # need to go with index since we might need to override internally
+        for i in xrange(largs):
+            l = args[i]
+            if isinstance(l, basestring):
+                if l.lower() == 'all':
+                    # override with a slice
+                    args[i] = slice(None)
+                else:
+                    break
+            largs_nonstring += 1
+
+        if largs_nonstring >= 1:
+            s_indx.append(args[0])
+            if __debug__ and 'CHECK_DS_SELECT' in debug.active:
+                _validate_indexes_uniq_sorted(args[0], 'select', 'samples')
+            if largs_nonstring == 2:
+                f_indx.append(args[1])
+                if __debug__ and 'CHECK_DS_SELECT' in debug.active:
+                    _validate_indexes_uniq_sorted(args[1], 'select', 'features')
+            elif largs_nonstring > 2:
+                raise ValueError, "Only two positional arguments are allowed" \
+                      ". 1st for samples, 2nd for features"
+
+        # process left positional arguments which must encode selections like
+        # ('labels', [1,2,3])
+
+        if (largs - largs_nonstring) % 2 != 0:
+            raise ValueError, "Positional selections must come in pairs:" \
+                  " e.g. ('labels', [1,2,3])"
+
+        for i in xrange(largs_nonstring, largs, 2):
+            k, v = args[i:i+2]
+            kwargs[k] = v
+
+        # process keyword parameters
+        data_ = self._data
+        for k, v in kwargs.iteritems():
+            if k == 'samples':
+                s_indx.append(v)
+            elif k == 'features':
+                f_indx.append(v)
+            elif data_.has_key(k):
+                # so it is an attribute for samples
+                # XXX may be do it not only if __debug__
+                if __debug__: # and 'CHECK_DS_SELECT' in debug.active:
+                    if not N.any([isinstance(v, cls) for cls in
+                                  [list, tuple, slice, int]]):
+                        raise ValueError, "Trying to specify selection for %s " \
+                              "based on unsupported '%s'" % (k, v)
+                s_indx.append(self._getSampleIdsByAttr(v, attrib=k, sort=False))
+            else:
+                raise ValueError, 'Keyword "%s" is not known, thus' \
+                      'select() failed' % k
+
+        def combine_indexes(indx, nelements):
+            """Helper function: intersect selections given in indx
+
+            :Parameters:
+              indxs : list of lists or slices
+                selections of elements
+              nelements : int
+                number of elements total for deriving indexes from slices
+            """
+            indx_sel = None                 # pure list of ids for selection
+            for s in indx:
+                if isinstance(s, slice) or \
+                   isinstance(s, N.ndarray) and s.dtype==bool:
+                    # XXX there might be a better way than reconstructing the full
+                    # index list. Also we are loosing ability to do simlpe slicing,
+                    # ie w.o making a copy of the selected data
+                    all_indexes = N.arange(nelements)
+                    s = all_indexes[s]
+                elif not operator.isSequenceType(s):
+                    s = [ s ]
+
+                if indx_sel is None:
+                    indx_sel = Set(s)
+                else:
+                    # To be consistent
+                    #if not isinstance(indx_sel, Set):
+                    #    indx_sel = Set(indx_sel)
+                    indx_sel = indx_sel.intersection(s)
+
+            # if we got Set -- convert
+            if isinstance(indx_sel, Set):
+                indx_sel = list(indx_sel)
+
+            # sort for the sake of sanity
+            indx_sel.sort()
+
+            return indx_sel
+
+        # Select samples
+        if len(s_indx) == 1 and isinstance(s_indx[0], slice) \
+               and s_indx[0] == slice(None):
+            # so no actual selection -- full slice
+            s_indx = s_indx[0]
+        else:
+            # else - get indexes
+            if len(s_indx) == 0:
+                s_indx = None
+            else:
+                s_indx = combine_indexes(s_indx, self.nsamples)
+
+        # Select features
+        if len(f_indx):
+            f_indx = combine_indexes(f_indx, self.nfeatures)
+        else:
+            f_indx = None
+
+        return s_indx, f_indx
+
+
+    def select(self, *args, **kwargs):
+        """Universal selector
+
+        WARNING: if you need to select duplicate samples
+        (e.g. samples=[5,5]) or order of selected samples of features
+        is important and has to be not ordered (e.g. samples=[3,2,1]),
+        please use selectFeatures or selectSamples functions directly
+
+        Examples:
+          Mimique plain selectSamples:
+            dataset.select([1,2,3])
+            dataset[[1,2,3]]
+
+          Mimique plain selectFeatures:
+            dataset.select(slice(None), [1,2,3])
+            dataset.select('all', [1,2,3])
+            dataset[:, [1,2,3]]
+
+          Mixed (select features and samples):
+            dataset.select([1,2,3], [1, 2])
+            dataset[[1,2,3], [1, 2]]
+
+          Select samples matching some attributes
+            dataset.select(labels=[1,2], chunks=[2,4])
+            dataset.select('labels', [1,2], 'chunks', [2,4])
+            dataset['labels', [1,2], 'chunks', [2,4]]
+
+          Mixed -- out of first 100 samples, select only those with
+          labels 1 or 2 and belonging to chunks 2 or 4, and select
+          features 2 and 3
+            dataset.select(slice(0,100), [2,3], labels=[1,2], chunks=[2,4])
+            dataset[:100, [2,3], 'labels', [1,2], 'chunks', [2,4]]
+
+        """
+        s_indx, f_indx = self.index(*args, **kwargs)
+
+        # Select samples
+        if s_indx == slice(None):
+            # so no actual selection was requested among samples.
+            # thus proceed with original dataset
+            if __debug__:
+                debug('DS', 'in select() not selecting samples')
+            ds = self
+        else:
+            # else do selection
+            if __debug__:
+                debug('DS', 'in select() selecting samples given selections'
+                      + str(s_indx))
+            ds = self.selectSamples(s_indx)
+
+        # Select features
+        if f_indx is not None:
+            if __debug__:
+                debug('DS', 'in select() selecting features given selections'
+                      + str(f_indx))
+            ds = ds.selectFeatures(f_indx)
+
+        return ds
+
+
+
+    def where(self, *args, **kwargs):
+        """Obtain indexes of interesting samples/features. See select() for more information
+
+        XXX somewhat obsoletes idsby...
+        """
+        s_indx, f_indx = self.index(*args, **kwargs)
+        if s_indx is not None and f_indx is not None:
+            return s_indx, f_indx
+        elif s_indx is not None:
+            return s_indx
+        else:
+            return f_indx
+
+
+    def __getitem__(self, *args):
+        """Convinience dataset parts selection
+
+        See select for more information
+        """
+        # for cases like ['labels', 1]
+        if len(args) == 1 and isinstance(args[0], tuple):
+            args = args[0]
+
+        args_,args = args,()
+        for a in args_:
+            if isinstance(a, slice) and \
+                   isinstance(a.start, basestring):
+                    # for the constructs like ['labels':[1,2]]
+                    if a.stop is None or a.step is not None:
+                        raise ValueError, \
+                              "Selection must look like ['chunks':[2,3]]"
+                    args += (a.start, a.stop)
+            else:
+                args += (a,)
+        return self.select(*args)
 
 
     def permuteLabels(self, status, perchunk=True, assure_permute=False):
@@ -1033,6 +1520,27 @@ class Dataset(object):
         return self._data['samples'].shape[1]
 
 
+    def getLabelsMap(self):
+        """Stored labels map (if any)
+        """
+        return self._dsattr.get('labels_map', None)
+
+
+    def setLabelsMap(self, lm):
+        """Set labels map.
+
+        Checks for the validity of the mapping -- values should cover
+        all existing labels in the dataset
+        """
+        values = Set(lm.values())
+        labels = Set(self.uniquelabels)
+        if not values.issuperset(labels):
+            raise ValueError, \
+                  "Provided mapping %s has some existing labels (out of %s) " \
+                  "missing from mapping" % (list(values), list(labels))
+        self._dsattr['labels_map'] = lm
+
+
     def setSamplesDType(self, dtype):
         """Set the data type of the samples array.
         """
@@ -1041,6 +1549,18 @@ class Dataset(object):
 
         if _data['samples'].dtype != dtype:
             _data['samples'] = _data['samples'].astype(dtype)
+
+
+    def defineFeatureGroups(self, definition):
+        """
+        """
+        if not len(definition) == self.nfeatures:
+            raise ValueError, \
+                  "Length of feature group definition %i " \
+                  "does not match the number of features %i " \
+                  % (len(definition), self.nfeatures)
+
+        self._dsattr['featuregroups'] = N.array(definition)
 
 
     def convertFeatureIds2FeatureMask(self, ids):
@@ -1077,12 +1597,24 @@ class Dataset(object):
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
+    labels_map      = property( fget=getLabelsMap, fset=setLabelsMap )
 
+def datasetmethod(func):
+    """Decorator to easily bind functions to a Dataset class
+    """
+    if __debug__:
+        debug("DS_",  "Binding function %s to Dataset class" % func.func_name)
+
+    # Bind the function
+    setattr(Dataset, func.func_name, func)
+
+    # return the original one
+    return func
 
 
 # Following attributes adherent to the basic dataset
-Dataset._registerAttribute("samples", "_data", hasunique=False)
-Dataset._registerAttribute("labels",  "_data", hasunique=True)
-Dataset._registerAttribute("chunks",  "_data", hasunique=True)
+Dataset._registerAttribute("samples", "_data", abbr='S', hasunique=False)
+Dataset._registerAttribute("labels",  "_data", abbr='L', hasunique=True)
+Dataset._registerAttribute("chunks",  "_data", abbr='C', hasunique=True)
 # samples ids (already unique by definition)
-Dataset._registerAttribute("origids",  "_data", hasunique=False)
+Dataset._registerAttribute("origids",  "_data", abbr='I', hasunique=False)

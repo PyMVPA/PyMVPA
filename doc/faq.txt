@@ -217,3 +217,54 @@ the classifier is configured to select the single most important feature (given
 the SMLR weights). After enabling the `feature_ids` state, the classifier
 provides the desired information, that can e.g. be applied to generate a
 stripped dataset for an analysis of the similarity structure.
+
+
+.. index:: sensitivity, cross-validation
+
+How do I extract sensitivities from a classifier used within a cross-validation?
+--------------------------------------------------------------------------------
+
+.. The answer depends on size of the classification problem and the used
+   classifier. If you can afford to keep a copy of the trained classifier for
+   each data split, the most elegant solution is probably a SplitClassifier_...
+   ...BUT no yet
+
+CrossValidatedTransferError_ provides an interface to access any
+classifier-related information: `harvest_attribs`. Harvesting the sensitivities
+computed by all classifiers (without recomputing them again) looks like this:
+
+  >>> cv = CrossValidatedTransferError(
+  ...       TransferError(SMLR()),
+  ...       OddEvenSplitter(),
+  ...       harvest_attribs=\
+  ...        ['transerror.clf.getSensitivityAnalyzer(force_training=False)()'])
+  >>> merror = cv(dataset)
+  >>> sensitivities = cv.harvested.values()[0]
+  >>> N.array(sensitivities).shape == (2, dataset.nfeatures)
+  True
+
+First, we define an instance of CrossValidatedTransferError_ that uses an SMLR_
+classifier to perform the cross-validation on odd-even splits of a dataset.
+The important piece is the definition of the `harvest_attribs`.  It takes a
+list of code snippets that will be executed in the local context of the
+cross-validation function. The TransferError_ instance used to train and test
+the classifier on each split is available via `transerror`. The rest is easy:
+TransferError_ provides access to its classifier and any classifier can in turn
+generate an appropriate Sensitivity_ instance via `getSensitivityAnalyzer()`.
+This generator method takes additional arguments to the constructor of the
+Sensitivity_ class. In this case we want to prevent retraining the classifiers,
+as they will be trained anyway by the TransferError_ instance they belong to.
+
+The return values of all code snippets defined in `harvest_attribs` are
+available in the `harvested` state variable. `harvested` is a dictionary where
+the keys are the code snippets used to compute the value. As the key in this
+case is pretty long, we simply take the first (and only) value from the
+dictionary.  The value is actually a list of sensitivity vectors, one per
+split. 
+
+.. _CrossValidatedTransferError : api/mvpa.clfs.base.SplitClassifier-class.html
+.. _SplitClassifier : api/mvpa.clfs.base.SplitClassifier-class.html
+.. _Sensitivity : api/mvpa.measures.base.Sensitivity-class.html
+.. _TransferError : api/mvpa.clfs.transerror.TransferError-class.html
+.. _SMLR : api/mvpa.clfs.smlr.SMLR-class.html
+

@@ -194,12 +194,13 @@ testapiref: apidoc
 test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
+	@echo "Generating coverage data and report. Takes awhile. No progress output."
 	@cd tests && { \
-	  export PYTHONPATH=..; \
-	  python-coverage -x main.py; \
-	  python-coverage -r -i -o /usr >| ../$(COVERAGE_REPORT); \
+	  export PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
+	  python-coverage -x main.py >/dev/null 2>&1; \
+	  python-coverage -r -i -o /usr,/var >| ../$(COVERAGE_REPORT); \
 	  grep -v '100%$$' ../$(COVERAGE_REPORT); \
-	  python-coverage -a -i -o /usr; }
+	  python-coverage -a -i -o /usr,/var ; }
 
 
 #
@@ -244,6 +245,11 @@ bdist_rpm: 3rd
 	  --doc-files "doc data" \
 	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
 	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
+
+# build MacOS installer -- depends on patched bdist_mpkg for Leopard
+bdist_mpkg: 3rd
+	python tools/mpkg_wrapper.py setup.py build_ext
+	python tools/mpkg_wrapper.py setup.py install
 
 
 #

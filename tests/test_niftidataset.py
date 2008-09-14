@@ -52,11 +52,15 @@ class NiftiDatasetTests(unittest.TestCase):
         data = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
                             labels=[1,2])
 
-
+        # test mapping of ndarray
         vol = data.map2Nifti(N.ones((294912,), dtype='int16'))
-
         self.failUnless(vol.data.shape == (24,96,128))
         self.failUnless((vol.data == 1).all())
+
+        # test mapping of the dataset
+        vol = data.map2Nifti(data)
+        self.failUnless(vol.data.shape ==
+                        (data.nsamples,) + data.mapper.dsshape)
 
 
     def testNiftiSelfMapper(self):

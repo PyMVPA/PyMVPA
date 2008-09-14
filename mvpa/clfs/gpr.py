@@ -14,12 +14,17 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base import externals
+
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
+from mvpa.datasets import Dataset
+
+externals.exists("scipy", raiseException=True)
 from scipy.linalg import cho_factor as SLcho_factor
 from scipy.linalg import cho_solve as SLcho_solve
 from scipy.linalg import cholesky as SLcholesky
@@ -35,6 +40,7 @@ Ndiag = N.diag
 NLAcholesky = N.linalg.cholesky
 NLAsolve = N.linalg.solve
 NLAError = N.linalg.linalg.LinAlgError
+SLAError = SL.basic.LinAlgError
 
 # Some precomputed items. log is relatively expensive
 _halflog2pi = 0.5 * Nlog(2*N.pi)
@@ -50,6 +56,9 @@ class GPR(Classifier):
 
     log_marginal_likelihood = StateVariable(enabled=False,
         doc="Log Marginal Likelihood")
+
+    log_marginal_likelihood_gradient = StateVariable(enabled=False,
+        doc="Log Marginal Likelihood Gradient")
 
     _clf_internals = [ 'gpr', 'regression', 'retrainable' ]
 
@@ -98,16 +107,33 @@ class GPR(Classifier):
         # append proper clf_internal depending on the kernel
         # TODO: unify finally all kernel-based machines.
         #       make SMLR to use kernels
-        self._clf_internals = self._clf_internals + \
-            (['non-linear'],
-             ['linear', 'has_sensitivity'])[int(isinstance(kernel, KernelLinear))]
+        if isinstance(kernel, KernelLinear):
+            self._clf_internals += ['linear']
+        else:
+            self._clf_internals += ['non-linear']
+            if externals.exists('openopt'):
+                self._clf_internals += ['has_sensitivity']
 
         # No need to initialize state variables. Unless they got set
         # they would raise an exception self.predicted_variances =
         # None self.log_marginal_likelihood = None
+        self._init_internals()
+        pass
+
+
+    def _init_internals(self):
+        """Reset some internal variables to None.
+
+        To be used in constructor and untrain()
+        """
         self._train_fv = None
         self._labels = None
         self._km_train_train = None
+        self._train_labels = None
+        self._alpha = None
+        self._L = None
+        self._LL = None
+        self.__kernel.reset()
         pass
 
 
@@ -147,10 +173,10 @@ class GPR(Classifier):
 
         # self.Kinv = N.linalg.inv(self._C)
         # Faster:
-        self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
+        Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
 
         alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
-        tmp = alphalphaT - self.Kinv
+        tmp = alphalphaT - Kinv
         # Pass tmp to __kernel and let it compute its gradient terms.
         # This scales up to huge number of hyperparameters:
         grad_LML_hypers = self.__kernel.compute_lml_gradient(tmp,self._train_fv)
@@ -159,43 +185,67 @@ class GPR(Classifier):
         # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
         # Faster formula: tr(AB) = (A*B.T).sum()
         grad_LML_sigma_n = 0.5 * (tmp * (grad_K_sigma_n).T).sum()
-        self.lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
-        return self.lml_gradient
-    
+        lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
+        self.log_marginal_likelihood_gradient = lml_gradient
+        return lml_gradient
+
 
     def compute_gradient_log_marginal_likelihood_logscale(self):
         """Compute gradient of the log marginal likelihood when
         hyperparameters are in logscale. This version use a more
         compact formula provided by Williams and Rasmussen book.
         """
-        # self.Kinv = N.linalg.inv(self._C)
+        # Kinv = N.linalg.inv(self._C)
         # Faster:
-        self.Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
-        alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
-        tmp = alphalphaT - self.Kinv
-        grad_LML_log_hypers = self.__kernel.compute_lml_gradient_logscale(tmp,self._train_fv)
-        grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(self.Kinv.shape[0])
+        Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
+        alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
+        tmp = alphalphaT - Kinv
+        grad_LML_log_hypers = \
+            self.__kernel.compute_lml_gradient_logscale(tmp, self._train_fv)
+        grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(Kinv.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_log_sigma_n))
         # Faster formula: tr(AB) = (A*B.T).sum()
         grad_LML_log_sigma_n = 0.5 * (tmp * (grad_K_log_sigma_n).T).sum()
-        self.LML_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
-        return self.LML_gradient
-    
+        lml_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
+        self.log_marginal_likelihood_gradient = lml_gradient
+        return lml_gradient
 
-    def getSensitivityAnalyzer(self, **kwargs):
+
+    def getSensitivityAnalyzer(self, flavor='auto', **kwargs):
         """Returns a sensitivity analyzer for GPR.
 
+        :Parameters:
+          flavor : basestring
+            What sensitivity to provide. Valid values are
+            'linear', 'model_select', 'auto'.
+            In case of 'auto' selects 'linear' for linear kernel
+            and 'model_select' for the rest. 'linear' corresponds to
+            GPRLinearWeights and 'model_select' to GRPWeights
         """
         # XXX The following two lines does not work since
         # self.__kernel is instance of kernel.KernelLinear and not
         # just KernelLinear. How to fix?
         # YYY yoh is not sure what is the problem... KernelLinear is actually
         #     kernel.KernelLinear so everything shoudl be ok
-        if not isinstance(self.__kernel, KernelLinear):
-            raise NotImplementedError
+        if flavor == 'auto':
+            flavor = ('model_select', 'linear')\
+                     [int(isinstance(self.__kernel, KernelLinear))]
+            if __debug__:
+                debug("GPR", "Returning '%s' sensitivity analyzer" % flavor)
 
-        return GPRLinearWeights(self, **kwargs)
+        # Return proper sensitivity
+        if flavor == 'linear':
+            return GPRLinearWeights(self, **kwargs)
+        elif flavor == 'model_select':
+            # sanity check
+            if not ('has_sensitivity' in self._clf_internals):
+                raise ValueError, \
+                      "model_select flavor is not available probably " \
+                      "due to not available 'openopt' module"
+            return GPRWeights(self, **kwargs)
+        else:
+            raise ValueError, "Flavor %s is not recognized" % flavor
 
 
     def _train(self, data):
@@ -212,7 +262,8 @@ class GPR(Classifier):
         self._train_fv = train_fv = data.samples
         self._train_labels = train_labels = data.labels
 
-        if not retrainable or _changedData['traindata'] or _changedData.get('kernel_params', False):
+        if not retrainable or _changedData['traindata'] \
+               or _changedData.get('kernel_params', False):
             if __debug__:
                 debug("GPR", "Computing train train kernel matrix")
             self._km_train_train = km_train_train = self.__kernel.compute(train_fv)
@@ -221,14 +272,17 @@ class GPR(Classifier):
                 self._km_train_test = None # reset to facilitate recomputation
         else:
             if __debug__:
-                debug("GPR", "Not recomputing kernel since retrainable and nothing changed")
+                debug("GPR", "Not recomputing kernel since retrainable and "
+                      "nothing has changed")
             km_train_train = self._km_train_train # reuse
 
         if not retrainable or newkernel or _changedData['params']:
             if __debug__:
                 debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
+            # XXX it seems that we do not need binding to object, but may be
+            # commented out code would return?
             self._C = km_train_train + \
-                  self.sigma_noise**2*N.identity(km_train_train.shape[0], 'd')
+                  self.sigma_noise**2 * N.identity(km_train_train.shape[0], 'd')
             # The following decomposition could raise
             # N.linalg.linalg.LinAlgError because of numerical
             # reasons, due to the too rapid decay of 'self._C'
@@ -250,15 +304,16 @@ class GPR(Classifier):
             try:
                 self._L = SLcholesky(self._C, lower=True)
                 self._LL = (self._L,True)
-            except NLAError:
+            except SLAError:
                 epsilon = 1.0e-20*N.eye(self._C.shape[0])
-                self._L = SLcholesky(self._C+epsilon, lower=True)
+                self._L = SLcholesky(self._C + epsilon, lower=True)
                 self._LL = (self._L,True)
                 pass
             newL = True
         else:
             if __debug__:
-                debug("GPR", "Not computing L since kernel, data and params stayed the same")
+                debug("GPR", "Not computing L since kernel, data and params "
+                      "stayed the same")
             L = self._L                 # reuse
 
         # XXX we leave _alpha being recomputed, although we could check
@@ -292,7 +347,8 @@ class GPR(Classifier):
         """
         retrainable = self.params.retrainable
 
-        if not retrainable or self._changedData['testdata'] or self._km_train_test is None:
+        if not retrainable or self._changedData['testdata'] \
+               or self._km_train_test is None:
             if __debug__:
                 debug('GPR', "Computing train test kernel matrix")
             km_train_test = self.__kernel.compute(self._train_fv, data)
@@ -348,6 +404,13 @@ class GPR(Classifier):
         super(GPR, self)._setRetrainable(value, force)
         if force or (value and value != self.params.retrainable):
             self._km_test_test = None
+
+
+    def untrain(self):
+        super(GPR, self).untrain()
+        # XXX might need to take special care for retrainable. later
+        self._init_internals()
+        pass
 
 
     def set_hyperparameters(self, hyperparameter):
@@ -414,62 +477,57 @@ class GPRLinearWeights(Sensitivity):
         return weights
 
 
-def compute_prediction(sigma_noise_best, sigma_f, length_scale_best, regression,
-                       dataset, data_test, label_test, F, logml=True):
-    """XXX Function which seems to be valid only for __main__...
+if externals.exists('openopt'):
 
-    TODO: remove reimporting of pylab etc. See pylint output for more
-          information
-    """
+    from mvpa.clfs.model_selector import ModelSelector
 
-    data_train = dataset.samples
-    label_train = dataset.labels
-    import pylab
-    kse = KernelSquaredExponential(length_scale=length_scale_best, sigma_f=sigma_f)
-    g = GPR(kse, sigma_noise=sigma_noise_best, regression=regression)
-    print g
-    if regression:
-        g.states.enable("predicted_variances")
-        pass
+    class GPRWeights(Sensitivity):
+        """`SensitivityAnalyzer` that reports the weights GPR trained
+        on a given `Dataset`.
+        """
 
-    if logml:
-        g.states.enable("log_marginal_likelihood")
-        pass
+        _LEGAL_CLFS = [ GPR ]
 
-    g.train(dataset)
-    prediction = g.predict(data_test)
+        def _call(self, dataset):
+            """Extract weights from GPR
+            """
 
-    # print label_test
-    # print prediction
-    accuracy = None
-    if regression:
-        accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
-        print "RMSE:", accuracy
-    else:
-        accuracy = (prediction.astype('l')==label_test.astype('l')).sum() \
-                   / float(prediction.size)
-        print "accuracy:", accuracy
-        pass
+            clf = self.clf
+            # normalize data:
+            clf._train_labels = (clf._train_labels - clf._train_labels.mean()) \
+                                / clf._train_labels.std()
+            # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0))/clf._train_fv.std(0)
+            dataset = Dataset(samples=clf._train_fv, labels=clf._train_labels)
+            clf.states.enable("log_marginal_likelihood")
+            ms = ModelSelector(clf, dataset)
+            # Note that some kernels does not have gradient yet!
+            sigma_noise_initial = 1.0e-5
+            sigma_f_initial = 1.0
+            length_scale_initial = N.ones(dataset.nfeatures)*1.0e4
+            # length_scale_initial = N.random.rand(dataset.nfeatures)*1.0e4
+            hyp_initial_guess = N.hstack([sigma_noise_initial,
+                                          sigma_f_initial,
+                                          length_scale_initial])
+            fixedHypers = N.array([0]*hyp_initial_guess.size, dtype=bool)
+            fixedHypers = None
+            problem =  ms.max_log_marginal_likelihood(
+                hyp_initial_guess=hyp_initial_guess,
+                optimization_algorithm="scipy_lbfgsb",
+                ftol=1.0e-3, fixedHypers=fixedHypers,
+                use_gradient=True, logscale=True)
+            if __debug__ and 'GPR_WEIGHTS' in debug.active:
+                problem.iprint = 1
+            lml = ms.solve()
+            weights = 1.0/ms.hyperparameters_best[2:] # weight = 1/length_scale
+            if __debug__:
+                debug("GPR",
+                      "%s, train: shape %s, labels %s, min:max %g:%g, "
+                      "sigma_noise %g, sigma_f %g" %
+                      (clf, clf._train_fv.shape, N.unique(clf._train_labels),
+                       clf._train_fv.min(), clf._train_fv.max(),
+                       ms.hyperparameters_best[0], ms.hyperparameters_best[1]))
 
-    if F == 1:
-        pylab.figure()
-        pylab.plot(data_train, label_train, "ro", label="train")
-        pylab.plot(data_test, prediction, "b-", label="prediction")
-        pylab.plot(data_test, label_test, "g+", label="test")
-        if regression:
-            pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances),
-                       "b--", label=None)
-            pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances),
-                       "b--", label=None)
-            pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))
-        else:
-            pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
-            pass
-        pylab.legend()
-        pass
-
-    print "LML:", g.log_marginal_likelihood
-
+            return weights
 
 
 
@@ -479,6 +537,64 @@ if __name__ == "__main__":
     pylab.ion()
 
     from mvpa.misc.data_generators import sinModulated
+
+    def compute_prediction(sigma_noise_best, sigma_f, length_scale_best,
+                           regression, dataset, data_test, label_test, F,
+                           logml=True):
+        """XXX Function which seems to be valid only for __main__...
+
+        TODO: remove reimporting of pylab etc. See pylint output for more
+              information
+        """
+
+        data_train = dataset.samples
+        label_train = dataset.labels
+        import pylab
+        kse = KernelSquaredExponential(length_scale=length_scale_best,
+                                       sigma_f=sigma_f)
+        g = GPR(kse, sigma_noise=sigma_noise_best, regression=regression)
+        print g
+        if regression:
+            g.states.enable("predicted_variances")
+            pass
+
+        if logml:
+            g.states.enable("log_marginal_likelihood")
+            pass
+
+        g.train(dataset)
+        prediction = g.predict(data_test)
+
+        # print label_test
+        # print prediction
+        accuracy = None
+        if regression:
+            accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
+            print "RMSE:", accuracy
+        else:
+            accuracy = (prediction.astype('l')==label_test.astype('l')).sum() \
+                       / float(prediction.size)
+            print "accuracy:", accuracy
+            pass
+
+        if F == 1:
+            pylab.figure()
+            pylab.plot(data_train, label_train, "ro", label="train")
+            pylab.plot(data_test, prediction, "b-", label="prediction")
+            pylab.plot(data_test, label_test, "g+", label="test")
+            if regression:
+                pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances),
+                           "b--", label=None)
+                pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances),
+                           "b--", label=None)
+                pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))
+            else:
+                pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
+                pass
+            pylab.legend()
+            pass
+
+        print "LML:", g.log_marginal_likelihood
 
     train_size = 40
     test_size = 100

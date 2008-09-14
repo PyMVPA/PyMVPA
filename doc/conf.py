@@ -42,9 +42,9 @@ copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.3.0'
+version = '0.3.1'
 # The full version, including alpha/beta/rc tags.
-release = '0.3.0'
+release = '0.3.1'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -132,8 +132,13 @@ latex_paper_size = 'a4'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual', 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg', 'manual'),
-  ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines', 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg', 'manual'),
+  ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
+   'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg, '
+   'James M. Huges',
+   'manual'),
+  ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
+   'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg',
+   'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

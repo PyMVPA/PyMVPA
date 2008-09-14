@@ -70,6 +70,9 @@ class Splitter(object):
         self.setNPerLabel(nperlabel)
 
 
+    __doc__ = enhancedDocString('Splitter', locals())
+
+
     def setNPerLabel(self, value):
         """Set the number of samples per label in the split datasets.
 

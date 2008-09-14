@@ -16,6 +16,8 @@ from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks
 
+from mvpa.misc.data_generators import normalFeatureDataset
+
 class MiscDatasetFxTests(unittest.TestCase):
 
     def testInvarFeaturesRemoval(self):
@@ -45,6 +47,33 @@ class MiscDatasetFxTests(unittest.TestCase):
             (len(chunks),1)), labels=[1]*8)
         coarsenChunks(ds2, nchunks=2)
         self.failUnless((chunks1 == ds.chunks).all())
+
+    def testBinds(self):
+        ds = normalFeatureDataset()
+        ds_data = ds.samples.copy()
+        ds_chunks = ds.chunks.copy()
+        self.failUnless(N.all(ds.samples == ds_data)) # sanity check
+
+        funcs = ['zscore', 'coarsenChunks']
+        if externals.exists('scipy'):
+            funcs.append('detrend')
+
+        for f in funcs:
+            eval('ds.%s()' % f)
+            self.failUnless(N.any(ds.samples != ds_data) or
+                            N.any(ds.chunks != ds_chunks),
+                msg="We should have modified original dataset with %s" % f)
+            ds.samples = ds_data.copy()
+            ds.chunks = ds_chunks.copy()
+
+        # and some which should just return results
+        for f in ['aggregateFeatures', 'removeInvariantFeatures',
+                  'getSamplesPerChunkLabel']:
+            res = eval('ds.%s()' % f)
+            self.failUnless(res is not None,
+                msg='We should have got result from function %s' % f)
+            self.failUnless(N.all(ds.samples == ds_data),
+                msg="Function %s should have not modified original dataset" % f)
 
 
 def suite():

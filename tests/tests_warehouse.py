@@ -140,6 +140,12 @@ for kind, spec in specs.iteritems():
 # some additional datasets
 datasets['dumb2'] = dumbFeatureBinaryDataset()
 datasets['dumb'] = dumbFeatureDataset()
+# dataset with few invariant features
+_dsinv = dumbFeatureDataset()
+_dsinv.samples = N.hstack((_dsinv.samples,
+                           N.zeros((_dsinv.nsamples, 1)),
+                           N.ones((_dsinv.nsamples, 1))))
+datasets['dumbinv'] = _dsinv
 
 # Datasets for regressions testing
 datasets['sin_modulated'] = multipleChunks(sinModulated, 4, 30, 1)

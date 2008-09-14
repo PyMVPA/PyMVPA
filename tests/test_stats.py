@@ -11,6 +11,7 @@
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist
 from mvpa.measures.anova import OneWayAnova
+from mvpa.measures.corrcoef import CorrCoef
 from tests_warehouse import *
 
 class StatsTests(unittest.TestCase):
@@ -36,7 +37,6 @@ class StatsTests(unittest.TestCase):
 
     def testNullDistProb(self):
         ds = datasets['uni2small']
-
         null = MCNullDist(permutations=10, tail='right')
 
         null.fit(OneWayAnova(), ds)
@@ -47,6 +47,23 @@ class StatsTests(unittest.TestCase):
         self.failUnless((prob == [0, 1, 1, 1, 1, 1]).all())
         # has to have matching shape
         self.failUnlessRaises(ValueError, null.cdf, [5,3,4])
+
+        # test 'any' mode
+        if not externals.exists('scipy'):
+            return
+
+        null = MCNullDist(permutations=10, tail='any')
+        null.fit(CorrCoef(), ds)
+
+        # 100 and -100 should both have zero probability on their respective
+        # tails
+        self.failUnless(null.cdf([-100, 0, 0, 0, 0, 0])[0] == 0)
+        self.failUnless(null.cdf([100, 0, 0, 0, 0, 0])[0] == 0)
+
+        # same test with just scalar measure/feature
+        null.fit(CorrCoef(), ds.selectFeatures([0]))
+        self.failUnless(null.cdf(-100) == 0)
+        self.failUnless(null.cdf(100) == 0)
 
 
     def testDatasetMeasureProb(self):
