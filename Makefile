@@ -28,7 +28,7 @@ all: build
 3rd-stamp:
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
 	 while read d; do \
-	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d"; \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" || :; \
      done
 	touch $@
 
@@ -62,7 +62,7 @@ clean:
 # clean 3rd party pieces
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
 	 while read d; do \
-	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean; \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean || : ; \
      done
 
 # if we are on debian system - we might have left-overs from build
