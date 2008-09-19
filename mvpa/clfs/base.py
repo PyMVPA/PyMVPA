@@ -45,7 +45,8 @@ from mvpa.misc.param import Parameter
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
 from mvpa.measures.base import \
-    BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer
+    BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
+    MappedClassifierSensitivityAnalyzer
 from mvpa.base import warning
 
 if __debug__:
@@ -68,7 +69,11 @@ def _deepcopyclf(clf):
 
 class Classifier(Parametrized):
     """Abstract classifier class to be inherited by all classifiers
+    """
 
+    # Kept separate from doc to don't pollute help(clf), especially if
+    # we including help for the parent class
+    _DEV__doc__ = """
     Required behavior:
 
     For every classifier is has to be possible to be instanciated without
@@ -138,8 +143,7 @@ class Classifier(Parametrized):
         doc="Time (in seconds) which took classifier to predict")
 
     feature_ids = StateVariable(enabled=False,
-        doc="Feature IDS which were used for the actual training." +
-            " Some classifiers might internally do feature selection (SMLR)")
+        doc="Feature IDS which were used for the actual training.")
 
     _clf_internals = []
     """Describes some specifics about the classifier -- is that it is
@@ -269,6 +273,9 @@ class Classifier(Parametrized):
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
 
+        # XXX seems to be not even needed
+        # self.__trained_labels_map = dataset.labels_map
+
         if __debug__ and 'CHECK_TRAINED' in debug.active:
             self.__trainedidhash = dataset.idhash
 
@@ -291,6 +298,11 @@ class Classifier(Parametrized):
                 targets=dataset.labels,
                 predictions=predictions)
 
+            try:
+                self.training_confusion.labels_map = dataset.labels_map
+            except:
+                pass
+
         if self.states.isEnabled('feature_ids'):
             self.feature_ids = self._getFeatureIds()
 
@@ -303,6 +315,36 @@ class Classifier(Parametrized):
         """
         # By default all features are used
         return range(self.__trainednfeatures)
+
+
+    def summary(self):
+        """Providing summary over the classifier"""
+
+        s = "Classifier %s" % self
+        states = self.states
+        states_enabled = states.enabled
+
+        if self.trained:
+            s += "\n trained"
+            if states.isSet('training_time'):
+                s += ' in %.3g sec' % states.training_time
+            s += ' on data with'
+            if states.isSet('trained_labels'):
+                s += ' labels:%s' % list(states.trained_labels)
+            if states.isSet('trained_dataset'):
+                td = states.trained_dataset
+                s += ' #samples:%d #chunks:%d' % (td.nsamples, len(td.uniquechunks))
+            s += " #features:%d" % self.__trainednfeatures
+            if states.isSet('feature_ids'):
+                s += ", used #features:%d" % len(states.feature_ids)
+            if states.isSet('training_confusion'):
+                s += ", training error:%.3g" % states.training_confusion.error
+        else:
+            s += "\n not yet trained"
+
+        if len(states_enabled):
+            s += "\n enabled states:%s" % ', '.join([str(states[x]) for x in states_enabled])
+        return s
 
 
     def _train(self, dataset):
@@ -975,6 +1017,16 @@ class ProxyClassifier(Classifier):
         return super(ProxyClassifier, self).__repr__(
             ["clf=%s" % repr(self.__clf)] + prefixes)
 
+    def summary(self):
+        s = super(ProxyClassifier, self).summary()
+        if self.trained:
+            s += "\n Slave classifier summary:" + \
+                 '\n + %s' % \
+                 (self.__clf.summary().replace('\n', '\n |'))
+        return s
+
+
+
     def _train(self, dataset):
         """Train `ProxyClassifier`
         """
@@ -1244,6 +1296,17 @@ class CombinedClassifier(BoostedClassifier):
     def __repr__(self, prefixes=[]):
         return super(CombinedClassifier, self).__repr__(
             ["combiner=%s" % repr(self.__combiner)] + prefixes)
+
+
+    def summary(self):
+        s = super(CombinedClassifier, self).summary()
+        if self.trained:
+            s += "\n Slave classifiers summaries:"
+            for i, clf in enumerate(self.clfs):
+                s += '\n + %d clf: %s' % \
+                     (i, clf.summary().replace('\n', '\n |'))
+        return s
+
 
     def untrain(self):
         """Untrain `CombinedClassifier`
@@ -1548,11 +1611,14 @@ class SplitClassifier(CombinedClassifier):
         # generate pairs and corresponding classifiers
         bclfs = []
 
-        if self.states.isEnabled('confusion'):
-            self.states.confusion = self.__clf._summaryClass()
-        if self.states.isEnabled('training_confusion'):
+        # local binding
+        states = self.states
+
+        if states.isEnabled('confusion'):
+            states.confusion = self.__clf._summaryClass()
+        if states.isEnabled('training_confusion'):
             self.__clf.states.enable(['training_confusion'])
-            self.states.training_confusion = self.__clf._summaryClass()
+            states.training_confusion = self.__clf._summaryClass()
 
 
         # for proper and easier debugging - first define classifiers and then
@@ -1573,7 +1639,7 @@ class SplitClassifier(CombinedClassifier):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
-            if self.states.isEnabled("splits"):
+            if states.isEnabled("splits"):
                 self.splits.append(split)
 
             clf = self.clfs[i]
@@ -1583,12 +1649,20 @@ class SplitClassifier(CombinedClassifier):
                 clf.testdataset = split[1]
 
             clf.train(split[0])
-            if self.states.isEnabled("confusion"):
+            if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions)
-            if self.states.isEnabled("training_confusion"):
-                self.states.training_confusion += \
+            if states.isEnabled("training_confusion"):
+                states.training_confusion += \
                                                clf.states.training_confusion
+        # XXX hackish way -- so it should work only for ConfusionMatrix
+        try:
+            if states.isEnabled("confusion"):
+                states.confusion.labels_map = dataset.labels_map
+            if states.isEnabled("training_confusion"):
+                states.training_confusion.labels_map = dataset.labels_map
+        except:
+            pass
 
 
     def getSensitivityAnalyzer(self, **kwargs):
@@ -1649,6 +1723,15 @@ class MappedClassifier(ProxyClassifier):
         """Predict using `MappedClassifier`
         """
         return ProxyClassifier._predict(self, self.__mapper.forward(data))
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer"""
+        print "HERE"
+        return MappedClassifierSensitivityAnalyzer(
+                self,
+                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                **kwargs)
 
 
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
@@ -1770,6 +1853,18 @@ class FeatureSelectionClassifier(ProxyClassifier):
     maskclf = property(lambda x:x.__maskclf, doc="Used `MappedClassifier`")
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Return an appropriate SensitivityAnalyzer
+
+        TODO: had to clone from mapped classifier... XXX 
+        """
+        return MappedClassifierSensitivityAnalyzer(
+                self,
+                analyzer=self.clf.getSensitivityAnalyzer(**kwargs),
+                **kwargs)
+
 
 
     testdataset = property(fget=lambda x:x.__testdataset,

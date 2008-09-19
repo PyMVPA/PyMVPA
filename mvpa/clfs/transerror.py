@@ -24,35 +24,10 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhancedDocString, table2string
 
 if __debug__:
     from mvpa.base import debug
-
-
-def _equalizedTable(out, printed):
-    """Given list of lists figure out their common widths and print to out
-
-    """
-    # equalize number of elements in each row
-    Nelements_max = max(len(x) for x in printed)
-    for i,printed_ in enumerate(printed):
-        printed[i] += [''] * (Nelements_max - len(printed_))
-
-    # figure out lengths within each column
-    aprinted = N.asarray(printed)
-    col_width = [ max( [len(x) for x in column] ) for column in aprinted.T ]
-
-    for i, printed_ in enumerate(printed):
-        for j, item in enumerate(printed_):
-            item = str(item)
-            NspacesL = ceil((col_width[j] - len(item))/2.0)
-            NspacesR = col_width[j] - NspacesL - len(item)
-            out.write("%%%ds%%s%%%ds " \
-                      % (NspacesL, NspacesR) % ('', item, ''))
-        out.write("\n")
-    pass
-
 
 
 def _p2(x, prec=2):
@@ -62,7 +37,7 @@ def _p2(x, prec=2):
     if isinstance(x, int):
         return "%d" % x
     elif isinstance(x, float):
-        s = ("%%.%df" % prec % x).rstrip('0.').lstrip()
+        s = ("%%.%df" % prec % x).rstrip('0').rstrip('.').lstrip()
         if s == '':
             s = '0'
         return s
@@ -87,7 +62,7 @@ class SummaryStatistics(object):
          None), )
 
 
-    def __init__(self, targets=None, predictions=None):
+    def __init__(self, targets=None, predictions=None, sets=None):
         """Initialize SummaryStatistics
 
         :Parameters:
@@ -95,10 +70,13 @@ class SummaryStatistics(object):
            Optional set of targets
          predictions
            Optional set of predictions
+         sets
+           Optional list of sets
         """
         self._computed = False
         """Flag either it was computed for a given set of data"""
-        self.__sets = []
+
+        self.__sets = (sets, [])[int(sets is None)]
         """Datasets (target, prediction) to compute confusion matrix on"""
 
         if not targets is None or not predictions is None:
@@ -260,12 +238,15 @@ class ConfusionMatrix(SummaryStatistics):
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
-    def __init__(self, labels=None, **kwargs):
+    def __init__(self, labels=None, labels_map=None, **kwargs):
         """Initialize ConfusionMatrix with optional list of `labels`
 
         :Parameters:
          labels : list
            Optional set of labels to include in the matrix
+         labels_map : None or dict
+           Dictionary from original dataset to show mapping into
+           numerical labels
          targets
            Optional set of targets
          predictions
@@ -278,6 +259,8 @@ class ConfusionMatrix(SummaryStatistics):
             labels = []
         self.__labels = labels
         """List of known labels"""
+        self.__labels_map = labels_map
+        """Mapping from original into given labels"""
         self.__matrix = None
         """Resultant confusion matrix"""
 
@@ -288,6 +271,7 @@ class ConfusionMatrix(SummaryStatistics):
     def matrices(self):
         """Return a list of separate confusion matrix per each stored set"""
         return [ self.__class__(labels=self.labels,
+                                labels_map=self.labels_map,
                                 targets=x[0],
                                 predictions=x[1]) for x in self.sets]
 
@@ -314,6 +298,28 @@ class ConfusionMatrix(SummaryStatistics):
                             Set(self.__labels)))
         except:
             labels = self.__labels
+
+        # Check labels_map if it was provided if it covers all the labels
+        labels_map = self.__labels_map
+        if labels_map is not None:
+            labels_set = Set(labels)
+            map_labels_set = Set(labels_map.values())
+
+            if not map_labels_set.issuperset(labels_set):
+                warning("Provided labels_map %s is not coherent with labels "
+                        "provided to ConfusionMatrix. No reverse mapping "
+                        "will be provided" % labels_map)
+                labels_map = None
+
+        # Create reverse map
+        labels_map_rev = None
+        if labels_map is not None:
+            labels_map_rev = {}
+            for k,v in labels_map.iteritems():
+                v_mapping = labels_map_rev.get(v, [])
+                v_mapping.append(k)
+                labels_map_rev[v] = v_mapping
+        self.__labels_map_rev = labels_map_rev
 
         labels.sort()
         self.__labels = labels          # store the recomputed labels
@@ -360,6 +366,9 @@ class ConfusionMatrix(SummaryStatistics):
         stats["P'"] = stats['TP'] + stats['FP']
         stats["N'"] = stats['TN'] + stats['FN']
         stats['TPR'] = stats['TP'] / (1.0*stats['P'])
+        # reset nans in TPRs to 0s whenever there is no entries
+        # for those labels among the targets
+        stats['TPR'][stats['P'] == 0] = 0
         stats['PPV'] = stats['TP'] / (1.0*stats["P'"])
         stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
@@ -374,6 +383,10 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
+
+        # compute mean stats
+        for k,v in stats.items():
+            stats['mean(%s)' % k] = N.mean(v)
 
         self._stats.update(stats)
 
@@ -400,7 +413,13 @@ class ConfusionMatrix(SummaryStatistics):
 
         # some shortcuts
         labels = self.__labels
+        labels_map_rev = self.__labels_map_rev
         matrix = self.__matrix
+
+        labels_rev = []
+        if labels_map_rev is not None:
+            labels_rev = [','.join([str(x) for x in labels_map_rev[l]])
+                                   for l in labels]
 
         out = StringIO()
         # numbers of different entries
@@ -440,31 +459,47 @@ class ConfusionMatrix(SummaryStatistics):
         underscores = [" %s" % ("-" * L)] * Nlabels
         if header:
             # labels
-            printed.append(['----------.        '])
-            printed.append(['predictions\\targets'] + labels)
+            printed.append(['@l----------.        '] + labels_rev)
+            printed.append(['@lpredictions\\targets'] + labels)
             # underscores
-            printed.append(['            `------'] \
+            printed.append(['@l            `------'] \
                            + underscores + stats_perpredict)
 
         # matrix itself
         for i, line in enumerate(matrix):
+            l = labels[i]
+            if labels_rev != []:
+                l = '@r%10s / %s' % (labels_rev[i], l)
             printed.append(
-                [labels[i]] +
+                [l] +
                 [ str(x) for x in line ] +
                 [ _p2(stats[x][i]) for x in stats_perpredict])
 
         if summary:
-            printed.append(['Per target:'] + underscores)
+            ## Various alternative schemes ;-)
+            # printed.append([''] + underscores)
+            # printed.append(['@lPer target \ Means:'] + underscores + \
+            #               [_p2(x) for x in mean_stats])
+            # printed.append(['Means:'] + [''] * len(labels)
+            #                + [_p2(x) for x in mean_stats])
+            printed.append(['@lPer target:'] + underscores)
             for stat in stats_pertarget:
                 printed.append([stat] + [
                     _p2(stats[stat][i]) for i in xrange(Nlabels)])
 
-            printed.append(['SUMMARY:'] + underscores)
+            # compute mean stats
+            # XXX refactor to expose them in stats as well, as
+            #     mean(FCC)
+            mean_stats = N.mean(N.array([stats[k] for k in stats_perpredict]),
+                                axis=1)
+            printed.append(['@lSummary \ Means:'] + underscores
+                           + [_p2(stats['mean(%s)' % x])
+                              for x in stats_perpredict])
 
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
 
-        _equalizedTable(out, printed)
+        table2string(printed, out)
 
         if description:
             out.write("\nStatistics computed in 1-vs-rest fashion per each " \
@@ -482,6 +517,180 @@ class ConfusionMatrix(SummaryStatistics):
         return result
 
 
+    def plot(self, labels=None, numbers=False, origin='upper',
+             numbers_alpha=None, xlabels_vertical=True, numbers_kwargs={},
+             **kwargs):
+        """Provide presentation of confusion matrix in image
+
+        :Parameters:
+          labels : list of int or basestring
+            Optionally provided labels guarantee the order of
+            presentation. Also value of None places empty column/row,
+            thus provides visual groupping of labels (Thanks Ingo)
+          numbers : bool
+            Place values inside of confusion matrix elements
+          numbers_alpha : None or float
+            Controls textual output of numbers. If None -- all numbers
+            are plotted in the same intensity. If some float -- it controls
+            alpha level -- higher value would give higher contrast. (good
+            value is 2)
+          origin : basestring
+            Which left corner diagonal should start
+          xlabels_vertical : bool
+            Either to plot xlabels vertical (benefitial if number of labels
+            is large)
+          numbers_kwargs : dict
+            Additional keyword parameters to be added to numbers (if numbers
+            is True)
+          **kwargs
+            Additional arguments given to imshow (\eg me cmap)
+
+        :Returns:
+           (fig, im, cb) -- figure, imshow, colorbar
+        """
+
+        externals.exists("pylab", raiseException=True)
+        import pylab as P
+
+        self.compute()
+        labels_order = labels
+
+        # some shortcuts
+        labels = self.__labels
+        labels_map = self.__labels_map
+        labels_map_rev = self.__labels_map_rev
+        matrix = self.__matrix
+
+        # craft original mapping from a label into index in the matrix
+        labels_indexes = dict([(x,i) for i,x in enumerate(labels)])
+
+        labels_rev = []
+        if labels_map_rev is not None:
+            labels_rev = [','.join([str(x) for x in labels_map_rev[l]])
+                                   for l in labels]
+
+        if labels_order is not None:
+            labels_order_filtered = filter(lambda x:x is not None, labels_order)
+            labels_order_filtered_set = Set(labels_order_filtered)
+            # Verify if all labels provided in labels
+            if Set(labels) == labels_order_filtered_set:
+                # We were provided numerical (most probably) set
+                labels_plot = labels_order
+            elif len(labels_rev) \
+                     and Set(labels_map.keys()) == labels_order_filtered_set:
+                # not clear if right whenever there were multiple labels
+                # mapped into the same
+                labels_plot = []
+                for l in labels_order:
+                    v = None
+                    if l is not None: v = labels_map[l]
+                    labels_plot += [v]
+            else:
+                raise ValueError, \
+                      "Provided labels %s do not match set of known " \
+                      "original labels (%s) or mapped labels (%s)" % \
+                      (labels_order, labels, labels_rev)
+        else:
+            labels_plot = labels
+
+        # where we have Nones?
+        isempty = N.array([l is None for l in labels_plot])
+        non_empty = N.where(N.logical_not(isempty))[0]
+        # numbers of different entries
+        NlabelsNN = len(non_empty)
+        Nlabels = len(labels_plot)
+
+        if matrix.shape != (NlabelsNN, NlabelsNN):
+            raise ValueError, \
+                  "Number of labels %d doesn't correspond the size" + \
+                  " of a confusion matrix %s" % (NlabelsNN, matrix.shape)
+
+        confusionmatrix = N.zeros((Nlabels, Nlabels))
+        mask = confusionmatrix.copy()
+        ticks = []
+        tick_labels = []
+        # populate in a silly way
+
+        for i, l in enumerate(labels_plot):
+            if l is not None:
+                j = labels_indexes[l]
+                confusionmatrix[i, non_empty] = matrix[j, :]
+                confusionmatrix[non_empty, i] = matrix[:, j]
+                ticks += [i + 0.5]
+                if labels_map_rev is not None:
+                    tick_labels += ['/'.join(labels_map_rev[l])]
+                else:
+                    tick_labels += [str(l)]
+            else:
+                mask[i, :] = mask[:, i] = 1
+
+        confusionmatrix = N.ma.MaskedArray(confusionmatrix, mask=mask)
+
+        # turn off automatic update if interactive
+        if P.matplotlib.get_backend() == 'TkAgg':
+            P.ioff()
+
+        fig = P.gcf()
+        ax = P.gca()
+        ax.axis('off')
+
+        # some customization depending on the origin
+        xticks_position, yticks, ybottom = {
+            'upper': ('top', ticks[::-1], 0.1),
+            'lower': ('bottom', ticks, 0.2)
+            }[origin]
+
+
+        # Plot
+        axi = fig.add_axes([0.15, ybottom, 0.7, 0.7])
+        im = axi.imshow(confusionmatrix, interpolation="nearest", origin=origin,
+                        aspect='equal', **kwargs)
+
+        # plot numbers
+        if numbers:
+            numbers_kwargs_ = {'fontsize': 10,
+                            'horizontalalignment': 'center',
+                            'verticalalignment': 'center'}
+            maxv = float(N.max(confusionmatrix))
+            colors = [im.to_rgba(0), im.to_rgba(maxv)]
+            for i,j in zip(*N.logical_not(mask).nonzero()):
+                v = confusionmatrix[j, i]
+                # scale alpha non-linearly
+                if numbers_alpha is None:
+                    alpha = 1.0
+                else:
+                    # scale according to value
+                    alpha = 1 - N.array(1 - v / maxv) ** numbers_alpha
+                y = {'lower':j, 'upper':Nlabels-j-1}[origin]
+                numbers_kwargs_['color'] = colors[int(v<maxv/2)]
+                numbers_kwargs_.update(numbers_kwargs)
+                P.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
+
+        maxv = N.max(confusionmatrix)
+        boundaries = N.linspace(0, maxv, N.min(maxv, 10), True)
+
+        # Label axes
+        P.xlabel("targets")
+        P.ylabel("predictions")
+
+        P.setp(axi, xticks=ticks, yticks=yticks,
+               xticklabels=tick_labels, yticklabels=tick_labels)
+
+        axi.xaxis.set_ticks_position(xticks_position)
+        axi.xaxis.set_label_position(xticks_position)
+
+        if xlabels_vertical:
+            P.setp(P.getp(axi, 'xticklabels'), rotation='vertical')
+
+        axcb = fig.add_axes([0.8, ybottom, 0.02, 0.7])
+        cb = P.colorbar(im, cax=axcb, format='%d', ticks = boundaries)
+
+        if P.matplotlib.get_backend() == 'TkAgg':
+            P.ion()
+        P.draw()
+        return fig, im, cb
+
+
     @property
     def error(self):
         self.compute()
@@ -492,6 +701,20 @@ class ConfusionMatrix(SummaryStatistics):
     def labels(self):
         self.compute()
         return self.__labels
+
+
+    def getLabels_map(self):
+        return self.__labels_map
+
+
+    def setLabels_map(self, val):
+        if val is None or isinstance(val, dict):
+            self.__labels_map = val
+        else:
+            raise ValueError, "Cannot set labels_map to %s" % val
+        # reset it just in case
+        self.__labels_map_rev = None
+        self._computed = False
 
 
     @property
@@ -505,6 +728,7 @@ class ConfusionMatrix(SummaryStatistics):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
+    labels_map = property(fget=getLabels_map, fset=setLabels_map)
 
 
 class RegressionStatistics(SummaryStatistics):
@@ -624,7 +848,7 @@ class RegressionStatistics(SummaryStatistics):
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
 
-        _equalizedTable(out, printed)
+        table2string(printed, out)
 
         if description:
             out.write("\nDescription of printed statistics.\n"
@@ -814,10 +1038,11 @@ class TransferError(ClassifierError):
 
 
     def __copy__(self):
-        """TODO: think... may be we need to copy self.clf"""
-        # TODO TODO -- use ClassifierError.__copy__
+        """Performs deepcopying of the classifier."""
+        # TODO -- use ClassifierError.__copy__
+        from mvpa.clfs.base import _deepcopyclf
         out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, self.clf, self.errorfx, self._labels)
+        TransferError.__init__(out, _deepcopyclf(self.clf), self.errorfx, self._labels)
 
         return out
 
@@ -841,18 +1066,24 @@ class TransferError(ClassifierError):
         #  not from test/train datasets explicitely, see
         #  `ConfusionBasedError`, where confusion is simply
         #  bound to classifiers confusion matrix
-        if self.states.isEnabled('confusion'):
-            self.confusion = self.clf._summaryClass(
+        states = self.states
+        if states.isEnabled('confusion'):
+            confusion = self.clf._summaryClass(
                 #labels=self.labels,
                 targets=testdataset.labels,
                 predictions=predictions)
+            try:
+                confusion.labels_map = testdataset.labels_map
+            except:
+                pass
+            states.confusion = confusion
 
-        if self.states.isEnabled('samples_error'):
+        if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
                 samples_error.append(self.__errorfx(p, testdataset.labels[i]))
 
-            self.samples_error = dict(zip(testdataset.origids,samples_error))
+            states.samples_error = dict(zip(testdataset.origids, samples_error))
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.labels)

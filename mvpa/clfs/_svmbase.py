@@ -70,8 +70,8 @@ class _SVM(Classifier):
         'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),
         'scale': Parameter(1.0, descr='Scale factor for linear kernel. (0 triggers automagic rescaling by SG'),
         'shrinking': Parameter(1, descr='Either shrinking is to be conducted'),
-        'weight_label': Parameter([], descr='???'),
-        'weight': Parameter([], descr='???'),
+        'weight_label': Parameter([], allowedtype='[int]', descr='???'),
+        'weight': Parameter([], allowedtype='[double]', descr='Custom weights per label'),
         # For some reason setting up epsilong to 1e-5 slowed things down a bit
         # in comparison to how it was before (in yoh/master) by up to 20%... not clear why
         # may be related to 1e-3 default within _svm.py?

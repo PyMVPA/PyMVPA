@@ -23,11 +23,45 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * None.
+  * None yet.
 
 
 Releases
 ========
+
+* 0.3.1 (Sun, 14 Sep 2008)
+
+  * New manual section about feature selection with a focus on RFE.
+    Contributed by James M. Hughes.
+  * New dataset type `ChannelDataset` for data structured in channels. Might
+    be useful for data modalities like EEG and MEG. This dataset includes
+    support for common preprocessing steps like resampling and baseline
+    signal substraction.
+  * Plotting of topographies on heads. Thanks to Ingo Fründ for contributing
+    this code. Additionally, a new example shows how to do such plots.
+  * New general purpose function for generating barplots and candlestick plots
+    with error bars (`plotBars()`).
+  * Dataset supports mapping of string labels onto numerical labels, removing
+    the need to perform this mapping manually in user code. 'clfs_examples.py'
+    is adjusted accordingly to demonstrate the new feature.
+  * New Classifier.summary() method to dump classifier settings.
+  * Improved and more flexible plotERPs().
+  * New I-RELIEF sensitivity analyzer.
+  * Added visualization of confusion matrices via `ConfusionMatrix.plot()`
+    inspired by Ingo Fründ.
+  * The PyMVPA version is now globally available in `mvpa.pymvpa_version`.
+  * BugFix: TuebingenMEG reader failed in some cases.
+  * Several improvements (docs and implementation) for building PyMVPA on
+    MacOS X.
+  * New convenience accessor methods (`select()`, `where()` and
+    `__getitem__()`) for the `Dataset` base class.
+  * New `seed()` function to configure the random number generators from user
+    code.
+  * Added reader for a MEG sensor locations format
+    (`TuebingenMEGSensorLocations`).
+  * Initial model selection support for GRP (using openopt).
+  * And tons of minor bugfixes, additional tests and improved documentation.
+
 
 * 0.3.0 (Mon, 18 Aug 2008)
 

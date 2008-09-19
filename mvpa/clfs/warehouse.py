@@ -23,8 +23,6 @@ from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
-from mvpa.clfs.gpr import GPR
-from mvpa.clfs.blr import BLR
 
 # Helpers
 from mvpa.clfs.transerror import TransferError
@@ -43,7 +41,7 @@ _KNOWN_INTERNALS=[ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
-        'notrain2predict', 'ridge', 'blr']
+        'notrain2predict', 'ridge', 'blr', 'gnpp']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -287,10 +285,14 @@ clfs += \
 
 
 # GPR
-clfs += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
-clfs += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
+if externals.exists('scipy'):
+    from mvpa.clfs.gpr import GPR
+
+    clfs += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
+    clfs += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
 
 # BLR
+from mvpa.clfs.blr import BLR
 clfs += BLR(descr="BLR()")
 
 

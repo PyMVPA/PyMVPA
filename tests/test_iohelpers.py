@@ -171,7 +171,7 @@ class IOHelperTests(unittest.TestCase):
 
 
     def testSensorLocations(self):
-        sl = SensorLocations(os.path.join('..', 'data', 'xavr1010.dat'))
+        sl = XAVRSensorLocations(os.path.join('..', 'data', 'xavr1010.dat'))
 
         for var in ['names', 'pos_x', 'pos_y', 'pos_z']:
             self.failUnless(len(eval('sl.' + var)) == 31)

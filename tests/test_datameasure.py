@@ -9,26 +9,36 @@
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
 from mvpa.base import externals
-from mvpa.featsel.base import FeatureSelectionPipeline
+from mvpa.featsel.base import FeatureSelectionPipeline, \
+     SensitivityBasedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector
 from mvpa.featsel.rfe import RFE
 
-from mvpa.clfs.base import SplitClassifier, MulticlassClassifier
+from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
+     FeatureSelectionClassifier
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
 
 from mvpa.misc.transformers import Absolute
 
 from mvpa.measures.anova import OneWayAnova
+from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
+     IterativeRelief_Devel, IterativeReliefOnline_Devel
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-_MEASURES_2_SWEEP = [ OneWayAnova ]
+_MEASURES_2_SWEEP = [ OneWayAnova(),
+                      IterativeRelief(), IterativeReliefOnline(),
+                      IterativeRelief_Devel(), IterativeReliefOnline_Devel()
+                      ]
 if externals.exists('scipy'):
     from mvpa.measures.corrcoef import CorrCoef
-    _MEASURES_2_SWEEP += [ CorrCoef ]
+    _MEASURES_2_SWEEP += [ CorrCoef(),
+                           # that one is good when small... handle later
+                           #CorrCoef(pvalue=True)
+                           ]
 
 class SensitivityAnalysersTests(unittest.TestCase):
 
@@ -36,28 +46,36 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.dataset = datasets['uni2large']
 
 
-    @sweepargs(saclass=_MEASURES_2_SWEEP)
-    def testBasic(self, saclass):
-        data = datasets['dumb']
-        dsm = saclass()
+    @sweepargs(dsm=_MEASURES_2_SWEEP)
+    def testBasic(self, dsm):
+        data = datasets['dumbinv']
+
+        datass = data.samples.copy()
 
         # compute scores
         f = dsm(data)
 
-        self.failUnless(f.shape == (2,))
-        self.failUnless(f[1] == 0.0)
-        self.failUnless(f[0] > 0.0)
+        # check if nothing evil is done to dataset
+        self.failUnless(N.all(data.samples == datass))
+        self.failUnless(f.shape == (4,))
+        self.failUnless(abs(f[1]) <= 1e-12, # some small value
+            msg="Failed test with value %g instead of != 0.0" % f[1])
+        self.failUnless(f[0] > 0.1)     # some reasonably large value
+
+        # we should not have NaNs
+        self.failUnless(not N.any(N.isnan(f)))
 
 
     # XXX meta should work too but doesn't
-    @sweepargs(clf=clfs['has_sensitivity', '!meta'])
+    @sweepargs(clf=clfs['has_sensitivity'])
     def testAnalyzerWithSplitClassifier(self, clf):
 
         # assumming many defaults it is as simple as
         mclf = SplitClassifier(clf=clf,
                                enable_states=['training_confusion',
                                               'confusion'])
-        sana = mclf.getSensitivityAnalyzer(transformer=Absolute, enable_states=["sensitivities"])
+        sana = mclf.getSensitivityAnalyzer(transformer=Absolute,
+                                           enable_states=["sensitivities"])
         # and lets look at all sensitivities
 
         # and we get sensitivity analyzer which works on splits
@@ -88,6 +106,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #     BoostedClassifierSensitivityAnalyzer and ProxyClassifierSensitivityAnalyzer
         #     we don't have yet way to provide transformers thus internal call to
         #     getSensitivityAnalyzer in _call of them is not parametrized
+        if 'meta' in clf._clf_internals and len(map_.nonzero()[0])<2:
+            # Some meta classifiers (5% of ANOVA) are too harsh ;-)
+            return
         for map__ in [map_]: # + sana.combined_analyzer.sensitivities:
             selected = FixedNElementTailSelector(
                 self.dataset.nfeatures -
@@ -96,6 +117,27 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 list(selected),
                 list(self.dataset.nonbogus_features),
                 msg="At the end we should have selected the right features")
+
+
+    @sweepargs(clf=clfs['has_sensitivity'])
+    def testMappedClassifierSensitivityAnalyzer(self, clf):
+
+        # assumming many defaults it is as simple as
+        mclf = FeatureSelectionClassifier(clf,
+                                          SensitivityBasedFeatureSelection(
+                                            OneWayAnova(),
+                                            FractionTailSelector(0.5, mode='select', tail='upper')),
+                                          enable_states=['training_confusion'])
+
+        sana = mclf.getSensitivityAnalyzer(transformer=Absolute,
+                                           enable_states=["sensitivities"])
+        # and lets look at all sensitivities
+
+        dataset = datasets['uni2medium']
+        # and we get sensitivity analyzer which works on splits
+        map_ = sana(dataset)
+        self.failUnlessEqual(len(map_), dataset.nfeatures)
+
 
 
     @sweepargs(svm=clfs['linear', 'svm'])

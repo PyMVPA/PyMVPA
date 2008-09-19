@@ -9,6 +9,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Kernels for Gaussian Process Regression and Classification."""
 
+
+_DEV__DOC__ = """
+Make use of Parameter Collections to keep parameters of the
+kernels. Then we would get a uniform .reset() functionality. Now reset
+is provided just for parts which are failing in the unittests, but
+there is many more places where they are not reset properly if
+classifier gets trained on some new data of different dimensionality
+"""
+
 __docformat__ = 'restructuredtext'
 
 
@@ -35,12 +44,16 @@ class Kernel(object):
     def compute(self, data1, data2=None):
         raise NotImplementedError
 
+    def reset(self):
+        """Resets the kernel dropping internal variables to the original values"""
+        pass
+
     def compute_gradient(self,alphaalphaTK):
         raise NotImplementedError
 
     def compute_lml_gradient(self,alphaalphaT_Kinv,data):
         raise NotImplementedError
-        
+
     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
         raise NotImplementedError
 
@@ -97,12 +110,12 @@ class KernelConstant(Kernel):
         # Fastest when B is a constant: B*A.sum()
         self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
         return self.lml_gradient
-    
+
     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
         K_grad_sigma_0 = 2*self.sigma_0**2
         self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
         return self.lml_gradient
-    
+
     pass
 
 
@@ -125,13 +138,22 @@ class KernelLinear(Kernel):
         # init base class first
         Kernel.__init__(self, **kwargs)
 
+        # TODO: figure out cleaner way... probably by using KernelParameters ;-)
         self.Sigma_p = Sigma_p
+        self.Sigma_p_orig = Sigma_p
         self.sigma_0 = sigma_0
         self.kernel_matrix = None
+
 
     def __repr__(self):
         return "%s(Sigma_p=%s, sigma_0=%s)" \
             % (self.__class__.__name__, str(self.Sigma_p), str(self.sigma_0))
+
+
+    def reset(self):
+        super(KernelLinear, self).reset()
+        self.Sigma_p = self.Sigma_p_orig
+
 
     def compute(self, data1, data2=None):
         """Compute kernel matrix.
@@ -277,7 +299,8 @@ class KernelExponential(Kernel):
         # efficient since length_scale is squared and then
         # square-rooted uselessly.
         # Weighted euclidean distance matrix:
-        self.wdm = N.sqrt(squared_euclidean_distance(data1, data2, weight=(self.length_scale**-2)))
+        self.wdm = N.sqrt(squared_euclidean_distance(
+            data1, data2, weight=(self.length_scale**-2)))
         self.kernel_matrix = \
             self.sigma_f**2 * N.exp(-self.wdm)
         return self.kernel_matrix
@@ -313,7 +336,7 @@ class KernelExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm*self.kernel_matrix*(self.length_scale**-1)
             self.lml_gradient.append(lml_grad(K_grad_l))
@@ -341,7 +364,7 @@ class KernelExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_log_sigma_f = 2.0*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_log_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm*self.kernel_matrix
             self.lml_gradient.append(lml_grad(K_grad_l))
@@ -381,8 +404,14 @@ class KernelSquaredExponential(Kernel):
         Kernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
+        self.length_scale_orig = length_scale
         self.sigma_f = sigma_f
         self.kernel_matrix = None
+
+
+    def reset(self):
+        super(KernelSquaredExponential, self).reset()
+        self.length_scale = self.length_scale_orig
 
 
     def __repr__(self):
@@ -431,7 +460,7 @@ class KernelSquaredExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm2*self.kernel_matrix*(1.0/self.length_scale)
             self.lml_gradient.append(lml_grad(K_grad_l))
@@ -458,7 +487,7 @@ class KernelSquaredExponential(Kernel):
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         K_grad_log_sigma_f = 2.0*self.kernel_matrix
         self.lml_gradient.append(lml_grad(K_grad_log_sigma_f))
-        if self.length_scale.size==1:
+        if N.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_log_l = self.wdm2*self.kernel_matrix
             self.lml_gradient.append(lml_grad(K_grad_log_l))

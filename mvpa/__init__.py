@@ -25,7 +25,7 @@ The mvpa package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: 0.3.0
+:version: 0.3.1
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
@@ -38,6 +38,9 @@ The mvpa package contains the following subpackages and modules:
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
+
+# PyMVPA version string
+pymvpa_version = '0.3.1'
 
 __docformat__ = 'restructuredtext'
 
@@ -64,8 +67,11 @@ if cfg.has_option('general', 'seed'):
 else:
     _random_seed = int(N.random.uniform()*(2**31-1))
 
-N.random.seed(_random_seed)
-random.seed(_random_seed)
+def seed(random_seed):
+    N.random.seed(random_seed)
+    random.seed(random_seed)
+
+seed(_random_seed)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)

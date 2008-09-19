@@ -15,37 +15,6 @@ from mvpa.suite import *
 if __debug__:
     debug.active += ["CROSSC"]
 
-# plotting helper function
-def makeBarPlot(data, labels=None, title=None, ylim=None, ylabel=None):
-    xlocations = N.array(range(len(data))) + 0.5
-    width = 0.5
-
-    # work with arrays
-    data = N.array(data)
-
-    # plot bars
-    plot = P.bar(xlocations,
-                 data.mean(axis=1),
-                 yerr=data.std(axis=1) / N.sqrt(data.shape[1]),
-                 width=width,
-                 color='0.6',
-                 ecolor='black')
-    P.axhline(0.5, ls='--', color='0.4')
-
-    if ylim:
-        P.ylim(*(ylim))
-    if title:
-        P.title(title)
-
-    if labels:
-        P.xticks(xlocations+ width/2, labels)
-
-    if ylabel:
-        P.ylabel(ylabel)
-
-    P.xlim(0, xlocations[-1]+width*2)
-
-
 #
 # load PyMVPA example dataset
 #
@@ -109,9 +78,10 @@ for desc, clf in clfs:
     results.append(cv.results)
     labels.append(desc)
 
-makeBarPlot(results, labels=labels,
-            title='Linear C-SVM classification (cats vs. scissors)',
-            ylabel='Mean classification error (N-1 cross-validation, 12-fold)')
+plotBars(results, labels=labels,
+         title='Linear C-SVM classification (cats vs. scissors)',
+         ylabel='Mean classification error (N-1 cross-validation, 12-fold)',
+         distance=0.5)
 
 if cfg.getboolean('examples', 'interactive', True):
     P.show()

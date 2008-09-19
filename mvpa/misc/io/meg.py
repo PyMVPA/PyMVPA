@@ -79,7 +79,7 @@ class TuebingenMEG(object):
                 continue
 
             id = line[:colon]
-            data = line[colon+1:]
+            data = line[colon+1:].strip()
             if id == 'Sample Number':
                 timepoints = N.fromstring(data, dtype=int, sep='\t')
                 # one more as it starts with zero
@@ -109,5 +109,5 @@ class TuebingenMEG(object):
         """Give a short summary.
         """
         return '<TuebingenMEG: %i samples, %i timepoints, %i channels>' \
-                  % (self.nsamples, self.ntimepoints, self.nchannels)
+                  % (self.nsamples, self.ntimepoints, len(self.channelids))
 

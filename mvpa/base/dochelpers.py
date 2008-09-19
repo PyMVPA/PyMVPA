@@ -12,6 +12,11 @@ __docformat__ = 'restructuredtext'
 
 import re, textwrap
 
+# for table2string
+import numpy as N
+from math import ceil
+from StringIO import StringIO
+
 def rstUnderline(text, markup):
     """Add and underline RsT string matching the length of the given string.
     """
@@ -97,6 +102,11 @@ def enhancedClassDocString(cls, *args):
                            rst_lvlmarkup[2]),
               handleDocString(initdoc) ]
 
+    # Add information about the states if available
+    if lcl.has_key('_statesdoc'):
+        docs += [rstUnderline('Available state variables:', rst_lvlmarkup[1]),
+                 handleDocString(cls._statesdoc)]
+
     if len(args):
         docs.append(rstUnderline('\nDocumentation for base classes of `%s`' \
                                  % name, rst_lvlmarkup[0]))
@@ -110,3 +120,69 @@ def enhancedClassDocString(cls, *args):
     result = re.sub("\s*\n\s*\n\s*\n", "\n\n", result)
 
     return result
+
+
+def table2string(table, out=None):
+    """Given list of lists figure out their common widths and print to out
+
+    :Parameters:
+      table : list of lists of strings
+        What is aimed to be printed
+      out : None or stream
+        Where to print. If None -- will print and return string
+
+    :Returns:
+      string if out was None
+    """
+
+    print2string = out is None
+    if print2string:
+        out = StringIO()
+
+    # equalize number of elements in each row
+    Nelements_max = max(len(x) for x in table)
+    for i,table_ in enumerate(table):
+        table[i] += [''] * (Nelements_max - len(table_))
+
+    # figure out lengths within each column
+    atable = N.asarray(table)
+    markup_strip = re.compile('^@[lrc]')
+    col_width = [ max( [len(markup_strip.sub('', x))
+                        for x in column] ) for column in atable.T ]
+    string = ""
+    for i, table_ in enumerate(table):
+        string_ = ""
+        for j, item in enumerate(table_):
+            item = str(item)
+            if item.startswith('@'):
+                align = item[1]
+                item = item[2:]
+                if not align in ['l', 'r', 'c']:
+                    raise ValueError, 'Unknown alignment %s. Known are l,r,c'
+            else:
+                align = 'c'
+
+            NspacesL = ceil((col_width[j] - len(item))/2.0)
+            NspacesR = col_width[j] - NspacesL - len(item)
+
+            if align == 'c':
+                pass
+            elif align == 'l':
+                NspacesL, NspacesR = 0, NspacesL + NspacesR
+            elif align == 'r':
+                NspacesL, NspacesR = NspacesL + NspacesR, 0
+            else:
+                raise RuntimeError, 'Should not get here with align=%s' % align
+
+            string_ += "%%%ds%%s%%%ds " \
+                       % (NspacesL, NspacesR) % ('', item, '')
+        string += string_.rstrip() + '\n'
+    out.write(string)
+
+    if print2string:
+        value = out.getvalue()
+        out.close()
+        return value
+
+    pass
+

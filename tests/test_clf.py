@@ -20,7 +20,6 @@ from mvpa.clfs.base import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      _deepcopyclf
-from mvpa.clfs.gpr import GPR
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
@@ -134,6 +133,15 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(cve < 0.25,
              msg="Got transfer error %g" % (cve))
 
+
+    @sweepargs(clf=clfs[:])
+    def testSummary(self, clf):
+        """Basic testing of the clf summary
+        """
+        clf.train(datasets['uni2small'])
+        summary = clf.summary()
+
+
     # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
@@ -184,6 +192,10 @@ class ClassifiersTests(unittest.TestCase):
         # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
         # self.failUnless(N.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
+
+        # Just check if we get it at all ;-)
+        summary = clf.summary()
+
 
     @sweepargs(clf_=clfs['binary', '!meta'])
     def testSplitClassifierExtended(self, clf_):
@@ -469,7 +481,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # should re-train if we change data
         # reuse trained SVM and its 'final' optimization point
-        if not isinstance(clf, GPR):    # on GPR everything depends on the data ;-)
+        if not clf.__class__.__name__ in ['GPR']: # on GPR everything depends on the data ;-)
             oldsamples = dstrain.samples.copy()
             dstrain.samples[:] += dstrain.samples*0.05
             self.failUnless((oldsamples != dstrain.samples).any())

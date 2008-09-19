@@ -24,7 +24,8 @@ install/python-mvpa-doc::
 # install directly into package directory (despite multiple packages)
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
 # immediately useable documentation
-DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json
+# and exemplar data (they are small excerpts anyways)
+DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
 # -doc package contents
 DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/latex/*.pdf
 DEB_INSTALL_EXAMPLES_python-mvpa-doc := doc/examples/* data

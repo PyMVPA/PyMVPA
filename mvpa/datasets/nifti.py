@@ -13,11 +13,12 @@ __docformat__ = 'restructuredtext'
 # little trick to be able to import 'nifti' package (which has same name)
 oldname = __name__
 # crazy name with close to zero possibility to cause whatever
-__name__ = 'iaugf9zrkjsbdv89' 
+__name__ = 'iaugf9zrkjsbdv89'
 from nifti import NiftiImage
 # restore old settings
 __name__ = oldname
 
+from mvpa.datasets.base import Dataset
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.datasets.metric import DescreteMetric, cartesianDistance
 from mvpa.base import warning
@@ -123,12 +124,16 @@ class NiftiDataset(MaskedDataset):
         the new NiftiImage.
 
         :Parameters:
-          data : ndarray
+          data : ndarray or Dataset
             The data to be wrapped into NiftiImage. If None (default), it
-            would wrap samples of the current dataset
+            would wrap samples of the current dataset. If it is a Dataset
+            instance -- takes its samples for mapping
         """
         if data is None:
             data = self.samples
+        elif isinstance(data, Dataset):
+            # ease users life
+            data = data.samples
         dsarray = self.mapper.reverse(data)
         return NiftiImage(dsarray, self.niftihdr)
 
