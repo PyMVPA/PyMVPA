@@ -68,7 +68,7 @@ with most algorithms in PyMVPA. This makes it very easy to test different
 classifiers on some dataset (see Fig. 1).
 
 .. image:: misc/pics/classifier_comparison_plot.png
-   :width: 15cm
+   :width: 12cm
    :alt: Classifier comparison
 
 A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
