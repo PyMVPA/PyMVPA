@@ -166,7 +166,7 @@ How can I do block-averaging of my block-design fMRI dataset?
 
   >>> dataset = normalFeatureDataset()
   >>> dataset
-  <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks>
+  <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
 
   Averaging all samples with the same label in each chunk individually is done
   by applying a samples mapper to the dataset.
@@ -177,7 +177,7 @@ How can I do block-averaging of my block-design fMRI dataset?
   >>> m = SampleGroupMapper(fx=FirstAxisMean)
   >>> mapped_dataset = dataset.applyMapper(samplesmapper=m)
   >>> mapped_dataset
-  <Dataset / float64 10 x 4 uniq: 2 labels 5 chunks>
+  <Dataset / float64 10 x 4 uniq: 2 labels 5 chunks labels_mapped>
 
   `SampleGroupMapper` applies a function to every group of samples in each
   chunk individually. Using `FirstAxisMean` as function, therefore yields
@@ -206,7 +206,7 @@ the classifier.
   >>> clf.train(dataset)
   >>> final_dataset = dataset.selectFeatures(clf.feature_ids)
   >>> final_dataset
-  <Dataset / float64 100 x 1 uniq: 2 labels 5 chunks>
+  <Dataset / float64 100 x 1 uniq: 2 labels 5 chunks labels_mapped>
 
 In the above code snippet a kNN classifier is defined, that performs a feature
 selection step prior training. Features are selected according to the absolute

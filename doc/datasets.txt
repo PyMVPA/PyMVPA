@@ -137,7 +137,7 @@ sample data. A masked dataset can be created just like a normal dataset.
   >>> mdata = MaskedDataset(samples=N.random.normal(size=(5,3,4)),
   ...                       labels=[1,2,3,4,5])
   >>> mdata
-  <Dataset / float64 5 x 12 uniq: 5 labels 5 chunks>
+  <Dataset / float64 5 x 12 uniq: 5 chunks 5 labels>
 
 .. _MaskedDataset: api/mvpa.datasets.masked.MaskedDataset-class.html
 
@@ -183,7 +183,7 @@ because the mapping is automatically updated upon feature selection.
          [ 9, 10, 11, 12]])
   >>> sdata = mdata.selectFeatures([2,7,9,10])
   >>> sdata
-  <Dataset / float64 5 x 4 uniq: 5 labels 5 chunks>
+  <Dataset / float64 5 x 4 uniq: 5 chunks 5 labels>
   >>> sdata.mapReverse(N.arange(1,sdata.nfeatures+1))
   array([[0, 0, 1, 0],
          [0, 0, 0, 2],
