@@ -67,7 +67,7 @@ abstraction and the simple interface, almost all classifiers can be combined
 with most algorithms in PyMVPA. This makes it very easy to test different
 classifiers on some dataset (see Fig. 1).
 
-.. image:: misc/pics/classifier_comparison_plot.png
+.. image:: pics/classifier_comparison_plot.png
    :width: 12cm
    :alt: Classifier comparison
 
@@ -238,7 +238,7 @@ Gaussian Process Regression
 
 (`Wikipedia entry about gaussian process regression`_).
 
-:.. _Wikipedia entry about gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
+.. _Wikipedia entry about gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
 
 
 .. index:: k-nearest-neighbour, kNN
@@ -446,7 +446,7 @@ which can be found in `mvpa/clfs/warehouse.py`_:
   ...       # update sensitivity at each step
   ...   descr='LinSVM+RFE(splits_avg)' )
 
-This analysis combines the FeatureSelectionClassifer_ and the
+This analysis combines the FeatureSelectionClassifier_ and the
 SplitClassifier_ to perform internal splitting of the data and then perform
 FeatureSelection based on those splits.  Such analyses can be easily created
 due to the straightforward way that classifier and meta-classifiers can be
