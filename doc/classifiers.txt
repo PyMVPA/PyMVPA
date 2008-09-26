@@ -68,7 +68,7 @@ with most algorithms in PyMVPA. This makes it very easy to test different
 classifiers on some dataset (see Fig. 1).
 
 .. image:: misc/pics/classifier_comparison_plot.png
-   :width: 15cm
+   :width: 12cm
    :alt: Classifier comparison
 
 A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
@@ -238,7 +238,7 @@ Gaussian Process Regression
 
 (`Wikipedia entry about gaussian process regression`_).
 
-.. _Wikipedia entry about gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
+:.. _Wikipedia entry about gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
 
 
 .. index:: k-nearest-neighbour, kNN
@@ -346,13 +346,113 @@ and RbfCSVMC_).
 .. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 
 
-Boosted and Multi-class Classifiers
-===================================
+Meta-Classifiers
+================
 
-(to be written)
+  *This section has been contributed by James M. Hughes.*
 
-.. Point to the special case of multi-class classification and how to deal with
-   it. Finally describe features of all available classifiers.
+A meta-classifier is essentially a blanket term used to describe all classes
+that appear functionally equivalent to a regular Classifier_, but which in
+reality provide some extra amount of functionality on top of a normal
+classifier.  Furthermore, they generally do not implement a Classifier_
+*per se*, but rather take a Classifier_ as input.  The methods then
+typically called on a classifier (e.g., `train` or `predict`) can be
+called on the meta-classifier, but will call the input classifier's routines,
+before or after some other function that the meta-classifier provides.
+
+
+Examples of Meta-Classifiers
+----------------------------
+
+At present, there are two primary meta-classifiers implemented in the PyMVPA
+package, beneath which there are several specific options:
+
+1. BoostedClassifier_ -- these typically combine some aspect of the
+   classifier's functionality with another component, such as prediction or data
+   splitting
+
+2. ProxyClassifier_ -- these typically perform some action on the data/labels
+   before classification is performed
+
+Within these more general categories, specific classifiers are implemented.
+For example, there are several BoostedClassifier_ subclasses:
+
+1. CombinedClassifier_ -- combines predictions using a PredictionsCombiner_
+   functor
+
+2. MulticlassClassifier_ -- performs multi-class classification by means of a
+   list of BinaryClassifier_ instances
+
+3. SplitClassifier_ -- combines a Classifier_ and an arbitrary Splitter_
+
+Furthermore, there are also several ProxyClassifier_ subclasses:
+
+1. BinaryClassifier_ -- maps a set of labels into two categories, +1 and -1
+
+2. MappedClassifier_ -- uses a mapper on input data prior to training/testing
+
+3. FeatureSelectionClassifier_ -- performs some kind of FeatureSelection_ prior
+   to training
+
+.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
+.. _BoostedClassifier: api/mvpa.clfs.base.BoostedClassifier-class.html
+.. _ProxyClassifier: api/mvpa.clfs.base.ProxyClassifier-class.html
+.. _BinaryClassifier: api/mvpa.clfs.base.BinaryClassifier-class.html
+.. _MappedClassifier: api/mvpa.clfs.base.MappedClassifier-class.html
+.. _MulticlassClassifier: api/mvpa.clfs.base.MulticlassClassifier-class.html
+.. _CombinedClassifier: api/mvpa.clfs.base.CombinedClassifier-class.html
+.. _FeatureSelectionClassifier: api/mvpa.clfs.base.FeatureSelectionClassifier-class.html
+.. _SplitClassifier: api/mvpa.clfs.base.SplitClassifier-class.html
+.. _FeatureSelection: api/mvpa.featsel.base.FeatureSelection-class.html
+.. _PredictionsCombiner: api/mvpa.clfs.base.PredictionsCombiner-class.html
+
+Implementation Examples
+-----------------------
+
+Classifiers such as the FeatureSelectionClassifier_ are particularly useful
+because they simplify the process of selecting features and then using only
+that subset of features to classify novel exemplars (the `predict` stage).
+They become even more powerful when combined with SplitClassifier_, so that
+even the task of withholding certain data points to create statistically valid
+training and testing datasets is abstracted and wrapped up within a single
+object (and, ultimately, very few method calls).  Consider the following code,
+which can be found in `mvpa/clfs/warehouse.py`_:
+
+.. _mvpa/clfs/warehouse.py: api/mvpa.clfs.warehouse-pysrc.html
+
+  >>> from mvpa.clfs.base import SplitClassifier, FeatureSelectionClassifier
+  >>> from mvpa.clfs.svm import LinearCSVMC
+  >>> from mvpa.clfs.transerror import ConfusionBasedError
+  >>> from mvpa.featsel.rfe import RFE
+  >>> from mvpa.featsel.helpers import FractionTailSelector
+  >>>
+  >>> rfesvm_split = SplitClassifier(LinearCSVMC())
+  >>> clf = \
+  ...  FeatureSelectionClassifier(
+  ...   clf = LinearCSVMC(),
+  ...   # on features selected via RFE
+  ...   feature_selection = RFE(
+  ...       # based on sensitivity of a clf which does
+  ...       # splitting internally
+  ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+  ...       transfer_error=ConfusionBasedError(
+  ...          rfesvm_split,
+  ...          confusion_state="confusion"),
+  ...          # and whose internal error we use
+  ...       feature_selector=FractionTailSelector(
+  ...                          0.2, mode='discard', tail='lower'),
+  ...                          # remove 20% of features at each step
+  ...       update_sensitivity=True),
+  ...       # update sensitivity at each step
+  ...   descr='LinSVM+RFE(splits_avg)' )
+
+This analysis combines the FeatureSelectionClassifer_ and the
+SplitClassifier_ to perform internal splitting of the data and then perform
+FeatureSelection based on those splits.  Such analyses can be easily created
+due to the straightforward way that classifier and meta-classifiers can be
+combined.  Please refer to the relevant documentation sections for more
+information about the specifics of each meta-classifier.
+
 
 
 Retrainable Classifiers
