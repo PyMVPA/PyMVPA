@@ -268,3 +268,65 @@ split.
 .. _TransferError : api/mvpa.clfs.transerror.TransferError-class.html
 .. _SMLR : api/mvpa.clfs.smlr.SMLR-class.html
 
+Can PyMVPA deal with literal class labels?
+------------------------------------------
+
+Yes and no. In general the classifiers wrapped or implemented in PyMVPA are not
+capable of handling literal labels, some even might require binary labels.
+However, PyMVPA datasets provide functionality to map any set of literal labels
+to a corresponding set of numerical labels. Let's take a look:
+
+  >>> # invent some samples (arbitrary in this example)
+  >>> samples = N.random.randn(3).reshape(3,1)
+
+First we will construct a Dataset the usual way (3 samples with unique numerical
+labels, all in one chunk:
+
+  >>> Dataset(samples=samples, labels=range(3), chunks=1)
+  <Dataset / float64 3 x 1 uniq: 3 labels 1 chunks>
+
+Now, we are trying to create the same dataset using literal labels:
+
+  >>> # now create the same dataset using literal labels
+  >>> ds = Dataset(samples=samples,
+  ...              labels=['one', 'two', 'three'],
+  ...              chunks=1)
+  >>> ds.labels[0]
+  'one'
+
+This approach simply stored the literal labels in the dataset and will most
+likely lead to unpredictable behavior of classifiers that cannot handle them.
+A more flexible approach is to let the dataset map the literal labels to
+numerical ones:
+
+  >>> ds = Dataset(samples=samples,
+  ...              labels=['one', 'two', 'three'],
+  ...              chunks=1,
+  ...              labels_map=True)
+  >>> ds
+  <Dataset / float64 3 x 1 uniq: 3 labels 1 chunks labels_mapped>
+  >>> ds.labels[0]
+  0
+  >>> for k in sorted(ds.labels_map.keys()):
+  ...     print k, ds.labels_map[k]
+  one 0
+  three 1
+  two 2
+
+With this approach the labels stored in the dataset are now numerical. However,
+the mapping between literal and numerical labels is somewhat arbitrary. If a
+fixed mapping is possible or intended (e.g. same mapping for multiple dataset),
+the mapping can be set explicitely:
+
+  >>> ds = Dataset(samples=samples,
+  ...              labels=['one', 'two', 'three'],
+  ...              chunks=1,
+  ...              labels_map={'one': 1, 'two': 2, 'three': 3})
+  >>> for k in sorted(ds.labels_map.keys()):
+  ...     print k, ds.labels_map[k]
+  one 1
+  three 3
+  two 2
+
+PyMVPA will use the labels mapping to display literal instead of numerical
+labels e.g. in confusion matrices.
