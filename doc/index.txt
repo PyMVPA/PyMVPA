@@ -15,7 +15,7 @@ nothing but free-software to run.
 .. _Python: http://www.python.org
 
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
-in **Py**\ thon.
+(MVPA) in **Py**\ thon.
 
 PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
 website, the source code repository and download services are hosted on 
