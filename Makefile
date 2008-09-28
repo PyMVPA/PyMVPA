@@ -123,6 +123,7 @@ website: website-stamp
 website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
+	tools/sitemap.sh > $(WWW_DIR)/sitemap.xml
 	touch $@
 
 upload-website: website
