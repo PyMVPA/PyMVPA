@@ -193,7 +193,7 @@ because the mapping is automatically updated upon feature selection.
 
 The above example selects four features from the set of the 12 original
 ones, by passing their ids to the `selectFeatures()` method. The method
-returns a new dataset only containing the nine selected features. Both datasets
+returns a new dataset only containing the four selected features. Both datasets
 share the sample data (using a NumPy array view). Using `selectFeatures()`
 is therefore both memory efficient and relatively fast. All other
 information like class labels and chunks are maintained. By calling
@@ -232,8 +232,9 @@ Data Formats
 
 The concept of mappers in conjuction with the functionality provided by the
 Dataset_ class, makes it very easy to create new dataset types with support
-for specialized data types and formats. The following list shows the data
-formats currently supported by PyMVPA:
+for specialized data types and formats. The following is a non-exhaustive list
+of data formats currently supported by PyMVPA (for additional formats take a
+look at the subclasses of Dataset_):
 
 * NumPy arrays
 
