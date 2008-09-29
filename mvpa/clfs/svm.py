@@ -12,13 +12,26 @@ __docformat__ = 'restructuredtext'
 
 # take care of conditional import of external classifiers
 import mvpa.base.externals as externals
-from mvpa.base import warning
+from mvpa.base import warning, cfg, debug
 
 from _svmbase import _SVM
 
 # default SVM implementation
 SVM = None
 _NuSVM = None
+
+
+# TODO: handle choices within cfg
+_VALID_BACKENDS = ('libsvm', 'shogun')
+default_backend = cfg.get('svm', 'backend', default='libsvm').lower()
+
+if not default_backend in _VALID_BACKENDS:
+    raise ValueError, 'Configuration option svm.backend got invalid value %s.' \
+          'Valid choices are %s' % (default_backend, _VALID_BACKENDS)
+
+if __debug__:
+    debug('SVM', 'Default SVM backend is %s' % default_backend)
+
 if externals.exists('shogun'):
     from mvpa.clfs import sg
     SVM = sg.SVM
@@ -29,9 +42,13 @@ if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
     from mvpa.clfs import libsvm
     _NuSVM = libsvm.SVM
-    SVM = libsvm.SVM
+    if default_backend == 'libsvm' or SVM is None:
+        if __debug__ and default_backend != 'libsvm' and SVM is None:
+            debug('SVM',
+                  'Default SVM backend %s was not found, so using libsvm'
+                  % default_backend)
+        SVM = libsvm.SVM
     #from mvpa.clfs.libsvm.svm import *
-
 
 if SVM is None:
     warning("None of SVM implementions libraries was found")

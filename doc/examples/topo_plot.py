@@ -11,6 +11,8 @@
 
 from mvpa.suite import *
 
+# Sanity check if we have griddata available
+externals.exists("griddata", raiseException=True)
 
 # EEG example splot
 P.subplot(1, 2, 1)
