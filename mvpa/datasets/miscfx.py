@@ -249,3 +249,15 @@ def getSamplesPerChunkLabel(dataset):
                                                 dataset.chunks == c))
 
     return count
+
+
+@datasetmethod
+def despike(dataset, thr):
+    # compute signal change between neigboring samples
+    diff = N.diff(N.arange(12).reshape(3,4), n=1, axis=0)
+
+    # per feature standard deviation
+
+
+    # cut everything that is over the threshold
+

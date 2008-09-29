@@ -23,7 +23,9 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * None yet.
+  * New manual section about meta-classifiers (contributed by James M.
+    Hughes).
+  * New minimal example for a 'getting started' section in the manual.
 
 
 Releases
