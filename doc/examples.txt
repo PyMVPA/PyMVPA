@@ -27,6 +27,8 @@ PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 
 .. index:: plotting
 
+.. _pylab2d:
+
 Simple Plotting of Classifier Behavior
 ======================================
 

@@ -74,7 +74,8 @@ classifiers on some dataset (see Fig. 1).
 A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
 linear SVM, logistic regression, ridge regression and SVM with radial basis
 function kernel) on a simple classification problem. The code to generate
-these figure can be found in the `pylab_2d.py` example.
+these figure can be found in the `pylab_2d.py` example in the :ref:`pylab2d`
+section.
 
 
 .. index:: states
@@ -86,39 +87,51 @@ Before looking at the different classifiers in more detail, it is
 important to mention another feature common to all of them. While
 their interface is simple, classifiers are in no way limited to report
 only predictions. All classifiers implement an additional interface:
-the so-called `Stateful` interface.  Objects of any class that is
-derived from `Stateful` have attributes (we refer to such attributes
+the so-called Stateful_ interface.  Objects of any class that is
+derived from Stateful_ have attributes (we refer to such attributes
 as state variables), which are conditionally computed and stored by
 PyMVPA. Such conditional storage and access is handy if a variable of
 interest might consume a lot of memory or needs intensive computation,
 and not needed in most (or in some) of the use cases.
 
-For instance, the `Classifier` class defines the `trained_labels`
+For instance, the Classifier_ class defines the `trained_labels`
 state variable, which just stores the unique labels for which the
 classifier was trained. Since `trained_labels` stores meaningful
 information only for a trained classifier, attempt to access
-'clf.trained_labels' before training would result in a raised
-`UnknownStateError` exception since the classifier has not seen the
-data yet and, thus, does not know the labels. In other words, 'clf' is
+'clf.trained_labels' before training would result in an error,
+
+ >>> from mvpa.misc.exceptions import UnknownStateError
+ >>> try:
+ ...     untrained_clf = kNN()
+ ...     labels = untrained_clf.trained_labels
+ ... except UnknownStateError:
+ ...     "Does not work"
+ 'Does not work'
+
+since the classifier has not seen the
+data yet and, thus, does not know the labels. In other words, it is
 not yet in the state to know anything about the labels, hence the name
-`Stateful`. We will refer to instances of classes derived from
-`Stateful` as 'statefull'.  Any state variable can be enabled or
+Stateful_. We will refer to instances of classes derived from
+Stateful_ as 'stateful'.  Any state variable can be enabled or
 disabled on per instance basis at any time of the execution.
 
+.. _Stateful: api/mvpa.misc.state.ClassWithCollections-class.html
+.. _StateCollection: api/mvpa.misc.state.StateCollection-class.html
+
 To continue the last example, each classifier, or more precisely every
-statefull object, can be asked to report existing state-related attributes:
+stateful object, can be asked to report existing state-related attributes:
 
   >>> list_with_verbose_explanations = clf.states.listing
 
-'clf.states' is an instance of `StateCollection` class which is a container
+'clf.states' is an instance of StateCollection_ class which is a container
 for all state variables of the given class. Although values can be queried
-or set (if state is enabled) operating directly on the statefull object
+or set (if state is enabled) operating directly on the stateful object
 
   >>> clf.trained_labels
   Set([0, 1])
 
 any other operation on the state (e.g. enabling, disabling) has to be carried
-out through the `StateCollection` '.states'.
+out through the StateCollection_ '.states'.
 
   >>> print clf.states
   states{trained_dataset predicting_time*+ training_confusion predictions*+...}
@@ -149,10 +162,10 @@ Therefore all states can be disabled or enabled (`states.disable()`,
   >>> clf.states.isActive('values')
   False
 
-States can be enabled or disabled during statefull object construction, if
+States can be enabled or disabled during stateful object construction, if
 `enable_states` or `disable_states` (or both) arguments, which store the list
 of desired state variables names, passed to the object constructor. Keyword
-'all' can be used to select all known states for that statefull object.
+'all' can be used to select all known states for that stateful object.
 
 
 .. index:: error, classifier error, transfer error
@@ -164,7 +177,8 @@ Error Calculation
 =================
 
 The TransferError_ class provides a convenient way to determine the transfer
-error of a trained classifier on some validation dataset. A TransferError_
+error of a trained classifier on some validation dataset, i.e. the accuracy of
+the classifier's predictions on a novel, independent dataset. A TransferError_
 object is instanciated by passing a classifier object to the constructor.
 Optionally a custom error function can be specified (see `errorfx` argument).
 
@@ -195,8 +209,8 @@ Cross-validated Transfer Error
 ------------------------------
 
 Often one is not only interested in a single transfer error on one validation
-dataset, but on a cross-validated estimate of the transfer error. A popular
-method is the so-called leave-one-out cross-validation.
+or test dataset, but on a cross-validated estimate of the transfer error. A
+popular method is the so-called leave-one-out cross-validation.
 
 The CrossValidatedTransferError_ class provides a simple way to compute such
 measure. It utilizes a TransferError_ object and a Splitter_. When called with
