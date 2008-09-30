@@ -342,19 +342,3 @@ def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
     samples += N.array(center)
 
     return Dataset(samples=samples, labels=labels)
-
-
-def spiky(shape=(100, 2), spike_loc=None, spike_amp=3.0):
-    # if no spike location are given, put one in the middle
-    if spike_loc is None:
-        spike_loc = [shape[0]/2]
-
-    samples = N.array(
-                [N.sin(.6 * N.linspace(0, 30, shape[0]))
-                 + N.random.rand(shape[0]) for i in range(shape[1])]).T
-
-    # set spikes
-    samples[spike_loc, :] = spike_amp
-
-    return Dataset(samples=samples, labels=1)
-
