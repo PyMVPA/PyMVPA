@@ -23,10 +23,11 @@ Searchlight
 
 The term Searchlight_ refers to an algorithm that runs a
 scalar `DatasetMeasure` on all possible spheres of a certain size within a
-dataset. The measure typically computed is a cross-validated transfer error
+dataset (that provides information about distances between feature locations).
+The measure typically computed is a cross-validated transfer error
 (see :ref:`CrossValidatedTransferError <cross-validation>`). The idea to use
-a searchlight as a sensitivity analyzer stems from a paper by Kriegeskorte and
-colleagues [1]_.
+a searchlight as a sensitivity analyzer on fMRI datasets stems from a paper by
+Kriegeskorte and colleagues [1]_.
 
 A searchlight analysis is can be easily performed. The following code snippet
 shows a draft of a complete analysis.
@@ -107,7 +108,7 @@ PyMVPA supports such permutations test for :ref:`transfer errors
 <transfer_error>` and all :ref:`dataset measures <measure>`. In both cases
 the object computing the measure or transfer error takes an optional
 contructor argument `null_dist`. The value of this argument is an instance
-of some Distribution_ estimator. If this is provided the respective
+of some Distribution_ estimator. If this is provided, the respective
 TransferError_ or DatasetMeasure_ instance will automatically use it to
 estimate the *NULL* distribution and store the associated *p*-values in a
 state variable named `null_prob`.
