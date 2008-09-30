@@ -114,12 +114,54 @@ arguments in the contructor. A transformer is a functor that is finally called
 with the computed sensitivity map. PyMVPA already comes with some convenience
 functors which can be used for this purpose (see Transformers_).
 
-Please note, that this class *cannot* extract reasonable weights from
-non-linear SVMs (e.g. with RBF kernels).
+ >>> from mvpa.misc.data_generators import normalFeatureDataset
+ >>> from mvpa.clfs.svm import LinearCSVMC
+ >>> from mvpa.misc.transformers import Absolute
+ >>>
+ >>> ds = normalFeatureDataset()
+ >>> ds
+ <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
+ >>>
+ >>> clf = LinearCSVMC()
+ >>> sensana = clf.getSensitivityAnalyzer()
+ >>> sens = sensana(ds)
+ >>> sens.shape
+ (4,)
+ >>> (sens < 0).any()
+ True
+ >>> sensana_abs = clf.getSensitivityAnalyzer(transformer=Absolute)
+ >>> (sensana_abs(ds) < 0).any()
+ False
+
+Above example shows how to use an existing classifier instance to report
+sensivity values (a linear SVM in this case). The computed sensitivity vector
+contains one element for each feature in the dataset. *Transformers* can be
+used to post-process the sensitvity scores, e.g. reporting absolute values for
+feature selection purposes, instead of raw sensitivities.
+
+Please note, that the *SVMWeights* classes *cannot* extract reasonable weights
+from non-linear SVMs (e.g. with RBF kernels).
 
 .. _libsvm.LinearSVMWeights: api/mvpa.clfs.libsvm.sens.LinearSVMWeights-class.html
 .. _sg.LinearSVMWeights: api/mvpa.clfs.sg.sens.LinearSVMWeights-class.html
 .. _Transformers: api/mvpa.misc.transformers-module.html
+
+
+Other linear Classifier Weights
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Any linear classifier in PyMVPA can report its weights. The procedure is
+identical for all of them. As outlined in the example using linear SVM weights,
+simply call `getSensitivityAnalyzer()` on a classifier instance and you'll get
+an appropriate Sensitivity_ object. Additionally, it is possible to force
+(re)training of the underlying classifier or simply report the weights computed
+during a previous training run.
+
+Examples of other classifier-based linear sensitivity analyzers are:
+SMLRWeights_ and GPRLinearWeights_.
+
+.. _SMLRWeights: api/mvpa.clfs.smlr.SMLRWeights-class.html
+.. _GPRLinearWeights: api/mvpa.clfs.gpr.GPRLinearWeights-class.html
 
 
 .. index:: noise perturbation, measure
@@ -133,9 +175,9 @@ scalar DatasetMeasure_ using the original dataset. Afterwards, for each single
 feature a noise pattern is added to the respective feature and the dataset
 measure is recomputed. The sensitivity of each feature is the difference
 between the dataset measure of the orginal dataset and the one with added
-noise. The reasoning behind this algorithm is that adding to noise to
+noise. The reasoning behind this algorithm is that adding noise to
 *important* features will impair a dataset measure like cross-validated
-classifier transfer error. However, adding noise the a feature that already
+classifier transfer error. However, adding noise to a feature that already
 only contains noise, will not change such a measure.
 
 Depending on the used scalar DatasetMeasure_ using the sensitivity analyzer
