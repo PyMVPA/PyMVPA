@@ -244,6 +244,10 @@ and some Dataset_ `data`.
 Basic Supervised Learning Methods
 =================================
 
+PyMVPA provides a number of learning methods (i.e. classifiers or
+regression algorithms) that can be plug into the various algorithms
+that are also part of the framework. Most importantly they all can be
+combined or enhanced with :ref:`metaclassifiers`.
 
 .. index:: gaussian process regression, GPR
 
@@ -315,10 +319,11 @@ intercept term so that you do not have to center your data.
 Sparse Multinomial Logistic Regression
 --------------------------------------
 
-Sparse Multinomial Logistic Regression [#]_ is a fast multi-class classifier that
-can easily with high-dimensional problems (`research paper about SMLR`_). PyMVPA
-include two implementations: one in pure Python and a faster one that makes use
-of a C extension for the performance critical pieces of the code.
+Sparse Multinomial Logistic Regression [#]_ is a fast multi-class classifier
+that can easily deal with high-dimensional problems (`research paper about
+SMLR`_).  PyMVPA includes two implementations: one in pure Python and a faster
+one that makes use of a C extension for the performance critical pieces of the
+code.
 
 .. [#] Krishnapuram, B., Figueiredo, M., Carin, L., & Hartemink, A. (2005).
        Sparse Multinomial Logistic Regression: Fast Algorithms and
@@ -332,7 +337,7 @@ of a C extension for the performance critical pieces of the code.
 Support Vector Machines
 -----------------------
 
-Support vector machines [#]_ classifiers (and regressions) are popular
+Support vector machine [#]_ classifiers (and regressions) are popular
 since they can deal with very high dimensional problems (`Wikipedia
 entry about SVM`_), while maintaining reasonable generalization performance.
 
@@ -359,6 +364,8 @@ and RbfCSVMC_).
 .. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
 .. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 
+
+.. _metaclassifiers:
 
 Meta-Classifiers
 ================
