@@ -284,7 +284,7 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     return af(d)
 
 
-if externals.exists('scipy'):
+if externals.exists('weave'):
     from scipy import weave
     from scipy.weave import converters
 

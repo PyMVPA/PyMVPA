@@ -28,6 +28,52 @@ def __check_shogun(bottom_version, custom_versions=[2456]):
               (ver, bottom_version)
 
 
+def __check_weave():
+    """Apparently presence of scipy is not sufficient since some
+    versions experience problems. E.g. in Sep,Oct 2008 lenny's weave
+    failed to work. May be some other converter could work (? See
+    http://lists.debian.org/debian-devel/2008/08/msg00730.html for a
+    similar report.
+
+    Following simple snippet checks compilation of the basic code using
+    weave
+    """
+    from scipy import weave
+    from scipy.weave import converters, build_tools
+    import numpy as N
+    # to shut weave up
+    import sys
+    ostdout = sys.stdout
+    if not( __debug__ and 'EXT_' in debug.active):
+        from StringIO import StringIO
+        sys.stdout = StringIO()
+        # *nix specific solution to shut weave up.
+        # Some users must complain and someone
+        # needs to fix this to become more generic.
+        cargs = [">/dev/null", "2>&1"]
+    else:
+        cargs = []
+    fmsg = None
+    try:
+        data = N.array([1,2,3])
+        counter = weave.inline("data[0]=fabs(-1);", ['data'],
+                               type_converters=converters.blitz,
+                               verbose=0,
+                               extra_compile_args=cargs,
+                               compiler = 'gcc')
+    except Exception, e:
+        fmsg = "Failed to build simple weave sample." \
+               " Exception was %s" % str(e)
+
+    sys.stdout = ostdout
+    # needed to fix sweave which might "forget" to restore sysv
+    build_tools.restore_sys_argv()
+    if fmsg is not None:
+        raise ImportError, fmsg
+    else:
+        return "Everything is cool"
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'nifti':'from nifti import NiftiImage as __',
@@ -36,6 +82,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
           'scipy': "import scipy as __",
+          'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'rpy': "import rpy as __",
           'lars': "import rpy; rpy.r.library('lars')",
@@ -94,15 +141,16 @@ def exists(dep, force=False, raiseException=False):
         if __debug__:
             debug('EXT', "Checking for the presence of %s" % dep)
 
+        estr = ''
         try:
             exec _KNOWN[dep]
             _VERIFIED[dep] = True
-        except tuple(_caught_exceptions):
-            pass
+        except tuple(_caught_exceptions), e:
+            estr = ". Caught exception was: " + str(e)
 
         if __debug__:
-            debug('EXT', "Presence of %s is%s verified" %
-                  (dep, {True:'', False:' NOT'}[_VERIFIED[dep]]))
+            debug('EXT', "Presence of %s is%s verified%s" %
+                  (dep, {True:'', False:' NOT'}[_VERIFIED[dep]], estr))
 
         result = _VERIFIED[dep]
 
@@ -125,8 +173,8 @@ def testAllDependencies(force=False):
     # loop over all known dependencies
     for dep in _KNOWN:
         if not exists(dep, force):
-            warning("Known dependency %s is not present, thus not available." \
-                    % dep)
+            warning("Known dependency %s is not present or is broken, " \
+                    "thus not available." % dep)
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \
