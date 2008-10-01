@@ -570,6 +570,21 @@ class Collection(object):
         return self._items[index].value
 
 
+    def get(self, index, default):
+        """Access the value by a given index.
+
+        Mimiquing regular dictionary behavior, if value cannot be obtained
+        (i.e. if any exception is caught) return default value.
+        """
+        try:
+            return self[index].value
+        except Exception, e:
+            #if default is not None:
+            return default
+            #else:
+            #    raise e
+
+
     def setvalue(self, index, value):
         """Sets the value by index"""
         self._checkIndex(index)
