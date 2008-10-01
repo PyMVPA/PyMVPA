@@ -132,7 +132,7 @@ class Classifier(Parametrized):
     predictions = StateVariable(enabled=True,
         doc="Most recent set of predictions")
 
-    values = StateVariable(enabled=False,
+    values = StateVariable(enabled=True,
         doc="Internal classifier values the most recent " +
             "predictions are based on")
 
