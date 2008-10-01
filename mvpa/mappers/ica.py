@@ -28,6 +28,7 @@ class ICAMapper(ProjectionMapper):
         ProjectionMapper.__init__(self, **kwargs)
 
         self._algorithm = algorithm
+        self._transpose = transpose
 
     __doc__ = enhancedDocString('ICAMapper', locals(), ProjectionMapper)
 
@@ -41,7 +42,7 @@ class ICAMapper(ProjectionMapper):
         # more features than samples? -> rank deficiancy
         # if not tranposing the data, MDP has to do SVD prior to ICA
         if dataset.samples.shape[1] > dataset.samples.shape[0] \
-           and not transpose:
+           and not self._transpose:
             white_param['svd'] = True
 
         if self._algorithm == 'fastica':
