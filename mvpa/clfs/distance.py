@@ -388,6 +388,6 @@ if externals.exists('scipy'):
 
 else:
     # Bind pure python implementation
-    pnrom_w = pnorm_w_python
+    pnorm_w = pnorm_w_python
     pass
 
