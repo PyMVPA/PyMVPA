@@ -484,7 +484,7 @@ class TuebingenMEGSensorLocations(SensorLocations):
 
 
 def design2labels(columndata, baseline_label=0,
-                  func=lambda x:x>0.0):
+                  func=lambda x: x > 0.0):
     """Helper to convert design matrix into a list of labels
 
     Given a design, assign a single label to any given sample
@@ -564,7 +564,6 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
                 if not label in ignore_labels:
                     seenlabels.union_update([label])
             chunks.append(chunk)
-        import numpy as N
         chunks = N.array(chunks)
         # fix up a bit the trailer
         if seenlabels != alllabels:

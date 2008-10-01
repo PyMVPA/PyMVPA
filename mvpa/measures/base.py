@@ -169,7 +169,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         self.__combiner = combiner
 
     def __repr__(self, prefixes=None):
-        if prefixes is None: prefixes = []
+        if prefixes is None:
+            prefixes = []
         if self.__combiner != SecondAxisSumOfAbs:
             prefixes.append("combiner=%s" % self.__combiner)
         return \
@@ -235,7 +236,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                 result = self.__combiner(result)
         else:
             # remove bogus dimensions
-            # XXX we might need to come up with smth better. May be some naive combiner? :-)
+            # XXX we might need to come up with smth better. May be some naive
+            # combiner? :-)
             result = result.squeeze()
 
         # call base class postcall
@@ -320,7 +322,8 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         """Either to force it to train"""
 
     def __repr__(self, prefixes=None):
-        if prefixes is None: prefixes = []
+        if prefixes is None:
+            prefixes = []
         prefixes.append("clf=%s" % repr(self.clf))
         if not self._force_training:
             prefixes.append("force_training=%s" % self._force_training)
@@ -507,10 +510,11 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
 
 
 class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
-    """Set sensitivity analyzer output be reverse mapped using mapper of the slave classifier"""
+    """Set sensitivity analyzer output be reverse mapped using mapper of the
+    slave classifier"""
 
     def _call(self, dataset):
-        sens = super(MappedClassifierSensitivityAnalyzer,self)._call(dataset)
+        sens = super(MappedClassifierSensitivityAnalyzer, self)._call(dataset)
         # So we have here the case that some sensitivities are given
         #  as nfeatures x nclasses, thus we need to take .T for the
         #  mapper and revert back afterwards

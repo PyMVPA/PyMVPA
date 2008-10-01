@@ -16,7 +16,7 @@ import numpy as N
 from mvpa.datasets.channel import ChannelDataset
 from mvpa.misc.io.eepbin import EEPBin
 from mvpa.base.dochelpers import enhancedDocString
-
+from mvpa.base import warning
 
 class EEPDataset(ChannelDataset):
     """Dataset using a EEP binary file as source.
