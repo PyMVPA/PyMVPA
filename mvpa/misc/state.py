@@ -17,10 +17,11 @@ import operator, copy
 from sets import Set
 from textwrap import TextWrapper
 
+import numpy as N
+
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.base import warning
-from mvpa.base.dochelpers import enhancedClassDocString, enhancedDocString
+from mvpa.base.dochelpers import enhancedClassDocString
 
 if __debug__:
     from mvpa.base import debug
@@ -317,7 +318,8 @@ class Collection(object):
             res = ""
         res += "{"
         for i in xrange(min(num, maxnumber)):
-            if i>0: res += " "
+            if i > 0:
+                res += " "
             res += "%s" % str(self._items.values()[i])
         if len(self._items) > maxnumber:
             res += "..."
@@ -730,7 +732,8 @@ class ParameterCollection(Collection):
         prefixes = []
         for k in self.names:
             # list only params with not default values
-            if self[k].isDefault: continue
+            if self[k].isDefault:
+                continue
             prefixes.append("%s=%s" % (k, self[k].value))
         return prefixes
 
@@ -1013,9 +1016,10 @@ class AttributesCollector(type):
     def __init__(cls, name, bases, dict):
 
         if __debug__:
-            debug("COLR",
-                  "AttributesCollector call for %s.%s, where bases=%s, dict=%s " \
-                  % (cls, name, bases, dict))
+            debug(
+                "COLR",
+                "AttributesCollector call for %s.%s, where bases=%s, dict=%s " \
+                % (cls, name, bases, dict))
 
         super(AttributesCollector, cls).__init__(name, bases, dict)
 
@@ -1174,6 +1178,11 @@ class ClassWithCollections(object):
 
         s__dict__ = self.__dict__
 
+        # init variable
+        # XXX: Added as pylint complained (rightfully) -- not sure if false
+        # is the proper default
+        self.__params_set = False
+
         # need to check to avoid override of enabled states in the case
            # of multiple inheritance, like both Statefull and Harvestable
         if not s__dict__.has_key('_collections'):
@@ -1249,9 +1258,11 @@ class ClassWithCollections(object):
             #else:
             #    if len(kwargs)>0:
             #        known_params = reduce(lambda x, y: x + y, \
-            #                            [x.items.keys() for x in collections], [])
+            #                            [x.items.keys() for x in collections],
+            #                            [])
             #        raise TypeError, \
-            #              "Unknown parameters %s for %s." % (kwargs.keys(), self) \
+            #              "Unknown parameters %s for %s." % (kwargs.keys(),
+            #                                                 self) \
             #              + " Valid parameters are %s" % known_params
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
@@ -1310,11 +1321,11 @@ class ClassWithCollections(object):
             s += "/%s " % self.__descr
         if hasattr(self, "_collections"):
             for col, collection in self._collections.iteritems():
-                s += " %d %s:%s" %(len(collection.items), col, str(collection))
+                s += " %d %s:%s" % (len(collection.items), col, str(collection))
         return s
 
 
-    def __repr__(self, prefixes=[], fullname=False):
+    def __repr__(self, prefixes=None, fullname=False):
         """String definition of the object of ClassWithCollections object
 
         :Parameters:
@@ -1323,6 +1334,8 @@ class ClassWithCollections(object):
           prefixes : list of strings
             What other prefixes to prepend to list of arguments
         """
+        if prefixes is None:
+            prefixes = []
         prefixes = prefixes[:]          # copy list
         id_str = ""
         module_str = ""

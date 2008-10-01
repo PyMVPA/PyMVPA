@@ -91,7 +91,8 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     # bring it 'under 1', since otherwise some classifiers have difficulties
     # during optimization
     data = 1.0/(N.max(N.abs(data))) * data
-    labels = N.concatenate([N.repeat('L%d' % i, perlabel) for i in range(nlabels)])
+    labels = N.concatenate([N.repeat('L%d' % i, perlabel)
+                                for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
     ds = Dataset(samples=data, labels=labels, chunks=chunks, labels_map=True)
@@ -275,12 +276,12 @@ def sinModulated(n_instances, n_features,
         data.resize(n_instances, n_features)
     else:
         data = N.random.rand(n_instances, n_features)*N.pi
-        pass
     label = N.sin((data**2).sum(1)).round()
     label += N.random.rand(label.size)*noise
     return Dataset(samples=data, labels=label)
 
-def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2, data_noise=0.4, noise=0.1):
+def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
+                data_noise=0.4, noise=0.1):
     """ Generates simple dataset for linear regressions
 
     Generates chirp signal, populates n_nonbogus_features out of

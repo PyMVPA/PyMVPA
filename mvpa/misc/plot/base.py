@@ -80,7 +80,7 @@ def errLinePlot(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
             # scales line array to same range as datapoints
             P.plot(xaxis, curves[:, c], linestyle=linestyle)
         # no line between data points
-        linestyle='None'
+        linestyle = 'None'
 
     # compute error per datapoint
     if errtype == 'ste':
@@ -266,7 +266,8 @@ def inverseCmap(cmap_name):
     new_data = dict( [(k, [(v[i][0], v[-(i+1)][1], v[-(i+1)][2])
                            for i in xrange(len(v))])
                       for k,v in cmap_data.iteritems()] )
-    return mpl.colors.LinearSegmentedColormap('%s_rev' % cmap_name, new_data, _cm.LUTSIZE)
+    return mpl.colors.LinearSegmentedColormap('%s_rev' % cmap_name,
+                                              new_data, _cm.LUTSIZE)
 
 
 def plotDatasetChunks(ds, clf_labels=None):
@@ -281,7 +282,7 @@ def plotDatasetChunks(ds, clf_labels=None):
         P.ioff()
     if clf_labels is not None and len(clf_labels) != ds.nsamples:
         clf_labels = None
-    colors=('b', 'g', 'r', 'c', 'm', 'y', 'k', 'w')
+    colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k', 'w')
     labels = ds.uniquelabels
     labels_map = dict(zip(labels, colors[:len(labels)]))
     for chunk in ds.uniquechunks:
@@ -300,7 +301,10 @@ def plotDatasetChunks(ds, clf_labels=None):
                    verticalalignment='center',
                    )
     dss = ds.samples
-    P.axis((1.1*N.min(dss[:,0]), 1.1*N.max(dss[:,1]), 1.1*N.max(dss[:,0]), 1.1*N.min(dss[:,1])))
+    P.axis((1.1 * N.min(dss[:, 0]),
+            1.1 * N.max(dss[:, 1]),
+            1.1 * N.max(dss[:, 0]),
+            1.1 * N.min(dss[:, 1])))
     P.draw()
     P.ion()
 

@@ -214,7 +214,7 @@ def RFEHistory2maps(history):
     history_maps = N.zeros((steps, nfeatures))
 
     for step in xrange(steps):
-        history_maps[step, history>=step] = 1
+        history_maps[step, history >= step] = 1
 
     return history_maps
 
