@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.base import externals
+externals.exists('nifti', raiseException=True)
+
 # little trick to be able to import 'nifti' package (which has same name)
 oldname = __name__
 # crazy name with close to zero possibility to cause whatever

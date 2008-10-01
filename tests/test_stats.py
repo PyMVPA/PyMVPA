@@ -11,7 +11,6 @@
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist
 from mvpa.measures.anova import OneWayAnova
-from mvpa.measures.corrcoef import CorrCoef
 from tests_warehouse import *
 
 class StatsTests(unittest.TestCase):
@@ -51,6 +50,8 @@ class StatsTests(unittest.TestCase):
         # test 'any' mode
         if not externals.exists('scipy'):
             return
+
+        from mvpa.measures.corrcoef import CorrCoef
 
         null = MCNullDist(permutations=10, tail='any')
         null.fit(CorrCoef(), ds)
