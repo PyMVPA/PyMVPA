@@ -43,6 +43,9 @@ def __check_weave():
     import numpy as N
     # to shut weave up
     import sys
+    # we can't rely on weave at all at the restoring argv. On etch box
+    # restore_sys_argv() is apparently is insufficient
+    oargv = sys.argv[:]
     ostdout = sys.stdout
     if not( __debug__ and 'EXT_' in debug.active):
         from StringIO import StringIO
@@ -67,7 +70,8 @@ def __check_weave():
 
     sys.stdout = ostdout
     # needed to fix sweave which might "forget" to restore sysv
-    build_tools.restore_sys_argv()
+    # build_tools.restore_sys_argv()
+    sys.argv = oargv
     if fmsg is not None:
         raise ImportError, fmsg
     else:
