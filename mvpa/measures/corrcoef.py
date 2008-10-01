@@ -54,7 +54,8 @@ class CorrCoef(FeaturewiseDatasetMeasure):
             # is actually NaN, although it might not be the case (covar of
             # 2 constants would be NaN although should be 1)
             if N.isnan(corrv):
-                if N.var(samples_) == 0.0 and N.var(attrdata) == 0.0 and len(samples_):
+                if N.var(samples_) == 0.0 and N.var(attrdata) == 0.0 \
+                   and len(samples_):
                     # constant terms
                     corrv = 1.0 - pvalue_index
                 else:

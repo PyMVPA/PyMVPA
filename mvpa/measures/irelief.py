@@ -61,11 +61,10 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
             self.kernel = KernelExponential
         else:
             self.kernel = kernel
-            pass
+
         self.w_guess = w_guess
         self.w = None
         self.kernel_width = kernel_width
-        pass
 
 
     def compute_M_H(self, label):
@@ -87,7 +86,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
             # There must be at least two exampls for class label[i]
             assert(tmp != [])
             H[i] = N.array(tmp)
-            pass
+
         return M, H
 
 
@@ -97,8 +96,8 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
         NS, NF = samples.shape[:2]
         if self.w_guess == None:
             self.w = N.ones(NF, 'd')
-            pass
-        self.w = self.w/(self.w**2).sum() # do normalization in all cases to be safe :)
+        # do normalization in all cases to be safe :)
+        self.w = self.w/(self.w**2).sum()
 
         M, H = self.compute_M_H(dataset.labels)
 
@@ -118,10 +117,11 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
                 alpha_n = N.nan_to_num(d_w_k[n, M[n]]/(d_w_k[n, M[n]].sum()))
                 beta_n = N.nan_to_num(d_w_k[n, H[n]]/(d_w_k[n, H[n]].sum()))
 
-                m_n = (N.abs(samples[n, :]-samples[M[n], :])*alpha_n[:, None]).sum(0)
-                h_n = (N.abs(samples[n, :]-samples[H[n], :])*beta_n[:, None]).sum(0)
+                m_n = (N.abs(samples[n, :] - samples[M[n], :]) \
+                        * alpha_n[:, None]).sum(0)
+                h_n = (N.abs(samples[n, :] - samples[H[n], :]) \
+                        * beta_n[:, None]).sum(0)
                 ni += gamma_n*(m_n-h_n)
-                pass
             ni = ni/NS
 
             ni_plus = N.clip(ni, 0.0, N.inf) # set all negative elements to zero
@@ -137,7 +137,6 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
             self.w = w_new
             if change < self.threshold:
                 break
-            pass
 
         return self.w
 
@@ -174,7 +173,6 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
         self.a = a # parameter of the learning rate
         self.permute = permute # shuffle data when running I-RELIEF
         self.max_iter = max_iter # maximum number of iterations
-        pass
 
 
     def _call(self, dataset):
@@ -183,8 +181,8 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
         NF = dataset.samples.shape[1]
         if self.w_guess == None:
             self.w = N.ones(NF, 'd')
-            pass
-        self.w = self.w/(self.w**2).sum() # do normalization in all cases to be safe :)
+        # do normalization in all cases to be safe :)
+        self.w = self.w/(self.w**2).sum()
 
         M, H = self.compute_M_H(dataset.labels)
 
@@ -192,57 +190,62 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
         pi = N.zeros(NF, 'd')
 
         if self.permute:
-            random_sequence = N.random.permutation(NS) # indices to go through samples in random order
+            # indices to go through samples in random order
+            random_sequence = N.random.permutation(NS)
         else:
             random_sequence = N.arange(NS)
-            pass
 
-        change = self.threshold+1.0
+        change = self.threshold + 1.0
         iteration = 0
         counter = 0.0
         while change > self.threshold and iteration < self.max_iter:
             if __debug__:
                 debug('IRELIEF', "Iteration %d" % iteration)
-                pass
+
             for t in range(NS):
                 counter += 1.0
                 n = random_sequence[t]
 
                 self.k = self.kernel(length_scale = self.kernel_width/self.w)
-                d_w_k_xn_Mn = self.k.compute(dataset.samples[None, n, :], dataset.samples[M[n], :]).squeeze()
+                d_w_k_xn_Mn = self.k.compute(dataset.samples[None, n, :],
+                                dataset.samples[M[n], :]).squeeze()
                 d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
-                d_w_k_xn_x = self.k.compute(dataset.samples[None, n, :], dataset.samples).squeeze()
+                d_w_k_xn_x = self.k.compute(dataset.samples[None, n, :],
+                                dataset.samples).squeeze()
                 gamma_n = 1.0 - d_w_k_xn_Mn_sum / d_w_k_xn_x.sum()
                 alpha_n = d_w_k_xn_Mn / d_w_k_xn_Mn_sum
 
-                d_w_k_xn_Hn = self.k.compute(dataset.samples[None, n, :], dataset.samples[H[n], :]).squeeze()
+                d_w_k_xn_Hn = self.k.compute(dataset.samples[None, n, :],
+                                dataset.samples[H[n], :]).squeeze()
                 beta_n = d_w_k_xn_Hn / d_w_k_xn_Hn.sum()
 
-                m_n = (N.abs(dataset.samples[n, :]-dataset.samples[M[n], :])*alpha_n[:, N.newaxis]).sum(0)
-                h_n = (N.abs(dataset.samples[n, :]-dataset.samples[H[n], :])*beta_n[:, N.newaxis]).sum(0)
-                pi = gamma_n*(m_n-h_n)
-                learning_rate = 1.0/(counter*self.a+1.0)
-                ni_new = ni+learning_rate*(pi-ni)
+                m_n = (N.abs(dataset.samples[n, :] - dataset.samples[M[n], :]) \
+                        * alpha_n[:, N.newaxis]).sum(0)
+                h_n = (N.abs(dataset.samples[n, :] - dataset.samples[H[n], :]) \
+                        * beta_n[:, N.newaxis]).sum(0)
+                pi = gamma_n * (m_n-h_n)
+                learning_rate = 1.0 / (counter * self.a + 1.0)
+                ni_new = ni + learning_rate * (pi - ni)
                 ni = ni_new
 
-                ni_plus = N.clip(ni, 0.0, N.inf) # set all negative elements to zero
-                w_new = N.nan_to_num(ni_plus/(N.sqrt((ni_plus**2).sum())))
-                change = N.abs(w_new-self.w).sum()
+                # set all negative elements to zero
+                ni_plus = N.clip(ni, 0.0, N.inf)
+                w_new = N.nan_to_num(ni_plus / (N.sqrt((ni_plus ** 2).sum())))
+                change = N.abs(w_new - self.w).sum()
                 if t % 10 == 0 and __debug__ and 'IRELIEF' in debug.active:
                     debug('IRELIEF',
                           "t=%d change=%.4f max=%f min=%.4f mean=%.4f std=%.4f"
                           " #nan=%d" %
                           (t, change, w_new.max(), w_new.min(), w_new.mean(),
                            w_new.std(), N.isnan(w_new).sum()))
-                    pass
 
                 self.w = w_new
 
                 if change < self.threshold and iteration > 0:
                     break
-                pass
+
             iteration += 1
-            pass
+
         return self.w
 
 
@@ -265,8 +268,8 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
     exponential-like kernels. Support for linear kernel will be
     added later.
     """
-    def __init__(self, threshold = 1.0e-2, kernel_width = 1.0,
-                 w_guess = None, **kwargs):
+    def __init__(self, threshold=1.0e-2, kernel_width=1.0,
+                 w_guess=None, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
@@ -278,7 +281,6 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
         self.w_guess = w_guess
         self.w = None
         self.kernel_width = kernel_width
-        pass
 
 
     def compute_M_H(self, label):
@@ -302,7 +304,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
             # There must be least two exampls for class label[i]
             assert(tmp != [])
             H[i] = N.array(tmp)
-            pass
+
         return M, H
 
 
@@ -321,8 +323,8 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
 
         if self.w_guess == None:
             w = N.ones(NF, 'd')
-            pass
-        w /= (w**2).sum() # do normalization in all cases to be safe :)
+
+        w /= (w ** 2).sum() # do normalization in all cases to be safe :)
 
         M, H = self.compute_M_H(dataset.labels)
 
@@ -341,7 +343,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
                 h_n = (N.abs(samples[n, :] - samples[H[n], :]) \
                        * beta_n[:, None]).sum(0)
                 ni += gamma_n*(m_n - h_n)
-                pass
+
             ni = ni / NS
 
             ni_plus = N.clip(ni, 0.0, N.inf) # set all negative elements to zero
@@ -349,15 +351,14 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
             change = N.abs(w_new - w).sum()
             if __debug__ and 'IRELIEF' in debug.active:
                 debug('IRELIEF',
-                      "change=%.4f max=%f min=%.4f mean=%.4f std=%.4f #nan=%d" %
-                      (change, w_new.max(), w_new.min(), w_new.mean(), w_new.std(),
-                       N.isnan(w_new).sum()))
+                      "change=%.4f max=%f min=%.4f mean=%.4f std=%.4f #nan=%d" \
+                      % (change, w_new.max(), w_new.min(), w_new.mean(),
+                         w_new.std(), N.isnan(w_new).sum()))
 
             # update weights:
             w = w_new
             if change < self.threshold:
                 break
-            pass
 
         self.w = w
         return w
@@ -372,7 +373,7 @@ class IterativeReliefOnline(IterativeRelief):
     Kernel.
     """
 
-    def __init__(self, a = 10.0, permute=True, max_iter = 3, **kwargs):
+    def __init__(self, a=10.0, permute=True, max_iter=3, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
@@ -382,7 +383,6 @@ class IterativeReliefOnline(IterativeRelief):
         self.a = a # parameter of the learning rate
         self.permute = permute # shuffle data when running I-RELIEF
         self.max_iter = max_iter # maximum number of iterations
-        pass
 
 
     def _call(self, dataset):
@@ -395,10 +395,9 @@ class IterativeReliefOnline(IterativeRelief):
 
         if self.w_guess == None:
             w = N.ones(NF, 'd')
-            pass
 
         # do normalization in all cases to be safe :)
-        w /= (w**2).sum()
+        w /= (w ** 2).sum()
 
         M, H = self.compute_M_H(dataset.labels)
 
@@ -410,7 +409,6 @@ class IterativeReliefOnline(IterativeRelief):
             random_sequence = N.random.permutation(NS)
         else:
             random_sequence = N.arange(NS)
-            pass
 
         change = threshold + 1.0
         iteration = 0
@@ -418,13 +416,12 @@ class IterativeReliefOnline(IterativeRelief):
         while change > threshold and iteration < self.max_iter:
             if __debug__:
                 debug('IRELIEF', "Iteration %d" % iteration)
-                pass
             for t in range(NS):
                 counter += 1.0
                 n = random_sequence[t]
 
                 d_xn_x = N.abs(samples[n, :] - samples)
-                d_w_k_xn_x = self.k((d_xn_x*w).sum(1))
+                d_w_k_xn_x = self.k((d_xn_x * w).sum(1))
 
                 d_w_k_xn_Mn = d_w_k_xn_x[M[n]]
                 d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
@@ -444,7 +441,7 @@ class IterativeReliefOnline(IterativeRelief):
 
                 # set all negative elements to zero
                 ni_plus = N.clip(ni, 0.0, N.inf)
-                w_new = N.nan_to_num(ni_plus/(N.sqrt((ni_plus**2).sum())))
+                w_new = N.nan_to_num(ni_plus / (N.sqrt((ni_plus ** 2).sum())))
                 change = N.abs(w_new - w).sum()
                 if t % 10 == 0 and __debug__ and 'IRELIEF' in debug.active:
                     debug('IRELIEF',
@@ -452,14 +449,14 @@ class IterativeReliefOnline(IterativeRelief):
                           " #nan=%d" %
                           (t, change, w_new.max(), w_new.min(), w_new.mean(),
                            w_new.std(), N.isnan(w_new).sum()))
-                    pass
+
                 w = w_new
 
                 if change < threshold and iteration > 0:
                     break
-                pass
+
             iteration += 1
-            pass
+
         self.w = w
         return w
 

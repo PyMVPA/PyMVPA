@@ -103,4 +103,4 @@ if externals.exists("pywt"):
     from mvpa.mappers.wavelet import *
 
 if externals.exists("pylab"):
-	import pylab as P
+    import pylab as P
