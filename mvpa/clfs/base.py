@@ -1046,7 +1046,11 @@ class ProxyClassifier(Classifier):
     def _predict(self, data):
         """Predict using `ProxyClassifier`
         """
-        result = self.__clf.predict(data)
+        clf = self.__clf
+        if self.states.isEnabled('values'):
+            clf.states.enable(['values'])
+
+        result = clf.predict(data)
         # for the ease of access
         self.states._copy_states_(self.__clf, ['values'], deep=False)
         return result
@@ -1843,9 +1847,13 @@ class FeatureSelectionClassifier(ProxyClassifier):
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`
         """
-        result = self.__maskclf._predict(data)
+        clf = self.__maskclf
+        if self.states.isEnabled('values'):
+            clf.states.enable(['values'])
+
+        result = clf._predict(data)
         # for the ease of access
-        self.states._copy_states_(self.__maskclf, ['values'], deep=False)
+        self.states._copy_states_(clf, ['values'], deep=False)
         return result
 
     def setTestDataset(self, testdataset):

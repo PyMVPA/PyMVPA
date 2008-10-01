@@ -12,7 +12,7 @@ from mvpa.misc.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -316,6 +316,24 @@ class ClassifiersTests(unittest.TestCase):
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
+
+    @sweepargs(clf=clfs[:])
+    def testValues(self, clf):
+        if isinstance(clf, MulticlassClassifier):
+            # TODO: handle those values correctly
+            return
+        ds = datasets['uni2small']
+        clf.states._changeTemporarily(enable_states = ['values'])
+        cv = CrossValidatedTransferError(
+            TransferError(clf),
+            OddEvenSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        cverror = cv(ds)
+        #print clf.descr, clf.values[0]
+        # basic test either we get 1 set of values per each sample
+        self.failUnlessEqual(len(clf.values), ds.nsamples/2)
+
+        clf.states._resetEnabledTemporarily()
 
     @sweepargs(clf=clfs['linear', 'svm', 'libsvm', '!meta'])
     def testMulticlassClassifier(self, clf):
