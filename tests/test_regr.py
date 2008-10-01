@@ -76,7 +76,7 @@ class RegressionsTests(unittest.TestCase):
         ds = datasets['uni2small']
         cverror = cv(ds)
         self.failUnless(len(clf.values) == ds['chunks', 1].nsamples)
-        clf.states._changeTemporarily(enable_states=['values'])
+        clf.states._resetEnabledTemporarily()
 
 
 def suite():
