@@ -1036,7 +1036,10 @@ class ProxyClassifier(Classifier):
 
         # for the ease of access
         # TODO: if to copy we should exclude some states which are defined in
-        # base Classifier (such as training_time, predicting_time)
+        #       base Classifier (such as training_time, predicting_time)
+        # YOH: for now _copy_states_ would copy only set states variables. If
+        #      anything needs to be overriden in the parent's class, it is welcome
+        #      to do so
         #self.states._copy_states_(self.__clf, deep=False)
 
 
@@ -1045,7 +1048,7 @@ class ProxyClassifier(Classifier):
         """
         result = self.__clf.predict(data)
         # for the ease of access
-        #self.states._copy_states_(self.__clf, deep=False)
+        self.states._copy_states_(self.__clf, ['values'], deep=False)
         return result
 
 
@@ -1842,7 +1845,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         result = self.__maskclf._predict(data)
         # for the ease of access
-        #self.states._copy_states_(self.__maskclf, deep=False)
+        self.states._copy_states_(self.__maskclf, ['values'], deep=False)
         return result
 
     def setTestDataset(self, testdataset):
