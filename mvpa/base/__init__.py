@@ -171,6 +171,7 @@ if __debug__:
     debug.register('INIT', "Just sequence of inits")
     debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
+    debug.register('EXT_', "External dependencies (verbose)")
     debug.register('TEST', "Debug unittests")
     debug.register('MODULE_IN_REPR', "Include module path in __repr__")
     debug.register('ID_IN_REPR', "Include id in __repr__")
