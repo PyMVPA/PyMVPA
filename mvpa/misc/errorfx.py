@@ -181,8 +181,9 @@ class Variance1SVFx(_ErrorFx):
         data = N.vstack( (predicted, target) ).T
         # demean
         data_demeaned = data - N.mean(data, axis=0)
-        u,s,vh = N.linalg.svd(data_demeaned, full_matrices=0)
+        u, s, vh = N.linalg.svd(data_demeaned, full_matrices=0)
         # assure sorting
-        s.sort(); s=s[::-1]
+        s.sort()
+        s=s[::-1]
         cvar = s[0]**2 / N.sum(s**2)
         return cvar

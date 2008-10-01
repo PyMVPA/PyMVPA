@@ -138,7 +138,7 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
     axline.set_clip_on(False)
 
 
-    for i,l in enumerate(locs):
+    for i, l in enumerate(locs):
         if l == 0:                    # no origin label
             continue
         coor = [args[2][0][i], args[2][1][i], format % (mult * l)]
@@ -155,7 +155,6 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
             verticalalignment=lvalignment, fontsize=14,
             # fontweight='bold',
             transform=transl)
-        pass
 
 
 def plotERP(data, SR=500, onsets=None,
@@ -432,7 +431,8 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
                   % params.get('label', 'UNKNOWN')
 
 
-        plotERP(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax, **params)
+        plotERP(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax,
+                **params)
         #             plot_kwargs={'label':label})
 
         if isinstance(erp_def, dict):
