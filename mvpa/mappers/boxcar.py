@@ -30,7 +30,7 @@ class BoxcarMapper(Mapper):
 
     def __init__(self, startpoints, boxlength, offset=0,
                  collision_resolution='mean'):
-        """Initialize the PCAMapper
+        """Initialize the BoxcarMapper
 
         Parameters:
           startpoints:    A sequence of index value along the first axis of

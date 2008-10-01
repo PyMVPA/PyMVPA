@@ -764,7 +764,7 @@ class Dataset(object):
 
         if stats:
             # TODO -- avg per chunk?
-            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g" % \
+            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
                  (ssep, N.mean(samples), N.std(samples),
                   N.var(samples), N.min(samples), N.max(samples))
 
