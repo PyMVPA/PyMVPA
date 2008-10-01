@@ -1067,8 +1067,9 @@ class TransferError(ClassifierError):
 
         Returns a scalar value of the transfer error.
         """
-
-        predictions = self.clf.predict(testdataset.samples)
+        # OPT: local binding
+        clf = self.clf
+        predictions = clf.predict(testdataset.samples)
 
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
@@ -1078,10 +1079,11 @@ class TransferError(ClassifierError):
         #  bound to classifiers confusion matrix
         states = self.states
         if states.isEnabled('confusion'):
-            confusion = self.clf._summaryClass(
+            confusion = clf._summaryClass(
                 #labels=self.labels,
                 targets=testdataset.labels,
-                predictions=predictions)
+                predictions=predictions,
+                values=clf.states.get('values', None))
             try:
                 confusion.labels_map = testdataset.labels_map
             except:

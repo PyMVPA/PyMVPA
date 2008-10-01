@@ -1658,7 +1658,8 @@ class SplitClassifier(CombinedClassifier):
             clf.train(split[0])
             if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
-                self.confusion.add(split[1].labels, predictions)
+                self.confusion.add(split[1].labels, predictions,
+                                   clf.states.get('values', None))
             if states.isEnabled("training_confusion"):
                 states.training_confusion += \
                                                clf.states.training_confusion
