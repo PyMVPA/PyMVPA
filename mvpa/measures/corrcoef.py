@@ -10,6 +10,10 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.base import externals
+externals.exists('scipy', raiseException=True)
+# TODO: implement corrcoef optionally without scipy, e.g. N.corrcoef
+
 import numpy as N
 from scipy.stats import pearsonr
 

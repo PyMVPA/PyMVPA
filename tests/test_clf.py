@@ -298,8 +298,15 @@ class ClassifiersTests(unittest.TestCase):
         # first classifier -- 0th feature should be discarded
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel,
                     enable_states=['feature_ids'])
+
+        self.clf_sign.states._changeTemporarily(enable_states=['values'])
         clf011.train(traindata)
+
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
+        # just silly test if we get values assigned in the 'ProxyClassifier'
+        self.failUnless(len(clf011.values) == len(res110),
+                        msg="We need to pass values into ProxyClassifier")
+        self.clf_sign.states._resetEnabledTemporarily()
 
         self.failUnlessEqual(len(clf011.feature_ids), 2)
         "Feature selection classifier had to be trained on 2 features"

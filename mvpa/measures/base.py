@@ -115,6 +115,10 @@ class DatasetMeasure(Stateful):
         """
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
+            if __debug__:
+                debug("SA_", "Estimating NULL distribution using %s"
+                      % self.__null_dist)
+
             # we need a matching datameasure instance, but we have to disable
             # the estimation of the null distribution in that child to prevent
             # infinite looping.

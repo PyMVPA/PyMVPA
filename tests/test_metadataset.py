@@ -11,9 +11,9 @@
 import unittest
 import numpy as N
 import os.path
+from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.meta import MetaDataset
-from mvpa.datasets.nifti import NiftiDataset
 from mvpa.datasets.eep import EEPDataset
 
 class MetaDatasetTests(unittest.TestCase):
@@ -56,6 +56,9 @@ class MetaDatasetTests(unittest.TestCase):
 
 
     def testMapping(self):
+        if not externals.exists('nifti'):
+            return
+        from mvpa.datasets.nifti import NiftiDataset
         eeds = EEPDataset(os.path.join('..', 'data', 'eep.bin'), labels=[1,2])
         nids = NiftiDataset(os.path.join('..', 'data', 'example4d.nii.gz'),
                             labels=[1,2])
