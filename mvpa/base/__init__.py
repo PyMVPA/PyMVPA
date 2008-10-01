@@ -235,6 +235,9 @@ if __debug__:
     debug.register('SMLR',    "SMLR")
     debug.register('SMLR_',   "SMLR verbose")
 
+    debug.register('LARS',    "LARS")
+    debug.register('LARS_',   "LARS verbose")
+
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KERNEL',  "Kernels module")
