@@ -21,7 +21,8 @@ from math import log10, ceil
 from mvpa.base import externals
 
 from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
-     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
+     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
+     AUCErrorFx
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString, table2string
@@ -394,6 +395,54 @@ class ConfusionMatrix(SummaryStatistics):
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
 
+        #
+        # ROC computation
+
+        # take sets which have values
+        sets = self.sets
+        sets_wv = filter(lambda x:x[2] is not None, sets)
+        # check if all had values, if not -- complain
+        if len(sets) != len(sets_wv):
+            warning("Only %d sets have values assigned from %d sets" %
+                    (len(sets_wv), len(sets)))
+        # bring all values to the same 'shape':
+        #  1 value per each label. In binary classifier, if only a single
+        #  value is provided, add '0' for 0th label 'value'... it should
+        #  work taking drunk Yarik logic ;-)
+        for iset,s in enumerate(sets_wv):
+            # we will do inplace modification, thus go by index
+            values = s[2]
+            # we would need it to be a list to reassign element with a list
+            if isinstance(values, N.ndarray) and len(values.shape)==1:
+                values = list(values)
+            for i in xrange(len(values)):
+                v = values[i]
+                if N.isscalar(v):
+                    if Nlabels == 2:
+                        values[i] = [0, v]
+                    else:
+                        raise ValueError, \
+                              "Cannot have a single 'value' for multiclass" \
+                              " classification. Got %s" % (v)
+                elif len(v) != Nlabels:
+                    raise ValueError, \
+                          "Got %d values whenever there is %d labels" % \
+                          (len(v), Nlabels)
+            # reassign possibly adjusted values
+            sets_wv[iset] = (s[0], s[1], N.asarray(values))
+
+        # we need to estimate ROC per each label
+        # XXX order of labels might not correspond to the one among 'values'
+        #     which were used to make a decision... check
+        rocs = {}                       # 1 per label
+        for i,label in enumerate(labels):
+            rocs[label] = []
+            values = None # XXXX -- not finished
+            for s in sets_wv:
+                # XXX not finished
+                #rocs[label] += [AUCErrorFx()((s[0] == label).astype(int),
+                #                           values)]
+                pass
         # compute mean stats
         for k,v in stats.items():
             stats['mean(%s)' % k] = N.mean(v)
