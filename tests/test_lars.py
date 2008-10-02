@@ -11,6 +11,7 @@
 from mvpa.clfs.lars import LARS
 from scipy.stats import pearsonr
 from tests_warehouse import *
+from mvpa.misc.data_generators import normalFeatureDataset
 
 class LARSTests(unittest.TestCase):
 
@@ -41,6 +42,20 @@ class LARSTests(unittest.TestCase):
         p = clf.predict(data.samples)
 
         self.failUnless((p == clf.predictions).all())
+
+
+    def testLARSSensitivities(self):
+        data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+
+        # use LARS on binary problem
+        clf = LARS()
+        clf.train(data)
+
+        # now ask for the sensitivities WITHOUT having to pass the dataset
+        # again
+        sens = clf.getSensitivityAnalyzer(force_training=False)()
+
+        self.failUnless(sens.shape == (data.nfeatures,))
 
 
 def suite():
