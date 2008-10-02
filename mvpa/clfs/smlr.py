@@ -455,7 +455,7 @@ class SMLRWeights(Sensitivity):
     _LEGAL_CLFS = [ SMLR ]
 
     def _call(self, dataset=None):
-        """Extract weights from Linear SVM classifier.
+        """Extract weights from SMLR classifier.
 
         SMLR always has weights available, so nothing has to be computed here.
         """
@@ -478,7 +478,7 @@ class SMLRWeights(Sensitivity):
             self.biases = clf.biases
 
         if __debug__:
-            debug('SVM',
+            debug('SMLR',
                   "Extracting weights for %d-class SMLR" %
                   (weights.shape[1]+1) +
                   "Result: min=%f max=%f" %\
