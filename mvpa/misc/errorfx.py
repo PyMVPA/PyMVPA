@@ -92,17 +92,15 @@ class AUCErrorFx(_ErrorFx):
         """Requires all arguments."""
         # sort the target in descending order based on the predicted and
         # set to boolean
-        t = target[N.argsort(predicted)[::-1]] > 0
+        self.t = t = N.asanyarray(target)[N.argsort(predicted)[::-1]] > 0
 
         # calculate the true positives
-        tp = N.concatenate(([0],
-                            N.cumsum(t)/t.sum(dtype=N.float),
-                            [1]))
+        self.tp = tp = N.concatenate(
+            ([0], N.cumsum(t)/t.sum(dtype=N.float), [1]))
 
         # calculate the false positives
-        fp = N.concatenate(([0],
-                            N.cumsum(~t)/(~t).sum(dtype=N.float),
-                            [1]))
+        self.fp = fp = N.concatenate(
+            ([0], N.cumsum(~t)/(~t).sum(dtype=N.float), [1]))
 
         return trapz(tp, fp)
 

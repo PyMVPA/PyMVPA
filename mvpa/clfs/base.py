@@ -132,7 +132,7 @@ class Classifier(Parametrized):
     predictions = StateVariable(enabled=True,
         doc="Most recent set of predictions")
 
-    values = StateVariable(enabled=False,
+    values = StateVariable(enabled=True,
         doc="Internal classifier values the most recent " +
             "predictions are based on")
 
@@ -1036,16 +1036,23 @@ class ProxyClassifier(Classifier):
 
         # for the ease of access
         # TODO: if to copy we should exclude some states which are defined in
-        # base Classifier (such as training_time, predicting_time)
+        #       base Classifier (such as training_time, predicting_time)
+        # YOH: for now _copy_states_ would copy only set states variables. If
+        #      anything needs to be overriden in the parent's class, it is welcome
+        #      to do so
         #self.states._copy_states_(self.__clf, deep=False)
 
 
     def _predict(self, data):
         """Predict using `ProxyClassifier`
         """
-        result = self.__clf.predict(data)
+        clf = self.__clf
+        if self.states.isEnabled('values'):
+            clf.states.enable(['values'])
+
+        result = clf.predict(data)
         # for the ease of access
-        #self.states._copy_states_(self.__clf, deep=False)
+        self.states._copy_states_(self.__clf, ['values'], deep=False)
         return result
 
 
@@ -1651,7 +1658,8 @@ class SplitClassifier(CombinedClassifier):
             clf.train(split[0])
             if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
-                self.confusion.add(split[1].labels, predictions)
+                self.confusion.add(split[1].labels, predictions,
+                                   clf.states.get('values', None))
             if states.isEnabled("training_confusion"):
                 states.training_confusion += \
                                                clf.states.training_confusion
@@ -1840,9 +1848,13 @@ class FeatureSelectionClassifier(ProxyClassifier):
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`
         """
-        result = self.__maskclf._predict(data)
+        clf = self.__maskclf
+        if self.states.isEnabled('values'):
+            clf.states.enable(['values'])
+
+        result = clf._predict(data)
         # for the ease of access
-        #self.states._copy_states_(self.__maskclf, deep=False)
+        self.states._copy_states_(clf, ['values'], deep=False)
         return result
 
     def setTestDataset(self, testdataset):
