@@ -11,10 +11,11 @@
 __docformat__ = 'restructuredtext'
 
 # take care of conditional import of external classifiers
-import mvpa.base.externals as externals
-from mvpa.base import warning, cfg, debug
-
+from mvpa.base import warning, cfg, externals
 from _svmbase import _SVM
+
+if __debug__:
+    from mvpa.base import debug
 
 # default SVM implementation
 SVM = None

@@ -21,7 +21,8 @@ from math import log10, ceil
 from mvpa.base import externals
 
 from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
-     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
+     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
+     AUCErrorFx
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString, table2string
@@ -50,7 +51,7 @@ class SummaryStatistics(object):
     """Basic class to collect targets/predictions and report summary statistics
 
     It takes care about collecting the sets, which are just tuples
-    (targets, predictions). While 'computing' the matrix, all sets are
+    (targets, predictions, values). While 'computing' the matrix, all sets are
     considered together.  Children of the class are responsible for
     computation and display. No real MVC is implemented, but if there
     was we had M here
@@ -62,14 +63,19 @@ class SummaryStatistics(object):
          None), )
 
 
-    def __init__(self, targets=None, predictions=None, sets=None):
+    def __init__(self, targets=None, predictions=None, values=None, sets=None):
         """Initialize SummaryStatistics
+
+        targets or predictions cannot be provided alone (ie targets
+        without predictions)
 
         :Parameters:
          targets
            Optional set of targets
          predictions
            Optional set of predictions
+         values
+           Optional set of values (which served for prediction)
          sets
            Optional list of sets
         """
@@ -81,18 +87,25 @@ class SummaryStatistics(object):
 
         if not targets is None or not predictions is None:
             if not targets is None and not predictions is None:
-                self.add(targets=targets, predictions=predictions)
+                self.add(targets=targets, predictions=predictions,
+                         values=values)
             else:
                 raise ValueError, \
                       "Please provide none or both targets and predictions"
 
 
-    def add(self, targets, predictions):
+    def add(self, targets, predictions, values=None):
         """Add new results to the set of known results"""
         if len(targets) != len(predictions):
             raise ValueError, \
                   "Targets[%d] and predictions[%d]" % (len(targets),
                                                        len(predictions)) + \
+                  " have different number of samples"
+
+        if values is not None and len(targets) != len(values):
+            raise ValueError, \
+                  "Targets[%d] and values[%d]" % (len(targets),
+                                                  len(values)) + \
                   " have different number of samples"
 
         # enforce labels in predictions to be of the same datatype as in
@@ -110,7 +123,7 @@ class SummaryStatistics(object):
                     predictions = list(predictions)
                 predictions[i] = t1(predictions[i])
 
-        self.__sets.append( (targets, predictions) )
+        self.__sets.append( (targets, predictions, values) )
         self._computed = False
 
 
@@ -154,7 +167,7 @@ class SummaryStatistics(object):
         # would loop forever and exhaust memory eventually
         othersets = copy.copy(other.__sets)
         for set in othersets:
-            self.add(set[0], set[1])
+            self.add(*set)#[0], set[1])
         return self
 
 
@@ -182,8 +195,7 @@ class SummaryStatistics(object):
     @property
     def summaries(self):
         """Return a list of separate summaries per each stored set"""
-        return [ self.__class__(targets=x[0],
-                                predictions=x[1]) for x in self.sets ]
+        return [ self.__class__(sets=[x]) for x in self.sets ]
 
 
     @property
@@ -272,8 +284,7 @@ class ConfusionMatrix(SummaryStatistics):
         """Return a list of separate confusion matrix per each stored set"""
         return [ self.__class__(labels=self.labels,
                                 labels_map=self.labels_map,
-                                targets=x[0],
-                                predictions=x[1]) for x in self.sets]
+                                sets=[x]) for x in self.sets]
 
 
     def _compute(self):
@@ -339,7 +350,7 @@ class ConfusionMatrix(SummaryStatistics):
 
         # reverse mapping from label into index in the list of labels
         rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
-        for iset, (targets, predictions) in enumerate(self.sets):
+        for iset, (targets, predictions, values) in enumerate(self.sets):
             for t,p in zip(targets, predictions):
                 mat_all[iset, rev_map[p], rev_map[t]] += 1
 
@@ -384,6 +395,54 @@ class ConfusionMatrix(SummaryStatistics):
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
 
+        #
+        # ROC computation
+
+        # take sets which have values
+        sets = self.sets
+        sets_wv = filter(lambda x:x[2] is not None, sets)
+        # check if all had values, if not -- complain
+        if len(sets) != len(sets_wv):
+            warning("Only %d sets have values assigned from %d sets" %
+                    (len(sets_wv), len(sets)))
+        # bring all values to the same 'shape':
+        #  1 value per each label. In binary classifier, if only a single
+        #  value is provided, add '0' for 0th label 'value'... it should
+        #  work taking drunk Yarik logic ;-)
+        for iset,s in enumerate(sets_wv):
+            # we will do inplace modification, thus go by index
+            values = s[2]
+            # we would need it to be a list to reassign element with a list
+            if isinstance(values, N.ndarray) and len(values.shape)==1:
+                values = list(values)
+            for i in xrange(len(values)):
+                v = values[i]
+                if N.isscalar(v):
+                    if Nlabels == 2:
+                        values[i] = [0, v]
+                    else:
+                        raise ValueError, \
+                              "Cannot have a single 'value' for multiclass" \
+                              " classification. Got %s" % (v)
+                elif len(v) != Nlabels:
+                    raise ValueError, \
+                          "Got %d values whenever there is %d labels" % \
+                          (len(v), Nlabels)
+            # reassign possibly adjusted values
+            sets_wv[iset] = (s[0], s[1], N.asarray(values))
+
+        # we need to estimate ROC per each label
+        # XXX order of labels might not correspond to the one among 'values'
+        #     which were used to make a decision... check
+        rocs = {}                       # 1 per label
+        for i,label in enumerate(labels):
+            rocs[label] = []
+            values = None # XXXX -- not finished
+            for s in sets_wv:
+                # XXX not finished
+                #rocs[label] += [AUCErrorFx()((s[0] == label).astype(int),
+                #                           values)]
+                pass
         # compute mean stats
         for k,v in stats.items():
             stats['mean(%s)' % k] = N.mean(v)
@@ -783,7 +842,7 @@ class RegressionStatistics(SummaryStatistics):
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
             stats[funcname_all] = []
-            for i, (targets, predictions) in enumerate(sets):
+            for i, (targets, predictions, values) in enumerate(sets):
                 stats[funcname_all] += [func(predictions, targets)]
             stats[funcname_all] = N.array(stats[funcname_all])
             stats[funcname] = N.mean(stats[funcname_all])
@@ -1057,8 +1116,9 @@ class TransferError(ClassifierError):
 
         Returns a scalar value of the transfer error.
         """
-
-        predictions = self.clf.predict(testdataset.samples)
+        # OPT: local binding
+        clf = self.clf
+        predictions = clf.predict(testdataset.samples)
 
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
@@ -1068,10 +1128,11 @@ class TransferError(ClassifierError):
         #  bound to classifiers confusion matrix
         states = self.states
         if states.isEnabled('confusion'):
-            confusion = self.clf._summaryClass(
+            confusion = clf._summaryClass(
                 #labels=self.labels,
                 targets=testdataset.labels,
-                predictions=predictions)
+                predictions=predictions,
+                values=clf.states.get('values', None))
             try:
                 confusion.labels_map = testdataset.labels_map
             except:
