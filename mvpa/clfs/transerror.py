@@ -446,14 +446,17 @@ class ConfusionMatrix(SummaryStatistics):
         # XXX order of labels might not correspond to the one among 'values'
         #     which were used to make a decision... check
         rocs = {}                       # 1 per label
+        stats['AUC'] = []
         for i,label in enumerate(labels):
-            rocs[label] = []
-            values = None # XXXX -- not finished
+            aucs = []
             for s in sets_wv:
-                # XXX not finished
-                #rocs[label] += [AUCErrorFx()((s[0] == label).astype(int),
-                #                           values)]
-                pass
+                # XXX we might like to store objects to access fp/tp
+                aucs += [AUCErrorFx()([x[i] for x in s[2]],
+                                      (s[0] == label).astype(int))]
+                #import pydb
+                #pydb.debugger()
+            stats['AUC'].append(N.mean(aucs))
+
         # compute mean stats
         for k,v in stats.items():
             stats['mean(%s)' % k] = N.mean(v)
@@ -510,7 +513,7 @@ class ConfusionMatrix(SummaryStatistics):
         res = ""
 
         stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
-                            'SPC', 'FDR', 'MCC']
+                            'SPC', 'FDR', 'MCC', 'AUC']
         stats_pertarget = ['P', 'N', 'TP', 'TN']
         stats_summary = ['ACC', 'ACC%', '# of sets']
 
