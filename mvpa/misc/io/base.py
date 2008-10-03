@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 import mvpa.misc.copy as copy
+from mvpa.base.dochelpers import enhancedDocString
 from sets import Set
 from re import sub as re_sub
 from mvpa.base import warning
@@ -150,6 +151,9 @@ class ColumnData(dict):
                 #        k,
                 #        property(fget=lambda x: x._getAttrib("%s" % k)))
                 # it seems to be error-prone due to continuation...
+
+
+    __doc__ = enhancedDocString('ColumnData', locals())
 
 
     def _getAttrib(self, key):
