@@ -415,11 +415,22 @@ class ConfusionMatrix(SummaryStatistics):
             # we would need it to be a list to reassign element with a list
             if isinstance(values, N.ndarray) and len(values.shape)==1:
                 values = list(values)
+            rangev = None
             for i in xrange(len(values)):
                 v = values[i]
                 if N.isscalar(v):
                     if Nlabels == 2:
-                        values[i] = [0, v]
+                        def last_el(x):
+                            """Helper function. Returns x if x is scalar, and
+                            last element if x is not (ie list/tuple)"""
+                            if N.isscalar(x): return x
+                            else:             return x[-1]
+                        if rangev is None:
+                            # we need to figure out min/max values
+                            # to invert for the 0th label
+                            values_ = [last_el(x) for x in values]
+                            rangev = N.min(values_) + N.max(values_)
+                        values[i] = [rangev - v, v]
                     else:
                         raise ValueError, \
                               "Cannot have a single 'value' for multiclass" \
