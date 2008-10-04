@@ -23,12 +23,14 @@ _NuSVM = None
 
 
 # TODO: handle choices within cfg
-_VALID_BACKENDS = ('libsvm', 'shogun')
+_VALID_BACKENDS = ('libsvm', 'shogun', 'sg')
 default_backend = cfg.get('svm', 'backend', default='libsvm').lower()
+if default_backend == 'shogun':
+    default_backend = 'sg'
 
 if not default_backend in _VALID_BACKENDS:
     raise ValueError, 'Configuration option svm.backend got invalid value %s.' \
-          'Valid choices are %s' % (default_backend, _VALID_BACKENDS)
+          ' Valid choices are %s' % (default_backend, _VALID_BACKENDS)
 
 if __debug__:
     debug('SVM', 'Default SVM backend is %s' % default_backend)
