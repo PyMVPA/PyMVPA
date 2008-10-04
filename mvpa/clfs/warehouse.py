@@ -26,7 +26,7 @@ from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
 
 # Helpers
 from mvpa.clfs.transerror import TransferError
-from mvpa.base import externals
+from mvpa.base import externals, cfg
 from mvpa.measures.anova import OneWayAnova
 from mvpa.misc.transformers import Absolute
 from mvpa.featsel.rfe import RFE
@@ -298,11 +298,16 @@ clfs += BLR(descr="BLR()")
 
 # SVM stuff
 
-if externals.exists('shogun') or externals.exists('libsvm'):
+if len(clfs['linear', 'svm']) > 0:
+
+    linearSVMC = clfs['linear', 'svm',
+                             cfg.get('svm', 'backend', default='libsvm').lower()
+                             ][0]
+
     # "Interesting" classifiers
     clfs += \
          FeatureSelectionClassifier(
-             LinearCSVMC(),
+             linearSVMC,
              SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=0.1, implementation="C")),
                 RangeElementSelector(mode='select')),
@@ -311,7 +316,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
 
     clfs += \
         FeatureSelectionClassifier(
-            LinearCSVMC(),
+            linearSVMC,
             SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=1.0, implementation="C")),
                 RangeElementSelector(mode='select')),
@@ -329,7 +334,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
 
     clfs += \
         FeatureSelectionClassifier(
-            LinearCSVMC(),
+            linearSVMC,
             SensitivityBasedFeatureSelection(
                OneWayAnova(),
                FractionTailSelector(0.05, mode='select', tail='upper')),
@@ -337,27 +342,25 @@ if externals.exists('shogun') or externals.exists('libsvm'):
 
     clfs += \
         FeatureSelectionClassifier(
-            LinearCSVMC(),
+            linearSVMC,
             SensitivityBasedFeatureSelection(
                OneWayAnova(),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(ANOVA)")
 
-    sample_linear_svm = clfs['linear', 'svm'][0]
-
     clfs += \
         FeatureSelectionClassifier(
-            sample_linear_svm,
+            linearSVMC,
             SensitivityBasedFeatureSelection(
-               sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
+               linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
     clfs += \
         FeatureSelectionClassifier(
-            sample_linear_svm,
+            linearSVMC,
             SensitivityBasedFeatureSelection(
-               sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
+               linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(SVM)")
 
@@ -366,7 +369,7 @@ if externals.exists('shogun') or externals.exists('libsvm'):
     # other terms leave-1-out error on the same dataset
     # Has to be bound outside of the RFE definition since both analyzer and
     # error should use the same instance.
-    rfesvm_split = SplitClassifier(LinearCSVMC())#clfs['LinearSVMC'][0])
+    rfesvm_split = SplitClassifier(linearSVMC)#clfs['LinearSVMC'][0])
 
     # "Almost" classical RFE. If this works it would differ only that
     # our transfer_error is based on internal splitting and classifier used
