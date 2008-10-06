@@ -71,8 +71,9 @@ class LARS(Classifier):
     """
 
     # XXX from yoh: it is linear, isn't it?
-    _clf_internals = [ 'lars', 'regression', 'linear' ]
-
+    _clf_internals = [ 'lars', 'regression', 'linear', 'has_sensitivity',
+                       # 'does_feature_selection',
+                       ]
     def __init__(self, model_type="lasso", trace=False, normalize=True,
                  intercept=True, max_steps=None, use_Gram=False, **kwargs):
         """
@@ -178,6 +179,14 @@ class LARS(Classifier):
             # if we just got 1 sample with a scalar
             fit = fit.reshape( (1,) )
         return fit
+
+
+    # def _getFeatureIds(self):
+    #     """Per Per's description it does feature selection internally,
+    #     so we need to implement this function and add
+    #     'does_feature_selection' into _clf_internals"""
+    #     raise NotImplementedError
+
 
     def getSensitivityAnalyzer(self, **kwargs):
         """Returns a sensitivity analyzer for LARS."""
