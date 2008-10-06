@@ -270,21 +270,41 @@ If no error messages appear, you have succesfully installed PyMVPA.
 
 
 .. index:: OpenSUSE
-.. _install_suse:
+.. _install_rpm:
 
 
-OpenSUSE
---------
+RPM-based GNU/Linux Distributions
+---------------------------------
 
-To install the provided RPM package for OpenSUSE, simply download it, open a
-console and invoke (the example command refers to PyMVPA 0.2.2 and OpenSUSE
-10.3)::
+To install one of the RPM packages provided through the `OpenSUSE Build
+Service`_, first download it from the `OpenSUSE software website`_. Please
+note, that this site does not only offer OpenSUSE packages, but also binaries
+for other distributions, including: CentOS 5, Fedora 9, Mandriva 2007-2008,
+RedHat Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE 10.2 up to 11.0.
+Once downloaded, open a console and invoke (the example command refers to
+PyMVPA 0.3.1)::
 
-  rpm -i pymvpa-0.2.2-1suse10_3.i586.rpm
+  rpm -i python-mvpa-0.3.1-19.1.i386.rpm
 
-Please refer to the section about :ref:`building on OpenSUSE <build_suse>` for
-notes about the installation of the dependencies.
+The OpenSUSE website also offers `1-click-installations`_ for distributions
+supporting it.
 
+A more convenient way to install PyMVPA and automatically receive software
+updates is to included one of the `RPM-package repositories`_ in the system's
+package management configuration. For e.g. OpenSUSE 11.0, simply use Yast to add
+another repository, using the following URL:
+
+  http://download.opensuse.org/repositories/home:/hankem/openSUSE_11.0/
+
+For other distributions use the respective package managers (e.g. Yum) to setup
+the repository URL.  The repositories include all core dependencies of PyMVPA
+(usually Numpy and PyNIfTI), if they are not available from other repositories
+of the respective distribution.
+
+.. _RPM-package repositories: http://download.opensuse.org/repositories/home:/hankem/
+.. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
+.. _OpenSUSE software website: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
+.. _OpenSUSE Build Service: https://build.opensuse.org/
 
 .. _buildfromsource:
 .. index:: building from source, source package, MacOS X
