@@ -219,6 +219,142 @@ class SummaryStatistics(object):
     sets = property(lambda self:self.__sets)
 
 
+class ROCCurve(object):
+    """Generic class for ROC curve computation and plotting
+    """
+
+    def __init__(self, labels, sets=None):
+        """
+        :Parameters:
+          labels : list
+            labels which were used (in order of values if multiclass,
+            or 1 per class for binary problems (e.g. in SMLR))
+          sets : list of tuples
+            list of sets for the analysis
+        """
+        self._labels = labels
+        self._sets = sets
+        self.__computed = False
+
+
+    def _compute(self):
+        """Lazy computation if needed
+        """
+        if self.__computed:
+            return
+        # local bindings
+        labels = self._labels
+        Nlabels = len(labels)
+        sets = self._sets
+
+        # take sets which have values
+        sets_wv = filter(lambda x:x[2] is not None, sets)
+        # check if all had values, if not -- complain
+        if len(sets) != len(sets_wv):
+            warning("Only %d sets have values assigned from %d sets" %
+                    (len(sets_wv), len(sets)))
+        # bring all values to the same 'shape':
+        #  1 value per each label. In binary classifier, if only a single
+        #  value is provided, add '0' for 0th label 'value'... it should
+        #  work taking drunk Yarik logic ;-)
+        for iset,s in enumerate(sets_wv):
+            # we will do inplace modification, thus go by index
+            values = s[2]
+            # we would need it to be a list to reassign element with a list
+            if isinstance(values, N.ndarray) and len(values.shape)==1:
+                values = list(values)
+            rangev = None
+            for i in xrange(len(values)):
+                v = values[i]
+                if N.isscalar(v):
+                    if Nlabels == 2:
+                        def last_el(x):
+                            """Helper function. Returns x if x is scalar, and
+                            last element if x is not (ie list/tuple)"""
+                            if N.isscalar(x): return x
+                            else:             return x[-1]
+                        if rangev is None:
+                            # we need to figure out min/max values
+                            # to invert for the 0th label
+                            values_ = [last_el(x) for x in values]
+                            rangev = N.min(values_) + N.max(values_)
+                        values[i] = [rangev - v, v]
+                    else:
+                        raise ValueError, \
+                              "Cannot have a single 'value' for multiclass" \
+                              " classification. Got %s" % (v)
+                elif len(v) != Nlabels:
+                    raise ValueError, \
+                          "Got %d values whenever there is %d labels" % \
+                          (len(v), Nlabels)
+            # reassign possibly adjusted values
+            sets_wv[iset] = (s[0], s[1], N.asarray(values))
+
+
+        # we need to estimate ROC per each label
+        # XXX order of labels might not correspond to the one among 'values'
+        #     which were used to make a decision... check
+        ROCs, aucs = [], []             # 1 per label
+        for i,label in enumerate(labels):
+            targets_pl = (s[0] == label).astype(int)
+            aucs_pl = []
+            ROCs_pl = []
+            for s in sets_wv:
+                # XXX we might unify naming between AUC/ROC
+                ROC = AUCErrorFx()
+                aucs_pl += [ROC([x[i] for x in s[2]], targets_pl)]
+                ROCs_pl.append(ROC)
+            if len(aucs_pl)>0:
+                ROCs += [ROCs_pl]
+                aucs += [N.mean(aucs_pl)]
+
+        # store results within the object
+        self._ROCs =  ROCs
+        self._aucs = aucs
+        self.__computed = True
+
+
+    @property
+    def aucs(self):
+        """Compute and return set of AUC values 1 per label
+        """
+        self._compute()
+        return self._aucs
+
+
+    @property
+    def ROCs(self):
+        self._compute()
+        return self._ROCs
+
+
+    def plot(self, label_index=0):
+        """
+
+        TODO: make it friendly to labels given by values?
+              should we also treat labels_map?
+        """
+        externals.exists("pylab", raiseException=True)
+        import pylab as P
+
+        self._compute()
+
+        labels = self._labels
+        # select only ROCs for the given label
+        ROCs = self.ROCs[label_index]
+
+        fig = P.gcf()
+        ax = P.gca()
+
+        ax.plot([0,0], [1,1], 'b-')
+
+        for ROC in ROCs:
+            ax.plot(ROC.fp, ROC.tp, linewidth=1)
+            print ROC.fp, ROC.tp
+
+        P.xlabel('False positive rate')
+        P.ylabel('True positive rate')
+
 
 class ConfusionMatrix(SummaryStatistics):
     """Class to contain information and display confusion matrix.
@@ -396,53 +532,21 @@ class ConfusionMatrix(SummaryStatistics):
         stats['ACC%'] = stats['ACC'] * 100.0
 
         #
-        # ROC computation
+        # ROC computation if available
+        ROC = ROCCurve(labels=labels, sets=self.sets)
+        aucs = ROC.aucs
+        if len(aucs)>0:
+            stats['AUC'] = aucs
+            if len(aucs) != Nlabels:
+                raise RuntimeError, \
+                      "We must got a AUC per label. Got %d instead of %d" % \
+                      (len(aucs), Nlabels)
+            self.ROC = ROC
+        else:
+            # we don't want to provide ROC if it is bogus
+            self.ROC = None
 
-        # take sets which have values
-        sets = self.sets
-        sets_wv = filter(lambda x:x[2] is not None, sets)
-        # check if all had values, if not -- complain
-        if len(sets) != len(sets_wv):
-            warning("Only %d sets have values assigned from %d sets" %
-                    (len(sets_wv), len(sets)))
-        # bring all values to the same 'shape':
-        #  1 value per each label. In binary classifier, if only a single
-        #  value is provided, add '0' for 0th label 'value'... it should
-        #  work taking drunk Yarik logic ;-)
-        for iset,s in enumerate(sets_wv):
-            # we will do inplace modification, thus go by index
-            values = s[2]
-            # we would need it to be a list to reassign element with a list
-            if isinstance(values, N.ndarray) and len(values.shape)==1:
-                values = list(values)
-            for i in xrange(len(values)):
-                v = values[i]
-                if N.isscalar(v):
-                    if Nlabels == 2:
-                        values[i] = [0, v]
-                    else:
-                        raise ValueError, \
-                              "Cannot have a single 'value' for multiclass" \
-                              " classification. Got %s" % (v)
-                elif len(v) != Nlabels:
-                    raise ValueError, \
-                          "Got %d values whenever there is %d labels" % \
-                          (len(v), Nlabels)
-            # reassign possibly adjusted values
-            sets_wv[iset] = (s[0], s[1], N.asarray(values))
 
-        # we need to estimate ROC per each label
-        # XXX order of labels might not correspond to the one among 'values'
-        #     which were used to make a decision... check
-        rocs = {}                       # 1 per label
-        for i,label in enumerate(labels):
-            rocs[label] = []
-            values = None # XXXX -- not finished
-            for s in sets_wv:
-                # XXX not finished
-                #rocs[label] += [AUCErrorFx()((s[0] == label).astype(int),
-                #                           values)]
-                pass
         # compute mean stats
         for k,v in stats.items():
             stats['mean(%s)' % k] = N.mean(v)
@@ -499,7 +603,7 @@ class ConfusionMatrix(SummaryStatistics):
         res = ""
 
         stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
-                            'SPC', 'FDR', 'MCC']
+                            'SPC', 'FDR', 'MCC', 'AUC']
         stats_pertarget = ['P', 'N', 'TP', 'TN']
         stats_summary = ['ACC', 'ACC%', '# of sets']
 
