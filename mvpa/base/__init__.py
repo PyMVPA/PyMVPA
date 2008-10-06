@@ -256,6 +256,7 @@ if __debug__:
 
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
+    debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC',"Cross-validation call")
     debug.register('CERR', "Various ClassifierErrors")
 

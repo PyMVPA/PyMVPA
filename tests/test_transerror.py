@@ -12,8 +12,13 @@ import unittest
 from mvpa.misc.copy import copy
 
 from mvpa.datasets import Dataset
+from mvpa.datasets.splitter import OddEvenSplitter
+
+from mvpa.clfs.base import MulticlassClassifier
 from mvpa.clfs.transerror import \
      TransferError, ConfusionMatrix, ConfusionBasedError
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+
 from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
@@ -177,6 +182,35 @@ class ErrorsTests(unittest.TestCase):
         self.failUnless(
             N.sum(N.array(se.values(), dtype='float') \
                   - N.array(se.values(), dtype='b')) == 0)
+
+
+    @sweepargs(clf=clfs['multiclass'])
+    def testAUC(self, clf):
+        """Test AUC computation
+        """
+        if isinstance(clf, MulticlassClassifier):
+            # TODO: handle those values correctly
+            return
+        clf.states._changeTemporarily(enable_states = ['values'])
+        for ds in [datasets['uni2small'], datasets['uni3small']]:
+            cv = CrossValidatedTransferError(
+                TransferError(clf),
+                OddEvenSplitter(),
+                enable_states=['confusion', 'training_confusion'])
+            cverror = cv(ds)
+            stats = cv.confusion.stats
+            Nlabels = len(ds.uniquelabels)
+            # so we at least do slightly above chance
+            self.failUnless(stats['ACC'] > 1.2 / Nlabels)
+            auc = stats['AUC']
+            if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not N.nan):
+                mauc = N.min(stats['AUC'])
+                self.failUnless(mauc > 0.55,
+                     msg='All AUCs must be above chance. Got minimal '
+                         'AUC=%.2g among %s' % (mauc, stats['AUC']))
+        clf.states._resetEnabledTemporarily()
+
+
 
 
     def _testConfusionPlot(self):
