@@ -27,6 +27,8 @@ Unreleased changes
     Hughes).
   * New minimal example for a 'getting started' section in the manual.
   * SVM backend is now configurable via MVPA_SVM_BACKEND (libsvm or shogun).
+  * Update insallation instructions for RPM-based distributions to make use
+    of the OpenSUSE Build Service.
 
 
 Releases
