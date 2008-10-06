@@ -240,37 +240,28 @@ class SVM(_SVM):
         predictions = [ self.model.predict(p) for p in src ]
 
         if states.isEnabled("values"):
-            nlabels = len(self.trained_labels)
-            #     not any more since we return dictionary of values in such case
-            #     for each pair
-            #if not self.regression and nlabels > 2:
-            #    warning("'Values' for multiclass SVM classifier are ambiguous. You " +
-            #            "are adviced to wrap your classifier with " +
-            #            "MulticlassClassifier for explicit handling of  " +
-            #            "separate binary classifiers and corresponding " +
-            #            "'values'")
-            # XXX We do duplicate work. model.predict calls predictValuesRaw
-            # internally and then does voting or thresholding. So if speed becomes
-            # a factor we might want to move out logic from libsvm over here to base
-            # predictions on obtined values, or adjust libsvm to spit out values from
-            # predict() as well
-            #
-            #try:
-            if nlabels == 2:
-                # Apperently libsvm reorders labels so we need to track (1,0)
-                # values instead of (0,1) thus just lets take negative reverse
-                values = [ -self.model.predictValuesRaw(p)[0] for p in src ]
+            if self.regression:
+                values = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
-                # In multiclass we return dictionary for all pairs of labels,
-                # since libsvm does 1-vs-1 pairs
-                values = [ self.model.predictValues(p) for p in src ]
-
-            if len(values)>0 and (not self.regression) and nlabels == 2:
-                if __debug__:
-                    debug("SVM","Forcing values to be ndarray and reshaping " +
-                          "them to be 1D vector")
-                values = N.asarray(values).reshape(len(values))
-
+                nlabels = len(self.trained_labels)
+                # XXX We do duplicate work. model.predict calls predictValuesRaw
+                # internally and then does voting or thresholding. So if speed becomes
+                # a factor we might want to move out logic from libsvm over here to base
+                # predictions on obtined values, or adjust libsvm to spit out values from
+                # predict() as well
+                if nlabels == 2:
+                    # Apperently libsvm reorders labels so we need to track (1,0)
+                    # values instead of (0,1) thus just lets take negative reverse
+                    values = [ -self.model.predictValuesRaw(p)[0] for p in src ]
+                    if len(values)>0:
+                        if __debug__:
+                            debug("SVM","Forcing values to be ndarray and reshaping " +
+                                  "them to be 1D vector")
+                        values = N.asarray(values).reshape(len(values))
+                else:
+                    # In multiclass we return dictionary for all pairs of labels,
+                    # since libsvm does 1-vs-1 pairs
+                    values = [ self.model.predictValues(p) for p in src ]
             states.values = values
 
         if states.isEnabled("probabilities"):
