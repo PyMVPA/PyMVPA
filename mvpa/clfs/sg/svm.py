@@ -504,6 +504,8 @@ class SVM(_SVM):
                 debug("SG__", "Tuned predictions %s" % predictions)
 
         # store state variable
+        # TODO: extract values properly for multiclass SVMs --
+        #       ie 1 value per label or pairs for all 1-vs-1 classifications
         self.values = values
 
         ## to avoid leaks with not yet properly fixed shogun
