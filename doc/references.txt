@@ -24,10 +24,24 @@ containing descriptions of interesting analysis methods or fruitful
 experiments.
 
 
+.. index:: feature selection stability
+
+.. _CPL+06:
+
+**Chen, X., Pereira, F., Lee, W., Strother, S. & Mitchell, T.** (2006). Exploring predictive and reproducible modeling with the single-subject FIAC dataset. *Human Brain Mapping*, *27*, 452–461.
+  *This paper illustrates the necessity to consider the stability or
+  reproducibility of a classifier's feature selection as at least equally
+  important to it's generalization performance.*
+
+  Keywords: `feature selection stability`
+
+  DOI: http://dx.doi.org/10.1002/hbm.20243
+
+
 .. _Dem06:
 
 **Demšar, J.** (2006). Statistical Comparisons of Classifiers over Multiple Data Sets. *Journal of Machine Learning Research*, *7*, 1–30.
-  *This is a review of several benchmarks procedures.*
+  *This is a review of several classifier benchmark procedures.*
 
   URL: http://portal.acm.org/citation.cfm?id=1248548
 
@@ -46,7 +60,7 @@ experiments.
 
 .. _HH08:
 
-**Hanson, S. J. & Halchenko, Y. O.** (2008). Brain reading using full brain support vector machines for object recognition: there is no ``face'' identification area. *Neural Computation*, *20*, 486–503.
+**Hanson, S. J. & Halchenko, Y. O.** (2008). Brain reading using full brain support vector machines for object recognition: there is no "face" identification area. *Neural Computation*, *20*, 486–503.
   Keywords: `support vector machine, SVM, recursive feature elimination, RFE`
 
   DOI: http://dx.doi.org/10.1162/neco.2007.09-06-340
@@ -71,6 +85,18 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nrn1931
 
 
+.. index:: searchlight
+
+.. _KGB06:
+
+**Kriegeskorte, N., Goebel, R. & Bandettini, P.** (2006). Information-based functional brain mapping. *Proceedings of the National Academy of Sciences of the USA*, *103*, 3863–3868.
+  *Paper introducing the searchlight algorithm.*
+
+  Keywords: `searchlight`
+
+  DOI: http://dx.doi.org/10.1073/pnas.0600244103
+
+
 .. index:: sparse multinomial logistic regression, SMLR
 
 .. _KCF+05:
@@ -79,6 +105,28 @@ experiments.
   Keywords: `sparse multinomial logistic regression, SMLR`
 
   DOI: http://dx.doi.org/10.1109/TPAMI.2005.127
+
+
+.. index:: SVM
+
+.. _LSC+05:
+
+**LaConte, S., Strother, S., Cherkassky, V., Anderson, J. & Hu, X.** (2005). Support vector machines for temporal classification of block design fMRI data. *Neuroimage*, *26*, 317–329.
+  *Comprehensive evaluation of preprocessing options with respect to
+  SVM-classifier (and others) performance on block-design fMRI data.*
+
+  Keywords: `SVM`
+
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
+
+
+.. _NH02:
+
+**Nichols, T. E. & Holmes, A. P.** (2002). Nonparametric permutation tests for functional neuroimaging: a primer with examples. *Hum Brain Mapp*, *15*, 1–25.
+  *Overview of standard nonparametric randomization and permutation testing
+  applied to neuroimaging data (e.g. fMRI)*
+
+  DOI: http://dx.doi.org/10.1002/hbm.1058
 
 
 .. _NPD+06:
