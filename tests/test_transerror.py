@@ -192,7 +192,18 @@ class ErrorsTests(unittest.TestCase):
             # TODO: handle those values correctly
             return
         clf.states._changeTemporarily(enable_states = ['values'])
-        for ds in [datasets['uni2small'], datasets['uni3small']]:
+        # uni2 dataset with reordered labels
+        ds2 = datasets['uni2small'].copy()
+        ds2.labels = 1 - ds2.labels   # revert labels
+        # same with uni3
+        ds3 = datasets['uni3small'].copy()
+        ul = ds3.uniquelabels
+        nl = ds3.labels.copy()
+        for l in xrange(3):
+            nl[ds3.labels == ul[l]] = ul[(l+1)%3]
+        ds3.labels = nl
+        for ds in [datasets['uni2small'], ds2,
+                   datasets['uni3small'], ds3]:
             cv = CrossValidatedTransferError(
                 TransferError(clf),
                 OddEvenSplitter(),

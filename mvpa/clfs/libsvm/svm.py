@@ -243,7 +243,8 @@ class SVM(_SVM):
             if self.regression:
                 values = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
-                nlabels = len(self.trained_labels)
+                trained_labels = self.trained_labels
+                nlabels = len(trained_labels)
                 # XXX We do duplicate work. model.predict calls predictValuesRaw
                 # internally and then does voting or thresholding. So if speed becomes
                 # a factor we might want to move out logic from libsvm over here to base
@@ -252,7 +253,7 @@ class SVM(_SVM):
                 if nlabels == 2:
                     # Apperently libsvm reorders labels so we need to track (1,0)
                     # values instead of (0,1) thus just lets take negative reverse
-                    values = [ -self.model.predictValuesRaw(p)[0] for p in src ]
+                    values = [ self.model.predictValues(p)[(trained_labels[1], trained_labels[0])] for p in src ]
                     if len(values)>0:
                         if __debug__:
                             debug("SVM","Forcing values to be ndarray and reshaping " +
