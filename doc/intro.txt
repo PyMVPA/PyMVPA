@@ -40,8 +40,9 @@ of high-quality text books about this field available. A very good example is:
 `Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
 
 A good starting point to learn about the application of machine learning
-algorithms to (f)MRI data are two recent reviews by Norman et al. [1]_ and
-Haynes and Rees [2]_.
+algorithms to (f)MRI data are two recent reviews by
+:ref:`Norman et al. (2006) <NPD+06>` and
+:ref:`Haynes and Rees (2006) <HR06>`.
 
 This manual also does not describe every bit and piece of the PyMVPA package.
 For more information, please have a look at the `API documentation`_, which is a
@@ -56,12 +57,6 @@ or even the unit test battery, also part of the source distribution (in the
 .. _API Documentation: api/index.html
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
-
-.. [1] Norman, K.A., Polyn, S.M., Detre, G.J. & Haxby, J.V. (2006). Beyond
-       mind-reading: multi-voxel pattern analysis of fMRI data. Trends in
-       Cognitive Science 10, 424–430.
-.. [2] Haynes, J.D. & Rees, G. (2007). Decoding mental states from brain
-       activity in humans. Nature Reviews Neuroscience, 7, 523–534.
 
 
 .. _history:
