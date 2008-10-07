@@ -176,7 +176,8 @@ class SVM(_SVM):
         TRANSLATEDICT={'epsilon': 'eps',
                        'tube_epsilon': 'p'}
         args = []
-        for paramname, param in self.params.items.items() + self.kernel_params.items.items():
+        for paramname, param in self.params.items.items() \
+                + self.kernel_params.items.items():
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
             elif paramname in svm.SVMParameter.default_parameters:
@@ -234,43 +235,40 @@ class SVM(_SVM):
             src = data
         else:
             src = data.astype('double')
+        states = self.states
 
         predictions = [ self.model.predict(p) for p in src ]
 
-        if self.states.isEnabled("values"):
-            if not self.regression and len(self.trained_labels) > 2:
-                warning("'Values' for multiclass SVM classifier are ambiguous. You " +
-                        "are adviced to wrap your classifier with " +
-                        "MulticlassClassifier for explicit handling of  " +
-                        "separate binary classifiers and corresponding " +
-                        "'values'")
-            # XXX We do duplicate work. model.predict calls predictValuesRaw
-            # internally and then does voting or thresholding. So if speed becomes
-            # a factor we might want to move out logic from libsvm over here to base
-            # predictions on obtined values, or adjust libsvm to spit out values from
-            # predict() as well
-            #
-            #try:
-            values = [ self.model.predictValuesRaw(p) for p in src ]
+        if states.isEnabled("values"):
+            if self.regression:
+                values = [ self.model.predictValuesRaw(p)[0] for p in src ]
+            else:
+                trained_labels = self.trained_labels
+                nlabels = len(trained_labels)
+                # XXX We do duplicate work. model.predict calls predictValuesRaw
+                # internally and then does voting or thresholding. So if speed becomes
+                # a factor we might want to move out logic from libsvm over here to base
+                # predictions on obtined values, or adjust libsvm to spit out values from
+                # predict() as well
+                if nlabels == 2:
+                    # Apperently libsvm reorders labels so we need to track (1,0)
+                    # values instead of (0,1) thus just lets take negative reverse
+                    values = [ self.model.predictValues(p)[(trained_labels[1], trained_labels[0])] for p in src ]
+                    if len(values)>0:
+                        if __debug__:
+                            debug("SVM","Forcing values to be ndarray and reshaping " +
+                                  "them to be 1D vector")
+                        values = N.asarray(values).reshape(len(values))
+                else:
+                    # In multiclass we return dictionary for all pairs of labels,
+                    # since libsvm does 1-vs-1 pairs
+                    values = [ self.model.predictValues(p) for p in src ]
+            states.values = values
 
-            if len(values)>0 and (not self.regression) and len(self.trained_labels) == 2:
-                if __debug__:
-                    debug("SVM","Forcing values to be ndarray and reshaping " +
-                          "them to be 1D vector")
-                values = N.asarray(values).reshape(len(values))
-            self.values = values
-            # XXX we should probably do the same as shogun for
-            # multiclass -- just spit out warning without
-            # providing actual values 'per pair' or whatever internal multiclass
-            # implementation it was
-            #except TypeError:
-            #    warning("Current SVM doesn't support probability estimation," +
-            #            " thus no 'values' state")
-
-        if self.states.isEnabled("probabilities"):
+        if states.isEnabled("probabilities"):
             self.probabilities = [ self.model.predictProbability(p) for p in src ]
             try:
-                self.probabilities = [ self.model.predictProbability(p) for p in src ]
+                states.probabilities = [ self.model.predictProbability(p) for p in src ]
             except TypeError:
                 warning("Current SVM %s doesn't support probability estimation," %
                         self + " thus no 'values' state")

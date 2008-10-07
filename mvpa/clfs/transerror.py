@@ -51,10 +51,9 @@ class SummaryStatistics(object):
     """Basic class to collect targets/predictions and report summary statistics
 
     It takes care about collecting the sets, which are just tuples
-    (targets, predictions, values). While 'computing' the matrix, all sets are
-    considered together.  Children of the class are responsible for
-    computation and display. No real MVC is implemented, but if there
-    was we had M here
+    (targets, predictions, values). While 'computing' the matrix, all
+    sets are considered together.  Children of the class are
+    responsible for computation and display.
     """
 
     _STATS_DESCRIPTION = (
@@ -247,12 +246,35 @@ class ROCCurve(object):
         Nlabels = len(labels)
         sets = self._sets
 
-        # take sets which have values
-        sets_wv = filter(lambda x:x[2] is not None, sets)
+        # take sets which have values in the shape we can handle
+        def _checkValues(set_):
+            """Check if values are 'acceptable'"""
+            x = set_[2]
+            # TODO: OPT: need optimization
+            if (x is None) or len(x) == 0: return False          # undefined
+            for v in x:
+                try:
+                    if Nlabels <= 2 and N.isscalar(v):
+                        continue
+                    if (isinstance(v, dict) or # not dict for pairs
+                        ((Nlabels>=2) and len(v)!=Nlabels) # 1 per each label for multiclass
+                        ): return False
+                except Exception, e:
+                    # Something else which is not supported, like
+                    # in shogun interface we don't yet extract values per each label or
+                    # in pairs in the case of built-in multiclass
+                    if __debug__:
+                        debug('ROC', "Exception %s while checking "
+                              "either %s are valid labels" % (str(e), x))
+                    return False
+            return True
+
+        sets_wv = filter(_checkValues, sets)
         # check if all had values, if not -- complain
-        if len(sets) != len(sets_wv):
+        Nsets_wv = len(sets_wv)
+        if Nsets_wv > 0 and len(sets) != Nsets_wv:
             warning("Only %d sets have values assigned from %d sets" %
-                    (len(sets_wv), len(sets)))
+                    (Nsets_wv, len(sets)))
         # bring all values to the same 'shape':
         #  1 value per each label. In binary classifier, if only a single
         #  value is provided, add '0' for 0th label 'value'... it should
@@ -296,10 +318,10 @@ class ROCCurve(object):
         #     which were used to make a decision... check
         ROCs, aucs = [], []             # 1 per label
         for i,label in enumerate(labels):
-            targets_pl = (s[0] == label).astype(int)
             aucs_pl = []
             ROCs_pl = []
             for s in sets_wv:
+                targets_pl = (s[0] == label).astype(int)
                 # XXX we might unify naming between AUC/ROC
                 ROC = AUCErrorFx()
                 aucs_pl += [ROC([x[i] for x in s[2]], targets_pl)]
@@ -346,11 +368,14 @@ class ROCCurve(object):
         fig = P.gcf()
         ax = P.gca()
 
-        ax.plot([0,0], [1,1], 'b-')
+        P.plot([0, 1], [0, 1], 'k:')
 
         for ROC in ROCs:
-            ax.plot(ROC.fp, ROC.tp, linewidth=1)
-            print ROC.fp, ROC.tp
+            P.plot(ROC.fp, ROC.tp, linewidth=1)
+
+        P.axis((0.0, 1.0, 0.0, 1.0))
+        P.axis('scaled')
+        P.title('Label %s. Mean AUC=%.2f' % (label_index, self.aucs[label_index]))
 
         P.xlabel('False positive rate')
         P.ylabel('True positive rate')
@@ -359,11 +384,18 @@ class ROCCurve(object):
 class ConfusionMatrix(SummaryStatistics):
     """Class to contain information and display confusion matrix.
 
-    Implementation is aimed to be simple, thus it delays actual
-    computation of confusion matrix untill all data is acquired (to
-    figure out complete set of labels. If testing data doesn't have a
-    complete set of labels, but you like to include all labels,
-    provide them as a parameter to constructor.
+    Implementation of the `SummaryStatistics` in the case of
+    classification problem. Actual computation of confusion matrix is
+    delayed until all data is acquired (to figure out complete set of
+    labels). If testing data doesn't have a complete set of labels,
+    but you like to include all labels, provide them as a parameter to
+    the constructor.
+
+    Confusion matrix provides a set of performance statistics (use
+    asstring(description=True) for the description of abbreviations),
+    as well ROC curve (http://en.wikipedia.org/wiki/ROC_curve)
+    plotting and analysis (AUC) in the limited set of problems:
+    binary, multiclass 1-vs-all.
     """
 
     _STATS_DESCRIPTION = (
@@ -383,6 +415,7 @@ class ConfusionMatrix(SummaryStatistics):
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
+        ('AUC', "Area under (AUC) curve", None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -544,6 +577,7 @@ class ConfusionMatrix(SummaryStatistics):
             self.ROC = ROC
         else:
             # we don't want to provide ROC if it is bogus
+            stats['AUC'] = [N.nan] * Nlabels
             self.ROC = None
 
 
@@ -603,7 +637,9 @@ class ConfusionMatrix(SummaryStatistics):
         res = ""
 
         stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
-                            'SPC', 'FDR', 'MCC', 'AUC']
+                            'SPC', 'FDR', 'MCC']
+        # print AUC only if ROC was computed
+        if self.ROC is not None: stats_perpredict += [ 'AUC' ]
         stats_pertarget = ['P', 'N', 'TP', 'TN']
         stats_summary = ['ACC', 'ACC%', '# of sets']
 
@@ -1107,7 +1143,7 @@ class ClassifierError(Stateful):
         if self.__clf.states.isEnabled('trained_labels') and \
                not testdataset is None:
             newlabels = Set(testdataset.uniquelabels) \
-                                - self.__clf.trained_labels
+                        - Set(self.__clf.trained_labels)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (`self.__clf`, `newlabels`) +

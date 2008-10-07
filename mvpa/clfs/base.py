@@ -266,7 +266,7 @@ class Classifier(Parametrized):
             Data which was used for training
         """
         if self.states.isEnabled('trained_labels'):
-            self.trained_labels = Set(dataset.uniquelabels)
+            self.trained_labels = dataset.uniquelabels
 
         self.trained_dataset = dataset
 
@@ -473,7 +473,7 @@ class Classifier(Parametrized):
             # XXX or should we just recreate "result"
             result_ = N.array(result)
             self.values = result_
-            trained_labels = N.asarray(list(self.trained_labels))
+            trained_labels = self.trained_labels
             for i, value in enumerate(result):
                 dists = N.abs(value - trained_labels)
                 result[i] = trained_labels[N.argmin(dists)]
