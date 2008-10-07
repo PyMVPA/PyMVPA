@@ -1143,7 +1143,7 @@ class ClassifierError(Stateful):
         if self.__clf.states.isEnabled('trained_labels') and \
                not testdataset is None:
             newlabels = Set(testdataset.uniquelabels) \
-                                - self.__clf.trained_labels
+                        - Set(self.__clf.trained_labels)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (`self.__clf`, `newlabels`) +
