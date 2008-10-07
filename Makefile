@@ -98,6 +98,9 @@ debian-clean:
 #
 doc: website
 
+references:
+	tools/bib2rst_ref.py
+
 htmldoc:
 	cd doc && $(MAKE) html
 
