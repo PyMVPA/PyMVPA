@@ -106,7 +106,9 @@ NFoldSplitter_, OddEvenSplitter_, etc.
 Recursive Feature Elimination
 =============================
 
-Recursive feature elimination (RFE_) is a technique that falls under the larger
+Recursive feature elimination
+(RFE_, applied to fMRI data in (:ref:`Hanson et al., 2008 <HH08>`))
+is a technique that falls under the larger
 umbrella of feature selection. Recursive feature elimination specifically
 attempts to reduce the number of selected features used for classification in
 the following way:
