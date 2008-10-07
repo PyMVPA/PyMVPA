@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import _bibtex
+import re
 
 def compareBibByDate(a, b):
     """Sorting helper."""
@@ -300,7 +301,7 @@ def bib2rst_references(bib):
         if prop.has_key('year'):
             rst += ' (' + prop['year'] + ').'
         if prop.has_key('title'):
-            rst += ' ' + prop['title']
+            rst += ' ' + smoothRsT(prop['title'])
             if not prop['title'].endswith('.'):
                 rst += '.'
 
@@ -345,6 +346,15 @@ def bib2rst_references(bib):
     rst += '\n\n'
 
     return rst.encode('utf-8')
+
+
+def smoothRsT(s):
+    """Replace problematic stuff with less problematic stuff."""
+    s = re.sub("``", '"', s)
+    # assuming that empty strings to not occur in a bib file
+    s = re.sub("''", '"', s)
+
+    return s
 
 
 # do it

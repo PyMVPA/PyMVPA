@@ -190,12 +190,11 @@ in state variables.
 
 Supported states:
 
-================== ===============================================  =========
+================== ==============================================   =========
     State Name      Description                                      Default
------------------- -----------------------------------------------  ---------
+------------------ ----------------------------------------------   ---------
 feature_ids         Feature IDS which were used for the actual       Disabled
-                    training. Some classifiers might internally do
-                    feature selection (SMLR).
+                    training.
 predicting_time     Time (in seconds) which took classifier to       Enabled
                     predict.
 predictions         Most recent set of predictions.                  Enabled
@@ -206,7 +205,7 @@ training_time       Time (in seconds) which took classifier to       Enabled
                     train.
 values              Internal classifier values the most recent       Disabled
                     predictions are based on.
-================== ===============================================  =========
+================== ==============================================   =========
 
 If any intended functionality cannot be realized be implementing above methods.
 The Classifier_ class offers some additionals methods that might be overriden
