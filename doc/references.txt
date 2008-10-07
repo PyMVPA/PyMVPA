@@ -1,0 +1,89 @@
+.. -*- mode: rst; fill-column: 78 -*-
+  #
+  # THIS IS A GENERATED FILE -- DO NOT EDIT!
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+.. index:: references
+
+.. _references:
+
+**********
+References
+**********
+
+This list aims to be a collection of literature, that is of particular interest
+in the context of multivarite pattern analysis. It includes all references
+cited throughout this manual, but also a number of additional manuscripts
+containing descriptions of interesting analysis methods or fruitful
+experiments.
+
+
+.. _Dem06:
+
+**Demšar, J.** (2006). Statistical Comparisons of Classifiers over Multiple Data Sets. *Journal of Machine Learning Research*, *7*, 1–30.
+  *This is a review of several benchmarks procedures.*
+
+  URL: http://portal.acm.org/citation.cfm?id=1248548
+
+
+.. index:: least angle regression, LARS
+
+.. _EHJ+04:
+
+**Efron, B., Trevor, H., Johnstone, I. & Tibshirani, R.** (2004). Least Angle Regression. *Annals of Statistics*, *32*, 407–499.
+  Keywords: `least angle regression, LARS`
+
+  DOI: http://dx.doi.org/10.1214/009053604000000067
+
+
+.. index:: split-correlation classifier
+
+.. _HGF+01:
+
+**Haxby, J., Gobbini, M., Furey, M., Ishai, A., Schouten, J. & Pietrini, P.** (2001). Distributed and overlapping representations of faces and objects in ventral temporal cortex. *Science*, *293*, 2425–2430.
+  Keywords: `split-correlation classifier`
+
+  DOI: http://dx.doi.org/10.1126/science.1063736
+
+
+.. _HR06:
+
+**Haynes, J. & Rees, G.** (2006). Decoding mental states from brain activity in humans. *Nature Reviews Neuroscience*, *7*, 523–534.
+  *Review of decoding studies, emphasizing the importance of ethical issues
+  concerning the privacy of personal thought.*
+
+  DOI: http://dx.doi.org/10.1038/nrn1931
+
+
+.. index:: sparse multinomial logistic regression, SMLR
+
+.. _KCF+05:
+
+**Krishnapuram, B., Carin, L., Figueiredo, M. A. & Hartemink, A. J.** (2005). Sparse multinomial logistic regression: fast algorithms and generalization bounds. *IEEE Transactions on Pattern Analysis and Machine Intelligence*, *27*, 957–968.
+  Keywords: `sparse multinomial logistic regression, SMLR`
+
+  DOI: http://dx.doi.org/10.1109/TPAMI.2005.127
+
+
+.. _NPD+06:
+
+**Norman, K. A., Polyn, S. M., Detre, G. J. & Haxby, J. V.** (2006). Beyond mind-reading: multi-voxel pattern analysis of fMRI data. *Trends in Cognitive Science*, *10*, 424–430.
+  DOI: http://dx.doi.org/10.1016/j.tics.2006.07.005
+
+
+.. index:: support vector machine, SVM
+
+.. _Vap95:
+
+**Vapnik, V.** (1995). The Nature of Statistical Learning Theory. Springer: New York.
+  Keywords: `support vector machine, SVM`
+
+
+
+
