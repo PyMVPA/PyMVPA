@@ -46,7 +46,7 @@ experiments.
 
 .. _HH08:
 
-**Hanson, S. J. & Halchenko, Y. O.** (2008). Brain reading using full brain support vector machines for object recognition: there is no ``face'' identification area. *Neural Computation*, *20*, 486–503.
+**Hanson, S. J. & Halchenko, Y. O.** (2008). Brain reading using full brain support vector machines for object recognition: there is no "face" identification area. *Neural Computation*, *20*, 486–503.
   Keywords: `support vector machine, SVM, recursive feature elimination, RFE`
 
   DOI: http://dx.doi.org/10.1162/neco.2007.09-06-340
