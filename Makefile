@@ -98,6 +98,9 @@ debian-clean:
 #
 doc: website
 
+references:
+	tools/bib2rst_ref.py
+
 htmldoc:
 	cd doc && $(MAKE) html
 
@@ -127,10 +130,10 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	touch $@
 
 upload-website: website
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* belka.rutgers.edu:/home/michael/www.pymvpa.org/pymvpa/
 
 upload-htmldoc: htmldoc
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* belka.rutgers.edu:/home/michael/www.pymvpa.org/pymvpa/
 
 
 # this takes some minutes !!

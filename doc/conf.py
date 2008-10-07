@@ -146,7 +146,10 @@ latex_documents = [
 latex_logo = os.path.join('_static', 'logo.pdf')
 
 # Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
+latex_preamble = """
+\usepackage{enumitem}
+\setdescription{style=nextline,font=\\normalfont}
+"""
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
