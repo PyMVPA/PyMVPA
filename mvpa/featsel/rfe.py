@@ -37,6 +37,16 @@ class RFE(FeatureSelection):
     unimportant features. For each feature selection the transfer error on some
     testdatset is computed. This procedure is repeated until a given
     `StoppingCriterion` is reached.
+
+    Such strategy after
+      Guyon, I., Weston, J., Barnhill, S., & Vapnik, V. (2002). Gene
+      selection for cancer classification using support vector
+      machines. Mach. Learn., 46(1-3), 389--422.
+    was applied to SVM-based analysis of fMRI data in
+      Hanson, S. J. & Halchenko, Y. O. (2008). Brain reading using
+      full brain support vector machines for object recognition:
+      there is no "face identification area". Neural Computation, 20,
+      486--503.
     """
 
     # TODO: remove

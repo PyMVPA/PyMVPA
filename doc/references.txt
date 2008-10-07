@@ -120,6 +120,15 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
 
 
+.. _NH02:
+
+**Nichols, T. E. & Holmes, A. P.** (2002). Nonparametric permutation tests for functional neuroimaging: a primer with examples. *Hum Brain Mapp*, *15*, 1–25.
+  *Overview of standard nonparametric randomization and permutation testing
+  applied to neuroimaging data (e.g. fMRI)*
+
+  DOI: http://dx.doi.org/10.1002/hbm.1058
+
+
 .. _NPD+06:
 
 **Norman, K. A., Polyn, S. M., Detre, G. J. & Haxby, J. V.** (2006). Beyond mind-reading: multi-voxel pattern analysis of fMRI data. *Trends in Cognitive Science*, *10*, 424–430.
