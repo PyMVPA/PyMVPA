@@ -122,7 +122,7 @@ experiments.
 
 .. _NH02:
 
-**Nichols, T. E. & Holmes, A. P.** (2002). Nonparametric permutation tests for functional neuroimaging: a primer with examples. *Hum Brain Mapp*, *15*, 1–25.
+**Nichols, T. E. & Holmes, A. P.** (2002). Nonparametric permutation tests for functional neuroimaging: a primer with examples. *Human Brain Mapping*, *15*, 1–25.
   *Overview of standard nonparametric randomization and permutation testing
   applied to neuroimaging data (e.g. fMRI)*
 
@@ -133,6 +133,21 @@ experiments.
 
 **Norman, K. A., Polyn, S. M., Detre, G. J. & Haxby, J. V.** (2006). Beyond mind-reading: multi-voxel pattern analysis of fMRI data. *Trends in Cognitive Science*, *10*, 424–430.
   DOI: http://dx.doi.org/10.1016/j.tics.2006.07.005
+
+
+.. index:: support vector machine, SVM, sensitivity
+
+.. _SMM+08:
+
+**Sato, J. R., Mourão-Miranda, J., Martin, M. d. G. M., Amaro, E., Morettin, P. A. & Brammer, M. J.** (2008). The impact of functional connectivity changes on support vector machines mapping of fMRI data. *Journal of Neuroscience Methods*, *172*, 94–104.
+  *Discussion of possible scenarios where univariate and multivariate (SVM)
+  sensitivity maps derived from the same dataset could differ. Including the
+  case were univariate methods would assign a substantially larger score to
+  some features.*
+
+  Keywords: `support vector machine, SVM, sensitivity`
+
+  DOI: http://dx.doi.org/10.1016/j.jneumeth.2008.04.008
 
 
 .. index:: support vector machine, SVM
