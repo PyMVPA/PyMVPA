@@ -9,12 +9,9 @@
 
 .. _glossary:
 
-
 ********
 Glossary
 ********
-
-.. glossary::
 
 The literature concerning the application of multivariate pattern analysis
 procedures to neuroscientific datasets contains a lot of specific terms to
@@ -25,58 +22,80 @@ learning literature. The foloowing glossary is an attempt to map the various
 terms found in the literature to the terminology used in this manual.
 
 
-Block-averaging
----------------
+.. glossary::
 
-Averaging all samples recorded during a block of continous stimulation in a
-block-design fMRI experiment. The rationale behind this technique is, that a
-averaging might lead to an improved signal-to-noise ratio. However, averaging
-further decreases the number of samples in a dataset, which is already very low
-in typical fMRI datasets, especially in comparsion to the number of
-features/voxels. Block-averaging might nevertheless improve the classifier
-performance, *if* it indeed improves signal-to-noise *and* the respective
-classifier benefits more from few high-quaility samples than from a larger set
-of lower-quality samples.
-
-
-Chunk
------
-
-A chunk is a group of samples. In PyMVPA chunks define *independent* groups
-of samples (note: the groups are independent from each other, not the samples
-in each particular group). This information is important in the context of a
-cross-validation procedure, as it is required to measured the classifier
-performance on independent test datasets to be able to compute unbiased
-generalization estimates. This is of particular importance in the case of
-fMRI data, where two successively recorded volumes cannot be considered as
-independent measurements. This is due to the significant temporal forward
-contamination of the hemodynamic response whos correlate is measures by the
-MR scanner.
+  Block-averaging
+    Averaging all samples recorded during a block of continous stimulation in a
+    block-design fMRI experiment. The rationale behind this technique is, that a
+    averaging might lead to an improved signal-to-noise ratio. However, averaging
+    further decreases the number of samples in a dataset, which is already very low
+    in typical fMRI datasets, especially in comparsion to the number of
+    features/voxels. Block-averaging might nevertheless improve the classifier
+    performance, *if* it indeed improves signal-to-noise *and* the respective
+    classifier benefits more from few high-quaility samples than from a larger set
+    of lower-quality samples.
 
 
-Sensitivity
------------
+  Chunk
+    A chunk is a group of samples. In PyMVPA chunks define *independent* groups
+    of samples (note: the groups are independent from each other, not the samples
+    in each particular group). This information is important in the context of a
+    cross-validation procedure, as it is required to measured the classifier
+    performance on independent test datasets to be able to compute unbiased
+    generalization estimates. This is of particular importance in the case of
+    fMRI data, where two successively recorded volumes cannot be considered as
+    independent measurements. This is due to the significant temporal forward
+    contamination of the hemodynamic response whos correlate is measures by the
+    MR scanner.
 
 
-Sensitivity Map
----------------
+  Dataset
+    In PyMVPA a dataset is the combination of samples, their ...
 
 
-Statistical Discrimination Map (SDM)
-------------------------------------
-
-This is another term for a `sensitivity map`_, used in e.g.
-:ref:`Sato et al. (2008) <SMM+08>`.
+  Epoch
+    Sometimes used to refer to a group of successively aqcuired samples, and, thus,
+    related to a :term:`chunk`.
 
 
-Time-compression
-----------------
-
-This usually refers to the block-averaging_ of samples from a block-design fMRI
-dataset.
+  Example
+    Another term for :term:`sample`.
 
 
-Weight Vector
--------------
+  Feature
+    (explain me)
 
-See sensitivity_.
+
+  Label
+    (explain me)
+
+
+  Sample
+    (explain me)
+
+
+  Sensitivity
+    (explain me)
+
+
+  Sensitivity Map
+    (explain me)
+
+
+  Spatial Discriminance Map (SDM)
+    This is another term for a :term:`sensitivity map`, used in e.g.
+    :ref:`Wang et al. (2007) <WCW+07>`.
+
+
+  Statistical Discrimination Map (SDM)
+    This is another term for a :term:`sensitivity map`, used in e.g.
+    :ref:`Sato et al. (2008) <SMM+08>`.
+
+
+  Time-compression
+    This usually refers to the :term:`block-averaging` of samples from a block-design fMRI
+    dataset.
+
+
+  Weight Vector
+    See :term:`sensitivity`.
