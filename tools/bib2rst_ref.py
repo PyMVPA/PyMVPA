@@ -281,16 +281,8 @@ def bib2rst_references(bib):
     biblist.sort(compareBibByAuthor)
 
     for id, (cat, prop) in biblist:
-        # place optional keywords for the index
-        if prop.has_key('pymvpa-keywords'):
-            rst += '.. index:: ' + prop['pymvpa-keywords']
-            rst += '\n\n'
-
         # put reference target for citations
         rst += '.. _' + id + ':\n\n'
-
-        # uncomment for a bullet list
-        #rst += '* '
 
         # initial details equal for all item types
         if prop.has_key('author'):
@@ -324,7 +316,10 @@ def bib2rst_references(bib):
 
         # make keywords visible
         if prop.has_key('pymvpa-keywords'):
-            rst += '\n  Keywords: `' + prop['pymvpa-keywords'] + '`\n'
+            rst += '\n  Keywords: ' \
+                   + ', '.join([':keyword:`' + kw.strip() + '`' 
+                                for kw in prop['pymvpa-keywords'].split(',')]) \
+                   + '\n'
 
         # place DOI link
         if prop.has_key('doi'):
