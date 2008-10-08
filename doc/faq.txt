@@ -158,8 +158,8 @@ Is there an easy way to remove invariant features from a dataset?
 
 .. index:: block-averaging
 
-How can I do block-averaging of my block-design fMRI dataset?
--------------------------------------------------------------
+How can I do :term:`block-averaging` of my block-design fMRI dataset?
+---------------------------------------------------------------------
 
   The easiest way is to use a mapper to transform/average the respective
   samples. Suppose you have a dataset:
