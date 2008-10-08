@@ -101,17 +101,16 @@ def formatAuthor(s, full_surname = False):
         # take lastname verbatim
         lastname = slist[0].strip()
         # remerge possible surnames with spaces if any
-        surnames = ' '.join(slist[1:])
+        surnames = u' '.join(slist[1:])
 
         # get nicely formated surnames concat with spaces
-        surname = ' '.join( [ formatSurname(i, full_surname) for i in surnames.split() ] )
+        surname = u' '.join( [ formatSurname(i, full_surname) for i in surnames.split() ] )
 
 
     else:
         # assume last entity is lastname the rest is surnames
         # check for lastname prefixes
         slist = s.split()
-
         if len(slist) < 2:
             # only lastname -> finished
             return slist[0]
@@ -121,24 +120,24 @@ def formatAuthor(s, full_surname = False):
             # seems like we have lastname->surname order
             if slist[0] in ('von', 'van'):
                 lastname = slist[0] + ' ' + slist[1]
-                surnames = ' '.join(slist[2:])
+                surnames = u' '.join(slist[2:])
             else:
                 lastname = slist[0]
-                surnames = ' '.join(slist[1:])
+                surnames = u' '.join(slist[1:])
 
         else:
             # the lastname is last
             lastname = slist[-1]
 
             if slist[-2] in ('von', 'van'):
-                lastname = slist[-2] + ' ' + lastname
-                surnames = ' '.join(slist[:-2])
+                lastname = slist[-2] + u' ' + lastname
+                surnames = u' '.join(slist[:-2])
             else:
-                surnames = ' '.join(slist[:-1])
+                surnames = u' '.join(slist[:-1])
 
-        surname = ' '.join( [ formatSurname(i, full_surname) for i in surnames.split() ] )
+        surname = u' '.join( [ formatSurname(i, full_surname) for i in surnames.split() ] )
 
-    return lastname + ', ' + surname
+    return lastname + u', ' + surname
 
 
 def joinAuthorList(alist):
@@ -149,9 +148,9 @@ def joinAuthorList(alist):
     if not len(alist) > 1:
         return formatAuthor(alist[0])
 
-    ret = ', '.join( [ formatAuthor(a) for a in alist[:-1] ] )
+    ret = u', '.join( [ formatAuthor(a) for a in alist[:-1] ] )
 
-    ret += ' & ' + formatAuthor( alist[-1] )
+    ret += u' & ' + formatAuthor( alist[-1] )
 
     return ret
 
@@ -201,9 +200,7 @@ class BibTeX(dict):
     except for the list of authors (which is a list of strings) and the pages
     which is a two-tuple with first and last page.
     """
-    def __init__(self, filename = None, encoding = 'utf-8'):
-
-        self.enc = encoding
+    def __init__(self, filename = None):
 
         if not filename == None:
             self.open(filename)
@@ -231,7 +228,7 @@ class BibTeX(dict):
                 # figure out what the last argument really does
                 # leaving in -1 seems to be save
                 value = _bibtex.expand(file, v,  0)[2]
-                value = unicode(value, self.enc)
+                value = unicode(value, 'utf-8')
 
                 if k.lower() == 'author':
                     value = value.split(' and ')
@@ -297,7 +294,7 @@ def bib2rst_references(bib):
 
         # initial details equal for all item types
         if prop.has_key('author'):
-            rst += '**' + joinAuthorList(prop['author']) + '**'
+            rst += u'**' + joinAuthorList(prop['author']) + u'**'
         if prop.has_key('year'):
             rst += ' (' + prop['year'] + ').'
         if prop.has_key('title'):
