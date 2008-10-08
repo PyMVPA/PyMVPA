@@ -10,21 +10,73 @@
 .. _glossary:
 
 
-****************************
-Data vs. Dataset: A Glossary
-****************************
+********
+Glossary
+********
 
 .. glossary::
 
-(to be written)
+The literature concerning the application of multivariate pattern analysis
+procedures to neuroscientific datasets contains a lot of specific terms to
+refer to procedures or types of data, that are of particular importants.
+Unfortunately, sometimes various terms refer to the same contruct and even
+worse these terms do not necessarily match the terminology used in the machine
+learning literature. The foloowing glossary is an attempt to map the various
+terms found in the literature to the terminology used in this manual.
 
-..
-   documentation root
-      The directory which contains the documentation's :file:`conf.py` file and
-      is therefore seen as one Sphinx project.
-..
-   environment
-      A structure where information about all documents under the root is saved,
-      and used for cross-referencing.  The environment is pickled after the
-      parsing stage, so that successive runs only need to read and parse new and
-      changed documents.
+
+Block-averaging
+---------------
+
+Averaging all samples recorded during a block of continous stimulation in a
+block-design fMRI experiment. The rationale behind this technique is, that a
+averaging might lead to an improved signal-to-noise ratio. However, averaging
+further decreases the number of samples in a dataset, which is already very low
+in typical fMRI datasets, especially in comparsion to the number of
+features/voxels. Block-averaging might nevertheless improve the classifier
+performance, *if* it indeed improves signal-to-noise *and* the respective
+classifier benefits more from few high-quaility samples than from a larger set
+of lower-quality samples.
+
+
+Chunk
+-----
+
+A chunk is a group of samples. In PyMVPA chunks define *independent* groups
+of samples (note: the groups are independent from each other, not the samples
+in each particular group). This information is important in the context of a
+cross-validation procedure, as it is required to measured the classifier
+performance on independent test datasets to be able to compute unbiased
+generalization estimates. This is of particular importance in the case of
+fMRI data, where two successively recorded volumes cannot be considered as
+independent measurements. This is due to the significant temporal forward
+contamination of the hemodynamic response whos correlate is measures by the
+MR scanner.
+
+
+Sensitivity
+-----------
+
+
+Sensitivity Map
+---------------
+
+
+Statistical Discrimination Map (SDM)
+------------------------------------
+
+This is another term for a `sensitivity map`_, used in e.g.
+:ref:`Sato et al. (2008) <SMM+08>`.
+
+
+Time-compression
+----------------
+
+This usually refers to the block-averaging_ of samples from a block-design fMRI
+dataset.
+
+
+Weight Vector
+-------------
+
+See sensitivity_.
