@@ -284,31 +284,38 @@ def bib2rst_references(bib):
         # put reference target for citations
         rst += '.. _' + id + ':\n\n'
 
+        # compose the citation as the list item label
+        cit = u''
         # initial details equal for all item types
         if prop.has_key('author'):
-            rst += u'**' + joinAuthorList(prop['author']) + u'**'
+            cit += u'**' + joinAuthorList(prop['author']) + u'**'
         if prop.has_key('year'):
-            rst += ' (' + prop['year'] + ').'
+            cit += ' (' + prop['year'] + ').'
         if prop.has_key('title'):
-            rst += ' ' + smoothRsT(prop['title'])
+            cit += ' ' + smoothRsT(prop['title'])
             if not prop['title'].endswith('.'):
-                rst += '.'
+                cit += '.'
 
         # appendix for journal articles
         if cat.lower() == 'article':
             # needs to have journal, volume, pages
-            rst += ' *' + prop['journal'] + '*'
-            rst +=  ','
-            rst += ' *' + prop['volume'] + '*,'
-            rst += ' ' + '-'.join(prop['pages'])
+            cit += ' *' + prop['journal'] + '*'
+            cit +=  ','
+            cit += ' *' + prop['volume'] + '*,'
+            cit += ' ' + '-'.join(prop['pages'])
         elif cat.lower() == 'book':
             # needs to have publisher, address
-            rst += ' ' + prop['publisher']
-            rst += ': ' + prop['address']
+            cit += ' ' + prop['publisher']
+            cit += ': ' + prop['address']
         else:
             print "WARNING: Cannot handle bibtex item type:", cat
 
-        rst += '.'
+        cit += '.'
+
+        # beautify citation with linebreaks and proper indentation
+        # damn, no. list label has to be a single line... :(
+        #rst += formatProperty(cit, 0)
+        rst += cit
 
         # place optional paper summary
         if prop.has_key('pymvpa-summary'):
