@@ -11,7 +11,7 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
-import sys, os
+import sys, os, re
 import numpy as N
 
 ##################################################
@@ -80,12 +80,8 @@ def smoothName(s):
     """Handle all kinds of voodoo cases, that might disturb RsT
     """
     s = s.strip()
-    if s == '**kwargs':
-        return '\*\*kwargs'
-    elif s == '*args':
-        return '\*args'
-    else:
-        return s
+    s = re.sub('\*', '\*', s)
+    return s
 
 
 def segmentItemList(lines, name):
@@ -183,6 +179,16 @@ def reformatReturnsBlock(lines, name):
     return out
 
 
+def reformatExampleBlock(lines, name):
+    """Turn an example block into a verbatim text.
+    """
+    out = [u'::', u'']
+    out += lines
+    # safety line
+    out.append(u'')
+    return out
+
+
 # demo function to access docstrings for processing
 def dumpit(app, what, name, obj, options, lines):
     """ For each docstring this function is called with the following set of
@@ -206,7 +212,6 @@ def dumpit(app, what, name, obj, options, lines):
     """
     param, pstart, pend = extractItemListBlock([':Parameters:',
                                                 ':Parameter:'], lines)
-
     if param:
         # make it beautiful
         param = reformatParameterBlock(param, name)
@@ -218,6 +223,13 @@ def dumpit(app, what, name, obj, options, lines):
     if returns:
         returns = reformatReturnsBlock(returns, name)
         lines[rstart:rend] = returns
+
+    examples, exstart, exend = extractItemListBlock([':Examples:',
+                                                     ':Example:'], lines)
+    if examples:
+        print 'WARNING: Example in %s should become a proper snippet' % name
+        examples = reformatExampleBlock(examples, name)
+        lines[exstart:exend] = examples
 
 # make this file a sphinx extension itself, to be able to do docstring
 # post-processing
