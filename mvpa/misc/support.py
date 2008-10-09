@@ -19,22 +19,22 @@ from operator import isSequenceType
 if __debug__:
     from mvpa.base import debug
 
-def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
-    """This function transforms a dataset by calculating the mean of a set of
-    patterns. Such a pattern set is defined by a starting point and the size
-    of the window along the first axis of the data ('boxlength').
+def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
+    """This function extracts boxcar windows from an array. Such a boxcar is
+    defined by a starting point and the size of the window along the first axis
+    of the array (`boxlength`). Afterwards a customizable function is applied
+    to each boxcar individually (Default: averaging).
 
-    Parameters:
-        data:           An array with an arbitrary number of dimensions.
-        startpoints:    A sequence of index value along the first axis of
-                        'data'.
-        boxlength:      The number of elements after 'startpoint' along the
-                        first axis of 'data' to be considered for averaging.
-        offset:         The offset between the starting point and the
-                        averaging window (boxcar).
-
-    The functions returns an array with the length of the first axis being
-    equal to the length of the 'startpoints' sequence.
+    :param data: An array with an arbitrary number of dimensions.
+    :type data: array
+    :param startpoints: Boxcar startpoints as index along the first array axis
+    :type startpoints: sequence
+    :param boxlength: Length of the boxcar window in #array elements
+    :type boxlength: int
+    :param offset: Optional offset between the configured starting point and the
+      actual begining of the boxcar window.
+    :type offset: int
+    :rtype: array (len(startpoints) x data.shape[1:])
     """
     if boxlength < 1:
         raise ValueError, "Boxlength lower than 1 makes no sense."
