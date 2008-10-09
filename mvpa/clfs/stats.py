@@ -19,7 +19,7 @@ class Distribution(object):
 
         :Parameter:
           tail: str ['left', 'right', 'any']
-            Which tail of the distribution to report. For 'any' it chooses 
+            Which tail of the distribution to report. For 'any' it chooses
             the tail it belongs to based on the comparison to p=0.5
         """
         self._tail = tail
@@ -51,6 +51,9 @@ class MCNullDist(Distribution):
     # lower number of transfer errors and therefore dramatically reduce the
     # necessary CPU time. This is almost trivial to do with
     #   scipy.stats.norm.{fit,cdf}
+    # Caution should be paid though since resultant distributions might be
+    # quite far from some conventional ones (e.g. Normal) -- it is expected to
+    # have them bimodal (or actually multimodal) in many scenarios.
     """Class to determine the distribution of a measure under the NULL
     distribution (no signal).
 
@@ -99,12 +102,12 @@ class MCNullDist(Distribution):
                 TransferError instance used to compute all errors.
             wdata: `Dataset` which gets permuted and used to compute the
                 measure/transfer error multiple times.
-            vdata: `Dataset` used for validation. 
+            vdata: `Dataset` used for validation.
                 If provided measure is assumed to be a `TransferError` and
                 working and validation dataset are passed onto it.
         """
         dist_samples = []
-        """Holds the transfer errors when randomized signal."""
+        """Holds the values for randomized labels."""
 
         # estimate null-distribution
         for p in xrange(self.__permutations):
@@ -129,6 +132,23 @@ class MCNullDist(Distribution):
 
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
+
+
+    def clean(self):
+        """Clean stored data
+
+        Storing all of the distribution samples might be too
+        expensive, and the scope of the object might be too broad to
+        wait for it to be destroyed. Clean would bind dist_samples to
+        empty list to let gc revoke the memory.
+        """
+        self.__dist_samples = []
+
+
+    @property
+    def dist_samples(self):
+        """Samples obtained by permutting the labels"""
+        return self.__dist_samples
 
 
     def cdf(self, x):
