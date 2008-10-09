@@ -19,6 +19,7 @@ PyMVPA Documentation Contents
    matlab
    faq
    examples
+   references
    legal
    changelog
    todo
