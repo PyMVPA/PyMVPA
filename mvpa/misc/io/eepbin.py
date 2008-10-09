@@ -47,9 +47,7 @@ class EEPBin(DataReader):
     def __init__(self, source):
         """Read EEP file and store header and data.
 
-        Parameter
-        ---------
-
+        :Parameter:
           source : str
             Filename.
         """

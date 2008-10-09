@@ -27,10 +27,8 @@ class FslEV3(ColumnData):
     def __init__(self, source):
         """Read and write FSL EV3 files.
 
-        Parameter
-        ---------
-
-        - `source`: filename of an EV3 file
+        :Parameter:
+          source: filename of an EV3 file
         """
         # init data from known format
         ColumnData.__init__(self, source,
