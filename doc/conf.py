@@ -18,6 +18,40 @@ import sys, os
 # absolute, like shown here.
 #sys.path.append(os.path.abspath('some/directory'))
 
+# demo function to access docstrings for processing
+def dumpit(app, what, name, obj, options, lines):
+    """ For each docstring this function is called with the following set of
+    arguments:
+
+    app
+      the Sphinx application object
+    what
+      the type of the object which the docstring belongs to (one of "module",
+      "class", "exception", "function", "method", "attribute")
+    name
+      the fully qualified name of the object
+    obj
+      the object itself
+    options
+      the options given to the directive: an object with attributes
+      inherited_members, undoc_members, show_inheritance and noindex that are
+      true if the flag option of same name was given to the auto directive
+    lines
+      the lines of the docstring (as a list)
+    """
+    #print name, options.__dict__.keys()
+    #print name, lines
+
+    # do nothing for now
+    pass
+
+
+# make this file a sphinx extension itself, to be able to do docstring
+# post-processing
+def setup(app):
+    app.connect('autodoc-process-docstring', dumpit)
+
+
 # General configuration
 # ---------------------
 
