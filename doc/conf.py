@@ -204,8 +204,6 @@ def dumpit(app, what, name, obj, options, lines):
     lines
       the lines of the docstring (as a list)
     """
-    #print name, options.__dict__.keys()
-    #print name, lines
     param, pstart, pend = extractItemListBlock([':Parameters:',
                                                 ':Parameter:'], lines)
 
