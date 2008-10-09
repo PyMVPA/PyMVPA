@@ -87,7 +87,8 @@ distclean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp \
+		apidoc-templates-stamp
 
 
 debian-clean:
@@ -102,7 +103,7 @@ doc: website
 references:
 	tools/bib2rst_ref.py
 
-htmldoc: build
+htmldoc: apidoc-templates build
 	cd doc && MVPA_APIDOC_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
 
 pdfdoc: pdfdoc-stamp
@@ -111,8 +112,10 @@ pdfdoc-stamp:
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
-apidoc-templates:
+apidoc-templates: apidoc-templates-stamp
+apidoc-templates-stamp:
 	tools/build_apidoc_templates.py
+	touch $@
 
 apidoc: apidoc-stamp
 apidoc-stamp: build
@@ -126,7 +129,7 @@ apidoc-stamp: build
 	LC_ALL=C epydoc --config doc/api/epydoc.conf
 	touch $@
 
-website: apidoc-templates website-stamp
+website: website-stamp
 website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
@@ -268,4 +271,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests apidoc-templates
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests
