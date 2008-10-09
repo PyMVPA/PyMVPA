@@ -21,7 +21,8 @@ def writeAPIDocTemplate(uri, toctree):
         # also listing inherited members swamps the index with lots of
         # quasi-duplicates
         #ad += '  :members:\n  :inherited-members:\n  :undoc-members:\n'
-        ad += '  :members:\n  :undoc-members:\n  :show-inheritance:\n'
+        ad += '  :members:\n  :undoc-members:\n' \
+              '  :show-inheritance:\n  :noindex:\n'
 
         tf.write(ad)
         tf.close()
