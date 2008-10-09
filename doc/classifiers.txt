@@ -474,8 +474,8 @@ re-training if they were previously trained, and only part of their
 specification got changed. For instance, for kernel-based classifier
 (e.g. GPR) it makes no sense to recompute kernel matrix, if only a classifier
 (not kernel) parameter (e.g. ``sigma_noise``) was changed. Another similar
-usecase: for null-hypothesis testing it might be needed to train classifier
-multiple times on a randomized set of labels.
+usecase: for :ref:`null-hypothesis statistical testing <statistical_testing>`
+it might be needed to train classifier multiple times on a randomized set of labels.
 
 Only classifiers which have ``retrainable`` in their ``_clf_internals`` are
 capable of efficient retraining. To enable retraining, just provide
