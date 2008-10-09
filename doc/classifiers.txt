@@ -276,12 +276,7 @@ future enhancements may include support for other kernels.
 Least Angle Regression
 ----------------------
 
-[#]_
-
-.. [#] Bradley Efron, Trevor Hastie, Iain Johnstone and Robert Tibshirani
-       (2004). A new method for variable subset selection, with the
-       lasso and "epsilon" forward stagewise methods as special cases.
-       *Annals of Statistics, 32*, 407-499.
+:ref:`Efron et al. (2004) <EHJ+04>`
 
 
 .. index:: logistic regression, penalized logistic regression
@@ -319,16 +314,13 @@ intercept term so that you do not have to center your data.
 Sparse Multinomial Logistic Regression
 --------------------------------------
 
-Sparse Multinomial Logistic Regression [#]_ is a fast multi-class classifier
+Sparse Multinomial Logistic Regression
+(:ref:`Krishnapuram et al., 2005 <KCF+05>`) is a fast multi-class classifier
 that can easily deal with high-dimensional problems (`research paper about
 SMLR`_).  PyMVPA includes two implementations: one in pure Python and a faster
 one that makes use of a C extension for the performance critical pieces of the
 code.
 
-.. [#] Krishnapuram, B., Figueiredo, M., Carin, L., & Hartemink, A. (2005).
-       Sparse Multinomial Logistic Regression: Fast Algorithms and
-       Generalization Bounds. *IEEE Transactions on Pattern Analysis and
-       Machine Intelligence (PAMI)*, 957–968.
 .. _research paper about SMLR: http://www.cs.duke.edu/~amink/publications/manuscripts/hartemink05.pami.pdf
 
 
@@ -337,7 +329,8 @@ code.
 Support Vector Machines
 -----------------------
 
-Support vector machine [#]_ classifiers (and regressions) are popular
+Support vector machine (:ref:`Vapnik, 1995 <Vap95>`) classifiers (and
+regressions) are popular
 since they can deal with very high dimensional problems (`Wikipedia
 entry about SVM`_), while maintaining reasonable generalization performance.
 
@@ -350,9 +343,6 @@ While any SVM class provides a complete interface, the others child classes
 make it easy to run some subset of standard classifiers, such as linear SVM,
 with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_, RbfNuSVMC_
 and RbfCSVMC_).
-
-.. [#] Vapnik, V. (1995). *The Nature of Statistical Learning Theory*.
-       Springer, New York.
 
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _Shogun: http://www.shogun-toolbox.org
@@ -484,8 +474,8 @@ re-training if they were previously trained, and only part of their
 specification got changed. For instance, for kernel-based classifier
 (e.g. GPR) it makes no sense to recompute kernel matrix, if only a classifier
 (not kernel) parameter (e.g. ``sigma_noise``) was changed. Another similar
-usecase: for null-hypothesis testing it might be needed to train classifier
-multiple times on a randomized set of labels.
+usecase: for :ref:`null-hypothesis statistical testing <statistical_testing>`
+it might be needed to train classifier multiple times on a randomized set of labels.
 
 Only classifiers which have ``retrainable`` in their ``_clf_internals`` are
 capable of efficient retraining. To enable retraining, just provide
