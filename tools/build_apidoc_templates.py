@@ -33,9 +33,8 @@ def writeAPIDocTemplate(uri, toctree):
 
 root_path = mvpa.__path__[0]
 
-
-toctree = open(os.path.join(apidoc_path, 'api.txt'), 'w')
-toctree.write('API Reference\n*************\n\n.. toctree::\n\n')
+# compose list of modules
+modules = []
 
 # raw directory parsing
 for dirpath, dirnames, filenames in os.walk(mvpa.__path__[0]):
@@ -46,15 +45,24 @@ for dirpath, dirnames, filenames in os.walk(mvpa.__path__[0]):
                                'mvpa',
                                dirpath))
 
-    writeAPIDocTemplate(module_uri, toctree)
+    modules.append(module_uri)
 
     for filename in filenames:
         # XXX maybe check for extenstions as well?
         if not filename.endswith('.py') or filename == '__init__.py':
             continue
 
-        writeAPIDocTemplate('.'.join([module_uri, filename[:-3]]),
-                            toctree)
+        modules.append('.'.join([module_uri, filename[:-3]]))
 
+
+# write the list
+
+toctree = open(os.path.join(apidoc_path, 'api.txt'), 'w')
+toctree.write('API Reference\n*************\n\n.. toctree::\n\n')
+
+modules.sort()
+
+for m in modules:
+    writeAPIDocTemplate(m, toctree)
 
 toctree.close()
