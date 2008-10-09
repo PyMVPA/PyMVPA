@@ -102,7 +102,7 @@ doc: website
 references:
 	tools/bib2rst_ref.py
 
-htmldoc: apidoc-templates build
+htmldoc: build
 	cd doc && MVPA_APIDOC_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
 
 pdfdoc: pdfdoc-stamp
@@ -126,7 +126,7 @@ apidoc-stamp: build
 	LC_ALL=C epydoc --config doc/api/epydoc.conf
 	touch $@
 
-website: website-stamp
+website: apidoc-templates website-stamp
 website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
