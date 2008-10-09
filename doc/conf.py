@@ -23,7 +23,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-#extensions = []
+extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -54,6 +54,9 @@ today_fmt = '%B %d, %Y'
 
 # List of documents that shouldn't be included in the build.
 unused_docs = []
+
+# what to put into API doc (just class doc, just init, or both
+autoclass_content = 'both'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True
