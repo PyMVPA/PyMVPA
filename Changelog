@@ -28,6 +28,12 @@ Unreleased changes
   * New minimal example for a 'getting started' section in the manual.
   * Update insallation instructions for RPM-based distributions to make use
     of the OpenSUSE Build Service.
+  * Added an initial list of MVPA-related references to the manual, tagged with
+    keywords and comments as well is DOI or similar URL reference to the
+    original document.
+  * Added initial glossary to the manual.
+  * Updated install instructions for several RPM-based GNU/Linux
+    distributions.
 
 
 Releases
