@@ -71,6 +71,7 @@ clean:
 	-@$(MAKE) distclean
 
 distclean:
+	-@rm -f doc/api/mvpa*.txt doc/api/api.txt
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
@@ -101,14 +102,17 @@ doc: website
 references:
 	tools/bib2rst_ref.py
 
-htmldoc:
-	cd doc && $(MAKE) html
+htmldoc: apidoc-templates build
+	cd doc && MVPA_APIDOC_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
 
 pdfdoc: pdfdoc-stamp
 pdfdoc-stamp:
 	cd doc && $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
+
+apidoc-templates:
+	tools/build_apidoc_templates.py
 
 apidoc: apidoc-stamp
 apidoc-stamp: build
@@ -264,4 +268,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests apidoc-templates
