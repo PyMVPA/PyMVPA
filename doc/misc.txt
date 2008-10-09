@@ -64,7 +64,7 @@ will become::
     [general]
     verbose = 1
 
-However, `MVPA_VERBOSE_OUTPUT=stdout` becomes::
+However, :envvar:`MVPA_VERBOSE_OUTPUT` `= stdout` becomes::
 
     [verbose]
     output = stdout
@@ -200,7 +200,7 @@ level:
 * command line: you can use opt.verbose_ for precrafted command
   line option for to give facility to change it from your script (see
   examples)
-* environment variable ``MVPA_VERBOSE``
+* environment variable :envvar:`MVPA_VERBOSE`
 * code: verbose.level property
 
 The following verbosity levels are supported:
@@ -222,13 +222,13 @@ default they are printed just once per occasion, i.e. once per piece of code
 where it is called. Following environment variables control the
 behavior of warnings:
 
-* ``MVPA_WARNINGS_COUNT=<int>`` controls for how many invocations of
+* :envvar:`MVPA_WARNINGS_COUNT` `=<int>` controls for how many invocations of
   specific warning it gets printed (default behavior is 1 for
   once). Specification of negative count results in all invocations
   being printed, and value of 0 obviously suppresses the warnings
-* ``MVPA_WARNINGS_SUPPRESS`` analogous to ``MVPA_WARNINGS_COUNT=0`` it
+* :envvar:`MVPA_WARNINGS_SUPPRESS` analogous to :envvar:`MVPA_WARNINGS_COUNT` `=0` it
   resultant behavior
-* ``MVPA_WARNINGS_BT=<int>`` controls up to how many lines of traceback
+* :envvar:`MVPA_WARNINGS_BT` `=<int>` controls up to how many lines of traceback
   is printed for the warnings
 
 In python code, invocation of warning with argument ``bt = True``
@@ -256,10 +256,10 @@ ids to be enabled (reported):
   option to provide it from your script (see examples). If in command
   line if optDebug_ is used, ``-d list`` is given, PyMVPA will print
   out list of known ids.
-* environment: variable ``MVPA_DEBUG`` can contain comma-separated
+* environment: variable :envvar:`MVPA_DEBUG` can contain comma-separated
   list of ids or python regular expressions to match multiple ids. Thus
-  specifying ``MVPA_DEBUG=CLF.*`` would enable all ids which start with
-  ``CLF``, and ``MVPA_DEBUG=.*`` would enable all known ids.
+  specifying :envvar:`MVPA_DEBUG` `=CLF.*` would enable all ids which start with
+  ``CLF``, and :envvar:`MVPA_DEBUG` `=.*` would enable all known ids.
 * code: debug.active property (e.g. ``debug.active = [ 'RFEC', 'CLF' ]``)
 
 Besides printing debug messages, it is also possible to print some
@@ -280,7 +280,7 @@ metric. You can define new metrics or select predefined ones:
   Concise traceback printout -- prefix common with the previous
   invocation is replaced with ``...``
 
-To enable list of metrics you can use ``MVPA_DEBUG_METRICS`` environment
+To enable list of metrics you can use :envvar:`MVPA_DEBUG_METRICS` environment
 variable to list desired metric names comma-separated. If ``ALL`` is provided,
 it enables all the metrics.
 
@@ -315,7 +315,7 @@ Random Number Generation
 
 To facilitate reproducible troubleshooting, a seed value of random generator
 of NumPy can be provided in debug mode (python is called without ``-O``) via
-environment variable ``MVPA_SEED=<int>``. Otherwise it gets seeded with random
+environment variable :envvar:`MVPA_SEED` `=<int>`. Otherwise it gets seeded with random
 integer which can be displayed with debug id ``RANDOM`` e.g.::
 
   > MVPA_SEED=123 MVPA_DEBUG=RANDOM python test_clf.py
@@ -333,7 +333,7 @@ Unittests at a Grasp
 
 If it is needed to just quickly grasp through all unittests without making
 them to test multiple classifiers (implemented with sweeparg), define
-environmental variable ``MVPA_QUICKTEST`` e.g.::
+environmental variable :envvar:`MVPA_QUICKTEST` e.g.::
 
   > MVPA_WARNINGS_SUPPRESS=no MVPA_QUICKTEST=1 python test_clf.py
   ...............

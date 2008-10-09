@@ -24,8 +24,6 @@ containing descriptions of interesting analysis methods or fruitful
 experiments.
 
 
-.. index:: feature selection stability
-
 .. _CPL+06:
 
 **Chen, X., Pereira, F., Lee, W., Strother, S. & Mitchell, T.** (2006). Exploring predictive and reproducible modeling with the single-subject FIAC dataset. *Human Brain Mapping*, *27*, 452–461.
@@ -33,7 +31,7 @@ experiments.
   reproducibility of a classifier's feature selection as at least equally
   important to it's generalization performance.*
 
-  Keywords: `feature selection stability`
+  Keywords: :keyword:`feature selection stability`
 
   DOI: http://dx.doi.org/10.1002/hbm.20243
 
@@ -46,32 +44,26 @@ experiments.
   URL: http://portal.acm.org/citation.cfm?id=1248548
 
 
-.. index:: least angle regression, LARS
-
 .. _EHJ+04:
 
 **Efron, B., Trevor, H., Johnstone, I. & Tibshirani, R.** (2004). Least Angle Regression. *Annals of Statistics*, *32*, 407–499.
-  Keywords: `least angle regression, LARS`
+  Keywords: :keyword:`least angle regression`, :keyword:`LARS`
 
   DOI: http://dx.doi.org/10.1214/009053604000000067
 
 
-.. index:: support vector machine, SVM, recursive feature elimination, RFE
-
 .. _HH08:
 
 **Hanson, S. J. & Halchenko, Y. O.** (2008). Brain reading using full brain support vector machines for object recognition: there is no "face" identification area. *Neural Computation*, *20*, 486–503.
-  Keywords: `support vector machine, SVM, recursive feature elimination, RFE`
+  Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`recursive feature elimination`, :keyword:`RFE`
 
   DOI: http://dx.doi.org/10.1162/neco.2007.09-06-340
 
 
-.. index:: split-correlation classifier
-
 .. _HGF+01:
 
 **Haxby, J., Gobbini, M., Furey, M., Ishai, A., Schouten, J. & Pietrini, P.** (2001). Distributed and overlapping representations of faces and objects in ventral temporal cortex. *Science*, *293*, 2425–2430.
-  Keywords: `split-correlation classifier`
+  Keywords: :keyword:`split-correlation classifier`
 
   DOI: http://dx.doi.org/10.1126/science.1063736
 
@@ -85,29 +77,23 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nrn1931
 
 
-.. index:: searchlight
-
 .. _KGB06:
 
 **Kriegeskorte, N., Goebel, R. & Bandettini, P.** (2006). Information-based functional brain mapping. *Proceedings of the National Academy of Sciences of the USA*, *103*, 3863–3868.
   *Paper introducing the searchlight algorithm.*
 
-  Keywords: `searchlight`
+  Keywords: :keyword:`searchlight`
 
   DOI: http://dx.doi.org/10.1073/pnas.0600244103
 
 
-.. index:: sparse multinomial logistic regression, SMLR
-
 .. _KCF+05:
 
 **Krishnapuram, B., Carin, L., Figueiredo, M. A. & Hartemink, A. J.** (2005). Sparse multinomial logistic regression: fast algorithms and generalization bounds. *IEEE Transactions on Pattern Analysis and Machine Intelligence*, *27*, 957–968.
-  Keywords: `sparse multinomial logistic regression, SMLR`
+  Keywords: :keyword:`sparse multinomial logistic regression`, :keyword:`SMLR`
 
   DOI: http://dx.doi.org/10.1109/TPAMI.2005.127
 
-
-.. index:: SVM
 
 .. _LSC+05:
 
@@ -115,14 +101,14 @@ experiments.
   *Comprehensive evaluation of preprocessing options with respect to
   SVM-classifier (and others) performance on block-design fMRI data.*
 
-  Keywords: `SVM`
+  Keywords: :keyword:`SVM`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
 
 
 .. _NH02:
 
-**Nichols, T. E. & Holmes, A. P.** (2002). Nonparametric permutation tests for functional neuroimaging: a primer with examples. *Hum Brain Mapp*, *15*, 1–25.
+**Nichols, T. E. & Holmes, A. P.** (2002). Nonparametric permutation tests for functional neuroimaging: a primer with examples. *Human Brain Mapping*, *15*, 1–25.
   *Overview of standard nonparametric randomization and permutation testing
   applied to neuroimaging data (e.g. fMRI)*
 
@@ -135,12 +121,31 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.tics.2006.07.005
 
 
-.. index:: support vector machine, SVM
+.. _SMM+08:
+
+**Sato, J. R., Mourão-Miranda, J., Martin, M. d. G. M., Amaro, E., Morettin, P. A. & Brammer, M. J.** (2008). The impact of functional connectivity changes on support vector machines mapping of fMRI data. *Journal of Neuroscience Methods*, *172*, 94–104.
+  *Discussion of possible scenarios where univariate and multivariate (SVM)
+  sensitivity maps derived from the same dataset could differ. Including the
+  case were univariate methods would assign a substantially larger score to
+  some features.*
+
+  Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`sensitivity`
+
+  DOI: http://dx.doi.org/10.1016/j.jneumeth.2008.04.008
+
 
 .. _Vap95:
 
 **Vapnik, V.** (1995). The Nature of Statistical Learning Theory. Springer: New York.
-  Keywords: `support vector machine, SVM`
+  Keywords: :keyword:`support vector machine`, :keyword:`SVM`
+
+
+.. _WCW+07:
+
+**Wang, Z., Childress, A. R., Wang, J. & Detre, J. A.** (2007). Support vector machine learning-based fMRI data group analysis. *Neuroimage*, *36*, 1139–51.
+  Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`group analysis`
+
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072
 
 
 
