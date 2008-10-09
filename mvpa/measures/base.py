@@ -293,7 +293,7 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         """Initialize the analyzer with the classifier it shall use.
 
         :Parameters:
-          clf : Classifier
+          clf : :class:`Classifier`
             classifier to use.
           force_training : Bool
             if classifier was already trained -- do not retrain
