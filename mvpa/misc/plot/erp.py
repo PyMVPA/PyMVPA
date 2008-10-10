@@ -206,7 +206,8 @@ def plotERP(data, SR=500, onsets=None,
       *args, **kwargs
         Additional arguments to plot().
 
-      :Returns:
+    :Returns:
+      array
         Mean ERP timeseries.
     """
     if pre_mean is None:

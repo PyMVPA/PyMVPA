@@ -103,11 +103,13 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     """ Create a 2d dataset with a clear multivariate signal, but no
     univariate information.
 
-    %%%%%%%%%
-    % O % X %
-    %%%%%%%%%
-    % X % O %
-    %%%%%%%%%
+    ::
+
+      %%%%%%%%%
+      % O % X %
+      %%%%%%%%%
+      % X % O %
+      %%%%%%%%%
     """
 
     # start with noise

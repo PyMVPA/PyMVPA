@@ -303,20 +303,18 @@ class ColumnData(dict):
     def tofile(self, filename, header=True, header_order=None, sep=' '):
         """Write column data to a text file.
 
-        Parameter
-        ---------
-
-        - `filename`: Think about it!
-        - `header`: If `True` a column header is written, using the column
-                    keys. If `False` no header is written.
-        - `header_order`: If it is a list of strings, they will be used instead
+        :Parameter:
+          filename: Think about it!
+          header: If `True` a column header is written, using the column
+                   keys. If `False` no header is written.
+          header_order: If it is a list of strings, they will be used instead
                           of simply asking for the dictionary keys. However
                           these strings must match the dictionary keys in number
                           and identity. This argument type can be used to
                           determine the order of the columns in the output file.
                           The default value is `None`. In this case the columns
                           will be in an arbitrary order.
-        - `sep`: String that is written as a separator between to data columns.
+          sep: String that is written as a separator between to data columns.
         """
         # XXX do the try: except: dance
         file_ = open(filename, 'w')
@@ -374,10 +372,8 @@ class SampleAttributes(ColumnData):
     def __init__(self, source, literallabels=False):
         """Read PyMVPA sample attributes from disk.
 
-        Parameter
-        ---------
-
-        - `source`: filename of an atrribute file
+        :Parameter:
+          source: filename of an atrribute file
         """
         if literallabels:
             dtypes = [str, float]

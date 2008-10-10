@@ -71,6 +71,7 @@ clean:
 	-@$(MAKE) distclean
 
 distclean:
+	-@rm -rf doc/modref
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
@@ -86,7 +87,8 @@ distclean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp \
+		modref-templates-stamp
 
 
 debian-clean:
@@ -101,13 +103,18 @@ doc: website
 references:
 	tools/bib2rst_ref.py
 
-htmldoc:
-	cd doc && $(MAKE) html
+htmldoc: modref-templates build
+	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
 
-pdfdoc: pdfdoc-stamp
+pdfdoc: modref-templates build pdfdoc-stamp
 pdfdoc-stamp:
-	cd doc && $(MAKE) latex
+	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
+	touch $@
+
+modref-templates: modref-templates-stamp
+modref-templates-stamp:
+	tools/build_modref_templates.py
 	touch $@
 
 apidoc: apidoc-stamp

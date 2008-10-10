@@ -31,7 +31,7 @@ class MappedDataset(Dataset):
     multiple samples respectively) or vice versa.
 
     Most likely, this class will not be used directly, but rather
-    indirectly through one of its subclasses (e.g. `MaskedDataset).
+    indirectly through one of its subclasses (e.g. `MaskedDataset`).
     """
 
     def __init__(self, samples=None, mapper=None, dsattr=None, **kwargs):
