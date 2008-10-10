@@ -12,6 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import warning
+from mvpa import cfg
 
 if __debug__:
     from mvpa.base import debug
@@ -159,7 +160,8 @@ def exists(dep, force=False, raiseException=False):
 
         result = _VERIFIED[dep]
 
-    if not result and raiseException:
+    if not result and raiseException \
+       and cfg.getboolean('externals', 'raise exception', True):
         raise RuntimeError, "Required external '%s' was not found" % dep
 
     return result

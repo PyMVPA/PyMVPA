@@ -38,14 +38,16 @@ class CollectableAttribute(object):
     part of a collection.
 
     Derived classes will have specific semantics:
+
     * StateVariable: conditional storage
     * AttributeWithUnique: easy access to a set of unique values
       within a container
     * Parameter: attribute with validity ranges.
-     - ClassifierParameter: specialization to become a part of
-       Classifier's params collection
-     - KernelParameter: --//-- to become a part of Kernel Classifier's
-       kernel_params collection
+
+      - ClassifierParameter: specialization to become a part of
+        Classifier's params collection
+      - KernelParameter: --//-- to become a part of Kernel Classifier's
+        kernel_params collection
 
     Those CollectableAttributes are to be groupped into corresponding
     collections for each class by statecollector metaclass, ie it

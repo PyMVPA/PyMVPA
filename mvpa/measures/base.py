@@ -293,9 +293,8 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         """Initialize the analyzer with the classifier it shall use.
 
         :Parameters:
-          clf : Classifier
-            classifier to use. Only classifiers sub-classed from
-            `LinearSVM` may be used.
+          clf : :class:`Classifier`
+            classifier to use.
           force_training : Bool
             if classifier was already trained -- do not retrain
         """

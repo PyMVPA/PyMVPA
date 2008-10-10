@@ -82,8 +82,7 @@ class BoxcarMapper(Mapper):
         """Project an ND matrix into N+1D matrix
 
         :Returns:
-          an array with the length of the first axis being
-          equal to the length of the `startpoints` sequence.
+          array: (#startpoint, ...)
         """
 
         self._inshape = data.shape

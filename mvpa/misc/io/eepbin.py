@@ -20,11 +20,11 @@ from mvpa.misc.io import DataReader
 class EEPBin(DataReader):
     """Read-access to binary EEP files.
 
-    EEP files are used by eeprobe_ a software for analysing even-related
+    EEP files are used by *eeprobe* a software for analysing even-related
     potentials (ERP), which was developed at the Max-Planck Institute for
     Cognitive Neuroscience in Leipzig, Germany.
 
-    .. _eegprobe: http://http://www.ant-neuro.com/products/eeprobe
+      http://www.ant-neuro.com/products/eeprobe
 
     EEP files consist of a plain text header and a binary data block in a
     single file. The header starts with a line of the form
@@ -47,9 +47,7 @@ class EEPBin(DataReader):
     def __init__(self, source):
         """Read EEP file and store header and data.
 
-        Parameter
-        ---------
-
+        :Parameter:
           source : str
             Filename.
         """

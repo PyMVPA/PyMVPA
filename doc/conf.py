@@ -11,19 +11,249 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
-import sys, os
+import sys, os, re
+import numpy as N
+
+##################################################
+# Config settings are at the bottom of the file! #
+##################################################
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #sys.path.append(os.path.abspath('some/directory'))
 
+
+def extractItemListBlock(blocktypes, lines):
+    """Extract a number of lines belonging to an idented block.
+
+    The block is defined by a minimum indentation level, in turn
+    defined by a line starting with any string given by the 'blocktypes'
+    sequence.
+
+    It returns the lines matching the block and the start and endline index
+    wrt the original line sequence.
+
+    WARNING: It may explode if there is more than one block with the same
+    indentifier.
+    """
+    param = None
+    in_block = False
+    indent = None
+    start_line = None
+    end_line = None
+
+    for i, line in enumerate(lines):
+        # ignore empty lines
+        if line.isspace() or not len(line.strip()):
+            continue
+
+        # strip leading whitespace
+        sline = line.lstrip()
+
+        # look for block start
+        if N.any([sline.startswith(bt) for bt in blocktypes]):
+            in_block = True
+            indent = len(line) - len(sline)
+            start_line = i
+            continue
+
+        # check if end is reached
+        if in_block and len(line) - len(sline) <= indent:
+            end_line = i
+            return param, start_line, end_line
+
+        # store param block line
+        if in_block:
+            if not param:
+                param = []
+            param.append(line)
+
+    # when nothing follows param block
+    if start_line:
+        end_line = len(lines) - 1
+
+    return param, start_line, end_line
+
+
+def smoothName(s):
+    """Handle all kinds of voodoo cases, that might disturb RsT
+    """
+    s = s.strip()
+    s = re.sub('\*', '\*', s)
+    return s
+
+
+def segmentItemList(lines, name):
+    """Parse the lines of a block into segment items of the format
+    used in PyMVPA::
+
+      name[: type]
+        (multiline) description
+
+    """
+    # assumes no empty lines left!
+    items = []
+    last_item = None
+
+    # determine indentation level
+    indent = len(lines[0]) - len(lines[0].lstrip())
+
+    for line in lines:
+        # if top level indent, we have a parameter def
+        if indent == len(line) - len(line.lstrip()):
+            # rescue previous one
+            if last_item is not None:
+                items.append(last_item)
+                last_item = None
+
+            last_item = {'name': None, 'type': None, 'descr': []}
+            # try splitting param def
+            l = line.split(':')
+            if len(l) >= 2:
+                last_item['name'] = smoothName(l[0])
+                last_item['type'] = u':'.join(l[1:]).strip()
+            elif len(l) == 1:
+                last_item['name'] = smoothName(line)
+            else:
+                print line
+                raise RuntimeError, \
+                      'Should not have happend, inspect %s' % name
+        else:
+            # it must belong to last_item and be its description
+            if last_item is None:
+                print line
+                raise ValueError, \
+                      'Parameter description, without parameter in %s' % name
+            last_item['descr'].append(line.strip())
+
+    if last_item is not None:
+        items.append(last_item)
+
+    return items
+
+
+def reformatParameterBlock(lines, name):
+    """Format a proper parameters block from the lines of a docstring
+    version of this block.
+    """
+    params = segmentItemList(lines, name)
+
+    out = []
+    # collection is done, now pretty print
+    for p in params:
+        out.append(':param ' + p['name'] + ': ')
+        if len(p['descr']):
+            # append first description line to previous one
+            out[-1] += p['descr'][0]
+            for l in p['descr'][1:]:
+                out.append('  ' + l)
+        if p['type']:
+            out.append(':type ' + p['name'] + ': ' + p['type'])
+
+    # safety line
+    out.append(u'')
+    return out
+
+
+def reformatReturnsBlock(lines, name):
+    """Format a proper returns block from the lines of a docstring
+    version of this block.
+    """
+    ret = segmentItemList(lines, name)
+
+    if not len(ret) == 1:
+        raise ValueError, \
+              '%s docstring specifies more than one return value' % name
+
+    ret  = ret[0]
+    out = []
+    out.append(':rtype: ' + ret['name'])
+    if len(ret['descr']):
+        out.append(':returns:')
+        for l in ret['descr']:
+            out.append('  ' + l)
+
+    # safety line
+    out.append(u'')
+    return out
+
+
+def reformatExampleBlock(lines, name):
+    """Turn an example block into a verbatim text.
+    """
+    out = [u'::', u'']
+    out += lines
+    # safety line
+    out.append(u'')
+    return out
+
+
+# demo function to access docstrings for processing
+def dumpit(app, what, name, obj, options, lines):
+    """ For each docstring this function is called with the following set of
+    arguments:
+
+    app
+      the Sphinx application object
+    what
+      the type of the object which the docstring belongs to (one of "module",
+      "class", "exception", "function", "method", "attribute")
+    name
+      the fully qualified name of the object
+    obj
+      the object itself
+    options
+      the options given to the directive: an object with attributes
+      inherited_members, undoc_members, show_inheritance and noindex that are
+      true if the flag option of same name was given to the auto directive
+    lines
+      the lines of the docstring (as a list)
+    """
+    param, pstart, pend = extractItemListBlock([':Parameters:',
+                                                ':Parameter:'], lines)
+    if param:
+        # make it beautiful
+        param = reformatParameterBlock(param, name)
+
+        # replace old block with new one
+        lines[pstart:pend] = param
+
+    returns, rstart, rend = extractItemListBlock([':Returns:'], lines)
+    if returns:
+        returns = reformatReturnsBlock(returns, name)
+        lines[rstart:rend] = returns
+
+    examples, exstart, exend = extractItemListBlock([':Examples:',
+                                                     ':Example:'], lines)
+    if examples:
+        print 'WARNING: Example in %s should become a proper snippet' % name
+        examples = reformatExampleBlock(examples, name)
+        lines[exstart:exend] = examples
+
+    # kill things that sphinx does not know
+    ls, lstart, lend = extractItemListBlock(['.. packagetree::'], lines)
+    if ls:
+        del(lines[lstart:lend])
+
+
+# make this file a sphinx extension itself, to be able to do docstring
+# post-processing
+def setup(app):
+    app.connect('autodoc-process-docstring', dumpit)
+
+
+
+
+
+
+
 # General configuration
 # ---------------------
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-#extensions = []
+extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -54,6 +284,9 @@ today_fmt = '%B %d, %Y'
 
 # List of documents that shouldn't be included in the build.
 unused_docs = []
+
+# what to put into API doc (just class doc, just init, or both
+autoclass_content = 'both'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True

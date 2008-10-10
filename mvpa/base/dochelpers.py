@@ -46,6 +46,7 @@ def handleDocString(text):
 
 def enhancedDocString(name, lcl, *args):
     """Generate enhanced doc strings."""
+    return lcl['__doc__']
     rst_lvlmarkup = ["=", "-", "_"]
 
     docs = []
@@ -72,6 +73,7 @@ def enhancedClassDocString(cls, *args):
     """
     name = cls.__name__
     lcl = cls.__dict__
+    return lcl['__doc__']
     rst_lvlmarkup = ["=", "-", "_"]
 
     initdoc = None

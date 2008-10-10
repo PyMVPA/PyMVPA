@@ -64,15 +64,14 @@ class Dataset(object):
     would not work.  The same applies to any other attribute which has
     corresponding unique* access property.
 
-    XXX Notes about migration to use Collections to store data and
-    attributes for samples, features, and dataset itself:
-
-    changes:
-      _data  ->  s_attr collection (samples attributes)
-      _dsattr -> ds_attr collection
-                 f_attr collection (features attributes)
-
     """
+    # XXX Notes about migration to use Collections to store data and
+    # attributes for samples, features, and dataset itself:
+
+    # changes:
+    #   _data  ->  s_attr collection (samples attributes)
+    #   _dsattr -> ds_attr collection
+    #              f_attr collection (features attributes)
 
     # static definition to track which unique attributes
     # have to be reset/recomputed whenever anything relevant
@@ -1309,27 +1308,32 @@ class Dataset(object):
         please use selectFeatures or selectSamples functions directly
 
         Examples:
-          Mimique plain selectSamples:
+          Mimique plain selectSamples::
+
             dataset.select([1,2,3])
             dataset[[1,2,3]]
 
-          Mimique plain selectFeatures:
+          Mimique plain selectFeatures::
+
             dataset.select(slice(None), [1,2,3])
             dataset.select('all', [1,2,3])
             dataset[:, [1,2,3]]
 
-          Mixed (select features and samples):
+          Mixed (select features and samples)::
+
             dataset.select([1,2,3], [1, 2])
             dataset[[1,2,3], [1, 2]]
 
-          Select samples matching some attributes
+          Select samples matching some attributes::
+
             dataset.select(labels=[1,2], chunks=[2,4])
             dataset.select('labels', [1,2], 'chunks', [2,4])
             dataset['labels', [1,2], 'chunks', [2,4]]
 
           Mixed -- out of first 100 samples, select only those with
           labels 1 or 2 and belonging to chunks 2 or 4, and select
-          features 2 and 3
+          features 2 and 3::
+
             dataset.select(slice(0,100), [2,3], labels=[1,2], chunks=[2,4])
             dataset[:100, [2,3], 'labels', [1,2], 'chunks', [2,4]]
 
