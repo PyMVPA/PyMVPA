@@ -9,9 +9,22 @@
 """Unit tests for PyMVPA stats helpers"""
 
 from mvpa.base import externals
-from mvpa.clfs.stats import MCNullDist
+from mvpa.clfs.stats import MCNonparamDist, MCFixedDist, FixedDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
+
+# Prepare few distributions to test
+#kwargs = {'permutations':10, 'tail':'any'}
+nulldist_sweep = [ MCNonparamDist(permutations=10, tail='any'),
+                   MCNonparamDist(permutations=10, tail='right')]
+if externals.exists('scipy'):
+    import scipy.stats
+    nulldist_sweep += [ MCFixedDist(scipy.stats.norm, permutations=10, tail='any'),
+                        MCFixedDist(scipy.stats.norm, permutations=10, tail='right'),
+                        MCFixedDist(scipy.stats.expon, permutations=10, tail='right'),
+                        FixedDist(scipy.stats.norm(0, 0.01), tail='any'),
+                        FixedDist(scipy.stats.norm(0, 0.01), tail='right'),
+                        ]
 
 class StatsTests(unittest.TestCase):
 
@@ -34,26 +47,36 @@ class StatsTests(unittest.TestCase):
         self.failUnless(p < 0.05)
 
 
-    def testNullDistProb(self):
+    @sweepargs(nd=nulldist_sweep[1:])
+    def testNullDistProb(self, nd):
         ds = datasets['uni2small']
-        null = MCNullDist(permutations=10, tail='right')
+        null = nd #MCNonparamDist(permutations=10, tail='right')
 
         null.fit(OneWayAnova(), ds)
 
-        # check reasonable output (F-score always positive and close to zero
-        # for random data
+        # check reasonable output.
+        # p-values for non-bogus features should significantly different,
+        # while bogus (0) not
         prob = null.cdf([3,0,0,0,0,0])
-        self.failUnless((prob == [0, 1, 1, 1, 1, 1]).all())
-        # has to have matching shape
-        self.failUnlessRaises(ValueError, null.cdf, [5,3,4])
+        self.failUnless(prob[0] < 0.01)
+        self.failUnless((prob[1:] > 0.05).all())
 
-        # test 'any' mode
+        # has to have matching shape
+        if not isinstance(nd, FixedDist):
+            # Fixed dist is univariate ATM so it doesn't care
+            # about dimensionality and gives 1 output value
+            self.failUnlessRaises(ValueError, null.cdf, [5, 3, 4])
+
+
+    def testNullDistProbAny(self):
         if not externals.exists('scipy'):
             return
 
+        # test 'any' mode
         from mvpa.measures.corrcoef import CorrCoef
+        ds = datasets['uni2small']
 
-        null = MCNullDist(permutations=10, tail='any')
+        null = MCNonparamDist(permutations=10, tail='any')
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
@@ -67,11 +90,12 @@ class StatsTests(unittest.TestCase):
         self.failUnless(null.cdf(100) == 0)
 
 
-    def testDatasetMeasureProb(self):
+    @sweepargs(nd=nulldist_sweep)
+    def testDatasetMeasureProb(self, nd):
         ds = datasets['uni2medium']
 
         # to estimate null distribution
-        m = OneWayAnova(null_dist=MCNullDist(permutations=10, tail='right'))
+        m = OneWayAnova(null_dist=nd)
 
         score = m(ds)
 
