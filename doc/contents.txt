@@ -23,4 +23,4 @@ PyMVPA Documentation Contents
    legal
    changelog
    todo
-   api/api.txt
+   modref

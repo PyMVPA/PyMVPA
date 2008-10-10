@@ -1,20 +1,22 @@
 #!/usr/bin/env python
-# Attempt to generate templates for API docs with Sphinx
-# Do not work so far (missing externals cause sphinx to fail
-
+# Attempt to generate templates for module reference with Sphinx
 
 import os
 import re
 import mvpa
 
-apidoc_path = os.path.join('doc', 'api')
+
+modref_path = os.path.join('doc', 'modref')
+if not os.path.exists(modref_path):
+    os.mkdir(modref_path)
+
 # only separating first two levels
 rst_section_levels = ['*', '=', '-', '-', '-']
 
-def writeAPIDocTemplate(uri, toctree):
+def writeAPIDocTemplate(uri):
     try:
         #exec 'import ' + uri + ' as obj'
-        tf = open(os.path.join(apidoc_path, uri + '.txt'), 'w')
+        tf = open(os.path.join(modref_path, uri + '.txt'), 'w')
 
         ad = '.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n'
         title = uri
@@ -25,11 +27,8 @@ def writeAPIDocTemplate(uri, toctree):
         #ad += '  :members:\n  :inherited-members:\n  :undoc-members:\n'
         ad += '  :members:\n  :undoc-members:\n' \
               '  :show-inheritance:\n  :noindex:\n'
-
         tf.write(ad)
         tf.close()
-
-        toctree.write('  ' + uri + '\n')
     except:
         print 'Warning: Cannot import', uri
 
@@ -57,15 +56,6 @@ for dirpath, dirnames, filenames in os.walk(mvpa.__path__[0]):
 
         modules.append('.'.join([module_uri, filename[:-3]]))
 
-
 # write the list
-
-toctree = open(os.path.join(apidoc_path, 'api.txt'), 'w')
-toctree.write('API Reference\n*************\n\n.. toctree::\n\n')
-
-modules.sort()
-
 for m in modules:
-    writeAPIDocTemplate(m, toctree)
-
-toctree.close()
+    writeAPIDocTemplate(m)
