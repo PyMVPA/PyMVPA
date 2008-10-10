@@ -106,9 +106,9 @@ references:
 htmldoc: apidoc-templates build
 	cd doc && MVPA_APIDOC_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
 
-pdfdoc: pdfdoc-stamp
+pdfdoc: apidoc-templates build pdfdoc-stamp
 pdfdoc-stamp:
-	cd doc && $(MAKE) latex
+	cd doc && MVPA_APIDOC_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
