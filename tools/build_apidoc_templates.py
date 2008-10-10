@@ -8,6 +8,8 @@ import re
 import mvpa
 
 apidoc_path = os.path.join('doc', 'api')
+# only separating first two levels
+rst_section_levels = ['*', '=', '-', '-', '-']
 
 def writeAPIDocTemplate(uri, toctree):
     try:
@@ -16,7 +18,7 @@ def writeAPIDocTemplate(uri, toctree):
 
         ad = '.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n'
         title = uri
-        ad += title + '\n' + '*' * len(title)
+        ad += title + '\n' + rst_section_levels[uri.count('.')] * len(title)
         ad += '\n\n.. automodule:: ' + uri + '\n'
         # also listing inherited members swamps the index with lots of
         # quasi-duplicates

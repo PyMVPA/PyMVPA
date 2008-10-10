@@ -231,6 +231,12 @@ def dumpit(app, what, name, obj, options, lines):
         examples = reformatExampleBlock(examples, name)
         lines[exstart:exend] = examples
 
+    # kill things that sphinx does not know
+    ls, lstart, lend = extractItemListBlock(['.. packagetree::'], lines)
+    if ls:
+        del(lines[lstart:lend])
+
+
 # make this file a sphinx extension itself, to be able to do docstring
 # post-processing
 def setup(app):
