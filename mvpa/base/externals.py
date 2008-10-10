@@ -160,7 +160,8 @@ def exists(dep, force=False, raiseException=False):
 
         result = _VERIFIED[dep]
 
-    if not result and raiseException and cfg.getboolean('apidoc', 'raise exception', True):
+    if not result and raiseException \
+       and cfg.getboolean('externals', 'raise exception', True):
         raise RuntimeError, "Required external '%s' was not found" % dep
 
     return result
