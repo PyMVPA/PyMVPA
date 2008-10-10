@@ -12,6 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base import externals, warning
+
+if __debug__:
+    from mvpa.base import debug
 
 class Distribution(object):
     def __init__(self, tail='left'):
@@ -42,24 +46,9 @@ class Distribution(object):
 
 
 
-class MCNullDist(Distribution):
-    # XXX this should be the baseclass of a bunch of tests with more
-    # sophisticated tests, perhaps making more assumptions about the data
-    # TODO invent derived classes that make use of some reasonable assumptions
-    # e.g. a gaussian distribution of transfer errors under the null hypothesis
-    # this would have the advantage that a model could be fitted to a much
-    # lower number of transfer errors and therefore dramatically reduce the
-    # necessary CPU time. This is almost trivial to do with
-    #   scipy.stats.norm.{fit,cdf}
-    # Caution should be paid though since resultant distributions might be
-    # quite far from some conventional ones (e.g. Normal) -- it is expected to
-    # have them bimodal (or actually multimodal) in many scenarios.
-    """Class to determine the distribution of a measure under the NULL
-    distribution (no signal).
-
-    No assumptions are made about the shape of the distribution under the null
-    hypothesis. Instead this distribution is estimated by performing multiple
-    measurements with permuted `label` vectors, hence no or random signal.
+class MCDist(Distribution):
+    """Base class of a bunch of distributions for Null testing, where
+    parameters are estimated from the data
 
     The distribution is estimated by calling fit() with an appropriate
     `DatasetMeasure` or `TransferError` instance and a training and a
@@ -76,7 +65,8 @@ class MCNullDist(Distribution):
     This class also supports `FeaturewiseDatasetMeasure`. In that case `cdf()`
     returns an array of featurewise probabilities/frequencies.
     """
-    def __init__(self, permutations=1000, **kwargs):
+
+    def __init__(self, permutations=100, **kwargs):
         """Cheap initialization.
 
         :Parameter:
@@ -87,7 +77,7 @@ class MCNullDist(Distribution):
         """
         Distribution.__init__(self, **kwargs)
 
-        self.__dist_samples = None
+        self._dist_samples = None
         self.__permutations = permutations
         """Number of permutations to compute the estimate the null
         distribution."""
@@ -128,7 +118,7 @@ class MCNullDist(Distribution):
                 dist_samples.append(measure(wdata))
 
         # store errors
-        self.__dist_samples = N.asarray(dist_samples)
+        self._dist_samples = N.asarray(dist_samples)
 
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
@@ -142,15 +132,32 @@ class MCNullDist(Distribution):
         wait for it to be destroyed. Clean would bind dist_samples to
         empty list to let gc revoke the memory.
         """
-        self.__dist_samples = []
+        self._dist_samples = []
 
 
     @property
     def dist_samples(self):
         """Samples obtained by permutting the labels"""
-        return self.__dist_samples
+        return self._dist_samples
 
+#
+# XXX whole logic left/right/any can be done in 1 place
+# (Distribution?) if all subclasses simply estimate values of cdf for
+# given x.  That would result in a better logic: MCNonparamDist would
+# be just MCFixedDist(dist_gen=Nonparam), so everything needs further
+# refactoring imho (yoh).
+#
+# Also cdf(x) per se shouldn't do 'left/right' -- that is a job of .p(x)
+# I guess ;-)
+#
+class MCNonparamDist(MCDist):
+    """Class to determine the distribution of a measure under the NULL
+    distribution (no signal).
 
+    No assumptions are made about the shape of the distribution under the null
+    hypothesis. Instead this distribution is estimated by performing multiple
+    measurements with permuted `label` vectors, hence no or random signal.
+    """
     def cdf(self, x):
         """Returns the frequency/probability of a value `x` given the estimated
         distribution. Returned values are determined left or right tailed
@@ -161,24 +168,24 @@ class MCNullDist(Distribution):
         a scalar value or an array of a matching shape.
         """
         if self._tail == 'left':
-            return (self.__dist_samples <= x).mean(axis=0)
+            return (self._dist_samples <= x).mean(axis=0)
         elif self._tail == 'right':
-            return (self.__dist_samples >= x).mean(axis=0)
+            return (self._dist_samples >= x).mean(axis=0)
         elif self._tail == 'any':
             # easy if just scalar
             if N.isscalar(x):
-                right_tail = N.median(self.__dist_samples) < x
+                right_tail = N.median(self._dist_samples) < x
                 if right_tail:
-                    return (self.__dist_samples >= x).mean(axis=0)
+                    return (self._dist_samples >= x).mean(axis=0)
                 else:
-                    return (self.__dist_samples <= x).mean(axis=0)
+                    return (self._dist_samples <= x).mean(axis=0)
 
             # now handle case of 'x is sequence'
             x = N.array(x)
 
             # determine on which tail we are
             # if critical is larger than median of distribution:
-            right_tail = N.array(N.median(self.__dist_samples) < x) #, axis=0))
+            right_tail = N.array(N.median(self._dist_samples) < x) #, axis=0))
             # ancient numpy does not have axis kwarg for median
 
             # generate container for results
@@ -190,14 +197,14 @@ class MCNullDist(Distribution):
             # handle right tail cases
             if right_tail_fraction > 0:
                 res[right_tail] = (
-                    self.__dist_samples[:, right_tail] >= x[right_tail]
+                    self._dist_samples[:, right_tail] >= x[right_tail]
                         ).mean(axis=0)
 
             # handle left tail cases
             if right_tail_fraction < 1:
                 left_tail = right_tail == False
                 res[left_tail] = (
-                    self.__dist_samples[:, left_tail] <= x[left_tail]
+                    self._dist_samples[:, left_tail] <= x[left_tail]
                         ).mean(axis=0)
 
             return res
@@ -205,6 +212,133 @@ class MCNullDist(Distribution):
         else:
             raise RuntimeError, "This should not happen!"
 
+
+# XXX think how to come up with some generic decorator
+#     to do this:
+class MCNullDist(MCNonparamDist):
+    def __init__(self, *args, **kwargs):
+        warning('Deprecation: class %s is superseeded by %s'
+                % (self.__class__.__name__, self.__class__.__bases__[0].__name__))
+        MCNonparamDist.__init__(self, *args, **kwargs)
+
+
+# some bogus class which never matches
+class _rv_frozen_bogus(object):
+    pass
+
+if externals.exists('scipy'):
+    import scipy.stats
+    rv_frozen = scipy.stats.distributions.rv_frozen
+else:
+    rv_frozen = _rv_frozen_bogus
+
+
+class MCFixedDist(MCDist):
+    """Proxy/Adaptor class for SciPy distributions which first estimates the distribution.
+
+    All distributions from SciPy's 'stats' module can be used with this class.
+
+    TODO automagically decide on the number of samples/permutations needed
+    Caution should be paid though since resultant distributions might be
+    quite far from some conventional ones (e.g. Normal) -- it is expected to
+    have them bimodal (or actually multimodal) in many scenarios.
+
+    >>> import numpy as N
+    >>> from scipy import stats
+    >>> from mvpa.clfs.stats import MCFixedDist
+    >>>
+    >>> dist = MCFixedDist(stats.norm)
+    >>> dist.cdf(2)
+    array(0.5)
+    >>>
+    >>> dist.cdf(N.arange(5))
+    array([ 0.30853754,  0.40129367,  0.5       ,  0.59870633,  0.69146246])
+    >>>
+    >>> dist = MCFixedDist(stats.norm, tail='right')
+    >>> dist.cdf(N.arange(5))
+    array([ 0.69146246,  0.59870633,  0.5       ,  0.40129367,  0.30853754])
+    """
+    def __init__(self, dist_gen, **kwargs):
+        """
+        :Parameter:
+          dist_gen: distribution generator object
+            This can be any generator the has a `fit()` method to report the
+            cumulative distribition function values.
+        """
+        MCDist.__init__(self, **kwargs)
+
+        self._dist_gen = dist_gen
+        self._dist = None
+
+
+    def fit(self, *args, **kwargs):
+        """Does nothing since the distribution is already fixed."""
+        super(MCFixedDist, self).fit(*args, **kwargs)
+        dist_samples = self.dist_samples
+
+        # to decide either it was done on scalars or vectors
+        shape = dist_samples.shape
+        nshape = len(shape)
+        # if just 1 dim, original data was scalar, just create an
+        # artif dimension for it
+        if nshape == 1:
+            dist_samples = dist_samples[:, N.newaxis]
+
+        # we need to fit per each element
+        # XXX could be more elegant?
+        dist_samples_rs = dist_samples.reshape((shape[0], -1))
+        dist = []
+        for samples in dist_samples_rs.T:
+            params = self._dist_gen.fit(samples)
+            if __debug__:
+                debug('STAT', 'Estimated parameters for the %s are %s'
+                      % (self._dist_gen, str(params)))
+            dist.append(self._dist_gen(*params))
+        self._dist = dist
+
+
+    def cdf(self, x):
+        """Return value of the cumulative distribution function at `x`.
+        """
+        if self._dist is None:
+            # XXX We might not want to descriminate that way since
+            # usually generators also have .cdf where they rely on the
+            # default parameters
+            raise RuntimeError, "Distribution has to be estimated first"
+        #raise NotImplementedError
+
+        is_scalar = N.isscalar(x)
+        if is_scalar:
+            x = [x]
+
+        # assure x is a 1D array now
+        x = N.asanyarray(x).reshape((-1,))
+
+        if len(self._dist) != len(x):
+            raise ValueError, 'Distribution was fit for structure with %d' \
+                  ' elements, whenever now queried with %d elements' \
+                  % (len(self._dist), len(x))
+
+        # extract cdf values per each element
+        cdfs = [ dist.cdf(v) for v, dist in zip(x, self._dist) ]
+        cdfs = N.array(cdfs)
+
+        # XXX probably is very similar to what FixedDist.cdf would
+        # look like if it was complete... may be we could unite those
+        # two somehow
+        if self._tail == 'left':
+            res = cdfs
+        elif self._tail == 'right':
+            res = 1 - cdfs
+        elif self._tail == 'any':
+            # more fun
+            right_tail = (cdfs >= 0.5)
+            res = cdfs
+            res[right_tail] = 1.0 - res[right_tail]
+
+        if is_scalar:
+            return res[0]
+        return res
 
 
 class FixedDist(Distribution):
@@ -247,7 +381,13 @@ class FixedDist(Distribution):
     def cdf(self, x):
         """Return value of the cumulative distribution function at `x`.
         """
+        cdf = self._dist.cdf(x)
         if self._tail == 'left':
-            return self._dist.cdf(x)
-        else:
-            return 1 - self._dist.cdf(x)
+            return cdf
+        elif self._tail == 'right':
+            return 1 - cdf
+        elif self._tail == 'any':
+            right_tail = (cdf >= 0.5)
+            cdf[right_tail] = 1.0 - cdf[right_tail]
+            return cdf
+
