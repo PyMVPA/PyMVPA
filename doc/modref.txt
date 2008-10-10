@@ -1,0 +1,20 @@
+.. -*- mode: rst -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+
+.. _modref:
+
+****************
+Module Reference
+****************
+
+This is the PyMVPA Module reference. It limits the technical information to a
+reasonable level. Developers might want to refer to the `API reference`_ with
+the full technical details.
+
+.. _API Reference: api/index.html
+
+
+.. toctree::
+  :glob:
+
+  modref/*

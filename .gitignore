@@ -34,5 +34,4 @@ data/haxby8x6
 .nfs*
 *.valgrind.out*
 *.kcache.*
-doc/api/mvpa*.txt
-doc/api/api.txt
+doc/modref
