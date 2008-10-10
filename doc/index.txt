@@ -52,6 +52,7 @@ Documentation
 * :ref:`Development Changelog <changelog>` (see what has changed)
 * :ref:`Developer Guidelines <devguide>` (information for people contributing
   code)
+* :ref:`Module Reference <modref>` (user-oriented reference, less complex than full API docs)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
 * :ref:`FAQ <faq>` (short answers to common problems)
