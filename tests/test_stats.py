@@ -9,21 +9,21 @@
 """Unit tests for PyMVPA stats helpers"""
 
 from mvpa.base import externals
-from mvpa.clfs.stats import MCNullHyp, FixedNullHyp
+from mvpa.clfs.stats import MCNullDist, FixedNullDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
-nulldist_sweep = [ MCNullHyp(permutations=10, tail='any'),
-                   MCNullHyp(permutations=10, tail='right')]
+nulldist_sweep = [ MCNullDist(permutations=10, tail='any'),
+                   MCNullDist(permutations=10, tail='right')]
 if externals.exists('scipy'):
     import scipy.stats
-    nulldist_sweep += [ MCNullHyp(scipy.stats.norm, permutations=10, tail='any'),
-                        MCNullHyp(scipy.stats.norm, permutations=10, tail='right'),
-                        MCNullHyp(scipy.stats.expon, permutations=10, tail='right'),
-                        FixedNullHyp(scipy.stats.norm(0, 0.01), tail='any'),
-                        FixedNullHyp(scipy.stats.norm(0, 0.01), tail='right'),
+    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10, tail='any'),
+                        MCNullDist(scipy.stats.norm, permutations=10, tail='right'),
+                        MCNullDist(scipy.stats.expon, permutations=10, tail='right'),
+                        FixedNullDist(scipy.stats.norm(0, 0.01), tail='any'),
+                        FixedNullDist(scipy.stats.norm(0, 0.01), tail='right'),
                         ]
 
 class StatsTests(unittest.TestCase):
@@ -62,7 +62,7 @@ class StatsTests(unittest.TestCase):
         self.failUnless((prob[1:] > 0.05).all())
 
         # has to have matching shape
-        if not isinstance(nd, FixedNullHyp):
+        if not isinstance(nd, FixedNullDist):
             # Fixed dist is univariate ATM so it doesn't care
             # about dimensionality and gives 1 output value
             self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
@@ -76,7 +76,7 @@ class StatsTests(unittest.TestCase):
         from mvpa.measures.corrcoef import CorrCoef
         ds = datasets['uni2small']
 
-        null = MCNullHyp(permutations=10, tail='any')
+        null = MCNullDist(permutations=10, tail='any')
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
