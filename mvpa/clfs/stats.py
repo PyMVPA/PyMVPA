@@ -46,11 +46,15 @@ class Nonparametric(object):
         return (self._dist_samples <= x).mean(axis=0)
 
 
-class NullHyp(Stateful):
+class NullDist(Stateful):
     """Base class for null-hypothesis testing.
 
     """
 
+    # Although base class is not benefiting from states, derived
+    # classes do (MCNullDist). For the sake of avoiding multiple
+    # inheritance and associated headache -- let them all be Stateful,
+    # performance hit should be negligible in most of the scenarios
     _ATTRIBUTE_COLLECTIONS = ['states']
 
     def __init__(self, tail='left', **kwargs):
@@ -66,8 +70,9 @@ class NullHyp(Stateful):
         self._tail = tail
 
         # sanity check
-        if self._tail not in ['left', 'right', 'any']:
+        if tail not in ['left', 'right', 'any']:
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
+                  % tail
 
 
     def fit(self, measure, wdata, vdata=None):
@@ -102,8 +107,8 @@ class NullHyp(Stateful):
         else:         return cdf
 
 
-class MCNullHyp(NullHyp):
-    """Null-hypothesis distribution is estimated from randomly permutted data labels.
+class MCNullDist(NullDist):
+    """Null-hypothesis distribution is estimated from randomly permuted data labels.
 
     The distribution is estimated by calling fit() with an appropriate
     `DatasetMeasure` or `TransferError` instance and a training and a
@@ -125,14 +130,14 @@ class MCNullHyp(NullHyp):
     TODO automagically decide on the number of samples/permutations needed
     Caution should be paid though since resultant distributions might be
     quite far from some conventional ones (e.g. Normal) -- it is expected to
-    have them bimodal (or actually multimodal) in many scenarios.
+    them to be bimodal (or actually multimodal) in many scenarios.
     """
 
     dist_samples = StateVariable(enabled=False,
                                  doc='Samples obtained for each permutation')
 
     def __init__(self, dist_class=Nonparametric, permutations=100, **kwargs):
-        """Cheap initialization.
+        """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         :Parameter:
           dist_class: class
@@ -144,7 +149,7 @@ class MCNullHyp(NullHyp):
             This many permutations of label will be performed to
             determine the distribution under the null hypothesis.
         """
-        NullHyp.__init__(self, **kwargs)
+        NullDist.__init__(self, **kwargs)
 
         self._dist_class = dist_class
         self._dist = []                 # actual distributions
@@ -261,34 +266,23 @@ class MCNullHyp(NullHyp):
 
 
 
-# XXX think how to come up with some generic decorator
-#     to do deprecation warning
-class MCNullDist(MCNullHyp):
-    def __init__(self, *args, **kwargs):
-        warning('Deprecation: class %s is superseeded by %s'
-                % (self.__class__.__name__, self.__class__.__bases__[0].__name__))
-        MCNullHyp.__init__(self, *args, **kwargs)
-
-
-# XXX I would not even mind to absorb this functionality to be default
-#     within NullHyp
-class FixedNullHyp(NullHyp):
+class FixedNullDist(NullDist):
     """Proxy/Adaptor class for SciPy distributions.
 
     All distributions from SciPy's 'stats' module can be used with this class.
 
     >>> import numpy as N
     >>> from scipy import stats
-    >>> from mvpa.clfs.stats import FixedNullHyp
+    >>> from mvpa.clfs.stats import FixedNullDist
     >>>
-    >>> dist = FixedNullHyp(stats.norm(loc=2, scale=4))
+    >>> dist = FixedNullDist(stats.norm(loc=2, scale=4))
     >>> dist.p(2)
-    array(0.5)
+    0.5
     >>>
     >>> dist.cdf(N.arange(5))
     array([ 0.30853754,  0.40129367,  0.5       ,  0.59870633,  0.69146246])
     >>>
-    >>> dist = FixedNullHyp(stats.norm(loc=2, scale=4), tail='right')
+    >>> dist = FixedNullDist(stats.norm(loc=2, scale=4), tail='right')
     >>> dist.p(N.arange(5))
     array([ 0.69146246,  0.59870633,  0.5       ,  0.40129367,  0.30853754])
     """
@@ -299,7 +293,7 @@ class FixedNullHyp(NullHyp):
             This can be any object the has a `cdf()` method to report the
             cumulative distribition function values.
         """
-        NullHyp.__init__(self, **kwargs)
+        NullDist.__init__(self, **kwargs)
 
         self._dist = dist
 
