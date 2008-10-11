@@ -1001,10 +1001,14 @@ class StateCollection(Collection):
         It might be handy to store set of enabled states and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> states_enabled = stateful.enabled
-        >>> stateful.enabled = ['blah']
-        >>> stateful.enabled = states_enabled
-
+        >>> from mvpa.misc.state import Stateful, StateVariable
+        >>> class Blah(Stateful):
+        ...   bleh = StateVariable(enabled=False, doc='Example')
+        ...
+        >>> blah = Blah()
+        >>> states_enabled = blah.states.enabled
+        >>> blah.states.enabled = ['bleh']
+        >>> blah.states.enabled = states_enabled
         """
         for index in self._items.keys():
             self.enable(index, index in indexlist)
