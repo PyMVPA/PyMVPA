@@ -9,21 +9,21 @@
 """Unit tests for PyMVPA stats helpers"""
 
 from mvpa.base import externals
-from mvpa.clfs.stats import MCNonparamDist, MCFixedDist, FixedDist
+from mvpa.clfs.stats import MCNullHyp, FixedNullHyp
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
-nulldist_sweep = [ MCNonparamDist(permutations=10, tail='any'),
-                   MCNonparamDist(permutations=10, tail='right')]
+nulldist_sweep = [ MCNullHyp(permutations=10, tail='any'),
+                   MCNullHyp(permutations=10, tail='right')]
 if externals.exists('scipy'):
     import scipy.stats
-    nulldist_sweep += [ MCFixedDist(scipy.stats.norm, permutations=10, tail='any'),
-                        MCFixedDist(scipy.stats.norm, permutations=10, tail='right'),
-                        MCFixedDist(scipy.stats.expon, permutations=10, tail='right'),
-                        FixedDist(scipy.stats.norm(0, 0.01), tail='any'),
-                        FixedDist(scipy.stats.norm(0, 0.01), tail='right'),
+    nulldist_sweep += [ MCNullHyp(scipy.stats.norm, permutations=10, tail='any'),
+                        MCNullHyp(scipy.stats.norm, permutations=10, tail='right'),
+                        MCNullHyp(scipy.stats.expon, permutations=10, tail='right'),
+                        FixedNullHyp(scipy.stats.norm(0, 0.01), tail='any'),
+                        FixedNullHyp(scipy.stats.norm(0, 0.01), tail='right'),
                         ]
 
 class StatsTests(unittest.TestCase):
@@ -57,15 +57,15 @@ class StatsTests(unittest.TestCase):
         # check reasonable output.
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
-        prob = null.cdf([3,0,0,0,0,0])
+        prob = null.p([3,0,0,0,0,0])
         self.failUnless(prob[0] < 0.01)
         self.failUnless((prob[1:] > 0.05).all())
 
         # has to have matching shape
-        if not isinstance(nd, FixedDist):
+        if not isinstance(nd, FixedNullHyp):
             # Fixed dist is univariate ATM so it doesn't care
             # about dimensionality and gives 1 output value
-            self.failUnlessRaises(ValueError, null.cdf, [5, 3, 4])
+            self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
 
 
     def testNullDistProbAny(self):
@@ -76,18 +76,18 @@ class StatsTests(unittest.TestCase):
         from mvpa.measures.corrcoef import CorrCoef
         ds = datasets['uni2small']
 
-        null = MCNonparamDist(permutations=10, tail='any')
+        null = MCNullHyp(permutations=10, tail='any')
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
         # tails
-        self.failUnless(null.cdf([-100, 0, 0, 0, 0, 0])[0] == 0)
-        self.failUnless(null.cdf([100, 0, 0, 0, 0, 0])[0] == 0)
+        self.failUnless(null.p([-100, 0, 0, 0, 0, 0])[0] == 0)
+        self.failUnless(null.p([100, 0, 0, 0, 0, 0])[0] == 0)
 
         # same test with just scalar measure/feature
         null.fit(CorrCoef(), ds.selectFeatures([0]))
-        self.failUnless(null.cdf(-100) == 0)
-        self.failUnless(null.cdf(100) == 0)
+        self.failUnless(null.p(-100) == 0)
+        self.failUnless(null.p(100) == 0)
 
 
     @sweepargs(nd=nulldist_sweep)
