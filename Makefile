@@ -114,7 +114,7 @@ pdfdoc-stamp:
 
 modref-templates: modref-templates-stamp
 modref-templates-stamp:
-	tools/build_modref_templates.py
+	PYTHONPATH=. tools/build_modref_templates.py
 	touch $@
 
 apidoc: apidoc-stamp
