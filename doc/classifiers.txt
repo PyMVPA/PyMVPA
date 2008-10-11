@@ -128,7 +128,7 @@ for all state variables of the given class. Although values can be queried
 or set (if state is enabled) operating directly on the stateful object
 
   >>> clf.trained_labels
-  Set([0, 1])
+  array([0, 1])
 
 any other operation on the state (e.g. enabling, disabling) has to be carried
 out through the StateCollection_ '.states'.
