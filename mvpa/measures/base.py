@@ -127,7 +127,7 @@ class DatasetMeasure(Stateful):
             self.__null_dist.fit(measure, dataset)
 
             # get probability of result under NULL hypothesis if available
-            self.null_prob = self.__null_dist.cdf(result)
+            self.null_prob = self.__null_dist.p(result)
 
         return result
 
