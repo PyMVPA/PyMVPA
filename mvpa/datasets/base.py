@@ -763,6 +763,8 @@ class Dataset(object):
 
         if stats:
             # TODO -- avg per chunk?
+            # XXX We might like to use scipy.stats.describe to get
+            # quick summary statistics (mean/range/skewness/kurtosis)
             s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
                  (ssep, N.mean(samples), N.std(samples),
                   N.var(samples), N.min(samples), N.max(samples))
