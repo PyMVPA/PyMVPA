@@ -45,6 +45,25 @@ class Nonparametric(object):
         """
         return (self._dist_samples <= x).mean(axis=0)
 
+def _pvalue(self, x, cdf_func, tail):
+    """Helper function to return p-value(x) given cdf and tail
+    """
+    is_scalar = N.isscalar(x)
+    if is_scalar:
+        x = [x]
+
+    cdf = cdf_func(x)
+    if tail == 'left':
+        pass
+    elif tail == 'right':
+        cdf = 1 - cdf
+    elif tail == 'any':
+        right_tail = (cdf >= 0.5)
+        cdf[right_tail] = 1.0 - cdf[right_tail]
+
+    if is_scalar: return cdf[0]
+    else:         return cdf
+
 
 class NullDist(Stateful):
     """Base class for null-hypothesis testing.
@@ -90,21 +109,8 @@ class NullDist(Stateful):
     def p(self, x):
         """Given `tail` provide a p value using cdf()
         """
-        is_scalar = N.isscalar(x)
-        if is_scalar:
-            x = [x]
+        return _pvalue(x, self.cdf, self._tail)
 
-        cdf = self.cdf(x)
-        if self._tail == 'left':
-            pass
-        elif self._tail == 'right':
-            cdf = 1 - cdf
-        elif self._tail == 'any':
-            right_tail = (cdf >= 0.5)
-            cdf[right_tail] = 1.0 - cdf[right_tail]
-
-        if is_scalar: return cdf[0]
-        else:         return cdf
 
 
 class MCNullDist(NullDist):
@@ -308,3 +314,105 @@ class FixedNullDist(NullDist):
         """
         return self._dist.cdf(x)
 
+if externals.exists('scipy'):
+    import scipy.stats
+    from scipy.stats import kstest
+    """
+    Thoughts:
+
+    So we can use `scipy.stats.kstest` (Kolmogorov-Smirnov test) to
+    check/reject H0 that samples come from a given distribution. But
+    since it is based on a full range of data, we might better of with
+    some ad-hoc checking by the detection power of the values in the
+    tail of a tentative distribution.
+
+    """
+
+    # XXX it is work in progress, so don't use yet ;)
+    def matchDistribution(data, test='kstest', **kwargs):
+        """Determine best matching distribution.
+
+        Can be used for 'smelling' the data, as well to choose a
+        parametric distribution for data obtained from non-parametric
+        testing (e.g. `MCNullDist`).
+
+        :Parameters:
+          data : N.ndarray
+            Array of the data for which to deduce the distribution. It has
+            to be sufficiently large to make a reliable conclusion
+          test : basestring
+            What kind of testing to do. Choices:
+             'p-roc' : detection power for a given ROC. Needs two
+               parameters: `p=0.05` and `tail='any'`
+             'kstest' : 'full-body' distribution comparison. The best
+               choice is made by minimal reported distance after estimating
+               parameters of the distribution
+          **kwargs
+            Additional arguments which are needed for each particular test
+            (see above)
+        """
+        _KNOWN_TESTS = ['p-roc', 'kstest']
+        if not test in _KNOWN_TESTS:
+            raise ValueError, 'Unknown kind of test %s. Known are %s' \
+                  % (test, _KNOWN_TESTS)
+
+        if test == 'p-roc':
+            p_thr, tail = kwargs.get(['p', 'tail', [0.05, 'any']])
+            # convert data into p-values
+            # XXX need to sleep... might simply use some scipy.stats function...
+
+        d_names = scipy.stats.distributions.__all__
+        results = []
+        for d in d_names:#[:10]:           # XXX
+            # perform actions which might puke for some
+            # distributions
+            try:
+                dist_gen = getattr(scipy.stats, d)
+                dist_params = dist_gen.fit(data)
+                if __debug__:
+                    debug('STAT__', 'Got distribution parameters %s for %s' % (dist_params, d))
+                if test == 'p-roc':
+                    cdf_func = lambda x: dist_gen.cdf(x, *dist_params)
+                    # We need to compare detection under given p
+                    pvalues = _pvalue(data, cdf_func, tail)
+                    D, p = 1,1
+                    if __debug__: res_sum = 'XXX'
+                elif test == 'kstest':
+                    D, p = kstest(data, d, args=dist_params)
+                    if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
+            except:
+                if __debug__:
+                    debug('STAT__', 'Testing for %s distribution failed' % d)
+                continue
+
+            if p > 0.05 and not N.isnan(D):
+                results += [ (D, d, dist_params) ]
+                if __debug__:
+                    debug('STAT_', 'Testing for %s dist.: %s' % (d, res_sum))
+            else:
+                if __debug__:
+                    debug('STAT__', 'Cannot consider %s dist. with %s'
+                          % (d, res_sum))
+                continue
+
+        # sort in ascending order, so smaller is better
+        results.sort()
+
+        if __debug__ and 'STAT' in debug.active:
+            # find the best and report it
+            nresults = len(results)
+            sresult = lambda r:'%s(%s)=%.2f' % (r[1], ', '.join(map(str, r[2])), r[0])
+            if nresults>0:
+                nnextbest = min(2, nresults-1)
+                snextbest = ', '.join(map(sresult, results[1:1+nnextbest]))
+                debug('STAT', 'Best distribution %s. Next best: %s'
+                          % (sresult(results[0]), snextbest))
+            else:
+                debug('STAT', 'Could not find suitable distribution')
+
+        # return all the results
+        return results
+
+
+    #matched = matchDistribution(data=N.random.normal(size=(100,)), test='p-roc')
+    matched = matchDistribution(data=N.random.normal(size=(100,)), test='kstest')
