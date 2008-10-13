@@ -2,9 +2,6 @@
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
 
-Pie ... what?
-=============
-
 PyMVPA is a Python_ module intended to ease pattern classification analyses of
 large datasets. It provides high-level abstraction of typical processing steps
 and a number of implementations of some popular algorithms.  While it is not
