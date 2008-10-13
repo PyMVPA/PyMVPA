@@ -108,7 +108,7 @@ vector machines and report those weights.
 
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
 or negative, with both extremes indicating higher sensitivities. To deal with
-this property all subclasses of DatasetMeasure_ support a `transformer`
+this property all subclasses of :class:`~mvpa.measures.base.DatasetMeasure` support a `transformer`
 arguments in the contructor. A transformer is a functor that is finally called
 with the computed sensitivity map. PyMVPA already comes with some convenience
 functors which can be used for this purpose (see Transformers_).
@@ -170,7 +170,7 @@ Noise Perturbation
 
 Noise perturbation is a generic approach to determine feature sensitivity.
 The sensitivity analyzer (NoisePerturbationSensitivity_) computes a
-scalar DatasetMeasure_ using the original dataset. Afterwards, for each single
+scalar :class:`~mvpa.measures.base.DatasetMeasure` using the original dataset. Afterwards, for each single
 feature a noise pattern is added to the respective feature and the dataset
 measure is recomputed. The sensitivity of each feature is the difference
 between the dataset measure of the orginal dataset and the one with added
@@ -179,13 +179,12 @@ noise. The reasoning behind this algorithm is that adding noise to
 classifier transfer error. However, adding noise to a feature that already
 only contains noise, will not change such a measure.
 
-Depending on the used scalar DatasetMeasure_ using the sensitivity analyzer
+Depending on the used scalar :class:`~mvpa.measures.base.DatasetMeasure` using the sensitivity analyzer
 might be really CPU-intensive! Also depending on the measure, it might be
 necessary to use appropriate Transformers_ (see `transformer` constructor
 arguments) to ensure that higher values represent higher sensitivities.
 
 .. _NoisePerturbationSensitivity: api/mvpa.measures.noiseperturbation.NoisePerturbationSensitivity-class.html
-.. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
 
 
 .. index:: meta measures

@@ -270,30 +270,30 @@ Adding a new DatasetMeasure
 ---------------------------
 
 There are few possible base-classes for new measures (former sensitivity
-analyzers).  First, DatasetMeasure_ can directly be sub-classed. It is a base
+analyzers).  First, :class:`~mvpa.measures.base.DatasetMeasure` can directly be sub-classed. It is a base
 class for any measure to be computed on a :class:`~mvpa.datasets.base.Dataset`. This is the more generic
 approach. In the most of the cases, measures are to be reported per each
-feature, thus FeaturewiseDatasetMeasure_ should serve as a base class in those
+feature, thus :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` should serve as a base class in those
 cases. Furthermore, for measures that make use of some classifier and extract
 the sensitivities from it, Sensitivity_ (derived from
 FeaturewiseDatasetMeasure_) is a more appropriate base-class, as it provides
 some additional useful functionality for this use case (e.g. training a
 classifier if needed).
 
-All measures (actually all objects based on DatasetMeasure_)
+All measures (actually all objects based on :class:`~mvpa.measures.base.DatasetMeasure`)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
 
-If a DatasetMeasure_ computes a characteristic, were both large positive and
+If a :class:`~mvpa.measures.base.DatasetMeasure` computes a characteristic, were both large positive and
 large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
 the absolute (e.g. plain `N.absolute` or a convinience wrapper Absolute_).
 
 To add a new measure implementation it is sufficient to create a new sub-class
-of DatasetMeasure_ (or FeaturewiseDatasetMeasure_, or Sensitivity_) and add an
+of :class:`~mvpa.measures.base.DatasetMeasure` (or :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`, or Sensitivity_) and add an
 implementation of the `_call(dataset)` method. It will be called with an
-instance of :class:`~mvpa.datasets.base.Dataset`. FeaturewiseDatasetMeasure_ (e.g. Sensitivity_ as well)
+instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` (e.g. Sensitivity_ as well)
 has to return a vector of featurewise sensitivity scores.
 
 .. IncludeStates: measures.base DatasetMeasure
@@ -349,8 +349,6 @@ Outstanding Questions:
 
 
 .. _Absolute: api/mvpa.misc.transformers-module.html#Absolute
-.. _DatasetMeasure: api/mvpa.measures.base.DatasetMeasure-class.html
-.. _FeaturewiseDatasetMeasure: api/mvpa.measures.base.FeaturewiseDatasetMeasure-class.html
 .. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
 .. _ProxyClassifierSensitivityAnalyzer: api/mvpa.measures.base.ProxyClassifierSensitivityAnalyzer-class.html
 
