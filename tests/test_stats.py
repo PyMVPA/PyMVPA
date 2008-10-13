@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA stats helpers"""
 
 from mvpa.base import externals
-from mvpa.clfs.stats import MCNullDist, FixedNullDist
+from mvpa.clfs.stats import MCNullDist, FixedNullDist, matchDistribution
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
 
@@ -114,6 +114,22 @@ class StatsTests(unittest.TestCase):
         # the others should be a lot larger
         self.failUnless(N.mean(null_prob_bogus) > N.mean(null_prob_nonbogus))
 
+
+    def testMatchDistribution(self):
+        """Some really basic testing for matchDistribution
+        """
+        if not externals.exists('scipy'):
+            return
+        data = datasets['uni2large'].samples[:,1]
+        for test in ['p-roc', 'kstest']:
+            # some really basic testing
+            matched = matchDistribution(data=data, test=test, p=0.05)
+            # at least norm should be in there
+            names = [m[1] for m in matched]
+            self.failUnless('norm' in names)
+            inorm = names.index('norm')
+            # and it should be at least in the first 5 best matching
+            self.failUnless(inorm <= 7)
 
 
 def suite():
