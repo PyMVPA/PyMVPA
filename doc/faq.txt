@@ -243,17 +243,17 @@ computed by all classifiers (without recomputing them again) looks like this:
   >>> N.array(sensitivities).shape == (2, dataset.nfeatures)
   True
 
-First, we define an instance of CrossValidatedTransferError_ that uses an SMLR_
+First, we define an instance of :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` that uses an SMLR_
 classifier to perform the cross-validation on odd-even splits of a dataset.
 The important piece is the definition of the `harvest_attribs`.  It takes a
 list of code snippets that will be executed in the local context of the
-cross-validation function. The TransferError_ instance used to train and test
+cross-validation function. The :class:`~mvpa.clfs.transerror.TransferError` instance used to train and test
 the classifier on each split is available via `transerror`. The rest is easy:
 TransferError_ provides access to its classifier and any classifier can in turn
 generate an appropriate :class:`~mvpa.measures.base.Sensitivity` instance via `getSensitivityAnalyzer()`.
 This generator method takes additional arguments to the constructor of the
 :class:`mvpa.measures.base.Sensitivity` class. In this case we want to prevent retraining the classifiers,
-as they will be trained anyway by the TransferError_ instance they belong to.
+as they will be trained anyway by the :class:`~mvpa.clfs.transerror.TransferError` instance they belong to.
 
 The return values of all code snippets defined in `harvest_attribs` are
 available in the `harvested` state variable. `harvested` is a dictionary where
@@ -262,9 +262,7 @@ case is pretty long, we simply take the first (and only) value from the
 dictionary.  The value is actually a list of sensitivity vectors, one per
 split. 
 
-.. _CrossValidatedTransferError : api/mvpa.clfs.base.SplitClassifier-class.html
 .. _SplitClassifier : api/mvpa.clfs.base.SplitClassifier-class.html
-.. _TransferError : api/mvpa.clfs.transerror.TransferError-class.html
 .. _SMLR : api/mvpa.clfs.smlr.SMLR-class.html
 
 Can PyMVPA deal with literal class labels?
