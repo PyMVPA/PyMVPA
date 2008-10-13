@@ -14,6 +14,17 @@ import numpy as N
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 
+# TODO: Extend with access to functionality from scipy.stats?
+# For binary:
+#  2-sample kolmogorov-smirnof might be interesting
+#   (scipy.stats.ks_2samp) to judge if two conditions are derived
+#   from different distributions (take it as 'activity' vs 'rest'),
+#
+# For binary+multiclass:
+#  kruskal-wallis H-test (scipy.stats.kruskal)
+#  GLM: scipy.stats.glm
+#
+# and may be some others
 
 class OneWayAnova(FeaturewiseDatasetMeasure):
     """`FeaturewiseDatasetMeasure` that performs a univariate ANOVA.
