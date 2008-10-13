@@ -275,8 +275,8 @@ class for any measure to be computed on a :class:`~mvpa.datasets.base.Dataset`. 
 approach. In the most of the cases, measures are to be reported per each
 feature, thus :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` should serve as a base class in those
 cases. Furthermore, for measures that make use of some classifier and extract
-the sensitivities from it, Sensitivity_ (derived from
-FeaturewiseDatasetMeasure_) is a more appropriate base-class, as it provides
+the sensitivities from it, :class:`~mvpa.measures.base.Sensitivity` (derived from
+:class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`) is a more appropriate base-class, as it provides
 some additional useful functionality for this use case (e.g. training a
 classifier if needed).
 
@@ -291,9 +291,9 @@ return absolute sensitivities, but set a default transformer instead that takes
 the absolute (e.g. plain `N.absolute` or a convinience wrapper Absolute_).
 
 To add a new measure implementation it is sufficient to create a new sub-class
-of :class:`~mvpa.measures.base.DatasetMeasure` (or :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`, or Sensitivity_) and add an
+of :class:`~mvpa.measures.base.DatasetMeasure` (or :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
 implementation of the `_call(dataset)` method. It will be called with an
-instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` (e.g. Sensitivity_ as well)
+instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
 has to return a vector of featurewise sensitivity scores.
 
 .. IncludeStates: measures.base DatasetMeasure
@@ -321,7 +321,7 @@ Nothing special.
 Classifier-based Sensitivity Analyzers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A Sensitivity_ behaves exactly like its
+A :class:`~mvpa.measures.base.Sensitivity` behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
@@ -344,13 +344,11 @@ raw_result          Computed results before applying any             Disabled
 
 Outstanding Questions:
 
-  * What is a ProxyClassifierSensitivityAnalyzer_ useful for?
+  * What is a :class:`mvpa.measures.base.ProxyClassifierSensitivityAnalyzer` useful for?
   * Shouldn't there be a `sensitivities` state?
 
 
 .. _Absolute: api/mvpa.misc.transformers-module.html#Absolute
-.. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
-.. _ProxyClassifierSensitivityAnalyzer: api/mvpa.measures.base.ProxyClassifierSensitivityAnalyzer-class.html
 
 
 

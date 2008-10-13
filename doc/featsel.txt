@@ -91,7 +91,7 @@ the selected features) and then test on a held-out testing dataset.  This
 results in an obvious positive bias in classification performance.  PyMVPA
 allows for easy dataset splitting, however, so creating independent training
 and testing datasets is easily accomplished, for instance using an
- :class:`~mvpa.datasets.splitter.NFoldSplitter`, :class:`~mvpa.datasets.splitter.OddEvenSplitter`, etc.
+:class:`~mvpa.datasets.splitter.NFoldSplitter`, :class:`~mvpa.datasets.splitter.OddEvenSplitter`, etc.
 
 .. fill in end of last paragraph with suggestions for how to take in an entire
    original dataset and split it:  should we just do a cross-validated outer
