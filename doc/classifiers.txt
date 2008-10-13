@@ -214,14 +214,14 @@ popular method is the so-called leave-one-out cross-validation.
 
 The CrossValidatedTransferError_ class provides a simple way to compute such
 measure. It utilizes a TransferError_ object and a Splitter_. When called with
-a Dataset_ the splitter generates splits of the Dataset and the transfer error
+a :class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the Dataset and the transfer error
 for all splits is computed by training on one of the splitted datasets and
 making predictions on the other. By default the mean of transfer errors is
 returned (but the actual `combiner` function is customizable).
 
 The following example shows the minimal code for a leave-one-out
 cross-validation reusing the transfer error object from the previous example
-and some Dataset_ `data`.
+and some :class:`~mvpa.datasets.base.Dataset` `data`.
 
   >>> # create some dataset
   >>> from mvpa.misc.data_generators import normalFeatureDataset
@@ -235,7 +235,6 @@ and some Dataset_ `data`.
   ...                                      NFoldSplitter(cvtype=1))
   >>> error = cvterr(data)
 
-.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
 

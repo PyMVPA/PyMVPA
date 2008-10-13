@@ -47,7 +47,7 @@ such a Classifier_:
 `feature_selection`: FeatureSelection_
   whatever feature selection is considered best
 
-`testdataset`: Dataset_ (optional)
+`testdataset`: :class:`~mvpa.datasets.base.Dataset` (optional)
   dataset which would be given on call to feature_selection
 
 .. index:: FeatureSelection
@@ -207,7 +207,6 @@ measures are most appropriate for the task at hand.
 
 .. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
-.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
 .. _OddEvenSplitter: api/mvpa.datasets.splitter.OddEvenSplitter-class.html
