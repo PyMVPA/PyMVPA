@@ -20,13 +20,13 @@ if __debug__:
 
 
 class Nonparametric(object):
-    """Non-parametric distribution -- derives cdf based on stored values.
+    """Non-parametric 1d distribution -- derives cdf based on stored values.
 
     Introduced to complement parametric distributions present in scipy.stats.
     """
 
     def __init__(self, dist_samples):
-        self._dist_samples = dist_samples
+        self._dist_samples = N.ravel(dist_samples)
 
 
     @staticmethod
@@ -35,17 +35,12 @@ class Nonparametric(object):
 
 
     def cdf(self, x):
-        """Returns the frequency/probability of a value `x` given the estimated
-        distribution. Returned values are determined left or right tailed
-        depending on the constructor setting.
-
-        In case a `FeaturewiseDatasetMeasure` was used to estimate the
-        distribution the method returns an array. In that case `x` can be
-        a scalar value or an array of a matching shape.
+        """Returns the cdf value at `x`.
         """
-        return (self._dist_samples <= x).mean(axis=0)
+        return N.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
 
-def _pvalue(self, x, cdf_func, tail):
+
+def _pvalue(x, cdf_func, tail):
     """Helper function to return p-value(x) given cdf and tail
     """
     is_scalar = N.isscalar(x)
@@ -107,7 +102,13 @@ class NullDist(Stateful):
 
 
     def p(self, x):
-        """Given `tail` provide a p value using cdf()
+        """Returns the p-value for values of `x`.
+        Returned values are determined left, right, or from any tail
+        depending on the constructor setting.
+
+        In case a `FeaturewiseDatasetMeasure` was used to estimate the
+        distribution the method returns an array. In that case `x` can be
+        a scalar value or an array of a matching shape.
         """
         return _pvalue(x, self.cdf, self._tail)
 
@@ -220,9 +221,8 @@ class MCNullDist(NullDist):
         if nshape == 1:
             dist_samples = dist_samples[:, N.newaxis]
 
-        # Nonparametric is actually generic enough, but scipy.stats
-        # are not multivariate, thus we need to fit per each element.
-        # XXX could be more elegant?
+        # fit per each element.
+        # XXX could be more elegant? may be use N.vectorize?
         dist_samples_rs = dist_samples.reshape((shape[0], -1))
         dist = []
         for samples in dist_samples_rs.T:
@@ -328,13 +328,15 @@ if externals.exists('scipy'):
 
     """
 
-    # XXX it is work in progress, so don't use yet ;)
-    def matchDistribution(data, test='kstest', **kwargs):
+    def matchDistribution(data, test='kstest', distributions=None,
+                          **kwargs):
         """Determine best matching distribution.
 
         Can be used for 'smelling' the data, as well to choose a
         parametric distribution for data obtained from non-parametric
         testing (e.g. `MCNullDist`).
+
+        WiP: use with caution, API might change
 
         :Parameters:
           data : N.ndarray
@@ -346,26 +348,43 @@ if externals.exists('scipy'):
                parameters: `p=0.05` and `tail='any'`
              'kstest' : 'full-body' distribution comparison. The best
                choice is made by minimal reported distance after estimating
-               parameters of the distribution
+               parameters of the distribution. Parameter `p=0.05` sets
+               threshold to reject null-hypothesis that distribution is the
+               same
+          distributions : None or list of basestring
+            Distributions to check. If None, all known in scipy.stats are
+            tested.
           **kwargs
             Additional arguments which are needed for each particular test
             (see above)
         """
+
+        # Handle parameters
         _KNOWN_TESTS = ['p-roc', 'kstest']
         if not test in _KNOWN_TESTS:
             raise ValueError, 'Unknown kind of test %s. Known are %s' \
                   % (test, _KNOWN_TESTS)
 
+        p_thr = kwargs.get('p', 0.05)
         if test == 'p-roc':
-            p_thr, tail = kwargs.get(['p', 'tail', [0.05, 'any']])
-            # convert data into p-values
-            # XXX need to sleep... might simply use some scipy.stats function...
+            tail = kwargs.get('tail', 'any')
+            data = N.ravel(data)
+            data_p = _pvalue(data, Nonparametric(data).cdf, tail)
+            data_p_thr = data_p <= p_thr
+            true_positives = N.sum(data_p_thr)
+            if true_positives == 0:
+                raise ValueError, "Provided data has no elements in non-" \
+                      "parametric distribution under p<=%.3f. Please " \
+                      "increase the size of data or value of p" % p
+            if __debug__:
+                debug('STAT_', 'Number of positives in non-parametric '
+                      'distribution is %d' % true_positives)
 
-        d_names = scipy.stats.distributions.__all__
+        if distributions is None:
+            distributions = scipy.stats.distributions.__all__
         results = []
-        for d in d_names:#[:10]:           # XXX
-            # perform actions which might puke for some
-            # distributions
+        for d in distributions:
+            # perform actions which might puke for some distributions
             try:
                 dist_gen = getattr(scipy.stats, d)
                 dist_params = dist_gen.fit(data)
@@ -374,9 +393,10 @@ if externals.exists('scipy'):
                 if test == 'p-roc':
                     cdf_func = lambda x: dist_gen.cdf(x, *dist_params)
                     # We need to compare detection under given p
-                    pvalues = _pvalue(data, cdf_func, tail)
-                    D, p = 1,1
-                    if __debug__: res_sum = 'XXX'
+                    cdf_p = _pvalue(data, cdf_func, tail)
+                    cdf_p_thr = cdf_p <= p_thr
+                    D, p = N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1
+                    if __debug__: res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
                     if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
@@ -385,7 +405,7 @@ if externals.exists('scipy'):
                     debug('STAT__', 'Testing for %s distribution failed' % d)
                 continue
 
-            if p > 0.05 and not N.isnan(D):
+            if p > p_thr and not N.isnan(D):
                 results += [ (D, d, dist_params) ]
                 if __debug__:
                     debug('STAT_', 'Testing for %s dist.: %s' % (d, res_sum))
@@ -413,6 +433,3 @@ if externals.exists('scipy'):
         # return all the results
         return results
 
-
-    #matched = matchDistribution(data=N.random.normal(size=(100,)), test='p-roc')
-    matched = matchDistribution(data=N.random.normal(size=(100,)), test='kstest')
