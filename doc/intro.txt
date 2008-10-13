@@ -35,7 +35,7 @@ What this Manual is NOT
 .. index:: textbook, review, API reference, examples
 
 This manual does not make an attempt to be a comprehensive introduction into
-machine learning theory or pattern recognition techniques. There is a wealth
+machine learning *theory*. There is a wealth
 of high-quality text books about this field available. A very good example is:
 `Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
 
@@ -44,9 +44,14 @@ algorithms to (f)MRI data are two recent reviews by
 :ref:`Norman et al. (2006) <NPD+06>` and
 :ref:`Haynes and Rees (2006) <HR06>`.
 
-This manual also does not describe every bit and piece of the PyMVPA package.
-For more information, please have a look at the `API documentation`_, which is a
-comprehensive and up-to-date description of the whole package.
+This manual also does not describe every technical bit and piece of the PyMVPA
+package, but is instead focused on the user perspective. Developers shoud have
+a look at the `API documentation`_, which is a detailed, comprehensive and
+up-to-date description of the whole package. Users looking for an overview of
+the public programming interface of the framework are referred to the
+:ref:`modref`. The :ref:`modref` is similar to the API reference, but hides
+overly technical information, which are only relevant for people intending to
+extend the framework by adding more functionality.
 
 More examples and usage patterns extending the ones described here can be taken
 from the examples shipped with the PyMVPA source distribution (`doc/examples/`;
