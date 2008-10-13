@@ -224,6 +224,10 @@ if __debug__:
     debug.register('CLFFS',  "FeatureSelectionClassifier")
     debug.register('CLFFS_', "FeatureSelectionClassifier (verbose)")
 
+    debug.register('STAT',   "Statistics estimates")
+    debug.register('STAT_',  "Statistics estimates (verbose)")
+    debug.register('STAT__', "Statistics estimates (very verbose)")
+
     debug.register('FS',     "FeatureSelections")
     debug.register('FS_',    "FeatureSelections (verbose)")
     debug.register('FSPL',   "FeatureSelectionPipeline")
