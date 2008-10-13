@@ -262,7 +262,6 @@ case is pretty long, we simply take the first (and only) value from the
 dictionary.  The value is actually a list of sensitivity vectors, one per
 split. 
 
-.. _SplitClassifier : api/mvpa.clfs.base.SplitClassifier-class.html
 .. _SMLR : api/mvpa.clfs.smlr.SMLR-class.html
 
 Can PyMVPA deal with literal class labels?
