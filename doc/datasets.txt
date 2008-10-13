@@ -150,7 +150,7 @@ doesn't tell us about 3x4 plane, but simply 12 features. That is because
 internally the sample array is automatically reshaped into the aforementioned
 2d matrix representation of the :class:`~mvpa.datasets.base.Dataset` class. However, the information about
 the original dataspace is not lost, but kept inside the mapper used by
-MaskedDataset_. Two useful methods of :class:`~mvpa.datasets.masked.MaskedDataset` make use of the mapper:
+:class:`~mvpa.datasets.masked.MaskedDataset`. Two useful methods of :class:`~mvpa.datasets.masked.MaskedDataset` make use of the mapper:
 `mapForward()` and `mapReverse()`. The former can be used to transform
 additional data from dataspace into the feature space and the latter performs
 the same in the opposite direction.
@@ -240,7 +240,7 @@ look at the subclasses of :class:`~mvpa.datasets.base.Dataset`):
   passed to the :class:`~mvpa.datasets.base.Dataset` constructor to create a dataset. With arrays it is
   possible to use the classes :class:`~mvpa.datasets.base.Dataset`, :class:`~mvpa.datasets.mapped.MappedDataset` (to combine the samples
   with any custom mapping algorithm) or :class:`~mvpa.datasets.masked.MaskedDataset` (readily provides a
-  DenseArrayMapper_). 
+  :class:`~mvpa.mappers.array.DenseArrayMapper`).
 
 * Plain text
 
@@ -251,7 +251,7 @@ look at the subclasses of :class:`~mvpa.datasets.base.Dataset`):
 
   PyMVPA provides a specialized dataset for MRI data in the NIfTI format.
   :class:`~mvpa.datasets.nifti.NiftiDataset` uses PyNIfTI_ to read the data and automatically configures an
-  appropriate DenseArrayMapper_ with metric information read from the NIfTI
+  appropriate :class:`~mvpa.mappers.array.DenseArrayMapper` with metric information read from the NIfTI
   file header.
 
 * EEP binary files
@@ -260,7 +260,6 @@ look at the subclasses of :class:`~mvpa.datasets.base.Dataset`):
   file (written by eeprobe_)
 
 
-.. _DenseArrayMapper: api/mvpa.mappers.array.DenseArrayMapper-class.html
 .. _PyNIfTI: http://niftilib.sf.net/pynifti
 .. _eeprobe: http://http://www.ant-neuro.com/products/eeprobe
 
@@ -298,7 +297,7 @@ as of e.g. the Python `xrange()` function.
 .. index:: working data, validation data
 
 To perform data splitting for the already mentioned cross-validation, PyMVPA
-provides the NFoldSplitter_ class. It implements a method to generate
+provides the  :class:`~mvpa.datasets.splitter.NFoldSplitter` class. It implements a method to generate
 arbitrary N-M splits, where N is the number of different chunks in a dataset
 and M is any non-negative integer smaller than N. Doing a leave-one-out split
 of our example dataset looks like this:
