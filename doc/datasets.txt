@@ -308,8 +308,6 @@ of our example dataset looks like this:
   >>> for wdata, vdata in splitter(data):
   ...     pass
 
-.. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
-
 where `wdata` is the *working dataset* and `vdata` is the *validation dataset*.
 If we have a look a those datasets we can see that the splitter did what we
 intended:

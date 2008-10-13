@@ -91,7 +91,7 @@ the selected features) and then test on a held-out testing dataset.  This
 results in an obvious positive bias in classification performance.  PyMVPA
 allows for easy dataset splitting, however, so creating independent training
 and testing datasets is easily accomplished, for instance using an
-NFoldSplitter_, OddEvenSplitter_, etc.
+NFoldSplitter_, :class:`~mvpa.datasets.splitter.OddEvenSplitter`, etc.
 
 .. fill in end of last paragraph with suggestions for how to take in an entire
    original dataset and split it:  should we just do a cross-validated outer
@@ -166,7 +166,7 @@ perform such an analysis:
 
 The code above introduces the SplitClassifier_, which in this case is yet
 another *meta-classifier* that takes in a Classifier_ (in this case a
-LinearCSVMC_) and an arbitrary Splitter_ object, so that the dataset can be
+LinearCSVMC_) and an arbitrary :class:`~mvpa.datasets.splitter.Splitter` object, so that the dataset can be
 split in whatever way the user desires.  Prior to training, the
 SplitClassifier_ splits the training dataset, dedicates a separate classifier
 to each split, trains each on the training part of the split, and then computes
@@ -207,9 +207,6 @@ measures are most appropriate for the task at hand.
 
 .. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
-.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
-.. _NFoldSplitter: api/mvpa.datasets.splitter.NFoldSplitter-class.html
-.. _OddEvenSplitter: api/mvpa.datasets.splitter.OddEvenSplitter-class.html
 .. _MaximalVote: api/mvpa.clfs.base.MaximalVote-class.html
 .. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 .. _FeatureSelectionClassifier: api/mvpa.clfs.base.FeatureSelectionClassifier-class.html

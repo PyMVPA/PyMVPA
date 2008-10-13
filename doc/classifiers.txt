@@ -213,7 +213,7 @@ or test dataset, but on a cross-validated estimate of the transfer error. A
 popular method is the so-called leave-one-out cross-validation.
 
 The CrossValidatedTransferError_ class provides a simple way to compute such
-measure. It utilizes a TransferError_ object and a Splitter_. When called with
+measure. It utilizes a TransferError_ object and a :class:`~mvpa.datasets.splitter.Splitter`. When called with
 a :class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the Dataset and the transfer error
 for all splits is computed by training on one of the splitted datasets and
 making predictions on the other. By default the mean of transfer errors is
@@ -235,7 +235,6 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   ...                                      NFoldSplitter(cvtype=1))
   >>> error = cvterr(data)
 
-.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
 
 
@@ -393,7 +392,7 @@ For example, there are several BoostedClassifier_ subclasses:
 2. MulticlassClassifier_ -- performs multi-class classification by means of a
    list of BinaryClassifier_ instances
 
-3. SplitClassifier_ -- combines a Classifier_ and an arbitrary Splitter_
+3. SplitClassifier_ -- combines a Classifier_ and an arbitrary :class:`~mvpa.datasets.splitter.Splitter`
 
 Furthermore, there are also several ProxyClassifier_ subclasses:
 
