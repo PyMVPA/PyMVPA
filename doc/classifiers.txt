@@ -356,10 +356,10 @@ Meta-Classifiers
   *This section has been contributed by James M. Hughes.*
 
 A meta-classifier is essentially a blanket term used to describe all classes
-that appear functionally equivalent to a regular Classifier_, but which in
+that appear functionally equivalent to a regular :class:`~mvpa.clfs.base.Classifier`, but which in
 reality provide some extra amount of functionality on top of a normal
-classifier.  Furthermore, they generally do not implement a Classifier_
-*per se*, but rather take a Classifier_ as input.  The methods then
+classifier.  Furthermore, they generally do not implement a :class:`~mvpa.clfs.base.Classifier`
+*per se*, but rather take a :class:`~mvpa.clfs.base.Classifier` as input.  The methods then
 typically called on a classifier (e.g., `train` or `predict`) can be
 called on the meta-classifier, but will call the input classifier's routines,
 before or after some other function that the meta-classifier provides.
@@ -371,52 +371,43 @@ Examples of Meta-Classifiers
 At present, there are two primary meta-classifiers implemented in the PyMVPA
 package, beneath which there are several specific options:
 
-1. BoostedClassifier_ -- these typically combine some aspect of the
+1. :class:`~mvpa.clfs.base.BoostedClassifier` -- these typically combine some aspect of the
    classifier's functionality with another component, such as prediction or data
    splitting
 
-2. ProxyClassifier_ -- these typically perform some action on the data/labels
+2. :class:`~mvpa.clfs.base.ProxyClassifier` -- these typically perform some action on the data/labels
    before classification is performed
 
 Within these more general categories, specific classifiers are implemented.
-For example, there are several BoostedClassifier_ subclasses:
+For example, there are several :class:`~mvpa.clfs.base.BoostedClassifier` subclasses:
 
-1. CombinedClassifier_ -- combines predictions using a PredictionsCombiner_
+1. :class:`~mvpa.clfs.base.CombinedClassifier` -- combines predictions using a PredictionsCombiner_
    functor
 
-2. MulticlassClassifier_ -- performs multi-class classification by means of a
-   list of BinaryClassifier_ instances
+2. :class:`~mvpa.clfs.base.MulticlassClassifier` -- performs multi-class classification by means of a
+   list of :class:`~mvpa.clfs.base.BinaryClassifier` instances
 
-3. SplitClassifier_ -- combines a Classifier_ and an arbitrary :class:`~mvpa.datasets.splitter.Splitter`
+3. :class:`~mvpa.clfs.base.SplitClassifier` -- combines a :class:`~mvpa.clfs.base.Classifier` and an arbitrary :class:`~mvpa.datasets.splitter.Splitter`
 
-Furthermore, there are also several ProxyClassifier_ subclasses:
+Furthermore, there are also several :class:`~mvpa.clfs.base.ProxyClassifier` subclasses:
 
-1. BinaryClassifier_ -- maps a set of labels into two categories, +1 and -1
+1. :class:`~mvpa.clfs.base.BinaryClassifier` -- maps a set of labels into two categories, +1 and -1
 
-2. MappedClassifier_ -- uses a mapper on input data prior to training/testing
+2. :class:`~mvpa.clfs.base.MappedClassifier` -- uses a mapper on input data prior to training/testing
 
-3. FeatureSelectionClassifier_ -- performs some kind of FeatureSelection_ prior
+3. :class:`~mvpa.clfs.base.FeatureSelectionClassifier` -- performs some kind of FeatureSelection_ prior
    to training
 
-.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
-.. _BoostedClassifier: api/mvpa.clfs.base.BoostedClassifier-class.html
-.. _ProxyClassifier: api/mvpa.clfs.base.ProxyClassifier-class.html
-.. _BinaryClassifier: api/mvpa.clfs.base.BinaryClassifier-class.html
-.. _MappedClassifier: api/mvpa.clfs.base.MappedClassifier-class.html
-.. _MulticlassClassifier: api/mvpa.clfs.base.MulticlassClassifier-class.html
-.. _CombinedClassifier: api/mvpa.clfs.base.CombinedClassifier-class.html
-.. _FeatureSelectionClassifier: api/mvpa.clfs.base.FeatureSelectionClassifier-class.html
-.. _SplitClassifier: api/mvpa.clfs.base.SplitClassifier-class.html
 .. _FeatureSelection: api/mvpa.featsel.base.FeatureSelection-class.html
 .. _PredictionsCombiner: api/mvpa.clfs.base.PredictionsCombiner-class.html
 
 Implementation Examples
 -----------------------
 
-Classifiers such as the FeatureSelectionClassifier_ are particularly useful
+Classifiers such as the :class:`~mvpa.clfs.base.FeatureSelectionClassifier` are particularly useful
 because they simplify the process of selecting features and then using only
 that subset of features to classify novel exemplars (the `predict` stage).
-They become even more powerful when combined with SplitClassifier_, so that
+They become even more powerful when combined with :class:`~mvpa.clfs.base.SplitClassifier`, so that
 even the task of withholding certain data points to create statistically valid
 training and testing datasets is abstracted and wrapped up within a single
 object (and, ultimately, very few method calls).  Consider the following code,
@@ -450,8 +441,8 @@ which can be found in `mvpa/clfs/warehouse.py`_:
   ...       # update sensitivity at each step
   ...   descr='LinSVM+RFE(splits_avg)' )
 
-This analysis combines the FeatureSelectionClassifier_ and the
-SplitClassifier_ to perform internal splitting of the data and then perform
+This analysis combines the :class:`~mvpa.clfs.base.FeatureSelectionClassifier` and the
+:class:`~mvpa.clfs.base.SplitClassifier` to perform internal splitting of the data and then perform
 FeatureSelection based on those splits.  Such analyses can be easily created
 due to the straightforward way that classifier and meta-classifiers can be
 combined.  Please refer to the relevant documentation sections for more

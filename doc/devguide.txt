@@ -190,7 +190,7 @@ Adding a new Classifier
 -----------------------
 
 To add a new classifier implementation it is sufficient to create a new
-sub-class of Classifier_ and add implementations of the following methods:
+sub-class of :class:`~mvpa.clfs.base.Classifier` and add implementations of the following methods:
 
 `__init__(**kwargs)`
     Additional arguments and keyword arguments may be added, but the base-class
@@ -233,7 +233,7 @@ values              Internal classifier values the most recent       Disabled
 ================== ==============================================   =========
 
 If any intended functionality cannot be realized be implementing above methods.
-The Classifier_ class offers some additionals methods that might be overriden
+The :class:`~mvpa.clfs.base.Classifier` class offers some additionals methods that might be overriden
 by sub-classes. For all methods described below it is strongly recommended to
 call the base-class methods at the end of the implementation in the sub-class
 to preserve the full functionality.
@@ -257,8 +257,6 @@ to preserve the full functionality.
 
 Source code files of all classifier implementations go into `mvpa/clfs/`.
 
-
-.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
 
 
 Outstanding Questions:

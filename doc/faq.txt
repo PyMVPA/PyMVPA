@@ -226,10 +226,10 @@ How do I extract sensitivities from a classifier used within a cross-validation?
 
 .. The answer depends on size of the classification problem and the used
    classifier. If you can afford to keep a copy of the trained classifier for
-   each data split, the most elegant solution is probably a SplitClassifier_...
+   each data split, the most elegant solution is probably a :class:`~mvpa.clfs.base.SplitClassifier`...
    ...BUT no yet
 
-CrossValidatedTransferError_ provides an interface to access any
+:class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` provides an interface to access any
 classifier-related information: `harvest_attribs`. Harvesting the sensitivities
 computed by all classifiers (without recomputing them again) looks like this:
 
@@ -249,7 +249,7 @@ The important piece is the definition of the `harvest_attribs`.  It takes a
 list of code snippets that will be executed in the local context of the
 cross-validation function. The :class:`~mvpa.clfs.transerror.TransferError` instance used to train and test
 the classifier on each split is available via `transerror`. The rest is easy:
-TransferError_ provides access to its classifier and any classifier can in turn
+:class:`~mvpa.clfs.transerror.TransferError` provides access to its classifier and any classifier can in turn
 generate an appropriate :class:`~mvpa.measures.base.Sensitivity` instance via `getSensitivityAnalyzer()`.
 This generator method takes additional arguments to the constructor of the
 :class:`mvpa.measures.base.Sensitivity` class. In this case we want to prevent retraining the classifiers,
