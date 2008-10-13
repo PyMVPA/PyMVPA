@@ -176,18 +176,18 @@ of desired state variables names, passed to the object constructor. Keyword
 Error Calculation
 =================
 
-The TransferError_ class provides a convenient way to determine the transfer
+The :class:`~mvpa.clfs.transerror.TransferError` class provides a convenient way to determine the transfer
 error of a trained classifier on some validation dataset, i.e. the accuracy of
-the classifier's predictions on a novel, independent dataset. A TransferError_
+the classifier's predictions on a novel, independent dataset. A :class:`~mvpa.clfs.transerror.TransferError`
 object is instanciated by passing a classifier object to the constructor.
 Optionally a custom error function can be specified (see `errorfx` argument).
 
 To compute the transfer error simply call the object with a validation dataset.
-The computed error value is returned. TransferError_ also supports a state
+The computed error value is returned. :class:`~mvpa.clfs.transerror.TransferError` also supports a state
 variable `confusion` that contains the full confusion matrix of the predictions
 made on the validation dataset. The confusion matrix is disabled by default.
 
-If the TransferError_ object is called with an optional training dataset, the
+If the :class:`~mvpa.clfs.transerror.TransferError` object is called with an optional training dataset, the
 contained classifier is first training using this dataset before predictions
 on the validation dataset are made.
 
@@ -196,9 +196,6 @@ on the validation dataset are made.
   >>> terr = TransferError(clf)
   >>> terr(validation, training )
   0.0
-
-.. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
-
 
 
 
@@ -212,8 +209,8 @@ Often one is not only interested in a single transfer error on one validation
 or test dataset, but on a cross-validated estimate of the transfer error. A
 popular method is the so-called leave-one-out cross-validation.
 
-The CrossValidatedTransferError_ class provides a simple way to compute such
-measure. It utilizes a TransferError_ object and a :class:`~mvpa.datasets.splitter.Splitter`. When called with
+The :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class provides a simple way to compute such
+measure. It utilizes a :class:`~mvpa.clfs.transerror.TransferError` object and a :class:`~mvpa.datasets.splitter.Splitter`. When called with
 a :class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the Dataset and the transfer error
 for all splits is computed by training on one of the splitted datasets and
 making predictions on the other. By default the mean of transfer errors is
@@ -234,8 +231,6 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1))
   >>> error = cvterr(data)
-
-.. _CrossValidatedTransferError: api/mvpa.algorithms.cvtranserror.CrossValidatedTransferError-class.html
 
 
 

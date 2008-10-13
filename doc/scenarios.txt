@@ -120,12 +120,11 @@ to get sensible estimates of the distribution parameters.  If no distribution
 family can be assumed, with a larger number of permutations, derivation of CDF
 out of population is possible with Nonparametric_ probability function (which
 is the default value of `dist_class` for MCNullDist_).  If `null_dist` is
-provided, the respective TransferError_ or :class:`~mvpa.measures.base.DatasetMeasure` instance will
+provided, the respective :class:`~mvpa.clfs.transerror.TransferError` or :class:`~mvpa.measures.base.DatasetMeasure` instance will
 automatically use it to estimate the *NULL* distribution and store the
 associated *p*-values in a state variable named `null_prob`.
 
 
-.. _TransferError: api/mvpa.clfs.transerror.TransferError-class.html
 .. _Distribution: api/mvpa.clfs.stats.NullDist-class.html
 .. _Nonparametric: api/mvpa.clfs.stats.Nonparametric-class.html
 .. _MCNullDist: api/mvpa.clfs.stats.MCNullDist-class.html
