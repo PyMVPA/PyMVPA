@@ -61,7 +61,7 @@ score that indicates how much interesting signal each feature contains
 on a classifier's decision for a certain problem.
 
 Every sensitivity analyzer object computes a one-dimensional array with the
-respective score for every feature, when called with a Dataset_. Due to this
+respective score for every feature, when called with a :class:`~mvpa.datasets.base.Dataset`. Due to this
 common behaviour all Sensitivity_ types are interchangeable and can be
 combined with any other algorithm requiring a sensitivity analyzer.
 
@@ -72,7 +72,6 @@ analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
 on the other hand utilize another sensitivity analyzer to compute their
 sensitivity maps.
 
-.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
 
 

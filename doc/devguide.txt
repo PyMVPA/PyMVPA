@@ -125,7 +125,7 @@ Function Arguments
 ------------------
 
 dataset vs data
-  Ones which are supposed to be derived from Dataset_ class should
+  Ones which are supposed to be derived from :class:`~mvpa.datasets.base.Dataset` class should
   have suffix (or whole name) ``dataset``. In contrast, if argument is
   expected to be simply a NumPy_ array, suffix should be ``data``. For
   example::
@@ -144,7 +144,6 @@ dataset vs data
   Such convention should be enforced in all ``*train``,
   ``*predict`` functions of classifiers.
 
-.. _Dataset: api/mvpa.datasets.base.Dataset-class.html
 .. _NumPy: http://numpy.scipy.org/
 
 
@@ -198,13 +197,13 @@ sub-class of Classifier_ and add implementations of the following methods:
     contructor has to be called with `**kwargs`!
 
 `_train(dataset)`
-    Has to train the classifier when it is called with a Dataset_. Successive
+    Has to train the classifier when it is called with a :class:`~mvpa.datasets.base.Dataset`. Successive
     calls to this methods always have to train the classifier on the respective
     datasets. An eventually existing prior training status has to be cleared
     automatically. Nothing is returned.
 
 `_predict(data)`
-    Unlike `_train()` the method is not called with a Dataset_ instance, but
+    Unlike `_train()` the method is not called with a :class:`~mvpa.datasets.base.Dataset` instance, but
     with any sequence of data samples (e.g. arrays). It has to return a
     sequence of predictions, one for each data sample.
 
@@ -240,11 +239,11 @@ call the base-class methods at the end of the implementation in the sub-class
 to preserve the full functionality.
 
 `_pretrain(dataset)`
-    Called with the Dataset_ instance that shall be trained with, but before
+    Called with the :class:`~mvpa.datasets.base.Dataset` instance that shall be trained with, but before
     the actual training is performed.
 
 `_posttrain(dataset)`
-    Called with the Dataset_ instance the classifier was trained on, just after
+    Called with the :class:`~mvpa.datasets.base.Dataset` instance the classifier was trained on, just after
     training was performed.
 
 `_prepredict(data)`
@@ -272,7 +271,7 @@ Adding a new DatasetMeasure
 
 There are few possible base-classes for new measures (former sensitivity
 analyzers).  First, DatasetMeasure_ can directly be sub-classed. It is a base
-class for any measure to be computed on a Dataset_. This is the more generic
+class for any measure to be computed on a :class:`~mvpa.datasets.base.Dataset`. This is the more generic
 approach. In the most of the cases, measures are to be reported per each
 feature, thus FeaturewiseDatasetMeasure_ should serve as a base class in those
 cases. Furthermore, for measures that make use of some classifier and extract
@@ -294,7 +293,7 @@ the absolute (e.g. plain `N.absolute` or a convinience wrapper Absolute_).
 To add a new measure implementation it is sufficient to create a new sub-class
 of DatasetMeasure_ (or FeaturewiseDatasetMeasure_, or Sensitivity_) and add an
 implementation of the `_call(dataset)` method. It will be called with an
-instance of Dataset_. FeaturewiseDatasetMeasure_ (e.g. Sensitivity_ as well)
+instance of :class:`~mvpa.datasets.base.Dataset`. FeaturewiseDatasetMeasure_ (e.g. Sensitivity_ as well)
 has to return a vector of featurewise sensitivity scores.
 
 .. IncludeStates: measures.base DatasetMeasure
