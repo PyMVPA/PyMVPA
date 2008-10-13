@@ -5,6 +5,9 @@ import os
 import re
 import mvpa
 
+# blacklist some pieces that should not show up
+exclude_list = ['mvpa.misc.copy']
+
 
 modref_path = os.path.join('doc', 'modref')
 if not os.path.exists(modref_path):
@@ -26,7 +29,7 @@ def parseModule(uri):
     elif  os.path.exists(os.path.join(filename, '__init__.py')):
         filename = os.path.join(filename, '__init__.py')
     else:
-        print 'URI?', uri, filename
+        print 'WARNING: URI?', uri, filename
 
     f = open(filename)
 
@@ -34,12 +37,12 @@ def parseModule(uri):
     classes = []
 
     for line in f:
-        if line.startswith('def'):
+        if line.startswith('def ') and line.count(':'):
             # exclude private stuff
             name = getObjectName(line)
             if not name.startswith('_'):
                 functions.append(name)
-        elif line.startswith('class'):
+        elif line.startswith('class ') and line.count(':'):
             # exclude private stuff
             name = getObjectName(line)
             if not name.startswith('_'):
@@ -130,4 +133,5 @@ for dirpath, dirnames, filenames in os.walk(mvpa.__path__[0]):
 
 # write the list
 for m in modules:
-    writeAPIDocTemplate(m)
+    if not m in exclude_list:
+        writeAPIDocTemplate(m)
