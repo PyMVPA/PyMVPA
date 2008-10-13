@@ -250,9 +250,9 @@ list of code snippets that will be executed in the local context of the
 cross-validation function. The TransferError_ instance used to train and test
 the classifier on each split is available via `transerror`. The rest is easy:
 TransferError_ provides access to its classifier and any classifier can in turn
-generate an appropriate Sensitivity_ instance via `getSensitivityAnalyzer()`.
+generate an appropriate :class:`~mvpa.measures.base.Sensitivity` instance via `getSensitivityAnalyzer()`.
 This generator method takes additional arguments to the constructor of the
-Sensitivity_ class. In this case we want to prevent retraining the classifiers,
+:class:`mvpa.measures.base.Sensitivity` class. In this case we want to prevent retraining the classifiers,
 as they will be trained anyway by the TransferError_ instance they belong to.
 
 The return values of all code snippets defined in `harvest_attribs` are
@@ -264,7 +264,6 @@ split.
 
 .. _CrossValidatedTransferError : api/mvpa.clfs.base.SplitClassifier-class.html
 .. _SplitClassifier : api/mvpa.clfs.base.SplitClassifier-class.html
-.. _Sensitivity : api/mvpa.measures.base.Sensitivity-class.html
 .. _TransferError : api/mvpa.clfs.transerror.TransferError-class.html
 .. _SMLR : api/mvpa.clfs.smlr.SMLR-class.html
 

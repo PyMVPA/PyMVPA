@@ -24,7 +24,7 @@ procedure.
 First, the impact of each individual feature on a classification has
 to be determined.  The resulting map reflects the sensitivities of all
 features with respect to a certain decision and, therefore, algorithms
-generating these maps are summarized as Sensitivity_ in PyMVPA.
+generating these maps are summarized as :class:`~mvpa.measures.base.Sensitivity` in PyMVPA.
 
 .. index:: feature selection
 
@@ -55,14 +55,14 @@ datasets.
 Sensitivity Measures
 ====================
 
-It was already mentioned that a Sensitivity_ computes a featurewise
+It was already mentioned that a :class:`~mvpa.measures.base.Sensitivity` computes a featurewise
 score that indicates how much interesting signal each feature contains
 -- hoping that this score somehow correlates with the impact of the features
 on a classifier's decision for a certain problem.
 
 Every sensitivity analyzer object computes a one-dimensional array with the
 respective score for every feature, when called with a :class:`~mvpa.datasets.base.Dataset`. Due to this
-common behaviour all Sensitivity_ types are interchangeable and can be
+common behaviour all :class:`~mvpa.measures.base.Sensitivity` types are interchangeable and can be
 combined with any other algorithm requiring a sensitivity analyzer.
 
 By convention higher sensitivity values indicate more interesting features.
@@ -71,8 +71,6 @@ There are two types of sensitivity analyzers in PyMVPA. Basic sensitivity
 analyzers directly compute a score from a Dataset. Meta sensitivity analyzers
 on the other hand utilize another sensitivity analyzer to compute their
 sensitivity maps.
-
-.. _Sensitivity: api/mvpa.measures.base.Sensitivity-class.html
 
 
 Basic Sensitivity (and related Measures)
@@ -152,7 +150,7 @@ Other linear Classifier Weights
 Any linear classifier in PyMVPA can report its weights. The procedure is
 identical for all of them. As outlined in the example using linear SVM weights,
 simply call `getSensitivityAnalyzer()` on a classifier instance and you'll get
-an appropriate Sensitivity_ object. Additionally, it is possible to force
+an appropriate :class:`~mvpa.measures.base.Sensitivity` object. Additionally, it is possible to force
 (re)training of the underlying classifier or simply report the weights computed
 during a previous training run.
 
@@ -169,7 +167,7 @@ Noise Perturbation
 ^^^^^^^^^^^^^^^^^^
 
 Noise perturbation is a generic approach to determine feature sensitivity.
-The sensitivity analyzer (NoisePerturbationSensitivity_) computes a
+The sensitivity analyzer  :class:`~mvpa.measures.noiseperturbation.NoisePerturbationSensitivity`) computes a
 scalar :class:`~mvpa.measures.base.DatasetMeasure` using the original dataset. Afterwards, for each single
 feature a noise pattern is added to the respective feature and the dataset
 measure is recomputed. The sensitivity of each feature is the difference
@@ -183,8 +181,6 @@ Depending on the used scalar :class:`~mvpa.measures.base.DatasetMeasure` using t
 might be really CPU-intensive! Also depending on the measure, it might be
 necessary to use appropriate Transformers_ (see `transformer` constructor
 arguments) to ensure that higher values represent higher sensitivities.
-
-.. _NoisePerturbationSensitivity: api/mvpa.measures.noiseperturbation.NoisePerturbationSensitivity-class.html
 
 
 .. index:: meta measures
