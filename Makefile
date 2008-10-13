@@ -105,6 +105,7 @@ references:
 
 htmldoc: modref-templates build
 	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
+	cd build/html/modref && ln -sf ../_static
 
 pdfdoc: modref-templates build pdfdoc-stamp
 pdfdoc-stamp:
