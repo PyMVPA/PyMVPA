@@ -21,7 +21,7 @@
 Searchlight
 ===========
 
-The term Searchlight_ refers to an algorithm that runs a
+The term :class:`~mvpa.measures.searchlight.Searchlight` refers to an algorithm that runs a
 scalar `DatasetMeasure` on all possible spheres of a certain size within a
 dataset (that provides information about distances between feature locations).
 The measure typically computed is a cross-validated transfer error
@@ -63,8 +63,6 @@ If this analysis is done on a fMRI dataset using `NiftiDataset` the resulting
 searchlight map (`sl_map`) can be mapped back into the original dataspace
 and viewed as a brain overlay. The :ref:`example section <example_searchlight>`
 contains a typical application of this algorithm.
-
-.. _Searchlight: api/mvpa.measures.searchlight.Searchlight-class.html
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
 

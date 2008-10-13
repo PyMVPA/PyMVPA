@@ -26,22 +26,22 @@ algorithmic fashion.
 .. index:: FeatureSelectionClassifier
 
 PyMVPA's flexible framework allows various feature selection methods to take
-place within a small block of code.  FeatureSelectionClassifier_ extends the
+place within a small block of code.  :class:`~mvpa.clfs.base.FeatureSelectionClassifier` extends the
 basic classifier framework to allow for the use of arbitrary methods of feature
 selection according to whatever ranking metric, feature selection criteria, and
 stopping criterion the user chooses for a given application.  Examples of the
 code/classification algorithms presented here can be found in
 `mvpa/clfs/warehouse.py`_.
 
-More formally, a FeatureSelectionClassifier_ is a meta-classifier.  That is, it
-is not a classifier itself -- it can take any *slave* Classifier_, perform some
+More formally, a :class:`~mvpa.clfs.base.FeatureSelectionClassifier` is a meta-classifier.  That is, it
+is not a classifier itself -- it can take any *slave* :class:`~mvpa.clfs.base.Classifier`, perform some
 feature selection in advance, select those features, and then train the
-provided *slave* Classifier_ on those features.  Externally, however, it looks
-like a Classifier_, in that it fulfills the specialization of the Classifier
+provided *slave* :class:`~mvpa.clfs.base.Classifier` on those features.  Externally, however, it looks
+like a :class:`~mvpa.clfs.base.Classifier`, in that it fulfills the specialization of the Classifier
 base class.  The following are the relevant arguments to the constructor of
-such a Classifier_:
+such a :class:`~mvpa.clfs.base.Classifier`:
 
-`clf`: Classifier_
+`clf`: :class:`~mvpa.clfs.base.Classifier`
   classifier based on which mask classifiers is created
 
 `feature_selection`: FeatureSelection_
@@ -164,20 +164,20 @@ perform such an analysis:
   ...       # update sensitivity at each step
   ...   descr='LinSVM+RFE(splits_avg)' )
 
-The code above introduces the SplitClassifier_, which in this case is yet
-another *meta-classifier* that takes in a Classifier_ (in this case a
+The code above introduces the :class:`~mvpa.clfs.base.SplitClassifier`, which in this case is yet
+another *meta-classifier* that takes in a :class:`~mvpa.clfs.base.Classifier` (in this case a
 LinearCSVMC_) and an arbitrary :class:`~mvpa.datasets.splitter.Splitter` object, so that the dataset can be
 split in whatever way the user desires.  Prior to training, the
-SplitClassifier_ splits the training dataset, dedicates a separate classifier
+:class:`~mvpa.clfs.base.SplitClassifier` splits the training dataset, dedicates a separate classifier
 to each split, trains each on the training part of the split, and then computes
-transfer error on the testing part of the split. If a SplitClassifier_ instance
+transfer error on the testing part of the split. If a :class:`~mvpa.clfs.base.SplitClassifier` instance
 is later on asked to *predict* some new data, it uses (by default) the
 MaximalVote_ strategy to derive an answer.  A summary about the performance of
-a SplitClassifier_ internally on each split of the training dataset is
+a :class:`~mvpa.clfs.base.SplitClassifier` internally on each split of the training dataset is
 available by accessing the `confusion` state variable.
 
 To summarize somewhat, RFE_ is just one method of feature selection, so we use a
-FeatureSelectionClassifier_ to facilitate this.  To parameterize the RFE
+:class:`~mvpa.clfs.base.FeatureSelectionClassifier` to facilitate this.  To parameterize the RFE
 process, we refer above to the following:
 
 `sensitivity_analyzer`
@@ -186,7 +186,7 @@ process, we refer above to the following:
 
 `transfer_error`
   confusion-based error that relies on the confusion matrices computed during
-  splitting of the dataset by the SplitClassifier_; this is used to provide a
+  splitting of the dataset by the :class:`~mvpa.clfs.base.SplitClassifier`; this is used to provide a
   value that can be compared against a stopping criterion to stop eliminating
   features
 
@@ -208,9 +208,6 @@ measures are most appropriate for the task at hand.
 .. _RFE: api/mvpa.featsel.rfe.RFE-class.html
 
 .. _MaximalVote: api/mvpa.clfs.base.MaximalVote-class.html
-.. _Classifier: api/mvpa.clfs.base.Classifier-class.html
-.. _FeatureSelectionClassifier: api/mvpa.clfs.base.FeatureSelectionClassifier-class.html
-.. _SplitClassifier: api/mvpa.clfs.base.SplitClassifier-class.html
 .. _FeatureSelection: api/mvpa.featsel.base.FeatureSelection-class.html
 .. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
 .. _mvpa/clfs/warehouse.py: api/mvpa.clfs.warehouse-pysrc.html
