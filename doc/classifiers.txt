@@ -94,7 +94,7 @@ PyMVPA. Such conditional storage and access is handy if a variable of
 interest might consume a lot of memory or needs intensive computation,
 and not needed in most (or in some) of the use cases.
 
-For instance, the :class:`Classifier` class defines the `trained_labels`
+For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the `trained_labels`
 state variable, which just stores the unique labels for which the
 classifier was trained. Since `trained_labels` stores meaningful
 information only for a trained classifier, attempt to access
