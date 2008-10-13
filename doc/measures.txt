@@ -202,11 +202,10 @@ of the `Basic Sensitivity Measures` to compute their sensitivity scores.
 Splitting Measures
 ^^^^^^^^^^^^^^^^^^
 
-The SplittingFeaturewiseMeasure uses a Splitter_ to generate dataset splits.
+The SplittingFeaturewiseMeasure uses a :class:`~mvpa.datasets.splitter.Splitter` to generate dataset splits.
 A FeaturewiseDatasetMeasure is then used to compute sensitivity maps for all these
 dataset splits. At the end a `combiner` function is called with all sensitivity
 maps to produce the final sensitivity map. By default the mean sensitivity
 maps across all splits is computed.
 
-.. _Splitter: api/mvpa.datasets.splitter.Splitter-class.html
 .. _SplitFeaturewiseMeasure: api/mvpa.measures.splitmeasure.SplitFeaturewiseMeasure-class.html
