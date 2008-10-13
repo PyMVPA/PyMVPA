@@ -55,6 +55,8 @@ def _pvalue(x, cdf_func, tail):
     elif tail == 'any':
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
+        # we need to half the signficance
+        cdf *= 2
 
     if is_scalar: return cdf[0]
     else:         return cdf
@@ -314,6 +316,7 @@ class FixedNullDist(NullDist):
         """
         return self._dist.cdf(x)
 
+
 if externals.exists('scipy'):
     import scipy.stats
     from scipy.stats import kstest
@@ -350,7 +353,10 @@ if externals.exists('scipy'):
                choice is made by minimal reported distance after estimating
                parameters of the distribution. Parameter `p=0.05` sets
                threshold to reject null-hypothesis that distribution is the
-               same
+               same.
+               WARNING: older versions (e.g. 0.5.2 in etch) of scipy have
+                        incorrect kstest implementation and do not function
+                        properly
           distributions : None or list of basestring
             Distributions to check. If None, all known in scipy.stats are
             tested.
@@ -432,4 +438,117 @@ if externals.exists('scipy'):
 
         # return all the results
         return results
+
+
+    if externals.exists('pylab'):
+        import pylab as P
+
+        def plotDistributionMatches(data, matches, nbins=31, nbest=5,
+                                    expand_tails=8, legend=2,
+                                    p=None, tail='any'):
+            """Plot best matching distributions
+
+            :Parameters:
+              data : N.ndarray
+                Data which was used to obtain the matches
+              matches : list of tuples
+                Sorted matches as provided by matchDistribution
+              nbins : int
+                Number of bins in the histogram
+              nbest : int
+                Number of top matches to plot
+              expand_tails : int
+                How many bins away to add to parametrized distributions
+                plots
+              legend : int
+                Either to provide legend and statistics in the legend.
+                1 -- just lists distributions.
+                2 -- adds distance measure
+                3 -- tp/fp/fn in the case if p is provided
+              p : float or None
+                If not None, visualize null-hypothesis testing (given p).
+                Bars in the histogram which fall under given p are colored
+                in red. False positives and false negatives are marked as
+                triangle up and down symbols correspondingly
+              tail : ('left', 'right', 'any')
+                If p is not None, the choise of tail for null-hypothesis
+                testing
+
+            :Returns: tuple(histogram, list of lines)
+            """
+
+            hist = P.hist(data, nbins, normed=1, align='center')
+            data_range = [N.min(data), N.max(data)]
+
+            # x's
+            x = hist[1]
+            dx = x[expand_tails] - x[0] # how much to expand tails by
+            x = N.hstack((x[:expand_tails] - dx, x, x[-expand_tails:] + dx))
+
+            p_thr = p
+
+            data_p = _pvalue(data, Nonparametric(data).cdf, tail)
+            data_p_thr = (data_p <= p_thr).ravel()
+
+            x_p = _pvalue(x, Nonparametric(data).cdf, tail)
+            x_p_thr = x_p <= p_thr
+            # color bars which pass thresholding in red
+            for thr, bar in zip(x_p_thr[expand_tails:], hist[2]):
+                bar.set_facecolor(('w','r')[int(thr)])
+
+            lines = []
+            labels = []
+            for i in xrange(min(nbest, len(matches))):
+                D, dist_name, params = matches[i]
+                dist = getattr(scipy.stats, dist_name)(*params)
+
+                label = '%s' % (dist_name)
+                if legend > 1: label += '(D=%.2f)' % (D)
+
+                xcdf_p = _pvalue(x, dist.cdf, tail)
+                xcdf_p_thr = (xcdf_p <= p_thr).ravel()
+
+                if p is not None and legend > 2:
+                    # We need to compare detection under given p
+                    data_cdf_p = _pvalue(data, dist.cdf, tail)
+                    data_cdf_p_thr = (data_cdf_p <= p_thr).ravel()
+
+                    # true positives
+                    tp = N.logical_and(data_cdf_p_thr, data_p_thr)
+                    # false positives
+                    fp = N.logical_and(data_cdf_p_thr, ~data_p_thr)
+                    # false negatives
+                    fn = N.logical_and(~data_cdf_p_thr, data_p_thr)
+
+                    label += ' tp/fp/fn=%d/%d/%d)' % \
+                            tuple(map(N.sum, [tp,fp,fn]))
+
+                pdf = dist.pdf(x)
+                line = P.plot(x, pdf, '-', linewidth=2, label=label)
+
+                # TODO: decide on tp/fp/fn by not centers of the bins but
+                #       by the values in data in the ranges covered by
+                #       those bins. Then it would correspond to the values
+                #       mentioned in the legend
+                if p is not None:
+                    color = line[0].get_color()
+                    # true positives
+                    xtp = N.logical_and(xcdf_p_thr, x_p_thr)
+                    # false positives
+                    xfp = N.logical_and(xcdf_p_thr, ~x_p_thr)
+                    # false negatives
+                    xfn = N.logical_and(~xcdf_p_thr, x_p_thr)
+
+                    # no need to plot tp explicitely -- marked by color of the bar
+                    # P.plot(x[xtp], pdf[xtp], 'o', color=color)
+                    P.plot(x[xfp], pdf[xfp], '^', color=color)
+                    P.plot(x[xfn], pdf[xfn], 'v', color=color)
+
+                lines.append(line)
+                labels.append(label)
+
+            if legend:
+                P.legend(lines, labels)
+
+            return (hist, lines)
 
