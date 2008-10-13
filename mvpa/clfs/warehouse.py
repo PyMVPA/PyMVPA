@@ -49,8 +49,8 @@ class Warehouse(object):
     Should provide easy ways to select classifiers of needed kind:
     clfs['linear', 'svm'] should return all linear SVMs
     clfs['linear', 'multiclass'] should return all linear classifiers
-     capable of doing multiclass classification
-     """
+    capable of doing multiclass classification
+    """
 
     def __init__(self, known_tags=None, matches={}):
         """Initialize warehouse
