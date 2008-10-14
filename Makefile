@@ -71,7 +71,7 @@ clean:
 	-@$(MAKE) distclean
 
 distclean:
-	-@rm -rf doc/modref doc/ex2rst
+	-@rm -rf doc/modref doc/ex
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
@@ -106,7 +106,7 @@ references:
 htmldoc: modref-templates examples2rst build
 	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
 	cd build/html/modref && ln -sf ../_static
-	cd build/html/ex2rst && ln -sf ../_static
+	cd build/html/ex && ln -sf ../_static
 
 pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:

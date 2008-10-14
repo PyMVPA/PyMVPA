@@ -30,9 +30,9 @@ Preprocessing
 
 .. toctree::
 
-   ex2rst/preproc_fsl_ev
-   ex2rst/projections
-   ex2rst/smellit
+   ex/preproc_fsl_ev
+   ex/projections
+   ex/smellit
 
 
 Analysis
@@ -40,15 +40,15 @@ Analysis
 
 .. toctree::
 
-   ex2rst/start_easy
-   ex2rst/smlr
-   ex2rst/clfs_examples
-   ex2rst/searchlight_minimal
-   ex2rst/searchlight_2d
-   ex2rst/sensanas
-   ex2rst/svdclf
-   ex2rst/permutation_test
-   ex2rst/match_distribution
+   ex/start_easy
+   ex/smlr
+   ex/clfs_examples
+   ex/searchlight_minimal
+   ex/searchlight_2d
+   ex/sensanas
+   ex/svdclf
+   ex/permutation_test
+   ex/match_distribution
 
 
 Visualization
@@ -56,9 +56,9 @@ Visualization
 
 .. toctree::
 
-   ex2rst/erp_plot
-   ex2rst/pylab_2d
-   ex2rst/topo_plot
+   ex/erp_plot
+   ex/pylab_2d
+   ex/topo_plot
 
 
 Miscellaneous
@@ -66,5 +66,5 @@ Miscellaneous
 
 .. toctree::
 
-   ex2rst/kerneldemo
-   ex2rst/curvefitting
+   ex/kerneldemo
+   ex/curvefitting
