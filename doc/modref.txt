@@ -23,7 +23,7 @@ For developers, more detailed (technical) information is available in the
 
 
 Global Facilities
------------------
+=================
 
 .. toctree::
 
@@ -31,7 +31,7 @@ Global Facilities
 
 
 Datasets: Input, Output, Storage and Preprocessing
---------------------------------------------------
+==================================================
 
 .. toctree::
   :glob:
@@ -40,7 +40,7 @@ Datasets: Input, Output, Storage and Preprocessing
 
 
 Mappers: Data Transformations
------------------------------
+=============================
 
 .. toctree::
   :glob:
@@ -49,7 +49,7 @@ Mappers: Data Transformations
 
 
 Classifiers and Errors
-----------------------
+======================
 
 .. toctree::
   :glob:
@@ -58,7 +58,7 @@ Classifiers and Errors
 
 
 Measures: Searchlights and Sensitivties
----------------------------------------
+=======================================
 
 .. toctree::
   :glob:
@@ -67,7 +67,7 @@ Measures: Searchlights and Sensitivties
 
 
 Feature Selection
------------------
+=================
 
 .. toctree::
   :glob:
@@ -76,7 +76,7 @@ Feature Selection
 
 
 Additional Algorithms
----------------------
+=====================
 
 .. toctree::
   :glob:
@@ -85,7 +85,7 @@ Additional Algorithms
 
 
 Common Facilities
------------------
+=================
 
 .. toctree::
   :glob:
@@ -94,7 +94,7 @@ Common Facilities
 
 
 Miscellaneous
--------------
+=============
 
 .. toctree::
   :glob:
