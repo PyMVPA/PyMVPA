@@ -7,7 +7,9 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Simple preprocessing of event-related data using FSL EV3 design files.
+"""
+Simple preprocessing of event-related data using FSL EV3 design files
+=====================================================================
 
 Events are defined using FSL's EV3 format (onset, duration, intensity).
 For each event a number of volumes is selected and the mean volume is
