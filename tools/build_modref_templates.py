@@ -37,12 +37,12 @@ def parseModule(uri):
     classes = []
 
     for line in f:
-        if line.startswith('def ') and line.count(':'):
+        if line.startswith('def ') and line.count('('):
             # exclude private stuff
             name = getObjectName(line)
             if not name.startswith('_'):
                 functions.append(name)
-        elif line.startswith('class ') and line.count(':'):
+        elif line.startswith('class '):
             # exclude private stuff
             name = getObjectName(line)
             if not name.startswith('_'):
