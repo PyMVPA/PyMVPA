@@ -7,7 +7,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a searchlight analysis on an fMRI dataset"""
+"""
+Easy Searchlight
+================
+
+.. index:: searchlight
+
+Run a searchlight analysis on the example fMRI dataset that is shipped with
+PyMVPA.
+"""
 
 from mvpa.suite import *
 
