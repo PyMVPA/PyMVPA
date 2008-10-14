@@ -11,9 +11,9 @@
 
 .. _examples:
 
-****************************************
-Complete Examples and Analysis Scenarios
-****************************************
+*************
+Full Examples
+*************
 
 Each of the examples in this section is a stand-alone script containing all
 necessary code to run some analysis. All examples are shipped with PyMVPA and
@@ -25,7 +25,46 @@ Some examples need to access a sample dataset available in the `data/`
 directory within the root of the PyMVPA hierarchy, and thus have to be invoked
 directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 
-.. toctree::
-  :glob:
+Preprocessing
+=============
 
-  ex2rst/*
+.. toctree::
+
+   ex2rst/preproc_fsl_ev
+   ex2rst/projections
+   ex2rst/smellit
+
+
+Analysis
+========
+
+.. toctree::
+
+   ex2rst/start_easy
+   ex2rst/smlr
+   ex2rst/clfs_examples
+   ex2rst/searchlight_minimal
+   ex2rst/searchlight_2d
+   ex2rst/sensanas
+   ex2rst/svdclf
+   ex2rst/permutation_test
+   ex2rst/match_distribution
+
+
+Visualization
+=============
+
+.. toctree::
+
+   ex2rst/erp_plot
+   ex2rst/pylab_2d
+   ex2rst/topo_plot
+
+
+Miscellaneous
+=============
+
+.. toctree::
+
+   ex2rst/kerneldemo
+   ex2rst/curvefitting
