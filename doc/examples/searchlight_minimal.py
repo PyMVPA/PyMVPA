@@ -8,18 +8,18 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Minimal Searchlight Examples
-============================
+Minimal Searchlight Example
+===========================
 
 .. index:: searchlight, cross-validation
 
 The term :class:`~mvpa.measures.searchlight.Searchlight` refers to an algorithm
-that runs a scalar `DatasetMeasure` on all possible spheres of a certain size
-within a dataset (that provides information about distances between feature
-locations).  The measure typically computed is a cross-validated transfer error
-(see :ref:`CrossValidatedTransferError <cross-validation>`). The idea to use a
-searchlight as a sensitivity analyzer on fMRI datasets stems from
-:ref:`Kriegeskorte et al. (2006) <KGB06>`.
+that runs a scalar :class:`~mvpa.measures.base.DatasetMeasure` on all possible
+spheres of a certain size within a dataset (that provides information about
+distances between feature locations).  The measure typically computed is a
+cross-validated transfer error (see :ref:`CrossValidatedTransferError
+<cross-validation>`). The idea to use a searchlight as a sensitivity analyzer
+on fMRI datasets stems from :ref:`Kriegeskorte et al. (2006) <KGB06>`.
 
 A searchlight analysis is can be easily performed. This examples shows a minimal
 draft of a complete analysis.
@@ -62,8 +62,8 @@ print 'Best performing sphere error:', max(sl_map)
 """
 If this analysis is done on a fMRI dataset using `NiftiDataset` the resulting
 searchlight map (`sl_map`) can be mapped back into the original dataspace
-and viewed as a brain overlay. The :ref:`example section <example_searchlight>`
-contains a typical application of this algorithm.
+and viewed as a brain overlay. :ref:`Another example <example_searchlight_2d>`
+shows a typical application of this algorithm.
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
 """
