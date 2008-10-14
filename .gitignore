@@ -35,3 +35,4 @@ data/haxby8x6
 *.valgrind.out*
 *.kcache.*
 doc/modref
+doc/ex2rst
