@@ -22,8 +22,8 @@ For developers, more detailed (technical) information is available in the
 .. _API Reference: api/index.html
 
 
-Package Content
-===============
+Global Facilities
+-----------------
 
 .. toctree::
 
