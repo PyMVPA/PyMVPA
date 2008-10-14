@@ -331,7 +331,8 @@ if externals.exists('scipy'):
 
     """
 
-    def matchDistribution(data, test='kstest', distributions=None,
+    def matchDistribution(data, nsamples=None,
+                          test='kstest', distributions=None,
                           **kwargs):
         """Determine best matching distribution.
 
@@ -345,6 +346,10 @@ if externals.exists('scipy'):
           data : N.ndarray
             Array of the data for which to deduce the distribution. It has
             to be sufficiently large to make a reliable conclusion
+          nsamples : int or None
+            If None -- use all samples in data to estimate parametric
+            distribution. Otherwise use only specified number randomly selected
+            from data.
           test : basestring
             What kind of testing to do. Choices:
              'p-roc' : detection power for a given ROC. Needs two
@@ -371,10 +376,21 @@ if externals.exists('scipy'):
             raise ValueError, 'Unknown kind of test %s. Known are %s' \
                   % (test, _KNOWN_TESTS)
 
+        data = N.ravel(data)
+        # data sampled
+        if nsamples is not None:
+            if __debug__:
+                debug('STAT', 'Sampling %d samples from data for the ' \
+                      'estimation of the distributions parameters' % nsamples)
+            indexes_selected = (N.random.sample(nsamples)*len(data)).astype(int)
+            data_selected = data[indexes_selected]
+        else:
+            indexes_selected = N.arange(len(data))
+            data_selected = data
+
         p_thr = kwargs.get('p', 0.05)
         if test == 'p-roc':
             tail = kwargs.get('tail', 'any')
-            data = N.ravel(data)
             data_p = _pvalue(data, Nonparametric(data).cdf, tail)
             data_p_thr = data_p <= p_thr
             true_positives = N.sum(data_p_thr)
@@ -393,7 +409,7 @@ if externals.exists('scipy'):
             # perform actions which might puke for some distributions
             try:
                 dist_gen = getattr(scipy.stats, d)
-                dist_params = dist_gen.fit(data)
+                dist_params = dist_gen.fit(data_selected)
                 if __debug__:
                     debug('STAT__', 'Got distribution parameters %s for %s' % (dist_params, d))
                 if test == 'p-roc':
@@ -444,7 +460,7 @@ if externals.exists('scipy'):
         import pylab as P
 
         def plotDistributionMatches(data, matches, nbins=31, nbest=5,
-                                    expand_tails=8, legend=2,
+                                    expand_tails=8, legend=2, plot_cdf=True,
                                     p=None, tail='any'):
             """Plot best matching distributions
 
@@ -465,6 +481,8 @@ if externals.exists('scipy'):
                 1 -- just lists distributions.
                 2 -- adds distance measure
                 3 -- tp/fp/fn in the case if p is provided
+              plot_cdf : bool
+                Either to plot cdf for data using non-parametric distribution
               p : float or None
                 If not None, visualize null-hypothesis testing (given p).
                 Bars in the histogram which fall under given p are colored
@@ -485,9 +503,14 @@ if externals.exists('scipy'):
             dx = x[expand_tails] - x[0] # how much to expand tails by
             x = N.hstack((x[:expand_tails] - dx, x, x[-expand_tails:] + dx))
 
+            nonparam = Nonparametric(data)
+            # plot cdf
+            if plot_cdf:
+                P.plot(x, nonparam.cdf(x), 'k--', linewidth=1)
+
             p_thr = p
 
-            data_p = _pvalue(data, Nonparametric(data).cdf, tail)
+            data_p = _pvalue(data, nonparam.cdf, tail)
             data_p_thr = (data_p <= p_thr).ravel()
 
             x_p = _pvalue(x, Nonparametric(data).cdf, tail)
@@ -495,6 +518,11 @@ if externals.exists('scipy'):
             # color bars which pass thresholding in red
             for thr, bar in zip(x_p_thr[expand_tails:], hist[2]):
                 bar.set_facecolor(('w','r')[int(thr)])
+
+            if not len(matches):
+                # no matches were provided
+                warning("No matching distributions were provided -- nothing to plot")
+                return (hist, )
 
             lines = []
             labels = []
@@ -525,13 +553,17 @@ if externals.exists('scipy'):
 
                 pdf = dist.pdf(x)
                 line = P.plot(x, pdf, '-', linewidth=2, label=label)
+                color = line[0].get_color()
+
+                if plot_cdf:
+                    cdf = dist.cdf(x)
+                    P.plot(x, cdf, ':', linewidth=1, color=color, label=label)
 
                 # TODO: decide on tp/fp/fn by not centers of the bins but
                 #       by the values in data in the ranges covered by
                 #       those bins. Then it would correspond to the values
                 #       mentioned in the legend
                 if p is not None:
-                    color = line[0].get_color()
                     # true positives
                     xtp = N.logical_and(xcdf_p_thr, x_p_thr)
                     # false positives
@@ -551,4 +583,9 @@ if externals.exists('scipy'):
                 P.legend(lines, labels)
 
             return (hist, lines)
+
+    #if True:
+    #    data = N.random.normal(size=(1000,1)); test='p-roc';
+    #    matches = matchDistribution(data, nsamples=30, test=test, p=0.05)
+    #    P.figure(); plotDistributionMatches(data, matches, nbins=101, p=0.05, legend=4, nbest=5)
 
