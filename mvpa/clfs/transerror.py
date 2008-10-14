@@ -1314,6 +1314,9 @@ class TransferError(ClassifierError):
     @property
     def errorfx(self): return self.__errorfx
 
+    @property
+    def null_dist(self): return self.__null_dist
+
 
 
 class ConfusionBasedError(ClassifierError):

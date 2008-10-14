@@ -141,6 +141,10 @@ class DatasetMeasure(Stateful):
         return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
 
 
+    @property
+    def null_dist(self): return self.__null_dist
+
+
 class FeaturewiseDatasetMeasure(DatasetMeasure):
     """A per-feature-measure computed from a `Dataset` (base class).
 
