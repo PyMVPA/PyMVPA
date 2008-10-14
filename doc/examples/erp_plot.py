@@ -7,7 +7,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating an ERP plot. Actually it is ERF plot since we have MEG data"""
+"""
+ERP/ERF-Plots
+=============
+
+Example demonstrating an ERP-style plots. Actually, this code can be used to
+plot various time-locked data types. This example uses MEG data and therefore
+generates an ERF-plot.
+"""
 
 from mvpa.suite import *
 

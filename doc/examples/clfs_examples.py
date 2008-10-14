@@ -7,7 +7,12 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Examples demonstrating various classifiers on different datasets"""
+"""
+Classifier Sweep
+================
+
+This examples shows a test of various classifiers on different datasets.
+"""
 
 from mvpa.suite import *
 
