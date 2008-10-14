@@ -11,9 +11,9 @@
 
 .. _examples:
 
-********
-Examples
-********
+****************************************
+Complete Examples and Analysis Scenarios
+****************************************
 
 Each of the examples in this section is a stand-alone script containing all
 necessary code to run some analysis. All examples are shipped with PyMVPA and

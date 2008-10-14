@@ -25,12 +25,11 @@ The PDF version of the manual is available for download_.
    classifiers
    measures
    featsel
-   scenarios
    misc
-   glossary
+   examples
    matlab
    faq
-   examples
+   glossary
    references
    legal
    changelog
