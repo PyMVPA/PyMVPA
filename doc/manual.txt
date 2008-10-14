@@ -34,9 +34,7 @@ The PDF version of the manual is available for download_.
    references
    legal
    changelog
-.. modref
-   This has to wait till bug in sphinx is fixed. For the status see:
-   http://bugs.debian.org/501763
+   modref
 
 .. <gjd> high-level comments
 
