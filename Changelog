@@ -36,6 +36,8 @@ Unreleased changes
   * Added initial glossary to the manual.
   * Updated install instructions for several RPM-based GNU/Linux
     distributions.
+  * New 'Module reference', as a middle-ground between manual and API
+    reference.
 
 
 Releases
