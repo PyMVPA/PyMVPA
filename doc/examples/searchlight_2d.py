@@ -8,10 +8,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Easy Searchlight
-================
+Searchlight on fMRI data
+========================
 
-.. index:: searchlight
+.. index:: searchlight, NIfTI
 
 Run a searchlight analysis on the example fMRI dataset that is shipped with
 PyMVPA.
@@ -100,4 +100,3 @@ for radius in [1,5,10]:
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
-
