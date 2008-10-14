@@ -331,7 +331,101 @@ if externals.exists('scipy'):
 
     """
 
-    def matchDistribution(data, nsamples=None,
+    # We need a way to fixate estimation of some parameters
+    # (e.g. mean) so lets create a simple proxy, or may be class
+    # generator later on, which would take care about punishing change
+    # from the 'right' arguments
+
+    import scipy
+
+    class rv_semifrozen(object):
+        """Helper proxy-class to fit distribution when some parameters are known
+
+        It is an ugly hack with snippets of code taken from scipy, which is
+        Copyright (c) 2001, 2002 Enthought, Inc.
+        and is distributed under BSD license
+        http://www.scipy.org/License_Compatibility
+        """
+
+        def __init__(self, dist, loc=None, scale=None, args=None):
+
+            self._dist = dist
+            fargs = (loc, scale)
+            if args is not None:
+                fargs += args
+            self._fargs = fargs
+            """Arguments which should get some fixed value"""
+
+
+        def nnlf(self, theta, x):
+            # - sum (log pdf(x, theta),axis=0)
+            #   where theta are the parameters (including loc and scale)
+            #
+            try:
+                fargs = self._fargs
+                i=-1
+                if fargs[1] is not None:
+                    scale = fargs[1]
+                else:
+                    scale = theta[i]
+                    i -= 1
+
+                if fargs[0] is not None: loc = fargs[0]
+                else:
+                    loc = theta[i]
+                    i -= 1
+                # TODO: if we want to fix params as well -- do here
+                args = tuple(theta[:i+1])
+            except IndexError:
+                raise ValueError, "Not enough input arguments."
+            if not self._argcheck(*args) or scale <= 0:
+                return N.inf
+            x = N.asarray((x-loc) / scale)
+            cond0 = (x <= self.a) | (x >= self.b)
+            if (N.any(cond0)):
+                return N.inf
+            else:
+                return self._nnlf(x, *args) + len(x)*N.log(scale)
+
+        def fit(self, data, *args, **kwds):
+            loc0, scale0 = map(kwds.get, ['loc', 'scale'], [0.0, 1.0])
+            fargs = self._fargs
+            Narg = len(args)
+            if Narg != self.numargs:
+                if Narg > self.numargs:
+                    raise ValueError, "Too many input arguments."
+                else:
+                    args += (1.0,)*(self.numargs-Narg)
+            # TODO: if needed to fix arguments -- remove them here
+            # location and scale are at the end
+            x0 = args
+            if fargs[0] is None: x0 = x0 + (loc0,)
+            if fargs[1] is None: x0 = x0 + (scale0,)
+            opt_x = scipy.optimize.fmin(self.nnlf, x0, args=(N.ravel(data),), disp=0)
+            if fargs[1] is not None: opt_x = N.hstack((opt_x,fargs[1:2]))
+            if fargs[0] is not None:
+                opt_x = N.hstack((opt_x[:-1], fargs[0:1],opt_x[-1:]))
+            return opt_x
+
+
+        def __setattr__(self, a, v):
+            if not a in ['_dist', '_fargs', 'fit', 'nnlf']:
+                self._dist.__setattr__(a, v)
+            else:
+                object.__setattr__(self, a, v)
+
+
+        def __getattribute__(self, a):
+            """We need to redirect all queries correspondingly
+            """
+            if not a in ['_dist', '_fargs', 'fit', 'nnlf']:
+                return getattr(self._dist, a)
+            else:
+                return object.__getattribute__(self, a)
+
+
+
+    def matchDistribution(data, nsamples=None, loc=None, scale=None,
                           test='kstest', distributions=None,
                           **kwargs):
         """Determine best matching distribution.
@@ -350,6 +444,10 @@ if externals.exists('scipy'):
             If None -- use all samples in data to estimate parametric
             distribution. Otherwise use only specified number randomly selected
             from data.
+          loc : float or None
+            Loc for the distribution (if known)
+          scale : float or None
+            Scale for the distribution (if known)
           test : basestring
             What kind of testing to do. Choices:
              'p-roc' : detection power for a given ROC. Needs two
@@ -409,7 +507,13 @@ if externals.exists('scipy'):
             # perform actions which might puke for some distributions
             try:
                 dist_gen = getattr(scipy.stats, d)
-                dist_params = dist_gen.fit(data_selected)
+                # specify distribution 'optimizer'. If loc or scale was provided,
+                # use home-brewed rv_semifrozen
+                if loc is not None or scale is not None:
+                    dist_opt = rv_semifrozen(dist_gen, loc=loc, scale=scale)
+                else:
+                    dist_opt = dist_gen
+                dist_params = dist_opt.fit(data_selected)
                 if __debug__:
                     debug('STAT__', 'Got distribution parameters %s for %s' % (dist_params, d))
                 if test == 'p-roc':
