@@ -7,7 +7,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a simple classifiction of a 2-D dataset"""
+"""
+Simple Plotting of Classifier Behavior
+======================================
+
+.. index:: plotting
+
+This example runs a number of classifiers on a simple 2D dataset and plots the
+decision surface of each classifier.
+"""
 
 from mvpa.suite import *
 

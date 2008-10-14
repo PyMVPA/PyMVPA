@@ -7,8 +7,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a how to use data projection onto SVD components
-for *any* clasifier"""
+"""
+Classification of SVD-mapped Datasets
+=====================================
+
+.. index:: mapper, SVD, MappedClassifier
+
+Demonstrate the usage of a dataset mapper performing data projection onto
+singular value components within a cross-validation -- for *any* clasifier.
+"""
 
 from mvpa.suite import *
 
