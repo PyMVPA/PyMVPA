@@ -24,7 +24,7 @@ on fMRI datasets stems from :ref:`Kriegeskorte et al. (2006) <KGB06>`.
 A searchlight analysis is can be easily performed. This examples shows a minimal
 draft of a complete analysis.
 
-First import a necessary pieces of PyMVPA.
+First import a necessary pieces of PyMVPA -- this time each bit individually.
 """
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.datasets.splitter import OddEvenSplitter
