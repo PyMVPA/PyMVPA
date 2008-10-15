@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA stats helpers"""
 
 from mvpa.base import externals
-from mvpa.clfs.stats import MCNullDist, FixedNullDist, matchDistribution
+from mvpa.clfs.stats import MCNullDist, FixedNullDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
 
@@ -120,16 +120,35 @@ class StatsTests(unittest.TestCase):
         """
         if not externals.exists('scipy'):
             return
+        from mvpa.clfs.stats import matchDistribution, rv_semifrozen
+        import scipy.stats
+
         data = datasets['uni2large'].samples[:,1]
-        for test in ['p-roc', 'kstest']:
-            # some really basic testing
-            matched = matchDistribution(data=data, test=test, p=0.05)
-            # at least norm should be in there
-            names = [m[1] for m in matched]
-            self.failUnless('norm' in names)
-            inorm = names.index('norm')
-            # and it should be at least in the first 5 best matching
-            self.failUnless(inorm <= 7)
+
+        # Lets test ad-hoc rv_semifrozen
+        floc = rv_semifrozen(scipy.stats.norm, loc=0).fit(data)
+        self.failUnless(floc[0] == 0)
+
+        fscale = rv_semifrozen(scipy.stats.norm, scale=1.0).fit(data)
+        self.failUnless(fscale[1] == 1)
+
+        flocscale = rv_semifrozen(scipy.stats.norm, loc=0, scale=1.0).fit(data)
+        self.failUnless(flocscale[1] == 1 and flocscale[0] == 0)
+
+        full = scipy.stats.norm.fit(data)
+        for res in [floc, fscale, flocscale, full]:
+            self.failUnless(len(res) == 2)
+
+        for loc in [None, N.mean(data)]:
+            for test in ['p-roc', 'kstest']:
+                # some really basic testing
+                matched = matchDistribution(data=data, test=test, loc=loc, p=0.05)
+                # at least norm should be in there
+                names = [m[1] for m in matched]
+                self.failUnless('norm' in names)
+                inorm = names.index('norm')
+                # and it should be at least in the first 5 best matching
+                self.failUnless(inorm <= 7)
 
 
 def suite():
