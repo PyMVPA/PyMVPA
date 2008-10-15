@@ -7,7 +7,16 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a SMLR classifier"""
+"""
+Compare SMLR to Linear SVM Classifier
+=====================================
+
+.. index:: SMLR, SVM
+
+Runs both classifiers on the the same dataset and compare their performance.
+This example also shows an example usage of confusion matrices and how two
+classifers can be combined.
+"""
 
 from mvpa.suite import *
 

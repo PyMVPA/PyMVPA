@@ -7,7 +7,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a searchlight analysis on an fMRI dataset"""
+"""
+Searchlight on fMRI data
+========================
+
+.. index:: searchlight, NIfTI
+
+Run a searchlight analysis on the example fMRI dataset that is shipped with
+PyMVPA.
+"""
 
 from mvpa.suite import *
 
@@ -92,4 +100,3 @@ for radius in [1,5,10]:
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
-

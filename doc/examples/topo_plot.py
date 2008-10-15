@@ -7,7 +7,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a topography plot."""
+"""
+Generating Topography plots
+===========================
+
+Example demonstrating a topography plot."""
 
 from mvpa.suite import *
 

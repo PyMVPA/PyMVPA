@@ -11,78 +11,60 @@
 
 .. _examples:
 
-********
-Examples
-********
+*************
+Full Examples
+*************
 
-Each of the following examples is a stand-alone script containing all
+Each of the examples in this section is a stand-alone script containing all
 necessary code to run some analysis. All examples are shipped with PyMVPA and
 can be found in the `doc/examples/` directory in the source package. This
-directory include some more special-interest examples which are not listed
+directory might include some more special-interest examples which are not listed
 here.
 
-Some examples need to access sample dataset available under `data/` directory
-within root of PyMVPA hierarchy, thus they have to be invoked directly from
-PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
+Some examples need to access a sample dataset available in the `data/`
+directory within the root of the PyMVPA hierarchy, and thus have to be invoked
+directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 
-.. index:: plotting
+Preprocessing
+=============
 
-.. _pylab2d:
+.. toctree::
 
-Simple Plotting of Classifier Behavior
-======================================
-
-This example runs a number of classifiers on a simple dataset and plots the
-decision surface of each classifier.
-
-.. literalinclude:: examples/pylab_2d.py
-
-.. _example_searchlight:
+   ex/preproc_fsl_ev
+   ex/projections
+   ex/smellit
 
 
-.. index:: searchlight
+Analysis
+========
 
-Easy Searchlight
-================
+.. toctree::
 
-Run a searchlight analysis on the example fMRI dataset that is shipped with
-PyMVPA. This example is part of the PyMVPA source distribution:
-doc/examples/searchlight_2d.py`.
-
-.. literalinclude:: examples/searchlight_2d.py
-
-
-.. index:: sensitivity
-
-Sensitivity Measure
-===================
-
-Run some basic and meta sensitivity measures on the example fMRI dataset that
-comes with PyMVPA and plot the computed featurewise measures for each.
-
-.. literalinclude:: examples/sensanas.py
+   ex/start_easy
+   ex/smlr
+   ex/clfs_examples
+   ex/searchlight_minimal
+   ex/searchlight_2d
+   ex/sensanas
+   ex/svdclf
+   ex/permutation_test
+   ex/match_distribution
 
 
-.. index:: mapper, SVD, MappedClassifier
+Visualization
+=============
 
-Classification of SVD-mapped Datasets
-=====================================
+.. toctree::
 
-Demonstrate the usage of a dataset mapper performing singular value
-decomposition within a cross-validation.
-
-.. literalinclude:: examples/svdclf.py
-
-
-.. index:: SMLR, SVM
-
-Compare SMLR to Linear SVM Classifier
-=====================================
-
-Runs both classifiers on the the same dataset and compare their performance.
-This example also shows an example usage of confusion matrices and how two
-classifers can be combined.
-
-.. literalinclude:: examples/smlr.py
+   ex/erp_plot
+   ex/pylab_2d
+   ex/topo_plot
 
 
+Miscellaneous
+=============
+
+.. toctree::
+
+   ex/kerneldemo
+   ex/curvefitting

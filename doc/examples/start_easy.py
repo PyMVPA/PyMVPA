@@ -7,7 +7,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Very, very simple example showing a complete cross-validation procedure
+"""
+Tiny Example of a Full Cross-Validation
+=======================================
+
+Very, very simple example showing a complete cross-validation procedure
 with no fancy additions whatsoever.
 """
 

@@ -61,6 +61,36 @@ The textwidth of all docstrings should not exceed **72** characters, to ensure
 nicely looking docs on a 80 characters terminal in IPython.
 
 
+Examples
+--------
+
+Examples should be complete and stand-alone scripts located in `doc/examples`.
+If an example involves any kind of interactive step, it should honour the
+:envvar:`MVPA_EXAMPLES_INTERACTIVE` setting, to allow for automatic testing of
+all examples. In case of a matplotlib-based visualization such snippet should
+be sufficient::
+
+  if cfg.getboolean('examples', 'interactive', True):
+      P.show()
+
+All examples are automatically converted into RsT documents for inclusion in the
+manual. Each of them is preprocessed in the following way:
+
+* Any header till the first docstring is stripped.
+* Each top-level (non-assigned) docstring is taken as a text block in the
+  generated RsT source file. Such a docstring might appear anywhere in the
+  example, not just at the beginning. In this case, the code snippet is
+  properly split and the text block is inserted at the corresponding location.
+* All remaining lines are treated as code and inserted in the RsT source with
+  appropriate markup.
+
+The first docstring in each example must have a proper section heading (with '='
+markup).
+
+Finally, each example should be added to the appropriate `toctree` in
+`doc/examples.txt`.
+
+
 Code Formatting
 ===============
 
@@ -454,123 +484,123 @@ Developer-TODO
 Things to implement for the next release (Release goals)
 --------------------------------------------------------
 
- * A part of below restructuring TODO but is separate due to it importance:
-   come up with cleaner hierarchy and tagging of classifiers and regressions --
-   now they are all `Classifier`
+* A part of below restructuring TODO but is separate due to it importance:
+  come up with cleaner hierarchy and tagging of classifiers and regressions --
+  now they are all `Classifier`
 
- * Unify parameter naming across all classifiers and come up with a labeling
-   guideline for future classifier implementations and wrappers::
+* Unify parameter naming across all classifiers and come up with a labeling
+  guideline for future classifier implementations and wrappers::
 
-    Numeric parameters can be part of .params Collection now, so they are
-    joined together.
+   Numeric parameters can be part of .params Collection now, so they are
+   joined together.
 
- * Provide sufficient documentation about internal variable naming to make
-   Harvester/Harvesting functionality usable. Currently the user is supposed
-   to know, how a particular *local* variable is called to be able to harvest
-   e.g. `feature_ids` of classifiers over cross-validation folds::
+* Provide sufficient documentation about internal variable naming to make
+  Harvester/Harvesting functionality usable. Currently the user is supposed
+  to know, how a particular *local* variable is called to be able to harvest
+  e.g. `feature_ids` of classifiers over cross-validation folds::
 
-     class.HARVESTABLE={'blah' : ' some description'}
+    class.HARVESTABLE={'blah' : ' some description'}
 
-     Add information on HARVESTABLE and StateVariable
-     Collectable -> Attribute
+    Add information on HARVESTABLE and StateVariable
+    Collectable -> Attribute
 
-     base.attributes
+    base.attributes
 
- * Restructure code base (incl. renaming and moving pieces)
+* Restructure code base (incl. renaming and moving pieces)
 
-   Let's use the following list to come up with a nice structure for all
-   logical components we have:
+  Let's use the following list to come up with a nice structure for all
+  logical components we have:
 
-    * Datasets
+  * Datasets
 
-    * Sensitivity analyzers (maybe: featurewise measures)
-        * Classifier sensitivities (SVM, SMLR) -> respective classifiers
-        * ANOVA                         -> mvpa.measures.anova
-        * Noise perturbation ->         -> mvpa.measures.noisepertrubation
-        * meta-algorithms (splitting)   -> mvpa.measures
+  * Sensitivity analyzers (maybe: featurewise measures)
+    * Classifier sensitivities (SVM, SMLR) -> respective classifiers
+    * ANOVA                         -> mvpa.measures.anova
+    * Noise perturbation ->         -> mvpa.measures.noisepertrubation
+    * meta-algorithms (splitting)   -> mvpa.measures
 
-     DatasetMeasure -> Measure (transformers)
+   DatasetMeasure -> Measure (transformers)
 
-     FeaturewiseDatasetMeasure?
+   FeaturewiseDatasetMeasure?
 
-     combiners to be absorbed withing transformers? and then gone?
-     {Classifier?}Sensitivity?
+   combiners to be absorbed withing transformers? and then gone?
+   {Classifier?}Sensitivity?
 
-    * Mappers::
-        mvpa.mappers (AKA mvpa.projections mvpa.transformers)
+  * Mappers::
+      mvpa.mappers (AKA mvpa.projections mvpa.transformers)
 
-      * Along with PCA/ICA mappers, we should add a PLS mapper::
+    * Along with PCA/ICA mappers, we should add a PLS mapper::
 
-          PCA.train(learningdataset)
-             .forward,
-             .backward
+        PCA.train(learningdataset)
+           .forward,
+           .backward
 
-          Package pychem for Debian, see how to use from PyMVPA! ;-) Same for MDP
-          (ie use from pymvpa)
-
-
-    * Feature selection algorithms
-        * Simple thresholding
-        * RFE
-        * IFS
-
-  		.mapper state variable
-
-          mvpa.featsel (NB no featsel.featsel.featsel more than 4 times!)
-          mvpa.featsel.rfe
-          mvpa.featsel.ifs
-
-    * several base classes with framework infrastructure (Harvester,
-      Stateful, virtual properties, ...)
-
-    * Transfer error calculation
-    * Cross-validation support
-    * Monte-Carlo-based significance testing
-    * Dataset splitter
-    * Metrics and distance functions
-    * Functions operating on dataset for preprocessing or transformations
-    * Commandline interface support
-    * Functions to generate artificial datasets
-    * Error functions (i.e. for TransferError)
-    * Custom exception types
-    * Python 2.5 copy() aka external code shipped with PyMVPA
-    * Several helpers for data IO
-    * Left-over from the last attempt to establish a generic parameter
-      interface
-    * Detrending (operating on Datasets)
-    * Result 'Transformers' to be used with 'transformer=' kwarg
-    * Debugging and verbosity infrastructure
-    * plus additional helpers, ranging from simple to complex scattered
-      all over the place
-
- * Resultant hierarchy:
-
-   - mvpa
-
-     + datasets
-     + clfs
-     + measures
-     + featsel
+        Package pychem for Debian, see how to use from PyMVPA! ;-) Same for MDP
+        (ie use from pymvpa)
 
 
- * Add ability to add/modify custom attributes to a dataset.
- * Possibly make NiftiDataset default to float32 when it sees that the data are
-   ints.
- * Add kernel methods as option to all classifiers, not just SVMs.  For example, you
-   should be able to run a predefined or custom kernel on the samples going into SMLR.
- * TransferError needs to know what type of data to send to any specific ErrorFX.  Right
-   now there is only support for predictions and labels, but the area under the ROC and
-   the correlation-based error functions expect to receive the "values" or "probabilities"
-   from a classifier.  Just to make this harder, every classifier is different.  For
-   example, a ridge regression's predictions are continuous values, whereas for a SVM you
-   need to pass in the probabilities.
+  * Feature selection algorithms
+      * Simple thresholding
+      * RFE
+      * IFS
 
-   For binary:       1 value
-       multiclass:   1 value, or N values
+  * .mapper state variable
 
- * In a related issue, the predictions and values states of the classifiers need to have
-   a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
-   returns a numpy ndarray.
+        mvpa.featsel (NB no featsel.featsel.featsel more than 4 times!)
+        mvpa.featsel.rfe
+        mvpa.featsel.ifs
+
+  * several base classes with framework infrastructure (Harvester,
+    Stateful, virtual properties, ...)
+
+  * Transfer error calculation
+  * Cross-validation support
+  * Monte-Carlo-based significance testing
+  * Dataset splitter
+  * Metrics and distance functions
+  * Functions operating on dataset for preprocessing or transformations
+  * Commandline interface support
+  * Functions to generate artificial datasets
+  * Error functions (i.e. for TransferError)
+  * Custom exception types
+  * Python 2.5 copy() aka external code shipped with PyMVPA
+  * Several helpers for data IO
+  * Left-over from the last attempt to establish a generic parameter
+    interface
+  * Detrending (operating on Datasets)
+  * Result 'Transformers' to be used with 'transformer=' kwarg
+  * Debugging and verbosity infrastructure
+  * plus additional helpers, ranging from simple to complex scattered
+    all over the place
+
+* Resultant hierarchy:
+
+  - mvpa
+
+    + datasets
+    + clfs
+    + measures
+    + featsel
+
+
+* Add ability to add/modify custom attributes to a dataset.
+* Possibly make NiftiDataset default to float32 when it sees that the data are
+  ints.
+* Add kernel methods as option to all classifiers, not just SVMs.  For example, you
+  should be able to run a predefined or custom kernel on the samples going into SMLR.
+* TransferError needs to know what type of data to send to any specific ErrorFX.  Right
+  now there is only support for predictions and labels, but the area under the ROC and
+  the correlation-based error functions expect to receive the "values" or "probabilities"
+  from a classifier.  Just to make this harder, every classifier is different.  For
+  example, a ridge regression's predictions are continuous values, whereas for a SVM you
+  need to pass in the probabilities.
+
+  For binary:       1 value
+      multiclass:   1 value, or N values
+
+* In a related issue, the predictions and values states of the classifiers need to have
+  a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
+  returns a numpy ndarray.
 
 
 

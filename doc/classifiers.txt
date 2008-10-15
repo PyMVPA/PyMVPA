@@ -15,18 +15,19 @@
 Classifiers
 ***********
 
-PyMVPA includes a number of ready-to-use classifiers, which are
-described in the following sections. All classifiers implement the
-same, very simple interface. Each classifier object takes all relevant
-parameters as arguments to its constructor. Once instantiated, the
-classifier object's `train()` method can be called with some
-dataset. This trains the classifier using *all* samples in the
-respective dataset.
+PyMVPA includes a number of ready-to-use classifiers, which are described in
+the following sections. All classifiers implement the same, very simple
+interface. Each classifier object takes all relevant parameters as arguments to
+its constructor. Once instantiated, the classifier object's
+:meth:`~mvpa.clfs.base.Classifier.train` method can be called with some
+dataset. This trains the classifier using *all* samples in the respective
+dataset.
 
-The major task for a classifier is to make predictions. Predictions are made
-by calling the classifier's `predict()` method with one or multiple data
-samples. `predict()` operates on pure sample data and not datasets, as in
-some cases the true label for a sample might be totally unknown.
+The major task for a classifier is to make predictions. Predictions are made by
+calling the classifier's :meth:`~mvpa.clfs.base.Classifier.predict` method with
+one or multiple data samples. :meth:`~mvpa.clfs.base.Classifier.predict`
+operates on pure sample data and not datasets, as in some cases the true label
+for a sample might be totally unknown.
 
 This examples demonstrates the typical daily life of a classifier.
 
@@ -55,7 +56,8 @@ generalizes well across samples not included in the training dataset. In this
 case the validation dataset consists of 10 random floating point values in the
 interval (0,100).
 
-The classifier in this example is a k-Nearest-Neighbour_ classifier that makes
+The classifier in this example is a :class:`~mvpa.clfs.knn.kNN`
+(k-Nearest-Neighbour) classifier that makes
 use of the 10 nearest neighbours of a data sample to make its predictions
 (k=10). One can see that after the training the classifier performs optimally
 on the training dataset as well as on the validation data samples.
@@ -74,8 +76,8 @@ classifiers on some dataset (see Fig. 1).
 A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
 linear SVM, logistic regression, ridge regression and SVM with radial basis
 function kernel) on a simple classification problem. The code to generate
-these figure can be found in the `pylab_2d.py` example in the :ref:`pylab2d`
-section.
+these figure can be found in the `pylab_2d.py` example in the
+:ref:`example_pylab_2d` section.
 
 
 .. index:: states
@@ -83,20 +85,19 @@ section.
 Stateful objects
 ================
 
-Before looking at the different classifiers in more detail, it is
-important to mention another feature common to all of them. While
-their interface is simple, classifiers are in no way limited to report
-only predictions. All classifiers implement an additional interface:
-the so-called Stateful_ interface.  Objects of any class that is
-derived from Stateful_ have attributes (we refer to such attributes
-as state variables), which are conditionally computed and stored by
-PyMVPA. Such conditional storage and access is handy if a variable of
-interest might consume a lot of memory or needs intensive computation,
-and not needed in most (or in some) of the use cases.
+Before looking at the different classifiers in more detail, it is important to
+mention another feature common to all of them. While their interface is simple,
+classifiers are in no way limited to report only predictions. All classifiers
+implement an additional interface: Objects of any class that are derived from
+:class:`~mvpa.misc.state.ClassWithCollections` have attributes (we refer to
+such attributes as state variables), which are conditionally computed and
+stored by PyMVPA. Such conditional storage and access is handy if a variable of
+interest might consume a lot of memory or needs intensive computation, and not
+needed in most (or in some) of the use cases.
 
-For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the `trained_labels`
-state variable, which just stores the unique labels for which the
-classifier was trained. Since `trained_labels` stores meaningful
+For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the
+`trained_labels` state variable, which just stores the unique labels for which
+the classifier was trained. Since `trained_labels` stores meaningful
 information only for a trained classifier, attempt to access
 'clf.trained_labels' before training would result in an error,
 
@@ -108,30 +109,26 @@ information only for a trained classifier, attempt to access
  ...     "Does not work"
  'Does not work'
 
-since the classifier has not seen the
-data yet and, thus, does not know the labels. In other words, it is
-not yet in the state to know anything about the labels, hence the name
-Stateful_. We will refer to instances of classes derived from
-Stateful_ as 'stateful'.  Any state variable can be enabled or
-disabled on per instance basis at any time of the execution.
-
-.. _Stateful: api/mvpa.misc.state.ClassWithCollections-class.html
-.. _StateCollection: api/mvpa.misc.state.StateCollection-class.html
+since the classifier has not seen the data yet and, thus, does not know the
+labels. In other words, it is not yet in the state to know anything about the
+labels. Any state variable can be enabled or disabled on per instance basis at
+any time of the execution (see :class:`~mvpa.misc.state.ClassWithCollections`).
 
 To continue the last example, each classifier, or more precisely every
 stateful object, can be asked to report existing state-related attributes:
 
   >>> list_with_verbose_explanations = clf.states.listing
 
-'clf.states' is an instance of StateCollection_ class which is a container
-for all state variables of the given class. Although values can be queried
-or set (if state is enabled) operating directly on the stateful object
+'clf.states' is an instance of :class:`~mvpa.misc.state.StateCollection` class
+which is a container for all state variables of the given class. Although
+values can be queried or set (if state is enabled) operating directly on the
+stateful object
 
   >>> clf.trained_labels
   array([0, 1])
 
 any other operation on the state (e.g. enabling, disabling) has to be carried
-out through the StateCollection_ '.states'.
+out through the `states` attribute.
 
   >>> print clf.states
   states{trained_dataset predicting_time*+ training_confusion predictions*+...}
@@ -150,7 +147,8 @@ enabled state variable, and '*' for a variable that stores some value
 
 By default all classifiers provide state variables `values`,
 `predictions`. The latter is simply the set of predictions that was returned
-by the last call to the objects `predict()` method. The former is heavily
+by the last call to the objects :meth:`~mvpa.clfs.base.Classifier.predict`
+method. The former is heavily
 classifier-specific. By convention the `values` key provides access to the
 raw values that a classifier prediction is based on. Depending on the
 classifier, this information might required significant resources when stored.
@@ -176,20 +174,22 @@ of desired state variables names, passed to the object constructor. Keyword
 Error Calculation
 =================
 
-The :class:`~mvpa.clfs.transerror.TransferError` class provides a convenient way to determine the transfer
-error of a trained classifier on some validation dataset, i.e. the accuracy of
-the classifier's predictions on a novel, independent dataset. A :class:`~mvpa.clfs.transerror.TransferError`
-object is instanciated by passing a classifier object to the constructor.
-Optionally a custom error function can be specified (see `errorfx` argument).
+The :class:`~mvpa.clfs.transerror.TransferError` class provides a convenient
+way to determine the transfer error of a trained classifier on some validation
+dataset, i.e. the accuracy of the classifier's predictions on a novel,
+independent dataset. A :class:`~mvpa.clfs.transerror.TransferError` object is
+instanciated by passing a classifier object to the constructor.  Optionally a
+custom error function can be specified (see `errorfx` argument).
 
 To compute the transfer error simply call the object with a validation dataset.
-The computed error value is returned. :class:`~mvpa.clfs.transerror.TransferError` also supports a state
-variable `confusion` that contains the full confusion matrix of the predictions
-made on the validation dataset. The confusion matrix is disabled by default.
+The computed error value is returned.
+:class:`~mvpa.clfs.transerror.TransferError` also supports a state variable
+`confusion` that contains the full confusion matrix of the predictions made on
+the validation dataset. The confusion matrix is disabled by default.
 
-If the :class:`~mvpa.clfs.transerror.TransferError` object is called with an optional training dataset, the
-contained classifier is first training using this dataset before predictions
-on the validation dataset are made.
+If the :class:`~mvpa.clfs.transerror.TransferError` object is called with an
+optional training dataset, the contained classifier is first training using
+this dataset before predictions on the validation dataset are made.
 
   >>> from mvpa.clfs.transerror import TransferError
   >>> clf = kNN(k=10)
@@ -209,12 +209,15 @@ Often one is not only interested in a single transfer error on one validation
 or test dataset, but on a cross-validated estimate of the transfer error. A
 popular method is the so-called leave-one-out cross-validation.
 
-The :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class provides a simple way to compute such
-measure. It utilizes a :class:`~mvpa.clfs.transerror.TransferError` object and a :class:`~mvpa.datasets.splitter.Splitter`. When called with
-a :class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the Dataset and the transfer error
-for all splits is computed by training on one of the splitted datasets and
-making predictions on the other. By default the mean of transfer errors is
-returned (but the actual `combiner` function is customizable).
+The :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class
+provides a simple way to compute such measure. It utilizes a
+:class:`~mvpa.clfs.transerror.TransferError` object and a
+:class:`~mvpa.datasets.splitter.Splitter`. When called with a
+:class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the
+Dataset and the transfer error for all splits is computed by training on one of
+the splitted datasets and making predictions on the other. By default the mean
+of transfer errors is returned (but the actual `combiner` function is
+customizable).
 
 The following example shows the minimal code for a leave-one-out
 cross-validation reusing the transfer error object from the previous example
@@ -244,9 +247,11 @@ combined or enhanced with :ref:`metaclassifiers`.
 
 .. index:: gaussian process regression, GPR
 
+
 Gaussian Process Regression
 ---------------------------
 
+:class:`~mvpa.clfs.gpr.GPR`
 (`Wikipedia entry about gaussian process regression`_).
 
 .. _Wikipedia entry about gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
@@ -257,11 +262,10 @@ Gaussian Process Regression
 k-Nearest-Neighbour
 -------------------
 
-The kNN_ classifier makes predictions based on the labels of nearby samples.
-It currently uses Euclidian distance to determine the nearest neighbours, but
-future enhancements may include support for other kernels.
-
-.. _kNN: api/mvpa.clfs.knn.kNN-class.html
+The :class:`~mvpa.clfs.knn.kNN` classifier makes predictions based on the
+labels of nearby samples.  It currently uses Euclidian distance to determine
+the nearest neighbours, but future enhancements may include support for other
+kernels.
 
 
 .. index:: least angle regression, LARS
@@ -269,6 +273,7 @@ future enhancements may include support for other kernels.
 Least Angle Regression
 ----------------------
 
+:class:`~mvpa.clfs.lars.LARS`
 :ref:`Efron et al. (2004) <EHJ+04>`
 
 
@@ -277,13 +282,12 @@ Least Angle Regression
 Penalized Logistic Regression
 -----------------------------
 
-The penalized logistic regression (PLR_) is similar to the ridge in that it
-has a penalty term, however, it is trained to predict a binary outcome by
-means of the logistic function (`Wikipedia entry about logistic regression`_).
+The penalized logistic regression (:class:`~mvpa.clfs.plr.PLR`) is similar to
+the ridge in that it has a penalty term, however, it is trained to predict a
+binary outcome by means of the logistic function (`Wikipedia entry about
+logistic regression`_).
 
 .. _Wikipedia entry about logistic regression: http://en.wikipedia.org/wiki/Logistic_regression
-.. _PLR: api/mvpa.clfs.plr.PLR-class.html
-
 
 
 .. index:: ridge regression
@@ -294,12 +298,12 @@ Ridge Regression
 Ridge regression (aka Tikhonov regularization) is a variant of a linear regression
 (`Wikipedia entry about ridge regression`_).
 
-The ridge regression classifier (RidgeReg_) performs a simple linear regression
-with a penalty parameter to help avoid over-fitting.  The regression inserts an
-intercept term so that you do not have to center your data.
+The ridge regression classifier (:class:`~mvpa.clfs.ridge.RidgeReg`) performs a
+simple linear regression with a penalty parameter to help avoid over-fitting.
+The regression inserts an intercept term so that you do not have to center your
+data.
 
 .. _Wikipedia entry about ridge regression: http://en.wikipedia.org/wiki/Ridge_regression
-.. _RidgeReg: api/mvpa.clfs.ridge.RidgeReg-class.html
 
 
 .. index:: sparse multinomial logistic regression, SMLR
@@ -307,8 +311,8 @@ intercept term so that you do not have to center your data.
 Sparse Multinomial Logistic Regression
 --------------------------------------
 
-Sparse Multinomial Logistic Regression
-(:ref:`Krishnapuram et al., 2005 <KCF+05>`) is a fast multi-class classifier
+Sparse Multinomial Logistic Regression (:class:`~mvpa.clfs.smlr.SMLR`;
+:ref:`Krishnapuram et al., 2005 <KCF+05>`) is a fast multi-class classifier
 that can easily deal with high-dimensional problems (`research paper about
 SMLR`_).  PyMVPA includes two implementations: one in pure Python and a faster
 one that makes use of a C extension for the performance critical pieces of the
@@ -328,24 +332,20 @@ since they can deal with very high dimensional problems (`Wikipedia
 entry about SVM`_), while maintaining reasonable generalization performance.
 
 The support vector machine classes provide a family of classifiers by wrapping
-libsvm_ and Shogun_ libraries, with corresponding base classes libsvm.SVM_ and
-sg.SVM_ accordingly. By default SVM class is bound to libsvm's implementation
-if such is available (shogun otherwise).
+libsvm_ and Shogun_ libraries, with corresponding base classes
+:class:`~mvpa.clfs.svm.libsvm.SVM` and :class:`~mvpa.clfs.svm.sg.SVM`
+accordingly. By default SVM class is bound to libsvm's implementation if such
+is available (shogun otherwise).
 
 While any SVM class provides a complete interface, the others child classes
 make it easy to run some subset of standard classifiers, such as linear SVM,
-with a default set of parameters (see LinearCSVMC_, LinearNuSVMC_, RbfNuSVMC_
-and RbfCSVMC_).
+with a default set of parameters (see :class:`~mvpa.clfs.svm.LinearCSVMC`,
+:class:`~mvpa.clfs.svm.LinearNuSVMC`, :class:`~mvpa.clfs.svm.RbfNuSVMC` and
+:class:`~mvpa.clfs.svm.RbfCSVMC`).
 
 .. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _Shogun: http://www.shogun-toolbox.org
 .. _Wikipedia entry about SVM: http://en.wikipedia.org/wiki/Support_Vector_Machine
-.. _libsvm.SVM: api/mvpa.clfs.libsvm.svm.SVM-class.html
-.. _sg.SVM: api/mvpa.clfs.sg.svm.SVM-class.html
-.. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
-.. _LinearNuSVMC: api/mvpa.clfs.svm.LinearNuSVMC-class.html
-.. _RbfCSVMC: api/mvpa.clfs.svm.RbfCSVMC-class.html
-.. _RbfNuSVMC: api/mvpa.clfs.svm.RbfNuSVMC-class.html
 
 
 .. _metaclassifiers:
@@ -371,47 +371,53 @@ Examples of Meta-Classifiers
 At present, there are two primary meta-classifiers implemented in the PyMVPA
 package, beneath which there are several specific options:
 
-1. :class:`~mvpa.clfs.base.BoostedClassifier` -- these typically combine some aspect of the
-   classifier's functionality with another component, such as prediction or data
-   splitting
+1. :class:`~mvpa.clfs.base.BoostedClassifier` -- these typically combine some
+    aspect of the classifier's functionality with another component, such as
+    prediction or data splitting
 
-2. :class:`~mvpa.clfs.base.ProxyClassifier` -- these typically perform some action on the data/labels
-   before classification is performed
+2. :class:`~mvpa.clfs.base.ProxyClassifier` -- these typically perform some
+    action on the data/labels before classification is performed
 
 Within these more general categories, specific classifiers are implemented.
-For example, there are several :class:`~mvpa.clfs.base.BoostedClassifier` subclasses:
+For example, there are several :class:`~mvpa.clfs.base.BoostedClassifier`
+subclasses:
 
-1. :class:`~mvpa.clfs.base.CombinedClassifier` -- combines predictions using a PredictionsCombiner_
-   functor
+1. :class:`~mvpa.clfs.base.CombinedClassifier` -- combines predictions using a
+    :class:`~mvpa.clfs.base.PredictionsCombiner` functor
 
-2. :class:`~mvpa.clfs.base.MulticlassClassifier` -- performs multi-class classification by means of a
-   list of :class:`~mvpa.clfs.base.BinaryClassifier` instances
+2. :class:`~mvpa.clfs.base.MulticlassClassifier` -- performs multi-class
+    classification by means of a list of
+    :class:`~mvpa.clfs.base.BinaryClassifier` instances
 
-3. :class:`~mvpa.clfs.base.SplitClassifier` -- combines a :class:`~mvpa.clfs.base.Classifier` and an arbitrary :class:`~mvpa.datasets.splitter.Splitter`
+3. :class:`~mvpa.clfs.base.SplitClassifier` -- combines a
+    :class:`~mvpa.clfs.base.Classifier` and an arbitrary
+    :class:`~mvpa.datasets.splitter.Splitter`
 
-Furthermore, there are also several :class:`~mvpa.clfs.base.ProxyClassifier` subclasses:
+Furthermore, there are also several :class:`~mvpa.clfs.base.ProxyClassifier`
+subclasses:
 
-1. :class:`~mvpa.clfs.base.BinaryClassifier` -- maps a set of labels into two categories, +1 and -1
+1. :class:`~mvpa.clfs.base.BinaryClassifier` -- maps a set of labels into two
+    categories, +1 and -1
 
-2. :class:`~mvpa.clfs.base.MappedClassifier` -- uses a mapper on input data prior to training/testing
+2. :class:`~mvpa.clfs.base.MappedClassifier` -- uses a mapper on input data
+    prior to training/testing
 
-3. :class:`~mvpa.clfs.base.FeatureSelectionClassifier` -- performs some kind of FeatureSelection_ prior
-   to training
+3. :class:`~mvpa.clfs.base.FeatureSelectionClassifier` -- performs some kind of
+    :class:`~mvpa.featsel.base.FeatureSelection` prior to training
 
-.. _FeatureSelection: api/mvpa.featsel.base.FeatureSelection-class.html
-.. _PredictionsCombiner: api/mvpa.clfs.base.PredictionsCombiner-class.html
 
 Implementation Examples
 -----------------------
 
-Classifiers such as the :class:`~mvpa.clfs.base.FeatureSelectionClassifier` are particularly useful
-because they simplify the process of selecting features and then using only
-that subset of features to classify novel exemplars (the `predict` stage).
-They become even more powerful when combined with :class:`~mvpa.clfs.base.SplitClassifier`, so that
-even the task of withholding certain data points to create statistically valid
-training and testing datasets is abstracted and wrapped up within a single
-object (and, ultimately, very few method calls).  Consider the following code,
-which can be found in `mvpa/clfs/warehouse.py`_:
+Classifiers such as the :class:`~mvpa.clfs.base.FeatureSelectionClassifier` are
+particularly useful because they simplify the process of selecting features and
+then using only that subset of features to classify novel exemplars (the
+`predict` stage).  They become even more powerful when combined with
+:class:`~mvpa.clfs.base.SplitClassifier`, so that even the task of withholding
+certain data points to create statistically valid training and testing datasets
+is abstracted and wrapped up within a single object (and, ultimately, very few
+method calls).  Consider the following code, which can be found in
+`mvpa/clfs/warehouse.py`_:
 
 .. _mvpa/clfs/warehouse.py: api/mvpa.clfs.warehouse-pysrc.html
 
@@ -441,12 +447,13 @@ which can be found in `mvpa/clfs/warehouse.py`_:
   ...       # update sensitivity at each step
   ...   descr='LinSVM+RFE(splits_avg)' )
 
-This analysis combines the :class:`~mvpa.clfs.base.FeatureSelectionClassifier` and the
-:class:`~mvpa.clfs.base.SplitClassifier` to perform internal splitting of the data and then perform
-FeatureSelection based on those splits.  Such analyses can be easily created
-due to the straightforward way that classifier and meta-classifiers can be
-combined.  Please refer to the relevant documentation sections for more
-information about the specifics of each meta-classifier.
+This analysis combines the :class:`~mvpa.clfs.base.FeatureSelectionClassifier`
+and the :class:`~mvpa.clfs.base.SplitClassifier` to perform internal splitting
+of the data and then perform FeatureSelection based on those splits.  Such
+analyses can be easily created due to the straightforward way that classifier
+and meta-classifiers can be combined.  Please refer to the relevant
+documentation sections for more information about the specifics of each
+meta-classifier.
 
 
 
@@ -455,11 +462,11 @@ Retrainable Classifiers
 
 Some classifiers have ability to provide quick (i.e in terms of performance)
 re-training if they were previously trained, and only part of their
-specification got changed. For instance, for kernel-based classifier
-(e.g. GPR) it makes no sense to recompute kernel matrix, if only a classifier
-(not kernel) parameter (e.g. ``sigma_noise``) was changed. Another similar
-usecase: for :ref:`null-hypothesis statistical testing <statistical_testing>`
-it might be needed to train classifier multiple times on a randomized set of labels.
+specification got changed. For instance, for kernel-based classifier (e.g. GPR)
+it makes no sense to recompute kernel matrix, if only a classifier (not kernel)
+parameter (e.g. ``sigma_noise``) was changed. Another similar usecase: for
+:ref:`null-hypothesis statistical testing <example_permutation_test>` it might be
+needed to train classifier multiple times on a randomized set of labels.
 
 Only classifiers which have ``retrainable`` in their ``_clf_internals`` are
 capable of efficient retraining. To enable retraining, just provide
@@ -468,12 +475,11 @@ retrainable classifiers will try to deduce what was changed in the
 specification of the classifier (e.g. training/testing datasets, parameters)
 and act accordingly. To reduce training/prediction time even more, classifier
 might directly be instructed with what aspects were changed. It must be
-previously trained / predicted, so later on retrain_ and repredict_
-methods could be called. repredict_ can be called only with the same data, for
-which it was earlier predicted. See API doc for more information.
-
-.. _retrain: api/mvpa.clfs.base.Classifier-class.html#retrain
-.. _repredict: api/mvpa.clfs.base.Classifier-class.html#repredict
+previously trained / predicted, so later on
+:meth:`~mvpa.clfs.base.Classifier.retrain` and
+:meth:`~mvpa.clfs.base.Classifier.repredict` methods could be called.
+:meth:`~mvpa.clfs.base.Classifier.repredict` can be called only with the same
+data, for which it was earlier predicted. See API doc for more information.
 
 Implementation of efficient retraining is not straightforward, thus it is
 strongly advised to
@@ -491,17 +497,13 @@ Classifiers "Warehouse"
 =======================
 
 To facilitate easy trial of different classifiers for any specific task,
-Warehouse_ of classifiers clfs.warehouse.clfs was defined to create a sample
-collection of some commonly used parameterizations of the classifiers present
-in PyMVPA. Such collection can be queried by any set of known keywords/tags
-with tags prefixed with ``!`` being excluded::
+:class:`~mvpa.clfs.warehouse.Warehouse` of classifiers clfs.warehouse.clfs was
+defined to create a sample collection of some commonly used parameterizations
+of the classifiers present in PyMVPA. Such collection can be queried by any set
+of known keywords/tags with tags prefixed with ``!`` being excluded::
 
   >>> from mvpa.clfs.warehouse import clfs
   >>> tryme = clfs['multiclass', '!svm']
 
 to simply sweep through classifiers which are capable of multiclass
 classification and are not SVM based.
-
-.. _Warehouse: api/mvpa.clfs.warehouse.Warehouse-class.html
-
-

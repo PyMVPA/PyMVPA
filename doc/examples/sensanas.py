@@ -7,13 +7,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating some FeaturewiseDatasetMeasures performing on a fMRI
-dataset with brain activity recorded while perceiving images of objects
-(shoes vs. chairs).
+"""
+Sensitivity Measure
+===================
 
-Generated images show sensitivity maps computed by six sensitivity analyzers.
+.. index:: sensitivity
 
-This example assumes that the PyMVPA example dataset is located in data/.
+Run some basic and meta sensitivity measures on the example fMRI dataset that
+comes with PyMVPA and plot the computed featurewise measures for each.  The
+generated figure shows sensitivity maps computed by six sensitivity analyzers.
 """
 
 from mvpa.suite import *

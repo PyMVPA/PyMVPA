@@ -37,12 +37,12 @@ def parseModule(uri):
     classes = []
 
     for line in f:
-        if line.startswith('def ') and line.count(':'):
+        if line.startswith('def ') and line.count('('):
             # exclude private stuff
             name = getObjectName(line)
             if not name.startswith('_'):
                 functions.append(name)
-        elif line.startswith('class ') and line.count(':'):
+        elif line.startswith('class '):
             # exclude private stuff
             name = getObjectName(line)
             if not name.startswith('_'):
@@ -92,6 +92,12 @@ def writeAPIDocTemplate(uri):
               '  :undoc-members:\n'
         #      '  :noindex:\n\n'
 
+        # place api link
+        ad += '.. seealso::\n\n' \
+              '  Full API documentation of ' \
+              '`%s in module %s`_.\n\n' % (c, uri)
+        ad += '.. _%s in module %s: ../api/%s.%s-class.html\n\n' % (c, uri, uri, c)
+
     multi_func = False
     if len(functions) > 1:
         ad += '\n' + 'Functions' + '\n' + rst_section_levels[2] * 9 + '\n\n'
@@ -101,6 +107,11 @@ def writeAPIDocTemplate(uri):
         # must NOT exclude from index to keep cross-refs working
         ad += '\n.. autofunction:: ' + uri + '.' + f + '\n\n'
 
+        # place api link
+        ad += '.. seealso::\n\n' \
+              '  Full API documentation of ' \
+              '`%s() in module %s`_.\n\n' % (f, uri)
+        ad += '.. _%s() in module %s: ../api/%s-module.html#%s\n\n' % (f, uri, uri, f)
     tf.write(ad)
     tf.close()
 

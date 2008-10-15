@@ -26,7 +26,8 @@ Unreleased changes
   * New manual section about meta-classifiers (contributed by James M.
     Hughes).
   * New minimal example for a 'getting started' section in the manual.
-  * SVM backend is now configurable via MVPA_SVM_BACKEND (libsvm or shogun).
+  * SVM backend is now configurable via :envvar:`MVPA_SVM_BACKEND` (libsvm or
+    shogun).
   * Update insallation instructions for RPM-based distributions to make use
     of the OpenSUSE Build Service.
   * Added an initial list of MVPA-related references to the manual, tagged with
@@ -35,6 +36,8 @@ Unreleased changes
   * Added initial glossary to the manual.
   * Updated install instructions for several RPM-based GNU/Linux
     distributions.
+  * New 'Module reference', as a middle-ground between manual and API
+    reference.
 
 
 Releases
@@ -44,32 +47,35 @@ Releases
 
   * New manual section about feature selection with a focus on RFE.
     Contributed by James M. Hughes.
-  * New dataset type `ChannelDataset` for data structured in channels. Might
-    be useful for data modalities like EEG and MEG. This dataset includes
-    support for common preprocessing steps like resampling and baseline
-    signal substraction.
+  * New dataset type :class:`~mvpa.datasets.channel.ChannelDataset` for data
+    structured in channels. Might be useful for data modalities like EEG and
+    MEG. This dataset includes support for common preprocessing steps like
+    resampling and baseline signal substraction.
   * Plotting of topographies on heads. Thanks to Ingo Fründ for contributing
     this code. Additionally, a new example shows how to do such plots.
   * New general purpose function for generating barplots and candlestick plots
-    with error bars (`plotBars()`).
+    with error bars (:func:`~mvpa.misc.plot.base.plotBars`).
   * Dataset supports mapping of string labels onto numerical labels, removing
     the need to perform this mapping manually in user code. 'clfs_examples.py'
     is adjusted accordingly to demonstrate the new feature.
-  * New Classifier.summary() method to dump classifier settings.
-  * Improved and more flexible plotERPs().
-  * New I-RELIEF sensitivity analyzer.
-  * Added visualization of confusion matrices via `ConfusionMatrix.plot()`
-    inspired by Ingo Fründ.
-  * The PyMVPA version is now globally available in `mvpa.pymvpa_version`.
-  * BugFix: TuebingenMEG reader failed in some cases.
+  * New :meth:`mvpa.clfs.base.Classifier.summary` method to dump classifier
+    settings.
+  * Improved and more flexible :func:`~mvpa.misc.plot.erp.plotERPs`.
+  * New :class:`~mvpa.measures.irelief.IterativeRelief` sensitivity analyzer.
+  * Added visualization of confusion matrices via
+    :meth:`mvpa.clfs.transerror.ConfusionMatrix.plot` inspired by Ingo Fründ.
+  * The PyMVPA version is now globally available in :data:`mvpa.pymvpa_version`.
+  * BugFix: :class:`~mvpa.misc.io.meg.TuebingenMEG` reader failed in some cases.
   * Several improvements (docs and implementation) for building PyMVPA on
     MacOS X.
-  * New convenience accessor methods (`select()`, `where()` and
-    `__getitem__()`) for the `Dataset` base class.
-  * New `seed()` function to configure the random number generators from user
-    code.
+  * New convenience accessor methods (:meth:`~mvpa.datasets.base.Dataset.select`,
+    :meth:`~mvpa.datasets.base.Dataset.where` and
+    :meth:`~mvpa.datasets.base.Dataset.__getitem__`) for
+    :class`~mvpa.datasets.base.Dataset`.
+  * New :func:`mvpa.seed()` function to configure the random number generators
+    from user code.
   * Added reader for a MEG sensor locations format
-    (`TuebingenMEGSensorLocations`).
+    (:class:`~mvpa.misc.io.meg.TuebingenMEGSensorLocations`).
   * Initial model selection support for GRP (using openopt).
   * And tons of minor bugfixes, additional tests and improved documentation.
 
