@@ -7,7 +7,13 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example of fitting an HRF model to noisy peristimulus data"""
+"""
+Curve-Fitting
+=============
+
+An example showing how to fit an HRF model to noisy peristimulus time-series
+data.
+"""
 
 import numpy as N
 import pylab as P
