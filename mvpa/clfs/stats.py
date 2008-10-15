@@ -350,10 +350,22 @@ if externals.exists('scipy'):
         def __init__(self, dist, loc=None, scale=None, args=None):
 
             self._dist = dist
-            fargs = (loc, scale)
+            # loc and scale
+            theta = (loc, scale)
+            # args
+            Narg_ = dist.numargs
             if args is not None:
-                fargs += args
-            self._fargs = fargs
+                Narg = len(args)
+                if Narg > Narg_:
+                    raise ValueError, \
+                          'Distribution %s has only %d arguments. Got %d' \
+                          % (dist, Narg_, Narg)
+                args += (None,) * (Narg_ - Narg)
+            else:
+                args = (None,) * Narg_
+
+            args_i = [i for i,v in enumerate(args) if v is None]
+            self._fargs = (list(args+theta), args_i)
             """Arguments which should get some fixed value"""
 
 
@@ -361,21 +373,28 @@ if externals.exists('scipy'):
             # - sum (log pdf(x, theta),axis=0)
             #   where theta are the parameters (including loc and scale)
             #
+            fargs, fargs_i = self._fargs
+            print theta
             try:
-                fargs = self._fargs
                 i=-1
-                if fargs[1] is not None:
-                    scale = fargs[1]
+                if fargs[-1] is not None:
+                    scale = fargs[-1]
                 else:
                     scale = theta[i]
                     i -= 1
 
-                if fargs[0] is not None: loc = fargs[0]
+                if fargs[-2] is not None:
+                    loc = fargs[-2]
                 else:
                     loc = theta[i]
                     i -= 1
-                # TODO: if we want to fix params as well -- do here
-                args = tuple(theta[:i+1])
+
+                args = theta[:i+1]
+                # adjust args if there were fixed
+                for i,a in zip(fargs_i, args):
+                    fargs[i] = a
+                args = fargs[:-2]
+
             except IndexError:
                 raise ValueError, "Not enough input arguments."
             if not self._argcheck(*args) or scale <= 0:
@@ -389,22 +408,43 @@ if externals.exists('scipy'):
 
         def fit(self, data, *args, **kwds):
             loc0, scale0 = map(kwds.get, ['loc', 'scale'], [0.0, 1.0])
-            fargs = self._fargs
+            fargs, fargs_i = self._fargs
             Narg = len(args)
-            if Narg != self.numargs:
-                if Narg > self.numargs:
+            Narg_ = self.numargs
+            if Narg != Narg_:
+                if Narg > Narg_:
                     raise ValueError, "Too many input arguments."
                 else:
                     args += (1.0,)*(self.numargs-Narg)
-            # TODO: if needed to fix arguments -- remove them here
-            # location and scale are at the end
-            x0 = args
-            if fargs[0] is None: x0 = x0 + (loc0,)
-            if fargs[1] is None: x0 = x0 + (scale0,)
+
+            # Provide only those args which are not fixed, and
+            # append location and scale (if not fixed) at the end
+            if len(fargs_i) != Narg_:
+                x0 = tuple([args[i] for i in fargs_i])
+            else:
+                x0 = args
+            if fargs[-2] is None: x0 = x0 + (loc0,)
+            if fargs[-1] is None: x0 = x0 + (scale0,)
+
             opt_x = scipy.optimize.fmin(self.nnlf, x0, args=(N.ravel(data),), disp=0)
-            if fargs[1] is not None: opt_x = N.hstack((opt_x,fargs[1:2]))
-            if fargs[0] is not None:
-                opt_x = N.hstack((opt_x[:-1], fargs[0:1],opt_x[-1:]))
+            print "opt_x ", opt_x
+
+            # reconstruct back
+            i = 0
+            loc, scale = fargs[-2:]
+            if fargs[-1] is None:
+                i -= 1
+                scale = opt_x[i]
+            if fargs[-2] is None:
+                i -= 1
+                loc = opt_x[i]
+
+            # assign those which weren't fixed
+            for i in fargs_i:
+                fargs[i] = opt_x[i]
+
+            #raise ValueError
+            opt_x = N.hstack((fargs[:-2], (loc, scale)))
             return opt_x
 
 
@@ -426,7 +466,7 @@ if externals.exists('scipy'):
 
 
     def matchDistribution(data, nsamples=None, loc=None, scale=None,
-                          test='kstest', distributions=None,
+                          args=None, test='kstest', distributions=None,
                           **kwargs):
         """Determine best matching distribution.
 
@@ -509,8 +549,8 @@ if externals.exists('scipy'):
                 dist_gen = getattr(scipy.stats, d)
                 # specify distribution 'optimizer'. If loc or scale was provided,
                 # use home-brewed rv_semifrozen
-                if loc is not None or scale is not None:
-                    dist_opt = rv_semifrozen(dist_gen, loc=loc, scale=scale)
+                if args is not None or loc is not None or scale is not None:
+                    dist_opt = rv_semifrozen(dist_gen, loc=loc, scale=scale, args=args)
                 else:
                     dist_opt = dist_gen
                 dist_params = dist_opt.fit(data_selected)
@@ -528,7 +568,7 @@ if externals.exists('scipy'):
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
                     if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
-            except Exception, e:
+            except RuntimeError, e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
                           'Testing for %s distribution failed due to %s'
@@ -693,7 +733,13 @@ if externals.exists('scipy'):
             return (hist, lines)
 
     #if True:
-    #    data = N.random.normal(size=(1000,1)); test='p-roc';
-    #    matches = matchDistribution(data, nsamples=30, test=test, p=0.05)
-    #    P.figure(); plotDistributionMatches(data, matches, nbins=101, p=0.05, legend=4, nbest=5)
+    #    data = N.random.normal(size=(1000,1));
+    #    data /= N.sqrt(data*data)
+    #    test='p-roc';
+    #    matches = matchDistribution(data, distributions=['rdist'],
+    #                                loc=0.2,
+    #                                #scale=1.1,
+    #                                args=(1.2,),
+    #                                nsamples=30, test=test, p=0.05)
+    #    #P.figure(); plotDistributionMatches(data, matches, nbins=101, p=0.05, legend=4, nbest=5)
 
