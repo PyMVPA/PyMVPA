@@ -28,13 +28,13 @@ useful operations typically performed on datasets.
 The Basic Concepts
 ==================
 
-A minimal dataset in PyMVPA consists of a number of `samples`, where each
-individual sample is nothing more than a vector of values. Each sample is
-associated with a `label`, which defines the category the respective sample
-belongs to, or in more general terms, defines the model that should be learned
-by a classifier.  Moreover, samples can be grouped into so-called `chunks`,
-where each chunk is assumed to be statistically independent from all other data
-chunks.
+A minimal dataset in PyMVPA consists of a number of :term:`sample`\ s, where
+each individual sample is nothing more than a vector of values. Each sample is
+associated with a :term:`label`, which defines the category the respective
+sample belongs to, or in more general terms, defines the model that should be
+learned by a classifier.  Moreover, samples can be grouped into so-called
+:term:`chunk`\ s, where each chunk is assumed to be statistically independent
+from all other data chunks.
 
 The foundation of PyMVPA's data handling is the :class:`~mvpa.datasets.base.Dataset` class. Basically, this
 class stores data samples, sample attributes and dataset attributes.  By
