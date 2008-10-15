@@ -374,7 +374,6 @@ if externals.exists('scipy'):
             #   where theta are the parameters (including loc and scale)
             #
             fargs, fargs_i = self._fargs
-            print theta
             try:
                 i=-1
                 if fargs[-1] is not None:
@@ -427,7 +426,6 @@ if externals.exists('scipy'):
             if fargs[-1] is None: x0 = x0 + (scale0,)
 
             opt_x = scipy.optimize.fmin(self.nnlf, x0, args=(N.ravel(data),), disp=0)
-            print "opt_x ", opt_x
 
             # reconstruct back
             i = 0
