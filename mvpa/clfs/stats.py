@@ -498,12 +498,25 @@ if externals.exists('scipy'):
                WARNING: older versions (e.g. 0.5.2 in etch) of scipy have
                         incorrect kstest implementation and do not function
                         properly
-          distributions : None or list of basestring
-            Distributions to check. If None, all known in scipy.stats are
-            tested.
+          distributions : None or list of basestring or tuple(basestring, dict)
+            Distributions to check. If None, all known in scipy.stats
+            are tested. If distribution is specified as a tuple, then
+            it must contain name and additional parameters (name, loc,
+            scale, args) in the dictionary. Entry 'scipy' adds all known
+            in scipy.stats.
           **kwargs
             Additional arguments which are needed for each particular test
             (see above)
+
+        :Example:
+          data = N.random.normal(size=(1000,1));
+          matches = matchDistribution(
+            data,
+            distributions=['rdist',
+                           ('rdist', {'name':'rdist_fixed',
+                                      'loc': 0.0,
+                                      'args': (10,)})],
+            nsamples=30, test='p-roc', p=0.05)
         """
 
         # Handle parameters
@@ -539,25 +552,52 @@ if externals.exists('scipy'):
                       'distribution is %d' % true_positives)
 
         if distributions is None:
-            distributions = scipy.stats.distributions.__all__
+            distributions = ['scipy']
+
+        # lets see if 'scipy' entry was in there
+        try:
+            scipy_ind = distributions.index('scipy')
+            distributions.pop(scipy_ind)
+            distributions += scipy.stats.distributions.__all__
+        except ValueError:
+            pass
+
         results = []
         for d in distributions:
+            dist_gen, loc_, scale_, args_ = None, loc, scale, args
+            if isinstance(d, basestring):
+                dist_gen = d
+                dist_name = d
+            elif isinstance(d, tuple):
+                if not (len(d)==2 and isinstance(d[1], dict)):
+                    raise ValueError,\
+                          "Tuple specification of distribution must be " \
+                          "(d, {params}). Got %s" % (d,)
+                dist_gen = d[0]
+                loc_ = d[1].get('loc', loc)
+                scale_ = d[1].get('scale', scale)
+                args_ = d[1].get('args', args)
+                dist_name = d[1].get('name', str(dist_gen))
+            else:
+                dist_gen = d
+                dist_name = str(d)
+
             # perform actions which might puke for some distributions
             try:
-                dist_gen = getattr(scipy.stats, d)
+                dist_gen_ = getattr(scipy.stats, dist_gen)
                 # specify distribution 'optimizer'. If loc or scale was provided,
                 # use home-brewed rv_semifrozen
-                if args is not None or loc is not None or scale is not None:
-                    dist_opt = rv_semifrozen(dist_gen, loc=loc, scale=scale, args=args)
+                if args_ is not None or loc_ is not None or scale_ is not None:
+                    dist_opt = rv_semifrozen(dist_gen_, loc=loc_, scale=scale_, args=args_)
                 else:
-                    dist_opt = dist_gen
+                    dist_opt = dist_gen_
                 dist_params = dist_opt.fit(data_selected)
                 if __debug__:
                     debug('STAT__',
                           'Got distribution parameters %s for %s'
-                          % (dist_params, d))
+                          % (dist_params, dist_name))
                 if test == 'p-roc':
-                    cdf_func = lambda x: dist_gen.cdf(x, *dist_params)
+                    cdf_func = lambda x: dist_gen_.cdf(x, *dist_params)
                     # We need to compare detection under given p
                     cdf_p = _pvalue(data, cdf_func, tail)
                     cdf_p_thr = cdf_p <= p_thr
@@ -566,7 +606,7 @@ if externals.exists('scipy'):
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
                     if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
-            except RuntimeError, e:#Exception, e:
+            except (TypeError, ValueError, AttributeError), e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
                           'Testing for %s distribution failed due to %s'
@@ -574,9 +614,9 @@ if externals.exists('scipy'):
                 continue
 
             if p > p_thr and not N.isnan(D):
-                results += [ (D, d, dist_params) ]
+                results += [ (D, dist_gen, dist_name, dist_params) ]
                 if __debug__:
-                    debug('STAT_', 'Testing for %s dist.: %s' % (d, res_sum))
+                    debug('STAT_', 'Testing for %s dist.: %s' % (dist_name, res_sum))
             else:
                 if __debug__:
                     debug('STAT__', 'Cannot consider %s dist. with %s'
@@ -589,7 +629,7 @@ if externals.exists('scipy'):
         if __debug__ and 'STAT' in debug.active:
             # find the best and report it
             nresults = len(results)
-            sresult = lambda r:'%s(%s)=%.2f' % (r[1], ', '.join(map(str, r[2])), r[0])
+            sresult = lambda r:'%s(%s)=%.2f' % (r[1], ', '.join(map(str, r[3])), r[0])
             if nresults>0:
                 nnextbest = min(2, nresults-1)
                 snextbest = ', '.join(map(sresult, results[1:1+nnextbest]))
@@ -673,8 +713,8 @@ if externals.exists('scipy'):
             lines = []
             labels = []
             for i in xrange(min(nbest, len(matches))):
-                D, dist_name, params = matches[i]
-                dist = getattr(scipy.stats, dist_name)(*params)
+                D, dist_gen, dist_name, params = matches[i]
+                dist = getattr(scipy.stats, dist_gen)(*params)
 
                 label = '%s' % (dist_name)
                 if legend > 1: label += '(D=%.2f)' % (D)
@@ -732,12 +772,13 @@ if externals.exists('scipy'):
 
     #if True:
     #    data = N.random.normal(size=(1000,1));
-    #    data /= N.sqrt(data*data)
-    #    test='p-roc';
-    #    matches = matchDistribution(data, distributions=['rdist'],
-    #                                loc=0.2,
-    #                                #scale=1.1,
-    #                                args=(1.2,),
-    #                                nsamples=30, test=test, p=0.05)
-    #    #P.figure(); plotDistributionMatches(data, matches, nbins=101, p=0.05, legend=4, nbest=5)
+    #    matches = matchDistribution(
+    #        data,
+    #        distributions=['scipy',
+    #                       ('norm', {'name':'norm_known',
+    #                                 'scale': 1.0,
+    #                                 'loc': 0.0})],
+    #        nsamples=30, test='p-roc', p=0.05)
+    #    P.figure(); plotDistributionMatches(data, matches, nbins=101,
+    #                                        p=0.05, legend=4, nbest=5)
 

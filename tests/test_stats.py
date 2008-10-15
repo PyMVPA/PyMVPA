@@ -123,7 +123,7 @@ class StatsTests(unittest.TestCase):
         from mvpa.clfs.stats import matchDistribution, rv_semifrozen
         import scipy.stats
 
-        data = datasets['uni2large'].samples[:,1]
+        data = datasets['uni2small'].samples[:,1]
 
         # Lets test ad-hoc rv_semifrozen
         floc = rv_semifrozen(scipy.stats.norm, loc=0).fit(data)
@@ -139,16 +139,26 @@ class StatsTests(unittest.TestCase):
         for res in [floc, fscale, flocscale, full]:
             self.failUnless(len(res) == 2)
 
-        for loc in [None, N.mean(data)]:
+        data_mean = N.mean(data)
+        for loc in [None, data_mean]:
             for test in ['p-roc', 'kstest']:
                 # some really basic testing
-                matched = matchDistribution(data=data, test=test, loc=loc, p=0.05)
+                matched = matchDistribution(data=data,
+                                            distributions = ['scipy',
+                                                             ('norm',
+                                                              {'name': 'norm_fixed',
+                                                               'loc': 0.2,
+                                                               'scale': 0.3})],
+                                            test=test, loc=loc, p=0.05)
                 # at least norm should be in there
-                names = [m[1] for m in matched]
-                self.failUnless('norm' in names)
-                inorm = names.index('norm')
-                # and it should be at least in the first 5 best matching
-                self.failUnless(inorm <= 7)
+                names = [m[2] for m in matched]
+                if test == 'p-roc':
+                    # we can guarantee that only for norm_fixed
+                    self.failUnless('norm' in names)
+                    self.failUnless('norm_fixed' in names)
+                    inorm = names.index('norm_fixed')
+                    # and it should be at least in the first 30 best matching ;-)
+                    self.failUnless(inorm <= 30)
 
 
 def suite():
