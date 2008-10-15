@@ -131,8 +131,8 @@ class SVMTests(unittest.TestCase):
         self.failUnless(cve.confusion.stats["P'"][1] > 0)
 
         e = cve(ds_)
-        # with disballance we should have no hits
-        self.failUnless(cve.confusion.stats["P'"][1] == 0)
+        # with disballance we should have almost no hits
+        self.failUnless(cve.confusion.stats["P'"][1] < 5)
         #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
 
         # Set '1 C per label'
