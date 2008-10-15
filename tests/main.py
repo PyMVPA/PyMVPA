@@ -80,6 +80,7 @@ __optional_tests = ( ('scipy', 'ridge'),
                      ('nifti', 'niftidataset'),
                      ('mdp', 'icamapper'),
                      ('pywt', 'waveletmapper'),
+                     (['cPickle', 'gzip'], 'hamster'),
 #                     ('mdp', 'pcamapper'),
                      )
 
