@@ -515,7 +515,9 @@ if externals.exists('scipy'):
                     dist_opt = dist_gen
                 dist_params = dist_opt.fit(data_selected)
                 if __debug__:
-                    debug('STAT__', 'Got distribution parameters %s for %s' % (dist_params, d))
+                    debug('STAT__',
+                          'Got distribution parameters %s for %s'
+                          % (dist_params, d))
                 if test == 'p-roc':
                     cdf_func = lambda x: dist_gen.cdf(x, *dist_params)
                     # We need to compare detection under given p
@@ -526,9 +528,11 @@ if externals.exists('scipy'):
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
                     if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
-            except:
+            except Exception, e:
                 if __debug__:
-                    debug('STAT__', 'Testing for %s distribution failed' % d)
+                    debug('STAT__',
+                          'Testing for %s distribution failed due to %s'
+                          % (d, str(e)))
                 continue
 
             if p > p_thr and not N.isnan(D):

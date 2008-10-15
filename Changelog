@@ -38,6 +38,9 @@ Unreleased changes
     distributions.
   * New 'Module reference', as a middle-ground between manual and API
     reference.
+  * New helper to determine and plot the best matching distribution(s) for
+    the data (matchDistribution, plotDistributionMatches). It is WiP
+    thus API can change in the upcoming release.
 
 
 Releases
