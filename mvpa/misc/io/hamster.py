@@ -34,7 +34,13 @@ class Hamster(dict):
     (using cPickle + zlib tandem). Any serializable object can be
     bound to a hamster to be stored.
 
-    To undig burried hamster use Hamster(filename)
+    To undig burried hamster use Hamster(filename). Here is an example:
+
+      >>> h = Hamster(bla='blai')
+      >>> h.boo = N.arange(5)
+      >>> h.dump(filename)
+      ...
+      >>> h = Hamster(filename)
     """
 
     def __new__(cls, *args, **kwargs):

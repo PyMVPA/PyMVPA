@@ -137,6 +137,25 @@ The manual is quite insufficient. When will you improve it?
   us and we will put it into the example collection or the manual. Thanks!
 
 
+Data import, export and storage
+===============================
+
+What file formats are understood by PyMVPA?
+-------------------------------------------
+
+Please see the :ref:`data_formats` section.
+
+
+What if there is no special file format for some particular datatype?
+---------------------------------------------------------------------
+
+With the :class:`~mvpa.misc.io.hamster.Hamster` class, PyMVPA
+supports storing *any* kind of serializable data into a
+(compressed) file (see the class documentation for a trivial
+usage example). The facility is particularly useful for storing
+any number of intermediate analysis results, e.g. for
+post-processing.
+
 
 Data preprocessing
 ==================
