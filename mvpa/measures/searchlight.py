@@ -24,43 +24,39 @@ class Searchlight(DatasetMeasure):
     """Runs a scalar `DatasetMeasure` on all possible spheres of a certain size
     within a dataset.
 
-    The idea for a searchlight algorithm stems from this paper:
-
-      Kriegeskorte, N., Goebel, R. & Bandettini, P. (2006).
-      'Information-based functional brain mapping.' Proceedings of the
-      National Academy of Sciences of the United States of America 103,
-      3863-3868.
+    The idea for a searchlight algorithm stems from a paper by
+    :ref:`Kriegeskorte et al. (2006) <KGB06>`.
     """
 
     spheresizes = StateVariable(enabled=False,
         doc="Number of features in each sphere.")
 
     def __init__(self, datameasure, radius=1.0, center_ids=None, **kwargs):
-        """Initialize Searchlight to compute `datameasure` for each sphere with
-        a certain `radius` in a given dataset.
-
+        """
         :Parameters:
-            datameasure: callable
-                Any object that takes a `Dataset` and returns some measure when
-                called.
-            radius: float
-                All features within the radius around the center will be part
-                of a sphere.
-            center_ids: list(int)
-                List of feature ids (not coordinates) the shall serve as sphere
-                centers. By default all features will be used.
-            **kwargs:
-                In additions this class supports all keyword arguments of its
-                base-class `DatasetMeasure`.
+          datameasure: callable
+            Any object that takes a :class:`~mvpa.datasets.base.Dataset`
+            and returns some measure when called.
+          radius: float
+            All features within the radius around the center will be part
+            of a sphere.
+          center_ids: list(int)
+            List of feature ids (not coordinates) the shall serve as sphere
+            centers. By default all features will be used.
+          **kwargs
+            In additions this class supports all keyword arguments of its
+            base-class :class:`~mvpa.measures.base.DatasetMeasure`.
 
-        ATTENTION: If `Searchlight` is used as `SensitivityAnalyzer` one has to
-        make sure that the specified scalar `DatasetMeasure` returns large
-        (absolute) values for high sensitivities and small (absolute) values
-        for low sensitivities. Especially when using error functions usually
-        low values imply high performance and therefore high sensitivity. This
-        would in turn result in sensitivity maps that have low (absolute)
-        values indicating high sensitivites and this conflicts with the
-        intended behavior of a `SensitivityAnalyzer`.
+        .. note::
+
+          If `Searchlight` is used as `SensitivityAnalyzer` one has to make
+          sure that the specified scalar `DatasetMeasure` returns large
+          (absolute) values for high sensitivities and small (absolute) values
+          for low sensitivities. Especially when using error functions usually
+          low values imply high performance and therefore high sensitivity.
+          This would in turn result in sensitivity maps that have low
+          (absolute) values indicating high sensitivites and this conflicts
+          with the intended behavior of a `SensitivityAnalyzer`.
         """
         DatasetMeasure.__init__(self, **(kwargs))
 

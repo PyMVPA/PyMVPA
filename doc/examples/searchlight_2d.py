@@ -13,16 +13,24 @@ Searchlight on fMRI data
 
 .. index:: searchlight, NIfTI
 
-Run a searchlight analysis on the example fMRI dataset that is shipped with
-PyMVPA.
+The example shows how to run a searchlight analysis on the example fMRI dataset
+that is shipped with PyMVPA.
+
+As always, we first have to import PyMVPA.
 """
 
 from mvpa.suite import *
+
+"""As searchlight analyses are usually quite expensive in term of computational
+ressources, we are going to enable some progress output, to entertain us while
+we are waiting."""
 
 # enable debug output for searchlight call
 if __debug__:
     debug.active += ["SLC"]
 
+"""The next section simply loads the example dataset and performs some standard
+preprocessing steps on it."""
 
 #
 # load PyMVPA example dataset
@@ -51,6 +59,11 @@ zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
                                         dtype='bool'))
 
+"""But now for the interesting part: Next we define the measure that shall be
+computed for each sphere. Theoretically, this can be anything, but here we
+choose to compute a full leave-one-out cross-validation using a linear Nu-SVM
+classifier."""
+
 #
 # Run Searchlight
 #
@@ -62,6 +75,18 @@ clf = LinearNuSVMC()
 # cross-validated mean transfer using an odd-even dataset splitter
 cv = CrossValidatedTransferError(TransferError(clf),
                                  NFoldSplitter())
+
+"""Finally, we run the searchlight analysis for three different radii, each
+time computing an error for each sphere. To achieve this, we simply use the
+:class:`~mvpa.measures.searchlight.Searchlight` class, which takes any
+:term:`processing object` and a radius as arguments. The :term:`processing
+object` has to compute the intended measure, when called with a dataset. The
+:class:`~mvpa.measures.searchlight.Searchlight` object will do nothing more
+than generating small datasets for each sphere, feeding it to the processing
+object and storing its result.
+
+After the errors are computed for all spheres, the resulting vector is then
+mapped back into the original fMRI dataspace and plotted."""
 
 # setup plotting
 fig = 0

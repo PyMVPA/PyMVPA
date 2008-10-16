@@ -11,14 +11,13 @@
 Simple Plotting of Classifier Behavior
 ======================================
 
-.. index:: plotting
+.. index:: plotting example
 
 This example runs a number of classifiers on a simple 2D dataset and plots the
 decision surface of each classifier.
+
+First compose some sample data -- no PyMVPA involved.
 """
-
-from mvpa.suite import *
-
 
 # set up the labeled data
 # two skewed 2-D distributions
@@ -39,10 +38,19 @@ x2 = N.linspace(-10, 10, 100)
 x,y = N.meshgrid(x1, x2);
 feat_test = N.array((N.ravel(x), N.ravel(y)))
 
+"""Now load PyMVPA and convert the data into a proper
+:class:`~mvpa.datasets.base.Dataset`."""
+
+from mvpa.suite import *
+
 # create the pymvpa dataset from the labeled features
 patternsPos = Dataset(samples=feat_pos.T, labels=1)
 patternsNeg = Dataset(samples=feat_neg.T, labels=0)
 patterns = patternsPos + patternsNeg
+
+"""This demo utilizes a number of classifiers. The instantiation of a
+classifier involves almost no runtime costs, so it is easily possible
+compile a long list, if necessary."""
 
 # set up classifiers to try out
 clfs = {'Ridge Regression': RidgeReg(),
@@ -53,6 +61,10 @@ clfs = {'Ridge Regression': RidgeReg(),
         'SMLR': SMLR(lm=0.01),
         'Logistic Regression': PLR(criterion=0.00001),
         'k-Nearest-Neighbour': kNN(k=10)}
+
+"""Now we are ready to run the classifiers. The folowing loop trains
+and queries each classifier to finally generate a nice plot showing
+the decision surface of each individual classifier."""
 
 # loop over classifiers and show how they do
 fig = 0
