@@ -52,11 +52,12 @@ def _pvalue(x, cdf_func, tail):
         pass
     elif tail == 'right':
         cdf = 1 - cdf
-    elif tail == 'any':
+    elif tail in ('any', 'both'):
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
-        # we need to half the signficance
-        cdf *= 2
+        if tail == 'both':
+            # we need to half the signficance
+            cdf *= 2
 
     if is_scalar: return cdf[0]
     else:         return cdf
@@ -73,20 +74,22 @@ class NullDist(Stateful):
     # performance hit should be negligible in most of the scenarios
     _ATTRIBUTE_COLLECTIONS = ['states']
 
-    def __init__(self, tail='left', **kwargs):
+    def __init__(self, tail='both', **kwargs):
         """Cheap initialization.
 
         :Parameter:
-          tail: str ['left', 'right', 'any']
-            Which tail of the distribution to report. For 'any' it chooses
-            the tail it belongs to based on the comparison to p=0.5
+          tail: str ('left', 'right', 'any', 'both')
+            Which tail of the distribution to report. For 'any' and 'both'
+            it chooses the tail it belongs to based on the comparison to
+            p=0.5. In the case of 'any' significance is taken like in a
+            one-tailed test.
         """
         Stateful.__init__(self, **kwargs)
 
         self._tail = tail
 
         # sanity check
-        if tail not in ['left', 'right', 'any']:
+        if tail not in ('left', 'right', 'any', 'both'):
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
                   % tail
 
@@ -489,7 +492,7 @@ if externals.exists('scipy'):
           test : basestring
             What kind of testing to do. Choices:
              'p-roc' : detection power for a given ROC. Needs two
-               parameters: `p=0.05` and `tail='any'`
+               parameters: `p=0.05` and `tail='both'`
              'kstest' : 'full-body' distribution comparison. The best
                choice is made by minimal reported distance after estimating
                parameters of the distribution. Parameter `p=0.05` sets
@@ -539,7 +542,7 @@ if externals.exists('scipy'):
 
         p_thr = kwargs.get('p', 0.05)
         if test == 'p-roc':
-            tail = kwargs.get('tail', 'any')
+            tail = kwargs.get('tail', 'both')
             data_p = _pvalue(data, Nonparametric(data).cdf, tail)
             data_p_thr = data_p <= p_thr
             true_positives = N.sum(data_p_thr)
@@ -647,7 +650,7 @@ if externals.exists('scipy'):
 
         def plotDistributionMatches(data, matches, nbins=31, nbest=5,
                                     expand_tails=8, legend=2, plot_cdf=True,
-                                    p=None, tail='any'):
+                                    p=None, tail='both'):
             """Plot best matching distributions
 
             :Parameters:
@@ -674,7 +677,7 @@ if externals.exists('scipy'):
                 Bars in the histogram which fall under given p are colored
                 in red. False positives and false negatives are marked as
                 triangle up and down symbols correspondingly
-              tail : ('left', 'right', 'any')
+              tail : ('left', 'right', 'any', 'both')
                 If p is not None, the choise of tail for null-hypothesis
                 testing
 
@@ -781,4 +784,19 @@ if externals.exists('scipy'):
     #        nsamples=30, test='p-roc', p=0.05)
     #    P.figure(); plotDistributionMatches(data, matches, nbins=101,
     #                                        p=0.05, legend=4, nbest=5)
+
+
+def autoNullDist(dist):
+    """Cheater for human beings -- wraps `dist` if needed with some
+    NullDist
+
+    tail and other arguments are assumed to be default as in
+    NullDist/MCNullDist
+    """
+    if dist is None or isinstance(dist, NullDist):
+        return dist
+    elif hasattr(dist, 'fit'):
+        return MCNullDist(dist)
+    else:
+        return FixedNullDist(dist)
 
