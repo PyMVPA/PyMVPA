@@ -78,6 +78,8 @@ from mvpa.misc import *
 from mvpa.misc.io import *
 from mvpa.misc.io.eepbin import *
 from mvpa.misc.io.meg import *
+if externals.exists('cPickle') and externals.exists('gzip'):
+    from mvpa.misc.io.hamster import *
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *

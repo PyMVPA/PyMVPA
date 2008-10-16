@@ -158,7 +158,15 @@ ut-%: build
 	@cd tests && PYTHONPATH=.. python test_$*.py
 
 unittest: build
+	@echo "I: Running unittests (without optimization nor debug output)"
 	@cd tests && PYTHONPATH=.. python main.py
+
+# test if PyMVPA is working if optional externals are missing
+unittest-badexternals: build
+	@echo "I: Running unittests under assumption of missing externals."
+	@cd tests && PYTHONPATH=badexternals:.. python main.py 2>&1 \
+	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
+              -e 'WARNING:.*SMLR.* implementation'
 
 # Runs unittests in few additional modes:
 # * with optimization on -- helps to catch unconditional debug calls
@@ -166,9 +174,9 @@ unittest: build
 #   That does:
 #     additional checking,
 #     debug() calls validation, etc
-unittests: unittest
+unittests: unittest unittest-badexternals
 	@cd tests && PYTHONPATH=.. python -O main.py
-	@echo "Running unittests with debug output. No progress output."
+	@echo "I: Running unittests with debug output. No progress output."
 	@cd tests && \
       PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
        python main.py 2>&1 \
@@ -191,25 +199,26 @@ testmanual: build
 # Check if everything imported in unitests is known to the
 # mvpa.suite()
 testsuite:
+	@echo "I: Running full testsuite"
 	@git grep -h '^\W*from mvpa.*import' tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
-	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
+	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
 	 done
 
 # Check if links to api/ within documentation are broken.
 testapiref: apidoc
 	@for tf in doc/*.txt; do \
 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
-	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
+	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
 test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
-	@echo "Generating coverage data and report. Takes awhile. No progress output."
+	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@cd tests && { \
 	  export PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
 	  python-coverage -x main.py >/dev/null 2>&1; \

@@ -52,11 +52,12 @@ def _pvalue(x, cdf_func, tail):
         pass
     elif tail == 'right':
         cdf = 1 - cdf
-    elif tail == 'any':
+    elif tail in ('any', 'both'):
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
-        # we need to half the signficance
-        cdf *= 2
+        if tail == 'both':
+            # we need to half the signficance
+            cdf *= 2
 
     if is_scalar: return cdf[0]
     else:         return cdf
@@ -73,20 +74,22 @@ class NullDist(Stateful):
     # performance hit should be negligible in most of the scenarios
     _ATTRIBUTE_COLLECTIONS = ['states']
 
-    def __init__(self, tail='left', **kwargs):
+    def __init__(self, tail='both', **kwargs):
         """Cheap initialization.
 
         :Parameter:
-          tail: str ['left', 'right', 'any']
-            Which tail of the distribution to report. For 'any' it chooses
-            the tail it belongs to based on the comparison to p=0.5
+          tail: str ('left', 'right', 'any', 'both')
+            Which tail of the distribution to report. For 'any' and 'both'
+            it chooses the tail it belongs to based on the comparison to
+            p=0.5. In the case of 'any' significance is taken like in a
+            one-tailed test.
         """
         Stateful.__init__(self, **kwargs)
 
         self._tail = tail
 
         # sanity check
-        if tail not in ['left', 'right', 'any']:
+        if tail not in ('left', 'right', 'any', 'both'):
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
                   % tail
 
@@ -350,10 +353,22 @@ if externals.exists('scipy'):
         def __init__(self, dist, loc=None, scale=None, args=None):
 
             self._dist = dist
-            fargs = (loc, scale)
+            # loc and scale
+            theta = (loc, scale)
+            # args
+            Narg_ = dist.numargs
             if args is not None:
-                fargs += args
-            self._fargs = fargs
+                Narg = len(args)
+                if Narg > Narg_:
+                    raise ValueError, \
+                          'Distribution %s has only %d arguments. Got %d' \
+                          % (dist, Narg_, Narg)
+                args += (None,) * (Narg_ - Narg)
+            else:
+                args = (None,) * Narg_
+
+            args_i = [i for i,v in enumerate(args) if v is None]
+            self._fargs = (list(args+theta), args_i)
             """Arguments which should get some fixed value"""
 
 
@@ -361,21 +376,27 @@ if externals.exists('scipy'):
             # - sum (log pdf(x, theta),axis=0)
             #   where theta are the parameters (including loc and scale)
             #
+            fargs, fargs_i = self._fargs
             try:
-                fargs = self._fargs
                 i=-1
-                if fargs[1] is not None:
-                    scale = fargs[1]
+                if fargs[-1] is not None:
+                    scale = fargs[-1]
                 else:
                     scale = theta[i]
                     i -= 1
 
-                if fargs[0] is not None: loc = fargs[0]
+                if fargs[-2] is not None:
+                    loc = fargs[-2]
                 else:
                     loc = theta[i]
                     i -= 1
-                # TODO: if we want to fix params as well -- do here
-                args = tuple(theta[:i+1])
+
+                args = theta[:i+1]
+                # adjust args if there were fixed
+                for i,a in zip(fargs_i, args):
+                    fargs[i] = a
+                args = fargs[:-2]
+
             except IndexError:
                 raise ValueError, "Not enough input arguments."
             if not self._argcheck(*args) or scale <= 0:
@@ -389,22 +410,42 @@ if externals.exists('scipy'):
 
         def fit(self, data, *args, **kwds):
             loc0, scale0 = map(kwds.get, ['loc', 'scale'], [0.0, 1.0])
-            fargs = self._fargs
+            fargs, fargs_i = self._fargs
             Narg = len(args)
-            if Narg != self.numargs:
-                if Narg > self.numargs:
+            Narg_ = self.numargs
+            if Narg != Narg_:
+                if Narg > Narg_:
                     raise ValueError, "Too many input arguments."
                 else:
                     args += (1.0,)*(self.numargs-Narg)
-            # TODO: if needed to fix arguments -- remove them here
-            # location and scale are at the end
-            x0 = args
-            if fargs[0] is None: x0 = x0 + (loc0,)
-            if fargs[1] is None: x0 = x0 + (scale0,)
+
+            # Provide only those args which are not fixed, and
+            # append location and scale (if not fixed) at the end
+            if len(fargs_i) != Narg_:
+                x0 = tuple([args[i] for i in fargs_i])
+            else:
+                x0 = args
+            if fargs[-2] is None: x0 = x0 + (loc0,)
+            if fargs[-1] is None: x0 = x0 + (scale0,)
+
             opt_x = scipy.optimize.fmin(self.nnlf, x0, args=(N.ravel(data),), disp=0)
-            if fargs[1] is not None: opt_x = N.hstack((opt_x,fargs[1:2]))
-            if fargs[0] is not None:
-                opt_x = N.hstack((opt_x[:-1], fargs[0:1],opt_x[-1:]))
+
+            # reconstruct back
+            i = 0
+            loc, scale = fargs[-2:]
+            if fargs[-1] is None:
+                i -= 1
+                scale = opt_x[i]
+            if fargs[-2] is None:
+                i -= 1
+                loc = opt_x[i]
+
+            # assign those which weren't fixed
+            for i in fargs_i:
+                fargs[i] = opt_x[i]
+
+            #raise ValueError
+            opt_x = N.hstack((fargs[:-2], (loc, scale)))
             return opt_x
 
 
@@ -426,7 +467,7 @@ if externals.exists('scipy'):
 
 
     def matchDistribution(data, nsamples=None, loc=None, scale=None,
-                          test='kstest', distributions=None,
+                          args=None, test='kstest', distributions=None,
                           **kwargs):
         """Determine best matching distribution.
 
@@ -451,7 +492,7 @@ if externals.exists('scipy'):
           test : basestring
             What kind of testing to do. Choices:
              'p-roc' : detection power for a given ROC. Needs two
-               parameters: `p=0.05` and `tail='any'`
+               parameters: `p=0.05` and `tail='both'`
              'kstest' : 'full-body' distribution comparison. The best
                choice is made by minimal reported distance after estimating
                parameters of the distribution. Parameter `p=0.05` sets
@@ -460,12 +501,25 @@ if externals.exists('scipy'):
                WARNING: older versions (e.g. 0.5.2 in etch) of scipy have
                         incorrect kstest implementation and do not function
                         properly
-          distributions : None or list of basestring
-            Distributions to check. If None, all known in scipy.stats are
-            tested.
+          distributions : None or list of basestring or tuple(basestring, dict)
+            Distributions to check. If None, all known in scipy.stats
+            are tested. If distribution is specified as a tuple, then
+            it must contain name and additional parameters (name, loc,
+            scale, args) in the dictionary. Entry 'scipy' adds all known
+            in scipy.stats.
           **kwargs
             Additional arguments which are needed for each particular test
             (see above)
+
+        :Example:
+          data = N.random.normal(size=(1000,1));
+          matches = matchDistribution(
+            data,
+            distributions=['rdist',
+                           ('rdist', {'name':'rdist_fixed',
+                                      'loc': 0.0,
+                                      'args': (10,)})],
+            nsamples=30, test='p-roc', p=0.05)
         """
 
         # Handle parameters
@@ -488,7 +542,7 @@ if externals.exists('scipy'):
 
         p_thr = kwargs.get('p', 0.05)
         if test == 'p-roc':
-            tail = kwargs.get('tail', 'any')
+            tail = kwargs.get('tail', 'both')
             data_p = _pvalue(data, Nonparametric(data).cdf, tail)
             data_p_thr = data_p <= p_thr
             true_positives = N.sum(data_p_thr)
@@ -501,25 +555,52 @@ if externals.exists('scipy'):
                       'distribution is %d' % true_positives)
 
         if distributions is None:
-            distributions = scipy.stats.distributions.__all__
+            distributions = ['scipy']
+
+        # lets see if 'scipy' entry was in there
+        try:
+            scipy_ind = distributions.index('scipy')
+            distributions.pop(scipy_ind)
+            distributions += scipy.stats.distributions.__all__
+        except ValueError:
+            pass
+
         results = []
         for d in distributions:
+            dist_gen, loc_, scale_, args_ = None, loc, scale, args
+            if isinstance(d, basestring):
+                dist_gen = d
+                dist_name = d
+            elif isinstance(d, tuple):
+                if not (len(d)==2 and isinstance(d[1], dict)):
+                    raise ValueError,\
+                          "Tuple specification of distribution must be " \
+                          "(d, {params}). Got %s" % (d,)
+                dist_gen = d[0]
+                loc_ = d[1].get('loc', loc)
+                scale_ = d[1].get('scale', scale)
+                args_ = d[1].get('args', args)
+                dist_name = d[1].get('name', str(dist_gen))
+            else:
+                dist_gen = d
+                dist_name = str(d)
+
             # perform actions which might puke for some distributions
             try:
-                dist_gen = getattr(scipy.stats, d)
+                dist_gen_ = getattr(scipy.stats, dist_gen)
                 # specify distribution 'optimizer'. If loc or scale was provided,
                 # use home-brewed rv_semifrozen
-                if loc is not None or scale is not None:
-                    dist_opt = rv_semifrozen(dist_gen, loc=loc, scale=scale)
+                if args_ is not None or loc_ is not None or scale_ is not None:
+                    dist_opt = rv_semifrozen(dist_gen_, loc=loc_, scale=scale_, args=args_)
                 else:
-                    dist_opt = dist_gen
+                    dist_opt = dist_gen_
                 dist_params = dist_opt.fit(data_selected)
                 if __debug__:
                     debug('STAT__',
                           'Got distribution parameters %s for %s'
-                          % (dist_params, d))
+                          % (dist_params, dist_name))
                 if test == 'p-roc':
-                    cdf_func = lambda x: dist_gen.cdf(x, *dist_params)
+                    cdf_func = lambda x: dist_gen_.cdf(x, *dist_params)
                     # We need to compare detection under given p
                     cdf_p = _pvalue(data, cdf_func, tail)
                     cdf_p_thr = cdf_p <= p_thr
@@ -528,7 +609,7 @@ if externals.exists('scipy'):
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
                     if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
-            except Exception, e:
+            except (TypeError, ValueError, AttributeError), e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
                           'Testing for %s distribution failed due to %s'
@@ -536,9 +617,9 @@ if externals.exists('scipy'):
                 continue
 
             if p > p_thr and not N.isnan(D):
-                results += [ (D, d, dist_params) ]
+                results += [ (D, dist_gen, dist_name, dist_params) ]
                 if __debug__:
-                    debug('STAT_', 'Testing for %s dist.: %s' % (d, res_sum))
+                    debug('STAT_', 'Testing for %s dist.: %s' % (dist_name, res_sum))
             else:
                 if __debug__:
                     debug('STAT__', 'Cannot consider %s dist. with %s'
@@ -551,7 +632,7 @@ if externals.exists('scipy'):
         if __debug__ and 'STAT' in debug.active:
             # find the best and report it
             nresults = len(results)
-            sresult = lambda r:'%s(%s)=%.2f' % (r[1], ', '.join(map(str, r[2])), r[0])
+            sresult = lambda r:'%s(%s)=%.2f' % (r[1], ', '.join(map(str, r[3])), r[0])
             if nresults>0:
                 nnextbest = min(2, nresults-1)
                 snextbest = ', '.join(map(sresult, results[1:1+nnextbest]))
@@ -569,7 +650,7 @@ if externals.exists('scipy'):
 
         def plotDistributionMatches(data, matches, nbins=31, nbest=5,
                                     expand_tails=8, legend=2, plot_cdf=True,
-                                    p=None, tail='any'):
+                                    p=None, tail='both'):
             """Plot best matching distributions
 
             :Parameters:
@@ -596,7 +677,7 @@ if externals.exists('scipy'):
                 Bars in the histogram which fall under given p are colored
                 in red. False positives and false negatives are marked as
                 triangle up and down symbols correspondingly
-              tail : ('left', 'right', 'any')
+              tail : ('left', 'right', 'any', 'both')
                 If p is not None, the choise of tail for null-hypothesis
                 testing
 
@@ -635,8 +716,8 @@ if externals.exists('scipy'):
             lines = []
             labels = []
             for i in xrange(min(nbest, len(matches))):
-                D, dist_name, params = matches[i]
-                dist = getattr(scipy.stats, dist_name)(*params)
+                D, dist_gen, dist_name, params = matches[i]
+                dist = getattr(scipy.stats, dist_gen)(*params)
 
                 label = '%s' % (dist_name)
                 if legend > 1: label += '(D=%.2f)' % (D)
@@ -693,7 +774,29 @@ if externals.exists('scipy'):
             return (hist, lines)
 
     #if True:
-    #    data = N.random.normal(size=(1000,1)); test='p-roc';
-    #    matches = matchDistribution(data, nsamples=30, test=test, p=0.05)
-    #    P.figure(); plotDistributionMatches(data, matches, nbins=101, p=0.05, legend=4, nbest=5)
+    #    data = N.random.normal(size=(1000,1));
+    #    matches = matchDistribution(
+    #        data,
+    #        distributions=['scipy',
+    #                       ('norm', {'name':'norm_known',
+    #                                 'scale': 1.0,
+    #                                 'loc': 0.0})],
+    #        nsamples=30, test='p-roc', p=0.05)
+    #    P.figure(); plotDistributionMatches(data, matches, nbins=101,
+    #                                        p=0.05, legend=4, nbest=5)
+
+
+def autoNullDist(dist):
+    """Cheater for human beings -- wraps `dist` if needed with some
+    NullDist
+
+    tail and other arguments are assumed to be default as in
+    NullDist/MCNullDist
+    """
+    if dist is None or isinstance(dist, NullDist):
+        return dist
+    elif hasattr(dist, 'fit'):
+        return MCNullDist(dist)
+    else:
+        return FixedNullDist(dist)
 

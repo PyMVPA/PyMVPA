@@ -98,6 +98,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
           'sg_fixedcachesize': "__check_shogun(3043)",
           'hcluster': "import hcluster as __",
           'griddata': "import griddata as __",
+          'cPickle': "import cPickle as __",
+          'gzip': "import gzip as __"
           }
 
 _VERIFIED = {}
