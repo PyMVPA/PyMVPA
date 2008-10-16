@@ -33,7 +33,19 @@ It is therefore possible to run PyMVPA on a wide variety of platforms and
 operating systems, ranging from computing mainframes, to regular desktop
 machines. It even runs on a cell phone.
 
-.. Yarik, can you take a picture of it running on your phone?
+
+.. image:: pics/pymvpa_on_phone.jpg
+   :alt: Picture showing PyMVPA running on an OpenMoko
+
+This picture shows PyMVPA on an OpenMoko_ cell phone --- running the
+`pylab_2d.py` example in an IPython_ session. Please note, that in general a
+phone might not be the optimal environment for data analysis with PyMVPA, but
+PyMVPA itself does not restrict the user's choice of the platform to the usual
+suspects.  (A `highres image`_ is available, if you want to double check. ;-)
+
+.. _OpenMoko: http://www.openmoko.com
+.. _highres image: http://www.onerussian.com/php/album.php?page=Photos/Geek/20081015FR/&image=img_1107.jpg
+
 
 .. index:: required software, NumPy
 
