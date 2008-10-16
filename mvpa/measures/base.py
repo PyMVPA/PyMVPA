@@ -26,6 +26,8 @@ from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
 
+from mvpa.clfs.stats import autoNullDist
+
 if __debug__:
     from mvpa.base import debug
 
@@ -74,7 +76,7 @@ class DatasetMeasure(Stateful):
         self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
         methods."""
-        self.__null_dist = null_dist
+        self.__null_dist = autoNullDist(null_dist)
 
 
     __doc__ = enhancedDocString('DatasetMeasure', locals(), Stateful)
