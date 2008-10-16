@@ -69,7 +69,7 @@ class Hamster(dict):
         """Bury the hamster into the file
         """
         if __debug__:
-            debug('IOH', 'Buring hamster into %s' % filename)
+            debug('IOH', 'Burying hamster into %s' % filename)
         f = gzip.open(filename, 'w')
         cPickle.dump(self, f)
         f.close()
