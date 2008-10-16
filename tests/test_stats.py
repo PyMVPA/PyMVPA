@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA stats helpers"""
 
 from mvpa.base import externals
-from mvpa.clfs.stats import MCNullDist, FixedNullDist
+from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
 
@@ -24,6 +24,7 @@ if externals.exists('scipy'):
                         MCNullDist(scipy.stats.expon, permutations=10, tail='right'),
                         FixedNullDist(scipy.stats.norm(0, 0.01), tail='any'),
                         FixedNullDist(scipy.stats.norm(0, 0.01), tail='right'),
+                        scipy.stats.norm(0, 0.01)
                         ]
 
 class StatsTests(unittest.TestCase):
@@ -49,8 +50,10 @@ class StatsTests(unittest.TestCase):
 
     @sweepargs(nd=nulldist_sweep[1:])
     def testNullDistProb(self, nd):
+        if not isinstance(nd, NullDist):
+            return
         ds = datasets['uni2small']
-        null = nd #MCNonparamDist(permutations=10, tail='right')
+        null = nd
 
         null.fit(OneWayAnova(), ds)
 
