@@ -320,6 +320,51 @@ class FixedNullDist(NullDist):
         return self._dist.cdf(x)
 
 
+class AdaptiveNullDist(FixedNullDist):
+    """Adaptive distribution which adjusts parameters according to the data
+
+    WiP: internal implementation might change
+    """
+    def fit(self, measure, wdata, vdata=None):
+        """Cares about dimensionality of the feature space in measure
+        """
+
+        try:
+            nfeatures = len(measure.feature_ids)
+        except ValueError:              # XXX
+            nfeatures = N.prod(wdata.shape[1:])
+
+        dist_gen = self._dist
+        if not hasattr(dist_gen, 'fit'): # frozen already
+            dist_gen = dist_gen.dist     # rv_frozen at least has it ;)
+
+        args, kwargs = self._adapt(nfeatures, measure, wdata, vdata)
+        if __debug__:
+            debug('STAT', 'Adapted parameters for %s to be %s, %s'
+                  % (dist_gen, args, kwargs))
+        self._dist = dist_gen(*args, **kwargs)
+
+
+    def _adapt(self, nfeatures, measure, wdata, vdata=None):
+        raise NotImplementedError
+
+
+class AdaptiveRDist(AdaptiveNullDist):
+    """Adaptive rdist: params are (nfeatures-1, 0, 1)
+    """
+
+    def _adapt(self, nfeatures, measure, wdata, vdata=None):
+        return (nfeatures-1, 0, 1), {}
+
+
+class AdaptiveNormal(AdaptiveNullDist):
+    """Adaptive rdist: params are (0, sqrt(1/nfeatures))
+    """
+
+    def _adapt(self, nfeatures, measure, wdata, vdata=None):
+        return (0, 1.0/N.sqrt(nfeatures)), {}
+
+
 if externals.exists('scipy'):
     import scipy.stats
     from scipy.stats import kstest
@@ -796,7 +841,11 @@ def autoNullDist(dist):
     if dist is None or isinstance(dist, NullDist):
         return dist
     elif hasattr(dist, 'fit'):
+        if __debug__:
+            debug('STAT', 'Wrapping %s into MCNullDist' % dist)
         return MCNullDist(dist)
     else:
+        if __debug__:
+            debug('STAT', 'Wrapping %s into FixedNullDist' % dist)
         return FixedNullDist(dist)
 

@@ -362,6 +362,14 @@ class Sensitivity(FeaturewiseDatasetMeasure):
     def _setClassifier(self, clf):
         self.__clf = clf
 
+
+    @property
+    def feature_ids(self):
+        """Return feature_ids used by the underlying classifier
+        """
+        return self.__clf._getFeatureIds()
+
+
     clf = property(fget=lambda self:self.__clf,
                    fset=_setClassifier)
 
@@ -385,7 +393,6 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         self.__combiner = combiner
         """Which functor to use to combine all sensitivities"""
-
 
 
     def _call(self, dataset):
