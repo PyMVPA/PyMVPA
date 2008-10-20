@@ -27,7 +27,8 @@ class RidgeReg(Classifier):
 
     _clf_internals = ['ridge']
 
-    def __init__(self, lm=None, **kwargs):
+    def __init__(self, lm=None, implementation='direct',
+                 stopcrit=0.001, **kwargs):
         """
         Initialize a ridge regression analysis.
 
@@ -35,7 +36,12 @@ class RidgeReg(Classifier):
           lm : float
             the penalty term lambda.  
             (Defaults to .05*nFeatures)
-
+          implementation : 'direct' | 'gradient'
+            choose between direct implementation via numpy.linalg.lstsq
+            and memory saving gradient descent implemented in fortran
+          stopcrit: float
+            Stopping criterion for the gradient descent training method
+            (absolute error)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -50,6 +56,10 @@ class RidgeReg(Classifier):
         # verify that they specified lambda
         self.__lm = lm
 
+        # store train method config
+        self.__implementation = implementation
+        self.__stopcrit = stopcrit
+
 
     def __repr__(self):
         """String summary of the object
@@ -62,16 +72,11 @@ class RidgeReg(Classifier):
                 (self.__lm, str(self.states.enabled))
 
 
-    def _train(self, data, implementation="direct"):
+    def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
-        :Parameters:
-          implementation : string
-          chooses between direct implementation via numpy.linalg.lstsq
-          (implementation="direct") and memory saving gradient descent
-          implemented in fortran (implementation="gradient")
         """
 
-        if implementation == "direct":
+        if self.implementation == "direct":
             # create matrices to solve with additional penalty term
             # determine the lambda matrix
             if self.__lm is None:
@@ -89,20 +94,20 @@ class RidgeReg(Classifier):
 
             # perform the least sq regression and save the weights
             self.w = lstsq(a, b)[0]
-        elif implementation == "gradient":
+        elif self.__implementation == "gradient":
             # Set lambda
             if self.__lm is None:
                 Lambda = .05*data.nfeatures
             else:
                 Lambda = self.__lm
             # We can directly run the training routine
-            # The stopping criterion is currently set to 0.001 for the
-            # absolute error
             self.w = N.random.randn(data.nfeatures+1)
             self.w = ridgetrain.ridgetrain(data.samples,\
-                    data.labels, self.w, Lambda, 0.001)
+                    data.labels, self.w, Lambda, self.__stopcrit)
         else:
-            raise ValueError, "Implementation should be 'direct' or 'gradient'"
+            raise ValueError, "Unknown implementation '%s'" \
+                              % self.__implementation
+
 
     def _predict(self, data):
         """
