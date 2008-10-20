@@ -16,6 +16,7 @@ from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier
 
+import ridgetrain
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
@@ -61,28 +62,47 @@ class RidgeReg(Classifier):
                 (self.__lm, str(self.states.enabled))
 
 
-    def _train(self, data):
+    def _train(self, data, implementation="direct"):
         """Train the classifier using `data` (`Dataset`).
+        :Parameters:
+          implementation : string
+          chooses between direct implementation via numpy.linalg.lstsq
+          (implementation="direct") and memory saving gradient descent
+          implemented in fortran (implementation="gradient")
         """
 
-        # create matrices to solve with additional penalty term
-        # determine the lambda matrix
-        if self.__lm is None:
-            # Not specified, so calculate based on .05*nfeatures
-            Lambda = .05*data.nfeatures*N.eye(data.nfeatures)
+        if implementation == "direct":
+            # create matrices to solve with additional penalty term
+            # determine the lambda matrix
+            if self.__lm is None:
+                # Not specified, so calculate based on .05*nfeatures
+                Lambda = .05*data.nfeatures*N.eye(data.nfeatures)
+            else:
+                # use the provided penalty
+                Lambda = self.__lm*N.eye(data.nfeatures)
+
+            # add the penalty term
+            a = N.concatenate( \
+                (N.concatenate((data.samples, N.ones((data.nsamples, 1))), 1),
+                    N.concatenate((Lambda, N.zeros((data.nfeatures, 1))), 1)))
+            b = N.concatenate((data.labels, N.zeros(data.nfeatures)))
+
+            # perform the least sq regression and save the weights
+            self.w = lstsq(a, b)[0]
+        elif implementation == "gradient":
+            # Set lambda
+            if self.__lm is None:
+                Lambda = .05*data.nfeatures
+            else:
+                Lambda = self.__lm
+            # We can directly run the training routine
+            # The stopping criterion is currently set to 0.001 for the
+            # absolute error
+            self.w = N.random.randn(data.nfeatures+1)
+            self.w = ridgetrain.ridgetrain(data.samples,\
+                    data.labels, self.w, Lambda, 0.001)
         else:
-            # use the provided penalty
-            Lambda = self.__lm*N.eye(data.nfeatures)
-
-        # add the penalty term
-        a = N.concatenate( \
-            (N.concatenate((data.samples, N.ones((data.nsamples, 1))), 1),
-                N.concatenate((Lambda, N.zeros((data.nfeatures, 1))), 1)))
-        b = N.concatenate((data.labels, N.zeros(data.nfeatures)))
-
-        # perform the least sq regression and save the weights
-        self.w = lstsq(a, b)[0]
-
+            raise ValueError, "Implementation should be 'direct' or 'gradient'"
 
     def _predict(self, data):
         """
