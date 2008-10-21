@@ -8,14 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Python distutils setup for PyMVPA"""
 
-from distutils.core import setup, Extension
-import numpy as N
+from numpy.distutils.core import setup, Extension
+from numpy.distutils.misc_util import get_numpy_include_dirs
 import os
 import sys
 from glob import glob
 
-# find numpy headers
-numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
 
 extra_link_args = []
 
@@ -27,13 +25,12 @@ if sys.platform == "darwin":
 libsvmc_ext = Extension(
     'mvpa.clfs.libsvmc._svmc',
     sources = [ 'mvpa/clfs/libsvmc/svmc.i' ],
-    include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
+    include_dirs = ['/usr/include/libsvm-2.0/libsvm'] \
+                   + get_numpy_include_dirs(),
     libraries    = [ 'svm' ],
     language     = 'c++',
     extra_link_args = extra_link_args,
-    swig_opts    = [ '-c++', '-noproxy',
-                     '-I/usr/include/libsvm-2.0/libsvm',
-                     '-I' + numpy_headers ] )
+    swig_opts    = ['-I/usr/include/libsvm-2.0/libsvm'])
 
 smlrc_ext = Extension(
     'mvpa.clfs.libsmlrc.smlrc',
@@ -43,7 +40,12 @@ smlrc_ext = Extension(
     extra_link_args = extra_link_args,
     language = 'c')
 
-ext_modules = [smlrc_ext]
+ridgetrain_ext = Extension(
+    'mvpa.clfs.libridgetrain.ridgetrain',
+    sources = ['mvpa/clfs/libridgetrain/ridgetrain.f'],
+    )
+
+ext_modules = [smlrc_ext, ridgetrain_ext]
 
 # only do libsvm if forced or libsvm.a is available
 if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \
@@ -81,6 +83,7 @@ setup(name       = 'pymvpa',
                        'mvpa.clfs.sg',
                        'mvpa.clfs.libsvmc',
                        'mvpa.clfs.libsmlrc',
+                       'mvpa.clfs.libridgetrain',
                        'mvpa.algorithms',
                        'mvpa.measures',
                        'mvpa.featsel',
