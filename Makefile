@@ -40,9 +40,8 @@ debian-build:
 
 build: build-stamp
 build-stamp: 3rd
-	python setup.py config --noisy
-	python setup.py build_ext
-	python setup.py build_py
+	python setup.py config --noisy --with-libsvm
+	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
 	for ext in _svmc smlrc ridgetrain; do \
 		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
