@@ -10,14 +10,14 @@
 
 if __debug__:
     from mvpa.base import debug
-    debug('INIT', 'mvpa.clfs.libsmlr')
+    debug('INIT', 'mvpa.clfs.libsmlrc')
 
 import numpy as N
 import ctypes as C
 import os
 import sys
 
-from mvpa.clfs.libsmlr.ctypes_helper import extend_args, c_darray
+from mvpa.clfs.libsmlrc.ctypes_helper import extend_args, c_darray
 
 # connect to library that's in this directory
 if sys.platform == 'win32':
@@ -54,5 +54,5 @@ def stepwise_regression(*args):
     return func(*arglist)
 
 if __debug__:
-    debug('INIT', 'mvpa.clfs.libsmlr end')
+    debug('INIT', 'mvpa.clfs.libsmlrc end')
 

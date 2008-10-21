@@ -16,8 +16,8 @@ import re, copy
 
 import numpy as N
 
-from mvpa.clfs.libsvm import svmc
-from mvpa.clfs.libsvm.svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
+from mvpa.clfs.libsvmc import _svmc as svmc
+from mvpa.clfs.libsvmc._svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
                                   PRECOMPUTED
 

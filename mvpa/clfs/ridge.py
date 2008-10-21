@@ -15,8 +15,7 @@ import numpy as N
 from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier
-
-import ridgetrain
+from mvpa.clfs.libridgetrain import ridgetrain
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
@@ -76,7 +75,7 @@ class RidgeReg(Classifier):
         """Train the classifier using `data` (`Dataset`).
         """
 
-        if self.implementation == "direct":
+        if self.__implementation == "direct":
             # create matrices to solve with additional penalty term
             # determine the lambda matrix
             if self.__lm is None:
@@ -102,7 +101,7 @@ class RidgeReg(Classifier):
                 Lambda = self.__lm
             # We can directly run the training routine
             self.w = N.random.randn(data.nfeatures+1)
-            self.w = ridgetrain.ridgetrain(data.samples,\
+            self.w = ridgetrain(data.samples,\
                     data.labels, self.w, Lambda, self.__stopcrit)
         else:
             raise ValueError, "Unknown implementation '%s'" \

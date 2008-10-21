@@ -22,14 +22,14 @@ from mvpa.clfs.base import Classifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.measures.base import Sensitivity
 
-import _svm as svm
+from mvpa.clfs.libsvmc import _svm as svm
 from sens import *
 
 if __debug__:
     from mvpa.base import debug
 
 # we better expose those since they are mentioned in docstrings
-from svmc import \
+from mvpa.clfs.libsvmc._svmc import \
      C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
      PRECOMPUTED
