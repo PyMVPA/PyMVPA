@@ -44,11 +44,11 @@ build-stamp: 3rd
 	python setup.py build_ext
 	python setup.py build_py
 # to overcome the issue of not-installed svmc.so
-	for ext in svm smlr; do \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/; \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/$${ext}c.dylib; \
+	for ext in _svmc smlrc ridgetrain; do \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/; \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/$${ext}.dylib; \
 		done
 	touch $@
 

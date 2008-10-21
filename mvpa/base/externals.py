@@ -80,7 +80,7 @@ def __check_weave():
 
 
 # contains list of available (optional) external classifier extensions
-_KNOWN = {'libsvm':'import mvpa.clfs.libsvm._svm as __; x=__.convert2SVMNode',
+_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'nifti':'from nifti import NiftiImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',

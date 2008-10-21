@@ -25,8 +25,8 @@ if sys.platform == "darwin":
 
 # define the extension modules
 libsvmc_ext = Extension(
-    'mvpa.clfs.libsvm.svmc',
-    sources = [ 'mvpa/clfs/libsvm/svmc.i' ],
+    'mvpa.clfs.libsvmc._svmc',
+    sources = [ 'mvpa/clfs/libsvmc/svmc.i' ],
     include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
     libraries    = [ 'svm' ],
     language     = 'c++',
@@ -36,8 +36,8 @@ libsvmc_ext = Extension(
                      '-I' + numpy_headers ] )
 
 smlrc_ext = Extension(
-    'mvpa.clfs.libsmlr.smlrc',
-    sources = [ 'mvpa/clfs/libsmlr/smlr.c' ],
+    'mvpa.clfs.libsmlrc.smlrc',
+    sources = [ 'mvpa/clfs/libsmlrc/smlr.c' ],
     libraries = ['m'],
     # extra_compile_args = ['-O0'],
     extra_link_args = extra_link_args,
@@ -79,8 +79,8 @@ setup(name       = 'pymvpa',
                        'mvpa.mappers',
                        'mvpa.clfs',
                        'mvpa.clfs.sg',
-                       'mvpa.clfs.libsvm',
-                       'mvpa.clfs.libsmlr',
+                       'mvpa.clfs.libsvmc',
+                       'mvpa.clfs.libsmlrc',
                        'mvpa.algorithms',
                        'mvpa.measures',
                        'mvpa.featsel',

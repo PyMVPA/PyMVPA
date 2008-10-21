@@ -23,7 +23,7 @@ from mvpa.base import warning, externals
 _DEFAULT_IMPLEMENTATION = "Python"
 if externals.exists('ctypes'):
     # Uber-fast C-version of the stepwise regression
-    from mvpa.clfs.libsmlr import stepwise_regression as _cStepwiseRegression
+    from mvpa.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
     _DEFAULT_IMPLEMENTATION = "C"
 else:
     _cStepwiseRegression = None

@@ -165,7 +165,7 @@ clfs += \
                             clfs['smlr'][0].descr) ]
 
 if externals.exists('libsvm'):
-    from mvpa.clfs import libsvm
+    from mvpa.clfs import libsvmc as libsvm
     clfs._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfs += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(

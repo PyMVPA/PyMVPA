@@ -1,3 +1,4 @@
+//-*-c++-*-
 %module svmc
 %{
 #include "svm.h"
