@@ -283,6 +283,8 @@ split.
 
 .. _SMLR : api/mvpa.clfs.smlr.SMLR-class.html
 
+.. _faq_literal_labels:
+
 Can PyMVPA deal with literal class labels?
 ------------------------------------------
 
