@@ -20,7 +20,15 @@ This dataset has already been repeatedly reanalyzed since its first publication
 (e.g.  :ref:`Hanson et al (2004) <HMH04>` and :ref:`O'Toole et al. (2005) <
 OJA+05`).
 
-The subset of the dataset that is avialable here has been converted into the
+.. note::
+
+  The orginal authors of :ref:`Haxby et al. (2001) <HGF+01>` hold the copyright
+  of this dataset and made it available under the terms of the `Creative Commons
+  Attribution-Share Alike 3.0`_ license.
+
+.. _Creative Commons Attribution-Share Alike 3.0: http://creativecommons.org/licenses/by-sa/3.0/
+
+The subset of the dataset that is available here has been converted into the
 NIfTI dataformat and is preprocessed to a degree that should allow people
 without prior fMRI experience to perform meaningful analyses. Moreover, it
 should not require further preprocessing with external tools.
@@ -51,7 +59,9 @@ bold.nii.gz
 
 bold_mc.par
   The motion correction parameter output. This is a 6-column textfile with
-  three rotation and three translation parameters respectively.
+  three rotation and three translation parameters respectively. This
+  information can be used e.g. as additional regressors for :ref:`motion-aware
+  timeseries detrending <motion-aware_detrending>`.
 
 mask.nii.gz
   A binary mask with a conservative brain outline estimate, i.e. including
@@ -79,9 +89,11 @@ easily loaded like this:
   ...                   labels_map=True,
   ...                   mask='data/mask.nii.gz')
 
-Please note, that the dataset used in the :ref:`examples <examples>` shipped
-with PyMVPA is actually a minimal version (posterior half of a single brain
-slice) of this full dataset. After appropriately adjusting the path, it is
-possible to run several of the examples on this full dataset.
+.. note::
+
+   The dataset used in the :ref:`examples <examples>` shipped with PyMVPA is
+   actually a minimal version (posterior half of a single brain slice) of this
+   full dataset. After appropriately adjusting the path, it is possible to run
+   several of the examples on this full dataset.
 
 .. _FSL: http://www.fmrib.ox.ac.uk/fsl

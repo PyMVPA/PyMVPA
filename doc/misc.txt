@@ -348,7 +348,7 @@ Others
 .. put information about IO helpers, external bindings, etc here
 
 
-.. index:: FSL
+.. index:: FSL, detrending, motion correction
 
 FSL Bindings
 ============
@@ -361,8 +361,13 @@ format. Therefore it can be easily imported into PyMVPA using PyNIfTI. However,
 some information is stored in textfiles, e.g. estimated motion correction
 parameters and *FEAT's three-column custom EV* files. PyMVPA provides import
 and export helpers for both of them (among other stuff like a *MELODIC*
-results import helper). Here is an example how the *McFlirt* parameter output
-can be used to perform motion-aware data detrending:
+results import helper).
+
+.. _motion-aware_detrending:
+
+Here is an example how the *McFlirt* parameter output can be used to perform
+motion-aware data detrending:
+
 
   >>> from os import path
   >>> import numpy as N

@@ -38,10 +38,14 @@ machines. It even runs on a cell phone.
    :alt: Picture showing PyMVPA running on an OpenMoko
 
 This picture shows PyMVPA on an OpenMoko_ cell phone --- running the
-`pylab_2d.py` example in an IPython_ session. Please note, that in general a
-phone might not be the optimal environment for data analysis with PyMVPA, but
-PyMVPA itself does not restrict the user's choice of the platform to the usual
-suspects.  (A `highres image`_ is available, if you want to double check. ;-)
+`pylab_2d.py` example in an IPython_ session.
+
+.. note::
+
+  In general a phone might not be the optimal environment for data analysis
+  with PyMVPA, but PyMVPA itself does not restrict the user's choice of the
+  platform to the usual suspects.  (A `highres image`_ is available, if you
+  want to double check. ;-)
 
 .. _OpenMoko: http://www.openmoko.com
 .. _highres image: http://www.onerussian.com/php/album.php?page=Photos/Geek/20081015FR/&image=img_1107.jpg
@@ -306,10 +310,14 @@ RPM-based GNU/Linux Distributions
 ---------------------------------
 
 To install one of the RPM packages provided through the `OpenSUSE Build
-Service`_, first download it from the `OpenSUSE software website`_. Please
-note, that this site does not only offer OpenSUSE packages, but also binaries
-for other distributions, including: CentOS 5, Fedora 9, Mandriva 2007-2008,
-RedHat Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE 10.2 up to 11.0.
+Service`_, first download it from the `OpenSUSE software website`_.
+
+.. note::
+
+   This site does not only offer OpenSUSE packages, but also binaries for other
+   distributions, including: CentOS 5, Fedora 9, Mandriva 2007-2008, RedHat
+   Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE 10.2 up to 11.0.
+
 Once downloaded, open a console and invoke (the example command refers to
 PyMVPA 0.3.1)::
 
@@ -469,9 +477,10 @@ previous commands from):
 
   export PYTHONPATH=$PWD
 
-However, please note that this procedure also always builds the LIBSVM_
-extension and therefore also requires the patched LIBSVM version and SWIG to be
-available.
+.. note::
+
+   This procedure also always builds the LIBSVM_ extension and therefore also
+   requires the patched LIBSVM version and SWIG to be available.
 
 
 .. index:: building on Windows
@@ -496,8 +505,12 @@ choose to install the `current` package. You will need the *MinGW base tools*,
 *g++* compiler and *MinGW Make*. For the remaining parts of the section, we
 will assume that MinGW got installed in `C:\\MinGW` and the directory
 `C:\\MinGW\\bin` has been added to the `PATH` environment variable, to be able
-to easily access all MinGW tools. Note, that it is not necessary to install
-`MSYS`_ to build PyMVPA, but it might handy to have it.
+to easily access all MinGW tools.
+
+.. note::
+
+   It is not necessary to install `MSYS`_ to build PyMVPA, but it might handy
+   to have it.
 
 If you want to build the LIBSVM wrapper for PyMVPA, you also need to download
 SWIG_ (actually *swigwin*, the distribution for Windows). SWIG does not have to

@@ -138,8 +138,10 @@ contains one element for each feature in the dataset.
 scores, e.g. reporting absolute values for feature selection purposes, instead
 of raw sensitivities.
 
-Please note, that the `SVMWeights` classes *cannot* extract reasonable weights
-from non-linear SVMs (e.g. with RBF kernels).
+.. note::
+
+  The `SVMWeights` classes *cannot* extract reasonable weights from non-linear
+  SVMs (e.g. with RBF kernels).
 
 .. _libsvm.LinearSVMWeights: api/mvpa.clfs.libsvm.sens.LinearSVMWeights-class.html
 .. _sg.LinearSVMWeights: api/mvpa.clfs.sg.sens.LinearSVMWeights-class.html
