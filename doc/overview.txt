@@ -77,7 +77,10 @@ However, once you found something interesting in the examples you should
 consider skipping through this manual, as it contains a lot of information that
 is complementary to the API reference and the examples.
 
-Now for the details ...
+
+.. include:: misc/exampledata.readme
+
+And now for the details ...
 
 
 Module Overview
