@@ -49,6 +49,16 @@ def _pvalue(x, cdf_func, tail, sign=True):
 
     cdf = cdf_func(x)
 
+    if __debug__ and 'CHECK_STABILITY' in debug.active:
+        cdf_min, cdf_max = N.min(cdf), N.max(cdf)
+        if cdf_min < 0 or cdf_max > 1.0:
+            warning('Stability check of cdf %s failed. Min=%s, max=%s' % \
+                  (cdf_func, cdf_min, cdf_max))
+
+    # no escape but to assure that CDF is in the right range. Some
+    # distributions from scipy tend to jump away from [0,1]
+    cdf = N.clip(cdf, m_min=0, m_max=1.0)
+
     if tail == 'left':
         pass
     elif tail == 'right':
