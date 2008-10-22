@@ -22,9 +22,9 @@ if externals.exists('scipy'):
     nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10, tail='any'),
                         MCNullDist(scipy.stats.norm, permutations=10, tail='right'),
                         MCNullDist(scipy.stats.expon, permutations=10, tail='right'),
-                        FixedNullDist(scipy.stats.norm(0, 0.01), tail='any'),
-                        FixedNullDist(scipy.stats.norm(0, 0.01), tail='right'),
-                        scipy.stats.norm(0, 0.01)
+                        FixedNullDist(scipy.stats.norm(0, 0.1), tail='any'),
+                        FixedNullDist(scipy.stats.norm(0, 0.1), tail='right'),
+                        scipy.stats.norm(0, 0.1)
                         ]
 
 class StatsTests(unittest.TestCase):
@@ -95,11 +95,10 @@ class StatsTests(unittest.TestCase):
 
     @sweepargs(nd=nulldist_sweep)
     def testDatasetMeasureProb(self, nd):
+
         ds = datasets['uni2medium']
 
-        # to estimate null distribution
-        m = OneWayAnova(null_dist=nd)
-
+        m = OneWayAnova(null_dist=nd, enable_states=['null_t'])
         score = m(ds)
 
         score_nonbogus = N.mean(score[ds.nonbogus_features])
@@ -116,6 +115,18 @@ class StatsTests(unittest.TestCase):
 
         # the others should be a lot larger
         self.failUnless(N.mean(N.abs(null_prob_bogus)) > N.mean(N.abs(null_prob_nonbogus)))
+
+        if isinstance(nd, MCNullDist):
+            # MCs are not stable with just 10 samples... so lets skip them
+            return
+
+        self.failUnless((N.abs(m.null_t[ds.nonbogus_features]) >= 5).all(),
+            msg="Nonbogus features should have high t-score. Got %s"
+                % (m.null_t[ds.nonbogus_features]))
+
+        self.failUnless((N.abs(m.null_t[ds.bogus_features]) < 4).all(),
+            msg="Bogus features should have low t-score. Got (t,p,sens):%s"
+                % (zip(m.null_t, m.null_prob, score)))
 
 
     def testMatchDistribution(self):
