@@ -61,8 +61,8 @@ class StatsTests(unittest.TestCase):
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
         prob = null.p([3,0,0,0,0,0])
-        self.failUnless(prob[0] < 0.01)
-        self.failUnless((prob[1:] > 0.05).all())
+        self.failUnless(N.abs(prob[0]) < 0.01)
+        self.failUnless((N.abs(prob[1:]) > 0.05).all())
 
         # has to have matching shape
         if not isinstance(nd, FixedNullDist):
@@ -115,7 +115,7 @@ class StatsTests(unittest.TestCase):
                 % null_prob_nonbogus)
 
         # the others should be a lot larger
-        self.failUnless(N.mean(null_prob_bogus) > N.mean(null_prob_nonbogus))
+        self.failUnless(N.mean(N.abs(null_prob_bogus)) > N.mean(N.abs(null_prob_nonbogus)))
 
 
     def testMatchDistribution(self):
