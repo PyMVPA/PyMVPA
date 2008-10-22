@@ -54,7 +54,9 @@ bold.nii.gz
 
 bold_mc.par
   The motion correction parameter output. This is a 6-column textfile with
-  three rotation and three translation parameters respectively.
+  three rotation and three translation parameters respectively. This
+  information can be used e.g. as additional regressors for :ref:`motion-aware
+  timeseries detrending <motion-aware_detrending>`.
 
 mask.nii.gz
   A binary mask with a conservative brain outline estimate, i.e. including
