@@ -50,6 +50,8 @@ Documentation
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
 * :ref:`FAQ <faq>` (short answers to common problems)
+* :ref:`exampledata` (single subject dataset from :ref:`Haxby et al. (2001)
+  <HGF+01>`
 * :ref:`genindex` (access by keywords)
 * :ref:`search` (online and offline full-text search)
 
