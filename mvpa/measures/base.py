@@ -76,7 +76,11 @@ class DatasetMeasure(Stateful):
         self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
         methods."""
-        self.__null_dist = autoNullDist(null_dist)
+        null_dist_ = autoNullDist(null_dist)
+        if __debug__:
+            debug('SA', 'Assigning null_dist %s whenever original given was %s'
+                  % (null_dist_, null_dist))
+        self.__null_dist = null_dist_
 
 
     __doc__ = enhancedDocString('DatasetMeasure', locals(), Stateful)
@@ -93,11 +97,6 @@ class DatasetMeasure(Stateful):
         """
         result = self._call(dataset)
         result = self._postcall(dataset, result)
-        self.raw_result = result
-        if not self.__transformer is None:
-            if __debug__:
-                debug("SA_", "Applying transformer %s" % self.__transformer)
-            result = self.__transformer(result)
         return result
 
 
@@ -115,6 +114,12 @@ class DatasetMeasure(Stateful):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
+        self.raw_result = result
+        if not self.__transformer is None:
+            if __debug__:
+                debug("SA_", "Applying transformer %s" % self.__transformer)
+            result = self.__transformer(result)
+
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
             if __debug__:
