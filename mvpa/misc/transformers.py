@@ -79,6 +79,7 @@ def L1Normed(x, norm=1.0, reverse=False):
     xnorm = N.sum(N.abs(x))
     return x * (norm/xnorm)
 
+
 def RankOrder(x, reverse=False):
     """Rank-order by value. Highest gets 0"""
 
@@ -100,3 +101,72 @@ def RankOrder(x, reverse=False):
 def ReverseRankOrder(x):
     """Convinience functor"""
     return RankOrder(x, reverse=True)
+
+
+class OverAxis(object):
+    """Helper to apply transformer over specific axis
+    """
+
+    def __init__(self, transformer, axis=None):
+        """Initialize transformer wrapper with an axis.
+
+        :Parameters:
+          transformer
+            A callable to be used
+          axis : None or int
+            If None -- apply transformer across all the data. If some
+            int -- over that axis
+        """
+        self.transformer = transformer
+        # sanity check
+        if not (axis is None or isinstance(axis, int)):
+            raise ValueError, "axis must be specified by integer"
+        self.axis = axis
+
+
+    def __call__(self, x, *args, **kwargs):
+        transformer = self.transformer
+        axis = self.axis
+        if axis is None:
+            return transformer(x, *args, **kwargs)
+
+        x = N.asanyarray(x)
+        shape = x.shape
+        if axis >= len(shape):
+            raise ValueError, "Axis given in constructor %d is higher " \
+                  "than dimensionality of the data of shape %s" % (axis, shape)
+
+        # WRONG! ;-)
+        #for ind in xrange(shape[axis]):
+        #    results.append(transformer(x.take([ind], axis=axis),
+        #                              *args, **kwargs))
+
+        # TODO: more elegant/speedy solution?
+        shape_sweep = shape[:axis] + shape[axis+1:]
+        shrinker = None
+        """Either transformer reduces the dimensionality of the data"""
+        #results = N.empty(shape_out, dtype=x.dtype)
+        for index_sweep in N.ndindex(shape_sweep):
+            if axis > 0:
+                index = index_sweep[:axis]
+            else:
+                index = ()
+            index = index + (slice(None),) + index_sweep[axis:]
+            x_sel = x[index]
+            x_t = transformer(x_sel, *args, **kwargs)
+            if shrinker is None:
+                if N.isscalar(x_t) or x_t.shape == shape_sweep:
+                    results = N.empty(shape_sweep, dtype=x.dtype)
+                    shrinker = True
+                elif x_t.shape == x_sel.shape:
+                    results = N.empty(x.shape, dtype=x.dtype)
+                    shrinker = False
+                else:
+                    raise RuntimeError, 'Not handled by OverAxis kind of transformer'
+
+            if shrinker:
+                results[index_sweep] = x_t
+            else:
+                results[index] = x_t
+
+        return results
