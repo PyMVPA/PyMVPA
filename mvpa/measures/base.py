@@ -20,12 +20,13 @@ has to be in some iterable container.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
 import mvpa.misc.copy as copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
-
+from mvpa.base import externals
 from mvpa.clfs.stats import autoNullDist
 
 if __debug__:
@@ -60,6 +61,9 @@ class DatasetMeasure(Stateful):
             "transformation algorithm")
     null_prob = StateVariable(enabled=True)
     """Stores the probability of a measure under the NULL hypothesis"""
+    null_t = StateVariable(enabled=False)
+    """Stores the t-score corresponding to null_prob under assumption
+    of Normal distribution"""
 
     def __init__(self, transformer=None, null_dist=None, **kwargs):
         """Does nothing special.
@@ -134,7 +138,38 @@ class DatasetMeasure(Stateful):
             self.__null_dist.fit(measure, dataset)
 
             # get probability of result under NULL hypothesis if available
-            self.null_prob = self.__null_dist.p(result)
+            null_prob = self.__null_dist.p(result)
+            self.null_prob = null_prob
+
+            if self.states.isEnabled('null_t'):
+                externals.exists('scipy', raiseException=True)
+                from scipy.stats import norm
+
+                # TODO: following logic should appear in NullDist,
+                #       not here
+                tail = self.null_dist._tail
+                if tail == 'left':
+                    acdf = N.abs(null_prob)
+                elif tail == 'right':
+                    acdf = 1.0 - N.abs(null_prob)
+                elif tail in ['any', 'both']:
+                    acdf = 1.0 - N.clip(N.abs(null_prob),
+                                        m_min=0, m_max=0.5)
+                else:
+                    raise RuntimeError, 'Unhandled tail %s' % tail
+                # We need to clip to avoid non-informative inf's ;-)
+                # that happens due to lack of precision in mantissa
+                # which is 11 bits in double. We could clip values
+                # around 0 at as low as 1e-100 (correspond to z~=21),
+                # but for consistency lets clip at 1e-16 which leads
+                # to distinguishable value around p=1 and max z=8.2.
+                # Should be sufficient range of z-values ;-)
+                clip = 1e-16
+                null_t = norm.ppf(N.clip(acdf,
+                                         m_min=clip,
+                                         m_max=1.0 - clip))
+                null_t[N.signbit(null_prob)] *= -1.0 # revert sign for negatives
+                self.null_t = null_t                 # store
 
         return result
 
