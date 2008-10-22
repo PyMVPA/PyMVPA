@@ -3,16 +3,17 @@
 
 
 PyMVPA is a Python_ module intended to ease pattern classification analyses of
-large datasets. It provides high-level abstraction of typical processing steps
-and a number of implementations of some popular algorithms.  While it is not
-limited to the neuroimaging domain, it is eminently suited for such datasets.
-PyMVPA is truely free software (in every respect) and additionally requires
-nothing but free-software to run.
+large datasets. In the neuroimaging contexts such analysis techniques are also
+known as :term:`decoding` or :term:`MVPA` analysis. PyMVPA provides high-level
+abstraction of typical processing steps and a number of implementations of some
+popular algorithms.  While it is not limited to the neuroimaging domain, it is
+eminently suited for such datasets.  PyMVPA is truely free software (in every
+respect) and additionally requires nothing but free-software to run.
 
 .. _Python: http://www.python.org
 
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
-(MVPA) in **Py**\ thon.
+(:term:`MVPA`) in **Py**\ thon.
 
 PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
 website, the source code repository and download services are hosted on 
