@@ -53,6 +53,13 @@ terms found in the literature to the terminology used in this manual.
     In PyMVPA a dataset is the combination of samples, their ...
 
 
+  Decoding
+    This term is usually used to refer to the application of machine learning or
+    pattern recognition techniques to brainimaging datasets, and therefore is
+    another term for :term:`MVPA`. Sometimes also 'brain-reading' is used as
+    another alternative.
+
+
   Epoch
     Sometimes used to refer to a group of successively aqcuired samples, and,
     thus, related to a :term:`chunk`.
@@ -72,6 +79,15 @@ terms found in the literature to the terminology used in this manual.
     problem, with some metric variable. The label therefore defines the model
     that a classifier has to learn. The labels also provide the "true"
     model value when computing classifier errors.
+
+
+  MVPA
+    This term originally stems from the authors of the Matlab MVPA toolbox, and
+    in that context stands for *multi-voxel pattern analysis* (see :ref:`Norman
+    et al., 2006 <NPD+06>`). PyMVPA obviously adopted this acronym. However, as
+    PyMVPA is explicitely designed to operate on non-fMRI data as well, the
+    'voxel' term is not appropriate and therefore MVPA in this context stands
+    for the more general term *multivariate pattern analysis*.
 
 
   Processing object
