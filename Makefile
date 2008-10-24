@@ -145,6 +145,8 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp doc/pics/favicon.png $(WWW_DIR)/_images/
 # for those who do not care about <link> and just trying to download it
 	cp doc/pics/favicon.png $(WWW_DIR)/favicon.ico
+# provide robots.txt to minimize unnecessary traffic
+	cp doc/_static/robots.txt $(WWW_DIR)/
 	touch $@
 
 upload-website: website
