@@ -122,7 +122,8 @@ def main():
             result = super(TextTestRunnerPyMVPA, self).run(test)
             if not result.wasSuccessful():
                 print "MVPA_SEED=%s" % _random_seed
-            sys.exit(1)
+                sys.exit(1)
+            return result
 
     # finally run it
     TextTestRunnerPyMVPA().run(ts)
