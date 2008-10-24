@@ -12,6 +12,7 @@ from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
+from mvpa import cfg
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -145,10 +146,12 @@ class StatsTests(unittest.TestCase):
                 matched = matchDistribution(data=data, test=test, loc=loc, p=0.05)
                 # at least norm should be in there
                 names = [m[1] for m in matched]
-                self.failUnless('norm' in names)
+                if cfg.getboolean('tests', 'labile', default='yes'):
+                    self.failUnless('norm' in names)
                 inorm = names.index('norm')
                 # and it should be at least in the first 5 best matching
-                self.failUnless(inorm <= 7)
+                if cfg.getboolean('tests', 'labile', default='yes'):
+                    self.failUnless(inorm <= 7)
 
 
 def suite():

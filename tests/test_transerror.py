@@ -216,9 +216,10 @@ class ErrorsTests(unittest.TestCase):
             auc = stats['AUC']
             if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not N.nan):
                 mauc = N.min(stats['AUC'])
-                self.failUnless(mauc > 0.55,
-                     msg='All AUCs must be above chance. Got minimal '
-                         'AUC=%.2g among %s' % (mauc, stats['AUC']))
+                if cfg.getboolean('tests', 'labile', default='yes'):
+                    self.failUnless(mauc > 0.55,
+                         msg='All AUCs must be above chance. Got minimal '
+                             'AUC=%.2g among %s' % (mauc, stats['AUC']))
         clf.states._resetEnabledTemporarily()
 
 
