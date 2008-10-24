@@ -9,6 +9,7 @@
 """Main unit test interface for PyMVPA"""
 
 import unittest
+import sys
 
 from mvpa import _random_seed
 from mvpa.base import externals, warning
@@ -121,7 +122,7 @@ def main():
             result = super(TextTestRunnerPyMVPA, self).run(test)
             if not result.wasSuccessful():
                 print "MVPA_SEED=%s" % _random_seed
-            return result
+            sys.exit(1)
 
     # finally run it
     TextTestRunnerPyMVPA().run(ts)
