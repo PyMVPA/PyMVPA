@@ -40,7 +40,7 @@ class Nonparametric(object):
         return N.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
 
 
-def _pvalue(x, cdf_func, tail):
+def _pvalue(x, cdf_func, tail, sign=True):
     """Helper function to return p-value(x) given cdf and tail
     """
     is_scalar = N.isscalar(x)
@@ -48,6 +48,17 @@ def _pvalue(x, cdf_func, tail):
         x = [x]
 
     cdf = cdf_func(x)
+
+    if __debug__ and 'CHECK_STABILITY' in debug.active:
+        cdf_min, cdf_max = N.min(cdf), N.max(cdf)
+        if cdf_min < 0 or cdf_max > 1.0:
+            warning('Stability check of cdf %s failed. Min=%s, max=%s' % \
+                  (cdf_func, cdf_min, cdf_max))
+
+    # no escape but to assure that CDF is in the right range. Some
+    # distributions from scipy tend to jump away from [0,1]
+    cdf = N.clip(cdf, m_min=0, m_max=1.0)
+
     if tail == 'left':
         pass
     elif tail == 'right':
@@ -55,6 +66,8 @@ def _pvalue(x, cdf_func, tail):
     elif tail in ('any', 'both'):
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
+        if sign:
+            cdf[~right_tail] *= -1
         if tail == 'both':
             # we need to half the signficance
             cdf *= 2
@@ -74,7 +87,7 @@ class NullDist(Stateful):
     # performance hit should be negligible in most of the scenarios
     _ATTRIBUTE_COLLECTIONS = ['states']
 
-    def __init__(self, tail='both', **kwargs):
+    def __init__(self, tail='both', sign=True, **kwargs):
         """Cheap initialization.
 
         :Parameter:
@@ -83,6 +96,9 @@ class NullDist(Stateful):
             it chooses the tail it belongs to based on the comparison to
             p=0.5. In the case of 'any' significance is taken like in a
             one-tailed test.
+          sign: bool
+            For double tailed tests (i.e [any, both]) multiply the
+            statistics by -1.
         """
         Stateful.__init__(self, **kwargs)
 
@@ -355,6 +371,26 @@ class AdaptiveRDist(AdaptiveNullDist):
 
     def _adapt(self, nfeatures, measure, wdata, vdata=None):
         return (nfeatures-1, 0, 1), {}
+
+    # XXX: RDist has stability issue, just run
+    #  python -c "import scipy.stats; print scipy.stats.rdist(541,0,1).cdf(0.72)"
+    # to get some improbable value, so we need to take care about that manually
+    # here
+    def cdf(self, x):
+        cdf_ = self._dist.cdf(x)
+        bad_values = N.where(N.abs(cdf_)>1)
+        # XXX there might be better implementation (faster/elegant) using N.clip,
+        #     the only problem is that instability results might flip the sign
+        #     arbitrarily
+        if len(bad_values[0]):
+            # in this distribution we have mean at 0, so we can take that easily
+            # into account
+            cdf_bad = cdf_[bad_values]
+            x_bad = x[bad_values]
+            cdf_bad[x_bad<0] = 0.0
+            cdf_bad[x_bad>=0] = 1.0
+            cdf_[bad_values] = cdf_bad
+        return cdf_
 
 
 class AdaptiveNormal(AdaptiveNullDist):

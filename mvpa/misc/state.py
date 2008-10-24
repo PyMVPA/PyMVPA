@@ -1183,7 +1183,7 @@ class AttributesCollector(type):
             setattr(cls, "_statesdoc", statesdoc)
 
         if paramsdoc != "":
-            if __debug__:
+            if __debug__ and 'COLR' in debug.active:
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
             setattr(cls, "_paramsdoc", paramsdoc)
 
