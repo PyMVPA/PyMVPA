@@ -33,8 +33,7 @@ class Mapper(object):
                reverse
     """
     def __init__(self, metric=None):
-        """Initialize a Mapper.
-
+        """
         :Parameters:
           metric : Metric
             Optional metric
@@ -122,7 +121,7 @@ class Mapper(object):
 
         Override if Out space is not simly a 1D vector
         """
-        return(outId>=0 and outId<self.getOutSize())
+        return(outId >= 0 and outId < self.getOutSize())
 
 
     def isValidInId(self, inId):
@@ -130,7 +129,7 @@ class Mapper(object):
 
         Override if In space is not simly a 1D vector
         """
-        return(inId>=0 and inId<self.getInSize())
+        return(inId >= 0 and inId < self.getInSize())
 
 
     def setMetric(self, metric):
