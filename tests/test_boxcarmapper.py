@@ -82,6 +82,12 @@ class BoxcarMapperTests(unittest.TestCase):
         # mapped samples
         self.failUnless((mr[3].ravel() == N.arange(72, 96)).all())
 
+        # test reverse of a single sample
+        singlesample = N.arange(48).reshape(2, 3, 4, 2)
+        self.failUnless((singlesample == m.reverse(singlesample)).all())
+        # should not work for shape mismatch
+        self.failUnlessRaises(ValueError, m.reverse, singlesample[0])
+
 
     def testIds(self):
         data = N.arange(20).reshape( (10,2) )
@@ -95,6 +101,8 @@ class BoxcarMapperTests(unittest.TestCase):
         self.failUnlessEqual(bcm.isValidOutId( [3] ), False)
         self.failUnlessEqual(bcm.isValidOutId( [0,1] ), True)
         self.failUnlessEqual(bcm.isValidOutId( [0,1,0] ), False)
+
+
 
 def suite():
     return unittest.makeSuite(BoxcarMapperTests)
