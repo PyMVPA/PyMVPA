@@ -127,13 +127,15 @@ class SVMTests(unittest.TestCase):
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
                                           enable_states='confusion')
         e = cve(ds__)
-        # without disballance we should already have some hits
-        self.failUnless(cve.confusion.stats["P'"][1] > 0)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            # without disballance we should already have some hits
+            self.failUnless(cve.confusion.stats["P'"][1] > 0)
 
         e = cve(ds_)
-        # with disballance we should have almost no hits
-        self.failUnless(cve.confusion.stats["P'"][1] < 5)
-        #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            # with disballance we should have almost no hits
+            self.failUnless(cve.confusion.stats["P'"][1] < 5)
+            #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
 
         # Set '1 C per label'
         oldC = clf.C
@@ -147,9 +149,10 @@ class SVMTests(unittest.TestCase):
             clf.C = oldC
             raise
         #print "B:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
-        # Finally test if we get any 'hit' for minor category. In the
-        # classifier, which has way to 'ballance' should be non-0
-        self.failUnless(cve.confusion.stats["P'"][1] > 0)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            # Finally test if we get any 'hit' for minor category. In the
+            # classifier, which has way to 'ballance' should be non-0
+            self.failUnless(cve.confusion.stats["P'"][1] > 0)
 
 
     def testSillyness(self):

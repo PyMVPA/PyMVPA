@@ -180,10 +180,16 @@ dataset vs data
 
 Tests
 =====
+
 * Every more or less "interesting" bugfix should be accompanied by a
   unittest which might help to prevent it in the future refactoring
 * Every new feature should have a unittest
+* Unit tests that might be non-deterministic (e.g. depending on classifier
+  performance, which is turn is randomly initialized) should be made conditional
+  like this:
 
+    >>> if cfg.getboolean('tests', 'labile', default='yes'):
+    ...     pass
 
 
 Extending PyMVPA

@@ -28,7 +28,10 @@ Unreleased changes
   * New minimal example for a 'getting started' section in the manual.
   * SVM backend is now configurable via :envvar:`MVPA_SVM_BACKEND` (libsvm or
     shogun).
-  * Update insallation instructions for RPM-based distributions to make use
+  * Non-deterministic tests in the unittest battery are no configurable via
+    :envvar:`MVPA_TESTS_LABILE`.
+  * Former :envvar:`MVPA_QUICKTEST` was renamed to :envvar:`MVPA_TESTS_QUICK`.
+  * Update installation instructions for RPM-based distributions to make use
     of the OpenSUSE Build Service.
   * Added an initial list of MVPA-related references to the manual, tagged with
     keywords and comments as well is DOI or similar URL reference to the

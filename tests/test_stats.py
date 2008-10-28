@@ -12,6 +12,7 @@ from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
+from mvpa import cfg
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -167,12 +168,13 @@ class StatsTests(unittest.TestCase):
                 # at least norm should be in there
                 names = [m[2] for m in matched]
                 if test == 'p-roc':
-                    # we can guarantee that only for norm_fixed
-                    self.failUnless('norm' in names)
-                    self.failUnless('norm_fixed' in names)
-                    inorm = names.index('norm_fixed')
-                    # and it should be at least in the first 30 best matching ;-)
-                    self.failUnless(inorm <= 30)
+                    if cfg.getboolean('tests', 'labile', default='yes'):
+                        # we can guarantee that only for norm_fixed
+                        self.failUnless('norm' in names)
+                        self.failUnless('norm_fixed' in names)
+                        inorm = names.index('norm_fixed')
+                        # and it should be at least in the first 30 best matching ;-)
+                        self.failUnless(inorm <= 30)
 
 
 def suite():
