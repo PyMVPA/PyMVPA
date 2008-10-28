@@ -22,8 +22,10 @@ if __debug__:
 class BoxcarMapper(Mapper):
     """Mapper to combine multiple samples into a single sample.
 
-    This mapper is somewhat unconventional since it doesn't preserve
-    number of samples (ie the size of 0-th dimension...
+    .. note::
+
+      This mapper is somewhat unconventional since it doesn't preserve number
+      of samples (ie the size of 0-th dimension).
     """
 
     _COLLISION_RESOLUTIONS = ['mean']

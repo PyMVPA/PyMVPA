@@ -54,6 +54,7 @@ class Mapper(object):
             s = ''
         return "%s(%s)" % (self.__class__.__name__, s)
 
+
     def forward(self, data):
         """Map data from the original dataspace into featurespace.
         """
