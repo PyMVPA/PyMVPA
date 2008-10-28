@@ -355,10 +355,32 @@ class ProjectionMapper(Mapper):
 
 
 class CombinedMapper(Mapper):
-    """Can only deal with mappers that map into nsamples x nfeatures dataspace.
+    """Meta mapper that combines several embedded mappers.
+
+    This mapper can be used the map from several input dataspaces into a common
+    output dataspace. When :meth:`~mvpa.mappers.base.CombinedMapper.forward`
+    is called with a sequence of data, each element in that sequence is passed
+    to the corresponding mapper, which in turned forward-maps the data. The
+    output of all mappers is finally stacked (horizontally or column or
+    feature-wise) into a single large 2D matrix (nsamples x nfeatures).
+
+    .. note::
+      This mapper can only embbed mappers that transform data into a 2D
+      (nsamples x nfeatures) representation.
+
+    CombinedMapper fully supports forward and backward mapping, training,
+    runtime selection of a feature subset (in output dataspace) and retrieval
+    of neighborhood information.
     """
     def __init__(self, mappers, **kwargs):
         """
+        :Parameters:
+          mappers: list of Mapper instances
+            The order of the mappers in the list is important, as it will define
+            the order in which data snippets have to be passed to
+            :meth:`~mvpa.mappers.base.CombinedMapper.forward`.
+          **kwargs
+            All additional arguments are passed to the base-class constructor.
         """
         Mapper.__init__(self, **kwargs)
 
@@ -366,7 +388,19 @@ class CombinedMapper(Mapper):
 
 
     def forward(self, data):
-        """Map data from the original dataspace into featurespace.
+        """Map data from the original dataspaces into to common featurespace.
+
+        :Parameter:
+          data: sequence
+            Each element in the `data` sequence is passed to the corresponding
+            embedded mapper and is mapped individually by it. The number of
+            elements in `data` has to match the number of embedded mappers. Each
+            element is `data` has to provide the same number of samples
+            (first dimension).
+
+        :Returns:
+          array: nsamples x nfeatures
+            Horizontally stacked array of all embedded mapper outputs.
         """
         if not len(data) == len(self._mappers):
             raise ValueError, \
@@ -385,7 +419,15 @@ class CombinedMapper(Mapper):
 
 
     def reverse(self, data):
-        """Reverse map data from featurespace into the original dataspace.
+        """Reverse map data from featurespace into the original dataspaces.
+
+        :Parameter:
+          data: array
+            Single data array to be reverse mapped into a sequence of data
+            snippets in their individual original dataspaces.
+
+        :Returns:
+          list
         """
         # assure array and transpose
         # i.e. transpose of 1D does nothing, but of 2D puts features
@@ -411,6 +453,15 @@ class CombinedMapper(Mapper):
 
     def train(self, dataset):
         """Trains all embedded mappers.
+
+        The provided training dataset is splitted appropriately and the
+        corresponding pieces are passed to the
+        :meth:`~mvpa.mappers.base.Mapper.train` method of each embedded mapper.
+
+        :Parameter:
+          dataset: :class:`~mvpa.datasets.base.Dataset` or subclass
+            A dataset with the number of features matching the `outSize` of the
+            `CombinedMapper`.
         """
         if dataset.nfeatures != self.getOutSize():
             raise ValueError, "Training dataset does not match the mapper " \
@@ -425,15 +476,20 @@ class CombinedMapper(Mapper):
 
 
     def getInShape(self):
-        """Returns the dimensionality specification of the original dataspace.
+        """Returns the dimensionality specification of the original dataspaces.
+
+        :Returns:
+          tuple
         """
+
         return tuple([m.getInShape() for m in self._mappers])
 
 
     def getOutShape(self):
-        """
-        Returns the shape (or other dimensionality specification)
-        of the destination dataspace.
+        """Shape of the destination dataspace.
+
+        :Returns:
+          tuple
         """
         return (self.getOutSize(),)
 
@@ -449,7 +505,15 @@ class CombinedMapper(Mapper):
 
 
     def selectOut(self, outIds):
-        """Remove some elements and leave only ids in 'out'/feature space"""
+        """Remove some elements and leave only ids in 'out'/feature space.
+
+        .. note::
+          The subset selection is done inplace
+
+        :Parameter:
+          outIds: sequence
+            All output feature ids to be selected/kept.
+        """
         # determine which features belong to what mapper
         # and call its selectOut() accordingly
         ids = N.asanyarray(outIds)
@@ -465,7 +529,15 @@ class CombinedMapper(Mapper):
 
 
     def getNeighbor(self, outId, *args, **kwargs):
-        """Return the list of Ids for the neighbors.
+        """Get the ids of the neighbors of a single feature in output dataspace.
+
+        :Parameters:
+          outId: int
+            Single id of a feature in output space, whos neighbors should be
+            determined.
+          *args, **kwargs
+            Additional arguments are passed to the metric of the embedded
+            mapper, that is responsible for the corresponding feature.
 
         Returns a list of outIds
         """
