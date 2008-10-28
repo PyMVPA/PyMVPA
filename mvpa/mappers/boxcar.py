@@ -122,28 +122,30 @@ class BoxcarMapper(Mapper):
         """
         if data.shape != self._outshape:
             raise ValueError, "BoxcarMapper operates on full dataset in " \
-                  "'reverse()' which must have shape %s" % self._outshape
+                  "'reverse()' which must have shape %s" % `self._outshape`
 
         assert(data.shape[0] == len(self.__selectors)) # am I right? :)
 
         output = N.zeros(self._inshape, dtype=data.dtype)
-        output_counts = N.zeros((self._inshape[0],),dtype=int)
+        output_counts = N.zeros((self._inshape[0],), dtype=int)
 
         for i, selector in enumerate(self.__selectors):
-            output[selector,...] += data[i, ...]
+            output[selector, ...] += data[i, ...]
             output_counts[selector] += 1
 
         # scale output
         if self.__collision_resolution == 'mean':
-            g1 = output_counts>1
-            # XXX couldn't broadcast if we have multiple columns...
-            # need to operate on transposed output, so that last running
-            # dimensions are the same
-            output_ = output.T
-            output_[:,g1] /= output_counts[g1]
-            output = output_.T
+            # which samples how multiple sources?
+            g1 = output_counts > 1
+            # average them
+            # doing complicated transposing to be able to process array with
+            # nd > 2
+            output_ = output[g1].T
+            output_ /= output_counts[g1]
+            output[g1] = output_.T
 
         return output
+
 
     def getInShape(self):
         """Returns a shape of original sample.
