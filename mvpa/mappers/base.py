@@ -366,7 +366,10 @@ class CombinedMapper(Mapper):
 
     .. note::
       This mapper can only embbed mappers that transform data into a 2D
-      (nsamples x nfeatures) representation.
+      (nsamples x nfeatures) representation. For mappers not supporting this
+      transformation, consider wrapping them in a
+      :class:`~mvpa.mappers.base.ChainMapper` with an appropriate
+      post-processing mapper.
 
     CombinedMapper fully supports forward and backward mapping, training,
     runtime selection of a feature subset (in output dataspace) and retrieval
@@ -383,6 +386,10 @@ class CombinedMapper(Mapper):
             All additional arguments are passed to the base-class constructor.
         """
         Mapper.__init__(self, **kwargs)
+
+        if not len(mappers):
+            raise ValueError, \
+                  'CombinedMapper needs at least one embedded mapper.'
 
         self._mappers = mappers
 
@@ -549,3 +556,135 @@ class CombinedMapper(Mapper):
             fsum = fsum_new
 
         raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
+
+
+
+class ChainMapper(Mapper):
+    """Meta mapper that embedded a chain of other mappers.
+
+    Each mapper in the chain is called successively to perform forward or
+    reverse mapping.
+
+    .. note::
+      Accessing neighbor information (i.e. distance metrics) is currently not
+      supported.
+    """
+    def __init__(self, mappers, **kwargs):
+        """
+        :Parameters:
+          mappers: list of Mapper instances
+          **kwargs
+            All additional arguments are passed to the base-class constructor.
+        """
+        Mapper.__init__(self, **kwargs)
+
+        if not len(mappers):
+            raise ValueError, 'ChainMapper needs at least one embedded mapper.'
+
+        self._mappers = mappers
+
+
+    def forward(self, data):
+        """Calls all mappers in the chain successively.
+
+        :Parameter:
+          data
+            data to be chain-mapped.
+        """
+        mp = data
+        for m in self._mappers:
+            mp = m.forward(mp)
+
+        return mp
+
+
+    def reverse(self, data):
+        """Calls all mappers in the chain successively, in reversed order.
+
+        :Parameter:
+          data: array
+            data array to be reverse mapped into the orginal dataspace.
+        """
+        mp = data
+        for m in reversed(self._mappers):
+            mp = m.reverse(mp)
+
+        return mp
+
+
+    def train(self, dataset):
+        """Trains the *last* mapper in the chain.
+
+        :Parameter:
+          dataset: :class:`~mvpa.datasets.base.Dataset` or subclass
+            A dataset with the number of features matching the `outSize` of the
+            last mapper in the chain (which is identical to the one of the
+            `ChainMapper` itself).
+        """
+        if dataset.nfeatures != self.getOutSize():
+            raise ValueError, "Training dataset does not match the mapper " \
+                              "properties."
+
+        self._mappers[-1].train(dataset)
+
+
+    def getInShape(self):
+        """Returns the dimensionality specification of the original dataspaces.
+
+        This is identical to the input dataspace of the first mapper in the
+        chain.
+        """
+        return self._mappers[0].getInShape()
+
+
+    def getOutShape(self):
+        """Shape of the destination dataspace (e.g. of the last mapper)
+
+        :Returns:
+          tuple
+        """
+        return self._mappers[-1].getOutShape()
+
+
+    def getInSize(self):
+        """Returns the size of the entity in input space"""
+        return self._mappers[0].getInSize()
+
+
+    def getOutSize(self):
+        """Returns the size of the entity in output space"""
+        return self._mappers[-1].getOutSize()
+
+
+    def selectOut(self, outIds):
+        """Remove some elements from the *last* mapper in the chain.
+
+        :Parameter:
+          outIds: sequence
+            All output feature ids to be selected/kept.
+        """
+        self._mappers[-1].selectOut(outIds)
+
+
+#    XXX: This is the tricky one!!
+#    def getNeighbor(self, outId, *args, **kwargs):
+#        """Get the ids of the neighbors of a single feature in output dataspace.
+#
+#        :Parameters:
+#          outId: int
+#            Single id of a feature in output space, whos neighbors should be
+#            determined.
+#          *args, **kwargs
+#            Additional arguments are passed to the metric of the embedded
+#            mapper, that is responsible for the corresponding feature.
+#
+#        Returns a list of outIds
+#        """
+#        fsum = 0
+#        for m in self._mappers:
+#            fsum_new = fsum + m.getOutSize()
+#            if outId >= fsum and outId < fsum_new:
+#                return m.getNeighbor(outId - fsum, *args, **kwargs)
+#            fsum = fsum_new
+#
+#        raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
