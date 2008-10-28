@@ -11,10 +11,14 @@
 import unittest
 import numpy as N
 import os.path
+from mvpa.misc.copy import deepcopy
 from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.meta import MetaDataset
 from mvpa.datasets.eep import EEPDataset
+from mvpa.mappers.base import CombinedMapper
+from mvpa.mappers.array import DenseArrayMapper
+from mvpa.mappers.mask import MaskMapper
 
 class MetaDatasetTests(unittest.TestCase):
 
@@ -78,6 +82,85 @@ class MetaDatasetTests(unittest.TestCase):
         self.failUnless(mr[0].shape == eeds.mapper.getInShape())
         self.failUnless(mr[1].shape == (plainds.nfeatures,))
         self.failUnless(mr[2].shape == nids.mapper.getInShape())
+
+
+    def testCombinedMapper(self):
+        # simple case: two array of different shape combined
+        m = CombinedMapper([DenseArrayMapper(mask=N.ones((2,3,4))),
+                            MaskMapper(mask=N.array((1,1)))])
+
+        self.failUnless(m.getInSize() == 26)
+        self.failUnless(m.getOutSize() == 26)
+        self.failUnless(m.getInShape() == ((2,3,4), (2,)))
+        self.failUnless(m.getOutShape() == (26,))
+
+        d1 = N.ones((5,2,3,4))
+        d2_broken = N.ones((6,2)) + 1
+        d2 = N.ones((5,2)) + 1
+
+        # should not work for sample mismatch
+        self.failUnlessRaises(ValueError, m.forward, (d1, d2_broken))
+
+        # check forward mapping (size and identity)
+        mf = m.forward((d1, d2))
+        self.failUnless(mf.shape == (5, 26))
+        self.failUnless((mf[:,:24] == 1).all())
+        self.failUnless((mf[:,-2:] == 2).all())
+
+        # check reverse mapping
+        self.failUnlessRaises(ValueError, m.reverse, N.arange(12))
+        mr = m.reverse(N.arange(26) + 1)
+        self.failUnless(len(mr) == 2)
+        self.failUnless((mr[0] == N.arange(24).reshape((2,3,4)) + 1).all())
+        self.failUnless((mr[1] == N.array((25,26))).all())
+
+        # check reverse mapping of multiple samples
+        mr = m.reverse(N.array([N.arange(26) + 1 for i in range(4)]))
+        self.failUnless(len(mr) == 2)
+        self.failUnless(
+            (mr[0] == N.array([N.arange(24).reshape((2,3,4)) + 1
+                                    for i in range(4)])).all())
+        self.failUnless(
+            (mr[1] == N.array([N.array((25,26)) for i in range(4)])).all())
+
+
+        # check dummy train
+        m.train(Dataset(samples=N.random.rand(10,26), labels=range(10)))
+        self.failUnlessRaises(ValueError, m.train,
+            Dataset(samples=N.random.rand(10,25), labels=range(10)))
+
+        # check neighbor information
+        # fail if invalid id
+        self.failUnlessRaises(ValueError, m.getNeighbor, 26)
+        # neighbors for last feature of first mapper, ie.
+        # close in out space but infinite/undefined distance in in-space
+        self.failUnless([n for n in m.getNeighbor(23, radius=2)]
+                        == [6, 7, 10, 11, 15, 18, 19, 21, 22, 23])
+
+        # check feature selection
+        m.selectOut((23,25))
+        self.failUnless(m.getInSize() == 26)
+        self.failUnless(m.getOutSize() == 2)
+        self.failUnless(m.getInShape() == ((2,3,4), (2,)))
+        self.failUnless(m.getOutShape() == (2,))
+
+        # check reverse mapping of truncated mapper
+        mr = m.reverse(N.array((99,88)))
+        target1 = N.zeros((2,3,4))
+        target1[1,2,3] = 99
+        target2 = N.array((0, 88))
+        self.failUnless(len(mr) == 2)
+        self.failUnless((mr[0] == target1).all())
+        self.failUnless((mr[1] == target2).all())
+
+        # check forward mapping
+        self.failUnless((m.forward((d1, d2))[0] == (1, 2)).all())
+
+        # check copying
+        mc = deepcopy(m)
+        mc.selectOut([1])
+        self.failUnless(m.getOutSize() == 2)
+        self.failUnless(mc.getOutSize() == 1)
 
 
 

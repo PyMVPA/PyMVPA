@@ -351,3 +351,129 @@ class ProjectionMapper(Mapper):
 
     proj  = property(fget=lambda self: self._proj, doc="Projection matrix")
     recon = property(fget=lambda self: self._recon, doc="Backprojection matrix")
+
+
+
+class CombinedMapper(Mapper):
+    """Can only deal with mappers that map into nsamples x nfeatures dataspace.
+    """
+    def __init__(self, mappers, **kwargs):
+        """
+        """
+        Mapper.__init__(self, **kwargs)
+
+        self._mappers = mappers
+
+
+    def forward(self, data):
+        """Map data from the original dataspace into featurespace.
+        """
+        if not len(data) == len(self._mappers):
+            raise ValueError, \
+                  "CombinedMapper needs a sequence with data for each " \
+                  "Mapper"
+
+        # return a big array for the result of the forward mapped data
+        # of each embedded mapper
+        try:
+            return N.hstack(
+                    [self._mappers[i].forward(d) for i, d in enumerate(data)])
+        except ValueError:
+            raise ValueError, \
+                  "Embedded mappers do not generate same number of samples. " \
+                  "Check input data."
+
+
+    def reverse(self, data):
+        """Reverse map data from featurespace into the original dataspace.
+        """
+        # assure array and transpose
+        # i.e. transpose of 1D does nothing, but of 2D puts features
+        # along first dimension
+        data = N.asanyarray(data).T
+
+        if not len(data) == self.getOutSize():
+            raise ValueError, \
+                  "Data shape does match mapper reverse mapping properties."
+
+        result = []
+        fsum = 0
+        for m in self._mappers:
+            # calculate upper border
+            fsum_new = fsum + m.getOutSize()
+
+            result.append(m.reverse(data[fsum:fsum_new].T))
+
+            fsum = fsum_new
+
+        return result
+
+
+    def train(self, dataset):
+        """Trains all embedded mappers.
+        """
+        if dataset.nfeatures != self.getOutSize():
+            raise ValueError, "Training dataset does not match the mapper " \
+                              "properties."
+
+        fsum = 0
+        for m in self._mappers:
+            # need to split the dataset
+            fsum_new = fsum + m.getOutSize()
+            m.train(dataset.selectFeatures(range(fsum, fsum_new)))
+            fsum = fsum_new
+
+
+    def getInShape(self):
+        """Returns the dimensionality specification of the original dataspace.
+        """
+        return tuple([m.getInShape() for m in self._mappers])
+
+
+    def getOutShape(self):
+        """
+        Returns the shape (or other dimensionality specification)
+        of the destination dataspace.
+        """
+        return (self.getOutSize(),)
+
+
+    def getInSize(self):
+        """Returns the size of the entity in input space"""
+        return N.sum(m.getInSize() for m in self._mappers)
+
+
+    def getOutSize(self):
+        """Returns the size of the entity in output space"""
+        return N.sum(m.getOutSize() for m in self._mappers)
+
+
+    def selectOut(self, outIds):
+        """Remove some elements and leave only ids in 'out'/feature space"""
+        # determine which features belong to what mapper
+        # and call its selectOut() accordingly
+        ids = N.asanyarray(outIds)
+        fsum = 0
+        for m in self._mappers:
+            # bool which meta feature ids belongs to this mapper
+            selector = N.logical_and(ids < fsum + m.getOutSize(), ids >= fsum)
+            # make feature ids relative to this dataset
+            selected = ids[selector] - fsum
+            fsum += m.getOutSize()
+            # finally apply to mapper
+            m.selectOut(selected)
+
+
+    def getNeighbor(self, outId, *args, **kwargs):
+        """Return the list of Ids for the neighbors.
+
+        Returns a list of outIds
+        """
+        fsum = 0
+        for m in self._mappers:
+            fsum_new = fsum + m.getOutSize()
+            if outId >= fsum and outId < fsum_new:
+                return m.getNeighbor(outId - fsum, *args, **kwargs)
+            fsum = fsum_new
+
+        raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
