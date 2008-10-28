@@ -33,11 +33,11 @@ NIfTI dataformat and is preprocessed to a degree that should allow people
 without prior fMRI experience to perform meaningful analyses. Moreover, it
 should not require further preprocessing with external tools.
 
-All preprocessing has been performed using tools from FSL_. Specifically, the 4D
-fMRI timeseries has skull-stripped and thresholded to zero-out non-brain voxels
-(using a brain outline estimate significantly larger than the brain, to prevent
-removal of edge voxels actually covering brain tissue). The corresponding
-commandline call to BET was::
+All preprocessing has been performed using tools from FSL_. Specifically, the
+4D fMRI timeseries has been skull-stripped and thresholded to zero-out
+non-brain voxels (using a brain outline estimate significantly larger than the
+brain, to prevent removal of edge voxels actually covering brain tissue). The
+corresponding commandline call to BET was::
 
   bet bold bold_brain -F -f 0.5 -g 0
 
