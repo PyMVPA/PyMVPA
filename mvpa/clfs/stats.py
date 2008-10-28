@@ -57,7 +57,7 @@ def _pvalue(x, cdf_func, tail, sign=True):
 
     # no escape but to assure that CDF is in the right range. Some
     # distributions from scipy tend to jump away from [0,1]
-    cdf = N.clip(cdf, m_min=0, m_max=1.0)
+    cdf = N.clip(cdf, 0, 1.0)
 
     if tail == 'left':
         pass

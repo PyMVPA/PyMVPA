@@ -153,8 +153,7 @@ class DatasetMeasure(Stateful):
                 elif tail == 'right':
                     acdf = 1.0 - N.abs(null_prob)
                 elif tail in ['any', 'both']:
-                    acdf = 1.0 - N.clip(N.abs(null_prob),
-                                        m_min=0, m_max=0.5)
+                    acdf = 1.0 - N.clip(N.abs(null_prob), 0, 0.5)
                 else:
                     raise RuntimeError, 'Unhandled tail %s' % tail
                 # We need to clip to avoid non-informative inf's ;-)
@@ -165,9 +164,7 @@ class DatasetMeasure(Stateful):
                 # to distinguishable value around p=1 and max z=8.2.
                 # Should be sufficient range of z-values ;-)
                 clip = 1e-16
-                null_t = norm.ppf(N.clip(acdf,
-                                         m_min=clip,
-                                         m_max=1.0 - clip))
+                null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
                 null_t[N.signbit(null_prob)] *= -1.0 # revert sign for negatives
                 self.null_t = null_t                 # store
 
