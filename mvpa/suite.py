@@ -55,6 +55,7 @@ from mvpa.featsel.helpers import *
 from mvpa.featsel.ifs import *
 from mvpa.featsel.rfe import *
 from mvpa.mappers import *
+from mvpa.mappers.base import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.boxcar import *
