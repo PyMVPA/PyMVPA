@@ -30,18 +30,19 @@ class BoxcarMapper(Mapper):
 
     def __init__(self, startpoints, boxlength, offset=0,
                  collision_resolution='mean'):
-        """Initialize the BoxcarMapper
-
-        Parameters:
-          startpoints:    A sequence of index value along the first axis of
-                          'data'.
-          boxlength:      The number of elements after 'startpoint' along the
-                          first axis of 'data' to be considered for averaging.
-          offset:         The offset between the starting point and the
-                          averaging window (boxcar).
-          collision_resolution : string
+        """
+        :Parameters:
+          startpoints: sequence
+            Index values along the first axis of 'data'.
+          boxlength: int
+            The number of elements after 'startpoint' along the first axis of
+            'data' to be considered for the boxcar.
+          offset: int
+            The offset between the provided starting point and the actual start
+            of the boxcar.
+          collision_resolution : 'mean'
             if a sample belonged to multiple output samples, then on reverse,
-            how to resolve the value (choices: 'mean')
+            how to resolve the value
         """
         Mapper.__init__(self)
 
@@ -120,10 +121,22 @@ class BoxcarMapper(Mapper):
 
         Samples which were not touched by forward will get value 0 assigned
         """
-        if data.shape != self._outshape:
-            raise ValueError, "BoxcarMapper operates on full dataset in " \
-                  "'reverse()' which must have shape %s" % `self._outshape`
+        if data.shape == self._outshape:
+            # reconstruct to full input space from the provided data
+            # done below
+            pass
+        elif data.shape == self._outshape[1:]:
+            # single sample was given, simple return it again.
+            # this is done because other mappers also work with 'single'
+            # samples
+            return data
+        else:
+            raise ValueError, "BoxcarMapper operates either on single samples" \
+                  " %s or on the full dataset in 'reverse()' which must have " \
+                  "shape %s" % (`self._outshape[1:]`, `self._outshape`)
 
+        # the rest of this method deals with reconstructing the full input
+        # space from the boxcar samples
         assert(data.shape[0] == len(self.__selectors)) # am I right? :)
 
         output = N.zeros(self._inshape, dtype=data.dtype)
