@@ -102,8 +102,6 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'gzip': "import gzip as __"
           }
 
-_VERIFIED = {}
-
 _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 """Exceptions which are silently caught while running tests for externals"""
 try:
@@ -127,7 +125,7 @@ def exists(dep, force=False, raiseException=False):
         Whether to force the test even if it has already been
         performed.
       raiseException : boolean
-        Whether to raise RintimeError if dependency is missing.
+        Whether to raise RuntimeError if dependency is missing.
 
     """
     # if we are provided with a list of deps - go through all of them
@@ -135,36 +133,48 @@ def exists(dep, force=False, raiseException=False):
         results = [ exists(dep_, force, raiseException) for dep_ in dep ]
         return bool(reduce(lambda x,y: x and y, results, True))
 
-    if _VERIFIED.has_key(dep) and not force:
-        # we have already tested for it, so return our previous result
-        result = _VERIFIED[dep]
-    elif not _KNOWN.has_key(dep):
+    # where to look in cfg
+    cfgid = 'have ' + dep
+
+    # prevent unnecessarry testing
+    if cfg.has_option('externals', cfgid) \
+       and not cfg.getboolean('externals', 'retest', default='no') \
+       and not force:
+        debug('EXT', "Skip restesting for '%s'." % dep)
+        return cfg.getboolean('externals', cfgid)
+
+    # default to 'not found'
+    result = False
+
+    if not _KNOWN.has_key(dep):
         warning("%s is not a known dependency key." % (dep))
-        result = False
     else:
         # try and load the specific dependency
-        # default to false
-        _VERIFIED[dep] = False
-
         if __debug__:
             debug('EXT', "Checking for the presence of %s" % dep)
 
         estr = ''
         try:
             exec _KNOWN[dep]
-            _VERIFIED[dep] = True
+            result = True
         except tuple(_caught_exceptions), e:
             estr = ". Caught exception was: " + str(e)
 
         if __debug__:
             debug('EXT', "Presence of %s is%s verified%s" %
-                  (dep, {True:'', False:' NOT'}[_VERIFIED[dep]], estr))
-
-        result = _VERIFIED[dep]
+                  (dep, {True:'', False:' NOT'}[result], estr))
 
     if not result and raiseException \
        and cfg.getboolean('externals', 'raise exception', True):
         raise RuntimeError, "Required external '%s' was not found" % dep
+
+    # store result in config manager
+    if not cfg.has_section('externals'):
+        cfg.add_section('externals')
+    if result:
+        cfg.set('externals', 'have ' + dep, 'yes')
+    else:
+        cfg.set('externals', 'have ' + dep, 'no')
 
     return result
 
@@ -187,4 +197,5 @@ def testAllDependencies(force=False):
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \
-                     % [ k for k in _VERIFIED.keys() if _VERIFIED[k]])
+                     % [ k[5:] for k in cfg.options('externals')
+                            if k.startswith('have')])
