@@ -16,9 +16,10 @@ from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.meta import MetaDataset
 from mvpa.datasets.eep import EEPDataset
-from mvpa.mappers.base import CombinedMapper
+from mvpa.mappers.base import CombinedMapper, ChainMapper
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.mappers.mask import MaskMapper
+from mvpa.mappers.boxcar import BoxcarMapper
 
 class MetaDatasetTests(unittest.TestCase):
 
@@ -161,6 +162,20 @@ class MetaDatasetTests(unittest.TestCase):
         mc.selectOut([1])
         self.failUnless(m.getOutSize() == 2)
         self.failUnless(mc.getOutSize() == 1)
+
+
+    def testChainMapper(self):
+        data = N.array([N.arange(24).reshape(3,4,2) + (i * 100)
+                            for i in range(10)])
+
+        startpoints = [ 2, 4, 3, 5 ]
+        m = ChainMapper([BoxcarMapper(startpoints, 2),
+                         MaskMapper(mask=N.ones((2, 3, 4, 2)))])
+        mp = m.forward(data)
+        # 4 startpoint, with each two samples of shape (3,4,2)
+        self.failUnless(mp.shape == (4, 48))
+
+        self.failUnless(m.reverse(N.arange(48)).shape == (2, 3, 4, 2))
 
 
 
