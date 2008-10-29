@@ -60,6 +60,7 @@ class _WaveletMapper(Mapper):
         self._mode = mode
         """Periodization mode"""
 
+
     def forward(self, data):
         data = N.asanyarray(data)
         self._inshape = data.shape
@@ -73,16 +74,13 @@ class _WaveletMapper(Mapper):
         data = N.asanyarray(data)
         return self._reverse(data)
 
+
     def _forward(self, *args):
         raise NotImplementedError
 
+
     def _reverse(self, *args):
         raise NotImplementedError
-
-
-    def getOutShape(self):
-        """Returns a tuple with the shape of output components."""
-        return self._outshape[1:]
 
 
     def getInSize(self):
@@ -193,6 +191,7 @@ class WaveletPacketMapper(_WaveletMapper):
             debug('MAP', "Done convertion into wp. Total size %s" % str(wp.shape))
         return wp
 
+
     def _reverse(self, data):
         raise NotImplementedError
 
@@ -244,6 +243,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP', "Done DWT. Total size %s" % str(wd.shape))
         self.lengths = coeff_lengths
         return wd
+
 
     def _reverse(self, wd):
         if __debug__:

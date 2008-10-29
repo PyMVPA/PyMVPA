@@ -63,14 +63,6 @@ class Mapper(object):
         raise NotImplementedError
 
 
-    def getOutShape(self):
-        """
-        Returns the shape (or other dimensionality specification)
-        of the destination dataspace.
-        """
-        raise NotImplementedError
-
-
     def getInSize(self):
         """Returns the size of the entity in input space"""
         raise NotImplementedError
@@ -343,11 +335,6 @@ class ProjectionMapper(Mapper):
             return ((N.asmatrix(data)) * self._recon).A
 
 
-    def getOutShape(self):
-        """Returns a one-tuple with the number of projection components."""
-        return (self._proj.shape[1], )
-
-
     def getInSize(self):
         """Returns the number of original features."""
         return self._proj.shape[0]
@@ -499,15 +486,6 @@ class CombinedMapper(Mapper):
             fsum = fsum_new
 
 
-    def getOutShape(self):
-        """Shape of the destination dataspace.
-
-        :Returns:
-          tuple
-        """
-        return (self.getOutSize(),)
-
-
     def getInSize(self):
         """Returns the size of the entity in input space"""
         return N.sum(m.getInSize() for m in self._mappers)
@@ -640,15 +618,6 @@ class ChainMapper(Mapper):
                               "properties."
 
         self._mappers[-1].train(dataset)
-
-
-    def getOutShape(self):
-        """Shape of the destination dataspace (e.g. of the last mapper)
-
-        :Returns:
-          tuple
-        """
-        return self._mappers[-1].getOutShape()
 
 
     def getInSize(self):

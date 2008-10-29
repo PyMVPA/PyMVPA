@@ -90,7 +90,6 @@ class MetaDatasetTests(unittest.TestCase):
 
         self.failUnless(m.getInSize() == 26)
         self.failUnless(m.getOutSize() == 26)
-        self.failUnless(m.getOutShape() == (26,))
 
         d1 = N.ones((5,2,3,4))
         d2_broken = N.ones((6,2)) + 1
@@ -139,7 +138,6 @@ class MetaDatasetTests(unittest.TestCase):
         m.selectOut((23,25))
         self.failUnless(m.getInSize() == 26)
         self.failUnless(m.getOutSize() == 2)
-        self.failUnless(m.getOutShape() == (2,))
 
         # check reverse mapping of truncated mapper
         mr = m.reverse(N.array((99,88)))
