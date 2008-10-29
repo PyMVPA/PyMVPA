@@ -162,12 +162,6 @@ class BoxcarMapper(Mapper):
         return output
 
 
-    def getOutShape(self):
-        """Returns a shape of combined sample.
-        """
-        return self._outshape[1:]
-
-
     def getInSize(self):
         """Returns the number of original samples which were combined.
         """
@@ -179,7 +173,7 @@ class BoxcarMapper(Mapper):
 
         """
         try:
-            return isInVolume(outId, self.getOutShape())
+            return isInVolume(outId, self._outshape[1:])
         except:
             return False
 

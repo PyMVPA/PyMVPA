@@ -86,7 +86,6 @@ class SVDMapperTests(unittest.TestCase):
 
         self.failUnlessEqual(pm.getInSize(), 40)
         self.failUnlessEqual(pm.getOutSize(), 10)
-        self.failUnlessEqual(pm.getOutShape(), (10,))
 
         # copy mapper
         pm2 = deepcopy(pm)
