@@ -104,14 +104,8 @@ class BoxcarMapper(Mapper):
 
         # build a list of list where each sublist contains the indexes of to be
         # averaged data elements
-
-        # XXX  check if use of slicing gives any benefits and if it works at all
-        #self.__selectors = [ slice( i + offset, i + offset + boxlength) \
         self.__selectors = [ N.arange(i + offset, i + offset + boxlength) \
                              for i in startpoints ]
-
-        # XXX average each box
-        #selected = [ fx( data[ N.array(box) ], axis=0 ) for box in selector ]
         selected = N.asarray([ data[ box ] for box in self.__selectors ])
         self._outshape = selected.shape
 
