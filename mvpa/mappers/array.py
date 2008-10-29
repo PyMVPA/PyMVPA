@@ -39,14 +39,16 @@ class DenseArrayMapper(MaskMapper):
     good cartesian cube on its own or smth like that?
     """
 
-    def __init__(self, mask, metric=None, distance_function=cartesianDistance,
-                 elementsize=None, **kwargs):
+    def __init__(self, mask=None, metric=None,
+                 distance_function=cartesianDistance,
+                 elementsize=None, size=None, **kwargs):
         """Initialize DenseArrayMapper
 
         :Parameters:
           mask : array
             an array in the original dataspace and its nonzero elements are
-            used to define the features included in the dataset
+            used to define the features included in the dataset. alternatively,
+            the `size` argument can be used to define the array dimensions.
           metric : Metric
             Corresponding metric for the space. No attempt is made to
             determine whether a certain metric is reasonable for this
@@ -61,11 +63,36 @@ class DenseArrayMapper(MaskMapper):
             Determines spacing within `DescreteMetric`. If it is given as a
             scalar, corresponding value is assigned to all dimensions, which
             are found within `mask`
+          size: tuple
+            The shape of the array to be mapped. If `size` is provided instead
+            of `mask`, a full mask (all True) of the desired shape is
+            constructed. If `size` is specified in addition to `mask`, the
+            provided mask is extended to have the same number of dimensions.
 
         :Note: parameters `elementsize` and `distance_function` are relevant
                only if `metric` is None
         """
+        if mask is None:
+            if size is None:
+                raise ValueError, \
+                      "Either `size` or `mask` have to be specified."
+            else:
+                # make full dataspace mask if nothing else is provided
+                mask = N.ones(size, dtype='bool')
+        else:
+            if not size is None:
+                # expand mask to span all dimensions but first one
+                # necessary e.g. if only one slice from timeseries of volumes is
+                # requested.
+                mask = N.array(mask, ndmin=len(size))
+                # check for compatibility
+                if not size == mask.shape:
+                    raise ValueError, \
+                        "The mask dataspace shape [%s] is not " \
+                        "compatible with the provided size." \
+                        % (`mask.shape`, `size`)
 
+        # configure the baseclass with the processed mask
         MaskMapper.__init__(self, mask, metric=metric, **kwargs)
 
         # We must have metric assigned

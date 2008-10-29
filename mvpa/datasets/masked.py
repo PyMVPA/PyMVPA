@@ -27,41 +27,33 @@ class MaskedDataset(MappedDataset):
     """
 
     def __init__(self, samples=None, mask=None, **kwargs):
-        """Initialize `MaskedDataset` instance
-
-        :Parameters:
-          - `mask`: an ndarray where the chosen features equal the non-zero
-            mask elements.
-
         """
+        :Parameters:
+          mask: ndarray
+            the chosen features equal the non-zero mask elements.
+        """
+        # might contain the default mapper
+        mapper = None
+
         # need if clause here as N.array(None) != None
         if not samples is None:
-            samples = N.asarray(samples)  # XXX should be asanyarray? but then smth segfaults on unittests
-            if mask is None:
-                # make full dataspace mask if nothing else is provided
-                mask = N.ones(samples.shape[1:], dtype='bool')
-        if not mask is None:
+            # XXX should be asanyarray? but then smth segfaults on unittests
+            samples = N.asarray(samples)
+            mapper = DenseArrayMapper(mask=mask,
+                                      size=samples.shape[1:])
+
+        if not mapper is None:
             if samples is None:
                 raise ValueError, \
                       "Constructor of MaskedDataset requires both a samples " \
                       "array and a mask if one of both is provided."
-            # expand mask to span all dimensions but first one
-            # necessary e.g. if only one slice from timeseries of volumes is
-            # requested.
-            mask = N.array(mask, ndmin=len(samples.shape[1:]))
-            # check for compatibility
-            if not samples.shape[1:] == mask.shape:
-                raise ValueError, "The mask dataspace shape [%s] is not " \
-                                  "compatible with the shape of the provided " \
-                                  "data samples [%s]." % (`mask.shape`,
-                                                          `samples.shape[1:]`)
             # init base class -- MappedDataset takes care of all the forward
             # mapping stuff
-            MappedDataset.__init__(self,
-                                   samples=samples,
-                                   mapper=DenseArrayMapper(mask),
-                                   **(kwargs))
-
+            MappedDataset.__init__(
+                self,
+                samples=samples,
+                mapper=mapper,
+                **(kwargs))
         else:
             MappedDataset.__init__(self, **(kwargs))
 
