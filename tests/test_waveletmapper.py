@@ -61,14 +61,11 @@ class WaveletMappersTests(unittest.TestCase):
                                 "dimensions and explicit mentioining of it. "
                                 "Got %s and %s" % (dd_wd, dd_wd_swap))
 
-                self.failUnless(wdm_swap.getInShape() ==
-                                (dd.shape[2], dd.shape[1]))
                 self.failUnless(wdm_swap.getOutShape() ==
                                 (dd_wd.shape[2], dd_wd.shape[1]))
 
             # some sanity checks
             self.failUnless(dd_wd.shape[0] == dd.shape[0])
-            self.failUnless(wdm.getInShape() == dd.shape[1:])
             self.failUnless(wdm.getOutShape() == dd_wd.shape[1:])
 
             if not isinstance(wdm, WaveletPacketMapper):

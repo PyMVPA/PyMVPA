@@ -91,12 +91,6 @@ class SampleGroupMapper(Mapper):
         raise NotImplementedError
 
 
-    def getInShape(self):
-        """Returns a shape of original sample.
-        """
-        return self.__datashape
-
-
     def getOutShape(self):
         """Returns a shape of combined sample.
         """

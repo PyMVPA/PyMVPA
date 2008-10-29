@@ -166,11 +166,6 @@ class MaskMapper(Mapper):
         return mapped
 
 
-    def getInShape(self):
-        """InShape is a shape of original mask"""
-        return self.__mask.shape
-
-
     def getInSize(self):
         """InShape is a shape of original mask"""
         return self.__masksize
