@@ -74,7 +74,12 @@ class Mapper(object):
 
 
     def selectOut(self, outIds):
-        """Remove some elements and leave only ids in 'out'/feature space"""
+        """Limit the OUT space to a certain set of features.
+
+        :Parameters:
+          outIds: sequence
+            Subset of ids of the current feature in OUT space to keep.
+        """
         raise NotImplementedError
 
 
@@ -92,7 +97,7 @@ class Mapper(object):
     # classes, in cases where the provided default behavior is not appropriate.
     #
     def isValidOutId(self, outId):
-        """Validate if OutId is valid
+        """Validate feature id in OUT space.
 
         Override if OUT space is not simly a 1D vector
         """
@@ -100,7 +105,7 @@ class Mapper(object):
 
 
     def isValidInId(self, inId):
-        """Validate if InId is valid
+        """Validate id in IN space.
 
         Override if IN space is not simly a 1D vector
         """
@@ -108,7 +113,7 @@ class Mapper(object):
 
 
     def train(self, dataset):
-        """Optional training of the mapper.
+        """Perform training of the mapper.
 
         This method is called to put the mapper in a state that allows it to
         perform to intended mapping.
