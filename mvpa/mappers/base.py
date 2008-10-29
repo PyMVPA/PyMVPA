@@ -567,8 +567,15 @@ class ChainMapper(Mapper):
     reverse mapping.
 
     .. note::
-      Accessing neighbor information (i.e. distance metrics) is currently not
-      supported.
+
+      In its current implementation the `ChainMapper` treats all but the last
+      mapper as simple pre-processing (in forward()) or post-processing (in
+      reverse()) steps. All other capabilities, e.g. training and neighbor
+      metrics are provided by or affect *only the last mapper in the chain*.
+
+      With respect to neighbor metrics this means that they are determined
+      based on the input space of the *last mapper* in the chain and *not* on
+      the input dataspace of the `ChainMapper` as a whole
     """
     def __init__(self, mappers, **kwargs):
         """
@@ -667,25 +674,23 @@ class ChainMapper(Mapper):
         self._mappers[-1].selectOut(outIds)
 
 
-#    XXX: This is the tricky one!!
-#    def getNeighbor(self, outId, *args, **kwargs):
-#        """Get the ids of the neighbors of a single feature in output dataspace.
-#
-#        :Parameters:
-#          outId: int
-#            Single id of a feature in output space, whos neighbors should be
-#            determined.
-#          *args, **kwargs
-#            Additional arguments are passed to the metric of the embedded
-#            mapper, that is responsible for the corresponding feature.
-#
-#        Returns a list of outIds
-#        """
-#        fsum = 0
-#        for m in self._mappers:
-#            fsum_new = fsum + m.getOutSize()
-#            if outId >= fsum and outId < fsum_new:
-#                return m.getNeighbor(outId - fsum, *args, **kwargs)
-#            fsum = fsum_new
-#
-#        raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
+    def getNeighbor(self, outId, *args, **kwargs):
+        """Get the ids of the neighbors of a single feature in output dataspace.
+
+        .. note::
+
+          The neighbors are determined based on the input space of the *last
+          mapper* in the chain and *not* on the input dataspace of the
+          `ChainMapper` as a whole!
+
+        :Parameters:
+          outId: int
+            Single id of a feature in output space, whos neighbors should be
+            determined.
+          *args, **kwargs
+            Additional arguments are passed to the metric of the embedded
+            mapper, that is responsible for the corresponding feature.
+
+        Returns a list of outIds
+        """
+        return self._mappers[-1].getNeighbor(outId, *args, **kwargs)

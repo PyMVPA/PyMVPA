@@ -170,13 +170,16 @@ class MetaDatasetTests(unittest.TestCase):
 
         startpoints = [ 2, 4, 3, 5 ]
         m = ChainMapper([BoxcarMapper(startpoints, 2),
-                         MaskMapper(mask=N.ones((2, 3, 4, 2)))])
+                         DenseArrayMapper(mask=N.ones((2, 3, 4, 2)))])
         mp = m.forward(data)
         # 4 startpoint, with each two samples of shape (3,4,2)
         self.failUnless(mp.shape == (4, 48))
 
         self.failUnless(m.reverse(N.arange(48)).shape == (2, 3, 4, 2))
 
+        # should behave a DenseArrayMapper alone
+        self.failUnless((N.array([n for n in m.getNeighbor(24, radius=1.1)])
+                         == N.array((0, 24, 25, 26, 32))).all())
 
 
 def suite():
