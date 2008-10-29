@@ -19,6 +19,8 @@ decision surface of each classifier.
 First compose some sample data -- no PyMVPA involved.
 """
 
+import numpy as N
+
 # set up the labeled data
 # two skewed 2-D distributions
 num_dat = 200
