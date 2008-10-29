@@ -10,7 +10,7 @@
 
 
 from mvpa.mappers.array import DenseArrayMapper
-from mvpa.datasets.metric import *
+from mvpa.mappers.metric import *
 import unittest
 import numpy as N
 

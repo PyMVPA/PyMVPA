@@ -43,7 +43,6 @@ from mvpa.clfs.warehouse import *
 from mvpa.datasets import *
 from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
-from mvpa.datasets.metric import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.channel import *
 from mvpa.datasets.eep import *
@@ -56,6 +55,7 @@ from mvpa.featsel.ifs import *
 from mvpa.featsel.rfe import *
 from mvpa.mappers import *
 from mvpa.mappers.base import *
+from mvpa.mappers.metric import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.boxcar import *

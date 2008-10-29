@@ -23,7 +23,7 @@ __name__ = oldname
 
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.masked import MaskedDataset
-from mvpa.datasets.metric import DescreteMetric, cartesianDistance
+from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.base import warning
 
 

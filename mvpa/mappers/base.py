@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.metric import Metric
+from mvpa.mappers.metric import Metric
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.base.dochelpers import enhancedDocString
