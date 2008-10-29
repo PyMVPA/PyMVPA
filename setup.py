@@ -74,7 +74,7 @@ ridgetrain_ext = Extension(
     library_dirs = library_dirs,
     )
 
-ext_modules = [smlrc_ext, ridgetrain_ext]
+ext_modules = [smlrc_ext] #, ridgetrain_ext]
 
 if have_libsvm:
     ext_modules.append(libsvmc_ext)
@@ -106,7 +106,7 @@ setup(name       = 'pymvpa',
                        'mvpa.clfs.sg',
                        'mvpa.clfs.libsvmc',
                        'mvpa.clfs.libsmlrc',
-                       'mvpa.clfs.libridgetrain',
+                       #'mvpa.clfs.libridgetrain',
                        'mvpa.algorithms',
                        'mvpa.measures',
                        'mvpa.featsel',
