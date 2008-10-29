@@ -14,7 +14,7 @@ import numpy as N
 from operator import isSequenceType
 
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.metric import DescreteMetric, cartesianDistance
+from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
