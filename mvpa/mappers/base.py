@@ -23,12 +23,13 @@ if __debug__:
 
 
 class Mapper(object):
-    """Interface to provide mapping between two spaces: in and out.
+    """Interface to provide mapping between two spaces: IN and OUT.
     Methods are prefixed correspondingly. forward/reverse operate
     on the entire dataset. get(In|Out)Id[s] operate per element::
 
               forward
-        in   ---------> out
+             --------->
+         IN              OUT
              <--------/
                reverse
     """
@@ -43,45 +44,27 @@ class Mapper(object):
         self.setMetric(metric)
         """Actually assign the metric"""
 
-
-    __doc__ = enhancedDocString('Mapper', locals())
-
-
-    def __repr__(self):
-        if self.__metric is not None:
-            s = "metric=%s" % repr(self.__metric)
-        else:
-            s = ''
-        return "%s(%s)" % (self.__class__.__name__, s)
-
+    #
+    # The following methods are abstract and merely define the intended
+    # interface of a mapper and have to be implemented in derived classes. See
+    # the docstrings of the respective methods for details about what they
+    # should do.
+    #
 
     def forward(self, data):
-        """Map data from the original dataspace into featurespace.
+        """Map data from the IN dataspace into OUT space.
         """
         raise NotImplementedError
-
-
-    def __call__(self, data):
-        """Calls the mappers forward() method.
-        """
-        return self.forward(data)
 
 
     def reverse(self, data):
-        """Reverse map data from featurespace into the original dataspace.
+        """Reverse map data from OUT space into the IN space.
         """
         raise NotImplementedError
 
 
-    def train(self, dataset):
-        """Sub-classes have to override this method if the mapper need
-        training.
-        """
-        pass
-
-
     def getInShape(self):
-        """Returns the dimensionality specification of the original dataspace.
+        """Returns the dimensionality specification of the IN space.
 
         XXX -- should be deprecated and  might be substituted
         with functions like  getEmptyFrom / getEmptyTo
@@ -112,15 +95,23 @@ class Mapper(object):
         raise NotImplementedError
 
 
-    def getMetric(self):
-        """To make pylint happy"""
-        return self.__metric
+    def getInId(self, outId):
+        """Translate a feature id into a coordinate/index in input space.
+
+        Such a translation might not be meaningful or even possible for a
+        particular mapping algorithm and therefore cannot be relied upon.
+        """
+        raise NotImplementedError
 
 
+    #
+    # The following methods are candidates for reimplementation in derived
+    # classes, in cases where the provided default behavior is not appropriate.
+    #
     def isValidOutId(self, outId):
         """Validate if OutId is valid
 
-        Override if Out space is not simly a 1D vector
+        Override if OUT space is not simly a 1D vector
         """
         return(outId >= 0 and outId < self.getOutSize())
 
@@ -128,28 +119,55 @@ class Mapper(object):
     def isValidInId(self, inId):
         """Validate if InId is valid
 
-        Override if In space is not simly a 1D vector
+        Override if IN space is not simly a 1D vector
         """
         return(inId >= 0 and inId < self.getInSize())
 
 
-    def setMetric(self, metric):
-        """To make pylint happy"""
-        if metric is not None and not isinstance(metric, Metric):
-            raise ValueError, "metric for Mapper must be an " \
-                              "instance of a Metric class . Got %s" \
-                                % `type(metric)`
-        self.__metric = metric
+    def train(self, dataset):
+        """Optional training of the mapper.
+
+        This method is called to put the mapper in a state that allows it to
+        perform to intended mapping.
+
+        :Parameter:
+          dataset: Dataset or subclass
+
+        .. note::
+          The default behavior of this method is to do nothing.
+        """
+        pass
 
 
+    def getNeighbor(self, outId, *args, **kwargs):
+        """Get feature neighbors in input space, given an id in output space.
+
+        This method has to be reimplemented whenever a derived class does not
+        provide an implementation for :meth:`~mvpa.mappers.base.Mapper.getInId`.
+        """
+        if self.metric is None:
+            raise RuntimeError, "No metric was assigned to %s, thus no " \
+                  "neighboring information is present" % self
+
+        if self.isValidOutId(outId):
+            inId = self.getInId(outId)
+            for inId in self.getNeighborIn(inId, *args, **kwargs):
+                yield self.getOutId(inId)
+
+
+    #
+    # The following methods provide common functionality for all mappers
+    # and there should be no immediate need to reimplement them
+    #
     def getNeighborIn(self, inId, *args, **kwargs):
         """Return the list of coordinates for the neighbors.
 
         :Parameters:
           inId
-            id (index) of input element
-          **kwargs : dict
-            would be passed to assigned metric
+            id (index) of an element in input dataspace.
+          *args, **kwargs
+            Any additional arguments are passed to the embedded metric of the
+            mapper.
 
         XXX See TODO below: what to return -- list of arrays or list
         of tuples?
@@ -165,28 +183,41 @@ class Mapper(object):
                     yield neighbor
 
 
-    def getNeighbor(self, outId, *args, **kwargs):
-        """Return the list of Ids for the neighbors.
-
-        Returns a list of outIds
-        """
-        if self.metric is None:
-            raise RuntimeError, "No metric was assigned to %s, thus no " \
-                  "neighboring information is present" % self
-
-        if self.isValidOutId(outId):
-            inId = self.getInId(outId)
-            for inId in self.getNeighborIn(inId, *args, **kwargs):
-                yield self.getOutId(inId)
-
-
     def getNeighbors(self, outId, *args, **kwargs):
         """Return the list of coordinates for the neighbors.
 
-        By default it simply constracts the list based on
-        the generator getNeighbor
+        By default it simply constructs the list based on
+        the generator returned by getNeighbor()
         """
         return [ x for x in self.getNeighbor(outId, *args, **kwargs) ]
+
+
+    def __repr__(self):
+        if self.__metric is not None:
+            s = "metric=%s" % repr(self.__metric)
+        else:
+            s = ''
+        return "%s(%s)" % (self.__class__.__name__, s)
+
+
+    def __call__(self, data):
+        """Calls the mappers forward() method.
+        """
+        return self.forward(data)
+
+
+    def getMetric(self):
+        """To make pylint happy"""
+        return self.__metric
+
+
+    def setMetric(self, metric):
+        """To make pylint happy"""
+        if metric is not None and not isinstance(metric, Metric):
+            raise ValueError, "metric for Mapper must be an " \
+                              "instance of a Metric class . Got %s" \
+                                % `type(metric)`
+        self.__metric = metric
 
 
     metric = property(fget=getMetric, fset=setMetric)
@@ -396,7 +427,7 @@ class CombinedMapper(Mapper):
 
 
     def forward(self, data):
-        """Map data from the original dataspaces into to common featurespace.
+        """Map data from the IN spaces into to common OUT space.
 
         :Parameter:
           data: sequence
@@ -427,12 +458,12 @@ class CombinedMapper(Mapper):
 
 
     def reverse(self, data):
-        """Reverse map data from featurespace into the original dataspaces.
+        """Reverse map data from OUT space into the IN spaces.
 
         :Parameter:
           data: array
             Single data array to be reverse mapped into a sequence of data
-            snippets in their individual original dataspaces.
+            snippets in their individual IN spaces.
 
         :Returns:
           list
@@ -484,7 +515,7 @@ class CombinedMapper(Mapper):
 
 
     def getInShape(self):
-        """Returns the dimensionality specification of the original dataspaces.
+        """Returns the dimensionality specification of the IN spaces.
 
         :Returns:
           tuple
@@ -637,7 +668,7 @@ class ChainMapper(Mapper):
 
 
     def getInShape(self):
-        """Returns the dimensionality specification of the original dataspaces.
+        """Returns the dimensionality specification of the IN spaces.
 
         This is identical to the input dataspace of the first mapper in the
         chain.
