@@ -80,9 +80,7 @@ class MetaDatasetTests(unittest.TestCase):
         mr = mds.mapReverse(N.arange(mds.nfeatures))
 
         self.failUnless(len(mr) == 3)
-        self.failUnless(mr[0].shape == eeds.mapper.getInShape())
         self.failUnless(mr[1].shape == (plainds.nfeatures,))
-        self.failUnless(mr[2].shape == nids.mapper.getInShape())
 
 
     def testCombinedMapper(self):
@@ -92,7 +90,6 @@ class MetaDatasetTests(unittest.TestCase):
 
         self.failUnless(m.getInSize() == 26)
         self.failUnless(m.getOutSize() == 26)
-        self.failUnless(m.getInShape() == ((2,3,4), (2,)))
         self.failUnless(m.getOutShape() == (26,))
 
         d1 = N.ones((5,2,3,4))
@@ -142,7 +139,6 @@ class MetaDatasetTests(unittest.TestCase):
         m.selectOut((23,25))
         self.failUnless(m.getInSize() == 26)
         self.failUnless(m.getOutSize() == 2)
-        self.failUnless(m.getInShape() == ((2,3,4), (2,)))
         self.failUnless(m.getOutShape() == (2,))
 
         # check reverse mapping of truncated mapper

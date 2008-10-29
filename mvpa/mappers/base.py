@@ -63,18 +63,9 @@ class Mapper(object):
         raise NotImplementedError
 
 
-    def getInShape(self):
-        """Returns the dimensionality specification of the IN space.
-
-        XXX -- should be deprecated and  might be substituted
-        with functions like  getEmptyFrom / getEmptyTo
-        """
-        raise NotImplementedError
-
-
     def getOutShape(self):
         """
-        Returns the shape (or other dimensionality speicification)
+        Returns the shape (or other dimensionality specification)
         of the destination dataspace.
         """
         raise NotImplementedError
@@ -222,7 +213,6 @@ class Mapper(object):
 
     metric = property(fget=getMetric, fset=setMetric)
     nfeatures = VProperty(fget=getOutSize)
-    dsshape = VProperty(fget=getInShape)
 
 
 
@@ -351,11 +341,6 @@ class ProjectionMapper(Mapper):
             return ((N.asmatrix(data) + self._mean_out) * self._recon).A
         else:
             return ((N.asmatrix(data)) * self._recon).A
-
-
-    def getInShape(self):
-        """Returns a one-tuple with the number of original features."""
-        return (self._proj.shape[0], )
 
 
     def getOutShape(self):
@@ -514,16 +499,6 @@ class CombinedMapper(Mapper):
             fsum = fsum_new
 
 
-    def getInShape(self):
-        """Returns the dimensionality specification of the IN spaces.
-
-        :Returns:
-          tuple
-        """
-
-        return tuple([m.getInShape() for m in self._mappers])
-
-
     def getOutShape(self):
         """Shape of the destination dataspace.
 
@@ -665,15 +640,6 @@ class ChainMapper(Mapper):
                               "properties."
 
         self._mappers[-1].train(dataset)
-
-
-    def getInShape(self):
-        """Returns the dimensionality specification of the IN spaces.
-
-        This is identical to the input dataspace of the first mapper in the
-        chain.
-        """
-        return self._mappers[0].getInShape()
 
 
     def getOutShape(self):

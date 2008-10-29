@@ -21,7 +21,6 @@ class DenseArrayMapperTests(unittest.TestCase):
         map_ = DenseArrayMapper(mask)
 
         # test shape reports
-        self.failUnless( map_.dsshape == mask.shape )
         self.failUnless( map_.nfeatures == 6 )
 
         # test 1sample mapping

@@ -80,11 +80,6 @@ class _WaveletMapper(Mapper):
         raise NotImplementedError
 
 
-    def getInShape(self):
-        """Returns a one-tuple with the number of original features."""
-        return self._inshape[1:]
-
-
     def getOutShape(self):
         """Returns a tuple with the shape of output components."""
         return self._outshape[1:]

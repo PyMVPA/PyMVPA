@@ -21,7 +21,6 @@ class NiftiDatasetTests(unittest.TestCase):
                             labels=[1,2])
         self.failUnless(data.nfeatures == 294912)
         self.failUnless(data.nsamples == 2)
-        self.failUnless(data.mapper.dsshape == (24,96,128))
 
         self.failUnless((data.mapper.metric.elementsize \
                          == data.niftihdr['pixdim'][3:0:-1]).all())
@@ -36,7 +35,6 @@ class NiftiDatasetTests(unittest.TestCase):
 
         self.failUnless(merged.nfeatures == 294912)
         self.failUnless(merged.nsamples == 4)
-        self.failUnless(merged.mapper.dsshape == (24,96,128))
 
         # check that the header survives
         #self.failUnless(merged.niftihdr == data.niftihdr)
@@ -59,8 +57,7 @@ class NiftiDatasetTests(unittest.TestCase):
 
         # test mapping of the dataset
         vol = data.map2Nifti(data)
-        self.failUnless(vol.data.shape ==
-                        (data.nsamples,) + data.mapper.dsshape)
+        self.failUnless(vol.data.shape == (2, 24, 96, 128))
 
 
     def testNiftiSelfMapper(self):
