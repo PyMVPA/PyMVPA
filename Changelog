@@ -50,6 +50,8 @@ Unreleased changes
   * Switch from distutils to numpy.distutils.
   * New :class:`~mvpa.mappers.base.CombinedMapper` to map between multiple,
     independent dataspace and a common feature space.
+  * Removed obselete MetricMapper class. :class:`~mvpa.mappers.base.Mapper`
+    itself provides the facilities for dealing with metrics.
 
 
 Releases

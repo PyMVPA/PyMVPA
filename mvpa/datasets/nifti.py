@@ -111,7 +111,7 @@ class NiftiDataset(MaskedDataset):
             # overwrite the default metric of it here to take the NIfTI element
             # properties into account
 
-            # NiftiDataset uses a MetricMapper with DescreteMetric with cartesian
+            # NiftiDataset uses a DescreteMetric with cartesian
             # distance and element size from the NIfTI header 
 
             # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)

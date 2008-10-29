@@ -91,32 +91,3 @@ class DenseArrayMapper(MaskMapper):
     def __str__(self):
         return "DenseArrayMapper: %d -> %d" \
             % (self.getInSize(), self.getOutSize())
-
-
-    # No need to overrride because all arguments just to assign a
-    # metric, which would be visible from Mapper class
-    #def __repr__(self):
-    #    s = super(DenseArrayMapper, self).__str__()
-    #    return s.sub("(", "?????", 1)
-
-
-#    def __deepcopy__(self, memo=None):
-#        # XXX memo does not seem to be used
-#        if memo is None:
-#            memo = {}
-#        from mvpa.misc.copy import deepcopy
-#        # XXX might be necessary to deepcopy 'self.metric' as well
-#        # to some degree reimplement the constructor to prevent calling the
-#        # expensive _initMask() again
-#        out = MaskMapper.__new__(MaskMapper)
-#        MetricMapper.__init__(out, self.metric)
-#        out.__mask = self.__mask.copy()
-#        out.__maskdim = self.__maskdim
-#        out.__masksize = self.__masksize
-#        out.__masknonzero = deepcopy(self.__masknonzero)
-#        out.__masknonzerosize = self.__masknonzerosize
-#        out.__forwardmap = self.__forwardmap.copy()
-#
-#        return out
-
-
