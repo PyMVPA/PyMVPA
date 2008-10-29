@@ -33,8 +33,8 @@ configure-inplace-use:
 		mvpa\\clfs\\libsmlrc
 	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsvmc\\_svmc.pyd \
 		mvpa\\clfs\\libsvmc
-	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libridgetrain\\ridgetrain.pyd \
-		mvpa\\clfs\\libridgetrain
+#	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libridgetrain\\ridgetrain.pyd \
+#		mvpa\\clfs\\libridgetrain
 
 #
 # Cleaning

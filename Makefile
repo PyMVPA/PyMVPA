@@ -43,7 +43,7 @@ build-stamp: 3rd
 	python setup.py config --noisy --with-libsvm
 	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
-	for ext in _svmc smlrc ridgetrain; do \
+	for ext in _svmc smlrc; do \
 		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
 		mvpa/clfs/lib$${ext#_*}/; \
 		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \

@@ -15,7 +15,7 @@ import numpy as N
 from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier
-from mvpa.clfs.libridgetrain import ridgetrain
+#from mvpa.clfs.libridgetrain import ridgetrain
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
@@ -26,8 +26,7 @@ class RidgeReg(Classifier):
 
     _clf_internals = ['ridge']
 
-    def __init__(self, lm=None, implementation='direct',
-                 stopcrit=0.001, **kwargs):
+    def __init__(self, lm=None, **kwargs):
         """
         Initialize a ridge regression analysis.
 
@@ -35,13 +34,14 @@ class RidgeReg(Classifier):
           lm : float
             the penalty term lambda.  
             (Defaults to .05*nFeatures)
-          implementation : 'direct' | 'gradient'
-            choose between direct implementation via numpy.linalg.lstsq
-            and memory saving gradient descent implemented in fortran
-          stopcrit: float
-            Stopping criterion for the gradient descent training method
-            (absolute error)
         """
+        #  implementation : 'direct' | 'gradient'
+        #    choose between direct implementation via numpy.linalg.lstsq
+        #    and memory saving gradient descent implemented in fortran
+        #  stopcrit: float
+        #    Stopping criterion for the gradient descent training method
+        #    (absolute error)
+
         # init base class first
         Classifier.__init__(self, **kwargs)
 
@@ -56,8 +56,8 @@ class RidgeReg(Classifier):
         self.__lm = lm
 
         # store train method config
-        self.__implementation = implementation
-        self.__stopcrit = stopcrit
+        self.__implementation = 'direct' #implementation
+        #self.__stopcrit = stopcrit
 
 
     def __repr__(self):
