@@ -41,7 +41,7 @@ class DenseArrayMapper(MaskMapper):
 
     def __init__(self, mask=None, metric=None,
                  distance_function=cartesianDistance,
-                 elementsize=None, size=None, **kwargs):
+                 elementsize=None, shape=None, **kwargs):
         """Initialize DenseArrayMapper
 
         :Parameters:
@@ -63,34 +63,34 @@ class DenseArrayMapper(MaskMapper):
             Determines spacing within `DescreteMetric`. If it is given as a
             scalar, corresponding value is assigned to all dimensions, which
             are found within `mask`
-          size: tuple
-            The shape of the array to be mapped. If `size` is provided instead
+          shape: tuple
+            The shape of the array to be mapped. If `shape` is provided instead
             of `mask`, a full mask (all True) of the desired shape is
-            constructed. If `size` is specified in addition to `mask`, the
+            constructed. If `shape` is specified in addition to `mask`, the
             provided mask is extended to have the same number of dimensions.
 
         :Note: parameters `elementsize` and `distance_function` are relevant
                only if `metric` is None
         """
         if mask is None:
-            if size is None:
+            if shape is None:
                 raise ValueError, \
-                      "Either `size` or `mask` have to be specified."
+                      "Either `shape` or `mask` have to be specified."
             else:
                 # make full dataspace mask if nothing else is provided
-                mask = N.ones(size, dtype='bool')
+                mask = N.ones(shape, dtype='bool')
         else:
-            if not size is None:
+            if not shape is None:
                 # expand mask to span all dimensions but first one
                 # necessary e.g. if only one slice from timeseries of volumes is
                 # requested.
-                mask = N.array(mask, ndmin=len(size))
+                mask = N.array(mask, ndmin=len(shape))
                 # check for compatibility
-                if not size == mask.shape:
+                if not shape == mask.shape:
                     raise ValueError, \
                         "The mask dataspace shape [%s] is not " \
-                        "compatible with the provided size." \
-                        % (`mask.shape`, `size`)
+                        "compatible with the provided shape." \
+                        % (`mask.shape`, `shape`)
 
         # configure the baseclass with the processed mask
         MaskMapper.__init__(self, mask, metric=metric, **kwargs)
