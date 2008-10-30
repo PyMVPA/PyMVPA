@@ -22,12 +22,13 @@ from nifti import NiftiImage
 __name__ = oldname
 
 from mvpa.datasets.base import Dataset
-from mvpa.datasets.masked import MaskedDataset
+from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.metric import DescreteMetric, cartesianDistance
+from mvpa.mappers.array import DenseArrayMapper
 from mvpa.base import warning
 
 
-class NiftiDataset(MaskedDataset):
+class NiftiDataset(MappedDataset):
     """Dataset based on NiftiImage provided by pynifti.
 
     See http://niftilib.sourceforge.net/pynifti/ for more information
@@ -45,80 +46,81 @@ class NiftiDataset(MaskedDataset):
             object
 
         """
-        # if dsattr is none, set it to an empty dict
-        if dsattr is None:
-            dsattr = {}
+        # if in copy constructor mode
+        if not dsattr is None and dsattr.has_key('mapper'):
+            Dataset._checkCopyConstructorArgs(samples=samples,
+                                              dsattr=dsattr,
+                                              **kwargs)
+            MappedDataset.__init__(self,
+                                   samples=samples,
+                                   dsattr=dsattr,
+                                   **kwargs)
+            return
 
-        # we have to handle the nifti elementsize at the end if
-        # mask is not already a Mapper
-        set_elementsize = False
-        if not dsattr.has_key('mapper'):
-            set_elementsize = True
+        #
+        # the following code only deals with contructing fresh datasets from
+        # scratch
+        #
 
-        # default way to use the constructor: with NIfTI image filename
-        if not samples is None:
-            if isinstance(samples, str):
-                # open the nifti file
-                try:
-                    nifti = NiftiImage(samples)
-                except RuntimeError, e:
-                    warning("ERROR: NiftiDatasets: Cannot open samples file %s" \
-                            % samples) # should we make also error?
-                    raise e
-            elif isinstance(samples, NiftiImage):
-                # nothing special
-                nifti = samples
-            else:
-                raise ValueError, \
-                      "NiftiDataset constructor takes the filename of a " \
-                      "NIfTI image or a NiftiImage object as 'samples' " \
-                      "argument."
-            samples = nifti.data
-            # do not put the whole NiftiImage in the dict as this will most
-            # likely be deepcopy'ed at some point and ensuring data integrity
-            # of the complex Python-C-Swig hybrid might be a tricky task.
-            # Only storing the header dict should achieve the same and is more
-            # memory efficient and even simpler
-            dsattr['niftihdr'] = nifti.header
-            if isinstance(mask, str):
-                # if mask is also a nifti file open, it and take the image array
-                # use a copy of the mask data as otherwise segfault will
-                # embarass you, once the 'mask' NiftiImage get deleted
-                try:
-                    mask = NiftiImage(mask).asarray()
-                except RuntimeError, e:
-                    warning("ERROR: NiftiDatasets: Cannot open mask file %s" \
-                            % mask)
-                    raise e
+        # figure out what type the samples are
+        if isinstance(samples, str):
+            # open the nifti file
+            try:
+                nifti = NiftiImage(samples)
+            except RuntimeError, e:
+                warning("ERROR: NiftiDatasets: Cannot open samples file %s" \
+                        % samples)
+                raise e
+        elif isinstance(samples, NiftiImage):
+            # nothing special
+            nifti = samples
+        else:
+            raise ValueError, \
+                  "NiftiDataset constructor takes the filename of a " \
+                  "NIfTI image or a NiftiImage object as 'samples' " \
+                  "argument."
+        samples = nifti.data
 
-            elif isinstance(mask, NiftiImage):
-                # just use data array as masl
-                mask = mask.asarray()
+        # do not put the whole NiftiImage in the dict as this will most
+        # likely be deepcopy'ed at some point and ensuring data integrity
+        # of the complex Python-C-Swig hybrid might be a tricky task.
+        # Only storing the header dict should achieve the same and is more
+        # memory efficient and even simpler
+        dsattr = {'niftihdr': nifti.header}
 
-        # by default init the dataset now
-        # if mask is a Mapper already, this is a cheap init. This is
-        # important as this is the default mode for the copy constructor
-        # and might be called really often!!
-        MaskedDataset.__init__(self,
+        # figure out what the mask is, but onyl handle known cases, the rest
+        # goes directly into the mapper which maybe knows more
+        if isinstance(mask, str):
+            # if mask is also a nifti file open, it and take the image array
+            # use a copy of the mask data as otherwise segfault will
+            # embarass you, once the 'mask' NiftiImage get deleted
+            try:
+                mask = NiftiImage(mask).asarray()
+            except RuntimeError, e:
+                warning("ERROR: NiftiDatasets: Cannot open mask file %s" \
+                        % mask)
+                raise e
+
+        elif isinstance(mask, NiftiImage):
+            # just use data array as mask
+            mask = mask.asarray()
+
+        # build an appropriate mapper that knows about the metrics of the NIfTI
+        # data
+        # NiftiDataset uses a DescreteMetric with cartesian
+        # distance and element size from the NIfTI header 
+
+        # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
+        elementsize = [i for i in reversed(nifti.voxdim)]
+        mapper = DenseArrayMapper(mask=mask, shape=samples.shape[1:],
+                    metric=DescreteMetric(elementsize=elementsize,
+                                          distance_function=cartesianDistance))
+
+        MappedDataset.__init__(self,
                                samples=samples,
-                               mask=mask,
+                               mapper=mapper,
                                dsattr=dsattr,
-                               **(kwargs))
-
-
-        if set_elementsize:
-            # in case the Mapper wasn't already passed to the constructor
-            # overwrite the default metric of it here to take the NIfTI element
-            # properties into account
-
-            # NiftiDataset uses a DescreteMetric with cartesian
-            # distance and element size from the NIfTI header 
-
-            # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-            elementsize = [i for i in reversed(nifti.voxdim)]
-            self.mapper.setMetric(
-                        DescreteMetric(elementsize=elementsize,
-                                       distance_function=cartesianDistance))
+                               **kwargs)
 
 
     def map2Nifti(self, data=None):
