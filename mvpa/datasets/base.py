@@ -1603,10 +1603,18 @@ class Dataset(object):
     @staticmethod
     def _checkCopyConstructorArgs(**kwargs):
         """Common sanity check for Dataset copy constructor calls."""
-        if not kwargs.has_key('samples') or kwargs['samples'] is None:
+        # check if we have samples (somwhere)
+        samples = None
+        if kwargs.has_key('samples'):
+            samples = kwargs['samples']
+        if samples is None and kwargs.has_key('data') \
+           and kwargs['data'].has_key('samples'):
+            samples = kwargs['data']['samples']
+        if samples is None:
             raise DatasetError, \
                   "`samples` must be provided to copy constructor call."
-        if not len(kwargs['samples'].shape) == 2:
+
+        if not len(samples.shape) == 2:
             raise DatasetError, \
                   "samples must be in 2D shape in copy constructor call."
 
