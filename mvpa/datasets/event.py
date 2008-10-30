@@ -81,7 +81,6 @@ class EventDataset(MappedDataset):
         """
         # check if we are in copy constructor mode
         if events is None:
-            Dataset._checkCopyConstructorArgs(samples=samples, **kwargs)
             MappedDataset.__init__(self, samples=samples, **kwargs)
             return
 
