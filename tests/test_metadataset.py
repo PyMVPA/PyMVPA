@@ -20,6 +20,10 @@ from mvpa.mappers.base import CombinedMapper, ChainMapper
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.mappers.mask import MaskMapper
 from mvpa.mappers.boxcar import BoxcarMapper
+from mvpa.datasets.event import EventDataset
+from mvpa.misc.support import Event
+from mvpa.misc.exceptions import DatasetError
+
 
 class MetaDatasetTests(unittest.TestCase):
 
@@ -174,6 +178,64 @@ class MetaDatasetTests(unittest.TestCase):
         # should behave a DenseArrayMapper alone
         self.failUnless((N.array([n for n in m.getNeighbor(24, radius=1.1)])
                          == N.array((0, 24, 25, 26, 32))).all())
+
+
+    def testEventDataset(self):
+        # baisc checks
+        self.failUnlessRaises(DatasetError, EventDataset)
+
+        # simple data
+        samples = N.arange(240).reshape(10, 2, 3, 4)
+
+        # copy constructor does not work on non-2D data
+        self.failUnlessRaises(DatasetError, EventDataset, samples=samples)
+
+        # try case without extra features
+        evs = [Event(onset=2, duration=2, label=1, chunk=2),
+               Event(onset=5, duration=1, label=2, chunk=2),
+               Event(onset=7, duration=2, label=3, chunk=4)]
+
+        ds = EventDataset(samples=samples, events=evs)
+        self.failUnless(ds.nfeatures == 48)
+        self.failUnless(ds.nsamples == 3)
+        self.failUnless((ds.labels == [1,2,3]).all())
+        self.failUnless((ds.chunks == [2,2,4]).all())
+        mr = ds.mapReverse(N.arange(48))
+        self.failUnless((mr == N.arange(48).reshape(2,2,3,4)).all())
+
+        # try case with extra features
+        evs = [Event(onset=2, duration=2, label=1, features=[2,3]),
+               Event(onset=5, duration=2, label=1, features=[4,5]),
+               Event(onset=7, duration=2, label=1, features=[6,7]),]
+        ds = EventDataset(samples=samples, events=evs)
+        # we have 2 additional features
+        self.failUnless(ds.nfeatures == 50)
+        self.failUnless(ds.nsamples == 3)
+        self.failUnless((ds.labels == [1,1,1]).all())
+        self.failUnless((ds.chunks == [0,1,2]).all())
+        # now for the long awaited -- map back into two distinct
+        # feature spaces
+        mr = ds.mapReverse(N.arange(50))
+        # we get two sets of feature spaces (samples and extra features)
+        self.failUnless(len(mr) == 2)
+        msamples, mxfeat = mr
+        # the sample side should be identical to the case without extra features
+        self.failUnless((msamples == N.arange(48).reshape(2,2,3,4)).all())
+        # the extra features should be flat
+        self.failUnless((mxfeat == (48,49)).all())
+
+        # now take a look at 
+        orig = ds.O
+        self.failUnless(len(mr) == 2)
+        osamples, oextra = orig
+        self.failUnless((oextra == [[2,3],[4,5],[6,7]]).all())
+        self.failUnless(osamples.shape == samples.shape)
+        # check that all samples not covered by an event are zero
+        filt = N.array([True,True,False,False,True,False,False,False,False,True])
+        self.failUnless(N.sum(osamples[filt]) == 0)
+        self.failUnless((osamples[N.negative(filt)] > 0).all())
+
+
 
 
 def suite():
