@@ -47,6 +47,14 @@ class DenseArrayMapperTests(unittest.TestCase):
                                map_.forward,
                                N.arange(4).reshape(2,2) )
 
+        # check fail if neither mask nor shape
+        self.failUnlessRaises(ValueError, DenseArrayMapper)
+
+        # check that a full mask is automatically created when providing shape
+        m = DenseArrayMapper(shape=(2, 3, 4))
+        mp = m.forward(N.arange(24).reshape(2, 3, 4))
+        self.failUnless((mp == N.arange(24)).all())
+
 
     def testReverseDenseArrayMapper(self):
         mask = N.ones((3,2))
