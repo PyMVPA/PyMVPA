@@ -40,7 +40,7 @@ class MaskedDataset(MappedDataset):
             # XXX should be asanyarray? but then smth segfaults on unittests
             samples = N.asarray(samples)
             mapper = DenseArrayMapper(mask=mask,
-                                      size=samples.shape[1:])
+                                      shape=samples.shape[1:])
 
         if not mapper is None:
             if samples is None:
