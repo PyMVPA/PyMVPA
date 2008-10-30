@@ -35,9 +35,29 @@ class EventDataset(MappedDataset):
     separates them again during reverse-mapping. Otherwise, this dataset type
     is a regular dataset (in contrast to `MetaDataset`).
 
-    The embedded :class:`~mvpa.mappers.boxcar.BoxcarMapper` will use the maximum
-    boxlength (i.e., `duration`) of all defined events to create a
-    regular-shaped data array.
+    The properties of an :class:`~mvpa.misc.support.Event` supported/required
+    by this class are:
+
+    `onset`
+      This is an integer indicating the startpoint of an event as the sample
+      index in the input data.
+
+    `duration`
+      How many input data samples following the onset sample should be
+      considered for an event. The embedded
+      :class:`~mvpa.mappers.boxcar.BoxcarMapper` will use the maximum boxlength
+      (i.e., `duration`) of all defined events to create a regular-shaped data
+      array.
+
+    `label`
+      The corresponding label of that event (numeric or literal).
+
+    `chunk`
+      An optional chunk id.
+
+    `features`
+      A list with an arbitrary number of features values (floats), that will
+      be added to the feature vector of the corresponding sample.
     """
     def __init__(self, samples=None, events=None, mask=None, bcshape=None,
                  **kwargs):
