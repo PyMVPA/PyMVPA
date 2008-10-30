@@ -1600,6 +1600,17 @@ class Dataset(object):
         return mask.nonzero()[0]
 
 
+    @staticmethod
+    def _checkCopyConstructorArgs(**kwargs):
+        """Common sanity check for Dataset copy constructor calls."""
+        if not kwargs.has_key('samples') or kwargs['samples'] is None:
+            raise DatasetError, \
+                  "`samples` must be provided to copy constructor call."
+        if not len(kwargs['samples'].shape) == 2:
+            raise DatasetError, \
+                  "samples must be in 2D shape in copy constructor call."
+
+
     # read-only class properties
     nsamples        = property( fget=getNSamples )
     nfeatures       = property( fget=getNFeatures )
