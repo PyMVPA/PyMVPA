@@ -134,7 +134,9 @@ class MappedDataset(Dataset):
 
     # read-only class properties
     mapper = property(fget=lambda self: self._dsattr['mapper'])
-    samples_original = property(fget=mapSelfReverse, doc="Return samples in the original shape")
+    samples_original = property(fget=mapSelfReverse,
+                                doc="Return samples in the original shape")
 
     # syntactic sugarings
-    O = property(fget=mapSelfReverse, doc="Return samples in the original shape")
+    O = property(fget=mapSelfReverse,
+                 doc="Return samples in the original shape")
