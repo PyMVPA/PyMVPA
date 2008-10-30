@@ -14,7 +14,7 @@ import mvpa.misc.copy as copy
 
 from mvpa.datasets import Dataset
 from mvpa.base.dochelpers import enhancedDocString
-
+from mvpa.misc.exceptions import DatasetError
 
 class MappedDataset(Dataset):
     """A `Dataset` which is created by applying a `Mapper` to the data.
@@ -68,8 +68,8 @@ class MappedDataset(Dataset):
         # if the samples are passed to the special arg, use the mapper to
         # transform them.
         if not samples is None:
-            if dsattr['mapper'] is None:
-                raise ValueError, \
+            if not dsattr.has_key('mapper') or dsattr['mapper'] is None:
+                raise DatasetError, \
                       "Constructor of MappedDataset requires a mapper " \
                       "if unmapped samples are provided."
             Dataset.__init__(self,
@@ -77,6 +77,9 @@ class MappedDataset(Dataset):
                              dsattr=dsattr,
                              **(kwargs))
         else:
+            Dataset._checkCopyConstructorArgs(samples=samples,
+                                              dsattr=dsattr,
+                                              **kwargs)
             Dataset.__init__(self, dsattr=dsattr, **(kwargs))
 
 

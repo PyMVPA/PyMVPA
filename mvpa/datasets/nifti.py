@@ -48,9 +48,6 @@ class NiftiDataset(MappedDataset):
         """
         # if in copy constructor mode
         if not dsattr is None and dsattr.has_key('mapper'):
-            Dataset._checkCopyConstructorArgs(samples=samples,
-                                              dsattr=dsattr,
-                                              **kwargs)
             MappedDataset.__init__(self,
                                    samples=samples,
                                    dsattr=dsattr,
