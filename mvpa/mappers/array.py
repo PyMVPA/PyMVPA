@@ -48,7 +48,7 @@ class DenseArrayMapper(MaskMapper):
           mask : array
             an array in the original dataspace and its nonzero elements are
             used to define the features included in the dataset. alternatively,
-            the `size` argument can be used to define the array dimensions.
+            the `shape` argument can be used to define the array dimensions.
           metric : Metric
             Corresponding metric for the space. No attempt is made to
             determine whether a certain metric is reasonable for this
