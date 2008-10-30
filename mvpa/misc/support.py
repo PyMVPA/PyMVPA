@@ -261,6 +261,40 @@ class MapOverlap(object):
         return N.mean(ovstats >= self.__overlap_threshold)
 
 
+class Event(dict):
+    """Simple class to define properties of an event.
+
+    The class is basically a dictionary. Any properties can
+    be pass as keyword arguments to the contructor, e.g.:
+
+      >>> ev = Event(onset=12, duration=2.45)
+
+    Conventions for keys:
+
+    `onset`
+      The onset of the event in some unit.
+    `duration`
+      The duration of the event in the same unit as `onset`.
+    `label`
+      E.g. the condition this event is part of.
+    `chunk`
+      Group this event is part of (if any), e.g. experimental run.
+    `features`
+      Any amount of additional features of the event. This might include
+      things like physiological measures, stimulus intensity, ...
+    """
+    _MUSTHAVE = ['onset']
+
+    def __init__(self, **kwargs):
+        # store everything
+        dict.__init__(self, **kwargs)
+
+        # basic checks
+        for k in Event._MUSTHAVE:
+            if not self.has_key(k):
+                raise ValueError, "Event must have '%s' defined." % k
+
+
 class HarvesterCall(object):
     def __init__(self, call, attribs=None, argfilter=None, expand_args=True,
                  copy_attribs=True):
