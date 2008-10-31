@@ -28,7 +28,7 @@ class EventDataset(MappedDataset):
     boxcar-shaped samples, by simply defining a list of events
     (see :class:`~mvpa.misc.support.Event`).
 
-    Additionally, I can be used to add arbitrary information (as features)
+    Additionally, it can be used to add arbitrary information (as features)
     to each event-sample (extracted from the event list itself). An
     appropriate mapper is automatically constructed, that merges original
     samples and additional features into a common feature space and also
@@ -39,7 +39,7 @@ class EventDataset(MappedDataset):
     by this class are:
 
     `onset`
-      This is an integer indicating the startpoint of an event as the sample
+      An integer indicating the startpoint of an event as the sample
       index in the input data.
 
     `duration`
@@ -77,7 +77,7 @@ class EventDataset(MappedDataset):
             If not provided this is determined automatically. However, this
             required an extra mapping step.
           **kwargs
-            All additional arguments are passed to the baseclass.
+            All additional arguments are passed to the base class.
         """
         # check if we are in copy constructor mode
         if events is None:
