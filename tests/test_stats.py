@@ -96,6 +96,9 @@ class StatsTests(unittest.TestCase):
 
     @sweepargs(nd=nulldist_sweep)
     def testDatasetMeasureProb(self, nd):
+        if not externals.exists('scipy'):
+            # due to null_t requirement
+            return
 
         ds = datasets['uni2medium']
 
