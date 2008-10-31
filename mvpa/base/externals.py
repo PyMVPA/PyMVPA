@@ -140,7 +140,8 @@ def exists(dep, force=False, raiseException=False):
     if cfg.has_option('externals', cfgid) \
        and not cfg.getboolean('externals', 'retest', default='no') \
        and not force:
-        debug('EXT', "Skip restesting for '%s'." % dep)
+        if __debug__:
+            debug('EXT', "Skip restesting for '%s'." % dep)
         return cfg.getboolean('externals', cfgid)
 
     # default to 'not found'
