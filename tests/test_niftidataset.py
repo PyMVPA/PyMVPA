@@ -13,6 +13,8 @@ import os.path
 import numpy as N
 
 from mvpa.datasets.nifti import *
+from mvpa.misc.exceptions import *
+from mvpa.misc.fsl.base import FslEV3
 
 class NiftiDatasetTests(unittest.TestCase):
 
@@ -95,6 +97,55 @@ class NiftiDatasetTests(unittest.TestCase):
         # The tricky part is: I have no clue, what is going on... :(
         self.failUnless((data.mapper.metric.elementsize \
                          == data2.mapper.metric.elementsize).all())
+
+
+    def testERNiftiDataset(self):
+        self.failUnlessRaises(DatasetError, ERNiftiDataset)
+
+        # setup data sources
+        tssrc = os.path.join('..', 'data', 'bold')
+        evsrc = os.path.join('..', 'data', 'fslev3.txt')
+        masrc = os.path.join('..', 'data', 'mask')
+        evs = FslEV3(evsrc).toEvents()
+
+        # more failure ;-)
+        # no label!
+        self.failUnlessRaises(ValueError, ERNiftiDataset,
+                              samples=tssrc, events=evs)
+
+        # set some label for each ev
+        for ev in evs:
+            ev['label'] = 1
+
+        # for real!
+        # using TR from nifti header
+        ds = ERNiftiDataset(samples=tssrc, events=evs)
+
+        # 40x20 volume, 9 volumes per sample + 1 intensity score = 7201 features
+        self.failUnless(ds.nfeatures == 7201)
+        self.failUnless(ds.nsamples == len(evs))
+
+        # check samples
+        origsamples = getNiftiFromAnySource(tssrc).data
+        for i, ev in enumerate(evs):
+            self.failUnless((ds.samples[i][:-1] \
+                == origsamples[ev['onset']:ev['onset'] + ev['duration']].ravel()
+                            ).all())
+
+        # do again -- with conversion
+        ds = ERNiftiDataset(samples=tssrc, events=evs, evconv=True,
+                            storeoffset=True)
+        self.failUnless(ds.nsamples == len(evs))
+        # TR=2.5, 40x20 volume, 9 second per sample (4volumes), 1 intensity
+        # score + 1 offset = 3202 features 
+        self.failUnless(ds.nfeatures == 3202)
+
+        # map back into voxel space, should ignore addtional features
+        nim = ds.map2Nifti()
+        self.failUnless(nim.data.shape == origsamples.shape)
+        # check shape of a single sample
+        nim = ds.map2Nifti(ds.samples[0])
+        self.failUnless(nim.data.shape == (4, 1, 20, 40))
 
 
 
