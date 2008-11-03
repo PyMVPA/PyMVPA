@@ -13,6 +13,9 @@ __docformat__ = 'restructuredtext'
 from mvpa.base import externals
 externals.exists('nifti', raiseException=True)
 
+import numpy as N
+from mvpa.misc.copy import deepcopy
+
 # little trick to be able to import 'nifti' package (which has same name)
 oldname = __name__
 # crazy name with close to zero possibility to cause whatever
@@ -23,6 +26,7 @@ __name__ = oldname
 
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.mapped import MappedDataset
+from mvpa.datasets.event import EventDataset
 from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.base import warning
@@ -103,7 +107,7 @@ class NiftiDataset(MappedDataset):
         # goes directly into the mapper which maybe knows more
         niftimask = getNiftiFromAnySource(mask)
         if not niftimask is None:
-            mask = niftimask.asarray()
+            mask = niftimask.data
 
         # build an appropriate mapper that knows about the metrics of the NIfTI
         # data
@@ -146,3 +150,147 @@ class NiftiDataset(MappedDataset):
     niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
                         doc='Access to the NIfTI header dictionary.')
 
+
+
+class ERNiftiDataset(EventDataset):
+    """Dataset with event-defined samples from a NIfTI timeseries image.
+
+    This is a convenience dataset to facilitate the analysis of event-related
+    fMRI datasets. Boxcar-shaped samples are automatically extracted from the
+    full timeseries using :class:`~mvpa.misc.support.Event` definition lists.
+    For each event all volumes covering that particular event in time
+    (including partial coverage) are used to form the corresponding sample.
+
+    The class supports the conversion of events defined in 'realtime' into the
+    descrete temporal space defined by the NIfTI image. Moreover, potentially
+    varying offsets between true event onset and timepoint of the first selected
+    volume can be stored as an additional feature in the dataset.
+
+    Additionally, the dataset supports masking. This is done similar to the
+    masking capabilities of :class:`~mvpa.datasets.nifti.NiftiDataset`. However,
+    the mask can either be of the same shape as a single NIfTI volume, or
+    can be of the same shape as the generated boxcar samples, i.e.
+    a samples consisting of three volumes with 24 slices and 64x64 inplane
+    resolution needs a mask with shape (3, 24, 64, 64). In the former case the
+    mask volume is automatically expanded to be identical in a volumes of the
+    boxcar.
+    """
+    def __init__(self, samples=None, events=None, mask=None, evconv=False,
+                 storeoffset=False, tr=None, **kwargs):
+        """
+        :Paramaters:
+          evconv: bool
+            Convert event definitions using `onset` and `duration` in some
+            temporal unit into #sample notation.
+          storeoffset: Bool
+            Whether to store temproal offset information when converting
+            Events into descrete time. Only considered when evconv == True.
+          tr: float
+            Temporal distance of two adjacent NIfTI volumes. This can be used
+            to override the corresponding value in the NIfTI header.
+        """
+        # check if we are in copy constructor mode
+        if events is None:
+            EventDataset.__init__(self, samples=samples, events=events,
+                                  mask=None, **kwargs)
+            return
+
+        nifti = getNiftiFromAnySource(samples)
+        # no copying
+        samples = nifti.data
+
+        # do not put the whole NiftiImage in the dict as this will most
+        # likely be deepcopy'ed at some point and ensuring data integrity
+        # of the complex Python-C-Swig hybrid might be a tricky task.
+        # Only storing the header dict should achieve the same and is more
+        # memory efficient and even simpler
+        dsattr = {'niftihdr': nifti.header}
+
+        # NiftiDataset uses a DescreteMetric with cartesian
+        # distance and element size from the NIfTI header 
+        # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
+        elementsize = [i for i in reversed(nifti.voxdim)]
+        # XXX metric might be inappropriate if boxcar has length 1
+        # might move metric setup after baseclass init and check what has
+        # really happened
+        metric = DescreteMetric(elementsize=elementsize,
+                                distance_function=cartesianDistance)
+
+        # convert EVs if necessary -- not altering original
+        if evconv:
+            # determine TR, take from NIfTI header by default
+            dt = nifti.rtime
+            # override if necessary
+            if not tr is None:
+                dt = tr
+            if dt == 0:
+                raise ValueError, "'dt' cannot be zero when converting Events"
+
+            events = [ev.asDescreteTime(dt, storeoffset) for ev in events]
+        else:
+            # do not touch the original
+            events = deepcopy(events)
+
+            # forcefully convert onset and duration into integers, as expected
+            # by the baseclass
+            for ev in events:
+                oldonset = ev['onset']
+                oldduration = ev['duration']
+                ev['onset'] = int(ev['onset'])
+                ev['duration'] = int(ev['duration'])
+                if not oldonset == ev['onset'] \
+                   or not oldduration == ev['duration']:
+                    warning("Loosing information during automatic integer "
+                            "conversion of EVs. Consider an explicit conversion"
+                            " by setting `evconv` in ERNiftiDataset().")
+
+        # pull mask array from NIfTI (if present)
+        mask = getNiftiFromAnySource(mask)
+        if not mask is None:
+            mask = mask.data
+
+        # finally init baseclass
+        EventDataset.__init__(self, samples=samples, events=events,
+                              mask=None, dametric=metric, dsattr=dsattr,
+                              **kwargs)
+
+
+    def map2Nifti(self, data=None):
+        """Maps a data vector into the dataspace and wraps it with a
+        NiftiImage. The header data of this object is used to initialize
+        the new NiftiImage.
+
+        .. note::
+          Only the features corresponding to voxels are mapped back -- not
+          any additional features passed via the Event definitions.
+
+        :Parameters:
+          data : ndarray or Dataset
+            The data to be wrapped into NiftiImage. If None (default), it
+            would wrap samples of the current dataset. If it is a Dataset
+            instance -- takes its samples for mapping
+        """
+        if data is None:
+            data = self.samples
+        elif isinstance(data, Dataset):
+            # ease users life
+            data = data.samples
+
+        mr = self.mapper.reverse(data)[0]
+
+        # handle all known cases
+        if isinstance(mr, tuple) and len(mr) == 2:
+            # we have additional feature in the dataset -- ignore them
+            mr = mr[0]
+        elif isinstance(mr, N.ndarray):
+            # no additional stuff, just voxels
+            pass
+        else:
+            raise RuntimeError, \
+                  "Received unexpected datatype from mapper.reverse()."
+
+        return NiftiImage(mr, self.niftihdr)
+
+
+    niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
+                        doc='Access to the NIfTI header dictionary.')

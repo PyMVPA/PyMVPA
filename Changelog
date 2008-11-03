@@ -52,6 +52,13 @@ Unreleased changes
     independent dataspace and a common feature space.
   * Removed obselete MetricMapper class. :class:`~mvpa.mappers.base.Mapper`
     itself provides the facilities for dealing with metrics.
+  * New :class:`~mvpa.datasets.event.EventDataset` to rapidly extract
+    boxcar-shaped samples from data array using a simple list of
+    :class:`~mvpa.misc.support.Event` definitions.
+  * New :class:`~mvpa.datasets.nifti.ERNiftiDataset` to facilitate the analysis
+    of event-related fMRI datasets.
+  * Depend on PyNIfTI >= 0.20081017.1 and gain a smaller memory footprint when
+    accessing NIfTI files via all datasets with NIfTI support.
 
 
 Releases
