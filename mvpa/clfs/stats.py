@@ -72,6 +72,8 @@ def _pvalue(x, cdf_func, tail, sign=True):
             # we need to half the signficance
             cdf *= 2
 
+    # Assure that NaNs didn't get significant value
+    cdf[N.isnan(x)] = 1.0
     if is_scalar: return cdf[0]
     else:         return cdf
 
