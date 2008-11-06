@@ -40,15 +40,14 @@ debian-build:
 
 build: build-stamp
 build-stamp: 3rd
-	python setup.py config --noisy
-	python setup.py build_ext
-	python setup.py build_py
+	python setup.py config --noisy --with-libsvm
+	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
-	for ext in svm smlr; do \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/; \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/$${ext}c.dylib; \
+	for ext in _svmc smlrc; do \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/; \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/$${ext}.dylib; \
 		done
 	touch $@
 
@@ -71,6 +70,7 @@ clean:
 	-@$(MAKE) distclean
 
 distclean:
+	-@rm -rf doc/modref doc/ex
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
@@ -86,7 +86,8 @@ distclean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp \
+		modref-templates-stamp examples2rst-stamp
 
 
 debian-clean:
@@ -101,13 +102,25 @@ doc: website
 references:
 	tools/bib2rst_ref.py
 
-htmldoc:
-	cd doc && $(MAKE) html
+htmldoc: modref-templates examples2rst build
+	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
+	cd build/html/modref && ln -sf ../_static
+	cd build/html/ex && ln -sf ../_static
 
-pdfdoc: pdfdoc-stamp
+pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
-	cd doc && $(MAKE) latex
+	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
+	touch $@
+
+modref-templates: modref-templates-stamp
+modref-templates-stamp:
+	PYTHONPATH=. tools/build_modref_templates.py
+	touch $@
+
+examples2rst: examples2rst-stamp
+examples2rst-stamp:
+	tools/examples2rst.py
 	touch $@
 
 apidoc: apidoc-stamp
@@ -127,6 +140,12 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
 	tools/sitemap.sh > $(WWW_DIR)/sitemap.xml
+# main icon of the website
+	cp doc/pics/favicon.png $(WWW_DIR)/_images/
+# for those who do not care about <link> and just trying to download it
+	cp doc/pics/favicon.png $(WWW_DIR)/favicon.ico
+# provide robots.txt to minimize unnecessary traffic
+	cp doc/_static/robots.txt $(WWW_DIR)/
 	touch $@
 
 upload-website: website
@@ -144,7 +163,15 @@ ut-%: build
 	@cd tests && PYTHONPATH=.. python test_$*.py
 
 unittest: build
+	@echo "I: Running unittests (without optimization nor debug output)"
 	@cd tests && PYTHONPATH=.. python main.py
+
+# test if PyMVPA is working if optional externals are missing
+unittest-badexternals: build
+	@echo "I: Running unittests under assumption of missing externals."
+	@cd tests && PYTHONPATH=badexternals:.. python main.py 2>&1 \
+	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
+              -e 'WARNING:.*SMLR.* implementation'
 
 # Runs unittests in few additional modes:
 # * with optimization on -- helps to catch unconditional debug calls
@@ -152,9 +179,9 @@ unittest: build
 #   That does:
 #     additional checking,
 #     debug() calls validation, etc
-unittests: unittest
+unittests: unittest unittest-badexternals
 	@cd tests && PYTHONPATH=.. python -O main.py
-	@echo "Running unittests with debug output. No progress output."
+	@echo "I: Running unittests with debug output. No progress output."
 	@cd tests && \
       PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
        python main.py 2>&1 \
@@ -177,25 +204,26 @@ testmanual: build
 # Check if everything imported in unitests is known to the
 # mvpa.suite()
 testsuite:
+	@echo "I: Running full testsuite"
 	@git grep -h '^\W*from mvpa.*import' tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
-	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
+	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
 	 done
 
 # Check if links to api/ within documentation are broken.
 testapiref: apidoc
 	@for tf in doc/*.txt; do \
 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
-	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
+	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
 test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
-	@echo "Generating coverage data and report. Takes awhile. No progress output."
+	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@cd tests && { \
 	  export PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
 	  python-coverage -x main.py >/dev/null 2>&1; \

@@ -166,27 +166,9 @@ class MaskMapper(Mapper):
         return mapped
 
 
-    def getInShape(self):
-        """InShape is a shape of original mask"""
-        return self.__mask.shape
-
-
     def getInSize(self):
         """InShape is a shape of original mask"""
         return self.__masksize
-
-
-    def getOutShape(self):
-        """OutShape is a shape of target dataset"""
-        # should worry about state-full class.
-        # TODO: add exception 'InvalidStateError' which is raised
-        #       by some class if state is not yet defined:
-        #         classifier has not yet been trained
-        #         mapped yet see the dataset
-        #raise NotImplementedError
-
-        # XXX: why it is not simply  a (self.getOutSize,)?
-        return (self.__masknonzerosize,)
 
 
     def getOutSize(self):

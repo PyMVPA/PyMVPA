@@ -24,19 +24,20 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3,
     Kernel parameters can be modified analogous to the Make_flobs GUI
     which is part of FSL. 
 
+    ::
 
-     ^         /-\\
-     |        /   \\
-     1       /     \\
-     |      /       \\
-     |     /         \\
-     |    /           \\
-    -----/             \\     /-----  |
-                        \\--/         |  undershootamp
-    |    |      |     |        |
-    |    |      |     |        |
+       ^         /-\\
+       |        /   \\
+       1       /     \\
+       |      /       \\
+       |     /         \\
+       |    /           \\
+      -----/             \\     /-----  |
+                          \\--/         |  undershootamp
+      |    |      |     |        |
+      |    |      |     |        |
 
-     pre   rise  fall  undershoot
+       pre   rise  fall  undershoot
 
     Parameters 'pre', 'rise', 'fall', 'undershoot' and 'undershootamp'
     can be specified as 2-tuples (min-max range for sampling) and single 

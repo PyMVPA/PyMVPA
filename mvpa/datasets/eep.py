@@ -21,11 +21,11 @@ from mvpa.base import warning
 class EEPDataset(ChannelDataset):
     """Dataset using a EEP binary file as source.
 
-    EEP files are used by eeprobe_ a software for analysing even-related
+    EEP files are used by *eeprobe* a software for analysing even-related
     potentials (ERP), which was developed at the Max-Planck Institute for
     Cognitive Neuroscience in Leipzig, Germany.
 
-    .. _eegprobe: http://http://www.ant-neuro.com/products/eeprobe
+      http://www.ant-neuro.com/products/eeprobe
     """
     def __init__(self, samples=None, **kwargs):
         """Initialize EEPDataset.

@@ -82,13 +82,14 @@ class SensitivityAnalysersTests(unittest.TestCase):
         map_ = sana(self.dataset)
         self.failUnlessEqual(len(map_), self.dataset.nfeatures)
 
-        for conf_matrix in [sana.clf.training_confusion] \
-                          + sana.clf.confusion.matrices:
-            self.failUnless(conf_matrix.percentCorrect>75,
-                            msg="We must have trained on each one more or " \
-                                "less correctly. Got %f%% correct on %d labels" %
-                            (conf_matrix.percentCorrect,
-                             len(self.dataset.uniquelabels)))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            for conf_matrix in [sana.clf.training_confusion] \
+                              + sana.clf.confusion.matrices:
+                self.failUnless(conf_matrix.percentCorrect>75,
+                                msg="We must have trained on each one more or " \
+                                    "less correctly. Got %f%% correct on %d labels" %
+                                (conf_matrix.percentCorrect,
+                                 len(self.dataset.uniquelabels)))
 
         errors = [x.percentCorrect
                     for x in sana.clf.confusion.matrices]

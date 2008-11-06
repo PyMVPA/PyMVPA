@@ -156,8 +156,8 @@ def plotHeadOutline(scale=1, shift=(0, 0), color='k', linewidth='5', **kwargs):
         All additional arguments are passed to `pylab.plot()`.
 
     :Returns:
-      Matplotlib lines2D object, that can be used to tweak the look of the
-      head outline.
+      Matplotlib lines2D object
+        can be used to tweak the look of the head outline.
     """
 
     rmax = 0.5

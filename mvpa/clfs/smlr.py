@@ -18,10 +18,17 @@ from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.state import StateVariable, Parametrized
 from mvpa.misc.param import Parameter
-from mvpa.base import warning
+from mvpa.base import warning, externals
 
-# Uber-fast C-version of the stepwise regression
-from mvpa.clfs.libsmlr import stepwise_regression as _cStepwiseRegression
+_DEFAULT_IMPLEMENTATION = "Python"
+if externals.exists('ctypes'):
+    # Uber-fast C-version of the stepwise regression
+    from mvpa.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
+    _DEFAULT_IMPLEMENTATION = "C"
+else:
+    _cStepwiseRegression = None
+    warning("SMLR implementation without ctypes is overwhelmingly slow."
+            " You are strongly advised to install python-ctypes")
 
 if __debug__:
     from mvpa.base import debug
@@ -88,7 +95,7 @@ class SMLR(Classifier):
             note that the convergence rate may be different, but convergence
             point is the same.""")
 
-    implementation = Parameter("C", allowedtype='basestring',
+    implementation = Parameter(_DEFAULT_IMPLEMENTATION, allowedtype='basestring',
              choices=["C", "Python"],
              doc="""Use C or Python as the implementation of
              stepwise_regression. C version brings significant speedup thus is
@@ -110,6 +117,11 @@ class SMLR(Classifier):
          """
         # init base class first
         Classifier.__init__(self, **kwargs)
+
+        if _cStepwiseRegression is None and self.implementation == 'C':
+            warning('SMLR: C implementation is not available.'
+                    ' Using pure Python one')
+            self.implementation = 'Python'
 
         # pylint friendly initializations
         self.__ulabels = None

@@ -9,9 +9,24 @@
 """Unit tests for PyMVPA stats helpers"""
 
 from mvpa.base import externals
-from mvpa.clfs.stats import MCNullDist
+from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa.measures.anova import OneWayAnova
 from tests_warehouse import *
+from mvpa import cfg
+
+# Prepare few distributions to test
+#kwargs = {'permutations':10, 'tail':'any'}
+nulldist_sweep = [ MCNullDist(permutations=10, tail='any'),
+                   MCNullDist(permutations=10, tail='right')]
+if externals.exists('scipy'):
+    import scipy.stats
+    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10, tail='any'),
+                        MCNullDist(scipy.stats.norm, permutations=10, tail='right'),
+                        MCNullDist(scipy.stats.expon, permutations=10, tail='right'),
+                        FixedNullDist(scipy.stats.norm(0, 0.1), tail='any'),
+                        FixedNullDist(scipy.stats.norm(0, 0.1), tail='right'),
+                        scipy.stats.norm(0, 0.1)
+                        ]
 
 class StatsTests(unittest.TestCase):
 
@@ -34,45 +49,60 @@ class StatsTests(unittest.TestCase):
         self.failUnless(p < 0.05)
 
 
-    def testNullDistProb(self):
+    @sweepargs(nd=nulldist_sweep[1:])
+    def testNullDistProb(self, nd):
+        if not isinstance(nd, NullDist):
+            return
         ds = datasets['uni2small']
-        null = MCNullDist(permutations=10, tail='right')
+        null = nd
 
         null.fit(OneWayAnova(), ds)
 
-        # check reasonable output (F-score always positive and close to zero
-        # for random data
-        prob = null.cdf([3,0,0,0,0,0])
-        self.failUnless((prob == [0, 1, 1, 1, 1, 1]).all())
-        # has to have matching shape
-        self.failUnlessRaises(ValueError, null.cdf, [5,3,4])
+        # check reasonable output.
+        # p-values for non-bogus features should significantly different,
+        # while bogus (0) not
+        prob = null.p([3,0,0,0,0,0])
+        self.failUnless(N.abs(prob[0]) < 0.01)
+        self.failUnless((N.abs(prob[1:]) > 0.05).all())
 
-        # test 'any' mode
+        # has to have matching shape
+        if not isinstance(nd, FixedNullDist):
+            # Fixed dist is univariate ATM so it doesn't care
+            # about dimensionality and gives 1 output value
+            self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
+
+
+    def testNullDistProbAny(self):
         if not externals.exists('scipy'):
             return
 
+        # test 'any' mode
         from mvpa.measures.corrcoef import CorrCoef
+        ds = datasets['uni2small']
 
         null = MCNullDist(permutations=10, tail='any')
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
         # tails
-        self.failUnless(null.cdf([-100, 0, 0, 0, 0, 0])[0] == 0)
-        self.failUnless(null.cdf([100, 0, 0, 0, 0, 0])[0] == 0)
+        self.failUnless(null.p([-100, 0, 0, 0, 0, 0])[0] == 0)
+        self.failUnless(null.p([100, 0, 0, 0, 0, 0])[0] == 0)
 
         # same test with just scalar measure/feature
         null.fit(CorrCoef(), ds.selectFeatures([0]))
-        self.failUnless(null.cdf(-100) == 0)
-        self.failUnless(null.cdf(100) == 0)
+        self.failUnless(null.p(-100) == 0)
+        self.failUnless(null.p(100) == 0)
 
 
-    def testDatasetMeasureProb(self):
+    @sweepargs(nd=nulldist_sweep)
+    def testDatasetMeasureProb(self, nd):
+        if not externals.exists('scipy'):
+            # due to null_t requirement
+            return
+
         ds = datasets['uni2medium']
 
-        # to estimate null distribution
-        m = OneWayAnova(null_dist=MCNullDist(permutations=10, tail='right'))
-
+        m = OneWayAnova(null_dist=nd, enable_states=['null_t'])
         score = m(ds)
 
         score_nonbogus = N.mean(score[ds.nonbogus_features])
@@ -88,8 +118,66 @@ class StatsTests(unittest.TestCase):
                 % null_prob_nonbogus)
 
         # the others should be a lot larger
-        self.failUnless(N.mean(null_prob_bogus) > N.mean(null_prob_nonbogus))
+        self.failUnless(N.mean(N.abs(null_prob_bogus)) > N.mean(N.abs(null_prob_nonbogus)))
 
+        if isinstance(nd, MCNullDist):
+            # MCs are not stable with just 10 samples... so lets skip them
+            return
+
+        self.failUnless((N.abs(m.null_t[ds.nonbogus_features]) >= 5).all(),
+            msg="Nonbogus features should have high t-score. Got %s"
+                % (m.null_t[ds.nonbogus_features]))
+
+        self.failUnless((N.abs(m.null_t[ds.bogus_features]) < 4).all(),
+            msg="Bogus features should have low t-score. Got (t,p,sens):%s"
+                % (zip(m.null_t, m.null_prob, score)))
+
+
+    def testMatchDistribution(self):
+        """Some really basic testing for matchDistribution
+        """
+        if not externals.exists('scipy'):
+            return
+        from mvpa.clfs.stats import matchDistribution, rv_semifrozen
+        import scipy.stats
+
+        data = datasets['uni2small'].samples[:,1]
+
+        # Lets test ad-hoc rv_semifrozen
+        floc = rv_semifrozen(scipy.stats.norm, loc=0).fit(data)
+        self.failUnless(floc[0] == 0)
+
+        fscale = rv_semifrozen(scipy.stats.norm, scale=1.0).fit(data)
+        self.failUnless(fscale[1] == 1)
+
+        flocscale = rv_semifrozen(scipy.stats.norm, loc=0, scale=1.0).fit(data)
+        self.failUnless(flocscale[1] == 1 and flocscale[0] == 0)
+
+        full = scipy.stats.norm.fit(data)
+        for res in [floc, fscale, flocscale, full]:
+            self.failUnless(len(res) == 2)
+
+        data_mean = N.mean(data)
+        for loc in [None, data_mean]:
+            for test in ['p-roc', 'kstest']:
+                # some really basic testing
+                matched = matchDistribution(data=data,
+                                            distributions = ['scipy',
+                                                             ('norm',
+                                                              {'name': 'norm_fixed',
+                                                               'loc': 0.2,
+                                                               'scale': 0.3})],
+                                            test=test, loc=loc, p=0.05)
+                # at least norm should be in there
+                names = [m[2] for m in matched]
+                if test == 'p-roc':
+                    if cfg.getboolean('tests', 'labile', default='yes'):
+                        # we can guarantee that only for norm_fixed
+                        self.failUnless('norm' in names)
+                        self.failUnless('norm_fixed' in names)
+                        inorm = names.index('norm_fixed')
+                        # and it should be at least in the first 30 best matching ;-)
+                        self.failUnless(inorm <= 30)
 
 
 def suite():

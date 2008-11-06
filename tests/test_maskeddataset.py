@@ -68,7 +68,6 @@ class MaskedDatasetTests(unittest.TestCase):
         data = MaskedDataset(samples=N.arange(24).reshape((2,3,4)),
                              labels=1, chunks=1)
         self.failUnlessEqual(data.nsamples, 2)
-        self.failUnless(data.mapper.dsshape == (3,4))
         self.failUnlessEqual(data.samples.shape, (2,12))
         self.failUnless((data.samples ==
                          N.array([range(12),range(12,24)])).all())
@@ -77,7 +76,6 @@ class MaskedDatasetTests(unittest.TestCase):
     def testPatternShape(self):
         data = MaskedDataset(samples=N.ones((10,2,3,4)), labels=1, chunks=1)
         self.failUnless(data.samples.shape == (10,24))
-        self.failUnless(data.mapper.dsshape == (2,3,4))
 
 
     def testFeature2Coord(self):
@@ -90,7 +88,7 @@ class MaskedDatasetTests(unittest.TestCase):
         # check 100 random coord2feature transformations
         for i in xrange(100):
             # choose random coord
-            c = randomCoord(data.mapper.dsshape)
+            c = randomCoord((2,4,3,5))
             # tranform to feature_id
             id = data.mapper.getOutId(c)
 
@@ -204,7 +202,7 @@ class MaskedDatasetTests(unittest.TestCase):
         self.failUnless( sel.samples.shape[1] == 1 )
         origmask = sel.mapper.getMask()
         self.failUnless( origmask[0,1,2] == True )
-        self.failUnless( origmask.shape == data.mapper.dsshape == (2,4,3) )
+        self.failUnless( origmask.shape == (2,4,3) )
 
 
 
