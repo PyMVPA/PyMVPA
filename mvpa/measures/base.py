@@ -296,6 +296,7 @@ class Sensitivity(FeaturewiseDatasetMeasure):
           clf : Classifier
             classifier to use. Only classifiers sub-classed from
             `LinearSVM` may be used.
+            XXX: This is no longer true, right (SMLR,GPR,...)?
           force_training : Bool
             if classifier was already trained -- do not retrain
         """

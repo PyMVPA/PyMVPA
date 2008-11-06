@@ -35,7 +35,7 @@ class MappedDataset(Dataset):
     """
 
     def __init__(self, samples=None, mapper=None, dsattr=None, **kwargs):
-        """Initialize `MaskedDataset`
+        """Initialize `MappedDataset`
 
         If `samples` and `mapper` arguments are not `None` the mapper is
         used to forward-map the samples array and the result is passed
