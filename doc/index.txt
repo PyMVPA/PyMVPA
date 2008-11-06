@@ -2,20 +2,18 @@
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
 
-Pie ... what?
-=============
-
 PyMVPA is a Python_ module intended to ease pattern classification analyses of
-large datasets. It provides high-level abstraction of typical processing steps
-and a number of implementations of some popular algorithms.  While it is not
-limited to the neuroimaging domain, it is eminently suited for such datasets.
-PyMVPA is truely free software (in every respect) and additionally requires
-nothing but free-software to run.
+large datasets. In the neuroimaging contexts such analysis techniques are also
+known as :term:`decoding` or :term:`MVPA` analysis. PyMVPA provides high-level
+abstraction of typical processing steps and a number of implementations of some
+popular algorithms.  While it is not limited to the neuroimaging domain, it is
+eminently suited for such datasets.  PyMVPA is truely free software (in every
+respect) and additionally requires nothing but free-software to run.
 
 .. _Python: http://www.python.org
 
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
-(MVPA) in **Py**\ thon.
+(:term:`MVPA`) in **Py**\ thon.
 
 PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
 website, the source code repository and download services are hosted on 
@@ -29,19 +27,19 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-
-  PyMVPA 0.3.1 is out [14 Sep 2008]
-
-    It features new plotting support, I-RELIEF sensitivity measure,
-    new Dataset types and readers, bugfixes and improved documentation. See
-    the :ref:`changelog <changelog>` for details.
+A complete fMRI :ref:`example dataset <exampledata` is now available for download [22 Oct 2008]
 
 
-  New beta version of a binary installer for MacOS X 10.5 [21 Aug 2008]
+PyMVPA is also running on a cell phone! [15 Oct 2008]
 
-    The installer is built for the Enthought Python distribution (Python 2.5)
-    and contains the recently released PyMVPA 0.3.
+  Here is :ref:`the proof <requirements>`.
 
+
+PyMVPA 0.3.1 is out [14 Sep 2008]
+
+  It features new plotting support, I-RELIEF sensitivity measure,
+  new Dataset types and readers, bugfixes and improved documentation. See
+  the :ref:`changelog <changelog>` for details.
 
 
 Documentation
@@ -52,9 +50,12 @@ Documentation
 * :ref:`Development Changelog <changelog>` (see what has changed)
 * :ref:`Developer Guidelines <devguide>` (information for people contributing
   code)
+* :ref:`Module Reference <modref>` (user-oriented reference, less complex than full API docs)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
 * :ref:`FAQ <faq>` (short answers to common problems)
+* :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
+  <HGF+01>`)
 * :ref:`genindex` (access by keywords)
 * :ref:`search` (online and offline full-text search)
 

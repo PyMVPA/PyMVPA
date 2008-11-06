@@ -41,13 +41,12 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
         """Cheap initialization.
 
         Parameters
-        ----------
-        - `datameasure`: `Datameasure` that is used to quantify the effect of
+          datameasure: `Datameasure` that is used to quantify the effect of
                          noise perturbation.
-        - `noise`: Functor to generate noise. The noise generator has to return
-                   an 1d array of n values when called the `size=n` keyword
-                   argument. This is the default interface of the random number
-                   generators in NumPy's `random` module.
+          noise: Functor to generate noise. The noise generator has to return
+                 an 1d array of n values when called the `size=n` keyword
+                 argument. This is the default interface of the random number
+                 generators in NumPy's `random` module.
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self)

@@ -43,14 +43,14 @@ if externals.exists('shogun'):
 
 if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
-    from mvpa.clfs import libsvm
-    _NuSVM = libsvm.SVM
+    from mvpa.clfs import libsvmc
+    _NuSVM = libsvmc.SVM
     if default_backend == 'libsvm' or SVM is None:
         if __debug__ and default_backend != 'libsvm' and SVM is None:
             debug('SVM',
                   'Default SVM backend %s was not found, so using libsvm'
                   % default_backend)
-        SVM = libsvm.SVM
+        SVM = libsvmc.SVM
     #from mvpa.clfs.libsvm.svm import *
 
 if SVM is None:

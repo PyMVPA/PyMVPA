@@ -14,7 +14,7 @@ import mvpa.misc.copy as copy
 
 from mvpa.datasets import Dataset
 from mvpa.base.dochelpers import enhancedDocString
-
+from mvpa.misc.exceptions import DatasetError
 
 class MappedDataset(Dataset):
     """A `Dataset` which is created by applying a `Mapper` to the data.
@@ -31,12 +31,11 @@ class MappedDataset(Dataset):
     multiple samples respectively) or vice versa.
 
     Most likely, this class will not be used directly, but rather
-    indirectly through one of its subclasses (e.g. `MaskedDataset).
+    indirectly through one of its subclasses (e.g. `MaskedDataset`).
     """
 
     def __init__(self, samples=None, mapper=None, dsattr=None, **kwargs):
-        """Initialize `MappedDataset`
-
+        """
         If `samples` and `mapper` arguments are not `None` the mapper is
         used to forward-map the samples array and the result is passed
         to the `Dataset` constructor.
@@ -68,8 +67,8 @@ class MappedDataset(Dataset):
         # if the samples are passed to the special arg, use the mapper to
         # transform them.
         if not samples is None:
-            if dsattr['mapper'] is None:
-                raise ValueError, \
+            if not dsattr.has_key('mapper') or dsattr['mapper'] is None:
+                raise DatasetError, \
                       "Constructor of MappedDataset requires a mapper " \
                       "if unmapped samples are provided."
             Dataset.__init__(self,
@@ -77,6 +76,9 @@ class MappedDataset(Dataset):
                              dsattr=dsattr,
                              **(kwargs))
         else:
+            Dataset._checkCopyConstructorArgs(samples=samples,
+                                              dsattr=dsattr,
+                                              **kwargs)
             Dataset.__init__(self, dsattr=dsattr, **(kwargs))
 
 
@@ -134,7 +136,9 @@ class MappedDataset(Dataset):
 
     # read-only class properties
     mapper = property(fget=lambda self: self._dsattr['mapper'])
-    samples_original = property(fget=mapSelfReverse, doc="Return samples in the original shape")
+    samples_original = property(fget=mapSelfReverse,
+                                doc="Return samples in the original shape")
 
     # syntactic sugarings
-    O = property(fget=mapSelfReverse, doc="Return samples in the original shape")
+    O = property(fget=mapSelfReverse,
+                 doc="Return samples in the original shape")

@@ -7,7 +7,10 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example"""
+"""
+Visualization of Data Projection Methods
+========================================
+"""
 
 from mvpa.misc.data_generators import noisy_2d_fx
 from mvpa.mappers.pca import PCAMapper

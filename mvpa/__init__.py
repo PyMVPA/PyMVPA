@@ -68,6 +68,9 @@ else:
     _random_seed = int(N.random.uniform()*(2**31-1))
 
 def seed(random_seed):
+    """Uniform and combined seeding of all relevant random number
+    generators.
+    """
     N.random.seed(random_seed)
     random.seed(random_seed)
 

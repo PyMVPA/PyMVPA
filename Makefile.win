@@ -29,10 +29,12 @@ installer: 3rd build
 
 
 configure-inplace-use:
-	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsmlr\\smlrc.pyd \
-		mvpa\\clfs\\libsmlr
-	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsvm\\svmc.pyd \
-		mvpa\\clfs\\libsvm
+	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsmlrc\\smlrc.pyd \
+		mvpa\\clfs\\libsmlrc
+	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsvmc\\_svmc.pyd \
+		mvpa\\clfs\\libsvmc
+#	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libridgetrain\\ridgetrain.pyd \
+#		mvpa\\clfs\\libridgetrain
 
 #
 # Cleaning

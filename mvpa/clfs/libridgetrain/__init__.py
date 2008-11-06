@@ -6,15 +6,16 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classifiers provied by LibSVM library"""
+"""Import helper for Fortran extension ridgetrain."""
 
 __docformat__ = 'restructuredtext'
 
+
 if __debug__:
     from mvpa.base import debug
-    debug('INIT', 'mvpa.clfs.libsvm')
+    debug('INIT', 'mvpa.clfs.libridgetrain')
 
-from mvpa.clfs.libsvm.svm import SVM
+from mvpa.clfs.libridgetrain.ridgetrain import ridgetrain
 
 if __debug__:
-    debug('INIT', 'mvpa.clfs.libsvm end')
+    debug('INIT', 'mvpa.clfs.libridgetrain end')

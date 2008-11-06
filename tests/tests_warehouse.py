@@ -73,7 +73,7 @@ def sweepargs(**kwargs):
                         if __debug__:
                             debug('TEST', 'Failed #%d' % len(failed_tests_str))
                     # TODO: handle different levels of unittests properly
-                    if cfg.getboolean('general', 'quicktest', False):
+                    if cfg.getboolean('tests', 'quick', False):
                         # on TESTQUICK just run test for 1st entry in the list,
                         # the rest are omitted
                         # TODO: proper partitioning of unittests

@@ -7,7 +7,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example showing some possibilities of data exploration
+"""
+Simple Data-Exploration
+=======================
+
+Example showing some possibilities of data exploration
 (i.e. to 'smell' data).
 """
 

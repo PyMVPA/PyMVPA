@@ -38,14 +38,16 @@ class CollectableAttribute(object):
     part of a collection.
 
     Derived classes will have specific semantics:
+
     * StateVariable: conditional storage
     * AttributeWithUnique: easy access to a set of unique values
       within a container
     * Parameter: attribute with validity ranges.
-     - ClassifierParameter: specialization to become a part of
-       Classifier's params collection
-     - KernelParameter: --//-- to become a part of Kernel Classifier's
-       kernel_params collection
+
+      - ClassifierParameter: specialization to become a part of
+        Classifier's params collection
+      - KernelParameter: --//-- to become a part of Kernel Classifier's
+        kernel_params collection
 
     Those CollectableAttributes are to be groupped into corresponding
     collections for each class by statecollector metaclass, ie it
@@ -999,10 +1001,14 @@ class StateCollection(Collection):
         It might be handy to store set of enabled states and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> states_enabled = stateful.enabled
-        >>> stateful.enabled = ['blah']
-        >>> stateful.enabled = states_enabled
-
+        >>> from mvpa.misc.state import Stateful, StateVariable
+        >>> class Blah(Stateful):
+        ...   bleh = StateVariable(enabled=False, doc='Example')
+        ...
+        >>> blah = Blah()
+        >>> states_enabled = blah.states.enabled
+        >>> blah.states.enabled = ['bleh']
+        >>> blah.states.enabled = states_enabled
         """
         for index in self._items.keys():
             self.enable(index, index in indexlist)
@@ -1177,7 +1183,7 @@ class AttributesCollector(type):
             setattr(cls, "_statesdoc", statesdoc)
 
         if paramsdoc != "":
-            if __debug__:
+            if __debug__ and 'COLR' in debug.active:
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
             setattr(cls, "_paramsdoc", paramsdoc)
 

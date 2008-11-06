@@ -26,6 +26,7 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString, table2string
+from mvpa.clfs.stats import autoNullDist
 
 if __debug__:
     from mvpa.base import debug
@@ -1230,7 +1231,7 @@ class TransferError(ClassifierError):
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
-        self.__null_dist = null_dist
+        self.__null_dist = autoNullDist(null_dist)
 
 
     __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
@@ -1308,11 +1309,14 @@ class TransferError(ClassifierError):
 
         # get probability of error under NULL hypothesis if available
         if not error is None and not self.__null_dist is None:
-            self.null_prob = self.__null_dist.cdf(error)
+            self.null_prob = self.__null_dist.p(error)
 
 
     @property
     def errorfx(self): return self.__errorfx
+
+    @property
+    def null_dist(self): return self.__null_dist
 
 
 

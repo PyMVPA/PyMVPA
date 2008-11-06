@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.misc.io import ColumnData
+from mvpa.misc.support import Event
 
 if __debug__:
     from mvpa.base import debug
@@ -27,10 +28,8 @@ class FslEV3(ColumnData):
     def __init__(self, source):
         """Read and write FSL EV3 files.
 
-        Parameter
-        ---------
-
-        - `source`: filename of an EV3 file
+        :Parameter:
+          source: filename of an EV3 file
         """
         # init data from known format
         ColumnData.__init__(self, source,
@@ -60,6 +59,16 @@ class FslEV3(ColumnData):
                           header=False,
                           header_order=['onsets', 'durations', 'intensities'],
                           sep=' ')
+
+
+    def toEvents(self):
+        """Convert into a list of `Event` instances.
+        """
+        return \
+            [Event(onset=self['onsets'][i],
+                   duration=self['durations'][i],
+                   features=[self['intensities'][i]])
+                        for i in xrange(self.nevs)]
 
 
     onsets = property(fget=lambda self: self['onsets'])

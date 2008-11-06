@@ -84,9 +84,6 @@ class PCAMapperTests(unittest.TestCase):
         self.failUnlessEqual(self.pm.getInSize(), 40)
 #        self.failUnlessEqual(self.pm.getOutSize(), 10)
         self.failUnlessEqual(self.pm.getOutSize(), 40)
-        self.failUnlessEqual(self.pm.getInShape(), (40,))
-#        self.failUnlessEqual(self.pm.getOutShape(), (10,))
-        self.failUnlessEqual(self.pm.getOutShape(), (40,))
 
         # copy mapper
         pm2 = deepcopy(self.pm)
