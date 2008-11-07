@@ -24,6 +24,7 @@ import numpy as N
 import mvpa.misc.copy as copy
 
 from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.args import group_kwargs
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals
@@ -207,7 +208,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             `transformer`, which is always applied. By default, the sum of
             absolute values along the second axis is computed.
         """
-        DatasetMeasure.__init__(self, **(kwargs))
+        DatasetMeasure.__init__(self, **kwargs)
 
         self.__combiner = combiner
 
@@ -306,7 +307,7 @@ class StaticDatasetMeasure(DatasetMeasure):
           bias
              optionally available bias
         """
-        DatasetMeasure.__init__(self, *(args), **(kwargs))
+        DatasetMeasure.__init__(self, *args, **kwargs)
         if measure is None:
             raise ValueError, "Sensitivity measure has to be provided"
         self.__measure = measure
@@ -421,7 +422,15 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     def __init__(self, analyzers=None,
                  combiner=FirstAxisMean,
                  **kwargs):
-        if analyzers == None:
+        """Initialize CombinedFeaturewiseDatasetMeasure
+
+        :Parameters:
+          analyzers : list or None
+            List of analyzers to be used. There is no logic to populate
+            such a list in __call__, so it must be either provided to
+            the constructor or assigned to .analyzers prior calling
+        """
+        if analyzers is None:
             analyzers = []
 
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
@@ -469,12 +478,24 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 class BoostedClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzers to be merged into a single output"""
 
+
+    # XXX we might like to pass parameters also for combined_analyzer
+    @group_kwargs(prefixes=['slave_'], assign=True)
     def __init__(self,
                  clf,
                  analyzer=None,
                  combined_analyzer=None,
+                 slave_kwargs={},
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
+
+        :Parameters:
+          clf : `BoostedClassifier`
+            Classifier to be used
+          analyzer : analyzer
+            Is used to populate combined_analyzer
+          slave_*
+            Arguments to pass to created analyzer if analyzer is None
         """
         Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:
@@ -484,7 +505,10 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 
-        self.__analyzer = None
+        if analyzer is not None and len(self._slave_kwargs):
+            raise ValueError, \
+                  "Provide either analyzer of slave_* arguments, not both"
+        self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
@@ -493,7 +517,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         # create analyzers
         for clf in self.clf.clfs:
             if self.__analyzer is None:
-                analyzer = clf.getSensitivityAnalyzer()
+                analyzer = clf.getSensitivityAnalyzer(**(self._slave_kwargs))
                 if analyzer is None:
                     raise ValueError, \
                           "Wasn't able to figure basic analyzer for clf %s" % \
@@ -514,7 +538,11 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 
         self.__combined_analyzer.analyzers = analyzers
 
-        return self.__combined_analyzer(dataset)
+        # XXX not sure if we don't want to call directly ._call(dataset) to avoid
+        # double application of transformers/combiners, after all we are just
+        # 'proxying' here to combined_analyzer...
+        # YOH: decided -- lets call ._call
+        return self.__combined_analyzer._call(dataset)
 
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
 
@@ -522,6 +550,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzer output just to pass through"""
 
+    @group_kwargs(prefixes=['slave_'], assign=True)
     def __init__(self,
                  clf,
                  analyzer=None,
@@ -530,30 +559,41 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         """
         Sensitivity.__init__(self, clf, **kwargs)
 
-        self.__analyzer = None
+        if analyzer is not None and len(self._slave_kwargs):
+            raise ValueError, \
+                  "Provide either analyzer of slave_* arguments, not both"
+
+        self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
     def _call(self, dataset):
-        if self.__analyzer is None:
-            self.__analyzer = self.clf.clf.getSensitivityAnalyzer()
-            if self.__analyzer is None:
+        # OPT: local bindings
+        clfclf = self.clf.clf
+        analyzer = self.__analyzer
+
+        if analyzer is None:
+            analyzer = clfclf.getSensitivityAnalyzer(
+                **(self._slave_kwargs))
+            if analyzer is None:
                 raise ValueError, \
                       "Wasn't able to figure basic analyzer for clf %s" % \
-                      `self.clf.clf`
+                      `clfclf`
             if __debug__:
                 debug("SA", "Selected analyzer %s for clf %s" % \
-                      (`self.__analyzer`, `self.clf.clf`))
+                      (analyzer, clfclf))
+            # bind to the instance finally
+            self.__analyzer = analyzer
 
         # TODO "remove" unnecessary things below on each call...
         # assign corresponding classifier
-        self.__analyzer.clf = self.clf.clf
+        analyzer.clf = clfclf
 
         # if clf was trained already - don't train again
-        if self.clf.clf.trained:
-            self.__analyzer._force_training = False
+        if clfclf.trained:
+            analyzer._force_training = False
 
-        return self.__analyzer._call(dataset)
+        return analyzer._call(dataset)
 
     analyzer = property(fget=lambda x:x.__analyzer)
 
