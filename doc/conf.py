@@ -367,7 +367,7 @@ latex_paper_size = 'a4'
 latex_documents = [
   ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
    'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg, '
-   'James M. Huges',
+   'James M. Hughes',
    'manual'),
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
    'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg',
