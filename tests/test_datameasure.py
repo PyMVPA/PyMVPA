@@ -20,7 +20,7 @@ from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
 
-from mvpa.misc.transformers import Absolute
+from mvpa.misc.transformers import Absolute, FirstAxisMean, SecondAxisSumOfAbs
 
 from mvpa.measures.anova import OneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
