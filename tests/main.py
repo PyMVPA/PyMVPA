@@ -43,6 +43,7 @@ tests = [
     'test_iohelpers',
     'test_datasetfx',
     'test_cmdline',
+    'test_args',
     'test_eepdataset',
     'test_meg',
     # Classifiers (longer tests)
