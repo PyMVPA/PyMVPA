@@ -198,7 +198,15 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
     # XXX should we may be default to combiner=None to avoid
     # unexpected results? Also rethink if we need combiner here at
     # all... May be combiners should be 'adjoint' with transformer
-    def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs):
+    # YYY in comparison to CombinedSensitivityAnalyzer here default
+    #     value for combiner is worse than anywhere. From now on,
+    #     default combiners should be provided "in place", ie
+    #     in SMLR it makes sense to have SecondAxisMaxOfAbs,
+    #     in SVM (pair-wise) only for not-binary should be
+    #     SecondAxisSumOfAbs, though could be Max as well... uff
+    #   YOH: started to do so, but still have issues... thus
+    #        reverting back for now
+    def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs): # SecondAxisSumOfAbs
         """Initialize
 
         :Parameters:
@@ -419,8 +427,11 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     sensitivities = StateVariable(enabled=False,
         doc="Sensitivities produced by each classifier")
 
+    # XXX think again about combiners... now we have it in here and as
+    #     well as in the parent -- FeaturewiseDatasetMeasure...
+    # YYY because we don't use parent's _call. Needs RF
     def __init__(self, analyzers=None,
-                 combiner=FirstAxisMean,
+                 combiner=None, #FirstAxisMean,
                  **kwargs):
         """Initialize CombinedFeaturewiseDatasetMeasure
 
@@ -443,23 +454,24 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
     def _call(self, dataset):
         sensitivities = []
-        ind = 0
-        for analyzer in self.__analyzers:
+        for ind,analyzer in enumerate(self.__analyzers):
             if __debug__:
                 debug("SA", "Computing sensitivity for SA#%d:%s" %
                       (ind, analyzer))
             sensitivity = analyzer(dataset)
             sensitivities.append(sensitivity)
-            ind += 1
 
         self.sensitivities = sensitivities
         if __debug__:
             debug("SA",
                   "Returning combined using %s sensitivity across %d items" %
-                  (`self.__combiner`, len(sensitivities)))
+                  (self.__combiner, len(sensitivities)))
 
         if self.__combiner is not None:
             sensitivities = self.__combiner(sensitivities)
+        else:
+            # assure that we have an ndarray on output
+            sensitivities = N.asarray(sensitivities)
         return sensitivities
 
 

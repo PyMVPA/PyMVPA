@@ -44,6 +44,7 @@ from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
 from mvpa.misc.param import Parameter
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
+from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
@@ -1677,7 +1678,13 @@ class SplitClassifier(CombinedClassifier):
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
     def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
-        """Return an appropriate SensitivityAnalyzer for `SplitClassifier`"""
+        """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
+
+        :Parameters:
+          combiner
+            If not provided, FirstAxisMean is assumed
+        """
+        kwargs.setdefault('combiner', FirstAxisMean)
         return BoostedClassifierSensitivityAnalyzer(
                 self,
                 analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
