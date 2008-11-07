@@ -18,6 +18,7 @@ from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.state import StateVariable, Parametrized
 from mvpa.misc.param import Parameter
+from mvpa.misc.transformers import SecondAxisMaxOfAbs
 from mvpa.base import warning, externals
 
 _DEFAULT_IMPLEMENTATION = "Python"
@@ -443,6 +444,7 @@ class SMLR(Classifier):
 
     def getSensitivityAnalyzer(self, **kwargs):
         """Returns a sensitivity analyzer for SMLR."""
+        kwargs.setdefault('combiner', SecondAxisMaxOfAbs)
         return SMLRWeights(self, **kwargs)
 
 
