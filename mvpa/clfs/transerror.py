@@ -1260,7 +1260,7 @@ class TransferError(ClassifierError):
         # OPT: local binding
         clf = self.clf
         predictions = clf.predict(testdataset.samples)
-
+        
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
