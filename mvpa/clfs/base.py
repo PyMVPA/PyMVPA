@@ -36,6 +36,7 @@ else:
 import time
 from sets import Set
 
+from mvpa.misc.args import group_kwargs
 from mvpa.misc.support import idhash
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
@@ -43,6 +44,7 @@ from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
 from mvpa.misc.param import Parameter
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
+from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
@@ -1080,11 +1082,12 @@ class ProxyClassifier(Classifier):
         super(ProxyClassifier, self).untrain()
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
         return ProxyClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 
@@ -1689,11 +1692,18 @@ class SplitClassifier(CombinedClassifier):
             pass
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
-        """Return an appropriate SensitivityAnalyzer"""
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
+        """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
+
+        :Parameters:
+          combiner
+            If not provided, FirstAxisMean is assumed
+        """
+        kwargs.setdefault('combiner', FirstAxisMean)
         return BoostedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
     splitter = property(fget=lambda x:x.__splitter,
@@ -1749,12 +1759,12 @@ class MappedClassifier(ProxyClassifier):
         return ProxyClassifier._predict(self, self.__mapper.forward(data))
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
-        print "HERE"
         return MappedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 
@@ -1882,15 +1892,15 @@ class FeatureSelectionClassifier(ProxyClassifier):
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
 
-
-    def getSensitivityAnalyzer(self, **kwargs):
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer
 
-        TODO: had to clone from mapped classifier... XXX 
+        TODO: had to clone from mapped classifier... XXX
         """
         return MappedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 
