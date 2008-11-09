@@ -91,11 +91,16 @@ def writeAPIDocTemplate(uri):
 
         # must NOT exclude from index to keep cross-refs working
         ad += '  :members:\n' \
-              '  :undoc-members:\n'
+              '  :undoc-members:\n' \
+              '  :show-inheritance:\n'
         #      '  :noindex:\n\n'
 
         # place api link
         ad += '.. seealso::\n\n' \
+              '  Derived classes might provide additional methods via their ' \
+              '  base classes. Please refer to the list of base classes ' \
+              '  (if it exists) at the begining of the ' \
+              '  :class:`~' + c + '` documentation.\n\n' \
               '  Full API documentation of ' \
               '`%s in module %s`_.\n\n' % (c, uri)
         ad += '.. _%s in module %s: ../api/%s.%s-class.html\n\n' % (c, uri, uri, c)
