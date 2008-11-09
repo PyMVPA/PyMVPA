@@ -17,6 +17,7 @@ from mvpa.misc.copy import deepcopy
 from mvpa.base import warning
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
+from mvpa.misc.transformers import SecondAxisSumOfAbs
 
 if __debug__:
     from mvpa.base import debug
@@ -253,6 +254,7 @@ class _SVM(Classifier):
         """Returns an appropriate SensitivityAnalyzer."""
         sana = self._KERNELS[self._kernel_type_literal][2]
         if sana is not None:
+            kwargs.setdefault('combiner', SecondAxisSumOfAbs)
             return sana(self, **kwargs)
         else:
             raise NotImplementedError, \

@@ -49,24 +49,25 @@ class StatsTests(unittest.TestCase):
         self.failUnless(p < 0.05)
 
 
-    @sweepargs(nd=nulldist_sweep[1:])
-    def testNullDistProb(self, nd):
-        if not isinstance(nd, NullDist):
+    @sweepargs(null=nulldist_sweep[1:])
+    def testNullDistProb(self, null):
+        if not isinstance(null, NullDist):
             return
         ds = datasets['uni2small']
-        null = nd
 
         null.fit(OneWayAnova(), ds)
 
         # check reasonable output.
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
-        prob = null.p([3,0,0,0,0,0])
+        prob = null.p([3,0,0,0,0,N.nan])
         self.failUnless(N.abs(prob[0]) < 0.01)
-        self.failUnless((N.abs(prob[1:]) > 0.05).all())
+        self.failUnless((N.abs(prob[1:]) > 0.05).all(),
+                        msg="Bogus features should have insignificant p."
+                        " Got %s" % (N.abs(prob[1:]),))
 
         # has to have matching shape
-        if not isinstance(nd, FixedNullDist):
+        if not isinstance(null, FixedNullDist):
             # Fixed dist is univariate ATM so it doesn't care
             # about dimensionality and gives 1 output value
             self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
