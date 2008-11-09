@@ -236,6 +236,11 @@ def dumpit(app, what, name, obj, options, lines):
     if ls:
         del(lines[lstart:lend])
 
+    # add empty line at begining of class docs to separate base class list from
+    # class docs (should actually be done by sphinx IMHO)
+    if what == 'class':
+        lines.insert(0, u'')
+
 
 # make this file a sphinx extension itself, to be able to do docstring
 # post-processing
