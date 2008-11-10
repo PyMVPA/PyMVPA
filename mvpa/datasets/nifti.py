@@ -27,6 +27,7 @@ __name__ = oldname
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.mapped import MappedDataset
 from mvpa.datasets.event import EventDataset
+from mvpa.mappers.base import CombinedMapper
 from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.base import warning
@@ -279,18 +280,14 @@ class ERNiftiDataset(EventDataset):
             # ease users life
             data = data.samples
 
-        mr = self.mapper.reverse(data)[0]
+        mr = self.mapper.reverse(data)
 
-        # handle all known cases
-        if isinstance(mr, tuple) and len(mr) == 2:
+        # trying to determine which part should go into NiftiImage
+        if isinstance(self.mapper, CombinedMapper):
             # we have additional feature in the dataset -- ignore them
             mr = mr[0]
-        elif isinstance(mr, N.ndarray):
-            # no additional stuff, just voxels
-            pass
         else:
-            raise RuntimeError, \
-                  "Received unexpected datatype from mapper.reverse()."
+            pass
 
         return NiftiImage(mr, self.niftihdr)
 
