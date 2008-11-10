@@ -192,7 +192,7 @@ class ERNiftiDataset(EventDataset):
         # check if we are in copy constructor mode
         if events is None:
             EventDataset.__init__(self, samples=samples, events=events,
-                                  mask=None, **kwargs)
+                                  mask=mask, **kwargs)
             return
 
         nifti = getNiftiFromAnySource(samples)
@@ -245,13 +245,16 @@ class ERNiftiDataset(EventDataset):
                             " by setting `evconv` in ERNiftiDataset().")
 
         # pull mask array from NIfTI (if present)
-        mask = getNiftiFromAnySource(mask)
         if not mask is None:
-            mask = mask.data
+            mask_nim = getNiftiFromAnySource(mask)
+            if not mask_nim is None:
+                mask = mask_nim.data
+            else:
+                raise ValueError, "Cannot load mask from '%s'" % mask
 
         # finally init baseclass
         EventDataset.__init__(self, samples=samples, events=events,
-                              mask=None, dametric=metric, dsattr=dsattr,
+                              mask=mask, dametric=metric, dsattr=dsattr,
                               **kwargs)
 
 
