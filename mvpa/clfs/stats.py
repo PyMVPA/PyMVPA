@@ -270,8 +270,10 @@ class MCNullDist(NullDist):
         if is_scalar:
             x = [x]
 
+        x = N.asanyarray(x)
+        xshape = x.shape
         # assure x is a 1D array now
-        x = N.asanyarray(x).reshape((-1,))
+        x = x.reshape((-1,))
 
         if len(self._dist) != len(x):
             raise ValueError, 'Distribution was fit for structure with %d' \
@@ -280,7 +282,7 @@ class MCNullDist(NullDist):
 
         # extract cdf values per each element
         cdfs = [ dist.cdf(v) for v, dist in zip(x, self._dist) ]
-        return N.array(cdfs)
+        return N.array(cdfs).reshape(xshape)
 
 
     def clean(self):
