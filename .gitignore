@@ -36,3 +36,4 @@ data/haxby8x6
 *.kcache.*
 doc/modref
 doc/ex
+tools/pdfbook
