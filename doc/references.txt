@@ -54,8 +54,14 @@ experiments.
 
 .. _GE03:
 
-**Guyon, I. & Elisseeff, A.** (2003). An Introduction to Variable and Feature Selection. *Journal of Machine Learning*, *3*, 1157-1182.
+**Guyon, I. & Elisseeff, A.** (2003). An Introduction to Variable and Feature Selection. *Journal of Machine Learning*, *3*, 1157–1182.
   URL: http://www.jmlr.org/papers/v3/guyon03a.html
+
+
+.. _HHS+IP:
+
+**Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S.** (in press). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. *Neuroinformatics*.
+  *Introduction into the analysis of fMRI data using PyMVPA.*
 
 
 .. _HH08:
@@ -68,7 +74,7 @@ experiments.
 
 .. _HMH04:
 
-**Hanson, S., Matsuka, T. & Haxby, J.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *Neuroimage*, *23*, 156-166.
+**Hanson, S., Matsuka, T. & Haxby, J.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *Neuroimage*, *23*, 156–166.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2004.05.020
 
 
@@ -91,7 +97,7 @@ experiments.
 
 .. _KT05:
 
-**Kamitani, Y. & Tong, F.** (2005). Decoding the visual and subjective contents of the human brain. *Nature Neuroscience*, *8*, 679-685.
+**Kamitani, Y. & Tong, F.** (2005). Decoding the visual and subjective contents of the human brain. *Nature Neuroscience*, *8*, 679–685.
   *One of the two studies showing the possibility to read out orientation
   information from visual cortex.*
 
@@ -129,7 +135,7 @@ experiments.
 
 .. _MHN+04:
 
-**Mitchell, T., Hutchinson, R., Niculescu, R. S., Pereira, F., Wang, X., Just, M. & Newman, S.** (2004). Learning to Decode Cognitive States from Brain Images. *Machine Learning*, *57*, 145-175.
+**Mitchell, T., Hutchinson, R., Niculescu, R. S., Pereira, F., Wang, X., Just, M. & Newman, S.** (2004). Learning to Decode Cognitive States from Brain Images. *Machine Learning*, *57*, 145–175.
   DOI: http://dx.doi.org/10.1023/B:MACH.0000035475.85309.1b
 
 
@@ -150,19 +156,19 @@ experiments.
 
 .. _OJA+05:
 
-**O'Toole, A. J., Jiang, F., Abdi, H. & Haxby, J. V.** (2005). Partially Distributed Representations of Objects and Faces in Ventral Temporal Cortex . *Journal of Cognitive Neuroscience*, *17*, 580-590.
+**O'Toole, A. J., Jiang, F., Abdi, H. & Haxby, J. V.** (2005). Partially Distributed Representations of Objects and Faces in Ventral Temporal Cortex . *Journal of Cognitive Neuroscience*, *17*, 580–590.
   DOI: http://dx.doi.org/10.1162/0898929053467550
 
 
 .. _OJA+07:
 
-**O'Toole, A. J., Jiang, F., Abdi, H., Penard, N., Dunlop, J. P. & Parent, M. A.** (2007). Theoretical, statistical, and practical perspectives on pattern-based classification approaches to the analysis of functional neuroimaging data. *Journal of Cognitive Neuroscience*, *19*, 1735-1752.
+**O'Toole, A. J., Jiang, F., Abdi, H., Penard, N., Dunlop, J. P. & Parent, M. A.** (2007). Theoretical, statistical, and practical perspectives on pattern-based classification approaches to the analysis of functional neuroimaging data. *Journal of Cognitive Neuroscience*, *19*, 1735–1752.
   DOI: http://dx.doi.org/10.1162/jocn.2007.19.11.1735
 
 
 .. _PP07:
 
-**Pessoa, L. & Padmala, S.** (2007). Decoding near-threshold perception of fear from distributed single-trial brain activation. *Cerebral Cortex*, *17*, 691-701.
+**Pessoa, L. & Padmala, S.** (2007). Decoding near-threshold perception of fear from distributed single-trial brain activation. *Cerebral Cortex*, *17*, 691–701.
   *Analysis of slow event-related fMRI data using patter classification techniques.*
 
   DOI: http://dx.doi.org/10.1093/cercor/bhk020
