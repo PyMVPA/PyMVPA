@@ -21,18 +21,18 @@ if __debug__:
 
 
 def reuseAbsolutePath(file1, file2, force=False):
-	"""Use path to file1 as the path to file2 is no absolute
-	path is given for file2
+    """Use path to file1 as the path to file2 is no absolute
+    path is given for file2
 
-	:Parameters:
-	  force : bool
-	    if True, force it even if the file2 starts with /
-	"""
-	if not file2.startswith('/') or force:
-		# lets reuse path to file1
-		return os.path.join(os.path.dirname(file1), file2)
-	else:
-		return file2
+    :Parameters:
+      force : bool
+        if True, force it even if the file2 starts with /
+    """
+    if not file2.startswith('/') or force:
+        # lets reuse path to file1
+        return os.path.join(os.path.dirname(file1), file2.lstrip('/'))
+    else:
+        return file2
 
 
 def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
