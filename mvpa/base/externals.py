@@ -99,7 +99,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'hcluster': "import hcluster as __",
           'griddata': "import griddata as __",
           'cPickle': "import cPickle as __",
-          'gzip': "import gzip as __"
+          'gzip': "import gzip as __",
+          'lxml': "from lxml import objectify as __",
           }
 
 _caught_exceptions = [ImportError, AttributeError, RuntimeError]
