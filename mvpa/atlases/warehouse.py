@@ -8,22 +8,24 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Collection of the known atlases"""
 
+import os
+
+from mvpa.atlases.base import *
+from mvpa.atlases.fsl import *
+
+
 KNOWN_ATLAS_FAMILIES = {
-	'pymvpa': (["talairach", "talairach-dist"],
-			   r"/usr/share/rumba/atlases/data/%(name)s_atlas.xml"),
-	'fsl': (["HarvardOxford-Cortical", "HarvardOxford-Subcortical",
-			 "JHU-tracts", "Juelich", "MNI", "Thalamus"],
-			r"/usr/share/fsl/data/atlases/%(name)s.xml")
-	# XXX make use of FSLDIR
-	}
+    'pymvpa': (["talairach", "talairach-dist"],
+               r"/usr/share/rumba/atlases/data/%(name)s_atlas.xml"),
+    'fsl': (["HarvardOxford-Cortical", "HarvardOxford-Subcortical",
+             "JHU-tracts", "Juelich", "MNI", "Thalamus"],
+            r"/usr/share/fsl/data/atlases/%(name)s.xml")
+    # XXX make use of FSLDIR
+    }
 
 # map to go from the name to the path
 KNOWN_ATLASES = dict(reduce(lambda x,y:x+[(yy,y[1]) for yy in y[0]],
                              KNOWN_ATLAS_FAMILIES.values(), []))
-
-
-from mvpa.atlases.base import *
-from mvpa.atlases.fsl import *
 
 
 def Atlas(filename=None, name=None, *args, **kwargs):
@@ -32,9 +34,12 @@ def Atlas(filename=None, name=None, *args, **kwargs):
     if filename is None:
         if name is None:
             raise ValueError, \
-				  "Please provide either path or name of the atlas to be used"
+                  "Please provide either path or name of the atlas to be used"
         atlaspath = KNOWN_ATLASES[name]
         filename = atlaspath % ( {'name': name} )
+        if not os.path.exists(filename):
+            raise IOError, \
+                  "File %s for atlas %s was not found" % (filename, name)
     else:
         if name is not None:
             raise ValueError, "Provide only filename or name"
@@ -53,7 +58,7 @@ def Atlas(filename=None, name=None, *args, **kwargs):
 
         atlasTypes = {
             'PyMVPA': {"Label" : LabelsAtlas,
-					   "Reference": ReferencesAtlas},
+                       "Reference": ReferencesAtlas},
             'FSL': {"Label" : FSLLabelsAtlas,
                     "Probabalistic": FSLProbabilisticAtlas}
             }[atlas_source]
@@ -69,7 +74,7 @@ def Atlas(filename=None, name=None, *args, **kwargs):
             return tempAtlas
     except XMLAtlasException, e:
         print "File %s is not a valid XML based atlas due to %s" \
-			  % (filename, `e`)
+              % (filename, `e`)
         raise e
 
 
