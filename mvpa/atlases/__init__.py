@@ -28,7 +28,9 @@ if __debug__:
     from mvpa.base import debug
     debug('INIT', 'mvpa.atlases')
 
-from base import LabelsAtlas, ReferencesAtlas, FSLProbabilisticAtlas
+from mvpa.atlases.base import LabelsAtlas, ReferencesAtlas, XMLAtlasException
+from mvpa.atlases.fsl import FSLProbabilisticAtlas
+from mvpa.atlases.warehouse import Atlas, KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES
 
 if __debug__:
     debug('INIT', 'mvpa.atlases end')

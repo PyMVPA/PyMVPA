@@ -31,17 +31,6 @@ from mvpa.base import warning
 if __debug__:
 	from mvpa.base import debug
 
-KNOWN_ATLAS_FAMILIES = { 'pymvpa': (["talairach", "talairach-dist"],
-                                    r"/usr/share/rumba/atlases/data/%(name)s_atlas.xml"),
-                          'fsl': (["HarvardOxford-Cortical", "HarvardOxford-Subcortical",
-                                   "JHU-tracts", "Juelich", "MNI", "Thalamus"],
-                                  r"/usr/share/fsl/data/atlases/%(name)s.xml") # XXX make use of FSLDIR
-                          }
-
-# map to go from the name to the path
-KNOWN_ATLASES = dict(reduce(lambda x,y:x+[(yy,y[1]) for yy in y[0]],
-                             KNOWN_ATLAS_FAMILIES.values(), []))
-
 
 def checkRange(coord, range):
     """
@@ -229,8 +218,8 @@ class XMLBasedAtlas(BaseAtlas):
 
 
     def labelPoint(self, coord, levels=None):
-        """
-        Return labels for the given spatial point at specified levels specified by index,
+        """Return labels for the given spatial point at specified levels
+
         so we first transform point into the voxel space
         """
         coord_ = N.asarray(coord)          # or we would alter what should be constant
@@ -356,7 +345,8 @@ class XMLBasedAtlas(BaseAtlas):
 class Label(object):
     """Represents a label. Just to bring all relevant information together
     """
-    def __init__ (self, text, abbr=None, coord=(None, None,None), count=0, index=0):
+    def __init__ (self, text, abbr=None, coord=(None, None,None),
+                  count=0, index=0):
         """
         :Parameters:
           text : basestring
@@ -514,7 +504,8 @@ class ReferencesLevel(Level):
                                     "following attributes defined " +
                                     `requiredAttrs`)
 
-        indexes = ( int(Elevel.get("x")), int(Elevel.get("y")), int(Elevel.get("z")) )
+        indexes = ( int(Elevel.get("x")), int(Elevel.get("y")),
+                    int(Elevel.get("z")) )
 
         return ReferencesLevel(Elevel.get('description'),
                                indexes)
@@ -554,7 +545,8 @@ class PyMVPAAtlas(XMLBasedAtlas):
         #       defined... this origin might be misleading actually
         self._origin = N.array( (0,0,0) )
         if imagefile.attrib.has_key('offset'):
-            self._origin = N.array( map(int, imagefile.get('offset').split(',')) )
+            self._origin = N.array( map(int,
+                                        imagefile.get('offset').split(',')) )
 
         # Load the image file which has labels
         imagefilename = reuseAbsolutePath(self._filename, imagefile.text)
@@ -570,7 +562,8 @@ class PyMVPAAtlas(XMLBasedAtlas):
         if len(self._data.shape[0:-4]) > 0:
             bogus_dims = self._data.shape[0:-4]
             if max(bogus_dims)>1:
-                raise RuntimeError, "Atlas " + imagefilename + " has more than 4 of non-singular dimensions"
+                raise RuntimeError, "Atlas %s has more than 4 of non-singular" \
+                      "dimensions" % imagefilename
             new_shape = self._data.shape[-4:]
             self._data.reshape(new_shape)
 
@@ -593,7 +586,8 @@ class PyMVPAAtlas(XMLBasedAtlas):
                 except:
                     pass
             else:
-                raise XMLAtlasException("Unknown child '%s' within data" % child.tag)
+                raise XMLAtlasException(
+                    "Unknown child '%s' within data" % child.tag)
             self.Nlevels += 1
 
 
@@ -629,7 +623,8 @@ class LabelsAtlas(PyMVPAAtlas):
             if self._levels_dict.has_key(level):
                 level_ = self._levels_dict[ level ]
             else:
-                raise IndexError("Unknown index or description for level %d" % level)
+                raise IndexError(
+                    "Unknown index or description for level %d" % level)
 
             resultIndex =  int(self._data[ level_.index, \
                                             c[2], c[1], c[0] ])
@@ -644,21 +639,29 @@ class LabelsAtlas(PyMVPAAtlas):
 
 class ReferencesAtlas(PyMVPAAtlas):
     """
-    Atlas which provides references to the other atlases. For instance the atlas which has
-    references to the closest points (closest Gray, etc) in another atlas.
+    Atlas which provides references to the other atlases.
+
+    Example: the atlas which has references to the closest points
+    (closest Gray, etc) in another atlas.
     """
+
     def __init__(self, distance=0, *args, **kwargs):
+        """Initialize `ReferencesAtlas`
+        """
         PyMVPAAtlas.__init__(self, *args, **kwargs)
         # sanity checks
         if not ('reference-atlas' in XMLBasedAtlas._children_tags(self.header)):
-            raise XMLAtlasException("ReferencesAtlas must refer to a some other atlas")
+            raise XMLAtlasException(
+                "ReferencesAtlas must refer to a some other atlas")
 
         referenceAtlasName = self.header["reference-atlas"].text
-        self.__referenceAtlas = Atlas(reuseAbsolutePath(self._filename, referenceAtlasName))
+        self.__referenceAtlas = Atlas(reuseAbsolutePath(
+            self._filename, referenceAtlasName))
 
         if self.__referenceAtlas.space != self.space or \
            self.__referenceAtlas.spaceFlavor != self.spaceFlavor:
-            raise XMLAtlasException("Reference and original atlases should be in the same space")
+            raise XMLAtlasException(
+                "Reference and original atlases should be in the same space")
 
         self.__referenceLevel = None
         self.setDistance(distance)
@@ -674,7 +677,7 @@ class ReferencesAtlas(PyMVPAAtlas):
         if self._levels_dict.has_key(level):
             self.__referenceLevel = self._levels_dict[level]
         else:
-            raise IndexError("Unknown reference level " + `level` +\
+            raise IndexError("Unknown reference level " + `level` +
                              ". Known are " + `self._levels_dict.keys()`)
 
 
@@ -690,14 +693,18 @@ class ReferencesAtlas(PyMVPAAtlas):
         # obtain coordinates of the closest voxel
         cref = self._data[ self.__referenceLevel.indexes, c[2], c[1], c[0] ]
         dist = norm( (cref - c) * self.voxdim )
-        if __debug__: debug('ATL__', "Closest referenced point for %s is %s at distance %3.2f" % (`c`, `cref`, dist))
+        if __debug__:
+            debug('ATL__', "Closest referenced point for %s is "
+                  "%s at distance %3.2f" % (`c`, `cref`, dist))
         if (self.distance - dist) >= 1e-3: # neglect everything smaller
             result = self.__referenceAtlas.labelVoxel(cref, levels)
             result['voxel_referenced'] = c
             result['distance'] = dist
         else:
             result = self.__referenceAtlas.labelVoxel(c, levels)
-            if __debug__: debug('ATL__', "Closest referenced point is further than desired " "distance %.2f" % self.distance)
+            if __debug__:
+                debug('ATL__', "Closest referenced point is "
+                      "further than desired distance %.2f" % self.distance)
             result['voxel_referenced'] = None
             result['distance'] = 0
         return result
@@ -714,247 +721,12 @@ class ReferencesAtlas(PyMVPAAtlas):
         Set desired maximal distance for the reference
         """
         if distance < 0:
-            raise ValueError("Distance should not be negative. Thus '%f' is not a legal value" % distance)
+            raise ValueError("Distance should not be negative. "
+                             " Thus '%f' is not a legal value" % distance)
         if __debug__:
-			debug('ATL__', "Setting maximal distance for queries to be %d" % distance)
+			debug('ATL__',
+                  "Setting maximal distance for queries to be %d" % distance)
         self.__distance = distance
 
     distance = property(fget=lambda self:self.__distance, fset=setDistance)
-
-
-#
-# Atlases from FSL support
-#
-
-class FSLAtlas(XMLBasedAtlas):
-    """Base class for FSL atlases
-
-    """
-    source = 'FSL'
-
-    def __init__(self, *args, **kwargs):
-        """
-
-        :Parameters:
-          filename : string
-            Filename for the xml definition of the atlas
-          resolution : None or float
-            Some atlases link to multiple images at different
-            resolutions. if None -- best resolution is selected
-            using 0th dimension resolution
-        """
-        XMLBasedAtlas.__init__(self, *args, **kwargs)
-        self.space = 'MNI'
-
-
-    def _loadImages(self):
-        resolution = self._resolution
-        header = self.header
-        images = header.images
-        # Load present images
-        # XXX might be refactored to avoid duplication of
-        #     effort with PyMVPAAtlas
-        ni_image = None
-        resolutions = []
-        for image in images:
-            imagefile = image.imagefile
-            imagefilename = reuseAbsolutePath(
-                self._filename, imagefile.text, force=True)
-
-            try:
-                ni_image_  = NiftiImage(imagefilename, load=False)
-            except RuntimeError, e:
-                raise RuntimeError, " Cannot open file " + imagefilename
-
-            resolution_ = ni_image_.pixdim[0]
-            if resolution is None:
-                # select this one if the best
-                if ni_image is None or \
-                       resolution_ < ni_image.pixdim[0]:
-                    ni_image = ni_image_
-                    self._imagefile = imagefilename
-            else:
-                if resolution_ == resolution:
-                    ni_image = ni_image_
-                    self._imagefile = imagefilename
-                    break
-                else:
-                    resolutions += [resolution_]
-            # TODO: also make use of summaryimagefile may be?
-
-        if ni_image is None:
-            msg = "Could not find an appropriate atlas among %d atlases."
-            if resolution is not None:
-                msg += " Atlases had resolutions %s" % \
-                      (resolutions,)
-            raise RuntimeError, msg
-        if __debug__:
-			debug('ATL__', "Loading atlas data from %s" % self._imagefile)
-        self._image = ni_image
-        self._resolution = ni_image.pixdim[0]
-        self._origin = N.abs(ni_image.header['qoffset']) * 1.0  # XXX
-        self._data   = self._image.data
-
-
-    def _loadData(self):
-        """   """
-        # Load levels
-        self._levels_dict = {}
-        # preprocess labels for different levels
-        self.Nlevels = 1
-        #level = Level.generateFromXML(self.data, levelType='label')
-        level = LabelsLevel.generateFromXML(self.data)#, levelType='label')
-        level.description = self.header.name.text
-        self._levels_dict = {0: level}
-        #for index, child in enumerate(self.data.getchildren()):
-        #   if child.tag == 'level':
-        #       level = Level.generateFromXML(child)
-        #       self._levels_dict[level.description] = level
-        #       try:
-        #           self._levels_dict[level.index] = level
-        #       except:
-        #           pass
-        #   else:
-        #       raise XMLAtlasException("Unknown child '%s' within data" % child.tag)
-        #   self.Nlevels += 1
-        #pass
-
-
-    @staticmethod
-    def _checkVersion(version):
-        return re.search('^[0-9]+\.[0-9]', version) is not None
-
-
-class FSLProbabilisticAtlas(FSLAtlas):
-
-    def __init__(self, thr=0.0, strategy='all', sort=True, *args, **kwargs):
-        """
-
-        :Parameters:
-          thr : float
-            Value to threshold at
-          strategy : basestring
-            Possible values
-              all - all entries above thr
-              max - entry with maximal value
-          sort : bool
-            Either to sort entries for 'all' strategy according to
-            probability
-        """
-
-        FSLAtlas.__init__(self, *args, **kwargs)
-        self.thr = thr
-        self.strategy = strategy
-        self.sort = sort
-
-    def labelVoxel(self, c, levels=None):
-        if levels is not None and not (levels in [0, [0], (0,)]):
-            raise ValueError, \
-                  "I guess we don't support levels other than 0 in FSL atlas"
-
-        # check range
-        c = self._checkRange(c)
-
-        # XXX think -- may be we should better assign each map to a
-        # different level
-        level = 0
-        resultLabels = []
-        for index, area in enumerate(self._levels_dict[level]):
-            prob =  int(self._data[index, c[2], c[1], c[0]])
-            if prob > self.thr:
-                resultLabels += [dict(index=index,
-                                      #id=
-                                      label=area.text,
-                                      prob=prob)]
-
-        if self.sort or self.strategy == 'max':
-            resultLabels.sort(cmp=lambda x,y: cmp(x['prob'], y['prob']),
-                              reverse=True)
-
-        if self.strategy == 'max':
-            resultLabels = resultLabels[:1]
-        elif self.strategy == 'all':
-            pass
-        else:
-            raise ValueError, 'Unknown strategy %s' % self.strategy
-
-        result = {'voxel_queried' : c,
-                  # in the list since we have only single level but
-                  # with multiple entries
-                  'labels': [resultLabels]}
-
-        return result
-
-
-class FSLLabelsAtlas(XMLBasedAtlas):
-    def __init__(self, *args, **kwargs):
-        FSLAtlas.__init__(self, *args, **kwargs)
-        raise NotImplementedError
-
-
-def Atlas(filename=None, name=None, *args, **kwargs):
-    """
-    Somewhat of a factory for the atlases
-    """
-    if filename is None:
-        if name is None:
-            raise ValueError, "Please provide either path or name of the atlas to be used"
-        atlaspath = KNOWN_ATLASES[name]
-        filename = atlaspath % ( {'name': name} )
-    else:
-        if name is not None:
-            raise ValueError, "Provide only filename or name"
-
-    try:
-        tempAtlas = XMLBasedAtlas(filename=filename, *args, **kwargs)
-        version = tempAtlas.version
-        atlas_source = None
-        for cls in [PyMVPAAtlas, FSLAtlas]:
-            if cls._checkVersion(version):
-                atlas_source = cls.source
-                break
-        if atlas_source is None:
-            if __debug__: debug('ATL_', "Unknown atlas " + filename)
-            return tempAtlas
-
-        atlasTypes = {
-            'PyMVPA': {"Label" : LabelsAtlas,
-					   "Reference": ReferencesAtlas},
-            'FSL': {"Label" : FSLLabelsAtlas,
-                    "Probabalistic": FSLProbabilisticAtlas}
-            }[atlas_source]
-        atlasType = tempAtlas.header.type.text
-        if atlasTypes.has_key(atlasType):
-            if __debug__: debug('ATL_', "Creating %s Atlas" % atlasType)
-            return atlasTypes[atlasType](filename=filename, *args, **kwargs)
-            #return ReferencesAtlas(filename)
-        else:
-            printdebug("Unknown %s type '%s' of atlas in %s." " Known are %s" %
-                       (atlas_source, atlasType, filename,
-                        atlasTypes.keys()), 2)
-            return tempAtlas
-    except XMLAtlasException, e:
-        print "File %s is not a valid XML based atlas due to %s" % (filename, `e`)
-        raise e
-
-
-if __name__ == '__main__':
-    from mvpa.base import verbose
-    verbose.level = 10
-    for name in [
-        #'data/talairach_atlas.xml',
-        '/usr/share/fsl/data/atlases/HarvardOxford-Cortical.xml',
-        '/usr/share/fsl/data/atlases/HarvardOxford-Subcortical.xml'
-        ]:
-        atlas = Atlas(name)
-        #print isinstance(atlas.atlas, objectify.ObjectifiedElement)
-        #print atlas.header.images.imagefile.get('offset')
-        #print atlas.labelVoxel( (0, -7, 20) )
-        #print atlas[ 0, 0, 0 ]
-        print atlas[ -63, -12, 22 ]
-        #print atlas[ 0, -7, 20, [1,2,3] ]
-        #print atlas[ (0, -7, 20), 1:2 ]
-        #print atlas[ (0, -7, 20) ]
-        #print atlas[ (0, -7, 20), : ]
-        #   print atlas.getLabels(0)
 
