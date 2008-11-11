@@ -31,6 +31,10 @@ from mvpa.clfs.stats import autoNullDist
 if __debug__:
     from mvpa.base import debug
 
+if externals.exists('scipy'):
+    from scipy.stats.stats import nanmean
+else:
+    from mvpa.clfs.stats import nanmean
 
 def _p2(x, prec=2):
     """Helper to print depending on the type nicely. For some
@@ -329,7 +333,8 @@ class ROCCurve(object):
                 ROCs_pl.append(ROC)
             if len(aucs_pl)>0:
                 ROCs += [ROCs_pl]
-                aucs += [N.mean(aucs_pl)]
+                aucs += [nanmean(aucs_pl)]
+                #aucs += [N.mean(aucs_pl)]
 
         # store results within the object
         self._ROCs =  ROCs
@@ -1260,7 +1265,7 @@ class TransferError(ClassifierError):
         # OPT: local binding
         clf = self.clf
         predictions = clf.predict(testdataset.samples)
-
+        
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it

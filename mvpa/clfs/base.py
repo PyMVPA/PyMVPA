@@ -449,7 +449,13 @@ class Classifier(Parametrized):
         # remember the time when started computing predictions
         t0 = time.time()
 
+        states = self.states
+        # to assure that those are reset (could be set due to testing
+        # post-training)
+        states.reset(['values', 'predictions'])
+
         self._prepredict(data)
+
         if self.__trainednfeatures > 0 \
                or 'notrain2predict' in self._clf_internals:
             result = self._predict(data)
@@ -461,7 +467,7 @@ class Classifier(Parametrized):
                       "bogus")
             result = [None]*data.shape[0]
 
-        self.predicting_time = time.time() - t0
+        states.predicting_time = time.time() - t0
 
         if 'regression' in self._clf_internals and not self.params.regression:
             # We need to convert regression values into labels
@@ -474,7 +480,17 @@ class Classifier(Parametrized):
             # into labels.
             # XXX or should we just recreate "result"
             result_ = N.array(result)
-            self.values = result_
+            if states.isEnabled('values'):
+                # values could be set by now so assigning 'result' would
+                # be misleading
+                if not states.isSet('values'):
+                    states.values = result_.copy()
+                else:
+                    # it might be the values are pointing to result at
+                    # the moment, so lets assure this silly way that
+                    # they do not overlap
+                    states.values = states.values.copy()
+
             trained_labels = self.trained_labels
             for i, value in enumerate(result):
                 dists = N.abs(value - trained_labels)

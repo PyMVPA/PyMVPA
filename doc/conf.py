@@ -236,6 +236,11 @@ def dumpit(app, what, name, obj, options, lines):
     if ls:
         del(lines[lstart:lend])
 
+    # add empty line at begining of class docs to separate base class list from
+    # class docs (should actually be done by sphinx IMHO)
+    if what == 'class':
+        lines.insert(0, u'')
+
 
 # make this file a sphinx extension itself, to be able to do docstring
 # post-processing
@@ -272,9 +277,9 @@ copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.3.1'
+version = '0.4.0'
 # The full version, including alpha/beta/rc tags.
-release = '0.3.1'
+release = '0.4.0'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -367,7 +372,7 @@ latex_paper_size = 'a4'
 latex_documents = [
   ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
    'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg, '
-   'James M. Huges',
+   'James M. Hughes',
    'manual'),
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
    'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg',

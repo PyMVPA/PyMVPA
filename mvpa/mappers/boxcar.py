@@ -84,9 +84,22 @@ class BoxcarMapper(Mapper):
     def forward(self, data):
         """Project an ND matrix into N+1D matrix
 
+        This method also handles the special of forward mapping a single 'raw'
+        sample. Such a sample is extended (by concatenating clones of itself) to
+        cover a full boxcar. This functionality is only availably after a full
+        data array has been forward mapped once.
+
         :Returns:
           array: (#startpoint, ...)
         """
+        # in case the mapper is already charged
+        if not self.__selectors is None:
+            # if we have a single 'raw' sample (not a boxcar)
+            # extend it to cover the full box -- useful if one
+            # wants to forward map a mask in raw dataspace (e.g.
+            # fMRI ROI or channel map) into an appropriate mask vector
+            if data.shape == self._outshape[2:]:
+                return N.asarray([data] * self.boxlength)
 
         self._inshape = data.shape
 

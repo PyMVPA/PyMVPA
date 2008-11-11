@@ -281,7 +281,8 @@ class Event(dict):
       Group this event is part of (if any), e.g. experimental run.
     `features`
       Any amount of additional features of the event. This might include
-      things like physiological measures, stimulus intensity, ...
+      things like physiological measures, stimulus intensity. Must be a mutable
+      sequence (e.g. list), if present.
     """
     _MUSTHAVE = ['onset']
 
@@ -293,6 +294,54 @@ class Event(dict):
         for k in Event._MUSTHAVE:
             if not self.has_key(k):
                 raise ValueError, "Event must have '%s' defined." % k
+
+
+    def asDescreteTime(self, dt, storeoffset=False):
+        """Convert `onset` and `duration` information into descrete timepoints.
+
+        :Parameters:
+          dt: float
+            Temporal distance between two timepoints in the same unit as `onset`
+            and `duration`.
+          storeoffset: bool
+            If True, the temporal offset between original `onset` and
+            descretized `onset` is stored as an additional item in `features`.
+
+        :Return:
+          A copy of the original `Event` with `onset` and optionally `duration`
+          replaced by their corresponding descrete timepoint. The new onset will
+          correspond to the timepoint just before or exactly at the original
+          onset. The new duration will be the number of timepoints covering the
+          event from the computed onset timepoint till the timepoint exactly at
+          the end, or just after the event.
+
+          Note again, that the new values are expressed as #timepoint and not
+          in their original unit!
+        """
+        dt = float(dt)
+        onset = self['onset']
+        out = deepcopy(self)
+
+        # get the timepoint just prior the onset
+        out['onset'] = int(N.floor(onset / dt))
+
+        if storeoffset:
+            # compute offset
+            offset = onset - (out['onset'] * dt)
+
+            if out.has_key('features'):
+                out['features'].append(offset)
+            else:
+                out['features'] = [offset]
+
+        if out.has_key('duration'):
+            # how many timepoint cover the event (from computed onset
+            # to the one timepoint just after the end of the event
+            out['duration'] = int(N.ceil((onset + out['duration']) / dt) \
+                                  - out['onset'])
+
+        return out
+
 
 
 class HarvesterCall(object):

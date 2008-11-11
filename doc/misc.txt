@@ -334,7 +334,7 @@ Unittests at a Grasp
 
 If it is needed to just quickly grasp through all unittests without making
 them to test multiple classifiers (implemented with sweeparg), define
-environmental variable :envvar:`MVPA_QUICKTEST` e.g.::
+environmental variable :envvar:`MVPA_TESTS_QUICK` e.g.::
 
   > MVPA_WARNINGS_SUPPRESS=no MVPA_TESTS_QUICK=yes python test_clf.py
   ...............
