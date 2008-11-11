@@ -251,8 +251,9 @@ class XMLBasedAtlas(BaseAtlas):
 
         Depends on given `levels` as well as self.levels
         """
-
-        if (isinstance(levels, slice)):
+        if levels is None:
+            levels = [ i for i in xrange(self.Nlevels) ]
+        elif (isinstance(levels, slice)):
             # levels are given as a range
             if levels.step: step = levels.step
             else: step = 1
@@ -483,6 +484,9 @@ class LabelsLevel(Level):
     @property
     def index(self): return self.__index
 
+    @property
+    def labels(self): return self.__labels
+
     def __getitem__(self, index):
         return self.__labels[index]
 
@@ -576,20 +580,32 @@ class PyMVPAAtlas(XMLBasedAtlas):
         # Load levels
         self._levels_dict = {}
         # preprocess labels for different levels
-        self.Nlevels = 0
+        self._Nlevels = 0
+        index_incr = 0
         for index, child in enumerate(self.data.getchildren()):
             if child.tag == 'level':
                 level = Level.generateFromXML(child)
                 self._levels_dict[level.description] = level
-                try:
-                    self._levels_dict[level.index] = level
-                except:
-                    pass
+                if hasattr(level, 'index'):
+                    index = level.index
+                else:
+                    # to avoid collision if some levels do
+                    # have indexes
+                    while index_incr in self._levels_dict:
+                        index_incr += 1
+                    index, index_incr = index_incr, index_incr+1
+                self._levels_dict[index] = level
             else:
                 raise XMLAtlasException(
                     "Unknown child '%s' within data" % child.tag)
-            self.Nlevels += 1
+            self._Nlevels += 1
 
+
+    def _getNLevelsVirtual(self):
+        return self._Nlevels
+
+    def _getNLevels(self):
+        return self._getNLevelsVirtual()
 
     @staticmethod
     def _checkVersion(version):
@@ -599,7 +615,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
 
     space = property(fget=lambda self:self.__space)
     spaceFlavor = property(fget=lambda self:self.__spaceFlavor)
-
+    Nlevels = property(fget=_getNLevels)
 
 
 class LabelsAtlas(PyMVPAAtlas):
@@ -655,7 +671,10 @@ class ReferencesAtlas(PyMVPAAtlas):
                 "ReferencesAtlas must refer to a some other atlas")
 
         referenceAtlasName = self.header["reference-atlas"].text
-        self.__referenceAtlas = Atlas(reuseAbsolutePath(
+
+        # uff -- another evil import but we better use the factory method
+        from mvpa.atlases.warehouse import Atlas
+        self.__referenceAtlas = Atlas(filename=reuseAbsolutePath(
             self._filename, referenceAtlasName))
 
         if self.__referenceAtlas.space != self.space or \
@@ -666,9 +685,13 @@ class ReferencesAtlas(PyMVPAAtlas):
         self.__referenceLevel = None
         self.setDistance(distance)
 
+
     # number of levels must be of the referenced atlas due to
     # handling of that in __getitem__
-    Nlevels = property(fget=lambda self:self.__referenceAtlas.Nlevels)
+    #Nlevels = property(fget=lambda self:self.__referenceAtlas.Nlevels)
+    def _getNLevelsVirtual(self):
+        return self.__referenceAtlas.Nlevels
+
 
     def setReferenceLevel(self, level):
         """
@@ -685,8 +708,10 @@ class ReferencesAtlas(PyMVPAAtlas):
 
         if self.__referenceLevel is None:
             warning("You did not provide what level to use "
-					"for reference. No referencing is done")
-            return self.__referenceAtlas.labelVoxel(c, levels)
+					"for reference. Assigning 0th level -- '%s'"
+                    % (self._levels_dict[0],))
+            self.setReferenceLevel(0)
+            # return self.__referenceAtlas.labelVoxel(c, levels)
 
         c = self._checkRange(c)
 
