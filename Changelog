@@ -23,40 +23,55 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * New manual section about meta-classifiers (contributed by James M.
-    Hughes).
-  * New minimal example for a 'getting started' section in the manual.
+  * Add :class:`~mvpa.misc.io.hamster.Hamster`, as a simple facility to easily
+    store any serializable objects in a compressed file and later on resurrect
+    all of them with a single line of code.
+  * New :class:`~mvpa.datasets.nifti.ERNiftiDataset` to facilitate the analysis
+    of event-related fMRI datasets.
   * SVM backend is now configurable via :envvar:`MVPA_SVM_BACKEND` (libsvm or
     shogun).
-  * Non-deterministic tests in the unittest battery are no configurable via
+  * Non-deterministic tests in the unittest battery are now configurable via
     :envvar:`MVPA_TESTS_LABILE`.
-  * Former :envvar:`MVPA_QUICKTEST` was renamed to :envvar:`MVPA_TESTS_QUICK`.
-  * Update installation instructions for RPM-based distributions to make use
-    of the OpenSUSE Build Service.
+  * New helper to determine and plot the best matching distribution(s) for
+    the data (matchDistribution, plotDistributionMatches). It is WiP
+    thus API can change in the upcoming release.
+  * Simplifies API of mappers.
+  * New :class:`~mvpa.mappers.base.CombinedMapper` to map between multiple,
+    independent dataspace and a common feature space.
+  * New :class:`~mvpa.mappers.base.ChainMapper` to create chains of mappers
+    of abitrary lenght (e.g. to build preprocessing pipelines).
+  * New :class:`~mvpa.datasets.event.EventDataset` to rapidly extract
+    boxcar-shaped samples from data array using a simple list of
+    :class:`~mvpa.misc.support.Event` definitions.
+  * Removed obselete MetricMapper class. :class:`~mvpa.mappers.base.Mapper`
+    itself provides the facilities for dealing with metrics.
+  * :class:`~mvpa.mappers.boxcar.BoxcarMapper` can now handle data with more
+    than four dimensions/axis and also performs reverse mapping of single
+    boxcar samples.
+  * :class:`~mvpa.misc.fsl.base.FslEV3` can now convert EV3 files into
+    a list of :class:`~mvpa.misc.support.Event` instances.
+  * Results of tests for external dependencies are now stored in PyMVPA's
+    config manager (`mvpa.cfg`) and can be stored to a file (not done
+    automatically at the moment). This will significantly decrease the time
+    needed to import the `mvpa` module, as it prevents the repeated and lengthy
+    tests for working externals.
+  * Initial support for ROC computing and AUC as an accuracy measure.
+  * Weights of LARS are now available via :class:`~mvpa.clfs.lars.LARSWeights`.
   * Added an initial list of MVPA-related references to the manual, tagged with
     keywords and comments as well is DOI or similar URL reference to the
     original document.
   * Added initial glossary to the manual.
-  * Updated install instructions for several RPM-based GNU/Linux
-    distributions.
   * New 'Module reference', as a middle-ground between manual and API
     reference.
-  * New helper to determine and plot the best matching distribution(s) for
-    the data (matchDistribution, plotDistributionMatches). It is WiP
-    thus API can change in the upcoming release.
-  * Add :class:`~mvpa.misc.io.hamster.Hamster`, as a simple facility to easily
-    store any serializable objects in a compressed file and later on resurrect
-    all of them with a single line of code.
-  * Switch from distutils to numpy.distutils.
-  * New :class:`~mvpa.mappers.base.CombinedMapper` to map between multiple,
-    independent dataspace and a common feature space.
-  * Removed obselete MetricMapper class. :class:`~mvpa.mappers.base.Mapper`
-    itself provides the facilities for dealing with metrics.
-  * New :class:`~mvpa.datasets.event.EventDataset` to rapidly extract
-    boxcar-shaped samples from data array using a simple list of
-    :class:`~mvpa.misc.support.Event` definitions.
-  * New :class:`~mvpa.datasets.nifti.ERNiftiDataset` to facilitate the analysis
-    of event-related fMRI datasets.
+  * New manual section about meta-classifiers (contributed by James M.
+    Hughes).
+  * New minimal example for a 'getting started' section in the manual.
+  * Former :envvar:`MVPA_QUICKTEST` was renamed to :envvar:`MVPA_TESTS_QUICK`.
+  * Update installation instructions for RPM-based distributions to make use
+    of the OpenSUSE Build Service.
+  * Updated install instructions for several RPM-based GNU/Linux
+    distributions.
+  * Switch from distutils to numpy.distutils (no change in dependencies).
   * Depend on PyNIfTI >= 0.20081017.1 and gain a smaller memory footprint when
     accessing NIfTI files via all datasets with NIfTI support.
 
