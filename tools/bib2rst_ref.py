@@ -300,9 +300,10 @@ def bib2rst_references(bib):
         if cat.lower() == 'article':
             # needs to have journal, volume, pages
             cit += ' *' + prop['journal'] + '*'
-            cit +=  ','
-            cit += ' *' + prop['volume'] + '*,'
-            cit += ' ' + '-'.join(prop['pages'])
+            if prop.has_key('volume'):
+                cit += ', *' + prop['volume'] + '*'
+            if prop.has_key('pages'):
+                cit += ', ' + '-'.join(prop['pages'])
         elif cat.lower() == 'book':
             # needs to have publisher, address
             cit += ' ' + prop['publisher']
