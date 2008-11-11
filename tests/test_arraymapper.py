@@ -201,25 +201,25 @@ class DenseArrayMapperTests(unittest.TestCase):
         newneighbors = map_.forward(data)[map_.getNeighbors(7, radius=2)]
         self.failUnless( (oldneighbors != newneighbors ).any())
 
-
-    def testSelectOrder(self):
-        """
-        Test if changing the order by doing selectOut preserves
-        neighborhood information -- but also apply sort in difference
-        to testSelectReOrder
-        """
-        mask = N.ones((3,3))
-        mask[1,1] = 0
-
-        data = N.arange(9).reshape(mask.shape)
-        map_ = DenseArrayMapper(mask)
-        oldneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
-
-        map_ = DenseArrayMapper(mask)
-        map_.selectOut([7, 1, 2, 3, 4, 5, 6, 0], sort=True)
-        # we check if an item new outId==0 still has proper neighbors
-        newneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
-        self.failUnless( (oldneighbors == newneighbors ).all())
+# disable since selectOut does not have 'sort' anymore
+#    def testSelectOrder(self):
+#        """
+#        Test if changing the order by doing selectOut preserves
+#        neighborhood information -- but also apply sort in difference
+#        to testSelectReOrder
+#        """
+#        mask = N.ones((3,3))
+#        mask[1,1] = 0
+#
+#        data = N.arange(9).reshape(mask.shape)
+#        map_ = DenseArrayMapper(mask)
+#        oldneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
+#
+#        map_ = DenseArrayMapper(mask)
+#        map_.selectOut([7, 1, 2, 3, 4, 5, 6, 0], sort=True)
+#        # we check if an item new outId==0 still has proper neighbors
+#        newneighbors = map_.forward(data)[map_.getNeighbors(0, radius=2)]
+#        self.failUnless( (oldneighbors == newneighbors ).all())
 
 
 def suite():

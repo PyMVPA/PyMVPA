@@ -130,7 +130,10 @@ class MappedDataset(Dataset):
             sdata = Dataset.selectFeatures(self, ids)
             # since we have new DataSet we better have a new mapper
             sdata._dsattr['mapper'] = copy.deepcopy(sdata._dsattr['mapper'])
-            sdata._dsattr['mapper'].selectOut(ids, sort)
+            if sort:
+                sdata._dsattr['mapper'].selectOut(sorted(ids))
+            else:
+                sdata._dsattr['mapper'].selectOut(ids)
             return sdata
 
 

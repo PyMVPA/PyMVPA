@@ -15,6 +15,7 @@ __docformat__ = 'restructuredtext'
 #
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import *
+from mvpa.clfs.ridge import RidgeReg
 
 from mvpa.clfs.warehouse import clfs, regrs
 from mvpa.base import externals
@@ -71,3 +72,6 @@ sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 #classical one which was used for a while
 #and surprisingly it is not bad at all for the unittests
 sample_clf_nl = kNN(k=5)
+
+# and also a regression-based classifier
+sample_clf_reg = RidgeReg()

@@ -889,3 +889,33 @@ def autoNullDist(dist):
             debug('STAT', 'Wrapping %s into FixedNullDist' % dist)
         return FixedNullDist(dist)
 
+
+# if no scipy, we need nanmean
+def _chk_asarray(a, axis):
+    if axis is None:
+        a = np.ravel(a)
+        outaxis = 0
+    else:
+        a = np.asarray(a)
+        outaxis = axis
+    return a, outaxis
+
+def nanmean(x, axis=0):
+    """Compute the mean over the given axis ignoring nans.
+
+    :Parameters:
+        x : ndarray
+            input array
+        axis : int
+            axis along which the mean is computed.
+
+    :Results:
+        m : float
+            the mean."""
+    x, axis = _chk_asarray(x,axis)
+    x = x.copy()
+    Norig = x.shape[axis]
+    factor = 1.0-N.sum(N.isnan(x),axis)*1.0/Norig
+
+    x[N.isnan(x)] = 0
+    return N.mean(x,axis)/factor

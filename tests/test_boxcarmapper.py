@@ -88,6 +88,11 @@ class BoxcarMapperTests(unittest.TestCase):
         # should not work for shape mismatch
         self.failUnlessRaises(ValueError, m.reverse, singlesample[0])
 
+        # check broadcasting of 'raw' samples into proper boxcars on forward()
+        bc = m.forward(N.arange(24).reshape(3, 4, 2))
+        self.failUnless((bc ==
+                         N.array(2 * [N.arange(24).reshape(3, 4, 2)])).all())
+
 
     def testIds(self):
         data = N.arange(20).reshape( (10,2) )

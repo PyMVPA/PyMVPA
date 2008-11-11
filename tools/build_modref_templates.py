@@ -76,10 +76,12 @@ def writeAPIDocTemplate(uri):
           'reference for %s`_ (for developers).\n\n' % uri
     ad += '.. _API reference for %s: ../api/%s-module.html\n\n' % (uri, uri)
 
-    multi_class = False
-    if len(classes) > 1:
+    multi_class = len(classes) > 1
+    multi_fx = len(functions) > 1
+    if multi_class:
         ad += '\n' + 'Classes' + '\n' + rst_section_levels[2] * 7 + '\n'
-        multi_class = True
+    elif len(classes) and multi_fx:
+        ad += '\n' + 'Class' + '\n' + rst_section_levels[2] * 5 + '\n'
 
     for c in classes:
         ad += '\n:class:`' + c + '`\n' \
@@ -89,19 +91,24 @@ def writeAPIDocTemplate(uri):
 
         # must NOT exclude from index to keep cross-refs working
         ad += '  :members:\n' \
-              '  :undoc-members:\n'
+              '  :undoc-members:\n' \
+              '  :show-inheritance:\n'
         #      '  :noindex:\n\n'
 
         # place api link
         ad += '.. seealso::\n\n' \
+              '  Derived classes might provide additional methods via their ' \
+              '  base classes. Please refer to the list of base classes ' \
+              '  (if it exists) at the begining of the ' \
+              '  :class:`~' + c + '` documentation.\n\n' \
               '  Full API documentation of ' \
               '`%s in module %s`_.\n\n' % (c, uri)
         ad += '.. _%s in module %s: ../api/%s.%s-class.html\n\n' % (c, uri, uri, c)
 
-    multi_func = False
-    if len(functions) > 1:
+    if multi_fx:
         ad += '\n' + 'Functions' + '\n' + rst_section_levels[2] * 9 + '\n\n'
-        multi_func = True
+    elif len(functions) and multi_class:
+        ad += '\n' + 'Function' + '\n' + rst_section_levels[2] * 8 + '\n\n'
 
     for f in functions:
         # must NOT exclude from index to keep cross-refs working

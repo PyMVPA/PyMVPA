@@ -316,6 +316,31 @@ class ClassifiersTests(unittest.TestCase):
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
+    def testFeatureSelectionClassifierWithRegression(self):
+        from test_rfe import SillySensitivityAnalyzer
+        from mvpa.featsel.base import \
+             SensitivityBasedFeatureSelection
+        from mvpa.featsel.helpers import \
+             FixedNElementTailSelector
+
+        # should give lowest weight to the feature with lowest index
+        sens_ana = SillySensitivityAnalyzer()
+
+        # corresponding feature selections
+        feat_sel = SensitivityBasedFeatureSelection(sens_ana,
+            FixedNElementTailSelector(1, mode='discard'))
+
+        # now test with regression-based classifier. The problem is
+        # that it is determining predictions twice from values and
+        # then setting the values from the results, which the second
+        # time is set to predictions.  The final outcome is that the
+        # values are actually predictions...
+        dat = Dataset(samples=N.random.randn(4,10),labels=[-1,-1,1,1])
+        clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
+        clf_reg.train(dat)
+        res = clf_reg.predict(dat.samples)
+        self.failIf((clf_reg.values-clf_reg.predictions).sum()==0,
+                    msg="Values were set to the predictions.")
 
     @sweepargs(clf=clfs[:])
     def testValues(self, clf):

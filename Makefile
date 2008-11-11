@@ -113,6 +113,12 @@ pdfdoc-stamp:
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
+# Create a handy .pdf of the manual to be printed as a book
+handbook: pdfdoc
+	cd tools && $(MAKE) pdfbook
+	tools/pdfbook -2 \
+	 $(LATEX_DIR)/PyMVPA-Manual.pdf $(LATEX_DIR)/PyMVPA-Manual-Handbook.pdf
+
 modref-templates: modref-templates-stamp
 modref-templates-stamp:
 	PYTHONPATH=. tools/build_modref_templates.py
@@ -132,7 +138,7 @@ apidoc-stamp: build
 # the buildds, though.
 #apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
-	LC_ALL=C epydoc --config doc/api/epydoc.conf
+	LC_ALL=C tools/epydoc --config doc/api/epydoc.conf
 	touch $@
 
 website: website-stamp
@@ -292,4 +298,4 @@ fetch-data:
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests handbook

@@ -53,7 +53,7 @@ class Dataset(object):
 
     :Groups:
       - `Creators`: `__init__`, `selectFeatures`, `selectSamples`,
-                    `applyMapper`
+        `applyMapper`
       - `Mutators`: `permuteLabels`
 
     Important: labels assumed to be immutable, i.e. noone should modify
