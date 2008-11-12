@@ -10,6 +10,7 @@
 """
 
 __docformat__ = 'restructuredtext'
+import os
 
 from mvpa.base import warning
 from mvpa import cfg
@@ -79,6 +80,17 @@ def __check_weave():
         return "Everything is cool"
 
 
+def __check_atlas_family(family):
+    # XXX I guess pylint will dislike it a lot
+    from mvpa.atlases.warehouse import KNOWN_ATLAS_FAMILIES
+    names, pathpattern = KNOWN_ATLAS_FAMILIES[family]
+    filename = pathpattern % {'name':names[0]}
+    if not os.path.exists(filename):
+        raise ImportError, "Cannot find file %s for atlas family %s" \
+              % (filename, family)
+    pass
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'nifti':'from nifti import NiftiImage as __',
@@ -99,7 +111,10 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'hcluster': "import hcluster as __",
           'griddata': "import griddata as __",
           'cPickle': "import cPickle as __",
-          'gzip': "import gzip as __"
+          'gzip': "import gzip as __",
+          'lxml': "from lxml import objectify as __",
+          'atlas_pymvpa': "__check_atlas_family('pymvpa')",
+          'atlas_fsl': "__check_atlas_family('fsl')",
           }
 
 _caught_exceptions = [ImportError, AttributeError, RuntimeError]

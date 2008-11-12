@@ -40,3 +40,4 @@ tools/pdfbook
 *.aux
 *.log
 tests/.noseids
+tools/codeswarm
