@@ -58,6 +58,10 @@ experiments.
   URL: http://www.jmlr.org/papers/v3/guyon03a.html
 
 
+.. _HHS+latest:
+
+**Hanke, M., Halchenko, Y. O., Sederberg, P. B. & Hughes, J. M.** The PyMVPA Manual. Available online at http://www.pymvpa.org/PyMVPA-Manual.pdf.
+
 .. _HHS+IP:
 
 **Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S.** (in press). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. *Neuroinformatics*.
