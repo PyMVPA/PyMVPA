@@ -240,7 +240,7 @@ if __debug__:
     debug.register('SMLR_',   "SMLR verbose")
 
     debug.register('LARS',    "LARS")
-    debug.register('LARS_',   "LARS verbose")
+    debug.register('LARS_',   "LARS (verbose)")
 
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
@@ -263,6 +263,10 @@ if __debug__:
     debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC',"Cross-validation call")
     debug.register('CERR', "Various ClassifierErrors")
+
+    debug.register('ATL',    "Atlases")
+    debug.register('ATL_',   "Atlases (verbose)")
+    debug.register('ATL__',  "Atlases (very verbose)")
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):

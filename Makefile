@@ -5,6 +5,10 @@ APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=build/pdf
 LATEX_DIR=build/latex
 WWW_DIR=build/website
+SWARM_DIR=build/swarm
+
+SWARMTOOL_DIR=tools/codeswarm
+SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 
 # should be made conditional, as pyversions id Debian specific
 #PYVER := $(shell pyversions -vd)
@@ -294,8 +298,44 @@ bdist_mpkg: 3rd
 fetch-data:
 	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
 
+
+#
+# Various sugarings
+#
+
+# Nice visual git log
+codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.avi
+$(SWARM_DIR)/pymvpa-codeswarm.avi: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
+	@echo "I: Visualizing git history using codeswarm"
+	@mkdir -p $(SWARM_DIR)/frames
+	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
+	@echo "I: Generating codeswarm video"
+	@cd $(SWARM_DIR)/frames && \
+     mencoder "mf://*.png" -msglevel all=0 -mf fps=10 -o ../pymvpa-codeswarm.avi \
+	  -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=500
+
+
+$(SWARM_DIR)/git.log:
+	@echo "I: Dumping git log in codeswarm preferred format"
+	@mkdir -p $(SWARM_DIR)
+	@git-log --name-status \
+     --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
+     sed -e 's,[a-z]*@onerussian.com,Yaroslav O. Halchenko,g' \
+         -e 's,michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\|neukom-data@neukom-data-desktop.(none)\),Michael Hanke,g' \
+         -e 's,\(per@parsec.Princeton.EDU\|per@sync.(none)\|psederberg@gmail.com\),Per P. Sederberg,g' \
+         -e 's,emanuele@relativita.com,Emanuele Olivetti,g' \
+         -e 's,Ingo.Fruend@gmail.com,Ingo Fruend,g' >| $@
+
+$(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.log
+	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
+	 -g $(SWARM_DIR)/git.log -o $(SWARM_DIR)/git.xml
+
+$(SWARMTOOL_DIR):
+	@echo "I: Checking out codeswarm tool source code"
+	@svn checkout http://codeswarm.googlecode.com/svn/trunk/ $(SWARMTOOL_DIR)
+
 #
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests handbook
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests handbook codeswarm

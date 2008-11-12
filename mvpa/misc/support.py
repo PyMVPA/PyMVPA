@@ -11,13 +11,29 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-import re
+import re, os
 
 from mvpa.misc.copy import copy, deepcopy
 from operator import isSequenceType
 
 if __debug__:
     from mvpa.base import debug
+
+
+def reuseAbsolutePath(file1, file2, force=False):
+    """Use path to file1 as the path to file2 is no absolute
+    path is given for file2
+
+    :Parameters:
+      force : bool
+        if True, force it even if the file2 starts with /
+    """
+    if not file2.startswith('/') or force:
+        # lets reuse path to file1
+        return os.path.join(os.path.dirname(file1), file2.lstrip('/'))
+    else:
+        return file2
+
 
 def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
     """This function extracts boxcar windows from an array. Such a boxcar is
