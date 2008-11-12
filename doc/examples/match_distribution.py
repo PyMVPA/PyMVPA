@@ -34,10 +34,11 @@ data = N.random.normal(size=(1000,1))
 #       p-roc testing is done here, which aims to minimize
 #       false positives/negatives while doing H0-testing
 test = 'p-roc'
+figsize = (15,10)
 verbose(1, "Find matching datasets")
 matches = matchDistribution(data, test=test, p=0.05)
 
-P.figure(figsize=(12,6));
+P.figure(figsize=figsize)
 P.subplot(2,1,1)
 plotDistributionMatches(data, matches, legend=1, nbest=5)
 P.title('Normal: 5 best distributions')
@@ -67,7 +68,7 @@ data = dataset.samples.ravel()
 verbose(2, "Find matching distribution")
 matches = matchDistribution(data, test=test, p=0.05)
 
-P.figure(figsize=(12,6));
+P.figure(figsize=figsize)
 P.subplot(2,1,1)
 plotDistributionMatches(data, matches, legend=1, nbest=5)
 P.title('Random voxel: 5 best distributions')
@@ -75,10 +76,6 @@ P.title('Random voxel: 5 best distributions')
 P.subplot(2,1,2)
 plotDistributionMatches(data, matches, nbest=5, p=0.05, tail='any', legend=4)
 P.title('Accept regions for two-tailed test')
-
-
-
-
 
 if cfg.getboolean('examples', 'interactive', True):
     # show the cool figure
