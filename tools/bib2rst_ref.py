@@ -308,6 +308,8 @@ def bib2rst_references(bib):
             # needs to have publisher, address
             cit += ' ' + prop['publisher']
             cit += ': ' + prop['address']
+        elif cat.lower() == 'manual':
+            cit += ' ' + prop['address']
         else:
             print "WARNING: Cannot handle bibtex item type:", cat
 
