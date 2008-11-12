@@ -318,7 +318,7 @@ $(SWARM_DIR)/pymvpa-codeswarm.avi: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 $(SWARM_DIR)/git.log:
 	@echo "I: Dumping git log in codeswarm preferred format"
 	@mkdir -p $(SWARM_DIR)
-	@git-log --name-status -100 \
+	@git-log --name-status \
      --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
      sed -e 's,[a-z]*@onerussian.com,Yaroslav O. Halchenko,g' \
          -e 's,michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\|neukom-data@neukom-data-desktop.(none)\),Michael Hanke,g' \
