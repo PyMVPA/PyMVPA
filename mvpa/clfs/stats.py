@@ -629,7 +629,7 @@ if externals.exists('scipy'):
         if test == 'p-roc':
             tail = kwargs.get('tail', 'both')
             data_p = _pvalue(data, Nonparametric(data).cdf, tail)
-            data_p_thr = data_p <= p_thr
+            data_p_thr = N.abs(data_p) <= p_thr
             true_positives = N.sum(data_p_thr)
             if true_positives == 0:
                 raise ValueError, "Provided data has no elements in non-" \
@@ -687,7 +687,7 @@ if externals.exists('scipy'):
                 if test == 'p-roc':
                     cdf_func = lambda x: dist_gen_.cdf(x, *dist_params)
                     # We need to compare detection under given p
-                    cdf_p = _pvalue(data, cdf_func, tail)
+                    cdf_p = N.abs(_pvalue(data, cdf_func, tail))
                     cdf_p_thr = cdf_p <= p_thr
                     D, p = N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1
                     if __debug__: res_sum = 'D=%.2f' % D
@@ -788,7 +788,7 @@ if externals.exists('scipy'):
             data_p_thr = (data_p <= p_thr).ravel()
 
             x_p = _pvalue(x, Nonparametric(data).cdf, tail)
-            x_p_thr = x_p <= p_thr
+            x_p_thr = N.abs(x_p) <= p_thr
             # color bars which pass thresholding in red
             for thr, bar in zip(x_p_thr[expand_tails:], hist[2]):
                 bar.set_facecolor(('w','r')[int(thr)])
@@ -807,12 +807,12 @@ if externals.exists('scipy'):
                 label = '%s' % (dist_name)
                 if legend > 1: label += '(D=%.2f)' % (D)
 
-                xcdf_p = _pvalue(x, dist.cdf, tail)
+                xcdf_p = N.abs(_pvalue(x, dist.cdf, tail))
                 xcdf_p_thr = (xcdf_p <= p_thr).ravel()
 
                 if p is not None and legend > 2:
                     # We need to compare detection under given p
-                    data_cdf_p = _pvalue(data, dist.cdf, tail)
+                    data_cdf_p = N.abs(_pvalue(data, dist.cdf, tail))
                     data_cdf_p_thr = (data_cdf_p <= p_thr).ravel()
 
                     # true positives
