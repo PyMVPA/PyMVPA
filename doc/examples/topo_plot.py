@@ -51,3 +51,13 @@ plotHeadTopography(topo, sensors.locations(), interpolation='nearest')
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
+
+"""
+The ouput of the provided example should look like
+
+.. image:: ../pics/topo_plot.*
+   :width: 10cm
+   :align: center
+   :alt: Topography plot of MEG data
+
+"""

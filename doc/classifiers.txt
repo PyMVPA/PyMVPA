@@ -71,6 +71,7 @@ classifiers on some dataset (see Fig. 1).
 
 .. image:: pics/classifier_comparison_plot.png
    :width: 12cm
+   :align: center
    :alt: Classifier comparison
 
 A comparison of the behavior of different classifiers (k-Nearest-Neighbour,
@@ -232,9 +233,85 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   >>> from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
   >>> from mvpa.datasets.splitter import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
-  ...                                      NFoldSplitter(cvtype=1))
+  ...                                      NFoldSplitter(cvtype=1),
+  ...                                      enable_states=['confusion'])
   >>> error = cvterr(data)
 
+
+Error Reporting
+===============
+
+PyMVPA is equipped with easy ways to have a glance overview over the
+generalization performance of a cross-validated classifier. Such
+summary is provided by instances of a
+:class:`~mvpa.clfs.transerror.ConfusionMatrix` class, and is
+accompanied by various performance metrics.  For example, the 8-fold
+cross-validation of the dataset with 8 labels with the SMLR classifier produced
+the following confusion matrix::
+
+  >>> # Simple 'print cvterr.confusion' provides the same output
+  >>> # without the description of abbreviations
+  >>> print cvterr.confusion.asstring(description=True)                                                         # doctest: +SKIP
+  --------.        3kHz  7kHz  12kHz 20kHz 30kHz song1 song2 song3 song4 song5
+  predict.\targets 38    39    40    41    42    43    44    45    46    47
+           `------ ---- ----- ----- ----- ----- ----- ----- ----- ----- -----  P'  N'  FP  FN   PPV  NPV  TPR  SPC  FDR  MCC
+         3kHz / 38 84    42    27     4     4     2     1     0    15    19   198 1351 114 90  0.42 0.93 0.48 0.92 0.58 0.36
+         7kHz / 39 43    94    16     0     1     1     1     2     1    24   183 1331 89  80  0.51 0.94 0.54 0.93 0.49 0.43
+        12kHz / 40 21    16    103    5     2     2     0     0     6    13   168 1312 65  70  0.61 0.95  0.6 0.95 0.39 0.51
+        20kHz / 41  1     2    13    158    1     0     0     1     3     1   180 1202 22  15  0.88 0.99 0.91 0.98 0.12 0.77
+        30kHz / 42  3     0     2     3    162    0     0     0     0     0   170 1194  8  11  0.95 0.99 0.94 0.99 0.05 0.82
+        song1 / 43  3     1     1     0     1    160    0     0     2     5   173 1199 13  14  0.92 0.99 0.92 0.99 0.08  0.8
+        song2 / 44  1     1     0     0     0     0    171    0     0     0   173 1176  2   2  0.99   1  0.99   1  0.01 0.86
+        song3 / 45  1     1     1     0     0     0     0    170    2     0   175 1179  5   4  0.97   1  0.98   1  0.03 0.84
+        song4 / 46  7     3     3     2     2     2     0     0    139    7   165 1240 26  34  0.84 0.97  0.8 0.98 0.16 0.71
+        song5 / 47 10    14     7     1     0     7     0     1     5    104  149 1310 45  69   0.7 0.95  0.6 0.97  0.3 0.55
+  Per target:      ---- ----- ----- ----- ----- ----- ----- ----- ----- -----
+        P          174   174   173   173   173   174   173   174   173   173
+        N         1560  1560  1561  1561  1561  1560  1561  1560  1561  1561
+        TP         84    94    103   158   162   160   171   170   139   104
+        TN        1261  1251  1242  1187  1183  1185  1174  1175  1206  1241
+  Summary\Means:  ---- ----- ----- ----- ----- ----- ----- ----- ----- ----- 173 1249 38  39  0.78 0.97 0.78 0.97 0.22 0.66
+       ACC        0.78
+       ACC%       77.57
+    # of sets       8
+  <BLANKLINE>
+  Statistics computed in 1-vs-rest fashion per each target.
+  Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):
+   TP : true positive (AKA hit)
+   TN : true negative (AKA correct rejection)
+   FP : false positive (AKA false alarm, Type I error)
+   FN : false negative (AKA miss, Type II error)
+   TPR: true positive rate (AKA hit rate, recall, sensitivity)
+        TPR = TP / P = TP / (TP + FN)
+   FPR: false positive rate (AKA false alarm rate, fall-out)
+        FPR = FP / N = FP / (FP + TN)
+   ACC: accuracy
+        ACC = (TP + TN) / (P + N)
+   SPC: specificity
+        SPC = TN / (FP + TN) = 1 - FPR
+   PPV: positive predictive value (AKA precision)
+        PPV = TP / (TP + FP)
+   NPV: negative predictive value
+        NPV = TN / (TN + FN)
+   FDR: false discovery rate
+        FDR = FP / (FP + TP)
+   MCC: Matthews Correlation Coefficient
+        MCC = (TP*TN - FP*FN)/sqrt(P N P' N')
+   # of sets: number of target/prediction sets which were provided
+
+In addition to the abusively informative textual representation, there is an
+alternative graphical representation of the confusion matrix
+via the :meth:`~mvpa.clfs.transerror.ConfusionMatrix.plot` method of a
+:class:`~mvpa.clfs.transerror.ConfusionMatrix`::
+
+  >>> import pylab as P
+  >>> cvterr.confusion.plot()                                                                                   # doctest: +SKIP
+  >>> P.show()                                                                                                  # doctest: +SKIP
+
+.. image:: pics/confusion_matrix.*
+   :width: 10cm
+   :align: center
+   :alt: Classification confusion matrix
 
 
 Basic Supervised Learning Methods
@@ -371,39 +448,44 @@ Examples of Meta-Classifiers
 At present, there are two primary meta-classifiers implemented in the PyMVPA
 package, beneath which there are several specific options:
 
-1. :class:`~mvpa.clfs.base.BoostedClassifier` -- these typically combine some
-    aspect of the classifier's functionality with another component, such as
-    prediction or data splitting
+:class:`~mvpa.clfs.base.BoostedClassifier`
+    typically uses multiple classifiers internally
 
-2. :class:`~mvpa.clfs.base.ProxyClassifier` -- these typically perform some
-    action on the data/labels before classification is performed
+:class:`~mvpa.clfs.base.ProxyClassifier`
+    typically performs some action on the data/labels before classification
+    is performed
 
 Within these more general categories, specific classifiers are implemented.
 For example, there are several :class:`~mvpa.clfs.base.BoostedClassifier`
 subclasses:
 
-1. :class:`~mvpa.clfs.base.CombinedClassifier` -- combines predictions using a
-    :class:`~mvpa.clfs.base.PredictionsCombiner` functor
+:class:`~mvpa.clfs.base.CombinedClassifier`
+    combines predictions using a :class:`~mvpa.clfs.base.PredictionsCombiner`
+    functor
 
-2. :class:`~mvpa.clfs.base.MulticlassClassifier` -- performs multi-class
-    classification by means of a list of
-    :class:`~mvpa.clfs.base.BinaryClassifier` instances
+:class:`~mvpa.clfs.base.MulticlassClassifier`
+    performs multi-class classification by means of a list of
+    :class:`~mvpa.clfs.base.BinaryClassifier` instances. Typical use-case is
+    to wrap a binary classifier to give it ability to operate on
+    multiple classes via voting over classifiers for all possible
+    pairs of the categories
 
-3. :class:`~mvpa.clfs.base.SplitClassifier` -- combines a
-    :class:`~mvpa.clfs.base.Classifier` and an arbitrary
+:class:`~mvpa.clfs.base.SplitClassifier`
+    combines a :class:`~mvpa.clfs.base.Classifier` and an arbitrary
     :class:`~mvpa.datasets.splitter.Splitter`
 
 Furthermore, there are also several :class:`~mvpa.clfs.base.ProxyClassifier`
 subclasses:
 
-1. :class:`~mvpa.clfs.base.BinaryClassifier` -- maps a set of labels into two
-    categories, +1 and -1
+:class:`~mvpa.clfs.base.BinaryClassifier`
+    maps a set of labels into two categories (+1 and -1)
 
-2. :class:`~mvpa.clfs.base.MappedClassifier` -- uses a mapper on input data
-    prior to training/testing
+:class:`~mvpa.clfs.base.MappedClassifier`
+    uses a mapper on input data prior to training/testing
 
-3. :class:`~mvpa.clfs.base.FeatureSelectionClassifier` -- performs some kind of
-    :class:`~mvpa.featsel.base.FeatureSelection` prior to training
+:class:`~mvpa.clfs.base.FeatureSelectionClassifier`
+    performs some kind of :class:`~mvpa.featsel.base.FeatureSelection` prior
+    to training/testing
 
 
 Implementation Examples
