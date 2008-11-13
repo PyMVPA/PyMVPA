@@ -1,8 +1,9 @@
 pymvpa (0.4.0-1) unstable; urgency=low
 
   * New upstream release.
+  * Now recommends python-nifti not earlier than version 0.20081017.1 (if any).
 
- -- Michael Hanke <michael.hanke@gmail.com>  Thu, 13 Nov 2008 16:14:25 +0100
+ -- Michael Hanke <michael.hanke@gmail.com>  Thu, 13 Nov 2008 16:28:42 +0100
 
 pymvpa (0.3.1-1) unstable; urgency=low
 
