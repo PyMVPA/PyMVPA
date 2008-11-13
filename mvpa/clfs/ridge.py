@@ -15,7 +15,6 @@ import numpy as N
 from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier
-#from mvpa.clfs.libridgetrain import ridgetrain
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
@@ -35,13 +34,6 @@ class RidgeReg(Classifier):
             the penalty term lambda.  
             (Defaults to .05*nFeatures)
         """
-        #  implementation : 'direct' | 'gradient'
-        #    choose between direct implementation via numpy.linalg.lstsq
-        #    and memory saving gradient descent implemented in fortran
-        #  stopcrit: float
-        #    Stopping criterion for the gradient descent training method
-        #    (absolute error)
-
         # init base class first
         Classifier.__init__(self, **kwargs)
 
@@ -56,8 +48,7 @@ class RidgeReg(Classifier):
         self.__lm = lm
 
         # store train method config
-        self.__implementation = 'direct' #implementation
-        #self.__stopcrit = stopcrit
+        self.__implementation = 'direct'
 
 
     def __repr__(self):
@@ -93,16 +84,6 @@ class RidgeReg(Classifier):
 
             # perform the least sq regression and save the weights
             self.w = lstsq(a, b)[0]
-        elif self.__implementation == "gradient":
-            # Set lambda
-            if self.__lm is None:
-                Lambda = .05*data.nfeatures
-            else:
-                Lambda = self.__lm
-            # We can directly run the training routine
-            self.w = N.random.randn(data.nfeatures+1)
-            self.w = ridgetrain(data.samples,\
-                    data.labels, self.w, Lambda, self.__stopcrit)
         else:
             raise ValueError, "Unknown implementation '%s'" \
                               % self.__implementation
