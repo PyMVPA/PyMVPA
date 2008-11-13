@@ -52,3 +52,13 @@ P.legend(('original', 'fit'))
 if cfg.getboolean('examples', 'interactive', True):
     # show the cool figure
     P.show()
+
+"""
+The ouput of the provided example should look like
+
+.. image:: ../pics/curvefitting.*
+   :width: 10cm
+   :align: center
+   :alt: Curve fitting example
+
+"""
