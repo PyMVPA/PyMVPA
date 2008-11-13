@@ -309,7 +309,6 @@ via the :meth:`~mvpa.clfs.transerror.ConfusionMatrix.plot` method of a
   >>> P.show()                                                                                                  # doctest: +SKIP
 
 .. image:: pics/confusion_matrix.*
-   :width: 10cm
    :align: center
    :alt: Classification confusion matrix
 
