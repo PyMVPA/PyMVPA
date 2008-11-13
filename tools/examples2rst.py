@@ -40,7 +40,6 @@ def procExample(filename):
     indocs = False
     doc2code = False
     code2doc = False
-    filename_inserted = False
 
     for line in xfile:
         # skip header
@@ -87,9 +86,6 @@ def procExample(filename):
 
             if proc_line:
                 dfile.write(proc_line.rstrip() + '\n')
-                if proc_line.startswith('===') and not filename_inserted:
-                    dfile.write("\nFilename: *%s* .\n" % filename)
-                    filename_inserted = True
 
         else:
             if doc2code:
@@ -102,6 +98,11 @@ def procExample(filename):
 
             # has to be code
             dfile.write('  >>> ' + line)
+
+    # write post example see also box
+    dfile.write("\n.. seealso::\n  The full source code of this example is "
+                "included in the PyMVPA source distribution (`%s`).\n"
+                % filename)
 
     xfile.close()
     dfile.close()
