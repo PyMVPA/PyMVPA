@@ -142,7 +142,7 @@ apidoc-stamp: build
 # the buildds, though.
 #apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
-	LC_ALL=C tools/epydoc --config doc/api/epydoc.conf
+	LC_ALL=C MVPA_EPYDOC_WARNINGS=once tools/epydoc --config doc/api/epydoc.conf
 	touch $@
 
 website: website-stamp
