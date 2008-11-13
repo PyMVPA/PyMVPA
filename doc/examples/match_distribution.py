@@ -85,7 +85,6 @@ if cfg.getboolean('examples', 'interactive', True):
 Example output for a random voxel is
 
 .. image:: ../pics/match_distribution.*
-   :width: 12cm
    :align: center
    :alt: Matching distributions for a random voxel
 
