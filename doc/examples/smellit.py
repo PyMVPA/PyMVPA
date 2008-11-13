@@ -78,3 +78,20 @@ if cfg.getboolean('examples', 'interactive', True):
     P.show()
 
 # XXX add some more, maybe show effect of preprocessing
+
+"""
+Outputs of the example script. Data prior to preprocessing
+
+.. image:: ../pics/smellit2.*
+   :width: 12cm
+   :align: center
+   :alt: Data prior preprocessing
+
+Data after minimal preprocessing
+
+.. image:: ../pics/smellit3.*
+   :width: 12cm
+   :align: center
+   :alt: Data after z-scoring and detrending
+
+"""

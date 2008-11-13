@@ -75,3 +75,15 @@ plotERPs(plots[2:3], ax=ax, ymult=-1e6, **cargs)
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
+
+"""
+The ouput of the provided example is presented below. It is not a very
+fascinating one due to the limited number of samples provided in the
+dataset shipped within the toolbox.
+
+.. image:: ../pics/erp_plot.*
+   :width: 12cm
+   :align: center
+   :alt: ERP plot example
+
+"""

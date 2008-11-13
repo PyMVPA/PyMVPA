@@ -124,3 +124,13 @@ for s in keys:
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
+
+"""
+Output of the example analysis:
+
+.. image:: ../pics/sensanas.*
+   :width: 12cm
+   :align: center
+   :alt: Various sensitivity analysis results
+
+"""
