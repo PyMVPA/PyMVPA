@@ -99,6 +99,7 @@ setup(name         = 'pymvpa',
           "PyMVPA is truely free software (in every respect) and " \
           "additionally requires nothing but free-software to run.",
       packages     = [ 'mvpa',
+                       'mvpa.atlases',
                        'mvpa.base',
                        'mvpa.datasets',
                        'mvpa.mappers',
