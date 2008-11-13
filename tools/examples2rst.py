@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Helper to automagically generate ReST versions of examples under doc/"""
+
+__docformat__ = 'restructuredtext'
+
 
 import os, sys, re, glob
 
@@ -28,6 +40,7 @@ def procExample(filename):
     indocs = False
     doc2code = False
     code2doc = False
+    filename_inserted = False
 
     for line in xfile:
         # skip header
@@ -74,6 +87,9 @@ def procExample(filename):
 
             if proc_line:
                 dfile.write(proc_line.rstrip() + '\n')
+                if proc_line.startswith('===') and not filename_inserted:
+                    dfile.write("\nFilename: *%s* .\n" % filename)
+                    filename_inserted = True
 
         else:
             if doc2code:
