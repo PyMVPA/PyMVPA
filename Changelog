@@ -23,6 +23,13 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
+  None yet.
+
+Releases
+========
+
+* 0.4.0 (Sat, 15 Nov 2008)
+
   * Add :class:`~mvpa.misc.io.hamster.Hamster`, as a simple facility to easily
     store any serializable objects in a compressed file and later on resurrect
     all of them with a single line of code.
@@ -75,9 +82,6 @@ Unreleased changes
   * Depend on PyNIfTI >= 0.20081017.1 and gain a smaller memory footprint when
     accessing NIfTI files via all datasets with NIfTI support.
 
-
-Releases
-========
 
 * 0.3.1 (Sun, 14 Sep 2008)
 
