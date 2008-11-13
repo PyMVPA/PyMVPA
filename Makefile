@@ -198,7 +198,11 @@ unittests: unittest unittest-badexternals
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
 te-%: build
-	MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py
+	@echo -n "I: Testing example $*: "
+	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py \
+	 >| temp-$@.log 2>&1 \
+	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
+	@rm -f temp-$@.log
 
 testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo
