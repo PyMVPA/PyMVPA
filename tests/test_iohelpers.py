@@ -113,6 +113,13 @@ class IOHelperTests(unittest.TestCase):
         # cleanup
         os.remove(fpath)
 
+        d = FslEV3(os.path.join('..', 'data', 'fslev3.txt'))
+        ev = d.toEvents()
+        self.failUnless(len(ev) == 3)
+        self.failUnless([e['duration'] for e in ev] == [9] * 3)
+        self.failUnless([e['onset'] for e in ev] == [6, 21, 35])
+        self.failUnless([e['features'] for e in ev] == [[1],[1],[1]])
+
 
     def testFslEV2(self):
         attr = SampleAttributes(os.path.join('..', 'data', 'smpl_attr.txt'))

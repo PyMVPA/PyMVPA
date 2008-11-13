@@ -7,7 +7,12 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Examples demonstrating various classifiers on different datasets"""
+"""
+Classifier Sweep
+================
+
+This examples shows a test of various classifiers on different datasets.
+"""
 
 from mvpa.suite import *
 
@@ -22,8 +27,10 @@ def main():
 
     # Load Haxby dataset example
     haxby1path = 'data'
-    attrs = SampleAttributes(os.path.join(haxby1path, 'attributes_literal.txt'))
-    haxby8 = NiftiDataset(samples=os.path.join(haxby1path, 'bold.nii.gz'),
+    attrs = SampleAttributes(os.path.join(haxby1path,
+                                          'attributes_literal.txt'))
+    haxby8 = NiftiDataset(samples=os.path.join(haxby1path,
+                                               'bold.nii.gz'),
                           labels=attrs.labels,
                           labels_map=True,
                           chunks=attrs.chunks,
@@ -33,7 +40,8 @@ def main():
     # preprocess slightly
     rest_label = haxby8.labels_map['rest']
     detrend(haxby8, perchunk=True, model='linear')
-    zscore(haxby8, perchunk=True, baselinelabels=[rest_label], targetdtype='float32')
+    zscore(haxby8, perchunk=True, baselinelabels=[rest_label],
+           targetdtype='float32')
     haxby8_no0 = haxby8.selectSamples(haxby8.labels != rest_label)
 
     dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
@@ -43,16 +51,23 @@ def main():
 
     for (dataset, datasetdescr), clfs_ in \
         [
-        ((dummy2, "Dummy 2-class univariate with 2 useful features out of 100"), clfs[:]),
-        ((pureMultivariateSignal(8, 3), "Dummy XOR-pattern"), clfs['non-linear']),
-        ((haxby8_no0, "Haxby 8-cat subject 1"), clfs['multiclass']),
+        ((dummy2,
+          "Dummy 2-class univariate with 2 useful features out of 100"),
+          clfs[:]),
+        ((pureMultivariateSignal(8, 3),
+          "Dummy XOR-pattern"),
+          clfs['non-linear']),
+        ((haxby8_no0,
+          "Haxby 8-cat subject 1"),
+          clfs['multiclass']),
         ]:
         print "%s\n %s" % (datasetdescr, dataset.summary(idhash=False))
-        print " Classifier                                  %corr  #features\t train predict  full"
+        print " Classifier                               " \
+              "%corr  #features\t train predict  full"
         for clf in clfs_:
             print "  %-40s: "  % clf.descr,
-            # Lets do splits/train/predict explicitely so we could track timing
-            # otherwise could be just
+            # Lets do splits/train/predict explicitely so we could track
+            # timing otherwise could be just
             #cv = CrossValidatedTransferError(
             #         TransferError(clf),
             #         NFoldSplitter(),

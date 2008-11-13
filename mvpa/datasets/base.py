@@ -53,7 +53,7 @@ class Dataset(object):
 
     :Groups:
       - `Creators`: `__init__`, `selectFeatures`, `selectSamples`,
-                    `applyMapper`
+        `applyMapper`
       - `Mutators`: `permuteLabels`
 
     Important: labels assumed to be immutable, i.e. noone should modify
@@ -64,15 +64,14 @@ class Dataset(object):
     would not work.  The same applies to any other attribute which has
     corresponding unique* access property.
 
-    XXX Notes about migration to use Collections to store data and
-    attributes for samples, features, and dataset itself:
-
-    changes:
-      _data  ->  s_attr collection (samples attributes)
-      _dsattr -> ds_attr collection
-                 f_attr collection (features attributes)
-
     """
+    # XXX Notes about migration to use Collections to store data and
+    # attributes for samples, features, and dataset itself:
+
+    # changes:
+    #   _data  ->  s_attr collection (samples attributes)
+    #   _dsattr -> ds_attr collection
+    #              f_attr collection (features attributes)
 
     # static definition to track which unique attributes
     # have to be reset/recomputed whenever anything relevant
@@ -764,7 +763,9 @@ class Dataset(object):
 
         if stats:
             # TODO -- avg per chunk?
-            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g" % \
+            # XXX We might like to use scipy.stats.describe to get
+            # quick summary statistics (mean/range/skewness/kurtosis)
+            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
                  (ssep, N.mean(samples), N.std(samples),
                   N.var(samples), N.min(samples), N.max(samples))
 
@@ -1309,27 +1310,32 @@ class Dataset(object):
         please use selectFeatures or selectSamples functions directly
 
         Examples:
-          Mimique plain selectSamples:
+          Mimique plain selectSamples::
+
             dataset.select([1,2,3])
             dataset[[1,2,3]]
 
-          Mimique plain selectFeatures:
+          Mimique plain selectFeatures::
+
             dataset.select(slice(None), [1,2,3])
             dataset.select('all', [1,2,3])
             dataset[:, [1,2,3]]
 
-          Mixed (select features and samples):
+          Mixed (select features and samples)::
+
             dataset.select([1,2,3], [1, 2])
             dataset[[1,2,3], [1, 2]]
 
-          Select samples matching some attributes
+          Select samples matching some attributes::
+
             dataset.select(labels=[1,2], chunks=[2,4])
             dataset.select('labels', [1,2], 'chunks', [2,4])
             dataset['labels', [1,2], 'chunks', [2,4]]
 
           Mixed -- out of first 100 samples, select only those with
           labels 1 or 2 and belonging to chunks 2 or 4, and select
-          features 2 and 3
+          features 2 and 3::
+
             dataset.select(slice(0,100), [2,3], labels=[1,2], chunks=[2,4])
             dataset[:100, [2,3], 'labels', [1,2], 'chunks', [2,4]]
 
@@ -1592,6 +1598,25 @@ class Dataset(object):
                 Ids of non-zero (non-False) mask elements.
         """
         return mask.nonzero()[0]
+
+
+    @staticmethod
+    def _checkCopyConstructorArgs(**kwargs):
+        """Common sanity check for Dataset copy constructor calls."""
+        # check if we have samples (somwhere)
+        samples = None
+        if kwargs.has_key('samples'):
+            samples = kwargs['samples']
+        if samples is None and kwargs.has_key('data') \
+           and kwargs['data'].has_key('samples'):
+            samples = kwargs['data']['samples']
+        if samples is None:
+            raise DatasetError, \
+                  "`samples` must be provided to copy constructor call."
+
+        if not len(samples.shape) == 2:
+            raise DatasetError, \
+                  "samples must be in 2D shape in copy constructor call."
 
 
     # read-only class properties

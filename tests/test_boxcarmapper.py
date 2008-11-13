@@ -48,7 +48,8 @@ class BoxcarMapperTests(unittest.TestCase):
         sp = N.arange(9)
         bcm = BoxcarMapper(sp,2)
         trans = bcm(data)
-        self.failUnless( (trans == N.vstack((N.arange(9), N.arange(9)+1)).T ).all() )
+        self.failUnless( (trans == N.vstack((N.arange(9),
+                                             N.arange(9)+1)).T ).all() )
 
 
         # now test for proper data shape
@@ -56,6 +57,42 @@ class BoxcarMapperTests(unittest.TestCase):
         sp = [ 2, 4, 3, 5 ]
         trans = BoxcarMapper(sp, 4)(data)
         self.failUnless( trans.shape == (4,4,3,4,2) )
+
+        # test reverse
+        data = N.arange(240).reshape(10, 3, 4, 2)
+        sp = [ 2, 4, 3, 5 ]
+        m = BoxcarMapper(sp, 2)
+        mp = m.forward(data)
+        self.failUnless(mp.shape == (4, 2, 3, 4, 2))
+
+        # try full reconstruct
+        mr = m.reverse(mp)
+        # shape has to match
+        self.failUnless(mr.shape == data.shape)
+        # first two samples where not in any of the boxcars and cannot be
+        # reconstructed
+        self.failUnless(N.sum(mr[:2]) == 0)
+        # same for the last ones
+        self.failUnless(N.sum(mr[7:]) == 0)
+
+        # check proper reconstruction of non-conflicting sample
+        self.failUnless((mr[2].ravel() == N.arange(48, 72)).all())
+
+        # check proper reconstruction of samples being part of multiple
+        # mapped samples
+        self.failUnless((mr[3].ravel() == N.arange(72, 96)).all())
+
+        # test reverse of a single sample
+        singlesample = N.arange(48).reshape(2, 3, 4, 2)
+        self.failUnless((singlesample == m.reverse(singlesample)).all())
+        # should not work for shape mismatch
+        self.failUnlessRaises(ValueError, m.reverse, singlesample[0])
+
+        # check broadcasting of 'raw' samples into proper boxcars on forward()
+        bc = m.forward(N.arange(24).reshape(3, 4, 2))
+        self.failUnless((bc ==
+                         N.array(2 * [N.arange(24).reshape(3, 4, 2)])).all())
+
 
     def testIds(self):
         data = N.arange(20).reshape( (10,2) )
@@ -69,6 +106,8 @@ class BoxcarMapperTests(unittest.TestCase):
         self.failUnlessEqual(bcm.isValidOutId( [3] ), False)
         self.failUnlessEqual(bcm.isValidOutId( [0,1] ), True)
         self.failUnlessEqual(bcm.isValidOutId( [0,1,0] ), False)
+
+
 
 def suite():
     return unittest.makeSuite(BoxcarMapperTests)

@@ -171,6 +171,7 @@ if __debug__:
     debug.register('INIT', "Just sequence of inits")
     debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
+    debug.register('EXT_', "External dependencies (verbose)")
     debug.register('TEST', "Debug unittests")
     debug.register('MODULE_IN_REPR', "Include module path in __repr__")
     debug.register('ID_IN_REPR', "Include id in __repr__")
@@ -223,6 +224,10 @@ if __debug__:
     debug.register('CLFFS',  "FeatureSelectionClassifier")
     debug.register('CLFFS_', "FeatureSelectionClassifier (verbose)")
 
+    debug.register('STAT',   "Statistics estimates")
+    debug.register('STAT_',  "Statistics estimates (verbose)")
+    debug.register('STAT__', "Statistics estimates (very verbose)")
+
     debug.register('FS',     "FeatureSelections")
     debug.register('FS_',    "FeatureSelections (verbose)")
     debug.register('FSPL',   "FeatureSelectionPipeline")
@@ -233,6 +238,9 @@ if __debug__:
 
     debug.register('SMLR',    "SMLR")
     debug.register('SMLR_',   "SMLR verbose")
+
+    debug.register('LARS',    "LARS")
+    debug.register('LARS_',   "LARS (verbose)")
 
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
@@ -252,8 +260,13 @@ if __debug__:
 
     debug.register('IOH',  "IO Helpers")
     debug.register('CM',   "Confusion matrix computation")
+    debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC',"Cross-validation call")
     debug.register('CERR', "Various ClassifierErrors")
+
+    debug.register('ATL',    "Atlases")
+    debug.register('ATL_',   "Atlases (verbose)")
+    debug.register('ATL__',  "Atlases (very verbose)")
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):

@@ -14,7 +14,7 @@ import numpy as N
 from operator import isSequenceType
 
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.metric import DescreteMetric, cartesianDistance
+from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
@@ -39,14 +39,16 @@ class DenseArrayMapper(MaskMapper):
     good cartesian cube on its own or smth like that?
     """
 
-    def __init__(self, mask, metric=None, distance_function=cartesianDistance,
-                 elementsize=None, **kwargs):
+    def __init__(self, mask=None, metric=None,
+                 distance_function=cartesianDistance,
+                 elementsize=None, shape=None, **kwargs):
         """Initialize DenseArrayMapper
 
         :Parameters:
           mask : array
             an array in the original dataspace and its nonzero elements are
-            used to define the features included in the dataset
+            used to define the features included in the dataset. alternatively,
+            the `shape` argument can be used to define the array dimensions.
           metric : Metric
             Corresponding metric for the space. No attempt is made to
             determine whether a certain metric is reasonable for this
@@ -61,11 +63,36 @@ class DenseArrayMapper(MaskMapper):
             Determines spacing within `DescreteMetric`. If it is given as a
             scalar, corresponding value is assigned to all dimensions, which
             are found within `mask`
+          shape: tuple
+            The shape of the array to be mapped. If `shape` is provided instead
+            of `mask`, a full mask (all True) of the desired shape is
+            constructed. If `shape` is specified in addition to `mask`, the
+            provided mask is extended to have the same number of dimensions.
 
         :Note: parameters `elementsize` and `distance_function` are relevant
                only if `metric` is None
         """
+        if mask is None:
+            if shape is None:
+                raise ValueError, \
+                      "Either `shape` or `mask` have to be specified."
+            else:
+                # make full dataspace mask if nothing else is provided
+                mask = N.ones(shape, dtype='bool')
+        else:
+            if not shape is None:
+                # expand mask to span all dimensions but first one
+                # necessary e.g. if only one slice from timeseries of volumes is
+                # requested.
+                mask = N.array(mask, ndmin=len(shape))
+                # check for compatibility
+                if not shape == mask.shape:
+                    raise ValueError, \
+                        "The mask dataspace shape [%s] is not " \
+                        "compatible with the provided shape." \
+                        % (`mask.shape`, `shape`)
 
+        # configure the baseclass with the processed mask
         MaskMapper.__init__(self, mask, metric=metric, **kwargs)
 
         # We must have metric assigned
@@ -91,32 +118,3 @@ class DenseArrayMapper(MaskMapper):
     def __str__(self):
         return "DenseArrayMapper: %d -> %d" \
             % (self.getInSize(), self.getOutSize())
-
-
-    # No need to overrride because all arguments just to assign a
-    # metric, which would be visible from Mapper class
-    #def __repr__(self):
-    #    s = super(DenseArrayMapper, self).__str__()
-    #    return s.sub("(", "?????", 1)
-
-
-#    def __deepcopy__(self, memo=None):
-#        # XXX memo does not seem to be used
-#        if memo is None:
-#            memo = {}
-#        from mvpa.misc.copy import deepcopy
-#        # XXX might be necessary to deepcopy 'self.metric' as well
-#        # to some degree reimplement the constructor to prevent calling the
-#        # expensive _initMask() again
-#        out = MaskMapper.__new__(MaskMapper)
-#        MetricMapper.__init__(out, self.metric)
-#        out.__mask = self.__mask.copy()
-#        out.__maskdim = self.__maskdim
-#        out.__masksize = self.__masksize
-#        out.__masknonzero = deepcopy(self.__masknonzero)
-#        out.__masknonzerosize = self.__masknonzerosize
-#        out.__forwardmap = self.__forwardmap.copy()
-#
-#        return out
-
-

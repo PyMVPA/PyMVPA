@@ -38,8 +38,8 @@ class Parameter(CollectableAttribute):
     """
 
     def __init__(self, default, name=None, doc=None, **kwargs):
-        """Specify a parameter by its default value and optionally an arbitrary number
-        of additional parameters.
+        """Specify a parameter by its default value and optionally an arbitrary
+        number of additional parameters.
 
         TODO: :Parameters: for Parameter
         """
@@ -61,7 +61,8 @@ class Parameter(CollectableAttribute):
 
     def __str__(self):
         res = CollectableAttribute.__str__(self)
-        res += '=%s' % (self.value,) # it is enabled but no value is assigned yet
+        # it is enabled but no value is assigned yet
+        res += '=%s' % (self.value,)
         return res
 
 
@@ -95,7 +96,8 @@ class Parameter(CollectableAttribute):
             self._isset = True
         elif __debug__:
             debug("COL",
-                  "Parameter: not setting %s since value is the same" % (str(self)))
+                  "Parameter: not setting %s since value is the same" \
+                  % (str(self)))
 
     @property
     def isDefault(self):

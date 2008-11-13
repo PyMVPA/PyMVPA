@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA metrics"""
 
 
-from mvpa.datasets.metric import *
+from mvpa.mappers.metric import *
 from mvpa.clfs.distance import *
 import unittest
 import numpy as N

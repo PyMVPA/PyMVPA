@@ -7,7 +7,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating an ERP plot. Actually it is ERF plot since we have MEG data"""
+"""
+ERP/ERF-Plots
+=============
+
+Example demonstrating an ERP-style plots. Actually, this code can be used to
+plot various time-locked data types. This example uses MEG data and therefore
+generates an ERF-plot.
+"""
 
 from mvpa.suite import *
 
@@ -63,8 +70,20 @@ plotERPs(plots[2:3], ax=ax, ymult=-1e6, **cargs)
 # Additional example: plotting a single ERP on an existing plot
 # without drawing axis:
 #
-# plotERP(data=meg.data[:, 0, :], SR=meg.samplingrate, pre=pre, pre_mean=pre, errtype=errtype, ymult=-1.0)
+# plotERP(data=meg.data[:, 0, :], SR=meg.samplingrate, pre=pre,
+#         pre_mean=pre, errtype=errtype, ymult=-1.0)
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
+
+"""
+The ouput of the provided example is presented below. It is not a very
+fascinating one due to the limited number of samples provided in the
+dataset shipped within the toolbox.
+
+.. image:: ../pics/erp_plot.*
+   :align: center
+   :alt: ERP plot example
+
+"""

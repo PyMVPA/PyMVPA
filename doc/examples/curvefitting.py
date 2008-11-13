@@ -7,7 +7,13 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example of fitting an HRF model to noisy peristimulus data"""
+"""
+Curve-Fitting
+=============
+
+An example showing how to fit an HRF model to noisy peristimulus time-series
+data.
+"""
 
 import numpy as N
 import pylab as P
@@ -17,7 +23,8 @@ from mvpa.misc.fx import singleGammaHRF, leastSqFit
 from mvpa import cfg
 
 # make dataset
-# 40 identical 'trial time courses' generated from a simple gamma function
+# 40 identical 'trial time courses' generated from a simple
+# gamma function
 #   time-to-peak: 6s
 #   FWHM: 7s
 #   Scaling: 1
@@ -46,3 +53,12 @@ P.legend(('original', 'fit'))
 if cfg.getboolean('examples', 'interactive', True):
     # show the cool figure
     P.show()
+
+"""
+The ouput of the provided example should look like
+
+.. image:: ../pics/curvefitting.*
+   :align: center
+   :alt: Curve fitting example
+
+"""

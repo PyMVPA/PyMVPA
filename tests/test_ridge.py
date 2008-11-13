@@ -29,6 +29,16 @@ class RidgeRegTests(unittest.TestCase):
         cor = pearsonr(pre,data.labels)
         self.failUnless(cor[0] > .8)
 
+        # do again for fortran implementation
+        # DISABLE for now, at it is known to be broken
+#        clf = RidgeReg(implementation='gradient')
+#        clf.train(data)
+#        cor = pearsonr(clf.predict(data.samples), data.labels)
+#        print cor
+#        self.failUnless(cor[0] > .8)
+
+
+
     def testRidgeRegState(self):
         data = datasets['dumb']
 

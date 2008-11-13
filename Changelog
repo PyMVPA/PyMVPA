@@ -23,42 +23,99 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * None yet.
-
+  None yet.
 
 Releases
 ========
+
+* 0.4.0 (Sat, 15 Nov 2008)
+
+  * Add :class:`~mvpa.misc.io.hamster.Hamster`, as a simple facility to easily
+    store any serializable objects in a compressed file and later on resurrect
+    all of them with a single line of code.
+  * New :class:`~mvpa.datasets.nifti.ERNiftiDataset` to facilitate the analysis
+    of event-related fMRI datasets.
+  * SVM backend is now configurable via :envvar:`MVPA_SVM_BACKEND` (libsvm or
+    shogun).
+  * Non-deterministic tests in the unittest battery are now configurable via
+    :envvar:`MVPA_TESTS_LABILE`.
+  * New helper to determine and plot the best matching distribution(s) for
+    the data (matchDistribution, plotDistributionMatches). It is WiP
+    thus API can change in the upcoming release.
+  * Simplifies API of mappers.
+  * New :class:`~mvpa.mappers.base.CombinedMapper` to map between multiple,
+    independent dataspace and a common feature space.
+  * New :class:`~mvpa.mappers.base.ChainMapper` to create chains of mappers
+    of abitrary lenght (e.g. to build preprocessing pipelines).
+  * New :class:`~mvpa.datasets.event.EventDataset` to rapidly extract
+    boxcar-shaped samples from data array using a simple list of
+    :class:`~mvpa.misc.support.Event` definitions.
+  * Removed obselete MetricMapper class. :class:`~mvpa.mappers.base.Mapper`
+    itself provides the facilities for dealing with metrics.
+  * :class:`~mvpa.mappers.boxcar.BoxcarMapper` can now handle data with more
+    than four dimensions/axis and also performs reverse mapping of single
+    boxcar samples.
+  * :class:`~mvpa.misc.fsl.base.FslEV3` can now convert EV3 files into
+    a list of :class:`~mvpa.misc.support.Event` instances.
+  * Results of tests for external dependencies are now stored in PyMVPA's
+    config manager (`mvpa.cfg`) and can be stored to a file (not done
+    automatically at the moment). This will significantly decrease the time
+    needed to import the `mvpa` module, as it prevents the repeated and lengthy
+    tests for working externals.
+  * Initial support for ROC computing and AUC as an accuracy measure.
+  * Weights of LARS are now available via :class:`~mvpa.clfs.lars.LARSWeights`.
+  * Added an initial list of MVPA-related references to the manual, tagged with
+    keywords and comments as well is DOI or similar URL reference to the
+    original document.
+  * Added initial glossary to the manual.
+  * New 'Module reference', as a middle-ground between manual and API
+    reference.
+  * New manual section about meta-classifiers (contributed by James M.
+    Hughes).
+  * New minimal example for a 'getting started' section in the manual.
+  * Former :envvar:`MVPA_QUICKTEST` was renamed to :envvar:`MVPA_TESTS_QUICK`.
+  * Update installation instructions for RPM-based distributions to make use
+    of the OpenSUSE Build Service.
+  * Updated install instructions for several RPM-based GNU/Linux
+    distributions.
+  * Switch from distutils to numpy.distutils (no change in dependencies).
+  * Depend on PyNIfTI >= 0.20081017.1 and gain a smaller memory footprint when
+    accessing NIfTI files via all datasets with NIfTI support.
+
 
 * 0.3.1 (Sun, 14 Sep 2008)
 
   * New manual section about feature selection with a focus on RFE.
     Contributed by James M. Hughes.
-  * New dataset type `ChannelDataset` for data structured in channels. Might
-    be useful for data modalities like EEG and MEG. This dataset includes
-    support for common preprocessing steps like resampling and baseline
-    signal substraction.
+  * New dataset type :class:`~mvpa.datasets.channel.ChannelDataset` for data
+    structured in channels. Might be useful for data modalities like EEG and
+    MEG. This dataset includes support for common preprocessing steps like
+    resampling and baseline signal substraction.
   * Plotting of topographies on heads. Thanks to Ingo Fründ for contributing
     this code. Additionally, a new example shows how to do such plots.
   * New general purpose function for generating barplots and candlestick plots
-    with error bars (`plotBars()`).
+    with error bars (:func:`~mvpa.misc.plot.base.plotBars`).
   * Dataset supports mapping of string labels onto numerical labels, removing
     the need to perform this mapping manually in user code. 'clfs_examples.py'
     is adjusted accordingly to demonstrate the new feature.
-  * New Classifier.summary() method to dump classifier settings.
-  * Improved and more flexible plotERPs().
-  * New I-RELIEF sensitivity analyzer.
-  * Added visualization of confusion matrices via `ConfusionMatrix.plot()`
-    inspired by Ingo Fründ.
-  * The PyMVPA version is now globally available in `mvpa.pymvpa_version`.
-  * BugFix: TuebingenMEG reader failed in some cases.
+  * New :meth:`mvpa.clfs.base.Classifier.summary` method to dump classifier
+    settings.
+  * Improved and more flexible :func:`~mvpa.misc.plot.erp.plotERPs`.
+  * New :class:`~mvpa.measures.irelief.IterativeRelief` sensitivity analyzer.
+  * Added visualization of confusion matrices via
+    :meth:`mvpa.clfs.transerror.ConfusionMatrix.plot` inspired by Ingo Fründ.
+  * The PyMVPA version is now globally available in :data:`mvpa.pymvpa_version`.
+  * BugFix: :class:`~mvpa.misc.io.meg.TuebingenMEG` reader failed in some cases.
   * Several improvements (docs and implementation) for building PyMVPA on
     MacOS X.
-  * New convenience accessor methods (`select()`, `where()` and
-    `__getitem__()`) for the `Dataset` base class.
-  * New `seed()` function to configure the random number generators from user
-    code.
+  * New convenience accessor methods (:meth:`~mvpa.datasets.base.Dataset.select`,
+    :meth:`~mvpa.datasets.base.Dataset.where` and
+    :meth:`~mvpa.datasets.base.Dataset.__getitem__`) for
+    :class`~mvpa.datasets.base.Dataset`.
+  * New :func:`mvpa.seed()` function to configure the random number generators
+    from user code.
   * Added reader for a MEG sensor locations format
-    (`TuebingenMEGSensorLocations`).
+    (:class:`~mvpa.misc.io.meg.TuebingenMEGSensorLocations`).
   * Initial model selection support for GRP (using openopt).
   * And tons of minor bugfixes, additional tests and improved documentation.
 

@@ -9,6 +9,7 @@
 """Main unit test interface for PyMVPA"""
 
 import unittest
+import sys
 
 from mvpa import _random_seed
 from mvpa.base import externals, warning
@@ -42,6 +43,7 @@ tests = [
     'test_iohelpers',
     'test_datasetfx',
     'test_cmdline',
+    'test_args',
     'test_eepdataset',
     'test_meg',
     # Classifiers (longer tests)
@@ -66,6 +68,9 @@ tests = [
     'test_splitsensana',
     # And the suite (all-in-1)
     'test_suite',
+    # Atlases... might become optional depending if any of the atlases
+    # is present
+    'test_atlases',
     ]
 
 # So we could see all warnings about missing dependencies
@@ -80,6 +85,7 @@ __optional_tests = ( ('scipy', 'ridge'),
                      ('nifti', 'niftidataset'),
                      ('mdp', 'icamapper'),
                      ('pywt', 'waveletmapper'),
+                     (['cPickle', 'gzip'], 'hamster'),
 #                     ('mdp', 'pcamapper'),
                      )
 
@@ -121,6 +127,7 @@ def main():
             result = super(TextTestRunnerPyMVPA, self).run(test)
             if not result.wasSuccessful():
                 print "MVPA_SEED=%s" % _random_seed
+                sys.exit(1)
             return result
 
     # finally run it

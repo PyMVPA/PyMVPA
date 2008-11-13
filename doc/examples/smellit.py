@@ -7,7 +7,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example showing some possibilities of data exploration
+"""
+Simple Data-Exploration
+=======================
+
+Example showing some possibilities of data exploration
 (i.e. to 'smell' data).
 """
 
@@ -47,10 +51,11 @@ P.subplot(121)
 plotSamplesDistance(ds, sortbyattr='chunks')
 P.title('Sample distances (sorted by chunks)')
 
-# similar distance plot, but now samples sorted by their respective labels,
-# i.e. samples with same labels are plotted in adjacent columns/rows.
-# Note, that the first and largest group corresponds to the 'rest' condition
-# in the dataset
+# similar distance plot, but now samples sorted by their
+# respective labels, i.e. samples with same labels are plotted
+# in adjacent columns/rows.
+# Note, that the first and largest group corresponds to the
+# 'rest' condition in the dataset
 P.subplot(122)
 plotSamplesDistance(ds, sortbyattr='labels')
 P.title('Sample distances (sorted by labels)')
@@ -74,3 +79,18 @@ if cfg.getboolean('examples', 'interactive', True):
     P.show()
 
 # XXX add some more, maybe show effect of preprocessing
+
+"""
+Outputs of the example script. Data prior to preprocessing
+
+.. image:: ../pics/smellit2.*
+   :align: center
+   :alt: Data prior preprocessing
+
+Data after minimal preprocessing
+
+.. image:: ../pics/smellit3.*
+   :align: center
+   :alt: Data after z-scoring and detrending
+
+"""

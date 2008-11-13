@@ -17,10 +17,11 @@ import operator, copy
 from sets import Set
 from textwrap import TextWrapper
 
+import numpy as N
+
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.base import warning
-from mvpa.base.dochelpers import enhancedClassDocString, enhancedDocString
+from mvpa.base.dochelpers import enhancedClassDocString
 
 if __debug__:
     from mvpa.base import debug
@@ -37,14 +38,16 @@ class CollectableAttribute(object):
     part of a collection.
 
     Derived classes will have specific semantics:
+
     * StateVariable: conditional storage
     * AttributeWithUnique: easy access to a set of unique values
       within a container
     * Parameter: attribute with validity ranges.
-     - ClassifierParameter: specialization to become a part of
-       Classifier's params collection
-     - KernelParameter: --//-- to become a part of Kernel Classifier's
-       kernel_params collection
+
+      - ClassifierParameter: specialization to become a part of
+        Classifier's params collection
+      - KernelParameter: --//-- to become a part of Kernel Classifier's
+        kernel_params collection
 
     Those CollectableAttributes are to be groupped into corresponding
     collections for each class by statecollector metaclass, ie it
@@ -317,7 +320,8 @@ class Collection(object):
             res = ""
         res += "{"
         for i in xrange(min(num, maxnumber)):
-            if i>0: res += " "
+            if i > 0:
+                res += " "
             res += "%s" % str(self._items.values()[i])
         if len(self._items) > maxnumber:
             res += "..."
@@ -444,10 +448,11 @@ class Collection(object):
           index : None or basestring or list of basestring
             What items to check if they were set in the collection
         """
+        _items = self._items
         if not (index is None):
             if isinstance(index, basestring):
                  self._checkIndex(index) # process just that single index
-                 return self._items[index].isSet
+                 return _items[index].isSet
             else:
                 items = index           # assume that we got some list
         else:
@@ -455,7 +460,7 @@ class Collection(object):
 
         for index in items:
             self._checkIndex(index)
-            if self._items[index].isSet:
+            if _items[index].isSet:
                 return True
         return False
 
@@ -464,8 +469,8 @@ class Collection(object):
         """Return list of indexes which were set"""
         result = []
         # go through all members and if any isSet -- return True
-        for index in self._items:
-            if self.isSet(index):
+        for index,v in self._items.iteritems():
+            if v.isSet:
                 result.append(index)
         return result
 
@@ -475,7 +480,9 @@ class Collection(object):
 
         :Raise `KeyError`: if given `index` is not known
         """
-        if not self.isKnown(index):
+        # OPT: lets not reuse isKnown, to don't incure 1 more function
+        #      call
+        if not self._items.has_key(index):
             raise KeyError, \
                   "%s of %s has no key '%s' registered" \
                   % (self.__class__.__name__,
@@ -565,6 +572,21 @@ class Collection(object):
         """Returns the value by index"""
         self._checkIndex(index)
         return self._items[index].value
+
+
+    def get(self, index, default):
+        """Access the value by a given index.
+
+        Mimiquing regular dictionary behavior, if value cannot be obtained
+        (i.e. if any exception is caught) return default value.
+        """
+        try:
+            return self[index].value
+        except Exception, e:
+            #if default is not None:
+            return default
+            #else:
+            #    raise e
 
 
     def setvalue(self, index, value):
@@ -730,7 +752,8 @@ class ParameterCollection(Collection):
         prefixes = []
         for k in self.names:
             # list only params with not default values
-            if self[k].isDefault: continue
+            if self[k].isDefault:
+                continue
             prefixes.append("%s=%s" % (k, self[k].value))
         return prefixes
 
@@ -831,8 +854,17 @@ class StateCollection(Collection):
                   "Got %s" % index
 
 
-    def _copy_states_(self, fromstate, deep=False):
+    def _copy_states_(self, fromstate, index=None, deep=False):
         """Copy known here states from `fromstate` object into current object
+
+        :Parameters:
+          fromstate : Collection or Stateful
+            Source states to copy from
+          index : None or list of basestring
+            If not to copy all set state variables, index provides
+            selection of what to copy
+          deep : bool
+            Optional control over the way to copy
 
         Crafted to overcome a problem mentioned above in the comment
         and is to be called from __copy__ of derived classes
@@ -853,10 +885,18 @@ class StateCollection(Collection):
         if isinstance(fromstate, Stateful):
             fromstate = fromstate.states
 
-        self.enabled = fromstate.enabled
-        for name in self.names:
-            if fromstate.isKnown(name):
-                self._items[name] = operation(fromstate._items[name])
+        #self.enabled = fromstate.enabled
+        _items, from_items = self._items, fromstate._items
+        if index is None:
+            # copy all set ones
+            for name in fromstate.whichSet():#self.names:
+                #if fromstate.isKnown(name):
+                _items[name] = operation(from_items[name])
+        else:
+            isKnown = fromstate.isKnown
+            for name in index:
+                if isKnown(name):
+                    _items[name] = operation(from_items[name])
 
 
     def isEnabled(self, index):
@@ -961,10 +1001,14 @@ class StateCollection(Collection):
         It might be handy to store set of enabled states and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> states_enabled = stateful.enabled
-        >>> stateful.enabled = ['blah']
-        >>> stateful.enabled = states_enabled
-
+        >>> from mvpa.misc.state import Stateful, StateVariable
+        >>> class Blah(Stateful):
+        ...   bleh = StateVariable(enabled=False, doc='Example')
+        ...
+        >>> blah = Blah()
+        >>> states_enabled = blah.states.enabled
+        >>> blah.states.enabled = ['bleh']
+        >>> blah.states.enabled = states_enabled
         """
         for index in self._items.keys():
             self.enable(index, index in indexlist)
@@ -1013,9 +1057,10 @@ class AttributesCollector(type):
     def __init__(cls, name, bases, dict):
 
         if __debug__:
-            debug("COLR",
-                  "AttributesCollector call for %s.%s, where bases=%s, dict=%s " \
-                  % (cls, name, bases, dict))
+            debug(
+                "COLR",
+                "AttributesCollector call for %s.%s, where bases=%s, dict=%s " \
+                % (cls, name, bases, dict))
 
         super(AttributesCollector, cls).__init__(name, bases, dict)
 
@@ -1138,7 +1183,7 @@ class AttributesCollector(type):
             setattr(cls, "_statesdoc", statesdoc)
 
         if paramsdoc != "":
-            if __debug__:
+            if __debug__ and 'COLR' in debug.active:
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
             setattr(cls, "_paramsdoc", paramsdoc)
 
@@ -1173,6 +1218,11 @@ class ClassWithCollections(object):
         self = super(ClassWithCollections, cls).__new__(cls)
 
         s__dict__ = self.__dict__
+
+        # init variable
+        # XXX: Added as pylint complained (rightfully) -- not sure if false
+        # is the proper default
+        self.__params_set = False
 
         # need to check to avoid override of enabled states in the case
            # of multiple inheritance, like both Statefull and Harvestable
@@ -1249,9 +1299,11 @@ class ClassWithCollections(object):
             #else:
             #    if len(kwargs)>0:
             #        known_params = reduce(lambda x, y: x + y, \
-            #                            [x.items.keys() for x in collections], [])
+            #                            [x.items.keys() for x in collections],
+            #                            [])
             #        raise TypeError, \
-            #              "Unknown parameters %s for %s." % (kwargs.keys(), self) \
+            #              "Unknown parameters %s for %s." % (kwargs.keys(),
+            #                                                 self) \
             #              + " Valid parameters are %s" % known_params
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
@@ -1310,11 +1362,11 @@ class ClassWithCollections(object):
             s += "/%s " % self.__descr
         if hasattr(self, "_collections"):
             for col, collection in self._collections.iteritems():
-                s += " %d %s:%s" %(len(collection.items), col, str(collection))
+                s += " %d %s:%s" % (len(collection.items), col, str(collection))
         return s
 
 
-    def __repr__(self, prefixes=[], fullname=False):
+    def __repr__(self, prefixes=None, fullname=False):
         """String definition of the object of ClassWithCollections object
 
         :Parameters:
@@ -1323,6 +1375,8 @@ class ClassWithCollections(object):
           prefixes : list of strings
             What other prefixes to prepend to list of arguments
         """
+        if prefixes is None:
+            prefixes = []
         prefixes = prefixes[:]          # copy list
         id_str = ""
         module_str = ""

@@ -7,10 +7,16 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a topography plot."""
+"""
+Generating Topography plots
+===========================
+
+Example demonstrating a topography plot."""
 
 from mvpa.suite import *
 
+# Sanity check if we have griddata available
+externals.exists("griddata", raiseException=True)
 
 # EEG example splot
 P.subplot(1, 2, 1)
@@ -33,15 +39,26 @@ plotHeadTopography(topo, sensors.locations(), plotsensors=True)
 P.subplot(1, 2, 2)
 
 # load MEG sensor locations
-sensors=TuebingenMEGSensorLocations(os.path.join('data', 'tueb_meg_coord.xyz'))
+sensors=TuebingenMEGSensorLocations(
+            os.path.join('data', 'tueb_meg_coord.xyz'))
 
 # random values this time
 topo = N.random.randn(len(sensors.names))
 
 # plot without additional interpolation
-plotHeadTopography(topo, sensors.locations(), interpolation='nearest')
+plotHeadTopography(topo, sensors.locations(),
+                   interpolation='nearest')
 
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
+
+"""
+The ouput of the provided example should look like
+
+.. image:: ../pics/topo_plot.*
+   :align: center
+   :alt: Topography plot of MEG data
+
+"""

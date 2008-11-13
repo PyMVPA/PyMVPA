@@ -2,20 +2,18 @@
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
 
-Pie ... what?
-=============
-
 PyMVPA is a Python_ module intended to ease pattern classification analyses of
-large datasets. It provides high-level abstraction of typical processing steps
-and a number of implementations of some popular algorithms.  While it is not
-limited to the neuroimaging domain, it is eminently suited for such datasets.
-PyMVPA is truely free software (in every respect) and additionally requires
-nothing but free-software to run.
+large datasets. In the neuroimaging contexts such analysis techniques are also
+known as :term:`decoding` or :term:`MVPA` analysis. PyMVPA provides high-level
+abstraction of typical processing steps and a number of implementations of some
+popular algorithms.  While it is not limited to the neuroimaging domain, it is
+eminently suited for such datasets.  PyMVPA is truely free software (in every
+respect) and additionally requires nothing but free-software to run.
 
 .. _Python: http://www.python.org
 
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
-in **Py**\ thon.
+(:term:`MVPA`) in **Py**\ thon.
 
 PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
 website, the source code repository and download services are hosted on 
@@ -29,19 +27,19 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-
-  PyMVPA 0.3.1 is out [14 Sep 2008]
-
-    It features new plotting support, I-RELIEF sensitivity measure,
-    new Dataset types and readers, bugfixes and improved documentation. See
-    the :ref:`changelog <changelog>` for details.
+A complete fMRI :ref:`example dataset <exampledata` is now available for download [22 Oct 2008]
 
 
-  New beta version of a binary installer for MacOS X 10.5 [21 Aug 2008]
+PyMVPA is also running on a cell phone! [15 Oct 2008]
 
-    The installer is built for the Enthought Python distribution (Python 2.5)
-    and contains the recently released PyMVPA 0.3.
+  Here is :ref:`the proof <requirements>`.
 
+
+PyMVPA 0.3.1 is out [14 Sep 2008]
+
+  It features new plotting support, I-RELIEF sensitivity measure,
+  new Dataset types and readers, bugfixes and improved documentation. See
+  the :ref:`changelog <changelog>` for details.
 
 
 Documentation
@@ -52,9 +50,12 @@ Documentation
 * :ref:`Development Changelog <changelog>` (see what has changed)
 * :ref:`Developer Guidelines <devguide>` (information for people contributing
   code)
+* :ref:`Module Reference <modref>` (user-oriented reference, less complex than full API docs)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
 * :ref:`FAQ <faq>` (short answers to common problems)
+* :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
+  <HGF+01>`)
 * :ref:`genindex` (access by keywords)
 * :ref:`search` (online and offline full-text search)
 
@@ -96,28 +97,29 @@ Binary packages are available for:
     available. Please read the `package repository instructions`_ to learn
     about how to obtain them.
 
-* Windows (:ref:`installation instructions <install_win>`)
-    An installer for Python 2.5 is available from the `download area`_.
+* RPM-based GNU/Linux distributions (:ref:`installation instructions <install_rpm>`)
+    RPM packages are provided through the `OpenSUSE Build Service`_. The
+    currently supported distributions include: CentOS 5, Fedora 9, Mandriva
+    2007-2008, RedHat Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE
+    10.2 up to 11.0. The build service supports `RPM-package repositories`_ and
+    `1-click-installations`_.
 
 * MacOS X (:ref:`installation instructions <install_macos>`)
     An installer built for the Enthought Python 2.5 distribution is available
     from the `download area`_.
 
-* OpenSUSE (:ref:`installation instructions <install_suse>`)
-   Initial version of a binary RPM package, built for OpenSUSE_ 10.3
-   -- available in the `download area`_.
+* Windows (:ref:`installation instructions <install_win>`)
+    An installer for Python 2.5 is available from the `download area`_.
 
-Currently, there are no binary packages for other operating systems. However,
-the manual contains instructions to build PyMVPA on :ref:`build_suse`,
-:ref:`build_fedora`, :ref:`build_macos` and :ref:`build_win`. Additionally, we
-know that PyMVPA successfully builds on recent RedHat_ releases (see below for
-instructions).
+If there are no binary packages for your particular operating system or
+platform, you need to compile your own. The manual contains :ref:`instructions
+<buildfromsource>` to build PyMVPA in various environments.
 
 .. _official Debian package: http://packages.debian.org/python-mvpa
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
-
-.. _RedHat: http://www.redhat.com
-.. _OpenSUSE: http://www.opensuse.org/
+.. _RPM-package repositories: http://download.opensuse.org/repositories/home:/hankem/
+.. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
+.. _OpenSUSE Build Service: https://build.opensuse.org/
 
 
 Source code
@@ -198,48 +200,38 @@ Some of their functionality is already available through and
 within the PyMVPA framework. *Only* free software projects are listed
 here.
 
-3dsvm_
-  AFNI_ plugin to apply support vector machine classifiers to fMRI data.
+* 3dsvm_: AFNI_ plugin to apply support vector machine classifiers to fMRI data.
 
-Elefant_
-  Efficient Learning, Large-scale Inference, and Optimization Toolkit.
-  Multi-purpose open source library for machine learning.
+* Elefant_: Efficient Learning, Large-scale Inference, and Optimization
+  Toolkit.  Multi-purpose open source library for machine learning.
 
-MDP_
+* MDP_
   Python data processing framework. MDP_ provides various algorithms.
   *PyMVPA makes use of MDP's PCA and ICA implementations.*
 
-`MVPA Toolbox`_
-  Matlab-based toolbox to facilitate multi-voxel pattern analysis of fMRI
-  neuroimaging data.
+* `MVPA Toolbox`_: Matlab-based toolbox to facilitate multi-voxel pattern
+  analysis of fMRI neuroimaging data.
 
-NiPy_
-  Project with growing functionality to analyze brain imaging data. NiPy_
+* NiPy_: Project with growing functionality to analyze brain imaging data. NiPy_
   is heavily connected to SciPy and lots of functionality developed within
   NiPy becomes part of SciPy.
 
-OpenMEEG_
-   Software package for low-frequency bio-electromagnetism including the
-   EEG/MEG forward and inverse problems. OpenMEEG includes Python bindings.
+* OpenMEEG_: Software package for low-frequency bio-electromagnetism including
+  the EEG/MEG forward and inverse problems. OpenMEEG includes Python bindings.
 
-Orange_
-  Powerful general-purpose data mining software. Orange also has Python
+* Orange_: Powerful general-purpose data mining software. Orange also has Python
   bindings.
 
-`PyMGH/PyFSIO`_
-  Python IO library to for FreeSurfer's `.mgh` data format.
+* `PyMGH/PyFSIO`_: Python IO library to for FreeSurfer's `.mgh` data format.
 
-PyML_
-  PyML is an interactive object oriented framework for machine learning
+* PyML_: PyML is an interactive object oriented framework for machine learning
   written in Python. PyML focuses on SVMs and other kernel methods.
 
-PyNIfTI_
-  Read and write NIfTI images from within Python.
+* PyNIfTI_: Read and write NIfTI images from within Python.
   *PyMVPA uses PyNIfTI to access MRI datasets.*
 
-Shogun_
-  Comprehensive machine learning toolbox with bindings to various programming
-  languages.
+* Shogun_: Comprehensive machine learning toolbox with bindings to various
+  programming languages.
   *PyMVPA can optionally use implementations of Support Vector Machines from
   Shogun.*
 

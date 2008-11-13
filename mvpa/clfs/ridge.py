@@ -15,7 +15,7 @@ import numpy as N
 from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier
-
+#from mvpa.clfs.libridgetrain import ridgetrain
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
@@ -24,7 +24,7 @@ class RidgeReg(Classifier):
     have to be zero-centered.
     """
 
-    _clf_internals = ['ridge']
+    _clf_internals = ['ridge', 'regression', 'linear']
 
     def __init__(self, lm=None, **kwargs):
         """
@@ -34,8 +34,14 @@ class RidgeReg(Classifier):
           lm : float
             the penalty term lambda.  
             (Defaults to .05*nFeatures)
-
         """
+        #  implementation : 'direct' | 'gradient'
+        #    choose between direct implementation via numpy.linalg.lstsq
+        #    and memory saving gradient descent implemented in fortran
+        #  stopcrit: float
+        #    Stopping criterion for the gradient descent training method
+        #    (absolute error)
+
         # init base class first
         Classifier.__init__(self, **kwargs)
 
@@ -48,6 +54,10 @@ class RidgeReg(Classifier):
 
         # verify that they specified lambda
         self.__lm = lm
+
+        # store train method config
+        self.__implementation = 'direct' #implementation
+        #self.__stopcrit = stopcrit
 
 
     def __repr__(self):
@@ -65,23 +75,37 @@ class RidgeReg(Classifier):
         """Train the classifier using `data` (`Dataset`).
         """
 
-        # create matrices to solve with additional penalty term
-        # determine the lambda matrix
-        if self.__lm is None:
-            # Not specified, so calculate based on .05*nfeatures
-            Lambda = .05*data.nfeatures*N.eye(data.nfeatures)
+        if self.__implementation == "direct":
+            # create matrices to solve with additional penalty term
+            # determine the lambda matrix
+            if self.__lm is None:
+                # Not specified, so calculate based on .05*nfeatures
+                Lambda = .05*data.nfeatures*N.eye(data.nfeatures)
+            else:
+                # use the provided penalty
+                Lambda = self.__lm*N.eye(data.nfeatures)
+
+            # add the penalty term
+            a = N.concatenate( \
+                (N.concatenate((data.samples, N.ones((data.nsamples, 1))), 1),
+                    N.concatenate((Lambda, N.zeros((data.nfeatures, 1))), 1)))
+            b = N.concatenate((data.labels, N.zeros(data.nfeatures)))
+
+            # perform the least sq regression and save the weights
+            self.w = lstsq(a, b)[0]
+        elif self.__implementation == "gradient":
+            # Set lambda
+            if self.__lm is None:
+                Lambda = .05*data.nfeatures
+            else:
+                Lambda = self.__lm
+            # We can directly run the training routine
+            self.w = N.random.randn(data.nfeatures+1)
+            self.w = ridgetrain(data.samples,\
+                    data.labels, self.w, Lambda, self.__stopcrit)
         else:
-            # use the provided penalty
-            Lambda = self.__lm*N.eye(data.nfeatures)
-
-        # add the penalty term
-        a = N.concatenate( \
-            (N.concatenate((data.samples, N.ones((data.nsamples, 1))), 1),
-                N.concatenate((Lambda, N.zeros((data.nfeatures, 1))), 1)))
-        b = N.concatenate((data.labels, N.zeros(data.nfeatures)))
-
-        # perform the least sq regression and save the weights
-        self.w = lstsq(a, b)[0]
+            raise ValueError, "Unknown implementation '%s'" \
+                              % self.__implementation
 
 
     def _predict(self, data):

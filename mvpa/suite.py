@@ -43,9 +43,9 @@ from mvpa.clfs.warehouse import *
 from mvpa.datasets import *
 from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
-from mvpa.datasets.metric import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.channel import *
+from mvpa.datasets.event import *
 from mvpa.datasets.eep import *
 if externals.exists('nifti'):
     from mvpa.datasets.nifti import *
@@ -55,6 +55,8 @@ from mvpa.featsel.helpers import *
 from mvpa.featsel.ifs import *
 from mvpa.featsel.rfe import *
 from mvpa.mappers import *
+from mvpa.mappers.base import *
+from mvpa.mappers.metric import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.boxcar import *
@@ -78,6 +80,8 @@ from mvpa.misc import *
 from mvpa.misc.io import *
 from mvpa.misc.io.eepbin import *
 from mvpa.misc.io.meg import *
+if externals.exists('cPickle') and externals.exists('gzip'):
+    from mvpa.misc.io.hamster import *
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *
@@ -103,4 +107,4 @@ if externals.exists("pywt"):
     from mvpa.mappers.wavelet import *
 
 if externals.exists("pylab"):
-	import pylab as P
+    import pylab as P

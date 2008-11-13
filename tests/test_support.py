@@ -55,6 +55,25 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless( trans.shape == (4,3,4,2) )
 
 
+
+    def testEvent(self):
+        self.failUnlessRaises(ValueError, Event)
+        ev = Event(onset=2.5)
+
+        # all there?
+        self.failUnless(ev.items() == [('onset', 2.5)])
+
+        # conversion
+        self.failUnless(ev.asDescreteTime(dt=2).items() == [('onset', 1)])
+        evc = ev.asDescreteTime(dt=2, storeoffset=True)
+        self.failUnless(evc.has_key('features'))
+        self.failUnless(evc['features'] == [0.5])
+
+        # same with duration included
+        evc = Event(onset=2.5, duration=3.55).asDescreteTime(dt=2)
+        self.failUnless(evc['duration'] == 3)
+
+
     def testMofNCombinations(self):
         self.failUnlessEqual(
             getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )

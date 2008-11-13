@@ -20,11 +20,15 @@ has to be in some iterable container.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
 import mvpa.misc.copy as copy
 
 from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.args import group_kwargs
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base import externals
+from mvpa.clfs.stats import autoNullDist
 
 if __debug__:
     from mvpa.base import debug
@@ -58,6 +62,9 @@ class DatasetMeasure(Stateful):
             "transformation algorithm")
     null_prob = StateVariable(enabled=True)
     """Stores the probability of a measure under the NULL hypothesis"""
+    null_t = StateVariable(enabled=False)
+    """Stores the t-score corresponding to null_prob under assumption
+    of Normal distribution"""
 
     def __init__(self, transformer=None, null_dist=None, **kwargs):
         """Does nothing special.
@@ -74,7 +81,11 @@ class DatasetMeasure(Stateful):
         self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
         methods."""
-        self.__null_dist = null_dist
+        null_dist_ = autoNullDist(null_dist)
+        if __debug__:
+            debug('SA', 'Assigning null_dist %s whenever original given was %s'
+                  % (null_dist_, null_dist))
+        self.__null_dist = null_dist_
 
 
     __doc__ = enhancedDocString('DatasetMeasure', locals(), Stateful)
@@ -91,11 +102,6 @@ class DatasetMeasure(Stateful):
         """
         result = self._call(dataset)
         result = self._postcall(dataset, result)
-        self.raw_result = result
-        if not self.__transformer is None:
-            if __debug__:
-                debug("SA_", "Applying transformer %s" % self.__transformer)
-            result = self.__transformer(result)
         return result
 
 
@@ -113,8 +119,18 @@ class DatasetMeasure(Stateful):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
+        self.raw_result = result
+        if not self.__transformer is None:
+            if __debug__:
+                debug("SA_", "Applying transformer %s" % self.__transformer)
+            result = self.__transformer(result)
+
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
+            if __debug__:
+                debug("SA_", "Estimating NULL distribution using %s"
+                      % self.__null_dist)
+
             # we need a matching datameasure instance, but we have to disable
             # the estimation of the null distribution in that child to prevent
             # infinite looping.
@@ -123,7 +139,35 @@ class DatasetMeasure(Stateful):
             self.__null_dist.fit(measure, dataset)
 
             # get probability of result under NULL hypothesis if available
-            self.null_prob = self.__null_dist.cdf(result)
+            null_prob = self.__null_dist.p(result)
+            self.null_prob = null_prob
+
+            if self.states.isEnabled('null_t'):
+                externals.exists('scipy', raiseException=True)
+                from scipy.stats import norm
+
+                # TODO: following logic should appear in NullDist,
+                #       not here
+                tail = self.null_dist._tail
+                if tail == 'left':
+                    acdf = N.abs(null_prob)
+                elif tail == 'right':
+                    acdf = 1.0 - N.abs(null_prob)
+                elif tail in ['any', 'both']:
+                    acdf = 1.0 - N.clip(N.abs(null_prob), 0, 0.5)
+                else:
+                    raise RuntimeError, 'Unhandled tail %s' % tail
+                # We need to clip to avoid non-informative inf's ;-)
+                # that happens due to lack of precision in mantissa
+                # which is 11 bits in double. We could clip values
+                # around 0 at as low as 1e-100 (correspond to z~=21),
+                # but for consistency lets clip at 1e-16 which leads
+                # to distinguishable value around p=1 and max z=8.2.
+                # Should be sufficient range of z-values ;-)
+                clip = 1e-16
+                null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
+                null_t[N.signbit(null_prob)] *= -1.0 # revert sign for negatives
+                self.null_t = null_t                 # store
 
         return result
 
@@ -135,6 +179,10 @@ class DatasetMeasure(Stateful):
         if self.__null_dist is not None:
             prefixes.append("null_dist=%s" % self.__null_dist)
         return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
+
+
+    @property
+    def null_dist(self): return self.__null_dist
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -150,7 +198,15 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
     # XXX should we may be default to combiner=None to avoid
     # unexpected results? Also rethink if we need combiner here at
     # all... May be combiners should be 'adjoint' with transformer
-    def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs):
+    # YYY in comparison to CombinedSensitivityAnalyzer here default
+    #     value for combiner is worse than anywhere. From now on,
+    #     default combiners should be provided "in place", ie
+    #     in SMLR it makes sense to have SecondAxisMaxOfAbs,
+    #     in SVM (pair-wise) only for not-binary should be
+    #     SecondAxisSumOfAbs, though could be Max as well... uff
+    #   YOH: started to do so, but still have issues... thus
+    #        reverting back for now
+    def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs): # SecondAxisSumOfAbs
         """Initialize
 
         :Parameters:
@@ -160,12 +216,13 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             `transformer`, which is always applied. By default, the sum of
             absolute values along the second axis is computed.
         """
-        DatasetMeasure.__init__(self, **(kwargs))
+        DatasetMeasure.__init__(self, **kwargs)
 
         self.__combiner = combiner
 
     def __repr__(self, prefixes=None):
-        if prefixes is None: prefixes = []
+        if prefixes is None:
+            prefixes = []
         if self.__combiner != SecondAxisSumOfAbs:
             prefixes.append("combiner=%s" % self.__combiner)
         return \
@@ -231,7 +288,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                 result = self.__combiner(result)
         else:
             # remove bogus dimensions
-            # XXX we might need to come up with smth better. May be some naive combiner? :-)
+            # XXX we might need to come up with smth better. May be some naive
+            # combiner? :-)
             result = result.squeeze()
 
         # call base class postcall
@@ -257,7 +315,7 @@ class StaticDatasetMeasure(DatasetMeasure):
           bias
              optionally available bias
         """
-        DatasetMeasure.__init__(self, *(args), **(kwargs))
+        DatasetMeasure.__init__(self, *args, **kwargs)
         if measure is None:
             raise ValueError, "Sensitivity measure has to be provided"
         self.__measure = measure
@@ -287,9 +345,8 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         """Initialize the analyzer with the classifier it shall use.
 
         :Parameters:
-          clf : Classifier
-            classifier to use. Only classifiers sub-classed from
-            `LinearSVM` may be used.
+          clf : :class:`Classifier`
+            classifier to use.
           force_training : Bool
             if classifier was already trained -- do not retrain
         """
@@ -316,7 +373,8 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         """Either to force it to train"""
 
     def __repr__(self, prefixes=None):
-        if prefixes is None: prefixes = []
+        if prefixes is None:
+            prefixes = []
         prefixes.append("clf=%s" % repr(self.clf))
         if not self._force_training:
             prefixes.append("force_training=%s" % self._force_training)
@@ -350,6 +408,14 @@ class Sensitivity(FeaturewiseDatasetMeasure):
     def _setClassifier(self, clf):
         self.__clf = clf
 
+
+    @property
+    def feature_ids(self):
+        """Return feature_ids used by the underlying classifier
+        """
+        return self.__clf._getFeatureIds()
+
+
     clf = property(fget=lambda self:self.__clf,
                    fset=_setClassifier)
 
@@ -361,10 +427,21 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     sensitivities = StateVariable(enabled=False,
         doc="Sensitivities produced by each classifier")
 
+    # XXX think again about combiners... now we have it in here and as
+    #     well as in the parent -- FeaturewiseDatasetMeasure...
+    # YYY because we don't use parent's _call. Needs RF
     def __init__(self, analyzers=None,
-                 combiner=FirstAxisMean,
+                 combiner=None, #FirstAxisMean,
                  **kwargs):
-        if analyzers == None:
+        """Initialize CombinedFeaturewiseDatasetMeasure
+
+        :Parameters:
+          analyzers : list or None
+            List of analyzers to be used. There is no logic to populate
+            such a list in __call__, so it must be either provided to
+            the constructor or assigned to .analyzers prior calling
+        """
+        if analyzers is None:
             analyzers = []
 
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
@@ -375,26 +452,26 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         """Which functor to use to combine all sensitivities"""
 
 
-
     def _call(self, dataset):
         sensitivities = []
-        ind = 0
-        for analyzer in self.__analyzers:
+        for ind,analyzer in enumerate(self.__analyzers):
             if __debug__:
                 debug("SA", "Computing sensitivity for SA#%d:%s" %
                       (ind, analyzer))
             sensitivity = analyzer(dataset)
             sensitivities.append(sensitivity)
-            ind += 1
 
         self.sensitivities = sensitivities
         if __debug__:
             debug("SA",
                   "Returning combined using %s sensitivity across %d items" %
-                  (`self.__combiner`, len(sensitivities)))
+                  (self.__combiner, len(sensitivities)))
 
         if self.__combiner is not None:
             sensitivities = self.__combiner(sensitivities)
+        else:
+            # assure that we have an ndarray on output
+            sensitivities = N.asarray(sensitivities)
         return sensitivities
 
 
@@ -413,12 +490,24 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 class BoostedClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzers to be merged into a single output"""
 
+
+    # XXX we might like to pass parameters also for combined_analyzer
+    @group_kwargs(prefixes=['slave_'], assign=True)
     def __init__(self,
                  clf,
                  analyzer=None,
                  combined_analyzer=None,
+                 slave_kwargs={},
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
+
+        :Parameters:
+          clf : `BoostedClassifier`
+            Classifier to be used
+          analyzer : analyzer
+            Is used to populate combined_analyzer
+          slave_*
+            Arguments to pass to created analyzer if analyzer is None
         """
         Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:
@@ -428,7 +517,10 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 
-        self.__analyzer = None
+        if analyzer is not None and len(self._slave_kwargs):
+            raise ValueError, \
+                  "Provide either analyzer of slave_* arguments, not both"
+        self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
@@ -437,7 +529,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         # create analyzers
         for clf in self.clf.clfs:
             if self.__analyzer is None:
-                analyzer = clf.getSensitivityAnalyzer()
+                analyzer = clf.getSensitivityAnalyzer(**(self._slave_kwargs))
                 if analyzer is None:
                     raise ValueError, \
                           "Wasn't able to figure basic analyzer for clf %s" % \
@@ -458,7 +550,11 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 
         self.__combined_analyzer.analyzers = analyzers
 
-        return self.__combined_analyzer(dataset)
+        # XXX not sure if we don't want to call directly ._call(dataset) to avoid
+        # double application of transformers/combiners, after all we are just
+        # 'proxying' here to combined_analyzer...
+        # YOH: decided -- lets call ._call
+        return self.__combined_analyzer._call(dataset)
 
     combined_analyzer = property(fget=lambda x:x.__combined_analyzer)
 
@@ -466,6 +562,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzer output just to pass through"""
 
+    @group_kwargs(prefixes=['slave_'], assign=True)
     def __init__(self,
                  clf,
                  analyzer=None,
@@ -474,39 +571,51 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         """
         Sensitivity.__init__(self, clf, **kwargs)
 
-        self.__analyzer = None
+        if analyzer is not None and len(self._slave_kwargs):
+            raise ValueError, \
+                  "Provide either analyzer of slave_* arguments, not both"
+
+        self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
     def _call(self, dataset):
-        if self.__analyzer is None:
-            self.__analyzer = self.clf.clf.getSensitivityAnalyzer()
-            if self.__analyzer is None:
+        # OPT: local bindings
+        clfclf = self.clf.clf
+        analyzer = self.__analyzer
+
+        if analyzer is None:
+            analyzer = clfclf.getSensitivityAnalyzer(
+                **(self._slave_kwargs))
+            if analyzer is None:
                 raise ValueError, \
                       "Wasn't able to figure basic analyzer for clf %s" % \
-                      `self.clf.clf`
+                      `clfclf`
             if __debug__:
                 debug("SA", "Selected analyzer %s for clf %s" % \
-                      (`self.__analyzer`, `self.clf.clf`))
+                      (analyzer, clfclf))
+            # bind to the instance finally
+            self.__analyzer = analyzer
 
         # TODO "remove" unnecessary things below on each call...
         # assign corresponding classifier
-        self.__analyzer.clf = self.clf.clf
+        analyzer.clf = clfclf
 
         # if clf was trained already - don't train again
-        if self.clf.clf.trained:
-            self.__analyzer._force_training = False
+        if clfclf.trained:
+            analyzer._force_training = False
 
-        return self.__analyzer._call(dataset)
+        return analyzer._call(dataset)
 
     analyzer = property(fget=lambda x:x.__analyzer)
 
 
 class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
-    """Set sensitivity analyzer output be reverse mapped using mapper of the slave classifier"""
+    """Set sensitivity analyzer output be reverse mapped using mapper of the
+    slave classifier"""
 
     def _call(self, dataset):
-        sens = super(MappedClassifierSensitivityAnalyzer,self)._call(dataset)
+        sens = super(MappedClassifierSensitivityAnalyzer, self)._call(dataset)
         # So we have here the case that some sensitivities are given
         #  as nfeatures x nclasses, thus we need to take .T for the
         #  mapper and revert back afterwards

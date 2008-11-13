@@ -12,6 +12,7 @@ import unittest
 import os.path
 import numpy as N
 
+from mvpa.base import externals
 from mvpa.datasets.eep import EEPDataset
 from mvpa.misc.io.eepbin import EEPBin
 
@@ -50,7 +51,10 @@ class EEPDatasetTests(unittest.TestCase):
         channelids = N.array(ds.channelids).copy()
         self.failUnless(N.round(ds.samplingrate) == 500.0)
 
-        # shoudl puke when called with nothing
+        if not externals.exists('scipy'):
+            return
+
+        # should puke when called with nothing
         self.failUnlessRaises(ValueError, ds.resample)
 
         # now for real -- should divide nsamples into half

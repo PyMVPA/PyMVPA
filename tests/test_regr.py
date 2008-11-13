@@ -62,6 +62,23 @@ class RegressionsTests(unittest.TestCase):
                         "dataset. Got correlation error of %s " % corr)
 
 
+    @sweepargs(clf=clfs['regression'])
+    def testRegressionsClassifiers(self, clf):
+        """Simple tests on regressions being used as classifiers
+        """
+        # check if we get values set correctly
+        clf.states._changeTemporarily(enable_states=['values'])
+        self.failUnlessRaises(UnknownStateError, clf.states['values']._get)
+        cv = CrossValidatedTransferError(
+            TransferError(clf),
+            NFoldSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        ds = datasets['uni2small']
+        cverror = cv(ds)
+        self.failUnless(len(clf.values) == ds['chunks', 1].nsamples)
+        clf.states._resetEnabledTemporarily()
+
+
 def suite():
     return unittest.makeSuite(RegressionsTests)
 

@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-import re
+import re, os
 
 from mvpa.misc.copy import copy, deepcopy
 from operator import isSequenceType
@@ -19,22 +19,38 @@ from operator import isSequenceType
 if __debug__:
     from mvpa.base import debug
 
-def transformWithBoxcar( data, startpoints, boxlength, offset=0, fx = N.mean ):
-    """This function transforms a dataset by calculating the mean of a set of
-    patterns. Such a pattern set is defined by a starting point and the size
-    of the window along the first axis of the data ('boxlength').
 
-    Parameters:
-        data:           An array with an arbitrary number of dimensions.
-        startpoints:    A sequence of index value along the first axis of
-                        'data'.
-        boxlength:      The number of elements after 'startpoint' along the
-                        first axis of 'data' to be considered for averaging.
-        offset:         The offset between the starting point and the
-                        averaging window (boxcar).
+def reuseAbsolutePath(file1, file2, force=False):
+    """Use path to file1 as the path to file2 is no absolute
+    path is given for file2
 
-    The functions returns an array with the length of the first axis being
-    equal to the length of the 'startpoints' sequence.
+    :Parameters:
+      force : bool
+        if True, force it even if the file2 starts with /
+    """
+    if not file2.startswith('/') or force:
+        # lets reuse path to file1
+        return os.path.join(os.path.dirname(file1), file2.lstrip('/'))
+    else:
+        return file2
+
+
+def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
+    """This function extracts boxcar windows from an array. Such a boxcar is
+    defined by a starting point and the size of the window along the first axis
+    of the array (`boxlength`). Afterwards a customizable function is applied
+    to each boxcar individually (Default: averaging).
+
+    :param data: An array with an arbitrary number of dimensions.
+    :type data: array
+    :param startpoints: Boxcar startpoints as index along the first array axis
+    :type startpoints: sequence
+    :param boxlength: Length of the boxcar window in #array elements
+    :type boxlength: int
+    :param offset: Optional offset between the configured starting point and the
+      actual begining of the boxcar window.
+    :type offset: int
+    :rtype: array (len(startpoints) x data.shape[1:])
     """
     if boxlength < 1:
         raise ValueError, "Boxlength lower than 1 makes no sense."
@@ -214,7 +230,7 @@ def RFEHistory2maps(history):
     history_maps = N.zeros((steps, nfeatures))
 
     for step in xrange(steps):
-        history_maps[step, history>=step] = 1
+        history_maps[step, history >= step] = 1
 
     return history_maps
 
@@ -261,6 +277,89 @@ class MapOverlap(object):
         return N.mean(ovstats >= self.__overlap_threshold)
 
 
+class Event(dict):
+    """Simple class to define properties of an event.
+
+    The class is basically a dictionary. Any properties can
+    be pass as keyword arguments to the constructor, e.g.:
+
+      >>> ev = Event(onset=12, duration=2.45)
+
+    Conventions for keys:
+
+    `onset`
+      The onset of the event in some unit.
+    `duration`
+      The duration of the event in the same unit as `onset`.
+    `label`
+      E.g. the condition this event is part of.
+    `chunk`
+      Group this event is part of (if any), e.g. experimental run.
+    `features`
+      Any amount of additional features of the event. This might include
+      things like physiological measures, stimulus intensity. Must be a mutable
+      sequence (e.g. list), if present.
+    """
+    _MUSTHAVE = ['onset']
+
+    def __init__(self, **kwargs):
+        # store everything
+        dict.__init__(self, **kwargs)
+
+        # basic checks
+        for k in Event._MUSTHAVE:
+            if not self.has_key(k):
+                raise ValueError, "Event must have '%s' defined." % k
+
+
+    def asDescreteTime(self, dt, storeoffset=False):
+        """Convert `onset` and `duration` information into descrete timepoints.
+
+        :Parameters:
+          dt: float
+            Temporal distance between two timepoints in the same unit as `onset`
+            and `duration`.
+          storeoffset: bool
+            If True, the temporal offset between original `onset` and
+            descretized `onset` is stored as an additional item in `features`.
+
+        :Return:
+          A copy of the original `Event` with `onset` and optionally `duration`
+          replaced by their corresponding descrete timepoint. The new onset will
+          correspond to the timepoint just before or exactly at the original
+          onset. The new duration will be the number of timepoints covering the
+          event from the computed onset timepoint till the timepoint exactly at
+          the end, or just after the event.
+
+          Note again, that the new values are expressed as #timepoint and not
+          in their original unit!
+        """
+        dt = float(dt)
+        onset = self['onset']
+        out = deepcopy(self)
+
+        # get the timepoint just prior the onset
+        out['onset'] = int(N.floor(onset / dt))
+
+        if storeoffset:
+            # compute offset
+            offset = onset - (out['onset'] * dt)
+
+            if out.has_key('features'):
+                out['features'].append(offset)
+            else:
+                out['features'] = [offset]
+
+        if out.has_key('duration'):
+            # how many timepoint cover the event (from computed onset
+            # to the one timepoint just after the end of the event
+            out['duration'] = int(N.ceil((onset + out['duration']) / dt) \
+                                  - out['onset'])
+
+        return out
+
+
+
 class HarvesterCall(object):
     def __init__(self, call, attribs=None, argfilter=None, expand_args=True,
                  copy_attribs=True):
@@ -294,7 +393,7 @@ class HarvesterCall(object):
         self.attribs = attribs
 
 
- 
+
 class Harvester(object):
     """World domination helper: do whatever it is asked and accumulate results
 

@@ -5,6 +5,10 @@ APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=build/pdf
 LATEX_DIR=build/latex
 WWW_DIR=build/website
+SWARM_DIR=build/swarm
+
+SWARMTOOL_DIR=tools/codeswarm
+SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 
 # should be made conditional, as pyversions id Debian specific
 #PYVER := $(shell pyversions -vd)
@@ -28,7 +32,7 @@ all: build
 3rd-stamp:
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
 	 while read d; do \
-	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d"; \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" || :; \
      done
 	touch $@
 
@@ -42,16 +46,15 @@ build: build-stamp
 # Do not build 3rd party software for Debian, but use corresponding Debian
 # packages instead
 #build-stamp: 3rd
-build-stamp:
-	python setup.py config --noisy
-	python setup.py build_ext
-	python setup.py build_py
+build-stamp: 3rd
+	python setup.py config --noisy --with-libsvm
+	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
-	for ext in svm smlr; do \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/; \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$$ext/$${ext}c.so \
-		mvpa/clfs/lib$$ext/$${ext}c.dylib; \
+	for ext in _svmc smlrc; do \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/; \
+		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/$${ext}.dylib; \
 		done
 	touch $@
 
@@ -65,7 +68,7 @@ clean:
 # clean 3rd party pieces
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
 	 while read d; do \
-	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean; \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean || : ; \
      done
 
 # if we are on debian system - we might have left-overs from build
@@ -74,6 +77,7 @@ clean:
 	-@$(MAKE) distclean
 
 distclean:
+	-@rm -rf doc/modref doc/ex
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
@@ -89,7 +93,8 @@ distclean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp
+	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp \
+		modref-templates-stamp examples2rst-stamp
 
 
 debian-clean:
@@ -101,13 +106,34 @@ debian-clean:
 #
 doc: website
 
-htmldoc:
-	cd doc && $(MAKE) html
+references:
+	tools/bib2rst_ref.py
 
-pdfdoc: pdfdoc-stamp
+htmldoc: modref-templates examples2rst build
+	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
+	cd build/html/modref && ln -sf ../_static
+	cd build/html/ex && ln -sf ../_static
+
+pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
-	cd doc && $(MAKE) latex
+	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
+	touch $@
+
+# Create a handy .pdf of the manual to be printed as a book
+handbook: pdfdoc
+	cd tools && $(MAKE) pdfbook
+	tools/pdfbook -2 \
+	 $(LATEX_DIR)/PyMVPA-Manual.pdf $(LATEX_DIR)/PyMVPA-Manual-Handbook.pdf
+
+modref-templates: modref-templates-stamp
+modref-templates-stamp:
+	PYTHONPATH=. tools/build_modref_templates.py
+	touch $@
+
+examples2rst: examples2rst-stamp
+examples2rst-stamp:
+	tools/examples2rst.py
 	touch $@
 
 apidoc: apidoc-stamp
@@ -119,20 +145,27 @@ apidoc-stamp: build
 # the buildds, though.
 #apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
-	LC_ALL=C epydoc --config doc/api/epydoc.conf
+	LC_ALL=C tools/epydoc --config doc/api/epydoc.conf
 	touch $@
 
 website: website-stamp
 website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
+	tools/sitemap.sh > $(WWW_DIR)/sitemap.xml
+# main icon of the website
+	cp doc/pics/favicon.png $(WWW_DIR)/_images/
+# for those who do not care about <link> and just trying to download it
+	cp doc/pics/favicon.png $(WWW_DIR)/favicon.ico
+# provide robots.txt to minimize unnecessary traffic
+	cp doc/_static/robots.txt $(WWW_DIR)/
 	touch $@
 
 upload-website: website
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* belka.rutgers.edu:/home/michael/www.pymvpa.org/pymvpa/
 
 upload-htmldoc: htmldoc
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* belka.rutgers.edu:/home/michael/www.pymvpa.org/pymvpa/
 
 
 # this takes some minutes !!
@@ -143,7 +176,15 @@ ut-%: build
 	@cd tests && PYTHONPATH=.. python test_$*.py
 
 unittest: build
+	@echo "I: Running unittests (without optimization nor debug output)"
 	@cd tests && PYTHONPATH=.. python main.py
+
+# test if PyMVPA is working if optional externals are missing
+unittest-badexternals: build
+	@echo "I: Running unittests under assumption of missing externals."
+	@cd tests && PYTHONPATH=badexternals:.. python main.py 2>&1 \
+	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
+              -e 'WARNING:.*SMLR.* implementation'
 
 # Runs unittests in few additional modes:
 # * with optimization on -- helps to catch unconditional debug calls
@@ -151,16 +192,20 @@ unittest: build
 #   That does:
 #     additional checking,
 #     debug() calls validation, etc
-unittests: unittest
+unittests: unittest unittest-badexternals
 	@cd tests && PYTHONPATH=.. python -O main.py
-	@echo "Running unittests with debug output. No progress output."
+	@echo "I: Running unittests with debug output. No progress output."
 	@cd tests && \
       PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
        python main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
 te-%: build
-	MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py
+	@echo -n "I: Testing example $*: "
+	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py \
+	 >| temp-$@.log 2>&1 \
+	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
+	@rm -f temp-$@.log
 
 testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo
@@ -176,25 +221,26 @@ testmanual: build
 # Check if everything imported in unitests is known to the
 # mvpa.suite()
 testsuite:
+	@echo "I: Running full testsuite"
 	@git grep -h '^\W*from mvpa.*import' tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
-	 { echo "'$$i' is missing from mvpa.suite()"; exit 1; }; \
+	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
 	 done
 
 # Check if links to api/ within documentation are broken.
 testapiref: apidoc
 	@for tf in doc/*.txt; do \
 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
-	  ff=build/html/$$f; [ ! -f $$ff ] && echo " $$f missing!"; done; ); \
+	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
 test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
-	@echo "Generating coverage data and report. Takes awhile. No progress output."
+	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@cd tests && { \
 	  export PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
 	  python-coverage -x main.py >/dev/null 2>&1; \
@@ -259,8 +305,44 @@ bdist_mpkg: 3rd
 fetch-data:
 	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
 
+
+#
+# Various sugarings
+#
+
+# Nice visual git log
+codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.avi
+$(SWARM_DIR)/pymvpa-codeswarm.avi: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
+	@echo "I: Visualizing git history using codeswarm"
+	@mkdir -p $(SWARM_DIR)/frames
+	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
+	@echo "I: Generating codeswarm video"
+	@cd $(SWARM_DIR)/frames && \
+     mencoder "mf://*.png" -msglevel all=0 -mf fps=10 -o ../pymvpa-codeswarm.avi \
+	  -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=500
+
+
+$(SWARM_DIR)/git.log:
+	@echo "I: Dumping git log in codeswarm preferred format"
+	@mkdir -p $(SWARM_DIR)
+	@git-log --name-status \
+     --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
+     sed -e 's,[a-z]*@onerussian.com,Yaroslav O. Halchenko,g' \
+         -e 's,michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\|neukom-data@neukom-data-desktop.(none)\),Michael Hanke,g' \
+         -e 's,\(per@parsec.Princeton.EDU\|per@sync.(none)\|psederberg@gmail.com\),Per P. Sederberg,g' \
+         -e 's,emanuele@relativita.com,Emanuele Olivetti,g' \
+         -e 's,Ingo.Fruend@gmail.com,Ingo Fruend,g' >| $@
+
+$(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.log
+	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
+	 -g $(SWARM_DIR)/git.log -o $(SWARM_DIR)/git.xml
+
+$(SWARMTOOL_DIR):
+	@echo "I: Checking out codeswarm tool source code"
+	@svn checkout http://codeswarm.googlecode.com/svn/trunk/ $(SWARMTOOL_DIR)
+
 #
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests handbook codeswarm

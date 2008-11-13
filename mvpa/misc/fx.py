@@ -93,10 +93,10 @@ def leastSqFit(fx, params, y, x=None, **kwargs):
         All additonal keyword arguments are passed to `fx`.
 
     :Returns:
-      Tuple as returned by scipy.optimize.leastsq, i.e. 2-tuple with list of
-      final (fitted) parameters of `fx` and an integer value indicating success
-      or failure of the fitting procedure (see leastsq docs for more
-      information).
+      tuple: as returned by scipy.optimize.leastsq
+        i.e. 2-tuple with list of final (fitted) parameters of `fx` and an
+        integer value indicating success or failure of the fitting procedure
+        (see leastsq docs for more information).
     """
     # import here to not let the whole module depend on SciPy
     from scipy.optimize import leastsq

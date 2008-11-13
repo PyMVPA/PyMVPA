@@ -166,27 +166,9 @@ class MaskMapper(Mapper):
         return mapped
 
 
-    def getInShape(self):
-        """InShape is a shape of original mask"""
-        return self.__mask.shape
-
-
     def getInSize(self):
         """InShape is a shape of original mask"""
         return self.__masksize
-
-
-    def getOutShape(self):
-        """OutShape is a shape of target dataset"""
-        # should worry about state-full class.
-        # TODO: add exception 'InvalidStateError' which is raised
-        #       by some class if state is not yet defined:
-        #         classifier has not yet been trained
-        #         mapped yet see the dataset
-        #raise NotImplementedError
-
-        # XXX: why it is not simply  a (self.getOutSize,)?
-        return (self.__masknonzerosize,)
 
 
     def getOutSize(self):
@@ -258,40 +240,26 @@ class MaskMapper(Mapper):
                   "The mask is of %s shape." % `self.__mask.shape`
 
 
-    def selectOut(self, outIds, sort=False):
+    def selectOut(self, outIds):
         """Only listed outIds would remain.
 
-        The function used to accept a matrix-mask as the input but now
-        it really has to be a list of IDs
+        *Function assumes that outIds are sorted*. In __debug__ mode selectOut
+        would check if obtained IDs are sorted and would warn the user if they
+        are not.
 
-        Function assumes that outIds are sorted. If not - please set
-        sort to True. While in __debug__ mode selectOut would check if
-        obtained IDs are sorted and would warn the user if they are
-        not.
+        .. note::
+          If you feel strongly that you need to remap features
+          internally (ie to allow Ids with mixed order) please contact
+          developers of mvpa to discuss your use case.
 
-        If you feel strongly that you need to remap features
-        internally (ie to allow Ids with mixed order) please contact
-        developers of mvpa to discuss your use case.
-
-        See `tests.test_maskmapper.testSelectOrder` for basic testing
+          The function used to accept a matrix-mask as the input but now
+          it really has to be a list of IDs
 
         Feature/Bug:
          * Negative outIds would not raise exception - just would be
            treated 'from the tail'
-
-        Older comments on 'order' - might be useful in future if
-        reordering gets ressurrected
-        Order will be taken into account -- ie items will be
-        remapped if order was changed... need to check if neighboring
-        still works... no -- it doesn't. For the data without samples
-        .forward can be easily adjusted by using masknonzero instead of
-        plain mask, but for data with samplesI don't see a clean way...
-        see forward() above... there is no testcase for order preservation
-        for DIM+1 case
         """
-        if sort:
-            outIds.sort()
-        elif __debug__ and 'CHECK_SORTEDIDS' in debug.active:
+        if __debug__ and 'CHECK_SORTEDIDS' in debug.active:
             # per short conversation with Michael -- we should not
             # allow reordering since we saw no viable use case for
             # it. Thus -- warn user is outIds are not in sorted order

@@ -43,7 +43,7 @@ NLAError = N.linalg.linalg.LinAlgError
 SLAError = SL.basic.LinAlgError
 
 # Some precomputed items. log is relatively expensive
-_halflog2pi = 0.5 * Nlog(2*N.pi)
+_halflog2pi = 0.5 * Nlog(2 * N.pi)
 
 
 class GPR(Classifier):
@@ -202,10 +202,10 @@ class GPR(Classifier):
         tmp = alphalphaT - Kinv
         grad_LML_log_hypers = \
             self.__kernel.compute_lml_gradient_logscale(tmp, self._train_fv)
-        grad_K_log_sigma_n = 2.0*self.sigma_noise**2*N.eye(Kinv.shape[0])
+        grad_K_log_sigma_n = 2.0 * self.sigma_noise ** 2 * N.eye(Kinv.shape[0])
         # Add the term related to sigma_noise:
-        # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_log_sigma_n))
-        # Faster formula: tr(AB) = (A*B.T).sum()
+        # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp, grad_K_log_sigma_n))
+        # Faster formula: tr(AB) = (A * B.T).sum()
         grad_LML_log_sigma_n = 0.5 * (tmp * (grad_K_log_sigma_n).T).sum()
         lml_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
         self.log_marginal_likelihood_gradient = lml_gradient
@@ -303,11 +303,11 @@ class GPR(Classifier):
             # not return a clean lower-triangular matrix (see docstring).
             try:
                 self._L = SLcholesky(self._C, lower=True)
-                self._LL = (self._L,True)
+                self._LL = (self._L, True)
             except SLAError:
-                epsilon = 1.0e-20*N.eye(self._C.shape[0])
+                epsilon = 1.0e-20 * N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C + epsilon, lower=True)
-                self._LL = (self._L,True)
+                self._LL = (self._L, True)
                 pass
             newL = True
         else:
@@ -389,8 +389,8 @@ class GPR(Classifier):
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
             # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
-            self.predicted_variances = Ndiag(km_test_test) - (v**2).sum(0) \
-                                       + self.sigma_noise**2
+            self.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
+                                       + self.sigma_noise ** 2
             pass
 
         if __debug__:
@@ -496,7 +496,8 @@ if externals.exists('openopt'):
             # normalize data:
             clf._train_labels = (clf._train_labels - clf._train_labels.mean()) \
                                 / clf._train_labels.std()
-            # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0))/clf._train_fv.std(0)
+            # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0)) \
+            #                  /clf._train_fv.std(0)
             dataset = Dataset(samples=clf._train_fv, labels=clf._train_labels)
             clf.states.enable("log_marginal_likelihood")
             ms = ModelSelector(clf, dataset)

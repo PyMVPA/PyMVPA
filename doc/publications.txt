@@ -6,7 +6,7 @@ The PyMVPA toolbox was first presented with a poster_ at annual meeting of the
 *German Society for Psychophysiology and its Application* in Magdeburg_,
 2008.
 
-.. _poster: http://pkg-exppsy.alioth.debian.org/pymvpa/files/PyMVPA_PuG2008.pdf
+.. _poster: http://www.pymvpa.org/files/PyMVPA_PuG2008.pdf
 .. _Magdeburg: http://www.magdeburg.de/
 
 

@@ -36,6 +36,7 @@ else:
 import time
 from sets import Set
 
+from mvpa.misc.args import group_kwargs
 from mvpa.misc.support import idhash
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
@@ -43,6 +44,7 @@ from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
 from mvpa.misc.param import Parameter
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
+from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
@@ -132,7 +134,7 @@ class Classifier(Parametrized):
     predictions = StateVariable(enabled=True,
         doc="Most recent set of predictions")
 
-    values = StateVariable(enabled=False,
+    values = StateVariable(enabled=True,
         doc="Internal classifier values the most recent " +
             "predictions are based on")
 
@@ -266,7 +268,7 @@ class Classifier(Parametrized):
             Data which was used for training
         """
         if self.states.isEnabled('trained_labels'):
-            self.trained_labels = Set(dataset.uniquelabels)
+            self.trained_labels = dataset.uniquelabels
 
         self.trained_dataset = dataset
 
@@ -447,7 +449,13 @@ class Classifier(Parametrized):
         # remember the time when started computing predictions
         t0 = time.time()
 
+        states = self.states
+        # to assure that those are reset (could be set due to testing
+        # post-training)
+        states.reset(['values', 'predictions'])
+
         self._prepredict(data)
+
         if self.__trainednfeatures > 0 \
                or 'notrain2predict' in self._clf_internals:
             result = self._predict(data)
@@ -459,7 +467,7 @@ class Classifier(Parametrized):
                       "bogus")
             result = [None]*data.shape[0]
 
-        self.predicting_time = time.time() - t0
+        states.predicting_time = time.time() - t0
 
         if 'regression' in self._clf_internals and not self.params.regression:
             # We need to convert regression values into labels
@@ -472,8 +480,18 @@ class Classifier(Parametrized):
             # into labels.
             # XXX or should we just recreate "result"
             result_ = N.array(result)
-            self.values = result_
-            trained_labels = N.asarray(list(self.trained_labels))
+            if states.isEnabled('values'):
+                # values could be set by now so assigning 'result' would
+                # be misleading
+                if not states.isSet('values'):
+                    states.values = result_.copy()
+                else:
+                    # it might be the values are pointing to result at
+                    # the moment, so lets assure this silly way that
+                    # they do not overlap
+                    states.values = states.values.copy()
+
+            trained_labels = self.trained_labels
             for i, value in enumerate(result):
                 dists = N.abs(value - trained_labels)
                 result[i] = trained_labels[N.argmin(dists)]
@@ -1036,16 +1054,23 @@ class ProxyClassifier(Classifier):
 
         # for the ease of access
         # TODO: if to copy we should exclude some states which are defined in
-        # base Classifier (such as training_time, predicting_time)
+        #       base Classifier (such as training_time, predicting_time)
+        # YOH: for now _copy_states_ would copy only set states variables. If
+        #      anything needs to be overriden in the parent's class, it is welcome
+        #      to do so
         #self.states._copy_states_(self.__clf, deep=False)
 
 
     def _predict(self, data):
         """Predict using `ProxyClassifier`
         """
-        result = self.__clf.predict(data)
+        clf = self.__clf
+        if self.states.isEnabled('values'):
+            clf.states.enable(['values'])
+
+        result = clf.predict(data)
         # for the ease of access
-        #self.states._copy_states_(self.__clf, deep=False)
+        self.states._copy_states_(self.__clf, ['values'], deep=False)
         return result
 
 
@@ -1057,11 +1082,12 @@ class ProxyClassifier(Classifier):
         super(ProxyClassifier, self).untrain()
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
         return ProxyClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 
@@ -1651,7 +1677,8 @@ class SplitClassifier(CombinedClassifier):
             clf.train(split[0])
             if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
-                self.confusion.add(split[1].labels, predictions)
+                self.confusion.add(split[1].labels, predictions,
+                                   clf.states.get('values', None))
             if states.isEnabled("training_confusion"):
                 states.training_confusion += \
                                                clf.states.training_confusion
@@ -1665,11 +1692,18 @@ class SplitClassifier(CombinedClassifier):
             pass
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
-        """Return an appropriate SensitivityAnalyzer"""
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
+        """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
+
+        :Parameters:
+          combiner
+            If not provided, FirstAxisMean is assumed
+        """
+        kwargs.setdefault('combiner', FirstAxisMean)
         return BoostedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
     splitter = property(fget=lambda x:x.__splitter,
@@ -1725,12 +1759,12 @@ class MappedClassifier(ProxyClassifier):
         return ProxyClassifier._predict(self, self.__mapper.forward(data))
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
-        print "HERE"
         return MappedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 
@@ -1840,9 +1874,13 @@ class FeatureSelectionClassifier(ProxyClassifier):
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`
         """
-        result = self.__maskclf._predict(data)
+        clf = self.__maskclf
+        if self.states.isEnabled('values'):
+            clf.states.enable(['values'])
+
+        result = clf._predict(data)
         # for the ease of access
-        #self.states._copy_states_(self.__maskclf, deep=False)
+        self.states._copy_states_(clf, ['values'], deep=False)
         return result
 
     def setTestDataset(self, testdataset):
@@ -1854,15 +1892,15 @@ class FeatureSelectionClassifier(ProxyClassifier):
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
 
-
-    def getSensitivityAnalyzer(self, **kwargs):
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer
 
-        TODO: had to clone from mapped classifier... XXX 
+        TODO: had to clone from mapped classifier... XXX
         """
         return MappedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.clf.getSensitivityAnalyzer(**kwargs),
+                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 

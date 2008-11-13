@@ -21,14 +21,20 @@ from math import log10, ceil
 from mvpa.base import externals
 
 from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
-     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx
+     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
+     AUCErrorFx
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.base.dochelpers import enhancedDocString, table2string
+from mvpa.clfs.stats import autoNullDist
 
 if __debug__:
     from mvpa.base import debug
 
+if externals.exists('scipy'):
+    from scipy.stats.stats import nanmean
+else:
+    from mvpa.clfs.stats import nanmean
 
 def _p2(x, prec=2):
     """Helper to print depending on the type nicely. For some
@@ -50,10 +56,9 @@ class SummaryStatistics(object):
     """Basic class to collect targets/predictions and report summary statistics
 
     It takes care about collecting the sets, which are just tuples
-    (targets, predictions). While 'computing' the matrix, all sets are
-    considered together.  Children of the class are responsible for
-    computation and display. No real MVC is implemented, but if there
-    was we had M here
+    (targets, predictions, values). While 'computing' the matrix, all
+    sets are considered together.  Children of the class are
+    responsible for computation and display.
     """
 
     _STATS_DESCRIPTION = (
@@ -62,14 +67,19 @@ class SummaryStatistics(object):
          None), )
 
 
-    def __init__(self, targets=None, predictions=None, sets=None):
+    def __init__(self, targets=None, predictions=None, values=None, sets=None):
         """Initialize SummaryStatistics
+
+        targets or predictions cannot be provided alone (ie targets
+        without predictions)
 
         :Parameters:
          targets
            Optional set of targets
          predictions
            Optional set of predictions
+         values
+           Optional set of values (which served for prediction)
          sets
            Optional list of sets
         """
@@ -81,18 +91,25 @@ class SummaryStatistics(object):
 
         if not targets is None or not predictions is None:
             if not targets is None and not predictions is None:
-                self.add(targets=targets, predictions=predictions)
+                self.add(targets=targets, predictions=predictions,
+                         values=values)
             else:
                 raise ValueError, \
                       "Please provide none or both targets and predictions"
 
 
-    def add(self, targets, predictions):
+    def add(self, targets, predictions, values=None):
         """Add new results to the set of known results"""
         if len(targets) != len(predictions):
             raise ValueError, \
                   "Targets[%d] and predictions[%d]" % (len(targets),
                                                        len(predictions)) + \
+                  " have different number of samples"
+
+        if values is not None and len(targets) != len(values):
+            raise ValueError, \
+                  "Targets[%d] and values[%d]" % (len(targets),
+                                                  len(values)) + \
                   " have different number of samples"
 
         # enforce labels in predictions to be of the same datatype as in
@@ -110,7 +127,7 @@ class SummaryStatistics(object):
                     predictions = list(predictions)
                 predictions[i] = t1(predictions[i])
 
-        self.__sets.append( (targets, predictions) )
+        self.__sets.append( (targets, predictions, values) )
         self._computed = False
 
 
@@ -154,7 +171,7 @@ class SummaryStatistics(object):
         # would loop forever and exhaust memory eventually
         othersets = copy.copy(other.__sets)
         for set in othersets:
-            self.add(set[0], set[1])
+            self.add(*set)#[0], set[1])
         return self
 
 
@@ -182,8 +199,7 @@ class SummaryStatistics(object):
     @property
     def summaries(self):
         """Return a list of separate summaries per each stored set"""
-        return [ self.__class__(targets=x[0],
-                                predictions=x[1]) for x in self.sets ]
+        return [ self.__class__(sets=[x]) for x in self.sets ]
 
 
     @property
@@ -207,15 +223,185 @@ class SummaryStatistics(object):
     sets = property(lambda self:self.__sets)
 
 
+class ROCCurve(object):
+    """Generic class for ROC curve computation and plotting
+    """
+
+    def __init__(self, labels, sets=None):
+        """
+        :Parameters:
+          labels : list
+            labels which were used (in order of values if multiclass,
+            or 1 per class for binary problems (e.g. in SMLR))
+          sets : list of tuples
+            list of sets for the analysis
+        """
+        self._labels = labels
+        self._sets = sets
+        self.__computed = False
+
+
+    def _compute(self):
+        """Lazy computation if needed
+        """
+        if self.__computed:
+            return
+        # local bindings
+        labels = self._labels
+        Nlabels = len(labels)
+        sets = self._sets
+
+        # take sets which have values in the shape we can handle
+        def _checkValues(set_):
+            """Check if values are 'acceptable'"""
+            x = set_[2]
+            # TODO: OPT: need optimization
+            if (x is None) or len(x) == 0: return False          # undefined
+            for v in x:
+                try:
+                    if Nlabels <= 2 and N.isscalar(v):
+                        continue
+                    if (isinstance(v, dict) or # not dict for pairs
+                        ((Nlabels>=2) and len(v)!=Nlabels) # 1 per each label for multiclass
+                        ): return False
+                except Exception, e:
+                    # Something else which is not supported, like
+                    # in shogun interface we don't yet extract values per each label or
+                    # in pairs in the case of built-in multiclass
+                    if __debug__:
+                        debug('ROC', "Exception %s while checking "
+                              "either %s are valid labels" % (str(e), x))
+                    return False
+            return True
+
+        sets_wv = filter(_checkValues, sets)
+        # check if all had values, if not -- complain
+        Nsets_wv = len(sets_wv)
+        if Nsets_wv > 0 and len(sets) != Nsets_wv:
+            warning("Only %d sets have values assigned from %d sets" %
+                    (Nsets_wv, len(sets)))
+        # bring all values to the same 'shape':
+        #  1 value per each label. In binary classifier, if only a single
+        #  value is provided, add '0' for 0th label 'value'... it should
+        #  work taking drunk Yarik logic ;-)
+        for iset,s in enumerate(sets_wv):
+            # we will do inplace modification, thus go by index
+            values = s[2]
+            # we would need it to be a list to reassign element with a list
+            if isinstance(values, N.ndarray) and len(values.shape)==1:
+                values = list(values)
+            rangev = None
+            for i in xrange(len(values)):
+                v = values[i]
+                if N.isscalar(v):
+                    if Nlabels == 2:
+                        def last_el(x):
+                            """Helper function. Returns x if x is scalar, and
+                            last element if x is not (ie list/tuple)"""
+                            if N.isscalar(x): return x
+                            else:             return x[-1]
+                        if rangev is None:
+                            # we need to figure out min/max values
+                            # to invert for the 0th label
+                            values_ = [last_el(x) for x in values]
+                            rangev = N.min(values_) + N.max(values_)
+                        values[i] = [rangev - v, v]
+                    else:
+                        raise ValueError, \
+                              "Cannot have a single 'value' for multiclass" \
+                              " classification. Got %s" % (v)
+                elif len(v) != Nlabels:
+                    raise ValueError, \
+                          "Got %d values whenever there is %d labels" % \
+                          (len(v), Nlabels)
+            # reassign possibly adjusted values
+            sets_wv[iset] = (s[0], s[1], N.asarray(values))
+
+
+        # we need to estimate ROC per each label
+        # XXX order of labels might not correspond to the one among 'values'
+        #     which were used to make a decision... check
+        ROCs, aucs = [], []             # 1 per label
+        for i,label in enumerate(labels):
+            aucs_pl = []
+            ROCs_pl = []
+            for s in sets_wv:
+                targets_pl = (s[0] == label).astype(int)
+                # XXX we might unify naming between AUC/ROC
+                ROC = AUCErrorFx()
+                aucs_pl += [ROC([x[i] for x in s[2]], targets_pl)]
+                ROCs_pl.append(ROC)
+            if len(aucs_pl)>0:
+                ROCs += [ROCs_pl]
+                aucs += [nanmean(aucs_pl)]
+                #aucs += [N.mean(aucs_pl)]
+
+        # store results within the object
+        self._ROCs =  ROCs
+        self._aucs = aucs
+        self.__computed = True
+
+
+    @property
+    def aucs(self):
+        """Compute and return set of AUC values 1 per label
+        """
+        self._compute()
+        return self._aucs
+
+
+    @property
+    def ROCs(self):
+        self._compute()
+        return self._ROCs
+
+
+    def plot(self, label_index=0):
+        """
+
+        TODO: make it friendly to labels given by values?
+              should we also treat labels_map?
+        """
+        externals.exists("pylab", raiseException=True)
+        import pylab as P
+
+        self._compute()
+
+        labels = self._labels
+        # select only ROCs for the given label
+        ROCs = self.ROCs[label_index]
+
+        fig = P.gcf()
+        ax = P.gca()
+
+        P.plot([0, 1], [0, 1], 'k:')
+
+        for ROC in ROCs:
+            P.plot(ROC.fp, ROC.tp, linewidth=1)
+
+        P.axis((0.0, 1.0, 0.0, 1.0))
+        P.axis('scaled')
+        P.title('Label %s. Mean AUC=%.2f' % (label_index, self.aucs[label_index]))
+
+        P.xlabel('False positive rate')
+        P.ylabel('True positive rate')
+
 
 class ConfusionMatrix(SummaryStatistics):
     """Class to contain information and display confusion matrix.
 
-    Implementation is aimed to be simple, thus it delays actual
-    computation of confusion matrix untill all data is acquired (to
-    figure out complete set of labels. If testing data doesn't have a
-    complete set of labels, but you like to include all labels,
-    provide them as a parameter to constructor.
+    Implementation of the `SummaryStatistics` in the case of
+    classification problem. Actual computation of confusion matrix is
+    delayed until all data is acquired (to figure out complete set of
+    labels). If testing data doesn't have a complete set of labels,
+    but you like to include all labels, provide them as a parameter to
+    the constructor.
+
+    Confusion matrix provides a set of performance statistics (use
+    asstring(description=True) for the description of abbreviations),
+    as well ROC curve (http://en.wikipedia.org/wiki/ROC_curve)
+    plotting and analysis (AUC) in the limited set of problems:
+    binary, multiclass 1-vs-all.
     """
 
     _STATS_DESCRIPTION = (
@@ -235,6 +421,7 @@ class ConfusionMatrix(SummaryStatistics):
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
+        ('AUC', "Area under (AUC) curve", None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -272,8 +459,7 @@ class ConfusionMatrix(SummaryStatistics):
         """Return a list of separate confusion matrix per each stored set"""
         return [ self.__class__(labels=self.labels,
                                 labels_map=self.labels_map,
-                                targets=x[0],
-                                predictions=x[1]) for x in self.sets]
+                                sets=[x]) for x in self.sets]
 
 
     def _compute(self):
@@ -339,7 +525,7 @@ class ConfusionMatrix(SummaryStatistics):
 
         # reverse mapping from label into index in the list of labels
         rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
-        for iset, (targets, predictions) in enumerate(self.sets):
+        for iset, (targets, predictions, values) in enumerate(self.sets):
             for t,p in zip(targets, predictions):
                 mat_all[iset, rev_map[p], rev_map[t]] += 1
 
@@ -383,6 +569,23 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
+
+        #
+        # ROC computation if available
+        ROC = ROCCurve(labels=labels, sets=self.sets)
+        aucs = ROC.aucs
+        if len(aucs)>0:
+            stats['AUC'] = aucs
+            if len(aucs) != Nlabels:
+                raise RuntimeError, \
+                      "We must got a AUC per label. Got %d instead of %d" % \
+                      (len(aucs), Nlabels)
+            self.ROC = ROC
+        else:
+            # we don't want to provide ROC if it is bogus
+            stats['AUC'] = [N.nan] * Nlabels
+            self.ROC = None
+
 
         # compute mean stats
         for k,v in stats.items():
@@ -441,6 +644,8 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
                             'SPC', 'FDR', 'MCC']
+        # print AUC only if ROC was computed
+        if self.ROC is not None: stats_perpredict += [ 'AUC' ]
         stats_pertarget = ['P', 'N', 'TP', 'TN']
         stats_summary = ['ACC', 'ACC%', '# of sets']
 
@@ -783,7 +988,7 @@ class RegressionStatistics(SummaryStatistics):
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
             stats[funcname_all] = []
-            for i, (targets, predictions) in enumerate(sets):
+            for i, (targets, predictions, values) in enumerate(sets):
                 stats[funcname_all] += [func(predictions, targets)]
             stats[funcname_all] = N.array(stats[funcname_all])
             stats[funcname] = N.mean(stats[funcname_all])
@@ -944,7 +1149,7 @@ class ClassifierError(Stateful):
         if self.__clf.states.isEnabled('trained_labels') and \
                not testdataset is None:
             newlabels = Set(testdataset.uniquelabels) \
-                                - self.__clf.trained_labels
+                        - Set(self.__clf.trained_labels)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (`self.__clf`, `newlabels`) +
@@ -1031,7 +1236,7 @@ class TransferError(ClassifierError):
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
-        self.__null_dist = null_dist
+        self.__null_dist = autoNullDist(null_dist)
 
 
     __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
@@ -1057,9 +1262,10 @@ class TransferError(ClassifierError):
 
         Returns a scalar value of the transfer error.
         """
-
-        predictions = self.clf.predict(testdataset.samples)
-
+        # OPT: local binding
+        clf = self.clf
+        predictions = clf.predict(testdataset.samples)
+        
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
@@ -1068,10 +1274,11 @@ class TransferError(ClassifierError):
         #  bound to classifiers confusion matrix
         states = self.states
         if states.isEnabled('confusion'):
-            confusion = self.clf._summaryClass(
+            confusion = clf._summaryClass(
                 #labels=self.labels,
                 targets=testdataset.labels,
-                predictions=predictions)
+                predictions=predictions,
+                values=clf.states.get('values', None))
             try:
                 confusion.labels_map = testdataset.labels_map
             except:
@@ -1107,11 +1314,14 @@ class TransferError(ClassifierError):
 
         # get probability of error under NULL hypothesis if available
         if not error is None and not self.__null_dist is None:
-            self.null_prob = self.__null_dist.cdf(error)
+            self.null_prob = self.__null_dist.p(error)
 
 
     @property
     def errorfx(self): return self.__errorfx
+
+    @property
+    def null_dist(self): return self.__null_dist
 
 
 

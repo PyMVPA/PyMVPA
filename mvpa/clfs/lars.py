@@ -26,8 +26,13 @@ if not externals.exists('lars'):
 import rpy
 rpy.r.library('lars')
 
+
 # local imports
 from mvpa.clfs.base import Classifier
+from mvpa.measures.base import Sensitivity
+
+if __debug__:
+    from mvpa.base import debug
 
 known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
 
@@ -66,8 +71,9 @@ class LARS(Classifier):
     """
 
     # XXX from yoh: it is linear, isn't it?
-    _clf_internals = [ 'lars', 'regression', 'linear' ]
-
+    _clf_internals = [ 'lars', 'regression', 'linear', 'has_sensitivity',
+                       # 'does_feature_selection',
+                       ]
     def __init__(self, model_type="lasso", trace=False, normalize=True,
                  intercept=True, max_steps=None, use_Gram=False, **kwargs):
         """
@@ -174,5 +180,47 @@ class LARS(Classifier):
             fit = fit.reshape( (1,) )
         return fit
 
+
+    # def _getFeatureIds(self):
+    #     """Per Per's description it does feature selection internally,
+    #     so we need to implement this function and add
+    #     'does_feature_selection' into _clf_internals"""
+    #     raise NotImplementedError
+
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns a sensitivity analyzer for LARS."""
+        return LARSWeights(self, **kwargs)
+
     weights = property(lambda self: self.__weights)
+
+
+
+class LARSWeights(Sensitivity):
+    """`SensitivityAnalyzer` that reports the weights LARS trained
+    on a given `Dataset`.
+
+    By default LARS provides multiple weights per feature (one per label in
+    training dataset). By default, all weights are combined into a single
+    sensitivity value. Please, see the `FeaturewiseDatasetMeasure` constructor
+    arguments how to custmize this behavior.
+    """
+
+    _LEGAL_CLFS = [ LARS ]
+
+    def _call(self, dataset=None):
+        """Extract weights from LARS classifier.
+
+        LARS always has weights available, so nothing has to be computed here.
+        """
+        clf = self.clf
+        weights = clf.weights
+
+        if __debug__:
+            debug('LARS',
+                  "Extracting weights for LARS - "+
+                  "Result: min=%f max=%f" %\
+                  (N.min(weights), N.max(weights)))
+
+        return weights
 

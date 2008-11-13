@@ -8,58 +8,83 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Python distutils setup for PyMVPA"""
 
-from distutils.core import setup, Extension
-import numpy as N
+from numpy.distutils.core import setup, Extension
+from numpy.distutils.misc_util import get_numpy_include_dirs
 import os
 import sys
 from glob import glob
 
-# find numpy headers
-numpy_headers = os.path.join(os.path.dirname(N.__file__),'core','include')
-
+# some config settings
+have_libsvm = False
 extra_link_args = []
+include_dirs = []
+library_dirs = []
+
+# only if libsvm.a is available
+if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')):
+    include_dirs += [os.path.join('3rd', 'libsvm')]
+    library_dirs += [os.path.join('3rd', 'libsvm')]
+    have_libsvm = True
+
+# when libsvm is forced
+if sys.argv.count('--with-libsvm'):
+    # clean argv if necessary (or distutils will complain)
+    sys.argv.remove('--with-libsvm')
+    # look for libsvm in some places, when local one is not used
+    if not have_libsvm:
+        if not sys.platform.startswith('win'):
+            include_dirs += ['/usr/include/libsvm-2.0/libsvm',
+                             '/usr/include/libsvm',
+                             '/usr/local/include/libsvm',
+                             '/usr/local/include/libsvm-2.0/libsvm',
+                             '/usr/local/include']
+        else:
+            # no clue on windows
+            pass
+    have_libsvm = True
 
 # platform-specific settings
 if sys.platform == "darwin":
     extra_link_args.append("-bundle")
 
+
 # define the extension modules
 libsvmc_ext = Extension(
-    'mvpa.clfs.libsvm.svmc',
-    sources = [ 'mvpa/clfs/libsvm/svmc.i' ],
-    include_dirs = [ '/usr/include/libsvm-2.0/libsvm', numpy_headers ],
-    libraries    = [ 'svm' ],
+    'mvpa.clfs.libsvmc._svmc',
+    sources = ['mvpa/clfs/libsvmc/svmc.i'],
+    include_dirs = include_dirs,
+    library_dirs = library_dirs,
+    libraries    = ['svm'],
     language     = 'c++',
     extra_link_args = extra_link_args,
-    swig_opts    = [ '-c++', '-noproxy',
-                     '-I/usr/include/libsvm-2.0/libsvm',
-                     '-I' + numpy_headers ] )
+    swig_opts    = ['-I' + d for d in include_dirs])
 
 smlrc_ext = Extension(
-    'mvpa.clfs.libsmlr.smlrc',
-    sources = [ 'mvpa/clfs/libsmlr/smlr.c' ],
+    'mvpa.clfs.libsmlrc.smlrc',
+    sources = [ 'mvpa/clfs/libsmlrc/smlr.c' ],
+    library_dirs = library_dirs,
     libraries = ['m'],
     # extra_compile_args = ['-O0'],
     extra_link_args = extra_link_args,
     language = 'c')
 
-ext_modules = [smlrc_ext]
+ridgetrain_ext = Extension(
+    'mvpa.clfs.libridgetrain.ridgetrain',
+    sources = ['mvpa/clfs/libridgetrain/ridgetrain.f'],
+    library_dirs = library_dirs,
+    )
 
-# only do libsvm if forced or libsvm.a is available
-if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')) \
-   or sys.argv.count('--with-libsvm'):
+ext_modules = [smlrc_ext] #, ridgetrain_ext]
+
+if have_libsvm:
     ext_modules.append(libsvmc_ext)
-    # clean argv if necessary (or distutils will complain)
-    if sys.argv.count('--with-libsvm'):
-        sys.argv.remove('--with-libsvm')
-
 
 # Notes on the setup
 # Version scheme is: major.minor.patch<suffix>
 
 # define the setup
-setup(name       = 'pymvpa',
-      version      = '0.3.1',
+setup(name         = 'pymvpa',
+      version      = '0.4.0',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -74,13 +99,15 @@ setup(name       = 'pymvpa',
           "PyMVPA is truely free software (in every respect) and " \
           "additionally requires nothing but free-software to run.",
       packages     = [ 'mvpa',
+                       'mvpa.atlases',
                        'mvpa.base',
                        'mvpa.datasets',
                        'mvpa.mappers',
                        'mvpa.clfs',
                        'mvpa.clfs.sg',
-                       'mvpa.clfs.libsvm',
-                       'mvpa.clfs.libsmlr',
+                       'mvpa.clfs.libsvmc',
+                       'mvpa.clfs.libsmlrc',
+                       #'mvpa.clfs.libridgetrain',
                        'mvpa.algorithms',
                        'mvpa.measures',
                        'mvpa.featsel',

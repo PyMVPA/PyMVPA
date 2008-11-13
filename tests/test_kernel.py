@@ -55,8 +55,6 @@ class KernelTests(unittest.TestCase):
                               data0[:10,:2], p=1.2, heuristic='buga')
         self.failUnlessRaises(ValueError, pnorm_w_python,
                               data0[:10,:2], weight=weight)
-        self.failUnlessRaises(ValueError, pnorm_w,
-                              data0[:10,:2], weight=weight)
 
         self.failUnlessRaises(ValueError, pnorm_w_python,
                               data0[:10,:2], data0[:10, :3],
@@ -64,6 +62,9 @@ class KernelTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, pnorm_w,
                               data0[:10,:2], data0[:10, :3],
                               weight=weight)
+
+        self.failUnlessRaises(ValueError, pnorm_w,
+                              data0[:10,:2], weight=weight)
 
         # some sanity checks
         for did, (data1, data2, w) in enumerate(

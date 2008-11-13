@@ -7,7 +7,12 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating various kernel implementation in PyMVPA."""
+"""
+Kernel-Demo
+===========
+
+This is an example demonstrating various kernel implementation in PyMVPA.
+"""
 
 from mvpa.suite import *
 from mvpa.clfs.kernel import *
