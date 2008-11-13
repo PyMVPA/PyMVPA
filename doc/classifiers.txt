@@ -448,39 +448,44 @@ Examples of Meta-Classifiers
 At present, there are two primary meta-classifiers implemented in the PyMVPA
 package, beneath which there are several specific options:
 
-1. :class:`~mvpa.clfs.base.BoostedClassifier` -- these typically combine some
-    aspect of the classifier's functionality with another component, such as
-    prediction or data splitting
+:class:`~mvpa.clfs.base.BoostedClassifier`
+    typically uses multiple classifiers internally
 
-2. :class:`~mvpa.clfs.base.ProxyClassifier` -- these typically perform some
-    action on the data/labels before classification is performed
+:class:`~mvpa.clfs.base.ProxyClassifier`
+    typically performs some action on the data/labels before classification
+    is performed
 
 Within these more general categories, specific classifiers are implemented.
 For example, there are several :class:`~mvpa.clfs.base.BoostedClassifier`
 subclasses:
 
-1. :class:`~mvpa.clfs.base.CombinedClassifier` -- combines predictions using a
-    :class:`~mvpa.clfs.base.PredictionsCombiner` functor
+:class:`~mvpa.clfs.base.CombinedClassifier`
+    combines predictions using a :class:`~mvpa.clfs.base.PredictionsCombiner`
+    functor
 
-2. :class:`~mvpa.clfs.base.MulticlassClassifier` -- performs multi-class
-    classification by means of a list of
-    :class:`~mvpa.clfs.base.BinaryClassifier` instances
+:class:`~mvpa.clfs.base.MulticlassClassifier`
+    performs multi-class classification by means of a list of
+    :class:`~mvpa.clfs.base.BinaryClassifier` instances. Typical use-case is
+    to wrap a binary classifier to give it ability to operate on
+    multiple classes via voting over classifiers for all possible
+    pairs of the categories
 
-3. :class:`~mvpa.clfs.base.SplitClassifier` -- combines a
-    :class:`~mvpa.clfs.base.Classifier` and an arbitrary
+:class:`~mvpa.clfs.base.SplitClassifier`
+    combines a :class:`~mvpa.clfs.base.Classifier` and an arbitrary
     :class:`~mvpa.datasets.splitter.Splitter`
 
 Furthermore, there are also several :class:`~mvpa.clfs.base.ProxyClassifier`
 subclasses:
 
-1. :class:`~mvpa.clfs.base.BinaryClassifier` -- maps a set of labels into two
-    categories, +1 and -1
+:class:`~mvpa.clfs.base.BinaryClassifier`
+    maps a set of labels into two categories (+1 and -1)
 
-2. :class:`~mvpa.clfs.base.MappedClassifier` -- uses a mapper on input data
-    prior to training/testing
+:class:`~mvpa.clfs.base.MappedClassifier`
+    uses a mapper on input data prior to training/testing
 
-3. :class:`~mvpa.clfs.base.FeatureSelectionClassifier` -- performs some kind of
-    :class:`~mvpa.featsel.base.FeatureSelection` prior to training
+:class:`~mvpa.clfs.base.FeatureSelectionClassifier`
+    performs some kind of :class:`~mvpa.featsel.base.FeatureSelection` prior
+    to training/testing
 
 
 Implementation Examples
