@@ -250,7 +250,8 @@ the following confusion matrix::
 
   >>> # Simple 'print cvterr.confusion' provides the same output
   >>> # without the description of abbreviations
-  >>> print cvterr.confusion.asstring(description=True)                                                         # doctest: +SKIP
+  >>> print cvterr.confusion.asstring(description=True) \
+  ... # doctest: +SKIP
   --------.        3kHz  7kHz  12kHz 20kHz 30kHz song1 song2 song3 song4 song5
   predict.\targets 38    39    40    41    42    43    44    45    46    47
            `------ ---- ----- ----- ----- ----- ----- ----- ----- ----- -----  P'  N'  FP  FN   PPV  NPV  TPR  SPC  FDR  MCC
@@ -304,8 +305,10 @@ via the :meth:`~mvpa.clfs.transerror.ConfusionMatrix.plot` method of a
 :class:`~mvpa.clfs.transerror.ConfusionMatrix`::
 
   >>> import pylab as P
-  >>> cvterr.confusion.plot()                                                                                   # doctest: +SKIP
-  >>> P.show()                                                                                                  # doctest: +SKIP
+  >>> cvterr.confusion.plot() \
+  ... # doctest: +SKIP
+  >>> P.show() \
+  ... # doctest: +SKIP
 
 .. image:: pics/confusion_matrix.*
    :align: center
