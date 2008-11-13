@@ -40,7 +40,8 @@ detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'cats' and 'scissors' samples from dataset
 dataset = dataset.selectSamples(
-                N.array([ l in [0,4,5] for l in dataset.labels], dtype='bool'))
+                N.array([ l in [0,4,5] for l in dataset.labels],
+                dtype='bool'))
 
 # zscore dataset relative to baseline ('rest') mean
 zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
@@ -56,8 +57,8 @@ print dataset
 # Just to assign a particular classifier class
 Clf = LinearCSVMC
 
-# define some classifiers: a simple one and several classifiers with built-in
-# SVDs
+# define some classifiers: a simple one and several classifiers with
+# built-in SVDs
 clfs = [('All orig.\nfeatures (%i)' % dataset.nfeatures, Clf()),
         ('All Comps\n(%i)' % (dataset.nsamples \
                  - (dataset.nsamples / len(dataset.uniquechunks)),),

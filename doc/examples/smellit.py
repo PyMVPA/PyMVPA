@@ -51,10 +51,11 @@ P.subplot(121)
 plotSamplesDistance(ds, sortbyattr='chunks')
 P.title('Sample distances (sorted by chunks)')
 
-# similar distance plot, but now samples sorted by their respective labels,
-# i.e. samples with same labels are plotted in adjacent columns/rows.
-# Note, that the first and largest group corresponds to the 'rest' condition
-# in the dataset
+# similar distance plot, but now samples sorted by their
+# respective labels, i.e. samples with same labels are plotted
+# in adjacent columns/rows.
+# Note, that the first and largest group corresponds to the
+# 'rest' condition in the dataset
 P.subplot(122)
 plotSamplesDistance(ds, sortbyattr='labels')
 P.title('Sample distances (sorted by labels)')

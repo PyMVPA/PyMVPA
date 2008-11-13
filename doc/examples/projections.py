@@ -37,8 +37,8 @@ mappers = {
             'ICA': ICAMapper(),
           }
 datasets = [
-#    noisy_2d_fx(100, lambda x: x, [lambda x: x], center, noise_std=2),
-    noisy_2d_fx(100, lambda x: x, [lambda x: x], center, noise_std=.5),
+    noisy_2d_fx(100, lambda x: x, [lambda x: x],
+                center, noise_std=.5),
     noisy_2d_fx(50, lambda x: x, [lambda x: x, lambda x: -x],
                 center, noise_std=.5),
     noisy_2d_fx(50, lambda x: x, [lambda x: x, lambda x: 0],
@@ -64,14 +64,11 @@ for ds in datasets:
             P.title(mname)
         P.axis('equal')
 
-        P.scatter(ds.samples[:, 0], ds.samples[:, 1], s=30, c=(ds.labels) * 200)
+        P.scatter(ds.samples[:, 0],
+                  ds.samples[:, 1],
+                  s=30, c=(ds.labels) * 200)
         plotProjDir(mproj)
         fig += 1
-#        P.subplot(nmappers, 2, fig + 1)
-#        P.axis('equal')
-#
-#        P.scatter(dproj[:, 0], dproj[:, 1], s=30, c=(ds.labels) * 200)
-#        fig += 1
 
 
 if cfg.getboolean('examples', 'interactive', True):

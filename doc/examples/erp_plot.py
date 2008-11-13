@@ -70,7 +70,8 @@ plotERPs(plots[2:3], ax=ax, ymult=-1e6, **cargs)
 # Additional example: plotting a single ERP on an existing plot
 # without drawing axis:
 #
-# plotERP(data=meg.data[:, 0, :], SR=meg.samplingrate, pre=pre, pre_mean=pre, errtype=errtype, ymult=-1.0)
+# plotERP(data=meg.data[:, 0, :], SR=meg.samplingrate, pre=pre,
+#         pre_mean=pre, errtype=errtype, ymult=-1.0)
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures

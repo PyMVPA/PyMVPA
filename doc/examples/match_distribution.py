@@ -44,7 +44,8 @@ plotDistributionMatches(data, matches, legend=1, nbest=5)
 P.title('Normal: 5 best distributions')
 
 P.subplot(2,1,2)
-plotDistributionMatches(data, matches, nbest=5, p=0.05, tail='any', legend=4)
+plotDistributionMatches(data, matches, nbest=5, p=0.05,
+                        tail='any', legend=4)
 P.title('Accept regions for two-tailed test')
 
 #
@@ -57,11 +58,13 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
                        chunks=attr.chunks,
                        mask='data/mask.nii.gz')
 # select random voxel
-dataset = dataset.selectFeatures([int(N.random.uniform()*dataset.nfeatures)])
+dataset = dataset.selectFeatures(
+            [int(N.random.uniform()*dataset.nfeatures)])
 
 verbose(2, "Minimal preprocessing to remove the bias per each voxel")
 detrend(dataset, perchunk=True, model='linear')
-zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
+zscore(dataset, perchunk=True, baselinelabels=[0],
+       targetdtype='float32')
 
 # on all voxels at once, just for the sake of visualization
 data = dataset.samples.ravel()
@@ -74,7 +77,8 @@ plotDistributionMatches(data, matches, legend=1, nbest=5)
 P.title('Random voxel: 5 best distributions')
 
 P.subplot(2,1,2)
-plotDistributionMatches(data, matches, nbest=5, p=0.05, tail='any', legend=4)
+plotDistributionMatches(data, matches, nbest=5, p=0.05,
+                        tail='any', legend=4)
 P.title('Accept regions for two-tailed test')
 
 if cfg.getboolean('examples', 'interactive', True):

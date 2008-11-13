@@ -23,7 +23,8 @@ from mvpa.misc.fx import singleGammaHRF, leastSqFit
 from mvpa import cfg
 
 # make dataset
-# 40 identical 'trial time courses' generated from a simple gamma function
+# 40 identical 'trial time courses' generated from a simple
+# gamma function
 #   time-to-peak: 6s
 #   FWHM: 7s
 #   Scaling: 1
