@@ -92,3 +92,13 @@ plotBars(results, labels=labels,
 
 if cfg.getboolean('examples', 'interactive', True):
     P.show()
+
+"""
+Output of the example analysis:
+
+.. image:: ../pics/svdclf.*
+   :width: 10cm
+   :align: center
+   :alt: Generalization performance on the selected PCs.
+
+"""

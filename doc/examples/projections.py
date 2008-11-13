@@ -77,3 +77,12 @@ for ds in datasets:
 if cfg.getboolean('examples', 'interactive', True):
     P.show()
 
+"""
+Output of the example:
+
+.. image:: ../pics/projections.*
+   :width: 10cm
+   :align: center
+   :alt: SVD/ICA/PCA projections
+
+"""
