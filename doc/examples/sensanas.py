@@ -129,7 +129,6 @@ if cfg.getboolean('examples', 'interactive', True):
 Output of the example analysis:
 
 .. image:: ../pics/sensanas.*
-   :width: 12cm
    :align: center
    :alt: Various sensitivity analysis results
 

@@ -82,7 +82,6 @@ fascinating one due to the limited number of samples provided in the
 dataset shipped within the toolbox.
 
 .. image:: ../pics/erp_plot.*
-   :width: 12cm
    :align: center
    :alt: ERP plot example
 

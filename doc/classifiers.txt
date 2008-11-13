@@ -70,7 +70,6 @@ with most algorithms in PyMVPA. This makes it very easy to test different
 classifiers on some dataset (see Fig. 1).
 
 .. image:: pics/classifier_comparison_plot.png
-   :width: 12cm
    :align: center
    :alt: Classifier comparison
 
