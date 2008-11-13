@@ -81,7 +81,6 @@ if cfg.getboolean('examples', 'interactive', True):
 Output of the example:
 
 .. image:: ../pics/projections.*
-   :width: 10cm
    :align: center
    :alt: SVD/ICA/PCA projections
 
