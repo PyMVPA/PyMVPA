@@ -50,7 +50,8 @@ detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'house' and 'scrambled' samples from dataset
 dataset = dataset.selectSamples(
-                N.array([ l in [0,2,6] for l in dataset.labels], dtype='bool'))
+                N.array([ l in [0,2,6] for l in dataset.labels],
+                dtype='bool'))
 
 # zscore dataset relative to baseline ('rest') mean
 zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
@@ -98,7 +99,8 @@ for radius in [1,5,10]:
     print "Running searchlight with radius: %i ..." % (radius)
 
     # setup Searchlight with a custom radius
-    # radius has to be in the same unit as the nifti file's pixdim property.
+    # radius has to be in the same unit as the nifti file's pixdim
+    # property.
     sl = Searchlight(cv, radius=radius)
 
     # run searchlight on example dataset and retrieve error map
@@ -106,7 +108,8 @@ for radius in [1,5,10]:
 
     # map sensitivity map into original dataspace
     orig_sl_map = dataset.mapReverse(N.array(sl_map))
-    masked_orig_sl_map = N.ma.masked_array(orig_sl_map, mask=orig_sl_map == 0)
+    masked_orig_sl_map = N.ma.masked_array(orig_sl_map,
+                                           mask=orig_sl_map == 0)
 
     # make a new subplot for each classifier
     fig += 1

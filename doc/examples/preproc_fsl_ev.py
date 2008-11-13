@@ -78,8 +78,8 @@ def main():
             if data[limits[0]:limits[1],:].shape[0] == 0:
                 raise ValueError, 'Invalid chunklimit value [%s].' \
                                   % options.chunklimits
-            # use limits to do a piecewise linear detrending (separate linear
-            # fit of the interesting chunk
+            # use limits to do a piecewise linear detrending (separate
+            # linear fit of the interesting chunk
             data = detrend(data, axis=0, bp=limits)
 
 
@@ -106,9 +106,9 @@ def main():
         labels += [label] * len(onsets)
         chunks += [options.chunk] * len(onsets)
 
-    # concatenate into a single array (assumes that each entry in samples
-    # already is 4d which is true, because transformWithBoxcar does it like
-    # that
+    # concatenate into a single array (assumes that each entry in
+    # samples already is 4d which is true, because
+    # transformWithBoxcar does it like that
     samples = N.concatenate(samples, axis=0)
 
     attrs = SampleAttributes({'labels': labels, 'chunks': chunks})

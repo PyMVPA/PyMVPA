@@ -29,12 +29,14 @@ dataset = NiftiDataset(samples='data/bold.nii.gz',
 detrend(dataset, perchunk=True, model='linear')
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
+zscore(dataset, perchunk=True, baselinelabels=[0],
+       targetdtype='float32')
 
 # select class 1 and 2 for this demo analysis
 # would work with full datasets (just a little slower)
-dataset = dataset.selectSamples(N.array([l in [1, 2] for l in dataset.labels],
-                                        dtype='bool'))
+dataset = dataset.selectSamples(
+                N.array([l in [1, 2] for l in dataset.labels],
+                        dtype='bool'))
 
 # setup cross validation procedure, using SMLR classifier
 cv = CrossValidatedTransferError(

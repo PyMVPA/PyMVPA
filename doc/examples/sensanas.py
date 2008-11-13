@@ -68,7 +68,8 @@ detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
 dataset = dataset.selectSamples(
-                N.array([ l in [0,3,7] for l in dataset.labels], dtype='bool'))
+                N.array([ l in [0,3,7] for l in dataset.labels],
+                dtype='bool'))
 
 # zscore dataset relative to baseline ('rest') mean
 zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
@@ -92,8 +93,8 @@ for s in keys:
     print "Running %s ..." % (s)
 
     # compute sensitivies
-    # I-RELIEF assigns zeros, which corrupts voxel masking for pylab's imshow,
-    # so adding some epsilon :)
+    # I-RELIEF assigns zeros, which corrupts voxel masking for pylab's
+    # imshow, so adding some epsilon :)
     smap = sensanas[s](dataset)+0.00001 
 
     # map sensitivity map into original dataspace

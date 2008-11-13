@@ -39,13 +39,15 @@ plotHeadTopography(topo, sensors.locations(), plotsensors=True)
 P.subplot(1, 2, 2)
 
 # load MEG sensor locations
-sensors=TuebingenMEGSensorLocations(os.path.join('data', 'tueb_meg_coord.xyz'))
+sensors=TuebingenMEGSensorLocations(
+            os.path.join('data', 'tueb_meg_coord.xyz'))
 
 # random values this time
 topo = N.random.randn(len(sensors.names))
 
 # plot without additional interpolation
-plotHeadTopography(topo, sensors.locations(), interpolation='nearest')
+plotHeadTopography(topo, sensors.locations(),
+                   interpolation='nearest')
 
 
 if cfg.getboolean('examples', 'interactive', True):
