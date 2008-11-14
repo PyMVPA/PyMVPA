@@ -86,11 +86,13 @@ they are available on a particular target platform.
     regression classifier code. However, the SciPy package provides a lot of
     functionality that might be relevant in the context of PyMVPA, e.g.
     IO support for Matlab .mat files.
-  PyNIfTI_: access to NIfTI files
+  PyNIfTI_ (>= 0.20081017.1): access to NIfTI files
     PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
     format, that internally uses PyNIfTI. If you don't need that, PyNIfTI is
     not necessary, but otherwise it makes it really easy to read from and write
-    to NIfTI images.
+    to NIfTI images. All dataset types dealing with NIfTI data will not be
+    available without a functional PyNIfTI installation. Since PyMVPA 0.4.0
+    at least PyNIfTI version 0.20081017.1 (or later) is required.
 
 .. _SciPy: http://www.scipy.org/
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti/
