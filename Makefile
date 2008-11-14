@@ -46,7 +46,7 @@ build: build-stamp
 # Do not build 3rd party software for Debian, but use corresponding Debian
 # packages instead
 #build-stamp: 3rd
-build-stamp: 3rd
+build-stamp:
 	python setup.py config --noisy --with-libsvm
 	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
