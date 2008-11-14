@@ -96,8 +96,9 @@ given.
 
 The manual does not cover all bits and pieces of PyMVPA. Detailed information
 about the module layout and additional documentation about all included
-functionality is available from the `API Reference`_. The main purpose of the
-manual is to give an idea how the individual parts of PyMVPA can be combined
-to perform complex analyses -- easily.
+functionality is available from the :ref:`Module Reference <modref>` -- or the
+`API Reference`_ if you are interested in a more technical document.  The main
+purpose of the manual is to give an idea how the individual parts of PyMVPA can
+be combined to perform complex analyses -- easily.
 
 .. _API Reference: api/index.html
