@@ -24,7 +24,7 @@ build/python-mvpa-doc::
 # use jquery from Debian package
 # symlinked by debhelper
 install/python-mvpa-doc::
-	rm build/html/_static/jquery.js
+	-rm build/html/_static/jquery.js
 
 # install directly into package directory (despite multiple packages)
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
@@ -32,6 +32,6 @@ DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
 # and exemplar data (they are small excerpts anyways)
 DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
 # -doc package contents
-DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/latex/*.pdf
+DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/latex/PyMVPA*.pdf
 DEB_INSTALL_EXAMPLES_python-mvpa-doc := doc/examples/* data
 
