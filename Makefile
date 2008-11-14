@@ -67,6 +67,8 @@ clean:
 	 while read d; do \
 	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean || : ; \
      done
+# clean tools
+	$(MAKE) -C tools clean
 
 # if we are on debian system - we might have left-overs from build
 	-@$(MAKE) debian-clean
