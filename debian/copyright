@@ -46,3 +46,21 @@ License: BSD-3
   repackaging of the upstream sources.
 On Debian GNU/Linux systems, the complete text of the 3-clause BSD License
 can be found in `/usr/share/common-licenses/BSD'.
+
+
+Files: doc/misc/replace_header.sh, tools/refactor.sh
+Copyright: Copyright 2007 Yaroslav Halchenko
+License: GPL-2
+  On Debian GNU/Linux systems, the complete text of the GPL-2 License
+  can be found in `/usr/share/common-licenses/GPL-2'.
+
+
+Files: tools/pdfbook.c
+Copyright:
+  Tigran Aivazian <tigran at aivazian.fsnet.co.uk>
+  Jaap Eldering <eldering at a-eskwadraat.nl>
+  Roman Buchert <roman.buchert at arcor.de>
+  Pierre Francois <pf at romanliturgy.org>
+License: GPL-2
+  On Debian GNU/Linux systems, the complete text of the GPL-2 License
+  can be found in `/usr/share/common-licenses/GPL-2'.
