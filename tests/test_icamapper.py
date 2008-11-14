@@ -16,8 +16,6 @@ from mvpa.mappers.ica import ICAMapper
 
 from mvpa.datasets import Dataset
 
-import pylab as P
-
 class ICAMapperTests(unittest.TestCase):
 
     def setUp(self):
