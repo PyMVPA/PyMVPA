@@ -17,6 +17,8 @@ import numpy as N
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhancedDocString
 
+if __debug__:
+    from mvpa.base import debug
 
 class Splitter(object):
     """Base class of dataset splitters.
@@ -33,10 +35,15 @@ class Splitter(object):
     Please note, that even if there is only one Dataset returned it has to be
     an element in a sequence and not just the Dataset object!
     """
+
+    _STRATEGIES = ('first', 'random', 'equidistant')
+
     def __init__(self,
                  nperlabel='all',
                  nrunspersplit=1,
                  permute=False,
+                 count=None,
+                 strategy='equidistant',
                  attr='chunks'):
         """Initialize splitter base.
 
@@ -57,6 +64,19 @@ class Splitter(object):
           permute : bool
             If set to `True`, the labels of each generated dataset
             will be permuted on a per-chunk basis.
+          count : None or int
+            Desired number of splits to be output. It is limited by the
+            number of splits possible for a given splitter
+            (e.g. `OddEvenSplitter` can have only up to 2 splits). If None,
+            all splits are output (default).
+          strategy : str
+            If `count` is not None, possible strategies are possible:
+             first
+              First `count` splits are chosen
+             random
+              Random (without replacement) `count` splits are chosen
+             equidistant
+              Splits which are equidistant from each other
           attr : str
             Sample attribute used to determine splits.
         """
@@ -66,12 +86,26 @@ class Splitter(object):
         self.__permute = permute
         self.__splitattr = attr
 
+        # we don't check it, thus no reason to make it private.
+        # someone might find it useful to change post creation
+        # TODO utilize such (or similar) policy through out the code
+        self.count = count
+        """Number (max) of splits to output on call"""
+
+        self._setStrategy(strategy)
+
         # pattern sampling status vars
         self.setNPerLabel(nperlabel)
 
 
     __doc__ = enhancedDocString('Splitter', locals())
 
+    def _setStrategy(self, strategy):
+        strategy = strategy.lower()
+        if not strategy in self._STRATEGIES:
+            raise ValueError, "strategy is not known. Known are %s" \
+                  % str(self._STRATEGIES)
+        self.__strategy = strategy
 
     def setNPerLabel(self, value):
         """Set the number of samples per label in the split datasets.
@@ -109,8 +143,40 @@ class Splitter(object):
         DS_getRandomSamples = ds_class.getRandomSamples
 
         # for each split
-        for split in self.splitcfg(dataset):
+        cfgs = self.splitcfg(dataset)
 
+        # Select just some splits if desired
+        count, Ncfgs = self.count, len(cfgs)
+        # further makes sense only iff count < Ncfgs,
+        # otherwise all strategies are equivalent
+        if count is not None and count < Ncfgs:
+            if count < 1:
+                # we can only wish a good luck
+                return
+            strategy = self.strategy
+            if strategy == 'first':
+                cfgs = cfgs[:count]
+            elif strategy in ['equidistant', 'random']:
+                if strategy == 'equidistant':
+                    # figure out what step is needed to
+                    # acommodate the `count` number
+                    step = float(Ncfgs) / count
+                    assert(step >= 1.0)
+                    indexes = [int(round(step * i)) for i in xrange(count)]
+                elif strategy == 'random':
+                    indexes = N.random.permutation(range(Ncfgs))[:count]
+                    # doesn't matter much but lets keep them in the original
+                    # order at least
+                    indexes.sort()
+                else:
+                    # who said that I am paranoid?
+                    raise RuntimeError, "Really should not happen"
+                if __debug__:
+                    debug("SPL", "For %s strategy selected %s splits "
+                          "from %d total" % (strategy, indexes, Ncfgs))
+                cfgs = [cfgs[i] for i in indexes]
+
+        for split in cfgs:
             # determine sample sizes
             if not operator.isSequenceType(self.__nperlabel) \
                    or isinstance(self.__nperlabel, str):
@@ -226,6 +292,9 @@ class Splitter(object):
         return self._getSplitConfig(eval('dataset.unique' + self.__splitattr))
 
 
+    strategy = property(fget=lambda self:self.__strategy,
+                        fset=_setStrategy)
+
 
 class NoneSplitter(Splitter):
     """This is a dataset splitter that does **not** split. It simply returns
@@ -299,6 +368,7 @@ class OddEvenSplitter(Splitter):
 
     def _getSplitConfig(self, uniqueattrs):
         """Huka chaka!
+           YOH: LOL XXX
         """
         if self.__usevalues:
             return [(None, uniqueattrs[(uniqueattrs % 2) == True]),

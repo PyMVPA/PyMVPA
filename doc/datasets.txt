@@ -288,7 +288,9 @@ describe signal similarities between training and validation datasets.
    maybe deserves emphasis. i was just looking at how we deal
    with it in our documentation, and we need to improve ours too!
 
-With the splitter classes, PyMVPA makes dataset splitting easy. All dataset
+With the splitter classes derived from the base
+:class:`~mvpa.datasets.splitter.Splitter`,
+PyMVPA makes dataset splitting easy. All dataset
 splitters in PyMVPA are implemented as Python generators, meaning that when
 called with a dataset once, they return one dataset split per iteration and
 an appropriate Exception when they are done. This is exactly the same behavior
@@ -327,7 +329,7 @@ dataset and the validation set contains the remaining chunk.
 .. index:: processing object
 
 The usage of the splitter, creating a splitter object and calling it with a
-dataset, is a very common design pattern in the PyMVPA package. Like splitters
+dataset, is a very common design pattern in the PyMVPA package. Like splitters,
 there are many more so called *processing objects*. These classes or objects
 are instantiated by passing all relevant parameters to the constructor.
 Processing objects can then be called multiple times with different datasets

@@ -322,7 +322,9 @@ class ClassifiersTests(unittest.TestCase):
              SensitivityBasedFeatureSelection
         from mvpa.featsel.helpers import \
              FixedNElementTailSelector
-
+        if sample_clf_reg is None:
+            # none regression was found, so nothing to test
+            return
         # should give lowest weight to the feature with lowest index
         sens_ana = SillySensitivityAnalyzer()
 
@@ -339,7 +341,7 @@ class ClassifiersTests(unittest.TestCase):
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
         res = clf_reg.predict(dat.samples)
-        self.failIf((clf_reg.values-clf_reg.predictions).sum()==0,
+        self.failIf((N.array(clf_reg.values)-clf_reg.predictions).sum()==0,
                     msg="Values were set to the predictions.")
 
     @sweepargs(clf=clfs[:])

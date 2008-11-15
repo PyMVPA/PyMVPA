@@ -893,10 +893,10 @@ def autoNullDist(dist):
 # if no scipy, we need nanmean
 def _chk_asarray(a, axis):
     if axis is None:
-        a = np.ravel(a)
+        a = N.ravel(a)
         outaxis = 0
     else:
-        a = np.asarray(a)
+        a = N.asarray(a)
         outaxis = axis
     return a, outaxis
 
