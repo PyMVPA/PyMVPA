@@ -15,7 +15,6 @@ __docformat__ = 'restructuredtext'
 #
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import *
-from mvpa.clfs.ridge import RidgeReg
 
 from mvpa.clfs.warehouse import clfs, regrs
 from mvpa.base import externals
@@ -74,4 +73,6 @@ sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 sample_clf_nl = kNN(k=5)
 
 # and also a regression-based classifier
-sample_clf_reg = RidgeReg()
+r = clfs['linear', 'regression', 'has_sensitivity']
+if len(r) > 0: sample_clf_reg = r[0]
+else: sample_clf_reg = None
