@@ -68,9 +68,6 @@ tests = [
     'test_splitsensana',
     # And the suite (all-in-1)
     'test_suite',
-    # Atlases... might become optional depending if any of the atlases
-    # is present
-    'test_atlases',
     ]
 
 # So we could see all warnings about missing dependencies
@@ -87,6 +84,7 @@ __optional_tests = ( ('scipy', 'ridge'),
                      ('pywt', 'waveletmapper'),
                      (['cPickle', 'gzip'], 'hamster'),
 #                     ('mdp', 'pcamapper'),
+                     ('nifti', 'atlases'),
                      )
 
 # and now for the optional tests
