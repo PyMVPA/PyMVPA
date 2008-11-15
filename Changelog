@@ -43,6 +43,7 @@ Releases
     the data (matchDistribution, plotDistributionMatches). It is WiP
     thus API can change in the upcoming release.
   * Simplifies API of mappers.
+  * Splitters can now limit the number of splits automatically.
   * New :class:`~mvpa.mappers.base.CombinedMapper` to map between multiple,
     independent dataspace and a common feature space.
   * New :class:`~mvpa.mappers.base.ChainMapper` to create chains of mappers
