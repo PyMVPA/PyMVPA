@@ -135,7 +135,7 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[1].nsamples == 16 )
             self.failUnless( p[2].nsamples == 4 )
 
- 
+
     def testNoneSplitter(self):
         nos = NoneSplitter()
         splits = [ (train, test) for (train, test) in nos(self.data) ]
@@ -184,6 +184,35 @@ class SplitterTests(unittest.TestCase):
         self.failUnless((splits[1][0].uniquelabels == [1,3]).all())
         self.failUnless((splits[1][1].uniquelabels == [0,2]).all())
 
+
+    def testCountedSplitting(self):
+        # count > #chunks, should result in 10 splits
+        nchunks = len(self.data.uniquechunks)
+        for strategy in NFoldSplitter._STRATEGIES:
+            for count, target in [ (nchunks*2, nchunks),
+                                   (nchunks, nchunks),
+                                   (nchunks-1, nchunks-1),
+                                   (3, 3),
+                                   (0, 0),
+                                   (1, 1)
+                                   ]:
+                nfs = NFoldSplitter(cvtype=1, count=count, strategy=strategy)
+                splits = [ (train, test) for (train,test) in nfs(self.data) ]
+                self.failUnless(len(splits) == target)
+                chosenchunks = [int(s[1].uniquechunks) for s in splits]
+                if strategy == 'first':
+                    self.failUnlessEqual(chosenchunks, range(target))
+                elif strategy == 'equidistant':
+                    if target == 3:
+                        self.failUnlessEqual(chosenchunks, [0, 3, 7])
+                elif strategy == 'random':
+                    # none is selected twice
+                    self.failUnless(len(set(chosenchunks)) == len(chosenchunks))
+                    self.failUnless(target == len(chosenchunks))
+                else:
+                    raise RuntimeError, "Add unittest for strategy %s" \
+                          % strategy
+                        
 
 def suite():
     return unittest.makeSuite(SplitterTests)
