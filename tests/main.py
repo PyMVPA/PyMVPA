@@ -11,7 +11,7 @@
 import unittest
 import sys
 
-from mvpa import _random_seed
+from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
 if __debug__:
@@ -76,7 +76,7 @@ warning.maxcount = 1000
 externals.testAllDependencies()
 
 
-__optional_tests = ( ('scipy', 'ridge'),
+__optional_tests = [ ('scipy', 'ridge'),
                      ('scipy', 'datasetfx_sp'),
                      (['lars','scipy'], 'lars'),
                      ('nifti', 'niftidataset'),
@@ -84,8 +84,11 @@ __optional_tests = ( ('scipy', 'ridge'),
                      ('pywt', 'waveletmapper'),
                      (['cPickle', 'gzip'], 'hamster'),
 #                     ('mdp', 'pcamapper'),
-                     ('nifti', 'atlases'),
-                     )
+                   ]
+
+if not cfg.getboolean('tests', 'lowmem', default='no'):
+    __optional_tests += [('nifti', 'atlases')]
+
 
 # and now for the optional tests
 optional_tests = []
