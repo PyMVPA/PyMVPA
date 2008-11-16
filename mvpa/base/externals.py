@@ -93,7 +93,9 @@ def __check_atlas_family(family):
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
-          'nifti':'from nifti.nifticlib import detachDataFromImage as __',
+          'nifti':'from nifti import NiftiImage as __',
+          'nifti >= 0.20081017.1':
+                'from nifti.nifticlib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
           'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
