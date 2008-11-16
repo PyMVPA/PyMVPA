@@ -211,7 +211,7 @@ def testAllDependencies(force=False):
     for dep in _KNOWN:
         if not exists(dep, force):
             warning("Known dependency %s is not present or is broken, " \
-                    "thus not availablei, or only available in an " \
+                    "thus not available, or only available in an " \
                     "outdated/insufficient version." % dep)
 
     if __debug__:
