@@ -110,6 +110,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
           'sg_fixedcachesize': "__check_shogun(3043)",
+           # XXX check exact revision (of a release 0.6.4)
+          'sg_ge_0_6_4': "__check_shogun(3380)",
           'hcluster': "import hcluster as __",
           'griddata': "import griddata as __",
           'cPickle': "import cPickle as __",
@@ -165,7 +167,7 @@ def exists(dep, force=False, raiseException=False):
     result = False
 
     if not _KNOWN.has_key(dep):
-        warning("%s is not a known dependency key." % (dep))
+        raise ValueError, "%s is not a known dependency key." % (dep)
     else:
         # try and load the specific dependency
         if __debug__:
