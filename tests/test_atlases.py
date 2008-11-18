@@ -12,7 +12,11 @@ import unittest
 import random
 import numpy as N
 
-from mvpa.atlases import *
+from mvpa.base import externals
+if externals.exists('nifti', raiseException=True):
+    from mvpa.atlases import *
+else:
+    raise RuntimeError, "Don't run me if no nifti is present"
 
 class AtlasesTests(unittest.TestCase):
 

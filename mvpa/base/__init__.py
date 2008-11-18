@@ -192,6 +192,8 @@ if __debug__:
     debug.register('DS_',  "*Dataset (verbose)")
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
+    debug.register('SPL',   "*Splitter")
+
     # CHECKs
     debug.register('CHECK_DS_SELECT',
                    "Check in dataset.select() for sorted and unique indexes")

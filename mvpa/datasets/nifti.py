@@ -62,6 +62,17 @@ def getNiftiFromAnySource(src):
     return nifti
 
 
+def getNiftiData(nim):
+    """Convenience function to extract the data array from a NiftiImage
+
+    This function will make use of advanced features of PyNIfTI to prevent
+    unnecessary copying if a sufficent version is available.
+    """
+    if externals.exists('nifti >= 0.20081017.1'):
+        return nim.data
+    else:
+        return nim.asarray()
+
 
 class NiftiDataset(MappedDataset):
     """Dataset based on NiftiImage provided by pynifti.
@@ -108,7 +119,7 @@ class NiftiDataset(MappedDataset):
         # goes directly into the mapper which maybe knows more
         niftimask = getNiftiFromAnySource(mask)
         if not niftimask is None:
-            mask = niftimask.data
+            mask = getNiftiData(niftimask)
 
         # build an appropriate mapper that knows about the metrics of the NIfTI
         # data
@@ -249,7 +260,7 @@ class ERNiftiDataset(EventDataset):
         if not mask is None:
             mask_nim = getNiftiFromAnySource(mask)
             if not mask_nim is None:
-                mask = mask_nim.data
+                mask = getNiftiData(mask_nim)
             else:
                 raise ValueError, "Cannot load mask from '%s'" % mask
 

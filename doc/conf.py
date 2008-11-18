@@ -14,6 +14,12 @@
 import sys, os, re
 import numpy as N
 
+try:
+    import matplotlib
+    matplotlib.use('svg')
+except:
+    pass
+
 ##################################################
 # Config settings are at the bottom of the file! #
 ##################################################

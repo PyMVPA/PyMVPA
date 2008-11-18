@@ -12,6 +12,9 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as N
+from mvpa.base import externals
+externals.exists("scipy", raiseException=True)
+
 from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier
@@ -31,7 +34,7 @@ class RidgeReg(Classifier):
 
         :Parameters:
           lm : float
-            the penalty term lambda.  
+            the penalty term lambda.
             (Defaults to .05*nFeatures)
         """
         # init base class first

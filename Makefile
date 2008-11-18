@@ -67,6 +67,8 @@ clean:
 	 while read d; do \
 	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean || : ; \
      done
+# clean tools
+	$(MAKE) -C tools clean
 
 # if we are on debian system - we might have left-overs from build
 	-@$(MAKE) debian-clean
@@ -142,7 +144,7 @@ apidoc-stamp: build
 # the buildds, though.
 #apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
-	LC_ALL=C tools/epydoc --config doc/api/epydoc.conf
+	LC_ALL=C MVPA_EPYDOC_WARNINGS=once tools/epydoc --config doc/api/epydoc.conf
 	touch $@
 
 website: website-stamp
@@ -178,7 +180,7 @@ unittest: build
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
-	@echo "I: Running unittests under assumption of missing externals."
+	@echo "I: Running unittests under assumption of missing optional externals."
 	@cd tests && PYTHONPATH=badexternals:.. python main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
