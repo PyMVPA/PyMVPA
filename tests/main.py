@@ -11,7 +11,7 @@
 import unittest
 import sys
 
-from mvpa import _random_seed
+from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
 if __debug__:
@@ -68,9 +68,6 @@ tests = [
     'test_splitsensana',
     # And the suite (all-in-1)
     'test_suite',
-    # Atlases... might become optional depending if any of the atlases
-    # is present
-    'test_atlases',
     ]
 
 # So we could see all warnings about missing dependencies
@@ -79,7 +76,7 @@ warning.maxcount = 1000
 externals.testAllDependencies()
 
 
-__optional_tests = ( ('scipy', 'ridge'),
+__optional_tests = [ ('scipy', 'ridge'),
                      ('scipy', 'datasetfx_sp'),
                      (['lars','scipy'], 'lars'),
                      ('nifti', 'niftidataset'),
@@ -87,7 +84,11 @@ __optional_tests = ( ('scipy', 'ridge'),
                      ('pywt', 'waveletmapper'),
                      (['cPickle', 'gzip'], 'hamster'),
 #                     ('mdp', 'pcamapper'),
-                     )
+                   ]
+
+if not cfg.getboolean('tests', 'lowmem', default='no'):
+    __optional_tests += [('nifti', 'atlases')]
+
 
 # and now for the optional tests
 optional_tests = []
