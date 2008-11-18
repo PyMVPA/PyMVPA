@@ -15,8 +15,8 @@ clean::
 
 build/python-mvpa::
 	# run the tests
-	# No, they eat more than 500 MB RAM, probably to much for some machines.
-	#MVPA_TESTS_QUICK=yes MVPA_TESTS_LABILE=no $(MAKE) unittest
+	MVPA_TESTS_LOWMEM=yes MVPA_TESTS_QUICK=yes MVPA_TESTS_LABILE=no \
+		$(MAKE) unittest
 
 build/python-mvpa-doc::
 	$(MAKE) doc
