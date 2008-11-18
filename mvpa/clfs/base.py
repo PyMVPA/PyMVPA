@@ -1646,6 +1646,7 @@ class SplitClassifier(CombinedClassifier):
             self.__clf.states.enable(['training_confusion'])
             states.training_confusion = self.__clf._summaryClass()
 
+        clf_hastestdataset = hasattr(self.__clf, 'testdataset')
 
         # for proper and easier debugging - first define classifiers and then
         # train them
@@ -1671,10 +1672,15 @@ class SplitClassifier(CombinedClassifier):
             clf = self.clfs[i]
 
             # assign testing dataset if given classifier can digest it
-            if hasattr(clf, 'testdataset'):
+            if clf_hastestdataset:
                 clf.testdataset = split[1]
 
             clf.train(split[0])
+
+            # unbind the testdataset from the classifier
+            if clf_hastestdataset:
+                clf.testdataset = None
+
             if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions,

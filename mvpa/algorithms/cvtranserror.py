@@ -114,7 +114,10 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 terr_enable += [state_var]
 
         # charge states with initial values
-        summaryClass = self.__transerror.clf._summaryClass
+        clf = self.__transerror.clf
+        summaryClass = clf._summaryClass
+        clf_hastestdataset = hasattr(clf, 'testdataset')
+
         self.confusion = summaryClass()
         self.training_confusion = summaryClass()
         self.transerrors = []
@@ -140,8 +143,15 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             else:
                 transerror = self.__transerror
 
+            # assign testing dataset if given classifier can digest it
+            if clf_hastestdataset:
+                clf.testdataset = split[1]
+
             # run the beast
             result = transerror(split[1], split[0])
+
+            if clf_hastestdataset:
+                clf.testdataset = None
 
             # next line is important for 'self._harvest' call
             self._harvest(locals())
