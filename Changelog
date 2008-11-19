@@ -82,6 +82,8 @@ Releases
   * Switch from distutils to numpy.distutils (no change in dependencies).
   * Depend on PyNIfTI >= 0.20081017.1 and gain a smaller memory footprint when
     accessing NIfTI files via all datasets with NIfTI support.
+  * Added workaround to make PyMVPA work with older Shogun releases and those
+    from 0.6.4 on, which introduced backward-incompatible API changes.
 
 
 * 0.3.1 (Sun, 14 Sep 2008)
