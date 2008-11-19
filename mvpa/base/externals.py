@@ -110,8 +110,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
           'sg_fixedcachesize': "__check_shogun(3043)",
-           # XXX check exact revision (of a release 0.6.4)
-          'sg_ge_0_6_4': "__check_shogun(3380)",
+           # 3318 corresponds to release 0.6.4
+          'sg_ge_0_6_4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
           'griddata': "import griddata as __",
           'cPickle': "import cPickle as __",
