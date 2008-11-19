@@ -10,6 +10,8 @@
 
 from sets import Set
 
+from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.featsel.rfe import RFE
@@ -21,6 +23,7 @@ from mvpa.featsel.helpers import \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
+from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 
@@ -118,7 +121,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([]) == False)
         self.failUnless(stopcrit([0.8, 0.9]) == True)
         self.failUnless(stopcrit([0.8]) == False)
- 
+
 
     def testMultiStopCrit(self):
         """Test multiple stop criteria"""
@@ -349,6 +352,40 @@ class RFETests(unittest.TestCase):
 
         # XXX add a test where sensitivity analyser and transfer error do not
         # use the same classifier
+
+
+    def testJamesProblem(self):
+        percent = 80
+        dataset = datasets['uni2small']
+        rfesvm_split = LinearCSVMC()
+        FeatureSelection = \
+            RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+                transfer_error=TransferError(rfesvm_split),
+                feature_selector=FractionTailSelector(
+                    percent / 100.0,
+                    mode='select', tail='upper'), update_sensitivity=True)
+
+        clf = FeatureSelectionClassifier(
+            clf = LinearCSVMC(),
+            # on features selected via RFE
+            feature_selection = FeatureSelection)
+             # update sensitivity at each step (since we're not using the
+             # same CLF as sensitivity analyzer)
+        clf.states.enable('feature_ids')
+
+        cv = CrossValidatedTransferError(
+            TransferError(clf),
+            NFoldSplitter(cvtype=1),
+            enable_states=['confusion'],
+            expose_testdataset=True)
+        #cv = SplitClassifier(clf)
+        try:
+            error = cv(dataset)
+            self.failUnless(error < 0.2)
+        except:
+            self.fail('CrossValidation cannot handle classifier with RFE '
+                      'feature selection')
+
 
 
 

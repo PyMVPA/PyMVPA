@@ -25,6 +25,7 @@ if __debug__:
 # list all test modules (without .py extension)
 tests = [
     # Basic data structures/manipulators
+    'test_base',
     'test_dataset',
     'test_arraymapper',
     'test_boxcarmapper',
