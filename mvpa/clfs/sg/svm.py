@@ -10,11 +10,21 @@
 
 __docformat__ = 'restructuredtext'
 
+
+_DEV__doc__ = """
+
+TODOs:
+ * dual-license under GPL for use of SG?
+ * for recent versions add ability to specify/parametrize normalization
+   scheme for the kernel
+ * Add support for simplified linear classifiers (which do not require
+   storing all training SVs/samples to make classification in predict())
+"""
+
 import numpy as N
 
 
 # Rely on SG
-# TODO: XXX dual-license under GPL for use of SG?
 import shogun.Features
 import shogun.Classifier
 import shogun.Regression
@@ -108,6 +118,13 @@ class SVM(_SVM):
     _KNOWN_KERNEL_PARAMS = [ ]
 
     _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
+
+    if externals.exists('sg_ge_0_6_4'):
+        _KERNELS['linear'] = (shogun.Kernel.LinearKernel, (), LinearSVMWeights)
+        # TODO -- add a normalizer parameter taking into account the
+        #         available ones
+        # due to the change of API in CustomKernel we need more work here
+        _clf_internals.pop(_clf_internals.index('retrainable'))
 
 
     # Some words of wisdom from shogun author:
@@ -283,13 +300,18 @@ class SVM(_SVM):
                 debug("SG", "Creating kernel instance of %s giving arguments %s" %
                       (`self._kernel_type`, kargs))
 
-            self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
+            self.__kernel = kernel = \
+                            self._kernel_type(self.__traindata, self.__traindata,
                                               *kargs)
+
+            if externals.exists('sg_ge_0_6_4'):
+                 kernel.set_normalizer(shogun.Kernel.IdentityKernelNormalizer())
+
             newkernel = True
             self.kernel_params.reset()  # mark them as not-changed
-            _setdebug(self.__kernel, 'Kernels')
+            _setdebug(kernel, 'Kernels')
 
-            self.__condition_kernel(self.__kernel)
+            self.__condition_kernel(kernel)
             if retrainable:
                 if __debug__:
                     debug("SG_", "Resetting test kernel for retrainable SVM")
@@ -447,7 +469,32 @@ class SVM(_SVM):
                 kernel_test = self._kernel_type(self.__traindata, testdata,
                                                 *self.__kernel_args)
                 _setdebug(kernel_test, 'Kernels')
-                kernel_test_custom = shogun.Kernel.CustomKernel(self.__traindata, testdata)
+                if __debug__:
+                    debug("SG__",
+                          "Re-creating custom testing kernel giving "
+                          "testdata of type %s" % (type(testdata),))
+                if externals.exists('sg_ge_0_6_4'):
+                    # TODO...
+                    """
+                    from error msg
+ NotImplementedError: Wrong number of arguments for overloaded function 'new_CustomKernel'.
+  Possible C/C++ prototypes are:
+    CCustomKernel()
+    CCustomKernel(CKernel *)
+
+from ? CustomKernel
+    __init__(self) -> CustomKernel
+    __init__(self, k) -> CustomKernel
+
+    constructor
+
+    compute custom kernel from given kernel matrix
+"""
+                    # which one is True?
+                    raise NotImplementedError
+                else:
+                    kernel_test_custom = shogun.Kernel.CustomKernel(self.__traindata, testdata)
+
                 _setdebug(kernel_test_custom, 'Kernels')
                 self.__kernel_test = kernel_test_custom
                 self.__kernel_test.set_full_kernel_matrix_from_full(

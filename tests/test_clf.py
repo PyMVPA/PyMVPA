@@ -428,7 +428,7 @@ class ClassifiersTests(unittest.TestCase):
         clf.states._resetEnabledTemporarily()
 
 
-    @sweepargs(clf=clfs['retrainable'])
+    @sweepargs(clf=clfs['retrainable'][:1])
     def testRetrainables(self, clf):
         # we need a copy since will tune its internals later on
         clf = _deepcopyclf(clf)
