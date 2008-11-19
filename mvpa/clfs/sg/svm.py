@@ -16,7 +16,7 @@ _DEV__doc__ = """
 TODOs:
  * dual-license under GPL for use of SG?
  * for recent versions add ability to specify/parametrize normalization
-   scheme for the kernel
+   scheme for the kernel, and reuse 'scale' now for the normalizer
  * Add support for simplified linear classifiers (which do not require
    storing all training SVs/samples to make classification in predict())
 """
@@ -121,11 +121,6 @@ class SVM(_SVM):
 
     if externals.exists('sg_ge_0_6_4'):
         _KERNELS['linear'] = (shogun.Kernel.LinearKernel, (), LinearSVMWeights)
-        # TODO -- add a normalizer parameter taking into account the
-        #         available ones
-        # due to the change of API in CustomKernel we need more work here
-        _clf_internals.pop(_clf_internals.index('retrainable'))
-
 
     # Some words of wisdom from shogun author:
     # XXX remove after proper comments added to implementations
@@ -458,7 +453,6 @@ class SVM(_SVM):
             # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
             self.__condition_kernel(self.__kernel)
-
         else:
             if changed_testdata:
                 if __debug__:
@@ -469,31 +463,14 @@ class SVM(_SVM):
                 kernel_test = self._kernel_type(self.__traindata, testdata,
                                                 *self.__kernel_args)
                 _setdebug(kernel_test, 'Kernels')
+
+                custk_args = ([self.__traindata, testdata], [])[
+                    int(externals.exists('sg_ge_0_6_4'))]
                 if __debug__:
                     debug("SG__",
                           "Re-creating custom testing kernel giving "
-                          "testdata of type %s" % (type(testdata),))
-                if externals.exists('sg_ge_0_6_4'):
-                    # TODO...
-                    """
-                    from error msg
- NotImplementedError: Wrong number of arguments for overloaded function 'new_CustomKernel'.
-  Possible C/C++ prototypes are:
-    CCustomKernel()
-    CCustomKernel(CKernel *)
-
-from ? CustomKernel
-    __init__(self) -> CustomKernel
-    __init__(self, k) -> CustomKernel
-
-    constructor
-
-    compute custom kernel from given kernel matrix
-"""
-                    # which one is True?
-                    raise NotImplementedError
-                else:
-                    kernel_test_custom = shogun.Kernel.CustomKernel(self.__traindata, testdata)
+                          "arguments %s" % (str(custk_args)))
+                kernel_test_custom = shogun.Kernel.CustomKernel(*custk_args)
 
                 _setdebug(kernel_test_custom, 'Kernels')
                 self.__kernel_test = kernel_test_custom
