@@ -715,7 +715,8 @@ class Dataset(object):
         return "<%s>" % str(self)
 
 
-    def summary(self, uniq=True, stats=True, idhash=False, lstats=True):
+    def summary(self, uniq=True, stats=True, idhash=False, lstats=True,
+                maxc=30, maxl=20):
         """String summary over the object
 
         :Parameters:
@@ -727,6 +728,10 @@ class Dataset(object):
              Include some basic statistics (mean, std, var) over dataset samples
           lstats : bool
              Include statistics on chunks/labels
+          maxc : int
+            Maximal number of chunks when provide details on labels/chunks
+          maxl : int
+            Maximal number of labels when provide details on labels/chunks
         """
         # local bindings
         samples = self.samples
@@ -770,7 +775,7 @@ class Dataset(object):
                   N.var(samples), N.min(samples), N.max(samples))
 
         if lstats:
-            s += self.summary_labels()
+            s += self.summary_labels(maxc=maxc, maxl=maxl)
 
         return s
 
