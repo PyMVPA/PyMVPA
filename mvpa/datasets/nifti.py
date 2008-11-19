@@ -75,10 +75,23 @@ def getNiftiData(nim):
 
 
 class NiftiDataset(MappedDataset):
-    """Dataset based on NiftiImage provided by pynifti.
+    """Dataset loading its samples from a NIfTI image or file.
 
-    See http://niftilib.sourceforge.net/pynifti/ for more information
-    about pynifti.
+    Samples can be loaded from a NiftiImage instance or directly from a NIfTI
+    file. This class stores all relevant information from the NIfTI file header
+    and provides information about the metrics and neighborhood information of
+    all voxels.
+
+    Most importantly it allows to map data back into the original data space
+    and format via :meth:`~mvpa.datasets.nifti.NiftiDataset.map2Nifti`.
+
+    This class allows for convenient pre-selection of features by providing a
+    mask to the constructor. Only non-zero elements from this mask will be
+    considered as features.
+
+    NIfTI files are accessed via PyNIfTI. See
+    http://niftilib.sourceforge.net/pynifti/ for more information about
+    pynifti.
     """
     # XXX: Every dataset should really have an example of howto instantiate
     #      it (necessary parameters).
