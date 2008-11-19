@@ -359,11 +359,11 @@ class RFETests(unittest.TestCase):
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
         FeatureSelection = \
-                         RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
-                             transfer_error=TransferError(rfesvm_split), \
-                             feature_selector=FractionTailSelector(
-                                percent / 100.0,
-                                mode='select', tail='upper'), update_sensitivity=True)
+            RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+                transfer_error=TransferError(rfesvm_split),
+                feature_selector=FractionTailSelector(
+                    percent / 100.0,
+                    mode='select', tail='upper'), update_sensitivity=True)
 
         clf = FeatureSelectionClassifier(
             clf = LinearCSVMC(),
@@ -375,7 +375,9 @@ class RFETests(unittest.TestCase):
 
         cv = CrossValidatedTransferError(
             TransferError(clf),
-            NFoldSplitter(cvtype=1), enable_states=['confusion'])
+            NFoldSplitter(cvtype=1),
+            enable_states=['confusion'],
+            expose_testdataset=True)
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset)
