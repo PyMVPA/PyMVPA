@@ -50,6 +50,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                  transerror,
                  splitter=NoneSplitter(),
                  combiner=GrandMean,
+                 expose_testdataset=False,
                  harvest_attribs=None,
                  copy_attribs='copy',
                  **kwargs):
@@ -69,6 +70,11 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             combiner : Functor
                 Used to aggregate the error values of all cross-validation
                 folds.
+            expose_testdataset : bool
+                In the proper pipeline, classifier must not know anything
+                about testing data, but in some cases it might lead only
+                to marginal harm, thus migth wanted to be enabled (provide
+                testdataset for RFE to determine stopping point).
             harvest_attribs : list of basestr
                 What attributes of call to store and return within
                 harvested state variable
@@ -81,6 +87,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         self.__splitter = splitter
         self.__transerror = transerror
         self.__combiner = combiner
+        self.__expose_testdataset = expose_testdataset
 
 # TODO: put back in ASAP
 #    def __repr__(self):
@@ -106,6 +113,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
         # local bindings
         states = self.states
+        clf = self.__transerror.clf
+        expose_testdataset = self.__expose_testdataset
 
         # what states to enable in terr
         terr_enable = []
@@ -114,7 +123,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 terr_enable += [state_var]
 
         # charge states with initial values
-        summaryClass = self.__transerror.clf._summaryClass
+        summaryClass = clf._summaryClass
+        clf_hastestdataset = hasattr(clf, 'testdataset')
+
         self.confusion = summaryClass()
         self.training_confusion = summaryClass()
         self.transerrors = []
@@ -140,8 +151,17 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             else:
                 transerror = self.__transerror
 
+            # assign testing dataset if given classifier can digest it
+            if clf_hastestdataset and expose_testdataset:
+                clf.testdataset = split[1]
+                pass
+
             # run the beast
             result = transerror(split[1], split[0])
+
+            # unbind the testdataset from the classifier
+            if clf_hastestdataset and expose_testdataset:
+                clf.testdataset = None
 
             # next line is important for 'self._harvest' call
             self._harvest(locals())
