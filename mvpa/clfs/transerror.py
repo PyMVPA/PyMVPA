@@ -1264,8 +1264,28 @@ class TransferError(ClassifierError):
         """
         # OPT: local binding
         clf = self.clf
+        if testdataset is None:
+            # We cannot do anythin, but we can try to figure out WTF and
+            # warn the user accordingly in some usecases
+            import traceback as tb
+            filenames = [x[0] for x in tb.extract_stack(limit=100)]
+            rfe_matches = [f for f in filenames if f.endswith('/rfe.py')]
+            cv_matches = [f for f in filenames if
+                          f.endswith('cvtranserror.py')]
+            msg = ""
+            if len(rfe_matches) > 0 and len(cv_matches):
+                msg = " It is possible that you used RFE with stopping " \
+                      "criterion based on the TransferError and directly" \
+                      " from CrossValidatedTransferError, such approach" \
+                      " would require exposing testing dataset " \
+                      " to the classifier which might heavily bias " \
+                      " generalization performance estimate. If you are " \
+                      " sure to use it that way, create CVTE with " \
+                      " parameter expose_testdataset=True"
+            raise ValueError, "Transfer error call obtained None " \
+                  "as a dataset for testing.%s" % msg
         predictions = clf.predict(testdataset.samples)
-        
+
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
