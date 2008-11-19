@@ -10,11 +10,21 @@
 
 __docformat__ = 'restructuredtext'
 
+
+_DEV__doc__ = """
+
+TODOs:
+ * dual-license under GPL for use of SG?
+ * for recent versions add ability to specify/parametrize normalization
+   scheme for the kernel, and reuse 'scale' now for the normalizer
+ * Add support for simplified linear classifiers (which do not require
+   storing all training SVs/samples to make classification in predict())
+"""
+
 import numpy as N
 
 
 # Rely on SG
-# TODO: XXX dual-license under GPL for use of SG?
 import shogun.Features
 import shogun.Classifier
 import shogun.Regression
@@ -109,6 +119,8 @@ class SVM(_SVM):
 
     _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
 
+    if externals.exists('sg_ge_0_6_4'):
+        _KERNELS['linear'] = (shogun.Kernel.LinearKernel, (), LinearSVMWeights)
 
     # Some words of wisdom from shogun author:
     # XXX remove after proper comments added to implementations
@@ -283,13 +295,18 @@ class SVM(_SVM):
                 debug("SG", "Creating kernel instance of %s giving arguments %s" %
                       (`self._kernel_type`, kargs))
 
-            self.__kernel = self._kernel_type(self.__traindata, self.__traindata,
+            self.__kernel = kernel = \
+                            self._kernel_type(self.__traindata, self.__traindata,
                                               *kargs)
+
+            if externals.exists('sg_ge_0_6_4'):
+                 kernel.set_normalizer(shogun.Kernel.IdentityKernelNormalizer())
+
             newkernel = True
             self.kernel_params.reset()  # mark them as not-changed
-            _setdebug(self.__kernel, 'Kernels')
+            _setdebug(kernel, 'Kernels')
 
-            self.__condition_kernel(self.__kernel)
+            self.__condition_kernel(kernel)
             if retrainable:
                 if __debug__:
                     debug("SG_", "Resetting test kernel for retrainable SVM")
@@ -436,7 +453,6 @@ class SVM(_SVM):
             # We can just reuse kernel used for training
             self.__kernel.init(self.__traindata, testdata)
             self.__condition_kernel(self.__kernel)
-
         else:
             if changed_testdata:
                 if __debug__:
@@ -447,7 +463,15 @@ class SVM(_SVM):
                 kernel_test = self._kernel_type(self.__traindata, testdata,
                                                 *self.__kernel_args)
                 _setdebug(kernel_test, 'Kernels')
-                kernel_test_custom = shogun.Kernel.CustomKernel(self.__traindata, testdata)
+
+                custk_args = ([self.__traindata, testdata], [])[
+                    int(externals.exists('sg_ge_0_6_4'))]
+                if __debug__:
+                    debug("SG__",
+                          "Re-creating custom testing kernel giving "
+                          "arguments %s" % (str(custk_args)))
+                kernel_test_custom = shogun.Kernel.CustomKernel(*custk_args)
+
                 _setdebug(kernel_test_custom, 'Kernels')
                 self.__kernel_test = kernel_test_custom
                 self.__kernel_test.set_full_kernel_matrix_from_full(
