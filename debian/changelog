@@ -1,11 +1,10 @@
 pymvpa (0.4.0-1) unstable; urgency=low
 
   * New upstream release.
-  * Now recommends python-nifti not earlier than version 0.20081017.1 (if any).
   * Running a subset of the unittests during package build (only tests not
     requiring a huge amount of cpu-time or memory.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Tue, 18 Nov 2008 21:42:50 +0100
+ -- Michael Hanke <michael.hanke@gmail.com>  Wed, 19 Nov 2008 03:30:53 +0100
 
 pymvpa (0.3.1-1) unstable; urgency=low
 
