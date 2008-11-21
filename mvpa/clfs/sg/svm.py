@@ -119,7 +119,7 @@ class SVM(_SVM):
 
     _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
 
-    if externals.exists('sg_ge_0_6_4'):
+    if externals.exists('sg >= 0.6.4'):
         _KERNELS['linear'] = (shogun.Kernel.LinearKernel, (), LinearSVMWeights)
 
     # Some words of wisdom from shogun author:
@@ -299,7 +299,7 @@ class SVM(_SVM):
                             self._kernel_type(self.__traindata, self.__traindata,
                                               *kargs)
 
-            if externals.exists('sg_ge_0_6_4'):
+            if externals.exists('sg >= 0.6.4'):
                  kernel.set_normalizer(shogun.Kernel.IdentityKernelNormalizer())
 
             newkernel = True
@@ -465,7 +465,7 @@ class SVM(_SVM):
                 _setdebug(kernel_test, 'Kernels')
 
                 custk_args = ([self.__traindata, testdata], [])[
-                    int(externals.exists('sg_ge_0_6_4'))]
+                    int(externals.exists('sg >= 0.6.4'))]
                 if __debug__:
                     debug("SG__",
                           "Re-creating custom testing kernel giving "
