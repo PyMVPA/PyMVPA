@@ -520,11 +520,10 @@ be installed, just unzip the file you downloaded and add the root directory of
 the extracted sources to the `PATH` environment variable (make sure that this
 directory contains `swig.exe`, if not, you haven't downloaded `swigwin`).
 
-PyMVPA comes with a specific build setup configuration for Windows
--- `setup.cfg.win` in the root of the source tarball. Please rename this file
-to `setup.cfg` (and overwrite the existing one). This is only necessary, if you
-have *not* configured your Python distutils installation to always use MinGW
-instead of the Mircrosoft compilers.
+PyMVPA comes with a specific build setup configuration for Windows --
+`setup.cfg.win` in the root of the source tarball. Please rename this file to
+`setup.cfg`. This is only necessary, if you have *not* configured your Python
+distutils installation to always use MinGW instead of the Mircrosoft compilers.
 
 Now, we are ready to build PyMVPA. The easiest way to do this, is to make use
 of the `Makefile.win` that is shipped with PyMVPA to build a binary installer
