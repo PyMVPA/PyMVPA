@@ -27,15 +27,15 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-A complete fMRI :ref:`example dataset <exampledata` is now available for download [22 Oct 2008]
-
-
 PyMVPA 0.4.0 is out [21 Nov 2008]
 
   Greatly enhanced documentation (glossary, references, examples), tons of
   bug-fixes and new mappers. This release also ensures compatibility with
   recent releases of the Shogun toolbox. See the :ref:`changelog <changelog>`
   for details.
+
+
+A complete fMRI :ref:`example dataset <exampledata` is now available for download [22 Oct 2008]
 
 
 PyMVPA is also running on a cell phone! [15 Oct 2008]
