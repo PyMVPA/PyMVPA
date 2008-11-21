@@ -83,8 +83,11 @@ class IOHelperTests(unittest.TestCase):
         d4 = ColumnData(fpath)
         self.failUnlessEqual(d4._header_order, header_order + ['four'])
 
-        # cleanup
-        os.remove(fpath)
+        # cleanup and ignore stupidity
+        try:
+            os.remove(fpath)
+        except WindowsError:
+            pass
 
 
     def testFslEV(self):
@@ -110,8 +113,11 @@ class IOHelperTests(unittest.TestCase):
 
         self.failUnless(d.getNEVs() == 3)
         self.failUnless(d.getEV(1) == (13.89, 2.0, 1.0))
-        # cleanup
-        os.remove(fpath)
+        # cleanup and ignore stupidity
+        try:
+            os.remove(fpath)
+        except WindowsError:
+            pass
 
         d = FslEV3(os.path.join('..', 'data', 'fslev3.txt'))
         ev = d.toEvents()
