@@ -310,16 +310,15 @@ fetch-data:
 #
 
 # Nice visual git log
-# Requires: java (possibly 5 not 6), mencoder, ant
+# Requires: sun-java5-jdk, ffmpeg, ant
 codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.avi
 $(SWARM_DIR)/pymvpa-codeswarm.avi: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 	@echo "I: Visualizing git history using codeswarm"
 	@mkdir -p $(SWARM_DIR)/frames
 	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
 	@echo "I: Generating codeswarm video"
-	@cd $(SWARM_DIR)/frames && \
-     mencoder "mf://*.png" -msglevel all=0 -mf fps=10 -o ../pymvpa-codeswarm.avi \
-	  -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=500
+	@cd $(SWARM_DIR) && \
+     ffmpeg -f image2 -i frames/code_swarm-%05d.png -b 250k pymvpa-codeswarm.flv
 
 
 $(SWARM_DIR)/git.log:
@@ -328,7 +327,7 @@ $(SWARM_DIR)/git.log:
 	@git-log --name-status \
      --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
      sed -e 's,[a-z]*@onerussian.com,Yaroslav O. Halchenko,g' \
-         -e 's,michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\|neukom-data@neukom-data-desktop.(none)\),Michael Hanke,g' \
+         -e 's,\(michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\)\|neukom-data@neukom-data-desktop\.(none)\),Michael Hanke,g' \
          -e 's,\(per@parsec.Princeton.EDU\|per@sync.(none)\|psederberg@gmail.com\),Per P. Sederberg,g' \
          -e 's,emanuele@relativita.com,Emanuele Olivetti,g' \
          -e 's,Ingo.Fruend@gmail.com,Ingo Fruend,g' >| $@
