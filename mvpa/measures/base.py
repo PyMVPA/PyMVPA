@@ -138,17 +138,19 @@ class DatasetMeasure(Stateful):
             measure.__null_dist = None
             self.__null_dist.fit(measure, dataset)
 
-            # get probability of result under NULL hypothesis if available
-            null_prob = self.__null_dist.p(result)
-            self.null_prob = null_prob
-
             if self.states.isEnabled('null_t'):
+                # get probability under NULL hyp, but also request
+                # either it belong to the right tail
+                null_prob, null_right_tail = \
+                           self.__null_dist.p(result, return_tails=True)
+                self.null_prob = null_prob
+
                 externals.exists('scipy', raiseException=True)
                 from scipy.stats import norm
 
                 # TODO: following logic should appear in NullDist,
                 #       not here
-                tail = self.null_dist._tail
+                tail = self.null_dist.tail
                 if tail == 'left':
                     acdf = N.abs(null_prob)
                 elif tail == 'right':
@@ -166,8 +168,12 @@ class DatasetMeasure(Stateful):
                 # Should be sufficient range of z-values ;-)
                 clip = 1e-16
                 null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
-                null_t[N.signbit(null_prob)] *= -1.0 # revert sign for negatives
+                null_t[~null_right_tail] *= -1.0 # revert sign for negatives
                 self.null_t = null_t                 # store
+            else:
+                # get probability of result under NULL hypothesis if available
+                # and don't request tail information
+                self.null_prob = self.__null_dist.p(result)
 
         return result
 

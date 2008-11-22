@@ -134,6 +134,31 @@ class StatsTests(unittest.TestCase):
                 % (zip(m.null_t, m.null_prob, score)))
 
 
+    def testNegativeT(self):
+        """Aims to provide very basic testing of the sign in p and t scores
+        """
+        from mvpa.measures.base import FeaturewiseDatasetMeasure
+
+        class BogusMeasure(FeaturewiseDatasetMeasure):
+            """Just put high positive into first 2 features, and high negative into 2nd two
+            """
+            def _call(self, dataset):
+                res = N.random.normal(size=(dataset.nfeatures,))
+                res[0] = res[1] = 100
+                res[2] = res[3] = -100
+                return res
+        if not externals.exists('scipy'):
+            return
+        nd = FixedNullDist(scipy.stats.norm(0, 0.1), tail='any')
+        m = BogusMeasure(null_dist=nd, enable_states=['null_t'])
+        ds = datasets['uni2small']
+        score = m(ds)
+        t,p = m.null_t, m.null_prob
+        self.failUnless((p>=0).all())
+        self.failUnless((t[:2] > 0).all())
+        self.failUnless((t[2:4] < 0).all())
+
+
     def testMatchDistribution(self):
         """Some really basic testing for matchDistribution
         """

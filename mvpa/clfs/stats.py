@@ -40,8 +40,21 @@ class Nonparametric(object):
         return N.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
 
 
-def _pvalue(x, cdf_func, tail, sign=True):
+def _pvalue(x, cdf_func, tail, return_tails=False):
     """Helper function to return p-value(x) given cdf and tail
+
+    :Parameters:
+      cdf_func : callable
+        Function to be used to derive cdf values for x
+      tail : str ('left', 'right', 'any', 'both')
+        Which tail of the distribution to report. For 'any' and 'both'
+        it chooses the tail it belongs to based on the comparison to
+        p=0.5. In the case of 'any' significance is taken like in a
+        one-tailed test.
+      return_tails : bool
+        If True, a tuple return (pvalues, tails), where tails contain
+        1s if value was from the right tail, and 0 if the value was
+        from the left tail.
     """
     is_scalar = N.isscalar(x)
     if is_scalar:
@@ -60,22 +73,28 @@ def _pvalue(x, cdf_func, tail, sign=True):
     cdf = N.clip(cdf, 0, 1.0)
 
     if tail == 'left':
-        pass
+        if return_tails:
+            right_tail = N.zeros(cdf.shape, dtype=bool)
     elif tail == 'right':
         cdf = 1 - cdf
+        if return_tails:
+            right_tail = N.ones(cdf.shape, dtype=bool)
     elif tail in ('any', 'both'):
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
-        if sign:
-            cdf[~right_tail] *= -1
         if tail == 'both':
             # we need to half the signficance
             cdf *= 2
 
     # Assure that NaNs didn't get significant value
     cdf[N.isnan(x)] = 1.0
-    if is_scalar: return cdf[0]
-    else:         return cdf
+    if is_scalar: res = cdf[0]
+    else:         res = cdf
+
+    if return_tails:
+        return (res, right_tail)
+    else:
+        return res
 
 
 class NullDist(Stateful):
@@ -89,7 +108,7 @@ class NullDist(Stateful):
     # performance hit should be negligible in most of the scenarios
     _ATTRIBUTE_COLLECTIONS = ['states']
 
-    def __init__(self, tail='both', sign=True, **kwargs):
+    def __init__(self, tail='both', **kwargs):
         """Cheap initialization.
 
         :Parameter:
@@ -98,18 +117,18 @@ class NullDist(Stateful):
             it chooses the tail it belongs to based on the comparison to
             p=0.5. In the case of 'any' significance is taken like in a
             one-tailed test.
-          sign: bool
-            For double tailed tests (i.e [any, both]) multiply the
-            statistics by -1.
         """
         Stateful.__init__(self, **kwargs)
 
-        self._tail = tail
+        self._setTail(tail)
 
+
+    def _setTail(self, tail):
         # sanity check
         if tail not in ('left', 'right', 'any', 'both'):
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
                   % tail
+        self.__tail = tail
 
 
     def fit(self, measure, wdata, vdata=None):
@@ -124,7 +143,7 @@ class NullDist(Stateful):
         raise NotImplementedError
 
 
-    def p(self, x):
+    def p(self, x, **kwargs):
         """Returns the p-value for values of `x`.
         Returned values are determined left, right, or from any tail
         depending on the constructor setting.
@@ -133,8 +152,10 @@ class NullDist(Stateful):
         distribution the method returns an array. In that case `x` can be
         a scalar value or an array of a matching shape.
         """
-        return _pvalue(x, self.cdf, self._tail)
+        return _pvalue(x, self.cdf, self.__tail, **kwargs)
 
+
+    tail = property(fget=lambda x:x.__tail, fset=_setTail)
 
 
 class MCNullDist(NullDist):

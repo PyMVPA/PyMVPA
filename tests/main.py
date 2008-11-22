@@ -25,6 +25,7 @@ if __debug__:
 # list all test modules (without .py extension)
 tests = [
     # Basic data structures/manipulators
+    'test_base',
     'test_dataset',
     'test_arraymapper',
     'test_boxcarmapper',
@@ -87,7 +88,7 @@ __optional_tests = [ ('scipy', 'ridge'),
                    ]
 
 if not cfg.getboolean('tests', 'lowmem', default='no'):
-    __optional_tests += [('nifti', 'atlases')]
+    __optional_tests += [(['nifti', 'lxml'], 'atlases')]
 
 
 # and now for the optional tests

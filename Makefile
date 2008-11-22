@@ -310,6 +310,7 @@ fetch-data:
 #
 
 # Nice visual git log
+# Requires: java (possibly 5 not 6), mencoder, ant
 codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.avi
 $(SWARM_DIR)/pymvpa-codeswarm.avi: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 	@echo "I: Visualizing git history using codeswarm"
