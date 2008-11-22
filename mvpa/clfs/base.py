@@ -1640,12 +1640,14 @@ class SplitClassifier(CombinedClassifier):
         # local binding
         states = self.states
 
+        clf_template = self.__clf
         if states.isEnabled('confusion'):
-            states.confusion = self.__clf._summaryClass()
+            states.confusion = clf_template._summaryClass()
         if states.isEnabled('training_confusion'):
-            self.__clf.states.enable(['training_confusion'])
-            states.training_confusion = self.__clf._summaryClass()
+            clf_template.states.enable(['training_confusion'])
+            states.training_confusion = clf_template._summaryClass()
 
+        clf_hastestdataset = hasattr(clf_template, 'testdataset')
 
         # for proper and easier debugging - first define classifiers and then
         # train them
@@ -1653,9 +1655,9 @@ class SplitClassifier(CombinedClassifier):
             if __debug__:
                 debug("CLFSPL",
                       "Deepcopying %(clf)s for %(sclf)s",
-                      msgargs={'clf':self.__clf,
+                      msgargs={'clf':clf_template,
                                'sclf':self})
-            clf = _deepcopyclf(self.__clf)
+            clf = _deepcopyclf(clf_template)
             bclfs.append(clf)
         self.clfs = bclfs
 
@@ -1671,10 +1673,15 @@ class SplitClassifier(CombinedClassifier):
             clf = self.clfs[i]
 
             # assign testing dataset if given classifier can digest it
-            if hasattr(clf, 'testdataset'):
+            if clf_hastestdataset:
                 clf.testdataset = split[1]
 
             clf.train(split[0])
+
+            # unbind the testdataset from the classifier
+            if clf_hastestdataset:
+                clf.testdataset = None
+
             if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions,

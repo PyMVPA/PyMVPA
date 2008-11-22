@@ -14,14 +14,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 import mvpa.base.externals as externals
-
-if not externals.exists('rpy'):
-    raise RuntimeError("Unable to load RPy which is needed for LARS.\n" +
-                       "Please ensure that it was installed correctly.")
-
-if not externals.exists('lars'):
-    raise RuntimeError("Unable to load LARS library from R with RPy.\n" +
-                       "Please ensure that LARS library was installed correctly.")
+externals.exists('rpy', raiseException=True)
+externals.exists('lars', raiseException=True)
 
 import rpy
 rpy.r.library('lars')
