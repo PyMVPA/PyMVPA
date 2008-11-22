@@ -45,7 +45,7 @@ algorithms to (f)MRI data are two recent reviews by
 :ref:`Haynes and Rees (2006) <HR06>`.
 
 This manual also does not describe every technical bit and piece of the PyMVPA
-package, but is instead focused on the user perspective. Developers shoud have
+package, but is instead focused on the user perspective. Developers should have
 a look at the `API documentation`_, which is a detailed, comprehensive and
 up-to-date description of the whole package. Users looking for an overview of
 the public programming interface of the framework are referred to the
@@ -126,7 +126,7 @@ for an example).
 .. _PyMatlab: http://code.google.com/p/pymatlab/
 
 After the decision for Python was made, Michael started development with a
-simple k-Nearest-Neighbour classifier and a cross-validation class. Using
+simple k-Nearest-Neighbor classifier and a cross-validation class. Using
 the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
 with EEG/MEG data (3d) or even non-neuroimaging datasets.
