@@ -318,7 +318,7 @@ $(SWARM_DIR)/pymvpa-codeswarm.avi: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
 	@echo "I: Generating codeswarm video"
 	@cd $(SWARM_DIR) && \
-     ffmpeg -f image2 -i frames/code_swarm-%05d.png -b 250k pymvpa-codeswarm.flv
+     ffmpeg -f image2 -i frames/code_swarm-%05d.png -r 15 -b 250k pymvpa-codeswarm.flv
 
 
 $(SWARM_DIR)/git.log:
