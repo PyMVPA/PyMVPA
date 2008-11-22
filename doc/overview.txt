@@ -44,9 +44,7 @@ using the mean and standard deviation determined from *rest* volumes
 
 Select a subset of two stimulation conditions from the whole dataset.
 
- >>> dataset = dataset.selectSamples(
- ...               N.array([l in [1, 2] for l in dataset.labels],
- ...                       dtype='bool'))
+ >>> dataset = dataset['labels', [1,2]]
 
 Finally, setup the cross-validation procedure using an odd-even split of the
 dataset and a *SMLR* classifier -- and run it.
