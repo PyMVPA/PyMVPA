@@ -16,7 +16,7 @@ The PyMVPA developers team currently consists of:
 
 
 We are very grateful to the following people, who have contributed
-valueable advice, code or documentation to PyMVPA:
+valuable advice, code or documentation to PyMVPA:
 
 * `Greg Detre`_, Princeton University, USA
 * `James M. Hughes`_, Dartmouth College, USA

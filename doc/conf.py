@@ -31,7 +31,7 @@ except:
 
 
 def extractItemListBlock(blocktypes, lines):
-    """Extract a number of lines belonging to an idented block.
+    """Extract a number of lines belonging to an indented block.
 
     The block is defined by a minimum indentation level, in turn
     defined by a line starting with any string given by the 'blocktypes'
@@ -41,7 +41,7 @@ def extractItemListBlock(blocktypes, lines):
     wrt the original line sequence.
 
     WARNING: It may explode if there is more than one block with the same
-    indentifier.
+    identifier.
     """
     param = None
     in_block = False
