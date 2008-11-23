@@ -7,7 +7,7 @@ large datasets. In the neuroimaging contexts such analysis techniques are also
 known as :term:`decoding` or :term:`MVPA` analysis. PyMVPA provides high-level
 abstraction of typical processing steps and a number of implementations of some
 popular algorithms.  While it is not limited to the neuroimaging domain, it is
-eminently suited for such datasets.  PyMVPA is truely free software (in every
+eminently suited for such datasets.  PyMVPA is truly free software (in every
 respect) and additionally requires nothing but free-software to run.
 
 .. _Python: http://www.python.org
@@ -27,15 +27,15 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-A complete fMRI :ref:`example dataset <exampledata` is now available for download [22 Oct 2008]
-
-
 PyMVPA 0.4.0 is out [21 Nov 2008]
 
   Greatly enhanced documentation (glossary, references, examples), tons of
   bug-fixes and new mappers. This release also ensures compatibility with
   recent releases of the Shogun toolbox. See the :ref:`changelog <changelog>`
   for details.
+
+
+A complete fMRI :ref:`example dataset <exampledata` is now available for download [22 Oct 2008]
 
 
 PyMVPA is also running on a cell phone! [15 Oct 2008]
@@ -160,7 +160,7 @@ Support
 
 If you have problems installing the software or questions about usage,
 documentation or something else related to PyMVPA, you can post to the PyMVPA
-mailing list (prefered) or contact the authors on IRC:
+mailing list (preferred) or contact the authors on IRC:
 
 :Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_,
                archive_]
@@ -169,7 +169,7 @@ mailing list (prefered) or contact the authors on IRC:
 All users should subscribe to the mailing list. PyMVPA is still a young project
 that is under heavy development. Significant modifications (hopefully
 improvements) are very likely to happen frequently. The mailing list is the
-prefered way to announce such changes. The mailing list archive can also be
+preferred way to announce such changes. The mailing list archive can also be
 searched using the *mailing list archive search* located in the sidebar of the
 PyMVPA home page.
 
@@ -184,7 +184,7 @@ Publications
 .. include:: publications.txt
 
 
-Authors & Contributers
+Authors & Contributors
 ======================
 
 .. include:: authors.txt

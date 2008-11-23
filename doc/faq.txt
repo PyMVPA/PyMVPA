@@ -49,7 +49,7 @@ I am tired of writing these endless import blocks. Any alternative?
     >>> from mvpa.suite import *
 
   However, as always there is a price to pay for this convenience. In contrast
-  to the individual imports there is some intial performance and memory cost. In
+  to the individual imports there is some initial performance and memory cost. In
   the worst case you'll get all external dependencies loaded (e.g. a full R
   session), just because you have them installed. Therefore, it might be better
   to limit this use to case where individual key presses matter and use
@@ -132,7 +132,7 @@ The manual is quite insufficient. When will you improve it?
   who is just starting. If you feel that something is missing which has cost
   you some time to figure out, please drop us a note and we will add it as
   soon as possible. If you have developed some code snippets to demonstrate
-  some feature or non-trivial behaviour (maybe even trivial ones, which are
+  some feature or non-trivial behavior (maybe even trivial ones, which are
   not as obvious as they should be), please consider sharing this snippet with
   us and we will put it into the example collection or the manual. Thanks!
 
@@ -333,7 +333,7 @@ numerical ones:
 With this approach the labels stored in the dataset are now numerical. However,
 the mapping between literal and numerical labels is somewhat arbitrary. If a
 fixed mapping is possible or intended (e.g. same mapping for multiple dataset),
-the mapping can be set explicitely:
+the mapping can be set explicitly:
 
   >>> ds = Dataset(samples=samples,
   ...              labels=['one', 'two', 'three'],

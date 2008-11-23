@@ -102,7 +102,7 @@ each data sample is typically a three-dimensional volume.
 One approach to deal with this situation would be to concatenate the whole
 volume into a 1d vector. While this would work in certain cases there is
 definitely information lost. Especially for brain-imaging data one would most
-likely want keep information about neighbourhood and distances between data
+likely want keep information about neighborhood and distances between data
 sample elements.
 
 In PyMVPA this is done by mappers that transform data samples from their
@@ -226,7 +226,7 @@ samples_original O            :class:`~mvpa.datasets.mapped.MappedDataset`
 Data Formats
 ============
 
-The concept of mappers in conjuction with the functionality provided by the
+The concept of mappers in conjunction with the functionality provided by the
 :class:`~mvpa.datasets.base.Dataset` class, makes it very easy to create new dataset types with support
 for specialized data types and formats. The following is a non-exhaustive list
 of data formats currently supported by PyMVPA (for additional formats take a
