@@ -93,7 +93,7 @@ distclean:
 	-@rm -rf build
 	-@rm -rf dist
 	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp \
-		modref-templates-stamp examples2rst-stamp
+		modref-templates-stamp examples2rst-stamp fetch-data-nonfree-stamp
 
 
 debian-clean:
@@ -305,22 +305,32 @@ bdist_mpkg: 3rd
 fetch-data:
 	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
 
-
+# Various other data which might be sensitive and not distribu
+fetch-data-nonfree: fetch-data-nonfree-stamp
+fetch-data-nonfree-stamp:
+	rsync -avz dev.pymvpa.org:/home/data/nonfree data/ && touch $@
 #
 # Various sugarings
 #
+AUDIO_TRACK=data/nonfree/audio/Peter_Nalitch-Guitar.mp3
+
+# With permission of the author, we can use Gitar for our visual history
+$(AUDIO_TRACK): fetch-data-nonfree
 
 # Nice visual git log
 # Requires: sun-java5-jdk, ffmpeg, ant
 codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.flv
-$(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
+$(SWARM_DIR)/frames: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 	@echo "I: Visualizing git history using codeswarm"
 	@mkdir -p $(SWARM_DIR)/frames
 	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
+
+$(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames
 	@echo "I: Generating codeswarm video"
 	@cd $(SWARM_DIR) && \
-     ffmpeg -f image2 -i frames/code_swarm-%05d.png -r 15 -b 250k pymvpa-codeswarm.flv
-
+     ffmpeg -f image2 -i frames/code_swarm-%05d.png -r 15 -b 250k \
+      -i ../../$(AUDIO_TRACK) -ar 22050 -ab 128k -acodec libmp3lame \
+      -ac 2 pymvpa-codeswarm.flv
 
 $(SWARM_DIR)/git.log:
 	@echo "I: Dumping git log in codeswarm preferred format"
@@ -341,6 +351,7 @@ $(SWARMTOOL_DIR):
 	@echo "I: Checking out codeswarm tool source code"
 	@svn checkout http://codeswarm.googlecode.com/svn/trunk/ $(SWARMTOOL_DIR)
 
+
 upload-codeswarm: codeswarm
 	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(SWARM_DIR)/*.flv belka.rutgers.edu:/home/michael/www.pymvpa.org/pymvpa/files/
 
@@ -348,4 +359,4 @@ upload-codeswarm: codeswarm
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests handbook codeswarm
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data-misc upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests handbook codeswarm
