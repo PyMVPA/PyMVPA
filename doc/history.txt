@@ -1,0 +1,29 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+.. index:: code swarm
+
+*******************************
+Watch the Development of PyMVPA
+*******************************
+
+Some blurb about code swarm.
+
+.. raw:: html
+
+  <script src="/swf/flowplayer.min.js"></script>
+  <a href="http://www.pymvpa.org/files/pymvpa-codeswarm.flv"
+     style="display:block;width:480px;height:360px" id="player">
+    <img src="_images/history_splash.png" alt="Play video" border="0" /></a>
+  <script language="JavaScript">
+    flowplayer("player", "/swf/flowplayer.swf");
+  </script>
+
+Some notes about siginificant dates in the history of PyMVPA (ie. commit
+madness prior to submission of the papers.
