@@ -312,8 +312,8 @@ fetch-data:
 
 # Nice visual git log
 # Requires: sun-java5-jdk, ffmpeg, ant
-codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.avi
-$(SWARM_DIR)/pymvpa-codeswarm.avi: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
+codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.flv
+$(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 	@echo "I: Visualizing git history using codeswarm"
 	@mkdir -p $(SWARM_DIR)/frames
 	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
@@ -340,6 +340,9 @@ $(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.log
 $(SWARMTOOL_DIR):
 	@echo "I: Checking out codeswarm tool source code"
 	@svn checkout http://codeswarm.googlecode.com/svn/trunk/ $(SWARMTOOL_DIR)
+
+upload-codeswarm: codeswarm
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(SWARM_DIR)/*.flv belka.rutgers.edu:/home/michael/www.pymvpa.org/pymvpa/files/
 
 #
 # Trailer
