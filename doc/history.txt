@@ -16,7 +16,7 @@ Watch the Development of PyMVPA
 Some blurb about code swarm.
 
 .. raw:: html
-
+  <center>
   <script src="/swf/flowplayer.min.js"></script>
   <a href="http://www.pymvpa.org/files/pymvpa-codeswarm.flv"
      style="display:block;width:480px;height:360px" id="player">
@@ -24,6 +24,10 @@ Some blurb about code swarm.
   <script language="JavaScript">
     flowplayer("player", "/swf/flowplayer.swf");
   </script>
-
+  </center>
+  <p>Many thanks to <a href="http://peternalitch.ru/">Peter Nalitch</a> for
+  permission to use his song "Gitar" (© Peter Nalitch) as music accompaniment
+  to our boring history of work.
+  </p>
 Some notes about siginificant dates in the history of PyMVPA (ie. commit
-madness prior to submission of the papers.
+madness prior to submission of the papers).
