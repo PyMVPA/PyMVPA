@@ -328,7 +328,8 @@ $(SWARM_DIR)/frames: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 $(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames
 	@echo "I: Generating codeswarm video"
 	@cd $(SWARM_DIR) && \
-     ffmpeg -f image2 -i frames/code_swarm-%05d.png -r 15 -b 250k \
+     ffmpeg -r $(echo "scale=2; $(ls -1 frames/ |wc -l) / 154" | bc) -f image2 \
+      -i frames/code_swarm-%05d.png -r 15 -b 250k \
       -i ../../$(AUDIO_TRACK) -ar 22050 -ab 128k -acodec libmp3lame \
       -ac 2 pymvpa-codeswarm.flv
 
