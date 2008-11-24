@@ -328,7 +328,7 @@ $(SWARM_DIR)/frames: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 $(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames
 	@echo "I: Generating codeswarm video"
 	@cd $(SWARM_DIR) && \
-     ffmpeg -r $(echo "scale=2; $(ls -1 frames/ |wc -l) / 154" | bc) -f image2 \
+     ffmpeg -r $$(echo "scale=2; $$(ls -1 frames/ |wc -l) / 154" | bc) -f image2 \
       -i frames/code_swarm-%05d.png -r 15 -b 250k \
       -i ../../$(AUDIO_TRACK) -ar 22050 -ab 128k -acodec libmp3lame \
       -ac 2 pymvpa-codeswarm.flv
@@ -338,11 +338,11 @@ $(SWARM_DIR)/git.log:
 	@mkdir -p $(SWARM_DIR)
 	@git-log --name-status \
      --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
-     sed -e 's,[a-z]*@onerussian.com,Yaroslav O. Halchenko,g' \
-         -e 's,\(michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\)\|neukom-data@neukom-data-desktop\.(none)\),Michael Hanke,g' \
-         -e 's,\(per@parsec.Princeton.EDU\|per@sync.(none)\|psederberg@gmail.com\),Per P. Sederberg,g' \
-         -e 's,emanuele@relativita.com,Emanuele Olivetti,g' \
-         -e 's,Ingo.Fruend@gmail.com,Ingo Fruend,g' >| $@
+     sed -e 's,[a-z]*@onerussian.com,Yarik,g' \
+         -e 's,\(michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\)\|neukom-data@neukom-data-desktop\.(none)\),Michael,g' \
+         -e 's,\(per@parsec.Princeton.EDU\|per@sync.(none)\|psederberg@gmail.com\),Per,g' \
+         -e 's,emanuele@relativita.com,Emanuele,g' \
+         -e 's,Ingo.Fruend@gmail.com,Ingo,g' >| $@
 
 $(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.log
 	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
