@@ -126,6 +126,16 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless([e['onset'] for e in ev] == [6, 21, 35])
         self.failUnless([e['features'] for e in ev] == [[1],[1],[1]])
 
+        ev = d.toEvents(label='face', chunk=0, crap=True)
+        ev[0]['label'] = 'house'
+        self.failUnless(len(ev) == 3)
+        self.failUnless([e['duration'] for e in ev] == [9] * 3)
+        self.failUnless([e['onset'] for e in ev] == [6, 21, 35])
+        self.failUnless([e['features'] for e in ev] == [[1],[1],[1]])
+        self.failUnless([e['label'] for e in ev] == ['house', 'face', 'face'])
+        self.failUnless([e['chunk'] for e in ev] == [0]*3)
+        self.failUnless([e['crap'] for e in ev] == [True]*3)
+
 
     def testFslEV2(self):
         attr = SampleAttributes(os.path.join('..', 'data', 'smpl_attr.txt'))
