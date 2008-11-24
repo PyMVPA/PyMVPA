@@ -13,6 +13,10 @@ changelog is available here:
 
   http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
 
+In addition there is also a somewhat unconventional visual changelog:
+
+  http://www.pymvpa.org/history.html
+
 'Closes' statement IDs refer to the Debian bug tracking system and can be
 queried by visiting the URL::
 
