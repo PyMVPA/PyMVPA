@@ -18,12 +18,20 @@ from mvpa import cfg
 if __debug__:
     from mvpa.base import debug
 
-def __check_shogun(bottom_version, custom_versions=[2456]):
+def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
-    be enabled in the testsuite"""
+    be enabled in the testsuite
+
+    :Parameters:
+      bottom_version : int
+        Bottom version which must be satisfied
+      custom_versions : list of int
+        Arbitrary list of versions which could got patched for
+        a specific issue
+    """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
-    if (ver in custom_versions) or (ver >= bottom_version) : # custom built
+    if (ver in custom_versions) or (ver >= bottom_version):
         return True
     else:
         raise ImportError, 'Version %s is smaller than needed %s' % \
@@ -109,7 +117,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pylab': "import pylab as __",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
-          'sg_fixedcachesize': "__check_shogun(3043)",
+          'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
           'sg >= 0.6.4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
