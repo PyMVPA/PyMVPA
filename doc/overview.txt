@@ -78,6 +78,8 @@ is complementary to the API reference and the examples.
 And now for the details ...
 
 
+.. index:: introduction, modular architecture
+
 Module Overview
 ===============
 
