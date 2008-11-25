@@ -27,6 +27,12 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
+The first PyMVPA movie is out!! [24 Nov 2008]
+
+  :ref:`Watch PyMVPA evolve <code_swarm>` in this code_swarm animation --
+  featuring a great soundtrack!
+
+
 PyMVPA 0.4.0 is out [21 Nov 2008]
 
   Greatly enhanced documentation (glossary, references, examples), tons of
@@ -35,7 +41,7 @@ PyMVPA 0.4.0 is out [21 Nov 2008]
   for details.
 
 
-A complete fMRI :ref:`example dataset <exampledata` is now available for download [22 Oct 2008]
+A complete fMRI :ref:`example dataset <exampledata>` is now available for download [22 Oct 2008]
 
 
 PyMVPA is also running on a cell phone! [15 Oct 2008]
