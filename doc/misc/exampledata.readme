@@ -48,7 +48,7 @@ Afterwards the timeseries has been motion-corrected using MCFLIRT::
 The following files are available in the `example fMRI dataset`_ download
 (approx. 100 MB):
 
-.. _example FMRI dataset: http://apsy.gse.uni-magdeburg.de/~hanke/data/pymvpa_exampledata.tar.bz2
+.. _example FMRI dataset: http://www.pymvpa.org/files/pymvpa_exampledata.tar.bz2
 
 bold.nii.gz
   The motion-corrected and skull-stripped 4D timeseries (1452 volumes with
