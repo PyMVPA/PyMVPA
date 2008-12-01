@@ -11,7 +11,7 @@
 from mvpa.clfs.knn import kNN
 from tests_warehouse import *
 from tests_warehouse import pureMultivariateSignal
-
+from mvpa.clfs.distance import oneMinusCorrelation
 
 class KNNTests(unittest.TestCase):
 
@@ -20,25 +20,26 @@ class KNNTests(unittest.TestCase):
         mv_perf = []
         uv_perf = []
 
-        for i in xrange(20):
-            train = pureMultivariateSignal( 20, 3 )
-            test = pureMultivariateSignal( 20, 3 )
+        # test some distance functions
+        for clf in [kNN(k=10), kNN(k=10, dfx=oneMinusCorrelation)]:
+            print clf
+            for i in xrange(100):
+                train = pureMultivariateSignal( 20, 3 )
+                test = pureMultivariateSignal( 20, 3 )
+                clf.train(train)
+                p_mv = clf.predict( test.samples )
+                mv_perf.append( N.mean(p_mv==test.labels) )
 
-            k_mv = kNN(k = 10)
-            k_mv.train(train)
-            p_mv = k_mv.predict( test.samples )
-            mv_perf.append( N.mean(p_mv==test.labels) )
+                clf.train(train.selectFeatures([0]))
+                p_uv = clf.predict( test.selectFeatures([0]).samples )
+                uv_perf.append( N.mean(p_uv==test.labels) )
 
-            k_uv = kNN(k=10)
-            k_uv.train(train.selectFeatures([0]))
-            p_uv = k_uv.predict( test.selectFeatures([0]).samples )
-            uv_perf.append( N.mean(p_uv==test.labels) )
+            mean_mv_perf = N.mean(mv_perf)
+            mean_uv_perf = N.mean(uv_perf)
 
-        mean_mv_perf = N.mean(mv_perf)
-        mean_uv_perf = N.mean(uv_perf)
-
-        self.failUnless( mean_mv_perf > 0.9 )
-        self.failUnless( mean_uv_perf < mean_mv_perf )
+            print mean_mv_perf, mean_uv_perf
+            self.failUnless( mean_mv_perf > 0.9 )
+            self.failUnless( mean_uv_perf < mean_mv_perf )
 
 
     def testKNNState(self):

@@ -40,7 +40,7 @@ def manhattenDistance(a, b):
 
 
 def mahalanobisDistance(x, y=None, w=None):
-    """Caclulcate Mahalanobis distance of the pairs of points.
+    """Calculate Mahalanobis distance of the pairs of points.
 
     :Parameters:
       `x`
@@ -204,8 +204,8 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     return squared_euclidean_distance_matrix
 
 
-def correlation(X, Y):
-    """Return correlations matrix between the rows of two matrices X and Y.
+def oneMinusCorrelation(X, Y):
+    """Return one minus the correlation matrix between the rows of two matrices.
 
     This functions computes a matrix of correlations between all pairs of
     rows of two matrices. Unlike NumPy's corrcoef() this function will only
@@ -222,7 +222,7 @@ def correlation(X, Y):
 
       >>> X = N.random.rand(20,80)
       >>> Y = N.random.rand(5,80)
-      >>> C = correlation(X, Y)
+      >>> C = oneMinusCorrelation(X, Y)
       >>> print C.shape
       (20, 5)
     """
@@ -239,7 +239,12 @@ def correlation(X, Y):
     Zy = Y - N.c_[Y.mean(axis=1)]
     Zy /= N.c_[Y.std(axis=1)]
 
-    return ((N.matrix(Zx) * N.matrix(Zy).T) / Zx.shape[1]).A
+    C = ((N.matrix(Zx) * N.matrix(Zy).T) / Zx.shape[1]).A
+
+    # let it behave like a distance, i.e. smaller is closer
+    C -= 1.0
+
+    return N.abs(C)
 
 
 def pnorm_w_python(data1, data2=None, weight=None, p=2,
