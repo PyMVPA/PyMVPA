@@ -204,6 +204,44 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     return squared_euclidean_distance_matrix
 
 
+def correlation(X, Y):
+    """Return correlations matrix between the rows of two matrizes X and Y.
+
+    This functions computes a matrix of correlations between all pairs of
+    rows of two matrizes. Unlike NumPy's corrcoef() this function will only
+    considers pairs across matrizes and not within, e.g. both elements of
+    a pair never have the same source matrix as origin.
+
+    Both arrays need to have the same number of columns.
+
+    :Parameters:
+      X: 2D-array
+      Y: 2D-array
+
+    Example:
+
+      >>> X = N.random.rand(20,80)
+      >>> Y = N.random.rand(5,80)
+      >>> C = correlation(X, Y)
+      >>> print C.shape
+      (20, 5)
+    """
+    # check if matrizes have same number of columns
+    if __debug__:
+        if not X.shape[1] == Y.shape[1]:
+            raise ValueError, 'correlation() requires to matrizes with the ' \
+                              'same #columns (Got: %s and %s)' \
+                              % (X.shape, Y.shape)
+
+    # zscore each sample/row
+    Zx = X - N.c_[X.mean(axis=1)]
+    Zx /= N.c_[X.std(axis=1)]
+    Zy = Y - N.c_[Y.mean(axis=1)]
+    Zy /= N.c_[Y.std(axis=1)]
+
+    return (N.matrix(Zx) * N.matrix(Zy).T) / Zx.shape[1]
+
+
 def pnorm_w_python(data1, data2=None, weight=None, p=2,
                    heuristic='auto', use_sq_euclidean=True):
     """Weighted p-norm between two datasets (pure Python implementation)

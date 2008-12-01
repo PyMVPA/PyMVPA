@@ -14,6 +14,7 @@ from mvpa.clfs.transerror import TransferError
 from tests_warehouse import *
 from tests_warehouse import getMVPattern
 from tests_warehouse_clfs import *
+from mvpa.clfs.distance import correlation
 
 from mvpa.misc.copy import deepcopy
 
@@ -177,6 +178,26 @@ class SupportFxTests(unittest.TestCase):
             a_2 = a_1
         a = a[2:]; a_3 = idhash(a)
         self.failUnless(a_2 != a_3, msg="Idhash must change after slicing")
+
+
+    def testCorrelation(self):
+        # data: 20 samples, 80 features
+        X = N.random.rand(20,80)
+
+        C = correlation(X, X)
+
+        # get nsample x nssample correlation matrix
+        self.failUnless(C.shape == (20, 20))
+        # diagonal is 1
+        self.failUnless((N.abs(N.diag(C) - 1).mean() < 0.00001).all())
+
+        # now two different
+        Y = N.random.rand(5,80)
+        C2 = correlation(X, Y)
+        # get nsample x nssample correlation matrix
+        self.failUnless(C2.shape == (20, 5))
+        # external validity check -- we are dealing with correlations
+        self.failUnless(C2[10,2] - N.corrcoef(X[10], Y[2])[0,1] < 0.000001)
 
 
 def suite():
