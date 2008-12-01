@@ -11,6 +11,11 @@
 
 __docformat__ = 'restructuredtext'
 
+# TODO: Make all distance functions accept 2D matrices samples x features
+#       and compute the distance matrix between all samples. They would
+#       need to be capable of dealing with unequal number of rows!
+#       If we would have that, we could make use of them in kNN.
+
 import numpy as N
 from mvpa.base import externals
 
