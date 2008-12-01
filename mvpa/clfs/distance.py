@@ -205,11 +205,11 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
 
 
 def correlation(X, Y):
-    """Return correlations matrix between the rows of two matrizes X and Y.
+    """Return correlations matrix between the rows of two matrices X and Y.
 
     This functions computes a matrix of correlations between all pairs of
-    rows of two matrizes. Unlike NumPy's corrcoef() this function will only
-    considers pairs across matrizes and not within, e.g. both elements of
+    rows of two matrices. Unlike NumPy's corrcoef() this function will only
+    considers pairs across matrices and not within, e.g. both elements of
     a pair never have the same source matrix as origin.
 
     Both arrays need to have the same number of columns.
@@ -226,10 +226,10 @@ def correlation(X, Y):
       >>> print C.shape
       (20, 5)
     """
-    # check if matrizes have same number of columns
+    # check if matrices have same number of columns
     if __debug__:
         if not X.shape[1] == Y.shape[1]:
-            raise ValueError, 'correlation() requires to matrizes with the ' \
+            raise ValueError, 'correlation() requires to matrices with the ' \
                               'same #columns (Got: %s and %s)' \
                               % (X.shape, Y.shape)
 
