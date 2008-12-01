@@ -24,13 +24,26 @@ if __debug__:
 
 
 class kNN(Classifier):
-    """k-nearest-neighbour classifier.
+    """k-Nearest-Neighbour classifier.
 
-    If enabled, it stores the votes per class in the 'values' state after
-    calling predict().
+    This is a simple classifier that bases its decision on the distances between
+    the training dataset samples and the test sample(s). Distances are computed
+    using a customizable distance function. A certain number (`k`)of nearest
+    neighbors is selected based on the smallest distances and the labels of this
+    neighboring samples are fed into a voting function to determine the labels
+    of the test sample.
+
+    Training a kNN classifier is extremely quick, as no actuall training is
+    performed as the training dataset is simply stored in the classifier. All
+    computations are done during classifier prediction.
+
+    .. note::
+      If enabled, kNN stores the votes per class in the 'values' state after
+      calling predict().
     """
 
-    _clf_internals = [ 'knn', 'non-linear', 'binary', 'multiclass', 'notrain2predict' ]
+    _clf_internals = ['knn', 'non-linear', 'binary', 'multiclass',
+                      'notrain2predict' ]
 
     def __init__(self, k=2, dfx=squared_euclidean_distance,
                  voting='weighted', **kwargs):
@@ -57,9 +70,6 @@ class kNN(Classifier):
         self.__dfx = dfx
         self.__voting = voting
         self.__data = None
-
-
-    __doc__ = enhancedDocString('kNN', locals(), Classifier)
 
 
     def __repr__(self):
