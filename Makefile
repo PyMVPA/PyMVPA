@@ -160,6 +160,8 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp doc/pics/favicon.png $(WWW_DIR)/favicon.ico
 # provide robots.txt to minimize unnecessary traffic
 	cp doc/_static/robots.txt $(WWW_DIR)/
+# provide promised pylintrc
+	mkdir -p $(WWW_DIR)/misc && cp doc/misc/pylintrc $(WWW_DIR)/misc
 	touch $@
 
 upload-website: website
