@@ -27,6 +27,7 @@ def cartesianDistance(a, b):
 def absminDistance(a, b):
     """Returns dinstance max(\|a-b\|)
     XXX There must be better name!
+    XXX Actually, why is it absmin not absmax?
 
     Useful to select a whole cube of a given "radius"
     """
