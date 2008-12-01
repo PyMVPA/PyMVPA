@@ -65,8 +65,8 @@ class kNN(Classifier):
     def __repr__(self):
         """Representation of the object
         """
-        return "kNN(k=%d, enable_states=%s)" % \
-            (self.__k, str(self.states.enabled))
+        return "kNN(k=%d, dfx=%s enable_states=%s)" % \
+            (self.__k, self.__dfx, str(self.states.enabled))
 
 
     def __str__(self):
