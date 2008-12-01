@@ -239,7 +239,7 @@ def correlation(X, Y):
     Zy = Y - N.c_[Y.mean(axis=1)]
     Zy /= N.c_[Y.std(axis=1)]
 
-    return (N.matrix(Zx) * N.matrix(Zy).T) / Zx.shape[1]
+    return ((N.matrix(Zx) * N.matrix(Zy).T) / Zx.shape[1]).A
 
 
 def pnorm_w_python(data1, data2=None, weight=None, p=2,
