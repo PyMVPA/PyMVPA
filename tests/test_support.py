@@ -14,7 +14,7 @@ from mvpa.clfs.transerror import TransferError
 from tests_warehouse import *
 from tests_warehouse import getMVPattern
 from tests_warehouse_clfs import *
-from mvpa.clfs.distance import correlation
+from mvpa.clfs.distance import oneMinusCorrelation
 
 from mvpa.misc.copy import deepcopy
 
@@ -184,7 +184,7 @@ class SupportFxTests(unittest.TestCase):
         # data: 20 samples, 80 features
         X = N.random.rand(20,80)
 
-        C = correlation(X, X)
+        C = 1 - oneMinusCorrelation(X, X)
 
         # get nsample x nssample correlation matrix
         self.failUnless(C.shape == (20, 20))
@@ -193,7 +193,7 @@ class SupportFxTests(unittest.TestCase):
 
         # now two different
         Y = N.random.rand(5,80)
-        C2 = correlation(X, Y)
+        C2 = 1 - oneMinusCorrelation(X, Y)
         # get nsample x nssample correlation matrix
         self.failUnless(C2.shape == (20, 5))
         # external validity check -- we are dealing with correlations
