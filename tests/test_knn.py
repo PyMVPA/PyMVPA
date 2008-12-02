@@ -20,26 +20,23 @@ class KNNTests(unittest.TestCase):
         mv_perf = []
         uv_perf = []
 
-        # test some distance functions
-        for clf in [kNN(k=10), kNN(k=10, dfx=oneMinusCorrelation)]:
-            print clf
-            for i in xrange(100):
-                train = pureMultivariateSignal( 20, 3 )
-                test = pureMultivariateSignal( 20, 3 )
-                clf.train(train)
-                p_mv = clf.predict( test.samples )
-                mv_perf.append( N.mean(p_mv==test.labels) )
+        clf = kNN(k=10)
+        for i in xrange(20):
+            train = pureMultivariateSignal( 20, 3 )
+            test = pureMultivariateSignal( 20, 3 )
+            clf.train(train)
+            p_mv = clf.predict( test.samples )
+            mv_perf.append( N.mean(p_mv==test.labels) )
 
-                clf.train(train.selectFeatures([0]))
-                p_uv = clf.predict( test.selectFeatures([0]).samples )
-                uv_perf.append( N.mean(p_uv==test.labels) )
+            clf.train(train.selectFeatures([0]))
+            p_uv = clf.predict( test.selectFeatures([0]).samples )
+            uv_perf.append( N.mean(p_uv==test.labels) )
 
-            mean_mv_perf = N.mean(mv_perf)
-            mean_uv_perf = N.mean(uv_perf)
+        mean_mv_perf = N.mean(mv_perf)
+        mean_uv_perf = N.mean(uv_perf)
 
-            print mean_mv_perf, mean_uv_perf
-            self.failUnless( mean_mv_perf > 0.9 )
-            self.failUnless( mean_uv_perf < mean_mv_perf )
+        self.failUnless( mean_mv_perf > 0.9 )
+        self.failUnless( mean_uv_perf < mean_mv_perf )
 
 
     def testKNNState(self):
