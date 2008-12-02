@@ -10,13 +10,14 @@
 
 from mvpa.base import externals
 from mvpa.featsel.base import FeatureSelectionPipeline, \
-     SensitivityBasedFeatureSelection
+     SensitivityBasedFeatureSelection, CombinedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
-                                 FractionTailSelector
+                                 FractionTailSelector, RangeElementSelector
 from mvpa.featsel.rfe import RFE
 
 from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
+from mvpa.clfs.smlr import SMLR, SMLRWeights
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter
 
@@ -182,6 +183,43 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # and we get sensitivity analyzer which works on splits and uses
         # sensitivity
         selected_features = rfe(self.dataset)
+
+    def testUnionFeatureSelection(self):
+        # two methods: 5% highes F-scores, non-zero SMLR weights
+        fss = [SensitivityBasedFeatureSelection(
+                    OneWayAnova(),
+                    FractionTailSelector(0.05, mode='select', tail='upper')),
+               SensitivityBasedFeatureSelection(
+                    SMLRWeights(SMLR(lm=1, implementation="C")),
+                    RangeElementSelector(mode='select'))]
+
+        fs = CombinedFeatureSelection(fss, combiner='union',
+                                      enable_states=['selected_ids',
+                                                     'selections_ids'])
+
+        od, otd = fs(self.dataset)
+
+        self.failUnless(fs.combiner == 'union')
+        self.failUnless(len(fs.selections_ids))
+        self.failUnless(len(fs.selections_ids) <= self.dataset.nfeatures)
+        # should store one set per methods
+        self.failUnless(len(fs.selections_ids) == len(fss))
+        # no individual can be larger than union
+        for s in fs.selections_ids:
+            self.failUnless(len(s) <= len(fs.selected_ids))
+        # check output dataset
+        self.failUnless(od.nfeatures == len(fs.selected_ids))
+        for i, id in enumerate(fs.selected_ids):
+            self.failUnless((od.samples[:,i]
+                             == self.dataset.samples[:,id]).all())
+
+        # again for intersection
+        fs = CombinedFeatureSelection(fss, combiner='intersection',
+                                      enable_states=['selected_ids',
+                                                     'selections_ids'])
+        # simply run it for now -- can't think of additional tests
+        od, otd = fs(self.dataset)
+
 
 
 def suite():
