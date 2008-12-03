@@ -21,9 +21,9 @@ include_dirs = []
 library_dirs = []
 
 # only if libsvm.a is available
-if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')):
+if os.path.exists(os.path.join('build', 'libsvm', 'libsvm.a')):
     include_dirs += [os.path.join('3rd', 'libsvm')]
-    library_dirs += [os.path.join('3rd', 'libsvm')]
+    library_dirs += [os.path.join('build', 'libsvm')]
     have_libsvm = True
 
 # when libsvm is forced
