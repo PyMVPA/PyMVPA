@@ -17,7 +17,10 @@ if not os.path.exists(modref_path):
 rst_section_levels = ['*', '=', '-', '~', '^']
 
 def getObjectName(line):
-    return line.split()[1].split('(')[0].strip()
+    name = line.split()[1].split('(')[0].strip()
+    # in case we have classes which are niot derived from object
+    # ie. old style classes
+    return name.rstrip(':')
 
 
 def parseModule(uri):
