@@ -130,6 +130,8 @@ class DescreteMetric(Metric):
         # build prototype search space
         filter_radiuses = N.ceil(N.abs(elementradius_per_axis)).astype('int')
         filter_center = filter_radiuses
+        comp_center = filter_center[self.__compatmask] \
+                            * self.__elementsize[self.__compatmask]
         filter_mask = N.ones((filter_radiuses * 2) + 1, dtype='bool')
 
         # get coordinates of all elements
@@ -143,8 +145,7 @@ class DescreteMetric(Metric):
             dist = self.__distance_function(
                         coord[self.__compatmask]
                             * self.__elementsize[self.__compatmask],
-                        filter_center[self.__compatmask]
-                            * self.__elementsize[self.__compatmask])
+                        comp_center)
             # compare with radius
             if dist <= compat_radius:
                 # zero too distant
