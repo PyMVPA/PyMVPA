@@ -34,9 +34,9 @@ Preprocessing
 
 .. toctree::
 
-   ex/preproc_fsl_ev
-   ex/projections
-   ex/smellit
+   examples/preproc_fsl_ev
+   examples/projections
+   examples/smellit
 
 
 Analysis
@@ -44,15 +44,15 @@ Analysis
 
 .. toctree::
 
-   ex/start_easy
-   ex/smlr
-   ex/clfs_examples
-   ex/searchlight_minimal
-   ex/searchlight_2d
-   ex/sensanas
-   ex/svdclf
-   ex/permutation_test
-   ex/match_distribution
+   examples/start_easy
+   examples/smlr
+   examples/clfs_examples
+   examples/searchlight_minimal
+   examples/searchlight_2d
+   examples/sensanas
+   examples/svdclf
+   examples/permutation_test
+   examples/match_distribution
 
 
 Visualization
@@ -60,9 +60,9 @@ Visualization
 
 .. toctree::
 
-   ex/erp_plot
-   ex/pylab_2d
-   ex/topo_plot
+   examples/erp_plot
+   examples/pylab_2d
+   examples/topo_plot
 
 
 Miscellaneous
@@ -70,5 +70,5 @@ Miscellaneous
 
 .. toctree::
 
-   ex/kerneldemo
-   ex/curvefitting
+   examples/kerneldemo
+   examples/curvefitting

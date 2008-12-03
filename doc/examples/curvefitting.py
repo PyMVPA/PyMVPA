@@ -57,7 +57,7 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 The ouput of the provided example should look like
 
-.. image:: ../pics/curvefitting.*
+.. image:: ../pics/ex_curvefitting.*
    :align: center
    :alt: Curve fitting example
 
