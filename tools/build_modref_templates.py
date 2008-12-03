@@ -9,7 +9,7 @@ import mvpa
 exclude_list = ['mvpa.misc.copy']
 
 
-modref_path = os.path.join('doc', 'modref')
+modref_path = os.path.join('build', 'docsrc', 'modref')
 if not os.path.exists(modref_path):
     os.mkdir(modref_path)
 
