@@ -1,6 +1,7 @@
 PROFILE_FILE=tests/main.pstats
 COVERAGE_REPORT=coverage
 HTML_DIR=build/html
+DOCSRC_DIR=build/docsrc
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=build/pdf
 LATEX_DIR=build/latex
@@ -77,7 +78,6 @@ clean:
 	-@$(MAKE) distclean
 
 distclean:
-	-@rm -rf doc/modref doc/ex
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
@@ -89,12 +89,11 @@ distclean:
 		 -o -name '.coverage' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
-		 -o -iname '*.[ao]' -o -iname '*.gch' \
+		 -o -iname '*.gch' \
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp website-stamp pdfdoc-stamp 3rd-stamp \
-		modref-templates-stamp examples2rst-stamp fetch-data-nonfree-stamp
+	-@rm *-stamp
 
 
 debian-clean:
@@ -106,33 +105,39 @@ debian-clean:
 #
 doc: website
 
+prepare-docsrc: prepare-docsrc-stamp
+prepare-docsrc-stamp:
+	mkdir -p build
+	cp -Lr doc/ $(DOCSRC_DIR)
+	touch $@
+
 references:
 	tools/bib2rst_ref.py
 
 htmldoc: modref-templates examples2rst build
-	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
-	cd build/html/modref && ln -sf ../_static
-	cd build/html/ex && ln -sf ../_static
-	cp doc/pics/history_splash.png build/html/_images/
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
+	cd $(HTML_DIR)/modref && ln -sf ../_static
+	cd $(HTML_DIR)/examples && ln -sf ../_static
+	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
-	cd doc && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) latex
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
 # Create a handy .pdf of the manual to be printed as a book
 handbook: pdfdoc
 	cd tools && $(MAKE) pdfbook
-	tools/pdfbook -2 \
+	build/tools/pdfbook -2 \
 	 $(LATEX_DIR)/PyMVPA-Manual.pdf $(LATEX_DIR)/PyMVPA-Manual-Handbook.pdf
 
-modref-templates: modref-templates-stamp
+modref-templates: prepare-docsrc modref-templates-stamp
 modref-templates-stamp:
 	PYTHONPATH=. tools/build_modref_templates.py
 	touch $@
 
-examples2rst: examples2rst-stamp
+examples2rst: prepare-docsrc examples2rst-stamp
 examples2rst-stamp:
 	tools/examples2rst.py
 	touch $@
@@ -155,13 +160,13 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
 	tools/sitemap.sh > $(WWW_DIR)/sitemap.xml
 # main icon of the website
-	cp doc/pics/favicon.png $(WWW_DIR)/_images/
+	cp $(DOCSRC_DIR)/pics/favicon.png $(WWW_DIR)/_images/
 # for those who do not care about <link> and just trying to download it
-	cp doc/pics/favicon.png $(WWW_DIR)/favicon.ico
+	cp $(DOCSRC_DIR)/pics/favicon.png $(WWW_DIR)/favicon.ico
 # provide robots.txt to minimize unnecessary traffic
-	cp doc/_static/robots.txt $(WWW_DIR)/
+	cp $(DOCSRC_DIR)/_static/robots.txt $(WWW_DIR)/
 # provide promised pylintrc
-	mkdir -p $(WWW_DIR)/misc && cp doc/misc/pylintrc $(WWW_DIR)/misc
+	mkdir -p $(WWW_DIR)/misc && cp $(DOCSRC_DIR)/misc/pylintrc $(WWW_DIR)/misc
 	touch $@
 
 upload-website: website

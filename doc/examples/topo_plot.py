@@ -57,7 +57,7 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 The ouput of the provided example should look like
 
-.. image:: ../pics/topo_plot.*
+.. image:: ../pics/ex_topo_plot.*
    :align: center
    :alt: Topography plot of MEG data
 

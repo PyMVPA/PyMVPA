@@ -83,13 +83,13 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 Outputs of the example script. Data prior to preprocessing
 
-.. image:: ../pics/smellit2.*
+.. image:: ../pics/ex_smellit2.*
    :align: center
    :alt: Data prior preprocessing
 
 Data after minimal preprocessing
 
-.. image:: ../pics/smellit3.*
+.. image:: ../pics/ex_smellit3.*
    :align: center
    :alt: Data after z-scoring and detrending
 
