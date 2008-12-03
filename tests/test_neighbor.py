@@ -47,6 +47,34 @@ class MetricTests(unittest.TestCase):
         for point in metric.getNeighbor([2,2], distance):
             self.failUnless( manhattenDistance(point, [2,2]) <= distance)
 
+
+    def testDescreteMetricCompatMask(self):
+        # let's play fMRI: 3x3x3.3 mm and 2s TR, but in NIfTI we have it
+        # reversed
+        esize = [2, 3.3, 3,  3]
+        # only the last three axis are spatial ones and compatible in terms
+        # of a meaningful distance among them.
+        metric = DescreteMetric(esize, compatmask=[0,1,1,1])
+
+        # neighbors in compat space will be simply propagated along remaining
+        # dimensions (somewhat like a backprojection from the subspace into the
+        # original space
+        self.failUnless((metric.getNeighbors([0,0,0,0], 1) ==
+                        [[-1, 0, 0, 0], [0, 0, 0, 0], [1, 0, 0, 0]]).all())
+        # test different radius in compat and in remaining space
+        # in this case usual spatial neighborhood, but no temporal
+        self.failUnless((metric.getNeighbors([0,0,0,0], [0,4,4,4]) ==
+            [[0,-1,0,0],[0,0,-1,0],[0,0,0,-1],[0,0,0,0],
+             [0,0,0,1],[0,0,1,0],[0,1,0,0]]).all())
+
+        # no spatial but temporal neighborhood
+        self.failUnless((metric.getNeighbors([0,0,0,0], [2,0,0,0]) ==
+            [[-1,0,0,0],[0,0,0,0],[1,0,0,0]]).all())
+
+        # check axis scaling in non-compat space
+        self.failUnless(len(metric.getNeighbors([0,0,0,0], [7.9,0,0,0])) == 9)
+
+
     def testGetNeighbors(self):
         """Test if generator getNeighbor and method getNeighbors
         return the right thing"""
