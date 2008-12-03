@@ -82,7 +82,7 @@ The ouput of the provided example is presented below. It is not a very
 fascinating one due to the limited number of samples provided in the
 dataset shipped within the toolbox.
 
-.. image:: ../pics/erp_plot.*
+.. image:: ../pics/ex_erp_plot.*
    :align: center
    :alt: ERP plot example
 

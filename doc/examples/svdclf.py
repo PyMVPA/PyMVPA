@@ -97,7 +97,7 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 Output of the example analysis:
 
-.. image:: ../pics/svdclf.*
+.. image:: ../pics/ex_svdclf.*
    :align: center
    :alt: Generalization performance on the selected PCs.
 
