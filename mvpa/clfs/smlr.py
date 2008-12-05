@@ -55,9 +55,9 @@ class SMLR(Classifier):
     """Sparse Multinomial Logistic Regression `Classifier`.
 
     This is an implementation of the SMLR algorithm published in
-    Krishnapuram et al. (2005, IEEE Transactions on Pattern Analysis
-    and Machine Intelligence).  Be sure to cite that article if you
-    use this for your work.
+    :ref:`Krishnapuram et al., 2005 <KCF+05>` (2005, IEEE Transactions
+    on Pattern Analysis and Machine Intelligence).  Be sure to cite
+    that article if you use this classifier for your work.
     """
 
     _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'binary',

@@ -133,8 +133,9 @@ class SVMTests(unittest.TestCase):
 
         e = cve(ds_)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            # with disballance we should have almost no hits
-            self.failUnless(cve.confusion.stats["P'"][1] < 5)
+            self.failUnless(cve.confusion.stats["P'"][1] < 5,
+                            msg="With disballance we should have almost no "
+                            "hits. Got %f" % cve.confusion.stats["P'"][1])
             #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
 
         # Set '1 C per label'
