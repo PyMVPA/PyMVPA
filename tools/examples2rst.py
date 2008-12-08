@@ -16,7 +16,7 @@ import os, sys, re, glob
 
 exclude_list = ['searchlight.py']
 
-outpath = os.path.join('doc', 'ex')
+outpath = os.path.join('build', 'docsrc', 'examples')
 if not os.path.exists(outpath):
     os.mkdir(outpath)
 

@@ -548,6 +548,15 @@ class CombinedMapper(Mapper):
         raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
 
 
+    def __repr__(self):
+        s = Mapper.__repr__(self).rstrip(' )')
+        # beautify
+        if not s[-1] == '(':
+            s += ' '
+        s += 'mappers=[%s])' % ', '.join([m.__repr__() for m in self._mappers])
+        return s
+
+
 
 class ChainMapper(Mapper):
     """Meta mapper that embedded a chain of other mappers.
@@ -665,3 +674,12 @@ class ChainMapper(Mapper):
         Returns a list of outIds
         """
         return self._mappers[-1].getNeighbor(outId, *args, **kwargs)
+
+
+    def __repr__(self):
+        s = Mapper.__repr__(self).rstrip(' )')
+        # beautify
+        if not s[-1] == '(':
+            s += ' '
+        s += 'mappers=[%s])' % ', '.join([m.__repr__() for m in self._mappers])
+        return s
