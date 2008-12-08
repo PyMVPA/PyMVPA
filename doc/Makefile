@@ -8,7 +8,7 @@ PAPER         =
 
 
 # Internal variables.
-BUILDROOT       = ../build
+BUILDROOT       = ..
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDROOT)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .

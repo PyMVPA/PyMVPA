@@ -231,10 +231,16 @@ class ERNiftiDataset(EventDataset):
         # memory efficient and even simpler
         dsattr = {'niftihdr': nifti.header}
 
+        # determine TR, take from NIfTI header by default
+        dt = nifti.rtime
+        # override if necessary
+        if not tr is None:
+            dt = tr
+
         # NiftiDataset uses a DescreteMetric with cartesian
         # distance and element size from the NIfTI header 
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-        elementsize = [i for i in reversed(nifti.voxdim)]
+        elementsize = [dt] + [i for i in reversed(nifti.voxdim)]
         # XXX metric might be inappropriate if boxcar has length 1
         # might move metric setup after baseclass init and check what has
         # really happened
@@ -243,11 +249,6 @@ class ERNiftiDataset(EventDataset):
 
         # convert EVs if necessary -- not altering original
         if evconv:
-            # determine TR, take from NIfTI header by default
-            dt = nifti.rtime
-            # override if necessary
-            if not tr is None:
-                dt = tr
             if dt == 0:
                 raise ValueError, "'dt' cannot be zero when converting Events"
 
