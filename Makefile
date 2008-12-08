@@ -9,6 +9,7 @@ SWARM_DIR=build/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
+RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 
 # should be made conditional, as pyversions id Debian specific
 #PYVER := $(shell pyversions -vd)
@@ -159,13 +160,15 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp doc/pics/favicon.png $(WWW_DIR)/favicon.ico
 # provide robots.txt to minimize unnecessary traffic
 	cp doc/_static/robots.txt $(WWW_DIR)/
+# provide promised pylintrc
+	mkdir -p $(WWW_DIR)/misc && cp doc/misc/pylintrc $(WWW_DIR)/misc
 	touch $@
 
 upload-website: website
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
+	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
 
 upload-htmldoc: htmldoc
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
+	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
 # this takes some minutes !!
@@ -303,16 +306,21 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
+	rsync $(RSYNC_OPTS) apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
 
 # Various other data which might be sensitive and not distribu
 fetch-data-nonfree: fetch-data-nonfree-stamp
 fetch-data-nonfree-stamp:
-	rsync -avz dev.pymvpa.org:/home/data/nonfree data/ && touch $@
+	@mkdir -p temp
+# clean up previous location to make sure we don't have it
+	@rm -f data/nonfree/audio/Peter_Nalitch-Guitar.mp3
+# remove directories which should be bogus now
+	@rmdir data/nonfree/audio data/nonfree 2>/dev/null || :
+	rsync $(RSYNC_OPTS) dev.pymvpa.org:/home/data/nonfree temp/ && touch $@
 #
 # Various sugarings
 #
-AUDIO_TRACK=data/nonfree/audio/Peter_Nalitch-Guitar.mp3
+AUDIO_TRACK=temp/nonfree/audio/Peter_Nalitch-Guitar.mp3
 
 # With permission of the author, we can use Gitar for our visual history
 $(AUDIO_TRACK): fetch-data-nonfree
