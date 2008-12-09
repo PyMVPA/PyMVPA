@@ -130,8 +130,9 @@ class ClassifiersTests(unittest.TestCase):
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
         cve = te(datasets['uni2medium'])
-        self.failUnless(cve < 0.25,
-             msg="Got transfer error %g" % (cve))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cve < 0.25,
+                            msg="Got transfer error %g" % (cve))
 
 
     @sweepargs(clf=clfs[:])
