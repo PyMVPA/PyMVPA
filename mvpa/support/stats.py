@@ -49,7 +49,7 @@ if not externals.exists('good scipy.stats.rdist'):
 
     # Lets try to avoid at least some of the numerical problems by removing points
     # around edges
-    __eps = N.finfo(float).eps
+    __eps = N.sqrt(N.finfo(float).eps)
     rdist = rdist_gen(a=-1.0+__eps, b=1.0-__eps, name="rdist", longname="An R-distributed",
                       shapes="c", extradoc="""
 
@@ -60,7 +60,10 @@ if not externals.exists('good scipy.stats.rdist'):
     """
                       )
     # Fix up number of arguments for veccdf's vectorize
-    rdist.veccdf.nin = 2
+    if rdist.veccdf.nin == 1:
+        if __debug__:
+            debug("EXT", "Fixing up veccdf.nin to make 2 for rdist")
+        rdist.veccdf.nin = 2
 
     scipy.stats.distributions.rdist_gen = scipy.stats.rdist_gen = rdist_gen
     scipy.stats.distributions.rdist = scipy.stats.rdist = rdist
