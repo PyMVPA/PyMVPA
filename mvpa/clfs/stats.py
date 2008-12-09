@@ -419,7 +419,7 @@ class AdaptiveRDist(AdaptiveNullDist):
 
 
 class AdaptiveNormal(AdaptiveNullDist):
-    """Adaptive rdist: params are (0, sqrt(1/nfeatures))
+    """Adaptive Normal Distribution: params are (0, sqrt(1/nfeatures))
     """
 
     def _adapt(self, nfeatures, measure, wdata, vdata=None):
@@ -427,7 +427,7 @@ class AdaptiveNormal(AdaptiveNullDist):
 
 
 if externals.exists('scipy'):
-    import scipy.stats
+    from mvpa.support.stats import scipy
     from scipy.stats import kstest
     """
     Thoughts:

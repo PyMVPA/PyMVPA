@@ -19,7 +19,7 @@ from mvpa import cfg
 nulldist_sweep = [ MCNullDist(permutations=10, tail='any'),
                    MCNullDist(permutations=10, tail='right')]
 if externals.exists('scipy'):
-    import scipy.stats
+    from mvpa.support.stats import scipy
     nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10, tail='any'),
                         MCNullDist(scipy.stats.norm, permutations=10, tail='right'),
                         MCNullDist(scipy.stats.expon, permutations=10, tail='right'),
@@ -209,7 +209,7 @@ class StatsTests(unittest.TestCase):
     def testRDistStability(self):
         if not externals.exists('scipy'):
             return
-        import scipy.stats
+        from mvpa.support.stats import scipy
         try:
             # actually I haven't managed to cause this error
             value = scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+N.finfo(float).eps)
@@ -219,10 +219,16 @@ class StatsTests(unittest.TestCase):
         try:
             # this one should fail with recent scipy with error
             # ZeroDivisionError: 0.0 cannot be raised to a negative power
-            value = scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
+
+            # XXX: There is 1 more bug in etch's scipy.stats, so I have to put 2 elements
+            #      in the queried x's, otherwise it would puke. But for now that fix is not here
+            value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
         except:
             self.fail('Failed to compute rdist.cdf due to numeric'
                       ' loss of precision')
+
+        v = scipy.stats.rdist(10000,0,1).cdf([-0.1])
+        self.failUnless(v>=0, v<=1)
 
 
 def suite():
