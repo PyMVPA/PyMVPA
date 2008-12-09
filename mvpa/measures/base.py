@@ -21,7 +21,7 @@ has to be in some iterable container.
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-import mvpa.misc.copy as copy
+import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.args import group_kwargs
