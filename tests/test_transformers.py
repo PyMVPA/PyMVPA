@@ -16,6 +16,8 @@ from mvpa.misc.transformers import Absolute, OneMinus, RankOrder, \
 
 from tests_warehouse import sweepargs, datasets
 
+from mvpa.base import cfg
+
 class TransformerTests(unittest.TestCase):
 
     def setUp(self):
@@ -98,9 +100,18 @@ class TransformerTests(unittest.TestCase):
         tp = [-dataxmax * 1.1] * (ndu/2) + [dataxmax * 1.1] * (ndu/2)
         x = N.hstack((datax, tp))
 
-        result = DistPValue(x, fpp=0.05)
-        self.failUnless((result>=0).all)
-        self.failUnless((result<=1).all)
+        # lets add just pure normal to it
+        x = N.vstack((x, N.random.normal(size=x.shape))).T
+        for distPValue in (DistPValue(), DistPValue(fpp=0.05)):
+            result = distPValue(x)
+            self.failUnless((result>=0).all)
+            self.failUnless((result<=1).all)
+
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(distPValue.positives_recovered[0] > 10)
+            self.failUnless((N.array(distPValue.positives_recovered) +
+                             N.array(distPValue.nulldist_number) == ndb + ndu).all())
+            self.failUnless(distPValue.positives_recovered[1] == 0)
 
 
 def suite():
