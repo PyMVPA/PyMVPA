@@ -27,7 +27,7 @@ from mvpa.base import verbose, externals
 # groups, since otherwise it is impossible to use them without using
 # the whole group. May be we should make some late creation of the
 # groups -- ie only if user requests a group, options are added to it.
-from mvpa.misc import copy
+from mvpa.support import copy
 
 class Options(object):
     """Just a convinience placeholder for all available options
