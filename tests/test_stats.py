@@ -62,9 +62,10 @@ class StatsTests(unittest.TestCase):
         # while bogus (0) not
         prob = null.p([3,0,0,0,0,N.nan])
         self.failUnless(N.abs(prob[0]) < 0.01)
-        self.failUnless((N.abs(prob[1:]) > 0.05).all(),
-                        msg="Bogus features should have insignificant p."
-                        " Got %s" % (N.abs(prob[1:]),))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless((N.abs(prob[1:]) > 0.05).all(),
+                            msg="Bogus features should have insignificant p."
+                            " Got %s" % (N.abs(prob[1:]),))
 
         # has to have matching shape
         if not isinstance(null, FixedNullDist):
