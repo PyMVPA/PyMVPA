@@ -14,7 +14,7 @@ from mvpa.base import externals
 externals.exists('nifti', raiseException=True)
 
 import numpy as N
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 
 # little trick to be able to import 'nifti' package (which has same name)
 oldname = __name__
