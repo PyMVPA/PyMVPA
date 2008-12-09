@@ -12,7 +12,7 @@ import unittest
 import numpy as N
 
 from mvpa.misc.transformers import Absolute, OneMinus, RankOrder, \
-     ReverseRankOrder, L1Normed, L2Normed, OverAxis
+     ReverseRankOrder, L1Normed, L2Normed, OverAxis, DistPValue
 
 from tests_warehouse import sweepargs, datasets
 
@@ -76,6 +76,31 @@ class TransformerTests(unittest.TestCase):
         self.failUnless(N.linalg.norm(overnorm)!=1.0)
         for d in overnorm.T:
             self.failUnless(N.abs(N.linalg.norm(d) - 1.0)<0.00001)
+
+
+    def testDistPValue(self):
+        """Basic testing of DistPValue"""
+        ndb = 200
+        ndu = 20
+        nperd = 2
+        pthr = 0.05
+        Nbins = 400
+
+        # Lets generate already normed data (on sphere) and add some nonbogus features
+        datau = (N.random.normal(size=(nperd, ndb)))
+        dist = N.sqrt((datau * datau).sum(axis=1))
+
+        datas = (datau.T / dist.T).T
+        tn = datax = datas[0, :]
+        dataxmax = N.max(N.abs(datax))
+
+        # now lets add true positive features
+        tp = [-dataxmax * 1.1] * (ndu/2) + [dataxmax * 1.1] * (ndu/2)
+        x = N.hstack((datax, tp))
+
+        result = DistPValue(x, fpp=0.05)
+        self.failUnless((result>=0).all)
+        self.failUnless((result<=1).all)
 
 
 def suite():

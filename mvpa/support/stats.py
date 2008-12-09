@@ -19,6 +19,7 @@ if __debug__:
 
 import scipy
 import scipy.stats
+import scipy.stats as stats
 
 if not externals.exists('good scipy.stats.rdist'):
     if __debug__:

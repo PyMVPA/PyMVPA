@@ -13,6 +13,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base import externals
+
+if __debug__:
+    from mvpa.base import debug
+
 
 def Absolute(x):
     """Returns the elementwise absolute of any argument."""
@@ -170,3 +175,151 @@ class OverAxis(object):
                 results[index] = x_t
 
         return results
+
+
+def DistPValue(x, sd=0, distribution='rdist', fpp=None, nbins=400):
+    """L2-Norm the values, convert them to p-values of a given distribution.
+
+    :Parameters:
+      x
+        Data to operate on
+      sd : int
+        Samples dimension (if len(x.shape)>1) on which to operate
+      distribution : string
+        Which distribution to use. Known are: 'rdist' (later normal should
+        be there as well)
+      fpp : float
+        At what p-value (both tails) if not None, to control for false
+        positives. It would iteratively prune the tails (tentative real positives)
+        until empirical p-value becomes less or equal to numerical.
+      nbins : int
+        Number of bins for the iterative pruning of positives
+
+    WARNING: Highly experimental/slow/etc: no theoretical grounds have been
+    presented in any paper, nor proven
+    """
+    externals.exists('scipy', raiseException=True)
+
+    from mvpa.support.stats import scipy
+    import scipy.stats as stats
+
+    if not (distribution in ['rdist']):
+        raise ValueError, "Actually only rdist supported at the moment" \
+              " got %s" % distribution
+
+    x = N.asanyarray(x)
+    shape_orig = x.shape
+    ndims = len(shape_orig)
+
+    # XXX May be just utilize OverAxis transformer?
+    if ndims > 2:
+        raise NotImplementedError, \
+              "TODO: add support for more than 2 dimensions"
+    elif ndims == 1:
+        x, sd = x[:, N.newaxis], 0
+
+    # lets transpose for convenience
+    if sd == 0: x = x.T
+
+
+    # Output p-values of x in null-distribution
+    pvalues = N.zeros(x.shape)
+    # finally go through all data
+    nd = x.shape[1]
+    dist = stats.rdist(nd-1, 0, 1)
+    for i, xx in enumerate(x):
+        xx /= N.linalg.norm(xx)
+
+        if fpp is not None:
+            # Adaptive adjustment for false negatives:
+            Nxx, xxx, pN_emp_prev = len(xx), xx, 1.0
+            indexes = N.arange(Nxx)
+            """What features belong to Null-distribution"""
+            while True:
+                Nxxx = len(xxx)
+                dist = stats.rdist(Nxxx-1, 0, 1)
+
+                Nhist = N.histogram(xxx, bins=nbins, normed=False)
+                pdf = Nhist[0].astype(float)/Nxxx
+                bins = Nhist[1]
+                bins_halfstep = (bins[1] - bins[2])/2.0
+
+                # theoretical CDF
+                # was really unstable -- now got better ;)
+                dist_cdf = dist.cdf(bins)
+
+                # otherwise just recompute manually
+                # dist_pdf = dist.pdf(bins)
+                # dist_pdf /= N.sum(dist_pdf)
+
+                # XXX can't recall the function... silly
+                #     probably could use N.integrate
+                cdf = N.zeros(nbins, dtype=float)
+                #dist_cdf = cdf.copy()
+                dist_prevv = cdf_prevv = 0.0
+                for j in range(nbins):
+                    cdf_prevv = cdf[j] = cdf_prevv + pdf[j]
+                    #dist_prevv = dist_cdf[j] = dist_prevv + dist_pdf[j]
+
+                # what bins fall into theoretical 'positives' in both tails
+                p = (0.5 - N.abs(dist_cdf - 0.5) < fpp/2.0)
+
+                # amount in empirical tails -- if we match theoretical, we
+                # should have total >= p
+
+                pN_emp = N.sum(pdf[p]) # / (1.0 * nbins)
+
+                if __debug__:
+                    debug('TRAN_', "empirical p=%.3f for theoretical p=%.3f"
+                          % (pN_emp, fpp))
+
+                if pN_emp <= fpp:
+                    # we are done
+                    break
+
+                if pN_emp > pN_emp_prev:
+                    if __debug__:
+                        debug('TRAN_', "Diverging -- thus keeping last result "
+                              "with p=%.3f" % pN_emp_prev)
+                    # we better restore previous result
+                    indexes, xxx, dist = indexes_prev, xxx_prev, dist_prev
+                    break
+
+                pN_emp_prev = pN_emp
+                # very silly way for now -- just proceed by 1 bin
+                keep = N.logical_and(xxx > bins[0], # + bins_halfstep,
+                                     xxx < bins[-1]) # - bins_halfstep)
+                if __debug__:
+                    debug('TRAN_', "Keeping %d out of %d elements" %
+                          (N.sum(keep), Nxxx))
+
+                # Preserve them if we need to "roll back"
+                indexes_prev, xxx_prev, dist_prev = indexes, xxx, dist
+                # we should remove those which we assume to be positives and
+                # which should not belong to Null-dist
+                xxx, indexes = xxx[keep], indexes[keep]
+                # L2 renorm it
+                xxx = xxx / N.linalg.norm(xxx)
+
+            Nindexes = len(indexes)
+            Nrecovered = Nxx - Nindexes
+
+            if __debug__:
+                if  distribution == 'rdist':
+                    assert(dist.args[0], Nindexes)
+                debug('TRAN', "Positives recovery finished with %d out of %d "
+                      "entries in Null-distribution, thus %d positives "
+                      "were recovered" % (Nindexes, Nxx, Nrecovered))
+
+            # And now we need to perform our duty -- assign p-values
+            #dist = stats.rdist(Nindexes-1, 0, 1)
+        pvalues[i, :] = dist.cdf(xx)
+
+    # XXX we might add an option to transform it to z-scores?
+    result = pvalues
+
+    # transpose if needed
+    if sd == 0:
+        result = result.T
+
+    return result
