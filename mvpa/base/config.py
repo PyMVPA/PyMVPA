@@ -171,7 +171,12 @@ class ConfigManager(SafeConfigParser):
         config parser does not have the requested option and/or section.
         """
         if not self.has_option(section, option):
-            return default
+            if isinstance(default, bool):
+                return default
+            else:
+                if default.lower() not in self._boolean_states:
+                    raise ValueError, 'Not a boolean: %s' % default
+                return self._boolean_states[default.lower()]
 
         return SafeConfigParser.getboolean(self, section, option)
 
