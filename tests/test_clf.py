@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
 
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper

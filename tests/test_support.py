@@ -16,7 +16,7 @@ from tests_warehouse import getMVPattern
 from tests_warehouse_clfs import *
 from mvpa.clfs.distance import oneMinusCorrelation
 
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 
 class SupportFxTests(unittest.TestCase):
 
