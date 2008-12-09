@@ -206,6 +206,25 @@ class StatsTests(unittest.TestCase):
                         self.failUnless(inorm <= 30)
 
 
+    def testRDistStability(self):
+        if not externals.exists('scipy'):
+            return
+        import scipy.stats
+        try:
+            # actually I haven't managed to cause this error
+            value = scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+N.finfo(float).eps)
+        except:
+            self.fail('Failed to compute rdist.pdf due to numeric'
+                      ' loss of precision')
+        try:
+            # this one should fail with recent scipy with error
+            # ZeroDivisionError: 0.0 cannot be raised to a negative power
+            value = scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
+        except:
+            self.fail('Failed to compute rdist.cdf due to numeric'
+                      ' loss of precision')
+
+
 def suite():
     return unittest.makeSuite(StatsTests)
 
