@@ -1504,9 +1504,10 @@ class Dataset(object):
 
         sample = []
         # for each available class
+        labels = self.labels
         for i, r in enumerate(self.uniquelabels):
             # get the list of pattern ids for this class
-            sample += random.sample( (self.labels == r).nonzero()[0],
+            sample += random.sample( (labels == r).nonzero()[0],
                                      nperlabel[i] )
 
         return self.selectSamples( sample )
