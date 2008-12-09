@@ -222,7 +222,9 @@ class StatsTests(unittest.TestCase):
 
             # XXX: There is 1 more bug in etch's scipy.stats, so I have to put 2 elements
             #      in the queried x's, otherwise it would puke. But for now that fix is not here
-            value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
+            #  value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
+            # Not sure what it was -- now works fine ;)
+            value = scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
         except:
             self.fail('Failed to compute rdist.cdf due to numeric'
                       ' loss of precision')
