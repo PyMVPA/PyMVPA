@@ -37,6 +37,7 @@ class Splitter(object):
     """
 
     _STRATEGIES = ('first', 'random', 'equidistant')
+    _NPERLABEL_STR = ['equal', 'all']
 
     def __init__(self,
                  nperlabel='all',
@@ -48,9 +49,11 @@ class Splitter(object):
         """Initialize splitter base.
 
         :Parameters:
-          nperlabel : int or str (or list of them)
+          nperlabel : int or str (or list of them) or float
             Number of dataset samples per label to be included in each
-            split. Two special strings are recognized: 'all' uses all available
+            split. If given as a float, it must be in [0,1] range and would
+            mean the ratio of selected samples per each label.
+            Two special strings are recognized: 'all' uses all available
             samples (default) and 'equal' uses the maximum number of samples
             the can be provided by all of the classes. This value might be
             provided as a sequence whos length matches the number of datasets
@@ -114,6 +117,10 @@ class Splitter(object):
         can be provided by each class. 'all' uses all available samples
         (default).
         """
+        if isinstance(value, basestring):
+            if not value in self._NPERLABEL_STR:
+                raise ValueError, "Unsupported value '%s' for nperlabel." \
+                      " Supported ones are %s or float or int" % (value, self._NPERLABEL_STR)
         self.__nperlabel = value
 
 
@@ -180,9 +187,9 @@ class Splitter(object):
             # determine sample sizes
             if not operator.isSequenceType(self.__nperlabel) \
                    or isinstance(self.__nperlabel, str):
-                nperlabel = [self.__nperlabel] * len(split)
+                nperlabelsplit = [self.__nperlabel] * len(split)
             else:
-                nperlabel = self.__nperlabel
+                nperlabelsplit = self.__nperlabel
 
             # get splitted datasets
             split_ds = self.splitDataset(dataset, split)
@@ -193,31 +200,39 @@ class Splitter(object):
                 # post-process all datasets
                 finalized_datasets = []
 
-                for i, ds in enumerate(split_ds):
+                for ds, nperlabel in zip(split_ds, nperlabelsplit):
                     # permute the labels
                     if self.__permute:
                         DS_permuteLabels(ds, True, perchunk=True)
 
                     # select subset of samples if requested
-                    if nperlabel[i] == 'all':
+                    if nperlabel == 'all' or ds is None:
                         finalized_datasets.append(ds)
                     else:
-                        # just pass through if no real dataset
-                        if ds == None:
-                            finalized_datasets.append(None)
-                        else:
-                            # go for maximum possible number of samples provided
-                            # by each label in this dataset
-                            if nperlabel[i] == 'equal':
-                                # determine number number of samples per class
-                                npl = N.array(DS_getNSamplesPerLabel(
-                                    ds, attrib='labels').values()).min()
-                            else:
-                                npl = nperlabel[i]
+                        # We need to select a subset of samples
+                        # TODO: move all this logic within getRandomSamples
 
-                            # finally select the patterns
-                            finalized_datasets.append(
-                                DS_getRandomSamples(ds, npl))
+                        # go for maximum possible number of samples provided
+                        # by each label in this dataset
+                        if nperlabel == 'equal':
+                            # determine the min number of samples per class
+                            npl = N.array(DS_getNSamplesPerLabel(
+                                ds, attrib='labels').values()).min()
+                        elif isinstance(nperlabel, float) or (
+                            operator.isSequenceType(nperlabel) and
+                            len(nperlabel) > 0 and
+                            isinstance(nperlabel[0], float)):
+                            # determine number of samples per class and take
+                            # a ratio
+                            counts = N.array(DS_getNSamplesPerLabel(
+                                ds, attrib='labels').values())
+                            npl = (counts * nperlabel).round().astype(int)
+                        else:
+                            npl = nperlabel
+
+                        # finally select the patterns
+                        finalized_datasets.append(
+                            DS_getRandomSamples(ds, npl))
 
                 yield finalized_datasets
 

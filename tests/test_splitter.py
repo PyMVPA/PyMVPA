@@ -93,9 +93,7 @@ class SplitterTests(unittest.TestCase):
     def testCustomSplit(self):
         #simulate half splitter
         hs = CustomSplitter([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
-
-        splits = [ (train, test) for (train, test) in hs(self.data) ]
-
+        splits = list(hs(self.data))
         self.failUnless(len(splits) == 2)
 
         for i,p in enumerate(splits):
@@ -111,7 +109,7 @@ class SplitterTests(unittest.TestCase):
 
         # check fully customized split with working and validation set specified
         cs = CustomSplitter([([0,3,4],[5,9])])
-        splits = [ (train, test) for (train, test) in cs(self.data) ]
+        splits = list(cs(self.data))
         self.failUnless(len(splits) == 1)
 
         for i,p in enumerate(splits):
@@ -126,7 +124,7 @@ class SplitterTests(unittest.TestCase):
         cs = CustomSplitter([([0,3,4],[5,9],[2])],
                             nperlabel=[3,4,1],
                             nrunspersplit=3)
-        splits = [ ds for ds in cs(self.data) ]
+        splits = list(cs(self.data))
         self.failUnless(len(splits) == 3)
 
         for i,p in enumerate(splits):
@@ -134,6 +132,34 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[0].nsamples == 12 )
             self.failUnless( p[1].nsamples == 16 )
             self.failUnless( p[2].nsamples == 4 )
+
+        # lets test selection of samples by ratio and combined with
+        # other ways
+        cs = CustomSplitter([([0,3,4],[5,9],[2])],
+                            nperlabel=[[0.3, 0.6, 1.0, 0.5],
+                                       0.5,
+                                       'all'],
+                            nrunspersplit=3)
+        csall = CustomSplitter([([0,3,4],[5,9],[2])],
+                               nrunspersplit=3)
+        # lets craft simpler dataset
+        #ds = Dataset(samples=N.arange(12), labels=[1]*6+[2]*6, chunks=1)
+        splits = list(cs(self.data))
+        splitsall = list(csall(self.data))
+
+        self.failUnless(len(splits) == 3)
+        ul = self.data.uniquelabels
+
+        self.failUnless(((N.array(splitsall[0][0].samplesperlabel.values())
+                          *[0.3, 0.6, 1.0, 0.5]).round().astype(int) ==
+                         N.array(splits[0][0].samplesperlabel.values())).all())
+
+        self.failUnless(((N.array(splitsall[0][1].samplesperlabel.values())*0.5
+                          ).round().astype(int) ==
+                         N.array(splits[0][1].samplesperlabel.values())).all())
+
+        self.failUnless((N.array(splitsall[0][2].samplesperlabel.values()) ==
+                         N.array(splits[0][2].samplesperlabel.values())).all())
 
 
     def testNoneSplitter(self):
