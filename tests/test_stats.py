@@ -217,18 +217,25 @@ class StatsTests(unittest.TestCase):
         except:
             self.fail('Failed to compute rdist.pdf due to numeric'
                       ' loss of precision')
+
         try:
             # this one should fail with recent scipy with error
             # ZeroDivisionError: 0.0 cannot be raised to a negative power
 
-            # XXX: There is 1 more bug in etch's scipy.stats, so I have to put 2 elements
-            #      in the queried x's, otherwise it would puke. But for now that fix is not here
-            #  value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
+            # XXX: There is 1 more bug in etch's scipy.stats, so I
+            #      have to put 2 elements in the queried x's, otherwise it
+            #      would puke. But for now that fix is not here
+            #
+            # value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
+
             # Not sure what it was -- now works fine ;)
             value = scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
-        except:
+        except IndexError, e:
+            self.fail('Failed due to bug which leads to InvalidIndex if only'
+                      ' scalar is provided to cdf')
+        except Exception, e:
             self.fail('Failed to compute rdist.cdf due to numeric'
-                      ' loss of precision')
+                      ' loss of precision. Exception was %s' % e)
 
         v = scipy.stats.rdist(10000,0,1).cdf([-0.1])
         self.failUnless(v>=0, v<=1)
