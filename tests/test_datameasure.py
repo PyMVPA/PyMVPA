@@ -18,10 +18,11 @@ from mvpa.featsel.rfe import RFE
 from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.misc.transformers import Absolute
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter, NoneSplitter
 
 from mvpa.misc.transformers import Absolute, FirstAxisMean, SecondAxisSumOfAbs
 
+from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
 from mvpa.measures.anova import OneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
@@ -153,6 +154,40 @@ class SensitivityAnalysersTests(unittest.TestCase):
         svmnl = clfs['non-linear', 'svm'][0]
         self.failUnlessRaises(NotImplementedError,
                               svmnl.getSensitivityAnalyzer)
+
+
+    def testSplitFeaturewiseDatasetMeasure(self):
+        ds = datasets['uni3small']
+        sana = SplitFeaturewiseDatasetMeasure(
+            analyzer=SMLR(
+              fit_all_weights=True).getSensitivityAnalyzer(combiner=None),
+            splitter=NFoldSplitter(),
+            combiner=None)
+
+        sens = sana(ds)
+
+        self.failUnless(sens.shape == (
+            len(ds.uniquechunks), ds.nfeatures, len(ds.uniquelabels)))
+
+
+        # Lets try more complex example with 'boosting'
+        ds = datasets['uni3medium']
+        sana = SplitFeaturewiseDatasetMeasure(
+            analyzer=SMLR(
+              fit_all_weights=True).getSensitivityAnalyzer(combiner=None),
+            splitter=NoneSplitter(nperlabel=0.25, mode='first', nrunspersplit=2),
+            combiner=None,
+            enable_states=['splits', 'sensitivities'])
+        sens = sana(ds)
+
+        self.failUnless(sens.shape == (2, ds.nfeatures, 3))
+        splits = sana.splits
+        self.failUnlessEqual(len(splits), 2)
+        self.failUnless(N.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
+        # should have used different samples
+        self.failUnless(N.any([splits[0][0].origids != splits[1][0].origids]))
+        # and should have got different sensitivities
+        self.failUnless(N.any(sens[0] != sens[1]))
 
 
     # TODO -- unittests for sensitivity analyzers which use combiners
