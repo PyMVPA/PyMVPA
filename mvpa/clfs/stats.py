@@ -40,7 +40,7 @@ class Nonparametric(object):
         return N.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
 
 
-def _pvalue(x, cdf_func, tail, return_tails=False):
+def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
     """Helper function to return p-value(x) given cdf and tail
 
     :Parameters:
@@ -65,8 +65,9 @@ def _pvalue(x, cdf_func, tail, return_tails=False):
     if __debug__ and 'CHECK_STABILITY' in debug.active:
         cdf_min, cdf_max = N.min(cdf), N.max(cdf)
         if cdf_min < 0 or cdf_max > 1.0:
-            warning('Stability check of cdf %s failed. Min=%s, max=%s' % \
-                  (cdf_func, cdf_min, cdf_max))
+            s = ('', ' for %s' % name)[int(name is not None)]
+            warning('Stability check of cdf %s failed%s. Min=%s, max=%s' % \
+                  (cdf_func, s, cdf_min, cdf_max))
 
     # no escape but to assure that CDF is in the right range. Some
     # distributions from scipy tend to jump away from [0,1]
@@ -419,7 +420,7 @@ class AdaptiveRDist(AdaptiveNullDist):
 
 
 class AdaptiveNormal(AdaptiveNullDist):
-    """Adaptive rdist: params are (0, sqrt(1/nfeatures))
+    """Adaptive Normal Distribution: params are (0, sqrt(1/nfeatures))
     """
 
     def _adapt(self, nfeatures, measure, wdata, vdata=None):
@@ -427,7 +428,7 @@ class AdaptiveNormal(AdaptiveNullDist):
 
 
 if externals.exists('scipy'):
-    import scipy.stats
+    from mvpa.support.stats import scipy
     from scipy.stats import kstest
     """
     Thoughts:
@@ -708,14 +709,15 @@ if externals.exists('scipy'):
                 if test == 'p-roc':
                     cdf_func = lambda x: dist_gen_.cdf(x, *dist_params)
                     # We need to compare detection under given p
-                    cdf_p = N.abs(_pvalue(data, cdf_func, tail))
+                    cdf_p = N.abs(_pvalue(data, cdf_func, tail, name=dist_gen))
                     cdf_p_thr = cdf_p <= p_thr
                     D, p = N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1
                     if __debug__: res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
                     if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
-            except (TypeError, ValueError, AttributeError), e:#Exception, e:
+            except (TypeError, ValueError, AttributeError,
+                    NotImplementedError), e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
                           'Testing for %s distribution failed due to %s'

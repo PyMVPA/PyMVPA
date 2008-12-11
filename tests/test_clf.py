@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
 
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
@@ -130,8 +130,9 @@ class ClassifiersTests(unittest.TestCase):
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
         cve = te(datasets['uni2medium'])
-        self.failUnless(cve < 0.25,
-             msg="Got transfer error %g" % (cve))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cve < 0.25,
+                            msg="Got transfer error %g" % (cve))
 
 
     @sweepargs(clf=clfs[:])
@@ -447,8 +448,8 @@ class ClassifiersTests(unittest.TestCase):
         # NB datasets will be changed by the end of testing, so if
         # are to change to use generic datasets - make sure to copy
         # them here
-        dstrain = deepcopy(datasets['uni2small_train'])
-        dstest = deepcopy(datasets['uni2small_test'])
+        dstrain = deepcopy(datasets['uni2large_train'])
+        dstest = deepcopy(datasets['uni2large_test'])
 
         clf.untrain()
         clf_re.untrain()

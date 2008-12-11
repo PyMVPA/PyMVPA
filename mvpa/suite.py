@@ -73,7 +73,7 @@ from mvpa.measures.searchlight import *
 from mvpa.measures.splitmeasure import *
 from mvpa.misc.errorfx import *
 from mvpa.misc.cmdline import *
-from mvpa.misc.copy import *
+from mvpa.support.copy import *
 from mvpa.misc.data_generators import *
 from mvpa.misc.exceptions import *
 from mvpa.misc import *
