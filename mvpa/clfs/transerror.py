@@ -1188,6 +1188,9 @@ class ClassifierError(Stateful):
         self._precall(testdataset, trainingdataset)
         error = self._call(testdataset, trainingdataset)
         self._postcall(testdataset, trainingdataset, error)
+        if __debug__:
+            debug('CERR', 'Classifier error on %s: %.2f'
+                  % (testdataset, error))
         return error
 
 
