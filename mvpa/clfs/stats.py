@@ -716,7 +716,8 @@ if externals.exists('scipy'):
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
                     if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
-            except (TypeError, ValueError, AttributeError), e:#Exception, e:
+            except (TypeError, ValueError, AttributeError,
+                    NotImplementedError), e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
                           'Testing for %s distribution failed due to %s'
