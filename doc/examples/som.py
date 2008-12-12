@@ -37,17 +37,23 @@ First, we define some colors as RGB values from the interval (0,1), i.e. with
 white being (1, 1, 1) and black being (0, 0, 0).
 """
 
-colors = [[0., 0., 0.],    # black
-          [0., 0., 1.],    # blue
-          [0., 1., 0.],    # green
-          [1., 0., 0.],    # red
-          [0., 1., 1.],    # cyan
-          [1., 0., 1.],    # violet
-          [1., 1., 0.],    # yellow
-          [1., 1., 1.],    # white
-          [.33, .33, .33], # darkgrey
-          [.5, .5, .5],    # mediumgrey
-          [.66, .66, .66]] # lightgrey
+colors = [[0., 0., 0.],
+          [0., 0., 1.],
+          [0., 1., 0.],
+          [1., 0., 0.],
+          [0., 1., 1.],
+          [1., 0., 1.],
+          [1., 1., 0.],
+          [1., 1., 1.],
+          [.33, .33, .33],
+          [.5, .5, .5],
+          [.66, .66, .66]]
+
+# store the names of the colors for visualization later on
+color_names = \
+        ['black', 'blue', 'green', 'red', 'cyan',
+         'violet', 'yellow', 'white', 'darkgrey',
+         'mediumgrey', 'lightgrey']
 
 """
 Since we are going to use a mapper, we will put the color vectors into a
@@ -84,5 +90,19 @@ matplotlib call:
 
 P.imshow(som.units)
 
+"""
+And now, let's take a look onto which coordinates the initial training
+prototypes were mapped to. The get those coordinates we can simply feed
+the training data to the mapper and plot the output.
+"""
+
+mapped = som(colors)
+
+# SOM's kshape is (rows x columns), while matplotlib wants (X x Y)
+for i, m in enumerate(mapped):
+    P.text(m[1], m[0], color_names[i], ha='center', va='center',
+           bbox=dict(facecolor='white', alpha=0.5, lw=0))
+
+# show the figure
 if cfg.getboolean('examples', 'interactive', True):
     P.show()

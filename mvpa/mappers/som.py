@@ -180,3 +180,12 @@ class SimpleSOMMapper(Mapper):
 
         return (N.divide(loc, self.kshape[1]), loc % self.kshape[1])
 
+
+    def forward(self, data):
+        """Map data from the IN dataspace into OUT space.
+
+        Mapping is performs by simple determining the best matching Kohonen
+        unit for each data sample.
+        """
+        return N.array([self._getBMU(d) for d in data])
+
