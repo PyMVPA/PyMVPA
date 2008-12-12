@@ -14,6 +14,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 from mvpa.mappers.base import Mapper
 
+if __debug__:
+    from mvpa.base import debug
 
 class SimpleSOMMapper(Mapper):
     """Mapper using a self-organizing map (SOM) for dimensionality reduction.
@@ -23,8 +25,8 @@ class SimpleSOMMapper(Mapper):
     ND -> 2D mapping, which can for, example, be used for visualization of
     high-dimensional data.
 
-    This SOM implementation uses squared euclidean distance to determine
-    the best matching Kohonen unit and a gaussian neighborhood influence
+    This SOM implementation uses squared Euclidean distance to determine
+    the best matching Kohonen unit and a Gaussian neighborhood influence
     kernel.
     """
     def __init__(self, nrows, ncolumns, niter, learning_rate=0.005,
@@ -38,11 +40,11 @@ class SimpleSOMMapper(Mapper):
           niter: int
             Number of iteration during network training.
           learning_rate: float
-            Initial learning rate, which will continously decreased during
+            Initial learning rate, which will continuously decreased during
             network training.
           iradius: float | None
-            Initial radius of the gaussian neighborhood kernel radius, which
-            will continously decreased during network training. If `None`
+            Initial radius of the Gaussian neighborhood kernel radius, which
+            will continuously decreased during network training. If `None`
             (default) the radius is set equal to the longest edge of the
             Kohonen layer.
         """
@@ -86,10 +88,10 @@ class SimpleSOMMapper(Mapper):
         # (height x width x #features)
         unit_deltas = N.zeros(self.units.shape, dtype='float')
 
-        # precompute distance kernel between elements in the kohonen layer
-        # that will remain constant troughout the training
-        # (just compute one quadrant, as the distances are symetric)
-        # XXX maybe do other than squared euclidean?
+        # precompute distance kernel between elements in the Kohonen layer
+        # that will remain constant throughout the training
+        # (just compute one quadrant, as the distances are symmetric)
+        # XXX maybe do other than squared Euclidean?
         dqd = N.fromfunction(lambda x, y: (x**2 + y**2)**0.5,
                              (self.nrows, self.ncolumns),
                              dtype='float')
@@ -126,6 +128,10 @@ class SimpleSOMMapper(Mapper):
             # apply cumulative unit deltas
             self.units += unit_deltas
 
+            if __debug__:
+                debug("SOM", "Iteration %d/%d done: ||unit_deltas||=%g" %
+                      (it, self.niter, N.sqrt(N.sum(unit_deltas **2))))
+
             # reset unit deltas
             unit_deltas.fill(0.)
 
@@ -137,7 +143,7 @@ class SimpleSOMMapper(Mapper):
           iter: int
             The iteration for which to compute the kernel.
           dqd: array (nrows x ncolumns)
-            This is one quadrant of euclidean distances between Kohonen unit
+            This is one quadrant of Euclidean distances between Kohonen unit
             locations.
         """
         # compute radius decay for this iteration
@@ -146,7 +152,7 @@ class SimpleSOMMapper(Mapper):
         # same for learning rate
         curr_lrate = self.lrate * N.exp(-1.0 * iter / self.iter_scale)
 
-        # compute gaussian influence kernel
+        # compute Gaussian influence kernel
         infl = N.exp((-1.0 * dqd) / (2 * curr_max_radius * iter))
         infl *= curr_lrate
 
@@ -160,7 +166,7 @@ class SimpleSOMMapper(Mapper):
     def _getBMU(self, sample):
         """Returns the ID of the best matching unit.
 
-        'best' is determined as minimal squared euclidean distance between
+        'best' is determined as minimal squared Euclidean distance between
         any units weight vector and some given target `sample`
 
         :Parameters:

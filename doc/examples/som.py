@@ -13,12 +13,12 @@ Self-organizing Maps
 
 .. index:: mapper, self-organizing map, SOM, SimpleSOMMapper
 
-This is a demonstration that shows how a self-organizing map (SOM) can be used
+This is a demonstration of how a self-organizing map (SOM) can be used
 to map high-dimensional data into a two-dimensional representation. For the sake
 of an easy visualization 'high-dimensional' in this case is 3D.
 
 In general SOMs might be useful for visualizing high-dimensional data in terms
-of the its similarity structure. Especially large SOMs (i.e. large number of
+of its similarity structure. Especially large SOMs (i.e. large number of
 Kohonen units) are known to perform mappings that preserve the topology of the
 original data, i.e. neighboring data points in input space will also be
 represented in adjacent locations on the SOM.
@@ -59,10 +59,11 @@ algorithm.
 ds = Dataset(samples=colors, labels=1)
 
 """
-Now we can instanciate the mapper. It will internally use a so-called Kohonen
+Now we can instantiate the mapper. It will internally use a so-called Kohonen
 layer to map the data onto. We tell the mapper to use a rectangular layer with
 30 x 20 units. This will be the output space of the mapper. Additionally, we
-tell it to train the network using 400 iterations and to use some learning rate.
+tell it to train the network using 400 iterations and to use custom learning
+rate.
 """
 
 som = SimpleSOMMapper(30, 20, 400, learning_rate=0.05)
