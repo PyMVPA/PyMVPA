@@ -29,14 +29,14 @@ class SimpleSOMMapper(Mapper):
     the best matching Kohonen unit and a Gaussian neighborhood influence
     kernel.
     """
-    def __init__(self, nrows, ncolumns, niter, learning_rate=0.005,
+    def __init__(self, kshape, niter, learning_rate=0.005,
                  iradius=None):
         """
         :Parameters:
-          nrows: int
-            Number of rows in the Kohonen layer.
-          ncolumns: int
-            Number of columns in the Kohonen layer.
+          kshape: (int, int)
+            Shape of the internal Kohonen layer. Currently, only 2D Kohonen
+            layers are supported, although the length of an axis might be set
+            to 1.
           niter: int
             Number of iteration during network training.
           learning_rate: float
@@ -51,11 +51,10 @@ class SimpleSOMMapper(Mapper):
         # init base class
         Mapper.__init__(self)
 
-        self.nrows = int(nrows)
-        self.ncolumns = int(ncolumns)
+        self.kshape = N.array(kshape, dtype='int')
 
         if iradius is None:
-            self.radius = max(self.nrows, self.ncolumns)
+            self.radius = self.kshape.max()
         else:
             self.radius = iradius
 
@@ -82,7 +81,8 @@ class SimpleSOMMapper(Mapper):
         """
         # XXX initialize with clever default, e.g. plain of first two PCA
         # components
-        self.units = N.random.randn(self.nrows, self.ncolumns, ds.nfeatures)
+        self.units = \
+                N.random.standard_normal(tuple(self.kshape) + (ds.nfeatures,))
 
         # units weight vector deltas for batch training
         # (height x width x #features)
@@ -93,8 +93,7 @@ class SimpleSOMMapper(Mapper):
         # (just compute one quadrant, as the distances are symmetric)
         # XXX maybe do other than squared Euclidean?
         dqd = N.fromfunction(lambda x, y: (x**2 + y**2)**0.5,
-                             (self.nrows, self.ncolumns),
-                             dtype='float')
+                             self.kshape, dtype='float')
 
         # for all iterations
         for it in xrange(1, self.niter + 1):
@@ -116,12 +115,12 @@ class SimpleSOMMapper(Mapper):
                             # upper left
                             k[b[0]:0:-1, b[1]:0:-1],
                             # upper right
-                            k[b[0]:0:-1, :self.ncolumns - b[1]])),
+                            k[b[0]:0:-1, :self.kshape[1] - b[1]])),
                         N.hstack((
                             # lower left
-                            k[:self.nrows - b[0], b[1]:0:-1],
+                            k[:self.kshape[0] - b[0], b[1]:0:-1],
                             # lower right
-                            k[:self.nrows - b[0], :self.ncolumns - b[1]]))
+                            k[:self.kshape[0] - b[0], :self.kshape[1] - b[1]]))
                                ))
                 unit_deltas += infl[:,:,N.newaxis] * (s - self.units)
 
@@ -179,4 +178,5 @@ class SimpleSOMMapper(Mapper):
         # TODO expose distance function as parameter
         loc = N.argmin(((self.units - sample) ** 2).sum(axis=2))
 
-        return (N.divide(loc, self.ncolumns), loc % self.ncolumns)
+        return (N.divide(loc, self.kshape[1]), loc % self.kshape[1])
+

@@ -66,7 +66,7 @@ tell it to train the network using 400 iterations and to use custom learning
 rate.
 """
 
-som = SimpleSOMMapper(30, 20, 400, learning_rate=0.05)
+som = SimpleSOMMapper((30, 20), 400, learning_rate=0.05)
 
 """
 Finally, we train the mapper with the previously defined 'color' dataset.
