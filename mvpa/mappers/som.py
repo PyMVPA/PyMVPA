@@ -68,7 +68,8 @@ class SimpleSOMMapper(Mapper):
         # scalar for decay of learning rate and radius across all iterations
         self.iter_scale = self.niter / N.log(self.radius)
 
-
+        # the internal kohonen layer
+        self._K = None
 
 
     def train(self, ds):
@@ -81,12 +82,11 @@ class SimpleSOMMapper(Mapper):
         """
         # XXX initialize with clever default, e.g. plain of first two PCA
         # components
-        self.units = \
-                N.random.standard_normal(tuple(self.kshape) + (ds.nfeatures,))
+        self._K = N.random.standard_normal(tuple(self.kshape) + (ds.nfeatures,))
 
         # units weight vector deltas for batch training
         # (height x width x #features)
-        unit_deltas = N.zeros(self.units.shape, dtype='float')
+        unit_deltas = N.zeros(self._K.shape, dtype='float')
 
         # precompute distance kernel between elements in the Kohonen layer
         # that will remain constant throughout the training
@@ -122,10 +122,10 @@ class SimpleSOMMapper(Mapper):
                             # lower right
                             k[:self.kshape[0] - b[0], :self.kshape[1] - b[1]]))
                                ))
-                unit_deltas += infl[:,:,N.newaxis] * (s - self.units)
+                unit_deltas += infl[:,:,N.newaxis] * (s - self._K)
 
             # apply cumulative unit deltas
-            self.units += unit_deltas
+            self._K += unit_deltas
 
             if __debug__:
                 debug("SOM", "Iteration %d/%d done: ||unit_deltas||=%g" %
@@ -176,8 +176,9 @@ class SimpleSOMMapper(Mapper):
           tuple: (row, column)
         """
         # TODO expose distance function as parameter
-        loc = N.argmin(((self.units - sample) ** 2).sum(axis=2))
+        loc = N.argmin(((self.K - sample) ** 2).sum(axis=2))
 
+        # assumes 2D Kohonen layer
         return (N.divide(loc, self.kshape[1]), loc % self.kshape[1])
 
 
@@ -189,3 +190,71 @@ class SimpleSOMMapper(Mapper):
         """
         return N.array([self._getBMU(d) for d in data])
 
+
+    def reverse(self, data):
+        """Reverse map data from OUT space into the IN space.
+        """
+        # simple transform into appropriate array slicing and
+        # return the associated Kohonen unit weights
+        return self.K[tuple(N.transpose(data))]
+
+
+    def getInSize(self):
+        """Returns the size of the entity in input space"""
+        return self.K.shape[-1]
+
+
+    def getOutSize(self):
+        """Returns the size of the entity in output space"""
+        return self.K.shape[:-1]
+
+
+    def selectOut(self, outIds):
+        """Limit the OUT space to a certain set of features.
+
+        This is currently not implemented. Moreover, although it is technically
+        possible to implement this functionality, it is unsure whether it is
+        meaningful in the context of SOMs.
+        """
+        raise NotImplementedError
+
+
+    def getInId(self, outId):
+        """Translate a feature id into a coordinate/index in input space.
+
+        This is not meaningful in the context of SOMs.
+        """
+        raise NotImplementedError
+
+
+    def isValidOutId(self, outId):
+        """Validate feature id in OUT space.
+        """
+        return (outId >= 0).all() and (outId < self.kshape).all()
+
+
+    def __repr__(self):
+        s = Mapper.__repr__(self).rstrip(' )')
+        # beautify
+        if not s[-1] == '(':
+            s += ' '
+        s += 'kshape=%s, niter=%i, learning_rate=%f, iradius=%f)' \
+                % (str(tuple(self.kshape)), self.niter, self.lrate,
+                   self.radius)
+        return s
+
+
+    def _accessKohonen(self):
+        """Provide access to the Kohonen layer.
+
+        With some care.
+        """
+        if self._K is None:
+            raise RuntimeError, \
+                  'The SOM needs to be trained before access to the Kohonen ' \
+                  'layer is possible.'
+
+        return self._K
+
+
+    K = property(fget=_accessKohonen)
