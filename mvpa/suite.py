@@ -61,6 +61,7 @@ from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.samplegroup import *
+from mvpa.mappers.som import *
 from mvpa.mappers.array import *
 if externals.exists('mdp'):
     from mvpa.mappers.pca import *
