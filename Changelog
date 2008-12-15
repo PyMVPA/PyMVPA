@@ -32,6 +32,11 @@ Unreleased changes
 Releases
 ========
 
+* 0.4.1 (???, ?? ??? 200?)
+
+  * NiftiDataset capable to handle files with less than 4 dimensions.
+
+
 * 0.4.0 (Sat, 15 Nov 2008)
 
   * Add :class:`~mvpa.misc.io.hamster.Hamster`, as a simple facility to easily
