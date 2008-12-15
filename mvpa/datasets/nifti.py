@@ -16,6 +16,9 @@ externals.exists('nifti', raiseException=True)
 import numpy as N
 from mvpa.support.copy import deepcopy
 
+if __debug__:
+    from mvpa.base import debug
+
 # little trick to be able to import 'nifti' package (which has same name)
 oldname = __name__
 # crazy name with close to zero possibility to cause whatever
@@ -33,12 +36,16 @@ from mvpa.mappers.array import DenseArrayMapper
 from mvpa.base import warning
 
 
-def getNiftiFromAnySource(src):
+def getNiftiFromAnySource(src, ensure=False, enforce4D=False):
     """Load/access NIfTI data from files or instances.
 
     :Parameter:
       src: str | NiftiImage
         Filename of a NIfTI image or a `NiftiImage` instance.
+      ensure : bool
+        If True, through ValueError exception if cannot be loaded.
+      enforce4D : bool
+        If True, enforce 4D (t,z,y,x) shape of the data
 
     :Returns:
       NiftiImage | None
@@ -58,6 +65,17 @@ def getNiftiFromAnySource(src):
     elif isinstance(src, NiftiImage):
         # nothing special
         nifti = src
+    elif ensure:
+        raise ValueError, "Cannot load NIfTI from %s" % (src,)
+
+    if nifti is not None and enforce4D:
+        shape = nifti.data.shape
+        if len(shape) < 4:
+            new_shape = (1,)*(4-len(shape)) + shape
+            if __debug__:
+                debug('DS_NIFTI', 'Enforcing shape %s for %s data from %s' %
+                      (new_shape, shape, src))
+            nifti.data.shape = new_shape
 
     return nifti
 
@@ -95,13 +113,16 @@ class NiftiDataset(MappedDataset):
     """
     # XXX: Every dataset should really have an example of howto instantiate
     #      it (necessary parameters).
-    def __init__(self, samples=None, mask=None, dsattr=None, **kwargs):
+    def __init__(self, samples=None, mask=None, dsattr=None,
+                 enforce4D=True, **kwargs):
         """
         :Parameters:
           samples: str | NiftiImage
             Filename of a NIfTI image or a `NiftiImage` instance.
           mask: str | NiftiImage
             Filename of a NIfTI image or a `NiftiImage` instance.
+          enforce4D: bool
+            Either to enforce 4D structucture of the loaded data.
         """
         # if in copy constructor mode
         if not dsattr is None and dsattr.has_key('mapper'):
@@ -117,7 +138,8 @@ class NiftiDataset(MappedDataset):
         #
 
         # load the samples
-        niftisamples = getNiftiFromAnySource(samples)
+        niftisamples = getNiftiFromAnySource(samples,
+                                             ensure=True, enforce4D=enforce4D)
         samples = niftisamples.data
 
         # do not put the whole NiftiImage in the dict as this will most
@@ -201,7 +223,7 @@ class ERNiftiDataset(EventDataset):
     boxcar.
     """
     def __init__(self, samples=None, events=None, mask=None, evconv=False,
-                 storeoffset=False, tr=None, **kwargs):
+                 storeoffset=False, tr=None, enforce4D=True, **kwargs):
         """
         :Paramaters:
           evconv: bool
@@ -213,6 +235,8 @@ class ERNiftiDataset(EventDataset):
           tr: float
             Temporal distance of two adjacent NIfTI volumes. This can be used
             to override the corresponding value in the NIfTI header.
+          enforce4D: bool
+            Either to enforce 4D structucture of the loaded data.
         """
         # check if we are in copy constructor mode
         if events is None:
@@ -220,7 +244,8 @@ class ERNiftiDataset(EventDataset):
                                   mask=mask, **kwargs)
             return
 
-        nifti = getNiftiFromAnySource(samples)
+        nifti = getNiftiFromAnySource(samples,
+                                      ensure=True, enforce4D=enforce4D)
         # no copying
         samples = nifti.data
 

@@ -147,6 +147,22 @@ class NiftiDatasetTests(unittest.TestCase):
         nim = ds.map2Nifti(ds.samples[0])
         self.failUnless(nim.data.shape == (4, 1, 20, 40))
 
+    def testNiftiDatasetFrom3D(self):
+        tssrc = os.path.join('..', 'data', 'bold')
+        masrc = os.path.join('..', 'data', 'mask')
+
+        # Test loading of 3D volumes
+
+        # it should puke if we are not enforcing 4D:
+        self.failUnlessRaises(Exception, NiftiDataset,
+                              masrc, mask=masrc, labels=1, enforce4D=False)
+        # by default we are enforcing it
+        ds = NiftiDataset(masrc, mask=masrc, labels=1)
+
+        plain_data = NiftiImage(masrc).data
+        # Lets check if mapping back works as well
+        self.failUnless(N.all(plain_data == \
+                              ds.map2Nifti().data.reshape(plain_data.shape)))
 
 
 def suite():
