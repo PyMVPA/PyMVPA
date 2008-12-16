@@ -22,7 +22,7 @@ if __debug__:
 
 __add_init2doc = False
 # figure out if ran within IPython
-if locals().has_key('__IP'):
+if '__IPYTHON__' in globals()['__builtins__']:
     from IPython import Release
     # XXX figure out exact version when init doc started to be added to class
     # description
