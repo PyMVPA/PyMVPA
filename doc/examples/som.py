@@ -179,13 +179,17 @@ rlm = dict([(v, k) for k, v in ds.labels_map.iteritems()])
 
 # define arbitrary colors for each stimulus condition
 pcolors = ['red', 'blue', 'yellow', 'black']
-for i, l in enumerate(ds.uniquelabels):
-    P.scatter(mapped[ds.labels==l, 0],
-              mapped[ds.labels==l, 1],
-              color=pcolors[i],
-              label=rlm[l])
-# auto-generate legend
-P.legend()
+
+# To render legend appropriately on older version of matplotlib
+# we need to store all the plots and generate legend manually
+splots, labels = [], []
+for l,color in zip(ds.uniquelabels, colors):
+    labels += [str(rlm[l])]
+    splots.append(P.scatter(mapped[ds.labels==l, 0],
+                            mapped[ds.labels==l, 1],
+                            color=color, label=labels[-1]))
+# generate legend
+P.legend(splots, labels)
 
 # show the figure
 if cfg.getboolean('examples', 'interactive', True):
