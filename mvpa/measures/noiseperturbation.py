@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa.base import debug
 
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 
 import numpy as N
 

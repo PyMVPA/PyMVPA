@@ -12,7 +12,7 @@ import unittest
 import numpy as N
 import os.path
 from mvpa import pymvpa_dataroot
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.meta import MetaDataset

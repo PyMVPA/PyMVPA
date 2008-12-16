@@ -12,7 +12,7 @@ from mvpa.base import externals
 externals.exists('pywt', raiseException=True)
 
 import unittest
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 import numpy as N
 
 from mvpa.mappers.boxcar import BoxcarMapper

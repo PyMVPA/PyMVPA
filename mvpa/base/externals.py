@@ -99,6 +99,15 @@ def __check_atlas_family(family):
     pass
 
 
+def __check_stablerdist():
+    import scipy.stats
+    # ATM all known implementations which implement custom cdf for
+    #     rdist are misbehaving, so there should be no _cdf
+    if '_cdf' in scipy.stats.distributions.rdist_gen.__dict__.keys():
+        raise ImportError, "scipy.stats carries misbehaving rdist distribution"
+    pass
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'nifti':'from nifti import NiftiImage as __',
@@ -110,6 +119,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
           'scipy': "import scipy as __",
+          'good scipy.stats.rdist': "__check_stablerdist()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'rpy': "import rpy as __",
@@ -137,7 +147,7 @@ try:
 except:
     pass
 
-def exists(dep, force=False, raiseException=False):
+def exists(dep, force=False, raiseException=False, issueWarning=None):
     """
     Test whether a known dependency is installed on the system.
 
@@ -153,7 +163,10 @@ def exists(dep, force=False, raiseException=False):
         performed.
       raiseException : boolean
         Whether to raise RuntimeError if dependency is missing.
-
+      issueWarning : string or None or True
+        If string, warning with given message would be thrown.
+        If True, standard message would be used for the warning
+        text.
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
@@ -168,7 +181,7 @@ def exists(dep, force=False, raiseException=False):
        and not cfg.getboolean('externals', 'retest', default='no') \
        and not force:
         if __debug__:
-            debug('EXT', "Skip restesting for '%s'." % dep)
+            debug('EXT', "Skip retesting for '%s'." % dep)
         return cfg.getboolean('externals', cfgid)
 
     # default to 'not found'
@@ -192,9 +205,17 @@ def exists(dep, force=False, raiseException=False):
             debug('EXT', "Presence of %s is%s verified%s" %
                   (dep, {True:'', False:' NOT'}[result], estr))
 
-    if not result and raiseException \
-       and cfg.getboolean('externals', 'raise exception', True):
-        raise RuntimeError, "Required external '%s' was not found" % dep
+    if not result:
+        if raiseException \
+               and cfg.getboolean('externals', 'raise exception', True):
+            raise RuntimeError, "Required external '%s' was not found" % dep
+        if issueWarning is not None \
+               and cfg.getboolean('externals', 'issue warning', True):
+            if issueWarning is True:
+                warning("Required external '%s' was not found" % dep)
+            else:
+                warning(issueWarning)
+
 
     # store result in config manager
     if not cfg.has_section('externals'):

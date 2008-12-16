@@ -149,6 +149,42 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnless(nim.data.shape == (4, 1, 20, 40))
 
 
+    def testNiftiDatasetFrom3D(self):
+        tssrc = os.path.join('..', 'data', 'bold')
+        masrc = os.path.join('..', 'data', 'mask')
+
+        # Test loading of 3D volumes
+
+        # it should puke if we are not enforcing 4D:
+        self.failUnlessRaises(Exception, NiftiDataset,
+                              masrc, mask=masrc, labels=1, enforce4D=False)
+        # by default we are enforcing it
+        ds = NiftiDataset(masrc, mask=masrc, labels=1)
+
+        plain_data = NiftiImage(masrc).data
+        # Lets check if mapping back works as well
+        self.failUnless(N.all(plain_data == \
+                              ds.map2Nifti().data.reshape(plain_data.shape)))
+
+        # test loading from a list of filenames
+
+        # for now we should fail if trying to load a mix of 4D and 3D volumes
+        self.failUnlessRaises(ValueError, NiftiDataset, (masrc, tssrc),
+                              mask=masrc, labels=1)
+
+        # Lets prepare some custom NiftiImage
+        dsfull = NiftiDataset(tssrc, mask=masrc, labels=1)
+        ds_selected = dsfull['samples', [3]]
+        nifti_selected = ds_selected.map2Nifti()
+
+        # Load dataset from a mix of 3D volumes (given by filenames and NiftiImages)
+        labels = [123,2,123]
+        ds2 = NiftiDataset((masrc, masrc, nifti_selected), mask=masrc, labels=labels)
+        self.failUnless(ds2.nsamples == 3)
+        self.failUnless((ds2.samples[0] == ds2.samples[1]).all())
+        self.failUnless((ds2.samples[2] == dsfull.samples[3]).all())
+        self.failUnless((ds2.labels == labels).all())
+
 
 def suite():
     return unittest.makeSuite(NiftiDatasetTests)

@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA Regressions"""
 
 from mvpa.base import externals
-from mvpa.misc.copy import deepcopy
+from mvpa.support.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
