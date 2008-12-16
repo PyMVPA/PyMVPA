@@ -127,6 +127,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pylab': "import pylab as __",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
+          'mdp >= 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
           'sg >= 0.6.4': "__check_shogun(3318)",
