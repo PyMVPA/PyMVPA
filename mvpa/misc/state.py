@@ -1252,7 +1252,7 @@ class ClassWithCollections(object):
         if __debug__:
             descr = kwargs.get('descr', None)
             debug("COL", "ClassWithCollections.__new__ was done "
-                  "for %s id %s with descr=%s" \
+                  "for %s#%s with descr=%s" \
                   % (s__class__.__name__, id(self), descr))
 
         return self
@@ -1307,7 +1307,7 @@ class ClassWithCollections(object):
             #              + " Valid parameters are %s" % known_params
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
-                  "for %s id %s with descr=%s" \
+                  "for %s#%s with descr=%s" \
                   % (self.__class__.__name__, id(self), descr))
 
 
