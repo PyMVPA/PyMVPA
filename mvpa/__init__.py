@@ -49,6 +49,10 @@ import random
 import numpy as N
 from mvpa.base import cfg
 
+# locate data root -- data might not be installed, but if it is, it should be at
+# this location
+pymvpa_dataroot = os.path.join(os.path.dirname(__file__), 'data')
+
 if not __debug__:
     try:
         import psyco
@@ -75,6 +79,9 @@ def seed(random_seed):
     random.seed(random_seed)
 
 seed(_random_seed)
+
+# import the main unittest interface
+from mvpa.tests import run as test
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)

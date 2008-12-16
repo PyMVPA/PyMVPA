@@ -23,7 +23,7 @@ P.subplot(1, 2, 1)
 
 # load the sensor information from their definition file.
 # This file has sensor names, as well as their 3D coordinates
-sensors=XAVRSensorLocations(os.path.join('data', 'xavr1010.dat'))
+sensors=XAVRSensorLocations(os.path.join(pymvpa_dataroot, 'xavr1010.dat'))
 
 # make up some artifical topography
 # 'enable' to channels, all others set to off ;-)
@@ -40,7 +40,7 @@ P.subplot(1, 2, 2)
 
 # load MEG sensor locations
 sensors=TuebingenMEGSensorLocations(
-            os.path.join('data', 'tueb_meg_coord.xyz'))
+            os.path.join(pymvpa_dataroot, 'tueb_meg_coord.xyz'))
 
 # random values this time
 topo = N.random.randn(len(sensors.names))

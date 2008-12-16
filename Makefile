@@ -1,5 +1,5 @@
-PROFILE_FILE=tests/main.pstats
-COVERAGE_REPORT=coverage
+PROFILE_FILE=$(CURDIR)/build/main.pstats
+COVERAGE_REPORT=$(CURDIR)/build/coverage
 HTML_DIR=build/html
 DOCSRC_DIR=build/docsrc
 APIDOC_DIR=$(HTML_DIR)/api
@@ -8,16 +8,23 @@ LATEX_DIR=build/latex
 WWW_DIR=build/website
 SWARM_DIR=build/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
+DATA_URI=apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 
-# should be made conditional, as pyversions id Debian specific
-#PYVER := $(shell pyversions -vd)
-# try generic variant instead
+
+#
+# Details on the Python/system
+#
+
 PYVER := $(shell python -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
 ARCH := $(shell uname -m)
 
+
+#
+# Little helpers
+#
 
 mkdir-%:
 	if [ ! -d $($*) ]; then mkdir -p $($*); fi
@@ -62,7 +69,7 @@ build-stamp: 3rd
 # Cleaning
 #
 
-# Full clean
+# this target is used to clean things for a fresh build
 clean:
 # clean 3rd party pieces
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
@@ -71,19 +78,13 @@ clean:
      done
 # clean tools
 	$(MAKE) -C tools clean
-
-# if we are on debian system - we might have left-overs from build
-	-@$(MAKE) debian-clean
-# if not on debian -- just distclean
-	-@$(MAKE) distclean
-
-distclean:
+# clean all bits and pieces
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
 		mvpa/clfs/lib*/*_wrap.* \
 		mvpa/clfs/lib*/*c.py \
-		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
+		mvpa/tests/*.{prof,pstats,kcache}
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
 		 -o -name '.coverage' \
@@ -95,14 +96,24 @@ distclean:
 	-@rm -rf dist
 	-@rm *-stamp
 
+# this target should put the source tree into shape for building the source
+# distribution
+distclean:
+# if we are on debian system - we might have left-overs from build
+	-@$(MAKE) debian-clean
+	-@rm -rf tools/codeswarm
+
+
 
 debian-clean:
 # remove stamps for builds since state is not really built any longer
 	-fakeroot debian/rules clean
 
+
 #
 # Documentation
 #
+
 doc: website
 
 prepare-docsrc: prepare-docsrc-stamp
@@ -154,6 +165,15 @@ apidoc-stamp: build
 	LC_ALL=C MVPA_EPYDOC_WARNINGS=once tools/epydoc --config doc/api/epydoc.conf
 	touch $@
 
+# this takes some minutes !!
+profile: build mvpa/tests/main.py
+	@PYTHONPATH=. tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
+
+
+#
+# Website
+#
+
 website: website-stamp
 website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
@@ -176,37 +196,49 @@ upload-htmldoc: htmldoc
 	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
-# this takes some minutes !!
-profile: build tests/main.py
-	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
+#
+# Tests (unittests, docs, examples)
+#
 
 ut-%: build
-	@cd tests && PYTHONPATH=.. python test_$*.py
+	PYTHONPATH=. python mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	@cd tests && PYTHONPATH=.. python main.py
+	PYTHONPATH=. python mvpa/tests/main.py
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@cd tests && PYTHONPATH=badexternals:.. python main.py 2>&1 \
+	@PYTHONPATH=badexternals:. python mvpa/tests/main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
-# Runs unittests in few additional modes:
-# * with optimization on -- helps to catch unconditional debug calls
-# * with all debug ids and some metrics (crossplatform ones) on.
+# only non-labile tests
+unittest-nonlabile: build
+	@echo "I: Running only non labile unittests. None of them should ever fail."
+	@PYTHONPATH=. MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+
+# Run unittests with optimization on -- helps to catch unconditional
+# debug calls
+unittest-optimization: build
+	@echo "I: Running unittests with python -O."
+	@PYTHONPATH=. python -O mvpa/tests/main.py
+
+
+# Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
 #     additional checking,
 #     debug() calls validation, etc
-unittests: unittest unittest-badexternals
-	@cd tests && PYTHONPATH=.. python -O main.py
+unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
-	@cd tests && \
-      PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-       python main.py 2>&1 \
+	@PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
+       python mvpa/tests/main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
+
+# Run all unittests
+unittests: unittest-nonlabile unittest unittest-badexternals \
+           unittest-optimization unittest-debug
 
 te-%: build
 	@echo -n "I: Testing example $*: "
@@ -230,7 +262,7 @@ testmanual: build
 # mvpa.suite()
 testsuite:
 	@echo "I: Running full testsuite"
-	@git grep -h '^\W*from mvpa.*import' tests | \
+	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	while read i; do \
@@ -249,11 +281,11 @@ test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
-	@cd tests && { \
-	  export PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
-	  python-coverage -x main.py >/dev/null 2>&1; \
-	  python-coverage -r -i -o /usr,/var >| ../$(COVERAGE_REPORT); \
-	  grep -v '100%$$' ../$(COVERAGE_REPORT); \
+	@{ \
+	  export PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
+	  python-coverage -x mvpa/tests/main.py >/dev/null 2>&1; \
+	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
+	  grep -v '100%$$' $(COVERAGE_REPORT); \
 	  python-coverage -a -i -o /usr,/var ; }
 
 
@@ -311,7 +343,7 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync $(RSYNC_OPTS) apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
+	rsync $(RSYNC_OPTS) $(DATA_URI) .
 
 # Various other data which might be sensitive and not distribu
 fetch-data-nonfree: fetch-data-nonfree-stamp
@@ -322,9 +354,12 @@ fetch-data-nonfree-stamp:
 # remove directories which should be bogus now
 	@rmdir data/nonfree/audio data/nonfree 2>/dev/null || :
 	rsync $(RSYNC_OPTS) dev.pymvpa.org:/home/data/nonfree temp/ && touch $@
+
+
 #
-# Various sugarings
+# Various sugarings (e.g. swarm)
 #
+
 AUDIO_TRACK=temp/nonfree/audio/Peter_Nalitch-Guitar.mp3
 
 # With permission of the author, we can use Gitar for our visual history
@@ -367,10 +402,16 @@ $(SWARMTOOL_DIR):
 
 
 upload-codeswarm: codeswarm
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(SWARM_DIR)/*.flv belka.rutgers.edu:/home/michael/www.pymvpa.org/pymvpa/files/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(SWARM_DIR)/*.flv $(WWW_UPLOAD_URI)/files/
+
 
 #
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual profile website fetch-data-misc upload-website test testsuite testmanual testapiref testexamples distclean debian-clean all unittest unittests handbook codeswarm
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual \
+        all profile website fetch-data-misc upload-website \
+        test testsuite testmanual testapiref testexamples distclean debian-clean \
+        unittest unittest-debug unittest-optimization unittest-nonlabile \
+        unittest-badexternals unittests \
+        handbook codeswarm upload-codeswarm

@@ -11,6 +11,8 @@
 import unittest
 import numpy as N
 
+from mvpa.base import externals
+
 from mvpa.misc.transformers import Absolute, OneMinus, RankOrder, \
      ReverseRankOrder, L1Normed, L2Normed, OverAxis, DistPValue
 
@@ -82,6 +84,8 @@ class TransformerTests(unittest.TestCase):
 
     def testDistPValue(self):
         """Basic testing of DistPValue"""
+        if not externals.exists('scipy'):
+            return
         ndb = 200
         ndu = 20
         nperd = 2
