@@ -18,8 +18,7 @@ from mvpa.misc.exceptions import UnknownStateError
 
 from mvpa.clfs.base import Classifier, CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
-     SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
-     _deepcopyclf
+     SplitClassifier, MappedClassifier, FeatureSelectionClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
@@ -69,8 +68,8 @@ class ClassifiersTests(unittest.TestCase):
     def testBoosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
-        bclf = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
-                                        _deepcopyclf(self.clf_sign)])
+        bclf = CombinedClassifier(clfs=[self.clf_sign.clone(),
+                                        self.clf_sign.clone()])
 
         self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
                              list(self.data_bin_1.labels),
@@ -81,16 +80,16 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def testBoostedStatePropagation(self):
-        bclf = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
-                                        _deepcopyclf(self.clf_sign)],
+        bclf = CombinedClassifier(clfs=[self.clf_sign.clone(),
+                                        self.clf_sign.clone()],
                                   enable_states=['feature_ids'])
 
         # check states enabling propagation
         self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
         self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
 
-        bclf2 = CombinedClassifier(clfs=[_deepcopyclf(self.clf_sign),
-                                        _deepcopyclf(self.clf_sign)],
+        bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
+                                         self.clf_sign.clone()],
                                   propagate_states=False,
                                   enable_states=['feature_ids'])
 
@@ -154,7 +153,7 @@ class ClassifiersTests(unittest.TestCase):
         error = clf.confusion.error
         tr_error = clf.training_confusion.error
 
-        clf2 = _deepcopyclf(clf)
+        clf2 = clf.clone()
         cv = CrossValidatedTransferError(
             TransferError(clf2),
             NFoldSplitter(),
@@ -200,7 +199,7 @@ class ClassifiersTests(unittest.TestCase):
 
     @sweepargs(clf_=clfs['binary', '!meta'])
     def testSplitClassifierExtended(self, clf_):
-        clf2 = _deepcopyclf(clf_)
+        clf2 = clf_.clone()
         ds = datasets['uni2medium']#self.data_bin_1
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
                 splitter=NFoldSplitter(1),
@@ -373,8 +372,7 @@ class ClassifiersTests(unittest.TestCase):
             oldC = clf.C
             clf.C = 1.0                 # reset C to be 1
 
-        svm = clf
-        svm2 = _deepcopyclf(clf)
+        svm, svm2 = clf, clf.clone()
         svm2.states.enable(['training_confusion'])
 
         mclf = MulticlassClassifier(clf=svm,
@@ -432,12 +430,12 @@ class ClassifiersTests(unittest.TestCase):
     @sweepargs(clf=clfs['retrainable'])
     def testRetrainables(self, clf):
         # we need a copy since will tune its internals later on
-        clf = _deepcopyclf(clf)
+        clf = clf.clone()
         clf.states._changeTemporarily(enable_states = ['values'],
                                       # ensure that it does do predictions
                                       # while training
                                       disable_states=['training_confusion'])
-        clf_re = _deepcopyclf(clf)
+        clf_re = clf.clone()
         # TODO: .retrainable must have a callback to call smth like
         # _setRetrainable
         clf_re._setRetrainable(True)
