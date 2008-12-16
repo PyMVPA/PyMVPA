@@ -202,13 +202,11 @@ def enhancedClassDocString(cls, *args):
 
     # Add information about the states if available
     if lcl.has_key('_statesdoc'):
-        docs += [rstUnderline('Available state variables:', rst_lvlmarkup[1]),
-                 handleDocString(cls._statesdoc)]
+        docs += ['.. note::\n  Available state variables:',
+                 _indent(handleDocString(cls._statesdoc))]
 
     if len(args):
-        docs.append(rstUnderline('\nSee also documentation for base classes:',
-                                 rst_lvlmarkup[0]) +
-                    '\n\n' +
+        docs.append('\n.. seealso::\n\n  ' +
                     ', '.join(['`%s`' % i.__class__.__name__ for i in args]))
 
     clsdoc = '\n\n'.join(docs)
