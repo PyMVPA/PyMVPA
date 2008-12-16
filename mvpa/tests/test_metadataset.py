@@ -11,6 +11,7 @@
 import unittest
 import numpy as N
 import os.path
+from mvpa import pymvpa_dataroot
 from mvpa.misc.copy import deepcopy
 from mvpa.base import externals
 from mvpa.datasets import Dataset
@@ -68,8 +69,8 @@ class MetaDatasetTests(unittest.TestCase):
         if not externals.exists('nifti'):
             return
         from mvpa.datasets.nifti import NiftiDataset
-        eeds = EEPDataset(os.path.join('..', 'data', 'eep.bin'), labels=[1,2])
-        nids = NiftiDataset(os.path.join('..', 'data', 'example4d.nii.gz'),
+        eeds = EEPDataset(os.path.join(pymvpa_dataroot, 'eep.bin'), labels=[1,2])
+        nids = NiftiDataset(os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
                             labels=[1,2])
         plainds = Dataset(samples=N.arange(8).reshape((2,4)), labels=[1,2])
 

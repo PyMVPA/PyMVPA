@@ -2,6 +2,4 @@ include AUTHOR COPYING MANIFEST.in setup.*
 include Changelog TODO Makefile*
 recursive-include doc *
 recursive-include tools *
-recursive-include tests *
-recursive-include data *
 recursive-include 3rd *

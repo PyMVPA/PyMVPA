@@ -78,7 +78,7 @@ if have_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.4.0',
+      version      = '0.4.1',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -108,7 +108,9 @@ setup(name         = 'pymvpa',
                        'mvpa.misc.bv',
                        'mvpa.misc.io',
                        'mvpa.misc.plot',
-                       'mvpa.misc.fsl' ],
+                       'mvpa.misc.fsl',
+                       'mvpa.tests' ],
+      data_files = [('mvpa/data', ['mvpa/data'])],
       scripts      = glob( 'bin/*' ),
       ext_modules  = ext_modules
       )
