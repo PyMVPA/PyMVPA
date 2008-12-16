@@ -16,6 +16,9 @@ externals.exists('nifti', raiseException=True)
 import numpy as N
 from mvpa.support.copy import deepcopy
 
+if __debug__:
+    from mvpa.base import debug
+
 # little trick to be able to import 'nifti' package (which has same name)
 oldname = __name__
 # crazy name with close to zero possibility to cause whatever
@@ -33,12 +36,17 @@ from mvpa.mappers.array import DenseArrayMapper
 from mvpa.base import warning
 
 
-def getNiftiFromAnySource(src):
+def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
     """Load/access NIfTI data from files or instances.
 
     :Parameter:
       src: str | NiftiImage
         Filename of a NIfTI image or a `NiftiImage` instance.
+      ensure : bool
+        If True, through ValueError exception if cannot be loaded.
+      enforce_dim : int or None
+        If not None, it is the dimensionality of the data to be enforced,
+        commonly 4D for the data, and 3D for the mask in case of fMRI.
 
     :Returns:
       NiftiImage | None
@@ -58,6 +66,51 @@ def getNiftiFromAnySource(src):
     elif isinstance(src, NiftiImage):
         # nothing special
         nifti = src
+    elif (isinstance(src, list) or isinstance(src, tuple)) \
+        and len(src)>0 \
+        and (isinstance(src[0], str) or isinstance(src[0], NiftiImage)):
+        # load from a list of given entries
+        if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
+        else:                       enforce_dim_ = None
+        srcs = [getNiftiFromAnySource(s, ensure=ensure,
+                                      enforce_dim=enforce_dim_)
+                for s in src]
+        if __debug__:
+            # lets check if they all have the same dimensionality
+            shapes = [s.data.shape for s in srcs]
+            if not N.all([s == shapes[0] for s in shapes]):
+                raise ValueError,\
+                      "Input volumes contain variable number of dimensions:" \
+                      " %s" % (shapes,)
+        # Combine them all into a single beast
+        nifti = NiftiImage(N.array([s.asarray() for s in srcs]),
+                           srcs[0].header)
+    elif ensure:
+        raise ValueError, "Cannot load NIfTI from %s" % (src,)
+
+    if nifti is not None and enforce_dim is not None:
+        shape, new_shape = nifti.data.shape, None
+        lshape = len(shape)
+
+        # check if we need to tune up shape
+        if lshape < enforce_dim:
+            # if we are missing required dimension(s)
+            new_shape = (1,)*(enforce_dim-lshape) + shape
+        elif lshape > enforce_dim:
+            # if there are bogus dimensions at the beginning
+            bogus_dims = lshape - enforce_dim
+            if shape[:bogus_dims] != (1,)*bogus_dims:
+                raise ValueError, \
+                      "Cannot enforce %dD on data with shape %s" \
+                      % (enforce_dim, shape)
+            new_shape = shape[bogus_dims:]
+
+        # tune up shape if needed
+        if new_shape is not None:
+            if __debug__:
+                debug('DS_NIFTI', 'Enforcing shape %s for %s data from %s' %
+                      (new_shape, shape, src))
+            nifti.data.shape = new_shape
 
     return nifti
 
@@ -95,13 +148,17 @@ class NiftiDataset(MappedDataset):
     """
     # XXX: Every dataset should really have an example of howto instantiate
     #      it (necessary parameters).
-    def __init__(self, samples=None, mask=None, dsattr=None, **kwargs):
+    def __init__(self, samples=None, mask=None, dsattr=None,
+                 enforce_dim=4, **kwargs):
         """
         :Parameters:
           samples: str | NiftiImage
             Filename of a NIfTI image or a `NiftiImage` instance.
           mask: str | NiftiImage
             Filename of a NIfTI image or a `NiftiImage` instance.
+          enforce_dim : int or None
+            If not None, it is the dimensionality of the data to be enforced,
+            commonly 4D for the data, and 3D for the mask in case of fMRI.
         """
         # if in copy constructor mode
         if not dsattr is None and dsattr.has_key('mapper'):
@@ -117,7 +174,8 @@ class NiftiDataset(MappedDataset):
         #
 
         # load the samples
-        niftisamples = getNiftiFromAnySource(samples)
+        niftisamples = getNiftiFromAnySource(samples, ensure=True,
+                                             enforce_dim=enforce_dim)
         samples = niftisamples.data
 
         # do not put the whole NiftiImage in the dict as this will most
@@ -201,7 +259,7 @@ class ERNiftiDataset(EventDataset):
     boxcar.
     """
     def __init__(self, samples=None, events=None, mask=None, evconv=False,
-                 storeoffset=False, tr=None, **kwargs):
+                 storeoffset=False, tr=None, enforce_dim=4, **kwargs):
         """
         :Paramaters:
           evconv: bool
@@ -213,6 +271,9 @@ class ERNiftiDataset(EventDataset):
           tr: float
             Temporal distance of two adjacent NIfTI volumes. This can be used
             to override the corresponding value in the NIfTI header.
+          enforce_dim : int or None
+            If not None, it is the dimensionality of the data to be enforced,
+            commonly 4D for the data, and 3D for the mask in case of fMRI.
         """
         # check if we are in copy constructor mode
         if events is None:
@@ -220,7 +281,8 @@ class ERNiftiDataset(EventDataset):
                                   mask=mask, **kwargs)
             return
 
-        nifti = getNiftiFromAnySource(samples)
+        nifti = getNiftiFromAnySource(samples, ensure=True,
+                                      enforce_dim=enforce_dim)
         # no copying
         samples = nifti.data
 
