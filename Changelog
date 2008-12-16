@@ -34,7 +34,10 @@ Releases
 
 * 0.4.1 (???, ?? ??? 200?)
 
-  * NiftiDataset capable to handle files with less than 4 dimensions.
+  * :class:`~mvpa.datasets.nifti.NiftiDataset` capable to handle files
+    with less than 4 dimensions, which can, optionally, be provided as
+    a list of filenames of :class:`~nifti.NiftiImage` objects. That
+    makes it easy to load data from a sequence of files.
 
 
 * 0.4.0 (Sat, 15 Nov 2008)
