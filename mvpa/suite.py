@@ -66,6 +66,8 @@ from mvpa.mappers.array import *
 if externals.exists('mdp'):
     from mvpa.mappers.pca import *
     from mvpa.mappers.ica import *
+if externals.exists('mdp >= 2.4'):
+    from mvpa.mappers.lle import *
 from mvpa.measures.anova import *
 from mvpa.measures.irelief import *
 from mvpa.measures.base import *
