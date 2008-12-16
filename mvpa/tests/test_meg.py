@@ -11,12 +11,13 @@
 import unittest
 import os.path
 
+from mvpa import pymvpa_dataroot
 from mvpa.misc.io.meg import TuebingenMEG
 
 class MEGTests(unittest.TestCase):
 
     def testTuebingenMEG(self):
-        meg = TuebingenMEG(os.path.join('..', 'data', 'tueb_meg.dat.gz'))
+        meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))
 
         # check basics
         self.failUnless(meg.channelids == ['BG1', 'MLC11', 'EEG02'])

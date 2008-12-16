@@ -17,7 +17,9 @@ Example showing some possibilities of data exploration
 
 import numpy as N
 import pylab as P
+import os
 
+from mvpa import pymvpa_dataroot
 from mvpa.misc.plot import plotFeatureHist, plotSamplesDistance
 from mvpa import cfg
 from mvpa.datasets.nifti import NiftiDataset
@@ -25,11 +27,11 @@ from mvpa.misc.io import SampleAttributes
 from mvpa.datasets.miscfx import zscore, detrend
 
 # load example fmri dataset
-attr = SampleAttributes('data/attributes.txt')
-ds = NiftiDataset(samples='data/bold.nii.gz',
+attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+ds = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                   labels=attr.labels,
                   chunks=attr.chunks,
-                  mask='data/mask.nii.gz')
+                  mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # only use the first 5 chunks to save some cpu-cycles
 ds = ds.selectSamples(ds.chunks < 5)

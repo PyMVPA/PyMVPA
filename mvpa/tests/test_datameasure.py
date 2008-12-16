@@ -11,8 +11,12 @@
 from mvpa.base import externals
 from mvpa.featsel.base import FeatureSelectionPipeline, \
      SensitivityBasedFeatureSelection, CombinedFeatureSelection
+from mvpa.clfs.transerror import TransferError
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
+
+>>>>>>> mh/master:mvpa/tests/test_datameasure.py
 from mvpa.featsel.rfe import RFE
 
 from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
@@ -21,7 +25,8 @@ from mvpa.clfs.smlr import SMLR, SMLRWeights
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter, NoneSplitter
 
-from mvpa.misc.transformers import Absolute, FirstAxisMean, SecondAxisSumOfAbs
+from mvpa.misc.transformers import Absolute, FirstAxisMean, \
+     SecondAxisSumOfAbs, DistPValue
 
 from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
 from mvpa.measures.anova import OneWayAnova
@@ -190,6 +195,35 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # and should have got different sensitivities
         self.failUnless(N.any(sens[0] != sens[1]))
 
+
+        if not externals.exists('scipy'):
+            return
+        # Most evil example
+        ds = datasets['uni2medium']
+        plain_sana = SVM().getSensitivityAnalyzer(
+               combiner=None, transformer=DistPValue())
+        boosted_sana = SplitFeaturewiseDatasetMeasure(
+            analyzer=SVM().getSensitivityAnalyzer(
+               combiner=None, transformer=DistPValue(fpp=0.05)),
+            splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
+            combiner=FirstAxisMean,
+            enable_states=['splits', 'sensitivities'])
+        # lets create feature selector
+        fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)
+
+        sanas = dict(plain=plain_sana, boosted=boosted_sana)
+        for k,sana in sanas.iteritems():
+            clf = FeatureSelectionClassifier(SVM(),
+                        SensitivityBasedFeatureSelection(sana, fsel),
+                        descr='SVM on p=0.01(both tails) using %s' % k)
+            ce = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
+            error = ce(ds)
+
+        sens = boosted_sana(ds)
+        sens_plain = plain_sana(ds)
+
+        # TODO: make a really unittest out of it -- not just runtime
+        #       bugs catcher
 
     # TODO -- unittests for sensitivity analyzers which use combiners
     # (linsvmweights for multi-class SVMs and smlrweights for SMLR)

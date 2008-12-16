@@ -241,9 +241,7 @@ def testAllDependencies(force=False):
     # loop over all known dependencies
     for dep in _KNOWN:
         if not exists(dep, force):
-            warning("Known dependency %s is not present or is broken, " \
-                    "thus not available, or only available in an " \
-                    "outdated/insufficient version." % dep)
+            warning("%s is not available." % dep)
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \

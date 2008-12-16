@@ -88,9 +88,9 @@ class DenseArrayMapper(MaskMapper):
                 # check for compatibility
                 if not shape == mask.shape:
                     raise ValueError, \
-                        "The mask dataspace shape [%s] is not " \
-                        "compatible with the provided shape." \
-                        % (`mask.shape`, `shape`)
+                        "The mask dataspace shape %s is not " \
+                        "compatible with the provided shape %s." \
+                        % (mask.shape, shape)
 
         # configure the baseclass with the processed mask
         MaskMapper.__init__(self, mask, metric=metric, **kwargs)

@@ -12,6 +12,7 @@ import unittest
 import os.path
 import numpy as N
 
+from mvpa import pymvpa_dataroot
 from mvpa.datasets.nifti import *
 from mvpa.misc.exceptions import *
 from mvpa.misc.fsl.base import FslEV3
@@ -19,7 +20,7 @@ from mvpa.misc.fsl.base import FslEV3
 class NiftiDatasetTests(unittest.TestCase):
 
     def testNiftiDataset(self):
-        data = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
+        data = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                             labels=[1,2])
         self.failUnless(data.nfeatures == 294912)
         self.failUnless(data.nsamples == 2)
@@ -49,7 +50,7 @@ class NiftiDatasetTests(unittest.TestCase):
 
 
     def testNiftiMapper(self):
-        data = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
+        data = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                             labels=[1,2])
 
         # test mapping of ndarray
@@ -63,7 +64,7 @@ class NiftiDatasetTests(unittest.TestCase):
 
 
     def testNiftiSelfMapper(self):
-        example_path = os.path.join('..', 'data','example4d')
+        example_path = os.path.join(pymvpa_dataroot, 'example4d')
         example = NiftiImage(example_path)
         data = NiftiDataset(samples=example_path,
                             labels=[1,2])
@@ -82,9 +83,9 @@ class NiftiDatasetTests(unittest.TestCase):
     def testMultipleCalls(self):
         # test if doing exactly the same operation twice yields the same
         # result
-        data = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
+        data = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                             labels=1)
-        data2 = NiftiDataset(samples=os.path.join('..', 'data','example4d'),
+        data2 = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                              labels=1)
 
         # Currently this test fails and I don't know why!
@@ -103,9 +104,9 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnlessRaises(DatasetError, ERNiftiDataset)
 
         # setup data sources
-        tssrc = os.path.join('..', 'data', 'bold')
-        evsrc = os.path.join('..', 'data', 'fslev3.txt')
-        masrc = os.path.join('..', 'data', 'mask')
+        tssrc = os.path.join(pymvpa_dataroot, 'bold')
+        evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
+        masrc = os.path.join(pymvpa_dataroot, 'mask')
         evs = FslEV3(evsrc).toEvents()
 
         # more failure ;-)
@@ -147,6 +148,42 @@ class NiftiDatasetTests(unittest.TestCase):
         nim = ds.map2Nifti(ds.samples[0])
         self.failUnless(nim.data.shape == (4, 1, 20, 40))
 
+
+    def testNiftiDatasetFrom3D(self):
+        tssrc = os.path.join(pymvpa_dataroot, 'bold')
+        masrc = os.path.join(pymvpa_dataroot, 'mask')
+
+        # Test loading of 3D volumes
+
+        # it should puke if we are not enforcing 4D:
+        self.failUnlessRaises(Exception, NiftiDataset,
+                              masrc, mask=masrc, labels=1, enforce4D=False)
+        # by default we are enforcing it
+        ds = NiftiDataset(masrc, mask=masrc, labels=1)
+
+        plain_data = NiftiImage(masrc).data
+        # Lets check if mapping back works as well
+        self.failUnless(N.all(plain_data == \
+                              ds.map2Nifti().data.reshape(plain_data.shape)))
+
+        # test loading from a list of filenames
+
+        # for now we should fail if trying to load a mix of 4D and 3D volumes
+        self.failUnlessRaises(ValueError, NiftiDataset, (masrc, tssrc),
+                              mask=masrc, labels=1)
+
+        # Lets prepare some custom NiftiImage
+        dsfull = NiftiDataset(tssrc, mask=masrc, labels=1)
+        ds_selected = dsfull['samples', [3]]
+        nifti_selected = ds_selected.map2Nifti()
+
+        # Load dataset from a mix of 3D volumes (given by filenames and NiftiImages)
+        labels = [123,2,123]
+        ds2 = NiftiDataset((masrc, masrc, nifti_selected), mask=masrc, labels=labels)
+        self.failUnless(ds2.nsamples == 3)
+        self.failUnless((ds2.samples[0] == ds2.samples[1]).all())
+        self.failUnless((ds2.samples[2] == dsfull.samples[3]).all())
+        self.failUnless((ds2.labels == labels).all())
 
 
 def suite():
