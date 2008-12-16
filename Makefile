@@ -124,14 +124,14 @@ references:
 	tools/bib2rst_ref.py
 
 htmldoc: modref-templates examples2rst build
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) html
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../.. $(MAKE) html
 	cd $(HTML_DIR)/modref && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=.. $(MAKE) latex
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../.. $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -372,7 +372,7 @@ $(SWARM_DIR)/frames: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
 	@mkdir -p $(SWARM_DIR)/frames
 	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
 
-$(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames
+$(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames $(AUDIO_TRACK)
 	@echo "I: Generating codeswarm video"
 	@cd $(SWARM_DIR) && \
      ffmpeg -r $$(echo "scale=2; $$(ls -1 frames/ |wc -l) / 154" | bc) -f image2 \
