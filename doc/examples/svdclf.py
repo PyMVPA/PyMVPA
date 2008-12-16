@@ -25,11 +25,11 @@ if __debug__:
 #
 # load PyMVPA example dataset
 #
-attr = SampleAttributes('data/attributes.txt')
-dataset = NiftiDataset(samples='data/bold.nii.gz',
+attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
-                       mask='data/mask.nii.gz')
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
 # preprocessing

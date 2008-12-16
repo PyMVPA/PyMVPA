@@ -19,7 +19,7 @@ generates an ERF-plot.
 from mvpa.suite import *
 
 # load data
-meg = TuebingenMEG(os.path.join('data', 'tueb_meg.dat.gz'))
+meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))
 
 
 # Define plots for easy feeding into plotERP

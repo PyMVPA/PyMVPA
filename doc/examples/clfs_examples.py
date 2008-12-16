@@ -26,10 +26,9 @@ def main():
 
 
     # Load Haxby dataset example
-    haxby1path = 'data'
-    attrs = SampleAttributes(os.path.join(haxby1path,
+    attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
                                           'attributes_literal.txt'))
-    haxby8 = NiftiDataset(samples=os.path.join(haxby1path,
+    haxby8 = NiftiDataset(samples=os.path.join(pymvpa_dataroot,
                                                'bold.nii.gz'),
                           labels=attrs.labels,
                           labels_map=True,
