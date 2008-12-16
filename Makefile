@@ -98,7 +98,7 @@ clean:
 
 # this target should put the source tree into shape for building the source
 # distribution
-distclean:
+distclean: clean
 # if we are on debian system - we might have left-overs from build
 	-@$(MAKE) debian-clean
 	-@rm -rf tools/codeswarm
