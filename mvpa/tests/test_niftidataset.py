@@ -150,8 +150,8 @@ class NiftiDatasetTests(unittest.TestCase):
 
 
     def testNiftiDatasetFrom3D(self):
-        tssrc = os.path.join('..', 'data', 'bold')
-        masrc = os.path.join('..', 'data', 'mask')
+        tssrc = os.path.join(pymvpa_dataroot, 'bold')
+        masrc = os.path.join(pymvpa_dataroot, 'mask')
 
         # Test loading of 3D volumes
 
