@@ -433,7 +433,10 @@ class ClassifiersTests(unittest.TestCase):
     def testRetrainables(self, clf):
         # we need a copy since will tune its internals later on
         clf = _deepcopyclf(clf)
-        clf.states._changeTemporarily(enable_states = ['values'])
+        clf.states._changeTemporarily(enable_states = ['values'],
+                                      # ensure that it does do predictions
+                                      # while training
+                                      disable_states=['training_confusion'])
         clf_re = _deepcopyclf(clf)
         # TODO: .retrainable must have a callback to call smth like
         # _setRetrainable
