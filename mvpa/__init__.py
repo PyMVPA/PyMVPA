@@ -80,6 +80,9 @@ def seed(random_seed):
 
 seed(_random_seed)
 
+# import the main unittest interface
+from mvpa.tests import run as test
+
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
     debug('INIT', 'mvpa end')
