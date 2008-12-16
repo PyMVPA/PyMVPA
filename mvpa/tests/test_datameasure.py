@@ -11,17 +11,22 @@
 from mvpa.base import externals
 from mvpa.featsel.base import FeatureSelectionPipeline, \
      SensitivityBasedFeatureSelection
+from mvpa.clfs.transerror import TransferError
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
-                                 FractionTailSelector
+                                 FractionTailSelector, RangeElementSelector
+
 from mvpa.featsel.rfe import RFE
 
 from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.misc.transformers import Absolute
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitter import NFoldSplitter, NoneSplitter
 
-from mvpa.misc.transformers import Absolute, FirstAxisMean, SecondAxisSumOfAbs
+from mvpa.misc.transformers import Absolute, FirstAxisMean, \
+     SecondAxisSumOfAbs, DistPValue
 
+from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
 from mvpa.measures.anova import OneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
@@ -154,6 +159,69 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessRaises(NotImplementedError,
                               svmnl.getSensitivityAnalyzer)
 
+
+    def testSplitFeaturewiseDatasetMeasure(self):
+        ds = datasets['uni3small']
+        sana = SplitFeaturewiseDatasetMeasure(
+            analyzer=SMLR(
+              fit_all_weights=True).getSensitivityAnalyzer(combiner=None),
+            splitter=NFoldSplitter(),
+            combiner=None)
+
+        sens = sana(ds)
+
+        self.failUnless(sens.shape == (
+            len(ds.uniquechunks), ds.nfeatures, len(ds.uniquelabels)))
+
+
+        # Lets try more complex example with 'boosting'
+        ds = datasets['uni3medium']
+        sana = SplitFeaturewiseDatasetMeasure(
+            analyzer=SMLR(
+              fit_all_weights=True).getSensitivityAnalyzer(combiner=None),
+            splitter=NoneSplitter(nperlabel=0.25, mode='first', nrunspersplit=2),
+            combiner=None,
+            enable_states=['splits', 'sensitivities'])
+        sens = sana(ds)
+
+        self.failUnless(sens.shape == (2, ds.nfeatures, 3))
+        splits = sana.splits
+        self.failUnlessEqual(len(splits), 2)
+        self.failUnless(N.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
+        # should have used different samples
+        self.failUnless(N.any([splits[0][0].origids != splits[1][0].origids]))
+        # and should have got different sensitivities
+        self.failUnless(N.any(sens[0] != sens[1]))
+
+
+        if not externals.exists('scipy'):
+            return
+        # Most evil example
+        ds = datasets['uni2medium']
+        plain_sana = SVM().getSensitivityAnalyzer(
+               combiner=None, transformer=DistPValue())
+        boosted_sana = SplitFeaturewiseDatasetMeasure(
+            analyzer=SVM().getSensitivityAnalyzer(
+               combiner=None, transformer=DistPValue(fpp=0.05)),
+            splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
+            combiner=FirstAxisMean,
+            enable_states=['splits', 'sensitivities'])
+        # lets create feature selector
+        fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)
+
+        sanas = dict(plain=plain_sana, boosted=boosted_sana)
+        for k,sana in sanas.iteritems():
+            clf = FeatureSelectionClassifier(SVM(),
+                        SensitivityBasedFeatureSelection(sana, fsel),
+                        descr='SVM on p=0.01(both tails) using %s' % k)
+            ce = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
+            error = ce(ds)
+
+        sens = boosted_sana(ds)
+        sens_plain = plain_sana(ds)
+
+        # TODO: make a really unittest out of it -- not just runtime
+        #       bugs catcher
 
     # TODO -- unittests for sensitivity analyzers which use combiners
     # (linsvmweights for multi-class SVMs and smlrweights for SMLR)

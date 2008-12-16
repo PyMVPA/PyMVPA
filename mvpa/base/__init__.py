@@ -168,6 +168,7 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")
     debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
@@ -189,10 +190,14 @@ if __debug__:
     debug.register('RFEC_', "Recursive Feature Elimination call (verbose)")
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
+    debug.register('DS_NIFTI', "NiftiDataset(s)")
     debug.register('DS_',  "*Dataset (verbose)")
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
     debug.register('SPL',   "*Splitter")
+
+    debug.register('TRAN',  "Transformers")
+    debug.register('TRAN_', "Transformers (verbose)")
 
     # CHECKs
     debug.register('CHECK_DS_SELECT',
@@ -213,6 +218,7 @@ if __debug__:
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
     debug.register('COLR', "Collector for states and classifier parameters")
+    debug.register('ES',   "Element selectors")
 
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")

@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import mvpa.misc.copy as copy
+import mvpa.support.copy as copy
 
 from mvpa.datasets import Dataset
 from mvpa.base.dochelpers import enhancedDocString
