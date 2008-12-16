@@ -32,7 +32,8 @@ def parseModule(uri):
     elif  os.path.exists(os.path.join(filename, '__init__.py')):
         filename = os.path.join(filename, '__init__.py')
     else:
-        print 'WARNING: URI?', uri, filename
+        # nothing that we could handle here.
+        return ([],[])
 
     f = open(filename)
 
@@ -64,6 +65,10 @@ def parseModule(uri):
 def writeAPIDocTemplate(uri):
     # get the names of all classes and functions
     functions, classes = parseModule(uri)
+
+    # do nothing if there is nothing to do
+    if not len(functions) and not len(classes):
+        return
 
     tf = open(os.path.join(modref_path, uri + '.txt'), 'w')
 
@@ -139,6 +144,10 @@ for dirpath, dirnames, filenames in os.walk(mvpa.__path__[0]):
                         re.sub(root_path,
                                'mvpa',
                                dirpath))
+
+    # no unittests in docs
+    if module_uri.startswith('mvpa.tests'):
+        continue
 
     # no private module
     if not module_uri.count('._'):
