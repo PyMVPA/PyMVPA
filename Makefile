@@ -126,7 +126,7 @@ references:
 	tools/bib2rst_ref.py
 
 htmldoc: modref-templates examples2rst build
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../.. $(MAKE) html
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR) $(MAKE) html
 	cd $(HTML_DIR)/modref && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
