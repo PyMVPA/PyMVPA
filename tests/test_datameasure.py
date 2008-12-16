@@ -194,6 +194,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnless(N.any(sens[0] != sens[1]))
 
 
+        if not externals.exists('scipy'):
+            return
         # Most evil example
         ds = datasets['uni2medium']
         plain_sana = SVM().getSensitivityAnalyzer(
