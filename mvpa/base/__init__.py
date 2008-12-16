@@ -168,6 +168,7 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")
     debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
