@@ -1,5 +1,5 @@
-PROFILE_FILE=tests/main.pstats
-COVERAGE_REPORT=coverage
+PROFILE_FILE=$(CURDIR)/build/main.pstats
+COVERAGE_REPORT=$(CURDIR)/build/coverage
 HTML_DIR=build/html
 DOCSRC_DIR=build/docsrc
 APIDOC_DIR=$(HTML_DIR)/api
@@ -62,7 +62,7 @@ build-stamp: 3rd
 # Cleaning
 #
 
-# Full clean
+# this target is used to clean things for a fresh build
 clean:
 # clean 3rd party pieces
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
@@ -71,19 +71,13 @@ clean:
      done
 # clean tools
 	$(MAKE) -C tools clean
-
-# if we are on debian system - we might have left-overs from build
-	-@$(MAKE) debian-clean
-# if not on debian -- just distclean
-	-@$(MAKE) distclean
-
-distclean:
+# clean all bits and pieces
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
 		mvpa/clfs/lib*/*.dylib \
 		mvpa/clfs/lib*/*_wrap.* \
 		mvpa/clfs/lib*/*c.py \
-		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
+		mvpa/tests/*.{prof,pstats,kcache}
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
 		 -o -name '.coverage' \
@@ -94,6 +88,14 @@ distclean:
 	-@rm -rf build
 	-@rm -rf dist
 	-@rm *-stamp
+
+# this target should put the source tree into shape for building the source
+# distribution
+distclean:
+# if we are on debian system - we might have left-overs from build
+	-@$(MAKE) debian-clean
+	-@rm -rf tools/codeswarm
+
 
 
 debian-clean:
@@ -177,20 +179,20 @@ upload-htmldoc: htmldoc
 
 
 # this takes some minutes !!
-profile: build tests/main.py
-	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
+profile: build mvpa/tests/main.py
+	@PYTHONPATH=. tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
 
 ut-%: build
-	@cd tests && PYTHONPATH=.. python test_$*.py
+	PYTHONPATH=. python mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	@cd tests && PYTHONPATH=.. python main.py
+	PYTHONPATH=. python mvpa/tests/main.py
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@cd tests && PYTHONPATH=badexternals:.. python main.py 2>&1 \
+	@PYTHONPATH=badexternals:. python mvpa/tests/main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
@@ -201,11 +203,10 @@ unittest-badexternals: build
 #     additional checking,
 #     debug() calls validation, etc
 unittests: unittest unittest-badexternals
-	@cd tests && PYTHONPATH=.. python -O main.py
+	@PYTHONPATH=. python -O mvpa/tests/main.py
 	@echo "I: Running unittests with debug output. No progress output."
-	@cd tests && \
-      PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-       python main.py 2>&1 \
+	@PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
+       python mvpa/tests/main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
 te-%: build
@@ -230,7 +231,7 @@ testmanual: build
 # mvpa.suite()
 testsuite:
 	@echo "I: Running full testsuite"
-	@git grep -h '^\W*from mvpa.*import' tests | \
+	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	while read i; do \
@@ -249,11 +250,11 @@ test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
-	@cd tests && { \
-	  export PYTHONPATH=.. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
-	  python-coverage -x main.py >/dev/null 2>&1; \
-	  python-coverage -r -i -o /usr,/var >| ../$(COVERAGE_REPORT); \
-	  grep -v '100%$$' ../$(COVERAGE_REPORT); \
+	@{ \
+	  export PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
+	  python-coverage -x mvpa/tests/main.py >/dev/null 2>&1; \
+	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
+	  grep -v '100%$$' $(COVERAGE_REPORT); \
 	  python-coverage -a -i -o /usr,/var ; }
 
 

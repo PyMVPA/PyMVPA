@@ -12,6 +12,7 @@ import unittest
 import os.path
 import numpy as N
 
+from mvpa import pymvpa_dataroot
 from mvpa.base import externals
 from mvpa.datasets.eep import EEPDataset
 from mvpa.misc.io.eepbin import EEPBin
@@ -20,10 +21,10 @@ from mvpa.misc.io.eepbin import EEPBin
 class EEPDatasetTests(unittest.TestCase):
 
     def testLoad(self):
-        eb = EEPBin(os.path.join('..', 'data', 'eep.bin'))
+        eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
 
         ds = [ EEPDataset(source, labels=[1, 2]) for source in
-                (eb, os.path.join('..', 'data', 'eep.bin')) ]
+                (eb, os.path.join(pymvpa_dataroot, 'eep.bin')) ]
 
         for d in ds:
             self.failUnless(d.nsamples == 2)
@@ -35,7 +36,7 @@ class EEPDatasetTests(unittest.TestCase):
 
 
     def testEEPBin(self):
-        eb = EEPBin(os.path.join('..', 'data', 'eep.bin'))
+        eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
 
         self.failUnless(eb.nchannels == 32)
         self.failUnless(eb.nsamples == 2)
@@ -46,7 +47,7 @@ class EEPDatasetTests(unittest.TestCase):
 
 
     def testResampling(self):
-        ds = EEPDataset(os.path.join('..', 'data', 'eep.bin'),
+        ds = EEPDataset(os.path.join(pymvpa_dataroot, 'eep.bin'),
                         labels=[1, 2], labels_map={1:100, 2:101})
         channelids = N.array(ds.channelids).copy()
         self.failUnless(N.round(ds.samplingrate) == 500.0)

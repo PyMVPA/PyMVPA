@@ -13,6 +13,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
+from mvpa import pymvpa_dataroot
 from mvpa.misc.io import *
 from mvpa.misc.fsl import FslEV3
 from mvpa.misc.bv import BrainVoyagerRTC
@@ -119,7 +120,7 @@ class IOHelperTests(unittest.TestCase):
         except WindowsError:
             pass
 
-        d = FslEV3(os.path.join('..', 'data', 'fslev3.txt'))
+        d = FslEV3(os.path.join(pymvpa_dataroot, 'fslev3.txt'))
         ev = d.toEvents()
         self.failUnless(len(ev) == 3)
         self.failUnless([e['duration'] for e in ev] == [9] * 3)
@@ -138,7 +139,7 @@ class IOHelperTests(unittest.TestCase):
 
 
     def testFslEV2(self):
-        attr = SampleAttributes(os.path.join('..', 'data', 'smpl_attr.txt'))
+        attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
         self.failUnless(sorted(attr.keys()) == \
@@ -149,7 +150,7 @@ class IOHelperTests(unittest.TestCase):
     def testBVRTC(self):
         """Simple testing of reading RTC files from BrainVoyager"""
 
-        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
         self.failUnlessEqual(attr.ncolumns, 4, "We must have 4 colums")
         self.failUnlessEqual(attr.nrows, 147, "We must have 147 rows")
 
@@ -164,7 +165,7 @@ class IOHelperTests(unittest.TestCase):
     def testdesign2labels(self):
         """Simple testing of helper Design2Labels"""
 
-        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
         labels0 = design2labels(attr, baseline_label='silence')
         labels = design2labels(attr, baseline_label='silence',
                                 func=lambda x:x>0.5)
@@ -181,7 +182,7 @@ class IOHelperTests(unittest.TestCase):
 
 
     def testlabels2chunks(self):
-        attr = BrainVoyagerRTC(os.path.join('..', 'data', 'bv/smpl_model.rtc'))
+        attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
         labels = design2labels(attr, baseline_label='silence')
         self.failUnlessRaises(ValueError, labels2chunks, labels, 'bugga')
         chunks = labels2chunks(labels)
@@ -194,7 +195,7 @@ class IOHelperTests(unittest.TestCase):
 
 
     def testSensorLocations(self):
-        sl = XAVRSensorLocations(os.path.join('..', 'data', 'xavr1010.dat'))
+        sl = XAVRSensorLocations(os.path.join(pymvpa_dataroot, 'xavr1010.dat'))
 
         for var in ['names', 'pos_x', 'pos_y', 'pos_z']:
             self.failUnless(len(eval('sl.' + var)) == 31)

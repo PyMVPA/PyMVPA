@@ -49,6 +49,10 @@ import random
 import numpy as N
 from mvpa.base import cfg
 
+# locate data root -- data might not be installed, but if it is, it should be at
+# this location
+pymvpa_dataroot = os.path.join(os.path.dirname(__file__), 'data')
+
 if not __debug__:
     try:
         import psyco
