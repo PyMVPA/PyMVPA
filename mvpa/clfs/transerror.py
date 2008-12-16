@@ -1248,9 +1248,8 @@ class TransferError(ClassifierError):
     def __copy__(self):
         """Performs deepcopying of the classifier."""
         # TODO -- use ClassifierError.__copy__
-        from mvpa.clfs.base import _deepcopyclf
         out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, _deepcopyclf(self.clf), self.errorfx, self._labels)
+        TransferError.__init__(out, self.clf.clone(), self.errorfx, self._labels)
 
         return out
 
