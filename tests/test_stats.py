@@ -210,6 +210,7 @@ class StatsTests(unittest.TestCase):
     def testRDistStability(self):
         if not externals.exists('scipy'):
             return
+
         from mvpa.support.stats import scipy
         try:
             # actually I haven't managed to cause this error
@@ -222,13 +223,18 @@ class StatsTests(unittest.TestCase):
             # this one should fail with recent scipy with error
             # ZeroDivisionError: 0.0 cannot be raised to a negative power
 
-            # XXX: There is 1 more bug in etch's scipy.stats, so I
+            # XXX: There is 1 more bug in etch's scipy.stats or numpy (vectorize), so I
             #      have to put 2 elements in the queried x's, otherwise it
             #      would puke. But for now that fix is not here
             #
             # value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
+            #
+            # to cause it now just run this unittest only with
+            #  nosetests -s test_stats:StatsTests.testRDistStability
 
-            # Not sure what it was -- now works fine ;)
+            # NB: very cool way to store the trace of the execution
+            #import pydb
+            #pydb.debugger(dbg_cmds=['bt', 'l', 's']*300 + ['c'])
             value = scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
         except IndexError, e:
             self.fail('Failed due to bug which leads to InvalidIndex if only'

@@ -448,8 +448,8 @@ class ClassifiersTests(unittest.TestCase):
         # NB datasets will be changed by the end of testing, so if
         # are to change to use generic datasets - make sure to copy
         # them here
-        dstrain = deepcopy(datasets['uni2small_train'])
-        dstest = deepcopy(datasets['uni2small_test'])
+        dstrain = deepcopy(datasets['uni2large_train'])
+        dstest = deepcopy(datasets['uni2large_test'])
 
         clf.untrain()
         clf_re.untrain()

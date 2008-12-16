@@ -194,7 +194,7 @@ class DistPValue(Stateful):
         doc="Number of features considered to be positives and which were recovered")
 
 
-    def __init__(self, sd=0, distribution='rdist', fpp=None, nbins=400):
+    def __init__(self, sd=0, distribution='rdist', fpp=None, nbins=400, **kwargs):
         """L2-Norm the values, convert them to p-values of a given distribution.
 
         :Parameters:
@@ -214,6 +214,8 @@ class DistPValue(Stateful):
         presented in any paper, nor proven
         """
         externals.exists('scipy', raiseException=True)
+        Stateful.__init__(self, **kwargs)
+
         self.sd = sd
         if not (distribution in ['rdist']):
             raise ValueError, "Actually only rdist supported at the moment" \
