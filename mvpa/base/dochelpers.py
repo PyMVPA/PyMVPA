@@ -128,7 +128,7 @@ def _parseParameters(paramdoc):
     should it be after _splitOutParametersStr
     """
     entries = __re_spliter1.split(paramdoc)
-    result = [(__re_spliter2.split(e)[0], e) for e in entries if e != '']
+    result = [(__re_spliter2.split(e)[0].strip(), e) for e in entries if e != '']
     if __debug__:
         debug('DOCH', 'parseParameters: Given "%s", we split into %s' %
               (paramdoc, result))
@@ -159,9 +159,22 @@ def enhancedClassDocString(cls, *args):
             params += '\n' + handleDocString(lcl['_paramsdoc'])
 
         params_list = _parseParameters(params)
-        known_params = set([i[0] for i in params_list]
-                           # no need for placeholders
-                           + ['kwargs', '**kwargs'])
+        known_params = set([i[0] for i in params_list])
+        # no need for placeholders
+        skip_params = set(['kwargs', '**kwargs'])
+
+        # XXX we do evil check here, refactor code to separate
+        #     regressions out of the classifiers, and making
+        #     retrainable flag not available for those classes which
+        #     can't actually do retraining. Although it is not
+        #     actually that obvious for Meta Classifiers
+        if hasattr(cls, '_clf_internals'):
+            clf_internals = cls._clf_internals
+            for i in ('regression', 'retrainable'):
+                if not i in cls._clf_internals:
+                    skip_params.update([i])
+
+        known_params.update(skip_params)
         # go through all the parents and obtain their init parameters
         parent_params_list = []
         for i in args:
@@ -181,7 +194,11 @@ def enhancedClassDocString(cls, *args):
 
         # if there are parameters -- populate the list
         if len(params_list):
-            params_ = '\n'.join([i[1].rstrip() for i in params_list])
+            params_ = '\n'.join([i[1].rstrip() for i in params_list
+                                 if not i[0] in skip_params])
+            if 'dict of keyworded arguments' in params_:
+                import pydb
+                pydb.debugger()
             initdoc += "\n\n:Parameters:\n" + _indent(params_)
 
         if suffix != "":
@@ -206,8 +223,19 @@ def enhancedClassDocString(cls, *args):
                  _indent(handleDocString(cls._statesdoc))]
 
     if len(args):
-        docs.append('\n.. seealso::\n\n  ' +
-                    ', '.join(['`%s`' % i.__class__.__name__ for i in args]))
+        if len(args) > 1:
+            bc_intro = '  Please refer to the documentation of the base ' \
+                       'classes for more information:'
+        else:
+            bc_intro = '  Please refer to the documentation of the base ' \
+                       'class for more information:'
+
+        docs += ['\n.. seealso::',
+                 bc_intro,
+                 '  ' + ',\n  '.join([':class:`~%s.%s`' % (i.__module__,
+                                                           i.__name__)
+                                                              for i in args])
+                ]
 
     clsdoc = '\n\n'.join(docs)
     # remove some bogus new lines -- never 3 empty lines in doc are useful
