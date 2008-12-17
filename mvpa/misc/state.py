@@ -54,7 +54,13 @@ class CollectableAttribute(object):
     would be done on a class creation (ie not per each object)
     """
 
-    def __init__(self, name=None, doc=None):
+    _instance_index = 0
+
+    def __init__(self, name=None, doc=None, index=None):
+        if index is None:
+            CollectableAttribute._instance_index += 1
+            index = CollectableAttribute._instance_index
+        self._instance_index = index
         self.__doc__ = doc
         self.__name = name
         self._value = None
@@ -62,7 +68,7 @@ class CollectableAttribute(object):
         self.reset()
         if __debug__:
             debug("COL",
-                  "Initialized new collectable %s " % name + `self`)
+                  "Initialized new collectable #%d:%s" % (index,name) + `self`)
 
 
     # Instead of going for VProperty lets make use of virtual method
@@ -1143,9 +1149,9 @@ class AttributesCollector(type):
                 paramscols.append(col)
                 # lets at least sort the parameters for consistent output
                 col_items = collections[col].items
-                params = col_items.keys()
+                params = [(v._instance_index, k) for k,v in col_items.iteritems()]
                 params.sort()
-                for param in params:
+                for index,param in params:
                     parameter = col_items[param]
                     paramsdoc += "  %s" % param
                     try:

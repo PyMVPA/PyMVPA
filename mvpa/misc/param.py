@@ -37,7 +37,7 @@ class Parameter(CollectableAttribute):
         step  - increment/decrement stepsize
     """
 
-    def __init__(self, default, name=None, doc=None, **kwargs):
+    def __init__(self, default, name=None, doc=None, index=None, **kwargs):
         """Specify a parameter by its default value and optionally an arbitrary
         number of additional parameters.
 
@@ -45,7 +45,7 @@ class Parameter(CollectableAttribute):
         """
         self.__default = default
 
-        CollectableAttribute.__init__(self, name, doc)
+        CollectableAttribute.__init__(self, name=name, doc=doc, index=index)
 
         self.resetvalue()
         self._isset = False
