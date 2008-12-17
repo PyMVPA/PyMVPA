@@ -135,11 +135,12 @@ class Classifier(Parametrized):
     regression = Parameter(False, allowedtype='bool',
         doc="""Either to use 'regression' as regression. By default any
         Classifier-derived class serves as a classifier, so regression
-        does binary classification. TODO:""")
+        does binary classification. TODO:""", index=1001)
 
     retrainable = Parameter(False, allowedtype='bool',
         doc="""Either to enable retraining for 'retrainable' classifier.
-        TODO: make it available only for actually retrainable classifiers""")
+        TODO: make it available only for actually retrainable classifiers""",
+        index=1002)
 
 
     def __init__(self, **kwargs):
