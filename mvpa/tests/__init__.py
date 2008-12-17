@@ -116,7 +116,7 @@ def collectTestSuites():
 
 
 
-def run(limit=None):
+def run(limit=None, verbosity=None):
     """Runs the full or a subset of the PyMVPA unittest suite.
 
     :Parameters:
@@ -125,6 +125,8 @@ def run(limit=None):
         can be provides. IDs are the base filenames of the test implementation,
         e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
         'niftidataset'.
+      verbosity: None | int
+        Explain me
     """
     if __debug__:
         from mvpa.base import debug
@@ -156,8 +158,11 @@ def run(limit=None):
             if not result.wasSuccessful():
                 print "MVPA_SEED=%s" % _random_seed
 
+    if verbosity is None:
+        verbosity = int(cfg.get('tests', 'verbosity', default=1))
+
     # finally run it
-    TextTestRunnerPyMVPA().run(ts)
+    TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
 
     # restore warning handlers
     warning.handlers = handler_backup

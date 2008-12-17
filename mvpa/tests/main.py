@@ -49,4 +49,6 @@ if __name__ == '__main__':
             return result
 
     # finally run it
-    TextTestRunnerPyMVPA().run(ts)
+    TextTestRunnerPyMVPA(
+            verbosity=int(cfg.get('tests', 'verbosity', default=1))
+                ).run(ts)
