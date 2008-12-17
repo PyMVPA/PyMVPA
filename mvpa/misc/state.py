@@ -54,7 +54,13 @@ class CollectableAttribute(object):
     would be done on a class creation (ie not per each object)
     """
 
-    def __init__(self, name=None, doc=None):
+    _instance_index = 0
+
+    def __init__(self, name=None, doc=None, index=None):
+        if index is None:
+            CollectableAttribute._instance_index += 1
+            index = CollectableAttribute._instance_index
+        self._instance_index = index
         self.__doc__ = doc
         self.__name = name
         self._value = None
@@ -62,7 +68,7 @@ class CollectableAttribute(object):
         self.reset()
         if __debug__:
             debug("COL",
-                  "Initialized new collectable %s " % name + `self`)
+                  "Initialized new collectable #%d:%s" % (index,name) + `self`)
 
 
     # Instead of going for VProperty lets make use of virtual method
@@ -647,7 +653,7 @@ class Collection(object):
         # lets assure consistent litsting order
         items = self._items.items()
         items.sort()
-        return [ "%s: %s" % (str(x[1]), x[1].__doc__) for x in items ]
+        return [ "`%s`: %s" % (str(x[1]), x[1].__doc__) for x in items ]
 
 
     def _getNames(self):
@@ -1143,9 +1149,9 @@ class AttributesCollector(type):
                 paramscols.append(col)
                 # lets at least sort the parameters for consistent output
                 col_items = collections[col].items
-                params = col_items.keys()
+                params = [(v._instance_index, k) for k,v in col_items.iteritems()]
                 params.sort()
-                for param in params:
+                for index,param in params:
                     parameter = col_items[param]
                     paramsdoc += "  %s" % param
                     try:
@@ -1176,8 +1182,9 @@ class AttributesCollector(type):
   disable_states : None or list of basestring
     Names of the state variables which should be disabled
 """
-            statesdoc = "Enabled by default are listed with +\n  * "
+            statesdoc = "  * "
             statesdoc += '\n  * '.join(collections['states'].listing)
+            statesdoc += "\n\n(States enabled by default are listed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __statesdoc to be %s" % statesdoc)
             setattr(cls, "_statesdoc", statesdoc)
@@ -1252,7 +1259,7 @@ class ClassWithCollections(object):
         if __debug__:
             descr = kwargs.get('descr', None)
             debug("COL", "ClassWithCollections.__new__ was done "
-                  "for %s id %s with descr=%s" \
+                  "for %s#%s with descr=%s" \
                   % (s__class__.__name__, id(self), descr))
 
         return self
@@ -1307,7 +1314,7 @@ class ClassWithCollections(object):
             #              + " Valid parameters are %s" % known_params
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
-                  "for %s id %s with descr=%s" \
+                  "for %s#%s with descr=%s" \
                   % (self.__class__.__name__, id(self), descr))
 
 

@@ -81,6 +81,8 @@ attributes.txt
 Once downloaded and extracted (e.g. into a folder `data/`), the dataset can be
 easily loaded like this:
 
+  >>> from mvpa.misc.io.base import SampleAttributes
+  >>> from mvpa.datasets.nifti import NiftiDataset
   >>> attrs = SampleAttributes('data/attributes_literal.txt',
   ...                          literallabels=True)
   >>> ds = NiftiDataset(samples='data/bold.nii.gz',
@@ -88,6 +90,10 @@ easily loaded like this:
   ...                   chunks=attrs.chunks,
   ...                   labels_map=True,
   ...                   mask='data/mask.nii.gz')
+
+Note, that instead of specific import statements, it is usually
+more convinient, but slower, to import all functionality from
+PyMVPA at once with 'from mvpa.suite import *' statement.
 
 .. note::
 
