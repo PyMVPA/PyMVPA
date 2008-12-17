@@ -13,7 +13,10 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import Stateful, StateVariable, Parametrized, ParameterCollection
+from mvpa.base import externals
+
+from mvpa.misc.state import Stateful, StateVariable, Parametrized, \
+     ParameterCollection, _def_sep
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -131,8 +134,8 @@ class StateTests(unittest.TestCase):
 
         # if documentary on the state is appropriate
         self.failUnlessEqual(proper2.states.listing,
-                             ['state1+: state1 doc',
-                              'state2: state2 doc'])
+                             ['%sstate1+%s: state1 doc' % (_def_sep, _def_sep),
+                              '%sstate2%s: state2 doc' % (_def_sep, _def_sep)])
 
         # if __str__ lists correct number of states
         str_ = str(proper2)
