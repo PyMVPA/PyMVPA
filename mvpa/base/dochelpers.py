@@ -17,12 +17,14 @@ import numpy as N
 from math import ceil
 from StringIO import StringIO
 
+from mvpa.base import externals
 if __debug__:
     from mvpa.base import debug
 
 __add_init2doc = False
-# figure out if ran within IPython
-if '__IPYTHON__' in globals()['__builtins__']:
+__in_ipython = externals.exists('in ipython')
+# if ran within IPython -- might need to add doc to init
+if __in_ipython:
     from IPython import Release
     # XXX figure out exact version when init doc started to be added to class
     # description
@@ -65,7 +67,7 @@ def _indent(text, istr='  '):
     return '\n'.join(istr + s for s in text.split('\n'))
 
 
-def enhancedDocString(name, lcl, *args):
+def __enhancedDocString_deprecated(name, lcl, *args):
     """Generate enhanced doc strings."""
     return lcl['__doc__']
     rst_lvlmarkup = ["=", "-", "_"]
@@ -135,20 +137,64 @@ def _parseParameters(paramdoc):
     return result
 
 
-def enhancedClassDocString(cls, *args):
-    """Generate enhanced doc strings but given a class, not just a name.
+def enhancedDocString(item, *args, **kwargs):
+    """Generate enhanced doc strings for various items.
+
+    :Parameters:
+      item : basestring or class
+        What object requires enhancing of documentation
+      *args : list
+        Includes base classes to look for parameters, as well, first item
+        must be a dictionary of locals if item is given by a string
+      force_extend : bool
+        Either to force looking for the documentation in the parents.
+        By default force_extend = False, and lookup happens only if kwargs
+        is one of the arguments to the respective function (e.g. item.__init__)
+      skip_params : list of basestring
+        List of parameters (in addition to [kwargs]) which should not
+        be added to the documentation of the class.
 
     It is to be used from a collector, ie whenever class is already created
     """
+    # Handling of arguments
+    if len(kwargs):
+        if set(kwargs.keys()).issubset(set(['force_extend'])):
+            raise ValueError, "Got unknown keyword arguments (smth among %s)" \
+                  " in enhancedDocString." % kwargs
+    force_extend = kwargs.get('force_extend', False)
+    skip_params = kwargs.get('skip_params', [])
+
     # XXX make it work also not only with classes but with methods as well
-    name = cls.__name__
-    lcl = cls.__dict__
+    if isinstance(item, basestring):
+        if len(args)<1 or not isinstance(args[0], dict):
+            raise ValueError, \
+                  "Please provide locals for enhancedDocString of %s" % item
+        name = item
+        lcl = args[0]
+        args = args[1:]
+    elif hasattr(item, "im_class"):
+        # bound method
+        raise NotImplementedError, "enhancedDocString is not yet implemented for methods"
+    elif hasattr(item, "__name__"):
+        name = item.__name__
+        lcl = item.__dict__
+    else:
+        raise ValueError, "Don't know how to extend docstring for %s" % item
+
     #return lcl['__doc__']
     rst_lvlmarkup = ["=", "-", "_"]
 
     initdoc = ""
     if lcl.has_key('__init__'):
-        initdoc = lcl['__init__'].__doc__
+        func = lcl['__init__']
+        initdoc = func.__doc__
+
+        # either to extend arguments
+        # do only if kwargs is one of the arguments
+        extend_args = force_extend or 'kwargs' in func.func_code.co_names
+
+        if __debug__ and not extend_args:
+            debug('DOCH', 'Not extending parameters for %s' % name)
 
         if initdoc is None:
             initdoc = "Initialize instance of %s" % name
@@ -161,36 +207,37 @@ def enhancedClassDocString(cls, *args):
         params_list = _parseParameters(params)
         known_params = set([i[0] for i in params_list])
         # no need for placeholders
-        skip_params = set(['kwargs', '**kwargs'])
+        skip_params = set(skip_params + ['kwargs', '**kwargs'])
 
         # XXX we do evil check here, refactor code to separate
         #     regressions out of the classifiers, and making
         #     retrainable flag not available for those classes which
         #     can't actually do retraining. Although it is not
         #     actually that obvious for Meta Classifiers
-        if hasattr(cls, '_clf_internals'):
-            clf_internals = cls._clf_internals
+        if hasattr(item, '_clf_internals'):
+            clf_internals = item._clf_internals
             for i in ('regression', 'retrainable'):
-                if not i in cls._clf_internals:
+                if not i in item._clf_internals:
                     skip_params.update([i])
 
         known_params.update(skip_params)
-        # go through all the parents and obtain their init parameters
-        parent_params_list = []
-        for i in args:
-            if hasattr(i, '__init__'):
-                # XXX just assign within a class to don't redo without need
-                initdoc_ = i.__init__.__doc__
-                if initdoc_ is None:
-                    continue
-                initdoc_, params_, suffix_ = _splitOutParametersStr(initdoc_)
-                parent_params_list += _parseParameters(params_.lstrip())
+        if extend_args:
+            # go through all the parents and obtain their init parameters
+            parent_params_list = []
+            for i in args:
+                if hasattr(i, '__init__'):
+                    # XXX just assign within a class to don't redo without need
+                    initdoc_ = i.__init__.__doc__
+                    if initdoc_ is None:
+                        continue
+                    initdoc_, params_, suffix_ = _splitOutParametersStr(initdoc_)
+                    parent_params_list += _parseParameters(params_.lstrip())
 
-        # extend with ones which are not known to current init
-        for i,v in parent_params_list:
-            if not (i in known_params):
-                params_list += [(i,v)]
-                known_params.update([i])
+            # extend with ones which are not known to current init
+            for i,v in parent_params_list:
+                if not (i in known_params):
+                    params_list += [(i,v)]
+                    known_params.update([i])
 
         # if there are parameters -- populate the list
         if len(params_list):
@@ -220,7 +267,7 @@ def enhancedClassDocString(cls, *args):
     # Add information about the states if available
     if lcl.has_key('_statesdoc'):
         docs += ['.. note::\n  Available state variables:',
-                 _indent(handleDocString(cls._statesdoc))]
+                 _indent(handleDocString(item._statesdoc))]
 
     if len(args):
         if len(args) > 1:
@@ -237,11 +284,11 @@ def enhancedClassDocString(cls, *args):
                                                               for i in args])
                 ]
 
-    clsdoc = '\n\n'.join(docs)
+    itemdoc = '\n\n'.join(docs)
     # remove some bogus new lines -- never 3 empty lines in doc are useful
-    result = re.sub("\s*\n\s*\n\s*\n", "\n\n", clsdoc)
+    result = re.sub("\s*\n\s*\n\s*\n", "\n\n", itemdoc)
 
-    return clsdoc
+    return itemdoc
 
 
 def table2string(table, out=None):
