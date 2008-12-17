@@ -653,7 +653,7 @@ class Collection(object):
         # lets assure consistent litsting order
         items = self._items.items()
         items.sort()
-        return [ "%s: %s" % (str(x[1]), x[1].__doc__) for x in items ]
+        return [ "`%s`: %s" % (str(x[1]), x[1].__doc__) for x in items ]
 
 
     def _getNames(self):
@@ -1182,8 +1182,9 @@ class AttributesCollector(type):
   disable_states : None or list of basestring
     Names of the state variables which should be disabled
 """
-            statesdoc = "Enabled by default are listed with +\n  * "
+            statesdoc = "  * "
             statesdoc += '\n  * '.join(collections['states'].listing)
+            statesdoc += "\n\n(States enabled by default are listed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __statesdoc to be %s" % statesdoc)
             setattr(cls, "_statesdoc", statesdoc)
