@@ -25,17 +25,33 @@ __add_init2doc = False
 __in_ipython = externals.exists('in ipython')
 # if ran within IPython -- might need to add doc to init
 if __in_ipython:
+    __rst_mode = 0                           # either to do ReST links at all
+    __rst_sep = ""
+    __rst_sep2 = ""
     from IPython import Release
     # XXX figure out exact version when init doc started to be added to class
     # description
     if Release.version <= '0.8.1':
         __add_init2doc = True
+else:
+    __rst_mode = 1
+    __rst_sep = "`"
+    __rst_sep2 = ":"
+
+def _rst(s, snotrst=''):
+    """Produce s only in __rst mode"""
+    if __rst_mode: return s
+    else:          return snotrst
 
 def rstUnderline(text, markup):
     """Add and underline RsT string matching the length of the given string.
     """
     return text + '\n' + markup * len(text)
 
+
+def singleOrPlural(single, plural, n):
+    if int(n)>1: return plural
+    else:   return single
 
 def handleDocString(text, polite=True):
     """Take care of empty and non existing doc strings."""
@@ -246,7 +262,8 @@ def enhancedDocString(item, *args, **kwargs):
             if 'dict of keyworded arguments' in params_:
                 import pydb
                 pydb.debugger()
-            initdoc += "\n\n:Parameters:\n" + _indent(params_)
+            initdoc += "\n\n%sParameters%s\n" % ( (__rst_sep2,)*2 ) \
+                       + _indent(params_)
 
         if suffix != "":
             initdoc += "\n\n" + suffix
@@ -266,29 +283,28 @@ def enhancedDocString(item, *args, **kwargs):
 
     # Add information about the states if available
     if lcl.has_key('_statesdoc'):
-        docs += ['.. note::\n  Available state variables:',
+        docs += [_rst('.. note::\n  ') + 'Available state variables:',
                  _indent(handleDocString(item._statesdoc))]
 
     if len(args):
-        if len(args) > 1:
-            bc_intro = '  Please refer to the documentation of the base ' \
-                       'classes for more information:'
-        else:
-            bc_intro = '  Please refer to the documentation of the base ' \
-                       'class for more information:'
+        bc_intro = _rst('  ') + 'Please refer to the documentation of the ' \
+                   'base %s for more information:' \
+                   % (singleOrPlural('class', 'classes', len(args)))
 
-        docs += ['\n.. seealso::',
+        docs += [_rst('\n.. seealso::'),
                  bc_intro,
-                 '  ' + ',\n  '.join([':class:`~%s.%s`' % (i.__module__,
-                                                           i.__name__)
-                                                              for i in args])
+                 '  ' + ',\n  '.join(['%s%s.%s%s' % (_rst(':class:`~'),
+                                                      i.__module__,
+                                                      i.__name__,
+                                                      __rst_sep)
+                                      for i in args])
                 ]
 
     itemdoc = '\n\n'.join(docs)
     # remove some bogus new lines -- never 3 empty lines in doc are useful
     result = re.sub("\s*\n\s*\n\s*\n", "\n\n", itemdoc)
 
-    return itemdoc
+    return result
 
 
 def table2string(table, out=None):
