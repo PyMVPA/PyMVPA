@@ -50,19 +50,6 @@ if __debug__:
     from mvpa.base import debug
 
 
-def _deepcopyclf(clf):
-    """Deepcopying of a classifier.
-
-    If deepcopy fails -- tries to untrain it first so that there is no
-    swig bindings attached
-    """
-    try:
-        return deepcopy(clf)
-    except:
-        clf.untrain()
-        return deepcopy(clf)
-
-
 class Classifier(Parametrized):
     """Abstract classifier class to be inherited by all classifiers
     """
@@ -148,11 +135,12 @@ class Classifier(Parametrized):
     regression = Parameter(False, allowedtype='bool',
         doc="""Either to use 'regression' as regression. By default any
         Classifier-derived class serves as a classifier, so regression
-        does binary classification. TODO:""")
+        does binary classification. TODO:""", index=1001)
 
     retrainable = Parameter(False, allowedtype='bool',
         doc="""Either to enable retraining for 'retrainable' classifier.
-        TODO: make it available only for actually retrainable classifiers""")
+        TODO: make it available only for actually retrainable classifiers""",
+        index=1002)
 
 
     def __init__(self, **kwargs):
@@ -341,6 +329,21 @@ class Classifier(Parametrized):
         if len(states_enabled):
             s += "\n enabled states:%s" % ', '.join([str(states[x]) for x in states_enabled])
         return s
+
+
+    def clone(self):
+        """Create full copy of the classifier.
+
+        It might require classifier to be untrained first due to
+        present SWIG bindings.
+
+        TODO: think about proper re-implementation, without enrolment of deepcopy
+        """
+        try:
+            return deepcopy(self)
+        except:
+            self.untrain()
+            return deepcopy(self)
 
 
     def _train(self, dataset):
@@ -1549,7 +1552,7 @@ class MulticlassClassifier(CombinedClassifier):
             biclfs = []
             for i in xrange(len(ulabels)):
                 for j in xrange(i+1, len(ulabels)):
-                    clf = _deepcopyclf(self.__clf)
+                    clf = self.__clf.clone()
                     biclfs.append(
                         BinaryClassifier(
                             clf,
@@ -1651,7 +1654,7 @@ class SplitClassifier(CombinedClassifier):
                       "Deepcopying %(clf)s for %(sclf)s",
                       msgargs={'clf':clf_template,
                                'sclf':self})
-            clf = _deepcopyclf(clf_template)
+            clf = clf_template.clone()
             bclfs.append(clf)
         self.clfs = bclfs
 
