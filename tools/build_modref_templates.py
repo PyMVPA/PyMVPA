@@ -104,6 +104,8 @@ def writeAPIDocTemplate(uri):
         #      '  :noindex:\n\n'
 
         # place api link
+        # Reference to base classes might go away, since we have
+        # enhancedClassDocString which does a superb job
         ad += '.. seealso::\n\n' \
               '  Derived classes might provide additional methods via their ' \
               '  base classes. Please refer to the list of base classes ' \

@@ -223,10 +223,19 @@ def enhancedClassDocString(cls, *args):
                  _indent(handleDocString(cls._statesdoc))]
 
     if len(args):
-        docs.append('\n.. seealso::\n\n  ' + ',\n  '.join(
-            [':class:`~%s.%s`' % (i.__module__,
-                                  i.__name__)
-                                    for i in args]))
+        if len(args) > 1:
+            bc_intro = '  Please refer to the documentation of the base ' \
+                       'classes for more information:'
+        else:
+            bc_intro = '  Please refer to the documentation of the base ' \
+                       'class for more information:'
+
+        docs += ['\n.. seealso::',
+                 bc_intro,
+                 '  ' + ',\n  '.join([':class:`~%s.%s`' % (i.__module__,
+                                                           i.__name__)
+                                                              for i in args])
+                ]
 
     clsdoc = '\n\n'.join(docs)
     # remove some bogus new lines -- never 3 empty lines in doc are useful
