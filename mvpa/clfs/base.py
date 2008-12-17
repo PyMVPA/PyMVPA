@@ -341,7 +341,7 @@ class Classifier(Parametrized):
         try:
             return deepcopy(self)
         except:
-            clf.untrain()
+            self.untrain()
             return deepcopy(self)
 
 
