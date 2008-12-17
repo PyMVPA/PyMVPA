@@ -78,7 +78,7 @@ class Warehouse(object):
             args = []
 
         # lets remove optional modifier '!'
-        dargs = Set([x.lstrip('!') for x in args]).difference(
+        dargs = Set([str(x).lstrip('!') for x in args]).difference(
             self._known_tags)
 
         if len(dargs)>0:
