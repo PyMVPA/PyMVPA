@@ -48,7 +48,7 @@ def group_kwargs(prefixes, assign=False, passthrough=False):
         If none of those is True, decorator simply filters out mentioned
         groups from being passed to the method
 
-    Example: if needed to join all args which start with 'slave_'
+    Example: if needed to join all args which start with 'slave<underscore>'
     together under slave_kwargs parameter
     """
     def decorated_method(method):
