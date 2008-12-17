@@ -853,11 +853,6 @@ class BoostedClassifier(Classifier, Harvestable):
             It is in effect only when slaves get assigned - so if state
             is enabled not during construction, it would not necessarily
             propagate into slaves
-          harvest_attribs : list of basestr
-            What attributes of call to store and return within
-            harvested state variable
-          copy_attribs : None or basestr
-            Force copying values of attributes on harvesting
           kwargs : dict
             dict of keyworded arguments which might get used
             by State or Classifier
