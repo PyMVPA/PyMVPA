@@ -260,6 +260,10 @@ class StateTests(unittest.TestCase):
         self.failUnless('state1' in a.states.enabled,
                         msg="state1 must have been enabled")
 
+        if (__debug__ and 'ID_IN_REPR' in debug.active):
+            # next tests would fail due to ID in the tails
+            return
+
         # validate that string representation of the object is valid and consistent
         a_str = `a`
         try:
@@ -268,10 +272,6 @@ class StateTests(unittest.TestCase):
         except Exception, e:
             self.fail(msg="Failed to generate an instance out of "
                       "representation %s. Got exception: %s" % (a_str, e))
-
-        if (__debug__ and 'ID_IN_REPR' in debug.active):
-            # next tests would fail due to ID in the tails
-            return
 
         a2_str = `a2`
         self.failUnless(a2_str == a_str,
