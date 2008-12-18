@@ -6,7 +6,22 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Collection of dataset splitters."""
+"""Collection of dataset splitters.
+
+Module Description
+==================
+
+Splitters are destined to split the provided dataset varous ways to
+simplify cross-validation analysis, implement boosting of the
+estimates, or sample null-space via permutation testing.
+
+Module Organization
+===================
+
+.. packagetree::
+   :style: UML
+
+"""
 
 __docformat__ = 'restructuredtext'
 

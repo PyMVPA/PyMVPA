@@ -6,7 +6,29 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA mappers."""
+"""PyMVPA mappers.
+
+Module Description
+==================
+
+Various space transformations which are intended to map between two
+spaces, most of the time both ways, and optionally requiring training.
+Classifiers from the mvpa.clfs module could be considered mappers as
+well, but they all are supervised, and only provide ND->1D mapping,
+most of the time without reverse transformation.
+
+Module Organization
+===================
+
+The mvpa.mappers module contains the following modules:
+
+.. packagetree::
+   :style: UML
+
+:group Base: base mask metric
+:group Specialized: wavelet boxcar svd ica pca samplegroup
+
+"""
 
 __docformat__ = 'restructuredtext'
 
