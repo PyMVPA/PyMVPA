@@ -25,6 +25,7 @@ def collectTestSuites():
     tests = [
         # Basic data structures/manipulators
         'test_base',
+        'test_dochelpers',
         'test_dataset',
         'test_arraymapper',
         'test_boxcarmapper',
