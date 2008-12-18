@@ -225,7 +225,6 @@ unittest-optimization: build
 	@echo "I: Running unittests with python -O."
 	@PYTHONPATH=. python -O mvpa/tests/main.py
 
-
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
 #     additional checking,
@@ -236,7 +235,10 @@ unittest-debug: build
        python mvpa/tests/main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
+
 # Run all unittests
+#  Run with 'make -k' if you like to sweep through all of them, so
+#  failure in one of them does not stop the full sweep
 unittests: unittest-nonlabile unittest unittest-badexternals \
            unittest-optimization unittest-debug
 
