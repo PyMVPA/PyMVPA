@@ -126,13 +126,16 @@ class StatsTests(unittest.TestCase):
             # MCs are not stable with just 10 samples... so lets skip them
             return
 
-        self.failUnless((N.abs(m.null_t[ds.nonbogus_features]) >= 5).all(),
-            msg="Nonbogus features should have high t-score. Got %s"
-                % (m.null_t[ds.nonbogus_features]))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
+            # with MVPA_SEED=833393575
+            self.failUnless((N.abs(m.null_t[ds.nonbogus_features]) >= 5).all(),
+                msg="Nonbogus features should have high t-score. Got %s"
+                    % (m.null_t[ds.nonbogus_features]))
 
-        self.failUnless((N.abs(m.null_t[ds.bogus_features]) < 4).all(),
-            msg="Bogus features should have low t-score. Got (t,p,sens):%s"
-                % (zip(m.null_t, m.null_prob, score)))
+            self.failUnless((N.abs(m.null_t[ds.bogus_features]) < 4).all(),
+                msg="Bogus features should have low t-score. Got (t,p,sens):%s"
+                    % (zip(m.null_t, m.null_prob, score)))
 
 
     def testNegativeT(self):
