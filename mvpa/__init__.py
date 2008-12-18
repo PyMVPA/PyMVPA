@@ -57,7 +57,7 @@ if not __debug__:
     try:
         import psyco
         psyco.profile()
-    except:
+    except ImportError:
         from mvpa.base import verbose
         verbose(2, "Psyco online compilation is not enabled")
 else:

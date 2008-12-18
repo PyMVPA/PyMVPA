@@ -155,6 +155,7 @@ def run(limit=None, verbosity=None):
         """Extend TextTestRunner to print out random seed which was
         used in the case of failure"""
         def run(self, test):
+            """Run the bloody test and puke the seed value if failed"""
             result = super(TextTestRunnerPyMVPA, self).run(test)
             if not result.wasSuccessful():
                 print "MVPA_SEED=%s" % _random_seed
