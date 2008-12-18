@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Various helpers to improve docstrings and textual output"""
 
 __docformat__ = 'restructuredtext'
 
@@ -40,8 +40,10 @@ else:
 
 def _rst(s, snotrst=''):
     """Produce s only in __rst mode"""
-    if __rst_mode: return s
-    else:          return snotrst
+    if __rst_mode:
+        return s
+    else:
+        return snotrst
 
 def rstUnderline(text, markup):
     """Add and underline RsT string matching the length of the given string.
@@ -50,8 +52,15 @@ def rstUnderline(text, markup):
 
 
 def singleOrPlural(single, plural, n):
-    if int(n)>1: return plural
-    else:   return single
+    """Little helper to spit out single or plural version of a word.
+    """
+    ni = int(n)
+    if ni > 1 or ni == 0:
+        # 1 forest, 2 forests, 0 forests
+        return plural
+    else:
+        return single
+
 
 def handleDocString(text, polite=True):
     """Take care of empty and non existing doc strings."""
@@ -61,12 +70,6 @@ def handleDocString(text, polite=True):
         else:
             return ''
     else:
-        # TODO: remove common empty prefix, so we don't offset
-        # documentation too much
-        # to see starts/ends of the lines use
-        #  return '\n'.join(['>%s<' % x for x in text.split('\n')])
-        # function posixpath.commonprefix might be used to detect
-        # common prefix, or just textwrap.dedent
         # Problem is that first line might often have no offset, so might
         # need to be ignored from dedent call
         if not text.startswith(' '):
@@ -83,35 +86,14 @@ def _indent(text, istr='  '):
     return '\n'.join(istr + s for s in text.split('\n'))
 
 
-def __enhancedDocString_deprecated(name, lcl, *args):
-    """Generate enhanced doc strings."""
-    return lcl['__doc__']
-    rst_lvlmarkup = ["=", "-", "_"]
-
-    docs = []
-    docs += [ handleDocString(lcl['__doc__']),
-              rstUnderline('Constructor information for `%s` class' % name,
-                           rst_lvlmarkup[2]),
-              handleDocString(lcl['__init__'].__doc__) ]
-
-    if len(args):
-        docs.append(rstUnderline('\nDocumentation for base classes of `%s`' \
-                                 % name, rst_lvlmarkup[0]))
-    for i in args:
-        docs += [ rstUnderline('Documentation for class `%s`' % i.__name__,
-                               rst_lvlmarkup[1]),
-                  handleDocString(i.__doc__) ]
-
-    return '\n\n'.join(docs)
-
-
 def _splitOutParametersStr(initdoc):
     """ header, parameters, suffix <- initdoc
     """
     if not (":Parameters:" in initdoc):
         result = initdoc, "", ""
     else:
-        # XXX any why not just re ???
+        # Could have been accomplished also via re.match
+
         # where new line is after :Parameters:
         # parameters header index
         ph_i = initdoc.index(':Parameters:')
@@ -125,7 +107,8 @@ def _splitOutParametersStr(initdoc):
         except ValueError:
             pe_i = len(initdoc)
 
-        result = initdoc[:ph_i].rstrip('\n '), initdoc[pb_i:pe_i], initdoc[pe_i:]
+        result = initdoc[:ph_i].rstrip('\n '), \
+                 initdoc[pb_i:pe_i], initdoc[pe_i:]
 
     # XXX a bit of duplication of effort since handleDocString might
     # do splitting internally
@@ -146,7 +129,8 @@ def _parseParameters(paramdoc):
     should it be after _splitOutParametersStr
     """
     entries = __re_spliter1.split(paramdoc)
-    result = [(__re_spliter2.split(e)[0].strip(), e) for e in entries if e != '']
+    result = [(__re_spliter2.split(e)[0].strip(), e)
+              for e in entries if e != '']
     if __debug__:
         debug('DOCH', 'parseParameters: Given "%s", we split into %s' %
               (paramdoc, result))
@@ -190,7 +174,8 @@ def enhancedDocString(item, *args, **kwargs):
         args = args[1:]
     elif hasattr(item, "im_class"):
         # bound method
-        raise NotImplementedError, "enhancedDocString is not yet implemented for methods"
+        raise NotImplementedError, \
+              "enhancedDocString is not yet implemented for methods"
     elif hasattr(item, "__name__"):
         name = item.__name__
         lcl = item.__dict__
@@ -232,9 +217,8 @@ def enhancedDocString(item, *args, **kwargs):
         #     actually that obvious for Meta Classifiers
         if hasattr(item, '_clf_internals'):
             clf_internals = item._clf_internals
-            for i in ('regression', 'retrainable'):
-                if not i in item._clf_internals:
-                    skip_params.update([i])
+            skip_params.update([i for i in ('regression', 'retrainable')
+                                if not (i in clf_internals)])
 
         known_params.update(skip_params)
         if extend_args:
@@ -246,22 +230,20 @@ def enhancedDocString(item, *args, **kwargs):
                     initdoc_ = i.__init__.__doc__
                     if initdoc_ is None:
                         continue
-                    initdoc_, params_, suffix_ = _splitOutParametersStr(initdoc_)
+                    splits_ = _splitOutParametersStr(initdoc_)
+                    params_ = splits_[1]
                     parent_params_list += _parseParameters(params_.lstrip())
 
             # extend with ones which are not known to current init
-            for i,v in parent_params_list:
+            for i, v in parent_params_list:
                 if not (i in known_params):
-                    params_list += [(i,v)]
+                    params_list += [(i, v)]
                     known_params.update([i])
 
         # if there are parameters -- populate the list
         if len(params_list):
             params_ = '\n'.join([i[1].rstrip() for i in params_list
                                  if not i[0] in skip_params])
-            if 'dict of keyworded arguments' in params_:
-                import pydb
-                pydb.debugger()
             initdoc += "\n\n%sParameters%s\n" % ( (__rst_sep2,)*2 ) \
                        + _indent(params_)
 
@@ -326,7 +308,7 @@ def table2string(table, out=None):
 
     # equalize number of elements in each row
     Nelements_max = max(len(x) for x in table)
-    for i,table_ in enumerate(table):
+    for i, table_ in enumerate(table):
         table[i] += [''] * (Nelements_max - len(table_))
 
     # figure out lengths within each column
@@ -368,6 +350,4 @@ def table2string(table, out=None):
         value = out.getvalue()
         out.close()
         return value
-
-    pass
 
