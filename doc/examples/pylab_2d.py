@@ -84,7 +84,7 @@ for id, ds in datasets.iteritems():
     fig = 0
 
     # make a new figure
-    P.figure(figsize=(8,12))
+    P.figure(figsize=(6, 6))
 
     print "Processing %s problem..." % id
 
@@ -94,7 +94,7 @@ for id, ds in datasets.iteritems():
 
         # make a new subplot for each classifier
         fig += 1
-        P.subplot(4,2,fig)
+        P.subplot(2, 3, fig)
 
         # plot the training points
         P.plot(ds.samples[ds.labels == 1, 0],
