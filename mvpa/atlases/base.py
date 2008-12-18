@@ -9,7 +9,21 @@
 """Base classes for Anatomy atlases support
 
 TODOs:
+======
+
  * major optimization. Now code is sloppy and slow -- plenty of checks etc
+
+Module Organization
+===================
+mvpa.atlases.base module contains support for various atlases
+
+.. packagetree::
+   :style: UML
+
+:group Base: BaseAtlas XMLBasedAtlas Label Level LabelsLevel
+:group Talairach: PyMVPAAtlas LabelsAtlas ReferencesAtlas
+:group Exceptions: XMLAtlasException
+
 """
 
 from mvpa.base import externals

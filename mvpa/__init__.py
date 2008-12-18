@@ -16,10 +16,15 @@ The mvpa package contains the following subpackages and modules:
 .. packagetree::
    :style: UML
 
-:group Basic Data Structures: datasets
-:group Classifiers: clf
 :group Algorithms: algorithms
-:group Miscellaneous: misc
+:group Anatomical Atlases: atlases
+:group Basic Data Structures: datasets
+:group Classifiers (supervised learners): clfs
+:group Feature Selections: featsel
+:group Mappers (usually unsupervised learners): mappers
+:group Measures: measures
+:group Miscellaneous: base misc support
+:group Unittests: tests
 
 :author: `Michael Hanke <michael.hanke@gmail.com>`__,
          `Yaroslav Halchenko <debian@onerussian.com>`__,
@@ -31,10 +36,11 @@ The mvpa package contains the following subpackages and modules:
 
 :license: The MIT License
 :copyright: |copy| 2006-2008 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2008 Yaroslav O. Halchenko <debian@onerussian.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
+:contributor: `Emanuele Olivetti <emanuele@relativita.com>`__
 :contributor: `Per B. Sederberg <persed@princeton.edu>`__
-:contributor: `Yaroslav O. Halchenko <debian@onerussian.com>`__
 
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
