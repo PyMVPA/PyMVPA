@@ -128,6 +128,7 @@ class WarningLog(OnceLogger):
 
 
     def _setMaxCount(self, value):
+        """Set maxcount for the warning"""
         self.__maxcount = value
 
     maxcount = property(fget=lambda x:x.__maxcount, fset=_setMaxCount)
