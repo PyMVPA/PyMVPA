@@ -23,7 +23,7 @@ from mvpa.featsel.helpers import \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
-from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier
+from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 

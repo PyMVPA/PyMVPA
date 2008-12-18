@@ -18,8 +18,8 @@ import operator
 from mvpa.datasets.splitter import OddEvenSplitter
 
 # Define sets of classifiers
-from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
-                                 MulticlassClassifier
+from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
+     MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential

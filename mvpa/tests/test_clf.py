@@ -16,7 +16,8 @@ from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from mvpa.clfs.base import Classifier, CombinedClassifier, \
+from mvpa.clfs.base import Classifier
+from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier
 from mvpa.clfs.transerror import TransferError
