@@ -28,11 +28,11 @@ Now, load the dataset from a NIfTI file. An additional 2-column textfile
 has the label and associated experimental run of each volume in the dataset
 (one volume per line). Finally, a mask is loaded to exclude non-brain voxels.
 
- >>> attr = SampleAttributes('data/attributes.txt')
- >>> dataset = NiftiDataset(samples='data/bold.nii.gz',
+ >>> attr = SampleAttributes('mvpa/data/attributes.txt')
+ >>> dataset = NiftiDataset(samples='mvpa/data/bold.nii.gz',
  ...                        labels=attr.labels,
  ...                        chunks=attr.chunks,
- ...                        mask='data/mask.nii.gz')
+ ...                        mask='mvpa/data/mask.nii.gz')
 
 Perform linear detrending and afterwards zscore the timeseries of each voxel
 using the mean and standard deviation determined from *rest* volumes
