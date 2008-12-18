@@ -294,7 +294,7 @@ $(COVERAGE_REPORT): build
 #
 
 pylint:
-	pylint --rcfile doc/misc/pylintrc mvpa
+	pylint -e --rcfile doc/misc/pylintrc mvpa
 
 #
 # Generate new source distribution
