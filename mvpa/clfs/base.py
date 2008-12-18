@@ -6,8 +6,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base classes for all classifiers.
+"""Base class for all classifiers.
 
+At the moment, regressions are treated just as a special case of
+classifier (or vise versa), so the same base class `Classifier` is
+utilized for both kinds.
 """
 
 __docformat__ = 'restructuredtext'
@@ -17,12 +20,9 @@ import numpy as N
 from mvpa.support.copy import deepcopy
 
 import time
-from sets import Set
 
 from mvpa.misc.support import idhash
-from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
+from mvpa.misc.state import StateVariable, Parametrized
 from mvpa.misc.param import Parameter
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
@@ -713,7 +713,8 @@ class Classifier(Parametrized):
         # mark for future 'train()' items which are explicitely
         # mentioned as changed
         for key, value in kwargs.iteritems():
-            if value: ichd[key] = True
+            if value:
+                ichd[key] = True
         self.__changedData_isset = True
 
         # To check if we are not fooled

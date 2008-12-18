@@ -24,18 +24,15 @@ __docformat__ = 'restructuredtext'
 import operator
 import numpy as N
 
-import time
 from sets import Set
 
 from mvpa.misc.args import group_kwargs
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.misc.state import StateVariable, Stateful, Harvestable, Parametrized
-from mvpa.misc.param import Parameter
+from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
 from mvpa.clfs.base import Classifier
-from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
-from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
+from mvpa.misc.transformers import FirstAxisMean
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
@@ -452,7 +449,7 @@ class MeanPrediction(PredictionsCombiner):
 class ClassifierCombiner(PredictionsCombiner):
     """Provides a decision using training a classifier on predictions/values
 
-    TODO
+    TODO: implement
     """
 
     predictions = StateVariable(enabled=True,
@@ -491,7 +488,6 @@ class ClassifierCombiner(PredictionsCombiner):
         if len(clfs)==0:
             return []                   # to don't even bother
 
-        # XXX TODO
         raise NotImplementedError
 
 
@@ -533,11 +529,15 @@ class CombinedClassifier(BoostedClassifier):
 
 
     def __repr__(self, prefixes=[]):
+        """Literal representation of `CombinedClassifier`.
+        """
         return super(CombinedClassifier, self).__repr__(
             ["combiner=%s" % repr(self.__combiner)] + prefixes)
 
 
     def summary(self):
+        """Provide summary for the `CombinedClassifier`.
+        """
         s = super(CombinedClassifier, self).summary()
         if self.trained:
             s += "\n Slave classifiers summaries:"
@@ -809,10 +809,10 @@ class SplitClassifier(CombinedClassifier):
     splits = StateVariable(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
 
-    # XXX couldn't be training_confusion since it has other meaning
+    # ??? couldn't be training_confusion since it has other meaning
     #     here, BUT it is named so within CrossValidatedTransferError
     #     -- unify
-    # YYY decided to go with overriding semantics tiny bit. For split
+    #  decided to go with overriding semantics tiny bit. For split
     #     classifier training_confusion would correspond to summary
     #     over training errors across all splits. Later on if need comes
     #     we might want to implement global_training_confusion which would
@@ -876,7 +876,7 @@ class SplitClassifier(CombinedClassifier):
 
         self.splits = []
 
-        for i,split in enumerate(self.__splitter(dataset)):
+        for i, split in enumerate(self.__splitter(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
@@ -902,7 +902,7 @@ class SplitClassifier(CombinedClassifier):
             if states.isEnabled("training_confusion"):
                 states.training_confusion += \
                                                clf.states.training_confusion
-        # XXX hackish way -- so it should work only for ConfusionMatrix
+        # hackish way -- so it should work only for ConfusionMatrix???
         try:
             if states.isEnabled("confusion"):
                 states.confusion.labels_map = dataset.labels_map
@@ -1116,7 +1116,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
     def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer
 
-        TODO: had to clone from mapped classifier... XXX
+        had to clone from mapped classifier???
         """
         return MappedClassifierSensitivityAnalyzer(
                 self,
