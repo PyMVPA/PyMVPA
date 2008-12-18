@@ -11,7 +11,7 @@
 from sets import Set
 
 from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.clfs.base import ProxyClassifier
+from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 

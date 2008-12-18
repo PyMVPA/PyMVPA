@@ -38,6 +38,9 @@ Releases
     with less than 4 dimensions, which can, optionally, be provided as
     a list of filenames of :class:`~nifti.NiftiImage` objects. That
     makes it easy to load data from a sequence of files.
+  * Meta classifiers definitions moved from `~mvpa.clfs.base` into
+    `~mvpa.clfs.meta`. This change should not impact any user who imports
+	from `~mvpa.suite`.
 
 
 * 0.4.0 (Sat, 15 Nov 2008)

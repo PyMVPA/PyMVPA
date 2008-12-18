@@ -18,7 +18,7 @@ from mvpa.featsel.helpers import FixedNElementTailSelector, \
 
 from mvpa.featsel.rfe import RFE
 
-from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
+from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.misc.transformers import Absolute
 from mvpa.datasets.splitter import NFoldSplitter, NoneSplitter
