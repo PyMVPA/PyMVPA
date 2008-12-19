@@ -210,7 +210,7 @@ unittest: build
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=badexternals:. python mvpa/tests/main.py 2>&1 \
+	@PYTHONPATH=mvpa/tests/badexternals:. python mvpa/tests/main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 

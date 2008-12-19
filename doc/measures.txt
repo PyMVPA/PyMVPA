@@ -143,7 +143,7 @@ of raw sensitivities.
   The `SVMWeights` classes *cannot* extract reasonable weights from non-linear
   SVMs (e.g. with RBF kernels).
 
-.. _libsvm.LinearSVMWeights: api/mvpa.clfs.libsvm.sens.LinearSVMWeights-class.html
+.. _libsvm.LinearSVMWeights: api/mvpa.clfs.libsvmc.sens.LinearSVMWeights-class.html
 .. _sg.LinearSVMWeights: api/mvpa.clfs.sg.sens.LinearSVMWeights-class.html
 
 
