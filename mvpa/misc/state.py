@@ -21,11 +21,18 @@ import numpy as N
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.base.dochelpers import enhancedClassDocString
+from mvpa.base.dochelpers import enhancedDocString
+
+from mvpa.base import externals
 
 if __debug__:
     from mvpa.base import debug
 
+
+_in_ipython = externals.exists('in ipython')
+# Separators around definitions, needed for ReST, but bogus for
+# interactive sessions
+_def_sep = ('`', '')[int(_in_ipython)]
 
 _object_getattribute = object.__getattribute__
 _object_setattr = object.__setattr__
@@ -653,7 +660,8 @@ class Collection(object):
         # lets assure consistent litsting order
         items = self._items.items()
         items.sort()
-        return [ "`%s`: %s" % (str(x[1]), x[1].__doc__) for x in items ]
+        return [ "%s%s%s: %s" % (_def_sep, str(x[1]), _def_sep, x[1].__doc__)
+                 for x in items ]
 
 
     def _getNames(self):
@@ -1195,7 +1203,7 @@ class AttributesCollector(type):
             setattr(cls, "_paramsdoc", paramsdoc)
 
         if paramsdoc + statesdoc != "":
-            cls.__doc__ = enhancedClassDocString(cls, *bases)
+            cls.__doc__ = enhancedDocString(cls, *bases)
 
 
 
@@ -1447,25 +1455,25 @@ class Harvestable(Stateful):
     _KNOWN_COPY_METHODS = [ None, 'copy', 'deepcopy' ]
 
 
-    def __init__(self, attribs=None, copy_attribs='copy', **kwargs):
+    def __init__(self, harvest_attribs=None, copy_attribs='copy', **kwargs):
         """Initialize state of harvestable
 
         :Parameters:
-            attribs : list of basestr or dicts
-                What attributes of call to store and return within
-                harvested state variable. If an item is a dictionary,
-                following keys are used ['name', 'copy']
-            copy_attribs : None or basestr
-                Default copying. If None -- no copying, 'copy'
-                - shallow copying, 'deepcopy' -- deepcopying
+          harvest_attribs : list of basestr or dicts
+            What attributes of call to store and return within
+            harvested state variable. If an item is a dictionary,
+            following keys are used ['name', 'copy']
+          copy_attribs : None or basestr
+            Default copying. If None -- no copying, 'copy'
+            - shallow copying, 'deepcopy' -- deepcopying
 
         """
         Stateful.__init__(self, **kwargs)
 
-        self.__atribs = attribs
+        self.__atribs = harvest_attribs
         self.__copy_attribs = copy_attribs
 
-        self._setAttribs(attribs)
+        self._setAttribs(harvest_attribs)
 
 
     def _setAttribs(self, attribs):

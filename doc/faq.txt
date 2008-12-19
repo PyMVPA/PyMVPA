@@ -245,7 +245,7 @@ How do I extract sensitivities from a classifier used within a cross-validation?
 
 .. The answer depends on size of the classification problem and the used
    classifier. If you can afford to keep a copy of the trained classifier for
-   each data split, the most elegant solution is probably a :class:`~mvpa.clfs.base.SplitClassifier`...
+   each data split, the most elegant solution is probably a :class:`~mvpa.clfs.meta.SplitClassifier`...
    ...BUT no yet
 
 :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` provides an interface to access any

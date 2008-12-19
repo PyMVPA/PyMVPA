@@ -210,7 +210,7 @@ unittest: build
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=badexternals:. python mvpa/tests/main.py 2>&1 \
+	@PYTHONPATH=mvpa/tests/badexternals:. python mvpa/tests/main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
@@ -225,7 +225,6 @@ unittest-optimization: build
 	@echo "I: Running unittests with python -O."
 	@PYTHONPATH=. python -O mvpa/tests/main.py
 
-
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
 #     additional checking,
@@ -236,7 +235,10 @@ unittest-debug: build
        python mvpa/tests/main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
+
 # Run all unittests
+#  Run with 'make -k' if you like to sweep through all of them, so
+#  failure in one of them does not stop the full sweep
 unittests: unittest-nonlabile unittest unittest-badexternals \
            unittest-optimization unittest-debug
 
@@ -294,7 +296,7 @@ $(COVERAGE_REPORT): build
 #
 
 pylint:
-	pylint --rcfile doc/misc/pylintrc mvpa
+	pylint -e --rcfile doc/misc/pylintrc mvpa
 
 #
 # Generate new source distribution

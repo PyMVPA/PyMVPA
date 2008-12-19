@@ -18,11 +18,12 @@ significantly above chance-level"*.  PyMVPA supports *NULL* (aka *H0*)
 hypothesis testing for :ref:`transfer errors <transfer_error>` and all
 :ref:`dataset measures <measure>`. In both cases the object computing the
 measure or transfer error takes an optional constructor argument `null_dist`.
-The value of this argument is an instance of some NullDist_ estimator.  If
-*NULL* distribution is luckily a-priori known, it is possible to reuse any
-distribution specified in `scipy.stats` module. If the parameters of the
-distribution are known, such distribution instance can be used to initialize
-FixedNullDist_ instance to be specified in `null_dist` parameter.
+The value of this argument is an instance of some
+:class:`~mvpa.clfs.stats.NullDist` estimator.  If *NULL* distribution is
+luckily a-priori known, it is possible to reuse any distribution specified in
+`scipy.stats` module. If the parameters of the distribution are known, such
+distribution instance can be used to initialize FixedNullDist_ instance to be
+specified in `null_dist` parameter.
 
 However, as with other applications of statistics in classifier-based analyses
 there is the problem that we do not know the distribution of a variable like

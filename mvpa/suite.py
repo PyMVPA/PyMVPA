@@ -30,6 +30,7 @@ from mvpa.base.verbosity import *
 from mvpa.clfs.distance import *
 from mvpa.clfs.kernel import *
 from mvpa.clfs.base import *
+from mvpa.clfs.meta import *
 from mvpa.clfs.knn import *
 if externals.exists('lars'):
     from mvpa.clfs.lars import *
@@ -111,3 +112,6 @@ if externals.exists("pywt"):
 
 if externals.exists("pylab"):
     import pylab as P
+
+if externals.exists("lxml") and externals.exists("nifti"):
+    from mvpa.atlases import *
