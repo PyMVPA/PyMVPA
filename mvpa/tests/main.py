@@ -16,7 +16,7 @@ from mvpa.base import externals, warning
 from mvpa.tests import collectTestSuites
 
 
-if __name__ == '__main__':
+def main():
     if __debug__:
         from mvpa.base import debug
         # Lets add some targets which provide additional testing
@@ -29,7 +29,6 @@ if __name__ == '__main__':
 
     # and make global test suite
     ts = unittest.TestSuite(suites.values())
-
 
     # no MVPA warnings during whole testsuite
     warning.handlers = []
@@ -49,4 +48,10 @@ if __name__ == '__main__':
             return result
 
     # finally run it
-    TextTestRunnerPyMVPA().run(ts)
+    TextTestRunnerPyMVPA(
+            verbosity=int(cfg.get('tests', 'verbosity', default=1))
+                ).run(ts)
+
+
+if __name__ == '__main__':
+    main()

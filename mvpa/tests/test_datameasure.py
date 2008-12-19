@@ -19,7 +19,7 @@ from mvpa.featsel.helpers import FixedNElementTailSelector, \
 >>>>>>> mh/master:mvpa/tests/test_datameasure.py
 from mvpa.featsel.rfe import RFE
 
-from mvpa.clfs.base import SplitClassifier, MulticlassClassifier, \
+from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.clfs.smlr import SMLR, SMLRWeights
 from mvpa.misc.transformers import Absolute

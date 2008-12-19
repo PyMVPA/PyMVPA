@@ -15,10 +15,9 @@ mvpa.atlases module contains support for various atlases
 .. packagetree::
    :style: UML
 
-:group Base: BaseAtlas XMLBasedAtlas Label Level LabelsLevel
-:group Talairach: RumbaAtlas LabelsAtlas ReferencesAtlas
-:group Atlases from FSL: FSLAtlas FSLProbabilisticAtlas
-:group Exceptions: XMLAtlasException
+:group Base Implementations: base
+:group Atlases from FSL: fsl
+:group Helpers: warehouse transformation
 """
 
 __docformat__ = 'restructuredtext'

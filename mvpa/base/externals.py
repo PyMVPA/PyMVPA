@@ -108,6 +108,13 @@ def __check_stablerdist():
     pass
 
 
+def __check_in_ipython():
+    # figure out if ran within IPython
+    if '__IPYTHON__' in globals()['__builtins__']:
+        return
+    raise RuntimeError, "Not running in IPython session"
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'nifti':'from nifti import NiftiImage as __',
@@ -138,6 +145,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'lxml': "from lxml import objectify as __",
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
+          'in ipython': "__check_in_ipython()",
           }
 
 _caught_exceptions = [ImportError, AttributeError, RuntimeError]

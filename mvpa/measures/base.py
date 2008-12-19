@@ -51,10 +51,10 @@ class DatasetMeasure(Stateful):
     probabilities are automatically computed and stored in the `null_prob`
     state variable.
 
-    :Developer note:
-      All subclasses shall get all necessary parameters via their constructor,
-      so it is possible to get the same type of measure for multiple datasets
-      by passing them to the __call__() method successively.
+    .. note::
+      For developers: All subclasses shall get all necessary parameters via
+      their constructor, so it is possible to get the same type of measure for
+      multiple datasets by passing them to the __call__() method successively.
     """
 
     raw_result = StateVariable(enabled=False,
@@ -74,7 +74,9 @@ class DatasetMeasure(Stateful):
             This functor is called in `__call__()` to perform a final
             processing step on the to be returned dataset measure. If None,
             nothing is called
-          null_dist : instance of distribution estimator
+          null_dist: instance of distribution estimator
+            The estimated distribution is used to assign a probability for a
+            certain value of the computed measure.
         """
         Stateful.__init__(self, **kwargs)
 
