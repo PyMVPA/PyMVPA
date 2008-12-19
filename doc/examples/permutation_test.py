@@ -88,4 +88,4 @@ print 'Error on training set:', err
 
 # check that the result is highly significant since we know that the
 # data has signal
-print 'Corresponding p-value: 'terr.null_prob
+print 'Corresponding p-value: ',  terr.null_prob
