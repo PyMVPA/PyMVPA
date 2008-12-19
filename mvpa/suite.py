@@ -109,3 +109,6 @@ if externals.exists("pywt"):
 
 if externals.exists("pylab"):
     import pylab as P
+
+if externals.exists("lxml") and externals.exists("nifti"):
+    from mvpa.atlases import *
