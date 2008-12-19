@@ -16,8 +16,7 @@ set -eu
 # what branches to test
 BRANCHES='master yoh/master mh/master maint/0.4'
 # where to send reports
-EMAILS=yoh@onerussian.com
-# michael.hanke@gmail.com
+EMAILS=yoh@onerussian.com,michael.hanke@gmail.com
 
 repo=git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
@@ -25,7 +24,7 @@ tmpdir=/tmp/pymvpa_tests-$(date +"20%y%m%d-%H:%M:%S")
 mkdir $tmpdir
 tmpfile=$tmpdir.tmp
 logfile=$tmpdir.log
-trap "echo 'I: removing $tmpdir'; rm -fr $tmpdir;" EXIT
+trap "rm -fr $tmpdir;" EXIT
 
 indent() {
 	sed -e 's/^/  /g'
@@ -58,8 +57,9 @@ ACTIONS='checkout build test'
 
     # checkout the repository
     echo "I: Cloning repository"
-    #git clone $repo 2>&1 | indent
-    #cd pymvpa
+    git clone $repo 2>&1 | indent
+    cd pymvpa
+
 	failed=0
 	succeeded=0
     #
@@ -91,6 +91,11 @@ ACTIONS='checkout build test'
 	if [ "x$branches_with_problems" != x ]; then
 		echo -e "I: Branches which experienced problems: $branches_with_problems"
 	fi
-} 2>&1 | tee $logfile
 
-echo "I: Exiting. Logfile $logfile"
+    echo "I:" $(date)
+    echo "I: Exiting. Logfile $logfile"
+
+} >| $logfile 2>&1
+
+sline=$(grep 'I: Succeeded' $logfile)
+cat $logfile | mail -s "PyMVPA: daily testing $sline" $EMAILS
