@@ -29,7 +29,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-_in_ipython = externals.exists('in ipython')
+_in_ipython = externals.exists('running ipython env')
 # Separators around definitions, needed for ReST, but bogus for
 # interactive sessions
 _def_sep = ('`', '')[int(_in_ipython)]
