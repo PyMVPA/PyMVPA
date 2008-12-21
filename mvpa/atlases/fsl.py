@@ -91,7 +91,7 @@ class FSLAtlas(XMLBasedAtlas):
                       (resolutions,)
             raise RuntimeError, msg
         if __debug__:
-			debug('ATL__', "Loading atlas data from %s" % self._imagefile)
+            debug('ATL__', "Loading atlas data from %s" % self._imagefile)
         self._image = ni_image
         self._resolution = ni_image.pixdim[0]
         self._origin = N.abs(ni_image.header['qoffset']) * 1.0  # XXX

@@ -763,7 +763,7 @@ class ReferencesAtlas(PyMVPAAtlas):
             raise ValueError("Distance should not be negative. "
                              " Thus '%f' is not a legal value" % distance)
         if __debug__:
-			debug('ATL__',
+            debug('ATL__',
                   "Setting maximal distance for queries to be %d" % distance)
         self.__distance = distance
 
