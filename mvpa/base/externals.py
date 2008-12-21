@@ -144,7 +144,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'lxml': "from lxml import objectify as __",
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
-          'in ipython': "__check_in_ipython()",
+          'running ipython env': "__check_in_ipython()",
           }
 
 _caught_exceptions = [ImportError, AttributeError, RuntimeError]
