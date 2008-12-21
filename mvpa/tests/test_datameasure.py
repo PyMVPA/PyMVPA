@@ -16,7 +16,6 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
 
->>>>>>> mh/master:mvpa/tests/test_datameasure.py
 from mvpa.featsel.rfe import RFE
 
 from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
