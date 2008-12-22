@@ -90,7 +90,7 @@ sweep()
 
     # checkout the repository
     echo "I: Cloning repository"
-    $precmd git clone $repo 2>&1 | indent
+    $precmd git clone -q $repo 2>&1 | indent
     $precmd cd pymvpa
     # no need to check here since checkout would fail below otherwise
 
