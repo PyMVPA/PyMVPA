@@ -16,9 +16,7 @@ set -e
 # what branches to test
 BRANCHES='master yoh/master mh/master maint/0.4'
 # where to send reports
-# XXX
-EMAILS='yoh@onerussian.com,yarikoptic@gmail.com'
-#,michael.hanke@gmail.com
+EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
 
 precmd=
 #precmd="echo  C: "
@@ -32,7 +30,7 @@ tmpfile="$logdir/tmp.log"
 logfile="$logdir/all.log"
 
 # Remove
-#trap "rm -fr $logdir/pymvpa $logdir/tmp.log;" EXIT
+trap "rm -fr $logdir/pymvpa $logdir/tmp.log;" EXIT
 
 mkdir -p "$logdir"
 
