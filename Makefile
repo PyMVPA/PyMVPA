@@ -88,6 +88,7 @@ clean:
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
 		 -o -name '.coverage' \
+		 -o -name 'iterate.dat' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '*.gch' \
