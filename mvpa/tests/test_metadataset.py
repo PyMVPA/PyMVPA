@@ -236,8 +236,19 @@ class MetaDatasetTests(unittest.TestCase):
         self.failUnless(N.sum(osamples[filt]) == 0)
         self.failUnless((osamples[N.negative(filt)] > 0).all())
 
-
-
+    def testEventDatasetExtended(self):
+        if not externals.exists('nifti'):
+            return
+        from mvpa.datasets.nifti import ERNiftiDataset
+        try:
+            ds = ERNiftiDataset(
+                samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+                events=[Event(onset=1,duration=5,label=1,chunk=1)],
+                evconv=True, tr=2.0)
+        except ValueError, e:
+            self.fail("Failed to create a simple ERNiftiDataset from a volume"
+                      " with only 1 slice. Exception was:\n %s" % e)
 
 def suite():
     return unittest.makeSuite(MetaDatasetTests)

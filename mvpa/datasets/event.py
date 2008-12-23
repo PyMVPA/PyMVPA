@@ -155,8 +155,15 @@ class EventDataset(MappedDataset):
 
         # expand the mask if necessary (ie. if provided in raw sample space and
         # not in boxcar space
-        if not mask is None and len(mask.shape) == len(bcshape) - 1:
-            mask = N.array([mask] * bcshape[0])
+        if not mask is None:
+            if len(mask.shape) < len(bcshape)-1:
+                # complement needed dimensions
+                mshape = mask.shape
+                missing_dims = len(bcshape) - 1 - len(mshape)
+                mask = mask.reshape((1,)*missing_dims + mshape)
+            if len(mask.shape) == len(bcshape) - 1:
+                # replicate per each boxcar elemenet
+                mask = N.array([mask] * bcshape[0])
 
         # now we can build the array mapper, using the optionally provided
         # custom metric
