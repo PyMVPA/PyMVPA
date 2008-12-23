@@ -22,7 +22,7 @@ if __debug__:
     from mvpa.base import debug
 
 __add_init2doc = False
-__in_ipython = externals.exists('in ipython')
+__in_ipython = externals.exists('running ipython env')
 # if ran within IPython -- might need to add doc to init
 if __in_ipython:
     __rst_mode = 0                           # either to do ReST links at all
