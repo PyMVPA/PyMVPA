@@ -15,7 +15,7 @@ import numpy as N
 from mvpa import pymvpa_dataroot
 from mvpa.datasets.nifti import *
 from mvpa.misc.exceptions import *
-from mvpa.misc.fsl.base import FslEV3
+from mvpa.misc.fsl import FslEV3
 
 class NiftiDatasetTests(unittest.TestCase):
 
