@@ -66,9 +66,9 @@ class SVM(_SVM):
                     ('binary', 'multiclass'), 'nu-SVM classification'),
         'ONE_CLASS' : (svm.svmc.ONE_CLASS, (),
                        ('oneclass',), 'one-class-SVM'),
-        'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, ('tube_epsilon',),
+        'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
                          ('regression',), 'epsilon-SVM regression'),
-        'NU_SVR' : (svm.svmc.NU_SVR, ('nu',),
+        'NU_SVR' : (svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
                     ('regression',), 'nu-SVM regression')
         }
 
