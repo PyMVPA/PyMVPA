@@ -6,7 +6,22 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Wrap the libsvm package into a very simple class interface."""
+"""Importer for the available SVM and SVR machines.
+
+Multiple external libraries implementing Support Vector Machines
+(Classification) and Regressions are available: LIBSVM, and shogun.
+This module is just a helper to provide default implementation for SVM
+depending on the availability of external libraries. By default LIBSVM
+implementation is choosen by default, but in any case both libraries
+are available through importing from this module:
+
+> from mvpa.clfs.svm import sg, libsvm
+> help(sg.SVM)
+> help(libsvm.SVM)
+
+Please refer to particular interface for more documentation about
+parametrization and available kernels and implementations.
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -43,14 +58,14 @@ if externals.exists('shogun'):
 
 if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
-    from mvpa.clfs import libsvmc
-    _NuSVM = libsvmc.SVM
+    from mvpa.clfs import libsvmc as libsvm
+    _NuSVM = libsvm.SVM
     if default_backend == 'libsvm' or SVM is None:
         if __debug__ and default_backend != 'libsvm' and SVM is None:
             debug('SVM',
                   'Default SVM backend %s was not found, so using libsvm'
                   % default_backend)
-        SVM = libsvmc.SVM
+        SVM = libsvm.SVM
     #from mvpa.clfs.libsvm.svm import *
 
 if SVM is None:
