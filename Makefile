@@ -283,6 +283,10 @@ testapiref: apidoc
 	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
+# Check if there is no WARNINGs from sphinx
+testsphinx: htmldoc
+	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
+
 test: unittests testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
