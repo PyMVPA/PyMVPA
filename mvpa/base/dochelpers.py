@@ -26,8 +26,8 @@ __in_ipython = externals.exists('running ipython env')
 # if ran within IPython -- might need to add doc to init
 if __in_ipython:
     __rst_mode = 0                           # either to do ReST links at all
-    __rst_sep = ""
-    __rst_sep2 = ""
+    _rst_sep = ""
+    _rst_sep2 = ""
     from IPython import Release
     # XXX figure out exact version when init doc started to be added to class
     # description
@@ -35,8 +35,8 @@ if __in_ipython:
         __add_init2doc = True
 else:
     __rst_mode = 1
-    __rst_sep = "`"
-    __rst_sep2 = ":"
+    _rst_sep = "`"
+    _rst_sep2 = ":"
 
 def _rst(s, snotrst=''):
     """Produce s only in __rst mode"""
@@ -248,7 +248,7 @@ def enhancedDocString(item, *args, **kwargs):
         if len(params_list):
             params_ = '\n'.join([i[1].rstrip() for i in params_list
                                  if not i[0] in skip_params])
-            initdoc += "\n\n%sParameters%s\n" % ( (__rst_sep2,)*2 ) \
+            initdoc += "\n\n%sParameters%s\n" % ( (_rst_sep2,)*2 ) \
                        + _indent(params_)
 
         if suffix != "":
@@ -282,7 +282,7 @@ def enhancedDocString(item, *args, **kwargs):
                  '  ' + ',\n  '.join(['%s%s.%s%s' % (_rst(':class:`~'),
                                                       i.__module__,
                                                       i.__name__,
-                                                      __rst_sep)
+                                                      _rst_sep)
                                       for i in args])
                 ]
 
