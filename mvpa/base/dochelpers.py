@@ -185,6 +185,10 @@ def enhancedDocString(item, *args, **kwargs):
     #return lcl['__doc__']
     rst_lvlmarkup = ["=", "-", "_"]
 
+    # would then be called for any child... ok - ad hoc for SVM???
+    if hasattr(item, '_customizeDoc') and name=='SVM':
+        item._customizeDoc()
+
     initdoc = ""
     if lcl.has_key('__init__'):
         func = lcl['__init__']
