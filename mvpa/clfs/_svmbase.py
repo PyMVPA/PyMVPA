@@ -22,6 +22,7 @@ from mvpa.misc.transformers import SecondAxisSumOfAbs
 if __debug__:
     from mvpa.base import debug
 
+
 class _SVM(Classifier):
     """Support Vector Machine Classifier.
 
@@ -57,7 +58,7 @@ class _SVM(Classifier):
     _ATTRIBUTE_COLLECTIONS = ['params', 'kernel_params'] # enforce presence of params collections
 
     _SVM_PARAMS = {
-        'C' : Parameter(-1.0, descr='Trade-off parameter. High C -- rigid margin SVM'),
+        'C' : Parameter(-1.0, descr='Trade-off parameter. High C -- rigid margin SVM. Negative values provide automatic scaling of their value according to the norm of the data.'),
         'nu' : Parameter(0.5, min=0.0, max=1.0, descr='Fraction of datapoints within the margin'),
         'cache_size': Parameter(100, descr='Size of the kernel cache, specified in megabytes'),
         'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
@@ -71,14 +72,15 @@ class _SVM(Classifier):
         'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),
         'scale': Parameter(1.0, descr='Scale factor for linear kernel. (0 triggers automagic rescaling by SG'),
         'shrinking': Parameter(1, descr='Either shrinking is to be conducted'),
-        'weight_label': Parameter([], allowedtype='[int]', descr='???'),
+        'weight_label': Parameter([], allowedtype='[int]', descr='To be used in conjunction with weight for custom per-label weight.'),
+        # TODO : merge them into a single dictionary
         'weight': Parameter([], allowedtype='[double]', descr='Custom weights per label'),
         # For some reason setting up epsilong to 1e-5 slowed things down a bit
         # in comparison to how it was before (in yoh/master) by up to 20%... not clear why
         # may be related to 1e-3 default within _svm.py?
         'epsilon': Parameter(5e-5,
                         min=1e-10,
-                        descr='Tolerance of termination criterium')
+                        descr='Tolerance of termination criteria')
         }
 
 
@@ -260,3 +262,67 @@ class _SVM(Classifier):
             raise NotImplementedError, \
                   "Sensitivity analyzers for kernel %s is TODO" % \
                   self._kernel_type_literal
+
+
+    @classmethod
+    def _customizeDoc(cls):
+        #cdoc_old = cls.__doc__
+        # Need to append documentation to __init__ method
+        idoc_old = cls.__init__.__doc__
+
+        idoc = """
+SVM/SVR definition is dependent on specifying kernel, implementation
+type, and parameters for each of them which vary depending on the
+choices made.
+
+Desired implementation is specified in `svm_impl` argument. Here
+is the list if implementations known to this class, along with
+specific to them parameters (described below among the rest of
+parameters), and what tasks it is capable to deal with
+(e.g. regression, binary and/or multiclass classification):\n"""
+
+        class NOSClass(object):
+            """Helper -- NothingOrSomething ;)
+            If list is not empty -- return its entries within string s
+            """
+            def __init__(self):
+                self.seen = []
+            def __call__(self, l, s):
+                if l is None or not len(l):
+                    return ''
+                else:
+                    lsorted = list(l)
+                    lsorted.sort()
+                    self.seen += lsorted
+                    return s % (', '.join(lsorted))
+        NOS = NOSClass()
+
+        # Describe implementations
+        idoc += ''.join(
+            ['\n %s : %s' % (k, v[3])
+             + NOS(v[1], "\n  Parameters: %s")
+             + NOS(v[2], "\n  Capabilities: %s")
+             for k,v in cls._KNOWN_IMPLEMENTATIONS.iteritems()])
+
+        # Describe kernels
+        idoc += """
+
+Kernel choice is specified as a string argument `kernel_type` and it
+can be specialized with additional arguments to this constructor
+function. Some kernels might allow computation of per feature
+sensitivity:
+"""
+        idoc += ''.join(
+            ['\n %s' % k + NOS(v[1], ' : %s')
+             + ('', ' (provides sensitivity)')[int(v[2] is not None)]
+             for k,v in cls._KERNELS.iteritems()])
+
+        # Finally parameters
+        NOS.seen += cls._KNOWN_PARAMS + cls._KNOWN_KERNEL_PARAMS
+
+        idoc += '\n:Parameters:' + ''.join(
+            ['\n  %s\n    %s' % (k, v.descr)
+             for k,v in cls._SVM_PARAMS.iteritems() if k in NOS.seen])
+
+        from mvpa.base.dochelpers import handleDocString
+        cls.__dict__['__init__'].__doc__ = handleDocString(idoc_old) + idoc
