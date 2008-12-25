@@ -11,10 +11,13 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+import textwrap
 
 from mvpa.support.copy import deepcopy
 
 from mvpa.base import warning
+from mvpa.base.dochelpers import handleDocString, _rst, _rst_sep2
+
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import SecondAxisSumOfAbs
@@ -58,29 +61,48 @@ class _SVM(Classifier):
     _ATTRIBUTE_COLLECTIONS = ['params', 'kernel_params'] # enforce presence of params collections
 
     _SVM_PARAMS = {
-        'C' : Parameter(-1.0, descr='Trade-off parameter. High C -- rigid margin SVM. Negative values provide automatic scaling of their value according to the norm of the data.'),
-        'nu' : Parameter(0.5, min=0.0, max=1.0, descr='Fraction of datapoints within the margin'),
-        'cache_size': Parameter(100, descr='Size of the kernel cache, specified in megabytes'),
-        'coef0': Parameter(0.5, descr='Offset coefficient in polynomial and sigmoid kernels'),
-        'degree': Parameter(3, descr='Degree of polynomial kernel'),
+        'C' : Parameter(-1.0,
+                  doc='Trade-off parameter between width of the '
+                      'margin and number of support vectors. Higher C -- '
+                      'more rigid margin SVM. In linear kernel, negative '
+                      'values provide automatic scaling of their value '
+                      'according to the norm of the data'),
+        'nu' : Parameter(0.5, min=0.0, max=1.0,
+                  doc='Fraction of datapoints within the margin'),
+        'cache_size': Parameter(100,
+                  doc='Size of the kernel cache, specified in megabytes'),
+        'coef0': Parameter(0.5,
+                  doc='Offset coefficient in polynomial and sigmoid kernels'),
+        'degree': Parameter(3, doc='Degree of polynomial kernel'),
             # init the parameter interface
-        'tube_epsilon': Parameter(0.01, descr='Epsilon in epsilon-insensitive loss function of epsilon-SVM regression (SVR)'),
-        'gamma': Parameter(0, descr='Scaling (width in RBF) within non-linear kernels'),
-        'tau': Parameter(1e-6, descr='TAU parameter of KRR regression in shogun'),
-        'max_shift': Parameter(10, min=0.0, descr='Maximal shift for SGs GaussianShiftKernel'),
-        'shift_step': Parameter(1, min=0.0, descr='Shift step for SGs GaussianShiftKernel'),
-        'probability': Parameter(0, descr='Flag to signal either probability estimate is obtained within LibSVM'),
-        'scale': Parameter(1.0, descr='Scale factor for linear kernel. (0 triggers automagic rescaling by SG'),
-        'shrinking': Parameter(1, descr='Either shrinking is to be conducted'),
-        'weight_label': Parameter([], allowedtype='[int]', descr='To be used in conjunction with weight for custom per-label weight.'),
+        'tube_epsilon': Parameter(0.01,
+                  doc='Epsilon in epsilon-insensitive loss function of '
+                      'epsilon-SVM regression (SVR)'),
+        'gamma': Parameter(0,
+                  doc='Scaling (width in RBF) within non-linear kernels'),
+        'tau': Parameter(1e-6, doc='TAU parameter of KRR regression in shogun'),
+        'max_shift': Parameter(10, min=0.0,
+                  doc='Maximal shift for SGs GaussianShiftKernel'),
+        'shift_step': Parameter(1, min=0.0,
+                  doc='Shift step for SGs GaussianShiftKernel'),
+        'probability': Parameter(0,
+                  doc='Flag to signal either probability estimate is obtained '
+                      'within LIBSVM'),
+        'scale': Parameter(1.0,
+                  doc='Scale factor for linear kernel. '
+                      '(0 triggers automagic rescaling by SG'),
+        'shrinking': Parameter(1, doc='Either shrinking is to be conducted'),
+        'weight_label': Parameter([], allowedtype='[int]',
+                  doc='To be used in conjunction with weight for custom '
+                      'per-label weight'),
         # TODO : merge them into a single dictionary
-        'weight': Parameter([], allowedtype='[double]', descr='Custom weights per label'),
-        # For some reason setting up epsilong to 1e-5 slowed things down a bit
+        'weight': Parameter([], allowedtype='[double]',
+                  doc='Custom weights per label'),
+        # For some reason setting up epsilon to 1e-5 slowed things down a bit
         # in comparison to how it was before (in yoh/master) by up to 20%... not clear why
         # may be related to 1e-3 default within _svm.py?
-        'epsilon': Parameter(5e-5,
-                        min=1e-10,
-                        descr='Tolerance of termination criteria')
+        'epsilon': Parameter(5e-5, min=1e-10,
+                  doc='Tolerance of termination criteria. (For nu-SVM default is 0.001)')
         }
 
 
@@ -279,7 +301,10 @@ Desired implementation is specified in `svm_impl` argument. Here
 is the list if implementations known to this class, along with
 specific to them parameters (described below among the rest of
 parameters), and what tasks it is capable to deal with
-(e.g. regression, binary and/or multiclass classification):\n"""
+(e.g. regression, binary and/or multiclass classification).
+
+%sImplementations%s""" % (_rst_sep2, _rst_sep2)
+
 
         class NOSClass(object):
             """Helper -- NothingOrSomething ;)
@@ -287,9 +312,9 @@ parameters), and what tasks it is capable to deal with
             """
             def __init__(self):
                 self.seen = []
-            def __call__(self, l, s):
+            def __call__(self, l, s, empty=''):
                 if l is None or not len(l):
-                    return ''
+                    return empty
                 else:
                     lsorted = list(l)
                     lsorted.sort()
@@ -299,9 +324,10 @@ parameters), and what tasks it is capable to deal with
 
         # Describe implementations
         idoc += ''.join(
-            ['\n %s : %s' % (k, v[3])
-             + NOS(v[1], "\n  Parameters: %s")
-             + NOS(v[2], "\n  Capabilities: %s")
+            ['\n  %s : %s' % (k, v[3])
+             + NOS(v[1], "\n    Parameters: %s")
+             + NOS(v[2], "\n%s    Capabilities: %%s" %
+                   _rst(('','\n')[int(len(v[1])>0)], ''))
              for k,v in cls._KNOWN_IMPLEMENTATIONS.iteritems()])
 
         # Describe kernels
@@ -310,19 +336,28 @@ parameters), and what tasks it is capable to deal with
 Kernel choice is specified as a string argument `kernel_type` and it
 can be specialized with additional arguments to this constructor
 function. Some kernels might allow computation of per feature
-sensitivity:
-"""
+sensitivity.
+
+%sKernels%s""" % (_rst_sep2, _rst_sep2)
+
         idoc += ''.join(
-            ['\n %s' % k + NOS(v[1], ' : %s')
-             + ('', ' (provides sensitivity)')[int(v[2] is not None)]
+            ['\n  %s' % k
+             + ('', ' : provides sensitivity')[int(v[2] is not None)]
+             + '\n    ' + NOS(v[1], '%s', 'No parameters')
              for k,v in cls._KERNELS.iteritems()])
 
         # Finally parameters
         NOS.seen += cls._KNOWN_PARAMS + cls._KNOWN_KERNEL_PARAMS
 
-        idoc += '\n:Parameters:' + ''.join(
-            ['\n  %s\n    %s' % (k, v.descr)
-             for k,v in cls._SVM_PARAMS.iteritems() if k in NOS.seen])
+        idoc += '\n:Parameters:\n' + '\n'.join(
+            [v.doc(indent='  ')
+             for k,v in cls._SVM_PARAMS.iteritems()
+             if k in NOS.seen])
 
-        from mvpa.base.dochelpers import handleDocString
         cls.__dict__['__init__'].__doc__ = handleDocString(idoc_old) + idoc
+
+
+# populate names in parameters
+for k,v in _SVM._SVM_PARAMS.iteritems():
+    v.name = k
+

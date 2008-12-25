@@ -104,7 +104,7 @@ class SVM(_SVM):
 
     num_threads = Parameter(1,
                             min=1,
-                            descr='Number of threads to utilize')
+                            doc='Number of threads to utilize')
 
     # NOTE: gamma is width in SG notation for RBF(Gaussian)
     _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ('scale',), LinearSVMWeights),
