@@ -45,7 +45,7 @@ class Splitter(object):
 
     Each split has to be returned as a sequence of Datasets. The properties
     of the splitted dataset may vary between implementations. It is possible
-    to declare a sequence element as 'None'. 
+    to declare a sequence element as 'None'.
 
     Please note, that even if there is only one Dataset returned it has to be
     an element in a sequence and not just the Dataset object!
@@ -119,6 +119,8 @@ class Splitter(object):
     __doc__ = enhancedDocString('Splitter', locals())
 
     def _setStrategy(self, strategy):
+        """Set strategy to select splits out from available
+        """
         strategy = strategy.lower()
         if not strategy in self._STRATEGIES:
             raise ValueError, "strategy is not known. Known are %s" \
