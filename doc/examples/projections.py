@@ -77,7 +77,7 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 Output of the example:
 
-.. image:: ../pics/projections.*
+.. image:: ../pics/ex_projections.*
    :align: center
    :alt: SVD/ICA/PCA projections
 

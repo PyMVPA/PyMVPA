@@ -18,12 +18,20 @@ from mvpa import cfg
 if __debug__:
     from mvpa.base import debug
 
-def __check_shogun(bottom_version, custom_versions=[2456]):
+def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
-    be enabled in the testsuite"""
+    be enabled in the testsuite
+
+    :Parameters:
+      bottom_version : int
+        Bottom version which must be satisfied
+      custom_versions : list of int
+        Arbitrary list of versions which could got patched for
+        a specific issue
+    """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
-    if (ver in custom_versions) or (ver >= bottom_version) : # custom built
+    if (ver in custom_versions) or (ver >= bottom_version):
         return True
     else:
         raise ImportError, 'Version %s is smaller than needed %s' % \
@@ -91,6 +99,22 @@ def __check_atlas_family(family):
     pass
 
 
+def __check_stablerdist():
+    import scipy.stats
+    # ATM all known implementations which implement custom cdf for
+    #     rdist are misbehaving, so there should be no _cdf
+    if '_cdf' in scipy.stats.distributions.rdist_gen.__dict__.keys():
+        raise ImportError, "scipy.stats carries misbehaving rdist distribution"
+    pass
+
+
+def __check_in_ipython():
+    # figure out if ran within IPython
+    if '__IPYTHON__' in globals()['__builtins__']:
+        return
+    raise RuntimeError, "Not running in IPython session"
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'nifti':'from nifti import NiftiImage as __',
@@ -102,6 +126,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
           'scipy': "import scipy as __",
+          'good scipy.stats.rdist': "__check_stablerdist()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'rpy': "import rpy as __",
@@ -109,7 +134,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pylab': "import pylab as __",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
-          'sg_fixedcachesize': "__check_shogun(3043)",
+          'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
           'sg >= 0.6.4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
@@ -119,17 +144,11 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'lxml': "from lxml import objectify as __",
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
+          'running ipython env': "__check_in_ipython()",
           }
 
-_caught_exceptions = [ImportError, AttributeError, RuntimeError]
-"""Exceptions which are silently caught while running tests for externals"""
-try:
-    import rpy
-    _caught_exceptions += [rpy.RException]
-except:
-    pass
 
-def exists(dep, force=False, raiseException=False):
+def exists(dep, force=False, raiseException=False, issueWarning=None):
     """
     Test whether a known dependency is installed on the system.
 
@@ -145,7 +164,10 @@ def exists(dep, force=False, raiseException=False):
         performed.
       raiseException : boolean
         Whether to raise RuntimeError if dependency is missing.
-
+      issueWarning : string or None or True
+        If string, warning with given message would be thrown.
+        If True, standard message would be used for the warning
+        text.
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
@@ -160,8 +182,11 @@ def exists(dep, force=False, raiseException=False):
        and not cfg.getboolean('externals', 'retest', default='no') \
        and not force:
         if __debug__:
-            debug('EXT', "Skip restesting for '%s'." % dep)
+            debug('EXT', "Skip retesting for '%s'." % dep)
         return cfg.getboolean('externals', cfgid)
+
+
+    # determine availability of external (non-cached)
 
     # default to 'not found'
     result = False
@@ -172,6 +197,21 @@ def exists(dep, force=False, raiseException=False):
         # try and load the specific dependency
         if __debug__:
             debug('EXT', "Checking for the presence of %s" % dep)
+
+        # Exceptions which are silently caught while running tests for externals
+        _caught_exceptions = [ImportError, AttributeError, RuntimeError]
+
+        # check whether RPy is involved and catch its excpetions as well.
+        # however, try to determine whether this is really necessary, as
+        # importing RPy also involved starting a full-blown R session, which can
+        # take seconds and therefore is quite nasty...
+        if dep.count('rpy') or _KNOWN[dep].count('rpy'):
+            try:
+                from rpy import RException
+                _caught_exceptions += [RException]
+            except:
+                pass
+
 
         estr = ''
         try:
@@ -184,9 +224,17 @@ def exists(dep, force=False, raiseException=False):
             debug('EXT', "Presence of %s is%s verified%s" %
                   (dep, {True:'', False:' NOT'}[result], estr))
 
-    if not result and raiseException \
-       and cfg.getboolean('externals', 'raise exception', True):
-        raise RuntimeError, "Required external '%s' was not found" % dep
+    if not result:
+        if raiseException \
+               and cfg.getboolean('externals', 'raise exception', True):
+            raise RuntimeError, "Required external '%s' was not found" % dep
+        if issueWarning is not None \
+               and cfg.getboolean('externals', 'issue warning', True):
+            if issueWarning is True:
+                warning("Required external '%s' was not found" % dep)
+            else:
+                warning(issueWarning)
+
 
     # store result in config manager
     if not cfg.has_section('externals'):
@@ -212,9 +260,7 @@ def testAllDependencies(force=False):
     # loop over all known dependencies
     for dep in _KNOWN:
         if not exists(dep, force):
-            warning("Known dependency %s is not present or is broken, " \
-                    "thus not available, or only available in an " \
-                    "outdated/insufficient version." % dep)
+            warning("%s is not available." % dep)
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \

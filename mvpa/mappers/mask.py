@@ -59,7 +59,7 @@ class MaskMapper(Mapper):
 #        # XXX memo does not seem to be used
 #        if memo is None:
 #            memo = {}
-#        from mvpa.misc.copy import deepcopy
+#        from mvpa.support.copy import deepcopy
 #        out = MaskMapper.__new__(MaskMapper)
 #        Mapper.__init__(out)
 #        out.__mask = self.__mask.copy()

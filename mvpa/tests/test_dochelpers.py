@@ -6,22 +6,23 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Test some base functionality which did not make it into a separate unittests"""
+"""Unit tests for PyMVPA dochelpers"""
+
+from mvpa.base.dochelpers import singleOrPlural
 
 import unittest
-import os.path
 import numpy as N
 
-from mvpa.base import externals
+class DochelpersTests(unittest.TestCase):
 
+    def testBasic(self):
+        self.failUnlessEqual(singleOrPlural('a', 'b', 1), 'a')
+        self.failUnlessEqual(singleOrPlural('a', 'b', 0), 'b')
+        self.failUnlessEqual(singleOrPlural('a', 'b', 123), 'b')
 
-class TestBases(unittest.TestCase):
-
-    def testExternals(self):
-        self.failUnlessRaises(ValueError, externals.exists, 'BoGuS')
-
+    # TODO: more unittests
 def suite():
-    return unittest.makeSuite(TestBases)
+    return unittest.makeSuite(DochelpersTests)
 
 
 if __name__ == '__main__':

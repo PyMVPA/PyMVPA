@@ -21,11 +21,18 @@ import numpy as N
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.base.dochelpers import enhancedClassDocString
+from mvpa.base.dochelpers import enhancedDocString
+
+from mvpa.base import externals
 
 if __debug__:
     from mvpa.base import debug
 
+
+_in_ipython = externals.exists('running ipython env')
+# Separators around definitions, needed for ReST, but bogus for
+# interactive sessions
+_def_sep = ('`', '')[int(_in_ipython)]
 
 _object_getattribute = object.__getattribute__
 _object_setattr = object.__setattr__
@@ -54,7 +61,13 @@ class CollectableAttribute(object):
     would be done on a class creation (ie not per each object)
     """
 
-    def __init__(self, name=None, doc=None):
+    _instance_index = 0
+
+    def __init__(self, name=None, doc=None, index=None):
+        if index is None:
+            CollectableAttribute._instance_index += 1
+            index = CollectableAttribute._instance_index
+        self._instance_index = index
         self.__doc__ = doc
         self.__name = name
         self._value = None
@@ -62,7 +75,7 @@ class CollectableAttribute(object):
         self.reset()
         if __debug__:
             debug("COL",
-                  "Initialized new collectable %s " % name + `self`)
+                  "Initialized new collectable #%d:%s" % (index,name) + `self`)
 
 
     # Instead of going for VProperty lets make use of virtual method
@@ -647,7 +660,8 @@ class Collection(object):
         # lets assure consistent litsting order
         items = self._items.items()
         items.sort()
-        return [ "%s: %s" % (str(x[1]), x[1].__doc__) for x in items ]
+        return [ "%s%s%s: %s" % (_def_sep, str(x[1]), _def_sep, x[1].__doc__)
+                 for x in items ]
 
 
     def _getNames(self):
@@ -1143,9 +1157,9 @@ class AttributesCollector(type):
                 paramscols.append(col)
                 # lets at least sort the parameters for consistent output
                 col_items = collections[col].items
-                params = col_items.keys()
+                params = [(v._instance_index, k) for k,v in col_items.iteritems()]
                 params.sort()
-                for param in params:
+                for index,param in params:
                     parameter = col_items[param]
                     paramsdoc += "  %s" % param
                     try:
@@ -1176,8 +1190,9 @@ class AttributesCollector(type):
   disable_states : None or list of basestring
     Names of the state variables which should be disabled
 """
-            statesdoc = "Enabled by default are listed with +\n  * "
+            statesdoc = "  * "
             statesdoc += '\n  * '.join(collections['states'].listing)
+            statesdoc += "\n\n(States enabled by default are listed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __statesdoc to be %s" % statesdoc)
             setattr(cls, "_statesdoc", statesdoc)
@@ -1188,7 +1203,7 @@ class AttributesCollector(type):
             setattr(cls, "_paramsdoc", paramsdoc)
 
         if paramsdoc + statesdoc != "":
-            cls.__doc__ = enhancedClassDocString(cls, *bases)
+            cls.__doc__ = enhancedDocString(cls, *bases)
 
 
 
@@ -1252,7 +1267,7 @@ class ClassWithCollections(object):
         if __debug__:
             descr = kwargs.get('descr', None)
             debug("COL", "ClassWithCollections.__new__ was done "
-                  "for %s id %s with descr=%s" \
+                  "for %s#%s with descr=%s" \
                   % (s__class__.__name__, id(self), descr))
 
         return self
@@ -1307,7 +1322,7 @@ class ClassWithCollections(object):
             #              + " Valid parameters are %s" % known_params
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
-                  "for %s id %s with descr=%s" \
+                  "for %s#%s with descr=%s" \
                   % (self.__class__.__name__, id(self), descr))
 
 
@@ -1440,25 +1455,25 @@ class Harvestable(Stateful):
     _KNOWN_COPY_METHODS = [ None, 'copy', 'deepcopy' ]
 
 
-    def __init__(self, attribs=None, copy_attribs='copy', **kwargs):
+    def __init__(self, harvest_attribs=None, copy_attribs='copy', **kwargs):
         """Initialize state of harvestable
 
         :Parameters:
-            attribs : list of basestr or dicts
-                What attributes of call to store and return within
-                harvested state variable. If an item is a dictionary,
-                following keys are used ['name', 'copy']
-            copy_attribs : None or basestr
-                Default copying. If None -- no copying, 'copy'
-                - shallow copying, 'deepcopy' -- deepcopying
+          harvest_attribs : list of basestr or dicts
+            What attributes of call to store and return within
+            harvested state variable. If an item is a dictionary,
+            following keys are used ['name', 'copy']
+          copy_attribs : None or basestr
+            Default copying. If None -- no copying, 'copy'
+            - shallow copying, 'deepcopy' -- deepcopying
 
         """
         Stateful.__init__(self, **kwargs)
 
-        self.__atribs = attribs
+        self.__atribs = harvest_attribs
         self.__copy_attribs = copy_attribs
 
-        self._setAttribs(attribs)
+        self._setAttribs(harvest_attribs)
 
 
     def _setAttribs(self, attribs):

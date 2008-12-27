@@ -18,8 +18,8 @@ import operator
 from mvpa.datasets.splitter import OddEvenSplitter
 
 # Define sets of classifiers
-from mvpa.clfs.base import FeatureSelectionClassifier, SplitClassifier, \
-                                 MulticlassClassifier
+from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
+     MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
@@ -78,7 +78,7 @@ class Warehouse(object):
             args = []
 
         # lets remove optional modifier '!'
-        dargs = Set([x.lstrip('!') for x in args]).difference(
+        dargs = Set([str(x).lstrip('!') for x in args]).difference(
             self._known_tags)
 
         if len(dargs)>0:

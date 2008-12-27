@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import mvpa.misc.copy as copy
+import mvpa.support.copy as copy
 
 import numpy as N
 
@@ -1188,6 +1188,9 @@ class ClassifierError(Stateful):
         self._precall(testdataset, trainingdataset)
         error = self._call(testdataset, trainingdataset)
         self._postcall(testdataset, trainingdataset, error)
+        if __debug__:
+            debug('CERR', 'Classifier error on %s: %.2f'
+                  % (testdataset, error))
         return error
 
 
@@ -1245,9 +1248,8 @@ class TransferError(ClassifierError):
     def __copy__(self):
         """Performs deepcopying of the classifier."""
         # TODO -- use ClassifierError.__copy__
-        from mvpa.clfs.base import _deepcopyclf
         out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, _deepcopyclf(self.clf), self.errorfx, self._labels)
+        TransferError.__init__(out, self.clf.clone(), self.errorfx, self._labels)
 
         return out
 

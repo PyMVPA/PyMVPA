@@ -100,3 +100,4 @@ Miscellaneous
   :glob:
 
   modref/mvpa.misc*
+  modref/mvpa.atlases*

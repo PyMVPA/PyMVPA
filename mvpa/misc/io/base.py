@@ -12,7 +12,7 @@ disk."""
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-import mvpa.misc.copy as copy
+import mvpa.support.copy as copy
 from mvpa.base.dochelpers import enhancedDocString
 from sets import Set
 from re import sub as re_sub

@@ -19,7 +19,7 @@ from mvpa import cfg
 nulldist_sweep = [ MCNullDist(permutations=10, tail='any'),
                    MCNullDist(permutations=10, tail='right')]
 if externals.exists('scipy'):
-    import scipy.stats
+    from mvpa.support.stats import scipy
     nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10, tail='any'),
                         MCNullDist(scipy.stats.norm, permutations=10, tail='right'),
                         MCNullDist(scipy.stats.expon, permutations=10, tail='right'),
@@ -62,9 +62,10 @@ class StatsTests(unittest.TestCase):
         # while bogus (0) not
         prob = null.p([3,0,0,0,0,N.nan])
         self.failUnless(N.abs(prob[0]) < 0.01)
-        self.failUnless((N.abs(prob[1:]) > 0.05).all(),
-                        msg="Bogus features should have insignificant p."
-                        " Got %s" % (N.abs(prob[1:]),))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless((N.abs(prob[1:]) > 0.05).all(),
+                            msg="Bogus features should have insignificant p."
+                            " Got %s" % (N.abs(prob[1:]),))
 
         # has to have matching shape
         if not isinstance(null, FixedNullDist):
@@ -125,13 +126,16 @@ class StatsTests(unittest.TestCase):
             # MCs are not stable with just 10 samples... so lets skip them
             return
 
-        self.failUnless((N.abs(m.null_t[ds.nonbogus_features]) >= 5).all(),
-            msg="Nonbogus features should have high t-score. Got %s"
-                % (m.null_t[ds.nonbogus_features]))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
+            # with MVPA_SEED=833393575
+            self.failUnless((N.abs(m.null_t[ds.nonbogus_features]) >= 5).all(),
+                msg="Nonbogus features should have high t-score. Got %s"
+                    % (m.null_t[ds.nonbogus_features]))
 
-        self.failUnless((N.abs(m.null_t[ds.bogus_features]) < 4).all(),
-            msg="Bogus features should have low t-score. Got (t,p,sens):%s"
-                % (zip(m.null_t, m.null_prob, score)))
+            self.failUnless((N.abs(m.null_t[ds.bogus_features]) < 4).all(),
+                msg="Bogus features should have low t-score. Got (t,p,sens):%s"
+                    % (zip(m.null_t, m.null_prob, score)))
 
 
     def testNegativeT(self):
@@ -204,6 +208,46 @@ class StatsTests(unittest.TestCase):
                         inorm = names.index('norm_fixed')
                         # and it should be at least in the first 30 best matching ;-)
                         self.failUnless(inorm <= 30)
+
+
+    def testRDistStability(self):
+        if not externals.exists('scipy'):
+            return
+
+        from mvpa.support.stats import scipy
+        try:
+            # actually I haven't managed to cause this error
+            value = scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+N.finfo(float).eps)
+        except:
+            self.fail('Failed to compute rdist.pdf due to numeric'
+                      ' loss of precision')
+
+        try:
+            # this one should fail with recent scipy with error
+            # ZeroDivisionError: 0.0 cannot be raised to a negative power
+
+            # XXX: There is 1 more bug in etch's scipy.stats or numpy (vectorize), so I
+            #      have to put 2 elements in the queried x's, otherwise it
+            #      would puke. But for now that fix is not here
+            #
+            # value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
+            #
+            # to cause it now just run this unittest only with
+            #  nosetests -s test_stats:StatsTests.testRDistStability
+
+            # NB: very cool way to store the trace of the execution
+            #import pydb
+            #pydb.debugger(dbg_cmds=['bt', 'l', 's']*300 + ['c'])
+            value = scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
+        except IndexError, e:
+            self.fail('Failed due to bug which leads to InvalidIndex if only'
+                      ' scalar is provided to cdf')
+        except Exception, e:
+            self.fail('Failed to compute rdist.cdf due to numeric'
+                      ' loss of precision. Exception was %s' % e)
+
+        v = scipy.stats.rdist(10000,0,1).cdf([-0.1])
+        self.failUnless(v>=0, v<=1)
 
 
 def suite():

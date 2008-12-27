@@ -28,11 +28,12 @@ Now, load the dataset from a NIfTI file. An additional 2-column textfile
 has the label and associated experimental run of each volume in the dataset
 (one volume per line). Finally, a mask is loaded to exclude non-brain voxels.
 
- >>> attr = SampleAttributes('data/attributes.txt')
- >>> dataset = NiftiDataset(samples='data/bold.nii.gz',
- ...                        labels=attr.labels,
- ...                        chunks=attr.chunks,
- ...                        mask='data/mask.nii.gz')
+ >>> attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+ >>> dataset = NiftiDataset(
+ ...                samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+ ...                labels=attr.labels,
+ ...                chunks=attr.chunks,
+ ...                mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 Perform linear detrending and afterwards zscore the timeseries of each voxel
 using the mean and standard deviation determined from *rest* volumes
@@ -44,9 +45,7 @@ using the mean and standard deviation determined from *rest* volumes
 
 Select a subset of two stimulation conditions from the whole dataset.
 
- >>> dataset = dataset.selectSamples(
- ...               N.array([l in [1, 2] for l in dataset.labels],
- ...                       dtype='bool'))
+ >>> dataset = dataset['labels', [1,2]]
 
 Finally, setup the cross-validation procedure using an odd-even split of the
 dataset and a *SMLR* classifier -- and run it.
@@ -79,6 +78,8 @@ is complementary to the API reference and the examples.
 
 And now for the details ...
 
+
+.. index:: introduction, modular architecture
 
 Module Overview
 ===============

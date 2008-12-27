@@ -30,6 +30,7 @@ from mvpa.base.verbosity import *
 from mvpa.clfs.distance import *
 from mvpa.clfs.kernel import *
 from mvpa.clfs.base import *
+from mvpa.clfs.meta import *
 from mvpa.clfs.knn import *
 if externals.exists('lars'):
     from mvpa.clfs.lars import *
@@ -73,7 +74,7 @@ from mvpa.measures.searchlight import *
 from mvpa.measures.splitmeasure import *
 from mvpa.misc.errorfx import *
 from mvpa.misc.cmdline import *
-from mvpa.misc.copy import *
+from mvpa.support.copy import *
 from mvpa.misc.data_generators import *
 from mvpa.misc.exceptions import *
 from mvpa.misc import *
@@ -108,3 +109,6 @@ if externals.exists("pywt"):
 
 if externals.exists("pylab"):
     import pylab as P
+
+if externals.exists("lxml") and externals.exists("nifti"):
+    from mvpa.atlases import *

@@ -11,7 +11,8 @@
 import unittest
 import numpy as N
 import os.path
-from mvpa.misc.copy import deepcopy
+from mvpa import pymvpa_dataroot
+from mvpa.support.copy import deepcopy
 from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.meta import MetaDataset
@@ -68,8 +69,8 @@ class MetaDatasetTests(unittest.TestCase):
         if not externals.exists('nifti'):
             return
         from mvpa.datasets.nifti import NiftiDataset
-        eeds = EEPDataset(os.path.join('..', 'data', 'eep.bin'), labels=[1,2])
-        nids = NiftiDataset(os.path.join('..', 'data', 'example4d.nii.gz'),
+        eeds = EEPDataset(os.path.join(pymvpa_dataroot, 'eep.bin'), labels=[1,2])
+        nids = NiftiDataset(os.path.join(pymvpa_dataroot, 'example4d.nii.gz'),
                             labels=[1,2])
         plainds = Dataset(samples=N.arange(8).reshape((2,4)), labels=[1,2])
 
@@ -235,8 +236,19 @@ class MetaDatasetTests(unittest.TestCase):
         self.failUnless(N.sum(osamples[filt]) == 0)
         self.failUnless((osamples[N.negative(filt)] > 0).all())
 
-
-
+    def testEventDatasetExtended(self):
+        if not externals.exists('nifti'):
+            return
+        from mvpa.datasets.nifti import ERNiftiDataset
+        try:
+            ds = ERNiftiDataset(
+                samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+                events=[Event(onset=1,duration=5,label=1,chunk=1)],
+                evconv=True, tr=2.0)
+        except ValueError, e:
+            self.fail("Failed to create a simple ERNiftiDataset from a volume"
+                      " with only 1 slice. Exception was:\n %s" % e)
 
 def suite():
     return unittest.makeSuite(MetaDatasetTests)

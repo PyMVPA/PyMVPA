@@ -9,12 +9,12 @@
 """Unit tests for PyMVPA classifier cross-validation"""
 
 import unittest
-from mvpa.misc.copy import copy
+from mvpa.support.copy import copy
 
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitter import OddEvenSplitter
 
-from mvpa.clfs.base import MulticlassClassifier
+from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs.transerror import \
      TransferError, ConfusionMatrix, ConfusionBasedError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError

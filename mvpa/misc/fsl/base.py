@@ -61,14 +61,20 @@ class FslEV3(ColumnData):
                           sep=' ')
 
 
-    def toEvents(self):
+    def toEvents(self, **kwargs):
         """Convert into a list of `Event` instances.
+
+        :Parameters:
+          kwargs
+            Any keyword arugment provided would be replicated, through all
+            the entries. Useful to specify label or even a chunk
         """
         return \
             [Event(onset=self['onsets'][i],
                    duration=self['durations'][i],
-                   features=[self['intensities'][i]])
-                        for i in xrange(self.nevs)]
+                   features=[self['intensities'][i]],
+                   **kwargs)
+             for i in xrange(self.nevs)]
 
 
     onsets = property(fget=lambda self: self['onsets'])

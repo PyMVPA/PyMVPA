@@ -62,7 +62,7 @@ of the features on a classifier's decision for a certain problem.
 
 Every sensitivity analyzer object computes a one-dimensional array with the
 respective score for every feature, when called with a
-:class:`~mvpa.datasets.base.Dataset`. Due to this common behaviour all
+:class:`~mvpa.datasets.base.Dataset`. Due to this common behavior all
 :class:`~mvpa.measures.base.Sensitivity` types are interchangeable and can be
 combined with any other algorithm requiring a sensitivity analyzer.
 
@@ -100,14 +100,15 @@ Linear SVM Weights
 ^^^^^^^^^^^^^^^^^^
 
 The featurewise weights of a trained support vector machine are another
-possible sensitivity measure. The libsvm.LinearSVMWeights_ and
-sg.LinearSVMWeights_ class can internally train all types of *linear* support
-vector machines and report those weights.
+possible sensitivity measure.  The
+:class:`mvpa.clfs.libsvmc.sens.LinearSVMWeights` and
+:class:`mvpa.clfs.sg.sens.LinearSVMWeights` classes can internally train all
+types of *linear* support vector machines and report those weights.
 
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
 or negative, with both extremes indicating higher sensitivities. To deal with
 this property all subclasses of :class:`~mvpa.measures.base.DatasetMeasure`
-support a `transformer` arguments in the contructor. A transformer is a functor
+support a `transformer` arguments in the constructor. A transformer is a functor
 that is finally called with the computed sensitivity map. PyMVPA already comes
 with some convenience functors which can be used for this purpose (see
 :mod:`~mvpa.misc.transformers`).
@@ -132,9 +133,9 @@ with some convenience functors which can be used for this purpose (see
  False
 
 Above example shows how to use an existing classifier instance to report
-sensivity values (a linear SVM in this case). The computed sensitivity vector
+sensitivity values (a linear SVM in this case). The computed sensitivity vector
 contains one element for each feature in the dataset.
-:mod:`~mvpa.misc.transformers` can be used to post-process the sensitvity
+:mod:`~mvpa.misc.transformers` can be used to post-process the sensitivity
 scores, e.g. reporting absolute values for feature selection purposes, instead
 of raw sensitivities.
 
@@ -143,8 +144,6 @@ of raw sensitivities.
   The `SVMWeights` classes *cannot* extract reasonable weights from non-linear
   SVMs (e.g. with RBF kernels).
 
-.. _libsvm.LinearSVMWeights: api/mvpa.clfs.libsvm.sens.LinearSVMWeights-class.html
-.. _sg.LinearSVMWeights: api/mvpa.clfs.sg.sens.LinearSVMWeights-class.html
 
 
 Other linear Classifier Weights
@@ -176,7 +175,7 @@ computes a scalar :class:`~mvpa.measures.base.DatasetMeasure` using the
 original dataset. Afterwards, for each single feature a noise pattern is added
 to the respective feature and the dataset measure is recomputed. The
 sensitivity of each feature is the difference between the dataset measure of
-the orginal dataset and the one with added noise. The reasoning behind this
+the original dataset and the one with added noise. The reasoning behind this
 algorithm is that adding noise to *important* features will impair a dataset
 measure like cross-validated classifier transfer error. However, adding noise
 to a feature that already only contains noise, will not change such a measure.

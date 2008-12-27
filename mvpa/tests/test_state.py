@@ -13,7 +13,10 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.misc.state import Stateful, StateVariable, Parametrized, ParameterCollection
+from mvpa.base import externals
+
+from mvpa.misc.state import Stateful, StateVariable, Parametrized, \
+     ParameterCollection, _def_sep
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -131,8 +134,8 @@ class StateTests(unittest.TestCase):
 
         # if documentary on the state is appropriate
         self.failUnlessEqual(proper2.states.listing,
-                             ['state1+: state1 doc',
-                              'state2: state2 doc'])
+                             ['%sstate1+%s: state1 doc' % (_def_sep, _def_sep),
+                              '%sstate2%s: state2 doc' % (_def_sep, _def_sep)])
 
         # if __str__ lists correct number of states
         str_ = str(proper2)
@@ -257,6 +260,10 @@ class StateTests(unittest.TestCase):
         self.failUnless('state1' in a.states.enabled,
                         msg="state1 must have been enabled")
 
+        if (__debug__ and 'ID_IN_REPR' in debug.active):
+            # next tests would fail due to ID in the tails
+            return
+
         # validate that string representation of the object is valid and consistent
         a_str = `a`
         try:
@@ -265,10 +272,6 @@ class StateTests(unittest.TestCase):
         except Exception, e:
             self.fail(msg="Failed to generate an instance out of "
                       "representation %s. Got exception: %s" % (a_str, e))
-
-        if (__debug__ and 'ID_IN_REPR' in debug.active):
-            # next tests would fail due to ID in the tails
-            return
 
         a2_str = `a2`
         self.failUnless(a2_str == a_str,

@@ -235,7 +235,7 @@ NumPy_. Download a matching NumPy windows installer for your Python version
 (in this case 2.5) from the `SciPy download page`_ and install it.
 
 Now, you can use the PyMVPA windows installer to install PyMVPA on your system.
-If done, verify that everything went fine by opening a command promt and start
+If done, verify that everything went fine by opening a command prompt and start
 Python by typing `python` and hit enter. Now you should see the Python prompt.
 Import the mvpa module, which should cause no error messages.
 
@@ -290,7 +290,7 @@ has been tested with MacOS X 10.5 (Leopard). It may, however, also work on
 First download `Enthought Python`_ and install it as usual. Now you can download
 the PyMVPA installer from the project's download area. It should be
 automatically decompressed after it has been downloaded (gzipped tar file).
-Simply click the dowloaded file to start the installer and follow the
+Simply click the downloaded file to start the installer and follow the
 instructions.
 
 Upon success, open a terminal window and start Python by typing `python` and
@@ -356,8 +356,8 @@ If a binary package for your platform and operating system is provided, you do
 not have to build the packages on your own -- use the corresponding pre-build
 packages instead. However, if there are no binary packages for your system, or
 you want to try a new (unreleased) version of PyMVPA, you can easily build
-PyMVPA on your own. Any recent linux distribution should be capable of doing
-it (e.g. RedHat). Additionally, building PyMVPA also works on Mac OSX and
+PyMVPA on your own. Any recent GNU/Linux distribution should be capable of doing
+it (e.g. RedHat). Additionally, building PyMVPA also works on Mac OS X and
 Windows systems.
 
 .. _PyMVPA project website: http://www.pymvpa.org
@@ -523,7 +523,7 @@ directory contains `swig.exe`, if not, you haven't downloaded `swigwin`).
 PyMVPA comes with a specific build setup configuration for Windows --
 `setup.cfg.win` in the root of the source tarball. Please rename this file to
 `setup.cfg`. This is only necessary, if you have *not* configured your Python
-distutils installation to always use MinGW instead of the Mircrosoft compilers.
+distutils installation to always use MinGW instead of the Microsoft compilers.
 
 Now, we are ready to build PyMVPA. The easiest way to do this, is to make use
 of the `Makefile.win` that is shipped with PyMVPA to build a binary installer
@@ -556,7 +556,7 @@ for OpenSUSE 10.3 is::
 
   http://download.opensuse.org/repositories/science/openSUSE_10.3/
 
-Now, install the following required packages: 
+Now, install the following required packages:
 
   * a recent C and C++ compiler (e.g. GCC 4.1)
   * `python-devel` (Python development package)
