@@ -25,11 +25,11 @@ if __debug__:
 #
 # load PyMVPA example dataset
 #
-attr = SampleAttributes('data/attributes.txt')
-dataset = NiftiDataset(samples='data/bold.nii.gz',
+attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
-                       mask='data/mask.nii.gz')
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
 # preprocessing
@@ -97,7 +97,7 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 Output of the example analysis:
 
-.. image:: ../pics/svdclf.*
+.. image:: ../pics/ex_svdclf.*
    :align: center
    :alt: Generalization performance on the selected PCs.
 

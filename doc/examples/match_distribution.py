@@ -52,11 +52,11 @@ P.title('Accept regions for two-tailed test')
 # Figure for fMRI data sample we have
 #
 verbose(1, "Load sample fMRI dataset")
-attr = SampleAttributes('data/attributes.txt')
-dataset = NiftiDataset(samples='data/bold.nii.gz',
+attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
-                       mask='data/mask.nii.gz')
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 # select random voxel
 dataset = dataset.selectFeatures(
             [int(N.random.uniform()*dataset.nfeatures)])
@@ -88,7 +88,7 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 Example output for a random voxel is
 
-.. image:: ../pics/match_distribution.*
+.. image:: ../pics/ex_match_distribution.*
    :align: center
    :alt: Matching distributions for a random voxel
 

@@ -13,6 +13,10 @@ changelog is available here:
 
   http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
 
+In addition there is also a somewhat unconventional visual changelog:
+
+  http://www.pymvpa.org/history.html
+
 'Closes' statement IDs refer to the Debian bug tracking system and can be
 queried by visiting the URL::
 
@@ -27,6 +31,17 @@ Unreleased changes
 
 Releases
 ========
+
+* 0.4.1 (???, ?? ??? 200?)
+
+  * :class:`~mvpa.datasets.nifti.NiftiDataset` capable to handle files
+    with less than 4 dimensions, which can, optionally, be provided as
+    a list of filenames of :class:`~nifti.NiftiImage` objects. That
+    makes it easy to load data from a sequence of files.
+  * Meta classifiers definitions moved from `~mvpa.clfs.base` into
+    `~mvpa.clfs.meta`. This change should not impact any user who imports
+    from `~mvpa.suite`.
+
 
 * 0.4.0 (Sat, 15 Nov 2008)
 

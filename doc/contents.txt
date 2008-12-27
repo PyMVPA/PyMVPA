@@ -21,5 +21,6 @@ PyMVPA Documentation Contents
    references
    legal
    changelog
+   history
    todo
    modref

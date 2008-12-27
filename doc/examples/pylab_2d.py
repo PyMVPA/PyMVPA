@@ -48,7 +48,17 @@ from mvpa.suite import *
 # create the pymvpa dataset from the labeled features
 patternsPos = Dataset(samples=feat_pos.T, labels=1)
 patternsNeg = Dataset(samples=feat_neg.T, labels=0)
-patterns = patternsPos + patternsNeg
+ds_lin = patternsPos + patternsNeg
+
+"""Let's add another dataset: XOR. This problem is not linear separable
+and therefore need a non-linear classifier to be solved. The dataset is
+provided by the PyMVPA dataset warehouse.
+"""
+
+# 30 samples per condition, SNR 3
+ds_nl = pureMultivariateSignal(30,3)
+
+datasets = {'linear': ds_lin, 'non-linear': ds_nl}
 
 """This demo utilizes a number of classifiers. The instantiation of a
 classifier involves almost no runtime costs, so it is easily possible
@@ -64,64 +74,73 @@ clfs = {'Ridge Regression': RidgeReg(),
         'Logistic Regression': PLR(criterion=0.00001),
         'k-Nearest-Neighbour': kNN(k=10)}
 
-"""Now we are ready to run the classifiers. The folowing loop trains
+"""Now we are ready to run the classifiers. The following loop trains
 and queries each classifier to finally generate a nice plot showing
-the decision surface of each individual classifier."""
+the decision surface of each individual classifier, both for the linear and
+the non-linear dataset."""
 
-# loop over classifiers and show how they do
-fig = 0
+for id, ds in datasets.iteritems():
+    # loop over classifiers and show how they do
+    fig = 0
 
-# make a new figure
-P.figure(figsize=(8,12))
-for c in clfs:
-    # tell which one we are doing
-    print "Running %s classifier..." % (c)
+    # make a new figure
+    P.figure(figsize=(6, 6))
 
-    # make a new subplot for each classifier
-    fig += 1
-    P.subplot(3,2,fig)
+    print "Processing %s problem..." % id
 
-    # plot the training points
-    P.plot(feat_pos[0, :], feat_pos[1, :], "r.")
-    P.plot(feat_neg[0, :], feat_neg[1, :], "b.")
+    for c in clfs:
+        # tell which one we are doing
+        print "Running %s classifier..." % (c)
 
-    # select the clasifier
-    clf = clfs[c]
+        # make a new subplot for each classifier
+        fig += 1
+        P.subplot(2, 3, fig)
 
-    # enable saving of the values used for the prediction
-    clf.states.enable('values')
+        # plot the training points
+        P.plot(ds.samples[ds.labels == 1, 0],
+               ds.samples[ds.labels == 1, 1],
+               "r.")
+        P.plot(ds.samples[ds.labels == 0, 0],
+               ds.samples[ds.labels == 0, 1],
+               "b.")
 
-    # train with the known points
-    clf.train(patterns)
+        # select the clasifier
+        clf = clfs[c]
 
-    # run the predictions on the test values
-    pre = clf.predict(feat_test.T)
+        # enable saving of the values used for the prediction
+        clf.states.enable('values')
 
-    # if ridge, use the prediction, otherwise use the values
-    if c == 'Ridge Regression' or c == 'k-Nearest-Neighbour':
-        # use the prediction
-        res = N.asarray(pre)
-    elif c == 'Logistic Regression':
-        # get out the values used for the prediction
-        res = N.asarray(clf.values)
-    elif c == 'SMLR':
-        res = N.asarray(clf.values[:, 1])
-    else:
-        # get the probabilities from the svm
-        res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
-                for q in clf.probabilities])
+        # train with the known points
+        clf.train(ds)
 
-    # reshape the results
-    z = N.asarray(res).reshape((100, 100))
+        # run the predictions on the test values
+        pre = clf.predict(feat_test.T)
 
-    # plot the predictions
-    P.pcolor(x, y, z, shading='interp')
-    P.clim(0, 1)
-    P.colorbar()
-    P.contour(x, y, z, linewidths=1, colors='black', hold=True)
+        # if ridge, use the prediction, otherwise use the values
+        if c == 'Ridge Regression' or c.startswith('k-Nearest'):
+            # use the prediction
+            res = N.asarray(pre)
+        elif c == 'Logistic Regression':
+            # get out the values used for the prediction
+            res = N.asarray(clf.values)
+        elif c == 'SMLR':
+            res = N.asarray(clf.values[:, 1])
+        else:
+            # get the probabilities from the svm
+            res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
+                    for q in clf.probabilities])
 
-    # add the title
-    P.title(c)
+        # reshape the results
+        z = N.asarray(res).reshape((100, 100))
+
+        # plot the predictions
+        P.pcolor(x, y, z, shading='interp')
+        P.clim(0, 1)
+        P.colorbar()
+        P.contour(x, y, z, linewidths=1, colors='black', hold=True)
+
+        # add the title
+        P.title(c)
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures

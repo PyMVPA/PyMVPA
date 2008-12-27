@@ -9,7 +9,7 @@ import mvpa
 exclude_list = ['mvpa.misc.copy']
 
 
-modref_path = os.path.join('doc', 'modref')
+modref_path = os.path.join('build', 'docsrc', 'modref')
 if not os.path.exists(modref_path):
     os.mkdir(modref_path)
 
@@ -17,7 +17,10 @@ if not os.path.exists(modref_path):
 rst_section_levels = ['*', '=', '-', '~', '^']
 
 def getObjectName(line):
-    return line.split()[1].split('(')[0].strip()
+    name = line.split()[1].split('(')[0].strip()
+    # in case we have classes which are niot derived from object
+    # ie. old style classes
+    return name.rstrip(':')
 
 
 def parseModule(uri):
@@ -29,7 +32,8 @@ def parseModule(uri):
     elif  os.path.exists(os.path.join(filename, '__init__.py')):
         filename = os.path.join(filename, '__init__.py')
     else:
-        print 'WARNING: URI?', uri, filename
+        # nothing that we could handle here.
+        return ([],[])
 
     f = open(filename)
 
@@ -61,6 +65,10 @@ def parseModule(uri):
 def writeAPIDocTemplate(uri):
     # get the names of all classes and functions
     functions, classes = parseModule(uri)
+
+    # do nothing if there is nothing to do
+    if not len(functions) and not len(classes):
+        return
 
     tf = open(os.path.join(modref_path, uri + '.txt'), 'w')
 
@@ -96,6 +104,8 @@ def writeAPIDocTemplate(uri):
         #      '  :noindex:\n\n'
 
         # place api link
+        # Reference to base classes might go away, since we have
+        # enhancedDocString which does a superb job
         ad += '.. seealso::\n\n' \
               '  Derived classes might provide additional methods via their ' \
               '  base classes. Please refer to the list of base classes ' \
@@ -136,6 +146,10 @@ for dirpath, dirnames, filenames in os.walk(mvpa.__path__[0]):
                         re.sub(root_path,
                                'mvpa',
                                dirpath))
+
+    # no unittests in docs
+    if module_uri.startswith('mvpa.tests'):
+        continue
 
     # no private module
     if not module_uri.count('._'):

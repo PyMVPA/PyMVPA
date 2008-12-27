@@ -48,11 +48,11 @@ Afterwards the timeseries has been motion-corrected using MCFLIRT::
 The following files are available in the `example fMRI dataset`_ download
 (approx. 100 MB):
 
-.. _example FMRI dataset: http://apsy.gse.uni-magdeburg.de/~hanke/data/pymvpa_exampledata.tar.bz2
+.. _example FMRI dataset: http://www.pymvpa.org/files/pymvpa_exampledata.tar.bz2
 
 bold.nii.gz
   The motion-corrected and skull-stripped 4D timeseries (1452 volumes with
-  40 x 64 x 64 voxels, corresponding to a voxelsize of 3.5 x 3.75 x 3.75 mm
+  40 x 64 x 64 voxels, corresponding to a voxel size of 3.5 x 3.75 x 3.75 mm
   and a volume repetition time of 2.5 seconds). The timeseries contains all
   12 runs of the original experiment, concatenated in a single file. Please
   note, that the timeseries signal is *not* detrended.
@@ -68,12 +68,12 @@ mask.nii.gz
   some non-brain voxels to prevent the exclusion of brain tissue.
 
 attributes_literal.txt
-  A two-column textfile with the stimulation condition and the corresponding
+  A two-column text file with the stimulation condition and the corresponding
   experimental run for each volume in the timeseries image. The labels a given
   in literal form (e.g. 'face').
 
 attributes.txt
-  Similiar as `attributes_literal.txt`, but with the condition labels encoded as
+  Similar as `attributes_literal.txt`, but with the condition labels encoded as
   integers. This file is only provided for earlier PyMVPA version, that could
   not handle :ref:`literal labels <faq_literal_labels>`.
 
@@ -81,6 +81,8 @@ attributes.txt
 Once downloaded and extracted (e.g. into a folder `data/`), the dataset can be
 easily loaded like this:
 
+  >>> from mvpa.misc.io.base import SampleAttributes
+  >>> from mvpa.datasets.nifti import NiftiDataset
   >>> attrs = SampleAttributes('data/attributes_literal.txt',
   ...                          literallabels=True)
   >>> ds = NiftiDataset(samples='data/bold.nii.gz',
@@ -88,6 +90,10 @@ easily loaded like this:
   ...                   chunks=attrs.chunks,
   ...                   labels_map=True,
   ...                   mask='data/mask.nii.gz')
+
+Note, that instead of specific import statements, it is usually
+more convinient, but slower, to import all functionality from
+PyMVPA at once with 'from mvpa.suite import *' statement.
 
 .. note::
 

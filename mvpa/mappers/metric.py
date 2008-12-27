@@ -114,9 +114,9 @@ class DescreteMetric(Metric):
         now
         """
         if len(origin) != self.__Ndims:
-            raise ValueError("Obtained coordinates [%s] which have different"
-                             + " number of dimensions (%d) from known "
-                             + " elementsize" % (`origin`, self.__Ndims))
+            raise ValueError("Obtained coordinates [%s] which have different "
+                             "number of dimensions (%d) from known "
+                             "elementsize" % (`origin`, self.__Ndims))
         if radius != self.__filter_radius:
             self._computeFilter(radius)
 

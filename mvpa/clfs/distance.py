@@ -11,6 +11,11 @@
 
 __docformat__ = 'restructuredtext'
 
+# TODO: Make all distance functions accept 2D matrices samples x features
+#       and compute the distance matrix between all samples. They would
+#       need to be capable of dealing with unequal number of rows!
+#       If we would have that, we could make use of them in kNN.
+
 import numpy as N
 from mvpa.base import externals
 
@@ -27,6 +32,7 @@ def cartesianDistance(a, b):
 def absminDistance(a, b):
     """Returns dinstance max(\|a-b\|)
     XXX There must be better name!
+    XXX Actually, why is it absmin not absmax?
 
     Useful to select a whole cube of a given "radius"
     """
@@ -40,7 +46,7 @@ def manhattenDistance(a, b):
 
 
 def mahalanobisDistance(x, y=None, w=None):
-    """Caclulcate Mahalanobis distance of the pairs of points.
+    """Calculate Mahalanobis distance of the pairs of points.
 
     :Parameters:
       `x`
@@ -202,6 +208,49 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
                         (less0num, N.sum(less0.shape), norm0, totalnorm))
     squared_euclidean_distance_matrix[less0] = 0
     return squared_euclidean_distance_matrix
+
+
+def oneMinusCorrelation(X, Y):
+    """Return one minus the correlation matrix between the rows of two matrices.
+
+    This functions computes a matrix of correlations between all pairs of
+    rows of two matrices. Unlike NumPy's corrcoef() this function will only
+    considers pairs across matrices and not within, e.g. both elements of
+    a pair never have the same source matrix as origin.
+
+    Both arrays need to have the same number of columns.
+
+    :Parameters:
+      X: 2D-array
+      Y: 2D-array
+
+    Example:
+
+      >>> X = N.random.rand(20,80)
+      >>> Y = N.random.rand(5,80)
+      >>> C = oneMinusCorrelation(X, Y)
+      >>> print C.shape
+      (20, 5)
+    """
+    # check if matrices have same number of columns
+    if __debug__:
+        if not X.shape[1] == Y.shape[1]:
+            raise ValueError, 'correlation() requires to matrices with the ' \
+                              'same #columns (Got: %s and %s)' \
+                              % (X.shape, Y.shape)
+
+    # zscore each sample/row
+    Zx = X - N.c_[X.mean(axis=1)]
+    Zx /= N.c_[X.std(axis=1)]
+    Zy = Y - N.c_[Y.mean(axis=1)]
+    Zy /= N.c_[Y.std(axis=1)]
+
+    C = ((N.matrix(Zx) * N.matrix(Zy).T) / Zx.shape[1]).A
+
+    # let it behave like a distance, i.e. smaller is closer
+    C -= 1.0
+
+    return N.abs(C)
 
 
 def pnorm_w_python(data1, data2=None, weight=None, p=2,

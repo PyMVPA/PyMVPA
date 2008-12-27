@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA datasets and helper classes such as mappers, splitters
+"""PyMVPA datasets and helper classes such as splitters
 
 Module Description
 ==================
@@ -22,12 +22,10 @@ The mvpa.datasets module contains the following modules:
 .. packagetree::
    :style: UML
 
-:group Generic Datasets: base, mapped, masked, meta
-:group Specialized Datasets: nifti, eep
-:group Mappers: mapper, maskmapper
-:group Metrics: metric
-:group Splitters: splitter, nfoldsplitter
-:group Miscellaneous: miscfx
+:group Generic Datasets: base mapped masked meta
+:group Specialized Datasets: nifti channel eep event
+:group Splitters: splitter
+:group Miscellaneous: miscfx miscfx_sp
 
 
 """

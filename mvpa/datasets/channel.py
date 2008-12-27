@@ -17,7 +17,7 @@ from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
-import mvpa.misc.copy as copy
+import mvpa.support.copy as copy
 
 from mvpa.base import externals
 
