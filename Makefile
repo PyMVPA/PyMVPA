@@ -289,6 +289,10 @@ testsphinx: htmldoc
 
 test: unittests testmanual testsuite testapiref testexamples
 
+# Target to be called after some major refactoring
+# It skips some flavors of unittests
+testrefactor: unittest testmanual testsuite testapiref testexamples
+
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@{ \

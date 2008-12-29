@@ -47,8 +47,8 @@ class Warehouse(object):
     """Class to keep known instantiated classifiers
 
     Should provide easy ways to select classifiers of needed kind:
-    clfs['linear', 'svm'] should return all linear SVMs
-    clfs['linear', 'multiclass'] should return all linear classifiers
+    clfswh['linear', 'svm'] should return all linear SVMs
+    clfswh['linear', 'multiclass'] should return all linear classifiers
     capable of doing multiclass classification
     """
 
@@ -143,8 +143,8 @@ class Warehouse(object):
     def items(self):
         return self.__items
 
-clfs = Warehouse(known_tags=_KNOWN_INTERNALS) # classifiers
-regrs = Warehouse(known_tags=_KNOWN_INTERNALS) # regressions
+clfswh = Warehouse(known_tags=_KNOWN_INTERNALS) # classifiers
+regrswh = Warehouse(known_tags=_KNOWN_INTERNALS) # regressions
 
 # NB:
 #  - Nu-classifiers are turned off since for haxby DS default nu
@@ -152,22 +152,22 @@ regrs = Warehouse(known_tags=_KNOWN_INTERNALS) # regressions
 #  - Python's SMLR is turned off for the duration of development
 #    since it is slow and results should be the same as of C version
 #
-clfs += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
+clfswh += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
           SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
           #SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
           #SMLR(lm=100.0, implementation="C", descr="SMLR(lm=100.0)"),
           #                         SMLR(implementation="Python", descr="SMLR(Python)")
           ]
 
-clfs += \
-     [ MulticlassClassifier(clfs['smlr'][0],
+clfswh += \
+     [ MulticlassClassifier(clfswh['smlr'][0],
                             descr='Pairs+maxvote multiclass on ' + \
-                            clfs['smlr'][0].descr) ]
+                            clfswh['smlr'][0].descr) ]
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvmc as libsvm
-    clfs._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
-    clfs += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
+    clfswh._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
+    clfswh += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
              libsvm.SVM(
@@ -175,7 +175,7 @@ if externals.exists('libsvm'):
              libsvm.SVM(svm_impl='NU_SVC',
                         descr="libsvm.LinNuSVM(nu=def)", probability=1)
              ]
-    clfs += [libsvm.SVM(kernel_type='RBF', descr="libsvm.RbfSVM()"),
+    clfswh += [libsvm.SVM(kernel_type='RBF', descr="libsvm.RbfSVM()"),
              libsvm.SVM(kernel_type='RBF', svm_impl='NU_SVC',
                         descr="libsvm.RbfNuSVM(nu=def)"),
              libsvm.SVM(kernel_type='poly',
@@ -186,15 +186,15 @@ if externals.exists('libsvm'):
              ]
 
     # regressions
-    regrs._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
-    regrs += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR',
+    regrswh._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
+    regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR',
                          regression=True),
               libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR',
                          regression=True)]
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
-    clfs._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
+    clfswh._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
     # some classifiers are not yet ready to be used out-of-the-box in
     # PyMVPA, thus we don't populate warehouse with their instances
@@ -217,7 +217,7 @@ if externals.exists('shogun'):
         # Uncomment the ones to disable
         if impl in bad_classifiers:
             continue
-        clfs += [
+        clfswh += [
             sg.SVM(
                 descr="sg.LinSVM(C=def)/%s" % impl, svm_impl=impl),
             sg.SVM(
@@ -225,7 +225,7 @@ if externals.exists('shogun'):
             sg.SVM(
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
-        clfs += [
+        clfswh += [
             sg.SVM(kernel_type='RBF', descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
 #            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
 #           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
@@ -234,15 +234,15 @@ if externals.exists('shogun'):
     for impl in ['libsvr', 'krr']:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
-        regrs._known_tags.union_update([impl])
-        regrs += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
+        regrswh._known_tags.union_update([impl])
+        regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
                           regression=True),
                    #sg.SVM(svm_impl=impl, kernel_type='RBF',
                    #       descr='sg.RBFSVMR()/%s' % impl,
                    #       regression=True),
                    ]
 
-if len(clfs['svm', 'linear']) > 0:
+if len(clfswh['svm', 'linear']) > 0:
     # if any SVM implementation is known, import default ones
     from mvpa.clfs.svm import *
 
@@ -253,13 +253,13 @@ if externals.exists('lars'):
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
         lars = LARS(descr="LARS(%s)" % model, model_type=model)
-        clfs += lars
-        # clfs += MulticlassClassifier(lars, descr='Multiclass %s' % lars.descr)
+        clfswh += lars
+        # clfswh += MulticlassClassifier(lars, descr='Multiclass %s' % lars.descr)
 
 # kNN
-clfs += kNN(k=5, descr="kNN(k=5)")
+clfswh += kNN(k=5, descr="kNN(k=5)")
 
-clfs += \
+clfswh += \
     FeatureSelectionClassifier(
         kNN(),
         SensitivityBasedFeatureSelection(
@@ -267,7 +267,7 @@ clfs += \
            RangeElementSelector(mode='select')),
         descr="kNN on SMLR(lm=1) non-0")
 
-clfs += \
+clfswh += \
     FeatureSelectionClassifier(
         kNN(),
         SensitivityBasedFeatureSelection(
@@ -275,7 +275,7 @@ clfs += \
            FractionTailSelector(0.05, mode='select', tail='upper')),
         descr="kNN on 5%(ANOVA)")
 
-clfs += \
+clfswh += \
     FeatureSelectionClassifier(
         kNN(),
         SensitivityBasedFeatureSelection(
@@ -288,24 +288,24 @@ clfs += \
 if externals.exists('scipy'):
     from mvpa.clfs.gpr import GPR
 
-    clfs += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
-    clfs += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
+    clfswh += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
+    clfswh += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
 
 # BLR
 from mvpa.clfs.blr import BLR
-clfs += BLR(descr="BLR()")
+clfswh += BLR(descr="BLR()")
 
 
 # SVM stuff
 
-if len(clfs['linear', 'svm']) > 0:
+if len(clfswh['linear', 'svm']) > 0:
 
-    linearSVMC = clfs['linear', 'svm',
+    linearSVMC = clfswh['linear', 'svm',
                              cfg.get('svm', 'backend', default='libsvm').lower()
                              ][0]
 
     # "Interesting" classifiers
-    clfs += \
+    clfswh += \
          FeatureSelectionClassifier(
              linearSVMC,
              SensitivityBasedFeatureSelection(
@@ -314,7 +314,7 @@ if len(clfs['linear', 'svm']) > 0:
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
 
-    clfs += \
+    clfswh += \
         FeatureSelectionClassifier(
             linearSVMC,
             SensitivityBasedFeatureSelection(
@@ -324,7 +324,7 @@ if len(clfs['linear', 'svm']) > 0:
 
 
     # "Interesting" classifiers
-    clfs += \
+    clfswh += \
         FeatureSelectionClassifier(
             RbfCSVMC(),
             SensitivityBasedFeatureSelection(
@@ -332,7 +332,7 @@ if len(clfs['linear', 'svm']) > 0:
                RangeElementSelector(mode='select')),
             descr="RbfSVM on SMLR(lm=1) non-0")
 
-    clfs += \
+    clfswh += \
         FeatureSelectionClassifier(
             linearSVMC,
             SensitivityBasedFeatureSelection(
@@ -340,7 +340,7 @@ if len(clfs['linear', 'svm']) > 0:
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(ANOVA)")
 
-    clfs += \
+    clfswh += \
         FeatureSelectionClassifier(
             linearSVMC,
             SensitivityBasedFeatureSelection(
@@ -348,7 +348,7 @@ if len(clfs['linear', 'svm']) > 0:
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(ANOVA)")
 
-    clfs += \
+    clfswh += \
         FeatureSelectionClassifier(
             linearSVMC,
             SensitivityBasedFeatureSelection(
@@ -356,7 +356,7 @@ if len(clfs['linear', 'svm']) > 0:
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
-    clfs += \
+    clfswh += \
         FeatureSelectionClassifier(
             linearSVMC,
             SensitivityBasedFeatureSelection(
@@ -369,7 +369,7 @@ if len(clfs['linear', 'svm']) > 0:
     # other terms leave-1-out error on the same dataset
     # Has to be bound outside of the RFE definition since both analyzer and
     # error should use the same instance.
-    rfesvm_split = SplitClassifier(linearSVMC)#clfs['LinearSVMC'][0])
+    rfesvm_split = SplitClassifier(linearSVMC)#clfswh['LinearSVMC'][0])
 
     # "Almost" classical RFE. If this works it would differ only that
     # our transfer_error is based on internal splitting and classifier used
@@ -377,9 +377,9 @@ if len(clfs['linear', 'svm']) > 0:
     # averaged
     #
 
-    #clfs += \
+    #clfswh += \
     #  FeatureSelectionClassifier(
-    #    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
+    #    clf = LinearCSVMC(), #clfswh['LinearSVMC'][0],         # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
@@ -394,9 +394,9 @@ if len(clfs['linear', 'svm']) > 0:
     #        # update sensitivity at each step
     #    descr='LinSVM+RFE(splits_avg)' )
     #
-    #clfs += \
+    #clfswh += \
     #  FeatureSelectionClassifier(
-    #    clf = LinearCSVMC(), #clfs['LinearSVMC'][0],         # we train LinearSVM
+    #    clf = LinearCSVMC(), #clfswh['LinearSVMC'][0],         # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
@@ -416,7 +416,7 @@ if len(clfs['linear', 'svm']) > 0:
     # This classifier will do RFE while taking transfer error to testing
     # set of that split. Resultant classifier is voted classifier on top
     # of all splits, let see what that would do ;-)
-    #clfs += \
+    #clfswh += \
     #  SplitClassifier(                      # which does splitting internally
     #   FeatureSelectionClassifier(
     #    clf = LinearCSVMC(),
@@ -433,7 +433,7 @@ if len(clfs['linear', 'svm']) > 0:
     #    descr='LinSVM+RFE(N-Fold)')
     #
     #
-    #clfs += \
+    #clfswh += \
     #  SplitClassifier(                      # which does splitting internally
     #   FeatureSelectionClassifier(
     #    clf = LinearCSVMC(),
