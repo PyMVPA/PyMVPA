@@ -27,7 +27,7 @@ draft of a complete analysis.
 First import a necessary pieces of PyMVPA -- this time each bit individually.
 """
 from mvpa.datasets.masked import MaskedDataset
-from mvpa.datasets.splitter import OddEvenSplitter
+from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.clfs.svm import LinearCSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError

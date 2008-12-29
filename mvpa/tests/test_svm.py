@@ -10,7 +10,7 @@
 
 from sets import Set
 
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError

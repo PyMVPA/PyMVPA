@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
 
 from tests_warehouse import *

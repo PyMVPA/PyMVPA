@@ -55,9 +55,8 @@ from mvpa.datasets.eep import *
 if externals.exists('nifti'):
     from mvpa.datasets.nifti import *
 
-from mvpa.datasets import splitter
-from mvpa.datasets import splitter as splitters
-from mvpa.datasets.splitter import *
+from mvpa.datasets import splitters
+from mvpa.datasets.splitters import *
 
 from mvpa import featsel
 from mvpa.featsel.base import *
