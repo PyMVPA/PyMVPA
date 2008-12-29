@@ -212,7 +212,7 @@ popular method is the so-called leave-one-out cross-validation.
 The :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class
 provides a simple way to compute such measure. It utilizes a
 :class:`~mvpa.clfs.transerror.TransferError` object and a
-:class:`~mvpa.datasets.splitter.Splitter`. When called with a
+:class:`~mvpa.datasets.splitters.Splitter`. When called with a
 :class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the
 Dataset and the transfer error for all splits is computed by training on one of
 the splitted datasets and making predictions on the other. By default the mean
@@ -230,7 +230,7 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   ...                             snr=3.0)
   >>> # now cross-validation
   >>> from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1),
   ...                                      enable_states=['confusion'])
@@ -410,9 +410,9 @@ since they can deal with very high dimensional problems (`Wikipedia
 entry about SVM`_), while maintaining reasonable generalization performance.
 
 The support vector machine classes provide a family of classifiers by wrapping
-libsvm_ and Shogun_ libraries, with corresponding base classes
+LIBSVM_ and Shogun_ libraries, with corresponding base classes
 :class:`~mvpa.clfs.svm.libsvm.SVM` and :class:`~mvpa.clfs.svm.sg.SVM`
-accordingly. By default SVM class is bound to libsvm's implementation if such
+accordingly. By default SVM class is bound to LIBSVM's implementation if such
 is available (shogun otherwise).
 
 While any SVM class provides a complete interface, the others child classes
@@ -421,7 +421,7 @@ with a default set of parameters (see :class:`~mvpa.clfs.svm.LinearCSVMC`,
 :class:`~mvpa.clfs.svm.LinearNuSVMC`, :class:`~mvpa.clfs.svm.RbfNuSVMC` and
 :class:`~mvpa.clfs.svm.RbfCSVMC`).
 
-.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _LIBSVM: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _Shogun: http://www.shogun-toolbox.org
 .. _Wikipedia entry about SVM: http://en.wikipedia.org/wiki/Support_Vector_Machine
 
@@ -473,7 +473,7 @@ subclasses:
 
 :class:`~mvpa.clfs.meta.SplitClassifier`
     combines a :class:`~mvpa.clfs.base.Classifier` and an arbitrary
-    :class:`~mvpa.datasets.splitter.Splitter`
+    :class:`~mvpa.datasets.splitters.Splitter`
 
 Furthermore, there are also several :class:`~mvpa.clfs.meta.ProxyClassifier`
 subclasses:

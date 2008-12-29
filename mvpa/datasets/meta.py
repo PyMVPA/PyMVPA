@@ -169,7 +169,11 @@ class MetaDataset(object):
 
 
     def mapReverse(self, val):
-        """
+        """Perform reverse mapping
+
+        :Return:
+          List of results per each used mapper and the corresponding part of
+          the provided `val`.
         """
         # assure array and transpose for easy slicing
         # i.e. transpose of 1D does nothing, but of 2D puts features

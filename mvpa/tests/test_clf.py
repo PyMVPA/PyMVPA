@@ -12,7 +12,7 @@ from mvpa.support.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter
+from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 

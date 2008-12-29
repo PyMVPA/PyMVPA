@@ -88,6 +88,7 @@ clean:
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
 		 -o -name '.coverage' \
+		 -o -name 'iterate.dat' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '*.gch' \
@@ -260,13 +261,16 @@ testmanual: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
 	                       --doctest-tests doc/
 
-# Check if everything imported in unitests is known to the
-# mvpa.suite()
+# Check if everything (with few exclusions) is imported in unitests is
+# known to the mvpa.suite()
 testsuite:
 	@echo "I: Running full testsuite"
 	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
 	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
+	 grep -v -e 'mvpa\.base\.dochelpers' \
+			 -e 'mvpa\.\(tests\|support\)' \
+			 -e 'mvpa\.misc\.args' | \
 	while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
 	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
@@ -278,6 +282,10 @@ testapiref: apidoc
 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
 	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
+
+# Check if there is no WARNINGs from sphinx
+testsphinx: htmldoc
+	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
 
 test: unittests testmanual testsuite testapiref testexamples
 

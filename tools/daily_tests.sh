@@ -65,7 +65,7 @@ do_clean() {
 # Not yet can do fine scale unittest separation since maint/0.4, nor
 # master have it that way... leaving it for future.
 #MAKE_TESTS="unittest unittest-optimization unittest-debug unittest-badexternals
-MAKE_TESTS="unittests testmanual testsuite testapiref testexamples"
+MAKE_TESTS="unittests testmanual testsuite testapiref testsphinx testexamples"
 
 for c in $MAKE_TESTS; do
     eval "do_$c() { $precmd make $c; }"
@@ -90,7 +90,7 @@ sweep()
 
     # checkout the repository
     echo "I: Cloning repository"
-    $precmd git clone $repo 2>&1 | indent
+    $precmd git clone -q $repo 2>&1 | indent
     $precmd cd pymvpa
     # no need to check here since checkout would fail below otherwise
 
