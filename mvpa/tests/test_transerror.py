@@ -12,7 +12,7 @@ import unittest
 from mvpa.support.copy import copy
 
 from mvpa.datasets import Dataset
-from mvpa.datasets.splitter import OddEvenSplitter
+from mvpa.datasets.splitters import OddEvenSplitter
 
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs.transerror import \

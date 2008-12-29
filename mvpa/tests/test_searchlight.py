@@ -11,7 +11,7 @@
 from mvpa.base import externals
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.measures.searchlight import Searchlight
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 

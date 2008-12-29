@@ -21,7 +21,7 @@ from mvpa.featsel.rfe import RFE
 from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.misc.transformers import Absolute
-from mvpa.datasets.splitter import NFoldSplitter, NoneSplitter
+from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 
 from mvpa.misc.transformers import Absolute, FirstAxisMean, \
      SecondAxisSumOfAbs, DistPValue

@@ -14,7 +14,7 @@ a `Dataset`.
 __docformat__ = 'restructuredtext'
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
-from mvpa.datasets.splitter import NoneSplitter
+from mvpa.datasets.splitters import NoneSplitter
 from mvpa.misc.state import StateVariable
 from mvpa.misc.transformers import FirstAxisMean
 

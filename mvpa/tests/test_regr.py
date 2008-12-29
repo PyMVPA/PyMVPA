@@ -13,7 +13,7 @@ from mvpa.support.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 
 from mvpa.misc.errorfx import RMSErrorFx, RelativeRMSErrorFx, \
      CorrErrorFx, CorrErrorPFx
