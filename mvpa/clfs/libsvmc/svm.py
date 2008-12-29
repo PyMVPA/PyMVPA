@@ -66,9 +66,9 @@ class SVM(_SVM):
                     ('binary', 'multiclass'), 'nu-SVM classification'),
         'ONE_CLASS' : (svm.svmc.ONE_CLASS, (),
                        ('oneclass',), 'one-class-SVM'),
-        'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, ('tube_epsilon',),
+        'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
                          ('regression',), 'epsilon-SVM regression'),
-        'NU_SVR' : (svm.svmc.NU_SVR, ('nu',),
+        'NU_SVR' : (svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
                     ('regression',), 'nu-SVM regression')
         }
 
@@ -81,49 +81,10 @@ class SVM(_SVM):
         # safety/simplifying logic around them
         # already done for: nr_weight
         # thought: weight and weight_label should be a dict
-        """This is the base class of all classifier that utilize the libSVM
-        package underneath. It is not really meant to be used directly. Unless
-        you know what you are doing it is most likely better to use one of the
-        subclasses.
+        """Interface class to LIBSVM classifiers and regressions.
 
-        Here is the explaination for some of the parameters from the libSVM
-        documentation:
-
-        svm_type can be one of C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR.
-
-        - `C_SVC`: C-SVM classification
-        - `NU_SVC`: nu-SVM classification
-        - `ONE_CLASS`: one-class-SVM
-        - `EPSILON_SVR`: epsilon-SVM regression
-        - `NU_SVR`: nu-SVM regression
-
-        kernel_type can be one of LINEAR, POLY, RBF, SIGMOID.
-
-        - `LINEAR`: ``u'*v``
-        - `POLY`: ``(gamma*u'*v + coef0)^degree``
-        - `RBF`: ``exp(-gamma*|u-v|^2)``
-        - `SIGMOID`: ``tanh(gamma*u'*v + coef0)``
-        - `PRECOMPUTED`: kernel values in training_set_file
-
-        cache_size is the size of the kernel cache, specified in megabytes.
-        C is the cost of constraints violation. (we usually use 1 to 1000)
-        eps is the stopping criterion. (we usually use 0.00001 in nu-SVC,
-        0.001 in others). nu is the parameter in nu-SVM, nu-SVR, and
-        one-class-SVM. p is the epsilon in epsilon-insensitive loss function
-        of epsilon-SVM regression. shrinking = 1 means shrinking is conducted;
-        = 0 otherwise. probability = 1 means model with probability
-        information is obtained; = 0 otherwise.
-
-        nr_weight, weight_label, and weight are used to change the penalty
-        for some classes (If the weight for a class is not changed, it is
-        set to 1). This is useful for training classifier using unbalanced
-        input data or with asymmetric misclassification cost.
-
-        Each weight[i] corresponds to weight_label[i], meaning that
-        the penalty of class weight_label[i] is scaled by a factor of weight[i].
-
-        If you do not want to change penalty for any of the classes,
-        just set nr_weight to 0.
+        Default implementation (C/nu/epsilon SVM) is chosen depending
+        on the given parameters (C/nu/tube_epsilon).
         """
 
         svm_impl = kwargs.get('svm_impl', None)
@@ -439,3 +400,6 @@ class LinearSVMWeights(Sensitivity):
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
 
         return N.asarray(weights.T)
+
+
+    _customizeDocInherit = True

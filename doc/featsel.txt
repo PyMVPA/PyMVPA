@@ -74,7 +74,7 @@ train the selected features as we used to select them:
 .. here we'll put the warehouse.py example of linear svm weights from yarik's
    email
 
-  >>> sample_linear_svm = clfs['linear', 'svm'][0]
+  >>> sample_linear_svm = clfswh['linear', 'svm'][0]
   >>> clf = \
   ...  FeatureSelectionClassifier(
   ...      sample_linear_svm,
@@ -91,7 +91,7 @@ the selected features) and then test on a held-out testing dataset.  This
 results in an obvious positive bias in classification performance.  PyMVPA
 allows for easy dataset splitting, however, so creating independent training
 and testing datasets is easily accomplished, for instance using an
-:class:`~mvpa.datasets.splitter.NFoldSplitter`, :class:`~mvpa.datasets.splitter.OddEvenSplitter`, etc.
+:class:`~mvpa.datasets.splitters.NFoldSplitter`, :class:`~mvpa.datasets.splitters.OddEvenSplitter`, etc.
 
 .. fill in end of last paragraph with suggestions for how to take in an entire
    original dataset and split it:  should we just do a cross-validated outer
@@ -166,7 +166,7 @@ perform such an analysis:
 
 The code above introduces the :class:`~mvpa.clfs.meta.SplitClassifier`, which in this case is yet
 another *meta-classifier* that takes in a :class:`~mvpa.clfs.base.Classifier` (in this case a
-LinearCSVMC_) and an arbitrary :class:`~mvpa.datasets.splitter.Splitter` object, so that the dataset can be
+LinearCSVMC_) and an arbitrary :class:`~mvpa.datasets.splitters.Splitter` object, so that the dataset can be
 split in whatever way the user desires.  Prior to training, the
 :class:`~mvpa.clfs.meta.SplitClassifier` splits the training dataset, dedicates a separate classifier
 to each split, trains each on the training part of the split, and then computes

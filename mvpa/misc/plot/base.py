@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import pylab as P
 import numpy as N
 
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.distance import squared_euclidean_distance
 
 
