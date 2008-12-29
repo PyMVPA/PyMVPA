@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.support.copy import deepcopy
 
 from mvpa.measures.base import DatasetMeasure
-from mvpa.datasets.splitter import NoneSplitter
+from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Harvestable
 from mvpa.misc.transformers import GrandMean
@@ -67,7 +67,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             first element is 'None' no training is performed. The second
             dataset is used to generate predictions with the (trained)
             classifier. If `None` (default) an instance of
-            :class:`~mvpa.datasets.splitter.NoneSplitter` is used.
+            :class:`~mvpa.datasets.splitters.NoneSplitter` is used.
           combiner: Functor | 'mean'
             Used to aggregate the error values of all cross-validation
             folds. If 'mean' (default) the grand mean of the transfer

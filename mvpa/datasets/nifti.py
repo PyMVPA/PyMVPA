@@ -84,7 +84,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
             # lets check if they all have the same dimensionality
             shapes = [s.data.shape for s in srcs]
             if not N.all([s == shapes[0] for s in shapes]):
-                raise ValueError,\
+                raise ValueError, \
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
@@ -200,7 +200,7 @@ class NiftiDataset(MappedDataset):
         # build an appropriate mapper that knows about the metrics of the NIfTI
         # data
         # NiftiDataset uses a DescreteMetric with cartesian
-        # distance and element size from the NIfTI header 
+        # distance and element size from the NIfTI header
 
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
         elementsize = [i for i in reversed(niftisamples.voxdim)]
@@ -305,7 +305,7 @@ class ERNiftiDataset(EventDataset):
             dt = tr
 
         # NiftiDataset uses a DescreteMetric with cartesian
-        # distance and element size from the NIfTI header 
+        # distance and element size from the NIfTI header
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
         elementsize = [dt] + [i for i in reversed(nifti.voxdim)]
         # XXX metric might be inappropriate if boxcar has length 1

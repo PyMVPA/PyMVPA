@@ -158,7 +158,7 @@ output if corresponding debug_ target is enabled
    debug output (if ``SMLR_`` debug_ target is enabled) appears on standard
    output
 
- libsvm
+ LIBSVM
    debug output (if ``LIBSVM`` debug_ target is enabled) appears on
    standard error
 
