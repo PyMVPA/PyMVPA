@@ -10,7 +10,7 @@
 
 from sets import Set
 
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -164,7 +164,7 @@ class SVMTests(unittest.TestCase):
             self.failUnlessRaises(TypeError, SVM,  C=1.0, nu=2.3)
 
         if externals.exists('libsvm'):
-            self.failUnlessRaises(TypeError, libsvmc.SVM,  C=1.0, nu=2.3)
+            self.failUnlessRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)
             self.failUnlessRaises(TypeError, LinearNuSVMC, C=2.3)
             self.failUnlessRaises(TypeError, LinearCSVMC, nu=2.3)
 

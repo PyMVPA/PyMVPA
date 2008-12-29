@@ -12,7 +12,7 @@ from mvpa.datasets.masked import MaskedDataset
 from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.featsel.helpers import FixedNElementTailSelector
 
 from tests_warehouse import *

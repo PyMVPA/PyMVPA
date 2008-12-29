@@ -10,7 +10,7 @@
 
 from sets import Set
 
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.measures.base import FeaturewiseDatasetMeasure

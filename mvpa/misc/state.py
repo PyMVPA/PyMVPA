@@ -1159,23 +1159,9 @@ class AttributesCollector(type):
                 col_items = collections[col].items
                 params = [(v._instance_index, k) for k,v in col_items.iteritems()]
                 params.sort()
-                for index,param in params:
-                    parameter = col_items[param]
-                    paramsdoc += "  %s" % param
-                    try:
-                        paramsdoc += " : %s" % parameter.allowedtype
-                    except:
-                        pass
-                    paramsdoc += "\n"
-                    try:
-                        doc = parameter.__doc__
-                        try:
-                            doc += " (Default: %s)" % parameter.default
-                        except:
-                            pass
-                        paramsdoc += '\n'.join(textwrapper.wrap(doc))+'\n'
-                    except Exception, e:
-                        pass
+                paramsdoc += '\n'.join(
+                    [col_items[param].doc(indent='  ')
+                     for index,param in params]) + '\n'
 
         # Parameters collection could be taked hash of to decide if
         # any were changed? XXX may be not needed at all?

@@ -15,7 +15,7 @@ from sets import Set
 import operator
 
 # Data
-from mvpa.datasets.splitter import OddEvenSplitter
+from mvpa.datasets.splitters import OddEvenSplitter
 
 # Define sets of classifiers
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \

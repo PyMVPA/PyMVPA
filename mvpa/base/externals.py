@@ -148,13 +148,6 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'running ipython env': "__check_in_ipython()",
           }
 
-_caught_exceptions = [ImportError, AttributeError, RuntimeError]
-"""Exceptions which are silently caught while running tests for externals"""
-try:
-    import rpy
-    _caught_exceptions += [rpy.RException]
-except:
-    pass
 
 def exists(dep, force=False, raiseException=False, issueWarning=None):
     """
@@ -193,6 +186,9 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
             debug('EXT', "Skip retesting for '%s'." % dep)
         return cfg.getboolean('externals', cfgid)
 
+
+    # determine availability of external (non-cached)
+
     # default to 'not found'
     result = False
 
@@ -202,6 +198,21 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # try and load the specific dependency
         if __debug__:
             debug('EXT', "Checking for the presence of %s" % dep)
+
+        # Exceptions which are silently caught while running tests for externals
+        _caught_exceptions = [ImportError, AttributeError, RuntimeError]
+
+        # check whether RPy is involved and catch its excpetions as well.
+        # however, try to determine whether this is really necessary, as
+        # importing RPy also involved starting a full-blown R session, which can
+        # take seconds and therefore is quite nasty...
+        if dep.count('rpy') or _KNOWN[dep].count('rpy'):
+            try:
+                from rpy import RException
+                _caught_exceptions += [RException]
+            except:
+                pass
+
 
         estr = ''
         try:

@@ -203,7 +203,7 @@ Splitting Measures
 ^^^^^^^^^^^^^^^^^^
 
 The SplittingFeaturewiseMeasure uses a
-:class:`~mvpa.datasets.splitter.Splitter` to generate dataset splits.  A
+:class:`~mvpa.datasets.splitters.Splitter` to generate dataset splits.  A
 FeaturewiseDatasetMeasure is then used to compute sensitivity maps for all
 these dataset splits. At the end a `combiner` function is called with all
 sensitivity maps to produce the final sensitivity map. By default the mean
