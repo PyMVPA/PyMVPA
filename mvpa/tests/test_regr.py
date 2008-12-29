@@ -28,7 +28,7 @@ from tests_warehouse_clfs import *
 
 class RegressionsTests(unittest.TestCase):
 
-    @sweepargs(ml=clfs['regression']+regrs[:])
+    @sweepargs(ml=clfswh['regression']+regrswh[:])
     def testNonRegressions(self, ml):
         """Test If binary regression-based  classifiers have proper tag
         """
@@ -36,7 +36,7 @@ class RegressionsTests(unittest.TestCase):
                         msg="Inconsistent markin with "
                         "binary and regression features detected")
 
-    @sweepargs(regr=regrs['regression'])
+    @sweepargs(regr=regrswh['regression'])
     def testRegressions(self, regr):
         """Simple tests on regressions
         """
@@ -62,7 +62,7 @@ class RegressionsTests(unittest.TestCase):
                         "dataset. Got correlation error of %s " % corr)
 
 
-    @sweepargs(clf=clfs['regression'])
+    @sweepargs(clf=clfswh['regression'])
     def testRegressionsClassifiers(self, clf):
         """Simple tests on regressions being used as classifiers
         """
