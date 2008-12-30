@@ -61,6 +61,8 @@ class RegressionsTests(unittest.TestCase):
                         msg="Regressions should perform well on a simple "
                         "dataset. Got correlation error of %s " % corr)
 
+        # Test access to summary statistics
+        self.failUnless(cve.confusion.stats['Summary CCe'] < 0.5)
 
     @sweepargs(clf=clfswh['regression'])
     def testRegressionsClassifiers(self, clf):
