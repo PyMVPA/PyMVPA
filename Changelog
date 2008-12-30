@@ -44,8 +44,8 @@ Releases
 
 	- Pre-populated warehouses of classifiers and regressions are
       renamed from clfs and regrs into
-      :var:`mvpa.clfs.warehouse.clfswh` and
-      :var:`mvpa.clfs.warehouse.regrswh` respectively.
+      :var:`~mvpa.clfs.warehouse.clfswh` and
+      :var:`~mvpa.clfs.warehouse.regrswh` respectively.
 
   * Changes (code refactorings) which *should not impact* any user who
     imports from :module:`~mvpa.suite`:
