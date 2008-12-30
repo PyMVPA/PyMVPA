@@ -28,7 +28,7 @@ from sets import Set
 
 from mvpa.misc.args import group_kwargs
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.misc.state import StateVariable, Stateful, Harvestable
 
 from mvpa.clfs.base import Classifier

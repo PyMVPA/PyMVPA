@@ -996,6 +996,18 @@ class RegressionStatistics(SummaryStatistics):
             stats[funcname+'_max'] = N.max(stats[funcname_all])
             stats[funcname+'_min'] = N.min(stats[funcname_all])
 
+        # create ``summary`` statistics, since some per-set statistics
+        # might be uncomputable if a set contains just a single number
+        # (like in the case of correlation coefficient)
+        targets, predictions = [], []
+        for i, (targets_, predictions_, values_) in enumerate(sets):
+            targets += list(targets_)
+            predictions += list(predictions_)
+
+        for funcname, func in funcs.iteritems():
+            funcname_all = 'Summary ' + funcname
+            stats[funcname_all] = func(predictions, targets)
+
         self._stats.update(stats)
 
 
@@ -1048,6 +1060,10 @@ class RegressionStatistics(SummaryStatistics):
         print_stats(printed, stats_data)
         printed.append(["Results:  "])
         print_stats(printed, stats_)
+        printed.append(["Summary:  "])
+        printed.append(["CCe", _p2(stats['Summary CCe']), "", "p=", '%g' % stats['Summary CCp']])
+        printed.append(["RMSE", _p2(stats['Summary RMSE'])])
+        printed.append(["RMSE/RMP_t", _p2(stats['Summary RMSE/RMP_t'])])
 
         if summary:
             for stat in stats_summary:

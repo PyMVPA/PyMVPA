@@ -38,9 +38,22 @@ Releases
     with less than 4 dimensions, which can, optionally, be provided as
     a list of filenames of :class:`~nifti.NiftiImage` objects. That
     makes it easy to load data from a sequence of files.
-  * Meta classifiers definitions moved from `~mvpa.clfs.base` into
-    `~mvpa.clfs.meta`. This change should not impact any user who imports
-    from `~mvpa.suite`.
+
+  * Changes (code refactorings) which *might impact* any user who
+    imports from :module:`~mvpa.suite`:
+
+	- Pre-populated warehouses of classifiers and regressions are
+      renamed from clfs and regrs into
+      :var:`~mvpa.clfs.warehouse.clfswh` and
+      :var:`~mvpa.clfs.warehouse.regrswh` respectively.
+
+  * Changes (code refactorings) which *should not impact* any user who
+    imports from :module:`~mvpa.suite`:
+
+    - Meta classifiers definitions moved from :module:`~mvpa.clfs.base` into
+      :module:`~mvpa.clfs.meta`.
+    - Splitters definitions moved from :module:`~mvpa.datasets.splitter` into
+	  :module:`~mvpa.datasets.splitters`
 
 
 * 0.4.0 (Sat, 15 Nov 2008)

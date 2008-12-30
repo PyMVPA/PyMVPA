@@ -6,7 +6,22 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""PyMVPA measures.
+
+Module Description
+==================
+
+Provide some measures given a dataset. Most of the time, derivatives of
+`FeaturewiseDatasetMeasure` are used, such as
+
+* `OneWayAnova`
+* `CorrCoef`
+* `IterativeRelief`
+* `NoisePerturbationSensitivity`
+
+Also many classifiers natively provide sensitivity estimators via the call to
+`getSensitivityAnalyzer` method
+"""
 
 __docformat__ = 'restructuredtext'
 

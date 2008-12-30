@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA pattern handling"""
 
 from mvpa.datasets.masked import MaskedDataset
-from mvpa.datasets.splitter import NFoldSplitter, OddEvenSplitter, \
+from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, CustomSplitter
 import unittest
 import numpy as N

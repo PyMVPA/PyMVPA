@@ -10,7 +10,7 @@
 
 from sets import Set
 
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -21,15 +21,15 @@ from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
-#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
-#    @sweepargs(nl_clf=clfs['non-linear', 'svm'] )
+#    @sweepargs(nl_clf=clfswh['non-linear', 'svm'] )
+#    @sweepargs(nl_clf=clfswh['non-linear', 'svm'] )
     def testMultivariate(self):
         mv_perf = []
         mv_lin_perf = []
         uv_perf = []
 
-        l_clf = clfs['linear', 'svm'][0]
-        nl_clf = clfs['non-linear', 'svm'][0]
+        l_clf = clfswh['linear', 'svm'][0]
+        nl_clf = clfswh['non-linear', 'svm'][0]
 
         #orig_keys = nl_clf.param._params.keys()
         #nl_param_orig = nl_clf.param._params.copy()
@@ -93,7 +93,7 @@ class SVMTests(unittest.TestCase):
 
     # TODO: For some reason libsvm's weight assignment has no effect
     # as well -- need to be fixed :-/
-    @sweepargs(clf=clfs['svm', 'sg', '!regression', '!gnpp', '!meta'])
+    @sweepargs(clf=clfswh['svm', 'sg', '!regression', '!gnpp', '!meta'])
     def testCperClass(self, clf):
         try:
             if clf.C > 0:

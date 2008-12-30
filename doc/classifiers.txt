@@ -212,7 +212,7 @@ popular method is the so-called leave-one-out cross-validation.
 The :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class
 provides a simple way to compute such measure. It utilizes a
 :class:`~mvpa.clfs.transerror.TransferError` object and a
-:class:`~mvpa.datasets.splitter.Splitter`. When called with a
+:class:`~mvpa.datasets.splitters.Splitter`. When called with a
 :class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the
 Dataset and the transfer error for all splits is computed by training on one of
 the splitted datasets and making predictions on the other. By default the mean
@@ -230,7 +230,7 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   ...                             snr=3.0)
   >>> # now cross-validation
   >>> from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1),
   ...                                      enable_states=['confusion'])
@@ -473,7 +473,7 @@ subclasses:
 
 :class:`~mvpa.clfs.meta.SplitClassifier`
     combines a :class:`~mvpa.clfs.base.Classifier` and an arbitrary
-    :class:`~mvpa.datasets.splitter.Splitter`
+    :class:`~mvpa.datasets.splitters.Splitter`
 
 Furthermore, there are also several :class:`~mvpa.clfs.meta.ProxyClassifier`
 subclasses:
@@ -585,8 +585,8 @@ defined to create a sample collection of some commonly used parameterizations
 of the classifiers present in PyMVPA. Such collection can be queried by any set
 of known keywords/tags with tags prefixed with ``!`` being excluded::
 
-  >>> from mvpa.clfs.warehouse import clfs
-  >>> tryme = clfs['multiclass', '!svm']
+  >>> from mvpa.clfs.warehouse import clfswh
+  >>> tryme = clfswh['multiclass', '!svm']
 
 to simply sweep through classifiers which are capable of multiclass
 classification and are not SVM based.

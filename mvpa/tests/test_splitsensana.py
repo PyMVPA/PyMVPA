@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure
 
 from tests_warehouse import *
@@ -18,7 +18,7 @@ from tests_warehouse_clfs import *
 class SplitSensitivityAnalyserTests(unittest.TestCase):
 
     # XXX meta should work TODO
-    @sweepargs(svm=clfs['linear', 'svm', '!meta'])
+    @sweepargs(svm=clfswh['linear', 'svm', '!meta'])
     def testAnalyzer(self, svm):
         dataset = datasets['uni2small']
 
