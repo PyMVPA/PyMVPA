@@ -15,6 +15,18 @@ Splitters are destined to split the provided dataset varous ways to
 simplify cross-validation analysis, implement boosting of the
 estimates, or sample null-space via permutation testing.
 
+Most of the splitters at the moment split 2-ways -- conventionally
+first part is used for training, and 2nd part for testing by
+`CrossValidatedTransferError` and `SplitClassifier`.
+
+Brief Description of Available Splitters
+========================================
+
+* `NoneSplitter` - just return full dataset as the desired part (training/testing)
+* `OddEvenSplitter` - 2 splits: (odd samples,even samples) and (even, odd)
+* `HalfSplitter` - 2 splits: (first half, second half) and (second, first)
+* `NFoldSplitter` - splits for N-Fold cross validation.
+
 Module Organization
 ===================
 
@@ -451,8 +463,30 @@ class HalfSplitter(Splitter):
 class NFoldSplitter(Splitter):
     """Generic N-fold data splitter.
 
-    XXX: This docstring is a shame for such an important class!
+    Provide folding splitting. Given a dataset with N chunks, with
+    cvtype=1 (which is default), it would generate N splits, where
+    each chunk sequentially is taken out (with replacement) for
+    cross-validation.  Example, if there is 4 chunks, splits for
+    cvtype=1 are:
+
+        [[1, 2, 3], [0]]
+        [[0, 2, 3], [1]]
+        [[0, 1, 3], [2]]
+        [[0, 1, 2], [3]]
+
+    If cvtype>1, then all possible combinations of cvtype number of
+    chunks are taken out for testing, so for cvtype=2 in previous
+    example:
+
+        [[2, 3], [0, 1]]
+        [[1, 3], [0, 2]]
+        [[1, 2], [0, 3]]
+        [[0, 3], [1, 2]]
+        [[0, 2], [1, 3]]
+        [[0, 1], [2, 3]]
+
     """
+
     def __init__(self,
                  cvtype = 1,
                  **kwargs):
