@@ -74,7 +74,7 @@ train the selected features as we used to select them:
 .. here we'll put the warehouse.py example of linear svm weights from yarik's
    email
 
-  >>> sample_linear_svm = clfs['linear', 'svm'][0]
+  >>> sample_linear_svm = clfswh['linear', 'svm'][0]
   >>> clf = \
   ...  FeatureSelectionClassifier(
   ...      sample_linear_svm,

@@ -124,7 +124,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: gune up default GPR?
-    @sweepargs(clf=clfs['binary'])
+    @sweepargs(clf=clfswh['binary'])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
@@ -135,7 +135,7 @@ class ClassifiersTests(unittest.TestCase):
                             msg="Got transfer error %g" % (cve))
 
 
-    @sweepargs(clf=clfs[:])
+    @sweepargs(clf=clfswh[:])
     def testSummary(self, clf):
         """Basic testing of the clf summary
         """
@@ -198,7 +198,7 @@ class ClassifiersTests(unittest.TestCase):
         summary = clf.summary()
 
 
-    @sweepargs(clf_=clfs['binary', '!meta'])
+    @sweepargs(clf_=clfswh['binary', '!meta'])
     def testSplitClassifierExtended(self, clf_):
         clf2 = clf_.clone()
         ds = datasets['uni2medium']#self.data_bin_1
@@ -345,7 +345,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failIf((N.array(clf_reg.values)-clf_reg.predictions).sum()==0,
                     msg="Values were set to the predictions.")
 
-    @sweepargs(clf=clfs[:])
+    @sweepargs(clf=clfswh[:])
     def testValues(self, clf):
         if isinstance(clf, MulticlassClassifier):
             # TODO: handle those values correctly
@@ -363,7 +363,7 @@ class ClassifiersTests(unittest.TestCase):
 
         clf.states._resetEnabledTemporarily()
 
-    @sweepargs(clf=clfs['linear', 'svm', 'libsvm', '!meta'])
+    @sweepargs(clf=clfswh['linear', 'svm', 'libsvm', '!meta'])
     def testMulticlassClassifier(self, clf):
         oldC = None
         # XXX somewhat ugly way to force non-dataspecific C value.
@@ -408,7 +408,7 @@ class ClassifiersTests(unittest.TestCase):
             clf.C = oldC
 
     # XXX meta should also work but TODO
-    @sweepargs(clf=clfs['svm', '!meta'])
+    @sweepargs(clf=clfswh['svm', '!meta'])
     def testSVMs(self, clf):
         knows_probabilities = 'probabilities' in clf.states.names and clf.params.probability
         enable_states = ['values']
@@ -428,7 +428,7 @@ class ClassifiersTests(unittest.TestCase):
         clf.states._resetEnabledTemporarily()
 
 
-    @sweepargs(clf=clfs['retrainable'])
+    @sweepargs(clf=clfswh['retrainable'])
     def testRetrainables(self, clf):
         # we need a copy since will tune its internals later on
         clf = clf.clone()
@@ -562,8 +562,8 @@ class ClassifiersTests(unittest.TestCase):
         """Test all classifiers for conformant behavior
         """
         for clf_, traindata in \
-                [(clfs['binary'], datasets['dumb2']),
-                 (clfs['multiclass'], datasets['dumb'])]:
+                [(clfswh['binary'], datasets['dumb2']),
+                 (clfswh['multiclass'], datasets['dumb'])]:
             traindata_copy = deepcopy(traindata) # full copy of dataset
             for clf in clf_:
                 clf.train(traindata)
@@ -583,7 +583,7 @@ class ClassifiersTests(unittest.TestCase):
 
     # XXX TODO: should work on smlr, knn, ridgereg as well! but now
     #     they fail to train
-    @sweepargs(clf=clfs['!smlr', '!knn', '!meta', '!ridge'])
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
