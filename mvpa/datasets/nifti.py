@@ -84,7 +84,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
             # lets check if they all have the same dimensionality
             shapes = [s.data.shape for s in srcs]
             if not N.all([s == shapes[0] for s in shapes]):
-                raise ValueError,\
+                raise ValueError, \
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
@@ -159,8 +159,9 @@ class NiftiDataset(MappedDataset):
         :Parameters:
           samples: str | NiftiImage
             Filename of a NIfTI image or a `NiftiImage` instance.
-          mask: str | NiftiImage
-            Filename of a NIfTI image or a `NiftiImage` instance.
+          mask: str | NiftiImage | ndarray
+            Filename of a NIfTI image or a `NiftiImage` instance or an ndarray
+            of appropriate shape.
           enforce_dim : int or None
             If not None, it is the dimensionality of the data to be enforced,
             commonly 4D for the data, and 3D for the mask in case of fMRI.
@@ -194,13 +195,17 @@ class NiftiDataset(MappedDataset):
         # figure out what the mask is, but onyl handle known cases, the rest
         # goes directly into the mapper which maybe knows more
         niftimask = getNiftiFromAnySource(mask)
-        if not niftimask is None:
+        if niftimask is None:
+            pass
+        elif isinstance(niftimask, N.ndarray):
+            mask = niftimask
+        else:
             mask = getNiftiData(niftimask)
 
         # build an appropriate mapper that knows about the metrics of the NIfTI
         # data
         # NiftiDataset uses a DescreteMetric with cartesian
-        # distance and element size from the NIfTI header 
+        # distance and element size from the NIfTI header
 
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
         elementsize = [i for i in reversed(niftisamples.voxdim)]
@@ -267,6 +272,9 @@ class ERNiftiDataset(EventDataset):
                  storeoffset=False, tr=None, enforce_dim=4, **kwargs):
         """
         :Paramaters:
+          mask: str | NiftiImage | ndarray
+            Filename of a NIfTI image or a `NiftiImage` instance or an ndarray
+            of appropriate shape.
           evconv: bool
             Convert event definitions using `onset` and `duration` in some
             temporal unit into #sample notation.
@@ -305,7 +313,7 @@ class ERNiftiDataset(EventDataset):
             dt = tr
 
         # NiftiDataset uses a DescreteMetric with cartesian
-        # distance and element size from the NIfTI header 
+        # distance and element size from the NIfTI header
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
         elementsize = [dt] + [i for i in reversed(nifti.voxdim)]
         # XXX metric might be inappropriate if boxcar has length 1
@@ -338,7 +346,12 @@ class ERNiftiDataset(EventDataset):
                             " by setting `evconv` in ERNiftiDataset().")
 
         # pull mask array from NIfTI (if present)
-        if not mask is None:
+        if mask is None:
+            pass
+        elif isinstance(mask, N.ndarray):
+            # plain array can be passed on to base class
+            pass
+        else:
             mask_nim = getNiftiFromAnySource(mask)
             if not mask_nim is None:
                 mask = getNiftiData(mask_nim)

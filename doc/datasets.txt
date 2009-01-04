@@ -289,7 +289,7 @@ describe signal similarities between training and validation datasets.
    with it in our documentation, and we need to improve ours too!
 
 With the splitter classes derived from the base
-:class:`~mvpa.datasets.splitter.Splitter`,
+:class:`~mvpa.datasets.splitters.Splitter`,
 PyMVPA makes dataset splitting easy. All dataset
 splitters in PyMVPA are implemented as Python generators, meaning that when
 called with a dataset once, they return one dataset split per iteration and
@@ -299,12 +299,12 @@ as of e.g. the Python `xrange()` function.
 .. index:: working data, validation data
 
 To perform data splitting for the already mentioned cross-validation, PyMVPA
-provides the  :class:`~mvpa.datasets.splitter.NFoldSplitter` class. It implements a method to generate
+provides the  :class:`~mvpa.datasets.splitters.NFoldSplitter` class. It implements a method to generate
 arbitrary N-M splits, where N is the number of different chunks in a dataset
 and M is any non-negative integer smaller than N. Doing a leave-one-out split
 of our example dataset looks like this:
 
-  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
   >>> for wdata, vdata in splitter(data):
   ...     pass

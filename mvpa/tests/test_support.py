@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
 from mvpa.misc.support import *
-from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
 from tests_warehouse import *
 from tests_warehouse import getMVPattern
