@@ -12,7 +12,7 @@ import unittest
 from mvpa.support.copy import copy
 
 from mvpa.datasets import Dataset
-from mvpa.datasets.splitter import OddEvenSplitter
+from mvpa.datasets.splitters import OddEvenSplitter
 
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs.transerror import \
@@ -120,7 +120,7 @@ class ErrorsTests(unittest.TestCase):
 
 
 
-    @sweepargs(l_clf=clfs['linear', 'svm'])
+    @sweepargs(l_clf=clfswh['linear', 'svm'])
     def testConfusionBasedError(self, l_clf):
         train = datasets['uni2medium_train']
         # to check if we fail to classify for 3 labels
@@ -144,7 +144,7 @@ class ErrorsTests(unittest.TestCase):
         terr_copy = copy(terr)
 
 
-    @sweepargs(l_clf=clfs['linear', 'svm'])
+    @sweepargs(l_clf=clfswh['linear', 'svm'])
     def testNullDistProb(self, l_clf):
         train = datasets['uni2medium']
 
@@ -168,7 +168,7 @@ class ErrorsTests(unittest.TestCase):
                 % null_prob)
 
 
-    @sweepargs(l_clf=clfs['linear', 'svm'])
+    @sweepargs(l_clf=clfswh['linear', 'svm'])
     def testPerSampleError(self, l_clf):
         train = datasets['uni2medium']
         terr = TransferError(clf=l_clf, enable_states=['samples_error'])
@@ -184,7 +184,7 @@ class ErrorsTests(unittest.TestCase):
                   - N.array(se.values(), dtype='b')) == 0)
 
 
-    @sweepargs(clf=clfs['multiclass'])
+    @sweepargs(clf=clfswh['multiclass'])
     def testAUC(self, clf):
         """Test AUC computation
         """

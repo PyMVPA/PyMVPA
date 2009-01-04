@@ -57,6 +57,21 @@ class HamsterHelperTests(unittest.TestCase):
         # cleanup
         os.remove(filename)
 
+    def testAssignment(self):
+        ex1 = """eins zwei drei
+        0 1 2
+        3 4 5
+        """
+        ex2 = {'d1': N.random.normal(size=(4,4))}
+
+        h = Hamster(ex1=ex1)
+        h.ex2 = ex2
+        self.failUnless(h.has_key('ex2'))
+        h.ex2 = None
+        self.failUnless(h.ex2 is None)
+        h.ex2 = 123
+        self.failUnless(h.ex2 == 123)
+        h.has_key  = 123
 
 
 

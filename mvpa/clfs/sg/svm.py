@@ -104,7 +104,7 @@ class SVM(_SVM):
 
     num_threads = Parameter(1,
                             min=1,
-                            descr='Number of threads to utilize')
+                            doc='Number of threads to utilize')
 
     # NOTE: gamma is width in SG notation for RBF(Gaussian)
     _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ('scale',), LinearSVMWeights),
@@ -148,10 +148,15 @@ class SVM(_SVM):
     however all SVMs can be evaluated in parallel.
     """
     _KNOWN_IMPLEMENTATIONS = {
-        "libsvm" : (shogun.Classifier.LibSVM, ('C',), ('multiclass', 'binary'), ''),
-        "gmnp" : (shogun.Classifier.GMNPSVM, ('C',), ('multiclass', 'binary'), ''),
-        "gpbt" : (shogun.Classifier.GPBTSVM, ('C',), ('binary',), ''),
-        "gnpp" : (shogun.Classifier.GNPPSVM, ('C',), ('binary',), ''),
+        "libsvm" : (shogun.Classifier.LibSVM, ('C',), ('multiclass', 'binary'),
+                    "LIBSVM's C-SVM (L2 soft-margin SVM)"),
+        "gmnp" : (shogun.Classifier.GMNPSVM, ('C',), ('multiclass', 'binary'),
+                  "Generalized Nearest Point Problem SVM"),
+        # XXX should have been GPDT, shogun has it fixed since some version
+        "gpbt" : (shogun.Classifier.GPBTSVM, ('C',), ('binary',),
+                  "Gradient Projection Decomposition Technique for large-scale SVM problems"),
+        "gnpp" : (shogun.Classifier.GNPPSVM, ('C',), ('binary',),
+                  "Generalized Nearest Point Problem SVM"),
 
         ## TODO: Needs sparse features...
         # "svmlin" : (shogun.Classifier.SVMLin, ''),
@@ -162,18 +167,19 @@ class SVM(_SVM):
         # "sgd" : ( shogun.Classifier.SVMSGD, ''),
 
         # regressions
-        "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',), ('regression',), ''),
-        "krr": (shogun.Regression.KRR, ('tau',), ('regression',), ''),
+        "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',), ('regression',),
+                   "LIBSVM's epsilon-SVR"),
+        "krr": (shogun.Regression.KRR, ('tau',), ('regression',),
+                "Kernel Ridge Regression"),
         }
 
 
     def __init__(self,
                  kernel_type='linear',
                  **kwargs):
-        """This is the base class of all classifier that utilize so
-        far just SVM classifiers provided by shogun.
+        """Interface class to Shogun's classifiers and regressions.
 
-        TODO Documentation if this all works ;-)
+        Default implementation is 'libsvm'.
         """
 
         svm_impl = kwargs.get('svm_impl', 'libsvm').lower()
