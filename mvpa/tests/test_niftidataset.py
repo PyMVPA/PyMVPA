@@ -48,6 +48,18 @@ class NiftiDatasetTests(unittest.TestCase):
         del data
         self.failUnless(merged.samples[3, 120000] == merged.samples[1, 120000])
 
+        # check whether we can use a plain ndarray as mask
+        mask = N.zeros((24, 96, 128), dtype='bool')
+        mask[12,20,40] = True
+        nddata = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+                              labels=[1,2],
+                              mask=mask)
+        self.failUnless(nddata.nfeatures == 1)
+        rmap = nddata.mapReverse([44])
+        self.failUnless(rmap.shape == (24, 96, 128))
+        self.failUnless(N.sum(rmap) == 44)
+        self.failUnless(rmap[12,20,40] == 44)
+
 
     def testNiftiMapper(self):
         data = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),

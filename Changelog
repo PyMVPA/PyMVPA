@@ -40,20 +40,20 @@ Releases
     makes it easy to load data from a sequence of files.
 
   * Changes (code refactorings) which *might impact* any user who
-    imports from :module:`~mvpa.suite`:
+    imports from :mod:`~mvpa.suite`:
 
-	- Pre-populated warehouses of classifiers and regressions are
+    - Pre-populated warehouses of classifiers and regressions are
       renamed from clfs and regrs into
-      :var:`~mvpa.clfs.warehouse.clfswh` and
-      :var:`~mvpa.clfs.warehouse.regrswh` respectively.
+      :data:`~mvpa.clfs.warehouse.clfswh` and
+      :data:`~mvpa.clfs.warehouse.regrswh` respectively.
 
   * Changes (code refactorings) which *should not impact* any user who
-    imports from :module:`~mvpa.suite`:
+    imports from :mod:`~mvpa.suite`:
 
-    - Meta classifiers definitions moved from :module:`~mvpa.clfs.base` into
-      :module:`~mvpa.clfs.meta`.
-    - Splitters definitions moved from :module:`~mvpa.datasets.splitter` into
-	  :module:`~mvpa.datasets.splitters`
+    - Meta classifiers definitions moved from :mod:`~mvpa.clfs.base` into
+      :mod:`~mvpa.clfs.meta`.
+    - Splitters definitions moved from :mod:`~mvpa.datasets.splitter` into
+      :mod:`~mvpa.datasets.splitters`
 
 
 * 0.4.0 (Sat, 15 Nov 2008)
