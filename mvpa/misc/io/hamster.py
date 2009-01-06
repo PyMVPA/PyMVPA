@@ -87,16 +87,26 @@ class Hamster(dict):
 
         _dict_ = _o_geta_(self, '__dict__')
 
-        if index in _dict_ or hasattr(self, index):
+        if index in _dict_ or \
+           (hasattr(self, index) and not self.has_key(index)):
+            if __debug__:
+                debug("IO_HAM", "Setting atttribute %s" % index)
             _o_seta_(self, index, value)
         else:
+            if __debug__:
+                debug("IO_HAM", "Setting index %s" % index)
             _d_seti_(self, index, value)
 
 
     def __getattribute__(self, index):
         if index[0] == '_' or index == 'has_key':
             return dict.__getattribute__(self, index)
+
         if self.has_key(index):
+            if __debug__:
+                debug("IO_HAM", "Getting index %s" % index)
             return _d_geti_(self, index)
         else:
+            if __debug__:
+                debug("IO_HAM", "Getting atttribute %s" % index)
             return _o_geta_(self, index)

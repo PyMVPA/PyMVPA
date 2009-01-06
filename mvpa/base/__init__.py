@@ -267,7 +267,8 @@ if __debug__:
     debug.register('SG_PROGRESS',
                    "Internal shogun progress bar during computation")
 
-    debug.register('IOH',  "IO Helpers")
+    debug.register('IOH',    "IO Helpers")
+    debug.register('IO_HAM', "Hamster")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC',"Cross-validation call")
