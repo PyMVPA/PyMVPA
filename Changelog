@@ -46,6 +46,9 @@ Releases
       renamed from clfs and regrs into
       :data:`~mvpa.clfs.warehouse.clfswh` and
       :data:`~mvpa.clfs.warehouse.regrswh` respectively.
+    - :class:`~mvpa.misc.io.hamster.Hamster` is not derived from
+	  :class:`dict` any longer -- just from a basic :class:`object` class.
+	  API includes methods 'dump', 'asdict' and a property 'registered'.
 
   * Changes (code refactorings) which *should not impact* any user who
     imports from :mod:`~mvpa.suite`:
