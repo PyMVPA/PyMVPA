@@ -14,9 +14,6 @@ __docformat__ = 'restructuredtext'
 from sets import Set
 import operator
 
-# Data
-from mvpa.datasets.splitters import OddEvenSplitter
-
 # Define sets of classifiers
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier
@@ -25,19 +22,16 @@ from mvpa.clfs.knn import kNN
 from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
 
 # Helpers
-from mvpa.clfs.transerror import TransferError
 from mvpa.base import externals, cfg
 from mvpa.measures.anova import OneWayAnova
 from mvpa.misc.transformers import Absolute
-from mvpa.featsel.rfe import RFE
 from mvpa.clfs.smlr import SMLRWeights
 from mvpa.featsel.helpers import FractionTailSelector, \
-    FixedNElementTailSelector, RangeElementSelector, \
-    FixedErrorThresholdStopCrit
-from mvpa.clfs.transerror import ConfusionBasedError
+    FixedNElementTailSelector, RangeElementSelector
+
 from mvpa.featsel.base import SensitivityBasedFeatureSelection
 
-_KNOWN_INTERNALS=[ 'knn', 'binary', 'svm', 'linear',
+_KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
@@ -52,7 +46,7 @@ class Warehouse(object):
     capable of doing multiclass classification
     """
 
-    def __init__(self, known_tags=None, matches={}):
+    def __init__(self, known_tags=None, matches=None):
         """Initialize warehouse
 
         :Parameters:
@@ -67,6 +61,8 @@ class Warehouse(object):
         self._known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
+        if matches is None:
+            matches = {}
         self.__matches = matches
 
     def __getitem__(self, *args):
@@ -134,13 +130,19 @@ class Warehouse(object):
 
     @property
     def internals(self):
+        """Known internal tags of the classifiers
+        """
         return self.__keys
 
     def listing(self):
+        """Listing (description + internals) of registered items
+        """
         return [(x.descr, x._clf_internals) for x in self.__items]
 
     @property
     def items(self):
+        """Registered items
+        """
         return self.__items
 
 clfswh = Warehouse(known_tags=_KNOWN_INTERNALS) # classifiers
@@ -156,7 +158,7 @@ clfswh += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
           SMLR(lm=1.0, implementation="C", descr="SMLR(lm=1.0)"),
           #SMLR(lm=10.0, implementation="C", descr="SMLR(lm=10.0)"),
           #SMLR(lm=100.0, implementation="C", descr="SMLR(lm=100.0)"),
-          #                         SMLR(implementation="Python", descr="SMLR(Python)")
+          #SMLR(implementation="Python", descr="SMLR(Python)")
           ]
 
 clfswh += \
@@ -205,8 +207,10 @@ if externals.exists('shogun'):
         # Should be a drop-in replacement for lightsvm
         'gpbt', # fails to train for testAnalyzerWithSplitClassifier
                 # also 'retraining' doesn't work -- fails to generalize
-        'gmnp', # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3, also refuses to train
-        'svrlight', # fails to 'generalize' as a binary classifier after 'binning'
+        'gmnp', # would fail with 'assertion Cache_Size > 2'
+                # if shogun < 0.6.3, also refuses to train
+        'svrlight', # fails to 'generalize' as a binary classifier
+                    # after 'binning'
         'krr', # fails to generalize
         ]
     if not externals.exists('sg_fixedcachesize'):
@@ -226,9 +230,13 @@ if externals.exists('shogun'):
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
         clfswh += [
-            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.SVM(kernel_type='RBF', descr="sg.RbfSVM(gamma=0.1)/%s" % impl, svm_impl=impl, gamma=0.1),
-#           sg.SVM(descr="sg.SigmoidSVM()/%s" % impl, svm_impl=impl, kernel_type="sigmoid"),
+            sg.SVM(kernel_type='RBF',
+                   descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+#            sg.SVM(kernel_type='RBF',
+#                   descr="sg.RbfSVM(gamma=0.1)/%s"
+#                    % impl, svm_impl=impl, gamma=0.1),
+#           sg.SVM(descr="sg.SigmoidSVM()/%s"
+#                   % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
     for impl in ['libsvr', 'krr']:# \
@@ -254,7 +262,8 @@ if externals.exists('lars'):
         # XXX create proper repository of classifiers!
         lars = LARS(descr="LARS(%s)" % model, model_type=model)
         clfswh += lars
-        # clfswh += MulticlassClassifier(lars, descr='Multiclass %s' % lars.descr)
+        # clfswh += MulticlassClassifier(lars,
+        #             descr='Multiclass %s' % lars.descr)
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
@@ -289,7 +298,8 @@ if externals.exists('scipy'):
     from mvpa.clfs.gpr import GPR
 
     clfswh += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
-    clfswh += GPR(kernel=KernelSquaredExponential(), descr="GPR(kernel='sqexp')")
+    clfswh += GPR(kernel=KernelSquaredExponential(),
+                  descr="GPR(kernel='sqexp')")
 
 # BLR
 from mvpa.clfs.blr import BLR
@@ -365,6 +375,13 @@ if len(clfswh['linear', 'svm']) > 0:
             descr="LinSVM on 50(SVM)")
 
 
+    ### Imports which are specific to RFEs
+    # from mvpa.datasets.splitters import OddEvenSplitter
+    # from mvpa.clfs.transerror import TransferError
+    # from mvpa.featsel.rfe import RFE
+    # from mvpa.featsel.helpers import FixedErrorThresholdStopCrit
+    # from mvpa.clfs.transerror import ConfusionBasedError
+
     # SVM with unbiased RFE -- transfer-error to another splits, or in
     # other terms leave-1-out error on the same dataset
     # Has to be bound outside of the RFE definition since both analyzer and
@@ -396,7 +413,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #
     #clfswh += \
     #  FeatureSelectionClassifier(
-    #    clf = LinearCSVMC(), #clfswh['LinearSVMC'][0],         # we train LinearSVM
+    #    clf = LinearCSVMC(),                 # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
     #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
@@ -449,3 +466,4 @@ if len(clfswh['linear', 'svm']) > 0:
     #        # update sensitivity at each step
     #   splitter = OddEvenSplitter(),
     #   descr='LinSVM+RFE(OddEven)')
+
