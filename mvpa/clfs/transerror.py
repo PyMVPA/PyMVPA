@@ -1011,6 +1011,77 @@ class RegressionStatistics(SummaryStatistics):
         self._stats.update(stats)
 
 
+    def plot(self,
+             plot=True, plot_stats=True,
+             splot=True
+             #labels=None, numbers=False, origin='upper',
+             #numbers_alpha=None, xlabels_vertical=True,
+             #numbers_kwargs={},
+             #**kwargs
+             ):
+        """Provide presentation of regression performance in image
+
+        :Parameters:
+          plot : bool
+            Plot regular plot of values (targets/predictions)
+          plot_stats : bool
+            Print basic statistics in the title
+          splot : bool
+            Plot scatter plot
+
+        :Returns:
+           (fig, im, cb) -- figure, imshow, colorbar
+        """
+        externals.exists("pylab", raiseException=True)
+        import pylab as P
+
+        self.compute()
+        # total number of plots
+        nplots = plot + splot
+
+        # turn off automatic update if interactive
+        if P.matplotlib.get_backend() == 'TkAgg':
+            P.ioff()
+
+        fig = P.gcf()
+        P.clf()
+        sps = []                        # subplots
+
+        nplot = 0
+        if plot:
+            nplot += 1
+            sps.append(P.subplot(nplots, 1, nplot))
+            xstart = 0
+            lines = []
+            for s in self.sets:
+                nsamples = len(s[0])
+                xend = xstart+nsamples
+                xs = xrange(xstart, xend)
+                lines += [P.plot(xs, s[0], 'b')]
+                lines += [P.plot(xs, s[1], 'r')]
+                # vertical line
+                P.plot([xend, xend], [N.min(s[0]), N.max(s[0])], 'k--')
+                xstart = xend
+            if len(lines)>1:
+                P.legend(lines[:2], ('Target', 'Prediction'))
+            if plot_stats:
+                P.title(self.asstring(short='very'))
+
+        if splot:
+            nplot += 1
+            sps.append(P.subplot(nplots, 1, nplot))
+            for s in self.sets:
+                P.plot(s[0], s[1], 'o',
+                       markeredgewidth=0.2,
+                       markersize=2)
+            P.gca().set_aspect('equal')
+
+        if P.matplotlib.get_backend() == 'TkAgg':
+            P.ion()
+        P.draw()
+
+        return fig, sps
+
     def asstring(self, short=False, header=True,  summary=True,
                  description=False):
         """'Pretty print' the statistics"""
@@ -1024,14 +1095,16 @@ class RegressionStatistics(SummaryStatistics):
 
         if short:
             if short == 'very':
-                return "%(# of sets)d sets CCe:%(CCe).2f CCp:%(CCp).2g" \
+                # " RMSE/RMP_t:%(RMSE/RMP_t).2f" \
+                return "%(# of sets)d sets CCe=%(CCe).2f p=%(CCp).2g" \
                        " RMSE:%(RMSE).2f" \
-                       " RMSE/RMP_t:%(RMSE/RMP_t).2f" \
+                       " Summary: " \
+                       "CCe=%(Summary CCe).2f p=%(Summary CCp).2g" \
                        % stats
             else:
-                return "%(# of sets)d sets CCe:%(CCe).2f+-%(CCe_std).3f" \
-                       " RMSE:%(RMSE).2f+-%(RMSE_std).3f" \
-                       " RMSE/RMP_t:%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
+                return "%(# of sets)d sets CCe=%(CCe).2f+-%(CCe_std).3f" \
+                       " RMSE=%(RMSE).2f+-%(RMSE_std).3f" \
+                       " RMSE/RMP_t=%(RMSE/RMP_t).2f+-%(RMSE/RMP_t_std).3f" \
                        % stats
 
         stats_data = ['RMP_t', 'STD_t', 'RMP_p', 'STD_p']
