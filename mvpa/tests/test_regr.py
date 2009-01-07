@@ -64,6 +64,11 @@ class RegressionsTests(unittest.TestCase):
         # Test access to summary statistics
         self.failUnless(cve.confusion.stats['Summary CCe'] < 0.5)
 
+        # To test basic plotting
+        #import pylab as P
+        #cve.confusion.plot()
+        #P.show()
+
     @sweepargs(clf=clfswh['regression'])
     def testRegressionsClassifiers(self, clf):
         """Simple tests on regressions being used as classifiers
