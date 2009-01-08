@@ -57,10 +57,13 @@ class BoxcarMapper(Mapper):
                       " Rounding and changing dtype")
             self.startpoints = N.asanyarray(N.round(startpoints), dtype='i')
 
+        # Sanity checks
         if boxlength < 1:
             raise ValueError, "Boxlength lower than 1 makes no sense."
+        if boxlength - int(boxlength) != 0:
+            raise ValueError, "boxlength must be an integer value."
 
-        self.boxlength = boxlength
+        self.boxlength = int(boxlength)
         self.offset = offset
         self.__selectors = None
 
