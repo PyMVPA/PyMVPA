@@ -41,7 +41,7 @@ def __check_pywt(features=None):
     try:
         for node in wp.get_level(2): wp2[node.path] = node.data
     except:
-        return ImportError, \
+        raise ImportError, \
                "Failed to reconstruct WP by specifying data in the layer"
 
     if 'wp reconstruct fixed' in features:
