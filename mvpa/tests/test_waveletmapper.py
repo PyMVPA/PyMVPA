@@ -77,6 +77,48 @@ class WaveletMappersTests(unittest.TestCase):
                 self.failUnless(diff/ornorm < 1e-10)
 
 
+    def testSimpleWP1Level(self):
+        """
+        """
+
+        ds = datasets['uni2large']
+        d2d = ds.samples
+        ws = 50                          # size of timeline for wavelet
+        sp = (N.arange(ds.nsamples - ws*2) + ws)[:4]
+
+        # create 3D instance (samples x timepoints x channels)
+        bcm = BoxcarMapper(sp, ws)
+        d3d = bcm(d2d)
+
+        # use wavelet mapper
+        wdm = WaveletPacketMapper(level=2, wavelet='sym2')
+        d3d_wd = wdm(d3d)
+
+        # Check dimensionality
+        d3d_wds, d3ds = d3d_wd.shape, d3d.shape
+        self.failUnless(len(d3d_wds) == len(d3ds)+1)
+        self.failUnless(d3d_wds[1] * d3d_wds[2] >= d3ds[1])
+        self.failUnless(d3d_wds[0] == d3ds[0])
+        self.failUnless(d3d_wds[-1] == d3ds[-1])
+        #print d2d.shape, d3d.shape, d3d_wd.shape
+
+        if externals.exists('pywt wp reconstruct'):
+            # Test reverse -- should be identical
+            # we can do reverse only for DWT
+            d3d_rev = wdm.reverse(d3d_wd)
+
+            # inverse transform might be not exactly as the
+            # input... but should be very close ;-)
+            self.failUnlessEqual(d3d_rev.shape, d3d.shape,
+                                 msg="Shape should be the same after iDWT")
+
+            diff = N.linalg.norm(d3d - d3d_rev)
+            ornorm = N.linalg.norm(d3d)
+
+            if externals.exists('pywt wp reconstruct fixed'):
+                self.failUnless(diff/ornorm < 1e-10)
+        else:
+            self.failUnlessRaises(NotImplementedError, wdm.reverse, d3d_wd)
 
 
     def _testCompareToOld(self):
