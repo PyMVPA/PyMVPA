@@ -15,7 +15,7 @@ import numpy as N
 import operator
 
 from mvpa.misc.param import Parameter
-from mvpa.base import warning
+from mvpa.base import warning, externals
 from mvpa.misc.state import StateVariable
 
 from mvpa.clfs.base import Classifier
@@ -337,7 +337,7 @@ class SVM(_SVM):
 #
 # check if there is a libsvm version with configurable
 # noise reduction ;)
-if hasattr(svm.svmc, 'svm_set_verbosity'):
+if externals.exists('libsvm verbosity control'):
     if __debug__ and "LIBSVM" in debug.active:
         debug("LIBSVM", "Setting verbosity for libsvm to 255")
         svm.svmc.svm_set_verbosity(255)
