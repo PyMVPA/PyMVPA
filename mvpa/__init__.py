@@ -34,7 +34,7 @@ The mvpa package contains the following subpackages and modules:
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
-:license: The MIT License
+:license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
 :copyright: |copy| 2006-2008 Michael Hanke <michael.hanke@gmail.com>
 :copyright: |copy| 2007-2008 Yaroslav O. Halchenko <debian@onerussian.com>
 
