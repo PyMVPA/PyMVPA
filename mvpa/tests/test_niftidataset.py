@@ -34,6 +34,10 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnless(nb22.shape[0] == 7)
         self.failUnless(nb20.shape[0] == 5)
 
+        # Can't rely on released pynifties, so doing really vague testing
+        # XXX
+        self.failUnless(data.dt in [2.0, 2000.0])
+        self.failUnless(data.samplingrate in [5e-4, 5e-1])
         merged = data + data
 
         self.failUnless(merged.nfeatures == 294912)
