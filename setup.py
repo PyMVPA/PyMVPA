@@ -9,7 +9,6 @@
 """Python distutils setup for PyMVPA"""
 
 from numpy.distutils.core import setup, Extension
-from numpy.distutils.misc_util import get_numpy_include_dirs
 import os
 import sys
 from glob import glob
@@ -109,7 +108,9 @@ setup(name         = 'pymvpa',
                        'mvpa.misc.io',
                        'mvpa.misc.plot',
                        'mvpa.misc.fsl',
-                       'mvpa.tests' ],
+                       'mvpa.tests',
+                       'mvpa.support'
+                       ],
       data_files = [('mvpa/data', ['mvpa/data'])],
       scripts      = glob( 'bin/*' ),
       ext_modules  = ext_modules

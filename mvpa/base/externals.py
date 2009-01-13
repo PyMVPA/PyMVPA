@@ -18,6 +18,50 @@ from mvpa import cfg
 if __debug__:
     from mvpa.base import debug
 
+
+def __check_pywt(features=None):
+    """Check for available functionality within pywt
+
+    :Parameters:
+      features : list of basestring
+        List of known features to check such as 'wp reconstruct',
+        'wp reconstruct fixed'
+    """
+    import pywt
+    import numpy as N
+    data = N.array([ 0.57316901,  0.65292526,  0.75266733,  0.67020084,  0.46505364,
+                     0.76478331,  0.33034164,  0.49165547,  0.32979941,  0.09696717,
+                     0.72552711,  0.4138999 ,  0.54460628,  0.786351  ,  0.50096306,
+                     0.72436454, 0.2193098 , -0.0135051 ,  0.34283984,  0.65596245,
+                     0.49598417,  0.39935064,  0.26370727,  0.05572373,  0.40194438,
+                     0.47004551,  0.60327258,  0.25628266,  0.32964893,  0.24009889,])
+    mode = 'per'
+    wp = pywt.WaveletPacket(data, 'sym2', mode)
+    wp2 = pywt.WaveletPacket(data=None, wavelet='sym2', mode=mode)
+    try:
+        for node in wp.get_level(2): wp2[node.path] = node.data
+    except:
+        raise ImportError, \
+               "Failed to reconstruct WP by specifying data in the layer"
+
+    if 'wp reconstruct fixed' in features:
+        rec = wp2.reconstruct()
+        if N.linalg.norm(rec[:len(data)] - data) > 1e-3:
+            raise ImportError, \
+                  "Failed to reconstruct WP correctly"
+    return True
+
+
+def __check_libsvm_verbosity_control():
+    """Check for available verbose control functionality
+    """
+    import mvpa.clfs.libsvmc._svmc as _svmc
+    try:
+        _svmc.svm_set_verbosity(0)
+    except:
+        raise ImportError, "Provided version of libsvm has no way to control " \
+              "its level of verbosity"
+
 def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
     be enabled in the testsuite
@@ -117,6 +161,7 @@ def __check_in_ipython():
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
+          'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
           'nifti >= 0.20081017.1':
                 'from nifti.nifticlib import detachDataFromImage as __',
@@ -129,6 +174,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'good scipy.stats.rdist': "__check_stablerdist()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
+          'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
+          'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "import rpy as __",
           'lars': "import rpy; rpy.r.library('lars')",
           'pylab': "import pylab as __",
