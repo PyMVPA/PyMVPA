@@ -116,11 +116,8 @@ debian-clean:
 
 doc: website
 
-prepare-docsrc: prepare-docsrc-stamp
-prepare-docsrc-stamp:
-	mkdir -p build
-	cp -Lr doc/ $(DOCSRC_DIR)
-	touch $@
+prepare-docsrc: mkdir-DOCSRC_DIR
+	cp -Lpurv doc/* $(DOCSRC_DIR)
 
 references:
 	tools/bib2rst_ref.py
