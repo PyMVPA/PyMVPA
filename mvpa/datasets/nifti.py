@@ -84,7 +84,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
             # lets check if they all have the same dimensionality
             shapes = [s.data.shape for s in srcs]
             if not N.all([s == shapes[0] for s in shapes]):
-                raise ValueError,\
+                raise ValueError, \
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
@@ -159,8 +159,9 @@ class NiftiDataset(MappedDataset):
         :Parameters:
           samples: str | NiftiImage
             Filename of a NIfTI image or a `NiftiImage` instance.
-          mask: str | NiftiImage
-            Filename of a NIfTI image or a `NiftiImage` instance.
+          mask: str | NiftiImage | ndarray
+            Filename of a NIfTI image or a `NiftiImage` instance or an ndarray
+            of appropriate shape.
           enforce_dim : int or None
             If not None, it is the dimensionality of the data to be enforced,
             commonly 4D for the data, and 3D for the mask in case of fMRI.
@@ -194,13 +195,17 @@ class NiftiDataset(MappedDataset):
         # figure out what the mask is, but onyl handle known cases, the rest
         # goes directly into the mapper which maybe knows more
         niftimask = getNiftiFromAnySource(mask)
-        if not niftimask is None:
+        if niftimask is None:
+            pass
+        elif isinstance(niftimask, N.ndarray):
+            mask = niftimask
+        else:
             mask = getNiftiData(niftimask)
 
         # build an appropriate mapper that knows about the metrics of the NIfTI
         # data
         # NiftiDataset uses a DescreteMetric with cartesian
-        # distance and element size from the NIfTI header 
+        # distance and element size from the NIfTI header
 
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
         elementsize = [i for i in reversed(niftisamples.voxdim)]
@@ -235,9 +240,44 @@ class NiftiDataset(MappedDataset):
         return NiftiImage(dsarray, self.niftihdr)
 
 
+    def getDt(self):
+        # plain value
+        hdr = self.niftihdr
+        TR = hdr['pixdim'][4]
+        # figure out units, if available
+        unit = 1.0
+        if hdr.has_key('time_unit'):
+            unit = hdr['time_unit']
+            if unit == 0.0:
+                warning("Errorneous time_unit %f. Assuming seconds (i.e. 1.0)" %
+                        (unit,))
+                unit = 1.0
+        elif hdr.has_key('xyzt_unit'):
+            unit_code = int(hdr['xyzt_unit']) / 8
+            if unit_code in [0, 1, 2, 3]:
+                if unit_code == 0:
+                    warning("Time units were not specified in NiftiImage. "
+                            "Assuming seconds.")
+                unit = [ 1.0, 1.0, 1e-3, 1e-6 ][unit_code]
+            else:
+                warning("Time units are incorrectly coded: value %d whenever "
+                        "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
+                        "Assuming seconds.")
+        else:
+            warning("No information on time units is available. Assuming "
+                    "seconds")
+        return TR * unit
+
+
     niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
                         doc='Access to the NIfTI header dictionary.')
 
+    dt = property(fget=getDt,
+                  doc='Time difference between two samples (in seconds). '
+                  'AKA TR in fMRI world.')
+
+    samplingrate = property(fget=lambda self: 1.0 / self.dt,
+                          doc='Sampling rate (based on .dt).')
 
 
 class ERNiftiDataset(EventDataset):
@@ -267,6 +307,9 @@ class ERNiftiDataset(EventDataset):
                  storeoffset=False, tr=None, enforce_dim=4, **kwargs):
         """
         :Paramaters:
+          mask: str | NiftiImage | ndarray
+            Filename of a NIfTI image or a `NiftiImage` instance or an ndarray
+            of appropriate shape.
           evconv: bool
             Convert event definitions using `onset` and `duration` in some
             temporal unit into #sample notation.
@@ -305,7 +348,7 @@ class ERNiftiDataset(EventDataset):
             dt = tr
 
         # NiftiDataset uses a DescreteMetric with cartesian
-        # distance and element size from the NIfTI header 
+        # distance and element size from the NIfTI header
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
         elementsize = [dt] + [i for i in reversed(nifti.voxdim)]
         # XXX metric might be inappropriate if boxcar has length 1
@@ -338,7 +381,12 @@ class ERNiftiDataset(EventDataset):
                             " by setting `evconv` in ERNiftiDataset().")
 
         # pull mask array from NIfTI (if present)
-        if not mask is None:
+        if mask is None:
+            pass
+        elif isinstance(mask, N.ndarray):
+            # plain array can be passed on to base class
+            pass
+        else:
             mask_nim = getNiftiFromAnySource(mask)
             if not mask_nim is None:
                 mask = getNiftiData(mask_nim)

@@ -19,8 +19,7 @@ RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 #
 
 PYVER := $(shell python -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
-ARCH := $(shell uname -m)
-
+DISTUTILS_PLATFORM := $(shell python -c "import distutils.util; print distutils.util.get_platform()")
 
 #
 # Little helpers
@@ -57,9 +56,9 @@ build-stamp: 3rd
 	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
 	for ext in _svmc smlrc; do \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
 		mvpa/clfs/lib$${ext#_*}/; \
-		ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
 		mvpa/clfs/lib$${ext#_*}/$${ext}.dylib; \
 		done
 	touch $@
@@ -283,7 +282,15 @@ testapiref: apidoc
 	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
+# Check if there is no WARNINGs from sphinx
+testsphinx: htmldoc
+	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
+
 test: unittests testmanual testsuite testapiref testexamples
+
+# Target to be called after some major refactoring
+# It skips some flavors of unittests
+testrefactor: unittest testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."

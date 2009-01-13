@@ -17,7 +17,7 @@ import numpy as N
 
 from mvpa import cfg
 from mvpa.datasets import Dataset
-from mvpa.datasets.splitter import OddEvenSplitter
+from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import Stateful

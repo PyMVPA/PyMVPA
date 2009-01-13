@@ -34,6 +34,10 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnless(nb22.shape[0] == 7)
         self.failUnless(nb20.shape[0] == 5)
 
+        # Can't rely on released pynifties, so doing really vague testing
+        # XXX
+        self.failUnless(data.dt in [2.0, 2000.0])
+        self.failUnless(data.samplingrate in [5e-4, 5e-1])
         merged = data + data
 
         self.failUnless(merged.nfeatures == 294912)
@@ -47,6 +51,18 @@ class NiftiDatasetTests(unittest.TestCase):
         # throw away old dataset and see if new one survives
         del data
         self.failUnless(merged.samples[3, 120000] == merged.samples[1, 120000])
+
+        # check whether we can use a plain ndarray as mask
+        mask = N.zeros((24, 96, 128), dtype='bool')
+        mask[12,20,40] = True
+        nddata = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+                              labels=[1,2],
+                              mask=mask)
+        self.failUnless(nddata.nfeatures == 1)
+        rmap = nddata.mapReverse([44])
+        self.failUnless(rmap.shape == (24, 96, 128))
+        self.failUnless(N.sum(rmap) == 44)
+        self.failUnless(rmap[12,20,40] == 44)
 
 
     def testNiftiMapper(self):
