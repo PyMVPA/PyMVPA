@@ -16,9 +16,7 @@ set -e
 # what branches to test
 BRANCHES='master yoh/master mh/master maint/0.4'
 # where to send reports
-# XXX
-EMAILS='yoh@onerussian.com,yarikoptic@gmail.com'
-#,michael.hanke@gmail.com
+EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
 
 precmd=
 #precmd="echo  C: "
@@ -32,7 +30,7 @@ tmpfile="$logdir/tmp.log"
 logfile="$logdir/all.log"
 
 # Remove
-#trap "rm -fr $logdir/pymvpa $logdir/tmp.log;" EXIT
+trap "rm -fr $logdir/pymvpa $logdir/tmp.log;" EXIT
 
 mkdir -p "$logdir"
 
@@ -65,7 +63,7 @@ do_clean() {
 # Not yet can do fine scale unittest separation since maint/0.4, nor
 # master have it that way... leaving it for future.
 #MAKE_TESTS="unittest unittest-optimization unittest-debug unittest-badexternals
-MAKE_TESTS="unittests testmanual testsuite testapiref testexamples"
+MAKE_TESTS="unittests testmanual testsuite testapiref testsphinx testexamples"
 
 for c in $MAKE_TESTS; do
     eval "do_$c() { $precmd make $c; }"

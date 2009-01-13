@@ -30,6 +30,8 @@ if __debug__:
     from mvpa.base import debug, warning
 
     def _validate_indexes_uniq_sorted(seq, fname, item):
+        """Helper function to validate that seq contains unique sorted values
+        """
         if operator.isSequenceType(seq):
             seq_unique = N.unique(seq)
             if len(seq) != len(seq_unique):
@@ -816,7 +818,8 @@ class Dataset(object):
                                      for x in labels_map.items()]) + '\n'
 
         def cl_stats(axis, u, name1, name2):
-            # Compute statistics per label
+            """ Compute statistics per label
+            """
             stats = {'min': N.min(spcl, axis=axis),
                      'max': N.max(spcl, axis=axis),
                      'mean': N.mean(spcl, axis=axis),
@@ -1054,7 +1057,7 @@ class Dataset(object):
             Flag whether to train the mapper with this dataset before applying
             it.
 
-        TODO: selectFeatures is pretty much 
+        TODO: selectFeatures is pretty much
               applyMapper(featuresmapper=MaskMapper(...))
         """
 
@@ -1395,7 +1398,7 @@ class Dataset(object):
         if len(args) == 1 and isinstance(args[0], tuple):
             args = args[0]
 
-        args_,args = args,()
+        args_, args = args, ()
         for a in args_:
             if isinstance(a, slice) and \
                    isinstance(a.start, basestring):
@@ -1564,7 +1567,9 @@ class Dataset(object):
 
 
     def defineFeatureGroups(self, definition):
-        """
+        """Assign `definition` to featuregroups
+
+        XXX Feature-groups was not finished to be useful
         """
         if not len(definition) == self.nfeatures:
             raise ValueError, \

@@ -6,7 +6,17 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""Feature selection methods.
+
+Brief Description of Available Methods
+======================================
+
+* `SensitivityBasedFeatureSelection` - generic class to provide feature
+  selection given some sensitivity measure
+* `RFE` - recursive feature elimination (RFE)
+* `IFS` - incremental feature selection
+
+"""
 
 __docformat__ = 'restructuredtext'
 

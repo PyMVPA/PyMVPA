@@ -185,7 +185,7 @@ def coarsenChunks(source, nchunks=4):
     nchunks = 0
     cur_chunk_nsamples = 0
     samples_counted = 0
-    for i,c in enumerate(chunks_unique):
+    for i, c in enumerate(chunks_unique):
         cc = counts[c]
 
         cur_chunk += [c]

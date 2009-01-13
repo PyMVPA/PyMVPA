@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import textwrap
 from mvpa.misc.state import CollectableAttribute
 
 if __debug__:
@@ -64,6 +65,34 @@ class Parameter(CollectableAttribute):
         # it is enabled but no value is assigned yet
         res += '=%s' % (self.value,)
         return res
+
+
+    def doc(self, indent="  ", width=70):
+        """Docstring for the parameter to be used in lists of parameters
+
+        :Returns:
+          string or list of strings (if indent is None)
+        """
+        paramsdoc = "  %s" % self.name
+        if hasattr(paramsdoc, 'allowedtype'):
+            paramsdoc += " : %s" % self.allowedtype
+        paramsdoc = [paramsdoc]
+        try:
+            doc = self.__doc__
+            if not doc.endswith('.'): doc += '.'
+            try:
+                doc += " (Default: %s)" % self.default
+            except:
+                pass
+            paramsdoc += ['  ' + x
+                          for x in textwrap.wrap(doc, width=width-len(indent))]
+        except Exception, e:
+            pass
+
+        if indent is None:
+            return paramsdoc
+        else:
+            return ('\n' + indent).join(paramsdoc)
 
 
     # XXX should be named reset2default? correspondingly in

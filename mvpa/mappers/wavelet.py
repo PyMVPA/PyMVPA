@@ -8,9 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wavelet mappers"""
 
+from mvpa.base import externals
+externals.exists('pywt', raiseException=True)
+
 import pywt
 import numpy as N
 
+from mvpa.base import warning
 from mvpa.mappers.base import Mapper
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -25,7 +29,7 @@ class _WaveletMapper(Mapper):
     """
 
     def __init__(self, dim=1, wavelet='sym4', mode='per', maxlevel=None):
-        """Initialize WaveletPacket mapper
+        """Initialize _WaveletMapper mapper
 
         :Parameters:
           dim : int or tuple of int
@@ -113,7 +117,7 @@ def _getIndexes(shape, dim):
               (dim, shape)
     n = len(shape)
     curindexes = [0] * n
-    curindexes[dim] = slice(None)       # all elements for dimension dim
+    curindexes[dim] = Ellipsis#slice(None)       # all elements for dimension dim
     while True:
         yield tuple(curindexes)
         for i in xrange(n):
@@ -133,10 +137,62 @@ class WaveletPacketMapper(_WaveletMapper):
     """Convert signal into an overcomplete representaion using Wavelet packet
     """
 
-    def _forward(self, data):
-        if __debug__:
-            debug('MAP', "Converting signal using DWP")
+    def __init__(self, level=None, **kwargs):
+        """Initialize WaveletPacketMapper mapper
 
+        :Parameters:
+          level : int or None
+            What level to decompose at. If 'None' data for all levels
+            is provided, but due to different sizes, they are placed
+            in 1D row.
+        """
+
+        _WaveletMapper.__init__(self,**kwargs)
+
+        self.__level = level
+
+
+    # XXX too much of duplications between such methods -- it begs
+    #     refactoring
+    def __forwardSingleLevel(self, data):
+        if __debug__:
+            debug('MAP', "Converting signal using DWP (single level)")
+
+        wp = None
+
+        level = self.__level
+        wavelet = self._wavelet
+        mode = self._mode
+        dim = self._dim
+
+        level_paths = None
+        for indexes in _getIndexes(data.shape, self._dim):
+            if __debug__:
+                debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
+            WP = pywt.WaveletPacket(
+                data[indexes], wavelet=wavelet,
+                mode=mode, maxlevel=level)
+
+            level_nodes = WP.get_level(level)
+            if level_paths is None:
+                # Needed for reconstruction
+                self.__level_paths = N.array([node.path for node in level_nodes])
+            level_datas = N.array([node.data for node in level_nodes])
+
+            if wp is None:
+                newdim = data.shape
+                newdim = newdim[:dim] + level_datas.shape + newdim[dim+1:]
+                if __debug__:
+                    debug('MAP_', "Initializing storage of size %s for single "
+                          "level (%d) mapping of data of size %s" % (newdim, level, data.shape))
+                wp = N.empty( tuple(newdim) )
+
+            wp[indexes] = level_datas
+
+        return wp
+
+
+    def __forwardMultipleLevels(self, data):
         wp = None
         levels_length = None                # total length at each level
         levels_lengths = None                # list of lengths per each level
@@ -192,8 +248,63 @@ class WaveletPacketMapper(_WaveletMapper):
         return wp
 
 
+    def _forward(self, data):
+        if __debug__:
+            debug('MAP', "Converting signal using DWP")
+
+        if self.__level is None:
+            return self.__forwardMultipleLevels(data)
+        else:
+            return self.__forwardSingleLevel(data)
+
+    #
+    # Reverse mapping
+    #
+    def __reverseSingleLevel(self, wp):
+
+        # local bindings
+        level_paths = self.__level_paths
+
+        # define wavelet packet to use
+        WP = pywt.WaveletPacket(
+            data=None, wavelet=self._wavelet,
+            mode=self._mode, maxlevel=self.__level)
+
+        # prepare storage
+        signal_shape = wp.shape[:1] + self.getInSize()
+        signal = N.zeros(signal_shape)
+        Ntime_points = self._intimepoints
+        for indexes in _getIndexes(signal_shape,
+                                   self._dim):
+            if __debug__:
+                debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
+
+            for path, level_data in zip(level_paths, wp[indexes]):
+                WP[path] = level_data
+
+            signal[indexes] = WP.reconstruct(True)[:Ntime_points]
+
+        return signal
+
+
     def _reverse(self, data):
-        raise NotImplementedError
+        if __debug__:
+            debug('MAP', "Converting signal back using DWP")
+
+        if self.__level is None:
+            raise NotImplementedError
+        else:
+            if not externals.exists('pywt wp reconstruct'):
+                raise NotImplementedError, \
+                      "Reconstruction for a single level for versions of " \
+                      "pywt < 0.1.7 (revision 103) is not supported"
+            if not externals.exists('pywt wp reconstruct fixed'):
+                warning("Reconstruction using available version of pywt might "
+                        "result in incorrect data in the tails of the signal")
+            return self.__reverseSingleLevel(data)
+
+
+
 
 
 class WaveletTransformationMapper(_WaveletMapper):
