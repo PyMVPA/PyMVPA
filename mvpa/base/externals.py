@@ -52,6 +52,16 @@ def __check_pywt(features=None):
     return True
 
 
+def __check_libsvm_verbosity_control():
+    """Check for available verbose control functionality
+    """
+    import mvpa.clfs.libsvmc._svmc as _svmc
+    try:
+        _svmc.svm_set_verbosity(0)
+    except:
+        raise ImportError, "Provided version of libsvm has no way to control " \
+              "its level of verbosity"
+
 def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
     be enabled in the testsuite
@@ -151,6 +161,7 @@ def __check_in_ipython():
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
+          'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
           'nifti >= 0.20081017.1':
                 'from nifti.nifticlib import detachDataFromImage as __',
