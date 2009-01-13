@@ -5,13 +5,22 @@ Below is a list of all publications about PyMVPA that have been published so
 far (in chronological order). If you use PyMVPA in your research please cite
 the one that matches best.
 
+Peer-reviewed publication
+-------------------------
+
+`Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2009). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. Neuroinformatics.`_
+  First paper introducing fMRI data analysis with PyMVPA.
+
+.. _Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2009). PyMVPA\: A Python toolbox for multivariate pattern analysis of fMRI data. Neuroinformatics.: http://dx.doi.org/10.1007/s12021-008-9041-y
+
+
+Poster
+------
+
 `Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2008). PyMVPA: A Python toolbox for classifier-based data analysis.`_
   First presentation of PyMVPA at the conference *Psychologie und Gehirn*
   [Psychology and Brain], Magdeburg_, 2008. This poster received the poster
   prize of the *German Society for Psychophysiology and its Application*.
-
-Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (in press). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. Neuroinformatics.
-  First paper introducing fMRI data analysis with PyMVPA.
 
 `Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2008). PyMVPA: A Python toolbox for machine-learning based data analysis.`_
   Poster emphasizing PyMVPA's capabilities concerning multi-modal data analysis
