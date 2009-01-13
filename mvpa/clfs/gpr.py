@@ -25,7 +25,6 @@ from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.datasets import Dataset
 
 externals.exists("scipy", raiseException=True)
-from scipy.linalg import cho_factor as SLcho_factor
 from scipy.linalg import cho_solve as SLcho_solve
 from scipy.linalg import cholesky as SLcholesky
 import scipy.linalg as SL
@@ -148,7 +147,8 @@ class GPR(Classifier):
         """
         Compute log marginal likelihood using self.train_fv and self.labels.
         """
-        if __debug__: debug("GPR", "Computing log_marginal_likelihood")
+        if __debug__:
+            debug("GPR", "Computing log_marginal_likelihood")
         self.log_marginal_likelihood = \
                                  -0.5*Ndot(self._train_labels, self._alpha) - \
                                   Nlog(self._L.diagonal()).sum() - \
@@ -175,11 +175,12 @@ class GPR(Classifier):
         # Faster:
         Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
 
-        alphalphaT = N.dot(self._alpha[:,None],self._alpha[None,:])
+        alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
         tmp = alphalphaT - Kinv
         # Pass tmp to __kernel and let it compute its gradient terms.
         # This scales up to huge number of hyperparameters:
-        grad_LML_hypers = self.__kernel.compute_lml_gradient(tmp,self._train_fv)
+        grad_LML_hypers = self.__kernel.compute_lml_gradient(
+            tmp, self._train_fv)
         grad_K_sigma_n = 2.0*self.sigma_noise*N.eye(tmp.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
@@ -197,7 +198,7 @@ class GPR(Classifier):
         """
         # Kinv = N.linalg.inv(self._C)
         # Faster:
-        Kinv = SLcho_solve(self._LL,N.eye(self._L.shape[0]))
+        Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
         alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
         tmp = alphalphaT - Kinv
         grad_LML_log_hypers = \
@@ -384,7 +385,7 @@ class GPR(Classifier):
             # v = NLAsolve(L, km_train_test)
             # Faster:
             piv = N.arange(L.shape[0])
-            v = SL.lu_solve((L.T,piv), km_train_test, trans=1)
+            v = SL.lu_solve((L.T, piv), km_train_test, trans=1)
             # self.predicted_variances = \
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
@@ -422,7 +423,7 @@ class GPR(Classifier):
         other kernel's hyperparameters values follow in the exact
         order the kernel expect them to be.
         """
-        if hyperparameter[0]<GPR.sigma_noise.min:
+        if hyperparameter[0] < GPR.sigma_noise.min:
             raise InvalidHyperparameterError()
         self.sigma_noise = hyperparameter[0]
         if hyperparameter.size > 1:

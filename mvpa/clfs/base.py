@@ -9,7 +9,7 @@
 """Base class for all classifiers.
 
 At the moment, regressions are treated just as a special case of
-classifier (or vise versa), so the same base class `Classifier` is
+classifier (or vise verse), so the same base class `Classifier` is
 utilized for both kinds.
 """
 
@@ -42,7 +42,7 @@ class Classifier(Parametrized):
     _DEV__doc__ = """
     Required behavior:
 
-    For every classifier is has to be possible to be instanciated without
+    For every classifier is has to be possible to be instantiated without
     having to specify the training pattern.
 
     Repeated calls to the train() method with different training data have to
@@ -60,9 +60,9 @@ class Classifier(Parametrized):
              state member. This variable is a list as long as and in same order
              as Dataset.uniquelabels (training data). Each item in the list
              corresponds to the likelyhood of a sample to belong to the
-             respective class. However the sematics might differ between
+             respective class. However the semantics might differ between
              classifiers, e.g. kNN would probably store distances to class-
-             neighbours, where PLR would store the raw function value of the
+             neighbors, where PLR would store the raw function value of the
              logistic function. So in the case of kNN low is predictive and for
              PLR high is predictive. Don't know if there is the need to unify
              that.
@@ -81,7 +81,7 @@ class Classifier(Parametrized):
     # This shall provide an interface to plug generic parameter optimizer
     # on all classifiers (e.g. grid- or line-search optimizer)
     # A dictionary is used because Michael thinks that access by name is nicer.
-    # Additonally Michael thinks ATM that additonal information might be
+    # Additionally Michael thinks ATM that additional information might be
     # necessary in some situations (e.g. reasonably predefined parameter range,
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa.misc.param.Parameter'...
@@ -174,7 +174,7 @@ class Classifier(Parametrized):
         """Functionality prior to training
         """
         # So we reset all state variables and may be free up some memory
-        # explicitely
+        # explicitly
         params = self.params
         if not params.retrainable:
             self.untrain()
@@ -320,7 +320,7 @@ class Classifier(Parametrized):
         It might require classifier to be untrained first due to
         present SWIG bindings.
 
-        TODO: think about proper re-implementation, without enrolment of deepcopy
+        TODO: think about proper re-implementation, without enrollment of deepcopy
         """
         try:
             return deepcopy(self)
@@ -330,7 +330,7 @@ class Classifier(Parametrized):
 
 
     def _train(self, dataset):
-        """Function to be actually overriden in derived classes
+        """Function to be actually overridden in derived classes
         """
         raise NotImplementedError
 
@@ -338,7 +338,7 @@ class Classifier(Parametrized):
     def train(self, dataset):
         """Train classifier on a dataset
 
-        Shouldn't be overriden in subclasses unless explicitely needed
+        Shouldn't be overridden in subclasses unless explicitly needed
         to do so
         """
         if __debug__:
@@ -411,7 +411,7 @@ class Classifier(Parametrized):
     def predict(self, data):
         """Predict classifier on data
 
-        Shouldn't be overriden in subclasses unless explicitely needed
+        Shouldn't be overridden in subclasses unless explicitly needed
         to do so. Also subclasses trying to call super class's predict
         should call _predict if within _predict instead of predict()
         since otherwise it would loop
@@ -679,7 +679,7 @@ class Classifier(Parametrized):
         but only classifier parameters, then kernel matrix does not
         have to be computed.
 
-        Words of caution: classifier must be previousely trained,
+        Words of caution: classifier must be previously trained,
         results always should first be compared to the results on not
         'retrainable' classifier (without calling retrain). Some
         additional checks are enabled if debug id 'CHECK_RETRAIN' is
@@ -786,13 +786,13 @@ class Classifier(Parametrized):
                           "Data %s found changed although wasn't " \
                           "labeled as such" % key
 
-        # Should be superseeded by above
+        # Should be superseded by above
         # remove in future???
         if __debug__ and 'CHECK_RETRAIN' in debug.active \
                and not self._changedData['testdata'] \
                and self.__trained['testdata'].shape != data.shape:
             raise ValueError, "In repredict got dataset with %s size, " \
-                  "whenever previousely was trained on %s size" \
+                  "whenever previously was trained on %s size" \
                   % (data.shape, self.__trained['testdata'].shape)
 
         return self.predict(data)

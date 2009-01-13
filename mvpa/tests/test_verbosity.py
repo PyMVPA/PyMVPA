@@ -147,7 +147,8 @@ class VerboseOutputTest(unittest.TestCase):
             verbose.handlers = []           # so debug doesn't spoil it
             debug.active = ['.*']
             # we should have enabled all of them
-            self.failUnlessEqual(Set(debug.active), Set(debug.registered.keys()))
+            self.failUnlessEqual(Set(debug.active),
+                                 Set(debug.registered.keys()))
             debug.active = ['S.*', 'CLF']
             self.failUnlessEqual(Set(debug.active),
                                  Set(filter(lambda x:x.startswith('S'),
