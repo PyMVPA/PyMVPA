@@ -240,9 +240,44 @@ class NiftiDataset(MappedDataset):
         return NiftiImage(dsarray, self.niftihdr)
 
 
+    def getDt(self):
+        # plain value
+        hdr = self.niftihdr
+        TR = hdr['pixdim'][4]
+        # figure out units, if available
+        unit = 1.0
+        if hdr.has_key('time_unit'):
+            unit = hdr['time_unit']
+            if unit == 0.0:
+                warning("Errorneous time_unit %f. Assuming seconds (i.e. 1.0)" %
+                        (unit,))
+                unit = 1.0
+        elif hdr.has_key('xyzt_unit'):
+            unit_code = int(hdr['xyzt_unit']) / 8
+            if unit_code in [0, 1, 2, 3]:
+                if unit_code == 0:
+                    warning("Time units were not specified in NiftiImage. "
+                            "Assuming seconds.")
+                unit = [ 1.0, 1.0, 1e-3, 1e-6 ][unit_code]
+            else:
+                warning("Time units are incorrectly coded: value %d whenever "
+                        "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
+                        "Assuming seconds.")
+        else:
+            warning("No information on time units is available. Assuming "
+                    "seconds")
+        return TR * unit
+
+
     niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
                         doc='Access to the NIfTI header dictionary.')
 
+    dt = property(fget=getDt,
+                  doc='Time difference between two samples (in seconds). '
+                  'AKA TR in fMRI world.')
+
+    samplingrate = property(fget=lambda self: 1.0 / self.dt,
+                          doc='Sampling rate (based on .dt).')
 
 
 class ERNiftiDataset(EventDataset):
