@@ -21,6 +21,7 @@ valuable advice, code or documentation to PyMVPA:
 * `Greg Detre`_, Princeton University, USA
 * `James M. Hughes`_, Dartmouth College, USA
 * `Ingo Fründ`_, University of Magdeburg, Germany
+* James Kyle, UCLA, USA
 
 .. _Greg Detre: http://www.princeton.edu/~gdetre/
 .. _James M. Hughes: http://www.cs.dartmouth.edu/~hughes/index.html
