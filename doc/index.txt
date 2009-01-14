@@ -112,8 +112,7 @@ Binary packages are available for:
     `1-click-installations`_.
 
 * MacOS X (:ref:`installation instructions <install_macos>`)
-    An installer built for the Enthought Python 2.5 distribution is available
-    from the `download area`_.
+    PyMVPA is available from the MacPorts_ framework.
 
 * Windows (:ref:`installation instructions <install_win>`)
     An installer for Python 2.5 is available from the `download area`_.
@@ -122,6 +121,7 @@ If there are no binary packages for your particular operating system or
 platform, you need to compile your own. The manual contains :ref:`instructions
 <buildfromsource>` to build PyMVPA in various environments.
 
+.. _MacPorts: http://www.macports.org
 .. _official Debian package: http://packages.debian.org/python-mvpa
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
 .. _RPM-package repositories: http://download.opensuse.org/repositories/home:/hankem/
