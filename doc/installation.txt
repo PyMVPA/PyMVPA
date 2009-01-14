@@ -334,6 +334,16 @@ list of available 3rd party packages please see::
 
   > $ port variants py25-pymvpa
 
+If this is your first time using MacPorts Python 2.5 will be automatically
+installed for you. However, an additional step is needed::
+
+  $ sudo port install python_select
+  $ sudo python_select python25
+
+MacPorts has the ability of installing several Python versions at a time, the
+`python_select` utility ensures that the default Python (located at
+`/opt/local/bin/python`) points to your preferred version.
+
 Upon success, open a terminal window and start Python by typing `python` and
 hit return. Now try to import the PyMVPA module by doing:
 
