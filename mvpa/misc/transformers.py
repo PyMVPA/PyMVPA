@@ -44,6 +44,11 @@ def FirstAxisMean(x):
     """Mean computed along the first axis."""
     return N.mean(x, axis=0)
 
+def FirstAxisSumNotZero(x):
+    """Sum computed over first axis of whether the values are not
+    equal to zero."""
+    return (N.asarray(x)!=0).sum(axis=0)
+
 
 def SecondAxisMean(x):
     """Mean across 2nd axis
