@@ -108,9 +108,7 @@ setup(name         = 'pymvpa',
                        'mvpa.misc.bv',
                        'mvpa.misc.io',
                        'mvpa.misc.plot',
-                       'mvpa.misc.fsl',
-                       'mvpa.support'
-                       ],
+                       'mvpa.misc.fsl' ],
       scripts      = glob( 'bin/*' ),
       ext_modules  = ext_modules
       )
