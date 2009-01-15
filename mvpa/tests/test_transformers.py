@@ -40,10 +40,10 @@ class TransformerTests(unittest.TestCase):
         self.failUnless((out == target).all())
 
     def testFirstAxisSumNotZero(self):
-        src = N.array([[ 1, -22.9, 6.8, 0],
-                       [ -.8, 7, 0, 0.0],
-                       [88, 0, 0.0, 0],
-                       [0, 0, 0, 0.0]])
+        src = [[ 1, -22.9, 6.8, 0],
+               [ -.8, 7, 0, 0.0],
+               [88, 0, 0.0, 0],
+               [0, 0, 0, 0.0]]
         target = N.array([ 3, 2, 1, 0])
         out = FirstAxisSumNotZero(src)
         self.failUnless((out == target).all())
