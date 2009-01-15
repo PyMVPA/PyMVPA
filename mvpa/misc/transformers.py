@@ -47,7 +47,7 @@ def FirstAxisMean(x):
 def FirstAxisSumNotZero(x):
     """Sum computed over first axis of whether the values are not
     equal to zero."""
-    return N.sum(x!=0, axis=0)
+    return (N.asarray(x)!=0).sum(axis=0)
 
 
 def SecondAxisMean(x):
