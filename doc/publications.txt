@@ -5,8 +5,15 @@ Below is a list of all publications about PyMVPA that have been published so
 far (in chronological order). If you use PyMVPA in your research please cite
 the one that matches best.
 
-Peer-reviewed publication
--------------------------
+Peer-reviewed publications
+--------------------------
+
+`Hanke, M., Halchenko, Y. O., Sederberg, P. B., Olivetti, E., Fründ, I., Rieger, J. W., Herrmann, C. S., Haxby, J. V., Hanson, S. J. and Pollmann, S. (2009) PyMVPA\: a unifying approach to the analysis of neuroscientific data. Frontiers in Neuroinformatics, 3:3.`_
+  Demonstration of PyMVPA capabilities concerning multi-modal or
+  modality-agnostic data analysis.
+
+.. _Hanke, M., Halchenko, Y. O., Sederberg, P. B., Olivetti, E., Fründ, I., Rieger, J. W., Herrmann, C. S., Haxby, J. V., Hanson, S. J. and Pollmann, S. (2009) PyMVPA\: a unifying approach to the analysis of neuroscientific data. Frontiers in Neuroinformatics, 3:3.: http://dx.doi.org/10.3389/neuro.11.003.2009
+
 
 `Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2009). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. Neuroinformatics.`_
   First paper introducing fMRI data analysis with PyMVPA.
