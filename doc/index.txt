@@ -27,26 +27,16 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-The first PyMVPA movie is out!! [24 Nov 2008]
+PyMVPA 0.4.1 is out [23 Jan 2009]
 
-  :ref:`Watch PyMVPA evolve <code_swarm>` in this code_swarm animation --
-  featuring a great soundtrack!
-
-
-PyMVPA 0.4.0 is out [21 Nov 2008]
-
-  Greatly enhanced documentation (glossary, references, examples), tons of
-  bug-fixes and new mappers. This release also ensures compatibility with
-  recent releases of the Shogun toolbox. See the :ref:`changelog <changelog>`
-  for details.
+  This is mostly a bugfix release with a futher improved documentation.
+  See the :ref:`changelog <changelog>` for details.
 
 
-A complete fMRI :ref:`example dataset <exampledata>` is now available for download [22 Oct 2008]
+New articles on PyMVPA available [21 Jan 2009]
 
+  Please see the Publications_ section for details.
 
-PyMVPA is also running on a cell phone! [15 Oct 2008]
-
-  Here is :ref:`the proof <requirements>`.
 
 
 Documentation
