@@ -128,6 +128,7 @@ class WarningLog(OnceLogger):
 
 
     def _setMaxCount(self, value):
+        """Set maxcount for the warning"""
         self.__maxcount = value
 
     maxcount = property(fget=lambda x:x.__maxcount, fset=_setMaxCount)
@@ -168,6 +169,7 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('DBG',  "Debug output itself")
+    debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")
     debug.register('RANDOM', "Random number generation")
     debug.register('EXT',  "External dependencies")
@@ -189,10 +191,14 @@ if __debug__:
     debug.register('RFEC_', "Recursive Feature Elimination call (verbose)")
     debug.register('IFSC', "Incremental Feature Search call")
     debug.register('DS',   "*Dataset")
+    debug.register('DS_NIFTI', "NiftiDataset(s)")
     debug.register('DS_',  "*Dataset (verbose)")
     debug.register('DS_ID',   "ID Datasets")
     debug.register('DS_STATS',"Datasets statistics")
     debug.register('SPL',   "*Splitter")
+
+    debug.register('TRAN',  "Transformers")
+    debug.register('TRAN_', "Transformers (verbose)")
 
     # CHECKs
     debug.register('CHECK_DS_SELECT',
@@ -213,6 +219,7 @@ if __debug__:
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
     debug.register('COLR', "Collector for states and classifier parameters")
+    debug.register('ES',   "Element selectors")
 
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")
@@ -260,7 +267,8 @@ if __debug__:
     debug.register('SG_PROGRESS',
                    "Internal shogun progress bar during computation")
 
-    debug.register('IOH',  "IO Helpers")
+    debug.register('IOH',    "IO Helpers")
+    debug.register('IO_HAM', "Hamster")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC',"Cross-validation call")

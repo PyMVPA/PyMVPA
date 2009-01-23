@@ -9,7 +9,6 @@
 """Python distutils setup for PyMVPA"""
 
 from numpy.distutils.core import setup, Extension
-from numpy.distutils.misc_util import get_numpy_include_dirs
 import os
 import sys
 from glob import glob
@@ -21,9 +20,9 @@ include_dirs = []
 library_dirs = []
 
 # only if libsvm.a is available
-if os.path.exists(os.path.join('3rd', 'libsvm', 'libsvm.a')):
+if os.path.exists(os.path.join('build', 'libsvm', 'libsvm.a')):
     include_dirs += [os.path.join('3rd', 'libsvm')]
-    library_dirs += [os.path.join('3rd', 'libsvm')]
+    library_dirs += [os.path.join('build', 'libsvm')]
     have_libsvm = True
 
 # when libsvm is forced
@@ -78,7 +77,7 @@ if have_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.4.0',
+      version      = '0.4.1',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -108,7 +107,11 @@ setup(name         = 'pymvpa',
                        'mvpa.misc.bv',
                        'mvpa.misc.io',
                        'mvpa.misc.plot',
-                       'mvpa.misc.fsl' ],
+                       'mvpa.misc.fsl',
+                       'mvpa.tests',
+                       'mvpa.support'
+                       ],
+      data_files = [('mvpa/data', ['mvpa/data'])],
       scripts      = glob( 'bin/*' ),
       ext_modules  = ext_modules
       )

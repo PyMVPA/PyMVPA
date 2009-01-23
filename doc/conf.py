@@ -13,6 +13,7 @@
 
 import sys, os, re
 import numpy as N
+from mvpa import pymvpa_version
 
 try:
     import matplotlib
@@ -31,7 +32,7 @@ except:
 
 
 def extractItemListBlock(blocktypes, lines):
-    """Extract a number of lines belonging to an idented block.
+    """Extract a number of lines belonging to an indented block.
 
     The block is defined by a minimum indentation level, in turn
     defined by a line starting with any string given by the 'blocktypes'
@@ -41,7 +42,7 @@ def extractItemListBlock(blocktypes, lines):
     wrt the original line sequence.
 
     WARNING: It may explode if there is more than one block with the same
-    indentifier.
+    identifier.
     """
     param = None
     in_block = False
@@ -283,9 +284,9 @@ copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.4.0'
+version = pymvpa_version
 # The full version, including alpha/beta/rc tags.
-release = '0.4.0'
+release = pymvpa_version
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

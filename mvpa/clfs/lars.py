@@ -66,7 +66,7 @@ class LARS(Classifier):
 
     # XXX from yoh: it is linear, isn't it?
     _clf_internals = [ 'lars', 'regression', 'linear', 'has_sensitivity',
-                       # 'does_feature_selection',
+                       'does_feature_selection',
                        ]
     def __init__(self, model_type="lasso", trace=False, normalize=True,
                  intercept=True, max_steps=None, use_Gram=False, **kwargs):
@@ -155,18 +155,31 @@ class LARS(Classifier):
                                               use_Gram=self.__use_Gram,
                                               max_steps=self.__max_steps)
 
-        # set the weights to the final state
-        self.__weights = self.__trained_model['beta'][-1,:]
+        # find the step with the lowest Cp (risk)
+        # it is often the last step if you set a max_steps
+        # must first convert dictionary to array
+        Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
+                             for x in range(len(self.__trained_model['Cp']))])
+        self.__lowest_Cp_step = Cp_vals.argmin()
+        
+        # set the weights to the lowest Cp step
+        self.__weights = self.__trained_model['beta'][self.__lowest_Cp_step,:]
+        
+#         # set the weights to the final state
+#         self.__weights = self.__trained_model['beta'][-1,:]
+
 
     def _predict(self, data):
         """
         Predict the output for the provided data.
         """
         # predict with the final state (i.e., the last step)
+        # predict with the lowest Cp step
         res = rpy.r.predict_lars(self.__trained_model,
                                  data,
                                  mode='step',
-                                 s=self.__trained_model['beta'].shape[0])
+                                 s=self.__lowest_Cp_step)
+                                 #s=self.__trained_model['beta'].shape[0])
 
         fit = N.asarray(res['fit'])
         if len(fit.shape) == 0:
@@ -175,11 +188,11 @@ class LARS(Classifier):
         return fit
 
 
-    # def _getFeatureIds(self):
-    #     """Per Per's description it does feature selection internally,
-    #     so we need to implement this function and add
-    #     'does_feature_selection' into _clf_internals"""
-    #     raise NotImplementedError
+    def _getFeatureIds(self):
+        """Return ids of the used features
+        """
+        return N.where(N.abs(self.__weights)>0)[0]
+
 
 
     def getSensitivityAnalyzer(self, **kwargs):
@@ -193,11 +206,6 @@ class LARS(Classifier):
 class LARSWeights(Sensitivity):
     """`SensitivityAnalyzer` that reports the weights LARS trained
     on a given `Dataset`.
-
-    By default LARS provides multiple weights per feature (one per label in
-    training dataset). By default, all weights are combined into a single
-    sensitivity value. Please, see the `FeaturewiseDatasetMeasure` constructor
-    arguments how to custmize this behavior.
     """
 
     _LEGAL_CLFS = [ LARS ]

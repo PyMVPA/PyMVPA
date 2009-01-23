@@ -10,16 +10,16 @@
 
 __docformat__ = 'restructuredtext'
 
-
 import numpy as N
 
+from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.misc.state import StateVariable, Parametrized
 from mvpa.misc.param import Parameter
+from mvpa.misc.state import StateVariable
 from mvpa.misc.transformers import SecondAxisMaxOfAbs
-from mvpa.base import warning, externals
+
 
 _DEFAULT_IMPLEMENTATION = "Python"
 if externals.exists('ctypes'):
@@ -55,13 +55,14 @@ class SMLR(Classifier):
     """Sparse Multinomial Logistic Regression `Classifier`.
 
     This is an implementation of the SMLR algorithm published in
-    Krishnapuram et al. (2005, IEEE Transactions on Pattern Analysis
-    and Machine Intelligence).  Be sure to cite that article if you
-    use this for your work.
+    :ref:`Krishnapuram et al., 2005 <KCF+05>` (2005, IEEE Transactions
+    on Pattern Analysis and Machine Intelligence).  Be sure to cite
+    that article if you use this classifier for your work.
     """
 
     _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
-                       'multiclass', 'does_feature_selection' ] # later 'kernel-based'?
+                       'multiclass', 'does_feature_selection' ]
+                     # XXX: later 'kernel-based'?
 
     lm = Parameter(.1, min=1e-10, allowedtype='float',
              doc="""The penalty term lambda.  Larger values will give rise to
@@ -73,7 +74,7 @@ class SMLR(Classifier):
              lead to tighter convergence.""")
 
     resamp_decay = Parameter(0.5, allowedtype='float', min=0.0, max=1.0,
-             doc="""Rate of decay in the probability of resampling a zero weight.
+             doc="""Decay rate in the probability of resampling a zero weight.
              1.0 will immediately decrease to the min_resamp from 1.0, 0.0
              will never decrease from 1.0.""")
 
@@ -96,7 +97,8 @@ class SMLR(Classifier):
             note that the convergence rate may be different, but convergence
             point is the same.""")
 
-    implementation = Parameter(_DEFAULT_IMPLEMENTATION, allowedtype='basestring',
+    implementation = Parameter(_DEFAULT_IMPLEMENTATION,
+             allowedtype='basestring',
              choices=["C", "Python"],
              doc="""Use C or Python as the implementation of
              stepwise_regression. C version brings significant speedup thus is
@@ -384,26 +386,28 @@ class SMLR(Classifier):
         self.__weights = w[:dataset.nfeatures, :]
 
         if self.states.isEnabled('feature_ids'):
-            self.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures,:]), axis=1)>0)[0]
+            self.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
+                                             axis=1)>0)[0]
 
         # and a bias
         if self.params.has_bias:
             self.__biases = w[-1, :]
 
         if __debug__:
-            debug('SMLR', "train finished in %s cycles on data.shape=%s " %
-                  (`cycles`, `X.shape`) +
+            debug('SMLR', "train finished in %d cycles on data.shape=%s " %
+                  (cycles, X.shape) +
                   "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
                   (N.min(X), N.max(X), N.min(w), N.max(w)))
 
 
     def _getFeatureIds(self):
+        """Return ids of the used features
+        """
         return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
 
 
     def _predict(self, data):
-        """
-        Predict the output for the provided data.
+        """Predict the output for the provided data.
         """
         # see if we are adding a bias term
         if self.params.has_bias:
@@ -436,7 +440,8 @@ class SMLR(Classifier):
         # generate predictions
         predictions = N.asarray([self.__ulabels[N.argmax(vals)]
                                  for vals in values])
-        # no need to assign state variable here -- would be done in Classifier._postpredict anyway
+        # no need to assign state variable here -- would be done
+        # in Classifier._postpredict anyway
         #self.predictions = predictions
 
         return predictions
@@ -467,6 +472,7 @@ class SMLRWeights(Sensitivity):
                            doc="A 1-d ndarray of biases")
 
     _LEGAL_CLFS = [ SMLR ]
+
 
     def _call(self, dataset=None):
         """Extract weights from SMLR classifier.

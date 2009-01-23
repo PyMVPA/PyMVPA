@@ -212,7 +212,7 @@ popular method is the so-called leave-one-out cross-validation.
 The :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class
 provides a simple way to compute such measure. It utilizes a
 :class:`~mvpa.clfs.transerror.TransferError` object and a
-:class:`~mvpa.datasets.splitter.Splitter`. When called with a
+:class:`~mvpa.datasets.splitters.Splitter`. When called with a
 :class:`~mvpa.datasets.base.Dataset` the splitter generates splits of the
 Dataset and the transfer error for all splits is computed by training on one of
 the splitted datasets and making predictions on the other. By default the mean
@@ -230,7 +230,7 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   ...                             snr=3.0)
   >>> # now cross-validation
   >>> from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-  >>> from mvpa.datasets.splitter import NFoldSplitter
+  >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1),
   ...                                      enable_states=['confusion'])
@@ -410,9 +410,9 @@ since they can deal with very high dimensional problems (`Wikipedia
 entry about SVM`_), while maintaining reasonable generalization performance.
 
 The support vector machine classes provide a family of classifiers by wrapping
-libsvm_ and Shogun_ libraries, with corresponding base classes
+LIBSVM_ and Shogun_ libraries, with corresponding base classes
 :class:`~mvpa.clfs.svm.libsvm.SVM` and :class:`~mvpa.clfs.svm.sg.SVM`
-accordingly. By default SVM class is bound to libsvm's implementation if such
+accordingly. By default SVM class is bound to LIBSVM's implementation if such
 is available (shogun otherwise).
 
 While any SVM class provides a complete interface, the others child classes
@@ -421,7 +421,7 @@ with a default set of parameters (see :class:`~mvpa.clfs.svm.LinearCSVMC`,
 :class:`~mvpa.clfs.svm.LinearNuSVMC`, :class:`~mvpa.clfs.svm.RbfNuSVMC` and
 :class:`~mvpa.clfs.svm.RbfCSVMC`).
 
-.. _libsvm: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _LIBSVM: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _Shogun: http://www.shogun-toolbox.org
 .. _Wikipedia entry about SVM: http://en.wikipedia.org/wiki/Support_Vector_Machine
 
@@ -449,42 +449,42 @@ Examples of Meta-Classifiers
 At present, there are two primary meta-classifiers implemented in the PyMVPA
 package, beneath which there are several specific options:
 
-:class:`~mvpa.clfs.base.BoostedClassifier`
+:class:`~mvpa.clfs.meta.BoostedClassifier`
     typically uses multiple classifiers internally
 
-:class:`~mvpa.clfs.base.ProxyClassifier`
+:class:`~mvpa.clfs.meta.ProxyClassifier`
     typically performs some action on the data/labels before classification
     is performed
 
 Within these more general categories, specific classifiers are implemented.
-For example, there are several :class:`~mvpa.clfs.base.BoostedClassifier`
+For example, there are several :class:`~mvpa.clfs.meta.BoostedClassifier`
 subclasses:
 
-:class:`~mvpa.clfs.base.CombinedClassifier`
-    combines predictions using a :class:`~mvpa.clfs.base.PredictionsCombiner`
+:class:`~mvpa.clfs.meta.CombinedClassifier`
+    combines predictions using a :class:`~mvpa.clfs.meta.PredictionsCombiner`
     functor
 
-:class:`~mvpa.clfs.base.MulticlassClassifier`
+:class:`~mvpa.clfs.meta.MulticlassClassifier`
     performs multi-class classification by means of a list of
-    :class:`~mvpa.clfs.base.BinaryClassifier` instances. Typical use-case is
+    :class:`~mvpa.clfs.meta.BinaryClassifier` instances. Typical use-case is
     to wrap a binary classifier to give it ability to operate on
     multiple classes via voting over classifiers for all possible
     pairs of the categories
 
-:class:`~mvpa.clfs.base.SplitClassifier`
+:class:`~mvpa.clfs.meta.SplitClassifier`
     combines a :class:`~mvpa.clfs.base.Classifier` and an arbitrary
-    :class:`~mvpa.datasets.splitter.Splitter`
+    :class:`~mvpa.datasets.splitters.Splitter`
 
-Furthermore, there are also several :class:`~mvpa.clfs.base.ProxyClassifier`
+Furthermore, there are also several :class:`~mvpa.clfs.meta.ProxyClassifier`
 subclasses:
 
-:class:`~mvpa.clfs.base.BinaryClassifier`
+:class:`~mvpa.clfs.meta.BinaryClassifier`
     maps a set of labels into two categories (+1 and -1)
 
-:class:`~mvpa.clfs.base.MappedClassifier`
+:class:`~mvpa.clfs.meta.MappedClassifier`
     uses a mapper on input data prior to training/testing
 
-:class:`~mvpa.clfs.base.FeatureSelectionClassifier`
+:class:`~mvpa.clfs.meta.FeatureSelectionClassifier`
     performs some kind of :class:`~mvpa.featsel.base.FeatureSelection` prior
     to training/testing
 
@@ -492,11 +492,11 @@ subclasses:
 Implementation Examples
 -----------------------
 
-Classifiers such as the :class:`~mvpa.clfs.base.FeatureSelectionClassifier` are
+Classifiers such as the :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` are
 particularly useful because they simplify the process of selecting features and
 then using only that subset of features to classify novel exemplars (the
 `predict` stage).  They become even more powerful when combined with
-:class:`~mvpa.clfs.base.SplitClassifier`, so that even the task of withholding
+:class:`~mvpa.clfs.meta.SplitClassifier`, so that even the task of withholding
 certain data points to create statistically valid training and testing datasets
 is abstracted and wrapped up within a single object (and, ultimately, very few
 method calls).  Consider the following code, which can be found in
@@ -504,7 +504,7 @@ method calls).  Consider the following code, which can be found in
 
 .. _mvpa/clfs/warehouse.py: api/mvpa.clfs.warehouse-pysrc.html
 
-  >>> from mvpa.clfs.base import SplitClassifier, FeatureSelectionClassifier
+  >>> from mvpa.clfs.meta import SplitClassifier, FeatureSelectionClassifier
   >>> from mvpa.clfs.svm import LinearCSVMC
   >>> from mvpa.clfs.transerror import ConfusionBasedError
   >>> from mvpa.featsel.rfe import RFE
@@ -530,8 +530,8 @@ method calls).  Consider the following code, which can be found in
   ...       # update sensitivity at each step
   ...   descr='LinSVM+RFE(splits_avg)' )
 
-This analysis combines the :class:`~mvpa.clfs.base.FeatureSelectionClassifier`
-and the :class:`~mvpa.clfs.base.SplitClassifier` to perform internal splitting
+This analysis combines the :class:`~mvpa.clfs.meta.FeatureSelectionClassifier`
+and the :class:`~mvpa.clfs.meta.SplitClassifier` to perform internal splitting
 of the data and then perform FeatureSelection based on those splits.  Such
 analyses can be easily created due to the straightforward way that classifier
 and meta-classifiers can be combined.  Please refer to the relevant
@@ -585,8 +585,8 @@ defined to create a sample collection of some commonly used parameterizations
 of the classifiers present in PyMVPA. Such collection can be queried by any set
 of known keywords/tags with tags prefixed with ``!`` being excluded::
 
-  >>> from mvpa.clfs.warehouse import clfs
-  >>> tryme = clfs['multiclass', '!svm']
+  >>> from mvpa.clfs.warehouse import clfswh
+  >>> tryme = clfswh['multiclass', '!svm']
 
 to simply sweep through classifiers which are capable of multiclass
 classification and are not SVM based.

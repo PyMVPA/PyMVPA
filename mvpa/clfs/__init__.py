@@ -15,10 +15,12 @@ mvpa.clfs module contains various classifiers
 .. packagetree::
    :style: UML
 
-:group Basic: classifier
-:group Specific Implementations: knn svm plr ridge smlr
-:group Internal Implementations: libsvm
-:group Utilities: transerror
+:group Base: base
+:group Meta Classifiers: meta
+:group Specific Implementations: knn svm _svmbase plr ridge smlr libsmlrc gpr blr
+:group External Interfaces: lars libsvmc sg
+:group Utilities: transerror model_selector stats kernel distance
+:group Warehouse of Classifiers: warehouse
 """
 
 __docformat__ = 'restructuredtext'

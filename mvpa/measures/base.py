@@ -21,7 +21,7 @@ has to be in some iterable container.
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-import mvpa.misc.copy as copy
+import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, Stateful
 from mvpa.misc.args import group_kwargs
@@ -51,10 +51,10 @@ class DatasetMeasure(Stateful):
     probabilities are automatically computed and stored in the `null_prob`
     state variable.
 
-    :Developer note:
-      All subclasses shall get all necessary parameters via their constructor,
-      so it is possible to get the same type of measure for multiple datasets
-      by passing them to the __call__() method successively.
+    .. note::
+      For developers: All subclasses shall get all necessary parameters via
+      their constructor, so it is possible to get the same type of measure for
+      multiple datasets by passing them to the __call__() method successively.
     """
 
     raw_result = StateVariable(enabled=False,
@@ -74,7 +74,9 @@ class DatasetMeasure(Stateful):
             This functor is called in `__call__()` to perform a final
             processing step on the to be returned dataset measure. If None,
             nothing is called
-          null_dist : instance of distribution estimator
+          null_dist: instance of distribution estimator
+            The estimated distribution is used to assign a probability for a
+            certain value of the computed measure.
         """
         Stateful.__init__(self, **kwargs)
 
@@ -179,6 +181,10 @@ class DatasetMeasure(Stateful):
 
 
     def __repr__(self, prefixes=[]):
+        """String representation of DatasetMeasure
+
+        Includes only arguments which differ from default ones
+        """
         prefixes = prefixes[:]
         if self.__transformer is not None:
             prefixes.append("transformer=%s" % self.__transformer)
@@ -188,7 +194,14 @@ class DatasetMeasure(Stateful):
 
 
     @property
-    def null_dist(self): return self.__null_dist
+    def null_dist(self):
+        """Return Null Distribution estimator"""
+        return self.__null_dist
+
+    @property
+    def transformer(self):
+        """Return transformer"""
+        return self.__transformer
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -263,8 +276,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
              here does not lead to an overall more complicated situation,
              without any real gain -- after all this one works ;-)
         """
-        rsshape = result.squeeze().shape
-        if len(result.squeeze().shape)>1:
+        result_sq = result.squeeze()
+        if len(result_sq.shape)>1:
             n_base = result.shape[1]
             """Number of base sensitivities"""
             if self.states.isEnabled('base_sensitivities'):
@@ -296,12 +309,17 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             # remove bogus dimensions
             # XXX we might need to come up with smth better. May be some naive
             # combiner? :-)
-            result = result.squeeze()
+            result = result_sq
 
         # call base class postcall
         result = DatasetMeasure._postcall(self, dataset, result)
 
         return result
+
+    @property
+    def combiner(self):
+        """Return combiner"""
+        return self.__combiner
 
 
 
@@ -431,12 +449,12 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     """Set sensitivity analyzers to be merged into a single output"""
 
     sensitivities = StateVariable(enabled=False,
-        doc="Sensitivities produced by each classifier")
+        doc="Sensitivities produced by each analyzer")
 
     # XXX think again about combiners... now we have it in here and as
-    #     well as in the parent -- FeaturewiseDatasetMeasure...
+    #     well as in the parent -- FeaturewiseDatasetMeasure
     # YYY because we don't use parent's _call. Needs RF
-    def __init__(self, analyzers=None,
+    def __init__(self, analyzers=None,  # XXX should become actually 'measures'
                  combiner=None, #FirstAxisMean,
                  **kwargs):
         """Initialize CombinedFeaturewiseDatasetMeasure
@@ -492,6 +510,89 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
                          doc="Used analyzers")
 
 
+# XXX Why did we come to name everything analyzer? inputs of regular
+#     things like CombinedFeaturewiseDatasetMeasure can be simple
+#     measures....
+
+class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
+    """Compute measures across splits for a specific analyzer"""
+
+    # XXX This beast is created based on code of
+    #     CombinedFeaturewiseDatasetMeasure, thus another reason to refactor
+
+    sensitivities = StateVariable(enabled=False,
+        doc="Sensitivities produced for each split")
+
+    splits = StateVariable(enabled=False, doc=
+       """Store the actual splits of the data. Can be memory expensive""")
+
+    def __init__(self, splitter, analyzer,
+                 insplit_index=0, combiner=None, **kwargs):
+        """Initialize SplitFeaturewiseDatasetMeasure
+
+        :Parameters:
+          splitter : Splitter
+            Splitter to use to split the dataset
+          analyzer : DatasetMeasure
+            Measure to be used. Could be analyzer as well (XXX)
+          insplit_index : int
+            splitter generates tuples of dataset on each iteration
+            (usually 0th for training, 1st for testing).
+            On what split index in that tuple to operate.
+        """
+
+        # XXX might want to extend insplit_index to handle 'all', so we store
+        #     sensitivities for all parts of the splits... not sure if it is needed
+
+        # XXX We really think through whole transformer/combiners pipelining
+
+        # Here we provide combiner None since if needs to be combined
+        # within each sensitivity, it better be done within analyzer
+        FeaturewiseDatasetMeasure.__init__(self, combiner=None, **kwargs)
+
+        self.__analyzer = analyzer
+        """Analyzer to use per split"""
+
+        self.__combiner = combiner
+        """Which functor to use to combine all sensitivities"""
+
+        self.__splitter = splitter
+        """Splitter to be used on the dataset"""
+
+        self.__insplit_index = insplit_index
+
+    def _call(self, dataset):
+        # local bindings
+        analyzer = self.__analyzer
+        insplit_index = self.__insplit_index
+
+        sensitivities = []
+        self.splits = splits = []
+        store_splits = self.states.isEnabled("splits")
+
+        for ind,split in enumerate(self.__splitter(dataset)):
+            ds = split[insplit_index]
+            if __debug__ and "SA" in debug.active:
+                debug("SA", "Computing sensitivity for split %d on "
+                      "dataset %s using %s" % (ind, ds, analyzer))
+            sensitivity = analyzer(ds)
+            sensitivities.append(sensitivity)
+            if store_splits: splits.append(split)
+
+        self.sensitivities = sensitivities
+        if __debug__:
+            debug("SA",
+                  "Returning sensitivities combined using %s across %d items "
+                  "generated by splitter %s" %
+                  (self.__combiner, len(sensitivities), self.__splitter))
+
+        if self.__combiner is not None:
+            sensitivities = self.__combiner(sensitivities)
+        else:
+            # assure that we have an ndarray on output
+            sensitivities = N.asarray(sensitivities)
+        return sensitivities
+
 
 class BoostedClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzers to be merged into a single output"""
@@ -511,7 +612,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
           clf : `BoostedClassifier`
             Classifier to be used
           analyzer : analyzer
-            Is used to populate combined_analyzer
+            Is used to populate combined_analyzer 
           slave_*
             Arguments to pass to created analyzer if analyzer is None
         """

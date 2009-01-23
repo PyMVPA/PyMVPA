@@ -18,7 +18,7 @@ References
 **********
 
 This list aims to be a collection of literature, that is of particular interest
-in the context of multivarite pattern analysis. It includes all references
+in the context of multivariate pattern analysis. It includes all references
 cited throughout this manual, but also a number of additional manuscripts
 containing descriptions of interesting analysis methods or fruitful
 experiments.
@@ -168,6 +168,12 @@ experiments.
 
 **O'Toole, A. J., Jiang, F., Abdi, H., Penard, N., Dunlop, J. P. & Parent, M. A.** (2007). Theoretical, statistical, and practical perspectives on pattern-based classification approaches to the analysis of functional neuroimaging data. *Journal of Cognitive Neuroscience*, *19*, 1735–1752.
   DOI: http://dx.doi.org/10.1162/jocn.2007.19.11.1735
+
+
+.. _PMB+IP:
+
+**Pereira, F., Mitchell, T. & Botvinick, M.** (in press). Machine learning classifiers and fMRI: A tutorial overview. *Neuroimage*.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
 
 .. _PP07:

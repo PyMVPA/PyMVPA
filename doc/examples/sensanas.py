@@ -23,11 +23,11 @@ We start by loading PyMVPA and the example fMRI dataset.
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-attr = SampleAttributes('data/attributes.txt')
-dataset = NiftiDataset(samples='data/bold.nii.gz',
+attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
-                       mask='data/mask.nii.gz')
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 """As with classifiers it is easy to define a bunch of sensitivity
 analyzers. It is usually possible to simply call `getSensitivityAnalyzer()`
@@ -83,7 +83,7 @@ the sensitivity scores. The resulting vectors are then mapped back into the
 dataspace of the original fMRI samples, which are then plotted."""
 
 fig = 0
-P.figure(figsize=(14,8))
+P.figure(figsize=(14, 8))
 
 keys = sensanas.keys()
 keys.sort()
@@ -95,7 +95,7 @@ for s in keys:
     # compute sensitivies
     # I-RELIEF assigns zeros, which corrupts voxel masking for pylab's
     # imshow, so adding some epsilon :)
-    smap = sensanas[s](dataset)+0.00001 
+    smap = sensanas[s](dataset)+0.00001
 
     # map sensitivity map into original dataspace
     orig_smap = dataset.mapReverse(smap)
@@ -103,7 +103,7 @@ for s in keys:
 
     # make a new subplot for each classifier
     fig += 1
-    P.subplot(3,3,fig)
+    P.subplot(3, 3, fig)
 
     P.title(s)
 
@@ -129,7 +129,7 @@ if cfg.getboolean('examples', 'interactive', True):
 """
 Output of the example analysis:
 
-.. image:: ../pics/sensanas.*
+.. image:: ../pics/ex_sensanas.*
    :align: center
    :alt: Various sensitivity analysis results
 

@@ -26,10 +26,9 @@ def main():
 
 
     # Load Haxby dataset example
-    haxby1path = 'data'
-    attrs = SampleAttributes(os.path.join(haxby1path,
+    attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
                                           'attributes_literal.txt'))
-    haxby8 = NiftiDataset(samples=os.path.join(haxby1path,
+    haxby8 = NiftiDataset(samples=os.path.join(pymvpa_dataroot,
                                                'bold.nii.gz'),
                           labels=attrs.labels,
                           labels_map=True,
@@ -53,13 +52,13 @@ def main():
         [
         ((dummy2,
           "Dummy 2-class univariate with 2 useful features out of 100"),
-          clfs[:]),
+          clfswh[:]),
         ((pureMultivariateSignal(8, 3),
           "Dummy XOR-pattern"),
-          clfs['non-linear']),
+          clfswh['non-linear']),
         ((haxby8_no0,
           "Haxby 8-cat subject 1"),
-          clfs['multiclass']),
+          clfswh['multiclass']),
         ]:
         print "%s\n %s" % (datasetdescr, dataset.summary(idhash=False))
         print " Classifier                               " \

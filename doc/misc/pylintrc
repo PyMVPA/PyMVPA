@@ -17,7 +17,7 @@
 
 [BASIC]
 # Regular expression which should only match correct module names
-module-rgx=(([a-z][a-z0-9]*)|([A-Z][a-zA-Z0-9]+))$
+module-rgx=(([a-z][a-z0-9_]*)|([A-Z][a-zA-Z0-9_]+))$
 
 attr-rgx=[a-z_][a-zA-Z0-9_]{2,30}
 
@@ -69,7 +69,8 @@ max-locals = 35
 # W0232 - Class has no __init__ method
 # W0212 - Access to a protected member ... of a client class
 # W0613 - Unused argument
-disable-msg=R0903,W0142,W0105,W0212,W0613
+# E1101 - Has no member (countless false-positives)
+disable-msg=R0903,W0142,W0105,W0212,W0613,E1101
 
 [REPORTS]
 

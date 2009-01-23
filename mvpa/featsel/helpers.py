@@ -15,6 +15,9 @@ import numpy as N
 
 from mvpa.misc.state import Stateful, StateVariable
 
+if __debug__:
+    from mvpa.base import debug
+
 #
 # Functors to be used for FeatureSelection
 #
@@ -340,7 +343,12 @@ class RangeElementSelector(ElementSelector):
         if self.mode == 'discard':
             selected = N.logical_not(selected)
 
-        return N.where(selected)[0]
+        result = N.where(selected)[0]
+
+        if __debug__:
+            debug("ES", "Selected %d out of %d elements" %
+                  (len(result), len_seq))
+        return result
 
 
 class TailSelector(ElementSelector):
@@ -430,7 +438,7 @@ class FixedNElementTailSelector(TailSelector):
         """Cheap initialization.
 
         :Parameters:
-          nselect : int
+          nelements : int
             Number of elements to select/discard.
         """
         TailSelector.__init__(self, **kwargs)
@@ -439,7 +447,7 @@ class FixedNElementTailSelector(TailSelector):
 
     def __repr__(self):
         return "%s number=%f" % (
-            TailSelector.__repr__(self), self.__nselect)
+            TailSelector.__repr__(self), self.__nelements)
 
 
     def _getNElements(self, seq):

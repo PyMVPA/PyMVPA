@@ -158,7 +158,7 @@ output if corresponding debug_ target is enabled
    debug output (if ``SMLR_`` debug_ target is enabled) appears on standard
    output
 
- libsvm
+ LIBSVM
    debug output (if ``LIBSVM`` debug_ target is enabled) appears on
    standard error
 
@@ -247,7 +247,7 @@ PyMVPA while the code run by python without optimization (i.e. without
 ``-O`` switch to python). They are specified not by the level but by
 some id usually specific for a particular PyMVPA routine. For example
 ``RFEC`` id causes debugging information about `Recursive Feature
-Elimination call`_ to be printed (See `misc module sources`_ for the
+Elimination call`_ to be printed (See `base module sources`_ for the
 list of all ids, or print ``debug.registered`` property).
 
 Analogous to verbosity level there are two easy ways to specify set of
@@ -302,7 +302,7 @@ the internal logic, thus enabled when full test suite is ran.
 
 .. _opt.verbose: api/mvpa.misc.cmdline-module.html#opt.verbose
 .. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
-.. _misc module sources: api/mvpa.misc-pysrc.html
+.. _base module sources: api/mvpa.base-pysrc.html
 .. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__
 
 
@@ -365,7 +365,7 @@ The purpose of these helpers is to increase the efficiency when doing an
 analysis by (re)using useful information that is already available from some
 FSL output. FSL usually stores most interesting information in the NIfTI
 format. Therefore it can be easily imported into PyMVPA using PyNIfTI. However,
-some information is stored in textfiles, e.g. estimated motion correction
+some information is stored in text files, e.g. estimated motion correction
 parameters and *FEAT's three-column custom EV* files. PyMVPA provides import
 and export helpers for both of them (among other stuff like a *MELODIC*
 results import helper).
@@ -385,7 +385,7 @@ motion-aware data detrending:
   >>>
   >>> # load motion correction output
   >>> from mvpa.misc.fsl.base import McFlirtParams
-  >>> mc = McFlirtParams(path.join('data', 'bold_mc.par'))
+  >>> mc = McFlirtParams(path.join('mvpa', 'data', 'bold_mc.par'))
   >>>
   >>> # simple plot using pylab (use pylab.show() or pylab.savefig()
   >>> # afterwards)

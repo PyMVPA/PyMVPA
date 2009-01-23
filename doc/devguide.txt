@@ -65,7 +65,7 @@ Examples
 --------
 
 Examples should be complete and stand-alone scripts located in `doc/examples`.
-If an example involves any kind of interactive step, it should honour the
+If an example involves any kind of interactive step, it should honor the
 :envvar:`MVPA_EXAMPLES_INTERACTIVE` setting, to allow for automatic testing of
 all examples. In case of a matplotlib-based visualization such snippet should
 be sufficient::
@@ -99,7 +99,7 @@ pylint
    Code should be conformant with Pylint_ driven by config located at
    `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback notation
    (classes start with capitals, functions with lowercase) and indentation
-   using 4 spaces (ie no tabs) Variables are low-case and can have up to 2
+   using 4 spaces (i.e. no tabs) Variables are low-case and can have up to 2
    _s. To engage, use 1 of 3 methods:
 
    - place it in *~/.pylintrc* for user-wide installation
@@ -129,7 +129,7 @@ notes
    FIXME
      something which needs fixing (sooner than later)
    TODO
-     future plan (ie later than sooner)
+     future plan (i.e. later than sooner)
    XXX
      some concern/question
    YYY
@@ -544,7 +544,7 @@ Things to implement for the next release (Release goals)
            .backward
 
         Package pychem for Debian, see how to use from PyMVPA! ;-) Same for MDP
-        (ie use from pymvpa)
+        (i.e. use from pymvpa)
 
 
   * Feature selection algorithms
@@ -635,7 +635,7 @@ Long and medium term TODOs (aka stuff that has been here forever)
  * implement proper cloning of classifiers. untrain() doesn't work in some
    cases, since we can create somewhat convolved object definitions so it is
    hard, if not impossible, to get to all used classifiers. See for
-   instance clfs['SVM/Multiclass+RFE']. We can't get all the way into
+   instance clfswh['SVM/Multiclass+RFE']. We can't get all the way into
    classifier-based sensitivity analyzer. Thus instead of tracking all
    the way down in hierarchy, we should finally create proper
    'parametrization' handling of classifiers, so we could easily clone

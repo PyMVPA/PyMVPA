@@ -235,7 +235,7 @@ NumPy_. Download a matching NumPy windows installer for your Python version
 (in this case 2.5) from the `SciPy download page`_ and install it.
 
 Now, you can use the PyMVPA windows installer to install PyMVPA on your system.
-If done, verify that everything went fine by opening a command promt and start
+If done, verify that everything went fine by opening a command prompt and start
 Python by typing `python` and hit enter. Now you should see the Python prompt.
 Import the mvpa module, which should cause no error messages.
 
@@ -278,20 +278,71 @@ which are shipped with the source code in the `doc/examples` directory.
 MacOS X
 -------
 
-Similar to the situation on Windows, there are multiple Python distributions
-available for the Mac. A convenient way to get PyMVPA running is to use the
-`Enthought Python`_ distribution, which is available free of charge for
-academic use. The main advange of this distribution is, that it already
-includes NumPy_, SciPy_, matplotlib_, and IPython_, hence only few additional
-software packages have to be installed manually. The procedure outlined here
-has been tested with MacOS X 10.5 (Leopard). It may, however, also work on
-10.4 (Tiger).
+The easiest installation method for OSX is via MacPorts_. MacPorts is a package
+management system for MacOS, which is in some respects very similiar to RPM or
+APT which are used in most GNU/Linux distributions. However, rather than
+installing binary packages, it compiles software from source on the target
+machine. 
 
-First download `Enthought Python`_ and install it as usual. Now you can download
-the PyMVPA installer from the project's download area. It should be
-automatically decompressed after it has been downloaded (gzipped tar file).
-Simply click the dowloaded file to start the installer and follow the
-instructions.
+*The MacPort of PyMVPA is kindly maintained by James Kyle <jameskyle@ucla.edu>.*
+
+.. _MacPorts: http://www.macports.org
+
+In the context of PyMVPA MacPorts is much easier to handle than the previously
+available PyMVPA installer for Macs (which was discontinued with PyMVPA 0.4.1).
+Although the initial overhead to setup MacPorts on a machine is higher than
+simply installing PyMVPA using the former installer, MacPorts saves the user a
+significant amount of time (in the long run). This is due to the fact that this
+framework will not only take care of updating a PyMVPA installation
+automatically whenever a new release is available. It will also provide many of
+the optional dependencies of PyMVPA (e.g. NumPy_, SciPy_, matplotlib_,
+IPython_, Shogun_, and pywt_) in the same environment and therefore abolishes
+the need to manually check dozens of websites for updates and deal with an
+unbelievable number of different installation methods.
+
+.. _Shogun: http://www.shogun-toolbox.org
+.. _pywt: http://www.pybytes.com/pywavelets
+
+MacPorts provides a universal binary package installer that is downloadable at
+http://www.macports.org/install.php
+
+After downloading, simply mount the dmg image and double click `MacPorts.pkg`.
+
+By default, MacPorts installs to `/opt/local`. After the installation is
+completed, you must ensure that your paths are set up correctly in order to
+access the programs and utilities installed by MacPorts. For exhaustive details
+on editing shell paths please see:
+
+  http://www.debian.org/doc/manuals/reference/ch-install.en.html#s-bashconf
+
+A typical `.bash_profile` set up for MacPorts might look like::
+
+  > export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+  > export DYLD_LIBRARY_PATH=/opt/local/lib:$DYLD_LIBRARY_PATH
+
+Be sure to source your .bash_profile or close Terminal.app and reopen it for
+these changes to take effect.
+
+Once MacPorts is installed and your environment is properly configured, PyMVPA is
+installed using a single command::
+
+  > $ sudo port install py25-pymvpa +scipy +pynifti +hcluster +libsvm
+  > +matplotlib +pywavelet
+
+The `+foo` arguments add support within PyMVPA for these packages. For a full
+list of available 3rd party packages please see::
+
+  > $ port variants py25-pymvpa
+
+If this is your first time using MacPorts Python 2.5 will be automatically
+installed for you. However, an additional step is needed::
+
+  $ sudo port install python_select
+  $ sudo python_select python25
+
+MacPorts has the ability of installing several Python versions at a time, the
+`python_select` utility ensures that the default Python (located at
+`/opt/local/bin/python`) points to your preferred version.
 
 Upon success, open a terminal window and start Python by typing `python` and
 hit return. Now try to import the PyMVPA module by doing:
@@ -300,8 +351,6 @@ hit return. Now try to import the PyMVPA module by doing:
   >>>
 
 If no error messages appear, you have succesfully installed PyMVPA.
-
-.. _Enthought Python: http://www.enthought.com/products/epddownload.php
 
 
 .. index:: OpenSUSE
@@ -356,8 +405,8 @@ If a binary package for your platform and operating system is provided, you do
 not have to build the packages on your own -- use the corresponding pre-build
 packages instead. However, if there are no binary packages for your system, or
 you want to try a new (unreleased) version of PyMVPA, you can easily build
-PyMVPA on your own. Any recent linux distribution should be capable of doing
-it (e.g. RedHat). Additionally, building PyMVPA also works on Mac OSX and
+PyMVPA on your own. Any recent GNU/Linux distribution should be capable of doing
+it (e.g. RedHat). Additionally, building PyMVPA also works on Mac OS X and
 Windows systems.
 
 .. _PyMVPA project website: http://www.pymvpa.org
@@ -523,7 +572,7 @@ directory contains `swig.exe`, if not, you haven't downloaded `swigwin`).
 PyMVPA comes with a specific build setup configuration for Windows --
 `setup.cfg.win` in the root of the source tarball. Please rename this file to
 `setup.cfg`. This is only necessary, if you have *not* configured your Python
-distutils installation to always use MinGW instead of the Mircrosoft compilers.
+distutils installation to always use MinGW instead of the Microsoft compilers.
 
 Now, we are ready to build PyMVPA. The easiest way to do this, is to make use
 of the `Makefile.win` that is shipped with PyMVPA to build a binary installer
@@ -556,7 +605,7 @@ for OpenSUSE 10.3 is::
 
   http://download.opensuse.org/repositories/science/openSUSE_10.3/
 
-Now, install the following required packages: 
+Now, install the following required packages:
 
   * a recent C and C++ compiler (e.g. GCC 4.1)
   * `python-devel` (Python development package)
@@ -627,11 +676,12 @@ Now, you are ready to compile and install PyMVPA as describe in the
 MacOS X
 -------
 
-To be able to compile PyMVPA on a Mac you first have to install the `XCode
-developer tools`_, as the operating system does not come with a compiler by
-default. If you want to use or even work on the latest development code, you
-should also install Git_. There is a `MacOS installer for Git`_, that make this
-step very easy.
+Since the MacPorts_ system basically compiles from source there should be no
+need to perform this step manually. However, if one intends to compile without
+MacPorts_ the `XCode developer tools`_, have to be installed first, as the
+operating system does not come with a compiler by default. If you want to use
+or even work on the latest development code, you should also install Git_.
+There is a `MacOS installer for Git`_, that make this step very easy.
 
 .. _XCode developer tools: http://developer.apple.com/tools/xcode/
 .. _MacOS installer for Git: http://code.google.com/p/git-osx-installer/
