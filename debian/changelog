@@ -1,8 +1,9 @@
 pymvpa (0.4.1-1) unstable; urgency=low
 
   * New upstream release.
+  * Added missing ${misc:Depends} to debian/control.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Fri, 23 Jan 2009 16:16:25 +0100
+ -- Michael Hanke <michael.hanke@gmail.com>  Fri, 23 Jan 2009 19:05:30 +0100
 
 pymvpa (0.4.0-1) unstable; urgency=low
 
