@@ -118,6 +118,7 @@ doc: website
 
 prepare-docsrc: mkdir-DOCSRC_DIR
 	cp -Lpurv doc/* $(DOCSRC_DIR)
+	cp -Lpurv doc/pics $(DOCSRC_DIR)/examples/
 
 references:
 	tools/bib2rst_ref.py
