@@ -281,7 +281,7 @@ class Event(dict):
     """Simple class to define properties of an event.
 
     The class is basically a dictionary. Any properties can
-    be pass as keyword arguments to the constructor, e.g.:
+    be passed as keyword arguments to the constructor, e.g.:
 
       >>> ev = Event(onset=12, duration=2.45)
 
