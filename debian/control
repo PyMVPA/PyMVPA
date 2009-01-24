@@ -15,7 +15,7 @@ Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy, python-ctypes (>= 1.0.1) | python (>= 2.5)
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt
+Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-mvpa-data
 Suggests: fslview, fsl, python-matplotlib
 Description: multivariate pattern analysis with Python
  Python module to ease pattern classification analyses of large
@@ -43,3 +43,10 @@ Description: documention and examples for PyMVPA
  .
  Additionally, all example scripts shipped with the PyMVPA sources are
  included.
+
+
+Package: python-mvpa-data
+Architecture: all
+Description: example data files for PyMVPA
+ This package contains a set of example data files to be used with PyMVPA.
+ These files additionally serve as input for the PyMVPA unittest battery.
