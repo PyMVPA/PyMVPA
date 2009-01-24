@@ -32,8 +32,10 @@ Unreleased changes
 Releases
 ========
 
-* 0.4.1 (Fri, 23 Jan 2009)
+* 0.4.1 (Sat, 24 Jan 2009)
 
+  * Unit tests and example data are now also installed. In conjuction with
+    :func:`mvpa.test`, this allow to easily run unittests from within Python.
   * :class:`~mvpa.datasets.nifti.NiftiDataset` capable to handle files
     with less than 4 dimensions, which can, optionally, be provided as
     a list of filenames or :class:`~nifti.NiftiImage` objects. That
