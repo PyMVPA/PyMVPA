@@ -277,12 +277,7 @@ class SMLR(Classifier):
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
 
-#        if __debug__:
-#            debug("SMLR_", \
-#                  "SMLR converged after %d steps. Error: %g" % \
-#                  (cycles, XXX))
-
-#        print 'cycles=%d ; wasted basis=%g\n' % (cycles, wasted_basis/((M-1)*nd))
+        return cycles
 
 
     def _train(self, dataset):
