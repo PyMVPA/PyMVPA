@@ -9,18 +9,19 @@
 """Unit tests for PyMVPA atlases"""
 
 import unittest
-import random
-import numpy as N
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 if externals.exists('nifti', raiseException=True):
     from mvpa.atlases import *
 else:
     raise RuntimeError, "Don't run me if no nifti is present"
 
 class AtlasesTests(unittest.TestCase):
-
+    """Basic tests for support of atlases such as the ones
+    shipped with FSL
+    """
     def testTransformations(self):
+        """TODO"""
         pass
 
     def testAtlases(self):
@@ -28,7 +29,7 @@ class AtlasesTests(unittest.TestCase):
 
         tested = 0
         for name in KNOWN_ATLASES.keys():
-            filename = KNOWN_ATLASES[name] % {'name': name}
+            #filename = KNOWN_ATLASES[name] % {'name': name}
             try:
                 atlas = Atlas(name=name)
                 tested += 1
