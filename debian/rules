@@ -43,6 +43,10 @@ binary-install/python-mvpa:: install/python-mvpa-lib
 	# remove the example data from the main package
 	rm -r debian/python-mvpa/usr/share/python-support/python-mvpa/mvpa/data
 
+binary-install/python-mvpa-lib::
+	# assure that there is no mvpa module itself
+	rm -rf debian/python-mvpa-lib/usr/share/python-support/python-mvpa-lib/mvpa/
+
 # install directly into package directory (despite multiple packages)
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
 # immediately useable documentation
