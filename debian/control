@@ -36,8 +36,7 @@ Section: doc
 Depends: ${misc:Depends}, libjs-jquery, python-mvpa-data
 Suggests: python-mvpa
 Description: documention and examples for PyMVPA
- This package contains PyMVPA documentation in various formats
- (HTML, TXT, PDF) including
+ PyMVPA documentation in various formats (HTML, TXT, PDF) including
   * User manual
   * Developer guidelines
   * API documentation
@@ -50,8 +49,8 @@ Package: python-mvpa-data
 Architecture: all
 Suggests: python-mvpa
 Description: example data files for PyMVPA
- This package contains a set of example data files to be used with PyMVPA.
- These files additionally serve as input for the PyMVPA unittest battery.
+ A set of example data files to be used with PyMVPA.  These files
+ additionally serve as an input for the PyMVPA unittest battery.
 
 
 Package: python-mvpa-lib
@@ -62,4 +61,3 @@ XB-Python-Version: ${python:Versions}
 Description: low-level implementations and bindings for PyMVPA
  Low-level implementation of SMLR classifier and custom Python
  bindings for libsvm external library.
-
