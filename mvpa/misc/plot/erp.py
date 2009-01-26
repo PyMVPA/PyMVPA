@@ -38,7 +38,7 @@ def _offset(ax, x, y):
     """
     d = dir(mlt)
     if 'offset_copy' in d:
-        # XXX not tested but should work ;-)
+        # ??? not tested but should work ;-)
         return mlt.offset_copy(ax.transData, x=x, y=y, units='dots')
     elif 'BlendedAffine2D' in d:
         # some newer versions of matplotlib
@@ -214,7 +214,6 @@ def plotERP(data, SR=500, onsets=None,
         pre_mean = pre
 
     # set default
-    # XXX should this be exposed?
     pre_discard = 0
 
     if onsets is not None: # if we need to extract ERPs
@@ -231,7 +230,6 @@ def plotERP(data, SR=500, onsets=None,
         erp_data = bcm(data)
 
         # override values since we are using Boxcar
-        pre_discard = 0
         pre_onset = pre
     else:
         if pre_onset is None:
@@ -448,6 +446,7 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
                  zorder=1, offset=loffset)
 
     def set_limits():
+        """Helper to set x and y limits"""
         ax.set_xlim( (-pre, post) )
         if ylim != None:
             ax.set_ylim(*ylim)
