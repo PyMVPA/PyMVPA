@@ -33,7 +33,13 @@ install/python-mvpa-data::
 	cp -r mvpa/data \
 		debian/python-mvpa-data/usr/share/python-support/python-mvpa/mvpa/
 
-binary-install/python-mvpa::
+install/python-mvpa-lib::
+	# move libraries into the python-mvpa-lib package
+	mkdir -p debian/python-mvpa-lib/usr/
+	mv debian/python-mvpa/usr/lib debian/python-mvpa-lib/usr/
+
+# we need to move libraries away first, hence dependence on -lib
+binary-install/python-mvpa:: install/python-mvpa-lib
 	# remove the example data from the main package
 	rm -r debian/python-mvpa/usr/share/python-support/python-mvpa/mvpa/data
 
