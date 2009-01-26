@@ -14,9 +14,10 @@ clean::
 	$(MAKE) distclean
 
 build/python-mvpa::
-	# run the tests
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	MVPA_TESTS_LOWMEM=yes MVPA_TESTS_QUICK=yes MVPA_TESTS_LABILE=no \
 		$(MAKE) unittest
+endif
 
 build/python-mvpa-doc::
 	$(MAKE) doc
@@ -25,6 +26,16 @@ build/python-mvpa-doc::
 # symlinked by debhelper
 install/python-mvpa-doc::
 	-rm build/html/_static/jquery.js
+
+install/python-mvpa-data::
+	# install the example data into the python-mvpa-data package
+	mkdir -p debian/python-mvpa-data/usr/share/python-support/python-mvpa/mvpa
+	cp -r mvpa/data \
+		debian/python-mvpa-data/usr/share/python-support/python-mvpa/mvpa/
+
+binary-install/python-mvpa::
+	# remove the example data from the main package
+	rm -r debian/python-mvpa/usr/share/python-support/python-mvpa/mvpa/data
 
 # install directly into package directory (despite multiple packages)
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa

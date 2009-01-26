@@ -2,8 +2,12 @@ pymvpa (0.4.1-1) unstable; urgency=low
 
   * New upstream release.
   * Added missing ${misc:Depends} to debian/control.
+  * Split example data (used for unittests and examples) into a separate
+    python-mvpa-data package. These datasets made-up almost 85% of the
+    original python-mvpa package.
+  * The package now honors 'nocheck' in DEB_BUILD_OPTIONS.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Fri, 23 Jan 2009 19:05:30 +0100
+ -- Michael Hanke <michael.hanke@gmail.com>  Mon, 26 Jan 2009 12:18:12 +0100
 
 pymvpa (0.4.0-1) unstable; urgency=low
 
