@@ -6,6 +6,7 @@ pymvpa (0.4.1-1) unstable; urgency=low
   * The package now honors 'nocheck' in DEB_BUILD_OPTIONS.
   * Speed-up of package build process by preventing the docs from being built
     twice.
+  * Added 'DM-Upload-Allowed: yes' to enable DM upload.
 
   [ Yaroslav Halchenko ]
   * Adjusted long descriptions.
@@ -13,7 +14,7 @@ pymvpa (0.4.1-1) unstable; urgency=low
     Python bindings) into a separate python-mvpa-lib package. That allows
     python-mvpa package to become architecture independent.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Tue, 27 Jan 2009 08:43:08 +0100
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 27 Jan 2009 22:01:15 +0100
 
 pymvpa (0.4.0-1) unstable; urgency=low
 

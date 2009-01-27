@@ -8,7 +8,7 @@ Standards-Version: 3.8.0
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
-
+XS-DM-Upload-Allowed: yes
 
 Package: python-mvpa
 Architecture: all
