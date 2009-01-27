@@ -33,7 +33,7 @@ def main():
                           labels=attrs.labels,
                           labels_map=True,
                           chunks=attrs.chunks,
-                          mask=os.path.join(haxby1path, 'mask.nii.gz'),
+                          mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
                           dtype=N.float32)
 
     # preprocess slightly
