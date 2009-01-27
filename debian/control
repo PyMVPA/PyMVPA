@@ -12,7 +12,7 @@ Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
 Package: python-mvpa
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-data, python-mvpa-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt
@@ -33,7 +33,7 @@ Description: multivariate pattern analysis with Python
 Package: python-mvpa-doc
 Architecture: all
 Section: doc
-Depends: ${misc:Depends}, libjs-jquery, python-mvpa-data
+Depends: ${misc:Depends}, libjs-jquery
 Suggests: python-mvpa
 Description: documention and examples for PyMVPA
  PyMVPA documentation in various formats (HTML, TXT, PDF) including
@@ -45,19 +45,11 @@ Description: documention and examples for PyMVPA
  included.
 
 
-Package: python-mvpa-data
-Architecture: all
-Suggests: python-mvpa
-Description: example data files for PyMVPA
- A set of example data files to be used with PyMVPA.  These files
- additionally serve as an input for the PyMVPA unittest battery.
-
-
 Package: python-mvpa-lib
 Architecture: any
 Depends: ${shlibs:Depends}, ${python:Depends}, python-numpy, python-ctypes (>= 1.0.1) | python (>= 2.5), python-mvpa(= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: low-level implementations and bindings for PyMVPA
- Low-level implementation of SMLR classifier and custom Python
- bindings for libsvm external library.
+ Low-level implementation of an SMLR classifier and custom Python
+ bindings for the LIBSVM library.

@@ -1,20 +1,19 @@
-pymvpa (0.4.1-1~pre9) unstable; urgency=low
+pymvpa (0.4.1-1) unstable; urgency=low
 
   [ Michael Hanke ]
   * New upstream release.
   * Added missing ${misc:Depends} to debian/control.
-  * Split example data (used for unittests and examples) into a separate
-    python-mvpa-data package. These datasets made-up almost 85% of the
-    original python-mvpa package.
   * The package now honors 'nocheck' in DEB_BUILD_OPTIONS.
+  * Speed-up of package build process by preventing the docs from being built
+    twice.
 
   [ Yaroslav Halchenko ]
   * Adjusted long descriptions.
-  * Split libraries (low-level SMLR implementation and libsvm custom
+  * Split libraries (low-level SMLR implementation and LIBSVM custom
     Python bindings) into a separate python-mvpa-lib package. That allows
     python-mvpa package to become architecture independent.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 26 Jan 2009 12:30:46 -0500
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 27 Jan 2009 08:43:08 +0100
 
 pymvpa (0.4.0-1) unstable; urgency=low
 

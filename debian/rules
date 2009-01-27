@@ -10,6 +10,11 @@ include /usr/share/cdbs/1/class/python-distutils.mk
 DEB_PYTHON_BUILD_ARGS += --with-libsvm
 DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
 
+doc: doc-stamp
+doc-stamp:
+	$(MAKE) doc
+	touch $@
+
 clean::
 	$(MAKE) distclean
 
@@ -19,19 +24,12 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 		$(MAKE) unittest
 endif
 
-build/python-mvpa-doc::
-	$(MAKE) doc
+build/python-mvpa-doc:: doc
 
 # use jquery from Debian package
 # symlinked by debhelper
 install/python-mvpa-doc::
 	-rm build/html/_static/jquery.js
-
-install/python-mvpa-data::
-	# install the example data into the python-mvpa-data package
-	mkdir -p debian/python-mvpa-data/usr/share/python-support/python-mvpa/mvpa
-	cp -r mvpa/data \
-		debian/python-mvpa-data/usr/share/python-support/python-mvpa/mvpa/
 
 install/python-mvpa-lib::
 	# move libraries into the python-mvpa-lib package
@@ -40,8 +38,6 @@ install/python-mvpa-lib::
 
 # we need to move libraries away first, hence dependence on -lib
 binary-install/python-mvpa:: install/python-mvpa-lib
-	# remove the example data from the main package
-	rm -r debian/python-mvpa/usr/share/python-support/python-mvpa/mvpa/data
 
 binary-install/python-mvpa-lib::
 	# assure that there is no mvpa module itself
