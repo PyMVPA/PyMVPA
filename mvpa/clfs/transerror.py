@@ -254,6 +254,7 @@ class ROCCurve(object):
         # take sets which have values in the shape we can handle
         def _checkValues(set_):
             """Check if values are 'acceptable'"""
+            if len(set_)<3: return False
             x = set_[2]
             # TODO: OPT: need optimization
             if (x is None) or len(x) == 0: return False          # undefined
@@ -525,8 +526,8 @@ class ConfusionMatrix(SummaryStatistics):
 
         # reverse mapping from label into index in the list of labels
         rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
-        for iset, (targets, predictions, values) in enumerate(self.sets):
-            for t,p in zip(targets, predictions):
+        for iset, set_ in enumerate(self.sets):
+            for t,p in zip(*set_[:2]):
                 mat_all[iset, rev_map[p], rev_map[t]] += 1
 
 
