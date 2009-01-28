@@ -213,6 +213,10 @@ def plotERP(data, SR=500, onsets=None,
     if pre_mean is None:
         pre_mean = pre
 
+    # set default
+    # XXX should this be exposed?
+    pre_discard = 0
+
     if onsets is not None: # if we need to extract ERPs
         if post is None:
             raise ValueError, \
