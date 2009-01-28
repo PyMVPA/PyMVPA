@@ -242,8 +242,8 @@ unittests: unittest-nonlabile unittest unittest-badexternals \
 
 te-%: build
 	@echo -n "I: Testing example $*: "
-	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py \
-	 >| temp-$@.log 2>&1 \
+	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	 python doc/examples/$*.py >| temp-$@.log 2>&1 \
 	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
 	@rm -f temp-$@.log
 
