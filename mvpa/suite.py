@@ -23,8 +23,17 @@ __docformat__ = 'restructuredtext'
 
 
 from mvpa import *
-from mvpa.algorithms.cvtranserror import *
 from mvpa.base import *
+
+# Assure that we are setting up matplotlib's frontend prior to the
+# first import of pylab.
+if externals.exists("matplotlib"):
+    __backend = cfg.get('matplotlib', 'backend')
+    if __backend:
+        import matplotlib
+        matplotlib.use(__backend)
+
+from mvpa.algorithms.cvtranserror import *
 from mvpa.base.config import *
 from mvpa.base.verbosity import *
 
