@@ -11,6 +11,7 @@
 import unittest
 from mvpa.support.copy import copy
 
+from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 
@@ -467,17 +468,23 @@ class ErrorsTests(unittest.TestCase):
             self.fail()
         self.failUnless('3kHz / 38' in cm.asstring())
 
-        if False:
+        if externals.exists("pylab plottable"):
             import pylab as P
             P.figure()
-            labels_order = ("7kHz", "3kHz", "12kHz", "20kHz","30kHz", None,
+            labels_order = ("3kHz", "7kHz", "12kHz", "20kHz","30kHz", None,
                             "song1","song2","song3","song4","song5")
-            print cm
-            fig, im, cb = cm.plot(origin='lower', labels=labels_order)
-            # fig.savefig('/tmp/1.svg')
-            P.figure()
-            fig, im, cb = cm.plot(labels=labels_order)
-            P.show()
+            #print cm
+            #fig, im, cb = cm.plot(origin='lower', labels=labels_order)
+            fig, im, cb = cm.plot(labels=labels_order[1:2] + labels_order[:1]
+                                         + labels_order[2:], numbers=True)
+            self.failUnless(cm._plotted_confusionmatrix[0,0] == cm.matrix[1,1])
+            self.failUnless(cm._plotted_confusionmatrix[0,1] == cm.matrix[1,0])
+            self.failUnless(cm._plotted_confusionmatrix[1,1] == cm.matrix[0,0])
+            self.failUnless(cm._plotted_confusionmatrix[1,0] == cm.matrix[0,1])
+            P.close(fig)
+            fig, im, cb = cm.plot(labels=labels_order, numbers=True)
+            P.close(fig)
+            # P.show()
 
 
 def suite():

@@ -816,12 +816,13 @@ class ConfusionMatrix(SummaryStatistics):
         ticks = []
         tick_labels = []
         # populate in a silly way
-
+        reordered_indexes = [labels_indexes[i] for i in labels_plot
+                             if i is not None]
         for i, l in enumerate(labels_plot):
             if l is not None:
                 j = labels_indexes[l]
-                confusionmatrix[i, non_empty] = matrix[j, :]
-                confusionmatrix[non_empty, i] = matrix[:, j]
+                confusionmatrix[i, non_empty] = matrix[j, reordered_indexes]
+                confusionmatrix[non_empty, i] = matrix[reordered_indexes, j]
                 ticks += [i + 0.5]
                 if labels_map_rev is not None:
                     tick_labels += ['/'.join(labels_map_rev[l])]
@@ -894,6 +895,8 @@ class ConfusionMatrix(SummaryStatistics):
         if P.matplotlib.get_backend() == 'TkAgg':
             P.ion()
         P.draw()
+        # Store it primarily for testing
+        self._plotted_confusionmatrix = confusionmatrix
         return fig, im, cb
 
 
