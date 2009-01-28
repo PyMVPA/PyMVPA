@@ -774,6 +774,7 @@ class ConfusionMatrix(SummaryStatistics):
         if labels_map_rev is not None:
             labels_rev = [','.join([str(x) for x in labels_map_rev[l]])
                                    for l in labels]
+            labels_map_full = dict(zip(labels_rev, labels))
 
         if labels_order is not None:
             labels_order_filtered = filter(lambda x:x is not None, labels_order)
@@ -783,13 +784,13 @@ class ConfusionMatrix(SummaryStatistics):
                 # We were provided numerical (most probably) set
                 labels_plot = labels_order
             elif len(labels_rev) \
-                     and Set(labels_map.keys()) == labels_order_filtered_set:
+                     and Set(labels_rev) == labels_order_filtered_set:
                 # not clear if right whenever there were multiple labels
                 # mapped into the same
                 labels_plot = []
                 for l in labels_order:
                     v = None
-                    if l is not None: v = labels_map[l]
+                    if l is not None: v = labels_map_full[l]
                     labels_plot += [v]
             else:
                 raise ValueError, \
@@ -843,7 +844,7 @@ class ConfusionMatrix(SummaryStatistics):
 
         # some customization depending on the origin
         xticks_position, yticks, ybottom = {
-            'upper': ('top', ticks[::-1], 0.1),
+            'upper': ('top', [Nlabels-x for x in ticks], 0.1),
             'lower': ('bottom', ticks, 0.2)
             }[origin]
 
