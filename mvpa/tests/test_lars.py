@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
+from mvpa import cfg
 from mvpa.clfs.lars import LARS
 from scipy.stats import pearsonr
 from tests_warehouse import *
@@ -28,7 +29,8 @@ class LARSTests(unittest.TestCase):
         # test with a correlation
         pre = clf.predict(data.samples)
         cor = pearsonr(pre, data.labels)
-        self.failUnless(cor[0] > .8)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cor[0] > .8)
 
     def testLARSState(self):
         data = datasets['dumb2']
