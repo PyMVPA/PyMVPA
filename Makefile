@@ -257,8 +257,9 @@ tm-%: build
 	                       --doctest-tests doc/$*.txt
 
 testmanual: build
-	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
-	                       --doctest-tests doc/
+	@echo "I: Testing code samples found in documentation"
+	@PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	 nosetests --with-doctest --doctest-extension .txt --doctest-tests doc/
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
