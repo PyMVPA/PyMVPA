@@ -35,7 +35,7 @@ def main():
     opt.clf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
     opt.clf.default='lin_nu_svmc'
 
-    parser.add_options([opt.clf, opt.radius, opt.zscore])
+    parser.add_options([opt.clf, opt.zscore])
 
     (options, files) = parser.parse_args()
 

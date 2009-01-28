@@ -158,6 +158,19 @@ def __check_in_ipython():
         return
     raise RuntimeError, "Not running in IPython session"
 
+def __check_pylab_plottable():
+    """Simple check either we can plot anything using pylab.
+
+    Primary use in unittests
+    """
+    try:
+        import pylab as P
+        fig = P.figure()
+        P.plot([1,2], [1,2])
+        P.close(fig)
+    except:
+        raise RuntimeError, "Cannot plot in pylab"
+    return True
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
@@ -179,6 +192,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'rpy': "import rpy as __",
           'lars': "import rpy; rpy.r.library('lars')",
           'pylab': "import pylab as __",
+          'pylab plottable': "__check_pylab_plottable()",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
