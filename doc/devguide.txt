@@ -441,6 +441,7 @@ categories:
   * *BF* : bug fix
   * *RF* : refactoring
   * *NF* : new feature
+  * *BW* : addresses backward-compatibility
   * *OPT* : optimization
   * *BK* : breaks something and/or tests fail
   * *PL* : making pylint happier

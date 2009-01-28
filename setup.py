@@ -111,8 +111,13 @@ setup(name         = 'pymvpa',
                        'mvpa.tests',
                        'mvpa.support'
                        ],
-      data_files = [('mvpa/data', ['mvpa/data'])],
-      scripts      = glob( 'bin/*' ),
+      data_files = [('mvpa/data',
+                     [f for f in glob(os.path.join('mvpa', 'data', '*'))
+                         if os.path.isfile(f)]),
+                    ('mvpa/data/bv',
+                     [f for f in glob(os.path.join('mvpa', 'data', 'bv', '*'))
+                         if os.path.isfile(f)])],
+      scripts      = glob(os.path.join('bin', '*')),
       ext_modules  = ext_modules
       )
 
