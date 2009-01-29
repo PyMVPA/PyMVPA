@@ -70,8 +70,7 @@ class DescreteMetric(Metric):
         self.__distance_function = distance_function
 
         # XXX might not need assume compatible spacemetric
-        self.__elementsize = N.array(elementsize, ndmin=1)
-        self.__Ndims = len(self.__elementsize)
+        self.elementsize = elementsize
 
 
     def _computeFilter(self, radius):
@@ -136,8 +135,19 @@ class DescreteMetric(Metric):
         """
         return self.__filter_coord
 
+    def _setElementSize(self, v):
+        # reset filter radius
+        _elementsize = N.array(v, ndmin=1)
+        # assure that it is read-only and it gets reassigned
+        # only as a whole to trigger this house-keeping
+        _elementsize.flags.writeable = False
+        self.__elementsize = _elementsize
+        self.__Ndims = len(_elementsize)
+        self.__filter_radius = None
+
     filter_coord = property(fget=_getFilter, fset=_setFilter)
-    elementsize = property(fget=lambda self: self.__elementsize)
+    elementsize = property(fget=lambda self: self.__elementsize,
+                           fset=_setElementSize)
 
 # Template for future classes
 #
