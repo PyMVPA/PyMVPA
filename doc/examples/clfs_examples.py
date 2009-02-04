@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -33,7 +33,7 @@ def main():
                           labels=attrs.labels,
                           labels_map=True,
                           chunks=attrs.chunks,
-                          mask=os.path.join(haxby1path, 'mask.nii.gz'),
+                          mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
                           dtype=N.float32)
 
     # preprocess slightly
