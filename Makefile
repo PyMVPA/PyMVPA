@@ -118,6 +118,7 @@ doc: website
 
 prepare-docsrc: mkdir-DOCSRC_DIR
 	cp -Lpurv doc/* $(DOCSRC_DIR)
+	cp -Lpurv doc/pics $(DOCSRC_DIR)/examples/
 
 references:
 	tools/bib2rst_ref.py
@@ -241,21 +242,24 @@ unittests: unittest-nonlabile unittest unittest-badexternals \
 
 te-%: build
 	@echo -n "I: Testing example $*: "
-	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. python doc/examples/$*.py \
-	 >| temp-$@.log 2>&1 \
+	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	 python doc/examples/$*.py >| temp-$@.log 2>&1 \
 	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
 	@rm -f temp-$@.log
 
 testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
-              te-curvefitting te-projections te-kerneldemo
+              te-curvefitting te-projections te-kerneldemo te-clfs_examples \
+              te-erp_plot te-match_distribution te-permutation_test \
+              te-searchlight_minimal te-smlr te-start_easy te-topo_plot
 
 tm-%: build
 	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
 	                       --doctest-tests doc/$*.txt
 
 testmanual: build
-	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
-	                       --doctest-tests doc/
+	@echo "I: Testing code samples found in documentation"
+	@PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	 nosetests --with-doctest --doctest-extension .txt --doctest-tests doc/
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()

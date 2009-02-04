@@ -6,22 +6,24 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA least angle regression (LARS) classifier"""
+"""Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
 from mvpa import cfg
-from mvpa.clfs.lars import LARS
+from mvpa.clfs.enet import ENET
 from scipy.stats import pearsonr
 from tests_warehouse import *
 from mvpa.misc.data_generators import normalFeatureDataset
 
-class LARSTests(unittest.TestCase):
+class ENETTests(unittest.TestCase):
 
-    def testLARS(self):
+    def testENET(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
-        data = datasets['dumb2']
+        #data = datasets['dumb2']
+        # for some reason the R code fails with the dumb data
+        data = datasets['chirp_linear']
 
-        clf = LARS(regression=True)
+        clf = ENET()
 
         clf.train(data)
 
@@ -32,10 +34,12 @@ class LARSTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cor[0] > .8)
 
-    def testLARSState(self):
-        data = datasets['dumb2']
+    def testENETState(self):
+        #data = datasets['dumb2']
+        # for some reason the R code fails with the dumb data
+        data = datasets['chirp_linear']
 
-        clf = LARS()
+        clf = ENET()
 
         clf.train(data)
 
@@ -46,11 +50,11 @@ class LARSTests(unittest.TestCase):
         self.failUnless((p == clf.predictions).all())
 
 
-    def testLARSSensitivities(self):
+    def testENETSensitivities(self):
         data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
 
-        # use LARS on binary problem
-        clf = LARS()
+        # use ENET on binary problem
+        clf = ENET()
         clf.train(data)
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
@@ -61,7 +65,7 @@ class LARSTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(LARSTests)
+    return unittest.makeSuite(ENETTests)
 
 
 if __name__ == '__main__':

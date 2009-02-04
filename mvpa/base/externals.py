@@ -1,4 +1,4 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -159,6 +159,34 @@ def __check_in_ipython():
     raise RuntimeError, "Not running in IPython session"
 
 
+def __check_matplotlib():
+    """Check for presence of matplotlib and set backend if requested."""
+    import matplotlib
+    backend = cfg.get('matplotlib', 'backend')
+    if backend:
+        matplotlib.use(backend)
+
+def __check_pylab():
+    """Check if matplotlib is there and then pylab"""
+    exists('matplotlib', raiseException=True)
+    import pylab as P
+
+def __check_pylab_plottable():
+    """Simple check either we can plot anything using pylab.
+
+    Primary use in unittests
+    """
+    try:
+        exists('pylab', raiseException=True)
+        import pylab as P
+        fig = P.figure()
+        P.plot([1,2], [1,2])
+        P.close(fig)
+    except:
+        raise RuntimeError, "Cannot plot in pylab"
+    return True
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
@@ -178,7 +206,10 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "import rpy as __",
           'lars': "import rpy; rpy.r.library('lars')",
-          'pylab': "import pylab as __",
+          'elasticnet': "import rpy; rpy.r.library('elasticnet')",
+          'matplotlib': "__check_matplotlib()",
+          'pylab': "__check_pylab()",
+          'pylab plottable': "__check_pylab_plottable()",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
@@ -313,3 +344,4 @@ def testAllDependencies(force=False):
         debug('EXT', 'The following optional externals are present: %s' \
                      % [ k[5:] for k in cfg.options('externals')
                             if k.startswith('have')])
+

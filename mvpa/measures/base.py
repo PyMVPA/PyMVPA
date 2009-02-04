@@ -1,4 +1,4 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -181,6 +181,10 @@ class DatasetMeasure(Stateful):
 
 
     def __repr__(self, prefixes=[]):
+        """String representation of DatasetMeasure
+
+        Includes only arguments which differ from default ones
+        """
         prefixes = prefixes[:]
         if self.__transformer is not None:
             prefixes.append("transformer=%s" % self.__transformer)
@@ -190,7 +194,14 @@ class DatasetMeasure(Stateful):
 
 
     @property
-    def null_dist(self): return self.__null_dist
+    def null_dist(self):
+        """Return Null Distribution estimator"""
+        return self.__null_dist
+
+    @property
+    def transformer(self):
+        """Return transformer"""
+        return self.__transformer
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -265,8 +276,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
              here does not lead to an overall more complicated situation,
              without any real gain -- after all this one works ;-)
         """
-        rsshape = result.squeeze().shape
-        if len(result.squeeze().shape)>1:
+        result_sq = result.squeeze()
+        if len(result_sq.shape)>1:
             n_base = result.shape[1]
             """Number of base sensitivities"""
             if self.states.isEnabled('base_sensitivities'):
@@ -298,12 +309,17 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             # remove bogus dimensions
             # XXX we might need to come up with smth better. May be some naive
             # combiner? :-)
-            result = result.squeeze()
+            result = result_sq
 
         # call base class postcall
         result = DatasetMeasure._postcall(self, dataset, result)
 
         return result
+
+    @property
+    def combiner(self):
+        """Return combiner"""
+        return self.__combiner
 
 
 

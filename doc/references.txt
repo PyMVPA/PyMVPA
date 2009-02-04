@@ -62,10 +62,25 @@ experiments.
 
 **Hanke, M., Halchenko, Y. O., Sederberg, P. B. & Hughes, J. M.** The PyMVPA Manual. Available online at http://www.pymvpa.org/PyMVPA-Manual.pdf.
 
-.. _HHS+IP:
+.. _HHS+09a:
 
-**Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S.** (in press). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. *Neuroinformatics*.
+**Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S.** (2009). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. *Neuroinformatics*, *In press*.
   *Introduction into the analysis of fMRI data using PyMVPA.*
+
+  Keywords: :keyword:`PyMVPA`, :keyword:`fMRI`
+
+  DOI: http://dx.doi.org/10.1007/s12021-008-9041-y
+
+
+.. _HHS+09b:
+
+**Hanke, M., Halchenko, Y. O., Sederberg, P. B., Olivetti, E., Fründ, I., Rieger, J. W., Herrmann, C. S., Haxby, J. V., Hanson, S. J. & Pollmann, S.** (2009). PyMVPA: A Unifying Approach to the Analysis of Neuroscientific Data. *Frontiers in Neuroinformatics*, *In press*.
+  *Demonstration of PyMVPA capabilities concerning multi-modal or
+  modality-agnostic data analysis.*
+
+  Keywords: :keyword:`PyMVPA`, :keyword:`fMRI`, :keyword:`EEG`, :keyword:`MEG`, :keyword:`extracellular recordings`
+
+  DOI: http://dx.doi.org/10.3389/neuro.11.003.2009
 
 
 .. _HH08:

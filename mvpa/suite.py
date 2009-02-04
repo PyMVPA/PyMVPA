@@ -1,4 +1,4 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -23,10 +23,12 @@ __docformat__ = 'restructuredtext'
 
 
 from mvpa import *
-from mvpa.algorithms.cvtranserror import *
+
 from mvpa.base import *
 from mvpa.base.config import *
 from mvpa.base.verbosity import *
+
+from mvpa.algorithms.cvtranserror import *
 
 from mvpa import clfs
 from mvpa.clfs.distance import *
@@ -36,6 +38,8 @@ from mvpa.clfs.meta import *
 from mvpa.clfs.knn import *
 if externals.exists('lars'):
     from mvpa.clfs.lars import *
+if externals.exists('elasticnet'):
+    from mvpa.clfs.enet import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.stats import *
