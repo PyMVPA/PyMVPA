@@ -1,0 +1,142 @@
+;; emacs: -*- mode: emacs-lisp; indent-tabs-mode: nil -*-
+;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;
+;
+;   See COPYING file distributed along with the PyMVPA package for the
+;   copyright and license terms.
+;
+;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;
+;;
+;; This file is to help PyMVPA users who use emacs for their needs.
+;; It enables suggested modes (if available), and sets up environment
+;; variables needed by Python and pylint
+;;
+;; Recommended usage:
+;;
+;;  * symlink this file as .emacs.local into the root of PyMVPA project:
+;;     ln -s doc/misc/emacs .emacs.local
+;;
+;;  * add following snippet into your .emacs to enable loading of local
+;;    emacs configuration:
+;;      (push "." load-path)					;add current path
+;;      (load ".emacs.local" t)
+;;      (pop load-path)							;clean up
+;;  * for flymake to work correctly, you would need to have epylint script
+;;    installed anywhere in the PATH. You can obtain the script from
+;;
+;;      http://git.onerussian.com/?p=etc/emacs.git;a=blob;f=.emacs.d/bin/epylint;hb=HEAD
+;;
+;; Now, whenever you start emacs in the root directory of PyMVPA project,
+;; it should load .emacs.local and setup suggested Emacs environment.
+;;
+;; Disclaimer: this config file is not extensively tested and was ripped away
+;;             from Yaroslav's .emacs configuration available from
+;;             http://git.onerussian.com/?p=etc/emacs.git;a=summary
+
+
+(setenv "PYTHONPATH" (expand-file-name default-directory))
+(setenv "PYLINTRC" (concat
+		(expand-file-name default-directory)
+		"doc/misc/pylintrc"))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Python
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Set IPython to be the python command and give it arguments
+(when (locate-library "python-mode")
+  (when (locate-library  "ipython")
+	(require 'ipython)
+	(when (locate-library "ansi-color")
+	  (add-hook 'py-shell-hook 'my-activate-ansi-colors)))
+
+  ;; We want pylint call
+  (add-hook 'python-mode-hook
+			'(lambda ()
+			   (when (and (stringp (buffer-file-name))
+						  (not (string-match ".*/tmp/python-.*" (buffer-file-name))))
+
+				 (when (locate-library "pylint")
+				   (load-library "pylint")
+				   (local-set-key "\C-xc" 'pylint) )
+
+				 (when (locate-library "pymacs")
+				   (load-library "pymacs")
+				   (when (pymacs-load "ropemacs" "rope-" t)
+					 (ropemacs-mode t)
+					 (set ropemacs-guess-project t)))
+
+				 (when (not indent-tabs-mode)
+				   (when (locate-library "show-wspace")
+					 (when (not show-ws-highlight-tabs-p)
+					   (show-ws-toggle-show-tabs))))
+
+				 (when (locate-library "outline")
+				   (defun py-outline-level ()
+					 "This is so that `current-column` DTRT in otherwise-hidden text"
+					 ;; from ada-mode.el
+					 (let (buffer-invisibility-spec)
+					   (save-excursion
+						 (beginning-of-line)
+						 (skip-chars-forward "\t ")
+						 (/ (current-column) py-indent-offset))))
+
+				   ;; this fragment originally came from the web somewhere, but the outline-regexp
+				   ;; was horribly broken and is broken in all instances of this code floating
+				   ;; around.  Finally fixed by Charl P. Botha
+
+				   ;; enable our level computation
+				   (setq outline-level 'py-outline-level)
+				   ;;(setq outline-regexp "[^ tn]|[ t]*(def[ t]+|class[ t]+)")
+				   ;;(setq outline-regexp "\\([ \t]*\n\\)?[ \t]*\\(if\\|for\\|def\\|class\\)[ \t]+.*[:\\\][ \t]*\\(#.*\\)?$")
+				   ;;	(setq outline-regexp "\\(^[ \t]*\n\\)?[ \t]*\\(if\\|for\\|def\\|class\\|else\\|elif\\|try\\|except\\|finally\\)")
+				   ;;	(setq outline-regexp "\\(^[ \t]*\n\\)?[ \t]*\\(def\\|class\\|@\\)")
+				   (setq outline-regexp "\\([ \t]*\\(def\\|class\\|@\\)\\|^#\\)")
+				   ;; without explicit keywords:
+				   ;;(setq outline-regexp "^[ \t\n]*\\([^ \t]+\\)[ \t]+.*[:\\\][ \t]*\\(#.*\\)?$")
+				   ;; custom shortcuts
+				   ;;(outline-shortcuts)
+				   ;; turn on outline mode
+				   (outline-minor-mode t)
+				   ;; initially hide all but the headers
+				   (hide-body)
+				   )
+
+				 (show-paren-mode 1)
+				 (flymake-mode 1)
+				 )))					;hook
+)										;python-mode
+
+;; Lets enable flymake + pylint tandem
+(when (load "flymake" t)
+  (defun flymake-pylint-init ()
+    (let* ((temp-file (flymake-init-create-temp-buffer-copy
+                       'flymake-create-temp-inplace))
+		   (local-file (file-relative-name
+						temp-file
+						(file-name-directory buffer-file-name))))
+      (list "epylint" (list local-file))))
+
+  (add-to-list 'flymake-allowed-file-name-masks
+			   '("\\.py\\'" flymake-pylint-init))
+
+  ;; helper to put pylint errors into the status line
+  ;; borrowed from
+  ;; http://plope.com/Members/chrism/flymake-mode
+  (load "flymake-cursor" t)
+
+  (add-hook 'find-file-hook 'flymake-find-file-hook)
+)
+
+(setq
+      enable-local-variables t
+      enable-local-eval t
+      search-highlight t		    ;highlight found matches
+      query-replace-highlight t		;highlight found matches
+      tab-width 4
+      show-trailing-whitespace t    ;show trailing spaces by default
+      inhibit-startup-message t		;ok I've seen the copyleft &c
+
+)
+
+(custom-set-variables
+ '(safe-local-variable-values (quote ((py-indent-offset . 4)))))
