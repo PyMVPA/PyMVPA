@@ -160,7 +160,12 @@ class LARS(Classifier):
         # must first convert dictionary to array
         Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
                              for x in range(len(self.__trained_model['Cp']))])
-        self.__lowest_Cp_step = Cp_vals.argmin()
+        if N.isnan(Cp_vals[0]):
+            # sometimes may come back nan, so just pick the last one
+            self.__lowest_Cp_step = len(Cp_vals)-1
+        else:
+            # determine the lowest
+            self.__lowest_Cp_step = Cp_vals.argmin()
         
         # set the weights to the lowest Cp step
         self.__weights = self.__trained_model['beta'][self.__lowest_Cp_step,:]
