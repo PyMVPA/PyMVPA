@@ -1,4 +1,4 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -92,6 +92,8 @@ opts = OptionGroups(parser)
 def _verboseCallback(option, optstr, value, parser):
     """Callback for -v|--verbose cmdline option
     """
+    if __debug__:
+        debug("CMDLINE", "Setting verbose.level to %s" % str(value))
     verbose.level = value
     optstr = optstr                     # pylint shut up
     setattr(parser.values, option.dest, value)

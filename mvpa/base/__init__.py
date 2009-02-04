@@ -1,4 +1,4 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 #ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -177,6 +177,7 @@ if __debug__:
     debug.register('TEST', "Debug unittests")
     debug.register('MODULE_IN_REPR', "Include module path in __repr__")
     debug.register('ID_IN_REPR', "Include id in __repr__")
+    debug.register('CMDLINE', "Handling of command line parameters")
 
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
@@ -274,7 +275,7 @@ if __debug__:
     debug.register('IO_HAM', "Hamster")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
-    debug.register('CROSSC',"Cross-validation call")
+    debug.register('CROSSC', "Cross-validation call")
     debug.register('CERR', "Various ClassifierErrors")
 
     debug.register('ATL',    "Atlases")
