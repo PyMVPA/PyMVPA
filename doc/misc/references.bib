@@ -1,3 +1,16 @@
+@Comment{
+  This file is used to autogenerate doc/references.txt
+  using tools/bib2rst_ref.py .
+
+  Due to external dependency on pybliographer (which is
+  discontinued project), automatic regeneration is not enabled,
+  thus you are required to run
+
+  make references
+
+  to regenerate doc/references.txt if you modified this file.
+}
+
 @Article{ HGF+01,
 	Author = "J.V. Haxby and M.I. Gobbini and M.L. Furey and A. Ishai and J.L. Schouten and P. Pietrini",
 	Title = "Distributed and overlapping representations of faces and objects in ventral temporal cortex.",
@@ -213,6 +226,19 @@
 	doi = "10.1016/j.neuroimage.2004.05.020"
 }
 
+@Article{ ZH05,
+	title = "Regularization and variable selection via the elastic net",
+	author = "H. Zou and T. Hastie",
+	journal = "Journal of the Royal Statistical Society Series B",
+	volume = "67",
+	number = "2",
+	pages = "301–320",
+	year = "2005",
+	publisher = "Blackwell Synergy",
+	keywords = "Feature Selection, Machine Learning",
+	url = "http://www-stat.stanford.edu/%7Ehastie/Papers/B67.2%20(2005)%20301-320%20Zou%20%26%20Hastie.pdf"
+}
+
 @Article{ MHN+04,
 	title = "Learning to Decode Cognitive States from Brain Images",
 	author = "Tom Mitchell and Rebecca Hutchinson and Radu S. Niculescu and Francisco Pereira and Xuerui Wang and Marcel Just and Sharlene Newman",
@@ -272,8 +298,8 @@
 	year = "2009",
 	pymvpa-summary = "Demonstration of PyMVPA capabilities concerning multi-modal or modality-agnostic data analysis.",
 	volume = "In press",
-    doi = "10.3389/neuro.11.003.2009",
-    url = "http://dx.doi.org/10.3389/neuro.11.003.2009",
+	doi = "10.3389/neuro.11.003.2009",
+	url = "http://dx.doi.org/10.3389/neuro.11.003.2009",
 	pymvpa-keywords = "PyMVPA, fMRI, EEG, MEG, extracellular recordings"
 }
 
@@ -284,3 +310,4 @@
 	year = "in press",
 	doi = "10.1016/j.neuroimage.2008.11.007"
 }
+
