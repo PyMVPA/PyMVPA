@@ -669,6 +669,10 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzer output just to pass through"""
 
+    clf_sensitivities = StateVariable(enabled=False,
+        doc="Stores sensitivities of the proxied classifier")
+
+
     @group_kwargs(prefixes=['slave_'], assign=True)
     def __init__(self,
                  clf,
@@ -712,7 +716,10 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         if clfclf.trained:
             analyzer._force_training = False
 
-        return analyzer._call(dataset)
+        result = analyzer._call(dataset)
+        self.clf_sensitivities = result
+
+        return result
 
     analyzer = property(fget=lambda x:x.__analyzer)
 
@@ -723,6 +730,20 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def _call(self, dataset):
         sens = super(MappedClassifierSensitivityAnalyzer, self)._call(dataset)
+        # So we have here the case that some sensitivities are given
+        #  as nfeatures x nclasses, thus we need to take .T for the
+        #  mapper and revert back afterwards
+        # devguide's TODO lists this point to 'disguss'
+        sens_mapped = self.clf.mapper.reverse(sens.T)
+        return sens_mapped.T
+
+
+class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    """Set sensitivity analyzer output be reverse mapped using mapper of the
+    slave classifier"""
+
+    def _call(self, dataset):
+        sens = super(FeatureSelectionClassifierSensitivityAnalyzer, self)._call(dataset)
         # So we have here the case that some sensitivities are given
         #  as nfeatures x nclasses, thus we need to take .T for the
         #  mapper and revert back afterwards
