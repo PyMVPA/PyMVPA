@@ -36,7 +36,8 @@ from mvpa.misc.transformers import FirstAxisMean
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
-    MappedClassifierSensitivityAnalyzer
+    MappedClassifierSensitivityAnalyzer, \
+    FeatureSelectionClassifierSensitivityAnalyzer
 
 from mvpa.base import warning
 
@@ -984,7 +985,7 @@ class MappedClassifier(ProxyClassifier):
         """Return an appropriate SensitivityAnalyzer"""
         return MappedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
+                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 
@@ -1118,7 +1119,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         had to clone from mapped classifier???
         """
-        return MappedClassifierSensitivityAnalyzer(
+        return FeatureSelectionClassifierSensitivityAnalyzer(
                 self,
                 analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
