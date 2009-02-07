@@ -13,7 +13,7 @@
 
 import sys, os, re
 import numpy as N
-from mvpa import pymvpa_version
+import mvpa
 
 try:
     import matplotlib
@@ -284,9 +284,9 @@ copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = pymvpa_version
+version = mvpa.__version__
 # The full version, including alpha/beta/rc tags.
-release = pymvpa_version
+release = mvpa.__version__
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
