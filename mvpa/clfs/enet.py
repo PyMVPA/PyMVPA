@@ -35,9 +35,9 @@ class ENET(Classifier):
 
     Elastic-Net is the model selection algorithm from:
 
-    Zou and Hastie (2005) 'Regularization and Variable Selection via
-    the Elastic Net' Journal of the Royal Statistical Society, Series
-    B, 67, 301-320.
+    :ref:`Zou and Hastie (2005) <ZH05>` 'Regularization and Variable
+    Selection via the Elastic Net' Journal of the Royal Statistical
+    Society, Series B, 67, 301-320.
 
     Similar to SMLR, it performs a feature selection while performing
     classification, but instead of starting with all features, it

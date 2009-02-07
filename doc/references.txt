@@ -226,5 +226,11 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072
 
 
+.. _ZH05:
+
+**Zou, H. & Hastie, T.** (2005). Regularization and variable selection via the elastic net. *Journal of the Royal Statistical Society Series B*, *67*, 301–320.
+  URL: http://www-stat.stanford.edu/%7Ehastie/Papers/B67.2%20(2005)%20301-320%20Zou%20%26%20Hastie.pdf
+
+
 
 

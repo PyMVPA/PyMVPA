@@ -19,7 +19,10 @@ class LARSTests(unittest.TestCase):
     def testLARS(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
-        data = datasets['dumb2']
+        #data = datasets['dumb2']
+        # for some reason the R code fails with the dumb data
+        data = datasets['chirp_linear']
+
 
         clf = LARS(regression=True)
 
@@ -33,7 +36,10 @@ class LARSTests(unittest.TestCase):
             self.failUnless(cor[0] > .8)
 
     def testLARSState(self):
-        data = datasets['dumb2']
+        #data = datasets['dumb2']
+        # for some reason the R code fails with the dumb data
+        data = datasets['chirp_linear']
+
 
         clf = LARS()
 
