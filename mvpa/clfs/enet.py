@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Least angle regression (LARS) classifier."""
+"""Elastic-Net (ENET) regression classifier."""
 
 __docformat__ = 'restructuredtext'
 
@@ -15,12 +15,12 @@ import numpy as N
 
 import mvpa.base.externals as externals
 externals.exists('rpy', raiseException=True)
-externals.exists('lars', raiseException=True)
+externals.exists('elasticnet', raiseException=True)
 
 # do conditional to be able to build module reference
-if externals.exists('rpy') and externals.exists('lars'):
+if externals.exists('rpy') and externals.exists('elasticnet'):
     import rpy
-    rpy.r.library('lars')
+    rpy.r.library('elasticnet')
 
 
 # local imports
@@ -30,57 +30,53 @@ from mvpa.measures.base import Sensitivity
 if __debug__:
     from mvpa.base import debug
 
-known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
+class ENET(Classifier):
+    """Elastic-Net regression (ENET) `Classifier`.
 
-class LARS(Classifier):
-    """Least angle regression (LARS) `Classifier`.
+    Elastic-Net is the model selection algorithm from:
 
-    LARS is the model selection algorithm from:
-
-    Bradley Efron, Trevor Hastie, Iain Johnstone and Robert
-    Tibshirani, Least Angle Regression Annals of Statistics (with
-    discussion) (2004) 32(2), 407-499. A new method for variable
-    subset selection, with the lasso and 'epsilon' forward stagewise
-    methods as special cases.
+    :ref:`Zou and Hastie (2005) <ZH05>` 'Regularization and Variable
+    Selection via the Elastic Net' Journal of the Royal Statistical
+    Society, Series B, 67, 301-320.
 
     Similar to SMLR, it performs a feature selection while performing
     classification, but instead of starting with all features, it
     starts with none and adds them in, which is similar to boosting.
 
-    This classifier behaves more like a ridge regression in that it
-    returns prediction values and it treats the training labels as
-    continuous.
+    Unlike LARS it has both L1 and L2 regularization (instead of just
+    L1).  This means that while it tries to sparsify the features it
+    also tries to keep redundant features, which may be very very good
+    for fMRI classification.
 
-    In the true nature of the PyMVPA framework, this algorithm is
-    actually implemented in R by Trevor Hastie and wrapped via RPy.
-    To make use of LARS, you must have R and RPy installed as well as
-    the LARS contributed package. You can install the R and RPy with
-    the following command on Debian-based machines:
+    In the true nature of the PyMVPA framework, this algorithm was
+    actually implemented in R by Zou and Hastie and wrapped via RPy.
+    To make use of ENET, you must have R and RPy installed as well as
+    both the lars and elasticnet contributed package. You can install
+    the R and RPy with the following command on Debian-based machines:
 
     sudo aptitude install python-rpy python-rpy-doc r-base-dev
 
-    You can then install the LARS package by running R as root and
-    calling:
+    You can then install the lars and elasticnet package by running R
+    as root and calling:
 
     install.packages()
 
     """
 
-    # XXX from yoh: it is linear, isn't it?
-    _clf_internals = [ 'lars', 'regression', 'linear', 'has_sensitivity',
-                       'does_feature_selection',
+    _clf_internals = [ 'enet', 'regression', 'linear', 'has_sensitivity',
+                       'does_feature_selection'
                        ]
-    def __init__(self, model_type="lasso", trace=False, normalize=True,
-                 intercept=True, max_steps=None, use_Gram=False, **kwargs):
+    def __init__(self, lm=1.0, trace=False, normalize=True,
+                 intercept=True, max_steps=None, **kwargs):
         """
-        Initialize LARS.
+        Initialize ENET.
 
         See the help in R for further details on the following parameters:
 
         :Parameters:
-          model_type : string
-            Type of LARS to run. Can be one of ('lasso', 'lar',
-            'forward.stagewise', 'stepwise').
+          lm : float
+            Penalty parameter.  0 will perform LARS with no ridge regression.
+            Default is 1.0.
           trace : boolean
             Whether to print progress in R as it works.
           normalize : boolean
@@ -91,24 +87,16 @@ class LARS(Classifier):
             If not None, specify the total number of iterations to run. Each
             iteration adds a feature, but leaving it none will add until
             convergence.
-          use_Gram : boolean
-            Whether to compute the Gram matrix (this should be false if you
-            have more features than samples.)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
 
-        if not model_type in known_models:
-            raise ValueError('Unknown model %s for LARS is specified. Known' %
-                             model_type + 'are %s' % `known_models`)
-
         # set up the params
-        self.__type = model_type
+        self.__lm = lm
         self.__normalize = normalize
         self.__intercept = intercept
         self.__trace = trace
         self.__max_steps = max_steps
-        self.__use_Gram = use_Gram
 
         # pylint friendly initializations
         self.__weights = None
@@ -124,13 +112,12 @@ class LARS(Classifier):
     def __repr__(self):
         """String summary of the object
         """
-        return """LARS(type=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, use_Gram=%s, enable_states=%s)""" % \
-               (self.__type,
+        return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_states=%s)""" % \
+               (self.__lm,
                 self.__normalize,
                 self.__intercept,
                 self.__trace,
                 self.__max_steps,
-                self.__use_Gram,
                 str(self.states.enabled))
 
 
@@ -139,38 +126,33 @@ class LARS(Classifier):
         """
         if self.__max_steps is None:
             # train without specifying max_steps
-            self.__trained_model = rpy.r.lars(data.samples,
+            self.__trained_model = rpy.r.enet(data.samples,
                                               data.labels[:,N.newaxis],
-                                              type=self.__type,
+                                              self.__lm,
                                               normalize=self.__normalize,
                                               intercept=self.__intercept,
-                                              trace=self.__trace,
-                                              use_Gram=self.__use_Gram)
+                                              trace=self.__trace)
         else:
             # train with specifying max_steps
-            self.__trained_model = rpy.r.lars(data.samples,
+            self.__trained_model = rpy.r.enet(data.samples,
                                               data.labels[:,N.newaxis],
-                                              type=self.__type,
+                                              self.__lm,
                                               normalize=self.__normalize,
                                               intercept=self.__intercept,
                                               trace=self.__trace,
-                                              use_Gram=self.__use_Gram,
                                               max_steps=self.__max_steps)
 
         # find the step with the lowest Cp (risk)
         # it is often the last step if you set a max_steps
         # must first convert dictionary to array
-        Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
-                             for x in range(len(self.__trained_model['Cp']))])
-        if N.isnan(Cp_vals[0]):
-            # sometimes may come back nan, so just pick the last one
-            self.__lowest_Cp_step = len(Cp_vals)-1
-        else:
-            # determine the lowest
-            self.__lowest_Cp_step = Cp_vals.argmin()
+#         Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
+#                              for x in range(len(self.__trained_model['Cp']))])
+#         self.__lowest_Cp_step = Cp_vals.argmin()
         
-        # set the weights to the lowest Cp step
-        self.__weights = self.__trained_model['beta'][self.__lowest_Cp_step,:]
+        # set the weights to the last step
+        self.__weights = N.zeros(data.nfeatures,dtype=self.__trained_model['beta.pure'].dtype)
+        ind = N.asarray(self.__trained_model['allset'])-1
+        self.__weights[ind] = self.__trained_model['beta.pure'][-1,:]
         
 #         # set the weights to the final state
 #         self.__weights = self.__trained_model['beta'][-1,:]
@@ -181,13 +163,13 @@ class LARS(Classifier):
         Predict the output for the provided data.
         """
         # predict with the final state (i.e., the last step)
-        # predict with the lowest Cp step
-        res = rpy.r.predict_lars(self.__trained_model,
+        res = rpy.r.predict_enet(self.__trained_model,
                                  data,
                                  mode='step',
-                                 s=self.__lowest_Cp_step)
-                                 #s=self.__trained_model['beta'].shape[0])
-
+                                 type='fit',
+                                 s=self.__trained_model['beta.pure'].shape[0])
+                                 #s=self.__lowest_Cp_step)
+                                 
         fit = N.asarray(res['fit'])
         if len(fit.shape) == 0:
             # if we just got 1 sample with a scalar
@@ -203,31 +185,31 @@ class LARS(Classifier):
 
 
     def getSensitivityAnalyzer(self, **kwargs):
-        """Returns a sensitivity analyzer for LARS."""
-        return LARSWeights(self, **kwargs)
+        """Returns a sensitivity analyzer for ENET."""
+        return ENETWeights(self, **kwargs)
 
     weights = property(lambda self: self.__weights)
 
 
 
-class LARSWeights(Sensitivity):
-    """`SensitivityAnalyzer` that reports the weights LARS trained
+class ENETWeights(Sensitivity):
+    """`SensitivityAnalyzer` that reports the weights ENET trained
     on a given `Dataset`.
     """
 
-    _LEGAL_CLFS = [ LARS ]
+    _LEGAL_CLFS = [ ENET ]
 
     def _call(self, dataset=None):
-        """Extract weights from LARS classifier.
+        """Extract weights from ENET classifier.
 
-        LARS always has weights available, so nothing has to be computed here.
+        ENET always has weights available, so nothing has to be computed here.
         """
         clf = self.clf
         weights = clf.weights
 
         if __debug__:
-            debug('LARS',
-                  "Extracting weights for LARS - "+
+            debug('ENET',
+                  "Extracting weights for ENET - "+
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 
