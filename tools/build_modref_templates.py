@@ -418,7 +418,7 @@ class ApiDocWriter(object):
 if __name__ == '__main__':
     package = 'mvpa'
     outdir = os.path.join('build', 'docsrc', 'modref')
-    docwriter = ApiDocWriter(package, rst_extension='.txt')
+    docwriter = ApiDocWriter(package, rst_extension='.rst')
     #docwriter.package_skip_patterns += ['\\.fixes$',
     #                                    '\\.externals$']
     docwriter.write_api_docs(outdir)

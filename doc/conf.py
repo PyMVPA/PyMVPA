@@ -271,7 +271,7 @@ extensions = ['sphinx.ext.autodoc']
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.txt'
+source_suffix = '.rst'
 
 # The master toctree document.
 master_doc = 'contents'
