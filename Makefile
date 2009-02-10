@@ -253,13 +253,13 @@ testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot
 
 tm-%: build
-	PYTHONPATH=. nosetests --with-doctest --doctest-extension .txt \
-	                       --doctest-tests doc/$*.txt
+	PYTHONPATH=. nosetests --with-doctest --doctest-extension .rst \
+	                       --doctest-tests doc/$*.rst
 
 testmanual: build
 	@echo "I: Testing code samples found in documentation"
 	@PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
-	 nosetests --with-doctest --doctest-extension .txt --doctest-tests doc/
+	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
@@ -278,7 +278,7 @@ testsuite:
 
 # Check if links to api/ within documentation are broken.
 testapiref: apidoc
-	@for tf in doc/*.txt; do \
+	@for tf in doc/*.rst; do \
 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
 	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done

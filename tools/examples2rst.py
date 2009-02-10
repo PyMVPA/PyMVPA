@@ -23,7 +23,7 @@ if not os.path.exists(outpath):
 
 def procExample(filename):
     #  doc filename
-    dfilename = filename[:-3] + '.txt'
+    dfilename = filename[:-3] + '.rst'
 
     # open source file
     xfile = open(filename)
