@@ -442,12 +442,13 @@ class FixedNElementTailSelector(TailSelector):
             Number of elements to select/discard.
         """
         TailSelector.__init__(self, **kwargs)
+        self.__nelements = None
         self._setNElements(nelements)
 
 
     def __repr__(self):
         return "%s number=%f" % (
-            TailSelector.__repr__(self), self.__nelements)
+            TailSelector.__repr__(self), self.nelements)
 
 
     def _getNElements(self, seq):
