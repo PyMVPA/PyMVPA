@@ -27,6 +27,12 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
+The `online documentation editor`_ is now available [11 Feb 2009]
+
+  It is powered by pydocweb_ -- the same software that also drives the Numpy
+  documentation editor.
+
+
 PyMVPA 0.4.1 is out [23 Jan 2009]
 
   This is mostly a bugfix release with a futher improved documentation.
@@ -37,33 +43,49 @@ New articles on PyMVPA available [21 Jan 2009]
 
   Please see the Publications_ section for details.
 
-
+.. _pydocweb: https://code.launchpad.net/~pauli-virtanen/scipy/pydocweb
 
 Documentation
 =============
 
-* :ref:`User Documentation <contents>` (**the** documentation)
+For users
+---------
+
+* :ref:`User Documentation <contents>` (**the** documentation) -- it is also
+  possible to edit and improve the documentation, using the `online
+  documentation editor`_.
+
+.. _online documentation editor: edt/
+
 * :ref:`Installation Instructions <installation>`
-* :ref:`Development Changelog <changelog>` (see what has changed)
-* :ref:`Developer Guidelines <devguide>` (information for people contributing
-  code)
 * :ref:`Module Reference <modref>` (user-oriented reference, less complex than full API docs)
-* `API Reference`_ (comprehensive and up-to-date information about the details
-  of the implementation)
+
 * :ref:`FAQ <faq>` (short answers to common problems)
 * :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
   <HGF+01>`)
-* :ref:`genindex` (access by keywords)
-* :ref:`search` (online and offline full-text search)
-
-.. _API Reference: api/index.html
+* :ref:`Development Changelog <changelog>` (see what has changed)
 
 * `PyMVPA Manual (PDF)`_ (all documentation except for developer guidelines
   and API reference)
-* `Developer Guidelines (PDF)`_
 
 .. _PyMVPA Manual (PDF): PyMVPA-Manual.pdf
+
+* :ref:`genindex` (access by keywords)
+* :ref:`search` (online and offline full-text search)
+
+
+For developers
+--------------
+
+* :ref:`Developer Guidelines <devguide>` (information for people contributing
+  code)
+* `API Reference`_ (comprehensive and up-to-date information about the details
+  of the implementation)
+
+* `Developer Guidelines (PDF)`_
+
 .. _Developer Guidelines (PDF): PyMVPA-DevGuide.pdf
+.. _API Reference: api/index.html
 
 
 License
