@@ -17,13 +17,10 @@ import sys
 # We have to use deepcopy from python 2.5, since otherwise it fails to
 # copy sensitivity analyzers with assigned combiners which are just
 # functions not functors
-if sys.version_info[0] > 2 or sys.version_info[1] > 4:
-    # little trick to be able to import 'copy' package (which has same name)
-    oldname = __name__
-    # crazy name with close to zero possibility to cause whatever
-    __name__ = 'iaugf9zrkjsbdv8'
-    from copy import copy, deepcopy
-    # restore old settings
-    __name__ = oldname
+if sys.version_info[:2] >= (2, 5):
+    # enforce absolute import
+    _copy = __import__('copy', globals(), locals(), [], 0)
+    copy = _copy.copy
+    deepcopy = _copy.deepcopy
 else:
     from mvpa.support._copy import copy, deepcopy
