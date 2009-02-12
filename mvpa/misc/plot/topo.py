@@ -21,7 +21,7 @@ import pylab as P
 import matplotlib.numerix.ma as M
 
 externals.exists("griddata", raiseException=True)
-from griddata import griddata
+from mvpa.support.griddata import griddata
 
 externals.exists("scipy", raiseException=True)
 from scipy.optimize import leastsq

@@ -187,12 +187,26 @@ def __check_pylab_plottable():
     return True
 
 
+def __check_griddata():
+    """griddata might be independent module or part of mlab
+    """
+
+    try:
+        from matplotlib.mlab import griddata as __
+        return True
+    except ImportError:
+        pass
+
+    from griddata import griddata as __
+    return True
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
           'nifti >= 0.20081017.1':
-                'from nifti.nifticlib import detachDataFromImage as __',
+          'from nifti.nifticlib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
           'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
@@ -216,7 +230,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
            # 3318 corresponds to release 0.6.4
           'sg >= 0.6.4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
-          'griddata': "import griddata as __",
+          'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",
           'gzip': "import gzip as __",
           'lxml': "from lxml import objectify as __",
