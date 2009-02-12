@@ -1,6 +1,6 @@
 #!/bin/bash
-#emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*- 
-#ex: set sts=4 ts=4 sw=4 noet:
+# emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*- 
+# vi: set ft=sh sts=4 ts=4 sw=4 noet:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
