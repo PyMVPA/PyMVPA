@@ -45,10 +45,10 @@ The mvpa package contains the following subpackages and modules:
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
 
-# PyMVPA version string
-pymvpa_version = '0.4.1'
-
 __docformat__ = 'restructuredtext'
+
+# canonical PyMVPA version string
+__version__ = '0.4.1'
 
 import os
 import random

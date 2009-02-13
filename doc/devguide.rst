@@ -89,7 +89,7 @@ The first docstring in each example must have a proper section heading (with '='
 markup).
 
 Finally, each example should be added to the appropriate `toctree` in
-`doc/examples.txt`.
+`doc/examples.rst`.
 
 
 Code Formatting

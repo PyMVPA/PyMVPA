@@ -21,8 +21,8 @@ Peer-reviewed publications
 .. _Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2009). PyMVPA\: A Python toolbox for multivariate pattern analysis of fMRI data. Neuroinformatics.: http://dx.doi.org/10.1007/s12021-008-9041-y
 
 
-Poster
-------
+Posters
+-------
 
 `Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2008). PyMVPA: A Python toolbox for classifier-based data analysis.`_
   First presentation of PyMVPA at the conference *Psychologie und Gehirn*
