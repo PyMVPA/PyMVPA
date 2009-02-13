@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -181,6 +181,10 @@ class DatasetMeasure(Stateful):
 
 
     def __repr__(self, prefixes=[]):
+        """String representation of DatasetMeasure
+
+        Includes only arguments which differ from default ones
+        """
         prefixes = prefixes[:]
         if self.__transformer is not None:
             prefixes.append("transformer=%s" % self.__transformer)
@@ -190,7 +194,14 @@ class DatasetMeasure(Stateful):
 
 
     @property
-    def null_dist(self): return self.__null_dist
+    def null_dist(self):
+        """Return Null Distribution estimator"""
+        return self.__null_dist
+
+    @property
+    def transformer(self):
+        """Return transformer"""
+        return self.__transformer
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -265,8 +276,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
              here does not lead to an overall more complicated situation,
              without any real gain -- after all this one works ;-)
         """
-        rsshape = result.squeeze().shape
-        if len(result.squeeze().shape)>1:
+        result_sq = result.squeeze()
+        if len(result_sq.shape)>1:
             n_base = result.shape[1]
             """Number of base sensitivities"""
             if self.states.isEnabled('base_sensitivities'):
@@ -298,12 +309,17 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             # remove bogus dimensions
             # XXX we might need to come up with smth better. May be some naive
             # combiner? :-)
-            result = result.squeeze()
+            result = result_sq
 
         # call base class postcall
         result = DatasetMeasure._postcall(self, dataset, result)
 
         return result
+
+    @property
+    def combiner(self):
+        """Return combiner"""
+        return self.__combiner
 
 
 
@@ -653,6 +669,10 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzer output just to pass through"""
 
+    clf_sensitivities = StateVariable(enabled=False,
+        doc="Stores sensitivities of the proxied classifier")
+
+
     @group_kwargs(prefixes=['slave_'], assign=True)
     def __init__(self,
                  clf,
@@ -696,7 +716,10 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         if clfclf.trained:
             analyzer._force_training = False
 
-        return analyzer._call(dataset)
+        result = analyzer._call(dataset)
+        self.clf_sensitivities = result
+
+        return result
 
     analyzer = property(fget=lambda x:x.__analyzer)
 
@@ -707,6 +730,20 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def _call(self, dataset):
         sens = super(MappedClassifierSensitivityAnalyzer, self)._call(dataset)
+        # So we have here the case that some sensitivities are given
+        #  as nfeatures x nclasses, thus we need to take .T for the
+        #  mapper and revert back afterwards
+        # devguide's TODO lists this point to 'disguss'
+        sens_mapped = self.clf.mapper.reverse(sens.T)
+        return sens_mapped.T
+
+
+class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    """Set sensitivity analyzer output be reverse mapped using mapper of the
+    slave classifier"""
+
+    def _call(self, dataset):
+        sens = super(FeatureSelectionClassifierSensitivityAnalyzer, self)._call(dataset)
         # So we have here the case that some sensitivities are given
         #  as nfeatures x nclasses, thus we need to take .T for the
         #  mapper and revert back afterwards

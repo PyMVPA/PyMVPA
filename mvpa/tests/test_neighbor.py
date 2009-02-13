@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -46,6 +46,20 @@ class MetricTests(unittest.TestCase):
         metric = DescreteMetric(elsize, manhattenDistance)
         for point in metric.getNeighbor([2,2], distance):
             self.failUnless( manhattenDistance(point, [2,2]) <= distance)
+
+        metric.elementsize = [10, 1.5]
+        """We can reassign element size as a whole"""
+        self.failUnless((metric.elementsize == [10, 1.5]).all())
+
+        try:
+            metric.elementsize[1] = 1
+            self.fail(msg="We should not be able to reassign parts of elementsize")
+        except RuntimeError:
+            pass
+
+        self.failUnless((metric.getNeighbors([2,2], 2.6) ==
+                         [t for t in target if t[0]==2]).all())
+        """Check if new elementsize is in effect for getNeighbors"""
 
 
     def testDescreteMetricCompatMask(self):

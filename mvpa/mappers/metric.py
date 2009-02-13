@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -200,8 +200,19 @@ class DescreteMetric(Metric):
         """
         return self.__filter_coord
 
+    def _setElementSize(self, v):
+        # reset filter radius
+        _elementsize = N.array(v, ndmin=1)
+        # assure that it is read-only and it gets reassigned
+        # only as a whole to trigger this house-keeping
+        _elementsize.flags.writeable = False
+        self.__elementsize = _elementsize
+        self.__Ndims = len(_elementsize)
+        self.__filter_radius = None
+
     filter_coord = property(fget=_getFilter, fset=_setFilter)
-    elementsize = property(fget=lambda self: self.__elementsize)
+    elementsize = property(fget=lambda self: self.__elementsize,
+                           fset=_setElementSize)
 
 # Template for future classes
 #

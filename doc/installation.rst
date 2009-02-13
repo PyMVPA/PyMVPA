@@ -334,6 +334,16 @@ list of available 3rd party packages please see::
 
   > $ port variants py25-pymvpa
 
+If this is your first time using MacPorts Python 2.5 will be automatically
+installed for you. However, an additional step is needed::
+
+  $ sudo port install python_select
+  $ sudo python_select python25
+
+MacPorts has the ability of installing several Python versions at a time, the
+`python_select` utility ensures that the default Python (located at
+`/opt/local/bin/python`) points to your preferred version.
+
 Upon success, open a terminal window and start Python by typing `python` and
 hit return. Now try to import the PyMVPA module by doing:
 
@@ -356,7 +366,7 @@ Service`_, first download it from the `OpenSUSE software website`_.
 .. note::
 
    This site does not only offer OpenSUSE packages, but also binaries for other
-   distributions, including: CentOS 5, Fedora 9, Mandriva 2007-2008, RedHat
+   distributions, including: CentOS 5, Fedora 9-10, Mandriva 2007-2008, RedHat
    Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE 10.2 up to 11.0.
 
 Once downloaded, open a console and invoke (the example command refers to
@@ -368,7 +378,7 @@ The OpenSUSE website also offers `1-click-installations`_ for distributions
 supporting it.
 
 A more convenient way to install PyMVPA and automatically receive software
-updates is to included one of the `RPM-package repositories`_ in the system's
+updates is to included one of the RPM-package repositories in the system's
 package management configuration. For e.g. OpenSUSE 11.0, simply use Yast to add
 another repository, using the following URL:
 
@@ -377,9 +387,12 @@ another repository, using the following URL:
 For other distributions use the respective package managers (e.g. Yum) to setup
 the repository URL.  The repositories include all core dependencies of PyMVPA
 (usually Numpy and PyNIfTI), if they are not available from other repositories
-of the respective distribution.
+of the respective distribution. There are two different repository groups, one
+for `Suse and Mandriva-related packages`_ and another one for `Fedora, Redhat
+and CentOS-related packages`_.
 
-.. _RPM-package repositories: http://download.opensuse.org/repositories/home:/hankem/
+.. _Suse and Mandriva-related packages: http://download.opensuse.org/repositories/home:/hankem/
+.. _Fedora, Redhat and CentOS-related packages: http://download.opensuse.org/repositories/home://hankem://rh5/
 .. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
 .. _OpenSUSE software website: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
 .. _OpenSUSE Build Service: https://build.opensuse.org/

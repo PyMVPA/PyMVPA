@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -83,7 +83,7 @@ the sensitivity scores. The resulting vectors are then mapped back into the
 dataspace of the original fMRI samples, which are then plotted."""
 
 fig = 0
-P.figure(figsize=(14,8))
+P.figure(figsize=(14, 8))
 
 keys = sensanas.keys()
 keys.sort()
@@ -95,7 +95,7 @@ for s in keys:
     # compute sensitivies
     # I-RELIEF assigns zeros, which corrupts voxel masking for pylab's
     # imshow, so adding some epsilon :)
-    smap = sensanas[s](dataset)+0.00001 
+    smap = sensanas[s](dataset)+0.00001
 
     # map sensitivity map into original dataspace
     orig_smap = dataset.mapReverse(smap)
@@ -103,7 +103,7 @@ for s in keys:
 
     # make a new subplot for each classifier
     fig += 1
-    P.subplot(3,3,fig)
+    P.subplot(3, 3, fig)
 
     P.title(s)
 

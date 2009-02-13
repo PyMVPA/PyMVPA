@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -38,7 +38,9 @@ class Searchlight(DatasetMeasure):
             and returns some measure when called.
           radius: float
             All features within the radius around the center will be part
-            of a sphere.
+            of a sphere. Provided dataset should have a metric assigned
+            (for NiftiDataset, voxel size is used to provide such a metric,
+            hence radius should be specified in mm).
           center_ids: list(int)
             List of feature ids (not coordinates) the shall serve as sphere
             centers. By default all features will be used.

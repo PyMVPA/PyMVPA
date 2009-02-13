@@ -35,14 +35,17 @@ What this Manual is NOT
 .. index:: textbook, review, API reference, examples
 
 This manual does not make an attempt to be a comprehensive introduction into
-machine learning *theory*. There is a wealth
-of high-quality text books about this field available. A very good example is:
-`Pattern Recognition and Machine Learning`_ by `Christopher M. Bishop`_.
+machine learning *theory*. There is a wealth of high-quality text books about
+this field available. A very good example is: `Pattern Recognition and Machine
+Learning`_ by `Christopher M. Bishop`_.
 
-A good starting point to learn about the application of machine learning
-algorithms to (f)MRI data are two recent reviews by
-:ref:`Norman et al. (2006) <NPD+06>` and
-:ref:`Haynes and Rees (2006) <HR06>`.
+There is a growing number of introductory papers about the application of
+machine learning algorithms to (f)MRI data. A very high-level overview about
+the basic principles is available in :ref:`Mur et al. (2009) <MBK09>`. A more
+detailed tutorial covering a wide variety of aspects is provided in
+:ref:`Pereira et al. (in press) <PMB+IP>`. Two reviews by :ref:`Norman et al.
+(2006) <NPD+06>` and :ref:`Haynes and Rees (2006) <HR06>` give a broad overview
+about the literature.
 
 This manual also does not describe every technical bit and piece of the PyMVPA
 package, but is instead focused on the user perspective. Developers should have
@@ -157,13 +160,13 @@ faster and easier than it has ever been before.
 Authors & Contributors
 ======================
 
-.. include:: authors.txt
+.. include:: authors.rst
 
 
 How to cite PyMVPA
 ==================
 
-.. include:: publications.txt
+.. include:: publications.rst
 
 
 Acknowledgements

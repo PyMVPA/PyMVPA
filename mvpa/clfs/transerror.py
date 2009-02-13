@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -254,6 +254,7 @@ class ROCCurve(object):
         # take sets which have values in the shape we can handle
         def _checkValues(set_):
             """Check if values are 'acceptable'"""
+            if len(set_)<3: return False
             x = set_[2]
             # TODO: OPT: need optimization
             if (x is None) or len(x) == 0: return False          # undefined
@@ -525,8 +526,8 @@ class ConfusionMatrix(SummaryStatistics):
 
         # reverse mapping from label into index in the list of labels
         rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
-        for iset, (targets, predictions, values) in enumerate(self.sets):
-            for t,p in zip(targets, predictions):
+        for iset, set_ in enumerate(self.sets):
+            for t,p in zip(*set_[:2]):
                 mat_all[iset, rev_map[p], rev_map[t]] += 1
 
 
@@ -773,6 +774,7 @@ class ConfusionMatrix(SummaryStatistics):
         if labels_map_rev is not None:
             labels_rev = [','.join([str(x) for x in labels_map_rev[l]])
                                    for l in labels]
+            labels_map_full = dict(zip(labels_rev, labels))
 
         if labels_order is not None:
             labels_order_filtered = filter(lambda x:x is not None, labels_order)
@@ -782,13 +784,13 @@ class ConfusionMatrix(SummaryStatistics):
                 # We were provided numerical (most probably) set
                 labels_plot = labels_order
             elif len(labels_rev) \
-                     and Set(labels_map.keys()) == labels_order_filtered_set:
+                     and Set(labels_rev) == labels_order_filtered_set:
                 # not clear if right whenever there were multiple labels
                 # mapped into the same
                 labels_plot = []
                 for l in labels_order:
                     v = None
-                    if l is not None: v = labels_map[l]
+                    if l is not None: v = labels_map_full[l]
                     labels_plot += [v]
             else:
                 raise ValueError, \
@@ -815,12 +817,13 @@ class ConfusionMatrix(SummaryStatistics):
         ticks = []
         tick_labels = []
         # populate in a silly way
-
+        reordered_indexes = [labels_indexes[i] for i in labels_plot
+                             if i is not None]
         for i, l in enumerate(labels_plot):
             if l is not None:
                 j = labels_indexes[l]
-                confusionmatrix[i, non_empty] = matrix[j, :]
-                confusionmatrix[non_empty, i] = matrix[:, j]
+                confusionmatrix[i, non_empty] = matrix[j, reordered_indexes]
+                confusionmatrix[non_empty, i] = matrix[reordered_indexes, j]
                 ticks += [i + 0.5]
                 if labels_map_rev is not None:
                     tick_labels += ['/'.join(labels_map_rev[l])]
@@ -841,7 +844,7 @@ class ConfusionMatrix(SummaryStatistics):
 
         # some customization depending on the origin
         xticks_position, yticks, ybottom = {
-            'upper': ('top', ticks[::-1], 0.1),
+            'upper': ('top', [Nlabels-x for x in ticks], 0.1),
             'lower': ('bottom', ticks, 0.2)
             }[origin]
 
@@ -893,6 +896,8 @@ class ConfusionMatrix(SummaryStatistics):
         if P.matplotlib.get_backend() == 'TkAgg':
             P.ion()
         P.draw()
+        # Store it primarily for testing
+        self._plotted_confusionmatrix = confusionmatrix
         return fig, im, cb
 
 

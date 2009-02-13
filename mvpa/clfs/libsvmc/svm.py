@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -334,16 +334,18 @@ class SVM(_SVM):
 #        SVM.__init__(self, kernel_type='rbf',
 #                     svm_impl='C_SVC', **kwargs)
 #
-#
-# check if there is a libsvm version with configurable
-# noise reduction ;)
-if externals.exists('libsvm verbosity control'):
+
+# try to configure libsvm 'noise reduction'. Due to circular imports,
+# we can't check externals here since it would not work.
+try:
+    # if externals.exists('libsvm verbosity control'):
     if __debug__ and "LIBSVM" in debug.active:
         debug("LIBSVM", "Setting verbosity for libsvm to 255")
         svm.svmc.svm_set_verbosity(255)
     else:
         svm.svmc.svm_set_verbosity(0)
-
+except AttributeError:
+    warning("Available LIBSVM has no way to control verbosity of the output")
 
 
 class LinearSVMWeights(Sensitivity):

@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -111,8 +111,13 @@ setup(name         = 'pymvpa',
                        'mvpa.tests',
                        'mvpa.support'
                        ],
-      data_files = [('mvpa/data', ['mvpa/data'])],
-      scripts      = glob( 'bin/*' ),
+      data_files = [('mvpa/data',
+                     [f for f in glob(os.path.join('mvpa', 'data', '*'))
+                         if os.path.isfile(f)]),
+                    ('mvpa/data/bv',
+                     [f for f in glob(os.path.join('mvpa', 'data', 'bv', '*'))
+                         if os.path.isfile(f)])],
+      scripts      = glob(os.path.join('bin', '*')),
       ext_modules  = ext_modules
       )
 

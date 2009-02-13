@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -277,12 +277,7 @@ class SMLR(Classifier):
         # calcualte the log likelihoods and posteriors for the training data
         #log_likelihood = x
 
-#        if __debug__:
-#            debug("SMLR_", \
-#                  "SMLR converged after %d steps. Error: %g" % \
-#                  (cycles, XXX))
-
-#        print 'cycles=%d ; wasted basis=%g\n' % (cycles, wasted_basis/((M-1)*nd))
+        return cycles
 
 
     def _train(self, dataset):

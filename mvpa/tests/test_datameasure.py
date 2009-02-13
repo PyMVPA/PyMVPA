@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -82,6 +82,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                               'confusion'])
         sana = mclf.getSensitivityAnalyzer(transformer=Absolute,
                                            enable_states=["sensitivities"])
+
+        # Test access to transformers and combiners
+        self.failUnless(sana.transformer is Absolute)
+        self.failUnless(sana.combiner is FirstAxisMean)
         # and lets look at all sensitivities
 
         # and we get sensitivity analyzer which works on splits
