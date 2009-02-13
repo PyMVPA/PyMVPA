@@ -34,7 +34,6 @@ Preprocessing
 
 .. toctree::
 
-   examples/preproc_fsl_ev
    examples/projections
    examples/smellit
 
