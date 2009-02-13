@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -11,6 +11,7 @@
 import unittest
 from mvpa.support.copy import copy
 
+from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 
@@ -225,7 +226,7 @@ class ErrorsTests(unittest.TestCase):
 
 
 
-    def _testConfusionPlot(self):
+    def testConfusionPlot(self):
         """Based on existing cell dataset results.
 
         Let in for possible future testing, but is not a part of the
@@ -237,7 +238,6 @@ class ErrorsTests(unittest.TestCase):
         ##rcmpl('font',  family='sans', style='normal', variant='normal',
         ##   weight='bold',  stretch='normal', size='large')
         #import numpy as N
-        import pylab as P
         #from mvpa.clfs.transerror import \
         #     TransferError, ConfusionMatrix, ConfusionBasedError
 
@@ -462,16 +462,29 @@ class ErrorsTests(unittest.TestCase):
                       'song3': 45,
                       'song4': 46,
                       'song5': 47}
-        labels_order = ("3kHz","7kHz","12kHz","20kHz","30kHz", None,
-                        "song1","song2","song3","song4","song5")
-        cm = ConfusionMatrix(sets=sets, labels_map=labels_map)
-        print cm
-        P.figure()
-        fig, im, cb = cm.plot(origin='lower', labels=labels_order)
-        fig.savefig('/tmp/1.svg')
-        #P.figure()
-        #fig, im, cb = cm.plot(labels=labels_order)
-        #P.show()
+        try:
+            cm = ConfusionMatrix(sets=sets, labels_map=labels_map)
+        except:
+            self.fail()
+        self.failUnless('3kHz / 38' in cm.asstring())
+
+        if externals.exists("pylab plottable"):
+            import pylab as P
+            P.figure()
+            labels_order = ("3kHz", "7kHz", "12kHz", "20kHz","30kHz", None,
+                            "song1","song2","song3","song4","song5")
+            #print cm
+            #fig, im, cb = cm.plot(origin='lower', labels=labels_order)
+            fig, im, cb = cm.plot(labels=labels_order[1:2] + labels_order[:1]
+                                         + labels_order[2:], numbers=True)
+            self.failUnless(cm._plotted_confusionmatrix[0,0] == cm.matrix[1,1])
+            self.failUnless(cm._plotted_confusionmatrix[0,1] == cm.matrix[1,0])
+            self.failUnless(cm._plotted_confusionmatrix[1,1] == cm.matrix[0,0])
+            self.failUnless(cm._plotted_confusionmatrix[1,0] == cm.matrix[0,1])
+            P.close(fig)
+            fig, im, cb = cm.plot(labels=labels_order, numbers=True)
+            P.close(fig)
+            # P.show()
 
 
 def suite():

@@ -1,3 +1,16 @@
+@Comment{
+  This file is used to autogenerate doc/references.rst
+  using tools/bib2rst_ref.py .
+
+  Due to external dependency on pybliographer (which is
+  discontinued project), automatic regeneration is not enabled,
+  thus you are required to run
+
+  make references
+
+  to regenerate doc/references.rst if you modified this file.
+}
+
 @Article{ HGF+01,
 	Author = "J.V. Haxby and M.I. Gobbini and M.L. Furey and A. Ishai and J.L. Schouten and P. Pietrini",
 	Title = "Distributed and overlapping representations of faces and objects in ventral temporal cortex.",
@@ -141,10 +154,10 @@
 	Journal = "Human Brain Mapping",
 	title = "Nonparametric permutation tests for functional neuroimaging: a primer with examples.",
 	pages = "1–25",
-	affiliation = "Department of Biostatistics, University of Michigan, Ann Arbor, Michigan, USA.",
 	author = "Thomas E Nichols and Andrew P Holmes",
-	pymvpa-summary = "Overview of standard nonparametric randomization and permutation testing applied to neuroimaging data (e.g. fMRI)",
-	doi = "10.1002/hbm.1058"
+	doi = "10.1002/hbm.1058",
+	affiliation = "Department of Biostatistics, University of Michigan, Ann Arbor, Michigan, USA.",
+	pymvpa-summary = "Overview of standard nonparametric randomization and permutation testing applied to neuroimaging data (e.g. fMRI)"
 }
 
 @Article{ SMM+08,
@@ -213,6 +226,19 @@
 	doi = "10.1016/j.neuroimage.2004.05.020"
 }
 
+@Article{ ZH05,
+	title = "Regularization and variable selection via the elastic net",
+	author = "H. Zou and T. Hastie",
+	journal = "Journal of the Royal Statistical Society Series B",
+	volume = "67",
+	number = "2",
+	pages = "301–320",
+	year = "2005",
+	publisher = "Blackwell Synergy",
+	keywords = "Feature Selection, Machine Learning",
+	url = "http://www-stat.stanford.edu/%7Ehastie/Papers/B67.2%20(2005)%20301-320%20Zou%20%26%20Hastie.pdf"
+}
+
 @Article{ MHN+04,
 	title = "Learning to Decode Cognitive States from Brain Images",
 	author = "Tom Mitchell and Rebecca Hutchinson and Radu S. Niculescu and Francisco Pereira and Xuerui Wang and Marcel Just and Sharlene Newman",
@@ -253,12 +279,17 @@
 	address = "Available online at http://www.pymvpa.org/PyMVPA-Manual.pdf"
 }
 
-@Article{ HHS+IP,
+@Article{ HHS+09a,
 	title = "PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data",
 	author = "Michael Hanke and Yaroslav O Halchenko and Per B Sederberg and Stephen José Hanson and James V Haxby and Stefan Pollmann",
 	journal = "Neuroinformatics",
-	year = "in press",
-	pymvpa-summary = "Introduction into the analysis of fMRI data using PyMVPA."
+	year = "2009",
+	pymvpa-summary = "Introduction into the analysis of fMRI data using PyMVPA.",
+	pages = "37–53",
+	volume = "7",
+	number = "1",
+	doi = "10.1007/s12021-008-9041-y",
+	pymvpa-keywords = "PyMVPA, fMRI"
 }
 
 @Article{ PMB+IP,
@@ -267,5 +298,26 @@
 	journal = "Neuroimage",
 	year = "in press",
 	doi = "10.1016/j.neuroimage.2008.11.007"
+}
+
+@Article{ HHS+09b,
+	issn = "1662-5196",
+	volume = "3",
+	year = "2009",
+	journal = "Frontiers in Neuroinformatics",
+	title = "PyMVPA: A Unifying Approach to the Analysis of Neuroscientific Data.",
+	pages = "3",
+	author = "Michael Hanke and Yaroslav O Halchenko and Per B Sederberg and Emanuele Olivetti and Ingo Fründ and Jochem W Rieger and Christoph S Herrmann and James V Haxby and Stephen José Hanson and Stefan Pollmann",
+	doi = "10.3389/neuro.11.003.2009",
+	pymvpa-keywords = "PyMVPA, fMRI, EEG, MEG, extracellular recordings",
+	pymvpa-summary = "Demonstration of PyMVPA capabilities concerning multi-modal or modality-agnostic data analysis."
+}
+
+@Article{ MBK09,
+	year = "2009",
+	journal = "Social Cognitive and Affective Neuroscience",
+	title = "Revealing representational content with pattern-information fMRI--an introductory guide.",
+	author = "Marieke Mur and Peter A Bandettini and Nikolaus Kriegeskorte",
+	doi = "10.1093/scan/nsn044",
 }
 

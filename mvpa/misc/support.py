@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -281,7 +281,7 @@ class Event(dict):
     """Simple class to define properties of an event.
 
     The class is basically a dictionary. Any properties can
-    be pass as keyword arguments to the constructor, e.g.:
+    be passed as keyword arguments to the constructor, e.g.:
 
       >>> ev = Event(onset=12, duration=2.45)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -23,7 +23,7 @@ if not os.path.exists(outpath):
 
 def procExample(filename):
     #  doc filename
-    dfilename = filename[:-3] + '.txt'
+    dfilename = filename[:-3] + '.rst'
 
     # open source file
     xfile = open(filename)

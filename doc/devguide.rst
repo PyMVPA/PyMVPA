@@ -89,7 +89,7 @@ The first docstring in each example must have a proper section heading (with '='
 markup).
 
 Finally, each example should be added to the appropriate `toctree` in
-`doc/examples.txt`.
+`doc/examples.rst`.
 
 
 Code Formatting
@@ -441,6 +441,7 @@ categories:
   * *BF* : bug fix
   * *RF* : refactoring
   * *NF* : new feature
+  * *BW* : addresses backward-compatibility
   * *OPT* : optimization
   * *BK* : breaks something and/or tests fail
   * *PL* : making pylint happier

@@ -69,11 +69,11 @@ mask.nii.gz
 
 attributes_literal.txt
   A two-column text file with the stimulation condition and the corresponding
-  experimental run for each volume in the timeseries image. The labels a given
+  experimental run for each volume in the timeseries image. The labels are given
   in literal form (e.g. 'face').
 
 attributes.txt
-  Similar as `attributes_literal.txt`, but with the condition labels encoded as
+  Similar to `attributes_literal.txt`, but with the condition labels encoded as
   integers. This file is only provided for earlier PyMVPA version, that could
   not handle :ref:`literal labels <faq_literal_labels>`.
 

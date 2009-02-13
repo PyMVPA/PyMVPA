@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -36,7 +36,8 @@ from mvpa.misc.transformers import FirstAxisMean
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
-    MappedClassifierSensitivityAnalyzer
+    MappedClassifierSensitivityAnalyzer, \
+    FeatureSelectionClassifierSensitivityAnalyzer
 
 from mvpa.base import warning
 
@@ -984,7 +985,7 @@ class MappedClassifier(ProxyClassifier):
         """Return an appropriate SensitivityAnalyzer"""
         return MappedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
+                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
 
 
@@ -1118,7 +1119,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         had to clone from mapped classifier???
         """
-        return MappedClassifierSensitivityAnalyzer(
+        return FeatureSelectionClassifierSensitivityAnalyzer(
                 self,
                 analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)

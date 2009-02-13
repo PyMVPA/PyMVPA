@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -442,12 +442,13 @@ class FixedNElementTailSelector(TailSelector):
             Number of elements to select/discard.
         """
         TailSelector.__init__(self, **kwargs)
+        self.__nelements = None
         self._setNElements(nelements)
 
 
     def __repr__(self):
         return "%s number=%f" % (
-            TailSelector.__repr__(self), self.__nelements)
+            TailSelector.__repr__(self), self.nelements)
 
 
     def _getNElements(self, seq):
