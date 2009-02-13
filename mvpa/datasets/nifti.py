@@ -241,32 +241,43 @@ class NiftiDataset(MappedDataset):
 
 
     def getDt(self):
+        """Return the temporal distance of two samples/volumes.
+
+        This method tries to be clever and always returns `dt` in seconds, by
+        using unit information from the NIfTI header. If such information is
+        not present the assumed unit will also be `seconds`.
+        """
         # plain value
         hdr = self.niftihdr
         TR = hdr['pixdim'][4]
+
+        # by default assume seconds as unit and do not scale
+        scale = 1.0
+
         # figure out units, if available
-        unit = 1.0
         if hdr.has_key('time_unit'):
-            unit = hdr['time_unit']
-            if unit == 0.0:
-                warning("Errorneous time_unit %f. Assuming seconds (i.e. 1.0)" %
-                        (unit,))
-                unit = 1.0
+            unit_code = hdr['time_unit']
         elif hdr.has_key('xyzt_unit'):
             unit_code = int(hdr['xyzt_unit']) / 8
-            if unit_code in [0, 1, 2, 3]:
-                if unit_code == 0:
-                    warning("Time units were not specified in NiftiImage. "
-                            "Assuming seconds.")
-                unit = [ 1.0, 1.0, 1e-3, 1e-6 ][unit_code]
-            else:
-                warning("Time units are incorrectly coded: value %d whenever "
-                        "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
-                        "Assuming seconds.")
         else:
             warning("No information on time units is available. Assuming "
                     "seconds")
-        return TR * unit
+            unit_code = 0
+
+        # handle known units
+        # XXX should be refactored to use actual unit labels from pynifti
+        # when version 0.20090205 or later is assumed to be available on all
+        # machines
+        if unit_code in [0, 1, 2, 3]:
+            if unit_code == 0:
+                warning("Time units were not specified in NiftiImage. "
+                        "Assuming seconds.")
+            scale = [ 1.0, 1.0, 1e-3, 1e-6 ][unit_code]
+        else:
+            warning("Time units are incorrectly coded: value %d whenever "
+                    "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
+                    "Assuming seconds.")
+        return TR * scale
 
 
     niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
