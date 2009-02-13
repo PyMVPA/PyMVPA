@@ -158,6 +158,12 @@ experiments.
   DOI: http://dx.doi.org/10.1023/B:MACH.0000035475.85309.1b
 
 
+.. _MBK09:
+
+**Mur, M., Bandettini, P. A. & Kriegeskorte, N.** (2009). Revealing representational content with pattern-information fMRI--an introductory guide. *Social Cognitive and Affective Neuroscience*.
+  DOI: http://dx.doi.org/10.1093/scan/nsn044
+
+
 .. _NH02:
 
 **Nichols, T. E. & Holmes, A. P.** (2002). Nonparametric permutation tests for functional neuroimaging: a primer with examples. *Human Brain Mapping*, *15*, 1–25.
