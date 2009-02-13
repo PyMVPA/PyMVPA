@@ -372,6 +372,6 @@ def smoothRsT(s):
 # do it
 bib = BibTeX('doc/misc/references.bib')
 
-refpage = open('doc/references.txt', 'w')
+refpage = open('doc/references.rst', 'w')
 refpage.write(bib2rst_references(bib))
 refpage.close()

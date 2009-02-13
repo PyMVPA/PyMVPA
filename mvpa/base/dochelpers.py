@@ -16,6 +16,7 @@ import re, textwrap
 import numpy as N
 from math import ceil
 from StringIO import StringIO
+from mvpa import cfg
 
 from mvpa.base import externals
 if __debug__:
@@ -181,6 +182,10 @@ def enhancedDocString(item, *args, **kwargs):
         lcl = item.__dict__
     else:
         raise ValueError, "Don't know how to extend docstring for %s" % item
+
+    # check whether docstring magic is requested or not
+    if not cfg.getboolean('doc', 'pimp docstrings', True):
+        return  lcl['__doc__']
 
     #return lcl['__doc__']
     rst_lvlmarkup = ["=", "-", "_"]

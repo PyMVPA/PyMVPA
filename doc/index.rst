@@ -27,6 +27,12 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
+The `online documentation editor`_ is now available [11 Feb 2009]
+
+  It is powered by pydocweb_ -- the same software that also drives the Numpy
+  documentation editor.
+
+
 PyMVPA 0.4.1 is out [23 Jan 2009]
 
   This is mostly a bugfix release with a futher improved documentation.
@@ -37,33 +43,49 @@ New articles on PyMVPA available [21 Jan 2009]
 
   Please see the Publications_ section for details.
 
-
+.. _pydocweb: https://code.launchpad.net/~pauli-virtanen/scipy/pydocweb
 
 Documentation
 =============
 
-* :ref:`User Documentation <contents>` (**the** documentation)
+For users
+---------
+
+* :ref:`User Documentation <contents>` (**the** documentation) -- it is also
+  possible to edit and improve the documentation, using the `online
+  documentation editor`_.
+
+.. _online documentation editor: edt/
+
 * :ref:`Installation Instructions <installation>`
-* :ref:`Development Changelog <changelog>` (see what has changed)
-* :ref:`Developer Guidelines <devguide>` (information for people contributing
-  code)
 * :ref:`Module Reference <modref>` (user-oriented reference, less complex than full API docs)
-* `API Reference`_ (comprehensive and up-to-date information about the details
-  of the implementation)
+
 * :ref:`FAQ <faq>` (short answers to common problems)
 * :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
   <HGF+01>`)
-* :ref:`genindex` (access by keywords)
-* :ref:`search` (online and offline full-text search)
-
-.. _API Reference: api/index.html
+* :ref:`Development Changelog <changelog>` (see what has changed)
 
 * `PyMVPA Manual (PDF)`_ (all documentation except for developer guidelines
   and API reference)
-* `Developer Guidelines (PDF)`_
 
 .. _PyMVPA Manual (PDF): PyMVPA-Manual.pdf
+
+* :ref:`genindex` (access by keywords)
+* :ref:`search` (online and offline full-text search)
+
+
+For developers
+--------------
+
+* :ref:`Developer Guidelines <devguide>` (information for people contributing
+  code)
+* `API Reference`_ (comprehensive and up-to-date information about the details
+  of the implementation)
+
+* `Developer Guidelines (PDF)`_
+
 .. _Developer Guidelines (PDF): PyMVPA-DevGuide.pdf
+.. _API Reference: api/index.html
 
 
 License
@@ -96,9 +118,10 @@ Binary packages are available for:
 
 * RPM-based GNU/Linux distributions (:ref:`installation instructions <install_rpm>`)
     RPM packages are provided through the `OpenSUSE Build Service`_. The
-    currently supported distributions include: CentOS 5, Fedora 9, Mandriva
+    currently supported distributions include: CentOS 5, Fedora 9-10, Mandriva
     2007-2008, RedHat Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE
-    10.2 up to 11.0. The build service supports `RPM-package repositories`_ and
+    10.2 up to 11.0. The build service supports RPM-package repositories (`Suse
+    and Mandriva-related`_ and `Fedora, Redhat and CentOS-related`_) and
     `1-click-installations`_.
 
 * MacOS X (:ref:`installation instructions <install_macos>`)
@@ -114,7 +137,8 @@ platform, you need to compile your own. The manual contains :ref:`instructions
 .. _MacPorts: http://www.macports.org
 .. _official Debian package: http://packages.debian.org/python-mvpa
 .. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
-.. _RPM-package repositories: http://download.opensuse.org/repositories/home:/hankem/
+.. _Suse and Mandriva-related: http://download.opensuse.org/repositories/home:/hankem/
+.. _Fedora, Redhat and CentOS-related: http://download.opensuse.org/repositories/home://hankem://rh5/
 .. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
 .. _OpenSUSE Build Service: https://build.opensuse.org/
 
@@ -177,13 +201,13 @@ PyMVPA home page.
 Publications
 ============
 
-.. include:: publications.txt
+.. include:: publications.rst
 
 
 Authors & Contributors
 ======================
 
-.. include:: authors.txt
+.. include:: authors.rst
 
 
 Similar or Related Projects
