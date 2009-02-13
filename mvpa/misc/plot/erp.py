@@ -1,5 +1,5 @@
-#emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -38,8 +38,10 @@ def _offset(ax, x, y):
     """
     d = dir(mlt)
     if 'offset_copy' in d:
-        # ??? not tested but should work ;-)
-        return mlt.offset_copy(ax.transData, x=x, y=y, units='dots')
+        # tested with python-matplotlib 0.98.3-5
+        # ??? if pukes, might need to replace 2nd parameter from
+        #     ax to ax.get_figure()
+        return mlt.offset_copy(ax.transData, ax, x=x, y=y, units='dots')
     elif 'BlendedAffine2D' in d:
         # some newer versions of matplotlib
         return ax.transData + \
