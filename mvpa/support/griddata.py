@@ -19,8 +19,6 @@ if __debug__:
     from mvpa.base import debug
 
 try:
-    from matplotlib.mlab import griddata
-except ImportError:
     if sys.version_info[:2] >= (2, 5):
         # enforce absolute import
         griddata = __import__('griddata', globals(), locals(), [], 0).griddata
@@ -30,7 +28,20 @@ except ImportError:
         oldname = __name__
         # crazy name with close to zero possibility to cause whatever
         __name__ = 'iaugf9zrkjsbdv91'
-        from griddata import griddata
-        # restore old settings
-        __name__ = oldname
+        try:
+            from griddata import griddata
+            # restore old settings
+            __name__ = oldname
+        except ImportError:
+            # restore old settings
+            __name__ = oldname
+            raise
+        if __debug__:
+            debug('EXT', 'Using python-griddata')
+except ImportError:
+    from matplotlib.mlab import griddata
+    if __debug__:
+        debug('EXT', 'Using matplotlib.mlab.griddata')
+
+
 
