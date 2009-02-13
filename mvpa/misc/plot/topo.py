@@ -90,9 +90,13 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
     # do fit
     (r, cx, cy, cz), stuff = leastsq(err, params)
 
+    # size of each square
+    ssh = float(r) / resolution         # half-size
+    ss = ssh * 2.0                      # full-size
+
     # Generate a grid and interpolate using the griddata module
-    x = N.arange(cx - r, cx + r, 2. * r / resolution)
-    y = N.arange(cy - r, cy + r, 2. * r / resolution)
+    x = N.arange(cx - r, cx + r, ss) + ssh
+    y = N.arange(cy - r, cy + r, ss) + ssh
     x, y = P.meshgrid(x, y)
 
     # project the sensor locations onto the sphere
@@ -102,7 +106,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
     sproj += sphere_center
 
     # fit topology onto xy projection of sphere
-    topo = griddata(sproj[:, 0], sproj[:, 1],\
+    topo = griddata(sproj[:, 0], sproj[:, 1],
             N.ravel(N.array(topography)), x, y)
 
     # mask values outside the head
@@ -117,7 +121,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
 
     if plothead:
         # plot scaled head outline
-        head = plotHeadOutline(scale=r, shift=(cx, cy), **plothead_kwargs)
+        head = plotHeadOutline(scale=r, shift=(cx/2.0, cy/2.0), **plothead_kwargs)
     else:
         head = None
 
@@ -129,7 +133,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
         zenum = [x[::-1] for x in enumerate(sproj[:, 2].tolist())]
         zenum.sort()
         indx = [ x[1] for x in zenum ]
-        sensors = P.plot(sproj[indx, 0], sproj[indx, 1], 'wo')
+        sensors = P.plot(sproj[indx, 0] - cx/2.0, sproj[indx, 1] - cy/2.0, 'wo')
     else:
         sensors = None
 
