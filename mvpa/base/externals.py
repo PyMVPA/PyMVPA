@@ -192,14 +192,14 @@ def __check_griddata():
     """
 
     try:
-        from matplotlib.mlab import griddata as __
+        from griddata import griddata as __
         return True
     except ImportError:
-        pass
+        if __debug__:
+            debug('EXT_', 'No python-griddata available')
 
-    from griddata import griddata as __
+    from matplotlib.mlab import griddata as __
     return True
-
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
