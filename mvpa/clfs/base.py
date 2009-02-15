@@ -22,7 +22,7 @@ from mvpa.support.copy import deepcopy
 import time
 
 from mvpa.misc.support import idhash
-from mvpa.misc.state import StateVariable, Parametrized
+from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
@@ -33,7 +33,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class Classifier(Parametrized):
+class Classifier(ClassWithCollections):
     """Abstract classifier class to be inherited by all classifiers
     """
 
@@ -129,7 +129,7 @@ class Classifier(Parametrized):
     def __init__(self, **kwargs):
         """Cheap initialization.
         """
-        Parametrized.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
 
         self.__trainednfeatures = None

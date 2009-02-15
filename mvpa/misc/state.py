@@ -1418,8 +1418,6 @@ class ClassWithCollections(object):
 # No actual separation is needed now between ClassWithCollections
 # and a specific usecase.
 Stateful = ClassWithCollections
-Parametrized = ClassWithCollections
-
 
 
 class Harvestable(Stateful):

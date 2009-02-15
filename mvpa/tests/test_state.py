@@ -15,7 +15,7 @@ from sets import Set
 
 from mvpa.base import externals
 
-from mvpa.misc.state import Stateful, StateVariable, Parametrized, \
+from mvpa.misc.state import Stateful, StateVariable, ClassWithCollections, \
      ParameterCollection, _def_sep
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
@@ -43,7 +43,7 @@ class TestClassProperChild(TestClassProper):
     state4 = StateVariable(enabled=False, doc="state4 doc")
 
 
-class TestClassParametrized(TestClassProper, Parametrized):
+class TestClassParametrized(TestClassProper, ClassWithCollections):
     p1 = Parameter(0)
     state0 = StateVariable(enabled=False)
 
@@ -51,7 +51,7 @@ class TestClassParametrized(TestClassProper, Parametrized):
         # XXX make such example when we actually need to invoke
         # constructor
         # TestClassProper.__init__(self, **kwargs)
-        Parametrized.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
 
 class StateTests(unittest.TestCase):
