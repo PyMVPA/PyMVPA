@@ -27,3 +27,9 @@ already familiar with the `Matlab MVPA toolbox`_. If you are using both
 packages and could compile a few tips, your contribution would be most welcome.
 
 .. _Matlab MVPA toolbox: http://www.csbmb.princeton.edu/mvpa/
+
+A recent paper by :ref:`Jurica and van Leeuwen (2009) <JL09>` describes an
+open-source MATLAB®-to-Python compiler which might be a very useful tool to
+migrate a substantial amount of Matlab-based source code to Python and
+therefore also aids the migration of developers from Matlab to the new *"general
+open-source lingua franca for scientific computation"*.
