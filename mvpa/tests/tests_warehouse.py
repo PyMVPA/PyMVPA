@@ -20,7 +20,7 @@ from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.clfs.base import Classifier
-from mvpa.misc.state import Stateful
+from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
 
 __all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
@@ -54,7 +54,7 @@ def sweepargs(**kwargs):
                     if isinstance(argvalue, Classifier):
                         # clear classifier before its use
                         argvalue.untrain()
-                    if isinstance(argvalue, Stateful):
+                    if isinstance(argvalue, ClassWithCollections):
                         argvalue.states.reset()
                     # update kwargs_
                     kwargs_[argname] = argvalue

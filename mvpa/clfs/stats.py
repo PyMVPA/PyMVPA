@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import Stateful, StateVariable
+from mvpa.misc.state import ClassWithCollections, StateVariable
 
 if __debug__:
     from mvpa.base import debug
@@ -98,14 +98,14 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
         return res
 
 
-class NullDist(Stateful):
+class NullDist(ClassWithCollections):
     """Base class for null-hypothesis testing.
 
     """
 
     # Although base class is not benefiting from states, derived
     # classes do (MCNullDist). For the sake of avoiding multiple
-    # inheritance and associated headache -- let them all be Stateful,
+    # inheritance and associated headache -- let them all be ClassWithCollections,
     # performance hit should be negligible in most of the scenarios
     _ATTRIBUTE_COLLECTIONS = ['states']
 
@@ -119,7 +119,7 @@ class NullDist(Stateful):
             p=0.5. In the case of 'any' significance is taken like in a
             one-tailed test.
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self._setTail(tail)
 

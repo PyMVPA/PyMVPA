@@ -19,7 +19,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug
@@ -188,7 +188,7 @@ class OverAxis(object):
         return results
 
 
-class DistPValue(Stateful):
+class DistPValue(ClassWithCollections):
     """Converts values into p-values under vague and non-scientific assumptions
     """
 
@@ -219,7 +219,7 @@ class DistPValue(Stateful):
         presented in any paper, nor proven
         """
         externals.exists('scipy', raiseException=True)
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self.sd = sd
         if not (distribution in ['rdist']):

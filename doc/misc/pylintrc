@@ -53,7 +53,7 @@ max-branchs = 20
 # some base class constructors have quite a few arguments
 max-args = 14
 
-# and due to Stateful and state variables classes by default have lots
+# and due to ClassWithCollections and state variables classes by default have lots
 # of attributes
 max-attributes = 14
 

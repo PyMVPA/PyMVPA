@@ -434,7 +434,7 @@ class Collection(object):
 #        operation = { True: copy.deepcopy,
 #                      False: copy.copy }[deep]
 #
-#        if isinstance(fromstate, Stateful):
+#        if isinstance(fromstate, ClassWithCollections):
 #            fromstate = fromstate.states
 #
 #        self.enabled = fromstate.enabled
@@ -674,9 +674,9 @@ class Collection(object):
 
 
     def _setOwner(self, owner):
-        if not isinstance(owner, Stateful):
+        if not isinstance(owner, ClassWithCollections):
             raise ValueError, \
-                  "Owner of the StateCollection must be Stateful object"
+                  "Owner of the StateCollection must be ClassWithCollections object"
         if __debug__:
             try:    strowner = str(owner)
             except: strowner = "UNDEF: <%s#%s>" % (owner.__class__, id(owner))
@@ -816,7 +816,7 @@ class StateCollection(Collection):
         :Parameters:
           items : dict
             dictionary of states
-          owner : Stateful
+          owner : ClassWithCollections
             object which owns the collection
           name : basestring
             literal description. Usually just attribute name for the
@@ -872,7 +872,7 @@ class StateCollection(Collection):
         """Copy known here states from `fromstate` object into current object
 
         :Parameters:
-          fromstate : Collection or Stateful
+          fromstate : Collection or ClassWithCollections
             Source states to copy from
           index : None or list of basestring
             If not to copy all set state variables, index provides
@@ -896,7 +896,7 @@ class StateCollection(Collection):
         operation = { True: copy.deepcopy,
                       False: copy.copy }[deep]
 
-        if isinstance(fromstate, Stateful):
+        if isinstance(fromstate, ClassWithCollections):
             fromstate = fromstate.states
 
         #self.enabled = fromstate.enabled
@@ -945,7 +945,7 @@ class StateCollection(Collection):
         `enable _states`. Use `resetEnabledTemporarily` to reset
         to previous state of enabled.
 
-        `other` can be a Stateful object or StateCollection
+        `other` can be a ClassWithCollections object or StateCollection
         """
         if enable_states == None:
             enable_states = []
@@ -953,7 +953,7 @@ class StateCollection(Collection):
             disable_states = []
         self.__storedTemporarily.append(self.enabled)
         other_ = other
-        if isinstance(other, Stateful):
+        if isinstance(other, ClassWithCollections):
             other = other.states
 
         if not other is None:
@@ -1015,8 +1015,8 @@ class StateCollection(Collection):
         It might be handy to store set of enabled states and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> from mvpa.misc.state import Stateful, StateVariable
-        >>> class Blah(Stateful):
+        >>> from mvpa.misc.state import ClassWithCollections, StateVariable
+        >>> class Blah(ClassWithCollections):
         ...   bleh = StateVariable(enabled=False, doc='Example')
         ...
         >>> blah = Blah()
@@ -1226,7 +1226,7 @@ class ClassWithCollections(object):
         self.__params_set = False
 
         # need to check to avoid override of enabled states in the case
-           # of multiple inheritance, like both Statefull and Harvestable
+           # of multiple inheritance, like both ClassWithCollectionsl and Harvestable
         if not s__dict__.has_key('_collections'):
             s__class__ = self.__class__
 
@@ -1312,7 +1312,7 @@ class ClassWithCollections(object):
                   % (self.__class__.__name__, id(self), descr))
 
 
-    #__doc__ = enhancedDocString('Stateful', locals())
+    #__doc__ = enhancedDocString('ClassWithCollections', locals())
 
 
     def __getattribute__(self, index):
@@ -1415,12 +1415,7 @@ class ClassWithCollections(object):
 
 
 
-# No actual separation is needed now between ClassWithCollections
-# and a specific usecase.
-Stateful = ClassWithCollections
-
-
-class Harvestable(Stateful):
+class Harvestable(ClassWithCollections):
     """Classes inherited from this class intend to collect attributes
     within internal processing.
 
@@ -1452,7 +1447,7 @@ class Harvestable(Stateful):
             - shallow copying, 'deepcopy' -- deepcopying
 
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self.__atribs = harvest_attribs
         self.__copy_attribs = copy_attribs

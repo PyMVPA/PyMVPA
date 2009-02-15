@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from math import floor
 import numpy as N
 
-from mvpa.misc.state import Stateful, StateVariable
+from mvpa.misc.state import ClassWithCollections, StateVariable
 
 if __debug__:
     from mvpa.base import debug
@@ -230,7 +230,7 @@ class NBackHistoryStopCrit(StoppingCriterion):
 
 
 
-class ElementSelector(Stateful):
+class ElementSelector(ClassWithCollections):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
@@ -245,7 +245,7 @@ class ElementSelector(Stateful):
            mode : ['discard', 'select']
               Decides whether to `select` or to `discard` features.
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self._setMode(mode)
         """Flag whether to select or to discard elements."""

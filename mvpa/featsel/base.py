@@ -11,12 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.featsel.helpers import FractionTailSelector
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug
 
-class FeatureSelection(Stateful):
+class FeatureSelection(ClassWithCollections):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
@@ -27,7 +27,7 @@ class FeatureSelection(Stateful):
 
     def __init__(self, **kwargs):
         # base init first
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, testdataset=None):

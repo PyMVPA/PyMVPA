@@ -15,24 +15,24 @@ from sets import Set
 
 from mvpa.base import externals
 
-from mvpa.misc.state import Stateful, StateVariable, ClassWithCollections, \
+from mvpa.misc.state import StateVariable, ClassWithCollections, \
      ParameterCollection, _def_sep
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
-class TestClassEmpty(Stateful):
+class TestClassEmpty(ClassWithCollections):
     pass
 
-class TestClassBlank(Stateful):
+class TestClassBlank(ClassWithCollections):
     # We can force to have 'states' present even though we don't have
     # any StateVariable defined here -- it might be added later on at run time
     _ATTRIBUTE_COLLECTIONS = ['states']
     pass
 
-class TestClassBlankNoExplicitStates(Stateful):
+class TestClassBlankNoExplicitStates(ClassWithCollections):
     pass
 
-class TestClassProper(Stateful):
+class TestClassProper(ClassWithCollections):
 
     state1 = StateVariable(enabled=False, doc="state1 doc")
     state2 = StateVariable(enabled=True, doc="state2 doc")
@@ -213,14 +213,12 @@ class StateTests(unittest.TestCase):
     def testStateVariables(self):
         """To test new states"""
 
-        from mvpa.misc.state import StateVariable, Stateful
-
-        class S1(Stateful):
+        class S1(ClassWithCollections):
             v1 = StateVariable(enabled=True, doc="values1 is ...")
             v1XXX = StateVariable(enabled=False, doc="values1 is ...")
 
 
-        class S2(Stateful):
+        class S2(ClassWithCollections):
             v2 = StateVariable(enabled=True, doc="values12 is ...")
 
         class S1_(S1):

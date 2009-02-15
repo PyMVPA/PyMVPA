@@ -24,7 +24,7 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.base.dochelpers import enhancedDocString, table2string
 from mvpa.clfs.stats import autoNullDist
 
@@ -1170,7 +1170,7 @@ class RegressionStatistics(SummaryStatistics):
 
 
 
-class ClassifierError(Stateful):
+class ClassifierError(ClassWithCollections):
     """Compute (or return) some error of a (trained) classifier on a dataset.
     """
 
@@ -1196,7 +1196,7 @@ class ClassifierError(Stateful):
             unless train=False, classifier gets trained if
             trainingdata provided to __call__
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
         self.__clf = clf
 
         self._labels = labels
@@ -1206,7 +1206,7 @@ class ClassifierError(Stateful):
         """Either to train classifier if trainingdata is provided"""
 
 
-    __doc__ = enhancedDocString('ClassifierError', locals(), Stateful)
+    __doc__ = enhancedDocString('ClassifierError', locals(), ClassWithCollections)
 
 
     def __copy__(self):

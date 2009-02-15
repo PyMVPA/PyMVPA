@@ -29,7 +29,7 @@ from sets import Set
 from mvpa.misc.args import group_kwargs
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.misc.state import StateVariable, Stateful, Harvestable
+from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
 
 from mvpa.clfs.base import Classifier
 from mvpa.misc.transformers import FirstAxisMean
@@ -310,7 +310,7 @@ class ProxyClassifier(Classifier):
 # Various combiners for CombinedClassifier
 #
 
-class PredictionsCombiner(Stateful):
+class PredictionsCombiner(ClassWithCollections):
     """Base class for combining decisions of multiple classifiers"""
 
     def train(self, clfs, dataset):
