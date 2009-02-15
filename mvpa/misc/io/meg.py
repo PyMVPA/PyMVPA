@@ -10,9 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
-
 import numpy as N
 
+from mvpa.base import externals
 
 class TuebingenMEG(object):
     """Reader for MEG data from line-based textfile format.
@@ -64,6 +64,7 @@ class TuebingenMEG(object):
         # open textfiles
         if isinstance(source, str):
             if source.endswith('.gz'):
+                externals.exists('gzip', raiseException=True)
                 import gzip
                 source = gzip.open(source, 'r')
             else:
