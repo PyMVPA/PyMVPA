@@ -23,7 +23,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import mvpa.support.copy as copy
 
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
@@ -34,7 +34,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class DatasetMeasure(Stateful):
+class DatasetMeasure(ClassWithCollections):
     """A measure computed from a `Dataset`
 
     All dataset measures support arbitrary transformation of the measure
@@ -78,7 +78,7 @@ class DatasetMeasure(Stateful):
             The estimated distribution is used to assign a probability for a
             certain value of the computed measure.
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
@@ -90,7 +90,7 @@ class DatasetMeasure(Stateful):
         self.__null_dist = null_dist_
 
 
-    __doc__ = enhancedDocString('DatasetMeasure', locals(), Stateful)
+    __doc__ = enhancedDocString('DatasetMeasure', locals(), ClassWithCollections)
 
 
     def __call__(self, dataset):

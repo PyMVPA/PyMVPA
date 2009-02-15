@@ -247,7 +247,7 @@ class ClassifiersTests(unittest.TestCase):
         # Number of harvested items should be equal to number of chunks
         self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
                              len(ds.uniquechunks))
-        # if we can blame multiple inheritance and Statefull.__init__
+        # if we can blame multiple inheritance and ClassWithCollections.__init__
         self.failUnlessEqual(clf.descr, "DESCR")
 
 
