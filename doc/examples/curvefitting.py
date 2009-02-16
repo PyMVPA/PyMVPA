@@ -18,7 +18,7 @@ data.
 import numpy as N
 import pylab as P
 
-from mvpa.misc.plot import errLinePlot
+from mvpa.misc.plot import plotErrLine
 from mvpa.misc.fx import singleGammaHRF, leastSqFit
 from mvpa import cfg
 
@@ -45,7 +45,7 @@ curves = [singleGammaHRF(N.linspace(0,20), 6, 7, 1),
           singleGammaHRF(N.linspace(0,20), *fpar)]
 
 # plot data (with error bars) and both curves
-errLinePlot(a, curves=curves, linestyle='-')
+plotErrLine(a, curves=curves, linestyle='-')
 
 # add legend to plot
 P.legend(('original', 'fit'))

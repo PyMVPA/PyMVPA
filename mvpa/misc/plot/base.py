@@ -18,7 +18,7 @@ from mvpa.clfs.distance import squared_euclidean_distance
 
 
 
-def errLinePlot(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
+def plotErrLine(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
     """Make a line plot with errorbars on the data points.
 
     :Parameters:
@@ -55,7 +55,7 @@ def errLinePlot(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
       Now, plot mean data points with error bars, plus a high-res
       version of the original sinus wave.
 
-        >>> errLinePlot(data, curves=N.sin(N.linspace(0, N.pi * 2, 200)))
+        >>> plotErrLine(data, curves=N.sin(N.linspace(0, N.pi * 2, 200)))
         >>> #P.show()
     """
     data = N.asanyarray(data)
