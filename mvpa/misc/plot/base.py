@@ -18,22 +18,25 @@ from mvpa.clfs.distance import squared_euclidean_distance
 
 
 
-def plotErrLine(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
+def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
+                fmt='o', perc_sigchg=False, baseline=None):
     """Make a line plot with errorbars on the data points.
 
     :Parameters:
       data: sequence of sequences
         First axis separates samples and second axis will appear as
         x-axis in the plot.
+      x: sequence
+        Value to be used as 'x-values' corresponding to the elements of
+        the 2nd axis id `data`. If `None`, a sequence of ascending integers
+        will be generated.
       errtype: 'ste' | 'std'
         Type of error value to be computed per datapoint.
           'ste': standard error of the mean
           'std': standard deviation
-      curves: None | ndarrayb
-        Each *row* of the array is plotted as an additional curve. The
-        curves might have a different sampling frequency (i.e. number of
-        samples) than the data array, as it will be scaled (along
-        x-axis) to the range of the data points.
+      curves: None | list of tuple(x, y)
+        Each tuple represents an additional curve, with x and y coordinates of
+        each point on the curve.
       linestyle: str
         matplotlib linestyle argument. Applied to either the additional
         curve or a the line connecting the datapoints. Set to 'None' to
@@ -41,6 +44,13 @@ def plotErrLine(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
       fmt: str
         matplotlib plot style argument to be applied to the data points
         and errorbars.
+      perc_sigchg: bool
+        If `True` the plot will show percent signal changes relative to a
+        baseline.
+      baseline: float | None
+        Baseline used for converting values into percent signal changes.
+        If `None` and `perc_sigchg` is `True`, the absolute of the mean of the
+        first feature (i.e. [:,0]) will be used as a baseline.
 
 
     :Example:
@@ -55,7 +65,8 @@ def plotErrLine(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
       Now, plot mean data points with error bars, plus a high-res
       version of the original sinus wave.
 
-        >>> plotErrLine(data, curves=N.sin(N.linspace(0, N.pi * 2, 200)))
+        >>> x = N.linspace(0, N.pi * 2, 200)
+        >>> plotErrLine(data, curves=[(x, N.sin(x))])
         >>> #P.show()
     """
     data = N.asanyarray(data)
@@ -66,19 +77,32 @@ def plotErrLine(data, errtype='ste', curves=None, linestyle='--', fmt='o'):
     # compute mean signal course
     md = data.mean(axis=0)
 
+    if baseline is None:
+        baseline = N.abs(md[0])
+
+    if perc_sigchg:
+        md /= baseline
+        md -= 1.0
+        md *= 100.0
+        # not in-place to keep original data intact
+        data = data / baseline
+        data *= 100.0
+
     # compute matching datapoint locations on x-axis
-    x = N.arange(len(md))
+    if x is None:
+        x = N.arange(len(md))
+    else:
+        if not len(md) == len(x):
+            raise ValueError, "The length of `x` (%i) has to match the 2nd " \
+                              "axis of the data array (%i)" % (len(x), len(md))
 
     # plot highres line if present
     if curves is not None:
-        curves = N.array(curves, ndmin=2).T
-        xaxis = N.linspace(0, len(md), len(curves))
-
-        # Since older matplotlib versions cannot plot multiple plots
-        # for the same axis, lets plot each column separately
-        for c in xrange(curves.shape[1]):
+        for c in curves:
+            xc, yc = c
             # scales line array to same range as datapoints
-            P.plot(xaxis, curves[:, c], linestyle=linestyle)
+            P.plot(xc, yc, linestyle=linestyle)
+
         # no line between data points
         linestyle = 'None'
 
