@@ -251,6 +251,7 @@ div.sidebar ul, div.sphinxsidebar ul {
 div.sidebar ul ul, div.sphinxsidebar ul ul {
     list-style: square;
     margin-left: 20px;
+    margin-bottom: 0.5em;
 }
 
 p {

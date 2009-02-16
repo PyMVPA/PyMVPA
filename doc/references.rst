@@ -114,6 +114,12 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nrn1931
 
 
+.. _JL09:
+
+**Jurica, P. & van Leeuwen, C.** (2009). OMPC: an open-source MATLAB-to-Python compiler. *Frontiers in Neuroinformatics*, *3*, 5.
+  DOI: http://dx.doi.org/10.3389/neuro.11.005.2009
+
+
 .. _KT05:
 
 **Kamitani, Y. & Tong, F.** (2005). Decoding the visual and subjective contents of the human brain. *Nature Neuroscience*, *8*, 679–685.
@@ -160,7 +166,7 @@ experiments.
 
 .. _MBK09:
 
-**Mur, M., Bandettini, P. A. & Kriegeskorte, N.** (2009). Revealing representational content with pattern-information fMRI--an introductory guide. *Social Cognitive and Affective Neuroscience*.
+**Mur, M., Bandettini, P. A. & Kriegeskorte, N.** (2009). Revealing representational content with pattern-information fMRI–an introductory guide. *Social Cognitive and Affective Neuroscience*.
   DOI: http://dx.doi.org/10.1093/scan/nsn044
 
 
