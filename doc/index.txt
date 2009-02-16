@@ -51,24 +51,22 @@ Documentation
 For users
 ---------
 
-* :ref:`User Documentation <contents>` (**the** documentation) -- it is also
-  possible to edit and improve the documentation, using the `online
+* :ref:`User Documentation <contents>` [PDF-manual_] (**the** documentation) --
+  it is also possible to edit and improve the documentation, using the `online
   documentation editor`_.
-
-.. _online documentation editor: edt/
-
 * :ref:`Installation Instructions <installation>`
-* :ref:`Module Reference <modref>` (user-oriented reference, less complex than full API docs)
-
 * :ref:`FAQ <faq>` (short answers to common problems)
-* :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
-  <HGF+01>`)
+* :ref:`Module Reference <modref>` (user-oriented reference)
+* :ref:`Bibliography <references>` (references to interesting literature)
 * :ref:`Development Changelog <changelog>` (see what has changed)
 
-* `PyMVPA Manual (PDF)`_ (all documentation except for developer guidelines
-  and API reference)
+.. _online documentation editor: edt/
+.. _PDF-manual: PyMVPA-Manual.pdf
 
-.. _PyMVPA Manual (PDF): PyMVPA-Manual.pdf
+* :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
+  <HGF+01>`)
+
+.. comment to separate the two lists
 
 * :ref:`genindex` (access by keywords)
 * :ref:`search` (online and offline full-text search)
@@ -77,14 +75,12 @@ For users
 For developers
 --------------
 
-* :ref:`Developer Guidelines <devguide>` (information for people contributing
-  code)
+* :ref:`Developer Guidelines <devguide>` [PDF-guide_] (information for people
+  contributing code)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
 
-* `Developer Guidelines (PDF)`_
-
-.. _Developer Guidelines (PDF): PyMVPA-DevGuide.pdf
+.. _PDF-guide: PyMVPA-DevGuide.pdf
 .. _API Reference: api/index.html
 
 
