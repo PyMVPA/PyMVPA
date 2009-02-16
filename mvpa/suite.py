@@ -94,6 +94,7 @@ from mvpa.measures.splitmeasure import *
 from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *
+from mvpa.misc.fx import *
 from mvpa.misc.errorfx import *
 from mvpa.misc.cmdline import *
 from mvpa.misc.data_generators import *
