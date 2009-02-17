@@ -11,6 +11,10 @@
 It was devised to provide conditional storage 
 """
 
+# XXX: MH: The use of `index` as variable name confuses me. IMHO `index` refers
+#          to a position in a container (i.e. list access). However, in this
+#          file it is mostly used in the context of a `key` for dictionary
+#          access. Can we refactor that?
 __docformat__ = 'restructuredtext'
 
 import operator, copy
