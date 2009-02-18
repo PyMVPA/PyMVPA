@@ -191,8 +191,8 @@ def __check_pylab_plottable():
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
-          'nifti >= 0.20081017.1':
-                'from nifti.nifticlib import detachDataFromImage as __',
+          'nifti >= 0.20090205.1':
+                'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
           'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
