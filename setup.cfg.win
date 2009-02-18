@@ -1,0 +1,9 @@
+[build_ext]
+# configure paths for libsvm
+include-dirs = 3rd/libsvm
+library-dirs = 3rd/libsvm
+
+[build]
+# configure python to use a free compiler
+compiler = mingw32
+

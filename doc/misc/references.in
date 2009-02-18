@@ -1,0 +1,21 @@
+.. -*- mode: rst; fill-column: 78 -*-
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+.. index:: references
+
+.. _references:
+
+**********
+References
+**********
+
+This list aims to be a collection of literature, that is of particular interest
+in the context of multivariate pattern analysis. It includes all references
+cited throughout this manual, but also a number of additional manuscripts
+containing descriptions of interesting analysis methods or fruitful
+experiments.

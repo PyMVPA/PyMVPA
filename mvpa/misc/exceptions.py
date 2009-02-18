@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -24,6 +24,7 @@ class UnknownStateError(Exception):
     def __str__(self):
         return "Exception: " + self.__msg
 
+
 class DatasetError(Exception):
     """Thrown if there is an internal problem with a Dataset.
 
@@ -45,3 +46,9 @@ class ConvergenceError(Exception):
     def __init__(self):
         Exception.__init__(self)
 
+
+class InvalidHyperparameterError(Exception):
+    """Generic exception to be raised when setting improper values
+    as hyperparameters."""
+    def __init__(self):
+        Exception.__init__(self)

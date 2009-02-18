@@ -1,6 +1,6 @@
 #!/usr/bin/python
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -16,8 +16,8 @@ import sys, os
 from optparse import OptionParser
 from os import environ, path
 
-from mvpa.misc.verbosity import LevelLogger
-from mvpa.misc.cmdline import optVerbose
+from mvpa.base.verbosity import LevelLogger
+from mvpa.misc.cmdline import opt
 
 if __name__ == "__main__":
 

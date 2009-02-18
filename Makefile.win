@@ -1,0 +1,60 @@
+# Makefile to build PyMVPA under Windows using a standard Python
+# distribution and MinGW
+#
+# Adjust this path to match the version and location of your Python
+# installation
+PYTHON_VERSION=2.5
+PYTHON_PATH=C:\\Python25
+
+#
+# Building
+#
+
+all: build configure-inplace-use
+
+# build included 3rd party pieces (if present)
+3rd: 3rd-stamp
+3rd-stamp:
+	cd 3rd\libsvm & $(MAKE) -f Makefile.win
+
+
+build: 3rd
+# build pymvpa extensions including libsvm
+	set PYTHON_INCLUDE="$(PYTHON_PATH)\\include" \
+		& python setup.py build_ext
+
+installer: 3rd build
+# now build the installer
+	python setup.py bdist_wininst --bitmap doc\pics\logo.bmp
+
+
+configure-inplace-use:
+	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsmlrc\\smlrc.pyd \
+		mvpa\\clfs\\libsmlrc
+	copy build\\lib.win32-$(PYTHON_VERSION)\\mvpa\\clfs\\libsvmc\\_svmc.pyd \
+		mvpa\\clfs\\libsvmc
+
+#
+# Cleaning
+#
+
+clean:
+	-rmdir /S /Q build
+	-del /S *.a *.o *.gch *.pyd
+
+#
+# Testing
+#
+
+ut-%: build configure-inplace-use
+	@set PYTHONPATH=$(CURDIR) & cd tests & python test_$*.py
+
+unittest: build configure-inplace-use
+	@set PYTHONPATH=$(CURDIR) & cd tests & python main.py
+
+
+#
+# Trailer
+#
+
+.PHONY: all

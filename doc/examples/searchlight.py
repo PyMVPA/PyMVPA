@@ -1,32 +1,21 @@
-#!/usr/bin/python
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+#!/usr/bin/env python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Example demonstrating a searchlight analysis on an fMRI dataset"""
+"""
+Searchlight Analysis on an fMRI Dataset
+=======================================
 
-import sys
+Example demonstrating a searchlight analysis on an fMRI dataset.
+"""
 
-import numpy as N
+from mvpa.suite import *
 
-from mvpa.datasets.niftidataset import NiftiDataset
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.knn import kNN
-from mvpa.clfs.svm import LinearNuSVMC, RbfNuSVMC
-from mvpa.datasets.splitter import NFoldSplitter
-from mvpa.datasets.misc import zscore
-from mvpa.algorithms.searchlight import Searchlight
-from mvpa.clfs.transerror import TransferError
-from mvpa.misc.iohelpers import SampleAttributes
-from mvpa.misc import verbose
-from mvpa.misc.cmdline import \
-     parser, \
-     optsCommon, optClf, optsSVM, optRadius, optsKNN, \
-     optsGener, optZScore
 
 def main():
     """ Wrapped into a function call for easy profiling later on
@@ -40,9 +29,13 @@ def main():
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
 
-    parser.option_groups = [optsSVM, optsKNN, optsGener, optsCommon]
-    parser.options = [optClf, optRadius, optZScore]
+    parser.option_groups = [opts.SVM, opts.KNN, opts.general, opts.common]
 
+    # Set a set of available classifiers for this example
+    opt.clf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
+    opt.clf.default='lin_nu_svmc'
+
+    parser.add_options([opt.clf, opt.zscore])
 
     (options, files) = parser.parse_args()
 
@@ -90,11 +83,11 @@ def main():
     if options.clf == 'knn':
         clf = kNN(k=options.knearestdegree)
     elif options.clf == 'lin_nu_svmc':
-        clf = LinearNuSVMC(options.svm_nu)
+        clf = LinearNuSVMC(nu=options.svm_nu)
     elif options.clf == 'rbf_nu_svmc':
-        clf = RbfNuSVMC(options.svm_nu)
+        clf = RbfNuSVMC(nu=options.svm_nu)
     else:
-        raise ValueError, 'Unknown classifier type: [%s]' % `options.clf`
+        raise ValueError, 'Unknown classifier type: %s' % `options.clf`
     verbose(3, "Using '%s' classifier" % options.clf)
 
     verbose(1, "Computing")

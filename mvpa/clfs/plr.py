@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -14,10 +14,10 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
 
 class PLR(Classifier):
@@ -114,7 +114,7 @@ class PLR(Classifier):
             if k > self.__maxiter:
                 raise ConvergenceError, \
                       "More than %d Iterations without convergence" % \
-                      (self.__criterion)
+                      (self.__maxiter)
 
         if __debug__:
             debug("PLR", \
@@ -144,7 +144,7 @@ class PLR(Classifier):
         Returns a list of class labels
         """
         # make sure the data are in matrix form
-        data = N.matrix(N.array(data))
+        data = N.matrix(N.asarray(data))
 
         # get the values and then predictions
         values = N.ravel(self.__f(self.offset + data * self.w))

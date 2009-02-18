@@ -1,0 +1,51 @@
+#!/usr/bin/python
+#
+# Call the command line interface for Epydoc.
+#
+
+# Make sure that we don't get confused between an epydoc.py script and
+# the real epydoc package.
+import sys, os.path
+
+from docutils.nodes import NodeVisitor
+
+NodeVisitor.optional = ('note')
+
+if os.path.exists(os.path.join(sys.path[0], 'epydoc.py')):
+    del sys.path[0]
+
+from epydoc.cli import cli
+
+# suppress multitude of warnings about profile data missing
+# import warnings
+# defaul is supposed to print it only once
+# warnings.simplefilter('default', Warning)
+
+# epydoc uses its own 
+# lets override it completely
+import epydoc.log
+import os
+epydoc_warnings = os.environ.get('MVPA_EPYDOC_WARNINGS', 'all').lower()
+
+_logged_warnings = set()
+
+if epydoc_warnings == 'all':
+	pass
+
+elif epydoc_warnings == 'once':
+	warning_orig = epydoc.log.warning
+	def once_warning(*messages):
+		smsg = str(messages)
+		if not (smsg in _logged_warnings):
+			warning_orig(*messages)
+			_logged_warnings.add(smsg)
+	epydoc.log.warning = once_warning
+
+elif epydoc_warnings == 'none':
+	epydoc.log.warning = lambda *x:None
+
+else:
+	print "ERROR: Unknown control for epydoc warnings %s. " \
+	      "Known are all, once, none" % epydoc_warnings
+cli()
+

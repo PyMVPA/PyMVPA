@@ -1,0 +1,148 @@
+#!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Tiny tool to prepare a directory for a typical analysis of fMRI data with
+PyMVPA."""
+
+import sys
+import os
+from subprocess import call
+
+import numpy as N
+
+from mvpa.misc.cmdline import parser, opt
+from mvpa.base import verbose#, warning, externals
+
+#externals.exists('nifti', raiseException=True)
+from nifti import NiftiImage
+
+if __debug__:
+    from mvpa.base import debug
+
+
+def prepParser(parser):
+    parser.usage = "%s [OPTIONS] <fmri-data>" % sys.argv[0]
+
+    parser.add_option(opt.verbose)
+    parser.add_option(opt.help)
+
+    parser.add_option("-s", "--subject-id",
+                      action="store", type="string", dest="subj",
+                      default=None,
+                      help="Subject ID used as output path")
+
+    parser.add_option("--example-func-vol",
+                      action="store", type="int", dest="exfuncid",
+                      default=10,
+                      help="Volume ID to be used a example functional image. " \
+                           "Default: 10")
+
+    parser.add_option("--mcflirt-options",
+                      action="store", type="string", dest="mcflirt_opts",
+                      default='',
+                      help="Options for MCFLIRT. '-plot' is auto-added ")
+
+    parser.add_option("--bet-options",
+                      action="store", type="string", dest="bet_opts",
+                      default='-f 0.3',
+                      help="Options for BET. '-m' is auto-added. " \
+                           "Default: '-f 0.3' for a safe guess of the brain " \
+                           "outline")
+
+
+
+def main():
+    """
+    """
+    prepParser(parser)
+    (options, infiles) = parser.parse_args()
+
+    if len(infiles) > 1 or not len(infiles):
+        print "%s needs exactly one input fMRI image as argument." % sys.argv[0]
+        sys.exit(1)
+
+    func_fname = infiles[0]
+
+    # compressed or uncompressed? decide by input image
+    # XXX maybe add override option
+    if func_fname.lower().endswith('nii.gz'):
+        nii_ext = '.nii.gz'
+        verbose(2, "Output files will be compressed NIfTI images")
+    else:
+        nii_ext = '.nii'
+        verbose(2, "Output files will be uncompressed NIfTI images")
+
+    # determine output path
+    if not options.subj is None:
+        opath = options.subj
+    else:
+        opath = os.path.curdir
+
+    if not os.path.exists(opath):
+        verbose(1, "Create output directory '%s'" % opath)
+        os.mkdir(opath)
+    else:
+        verbose(2, "Using output path '%s'" % opath)
+
+    verbose(2, "Load image file from '%s'" % func_fname)
+    func_nim = NiftiImage(func_fname, load=True)
+
+    verbose(2, "Extract volume %i as example volume" % options.exfuncid)
+    ef_nim = NiftiImage(func_nim.data[options.exfuncid], func_nim.header)
+    ef_nim.save(os.path.join(opath, 'example_func' + nii_ext))
+
+    # close input file -- will operate on motion-corrected one later on
+    del func_nim
+
+    mcflirt_call = \
+        ' '.join(
+           ['mcflirt',
+            '-in ' + func_fname,
+            '-out ' + os.path.join(opath, 'func_mc'),
+            '-reffile ' + os.path.join(opath, 'example_func'),
+            '-verbose 0',
+            '-plots',
+            options.mcflirt_opts]).strip()
+
+    verbose(2, "Perform motion correction ('%s')" % mcflirt_call)
+
+    # run MCFLIRT (silence stderr; 5 being some random file descriptor)
+    if call(mcflirt_call, shell=True, stderr=None):
+        print "MCFLIRT failed to perform the motion correction."
+        sys.exit(1)
+
+    bet_call = \
+        ' '.join(
+            ['bet',
+             os.path.join(opath, 'example_func'),
+             os.path.join(opath, 'example_func_brain'),
+             '-m',
+             options.bet_opts]).strip()
+
+    verbose(2, "Determine brain mask in functional space ('%s')" % bet_call)
+
+    # run BET (silence stderr; 5 being some random file descriptor)
+    if call(bet_call, shell=True, stderr=None):
+        print "BET failed to perform the skull stripping."
+        sys.exit(1)
+
+
+    verbose(2, "Threshold image background using brain mask")
+    mask_nim = NiftiImage(os.path.join(opath, 'example_func_brain_mask'))
+    func_nim = NiftiImage(os.path.join(opath, 'func_mc'))
+    # special case: single slice mask
+    if len(mask_nim.extent) < 3:
+        func_nim.data[:, N.asarray([mask_nim.data]) == 0] = 0
+    else:
+        func_nim.data[:, mask_nim.data == 0] = 0
+    func_nim.save()
+
+
+if __name__ == '__main__':
+    main()

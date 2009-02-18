@@ -1,12 +1,21 @@
 .. -*- mode: rst -*-
 
+.. _changelog:
+
+.. index:: changelog
+
+****************************
 PyMVPA Development Changelog
------------------------------
+****************************
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
 
-  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=shortlog;h=upstream
+  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
+
+In addition there is also a somewhat unconventional visual changelog:
+
+  http://www.pymvpa.org/history.html
 
 'Closes' statement IDs refer to the Debian bug tracking system and can be
 queried by visiting the URL::
@@ -18,11 +27,228 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * New Splitter class (HalfSplitter) to split into first and second half.
-
+  None yet.
 
 Releases
-~~~~~~~~
+========
+
+* 0.4.1 (Sat, 24 Jan 2009)
+
+  * Unit tests and example data are now also installed. In conjuction with
+    :func:`mvpa.test`, this allow to easily run unittests from within Python.
+  * :class:`~mvpa.datasets.nifti.NiftiDataset` capable to handle files
+    with less than 4 dimensions, which can, optionally, be provided as
+    a list of filenames or :class:`~nifti.NiftiImage` objects. That
+    makes it easy to load data from a sequence of files.
+
+  * Changes (code refactorings) which *might impact* any user who
+    imports from :mod:`~mvpa.suite`:
+
+    - Pre-populated warehouses of classifiers and regressions are
+      renamed from clfs and regrs into
+      :data:`~mvpa.clfs.warehouse.clfswh` and
+      :data:`~mvpa.clfs.warehouse.regrswh` respectively.
+    - :class:`~mvpa.misc.io.hamster.Hamster` is not derived from
+      :class:`dict` any longer -- just from a basic :class:`object` class.
+      API includes methods 'dump', 'asdict' and a property 'registered'.
+
+  * Changes (code refactorings) which *should not impact* any user who
+    imports from :mod:`~mvpa.suite`:
+
+    - Meta classifiers definitions moved from :mod:`~mvpa.clfs.base` into
+      :mod:`~mvpa.clfs.meta`.
+    - Splitters definitions moved from :mod:`~mvpa.datasets.splitter` into
+      :mod:`~mvpa.datasets.splitters`
+
+
+* 0.4.0 (Sat, 15 Nov 2008)
+
+  * Add :class:`~mvpa.misc.io.hamster.Hamster`, as a simple facility to easily
+    store any serializable objects in a compressed file and later on resurrect
+    all of them with a single line of code.
+  * SVM backend is now configurable via :envvar:`MVPA_SVM_BACKEND` (libsvm or
+    shogun).
+  * Non-deterministic tests in the unittest battery are now configurable via
+    :envvar:`MVPA_TESTS_LABILE`.
+  * New helper to determine and plot the best matching distribution(s) for
+    the data (matchDistribution, plotDistributionMatches). It is WiP
+    thus API can change in the upcoming release.
+  * Simplifies API of mappers.
+  * Splitters can now limit the number of splits automatically.
+  * New :class:`~mvpa.mappers.base.CombinedMapper` to map between multiple,
+    independent dataspace and a common feature space.
+  * New :class:`~mvpa.mappers.base.ChainMapper` to create chains of mappers
+    of abitrary lenght (e.g. to build preprocessing pipelines).
+  * New :class:`~mvpa.datasets.event.EventDataset` to rapidly extract
+    boxcar-shaped samples from data array using a simple list of
+    :class:`~mvpa.misc.support.Event` definitions.
+  * Removed obsolete MetricMapper class. :class:`~mvpa.mappers.base.Mapper`
+    itself provides the facilities for dealing with metrics.
+  * :class:`~mvpa.mappers.boxcar.BoxcarMapper` can now handle data with more
+    than four dimensions/axis and also performs reverse mapping of single
+    boxcar samples.
+  * :class:`~mvpa.misc.fsl.base.FslEV3` can now convert EV3 files into
+    a list of :class:`~mvpa.misc.support.Event` instances.
+  * Results of tests for external dependencies are now stored in PyMVPA's
+    config manager (`mvpa.cfg`) and can be stored to a file (not done
+    automatically at the moment). This will significantly decrease the time
+    needed to import the `mvpa` module, as it prevents the repeated and lengthy
+    tests for working externals.
+  * Initial support for ROC computing and AUC as an accuracy measure.
+  * Weights of LARS are now available via :class:`~mvpa.clfs.lars.LARSWeights`.
+  * Added an initial list of MVPA-related references to the manual, tagged with
+    keywords and comments as well is DOI or similar URL reference to the
+    original document.
+  * Added initial glossary to the manual.
+  * New 'Module reference', as a middle-ground between manual and API
+    reference.
+  * New manual section about meta-classifiers (contributed by James M.
+    Hughes).
+  * New minimal example for a 'getting started' section in the manual.
+  * Former :envvar:`MVPA_QUICKTEST` was renamed to :envvar:`MVPA_TESTS_QUICK`.
+  * Update installation instructions for RPM-based distributions to make use
+    of the OpenSUSE Build Service.
+  * Updated install instructions for several RPM-based GNU/Linux
+    distributions.
+  * Switch from distutils to numpy.distutils (no change in dependencies).
+  * Depend on PyNIfTI >= 0.20081017.1 and gain a smaller memory footprint when
+    accessing NIfTI files via all datasets with NIfTI support.
+  * Added workaround to make PyMVPA work with older Shogun releases and those
+    from 0.6.4 on, which introduced backward-incompatible API changes.
+
+
+* 0.3.1 (Sun, 14 Sep 2008)
+
+  * New manual section about feature selection with a focus on RFE.
+    Contributed by James M. Hughes.
+  * New dataset type :class:`~mvpa.datasets.channel.ChannelDataset` for data
+    structured in channels. Might be useful for data modalities like EEG and
+    MEG. This dataset includes support for common preprocessing steps like
+    resampling and baseline signal substraction.
+  * Plotting of topographies on heads. Thanks to Ingo Fründ for contributing
+    this code. Additionally, a new example shows how to do such plots.
+  * New general purpose function for generating barplots and candlestick plots
+    with error bars (:func:`~mvpa.misc.plot.base.plotBars`).
+  * Dataset supports mapping of string labels onto numerical labels, removing
+    the need to perform this mapping manually in user code. 'clfs_examples.py'
+    is adjusted accordingly to demonstrate the new feature.
+  * New :meth:`mvpa.clfs.base.Classifier.summary` method to dump classifier
+    settings.
+  * Improved and more flexible :func:`~mvpa.misc.plot.erp.plotERPs`.
+  * New :class:`~mvpa.measures.irelief.IterativeRelief` sensitivity analyzer.
+  * Added visualization of confusion matrices via
+    :meth:`mvpa.clfs.transerror.ConfusionMatrix.plot` inspired by Ingo Fründ.
+  * The PyMVPA version is now globally available in :data:`mvpa.pymvpa_version`.
+  * BugFix: :class:`~mvpa.misc.io.meg.TuebingenMEG` reader failed in some cases.
+  * Several improvements (docs and implementation) for building PyMVPA on
+    MacOS X.
+  * New convenience accessor methods (:meth:`~mvpa.datasets.base.Dataset.select`,
+    :meth:`~mvpa.datasets.base.Dataset.where` and
+    :meth:`~mvpa.datasets.base.Dataset.__getitem__`) for
+    :class`~mvpa.datasets.base.Dataset`.
+  * New :func:`mvpa.seed()` function to configure the random number generators
+    from user code.
+  * Added reader for a MEG sensor locations format
+    (:class:`~mvpa.misc.io.meg.TuebingenMEGSensorLocations`).
+  * Initial model selection support for GRP (using openopt).
+  * And tons of minor bugfixes, additional tests and improved documentation.
+
+
+* 0.3.0 (Mon, 18 Aug 2008)
+
+  * Import of binary EEP files (used by EEProbe) and EEPDataset class.
+  * Initial version of a meta dataset class (MetaDataset). This is a container
+    for multiple datasets, which behaves like a dataset itself.
+  * Regression performance is summarized now within RegressionStatistics.
+  * Error functions: CorrErrorPFx, RelativeRMSErrorFx.
+  * Measures: CorrCoef.
+  * Data generators: chirp, wr1996
+  * Few more examples: curvefitting, kerneldemo, smellit, projections
+  * Updated kNN classifier. kNN is now able to use custom distance function
+    to determine that nearest neighbors. It also (re)gained the ability to do
+    simple majority or weighted voting.
+  * Some initial convenience functions for plotting typical results and data
+    exploration.
+  * Unified configuration handling with support for user-specific and
+    analysis-specific config files, as well as the ability to override all
+    config settings via environment variables. The configuration handling is
+    used for PyMVPA internal settings, but can also be easily used for
+    custom (user-)settings.
+  * Improved modularity, e.g. SciPy is not required anymore, but still very
+    useful.
+  * Initial implementations of ICA and PCA mapper using functionality provided
+    by MDP. These mappers are more or less untested and should be used with
+    great care.
+  * Further improved docstrings of some classes, but still a long way to go.
+  * New 'boxcar' mapper, which is the similar to the already present
+    transformWithBoxCar() function, but implemented as a mapper.
+  * New SampleGroupMapper that can be used for e.g. block averaging of
+    samples. See new FAQ item.
+  * Stripped redundant suffixes from module names, e.g.
+    mvpa.datasets.niftidataset -> mvpa.datasets.nifti
+  * mvpa.misc.cmdline variables opt* and opts* were groupped within
+    opt and optss class instances. Also names of the options were
+    changed to match 'dest' of the options. Use tools/refactor.py to
+    quickly fix your custom code.
+  * Change all references to PyMVPA website to www.pymvpa.org.
+  * Make website stylesheet compatible with sphinx 0.4.
+  * Several minor improvements of the compatibilty with MacOS.
+  * Extended FAQ section of the manual.
+  * Bugfix: doubleGammaHRF() ignoring K2 argument.
+
+
+* 0.2.2 (Tue, 17 Jun 2008)
+
+  * Extended build instructions: Added section on OpenSUSE.
+  * Replaced ugly PYMVPA_LIBSVM environment variable to trigger compiling the
+    LIBSVM wrapper with a proper '--with-libsvm' switch in setup.py.
+    Additionally, setup.py now detects if included LIBSVM has been built and
+    enables LIBSVM wrapper automatically in this case.
+  * Added proper Makefiles for LIBSVM copy, with configurable compiler flags.
+  * Added 'setup.cfg' to remove the need to manually specify swig-opts
+    (Windows specific configuration is in 'setup.cfg.win').
+
+
+* 0.2.1 (Sun, 15 Jun 2008)
+
+  * Several improvements to make building PyMVPA on Windows systems easy
+    (e.g. added dedicated Makefile.win to build a binary installer).
+  * Improved and extended documentation for building and installing PyMVPA.
+  * Include a minimal copy of the required (patched) LIBSVM library (currently
+    version 2.85.0) for convenience. This copy is automatically compiled and
+    used for the LIBSVM wrapper when PyMVPA built using the `Make` approach.
+
+
+* 0.2.0 (Wed, 29 May 2008)
+
+  * New Splitter class (HalfSplitter) to split into first and second half.
+  * New Splitter class (CustomSplitter) to allow for splits with an arbitrary
+    number of datasets per split and the ability to specify the association
+    of samples with any of those datasets (not just the validation set).
+  * New sparse multinomial logistic regression (SMLR) classifier and
+    associated sensitivity analyzer.
+  * New least angle regression classifier (LARS).
+  * New gaussian process regression classifier (GPR).
+  * Initial documentation on extending PyMVPA.
+  * Switch to Sphinx for documentation handling.
+  * New example comparing the performance of all classifiers on some
+    artificial datasets.
+  * New data mapper performing singular value decomposition (SVDMapper) and an
+    example showing its usage.
+  * More sophisticated data preprocessing: removal of non-linear trends and
+    other arbitrary confounding regressors.
+  * New `Harvester` class to feed data from arbitrary generators into multiple
+    objects and store results of returned values and arbitrary properties.
+  * Added documentation about how to build patched libsvm version with sane
+    debug output.
+  * libsvm bindings are not build by default anymore. Instructions on how to
+    reenable them are available in the manual.
+  * New wrapper from SVM implementation of the Shogun toolbox.
+  * Important bugfix in RFE, which reported incorrect feature ids in some
+    cases.
+  * Added ability to compute stats/probabilities for all measures and transfer
+    errors.
+
 
 * 0.1.0 (Wed, 20 Feb 2008)
 
