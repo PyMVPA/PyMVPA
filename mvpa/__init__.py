@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -16,22 +16,30 @@ The mvpa package contains the following subpackages and modules:
 .. packagetree::
    :style: UML
 
-:group Basic Data Structures: datasets
-:group Classifiers: clf
 :group Algorithms: algorithms
-:group Miscellaneous: misc
+:group Anatomical Atlases: atlases
+:group Basic Data Structures: datasets
+:group Classifiers (supervised learners): clfs
+:group Feature Selections: featsel
+:group Mappers (usually unsupervised learners): mappers
+:group Measures: measures
+:group Miscellaneous: base misc support
+:group Unittests: tests
 
-:author: `Michael Hanke <michael.hanke@gmail.com>`__
-         `Yaroslav Halchenko <debian@onerussian.com>`__
+:author: `Michael Hanke <michael.hanke@gmail.com>`__,
+         `Yaroslav Halchenko <debian@onerussian.com>`__,
+         `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: unreleased
-:see: `The PyMVPA webpage <http://pkg-exppsy.alioth.debian.org/pymvpa>`__
+:version: 0.4.1
+:see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
-:license: The MIT License
-:copyright: |copy| 2006-2008 Michael Hanke <michael.hanke@gmail.com>
+:license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
+:copyright: |copy| 2006-2009 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2009 Yaroslav O. Halchenko <debian@onerussian.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
+:contributor: `Emanuele Olivetti <emanuele@relativita.com>`__
 :contributor: `Per B. Sederberg <persed@princeton.edu>`__
 
 .. |copy| unicode:: 0xA9 .. copyright sign
@@ -39,13 +47,48 @@ The mvpa package contains the following subpackages and modules:
 
 __docformat__ = 'restructuredtext'
 
+# canonical PyMVPA version string
+__version__ = '0.4.1'
+
+import os
+import random
+import numpy as N
+from mvpa.base import cfg
+
+# locate data root -- data might not be installed, but if it is, it should be at
+# this location
+pymvpa_dataroot = os.path.join(os.path.dirname(__file__), 'data')
 
 if not __debug__:
     try:
         import psyco
         psyco.profile()
-    except:
-        from mvpa.misc import verbose
+    except ImportError:
+        from mvpa.base import verbose
         verbose(2, "Psyco online compilation is not enabled")
+else:
+    # Controllable seeding of random number generator
+    from mvpa.base import debug
 
-#from mvpa.dataset import *
+    debug('INIT', 'mvpa')
+
+if cfg.has_option('general', 'seed'):
+    _random_seed = cfg.getint('general', 'seed')
+else:
+    _random_seed = int(N.random.uniform()*(2**31-1))
+
+def seed(random_seed):
+    """Uniform and combined seeding of all relevant random number
+    generators.
+    """
+    N.random.seed(random_seed)
+    random.seed(random_seed)
+
+seed(_random_seed)
+
+# import the main unittest interface
+from mvpa.tests import run as test
+
+if __debug__:
+    debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
+    debug('INIT', 'mvpa end')

@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -13,39 +13,70 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.misc import verbose
+from mvpa.base import warning
 from mvpa.misc.support import indentDoc
-from mvpa.clfs.classifier import Classifier
+from mvpa.clfs.base import Classifier
+from mvpa.base.dochelpers import enhancedDocString
+from mvpa.clfs.distance import squared_euclidean_distance
+
+if __debug__:
+    from mvpa.base import debug
 
 
 class kNN(Classifier):
-    """k-nearest-neighbour classifier.
+    """k-Nearest-Neighbour classifier.
 
-    If enabled it stores the votes per class in the 'values' state after
-    calling predict().
+    This is a simple classifier that bases its decision on the distances between
+    the training dataset samples and the test sample(s). Distances are computed
+    using a customizable distance function. A certain number (`k`)of nearest
+    neighbors is selected based on the smallest distances and the labels of this
+    neighboring samples are fed into a voting function to determine the labels
+    of the test sample.
+
+    Training a kNN classifier is extremely quick, as no actuall training is
+    performed as the training dataset is simply stored in the classifier. All
+    computations are done during classifier prediction.
+
+    .. note::
+      If enabled, kNN stores the votes per class in the 'values' state after
+      calling predict().
     """
 
-    __warned = False
+    _clf_internals = ['knn', 'non-linear', 'binary', 'multiclass',
+                      'notrain2predict' ]
 
-    def __init__(self, k=2, **kwargs):
+    def __init__(self, k=2, dfx=squared_euclidean_distance,
+                 voting='weighted', **kwargs):
         """
-        Parameters:
-          k:       number of nearest neighbours to be used for voting
+        :Parameters:
+          k: unsigned integer
+            Number of nearest neighbours to be used for voting.
+          dfx: functor
+            Function to compute the distances between training and test samples.
+            Default: squared euclidean distance
+          voting: str
+            Voting method used to derive predictions from the nearest neighbors.
+            Possible values are 'majority' (simple majority of classes
+            determines vote) and 'weighted' (votes are weighted according to the
+            relative frequencies of each class in the training data).
+          **kwargs:
+            Additonal arguments are passed to the base class.
         """
+
         # init base class first
-        Classifier.__init__(self, train2predict=False, **kwargs)
+        Classifier.__init__(self, **kwargs)
 
         self.__k = k
-        # XXX So is the voting function fixed forever?
-        self.__votingfx = self.getWeightedVote
+        self.__dfx = dfx
+        self.__voting = voting
         self.__data = None
 
 
     def __repr__(self):
         """Representation of the object
         """
-        return "kNN(k=%d, enable_states=%s)" % \
-            (self.__k, str(self.states.enabled))
+        return "kNN(k=%d, dfx=%s enable_states=%s)" % \
+            (self.__k, self.__dfx, str(self.states.enabled))
 
 
     def __str__(self):
@@ -60,11 +91,9 @@ class kNN(Classifier):
         """
         self.__data = data
         if __debug__:
-            if not kNN.__warned and \
-                str(data.samples.dtype).startswith('uint') \
+            if str(data.samples.dtype).startswith('uint') \
                 or str(data.samples.dtype).startswith('int'):
-                kNN.__warned = True
-                verbose(1, "kNN: input data is in integers. " + \
+                warning("kNN: input data is in integers. " + \
                         "Overflow on arithmetic operations might result in"+\
                         " errors. Please convert dataset's samples into" +\
                         " floating datatype if any error is reported.")
@@ -82,40 +111,46 @@ class kNN(Classifier):
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = N.array(data)
+        data = N.asarray(data)
 
-        if not data.ndim == 2:
-            raise ValueError, "Data array must be two-dimensional."
+        # checks only in debug mode
+        if __debug__:
+            if not data.ndim == 2:
+                raise ValueError, "Data array must be two-dimensional."
 
-        if not data.shape[1] == self.__data.nfeatures:
-            raise ValueError, "Length of data samples (features) does " \
-                              "not match the classifier."
+            if not data.shape[1] == self.__data.nfeatures:
+                raise ValueError, "Length of data samples (features) does " \
+                                  "not match the classifier."
+
+        # compute the distance matrix between training and test data with
+        # distances stored row-wise, ie. distances between test sample [0]
+        # and all training samples will end up in row 0
+        dists = self.__dfx(self.__data.samples, data).T
+
+        # determine the k nearest neighbors per test sample
+        knns = dists.argsort(axis=1)[:, :self.__k]
 
         # predicted class labels will go here
         predicted = []
         votes = []
 
-        # for all test pattern
-        for p in data:
-            # calc the euclidean distance of the pattern vector to all
-            # patterns in the training data
-            dists = N.sqrt(
-                        N.sum(
-                            (self.__data.samples - p )**2, axis=1
-                            )
-                        )
-            # get the k nearest neighbours from the sorted list of distances
-            knn = dists.argsort()[:self.__k]
+        if self.__voting == 'majority':
+            vfx = self.getMajorityVote
+        elif self.__voting == 'weighted':
+            vfx = self.getWeightedVote
+        else:
+            raise ValueError, "kNN told to perform unknown voting '%s'." % self.__voting
 
-            # finally get the class label
-            prediction, vote = self.__votingfx(knn)
-            predicted.append(prediction)
-            votes.append(vote)
+        # perform voting
+        results = [vfx(knn) for knn in knns]
+
+        # extract predictions
+        predicted = [r[0] for r in results]
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
         self.predictions = predicted
-        self.values = votes
+        self.values = [r[1] for r in results]
 
         return predicted
 
@@ -136,7 +171,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.array(votes).argmax()], \
+        return uniquelabels[N.asarray(votes).argmax()], \
                votes
 
 
@@ -177,7 +212,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.array(votes).argmax()], \
+        return uniquelabels[N.asarray(votes).argmax()], \
                votes
 
 
@@ -185,4 +220,3 @@ class kNN(Classifier):
         """Reset trained state"""
         self.__data = None
         super(kNN, self).untrain()
-

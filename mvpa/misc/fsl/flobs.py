@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -24,19 +24,20 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3,
     Kernel parameters can be modified analogous to the Make_flobs GUI
     which is part of FSL. 
 
+    ::
 
-     ^         /-\\
-     |        /   \\
-     1       /     \\
-     |      /       \\
-     |     /         \\
-     |    /           \\
-    -----/             \\     /-----  |
-                        \\--/         |  undershootamp
-    |    |      |     |        |
-    |    |      |     |        |
+       ^         /-\\
+       |        /   \\
+       1       /     \\
+       |      /       \\
+       |     /         \\
+       |    /           \\
+      -----/             \\     /-----  |
+                          \\--/         |  undershootamp
+      |    |      |     |        |
+      |    |      |     |        |
 
-     pre   rise  fall  undershoot
+       pre   rise  fall  undershoot
 
     Parameters 'pre', 'rise', 'fall', 'undershoot' and 'undershootamp'
     can be specified as 2-tuples (min-max range for sampling) and single 

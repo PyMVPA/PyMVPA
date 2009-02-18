@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -12,16 +12,62 @@ __docformat__ = 'restructuredtext'
 
 Conventions:
 Every option (instance of optparse.Option) has prefix "opt". Lists of options
-has prefix opts (e.g. `optsCommon`).
+has prefix opts (e.g. `opts.common`).
 
 Option name should be camelbacked version of .dest for the option.
 """
 
 # TODO? all options (opt*) might migrate to respective module? discuss
-from optparse import OptionParser, Option, OptionGroup
+from optparse import OptionParser, Option, OptionGroup, OptionConflictError
 
 # needed for verboseCallback
-from mvpa.misc import verbose
+from mvpa.base import verbose, externals
+
+# we need to make copies of the options if we place them into the
+# groups, since otherwise it is impossible to use them without using
+# the whole group. May be we should make some late creation of the
+# groups -- ie only if user requests a group, options are added to it.
+from mvpa.support import copy
+
+class Options(object):
+    """Just a convinience placeholder for all available options
+    """
+    pass
+
+class OptionGroups(object):
+    """Group creation is delayed until instance is requested.
+
+    This allows to overcome the problem of poluting handled cmdline options
+    """
+
+    def __init__(self, parser):
+        self._d = {}
+        self._parser = parser
+
+    def add(self, name, l, doc):
+        self._d[name] = (doc, l)
+
+    def _getGroup(self, name):
+        try:
+            doc, l = self._d[name]
+        except KeyError:
+            raise ValueError, "No group with name %s" % name
+        opts = OptionGroup(self._parser, doc)
+        #opts.add_options(copy.deepcopy(l)) # may be copy?
+        try:
+            opts.add_options(l)
+        except OptionConflictError:
+            print "Problem addition options to the group '%s'. Most probably" \
+                  " the option was independently added already." % name
+            raise
+        return opts
+
+    def __getattribute__(self, index):
+        if index[0] == '_':
+            return object.__getattribute__(self, index)
+        if self._d.has_key(index):
+            return self._getGroup(index)
+        return object.__getattribute__(self, index)
 
 
 # TODO: try to make groups definition somewhat lazy, since now
@@ -34,41 +80,42 @@ from mvpa.misc import verbose
 # to some group and also available 'freely'
 #
 parser = OptionParser(add_help_option=False,
-                      conflict_handler="resolve")
+                      conflict_handler="error")
+
+
+opt = Options()
+opts = OptionGroups(parser)
 
 #
 # Verbosity options
 #
-def verboseCallback(option, optstr, value, parser):
+def _verboseCallback(option, optstr, value, parser):
     """Callback for -v|--verbose cmdline option
     """
+    if __debug__:
+        debug("CMDLINE", "Setting verbose.level to %s" % str(value))
     verbose.level = value
     optstr = optstr                     # pylint shut up
     setattr(parser.values, option.dest, value)
 
-optHelp = \
+opt.help = \
     Option("-h", "--help", "--sos",
            action="help",
            help="Show this help message and exit")
 
-optVerbose = \
+opt.verbose = \
     Option("-v", "--verbose", "--verbosity",
-           action="callback", callback=verboseCallback, nargs=1,
+           action="callback", callback=_verboseCallback, nargs=1,
            type="int", dest="verbose", default=0,
            help="Verbosity level of output")
 """Pre-cooked `optparse`'s option to specify verbose level"""
 
-optsCommon = OptionGroup(parser, title="Generic"
-#   , description="Options often used in a PyMVPA application"
-                         )
-
-optsCommon.add_options([optVerbose, optHelp])
-
+commonopts_list = [opt.verbose, opt.help]
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa.base import debug
 
-    def debugCallback(option, optstr, value, parser):
+    def _debugCallback(option, optstr, value, parser):
         """Callback for -d|--debug cmdline option
         """
         if value == "list":
@@ -85,130 +132,187 @@ if __debug__:
         optstr = optstr                     # pylint shut up
         debug.setActiveFromString(value)
 
-
         setattr(parser.values, option.dest, value)
 
 
     optDebug = Option("-d", "--debug",
-                      action="callback", callback=debugCallback,
+                      action="callback", callback=_debugCallback,
                       nargs=1,
                       type="string", dest="debug", default="",
                       help="Debug entries to report. " +
                       "Run with '-d list' to get a list of " +
                       "registered entries")
 
-    optsCommon.add_option(optDebug)
+    commonopts_list.append(optDebug)
 
+opts.add("common", commonopts_list, "Common generic options")
 
 #
 # Classifiers options
 #
-optClf = \
+opt.clf = \
     Option("--clf",
            type="choice", dest="clf",
-           choices=['knn', 'svm', 'ridge'], default='svm',
+           choices=['knn', 'svm', 'ridge', 'gpr', 'smlr'], default='svm',
            help="Type of classifier to be used. Default: svm")
 
-optRadius = \
+opt.radius = \
     Option("-r", "--radius",
            action="store", type="float", dest="radius",
            default=5.0,
            help="Radius to be used (eg for the searchlight). Default: 5.0")
 
 
-optKNearestDegree = \
+opt.knearestdegree = \
     Option("-k", "--k-nearest",
            action="store", type="int", dest="knearestdegree", default=3,
            help="Degree of k-nearest classifier. Default: 3")
 
-optsKNN = OptionGroup(parser, "Specification of kNN")
-optsKNN.add_option(optKNearestDegree)
+opts.add('KNN', [opt.radius, opt.knearestdegree], "Specification of kNN")
 
-optSVMC = \
+
+opt.svm_C = \
     Option("-C", "--svm-C",
            action="store", type="float", dest="svm_C", default=1.0,
            help="C parameter for soft-margin C-SVM classification. " \
                 "Default: 1.0")
 
-optSVMNu = \
+opt.svm_nu = \
     Option("--nu", "--svm-nu",
            action="store", type="float", dest="svm_nu", default=0.1,
            help="nu parameter for soft-margin nu-SVM classification. " \
                 "Default: 0.1")
 
-optSVMGamma = \
+opt.svm_gamma = \
     Option("--gamma", "--svm-gamma",
            action="store", type="float", dest="svm_gamma", default=1.0,
            help="gamma parameter for Gaussian kernel of RBF SVM. " \
                 "Default: 1.0")
 
+opts.add('SVM', [opt.svm_nu, opt.svm_C, opt.svm_gamma], "SVM specification")
 
-optsSVM = OptionGroup(parser, "SVM specification")
-optsSVM.add_options([optSVMNu, optSVMC, optSVMGamma])
-
+opt.do_sweep = \
+             Option("--sweep",
+                    action="store_true", dest="do_sweep",
+                    default=False,
+                    help="Sweep through various classifiers")
 
 # Crossvalidation options
 
-optCrossfoldDegree = \
+opt.crossfolddegree = \
     Option("-c", "--crossfold",
            action="store", type="int", dest="crossfolddegree", default=1,
            help="Degree of N-fold crossfold. Default: 1")
 
-optsGener = OptionGroup(parser, "Generalization estimates")
-optsGener.add_options([optCrossfoldDegree])
+opts.add('general', [opt.crossfolddegree], "Generalization estimates")
+
 
 # preprocess options
 
-optZScore = \
+opt.zscore = \
     Option("--zscore",
            action="store_true", dest="zscore", default=0,
            help="Enable zscoring of dataset samples. Default: Off")
 
-optTr = \
+opt.tr = \
     Option("--tr",
            action="store", dest="tr", default=2.0, type='float',
            help="fMRI volume repetition time. Default: 2.0")
 
-optDetrend = \
+opt.detrend = \
     Option("--detrend",
            action="store_true", dest="detrend", default=0,
            help="Do linear detrending. Default: Off")
 
-optsPreproc = OptionGroup(parser, "Preprocessing options")
-optsPreproc.add_options([optZScore, optTr, optDetrend])
+opts.add('preproc', [opt.zscore, opt.tr, opt.detrend], "Preprocessing options")
+
+
+# Wavelets options
+if externals.exists('pywt'):
+    import pywt
+    def _waveletFamilyCallback(option, optstr, value, parser):
+        """Callback for -w|--wavelet-family cmdline option
+        """
+        wl_list = pywt.wavelist()
+        wl_list_str = ", ".join(
+                ['-1: None'] + ['%d:%s' % w for w in enumerate(wl_list)])
+        if value == "list":
+            print "Available wavelet families: " + wl_list_str
+            raise SystemExit, 0
+
+        wl_family = value
+        try:
+            # may be int? ;-)
+            wl_family_index = int(value)
+            if wl_family_index >= 0:
+                try:
+                    wl_family = wl_list[wl_family_index]
+                except IndexError:
+                    print "Index is out of range. " + \
+                          "Following indexes with names are known: " + \
+                          wl_list_str
+                    raise SystemExit, -1
+            else:
+                wl_family = 'None'
+        except ValueError:
+            pass
+        # Check the value
+        wl_family = wl_family.lower()
+        if wl_family == 'none':
+            wl_family = None
+        elif not wl_family in wl_list:
+            print "Uknown family '%s'. Known are %s" % (wl_family, ', '.join(wl_list))
+            raise SystemExit, -1
+        # Store it in the parser
+        setattr(parser.values, option.dest, wl_family)
+
+
+    opt.wavelet_family = \
+            Option("-w", "--wavelet-family", callback=_waveletFamilyCallback,
+                   action="callback", type="string", dest="wavelet_family",
+                   default='-1',
+                   help="Wavelet family: string or index among the available. " +
+                   "Run with '-w list' to see available families")
+
+    opt.wavelet_decomposition = \
+            Option("-W", "--wavelet-decomposition",
+                   action="store", type="choice", dest="wavelet_decomposition",
+                   default='dwt', choices=['dwt', 'dwp'],
+                   help="Wavelet decomposition: discrete wavelet transform "+
+                   "(dwt) or packet (dwp)")
+
+    opts.add('wavelet', [opt.wavelet_family, opt.wavelet_decomposition],
+             "Wavelets mappers")
+
 
 # Box options
 
-optBoxLength = \
+opt.boxlength = \
     Option("--boxlength",
            action="store", dest="boxlength", default=1, type='int',
            help="Length of the box in volumes (integer). Default: 1")
 
-optBoxOffset = \
+opt.boxoffset = \
     Option("--boxoffset",
            action="store", dest="boxoffset", default=0, type='int',
            help="Offset of the box from the event onset in volumes. Default: 0")
 
-optsBox = OptionGroup(parser, "Box options")
-optsBox.add_options([optBoxLength, optBoxOffset])
+opts.add('box', [opt.boxlength, opt.boxoffset], "Box options")
 
 
 # sample attributes
 
-optChunk = \
+opt.chunk = \
     Option("--chunk",
            action="store", dest="chunk", default='0',
            help="Id of the data chunk. Default: 0")
 
-optChunkLimits = \
+opt.chunkLimits = \
     Option("--chunklimits",
            action="store", dest="chunklimits", default=None,
            help="Limit processing to a certain chunk of data given by start " \
                 "and end volume number (including lower, excluding upper " \
                 "limit). Numbering starts with zero.")
 
-optsChunk = OptionGroup(parser, "Chunk options AKA Sample attributes XXX")
-optsChunk.add_options([optChunk, optChunkLimits])
-
-
+opts.add('chunk', [opt.chunk, opt.chunkLimits], "Chunk options AKA Sample attributes XXX")
 

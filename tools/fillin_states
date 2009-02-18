@@ -1,0 +1,100 @@
+#!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+""""""
+
+__docformat__ = 'restructuredtext'
+
+if not __name__ == "__main__":
+    raise ValueError, "Go away -- nothing to look here for as a module"
+
+import sys, os, re
+
+from optparse import OptionParser
+from os import environ, path
+from textwrap import wrap
+
+from mvpa.base import verbose
+from mvpa.misc.cmdline import parser, opts
+
+parser.usage = """Usage: %s [options] infile outfile...""" % sys.argv[0]
+parser.option_groups = [opts.common]
+
+(options, files) = parser.parse_args()
+if len(files)!=2:
+    print "Need input and output files"
+    sys.exit(1)
+
+if files[0] == files[1]:
+    print "For now provide two different names"
+    sys.exit(1)
+
+infile = open(files[0], 'r')
+inlines = infile.readlines()
+infile.close()
+outlines = []
+
+reg = re.compile('^.. IncludeStates: +(?P<path>\S*) +(?P<cls>\S*)')
+i = 0
+while i < len(inlines):
+    line = inlines[i]
+    i += 1
+    outlines.append(line)
+    reg_res = reg.search(line)
+    if not reg_res:
+        continue
+    else:
+        verbose(2, "Line: %s" % line)
+        d = reg_res.groupdict()
+        # import asked module
+        exec "from mvpa.%s import %s as Victim" % (d['path'], d['cls'])
+
+        states = Victim._collections_template['states'].items
+        keys = states.keys()
+        keys.sort()
+
+        isthere = inlines[i+1].startswith("Supported st")
+
+        suffix = ['', 's'][len(keys)>1]
+        outlines.append("""
+Supported state%s:
+
+================== ==============================================   =========
+    State Name      Description                                      Default
+------------------ ----------------------------------------------   ---------
+"""%suffix)
+
+        for k in keys:
+            verbose(3, " " + k)
+            v = states[k]
+            doc = v.__doc__
+            if not doc.endswith('.'): doc += '.'
+            doc = wrap(doc, 46)
+            k, e = k[:], ['Disabled', 'Enabled'][v.isEnabled]
+            for d in doc:
+                new_line = "%-19s %-46s   %s" % \
+                           (k, d, e)
+                k, e = "", ""
+                outlines.append(new_line.rstrip()+"\n")
+
+        outlines.append("""================== ==============================================   =========\n""")
+
+        if isthere:
+            count = 0
+            # aborb "older" lines until we hit good one
+            while count < 2:
+                count += inlines[i].startswith('======')
+                i += 1
+
+
+
+
+outfile = open(files[1], 'w')
+[outfile.write(x) for x in outlines]
+outfile.close()

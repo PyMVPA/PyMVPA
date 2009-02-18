@@ -1,21 +1,29 @@
-PROFILE_FILE=tests/main.pstats
-COVERAGE_REPORT=coverage
+PROFILE_FILE=$(CURDIR)/build/main.pstats
+COVERAGE_REPORT=$(CURDIR)/build/coverage
 HTML_DIR=build/html
+DOCSRC_DIR=build/docsrc
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=build/pdf
+LATEX_DIR=build/latex
 WWW_DIR=build/website
+SWARM_DIR=build/swarm
+WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
+DATA_URI=apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data
+SWARMTOOL_DIR=tools/codeswarm
+SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
+RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 
 
-PYVER := $(shell pyversions -vd)
-ARCH := $(shell uname -m)
+#
+# Details on the Python/system
+#
 
-rst2html = rst2html --date --strict --stylesheet=pymvpa.css --link-stylesheet
-rst2latex=rst2latex --documentclass=scrartcl \
-					--use-latex-citations \
-					--strict \
-					--use-latex-footnotes \
-					--stylesheet ../../doc/misc/style.tex
+PYVER := $(shell python -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
+DISTUTILS_PLATFORM := $(shell python -c "import distutils.util; print distutils.util.get_platform()")
 
+#
+# Little helpers
+#
 
 mkdir-%:
 	if [ ! -d $($*) ]; then mkdir -p $($*); fi
@@ -27,83 +35,121 @@ mkdir-%:
 
 all: build
 
+# build included 3rd party pieces (if present)
+3rd: 3rd-stamp
+3rd-stamp:
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" || :; \
+     done
+	touch $@
+
+
 debian-build:
 # reuse is better than duplication (yoh)
 	debian/rules build
 
 
 build: build-stamp
-build-stamp:
-	python setup.py config --noisy
-	python setup.py build_ext
-	python setup.py build_py
+build-stamp: 3rd
+	python setup.py config --noisy --with-libsvm
+	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
-	ln -sf ../../../build/lib.linux-$(ARCH)-$(PYVER)/mvpa/clfs/libsvm/svmc.so \
-		mvpa/clfs/libsvm/
+	for ext in _svmc smlrc; do \
+		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/; \
+		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
+		mvpa/clfs/lib$${ext#_*}/$${ext}.dylib; \
+		done
 	touch $@
+
 
 #
 # Cleaning
 #
 
-# Full clean
+# this target is used to clean things for a fresh build
 clean:
-# if we are on debian system - we might have left-overs from build
-	-@$(MAKE) debian-clean
-# if not on debian -- just distclean
-	-@$(MAKE) distclean
-
-distclean:
+# clean 3rd party pieces
+	find 3rd -mindepth 1 -maxdepth 1  -type d | \
+	 while read d; do \
+	  [ -f "$$d/Makefile" ] && $(MAKE) -C "$$d" clean || : ; \
+     done
+# clean tools
+	$(MAKE) -C tools clean
+# clean all bits and pieces
 	-@rm -f MANIFEST
-	-@rm -f mvpa/clfs/libsvm/*.{c,so} \
-		mvpa/clfs/libsvm/svmc.py \
-		mvpa/clfs/libsvm/svmc_wrap.cpp \
-		tests/*.{prof,pstats,kcache} $(PROFILE_FILE) $(COVERAGE_REPORT)
+	-@rm -f mvpa/clfs/lib*/*.so \
+		mvpa/clfs/lib*/*.dylib \
+		mvpa/clfs/lib*/*_wrap.* \
+		mvpa/clfs/lib*/*c.py \
+		mvpa/tests/*.{prof,pstats,kcache}
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
 		 -o -name '.coverage' \
+		 -o -name 'iterate.dat' \
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
-		 -o -iname '#*#' | xargs -l10 rm -f
+		 -o -iname '*.gch' \
+		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist
-	-@rm build-stamp apidoc-stamp
+	-@rm *-stamp
+
+# this target should put the source tree into shape for building the source
+# distribution
+distclean: clean
+# if we are on debian system - we might have left-overs from build
+	-@$(MAKE) debian-clean
+	-@rm -rf tools/codeswarm
+
 
 
 debian-clean:
 # remove stamps for builds since state is not really built any longer
 	-fakeroot debian/rules clean
 
+
 #
 # Documentation
 #
+
 doc: website
 
-htmlindex: mkdir-HTML_DIR
-	$(rst2html) doc/index.txt $(HTML_DIR)/index.html
+prepare-docsrc: mkdir-DOCSRC_DIR
+	cp -Lpurv doc/* $(DOCSRC_DIR)
+	cp -Lpurv doc/pics $(DOCSRC_DIR)/examples/
 
-htmlchangelog: mkdir-HTML_DIR
-	$(rst2html) Changelog $(HTML_DIR)/changelog.html
+references:
+	tools/bib2rst_ref.py
 
-htmlmanual: mkdir-HTML_DIR
-	$(rst2html) doc/manual.txt $(HTML_DIR)/manual.html
-	# copy images and styles
-	cp -r -t $(HTML_DIR) doc/misc/*.css doc/misc/pics
+htmldoc: modref-templates examples2rst build
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR) $(MAKE) html
+	cd $(HTML_DIR)/modref && ln -sf ../_static
+	cd $(HTML_DIR)/examples && ln -sf ../_static
+	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
-htmldevguide: mkdir-HTML_DIR
-	$(rst2html) doc/devguide.txt $(HTML_DIR)/devguide.html
+pdfdoc: modref-templates examples2rst build pdfdoc-stamp
+pdfdoc-stamp:
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../.. $(MAKE) latex
+	cd $(LATEX_DIR) && $(MAKE) all-pdf
+	touch $@
 
-pdfmanual: mkdir-PDF_DIR
-	cat doc/manual.txt Changelog | $(rst2latex) > $(PDF_DIR)/manual.tex
-	-cp -r doc/misc/pics $(PDF_DIR)
-	# need to run twice to get cross-refs right
-	cd $(PDF_DIR) && pdflatex manual.tex && pdflatex manual.tex
+# Create a handy .pdf of the manual to be printed as a book
+handbook: pdfdoc
+	cd tools && $(MAKE) pdfbook
+	build/tools/pdfbook -2 \
+	 $(LATEX_DIR)/PyMVPA-Manual.pdf $(LATEX_DIR)/PyMVPA-Manual-Handbook.pdf
 
-pdfdevguide: mkdir-PDF_DIR
-	$(rst2latex) doc/devguide.txt $(PDF_DIR)/devguide.tex
-	cd $(PDF_DIR) && pdflatex devguide.tex
+modref-templates: prepare-docsrc modref-templates-stamp
+modref-templates-stamp:
+	PYTHONPATH=. tools/build_modref_templates.py
+	touch $@
 
-printables: pdfmanual pdfdevguide
+examples2rst: prepare-docsrc examples2rst-stamp
+examples2rst-stamp:
+	tools/examples2rst.py
+	touch $@
 
 apidoc: apidoc-stamp
 apidoc-stamp: build
@@ -112,38 +158,149 @@ apidoc-stamp: build
 # developer machine, because it is only necessary for the arch-all package,
 # but e.g. dpkg-buildpackage runs the indep target anyway -- not sure about
 # the buildds, though.
-#apidoc-stamp: $(PROFILE_FILE)
+#apidoc-stamp: profile
 	mkdir -p $(HTML_DIR)/api
-	epydoc --config doc/api/epydoc.conf
+	LC_ALL=C MVPA_EPYDOC_WARNINGS=once tools/epydoc --config doc/api/epydoc.conf
 	touch $@
 
-website: mkdir-WWW_DIR htmlindex htmlmanual htmlchangelog \
-         htmldevguide printables apidoc
+# this takes some minutes !!
+profile: build mvpa/tests/main.py
+	@PYTHONPATH=. tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
+
+
+#
+# Website
+#
+
+website: website-stamp
+website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
-	cp $(PDF_DIR)/*.pdf $(WWW_DIR)
+	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
+	tools/sitemap.sh > $(WWW_DIR)/sitemap.xml
+# main icon of the website
+	cp $(DOCSRC_DIR)/pics/favicon.png $(WWW_DIR)/_images/
+# for those who do not care about <link> and just trying to download it
+	cp $(DOCSRC_DIR)/pics/favicon.png $(WWW_DIR)/favicon.ico
+# provide robots.txt to minimize unnecessary traffic
+	cp $(DOCSRC_DIR)/_static/robots.txt $(WWW_DIR)/
+# provide promised pylintrc
+	mkdir -p $(WWW_DIR)/misc && cp $(DOCSRC_DIR)/misc/pylintrc $(WWW_DIR)/misc
+	touch $@
 
 upload-website: website
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* alioth.debian.org:/home/groups/pkg-exppsy/htdocs/pymvpa/
+	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
+
+upload-htmldoc: htmldoc
+	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
-# this takes some minutes !!
-$(PROFILE_FILE): build tests/main.py
-	@cd tests && PYTHONPATH=.. ../tools/profile -K  -O ../$(PROFILE_FILE) main.py
+#
+# Tests (unittests, docs, examples)
+#
 
-test-%: build
-	@cd tests && PYTHONPATH=.. python test_$*.py
+ut-%: build
+	PYTHONPATH=. python mvpa/tests/test_$*.py
 
-test: build
-	@cd tests && PYTHONPATH=.. python main.py
+unittest: build
+	@echo "I: Running unittests (without optimization nor debug output)"
+	PYTHONPATH=. python mvpa/tests/main.py
 
+# test if PyMVPA is working if optional externals are missing
+unittest-badexternals: build
+	@echo "I: Running unittests under assumption of missing optional externals."
+	@PYTHONPATH=mvpa/tests/badexternals:. python mvpa/tests/main.py 2>&1 \
+	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
+              -e 'WARNING:.*SMLR.* implementation'
+
+# only non-labile tests
+unittest-nonlabile: build
+	@echo "I: Running only non labile unittests. None of them should ever fail."
+	@PYTHONPATH=. MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+
+# Run unittests with optimization on -- helps to catch unconditional
+# debug calls
+unittest-optimization: build
+	@echo "I: Running unittests with python -O."
+	@PYTHONPATH=. python -O mvpa/tests/main.py
+
+# Run unittests with all debug ids and some metrics (crossplatform ones) on.
+#   That does:
+#     additional checking,
+#     debug() calls validation, etc
+unittest-debug: build
+	@echo "I: Running unittests with debug output. No progress output."
+	@PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
+       python mvpa/tests/main.py 2>&1 \
+       |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
+
+
+# Run all unittests
+#  Run with 'make -k' if you like to sweep through all of them, so
+#  failure in one of them does not stop the full sweep
+unittests: unittest-nonlabile unittest unittest-badexternals \
+           unittest-optimization unittest-debug
+
+te-%: build
+	@echo -n "I: Testing example $*: "
+	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	 python doc/examples/$*.py >| temp-$@.log 2>&1 \
+	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
+	@rm -f temp-$@.log
+
+testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
+              te-curvefitting te-projections te-kerneldemo te-clfs_examples \
+              te-erp_plot te-match_distribution te-permutation_test \
+              te-searchlight_minimal te-smlr te-start_easy te-topo_plot
+
+tm-%: build
+	PYTHONPATH=. nosetests --with-doctest --doctest-extension .rst \
+	                       --doctest-tests doc/$*.rst
+
+testmanual: build
+	@echo "I: Testing code samples found in documentation"
+	@PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/
+
+# Check if everything (with few exclusions) is imported in unitests is
+# known to the mvpa.suite()
+testsuite:
+	@echo "I: Running full testsuite"
+	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
+	 sort | uniq | \
+	 grep -v -e 'mvpa\.base\.dochelpers' \
+			 -e 'mvpa\.\(tests\|support\)' \
+			 -e 'mvpa\.misc\.args' | \
+	while read i; do \
+	 grep -q "^ *$$i" mvpa/suite.py || \
+	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
+	 done
+
+# Check if links to api/ within documentation are broken.
+testapiref: apidoc
+	@for tf in doc/*.rst; do \
+	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
+	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
+	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
+
+# Check if there is no WARNINGs from sphinx
+testsphinx: htmldoc
+	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
+
+test: unittests testmanual testsuite testapiref testexamples
+
+# Target to be called after some major refactoring
+# It skips some flavors of unittests
+testrefactor: unittest testmanual testsuite testapiref testexamples
 
 $(COVERAGE_REPORT): build
-	@cd tests && { \
-	  export PYTHONPATH=..; \
-	  python-coverage -x main.py; \
-	  python-coverage -r -i -o /usr >| ../$(COVERAGE_REPORT); \
-	  grep -v '100%$$' ../$(COVERAGE_REPORT); \
-	  python-coverage -a -i -o /usr; }
+	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
+	@{ \
+	  export PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
+	  python-coverage -x mvpa/tests/main.py >/dev/null 2>&1; \
+	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
+	  grep -v '100%$$' $(COVERAGE_REPORT); \
+	  python-coverage -a -i -o /usr,/var ; }
 
 
 #
@@ -151,7 +308,7 @@ $(COVERAGE_REPORT): build
 #
 
 pylint:
-	pylint --rcfile doc/misc/pylintrc mvpa
+	pylint -e --rcfile doc/misc/pylintrc mvpa
 
 #
 # Generate new source distribution
@@ -161,25 +318,114 @@ orig-src: distclean debian-clean
 	# clean existing dist dir first to have a single source tarball to process
 	-rm -rf dist
 
-	if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
-			printf "WARNING: Changelog version does not match tarball version!\n" ;\
-			exit 1; \
+	if [ -f debian/changelog ]; then \
+		if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
+				printf "WARNING: Changelog version does not match tarball version!\n" ;\
+				exit 1; \
+		fi \
 	fi
 	# let python create the source tarball
-	python setup.py sdist --formats=gztar
+	# enable libsvm to get all sources!
+	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
+	# clean leftover
+	rm MANIFEST
+
+# make Debian source package
+# # DO NOT depend on orig-src here as it would generate a source tarball in a
+# Debian branch and might miss patches!
+debsrc:
+	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
+
+
+bdist_rpm: 3rd
+	python setup.py bdist_rpm --with-libsvm \
+	  --doc-files "doc data" \
+	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
+	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
+
+# build MacOS installer -- depends on patched bdist_mpkg for Leopard
+bdist_mpkg: 3rd
+	python tools/mpkg_wrapper.py setup.py build_ext
+	python tools/mpkg_wrapper.py setup.py install
+
 
 #
 # Data
 #
 
 fetch-data:
-	rsync -avz apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data .
+	rsync $(RSYNC_OPTS) $(DATA_URI) .
+
+# Various other data which might be sensitive and not distribu
+fetch-data-nonfree: fetch-data-nonfree-stamp
+fetch-data-nonfree-stamp:
+	@mkdir -p temp
+# clean up previous location to make sure we don't have it
+	@rm -f data/nonfree/audio/Peter_Nalitch-Guitar.mp3
+# remove directories which should be bogus now
+	@rmdir data/nonfree/audio data/nonfree 2>/dev/null || :
+	rsync $(RSYNC_OPTS) dev.pymvpa.org:/home/data/nonfree temp/ && touch $@
+
+
+#
+# Various sugarings (e.g. swarm)
+#
+
+AUDIO_TRACK=temp/nonfree/audio/Peter_Nalitch-Guitar.mp3
+
+# With permission of the author, we can use Gitar for our visual history
+$(AUDIO_TRACK): fetch-data-nonfree
+
+# Nice visual git log
+# Requires: sun-java5-jdk, ffmpeg, ant
+codeswarm: $(SWARM_DIR)/pymvpa-codeswarm.flv
+$(SWARM_DIR)/frames: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.xml
+	@echo "I: Visualizing git history using codeswarm"
+	@mkdir -p $(SWARM_DIR)/frames
+	cd $(SWARMTOOL_DIR) && ./run.sh ../../doc/misc/codeswarm.config
+
+$(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames $(AUDIO_TRACK)
+	@echo "I: Generating codeswarm video"
+	@cd $(SWARM_DIR) && \
+     ffmpeg -r $$(echo "scale=2; $$(ls -1 frames/ |wc -l) / 154" | bc) -f image2 \
+      -i frames/code_swarm-%05d.png -r 15 -b 250k \
+      -i ../../$(AUDIO_TRACK) -ar 22050 -ab 128k -acodec libmp3lame \
+      -ac 2 pymvpa-codeswarm.flv
+
+$(SWARM_DIR)/git.log:
+	@echo "I: Dumping git log in codeswarm preferred format"
+	@mkdir -p $(SWARM_DIR)
+	@git-log --name-status \
+     --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
+     sed -e 's,[a-z]*@onerussian.com,Yarik,g' \
+         -e 's,\(michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\)\|neukom-data@neukom-data-desktop\.(none)\),Michael,g' \
+         -e 's,\(per@parsec.Princeton.EDU\|per@sync.(none)\|psederberg@gmail.com\),Per,g' \
+         -e 's,emanuele@relativita.com,Emanuele,g' \
+         -e 's,Ingo.Fruend@gmail.com,Ingo,g' >| $@
+
+$(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.log
+	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
+	 -g $(SWARM_DIR)/git.log -o $(SWARM_DIR)/git.xml
+
+$(SWARMTOOL_DIR):
+	@echo "I: Checking out codeswarm tool source code"
+	@svn checkout http://codeswarm.googlecode.com/svn/trunk/ $(SWARMTOOL_DIR)
+
+
+upload-codeswarm: codeswarm
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(SWARM_DIR)/*.flv $(WWW_UPLOAD_URI)/files/
+
 
 #
 # Trailer
 #
 
-.PHONY: fetch-data orig-src pylint apidoc doc manual
+.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual \
+        all profile website fetch-data-misc upload-website \
+        test testsuite testmanual testapiref testexamples distclean debian-clean \
+        unittest unittest-debug unittest-optimization unittest-nonlabile \
+        unittest-badexternals unittests \
+        handbook codeswarm upload-codeswarm

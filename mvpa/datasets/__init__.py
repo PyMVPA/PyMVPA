@@ -1,12 +1,12 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA datasets and helper classes such as mappers, splitters
+"""PyMVPA datasets and helper classes such as splitters
 
 Module Description
 ==================
@@ -22,13 +22,22 @@ The mvpa.datasets module contains the following modules:
 .. packagetree::
    :style: UML
 
-:group Datasets: dataset, mappeddataset, maskeddataset, niftidataset
-:group Mappers: mapper, maskmapper
-:group Metrics: metric
-:group Splitters: splitter, nfoldsplitter
-:group Miscellaneous TODO: should be gone somewhere else: misc
+:group Generic Datasets: base mapped masked meta
+:group Specialized Datasets: nifti channel eep event
+:group Splitters: splitter
+:group Miscellaneous: miscfx miscfx_sp
 
 
 """
 
 __docformat__ = 'restructuredtext'
+
+if __debug__:
+    from mvpa.base import debug
+    debug('INIT', 'mvpa.datasets')
+
+# nothing in here that works without the base class
+from mvpa.datasets.base import Dataset
+
+if __debug__:
+    debug('INIT', 'mvpa.datasets end')
