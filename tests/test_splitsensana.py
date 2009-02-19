@@ -1,5 +1,5 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
-# vi: set ft=python sts=4 ts=4 sw=4 et:
+#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
+#ex: set sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -8,52 +8,53 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure, \
-        TScoredFeaturewiseMeasure
-from mvpa.misc.data_generators import normalFeatureDataset
-from mvpa.misc.transformers import Absolute
-from tests_warehouse import *
-from tests_warehouse_clfs import *
+import unittest
 
+import numpy as N
+
+from mvpa.datasets.dataset import Dataset
+from mvpa.algorithms.linsvmweights import LinearSVMWeights
+from mvpa.clfs.svm import LinearNuSVMC
+from mvpa.datasets.splitter import NFoldSplitter
+from mvpa.algorithms.splitsensana import SplittingSensitivityAnalyzer, \
+                                         TScoredSensitivityAnalyzer
+from mvpa.misc.transformers import Absolute
+
+from tests_warehouse import *
 
 class SplitSensitivityAnalyserTests(unittest.TestCase):
 
-    # XXX meta should work TODO
-    @sweepargs(svm=clfswh['linear', 'svm', '!meta'])
-    def testAnalyzer(self, svm):
-        dataset = datasets['uni2small']
+    def testAnalyzer(self):
+        self.dataset = normalFeatureDataset(perlabel=50, nlabels=2,
+                                            nfeatures=4)
+        svm = LinearNuSVMC()
+        svm_weigths = LinearSVMWeights(svm)
 
-        svm_weigths = svm.getSensitivityAnalyzer()
-
-        sana = SplitFeaturewiseMeasure(
+        sana = SplittingSensitivityAnalyzer(
                     svm_weigths,
                     NFoldSplitter(cvtype=1),
                     enable_states=['maps'])
 
-        maps = sana(dataset)
-        nchunks = len(dataset.uniquechunks)
-        nfeatures = dataset.nfeatures
-        self.failUnless(len(maps) == nfeatures,
-            msg='Lengths of the map %d is different from number of features %d'
-                 % (len(maps), nfeatures))
+        maps = sana(self.dataset)
+
+        self.failUnless(len(maps) == 4)
         self.failUnless(sana.states.isKnown('maps'))
         allmaps = N.array(sana.maps)
         self.failUnless(allmaps[:,0].mean() == maps[0])
-        self.failUnless(allmaps.shape == (nchunks, nfeatures))
+        self.failUnless(allmaps.shape == (5,4))
 
 
-    @sweepargs(svm=clfswh['linear', 'svm', '!meta'])
-    def testTScoredAnalyzer(self, svm):
+    def testTScoredAnalyzer(self):
         self.dataset = normalFeatureDataset(perlabel=100,
                                             nlabels=2,
                                             nchunks=20,
                                             nonbogus_features=[0,1],
                                             nfeatures=4,
                                             snr=10)
-        svm_weigths = svm.getSensitivityAnalyzer()
+        svm = LinearNuSVMC()
+        svm_weigths = LinearSVMWeights(svm)
 
-        sana = TScoredFeaturewiseMeasure(
+        sana = TScoredSensitivityAnalyzer(
                     svm_weigths,
                     NFoldSplitter(cvtype=1),
                     enable_states=['maps'])
@@ -78,5 +79,5 @@ def suite():
 
 
 if __name__ == '__main__':
-    import runner
+    import test_runner
 
