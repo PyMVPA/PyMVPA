@@ -18,6 +18,7 @@ import numpy as N
 
 from mvpa.misc.cmdline import parser, opt
 from mvpa.base import verbose#, warning, externals
+import mvpa
 
 #externals.exists('nifti', raiseException=True)
 from nifti import NiftiImage
@@ -28,6 +29,7 @@ if __debug__:
 
 def prepParser(parser):
     parser.usage = "%s [OPTIONS] <fmri-data>" % sys.argv[0]
+    parser.version = "%prog " + mvpa.__version__
 
     parser.add_option(opt.verbose)
     parser.add_option(opt.help)
