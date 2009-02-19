@@ -17,6 +17,8 @@ has prefix opts (e.g. `opts.common`).
 Option name should be camelbacked version of .dest for the option.
 """
 
+import mvpa
+
 # TODO? all options (opt*) might migrate to respective module? discuss
 from optparse import OptionParser, Option, OptionGroup, OptionConflictError
 
@@ -79,7 +81,10 @@ class OptionGroups(object):
 # Conflict hanlder to resolve situation that we have the same option added
 # to some group and also available 'freely'
 #
-parser = OptionParser(add_help_option=False,
+# set default version string, otherwise '--version' option is not enabled
+# can be overwritten later on by assigning to `parser.version`
+parser = OptionParser(version="%prog",
+                      add_help_option=False,
                       conflict_handler="error")
 
 
