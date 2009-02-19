@@ -36,6 +36,7 @@ from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
+                      OneWayAnova(compound=True, combiner=SecondAxisSumOfAbs),
                       IterativeRelief(), IterativeReliefOnline(),
                       IterativeRelief_Devel(), IterativeReliefOnline_Devel()
                       ]
