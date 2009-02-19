@@ -37,23 +37,43 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
     sensitivity map. As usual F-scores have a range of [0,inf] with greater
     values indicating higher sensitivity.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, compound=False, **kwargs):
         """Nothing special to do here.
+
+        :Parameters:
+          compound : bool
+            Perform compound comparison for each of the labels against
+            the others
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
+        self.compound = compound
+
 
     def _call(self, dataset):
         """Computes featurewise f-scores."""
+
+        if self.compound:
+            return self._call_compound(dataset)
+        else:
+            return self._call_simple(dataset)
+
+
+    def _call_simple(self, dataset, labels=None):
+        """Computes featurewise f-scores using simple comparisons."""
         # group means
         means = []
         # with group variance
         vars_ = []
 
+        # if no labels were provided -- use the ones within the dataset
+        if labels is None:
+            labels = dataset.labels
+
         # split by groups -> [groups x [samples x features]]
-        for ul in dataset.uniquelabels:
-            ul_samples = dataset.samples[dataset.labels == ul]
+        for ul in N.unique(labels):
+            ul_samples = dataset.samples[labels == ul]
             means.append(ul_samples.mean(axis=0))
             vars_.append(ul_samples.var(axis=0))
 
@@ -78,3 +98,19 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         vgm[vgm0] /= mvw[vgm0]
 
         return vgm
+
+
+    def _call_compound(self, dataset):
+        """Computes featurewise f-scores using compound comparisons."""
+
+        orig_labels = dataset.labels
+        labels = orig_labels.copy()
+
+        results = []
+        for ul in dataset.uniquelabels:
+            labels[orig_labels == ul] = 1
+            labels[orig_labels != ul] = 2
+            results.append(self._call_simple(dataset, labels))
+
+        # features x labels
+        return N.array(results).T
