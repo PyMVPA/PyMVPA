@@ -28,7 +28,7 @@ from mvpa.misc.transformers import Absolute, FirstAxisMean, \
      SecondAxisSumOfAbs, DistPValue
 
 from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
-from mvpa.measures.anova import OneWayAnova
+from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
 
@@ -36,6 +36,7 @@ from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
+                      CompoundOneWayAnova(combiner=SecondAxisSumOfAbs),
                       IterativeRelief(), IterativeReliefOnline(),
                       IterativeRelief_Devel(), IterativeReliefOnline_Devel()
                       ]
