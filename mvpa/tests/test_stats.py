@@ -10,7 +10,7 @@
 
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
-from mvpa.measures.anova import OneWayAnova
+from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from tests_warehouse import *
 from mvpa import cfg
 
@@ -248,6 +248,34 @@ class StatsTests(unittest.TestCase):
 
         v = scipy.stats.rdist(10000,0,1).cdf([-0.1])
         self.failUnless(v>=0, v<=1)
+
+
+    def testAnova(self):
+        """Do some extended testing of OneWayAnova
+
+        in particular -- compound estimation
+        """
+
+        m = OneWayAnova()               # default must be not compound ?
+        mc = CompoundOneWayAnova(combiner=None)
+        ds = datasets['uni2medium']
+
+        # For 2 labels it must be identical for both and equal to
+        # simple OneWayAnova
+        a, ac = m(ds), mc(ds)
+
+        self.failUnless(a.shape == (ds.nfeatures,))
+        self.failUnless(ac.shape == (ds.nfeatures, len(ds.uniquelabels)))
+
+        self.failUnless((ac[:, 0] == ac[:, 1]).all())
+        self.failUnless((a == ac[:, 1]).all())
+
+        ds = datasets['uni4large']
+        ac = mc(ds)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            # All non-bogus features must be high for a corresponding feature
+            self.failUnless((ac[(N.array(ds.nonbogus_features),
+                                 N.arange(4))] >= 1).all())
 
 
 def suite():
