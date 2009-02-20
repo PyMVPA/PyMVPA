@@ -5,13 +5,19 @@ MISC=svm.cpp
 LIBFLAGS=
 CFLAGS=-Wall -O2
 
-all: $(LIB)
+TDIR=..\\..\\build\\libsvm
+
+all: prep $(LIB)
+
+prep:
+	-@mkdir ..\\..\\build
+	-@mkdir ..\\..\\build\\libsvm
 
 .cpp.o:
-	g++ $(CFLAGS) $(LIBFLAGS) -c $^
+	g++ $(CFLAGS) $(LIBFLAGS) -c $^ -o $(TDIR)\\$(^:.cpp=.o)
 
 $(LIB): $(MISC:.cpp=.o)
-	ar cur $@ $^
+	ar cur $(TDIR)\\$@ $(TDIR)\\$^
 
 clean:
-	-del $(LIB) $(MISC:.cpp=.o)
+	-rmdir /S /Q $(TDIR)
