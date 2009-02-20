@@ -37,30 +37,8 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
     sensitivity map. As usual F-scores have a range of [0,inf] with greater
     values indicating higher sensitivity.
     """
-    def __init__(self, compound=False, **kwargs):
-        """Nothing special to do here.
 
-        :Parameters:
-          compound : bool
-            Perform compound comparison for each of the labels against
-            the others
-        """
-        # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
-
-        self.compound = compound
-
-
-    def _call(self, dataset):
-        """Computes featurewise f-scores."""
-
-        if self.compound:
-            return self._call_compound(dataset)
-        else:
-            return self._call_simple(dataset)
-
-
-    def _call_simple(self, dataset, labels=None):
+    def _call(self, dataset, labels=None):
         """Computes featurewise f-scores using simple comparisons."""
         # group means
         means = []
@@ -100,7 +78,13 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         return vgm
 
 
-    def _call_compound(self, dataset):
+class CompoundOneWayAnova(OneWayAnova):
+    """Compound comparisons via univariate ANOVA.
+
+    Provides F-scores per each label if compared to the other labels.
+    """
+
+    def _call(self, dataset):
         """Computes featurewise f-scores using compound comparisons."""
 
         orig_labels = dataset.labels
@@ -110,7 +94,9 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         for ul in dataset.uniquelabels:
             labels[orig_labels == ul] = 1
             labels[orig_labels != ul] = 2
-            results.append(self._call_simple(dataset, labels))
+            results.append(OneWayAnova._call(self, dataset, labels))
 
         # features x labels
         return N.array(results).T
+
+

@@ -10,7 +10,7 @@
 
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
-from mvpa.measures.anova import OneWayAnova
+from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from tests_warehouse import *
 from mvpa import cfg
 
@@ -257,7 +257,7 @@ class StatsTests(unittest.TestCase):
         """
 
         m = OneWayAnova()               # default must be not compound ?
-        mc = OneWayAnova(compound=True, combiner=None)
+        mc = CompoundOneWayAnova(combiner=None)
         ds = datasets['uni2medium']
 
         # For 2 labels it must be identical for both and equal to
