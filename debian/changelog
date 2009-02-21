@@ -7,6 +7,8 @@ pymvpa (0.4.1-1) unstable; urgency=low
   * Speed-up of package build process by preventing the docs from being built
     twice.
   * Added 'DM-Upload-Allowed: yes' to enable DM upload.
+  * Install new manpages and add build-dep. to help2man.
+  * Updated debian/copyright.
 
   [ Yaroslav Halchenko ]
   * Adjusted long descriptions.
@@ -14,7 +16,7 @@ pymvpa (0.4.1-1) unstable; urgency=low
     Python bindings) into a separate python-mvpa-lib package. That allows
     python-mvpa package to become architecture independent.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Tue, 27 Jan 2009 22:01:15 +0100
+ -- Michael Hanke <michael.hanke@gmail.com>  Sat, 21 Feb 2009 14:07:55 +0100
 
 pymvpa (0.4.0-1) unstable; urgency=low
 

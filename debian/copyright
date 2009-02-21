@@ -4,9 +4,9 @@ Upstream-Source-Location: http://pkg-exppsy.alioth.debian.org/pymvpa
 
 Files: *
 Copyright: Copyright,
-    2006-2008, Michael Hanke <michael.hanke@gmail.com>
-    2007-2008, Yaroslav Halchenko <debian@onerussian.com>
-    2007-2008, Per B. Sederberg <persed@princeton.edu>
+    2006-2009, Michael Hanke <michael.hanke@gmail.com>
+    2007-2009, Yaroslav Halchenko <debian@onerussian.com>
+    2007-2009, Per B. Sederberg <persed@princeton.edu>
          2008, Emanuele Olivetti <emanuele@relativita.com>
 License: Expat
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,7 +29,7 @@ License: Expat
 
 
 Files: debian/*
-Copyright: Copyright 2006-2008,
+Copyright: Copyright 2006-2009,
     Michael Hanke <michael.hanke@gmail.com>
     Yaroslav Halchenko <debian@onerussian.com>
 License: Expat
