@@ -8,7 +8,19 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Tiny tool to prepare a directory for a typical analysis of fMRI data with
-PyMVPA."""
+PyMVPA. Tools from the FSL suite will be used for preprocessing. It takes a 4D
+fMRI timeseries as input and performs the following steps:
+
+- extract an example volume
+
+- perform motion correction using the example volume as reference
+
+- conservative skull-stripping and brain mask generation
+
+- masking of the motion-corrected timeseries with the brain mask
+
+All results will be stored either in the current directory, or in a
+subdirectory with the subject ID (if specified)."""
 
 import sys
 import os
@@ -28,7 +40,8 @@ if __debug__:
 
 
 def prepParser(parser):
-    parser.usage = "%s [OPTIONS] <fmri-data>" % sys.argv[0]
+    # use module docstring for help output
+    parser.usage = "%s [OPTIONS] <fmri-data>\n\n" % sys.argv[0] + __doc__
     parser.version = "%prog " + mvpa.__version__
 
     parser.add_option(opt.verbose)
