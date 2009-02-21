@@ -2,6 +2,7 @@ PROFILE_FILE=$(CURDIR)/build/main.pstats
 COVERAGE_REPORT=$(CURDIR)/build/coverage
 HTML_DIR=build/html
 DOCSRC_DIR=build/docsrc
+MAN_DIR=build/man
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=build/pdf
 LATEX_DIR=build/latex
@@ -117,7 +118,13 @@ debian-clean:
 # Documentation
 #
 
-doc: website
+doc: website manpages
+
+manpages: mkdir-MAN_DIR
+	PYTHONPATH=. help2man -N -n 'preprocess fMRI data for PyMVPA' \
+		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
+	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
+		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
 
 prepare-docsrc: mkdir-DOCSRC_DIR
 	cp -Lpurv doc/* $(DOCSRC_DIR)
