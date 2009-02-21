@@ -11,6 +11,7 @@
 
 import re, sys
 
+import mvpa
 from mvpa.misc.cmdline import parser, opts, opt
 from mvpa.base import verbose, warning, externals
 
@@ -131,6 +132,7 @@ Examples:
  looking within 10mm radius for the closest gray matter voxel.
 
  """ % (sys.argv[0], )
+parser.version = "%prog " + mvpa.__version__
 
 # can't use due to conflict with -d (debug and distance)
 #parser.option_groups = [opts.common]
