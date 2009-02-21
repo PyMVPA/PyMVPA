@@ -47,6 +47,7 @@ The mvpa package contains the following subpackages and modules:
 
 # PyMVPA version string
 pymvpa_version = '0.4.1'
+__version__ = pymvpa_version
 
 __docformat__ = 'restructuredtext'
 
