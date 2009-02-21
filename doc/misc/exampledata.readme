@@ -93,7 +93,7 @@ easily loaded like this:
 
 Note, that instead of specific import statements, it is usually
 more convinient, but slower, to import all functionality from
-PyMVPA at once with 'from mvpa.suite import *' statement.
+PyMVPA at once with `from mvpa.suite import *` statement.
 
 .. note::
 

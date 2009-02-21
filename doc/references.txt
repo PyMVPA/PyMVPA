@@ -62,10 +62,25 @@ experiments.
 
 **Hanke, M., Halchenko, Y. O., Sederberg, P. B. & Hughes, J. M.** The PyMVPA Manual. Available online at http://www.pymvpa.org/PyMVPA-Manual.pdf.
 
-.. _HHS+IP:
+.. _HHS+09a:
 
-**Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S.** (in press). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. *Neuroinformatics*.
+**Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S.** (2009). PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data. *Neuroinformatics*, *7*, 37–53.
   *Introduction into the analysis of fMRI data using PyMVPA.*
+
+  Keywords: :keyword:`PyMVPA`, :keyword:`fMRI`
+
+  DOI: http://dx.doi.org/10.1007/s12021-008-9041-y
+
+
+.. _HHS+09b:
+
+**Hanke, M., Halchenko, Y. O., Sederberg, P. B., Olivetti, E., Fründ, I., Rieger, J. W., Herrmann, C. S., Haxby, J. V., Hanson, S. J. & Pollmann, S.** (2009). PyMVPA: A Unifying Approach to the Analysis of Neuroscientific Data. *Frontiers in Neuroinformatics*, *3*, 3.
+  *Demonstration of PyMVPA capabilities concerning multi-modal or
+  modality-agnostic data analysis.*
+
+  Keywords: :keyword:`PyMVPA`, :keyword:`fMRI`, :keyword:`EEG`, :keyword:`MEG`, :keyword:`extracellular recordings`
+
+  DOI: http://dx.doi.org/10.3389/neuro.11.003.2009
 
 
 .. _HH08:
@@ -97,6 +112,12 @@ experiments.
   concerning the privacy of personal thought.*
 
   DOI: http://dx.doi.org/10.1038/nrn1931
+
+
+.. _JL09:
+
+**Jurica, P. & van Leeuwen, C.** (2009). OMPC: an open-source MATLAB-to-Python compiler. *Frontiers in Neuroinformatics*, *3*, 5.
+  DOI: http://dx.doi.org/10.3389/neuro.11.005.2009
 
 
 .. _KT05:
@@ -141,6 +162,12 @@ experiments.
 
 **Mitchell, T., Hutchinson, R., Niculescu, R. S., Pereira, F., Wang, X., Just, M. & Newman, S.** (2004). Learning to Decode Cognitive States from Brain Images. *Machine Learning*, *57*, 145–175.
   DOI: http://dx.doi.org/10.1023/B:MACH.0000035475.85309.1b
+
+
+.. _MBK09:
+
+**Mur, M., Bandettini, P. A. & Kriegeskorte, N.** (2009). Revealing representational content with pattern-information fMRI–an introductory guide. *Social Cognitive and Affective Neuroscience*.
+  DOI: http://dx.doi.org/10.1093/scan/nsn044
 
 
 .. _NH02:
@@ -209,6 +236,12 @@ experiments.
   Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`group analysis`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072
+
+
+.. _ZH05:
+
+**Zou, H. & Hastie, T.** (2005). Regularization and variable selection via the elastic net. *Journal of the Royal Statistical Society Series B*, *67*, 301–320.
+  URL: http://www-stat.stanford.edu/%7Ehastie/Papers/B67.2%20(2005)%20301-320%20Zou%20%26%20Hastie.pdf
 
 
 

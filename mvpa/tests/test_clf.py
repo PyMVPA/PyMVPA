@@ -219,14 +219,14 @@ class ClassifiersTests(unittest.TestCase):
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (error, cverror))
 
-        self.failUnless( error < 0.25,
-                         msg="clf should generalize more or less fine. "
-                         "Got error %s" % error)
-        self.failUnlessEqual(len(clf.confusion.sets),
-                             len(ds.uniquechunks),
-                             msg="Should have 1 confusion per each split")
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(error < 0.25,
+                msg="clf should generalize more or less fine. "
+                    "Got error %s" % error)
+        self.failUnlessEqual(len(clf.confusion.sets), len(ds.uniquechunks),
+            msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
-                             msg="Should have number of classifiers equal # of epochs")
+            msg="Should have number of classifiers equal # of epochs")
         #self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
         #                     msg="Should classify correctly")
 

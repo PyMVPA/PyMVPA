@@ -23,10 +23,12 @@ __docformat__ = 'restructuredtext'
 
 
 from mvpa import *
-from mvpa.algorithms.cvtranserror import *
+
 from mvpa.base import *
 from mvpa.base.config import *
 from mvpa.base.verbosity import *
+
+from mvpa.algorithms.cvtranserror import *
 
 from mvpa import clfs
 from mvpa.clfs.distance import *
