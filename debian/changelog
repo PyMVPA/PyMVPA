@@ -9,6 +9,8 @@ pymvpa (0.4.1-1) unstable; urgency=low
   * Added 'DM-Upload-Allowed: yes' to enable DM upload.
   * Install new manpages and add build-dep. to help2man.
   * Updated debian/copyright.
+  * Imported various bugfixes from the upstream VCS that were pushed into the
+    0.4 maintenance branch since the release of 0.4.1.
 
   [ Yaroslav Halchenko ]
   * Adjusted long descriptions.
