@@ -123,8 +123,10 @@ doc: website manpages
 manpages: mkdir-MAN_DIR
 	PYTHONPATH=. help2man -N -n 'preprocess fMRI data for PyMVPA' \
 		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
-	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
-		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
+# no manpage for atlaslabeler now, since it implies build-deps for
+# pynifti and lxml
+#	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
+#		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
 
 prepare-docsrc: mkdir-DOCSRC_DIR
 	cp -Lpurv doc/* $(DOCSRC_DIR)
