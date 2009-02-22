@@ -29,11 +29,8 @@ from subprocess import call
 import numpy as N
 
 from mvpa.misc.cmdline import parser, opt
-from mvpa.base import verbose#, warning, externals
+from mvpa.base import verbose, externals
 import mvpa
-
-#externals.exists('nifti', raiseException=True)
-from nifti import NiftiImage
 
 if __debug__:
     from mvpa.base import debug
@@ -77,6 +74,11 @@ def main():
     """
     prepParser(parser)
     (options, infiles) = parser.parse_args()
+
+    # late import of pynifti to be able to get help output without a big
+    # external dep.
+    externals.exists('nifti', raiseException=True)
+    from nifti import NiftiImage
 
     if len(infiles) > 1 or not len(infiles):
         print "%s needs exactly one input fMRI image as argument." % sys.argv[0]
