@@ -26,7 +26,13 @@ if __debug__:
 
 
 def Absolute(x):
-    """Returns the elementwise absolute of any argument."""
+    """
+    Returns the elementwise absolute of any argument.
+
+    :Parameter:
+      x: scalar | sequence
+
+    """
     return N.absolute(x)
 
 

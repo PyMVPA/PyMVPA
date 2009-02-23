@@ -1,3 +1,16 @@
+"""
+MultiVariate Pattern Analysis -- load helper
+
+If you don't like to specify the exact location of any particular
+functionality within PyMVPA, use simply::
+
+  from mvpa.suite import *
+
+or::
+
+  import mvpa.suite
+
+"""
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
