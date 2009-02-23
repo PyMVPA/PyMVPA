@@ -41,7 +41,9 @@ binary-install/python-mvpa:: install/python-mvpa-lib
 
 binary-install/python-mvpa-lib::
 	# assure that there is no mvpa module itself
-	rm -rf debian/python-mvpa-lib/usr/share/python-support/python-mvpa-lib/mvpa/
+	# actually remove everything under ../share/.. since that is provided
+	# by python-mvpa. That prevents e.g. duplicate egg-info files.
+	rm -rf debian/python-mvpa-lib/usr/share/python-support/python-mvpa-lib/*
 
 # install directly into package directory (despite multiple packages)
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
