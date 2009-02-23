@@ -358,5 +358,6 @@ def testAllDependencies(force=False):
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \
                      % [ k[5:] for k in cfg.options('externals')
-                            if k.startswith('have')])
+                            if k.startswith('have') \
+                            and cfg.getboolean('externals', k) == True ])
 
