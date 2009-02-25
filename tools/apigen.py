@@ -169,7 +169,7 @@ class ApiDocWriter(object):
         functions, classes = self._parse_lines(f)
         f.close()
         return functions, classes
-    
+
     def _parse_lines(self, linesource):
         ''' Parse lines of text for functions and classes '''
         functions = []
@@ -213,7 +213,7 @@ class ApiDocWriter(object):
         # Make a shorter version of the uri that omits the package name for
         # titles 
         uri_short = re.sub(r'^%s\.' % self.package_name,'',uri)
-        
+
         ad = '.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n'
 
         chap_title = uri_short
@@ -251,9 +251,7 @@ class ApiDocWriter(object):
             # must NOT exclude from index to keep cross-refs working
             ad += '  :members:\n' \
                   '  :undoc-members:\n' \
-                  '  :show-inheritance:\n' \
-                  '\n' \
-                  '  .. automethod:: __init__\n'
+                  '  :show-inheritance:\n'
         if multi_fx:
             ad += '\n' + 'Functions' + '\n' + \
                   self.rst_section_levels[2] * 9 + '\n\n'
@@ -351,7 +349,7 @@ class ApiDocWriter(object):
                     self._survives_exclude(module_uri, 'module')):
                     modules.append(module_uri)
         return sorted(modules)
-    
+
     def write_modules_api(self, modules,outdir):
         # write the list
         written_modules = []
@@ -376,7 +374,7 @@ class ApiDocWriter(object):
         outdir : string
             Directory name in which to store files
             We create automatic filenames for each module
-            
+
         Returns
         -------
         None
@@ -390,7 +388,7 @@ class ApiDocWriter(object):
         # compose list of modules
         modules = self.discover_modules()
         self.write_modules_api(modules,outdir)
-        
+
     def write_index(self, outdir, froot='gen', relative_to=None):
         """Make a reST API index file from written files
 
