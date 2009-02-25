@@ -46,7 +46,7 @@ def my_import(name):
     """Module importer - taken from the python documentation.
 
     This function allows importing names with dots in them."""
-    
+
     mod = __import__(name)
     components = name.split('.')
     for comp in components[1:]:
@@ -101,7 +101,7 @@ class InheritanceGraph(object):
             # second call will force the equivalent of 'import a.b' to happen
             # after the top-level import above.
             my_import(fullname)
-            
+
         except ImportError:
             raise ValueError(
                 "Could not import class or module '%s' specified for inheritance diagram" % name)
@@ -176,8 +176,8 @@ class InheritanceGraph(object):
 
     # These are the default options for graphviz
     default_graph_options = {
-        "rankdir": "LR",
-        "size": '"8.0, 12.0"'
+        "rankdir": "UD",
+        "size": '"8.0, 8.0"'
         }
     default_node_options = {
         "shape": "box",
