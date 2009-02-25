@@ -225,6 +225,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
     #     SecondAxisSumOfAbs, though could be Max as well... uff
     #   YOH: started to do so, but still have issues... thus
     #        reverting back for now
+    #   MH: Full ack -- voting for no default combiners!
     def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs): # SecondAxisSumOfAbs
         """Initialize
 

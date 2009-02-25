@@ -10,7 +10,10 @@
 
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
+from mvpa.datasets import Dataset
+from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
+from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
 from tests_warehouse import *
 from mvpa import cfg
 
@@ -276,6 +279,76 @@ class StatsTests(unittest.TestCase):
             # All non-bogus features must be high for a corresponding feature
             self.failUnless((ac[(N.array(ds.nonbogus_features),
                                  N.arange(4))] >= 1).all())
+
+
+    def testGLM(self):
+        # play fmri
+        # full-blown HRF with initial dip and undershoot ;-)
+        hrf_x = N.linspace(0,25,250)
+        hrf = doubleGammaHRF(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
+
+        # come up with an experimental design
+        samples = 1800
+        fast_er_onsets = N.array([10, 200, 250, 500, 600, 900, 920, 1400])
+        fast_er = N.zeros(samples)
+        fast_er[fast_er_onsets] = 1
+
+        # high resolution model of the convolved regressor
+        model_hr = N.convolve(fast_er, hrf)[:samples]
+
+        if not externals.exists('scipy'):
+            return
+
+        from scipy import signal
+        # downsample the regressor to fMRI resolution
+        tr = 2.0
+        model_lr = signal.resample(model_hr,
+                                   int(samples / tr / 10),
+                                   window='ham')
+
+        # generate artifical fMRI data: two voxels one is noise, one has
+        # something
+        baseline = 800.0
+        wsignal = baseline + 2 * model_lr + N.random.randn(int(samples / tr / 10)) * 0.2
+        nsignal = baseline + N.random.randn(int(samples / tr / 10)) * 0.5
+
+        # build design matrix: bold-regressor and constant
+        X = N.array([model_lr, N.repeat(1,len(model_lr))]).T
+
+        # two 'voxel' dataset
+        data = Dataset(samples=N.array((wsignal, nsignal)).T, labels=1)
+
+        # check GLM betas
+        glm = GLM(X, combiner=None)
+        betas = glm(data)
+
+        # betas for each feature and each regressor
+        self.failUnless(betas.shape == (data.nfeatures, X.shape[1]))
+
+        # baseline betas should be huge and around 800dd
+        self.failUnless(N.absolute(betas[:,1] - baseline < 10).all(),
+            msg="baseline betas should be huge and around 800")
+
+        self.failUnless(betas[0][0] > betas[1,0],
+            msg="feature (with signal) beta should be larger than for noise")
+
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(N.absolute(betas[1,0]) < 0.5)
+            self.failUnless(N.absolute(betas[0,0]) > 1.0)
+
+
+        # check GLM zscores
+        glm = GLM(X, voi='zscore', combiner=None)
+        zscores = glm(data)
+
+        self.failUnless(zscores.shape == betas.shape)
+
+        self.failUnless((zscores[:,1] > 1000).all(),
+                msg='constant zscores should be huge')
+
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(N.absolute(betas[0,0]) > betas[1][0],
+                msg='with signal should have higher z-score')
 
 
 def suite():

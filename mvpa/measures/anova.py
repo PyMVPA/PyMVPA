@@ -22,7 +22,6 @@ from mvpa.measures.base import FeaturewiseDatasetMeasure
 #
 # For binary+multiclass:
 #  kruskal-wallis H-test (scipy.stats.kruskal)
-#  GLM: scipy.stats.glm
 #
 # and may be some others
 
