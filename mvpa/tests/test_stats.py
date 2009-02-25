@@ -325,7 +325,6 @@ class StatsTests(unittest.TestCase):
         # betas for each feature and each regressor
         self.failUnless(betas.shape == (data.nfeatures, X.shape[1]))
 
-        # baseline betas should be huge and around 800dd
         self.failUnless(N.absolute(betas[:,1] - baseline < 10).all(),
             msg="baseline betas should be huge and around 800")
 
@@ -338,17 +337,17 @@ class StatsTests(unittest.TestCase):
 
 
         # check GLM zscores
-        glm = GLM(X, voi='zscore', combiner=None)
-        zscores = glm(data)
+        glm = GLM(X, voi='zstat', combiner=None)
+        zstats = glm(data)
 
-        self.failUnless(zscores.shape == betas.shape)
+        self.failUnless(zstats.shape == betas.shape)
 
-        self.failUnless((zscores[:,1] > 1000).all(),
-                msg='constant zscores should be huge')
+        self.failUnless((zstats[:,1] > 1000).all(),
+                msg='constant zstats should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(N.absolute(betas[0,0]) > betas[1][0],
-                msg='with signal should have higher z-score')
+                msg='with signal should have higher zstats')
 
 
 def suite():

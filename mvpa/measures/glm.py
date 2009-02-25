@@ -13,27 +13,35 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.misc.state import StateVariable
 
 class GLM(FeaturewiseDatasetMeasure):
     """General linear model (GLM).
 
-    Regressors can be defined in a design matrix and a linear fit of the
-    data is computed univariately (i.e. indepently for each feature). This
-    measure can report 'raw' beta weights of the linear model, as well
-    as standardized parameters (z-scores) using an ordinary least squares
-    (aka fixed-effects) approach to estimate the parameter estimate.
+    Regressors can be defined in a design matrix and a linear fit of the data
+    is computed univariately (i.e. indepently for each feature). This measure
+    can report 'raw' parameter estimates (i.e. beta weights) of the linear
+    model, as well as standardized parameters (z-stat) using an ordinary
+    least squares (aka fixed-effects) approach to estimate the parameter
+    estimate.
 
     The measure is reported in a (nfeatures x nregressors)-shaped array.
     """
 
-    def __init__(self, design, voi='beta', **kwargs):
+    pe = StateVariable(enabled=False,
+        doc="Parameter estimates (nfeatures x nparameters).")
+
+    zstat = StateVariable(enabled=False,
+        doc="Standardized parameter estimates (nfeatures x nparameters).")
+
+    def __init__(self, design, voi='pe', **kwargs):
         """
         :Parameters:
           design: array(nsamples x nregressors)
             GLM design matrix.
-          voi: 'beta' | 'zscore'
+          voi: 'pe' | 'zstat'
             Variable of interest that should be reported as feature-wise
-            measure. 'beta' are the parameter estimates and 'zscore' returns
+            measure. 'beta' are the parameter estimates and 'zstat' returns
             standardized parameter estimates.
         """
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
@@ -41,7 +49,7 @@ class GLM(FeaturewiseDatasetMeasure):
         self._design = N.asmatrix(design)
 
         # what should be computed ('variable of interest')
-        if not voi in ['beta', 'zscore']:
+        if not voi in ['pe', 'zstat']:
             raise ValueError, \
                   "Unknown variable of interest '%s'" % str(voi)
         self._voi = voi
@@ -67,8 +75,11 @@ class GLM(FeaturewiseDatasetMeasure):
         # (betas x features)
         betas = self._inv_design * dataset.samples
 
-        # if betas are desired return them
-        if self._voi == 'beta':
+        # charge state
+        self.pe = betas.T.A
+
+        # if betas and no z-stats are desired return them right away
+        if self._voi == 'pe' and not self.states.isEnabled('zstat'):
             # return as (feature x beta)
             return betas.T.A
 
@@ -76,15 +87,21 @@ class GLM(FeaturewiseDatasetMeasure):
         residuals = X * betas
         residuals -= dataset.samples
 
-        # estimates of the parameter variance and compute zscores
+        # estimates of the parameter variance and compute zstats
         # assumption of mean(E) == 0 and equal variance
         beta_vars = residuals.var(axis=0) * self._inv_ip
         # (parameter x feature)
-        zscore = betas.A / N.sqrt(beta_vars.T.A)
+        zstat = betas.A / N.sqrt(beta_vars.T.A)
 
-        if self._voi == 'zscore':
-            # return as (feature x zscore)
-            return zscore.T
+        # charge state
+        self.zstat = zstat.T
+
+        if self._voi == 'pe':
+            # return as (feature x beta)
+            return betas.T.A
+        elif self._voi == 'zstat':
+            # return as (feature x zstat)
+            return zstat.T
 
         # we shall never get to this point
         raise ValueError, \
