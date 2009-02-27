@@ -276,6 +276,13 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
        and not force:
         if __debug__:
             debug('EXT', "Skip retesting for '%s'." % dep)
+
+        # check whether an exception should be raised, even though the external
+        # was already tested previously
+        if not cfg.getboolean('externals', cfgid) \
+               and raiseException \
+               and cfg.getboolean('externals', 'raise exception', True):
+            raise RuntimeError, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
 
 
@@ -358,5 +365,6 @@ def testAllDependencies(force=False):
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \
                      % [ k[5:] for k in cfg.options('externals')
-                            if k.startswith('have')])
+                            if k.startswith('have') \
+                            and cfg.getboolean('externals', k) == True ])
 

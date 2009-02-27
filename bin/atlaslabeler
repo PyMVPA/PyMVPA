@@ -11,6 +11,7 @@
 
 import re, sys
 
+import mvpa
 from mvpa.misc.cmdline import parser, opts, opt
 from mvpa.base import verbose, warning, externals
 
@@ -125,12 +126,13 @@ def presentLabels(labels):
 #def processCmdLine():
 parser.usage = "%s [OPTIONS] [input_file.nii.gz]" % sys.argv[0] + """
 Examples:
- %s -s -A talairach-dist -d 10 -R Closest\ Gray -l Structure,Brodmann\ area  -cC mask.nii.gz
 
- spits out summary per each structure + brodmann area, for each voxel
- looking within 10mm radius for the closest gray matter voxel.
+%s -s -A talairach-dist -d 10 -R Closest\ Gray -l Structure,Brodmann\ area  -cC mask.nii.gz
 
- """ % (sys.argv[0], )
+produces a summary per each structure and brodmann area, for each voxel
+looking within 10mm radius for the closest gray matter voxel.
+""" % (sys.argv[0], )
+parser.version = "%prog " + mvpa.__version__
 
 # can't use due to conflict with -d (debug and distance)
 #parser.option_groups = [opts.common]
