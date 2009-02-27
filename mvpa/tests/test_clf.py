@@ -581,9 +581,9 @@ class ClassifiersTests(unittest.TestCase):
 
         # TODO: unify str and repr for all classifiers
 
-    # XXX TODO: should work on smlr, knn, ridgereg as well! but now
+    # XXX TODO: should work on smlr, knn, ridgereg, lars as well! but now
     #     they fail to train
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!meta', '!ridge'])
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!lars', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about

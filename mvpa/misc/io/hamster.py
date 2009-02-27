@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper for simple storage facility via cPickle and zlib"""
+"""Helper for simple storage facility via cPickle and optionally zlib"""
 
 __docformat__ = 'restructuredtext'
 
@@ -30,9 +30,9 @@ if __debug__:
 class Hamster(object):
     """Simple container class with basic IO capabilities.
 
-    It is capable of storing itself in a file, or loading from a file
-    (using cPickle + zlib tandem). Any serializable object can be
-    bound to a hamster to be stored.
+    It is capable of storing itself in a file, or loading from a file using
+    cPickle (optionally via zlib from compressed files). Any serializable
+    object can be bound to a hamster to be stored.
 
     To undig burried hamster use Hamster(filename). Here is an example:
 
@@ -64,7 +64,11 @@ class Hamster(object):
                 args = args[1:]
                 if __debug__:
                     debug('IOH', 'Undigging hamster from %s' % filename)
-                f = gzip.open(filename)
+                # compressed or not -- that is the question
+                if filename.endswith('.gz'):
+                    f = gzip.open(filename)
+                else:
+                    f = open(filename)
                 result = cPickle.load(f)
                 if not isinstance(result, Hamster):
                     warning("Loaded other than Hamster class from %s" % filename)
@@ -98,12 +102,28 @@ class Hamster(object):
         object.__init__(self)
 
 
-    def dump(self, filename):
+    def dump(self, filename, compresslevel=0):
         """Bury the hamster into the file
+
+        :Parameter:
+          filename: str
+            Name of the target file. When writing to a compressed file the
+            filename gets a '.gz' extension if not already specified. This
+            is necessary as the constructor uses the extension to decide
+            whether it loads from a compressed or uncompressed file.
+          compresslevel: int
+            Compression level setting passed to gzip. However, when set to
+            zero gzip is bypassed completely and everything is written to an
+            uncompressed file.
         """
+        if compresslevel > 0 and not filename.endswith('.gz'):
+            filename += '.gz'
         if __debug__:
             debug('IOH', 'Burying hamster into %s' % filename)
-        f = gzip.open(filename, 'w')
+        if compresslevel == 0:
+            f = open(filename, 'w')
+        else:
+            f = gzip.open(filename, 'w', compresslevel)
         cPickle.dump(self, f)
         f.close()
 
