@@ -46,6 +46,7 @@ Analysis
    examples/start_easy
    examples/smlr
    examples/clfs_examples
+   examples/gpr
    examples/searchlight_minimal
    examples/searchlight_2d
    examples/sensanas
