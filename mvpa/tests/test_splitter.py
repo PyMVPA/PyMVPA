@@ -238,7 +238,51 @@ class SplitterTests(unittest.TestCase):
                 else:
                     raise RuntimeError, "Add unittest for strategy %s" \
                           % strategy
-                        
+
+
+    def testDiscardedBoundaries(self):
+        splitters = [NFoldSplitter(),
+                     NFoldSplitter(discard_boundary=(0,1)), # discard testing
+                     NFoldSplitter(discard_boundary=(1,0)), # discard training
+                     NFoldSplitter(discard_boundary=(2,0)), # discard 2 from training
+                     NFoldSplitter(discard_boundary=1),     # discard from both
+                     OddEvenSplitter(discard_boundary=(1,0)),
+                     OddEvenSplitter(discard_boundary=(0,1)),
+                     HalfSplitter(discard_boundary=(1,0)),
+                     ]
+
+        split_sets = [list(s(self.data)) for s in splitters]
+        counts = [[(len(s[0].chunks), len(s[1].chunks)) for s in split_set]
+                  for split_set in split_sets]
+
+        nodiscard_tr = [c[0] for c in counts[0]]
+        nodiscard_te = [c[1] for c in counts[0]]
+
+        # Discarding in testing:
+        self.failUnless(nodiscard_tr == [c[0] for c in counts[1]])
+        self.failUnless(nodiscard_te[1:-1] == [c[1] + 2 for c in counts[1][1:-1]])
+        # at the beginning/end chunks, just a single element
+        self.failUnless(nodiscard_te[0] == counts[1][0][1] + 1)
+        self.failUnless(nodiscard_te[-1] == counts[1][-1][1] + 1)
+
+        # Discarding in training
+        for d in [1,2]:
+            self.failUnless(nodiscard_te == [c[1] for c in counts[1+d]])
+            self.failUnless(nodiscard_tr[0] == counts[1+d][0][0] + d)
+            self.failUnless(nodiscard_tr[-1] == counts[1+d][-1][0] + d)
+            self.failUnless(nodiscard_tr[1:-1] == [c[0] + d*2
+                                                   for c in counts[1+d][1:-1]])
+
+        # Discarding in both -- should be eq min from counts[1] and [2]
+        counts_min = [(min(c1[0], c2[0]), min(c1[1], c2[1]))
+                      for c1,c2 in zip(counts[1], counts[2])]
+        self.failUnless(counts_min == counts[4])
+
+        # TODO: test all those odd/even etc splitters... YOH: did
+        # visually... looks ok;)
+        #for count in counts[5:]:
+        #    print count
+
 
 def suite():
     return unittest.makeSuite(SplitterTests)
