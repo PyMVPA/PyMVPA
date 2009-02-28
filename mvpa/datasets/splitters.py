@@ -72,6 +72,7 @@ class Splitter(object):
                  permute=False,
                  count=None,
                  strategy='equidistant',
+                 discard_boundary=None,
                  attr='chunks'):
         """Initialize splitter base.
 
@@ -107,6 +108,14 @@ class Splitter(object):
               Random (without replacement) `count` splits are chosen
              equidistant
               Splits which are equidistant from each other
+          discard_boundary : None or int or sequence of int
+             If not `None`, how many samples on the boundaries between
+             parts of the split to discard in the training part.
+             If int, then discarded in all parts.  If a sequence, numbers
+             to discard are given per part of the split.
+             E.g. if splitter splits only into (training, testing)
+             parts, then `discard_boundary`=(2,0) would instruct to discard
+             2 samples from training which are on the boundary with testing.
           attr : str
             Sample attribute used to determine splits.
         """
@@ -115,6 +124,7 @@ class Splitter(object):
         self.__runspersplit = nrunspersplit
         self.__permute = permute
         self.__splitattr = attr
+        self.discard_boundary = discard_boundary
 
         # we don't check it, thus no reason to make it private.
         # someone might find it useful to change post creation
@@ -183,6 +193,7 @@ class Splitter(object):
 
         # Select just some splits if desired
         count, Ncfgs = self.count, len(cfgs)
+
         # further makes sense only iff count < Ncfgs,
         # otherwise all strategies are equivalent
         if count is not None and count < Ncfgs:
@@ -212,7 +223,9 @@ class Splitter(object):
                           "from %d total" % (strategy, indexes, Ncfgs))
                 cfgs = [cfgs[i] for i in indexes]
 
+        # Finally split the data
         for split in cfgs:
+
             # determine sample sizes
             if not operator.isSequenceType(self.__nperlabel) \
                    or isinstance(self.__nperlabel, str):
@@ -276,7 +289,6 @@ class Splitter(object):
           specs : sequence of sequences
             Contains ids of a sample attribute that shall be split into the
             another dataset.
-
         :Returns: Tuple of splitted datasets.
         """
         # collect the sample ids for each resulting dataset
@@ -284,16 +296,24 @@ class Splitter(object):
         none_specs = 0
         cum_filter = None
 
+        # Prepare discard_boundary
+        discard_boundary = self.discard_boundary
+        if isinstance(discard_boundary, int):
+            if discard_boundary != 0:
+                discard_boundary = (discard_boundary,) * len(specs)
+            else:
+                discard_boundary = None
+
         splitattr_data = eval('dataset.' + self.__splitattr)
         for spec in specs:
-            if spec == None:
+            if spec is None:
                 filters.append(None)
                 none_specs += 1
             else:
                 filter_ = N.array([ i in spec \
                                     for i in splitattr_data])
                 filters.append(filter_)
-                if cum_filter == None:
+                if cum_filter is None:
                     cum_filter = filter_
                 else:
                     cum_filter = N.logical_and(cum_filter, filter_)
@@ -304,8 +324,22 @@ class Splitter(object):
                               "split definition."
 
         for i, filter_ in enumerate(filters):
-            if filter_ == None:
+            if filter_ is None:
                 filters[i] = N.logical_not(cum_filter)
+
+            # If it was told to discard samples on the boundary to the
+            # other parts of the split
+            if discard_boundary is not None:
+                ndiscard = discard_boundary[i]
+                if ndiscard != 0:
+                    # XXX sloppy implementation for now. It still
+                    # should not be the main reason for a slow-down of
+                    # the whole analysis ;)
+                    f, lenf = filters[i], len(filters[i])
+                    f_pad = N.concatenate(([True]*ndiscard, f, [True]*ndiscard))
+                    for d in xrange(2*ndiscard+1):
+                        f = N.logical_and(f, f_pad[d:d+lenf])
+                    filters[i] = f[:]
 
         # split data: return None if no samples are left
         # XXX: Maybe it should simply return an empty dataset instead, but
