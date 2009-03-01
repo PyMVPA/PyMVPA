@@ -65,15 +65,15 @@ def compute_prediction(sigma_f, length_scale, sigma_noise,
                        "b--", label=None)
             P.plot(data_test, prediction+N.sqrt(g.predicted_variances),
                        "b--", label=None)
-            P.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))
-            P.text(0.5, -0.95, "LML="+"%f" %(g.log_marginal_likelihood))
+            P.text(0.5, -0.8, "RMSE="+"%.3f" %(accuracy))
+            P.text(0.5, -0.95, "LMLtest="+"%.3f" %(g.log_marginal_likelihood))
         else:
             P.text(0.5, -0.8, "accuracy="+str(accuracy))
             pass
-        P.legend()
+        P.legend(loc='lower right')
         pass
 
-    print "LML:", g.log_marginal_likelihood
+    print "LMLtest:", g.log_marginal_likelihood
 
 
 if __name__=="__main__":
@@ -90,10 +90,10 @@ if __name__=="__main__":
     label_test = dataset_test.labels
 
     # Hyperparameters. Each row is [sigma_f, length_scale, sigma_noise]
-    hyperparameters = N.array([[1.0, 1.0, 0.1],
+    hyperparameters = N.array([[1.0, 0.2, 0.4],
                                [1.0, 0.1, 0.1],
-                               [0.1, 1.0, 0.1],
-                               [0.1, 0.1, 1.0]])
+                               [1.0, 1.0, 0.1],
+                               [1.0, 0.1, 1.0]])
 
     rows = 2
     columns = 2
