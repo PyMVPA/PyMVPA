@@ -76,7 +76,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
     # XXX meta should work too but doesn't
     @sweepargs(clf=clfswh['has_sensitivity'])
     def testAnalyzerWithSplitClassifier(self, clf):
-
+        """Test analyzers in split classifier
+        """
         # assumming many defaults it is as simple as
         mclf = SplitClassifier(clf=clf,
                                enable_states=['training_confusion',
@@ -96,11 +97,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             for conf_matrix in [sana.clf.training_confusion] \
                               + sana.clf.confusion.matrices:
-                self.failUnless(conf_matrix.percentCorrect>75,
-                                msg="We must have trained on each one more or " \
-                                    "less correctly. Got %f%% correct on %d labels" %
-                                (conf_matrix.percentCorrect,
-                                 len(self.dataset.uniquelabels)))
+                self.failUnless(
+                    conf_matrix.percentCorrect>75,
+                    msg="We must have trained on each one more or " \
+                    "less correctly. Got %f%% correct on %d labels" %
+                    (conf_matrix.percentCorrect,
+                     len(self.dataset.uniquelabels)))
 
         errors = [x.percentCorrect
                     for x in sana.clf.confusion.matrices]
@@ -115,9 +117,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # lets go through all sensitivities and see if we selected the right
         # features
         # XXX yoh: disabled checking of each map separately since in
-        #     BoostedClassifierSensitivityAnalyzer and ProxyClassifierSensitivityAnalyzer
-        #     we don't have yet way to provide transformers thus internal call to
-        #     getSensitivityAnalyzer in _call of them is not parametrized
+        #     BoostedClassifierSensitivityAnalyzer and
+        #     ProxyClassifierSensitivityAnalyzer
+        #     we don't have yet way to provide transformers thus internal call
+        #     to getSensitivityAnalyzer in _call of them is not parametrized
         if 'meta' in clf._clf_internals and len(map_.nonzero()[0])<2:
             # Some meta classifiers (5% of ANOVA) are too harsh ;-)
             return
@@ -125,21 +128,24 @@ class SensitivityAnalysersTests(unittest.TestCase):
             selected = FixedNElementTailSelector(
                 self.dataset.nfeatures -
                 len(self.dataset.nonbogus_features))(map__)
-            self.failUnlessEqual(
-                list(selected),
-                list(self.dataset.nonbogus_features),
-                msg="At the end we should have selected the right features")
+            if cfg.getboolean('tests', 'labile', default='yes'):
+                self.failUnlessEqual(
+                    list(selected),
+                    list(self.dataset.nonbogus_features),
+                    msg="At the end we should have selected the right features")
 
 
     @sweepargs(clf=clfswh['has_sensitivity'])
     def testMappedClassifierSensitivityAnalyzer(self, clf):
-
-        # assumming many defaults it is as simple as
-        mclf = FeatureSelectionClassifier(clf,
-                                          SensitivityBasedFeatureSelection(
-                                            OneWayAnova(),
-                                            FractionTailSelector(0.5, mode='select', tail='upper')),
-                                          enable_states=['training_confusion'])
+        """Test sensitivity of the mapped classifier
+        """
+        # Assuming many defaults it is as simple as
+        mclf = FeatureSelectionClassifier(
+            clf,
+            SensitivityBasedFeatureSelection(
+                OneWayAnova(),
+                FractionTailSelector(0.5, mode='select', tail='upper')),
+            enable_states=['training_confusion'])
 
         sana = mclf.getSensitivityAnalyzer(transformer=Absolute,
                                            enable_states=["sensitivities"])
@@ -185,7 +191,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
               fit_all_weights=True).getSensitivityAnalyzer(combiner=None),
-            splitter=NoneSplitter(nperlabel=0.25, mode='first', nrunspersplit=2),
+            splitter=NoneSplitter(nperlabel=0.25, mode='first',
+                                  nrunspersplit=2),
             combiner=None,
             enable_states=['splits', 'sensitivities'])
         sens = sana(ds)
@@ -220,7 +227,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
             clf = FeatureSelectionClassifier(SVM(),
                         SensitivityBasedFeatureSelection(sana, fsel),
                         descr='SVM on p=0.01(both tails) using %s' % k)
-            ce = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
+            ce = CrossValidatedTransferError(TransferError(clf),
+                                             NFoldSplitter())
             error = ce(ds)
 
         sens = boosted_sana(ds)
