@@ -102,7 +102,7 @@ class Hamster(object):
         object.__init__(self)
 
 
-    def dump(self, filename, compresslevel=0):
+    def dump(self, filename, compresslevel='auto'):
         """Bury the hamster into the file
 
         :Parameter:
@@ -111,11 +111,15 @@ class Hamster(object):
             filename gets a '.gz' extension if not already specified. This
             is necessary as the constructor uses the extension to decide
             whether it loads from a compressed or uncompressed file.
-          compresslevel: int
-            Compression level setting passed to gzip. However, when set to
-            zero gzip is bypassed completely and everything is written to an
-            uncompressed file.
+          compresslevel: 'auto' or int
+            Compression level setting passed to gzip. When set to
+            'auto', if filename ends with '.gz' `compresslevel` is set
+            to 5, 0 otherwise.  However, when `compresslevel` is set to
+            0 gzip is bypassed completely and everything is written to
+            an uncompressed file.
         """
+        if compresslevel == 'auto':
+            compresslevel = (0, 5)[int(filename.endswith('.gz'))]
         if compresslevel > 0 and not filename.endswith('.gz'):
             filename += '.gz'
         if __debug__:
