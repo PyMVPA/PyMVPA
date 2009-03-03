@@ -278,6 +278,20 @@ class ProjectionMapper(Mapper):
             self.selectOut(self._selector)
 
 
+    def _demeanData(self, data):
+        """Helper which optionally demeans
+        """
+        if self._demean:
+            # demean the training data
+            data = data - self._mean
+
+            if __debug__ and "MAP_" in debug.active:
+                debug("MAP_",
+                      "%s: Mean of data in input space %s was subtracted" %
+                      (self.__class__.__name__, self._mean))
+        return data
+
+
     def _train(self, dataset):
         """Worker method. Needs to be implemented by subclass.
 
