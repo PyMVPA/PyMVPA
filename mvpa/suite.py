@@ -78,6 +78,8 @@ from mvpa.mappers.boxcar import *
 from mvpa.mappers.samplegroup import *
 from mvpa.mappers.som import *
 from mvpa.mappers.array import *
+if externals.exists('scipy'):
+    from mvpa.mappers.zscore import ZScoreMapper
 if externals.exists('mdp'):
     from mvpa.mappers.pca import *
     from mvpa.mappers.ica import *
