@@ -81,6 +81,10 @@ def zscore(dataset, mean=None, std=None,
         samples -= mean
 
         # calculate std-deviation if necessary
+        # XXX YOH: would that be actually what we want?
+        #          may be we want actually estimate of deviation from the mean,
+        #          which per se might be not statsamples.mean (see above)?
+        #          if logic to be changed -- adjust ZScoreMapper as well
         if std is None:
             std = statsamples.std(**axisarg)
 
