@@ -218,7 +218,7 @@ class FslGLMDesign(object):
         # of the time
         import pylab as P
 
-        if style == 'line':
+        if style == 'lines':
             # common y-axis
             yax = N.arange(0, self.mat.shape[0])
             axcenters = []
