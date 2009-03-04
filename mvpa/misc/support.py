@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re, os
 
+from mvpa.base import warning
 from mvpa.support.copy import copy, deepcopy
 from operator import isSequenceType
 
@@ -74,8 +75,7 @@ def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
     return N.array( selected )
 
 
-
-def getUniqueLengthNCombinations(data, n):
+def _getUniqueLengthNCombinations_lt3(data, n):
     """Generates a list of lists containing all combinations of
     elements of data of length 'n' without repetitions.
 
@@ -86,7 +86,13 @@ def getUniqueLengthNCombinations(data, n):
     the web as an answer to the question 'How can I generate all possible
     combinations of length n?'. Unfortunately I cannot remember which
     forum it was.
+
+    NOTE: implementation is broken for n>2
     """
+
+    if n > 2:
+        raise ValueError, "_getUniqueLengthNCombinations_lt3 " \
+              "is broken for n>2, hence should not be used directly."
 
     # to be returned
     combos = []
@@ -119,6 +125,58 @@ def getUniqueLengthNCombinations(data, n):
 
     # return the result
     return combos
+
+
+def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
+    """Find all subsets of data
+
+    :Parameters:
+      L : list
+        list of unique ids
+      n : None or int
+        If None, all possible subsets are returned. If n is specified (int),
+        then only the ones of the length n are returned
+      sort : bool
+        Either to sort the resultant sequence
+
+    Adopted from Alex Martelli:
+    http://mail.python.org/pipermail/python-list/2001-January/067815.html
+    """
+    N = len(L)
+    if N > 20 and n == 1:
+        warning("getUniqueLengthNCombinations_binary should not be used for "
+                "large N")
+    result = []
+    for X in range(2**N):
+        x = [ L[i] for i in range(N) if X & (1L<<i) ]
+        if n is None or len(x) == n:
+            # yield x # if we wanted to use it as a generator
+            result.append(x)
+    result.sort()
+    # if __debug__ and n is not None:
+    #     # verify the result
+    #     # would need scipy... screw it
+    #     assert(len(result) == ...)
+    return result
+
+
+def getUniqueLengthNCombinations(L, n=None, sort=True):
+    """Find all subsets of data
+
+    :Parameters:
+      L : list
+        list of unique ids
+      n : None or int
+        If None, all possible subsets are returned. If n is specified (int),
+        then only the ones of the length n are returned
+
+    TODO: work out single stable implementation -- probably just by fixing
+    _getUniqueLengthNCombinations_lt3
+    """
+    if n == 1:
+        return _getUniqueLengthNCombinations_lt3(L, n)
+    else:
+        return _getUniqueLengthNCombinations_binary(L, n, sort=True)
 
 
 def indentDoc(v):
