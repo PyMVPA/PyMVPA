@@ -316,7 +316,7 @@ class StatsTests(unittest.TestCase):
         X = N.array([model_lr, N.repeat(1,len(model_lr))]).T
 
         # two 'voxel' dataset
-        data = Dataset(samples=N.array((wsignal, nsignal)).T, labels=1)
+        data = Dataset(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
 
         # check GLM betas
         glm = GLM(X, combiner=None)
