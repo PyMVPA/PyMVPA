@@ -40,8 +40,8 @@ class PCAMapper(ProjectionMapper):
         """
         samples = dataset.samples
         dtype = samples.dtype
-        if str(samples.dtype).startswith('uint') \
-               or str(samples.dtype).startswith('int'):
+        if str(dtype).startswith('uint') \
+               or str(dtype).startswith('int'):
                 warning("PCA: input data is in integers. " + \
                         "MDP's NIPALSNode operates only on floats, thus "+\
                         "coercing to double")

@@ -89,6 +89,7 @@ def collectTestSuites():
                          (['lars','scipy'], 'lars'),
                          ('nifti', 'niftidataset'),
                          ('mdp', 'icamapper'),
+                         ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
     #                     ('mdp', 'pcamapper'),
