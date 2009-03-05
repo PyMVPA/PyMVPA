@@ -16,9 +16,10 @@ Gaussian Process Regression (GPR) on a simple 1D example.
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+raise RuntimeError, "Not yet fixed: sorry ;)"
+from gpr import compute_prediction
 from mvpa.suite import *
 import pylab as P
-from gpr_example import compute_prediction
 
 # Generate train and test dataset:
 train_size = 40
