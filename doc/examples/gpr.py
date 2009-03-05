@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -20,6 +21,10 @@ solutions are finally visualized in a single figure.
 
 As usual we start by importing all of PyMVPA:
 """
+
+# Lets use LaTeX for proper rendering of greek
+from matplotlib import rc
+rc('text', usetex=True)
 
 from mvpa.suite import *
 
@@ -55,9 +60,9 @@ performed in a single loop.
 
 rows = 2
 columns = 2
-P.figure()
+P.figure(figsize=(12, 12))
 for i in range(rows*columns):
-    P.subplot(rows,columns,i+1)
+    P.subplot(rows, columns, i+1)
     regression = True
     logml = True
 
@@ -72,7 +77,7 @@ for i in range(rows*columns):
     instance.
     """
 
-    sigma_f, length_scale, sigma_noise = hyperparameters[i,:]
+    sigma_f, length_scale, sigma_noise = hyperparameters[i, :]
     kse = KernelSquaredExponential(length_scale=length_scale,
                                    sigma_f=sigma_f)
     g = GPR(kse, sigma_noise=sigma_noise, regression=regression)
@@ -109,7 +114,7 @@ for i in range(rows*columns):
     """
 
     if F == 1:
-        P.title("GPR: sigma_f=%0.2f , length_s=%0.2f , sigma_n=%0.2f" \
+        P.title(r"$\sigma_f=%0.2f$, $length_s=%0.2f$, $\sigma_n=%0.2f$" \
                 % (sigma_f,length_scale,sigma_noise))
         P.plot(data_train, label_train, "ro", label="train")
         P.plot(data_test, prediction, "b-", label="prediction")
@@ -119,10 +124,10 @@ for i in range(rows*columns):
                        "b--", label=None)
             P.plot(data_test, prediction+N.sqrt(g.predicted_variances),
                        "b--", label=None)
-            P.text(0.5, -0.8, "RMSE="+"%.3f" %(accuracy))
-            P.text(0.5, -0.95, "LMLtest="+"%.3f" %(g.log_marginal_likelihood))
+            P.text(0.5, -0.8, "$RMSE=%.3f$" %(accuracy))
+            P.text(0.5, -0.95, "$LML_{test}=%.3f$" %(g.log_marginal_likelihood))
         else:
-            P.text(0.5, -0.8, "accuracy="+str(accuracy))
+            P.text(0.5, -0.8, "$accuracy=%s" % accuracy)
 
         P.legend(loc='lower right')
 
