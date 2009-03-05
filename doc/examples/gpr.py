@@ -125,13 +125,13 @@ for i in range(rows*columns):
             P.plot(data_test, prediction+N.sqrt(g.predicted_variances),
                        "b--", label=None)
             P.text(0.5, -0.8, "$RMSE=%.3f$" %(accuracy))
-            P.text(0.5, -0.95, "$LML_{test}=%.3f$" %(g.log_marginal_likelihood))
+            P.text(0.5, -0.95, "$LML=%.3f$" %(g.log_marginal_likelihood))
         else:
             P.text(0.5, -0.8, "$accuracy=%s" % accuracy)
 
         P.legend(loc='lower right')
 
-    print "LMLtest:", g.log_marginal_likelihood
+    print "LML:", g.log_marginal_likelihood
 
 
 if cfg.getboolean('examples', 'interactive', True):
