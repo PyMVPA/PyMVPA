@@ -15,7 +15,7 @@ import numpy as N
 
 from mvpa import pymvpa_dataroot
 from mvpa.misc.io import *
-from mvpa.misc.fsl import FslEV3
+from mvpa.misc.fsl import *
 from mvpa.misc.bv import BrainVoyagerRTC
 
 
@@ -201,6 +201,11 @@ class IOHelperTests(unittest.TestCase):
             self.failUnless(len(eval('sl.' + var)) == 31)
 
 
+    def testFslGLMDesign(self):
+        glm = FslGLMDesign(os.path.join(pymvpa_dataroot, 'glm.mat'))
+
+        self.failUnless(glm.mat.shape == (850, 6))
+        self.failUnless(len(glm.ppheights) == 6)
 
 def suite():
     return unittest.makeSuite(IOHelperTests)

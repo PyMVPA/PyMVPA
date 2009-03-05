@@ -89,19 +89,24 @@ class GLM(FeaturewiseDatasetMeasure):
 
         # estimates of the parameter variance and compute zstats
         # assumption of mean(E) == 0 and equal variance
-        beta_vars = residuals.var(axis=0) * self._inv_ip
+        # XXX next lines ignore off-diagonal elements and hence covariance
+        # between regressors. The humble being writing these lines asks the
+        # god of statistics for forgives, because it knows not what it does
+        diag_ip = N.diag(self._inv_ip)
+        # (features x betas)
+        beta_vars = N.array([ r.var() * diag_ip for r in residuals.T ])
         # (parameter x feature)
-        zstat = betas.A / N.sqrt(beta_vars.T.A)
+        zstat = betas.A.T / N.sqrt(beta_vars)
 
         # charge state
-        self.zstat = zstat.T
+        self.zstat = zstat
 
         if self._voi == 'pe':
             # return as (feature x beta)
-            return betas.T.A
+            return betas.A
         elif self._voi == 'zstat':
             # return as (feature x zstat)
-            return zstat.T
+            return zstat
 
         # we shall never get to this point
         raise ValueError, \
