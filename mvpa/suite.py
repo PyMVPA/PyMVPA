@@ -109,6 +109,7 @@ from mvpa.misc.io.meg import *
 if externals.exists('cPickle') and externals.exists('gzip'):
     from mvpa.misc.io.hamster import *
 from mvpa.misc.fsl import *
+from mvpa.misc.fsl.melodic import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *
 from mvpa.misc.param import *
