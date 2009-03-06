@@ -59,7 +59,7 @@ def detrend(dataset, perchunk=False, model='linear',
         As with the data, time is on the first axis.
 
     """
-    if polyord is not None or opt_reg is not None: model=='regress'
+    if polyord is not None or opt_reg is not None: model='regress'
     
     if model in ['linear', 'constant']:
         # perform scipy detrend
