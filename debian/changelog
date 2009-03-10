@@ -1,3 +1,10 @@
+pymvpa (0.4.1-2) unstable; urgency=low
+
+  * Removing the circular dependency between python-mvpa and python-mvpa-lib
+    (Closes: #519129).
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 10 Mar 2009 19:20:30 +0100
+
 pymvpa (0.4.1-1) unstable; urgency=low
 
   [ Michael Hanke ]
