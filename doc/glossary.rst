@@ -40,7 +40,7 @@ terms found in the literature to the terminology used in this manual.
     A chunk is a group of samples. In PyMVPA chunks define *independent* groups
     of samples (note: the groups are independent from each other, not the
     samples in each particular group). This information is important in the
-    context of a cross-validation procedure, as it is required to measured the
+    context of a cross-validation procedure, as it is required to measure the
     classifier performance on independent test datasets to be able to compute
     unbiased generalization estimates. This is of particular importance in the
     case of fMRI data, where two successively recorded volumes cannot be
@@ -74,7 +74,7 @@ terms found in the literature to the terminology used in this manual.
 
 
   Label
-    A label associates each :term:`sample` sample in the :term:`dataset` with
+    A label associates each :term:`sample` in the :term:`dataset` with
     a certain category, experimental condition or, in case of a regression
     problem, with some metric variable. The label therefore defines the model
     that a classifier has to learn. The labels also provide the "true"
