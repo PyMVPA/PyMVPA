@@ -55,6 +55,7 @@ import os
 import random
 import numpy as N
 from mvpa.base import cfg
+from mvpa.base import externals
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
@@ -89,6 +90,14 @@ seed(_random_seed)
 
 # import the main unittest interface
 from mvpa.tests import run as test
+
+# PyMVPA is useless without numpy
+# Also, this check enforcing population of externals.versions
+# for possible later version checks, hence don't remove
+externals.exists('numpy', force=True, raiseException=True)
+# We might need to suppress the warnings so enforcing check here,
+# it is ok if it would fail
+externals.exists('scipy', force=True, raiseException=False)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
