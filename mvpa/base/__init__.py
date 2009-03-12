@@ -23,10 +23,8 @@ PyMVPA code, and are generic building blocks
 __docformat__ = 'restructuredtext'
 
 
-from sys import stdout, stderr
-
 from mvpa.base.config import ConfigManager
-from mvpa.base.verbosity import LevelLogger, OnceLogger, Logger
+from mvpa.base.verbosity import LevelLogger, OnceLogger
 
 #
 # Setup verbose and debug outputs
@@ -168,6 +166,7 @@ if __debug__:
     # debug.registerMetric('vmem')
 
     # List agreed sets for debug
+    debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
     debug.register('DBG',  "Debug output itself")
     debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")

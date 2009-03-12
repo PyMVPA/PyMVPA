@@ -18,6 +18,67 @@ from mvpa import cfg
 if __debug__:
     from mvpa.base import debug
 
+versions = {}
+"""Versions of available externals, as tuples
+"""
+
+def __version_to_tuple(v):
+    """Simple helper to convert version given as a string into a tuple.
+
+    Tuple of integers constructed by splitting at '.'.
+    """
+    if isinstance(v, basestring):
+        v = tuple([int(x) for x in v.split('.')])
+    elif isinstance(v, tuple) or isinstance(v, list):
+        # assure tuple
+        v = tuple(v)
+    else:
+        raise ValueError, "Do not know how to treat version '%s'" % str(v)
+    return v
+
+
+def __check_scipy():
+    """Check if scipy is present an if it is -- store its version
+    """
+    import warnings
+    # To don't allow any crappy warning to sneak in
+    warnings.simplefilter('ignore', DeprecationWarning)
+    try:
+        import scipy as sp
+    except:
+        warnings.simplefilter('default', DeprecationWarning)
+        raise
+    warnings.simplefilter('default', DeprecationWarning)
+    # Infiltrate warnings if necessary
+    numpy_ver = versions['numpy']
+    scipy_ver = versions['scipy'] = __version_to_tuple(sp.__version__)
+    # There is way too much deprecation warnings spit out onto the
+    # user. Lets assume that they should be fixed by scipy 0.7.0 time
+    if scipy_ver >= (0, 6, 0) and scipy_ver < (0, 7, 0) \
+        and numpy_ver > (1, 1, 0):
+        import warnings
+        if not __debug__ or (__debug__ and not 'PY' in debug.active):
+            debug('EXT', "Setting up filters for numpy DeprecationWarnings")
+            filter_lines = [
+                ('NumpyTest will be removed in the next release.*',
+                 DeprecationWarning),
+                ('PyArray_FromDims: use PyArray_SimpleNew.',
+                 DeprecationWarning),
+                ('PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.',
+                 DeprecationWarning),
+                # Trick re.match, since in warnings absent re.DOTALL in re.compile
+                ('[\na-z \t0-9]*The original semantics of histogram is scheduled to be.*'
+                 '[\na-z \t0-9]*', Warning) ]
+            for f, w in filter_lines:
+                warnings.filterwarnings('ignore', f, w)
+
+
+def __check_numpy():
+    """Check if numpy is present (it must be) an if it is -- store its version
+    """
+    import numpy as N
+    versions['numpy'] = __version_to_tuple(N.__version__)
+
 
 def __check_pywt(features=None):
     """Check for available functionality within pywt
@@ -212,7 +273,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
-          'scipy': "import scipy as __",
+          'numpy': "__check_numpy()",
+          'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
