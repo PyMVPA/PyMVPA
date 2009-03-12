@@ -166,6 +166,7 @@ if __debug__:
     # debug.registerMetric('vmem')
 
     # List agreed sets for debug
+    debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
     debug.register('DBG',  "Debug output itself")
     debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")
