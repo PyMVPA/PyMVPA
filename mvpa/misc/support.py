@@ -126,6 +126,28 @@ def _getUniqueLengthNCombinations_lt3(data, n):
     # return the result
     return combos
 
+def xuniqueCombinations(L, n):
+    """Generator of unique combinations form a list L of objects in
+    groups of size n.
+
+    # XXX EO: I guess they are already sorted.
+    # XXX EO: It seems to work well for n>20 :)
+
+    :Parameters:
+      L : list
+        list of unique ids
+      n : int
+        grouping size
+
+    Adopted from Li Daobing
+    http://code.activestate.com/recipes/190465/
+    (MIT license, according to activestate.com's policy)
+    """
+    if n==0: yield []
+    else:
+        for i in xrange(len(L)-n+1):
+            for cc in xuniqueCombinations(L[i+1:],n-1):
+                yield [L[i]]+cc
 
 def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
     """Find all subsets of data
@@ -175,8 +197,16 @@ def getUniqueLengthNCombinations(L, n=None, sort=True):
     """
     if n == 1:
         return _getUniqueLengthNCombinations_lt3(L, n)
-    else:
+    elif n==None:
         return _getUniqueLengthNCombinations_binary(L, n, sort=True)
+    else:
+        # XXX EO: Is it safe to remove "list" and use generator
+        #         directly to save memory for large number of
+        #         combinations? It seems OK according to tests but
+        #         I'd like a second opinion.
+        # XXX EO: what about inserting a warning if number of
+        #         combinations > 10000? No one would run it...
+        return list(xuniqueCombinations(L, n))
 
 
 def indentDoc(v):
