@@ -245,6 +245,9 @@ class SetLogger(Logger):
             if item == '':
                 continue
             if isinstance(item, basestring):
+                if item in ['?', 'list', 'help']:
+                    self.print_registered(detailed=(item != '?'))
+                    raise SystemExit(0)
                 if item.upper() == "ALL":
                     verbose(2, "Enabling all registered debug handlers")
                     self.__active = registered_keys
@@ -319,6 +322,20 @@ class SetLogger(Logger):
         # somewhat evil but works since verbose must be initiated
         # by now
         self.active = value.split(",")
+
+
+    def print_registered(self, detailed=True):
+        print "Registered debug entries: ",
+        kd = self.registered
+        rks = sorted(kd.keys())
+        maxl = max([len(k) for k in rks])
+        if not detailed:
+            # short list
+            print ', '.join(rks)
+        else:
+            print
+            for k in rks:
+                print '%%%ds  %%s' % maxl % (k, kd[k])
 
 
     printsetid = property(fget=lambda self: self.__printsetid, \
@@ -461,10 +478,15 @@ if __debug__:
                 if DebugLogger._known_metrics.has_key(func):
                     func = DebugLogger._known_metrics[func]
                 else:
-                    raise ValueError, \
-                          "Unknown name %s for metric in DebugLogger" % \
-                          func + " Known metrics are " + \
-                          `DebugLogger._known_metrics.keys()`
+                    if func in ['?', 'list', 'help']:
+                        print 'Known debug metrics: ', \
+                              ', '.join(DebugLogger._known_metrics.keys())
+                        raise SystemExit(0)
+                    else:
+                        raise ValueError, \
+                              "Unknown name %s for metric in DebugLogger" % \
+                              func + " Known metrics are " + \
+                              `DebugLogger._known_metrics.keys()`
             elif isinstance(func, list):
                 self.__metrics = []     # reset
                 for item in func:
