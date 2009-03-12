@@ -23,10 +23,8 @@ PyMVPA code, and are generic building blocks
 __docformat__ = 'restructuredtext'
 
 
-from sys import stdout, stderr
-
 from mvpa.base.config import ConfigManager
-from mvpa.base.verbosity import LevelLogger, OnceLogger, Logger
+from mvpa.base.verbosity import LevelLogger, OnceLogger
 
 #
 # Setup verbose and debug outputs
