@@ -244,6 +244,9 @@ class DistPValue(Stateful):
         shape_orig = x.shape
         ndims = len(shape_orig)
 
+        # XXX for now deal with numpy deprecation hell locally:
+        hist_kwargs = ({}, {'new': False})[externals.versions['numpy'] > (1,1)]
+
         # XXX May be just utilize OverAxis transformer?
         if ndims > 2:
             raise NotImplementedError, \
@@ -275,7 +278,8 @@ class DistPValue(Stateful):
                 indexes = N.arange(Nxx)
                 """What features belong to Null-distribution"""
                 while True:
-                    Nhist = N.histogram(xxx, bins=nbins, normed=False)
+                    Nhist = N.histogram(xxx, bins=nbins, normed=False,
+                                        **hist_kwargs)
                     pdf = Nhist[0].astype(float)/Nxxx
                     bins = Nhist[1]
                     bins_halfstep = (bins[1] - bins[2])/2.0
