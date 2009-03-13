@@ -18,6 +18,12 @@ import scipy.sparse
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import ProjectionMapper
 
+if externals.versions['scipy'] >= (0, 7, 0):
+    _identity = scipy.sparse.identity
+else:
+    _identity = scipy.sparse.spidentity
+
+__all__ = [ 'ZScoreMapper' ]            # just to don't leak all the evil ;)
 
 class ZScoreMapper(ProjectionMapper):
     """Mapper to project data into standardized values (z-scores).
@@ -78,9 +84,9 @@ class ZScoreMapper(ProjectionMapper):
         # so we will handle case with n = 1 with regular non-sparse
         # matrices
         if n > 1:
-            proj = scipy.sparse.speye(n, n)
+            proj = _identity(n)
             proj.setdiag(1.0/std)
-            recon = scipy.sparse.speye(n, n)
+            recon = _identity(n)
             recon.setdiag(std)
             self._proj = proj
             self._recon = recon
