@@ -23,30 +23,35 @@ nulldist_sweep = [ MCNullDist(permutations=10, tail='any'),
                    MCNullDist(permutations=10, tail='right')]
 if externals.exists('scipy'):
     from mvpa.support.stats import scipy
-    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10, tail='any'),
-                        MCNullDist(scipy.stats.norm, permutations=10, tail='right'),
-                        MCNullDist(scipy.stats.expon, permutations=10, tail='right'),
+    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10,
+                                   tail='any'),
+                        MCNullDist(scipy.stats.norm, permutations=10,
+                                   tail='right'),
+                        MCNullDist(scipy.stats.expon, permutations=10,
+                                   tail='right'),
                         FixedNullDist(scipy.stats.norm(0, 0.1), tail='any'),
                         FixedNullDist(scipy.stats.norm(0, 0.1), tail='right'),
                         scipy.stats.norm(0, 0.1)
                         ]
 
 class StatsTests(unittest.TestCase):
+    """Unittests for various statistics"""
 
     def testChiSquare(self):
+        """Test chi-square distribution"""
         if not externals.exists('scipy'):
             return
 
         from mvpa.misc.stats import chisquare
 
         # test equal distribution
-        tbl = N.array([[5,5],[5,5]])
+        tbl = N.array([[5, 5], [5, 5]])
         chi, p = chisquare(tbl)
         self.failUnless( chi == 0.0 )
         self.failUnless( p == 1.0 )
 
         # test non-equal distribution
-        tbl = N.array([[4,0],[0,4]])
+        tbl = N.array([[4, 0], [0, 4]])
         chi, p = chisquare(tbl)
         self.failUnless(chi == 8.0)
         self.failUnless(p < 0.05)
@@ -54,6 +59,7 @@ class StatsTests(unittest.TestCase):
 
     @sweepargs(null=nulldist_sweep[1:])
     def testNullDistProb(self, null):
+        """Testing null dist probability"""
         if not isinstance(null, NullDist):
             return
         ds = datasets['uni2small']
@@ -63,7 +69,7 @@ class StatsTests(unittest.TestCase):
         # check reasonable output.
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
-        prob = null.p([3,0,0,0,0,N.nan])
+        prob = null.p([3, 0, 0, 0, 0, N.nan])
         self.failUnless(N.abs(prob[0]) < 0.01)
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless((N.abs(prob[1:]) > 0.05).all(),
@@ -78,6 +84,7 @@ class StatsTests(unittest.TestCase):
 
 
     def testNullDistProbAny(self):
+        """Test 'any' tail statistics estimation"""
         if not externals.exists('scipy'):
             return
 
@@ -101,6 +108,7 @@ class StatsTests(unittest.TestCase):
 
     @sweepargs(nd=nulldist_sweep)
     def testDatasetMeasureProb(self, nd):
+        """Test estimation of measures statistics"""
         if not externals.exists('scipy'):
             # due to null_t requirement
             return
@@ -123,7 +131,8 @@ class StatsTests(unittest.TestCase):
                 % null_prob_nonbogus)
 
         # the others should be a lot larger
-        self.failUnless(N.mean(N.abs(null_prob_bogus)) > N.mean(N.abs(null_prob_nonbogus)))
+        self.failUnless(N.mean(N.abs(null_prob_bogus)) >
+                        N.mean(N.abs(null_prob_nonbogus)))
 
         if isinstance(nd, MCNullDist):
             # MCs are not stable with just 10 samples... so lets skip them
@@ -142,14 +151,16 @@ class StatsTests(unittest.TestCase):
 
 
     def testNegativeT(self):
-        """Aims to provide very basic testing of the sign in p and t scores
+        """Basic testing of the sign in p and t scores
         """
         from mvpa.measures.base import FeaturewiseDatasetMeasure
 
         class BogusMeasure(FeaturewiseDatasetMeasure):
-            """Just put high positive into first 2 features, and high negative into 2nd two
+            """Just put high positive into first 2 features, and high
+            negative into 2nd two
             """
             def _call(self, dataset):
+                """just a little helper... pylint shut up!"""
                 res = N.random.normal(size=(dataset.nfeatures,))
                 res[0] = res[1] = 100
                 res[2] = res[3] = -100
@@ -160,7 +171,7 @@ class StatsTests(unittest.TestCase):
         m = BogusMeasure(null_dist=nd, enable_states=['null_t'])
         ds = datasets['uni2small']
         score = m(ds)
-        t,p = m.null_t, m.null_prob
+        t, p = m.null_t, m.null_prob
         self.failUnless((p>=0).all())
         self.failUnless((t[:2] > 0).all())
         self.failUnless((t[2:4] < 0).all())
@@ -172,9 +183,8 @@ class StatsTests(unittest.TestCase):
         if not externals.exists('scipy'):
             return
         from mvpa.clfs.stats import matchDistribution, rv_semifrozen
-        import scipy.stats
 
-        data = datasets['uni2small'].samples[:,1]
+        data = datasets['uni2small'].samples[:, 1]
 
         # Lets test ad-hoc rv_semifrozen
         floc = rv_semifrozen(scipy.stats.norm, loc=0).fit(data)
@@ -194,13 +204,14 @@ class StatsTests(unittest.TestCase):
         for loc in [None, data_mean]:
             for test in ['p-roc', 'kstest']:
                 # some really basic testing
-                matched = matchDistribution(data=data,
-                                            distributions = ['scipy',
-                                                             ('norm',
-                                                              {'name': 'norm_fixed',
-                                                               'loc': 0.2,
-                                                               'scale': 0.3})],
-                                            test=test, loc=loc, p=0.05)
+                matched = matchDistribution(
+                    data=data,
+                    distributions = ['scipy',
+                                     ('norm',
+                                      {'name': 'norm_fixed',
+                                       'loc': 0.2,
+                                       'scale': 0.3})],
+                    test=test, loc=loc, p=0.05)
                 # at least norm should be in there
                 names = [m[2] for m in matched]
                 if test == 'p-roc':
@@ -209,18 +220,20 @@ class StatsTests(unittest.TestCase):
                         self.failUnless('norm' in names)
                         self.failUnless('norm_fixed' in names)
                         inorm = names.index('norm_fixed')
-                        # and it should be at least in the first 30 best matching ;-)
+                        # and it should be at least in the first
+                        # 30 best matching ;-)
                         self.failUnless(inorm <= 30)
 
 
     def testRDistStability(self):
+        """Test either rdist distribution performs nicely
+        """
         if not externals.exists('scipy'):
             return
 
-        from mvpa.support.stats import scipy
         try:
             # actually I haven't managed to cause this error
-            value = scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+N.finfo(float).eps)
+            scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+N.finfo(float).eps)
         except:
             self.fail('Failed to compute rdist.pdf due to numeric'
                       ' loss of precision')
@@ -229,11 +242,13 @@ class StatsTests(unittest.TestCase):
             # this one should fail with recent scipy with error
             # ZeroDivisionError: 0.0 cannot be raised to a negative power
 
-            # XXX: There is 1 more bug in etch's scipy.stats or numpy (vectorize), so I
-            #      have to put 2 elements in the queried x's, otherwise it
+            # XXX: There is 1 more bug in etch's scipy.stats or numpy
+            #      (vectorize), so I have to put 2 elements in the
+            #      queried x's, otherwise it
             #      would puke. But for now that fix is not here
             #
-            # value = scipy.stats.rdist(1.32, 0, 1).cdf([-1.0+N.finfo(float).eps, 0])
+            # value = scipy.stats.rdist(1.32, 0, 1).cdf(
+            #      [-1.0+N.finfo(float).eps, 0])
             #
             # to cause it now just run this unittest only with
             #  nosetests -s test_stats:StatsTests.testRDistStability
@@ -241,7 +256,7 @@ class StatsTests(unittest.TestCase):
             # NB: very cool way to store the trace of the execution
             #import pydb
             #pydb.debugger(dbg_cmds=['bt', 'l', 's']*300 + ['c'])
-            value = scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
+            scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
         except IndexError, e:
             self.fail('Failed due to bug which leads to InvalidIndex if only'
                       ' scalar is provided to cdf')
@@ -249,7 +264,7 @@ class StatsTests(unittest.TestCase):
             self.fail('Failed to compute rdist.cdf due to numeric'
                       ' loss of precision. Exception was %s' % e)
 
-        v = scipy.stats.rdist(10000,0,1).cdf([-0.1])
+        v = scipy.stats.rdist(10000, 0, 1).cdf([-0.1])
         self.failUnless(v>=0, v<=1)
 
 
@@ -282,9 +297,11 @@ class StatsTests(unittest.TestCase):
 
 
     def testGLM(self):
+        """Test GLM
+        """
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
-        hrf_x = N.linspace(0,25,250)
+        hrf_x = N.linspace(0, 25, 250)
         hrf = doubleGammaHRF(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
 
         # come up with an experimental design
@@ -309,11 +326,12 @@ class StatsTests(unittest.TestCase):
         # generate artifical fMRI data: two voxels one is noise, one has
         # something
         baseline = 800.0
-        wsignal = baseline + 2 * model_lr + N.random.randn(int(samples / tr / 10)) * 0.2
+        wsignal = baseline + 2 * model_lr + \
+                  N.random.randn(int(samples / tr / 10)) * 0.2
         nsignal = baseline + N.random.randn(int(samples / tr / 10)) * 0.5
 
         # build design matrix: bold-regressor and constant
-        X = N.array([model_lr, N.repeat(1,len(model_lr))]).T
+        X = N.array([model_lr, N.repeat(1, len(model_lr))]).T
 
         # two 'voxel' dataset
         data = Dataset(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
@@ -325,15 +343,15 @@ class StatsTests(unittest.TestCase):
         # betas for each feature and each regressor
         self.failUnless(betas.shape == (data.nfeatures, X.shape[1]))
 
-        self.failUnless(N.absolute(betas[:,1] - baseline < 10).all(),
+        self.failUnless(N.absolute(betas[:, 1] - baseline < 10).all(),
             msg="baseline betas should be huge and around 800")
 
-        self.failUnless(betas[0][0] > betas[1,0],
+        self.failUnless(betas[0][0] > betas[1, 0],
             msg="feature (with signal) beta should be larger than for noise")
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.absolute(betas[1,0]) < 0.5)
-            self.failUnless(N.absolute(betas[0,0]) > 1.0)
+            self.failUnless(N.absolute(betas[1, 0]) < 0.5)
+            self.failUnless(N.absolute(betas[0, 0]) > 1.0)
 
 
         # check GLM zscores
@@ -342,15 +360,16 @@ class StatsTests(unittest.TestCase):
 
         self.failUnless(zstats.shape == betas.shape)
 
-        self.failUnless((zstats[:,1] > 1000).all(),
+        self.failUnless((zstats[:, 1] > 1000).all(),
                 msg='constant zstats should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.absolute(betas[0,0]) > betas[1][0],
+            self.failUnless(N.absolute(betas[0, 0]) > betas[1][0],
                 msg='with signal should have higher zstats')
 
 
 def suite():
+    """Create the suite"""
     return unittest.makeSuite(StatsTests)
 
 
