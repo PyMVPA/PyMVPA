@@ -206,11 +206,18 @@ def __check_atlas_family(family):
 
 def __check_stablerdist():
     import scipy.stats
-    # ATM all known implementations which implement custom cdf for
-    #     rdist are misbehaving, so there should be no _cdf
-    if '_cdf' in scipy.stats.distributions.rdist_gen.__dict__.keys():
-        raise ImportError, "scipy.stats carries misbehaving rdist distribution"
-    pass
+    import numpy as N
+    ## ATM all known implementations which implement custom cdf for
+    ##     rdist are misbehaving, so there should be no _cdf
+    #if '_cdf' in scipy.stats.distributions.rdist_gen.__dict__.keys():
+    #    raise ImportError, "scipy.stats carries misbehaving rdist distribution"
+    #
+    ## Unfortunately 0.7.0 hasn't fixed the issue so no chance but to do
+    ## a proper numerical test here
+    try:
+        scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + N.finfo(float).eps)
+    except ZeroDivisionError:
+        raise RuntimeError, "RDist in scipy is still unstable on the boundaries"
 
 
 def __check_in_ipython():
