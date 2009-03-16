@@ -106,6 +106,9 @@ from mvpa.misc.state import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
 
+if externals.exists("nifti"):
+    from mvpa.misc.fsl.melodic import *
+
 if externals.exists("pylab"):
     from mvpa.misc.plot import *
     from mvpa.misc.plot.erp import *
