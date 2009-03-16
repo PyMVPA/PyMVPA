@@ -109,13 +109,15 @@ from mvpa.misc.io.meg import *
 if externals.exists('cPickle') and externals.exists('gzip'):
     from mvpa.misc.io.hamster import *
 from mvpa.misc.fsl import *
-from mvpa.misc.fsl.melodic import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *
 from mvpa.misc.param import *
 from mvpa.misc.state import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
+
+if externals.exists("nifti"):
+    from mvpa.misc.fsl.melodic import *
 
 if externals.exists("pylab"):
     from mvpa.misc.plot import *
