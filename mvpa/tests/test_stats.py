@@ -234,9 +234,9 @@ class StatsTests(unittest.TestCase):
         try:
             # actually I haven't managed to cause this error
             scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+N.finfo(float).eps)
-        except:
+        except Exception, e:
             self.fail('Failed to compute rdist.pdf due to numeric'
-                      ' loss of precision')
+                      ' loss of precision. Exception was %s' % e)
 
         try:
             # this one should fail with recent scipy with error
