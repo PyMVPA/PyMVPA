@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+# Some global imports useful through out unittests
+from mvpa.base import cfg
+
 #
 # first deal with classifiers which do not have external deps
 #
