@@ -983,6 +983,8 @@ class Dataset(object):
         also cause major headaches! Order would is verified when
         running in non-optimized code (if __debug__)
         """
+        ids = copy.deepcopy(ids)
+        
         if ids is None and groups is None:
             raise ValueError, "No feature selection specified."
 
