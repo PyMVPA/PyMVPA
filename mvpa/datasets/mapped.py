@@ -125,9 +125,9 @@ class MappedDataset(Dataset):
             sdata = Dataset(self._data, self._dsattr, check_data=False,
                             copy_samples=False, copy_data=False,
                             copy_dsattr=False)
-            return sdata.selectFeatures(ids, sort)
+            return sdata.selectFeatures(ids=ids, sort=sort)
         else:
-            sdata = Dataset.selectFeatures(self, ids)
+            sdata = Dataset.selectFeatures(self, ids=ids, sort=sort)
             # since we have new DataSet we better have a new mapper
             sdata._dsattr['mapper'] = copy.deepcopy(sdata._dsattr['mapper'])
             if sort:
