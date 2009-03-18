@@ -16,6 +16,7 @@ from mvpa.datasets import Dataset
 from mvpa.datasets.miscfx import zscore, aggregateFeatures
 from mvpa.mappers.mask import MaskMapper
 from mvpa.misc.exceptions import DatasetError
+from mvpa.support import copy
 
 from tests_warehouse import datasets
 
@@ -85,12 +86,15 @@ class DatasetTests(unittest.TestCase):
         # default must be no mask
         self.failUnless( data.nfeatures == 100 )
 
+        features_to_select = [20, 0, 79]
+        features_to_select_copy = copy.deepcopy(features_to_select)
         bsel = N.array([False]*100)
-        bsel[ [0,20,79] ] = True
+        bsel[ features_to_select ] = True
         # check selection with feature list
-        for sel in [ data.selectFeatures( [0,20,79], sort=False ),
-                     data.select(slice(None), [0,20,79]),
-                     data.select(slice(None), N.array([0,20,79])),
+        for sel in [ data.selectFeatures( features_to_select, sort=False ),
+                     data.selectFeatures( features_to_select, sort=True ),
+                     data.select(slice(None), features_to_select),
+                     data.select(slice(None), N.array(features_to_select)),
                      data.select(slice(None), bsel),
                      ]:
             self.failUnless(sel.nfeatures == 3)
@@ -99,10 +103,13 @@ class DatasetTests(unittest.TestCase):
             self.failUnless( sel.samples.shape == (10,3) )
 
             # check that the right features are selected
-            self.failUnless( (unmasked[:,[0,20,79]]==sel.samples).all() )
+            self.failUnless( (unmasked[:,features_to_select]==sel.samples).all() )
 
             # check grouping information
             self.failUnless((sel._dsattr['featuregroups'] == [0, 0, 3]).all())
+
+            # check side effect on features_to_select parameter:
+            self.failUnless(features_to_select==features_to_select_copy)
 
         # check selection by feature group id
         gsel = data.selectFeatures(groups=[2,3])
