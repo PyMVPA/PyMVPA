@@ -88,22 +88,32 @@ class DatasetTests(unittest.TestCase):
 
         features_to_select = [20, 0, 79]
         features_to_select_copy = copy.deepcopy(features_to_select)
+        features_to_select_sorted = copy.deepcopy(features_to_select)
+        features_to_select_sorted.sort()
+
         bsel = N.array([False]*100)
         bsel[ features_to_select ] = True
         # check selection with feature list
-        for sel in [ data.selectFeatures( features_to_select, sort=False ),
-                     data.selectFeatures( features_to_select, sort=True ),
-                     data.select(slice(None), features_to_select),
-                     data.select(slice(None), N.array(features_to_select)),
-                     data.select(slice(None), bsel),
-                     ]:
+        for sel, sorted in \
+            [(data.selectFeatures( features_to_select, sort=False ), False),
+             (data.selectFeatures( features_to_select, sort=True ), True),
+             (data.select(slice(None), features_to_select), True),
+             (data.select(slice(None), N.array(features_to_select)), True),
+             (data.select(slice(None), bsel), True)
+            ]:
             self.failUnless(sel.nfeatures == 3)
 
             # check size of the masked patterns
             self.failUnless( sel.samples.shape == (10,3) )
 
             # check that the right features are selected
-            self.failUnless( (unmasked[:,features_to_select]==sel.samples).all() )
+            if sorted:
+                self.failUnless(
+                    (unmasked[:,
+                              features_to_select_sorted] == sel.samples).all())
+            else:
+                self.failUnless(
+                    (unmasked[:,features_to_select]==sel.samples).all())
 
             # check grouping information
             self.failUnless((sel._dsattr['featuregroups'] == [0, 0, 3]).all())
