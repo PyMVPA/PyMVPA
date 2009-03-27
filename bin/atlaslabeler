@@ -347,6 +347,7 @@ else:
         # XXX ask Michael to remove nasty warning message
         coordsIterator = selectVoxelsFromVolumeIteratorNumPY(
             infile, options.lowerThreshold, options.upperThreshold)
+        assert(coordT is None)
         coordT = Linear(niftiInput.qform)
         # previous iterator returns space coordinates
         options.coordRelativeToOrigin = True
@@ -435,7 +436,7 @@ else:
         from scipy.io import read_array
 
         transfMatrix = read_array(options.transformationFile)
-        coordT = Linear(transfMatrix, coordT)
+        coordT = Linear(transfMatrix, previous=coordT)
         verbose(2, "coordT got linear transformation from file %s" %
                    options.transformationFile)
 
