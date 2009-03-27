@@ -124,6 +124,8 @@ if externals.exists("pylab"):
     from mvpa.misc.plot.erp import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa.misc.plot.topo import *
+    if externals.exists('nifti'):
+        from mvpa.misc.plot.mri import plotMRI
 
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *

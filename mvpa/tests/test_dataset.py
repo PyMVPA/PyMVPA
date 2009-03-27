@@ -23,6 +23,8 @@ from tests_warehouse import datasets
 class DatasetTests(unittest.TestCase):
 
     def testAddPatterns(self):
+        """Test composition of new datasets by addition of existing ones
+        """
         data = Dataset(samples=range(5), labels=1, chunks=1)
 
         self.failUnlessEqual(
@@ -46,57 +48,59 @@ class DatasetTests(unittest.TestCase):
                                                       chunks=1))
 
         # now add two real patterns
-        data += Dataset(samples=N.random.standard_normal((2,5)),
-                        labels=2, chunks=2 )
+        dss = datasets['uni2large'].samples
+        data += Dataset(samples=dss[:2, :5], labels=2, chunks=2 )
         self.failUnlessEqual( data.nfeatures, 5 )
-        self.failUnless( (data.labels == N.array([1,2,2]) ).all() )
-        self.failUnless( (data.chunks == N.array([1,2,2]) ).all() )
+        self.failUnless((data.labels == N.array([1, 2, 2])).all() )
+        self.failUnless((data.chunks == N.array([1, 2, 2])).all() )
 
         # test automatic origins
-        data += Dataset(samples=N.random.standard_normal((2,5)), labels=3)
-        self.failUnless( (data.chunks == N.array([1,2,2,0,1]) ).all() )
+        data += Dataset(samples=dss[3:5, :5], labels=3)
+        self.failUnless((data.chunks == N.array([1, 2, 2, 0, 1]) ).all())
 
         # test unique class labels
-        self.failUnless( (data.uniquelabels == N.array([1,2,3]) ).all() )
+        self.failUnless((data.uniquelabels == N.array([1, 2, 3]) ).all())
 
         # test wrong label length
-        self.failUnlessRaises( DatasetError,
-                               Dataset,
-                               samples=N.random.standard_normal((4,5)),
-                               labels=[ 1, 2, 3 ],
-                               chunks=2 )
+        self.failUnlessRaises(DatasetError,
+                              Dataset,
+                              samples=dss[:4, :5],
+                              labels=[ 1, 2, 3 ],
+                              chunks=2)
 
         # test wrong origin length
-        self.failUnlessRaises( DatasetError,
-                               Dataset,
-                               samples=N.random.standard_normal((4,5)),
-                               labels=[ 1, 2, 3, 4 ],
-                               chunks=[ 2, 2, 2 ] )
+        self.failUnlessRaises(DatasetError,
+                              Dataset,
+                              samples=dss[:4, :5],
+                              labels=[ 1, 2, 3, 4 ],
+                              chunks=[ 2, 2, 2 ])
 
 
     def testFeatureSelection(self):
-        origdata = N.random.standard_normal((10,100))
+        """Testing feature selection: sorted/not sorted, feature groups
+        """
+        origdata = datasets['uni2large'].samples[:10, :20]
         data = Dataset(samples=origdata, labels=2, chunks=2 )
 
         # define some feature groups
-        data.defineFeatureGroups(N.repeat(range(4), 25))
+        data.defineFeatureGroups(N.repeat(range(4), 5))
 
         unmasked = data.samples.copy()
 
         # default must be no mask
-        self.failUnless( data.nfeatures == 100 )
+        self.failUnless( data.nfeatures == 20 )
 
-        features_to_select = [20, 0, 79]
+        features_to_select = [3, 0, 17]
         features_to_select_copy = copy.deepcopy(features_to_select)
         features_to_select_sorted = copy.deepcopy(features_to_select)
         features_to_select_sorted.sort()
 
-        bsel = N.array([False]*100)
+        bsel = N.array([False]*20)
         bsel[ features_to_select ] = True
         # check selection with feature list
-        for sel, sorted in \
-            [(data.selectFeatures( features_to_select, sort=False ), False),
-             (data.selectFeatures( features_to_select, sort=True ), True),
+        for sel, issorted in \
+            [(data.selectFeatures( features_to_select, sort=False), False),
+             (data.selectFeatures( features_to_select, sort=True), True),
              (data.select(slice(None), features_to_select), True),
              (data.select(slice(None), N.array(features_to_select)), True),
              (data.select(slice(None), bsel), True)
@@ -104,16 +108,11 @@ class DatasetTests(unittest.TestCase):
             self.failUnless(sel.nfeatures == 3)
 
             # check size of the masked patterns
-            self.failUnless( sel.samples.shape == (10,3) )
+            self.failUnless(sel.samples.shape == (10, 3))
 
             # check that the right features are selected
-            if sorted:
-                self.failUnless(
-                    (unmasked[:,
-                              features_to_select_sorted] == sel.samples).all())
-            else:
-                self.failUnless(
-                    (unmasked[:,features_to_select]==sel.samples).all())
+            fts = (features_to_select, features_to_select_sorted)[int(issorted)]
+            self.failUnless((unmasked[:, fts] == sel.samples).all())
 
             # check grouping information
             self.failUnless((sel._dsattr['featuregroups'] == [0, 0, 3]).all())
@@ -122,12 +121,13 @@ class DatasetTests(unittest.TestCase):
             self.failUnless(features_to_select==features_to_select_copy)
 
         # check selection by feature group id
-        gsel = data.selectFeatures(groups=[2,3])
-        self.failUnless(gsel.nfeatures == 50)
+        gsel = data.selectFeatures(groups=[2, 3])
+        self.failUnless(gsel.nfeatures == 10)
+        self.failUnless(set(gsel._dsattr['featuregroups']) == set([2, 3]))
 
 
     def testSampleSelection(self):
-        origdata = N.random.standard_normal((10,100))
+        origdata = datasets['uni2large'].samples[:100, :10].T
         data = Dataset(samples=origdata, labels=2, chunks=2 )
 
         self.failUnless( data.nsamples == 10 )
@@ -156,7 +156,7 @@ class DatasetTests(unittest.TestCase):
             self.failUnless( len(sel.chunks) == 2 )
             self.failUnless((sel.origids == [5, 5]).all())
 
-            self.failUnless( sel.samples.shape == (2,100) )
+            self.failUnless( sel.samples.shape == (2, 100) )
 
         # check selection by labels
         for sel in [ data.selectSamples(data.idsbylabels(2)),
@@ -202,7 +202,7 @@ class DatasetTests(unittest.TestCase):
     def testEvilSelects(self):
         """Test some obscure selections of samples via select() or __getitem__
         """
-        origdata = N.random.standard_normal((10,100))
+        origdata = datasets['uni2large'].samples[:100, :10].T
         data = Dataset(samples=origdata,
                        #       0  1  2  3  4  5  6  7  8  9
                        labels=[8, 9, 4, 3, 3, 3, 3, 2, 8, 9],
@@ -226,12 +226,12 @@ class DatasetTests(unittest.TestCase):
                      # get warnings but should work as the rest for now
                      data[3:8, 'chunks', [2, 6, 2, 6], 'labels', [3, 2]],
                      ]:
-            self.failUnless(N.all(sel.origids == [3,7]))
+            self.failUnless(N.all(sel.origids == [3, 7]))
             self.failUnless(sel.nfeatures == 100)
-            self.failUnless(N.all(sel.samples == origdata[ [3,7] ]))
+            self.failUnless(N.all(sel.samples == origdata[ [3, 7] ]))
 
         target = origdata[ [3, 7] ]
-        target = target[:, [1,3] ]
+        target = target[:, [1, 3] ]
         # various getitems which should carry the same result
         for sel in [ data.select('all', [1, 3],
                                  'chunks', [2, 6], labels=[3, 2]),
@@ -241,7 +241,7 @@ class DatasetTests(unittest.TestCase):
                      data[3:8, [1, 1, 3, 1],
                           'chunks', [2, 6, 2, 6], 'labels', [3, 2]],
                      ]:
-            self.failUnless(N.all(sel.origids == [3,7]))
+            self.failUnless(N.all(sel.origids == [3, 7]))
             self.failUnless(sel.nfeatures == 2)
             self.failUnless(N.all(sel.samples == target))
 
@@ -249,8 +249,8 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(data.select(chunks=[23]).nsamples == 0)
 
         # Check .where()
-        self.failUnless(N.all(data.where(chunks=[2,6]) == [1, 3, 7, 9]))
-        self.failUnless(N.all(data.where(chunks=[2,6], labels=[22, 3]) == [3]))
+        self.failUnless(N.all(data.where(chunks=[2, 6])==[1, 3, 7, 9]))
+        self.failUnless(N.all(data.where(chunks=[2, 6], labels=[22, 3])==[3]))
         # both samples and features
         idx = data.where('all', [1, 3, 10], labels=[2, 3, 4])
         self.failUnless(N.all(idx[1] == [1, 3, 10]))
@@ -262,50 +262,54 @@ class DatasetTests(unittest.TestCase):
 
 
     def testCombinedPatternAndFeatureMasking(self):
-        data = Dataset(samples=N.arange( 20 ).reshape( (4,5) ),
+        data = Dataset(samples=N.arange( 20 ).reshape( (4, 5) ),
                        labels=1,
                        chunks=1)
 
         self.failUnless( data.nsamples == 4 )
         self.failUnless( data.nfeatures == 5 )
-        fsel = data.selectFeatures([1,2])
-        fpsel = fsel.selectSamples([0,3])
+        fsel = data.selectFeatures([1, 2])
+        fpsel = fsel.selectSamples([0, 3])
         self.failUnless( fpsel.nsamples == 2 )
         self.failUnless( fpsel.nfeatures == 2 )
 
-        self.failUnless( (fpsel.samples == [[1,2],[16,17]]).all() )
+        self.failUnless( (fpsel.samples == [[1, 2], [16, 17]]).all() )
 
 
     def testPatternMerge(self):
-        data1 = Dataset(samples=N.ones((5,5)), labels=1, chunks=1 )
-        data2 = Dataset(samples=N.ones((3,5)), labels=2, chunks=1 )
+        data1 = Dataset(samples=N.ones((5, 5)), labels=1, chunks=1 )
+        data2 = Dataset(samples=N.ones((3, 5)), labels=2, chunks=1 )
 
         merged = data1 + data2
 
         self.failUnless( merged.nfeatures == 5 )
-        self.failUnless( (merged.labels == [ 1,1,1,1,1,2,2,2]).all() )
-        self.failUnless( (merged.chunks == [ 1,1,1,1,1,1,1,1]).all() )
+        l12 = [1]*5 + [2]*3
+        l1 = [1]*8
+        self.failUnless( (merged.labels == l12).all() )
+        self.failUnless( (merged.chunks == l1).all() )
 
         data1 += data2
 
         self.failUnless( data1.nfeatures == 5 )
-        self.failUnless( (data1.labels == [ 1,1,1,1,1,2,2,2]).all() )
-        self.failUnless( (data1.chunks == [ 1,1,1,1,1,1,1,1]).all() )
+        self.failUnless( (data1.labels == l12).all() )
+        self.failUnless( (data1.chunks == l1).all() )
 
 
     def testLabelRandomizationAndSampling(self):
-        data = Dataset(samples=N.ones((5,1)), labels=range(5), chunks=1 )
-        data += Dataset(samples=N.ones((5,1))+1, labels=range(5), chunks=2 )
-        data += Dataset(samples=N.ones((5,1))+2, labels=range(5), chunks=3 )
-        data += Dataset(samples=N.ones((5,1))+3, labels=range(5), chunks=4 )
-        data += Dataset(samples=N.ones((5,1))+4, labels=range(5), chunks=5 )
+        """
+        """
+        data = Dataset(samples=N.ones((5, 1)), labels=range(5), chunks=1 )
+        data += Dataset(samples=N.ones((5, 1))+1, labels=range(5), chunks=2 )
+        data += Dataset(samples=N.ones((5, 1))+2, labels=range(5), chunks=3 )
+        data += Dataset(samples=N.ones((5, 1))+3, labels=range(5), chunks=4 )
+        data += Dataset(samples=N.ones((5, 1))+4, labels=range(5), chunks=5 )
         self.failUnless( data.samplesperlabel == {0:5, 1:5, 2:5, 3:5, 4:5} )
 
 
         sample = data.getRandomSamples( 2 )
-        self.failUnless( sample.samplesperlabel.values() == [ 2,2,2,2,2 ] )
+        self.failUnless( sample.samplesperlabel.values() == [ 2, 2, 2, 2, 2 ] )
 
-        self.failUnless( (data.uniquechunks == range(1,6)).all() )
+        self.failUnless( (data.uniquechunks == range(1, 6)).all() )
 
         # store the old labels
         origlabels = data.labels.copy()
@@ -336,6 +340,8 @@ class DatasetTests(unittest.TestCase):
 
 
     def testAttributes(self):
+        """Test adding custom attributes to a dataset
+        """
         #class BlobbyDataset(Dataset):
         #    pass
         # TODO: we can't assign attributes to those for now...
@@ -347,11 +353,12 @@ class DatasetTests(unittest.TestCase):
         Dataset._registerAttribute("blobs", "_data", hasunique=True)
         ds = Dataset(samples=range(5), labels=1, chunks=1)
         self.failUnless(not ds.blobs != [ 0 ],
-                        msg="By default new attributes supposed to get 0 as the value")
+             msg="By default new attributes supposed to get 0 as the value")
 
         try:
-            ds.blobs = [1,2]
-            self.fail(msg="Dataset.blobs=[1,2] should fail since there is 5 samples")
+            ds.blobs = [1, 2]
+            self.fail(msg="Dataset.blobs=[1,2] should fail since "
+                      "there is 5 samples")
         except ValueError, e:
             pass
 
@@ -366,6 +373,8 @@ class DatasetTests(unittest.TestCase):
 
 
     def testRequiredAtrributes(self):
+        """Verify that we have required attributes
+        """
         self.failUnlessRaises(DatasetError, Dataset)
         self.failUnlessRaises(DatasetError, Dataset, samples=[1])
         self.failUnlessRaises(DatasetError, Dataset, labels=[1])
@@ -373,9 +382,12 @@ class DatasetTests(unittest.TestCase):
             ds = Dataset(samples=[1], labels=[1])
         except:
             self.fail(msg="samples and labels are 2 required parameters")
+        assert(ds is not None)          # silence pylint
 
 
     def testZScoring(self):
+        """Test z-scoring transformation
+        """
         # dataset: mean=2, std=1
         samples = N.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) ).\
             reshape((16, 1))
@@ -404,7 +416,7 @@ class DatasetTests(unittest.TestCase):
 
 
     def testAggregation(self):
-        data = Dataset(samples=N.arange( 20 ).reshape( (4,5) ),
+        data = Dataset(samples=N.arange( 20 ).reshape( (4, 5) ),
                        labels=1,
                        chunks=1)
 
@@ -412,13 +424,13 @@ class DatasetTests(unittest.TestCase):
 
         self.failUnless(ag_data.nsamples == 4)
         self.failUnless(ag_data.nfeatures == 1)
-        self.failUnless((ag_data.samples[:,0] == [2, 7, 12, 17]).all())
+        self.failUnless((ag_data.samples[:, 0] == [2, 7, 12, 17]).all())
 
 
     def testApplyMapper(self):
         """Test creation of new dataset by applying a mapper"""
-        mapper = MaskMapper(N.array([1,0,1]))
-        dataset = Dataset(samples=N.arange(12).reshape( (4,3) ),
+        mapper = MaskMapper(N.array([1, 0, 1]))
+        dataset = Dataset(samples=N.arange(12).reshape( (4, 3) ),
                           labels=1,
                           chunks=1)
         seldataset = dataset.applyMapper(featuresmapper=mapper)
@@ -429,8 +441,8 @@ class DatasetTests(unittest.TestCase):
         # do evil things. Those checks are done only in __debug__
         if __debug__:
             # should fail since in mask we have just 2 features now
-            self.failUnlessRaises(ValueError, mapper.reverse, [10,20,30])
-            self.failUnlessRaises(ValueError, mapper.forward, [10,20])
+            self.failUnlessRaises(ValueError, mapper.reverse, [10, 20, 30])
+            self.failUnlessRaises(ValueError, mapper.forward, [10, 20])
 
         # XXX: the intended test is added as SampleGroupMapper test
 #        self.failUnlessRaises(NotImplementedError,
@@ -440,9 +452,11 @@ class DatasetTests(unittest.TestCase):
 
 
     def testId(self):
-        """Test Dataset.idhash() if it gets changed if any of the labels/chunks changes"""
+        """Test Dataset.idhash() if it gets changed if any of the
+        labels/chunks changes
+        """
 
-        dataset = Dataset(samples=N.arange(12).reshape( (4,3) ),
+        dataset = Dataset(samples=N.arange(12).reshape( (4, 3) ),
                           labels=1,
                           chunks=1)
         origid = dataset.idhash
@@ -463,7 +477,7 @@ class DatasetTests(unittest.TestCase):
                         msg="Changing value in attribute should change idhash")
 
         origid = dataset.idhash
-        dataset.samples[1,1] = 1000
+        dataset.samples[1, 1] = 1000
         self.failUnless(origid != dataset.idhash,
                         msg="Changing value in data should change idhash")
 
@@ -475,11 +489,12 @@ class DatasetTests(unittest.TestCase):
 
         dataset.permuteLabels(False)
         self.failUnless(origid == dataset.idhash,
-                        msg="idhash should be restored after permuteLabels(False)")
+                        msg="idhash should be restored after "
+                        "permuteLabels(False)")
 
 
     def testFeatureMaskConversion(self):
-        dataset = Dataset(samples=N.arange(12).reshape( (4,3) ),
+        dataset = Dataset(samples=N.arange(12).reshape((4, 3)),
                           labels=1,
                           chunks=1)
 
@@ -505,8 +520,10 @@ class DatasetTests(unittest.TestCase):
 
 
     def testLabelsMapping(self):
+        """Test mapping of the labels from strings to numericals
+        """
         od = {'apple':0, 'orange':1}
-        samples = [[3],[2],[3]]
+        samples = [[3], [2], [3]]
         labels_l = ['apple', 'orange', 'apple']
 
         # test broadcasting of the label
@@ -534,8 +551,8 @@ class DatasetTests(unittest.TestCase):
 
         # We should label numerical labels if it was requested:
         od3 = {1:100, 2:101, 3:100}
-        ds3 = Dataset(samples=samples, labels=[1,2,3],
-                      labels_map = od3)
+        ds3 = Dataset(samples=samples, labels=[1, 2, 3],
+                      labels_map=od3)
         self.failUnlessEqual(ds3.labels_map, od3)
         self.failUnless(N.all(ds3.labels == [100, 101, 100]))
 
@@ -557,7 +574,7 @@ class DatasetTests(unittest.TestCase):
     def testLabelsMappingAddDataset(self):
         """Adding datasets needs special care whenever labels mapping
         is used."""
-        samples = [[3],[2],[3]]
+        samples = [[3], [2], [3]]
         l1 = ['a', 'b', 'a']
         l2 = ['b', 'a', 'c']
         ds1 = Dataset(samples=samples, labels=l1,
@@ -602,7 +619,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(N.all(ds.chunks == ds_.chunks))
 
         # modify and see if we don't change data in the original one
-        ds_.samples[0,0] = 1234
+        ds_.samples[0, 0] = 1234
         self.failUnless(N.any(ds.samples != ds_.samples))
         self.failUnless(N.all(ds.labels == ds_.labels))
         self.failUnless(N.all(ds.chunks == ds_.chunks))
