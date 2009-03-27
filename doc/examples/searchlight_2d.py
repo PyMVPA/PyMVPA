@@ -73,7 +73,7 @@ classifier."""
 clf = LinearNuSVMC()
 
 # setup measure to be computed by Searchlight
-# cross-validated mean transfer using an odd-even dataset splitter
+# cross-validated mean transfer using an N-fold dataset splitter
 cv = CrossValidatedTransferError(TransferError(clf),
                                  NFoldSplitter())
 
