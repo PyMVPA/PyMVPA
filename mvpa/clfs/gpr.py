@@ -306,10 +306,11 @@ class GPR(Classifier):
                 self._L = SLcholesky(self._C, lower=True)
                 self._LL = (self._L, True)
             except SLAError:
-                epsilon = 1.0e-20 * N.eye(self._C.shape[0])
+                # try setting epsilon based on the dtype of C
+                epsilon = N.finfo(self._C.dtype).eps * N.eye(self._C.shape[0])
+                #epsilon = 1.0e-20 * N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C + epsilon, lower=True)
                 self._LL = (self._L, True)
-                pass
             newL = True
         else:
             if __debug__:
