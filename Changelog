@@ -27,7 +27,26 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  None yet.
+  * New correlation stability measure
+    (:class:`~mvpa.measures.corrstability.CorrStability`).
+  * New elastic net classifier (:class:`~mvpa.clfs.enet.ENET`).
+  * New measure :class:`~mvpa.measures.anova.CompoundOneWayAnova`.
+  * New meta-measure
+    :class:`~mvpa.measures.splitmeasure.TScoredFeaturewiseMeasure`.
+  * New basic :class:`~mvpa.measures.glm.GLM` implementation.
+  * New examples for Gaussian process regression.
+  * New :class:`~mvpa.mappers.zscore.ZScoreMapper`.
+  * New import helper for FSL design matrices
+    (:class:`~mvpa.misc.fsl.base.FslGLMDesign`).
+  * New implementation of a mapper using a self-organizing map
+    (:class:`~mvpa.mappers.som.SimpleSOMMapper`) and a corresponding example.
+  * Matplotlib backend is now configurable via
+    :envvar:`MVPA_MATPLOTLIB_BACKEND`.
+  * PyMVPA version is now avialable from :data:`mvpa.__version__`.
+  * Renamed `mvpa.misc.plot.errLinePLot` to
+    :func:`~mvpa.misc.plot.plotErrLine` for consistency.
+  * Fixed :class:`~mvpa.datasets.splitters.NFoldSplitter` to support N-3 and
+    larger splits.
 
 Releases
 ========
