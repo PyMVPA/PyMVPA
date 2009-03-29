@@ -43,6 +43,7 @@ import numpy as N
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhancedDocString
+from mvpa.datasets.miscfx import coarsenChunks
 
 if __debug__:
     from mvpa.base import debug
@@ -494,6 +495,58 @@ class HalfSplitter(Splitter):
 
 
 
+class NGroupSplitter(Splitter):
+    """Split a dataset into N-groups of the sample attribute.
+    
+    For example, NGroupSplitter(2) is the same as the HalfSplitter and
+    yields to splits: first (1st half, 2nd half) and second (2nd half,
+    1st half).
+    """
+    def __init__(self, ngroups=4, **kwargs):
+        """Initialize the N-group splitter.
+
+        :Parameter:
+          ngroups: Int
+            Number of groups to split the attribute into.
+          kwargs
+            Additional parameters are passed to the `Splitter` base class.
+        """
+        Splitter.__init__(self, **(kwargs))
+
+        self.__ngroups = ngroups
+
+    __doc__ = enhancedDocString('NGroupSplitter', locals(), Splitter)
+
+
+    def _getSplitConfig(self, uniqueattrs):
+        """Huka chaka, wuka waka!
+        """
+
+        # make sure there are more of attributes than desired groups
+        if len(uniqueattrs) < self.__ngroups:
+            raise ValueError, "Number of groups (%d) " % (self.__ngroups) + \
+                  "must be less than " + \
+                  "or equal to the number of unique attributes (%d)" % \
+                  (len(uniqueattrs))
+
+        # use coarsenChunks to get the split indices
+        split_ind = coarsenChunks(uniqueattrs, nchunks=self.__ngroups)
+        split_ind = N.asarray(split_ind)
+        
+        # loop and create splits
+        split_list = [(None, uniqueattrs[split_ind==i])
+                       for i in range(self.__ngroups)]
+        return split_list
+
+
+    def __str__(self):
+        """String summary over the object
+        """
+        return \
+          "N-%d-GroupSplitter / " % self.__ngroup + Splitter.__str__(self)
+
+
+
 class NFoldSplitter(Splitter):
     """Generic N-fold data splitter.
 
@@ -534,7 +587,7 @@ class NFoldSplitter(Splitter):
         """
         Splitter.__init__(self, **(kwargs))
 
-        # pylint happyness block
+        # pylint happiness block
         self.__cvtype = cvtype
 
 
