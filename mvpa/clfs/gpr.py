@@ -40,6 +40,7 @@ NLAcholesky = N.linalg.cholesky
 NLAsolve = N.linalg.solve
 NLAError = N.linalg.linalg.LinAlgError
 SLAError = SL.basic.LinAlgError
+eps64 = N.finfo(N.float64).eps
 
 # Some precomputed items. log is relatively expensive
 _halflog2pi = 0.5 * Nlog(2 * N.pi)
@@ -81,6 +82,11 @@ class GPR(Classifier):
     #kernel = Parameter(None, allowedtype='Kernel',
     #    doc="Kernel object defining the covariance between instances. "
     #        "(Defaults to KernelSquaredExponential if None in arguments)")
+
+    lm = Parameter(0.0, min=0.0, allowedtype='float',
+                   doc="""The regularization term lambda.
+                   Increase this when the kernel matrix is not positive, definite.""")
+
 
     def __init__(self, kernel=None, **kwargs):
         """Initialize a GPR regression analysis.
@@ -302,13 +308,19 @@ class GPR(Classifier):
             # 3) self._L = numpy.linalg.cholesky(self._C)
             # Even though 1 is the fastest we choose 2 since 1 does
             # not return a clean lower-triangular matrix (see docstring).
+
+            # PBS: I just made it so the KernelMatrix is regularized
+            # all the time.  I figured that if ever you were going to
+            # use regularization, you would want to set it yourself
+            # and use the same value for all folds of your data.
             try:
-                self._L = SLcholesky(self._C, lower=True)
-                self._LL = (self._L, True)
-            except SLAError:
-                epsilon = 1.0e-20 * N.eye(self._C.shape[0])
+                # apply regularization
+                epsilon = self.params.lm * N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C + epsilon, lower=True)
                 self._LL = (self._L, True)
+            except SLAError:
+                raise SLAError("Kernel matrix is not positive, definite.  " + \
+                               "Try increasing the lm parameter.")
                 pass
             newL = True
         else:
