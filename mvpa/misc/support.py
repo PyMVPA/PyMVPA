@@ -242,9 +242,9 @@ def isSorted(items):
 
     :return: `True` if were sorted. Otherwise `False` + Warning
     """
-    itemsOld = deepcopy(items)
-    items.sort()
-    equality = itemsOld == items
+    items_sorted = deepcopy(items)
+    items_sorted.sort()
+    equality = items_sorted == items
     # XXX yarik forgotten analog to isiterable
     if hasattr(equality, '__iter__'):
         equality = N.all(equality)

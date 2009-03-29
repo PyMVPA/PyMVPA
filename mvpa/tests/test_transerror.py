@@ -486,6 +486,52 @@ class ErrorsTests(unittest.TestCase):
             P.close(fig)
             # P.show()
 
+    def testConfusionPlot2(self):
+        """Based on a sample confusion which plots incorrectly
+
+        """
+
+        array = N.array
+        uint8 = N.uint8
+        sets = [(array([1, 2]), array([1, 1]),
+                 array([[ 0.54343765,  0.45656235],
+                        [ 0.92395853,  0.07604147]])),
+                (array([1, 2]), array([1, 1]),
+                 array([[ 0.98030832,  0.01969168],
+                        [ 0.78998763,  0.21001237]])),
+                (array([1, 2]), array([1, 1]),
+                 array([[ 0.86125263,  0.13874737],
+                        [ 0.83674113,  0.16325887]])),
+                (array([1, 2]), array([1, 1]),
+                 array([[ 0.57870383,  0.42129617],
+                        [ 0.59702509,  0.40297491]])),
+                (array([1, 2]), array([1, 1]),
+                 array([[ 0.89530255,  0.10469745],
+                        [ 0.69373919,  0.30626081]])),
+                (array([1, 2]), array([1, 1]),
+                 array([[ 0.75015218,  0.24984782],
+                        [ 0.9339767 ,  0.0660233 ]])),
+                (array([1, 2]), array([1, 2]),
+                 array([[ 0.97826616,  0.02173384],
+                        [ 0.38620638,  0.61379362]])),
+                (array([2]), array([2]),
+                 array([[ 0.46893776,  0.53106224]]))]
+        try:
+            cm = ConfusionMatrix(sets=sets)
+        except:
+            self.fail()
+        if externals.exists("pylab plottable"):
+            import pylab as P
+            #P.figure()
+            #print cm
+            fig, im, cb = cm.plot(origin='lower', numbers=True)
+            #P.plot()
+            self.failUnless((cm._plotted_confusionmatrix == cm.matrix).all())
+            P.close(fig)
+            #fig, im, cb = cm.plot(labels=labels_order, numbers=True)
+            #P.close(fig)
+            #P.show()
+
 
 def suite():
     return unittest.makeSuite(ErrorsTests)
