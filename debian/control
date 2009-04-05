@@ -51,5 +51,6 @@ Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy, py
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: low-level implementations and bindings for PyMVPA
- Low-level implementation of an SMLR classifier and custom Python
- bindings for the LIBSVM library.
+ This is an add-on package for the PyMVPA framework. It provides a low-level
+ implementation of an SMLR classifier and custom Python bindings for the LIBSVM
+ library.
