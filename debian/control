@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Michael Hanke <michael.hanke@gmail.com>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.4), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-sphinx, python-ctypes (>= 1.0.1), texlive, texlive-latex-extra, help2man
-Standards-Version: 3.8.0
+Standards-Version: 3.8.1
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
@@ -12,7 +12,7 @@ XS-DM-Upload-Allowed: yes
 
 Package: python-mvpa
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends}, python, python-numpy, python-mvpa-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt

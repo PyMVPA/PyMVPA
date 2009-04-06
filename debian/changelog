@@ -1,12 +1,15 @@
-pymvpa (0.4.1-2) unstable; urgency=low
+pymvpa (0.4.2-1) unstable; urgency=low
 
+  * new upstream release.
   * Removing the circular dependency between python-mvpa and python-mvpa-lib
     (Closes: #519129).
   * Improve long description of python-mvpa-lib and turn it into complete
     sentences, as recommended by the developers reference 6.2.3
     (Closes: #521332).
+  * Bump Standards-Version to 3.8.1 -- no changes necessary.
+  * Added dependency on python to the python-mvpa package to satisfy lintian.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Sun, 05 Apr 2009 17:23:06 +0200
+ -- Michael Hanke <michael.hanke@gmail.com>  Mon, 06 Apr 2009 10:22:56 +0200
 
 pymvpa (0.4.1-1) unstable; urgency=low
 
