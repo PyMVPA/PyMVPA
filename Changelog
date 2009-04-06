@@ -27,6 +27,14 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
+  * None yet.
+
+
+Releases
+========
+
+* 0.4.2 (Mon, 6 Apr 2009)
+
   * New correlation stability measure
     (:class:`~mvpa.measures.corrstability.CorrStability`).
   * New elastic net classifier (:class:`~mvpa.clfs.enet.ENET`).
@@ -48,8 +56,6 @@ Unreleased changes
   * Fixed :class:`~mvpa.datasets.splitters.NFoldSplitter` to support N-3 and
     larger splits.
 
-Releases
-========
 
 * 0.4.1 (Sat, 24 Jan 2009)
 
