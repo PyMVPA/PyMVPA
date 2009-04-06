@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -15,7 +15,7 @@ import numpy as N
 
 from mvpa import pymvpa_dataroot
 from mvpa.misc.io import *
-from mvpa.misc.fsl import FslEV3
+from mvpa.misc.fsl import *
 from mvpa.misc.bv import BrainVoyagerRTC
 
 
@@ -201,6 +201,11 @@ class IOHelperTests(unittest.TestCase):
             self.failUnless(len(eval('sl.' + var)) == 31)
 
 
+    def testFslGLMDesign(self):
+        glm = FslGLMDesign(os.path.join(pymvpa_dataroot, 'glm.mat'))
+
+        self.failUnless(glm.mat.shape == (850, 6))
+        self.failUnless(len(glm.ppheights) == 6)
 
 def suite():
     return unittest.makeSuite(IOHelperTests)

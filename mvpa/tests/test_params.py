@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -14,7 +14,7 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets import Dataset
-from mvpa.misc.state import Stateful, StateVariable
+from mvpa.misc.state import ClassWithCollections, StateVariable
 from mvpa.misc.param import Parameter, KernelParameter
 
 from tests_warehouse_clfs import SameSignClassifier
@@ -28,13 +28,13 @@ class ParametrizedClassifierExtended(ParametrizedClassifier):
         ParametrizedClassifier.__init__(self)
         self.kernel_params.add(KernelParameter(200.0, doc="Very useful param", name="kp2"))
 
-class BlankClass(Stateful):
+class BlankClass(ClassWithCollections):
     pass
 
-class SimpleClass(Stateful):
+class SimpleClass(ClassWithCollections):
     C = Parameter(1.0, min=0, doc="C parameter")
 
-class MixedClass(Stateful):
+class MixedClass(ClassWithCollections):
     C = Parameter(1.0, min=0, doc="C parameter")
     D = Parameter(3.0, min=0, doc="D parameter")
     state1 = StateVariable(doc="bogus")

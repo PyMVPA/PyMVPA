@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -49,16 +49,7 @@ class SVDMapper(ProjectionMapper):
         a 2D samples x feature data matrix.
         """
         X = N.asmatrix(dataset.samples)
-
-        if self._demean:
-            # demean the training data
-            X = X - self._mean
-
-            if __debug__:
-                debug("MAP_",
-                      "Mean of data in input space %s was subtracted" %
-                      (self._mean))
-
+        X = self._demeanData(X)
 
         # singular value decomposition
         U, SV, Vh = N.linalg.svd(X, full_matrices=0)

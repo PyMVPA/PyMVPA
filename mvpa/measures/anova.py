@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -22,7 +22,6 @@ from mvpa.measures.base import FeaturewiseDatasetMeasure
 #
 # For binary+multiclass:
 #  kruskal-wallis H-test (scipy.stats.kruskal)
-#  GLM: scipy.stats.glm
 #
 # and may be some others
 
@@ -37,23 +36,21 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
     sensitivity map. As usual F-scores have a range of [0,inf] with greater
     values indicating higher sensitivity.
     """
-    def __init__(self, **kwargs):
-        """Nothing special to do here.
-        """
-        # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 
-
-    def _call(self, dataset):
-        """Computes featurewise f-scores."""
+    def _call(self, dataset, labels=None):
+        """Computes featurewise f-scores using simple comparisons."""
         # group means
         means = []
         # with group variance
         vars_ = []
 
+        # if no labels were provided -- use the ones within the dataset
+        if labels is None:
+            labels = dataset.labels
+
         # split by groups -> [groups x [samples x features]]
-        for ul in dataset.uniquelabels:
-            ul_samples = dataset.samples[dataset.labels == ul]
+        for ul in N.unique(labels):
+            ul_samples = dataset.samples[labels == ul]
             means.append(ul_samples.mean(axis=0))
             vars_.append(ul_samples.var(axis=0))
 
@@ -78,3 +75,27 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         vgm[vgm0] /= mvw[vgm0]
 
         return vgm
+
+
+class CompoundOneWayAnova(OneWayAnova):
+    """Compound comparisons via univariate ANOVA.
+
+    Provides F-scores per each label if compared to the other labels.
+    """
+
+    def _call(self, dataset):
+        """Computes featurewise f-scores using compound comparisons."""
+
+        orig_labels = dataset.labels
+        labels = orig_labels.copy()
+
+        results = []
+        for ul in dataset.uniquelabels:
+            labels[orig_labels == ul] = 1
+            labels[orig_labels != ul] = 2
+            results.append(OneWayAnova._call(self, dataset, labels))
+
+        # features x labels
+        return N.array(results).T
+
+

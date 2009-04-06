@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -41,8 +41,8 @@ def detrend(dataset, perchunk=False, model='linear',
       `model`
         Type of detrending model to run.  If 'linear' or 'constant',
         scipy.signal.detrend is used to perform a linear or demeaning
-        detrend. If 'regress', then you specify the polyord and opt_reg
-        arguments to define regressors to regress out of the dataset.
+        detrend. Polynomial detrending is activated when 'regress' is
+        used or when polyord or opt_reg are specified.
       `polyord` : int or list
         Order of the Legendre polynomial to remove from the data.  This
         will remove every polynomial up to and including the provided
@@ -59,7 +59,8 @@ def detrend(dataset, perchunk=False, model='linear',
         As with the data, time is on the first axis.
 
     """
-
+    if polyord is not None or opt_reg is not None: model='regress'
+    
     if model in ['linear', 'constant']:
         # perform scipy detrend
         bp = 0                              # no break points by default

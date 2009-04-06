@@ -326,6 +326,19 @@ intended:
 In the first split, the working dataset contains nine chunks of the original
 dataset and the validation set contains the remaining chunk.
 
+Behavior of the splitters can be heavily customized by additional arguments to
+the constructor (see :class:`~mvpa.datasets.splitters.Splitter` for extended
+help on the arguments).  For instance, in the analysis in fMRI data it might
+be important to assure that samples in the training and testing parts of the
+split are not neighboring samples (unless it is otherwise assured by the
+presence of baseline condition on the boundaries between chunks, samples of
+which are discarded prior the statistical learning analysis).  Providing
+argument `discard_boundary=1` to the splitter, would remove from both training
+and testing parts a single sample, which lie on the boundary between chunks.
+Providing `discard_boundary=(2,0)` would remove 2 samples only from training
+part of the split (which is desired strategy for `NFoldSplitter` where
+training part contains majority of the data).
+
 .. index:: processing object
 
 The usage of the splitter, creating a splitter object and calling it with a

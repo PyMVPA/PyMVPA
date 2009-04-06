@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -9,6 +9,8 @@
 """Tiny snippets to interface with FSL easily."""
 
 __docformat__ = 'restructuredtext'
+
+import numpy as N
 
 from mvpa.misc.io import ColumnData
 from mvpa.misc.support import Event
@@ -148,3 +150,95 @@ class McFlirtParams(ColumnData):
         return N.array([self[i] for i in McFlirtParams.header_def],
                        dtype='float').T
 
+
+class FslGLMDesign(object):
+    """Load FSL GLM design matrices from file.
+
+    Be aware that such a desig matrix has its regressors in columns and the
+    samples in its rows.
+    """
+    def __init__(self, source):
+        """
+        :Parameter:
+          source: filename
+            Compressed files will be read as well, if their filename ends with
+            '.gz'.
+        """
+        # XXX maybe load from array as well
+        self._loadFile(source)
+
+
+    def _loadFile(self, fname):
+        """Helper function to load GLM definition from a file.
+        """
+        # header info
+        nwaves = 0
+        ntimepoints = 0
+        matrix_offset = 0
+
+        # open the file compressed or not
+        if fname.endswith('.gz'):
+            fh = gzip.open(fname, 'r')
+        else:
+            fh = open(fname, 'r')
+
+        # read header
+        for i, line in enumerate(fh):
+            if line.startswith('/NumWaves'):
+                nwaves = int(line.split()[1])
+            if line.startswith('/NumPoints'):
+                ntimepoints = int(line.split()[1])
+            if line.startswith('/PPheights'):
+                self.ppheights = [float(i) for i in line.split()[1:]]
+            if line.startswith('/Matrix'):
+                matrix_offset = i + 1
+
+        # done with the header, now revert to NumPy's loadtxt for convenience
+        fh.close()
+        self.mat = N.loadtxt(fname, skiprows=matrix_offset)
+
+        # checks
+        if not self.mat.shape == (ntimepoints, nwaves):
+            raise IOError, "Design matrix file '%s' did not contain expected " \
+                           "matrix size (expected %s, got %s)" \
+                           % (fname, str((ntimepoints, nwaves)), self.mat.shape)
+
+
+    def plot(self, style='lines', **kwargs):
+        """Visualize the design matrix.
+
+        :Parameters:
+          style: 'lines', 'matrix'
+          **kwargs:
+            Additional arguments will be passed to the corresponding matplotlib
+            plotting functions 'plot()' and 'pcolor()' for 'lines' and 'matrix'
+            plots respectively.
+        """
+        # import internally as it takes some time and might not be needed most
+        # of the time
+        import pylab as P
+
+        if style == 'lines':
+            # common y-axis
+            yax = N.arange(0, self.mat.shape[0])
+            axcenters = []
+            col_offset = max(self.ppheights)
+
+            # for all columns
+            for i in xrange(self.mat.shape[1]):
+                axcenter = i * col_offset
+                P.plot(self.mat[:, i] + axcenter, yax, **kwargs)
+                axcenters.append(axcenter)
+
+            P.xticks(N.array(axcenters), range(self.mat.shape[1]))
+        elif style == 'matrix':
+            P.pcolor(self.mat, **kwargs)
+            ticks = N.arange(1, self.mat.shape[1]+1)
+            P.xticks(ticks - 0.5, ticks)
+        else:
+            raise ValueError, "Unknown plotting style '%s'" % style
+
+        # labels and turn y-axis upside down
+        P.ylabel('Samples (top to bottom)')
+        P.xlabel('Regressors')
+        P.ylim(self.mat.shape[0],0)

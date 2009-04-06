@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -15,24 +15,24 @@ from sets import Set
 
 from mvpa.base import externals
 
-from mvpa.misc.state import Stateful, StateVariable, Parametrized, \
+from mvpa.misc.state import StateVariable, ClassWithCollections, \
      ParameterCollection, _def_sep
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
-class TestClassEmpty(Stateful):
+class TestClassEmpty(ClassWithCollections):
     pass
 
-class TestClassBlank(Stateful):
+class TestClassBlank(ClassWithCollections):
     # We can force to have 'states' present even though we don't have
     # any StateVariable defined here -- it might be added later on at run time
     _ATTRIBUTE_COLLECTIONS = ['states']
     pass
 
-class TestClassBlankNoExplicitStates(Stateful):
+class TestClassBlankNoExplicitStates(ClassWithCollections):
     pass
 
-class TestClassProper(Stateful):
+class TestClassProper(ClassWithCollections):
 
     state1 = StateVariable(enabled=False, doc="state1 doc")
     state2 = StateVariable(enabled=True, doc="state2 doc")
@@ -43,7 +43,7 @@ class TestClassProperChild(TestClassProper):
     state4 = StateVariable(enabled=False, doc="state4 doc")
 
 
-class TestClassParametrized(TestClassProper, Parametrized):
+class TestClassParametrized(TestClassProper, ClassWithCollections):
     p1 = Parameter(0)
     state0 = StateVariable(enabled=False)
 
@@ -51,7 +51,7 @@ class TestClassParametrized(TestClassProper, Parametrized):
         # XXX make such example when we actually need to invoke
         # constructor
         # TestClassProper.__init__(self, **kwargs)
-        Parametrized.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
 
 class StateTests(unittest.TestCase):
@@ -213,14 +213,12 @@ class StateTests(unittest.TestCase):
     def testStateVariables(self):
         """To test new states"""
 
-        from mvpa.misc.state import StateVariable, Stateful
-
-        class S1(Stateful):
+        class S1(ClassWithCollections):
             v1 = StateVariable(enabled=True, doc="values1 is ...")
             v1XXX = StateVariable(enabled=False, doc="values1 is ...")
 
 
-        class S2(Stateful):
+        class S2(ClassWithCollections):
             v2 = StateVariable(enabled=True, doc="values12 is ...")
 
         class S1_(S1):

@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -11,12 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.featsel.helpers import FractionTailSelector
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug
 
-class FeatureSelection(Stateful):
+class FeatureSelection(ClassWithCollections):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
@@ -27,7 +27,7 @@ class FeatureSelection(Stateful):
 
     def __init__(self, **kwargs):
         # base init first
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, testdataset=None):
@@ -197,3 +197,89 @@ class FeatureSelectionPipeline(FeatureSelection):
 
     feature_selections = property(fget=lambda self:self.__feature_selections,
                                   doc="List of `FeatureSelections`")
+
+
+
+class CombinedFeatureSelection(FeatureSelection):
+    """Meta feature selection utilizing several embedded selection methods.
+
+    Each embedded feature selection method is computed individually. Afterwards
+    all feature sets are combined by either taking the union or intersection of
+    all sets.
+
+    The individual feature sets of all embedded methods are optionally avialable
+    from the `selections_ids` state variable.
+    """
+    selections_ids = StateVariable(
+        doc="List of feature id sets for each performed method.")
+
+    def __init__(self, feature_selections, combiner, **kwargs):
+        """
+        :Parameters:
+          feature_selections: list
+            FeatureSelection instances to run. Order is not important.
+          combiner: 'union', 'intersection'
+            which method to be used to combine the feature selection set of
+            all computed methods.
+        """
+        FeatureSelection.__init__(self, **kwargs)
+
+        self.__feature_selections = feature_selections
+        self.__combiner = combiner
+
+
+    def __call__(self, dataset, testdataset=None):
+        """Really run it.
+        """
+        # to hold the union
+        selected_ids = None
+        # to hold the individuals
+        self.selections_ids = []
+
+        for fs in self.__feature_selections:
+            # we need the feature ids that were selection by each method,
+            # so enable them temporarily
+            fs.states._changeTemporarily(
+                enable_states=["selected_ids"], other=self)
+
+            # compute feature selection, but ignore return datasets
+            fs(dataset, testdataset)
+
+            # retrieve feature ids and determined union of all selections
+            if selected_ids == None:
+                selected_ids = set(fs.selected_ids)
+            else:
+                if self.__combiner == 'union':
+                    selected_ids.update(fs.selected_ids)
+                elif self.__combiner == 'intersection':
+                    selected_ids.intersection_update(fs.selected_ids)
+                else:
+                    raise ValueError, "Unknown combiner '%s'" % self.__combiner
+
+            # store individual set in state
+            self.selections_ids.append(fs.selected_ids)
+
+            # restore states to previous settings
+            fs.states._resetEnabledTemporarily()
+
+        # finally apply feature set union selection to original datasets
+        selected_ids = sorted(list(selected_ids))
+
+        # take care of optional second dataset
+        td_sel = None
+        if not testdataset is None:
+            td_sel = testdataset.selectFeatures(self.selected_ids)
+
+        # and main dataset
+        d_sel = dataset.selectFeatures(selected_ids)
+
+        # finally store ids in state
+        self.selected_ids = selected_ids
+
+        return (d_sel, td_sel)
+
+
+    feature_selections = property(fget=lambda self:self.__feature_selections,
+                                  doc="List of `FeatureSelections`")
+    combiner = property(fget=lambda self:self.__combiner,
+                        doc="Selection set combination method.")

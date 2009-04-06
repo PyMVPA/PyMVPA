@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -33,14 +33,11 @@ if not externals.exists('good scipy.stats.rdist'):
     import scipy.integrate
 
     # NB: Following function is copied from scipy SVN rev.5236
-    #     and probably due to already mentioned FIXME it is buggy, since if x is close to self.a,
-    #     squaring it makes it self.a^2, and actually just 1.0 in rdist, so 1-x*x becomes 0
-    #     which is not raisable to negative non-round powers...
-    #     as a fix I am initializing .a/.b with values which should avoid such situation
+    #     and fixed with pow -> N.power (thanks Josef!)
     # FIXME: PPF does not work.
     class rdist_gen(rv_continuous):
         def _pdf(self, x, c):
-            return pow((1.0-x*x),c/2.0-1) / special.beta(0.5,c/2.0)
+            return N.power((1.0-x*x),c/2.0-1) / special.beta(0.5,c/2.0)
         def _cdf_skip(self, x, c):
             #error inspecial.hyp2f1 for some values see tickets 758, 759
             return 0.5 + x/special.beta(0.5,c/2.0)* \
@@ -50,8 +47,7 @@ if not externals.exists('good scipy.stats.rdist'):
 
     # Lets try to avoid at least some of the numerical problems by removing points
     # around edges
-    __eps = N.sqrt(N.finfo(float).eps)
-    rdist = rdist_gen(a=-1.0+__eps, b=1.0-__eps, name="rdist", longname="An R-distributed",
+    rdist = rdist_gen(a=-1.0, b=1.0, name="rdist", longname="An R-distributed",
                       shapes="c", extradoc="""
 
     R-distribution

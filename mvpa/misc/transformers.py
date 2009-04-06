@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -19,14 +19,20 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug
 
 
 def Absolute(x):
-    """Returns the elementwise absolute of any argument."""
+    """
+    Returns the elementwise absolute of any argument.
+
+    :Parameter:
+      x: scalar | sequence
+
+    """
     return N.absolute(x)
 
 
@@ -188,7 +194,7 @@ class OverAxis(object):
         return results
 
 
-class DistPValue(Stateful):
+class DistPValue(ClassWithCollections):
     """Converts values into p-values under vague and non-scientific assumptions
     """
 
@@ -219,7 +225,7 @@ class DistPValue(Stateful):
         presented in any paper, nor proven
         """
         externals.exists('scipy', raiseException=True)
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self.sd = sd
         if not (distribution in ['rdist']):
@@ -243,6 +249,9 @@ class DistPValue(Stateful):
         x = N.asanyarray(x)
         shape_orig = x.shape
         ndims = len(shape_orig)
+
+        # XXX for now deal with numpy deprecation hell locally:
+        hist_kwargs = ({}, {'new': False})[externals.versions['numpy'] > (1,1)]
 
         # XXX May be just utilize OverAxis transformer?
         if ndims > 2:
@@ -275,7 +284,8 @@ class DistPValue(Stateful):
                 indexes = N.arange(Nxx)
                 """What features belong to Null-distribution"""
                 while True:
-                    Nhist = N.histogram(xxx, bins=nbins, normed=False)
+                    Nhist = N.histogram(xxx, bins=nbins, normed=False,
+                                        **hist_kwargs)
                     pdf = Nhist[0].astype(float)/Nxxx
                     bins = Nhist[1]
                     bins_halfstep = (bins[1] - bins[2])/2.0

@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   Copyright (c) 2008 Emanuele Olivetti <emanuele@relativita.com>
@@ -40,6 +40,7 @@ NLAcholesky = N.linalg.cholesky
 NLAsolve = N.linalg.solve
 NLAError = N.linalg.linalg.LinAlgError
 SLAError = SL.basic.LinAlgError
+eps64 = N.finfo(N.float64).eps
 
 # Some precomputed items. log is relatively expensive
 _halflog2pi = 0.5 * Nlog(2 * N.pi)
@@ -81,6 +82,11 @@ class GPR(Classifier):
     #kernel = Parameter(None, allowedtype='Kernel',
     #    doc="Kernel object defining the covariance between instances. "
     #        "(Defaults to KernelSquaredExponential if None in arguments)")
+
+    lm = Parameter(0.0, min=0.0, allowedtype='float',
+                   doc="""The regularization term lambda.
+                   Increase this when the kernel matrix is not positive, definite.""")
+
 
     def __init__(self, kernel=None, **kwargs):
         """Initialize a GPR regression analysis.
@@ -302,13 +308,19 @@ class GPR(Classifier):
             # 3) self._L = numpy.linalg.cholesky(self._C)
             # Even though 1 is the fastest we choose 2 since 1 does
             # not return a clean lower-triangular matrix (see docstring).
+
+            # PBS: I just made it so the KernelMatrix is regularized
+            # all the time.  I figured that if ever you were going to
+            # use regularization, you would want to set it yourself
+            # and use the same value for all folds of your data.
             try:
-                self._L = SLcholesky(self._C, lower=True)
-                self._LL = (self._L, True)
-            except SLAError:
-                epsilon = 1.0e-20 * N.eye(self._C.shape[0])
+                # apply regularization
+                epsilon = self.params.lm * N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C + epsilon, lower=True)
                 self._LL = (self._L, True)
+            except SLAError:
+                raise SLAError("Kernel matrix is not positive, definite.  " + \
+                               "Try increasing the lm parameter.")
                 pass
             newL = True
         else:
@@ -531,141 +543,3 @@ if externals.exists('openopt'):
 
             return weights
 
-
-
-if __name__ == "__main__":
-    import pylab
-    pylab.close("all")
-    pylab.ion()
-
-    from mvpa.misc.data_generators import sinModulated
-
-    def compute_prediction(sigma_noise_best, sigma_f, length_scale_best,
-                           regression, dataset, data_test, label_test, F,
-                           logml=True):
-        """XXX Function which seems to be valid only for __main__...
-
-        TODO: remove reimporting of pylab etc. See pylint output for more
-              information
-        """
-
-        data_train = dataset.samples
-        label_train = dataset.labels
-        import pylab
-        kse = KernelSquaredExponential(length_scale=length_scale_best,
-                                       sigma_f=sigma_f)
-        g = GPR(kse, sigma_noise=sigma_noise_best, regression=regression)
-        print g
-        if regression:
-            g.states.enable("predicted_variances")
-            pass
-
-        if logml:
-            g.states.enable("log_marginal_likelihood")
-            pass
-
-        g.train(dataset)
-        prediction = g.predict(data_test)
-
-        # print label_test
-        # print prediction
-        accuracy = None
-        if regression:
-            accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
-            print "RMSE:", accuracy
-        else:
-            accuracy = (prediction.astype('l')==label_test.astype('l')).sum() \
-                       / float(prediction.size)
-            print "accuracy:", accuracy
-            pass
-
-        if F == 1:
-            pylab.figure()
-            pylab.plot(data_train, label_train, "ro", label="train")
-            pylab.plot(data_test, prediction, "b-", label="prediction")
-            pylab.plot(data_test, label_test, "g+", label="test")
-            if regression:
-                pylab.plot(data_test, prediction-N.sqrt(g.predicted_variances),
-                           "b--", label=None)
-                pylab.plot(data_test, prediction+N.sqrt(g.predicted_variances),
-                           "b--", label=None)
-                pylab.text(0.5, -0.8, "RMSE="+"%f" %(accuracy))
-            else:
-                pylab.text(0.5, -0.8, "accuracy="+str(accuracy))
-                pass
-            pylab.legend()
-            pass
-
-        print "LML:", g.log_marginal_likelihood
-
-    train_size = 40
-    test_size = 100
-    F = 1
-
-    dataset = sinModulated(train_size, F)
-    # print dataset.labels
-
-    dataset_test = sinModulated(test_size, F, flat=True)
-    # print dataset_test.labels
-
-    regression = True
-    logml = True
-
-    if logml :
-        print "Looking for better hyperparameters: grid search"
-
-        sigma_noise_steps = N.linspace(0.1, 0.5, num=20)
-        length_scale_steps = N.linspace(0.05, 0.6, num=20)
-        lml = N.zeros((len(sigma_noise_steps), len(length_scale_steps)))
-        lml_best = -N.inf
-        length_scale_best = 0.0
-        sigma_noise_best = 0.0
-        i = 0
-        for x in sigma_noise_steps:
-            j = 0
-            for y in length_scale_steps:
-                kse = KernelSquaredExponential(length_scale=y)
-                g = GPR(kse, sigma_noise=x, regression=regression)
-                g.states.enable("log_marginal_likelihood")
-                g.train(dataset)
-                lml[i, j] = g.log_marginal_likelihood
-                # print x,y,g.log_marginal_likelihood
-                # g.train_fv = dataset.samples
-                # g.train_labels = dataset.labels
-                # lml[i, j] = g.compute_log_marginal_likelihood()
-                if lml[i, j] > lml_best:
-                    lml_best = lml[i, j]
-                    length_scale_best = y
-                    sigma_noise_best = x
-                    # print x,y,lml_best
-                    pass
-                j += 1
-                pass
-            i += 1
-            pass
-        pylab.figure()
-        X = N.repeat(sigma_noise_steps[:, N.newaxis], sigma_noise_steps.size,
-                     axis=1)
-        Y = N.repeat(length_scale_steps[N.newaxis, :], length_scale_steps.size,
-                     axis=0)
-        step = (lml.max()-lml.min())/30
-        pylab.contour(X, Y, lml, N.arange(lml.min(), lml.max()+step, step),
-                      colors='k')
-        pylab.plot([sigma_noise_best], [length_scale_best], "k+",
-                   markeredgewidth=2, markersize=8)
-        pylab.xlabel("noise standard deviation")
-        pylab.ylabel("characteristic length_scale")
-        pylab.title("log marginal likelihood")
-        pylab.axis("tight")
-        print "lml_best", lml_best
-        print "sigma_noise_best", sigma_noise_best
-        print "length_scale_best", length_scale_best
-        print "number of expected upcrossing on the unitary intervale:", \
-              1.0/(2*N.pi*length_scale_best)
-        pass
-
-
-
-    compute_prediction(sigma_noise_best, 1.0, length_scale_best, regression, dataset,
-                       dataset_test.samples, dataset_test.labels, F, logml)
-    pylab.show()

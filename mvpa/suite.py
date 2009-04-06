@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -38,6 +38,8 @@ from mvpa.clfs.meta import *
 from mvpa.clfs.knn import *
 if externals.exists('lars'):
     from mvpa.clfs.lars import *
+if externals.exists('elasticnet'):
+    from mvpa.clfs.enet import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.stats import *
@@ -74,20 +76,28 @@ from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.samplegroup import *
+from mvpa.mappers.som import *
 from mvpa.mappers.array import *
+if externals.exists('scipy'):
+    from mvpa.mappers.zscore import ZScoreMapper
 if externals.exists('mdp'):
     from mvpa.mappers.pca import *
     from mvpa.mappers.ica import *
+if externals.exists('mdp >= 2.4'):
+    from mvpa.mappers.lle import *
 
 from mvpa import measures
 from mvpa.measures.anova import *
+from mvpa.measures.glm import *
 from mvpa.measures.irelief import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *
 from mvpa.measures.splitmeasure import *
+from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *
+from mvpa.misc.fx import *
 from mvpa.misc.errorfx import *
 from mvpa.misc.cmdline import *
 from mvpa.misc.data_generators import *
@@ -106,11 +116,16 @@ from mvpa.misc.state import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
 
+if externals.exists("nifti"):
+    from mvpa.misc.fsl.melodic import *
+
 if externals.exists("pylab"):
     from mvpa.misc.plot import *
     from mvpa.misc.plot.erp import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa.misc.plot.topo import *
+    if externals.exists('nifti'):
+        from mvpa.misc.plot.mri import plotMRI
 
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *

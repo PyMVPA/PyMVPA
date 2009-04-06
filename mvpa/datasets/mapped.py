@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -125,9 +125,9 @@ class MappedDataset(Dataset):
             sdata = Dataset(self._data, self._dsattr, check_data=False,
                             copy_samples=False, copy_data=False,
                             copy_dsattr=False)
-            return sdata.selectFeatures(ids, sort)
+            return sdata.selectFeatures(ids=ids, sort=sort)
         else:
-            sdata = Dataset.selectFeatures(self, ids)
+            sdata = Dataset.selectFeatures(self, ids=ids, sort=sort)
             # since we have new DataSet we better have a new mapper
             sdata._dsattr['mapper'] = copy.deepcopy(sdata._dsattr['mapper'])
             if sort:

@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -10,7 +10,8 @@
 
 from mvpa.datasets.masked import MaskedDataset
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
-                                   NoneSplitter, HalfSplitter, CustomSplitter
+                                   NoneSplitter, HalfSplitter, \
+                                   CustomSplitter, NGroupSplitter
 import unittest
 import numpy as N
 
@@ -89,6 +90,53 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[0] != None)
             self.failUnless(split[1] != None)
 
+    def testNGroupSplit(self):
+        # Test 2 groups like HalfSplitter first
+        hs = NGroupSplitter(2)
+        splits = [ (train, test) for (train, test) in hs(self.data) ]
+
+        self.failUnless(len(splits) == 2)
+
+        for i,p in enumerate(splits):
+            self.failUnless( len(p) == 2 )
+            self.failUnless( p[0].nsamples == 50 )
+            self.failUnless( p[1].nsamples == 50 )
+
+        self.failUnless((splits[0][1].uniquechunks == [0, 1, 2, 3, 4]).all())
+        self.failUnless((splits[0][0].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][1].uniquechunks == [5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][0].uniquechunks == [0, 1, 2, 3, 4]).all())
+
+        # check if it works on pure odd and even chunk ids
+        moresplits = [ (train, test) for (train, test) in hs(splits[0][0])]
+
+        for split in moresplits:
+            self.failUnless(split[0] != None)
+            self.failUnless(split[1] != None)
+
+        # now test more groups
+        s5 = NGroupSplitter(5)
+
+        # get the splits
+        splits = [ (train, test) for (train, test) in s5(self.data) ]
+
+        # must have 10 splits
+        self.failUnless(len(splits) == 5)
+
+        # check split content
+        self.failUnless((splits[0][1].uniquechunks == [0, 1]).all())
+        self.failUnless((splits[0][0].uniquechunks == [2, 3, 4, 5, 6, 7, 8, 9]).all())
+        self.failUnless((splits[1][1].uniquechunks == [2, 3]).all())
+        self.failUnless((splits[1][0].uniquechunks == [0, 1, 4, 5, 6, 7, 8, 9]).all())
+        # ...
+        self.failUnless((splits[4][1].uniquechunks == [8, 9]).all())
+        self.failUnless((splits[4][0].uniquechunks == [0, 1, 2, 3, 4, 5, 6, 7]).all())
+        
+        # Test for too many groups
+        def splitcall(spl, dat):
+            return [ (train, test) for (train, test) in spl(dat) ]
+        s20 = NGroupSplitter(20)
+        self.assertRaises(ValueError,splitcall,s20,self.data)
 
     def testCustomSplit(self):
         #simulate half splitter
@@ -238,7 +286,51 @@ class SplitterTests(unittest.TestCase):
                 else:
                     raise RuntimeError, "Add unittest for strategy %s" \
                           % strategy
-                        
+
+
+    def testDiscardedBoundaries(self):
+        splitters = [NFoldSplitter(),
+                     NFoldSplitter(discard_boundary=(0,1)), # discard testing
+                     NFoldSplitter(discard_boundary=(1,0)), # discard training
+                     NFoldSplitter(discard_boundary=(2,0)), # discard 2 from training
+                     NFoldSplitter(discard_boundary=1),     # discard from both
+                     OddEvenSplitter(discard_boundary=(1,0)),
+                     OddEvenSplitter(discard_boundary=(0,1)),
+                     HalfSplitter(discard_boundary=(1,0)),
+                     ]
+
+        split_sets = [list(s(self.data)) for s in splitters]
+        counts = [[(len(s[0].chunks), len(s[1].chunks)) for s in split_set]
+                  for split_set in split_sets]
+
+        nodiscard_tr = [c[0] for c in counts[0]]
+        nodiscard_te = [c[1] for c in counts[0]]
+
+        # Discarding in testing:
+        self.failUnless(nodiscard_tr == [c[0] for c in counts[1]])
+        self.failUnless(nodiscard_te[1:-1] == [c[1] + 2 for c in counts[1][1:-1]])
+        # at the beginning/end chunks, just a single element
+        self.failUnless(nodiscard_te[0] == counts[1][0][1] + 1)
+        self.failUnless(nodiscard_te[-1] == counts[1][-1][1] + 1)
+
+        # Discarding in training
+        for d in [1,2]:
+            self.failUnless(nodiscard_te == [c[1] for c in counts[1+d]])
+            self.failUnless(nodiscard_tr[0] == counts[1+d][0][0] + d)
+            self.failUnless(nodiscard_tr[-1] == counts[1+d][-1][0] + d)
+            self.failUnless(nodiscard_tr[1:-1] == [c[0] + d*2
+                                                   for c in counts[1+d][1:-1]])
+
+        # Discarding in both -- should be eq min from counts[1] and [2]
+        counts_min = [(min(c1[0], c2[0]), min(c1[1], c2[1]))
+                      for c1,c2 in zip(counts[1], counts[2])]
+        self.failUnless(counts_min == counts[4])
+
+        # TODO: test all those odd/even etc splitters... YOH: did
+        # visually... looks ok;)
+        #for count in counts[5:]:
+        #    print count
+
 
 def suite():
     return unittest.makeSuite(SplitterTests)

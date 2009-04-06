@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -43,6 +43,7 @@ import numpy as N
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhancedDocString
+from mvpa.datasets.miscfx import coarsenChunks
 
 if __debug__:
     from mvpa.base import debug
@@ -72,6 +73,7 @@ class Splitter(object):
                  permute=False,
                  count=None,
                  strategy='equidistant',
+                 discard_boundary=None,
                  attr='chunks'):
         """Initialize splitter base.
 
@@ -107,6 +109,14 @@ class Splitter(object):
               Random (without replacement) `count` splits are chosen
              equidistant
               Splits which are equidistant from each other
+          discard_boundary : None or int or sequence of int
+             If not `None`, how many samples on the boundaries between
+             parts of the split to discard in the training part.
+             If int, then discarded in all parts.  If a sequence, numbers
+             to discard are given per part of the split.
+             E.g. if splitter splits only into (training, testing)
+             parts, then `discard_boundary`=(2,0) would instruct to discard
+             2 samples from training which are on the boundary with testing.
           attr : str
             Sample attribute used to determine splits.
         """
@@ -115,6 +125,7 @@ class Splitter(object):
         self.__runspersplit = nrunspersplit
         self.__permute = permute
         self.__splitattr = attr
+        self.discard_boundary = discard_boundary
 
         # we don't check it, thus no reason to make it private.
         # someone might find it useful to change post creation
@@ -183,6 +194,7 @@ class Splitter(object):
 
         # Select just some splits if desired
         count, Ncfgs = self.count, len(cfgs)
+
         # further makes sense only iff count < Ncfgs,
         # otherwise all strategies are equivalent
         if count is not None and count < Ncfgs:
@@ -212,7 +224,9 @@ class Splitter(object):
                           "from %d total" % (strategy, indexes, Ncfgs))
                 cfgs = [cfgs[i] for i in indexes]
 
+        # Finally split the data
         for split in cfgs:
+
             # determine sample sizes
             if not operator.isSequenceType(self.__nperlabel) \
                    or isinstance(self.__nperlabel, str):
@@ -276,7 +290,6 @@ class Splitter(object):
           specs : sequence of sequences
             Contains ids of a sample attribute that shall be split into the
             another dataset.
-
         :Returns: Tuple of splitted datasets.
         """
         # collect the sample ids for each resulting dataset
@@ -284,16 +297,24 @@ class Splitter(object):
         none_specs = 0
         cum_filter = None
 
+        # Prepare discard_boundary
+        discard_boundary = self.discard_boundary
+        if isinstance(discard_boundary, int):
+            if discard_boundary != 0:
+                discard_boundary = (discard_boundary,) * len(specs)
+            else:
+                discard_boundary = None
+
         splitattr_data = eval('dataset.' + self.__splitattr)
         for spec in specs:
-            if spec == None:
+            if spec is None:
                 filters.append(None)
                 none_specs += 1
             else:
                 filter_ = N.array([ i in spec \
                                     for i in splitattr_data])
                 filters.append(filter_)
-                if cum_filter == None:
+                if cum_filter is None:
                     cum_filter = filter_
                 else:
                     cum_filter = N.logical_and(cum_filter, filter_)
@@ -304,8 +325,22 @@ class Splitter(object):
                               "split definition."
 
         for i, filter_ in enumerate(filters):
-            if filter_ == None:
+            if filter_ is None:
                 filters[i] = N.logical_not(cum_filter)
+
+            # If it was told to discard samples on the boundary to the
+            # other parts of the split
+            if discard_boundary is not None:
+                ndiscard = discard_boundary[i]
+                if ndiscard != 0:
+                    # XXX sloppy implementation for now. It still
+                    # should not be the main reason for a slow-down of
+                    # the whole analysis ;)
+                    f, lenf = filters[i], len(filters[i])
+                    f_pad = N.concatenate(([True]*ndiscard, f, [True]*ndiscard))
+                    for d in xrange(2*ndiscard+1):
+                        f = N.logical_and(f, f_pad[d:d+lenf])
+                    filters[i] = f[:]
 
         # split data: return None if no samples are left
         # XXX: Maybe it should simply return an empty dataset instead, but
@@ -460,6 +495,58 @@ class HalfSplitter(Splitter):
 
 
 
+class NGroupSplitter(Splitter):
+    """Split a dataset into N-groups of the sample attribute.
+    
+    For example, NGroupSplitter(2) is the same as the HalfSplitter and
+    yields to splits: first (1st half, 2nd half) and second (2nd half,
+    1st half).
+    """
+    def __init__(self, ngroups=4, **kwargs):
+        """Initialize the N-group splitter.
+
+        :Parameter:
+          ngroups: Int
+            Number of groups to split the attribute into.
+          kwargs
+            Additional parameters are passed to the `Splitter` base class.
+        """
+        Splitter.__init__(self, **(kwargs))
+
+        self.__ngroups = ngroups
+
+    __doc__ = enhancedDocString('NGroupSplitter', locals(), Splitter)
+
+
+    def _getSplitConfig(self, uniqueattrs):
+        """Huka chaka, wuka waka!
+        """
+
+        # make sure there are more of attributes than desired groups
+        if len(uniqueattrs) < self.__ngroups:
+            raise ValueError, "Number of groups (%d) " % (self.__ngroups) + \
+                  "must be less than " + \
+                  "or equal to the number of unique attributes (%d)" % \
+                  (len(uniqueattrs))
+
+        # use coarsenChunks to get the split indices
+        split_ind = coarsenChunks(uniqueattrs, nchunks=self.__ngroups)
+        split_ind = N.asarray(split_ind)
+        
+        # loop and create splits
+        split_list = [(None, uniqueattrs[split_ind==i])
+                       for i in range(self.__ngroups)]
+        return split_list
+
+
+    def __str__(self):
+        """String summary over the object
+        """
+        return \
+          "N-%d-GroupSplitter / " % self.__ngroup + Splitter.__str__(self)
+
+
+
 class NFoldSplitter(Splitter):
     """Generic N-fold data splitter.
 
@@ -500,7 +587,7 @@ class NFoldSplitter(Splitter):
         """
         Splitter.__init__(self, **(kwargs))
 
-        # pylint happyness block
+        # pylint happiness block
         self.__cvtype = cvtype
 
 

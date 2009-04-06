@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -12,11 +12,14 @@ import unittest
 import os.path
 
 from mvpa import pymvpa_dataroot
+from mvpa.base import externals
 from mvpa.misc.io.meg import TuebingenMEG
 
 class MEGTests(unittest.TestCase):
 
     def testTuebingenMEG(self):
+        if not externals.exists('gzip'):
+            return
         meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))
 
         # check basics

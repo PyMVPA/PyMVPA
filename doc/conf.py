@@ -13,7 +13,7 @@
 
 import sys, os, re
 import numpy as N
-from mvpa import pymvpa_version
+import mvpa
 
 try:
     import matplotlib
@@ -263,15 +263,21 @@ def setup(app):
 # General configuration
 # ---------------------
 
+# If your extensions are in another directory, add it here. If the directory 
+# is relative to the documentation root, use os.path.abspath to make it 
+# absolute, like shown here. 
+sys.path.append(os.path.abspath('sphinxext'))
+
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc',
+              'inheritance_diagram']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.txt'
+source_suffix = '.rst'
 
 # The master toctree document.
 master_doc = 'contents'
@@ -284,9 +290,9 @@ copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = pymvpa_version
+version = mvpa.__version__
 # The full version, including alpha/beta/rc tags.
-release = pymvpa_version
+release = mvpa.__version__
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

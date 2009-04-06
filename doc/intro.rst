@@ -160,13 +160,13 @@ faster and easier than it has ever been before.
 Authors & Contributors
 ======================
 
-.. include:: authors.txt
+.. include:: authors.rst
 
 
 How to cite PyMVPA
 ==================
 
-.. include:: publications.txt
+.. include:: publications.rst
 
 
 Acknowledgements

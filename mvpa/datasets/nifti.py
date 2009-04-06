@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -256,7 +256,7 @@ class NiftiDataset(MappedDataset):
 
         # figure out units, if available
         if hdr.has_key('time_unit'):
-            unit_code = hdr['time_unit']
+            unit_code = hdr['time_unit'] / 8
         elif hdr.has_key('xyzt_unit'):
             unit_code = int(hdr['xyzt_unit']) / 8
         else:
@@ -276,7 +276,8 @@ class NiftiDataset(MappedDataset):
         else:
             warning("Time units are incorrectly coded: value %d whenever "
                     "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
-                    "Assuming seconds.")
+                    "Assuming seconds." % (unit_code * 8,)
+                    )
         return TR * scale
 
 

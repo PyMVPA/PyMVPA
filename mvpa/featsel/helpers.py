@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from math import floor
 import numpy as N
 
-from mvpa.misc.state import Stateful, StateVariable
+from mvpa.misc.state import ClassWithCollections, StateVariable
 
 if __debug__:
     from mvpa.base import debug
@@ -230,7 +230,7 @@ class NBackHistoryStopCrit(StoppingCriterion):
 
 
 
-class ElementSelector(Stateful):
+class ElementSelector(ClassWithCollections):
     """Base class to implement functors to select some elements based on a
     sequence of values.
     """
@@ -245,7 +245,7 @@ class ElementSelector(Stateful):
            mode : ['discard', 'select']
               Decides whether to `select` or to `discard` features.
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self._setMode(mode)
         """Flag whether to select or to discard elements."""
@@ -442,12 +442,13 @@ class FixedNElementTailSelector(TailSelector):
             Number of elements to select/discard.
         """
         TailSelector.__init__(self, **kwargs)
+        self.__nelements = None
         self._setNElements(nelements)
 
 
     def __repr__(self):
         return "%s number=%f" % (
-            TailSelector.__repr__(self), self.__nelements)
+            TailSelector.__repr__(self), self.nelements)
 
 
     def _getNElements(self, seq):

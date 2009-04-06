@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -23,7 +23,7 @@ if not os.path.exists(outpath):
 
 def procExample(filename):
     #  doc filename
-    dfilename = filename[:-3] + '.txt'
+    dfilename = filename[:-3] + '.rst'
 
     # open source file
     xfile = open(filename)
@@ -40,6 +40,13 @@ def procExample(filename):
     indocs = False
     doc2code = False
     code2doc = False
+    # an empty line found in the example enables the check for a potentially
+    # indented docstring starting on the next line (as an attempt to exclude
+    # function or class docstrings)
+    last_line_empty = False
+    # indentation of indented docstring, which is removed from the RsT output
+    # since we typically do not want an indentation there.
+    indent_level = 0
 
     for line in xfile:
         # skip header
@@ -50,7 +57,19 @@ def procExample(filename):
             inheader = False
 
         # strip comments and remove trailing whitespace
-        cleanline = line[:line.find('#')].rstrip()
+        if not indocs and last_line_empty:
+            # first remove leading whitespace and store indent level
+            cleanline = line[:line.find('#')].lstrip()
+            indent_level = len(line) - len(cleanline) - 1
+            cleanline = cleanline.rstrip()
+        else:
+            cleanline = line[:line.find('#')].rstrip()
+
+        if not indocs and line == '\n':
+            last_line_empty = True
+        else:
+            last_line_empty = False
+
         # if we have something that should go into the text
         if indocs or cleanline.startswith('"""'):
             proc_line = None
@@ -76,9 +95,11 @@ def procExample(filename):
                     doc2code = True
                     # rescue what is left on the line
                     proc_line = cleanline[:-3]
+                    # reset the indentation
+                    indent_level = 0
                 else:
                     # has to be documentation
-                    proc_line = line
+                    proc_line = line[indent_level:]
 
             if code2doc:
                 code2doc = False
@@ -112,3 +133,4 @@ def procExample(filename):
 for f in glob.glob(os.path.join('doc','examples','*.py')):
     if not os.path.basename(f) in exclude_list:
         procExample(f)
+#procExample('doc/examples/gpr.py')

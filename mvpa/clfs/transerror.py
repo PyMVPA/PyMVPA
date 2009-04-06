@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -24,7 +24,7 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.base.dochelpers import enhancedDocString, table2string
 from mvpa.clfs.stats import autoNullDist
 
@@ -852,13 +852,14 @@ class ConfusionMatrix(SummaryStatistics):
         # Plot
         axi = fig.add_axes([0.15, ybottom, 0.7, 0.7])
         im = axi.imshow(confusionmatrix, interpolation="nearest", origin=origin,
-                        aspect='equal', **kwargs)
+                        aspect='equal', extent=(0, Nlabels, 0, Nlabels),
+                        **kwargs)
 
         # plot numbers
         if numbers:
             numbers_kwargs_ = {'fontsize': 10,
-                            'horizontalalignment': 'center',
-                            'verticalalignment': 'center'}
+                               'horizontalalignment': 'center',
+                               'verticalalignment': 'center'}
             maxv = float(N.max(confusionmatrix))
             colors = [im.to_rgba(0), im.to_rgba(maxv)]
             for i,j in zip(*N.logical_not(mask).nonzero()):
@@ -875,7 +876,7 @@ class ConfusionMatrix(SummaryStatistics):
                 P.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
 
         maxv = N.max(confusionmatrix)
-        boundaries = N.linspace(0, maxv, N.min(maxv, 10), True)
+        boundaries = N.linspace(0, maxv, N.min((maxv, 10)), True)
 
         # Label axes
         P.xlabel("targets")
@@ -1170,7 +1171,7 @@ class RegressionStatistics(SummaryStatistics):
 
 
 
-class ClassifierError(Stateful):
+class ClassifierError(ClassWithCollections):
     """Compute (or return) some error of a (trained) classifier on a dataset.
     """
 
@@ -1196,7 +1197,7 @@ class ClassifierError(Stateful):
             unless train=False, classifier gets trained if
             trainingdata provided to __call__
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
         self.__clf = clf
 
         self._labels = labels
@@ -1206,7 +1207,7 @@ class ClassifierError(Stateful):
         """Either to train classifier if trainingdata is provided"""
 
 
-    __doc__ = enhancedDocString('ClassifierError', locals(), Stateful)
+    __doc__ = enhancedDocString('ClassifierError', locals(), ClassWithCollections)
 
 
     def __copy__(self):

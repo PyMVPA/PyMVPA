@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -45,16 +45,16 @@ The mvpa package contains the following subpackages and modules:
 .. |copy| unicode:: 0xA9 .. copyright sign
 """
 
-# PyMVPA version string
-pymvpa_version = '0.4.1'
-__version__ = pymvpa_version
-
 __docformat__ = 'restructuredtext'
+
+# canonical PyMVPA version string
+__version__ = '0.4.2'
 
 import os
 import random
 import numpy as N
 from mvpa.base import cfg
+from mvpa.base import externals
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
@@ -89,6 +89,14 @@ seed(_random_seed)
 
 # import the main unittest interface
 from mvpa.tests import run as test
+
+# PyMVPA is useless without numpy
+# Also, this check enforcing population of externals.versions
+# for possible later version checks, hence don't remove
+externals.exists('numpy', force=True, raiseException=True)
+# We might need to suppress the warnings so enforcing check here,
+# it is ok if it would fail
+externals.exists('scipy', force=True, raiseException=False)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)

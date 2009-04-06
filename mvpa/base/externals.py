@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -17,6 +17,67 @@ from mvpa import cfg
 
 if __debug__:
     from mvpa.base import debug
+
+versions = {}
+"""Versions of available externals, as tuples
+"""
+
+def __version_to_tuple(v):
+    """Simple helper to convert version given as a string into a tuple.
+
+    Tuple of integers constructed by splitting at '.'.
+    """
+    if isinstance(v, basestring):
+        v = tuple([int(x) for x in v.split('.')])
+    elif isinstance(v, tuple) or isinstance(v, list):
+        # assure tuple
+        v = tuple(v)
+    else:
+        raise ValueError, "Do not know how to treat version '%s'" % str(v)
+    return v
+
+
+def __check_scipy():
+    """Check if scipy is present an if it is -- store its version
+    """
+    import warnings
+    # To don't allow any crappy warning to sneak in
+    warnings.simplefilter('ignore', DeprecationWarning)
+    try:
+        import scipy as sp
+    except:
+        warnings.simplefilter('default', DeprecationWarning)
+        raise
+    warnings.simplefilter('default', DeprecationWarning)
+    # Infiltrate warnings if necessary
+    numpy_ver = versions['numpy']
+    scipy_ver = versions['scipy'] = __version_to_tuple(sp.__version__)
+    # There is way too much deprecation warnings spit out onto the
+    # user. Lets assume that they should be fixed by scipy 0.7.0 time
+    if scipy_ver >= (0, 6, 0) and scipy_ver < (0, 7, 0) \
+        and numpy_ver > (1, 1, 0):
+        import warnings
+        if not __debug__ or (__debug__ and not 'PY' in debug.active):
+            debug('EXT', "Setting up filters for numpy DeprecationWarnings")
+            filter_lines = [
+                ('NumpyTest will be removed in the next release.*',
+                 DeprecationWarning),
+                ('PyArray_FromDims: use PyArray_SimpleNew.',
+                 DeprecationWarning),
+                ('PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.',
+                 DeprecationWarning),
+                # Trick re.match, since in warnings absent re.DOTALL in re.compile
+                ('[\na-z \t0-9]*The original semantics of histogram is scheduled to be.*'
+                 '[\na-z \t0-9]*', Warning) ]
+            for f, w in filter_lines:
+                warnings.filterwarnings('ignore', f, w)
+
+
+def __check_numpy():
+    """Check if numpy is present (it must be) an if it is -- store its version
+    """
+    import numpy as N
+    versions['numpy'] = __version_to_tuple(N.__version__)
 
 
 def __check_pywt(features=None):
@@ -145,11 +206,20 @@ def __check_atlas_family(family):
 
 def __check_stablerdist():
     import scipy.stats
-    # ATM all known implementations which implement custom cdf for
-    #     rdist are misbehaving, so there should be no _cdf
-    if '_cdf' in scipy.stats.distributions.rdist_gen.__dict__.keys():
-        raise ImportError, "scipy.stats carries misbehaving rdist distribution"
-    pass
+    import numpy as N
+    ## Unfortunately 0.7.0 hasn't fixed the issue so no chance but to do
+    ## a proper numerical test here
+    try:
+        scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + N.finfo(float).eps)
+        # Actually previous test is insufficient for 0.6, so enabling
+        # elderly test on top
+        # ATM all known implementations which implement custom cdf for
+        #     rdist are misbehaving, so there should be no _cdf
+        if '_cdf' in scipy.stats.distributions.rdist_gen.__dict__.keys():
+            raise ImportError, \
+                  "scipy.stats carries misbehaving rdist distribution"
+    except ZeroDivisionError:
+        raise RuntimeError, "RDist in scipy is still unstable on the boundaries"
 
 
 def __check_in_ipython():
@@ -187,6 +257,20 @@ def __check_pylab_plottable():
     return True
 
 
+def __check_griddata():
+    """griddata might be independent module or part of mlab
+    """
+
+    try:
+        from griddata import griddata as __
+        return True
+    except ImportError:
+        if __debug__:
+            debug('EXT_', 'No python-griddata available')
+
+    from matplotlib.mlab import griddata as __
+    return True
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
@@ -198,7 +282,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
-          'scipy': "import scipy as __",
+          'numpy': "__check_numpy()",
+          'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
@@ -206,16 +291,18 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "import rpy as __",
           'lars': "import rpy; rpy.r.library('lars')",
+          'elasticnet': "import rpy; rpy.r.library('elasticnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
+          'mdp >= 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
           'sg >= 0.6.4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
-          'griddata': "import griddata as __",
+          'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",
           'gzip': "import gzip as __",
           'lxml': "from lxml import objectify as __",
@@ -260,6 +347,13 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
        and not force:
         if __debug__:
             debug('EXT', "Skip retesting for '%s'." % dep)
+
+        # check whether an exception should be raised, even though the external
+        # was already tested previously
+        if not cfg.getboolean('externals', cfgid) \
+               and raiseException \
+               and cfg.getboolean('externals', 'raise exception', True):
+            raise RuntimeError, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
 
 
@@ -342,5 +436,6 @@ def testAllDependencies(force=False):
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \
                      % [ k[5:] for k in cfg.options('externals')
-                            if k.startswith('have')])
+                            if k.startswith('have') \
+                            and cfg.getboolean('externals', k) == True ])
 

@@ -197,13 +197,13 @@ PyMVPA home page.
 Publications
 ============
 
-.. include:: publications.txt
+.. include:: publications.rst
 
 
 Authors & Contributors
 ======================
 
-.. include:: authors.txt
+.. include:: authors.rst
 
 
 Similar or Related Projects

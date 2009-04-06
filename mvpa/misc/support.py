@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re, os
 
+from mvpa.base import warning
 from mvpa.support.copy import copy, deepcopy
 from operator import isSequenceType
 
@@ -74,8 +75,7 @@ def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
     return N.array( selected )
 
 
-
-def getUniqueLengthNCombinations(data, n):
+def _getUniqueLengthNCombinations_lt3(data, n):
     """Generates a list of lists containing all combinations of
     elements of data of length 'n' without repetitions.
 
@@ -86,7 +86,13 @@ def getUniqueLengthNCombinations(data, n):
     the web as an answer to the question 'How can I generate all possible
     combinations of length n?'. Unfortunately I cannot remember which
     forum it was.
+
+    NOTE: implementation is broken for n>2
     """
+
+    if n > 2:
+        raise ValueError, "_getUniqueLengthNCombinations_lt3 " \
+              "is broken for n>2, hence should not be used directly."
 
     # to be returned
     combos = []
@@ -119,6 +125,88 @@ def getUniqueLengthNCombinations(data, n):
 
     # return the result
     return combos
+
+def xuniqueCombinations(L, n):
+    """Generator of unique combinations form a list L of objects in
+    groups of size n.
+
+    # XXX EO: I guess they are already sorted.
+    # XXX EO: It seems to work well for n>20 :)
+
+    :Parameters:
+      L : list
+        list of unique ids
+      n : int
+        grouping size
+
+    Adopted from Li Daobing
+    http://code.activestate.com/recipes/190465/
+    (MIT license, according to activestate.com's policy)
+    """
+    if n==0: yield []
+    else:
+        for i in xrange(len(L)-n+1):
+            for cc in xuniqueCombinations(L[i+1:],n-1):
+                yield [L[i]]+cc
+
+def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
+    """Find all subsets of data
+
+    :Parameters:
+      L : list
+        list of unique ids
+      n : None or int
+        If None, all possible subsets are returned. If n is specified (int),
+        then only the ones of the length n are returned
+      sort : bool
+        Either to sort the resultant sequence
+
+    Adopted from Alex Martelli:
+    http://mail.python.org/pipermail/python-list/2001-January/067815.html
+    """
+    N = len(L)
+    if N > 20 and n == 1:
+        warning("getUniqueLengthNCombinations_binary should not be used for "
+                "large N")
+    result = []
+    for X in range(2**N):
+        x = [ L[i] for i in range(N) if X & (1L<<i) ]
+        if n is None or len(x) == n:
+            # yield x # if we wanted to use it as a generator
+            result.append(x)
+    result.sort()
+    # if __debug__ and n is not None:
+    #     # verify the result
+    #     # would need scipy... screw it
+    #     assert(len(result) == ...)
+    return result
+
+
+def getUniqueLengthNCombinations(L, n=None, sort=True):
+    """Find all subsets of data
+
+    :Parameters:
+      L : list
+        list of unique ids
+      n : None or int
+        If None, all possible subsets are returned. If n is specified (int),
+        then only the ones of the length n are returned
+
+    TODO: work out single stable implementation -- probably just by fixing
+    _getUniqueLengthNCombinations_lt3
+    """
+    if n == 1:
+        return _getUniqueLengthNCombinations_lt3(L, n)
+    elif n==None:
+        return _getUniqueLengthNCombinations_binary(L, n, sort=True)
+    else:
+        # XXX EO: Is it safe to remove "list" and use generator
+        #         directly to save memory for large number of
+        #         combinations? It seems OK according to tests but
+        #         I'd like a second opinion.
+        # XXX EO: what about inserting a warning if number of
+        #         combinations > 10000? No one would run it...
+        return list(xuniqueCombinations(L, n))
 
 
 def indentDoc(v):
@@ -154,9 +242,9 @@ def isSorted(items):
 
     :return: `True` if were sorted. Otherwise `False` + Warning
     """
-    itemsOld = deepcopy(items)
-    items.sort()
-    equality = itemsOld == items
+    items_sorted = deepcopy(items)
+    items_sorted.sort()
+    equality = items_sorted == items
     # XXX yarik forgotten analog to isiterable
     if hasattr(equality, '__iter__'):
         equality = N.all(equality)

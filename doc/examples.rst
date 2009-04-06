@@ -46,6 +46,7 @@ Analysis
    examples/start_easy
    examples/smlr
    examples/clfs_examples
+   examples/gpr
    examples/searchlight_minimal
    examples/searchlight_2d
    examples/sensanas
@@ -62,6 +63,7 @@ Visualization
    examples/erp_plot
    examples/pylab_2d
    examples/topo_plot
+   examples/som
 
 
 Miscellaneous

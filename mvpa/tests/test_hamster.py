@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -53,11 +53,25 @@ class HamsterHelperTests(unittest.TestCase):
         self.failUnless(set(hamster.registered) == set(['ex1', 'd', 'boo']))
 
         filename = mktemp('mvpa', 'test')
+        filename_gz = filename + '.gz'
+        filename_bogusgz = filename + '_bogus.gz'
+
         # dump
         hamster.dump(filename)
+        hamster.dump(filename_gz)
+        # allow to shoot yourself in the head
+        hamster.dump(filename_bogusgz, compresslevel=0)
         self.failUnless(hamster.asdict() == total_dict)
 
-        # load
+        # We should have stored plain and gzipped versions
+        gzplain = gzip.open(filename)
+        self.failUnlessRaises(IOError, gzplain.readlines)
+        gzipped = gzip.open(filename_gz)
+        discard = gzipped.readlines()
+        gzbogus = gzip.open(filename_bogusgz)
+        self.failUnlessRaises(IOError, gzbogus.readlines)
+
+        # load plain
         hamster2 = Hamster(filename)
 
         # check if we re-stored all the keys
@@ -82,6 +96,8 @@ class HamsterHelperTests(unittest.TestCase):
 
         # cleanup
         os.remove(filename)
+        os.remove(filename_gz)
+        os.remove(filename_bogusgz)
 
     def testAssignment(self):
         ex1 = """eins zwei drei

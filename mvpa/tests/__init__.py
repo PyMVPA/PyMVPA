@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -29,6 +29,7 @@ def collectTestSuites():
         'test_dataset',
         'test_arraymapper',
         'test_boxcarmapper',
+        'test_som',
         'test_neighbor',
         'test_maskeddataset',
         'test_metadataset',
@@ -88,6 +89,7 @@ def collectTestSuites():
                          (['lars','scipy'], 'lars'),
                          ('nifti', 'niftidataset'),
                          ('mdp', 'icamapper'),
+                         ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
     #                     ('mdp', 'pcamapper'),

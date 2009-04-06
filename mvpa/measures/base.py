@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -23,7 +23,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import mvpa.support.copy as copy
 
-from mvpa.misc.state import StateVariable, Stateful
+from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
@@ -34,7 +34,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class DatasetMeasure(Stateful):
+class DatasetMeasure(ClassWithCollections):
     """A measure computed from a `Dataset`
 
     All dataset measures support arbitrary transformation of the measure
@@ -78,7 +78,7 @@ class DatasetMeasure(Stateful):
             The estimated distribution is used to assign a probability for a
             certain value of the computed measure.
         """
-        Stateful.__init__(self, **kwargs)
+        ClassWithCollections.__init__(self, **kwargs)
 
         self.__transformer = transformer
         """Functor to be called in return statement of all subclass __call__()
@@ -90,7 +90,7 @@ class DatasetMeasure(Stateful):
         self.__null_dist = null_dist_
 
 
-    __doc__ = enhancedDocString('DatasetMeasure', locals(), Stateful)
+    __doc__ = enhancedDocString('DatasetMeasure', locals(), ClassWithCollections)
 
 
     def __call__(self, dataset):
@@ -225,6 +225,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
     #     SecondAxisSumOfAbs, though could be Max as well... uff
     #   YOH: started to do so, but still have issues... thus
     #        reverting back for now
+    #   MH: Full ack -- voting for no default combiners!
     def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs): # SecondAxisSumOfAbs
         """Initialize
 
@@ -669,6 +670,10 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzer output just to pass through"""
 
+    clf_sensitivities = StateVariable(enabled=False,
+        doc="Stores sensitivities of the proxied classifier")
+
+
     @group_kwargs(prefixes=['slave_'], assign=True)
     def __init__(self,
                  clf,
@@ -712,7 +717,10 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         if clfclf.trained:
             analyzer._force_training = False
 
-        return analyzer._call(dataset)
+        result = analyzer._call(dataset)
+        self.clf_sensitivities = result
+
+        return result
 
     analyzer = property(fget=lambda x:x.__analyzer)
 
@@ -723,6 +731,20 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def _call(self, dataset):
         sens = super(MappedClassifierSensitivityAnalyzer, self)._call(dataset)
+        # So we have here the case that some sensitivities are given
+        #  as nfeatures x nclasses, thus we need to take .T for the
+        #  mapper and revert back afterwards
+        # devguide's TODO lists this point to 'disguss'
+        sens_mapped = self.clf.mapper.reverse(sens.T)
+        return sens_mapped.T
+
+
+class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    """Set sensitivity analyzer output be reverse mapped using mapper of the
+    slave classifier"""
+
+    def _call(self, dataset):
+        sens = super(FeatureSelectionClassifierSensitivityAnalyzer, self)._call(dataset)
         # So we have here the case that some sensitivities are given
         #  as nfeatures x nclasses, thus we need to take .T for the
         #  mapper and revert back afterwards

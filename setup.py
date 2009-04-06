@@ -1,5 +1,6 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+#!/usr/bin/env python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -77,7 +78,7 @@ if have_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.4.1',
+      version      = '0.4.2',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -91,25 +92,26 @@ setup(name         = 'pymvpa',
           "it is eminently suited for such datasets.\n" \
           "PyMVPA is truely free software (in every respect) and " \
           "additionally requires nothing but free-software to run.",
+      # please maintain alphanumeric order
       packages     = [ 'mvpa',
+                       'mvpa.algorithms',
                        'mvpa.atlases',
                        'mvpa.base',
-                       'mvpa.datasets',
-                       'mvpa.mappers',
                        'mvpa.clfs',
-                       'mvpa.clfs.sg',
-                       'mvpa.clfs.libsvmc',
                        'mvpa.clfs.libsmlrc',
-                       'mvpa.algorithms',
-                       'mvpa.measures',
+                       'mvpa.clfs.libsvmc',
+                       'mvpa.clfs.sg',
+                       'mvpa.datasets',
                        'mvpa.featsel',
+                       'mvpa.mappers',
+                       'mvpa.measures',
                        'mvpa.misc',
                        'mvpa.misc.bv',
+                       'mvpa.misc.fsl',
                        'mvpa.misc.io',
                        'mvpa.misc.plot',
-                       'mvpa.misc.fsl',
+                       'mvpa.support',
                        'mvpa.tests',
-                       'mvpa.support'
                        ],
       data_files = [('mvpa/data',
                      [f for f in glob(os.path.join('mvpa', 'data', '*'))

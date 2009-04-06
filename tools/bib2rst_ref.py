@@ -1,5 +1,12 @@
 #!/usr/bin/env python
-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 import _bibtex
 import re
 
@@ -228,8 +235,11 @@ class BibTeX(dict):
                 # figure out what the last argument really does
                 # leaving in -1 seems to be save
                 value = _bibtex.expand(file, v,  0)[2]
-                value = unicode(value, 'utf-8')
-
+                try:
+                    value = unicode(value, 'utf-8')
+                except UnicodeDecodeError, e:
+                    print "ERROR: Failed to decode string '%s'" % value
+                    raise
                 if k.lower() == 'author':
                     value = value.split(' and ')
 
@@ -362,6 +372,6 @@ def smoothRsT(s):
 # do it
 bib = BibTeX('doc/misc/references.bib')
 
-refpage = open('doc/references.txt', 'w')
+refpage = open('doc/references.rst', 'w')
 refpage.write(bib2rst_references(bib))
 refpage.close()

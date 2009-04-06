@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -10,9 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
-
 import numpy as N
 
+from mvpa.base import externals
 
 class TuebingenMEG(object):
     """Reader for MEG data from line-based textfile format.
@@ -64,6 +64,7 @@ class TuebingenMEG(object):
         # open textfiles
         if isinstance(source, str):
             if source.endswith('.gz'):
+                externals.exists('gzip', raiseException=True)
                 import gzip
                 source = gzip.open(source, 'r')
             else:

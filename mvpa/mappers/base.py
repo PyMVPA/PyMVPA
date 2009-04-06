@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -276,6 +276,20 @@ class ProjectionMapper(Mapper):
         # perform component selection
         if self._selector is not None:
             self.selectOut(self._selector)
+
+
+    def _demeanData(self, data):
+        """Helper which optionally demeans
+        """
+        if self._demean:
+            # demean the training data
+            data = data - self._mean
+
+            if __debug__ and "MAP_" in debug.active:
+                debug("MAP_",
+                      "%s: Mean of data in input space %s was subtracted" %
+                      (self.__class__.__name__, self._mean))
+        return data
 
 
     def _train(self, dataset):

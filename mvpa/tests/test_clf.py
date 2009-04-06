@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -247,7 +247,7 @@ class ClassifiersTests(unittest.TestCase):
         # Number of harvested items should be equal to number of chunks
         self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
                              len(ds.uniquechunks))
-        # if we can blame multiple inheritance and Statefull.__init__
+        # if we can blame multiple inheritance and ClassWithCollections.__init__
         self.failUnlessEqual(clf.descr, "DESCR")
 
 
@@ -581,9 +581,9 @@ class ClassifiersTests(unittest.TestCase):
 
         # TODO: unify str and repr for all classifiers
 
-    # XXX TODO: should work on smlr, knn, ridgereg as well! but now
+    # XXX TODO: should work on smlr, knn, ridgereg, lars as well! but now
     #     they fail to train
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!meta', '!ridge'])
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!lars', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
