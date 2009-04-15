@@ -28,7 +28,7 @@ def __version_to_tuple(v):
     Tuple of integers constructed by splitting at '.'.
     """
     if isinstance(v, basestring):
-        v = tuple([int(x) for x in v.split('.') if x is not x.startswith('dev')])
+        v = tuple([int(x) for x in v.split('.') if not x.startswith('dev')])
     elif isinstance(v, tuple) or isinstance(v, list):
         # assure tuple
         v = tuple(v)
