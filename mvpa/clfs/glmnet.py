@@ -192,11 +192,14 @@ class GLMNET(Classifier):
         values = rpy.r.predict(self.__trained_model,
                                newx=data,
                                type='link',
-                               s=self.__last_lambda)[:,:,0]
+                               s=self.__last_lambda)
         
         # predict with the final state (i.e., the last step)
         classes = None
         if self.params.family == 'multinomial':
+            # remove last dimension of values
+            values = values[:,:,0]
+            
             # get the classes too (they are 1-indexed)
             rpy.set_default_mode(rpy.NO_CONVERSION)
             class_ind = rpy.r.predict(self.__trained_model,
@@ -211,6 +214,9 @@ class GLMNET(Classifier):
             
             # convert to actual labels
             classes = self.__ulabels[class_ind]
+        else:
+            # is gaussian, so just remove last dim of values
+            values = values[:,0]
             
         if not classes is None:
             # set the values and return none
