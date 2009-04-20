@@ -22,18 +22,32 @@ if externals.exists('rpy') and externals.exists('glmnet'):
     import rpy
     rpy.r.library('glmnet')
 
-
 # local imports
 from mvpa.clfs.base import Classifier
 from mvpa.measures.base import Sensitivity
+from mvpa.misc.param import Parameter
 
 if __debug__:
     from mvpa.base import debug
 
-class GLMNET(Classifier):
-    """Elastic-Net regression (GLMNET) `Classifier`.
+def _label2indlist(labels, ulabels):
+    """Convert labels to list of unique label indicies starting at 1.
+    """
 
-    Elastic-Net is the model selection algorithm from:
+    # allocate for the new one-of-M labels
+    new_labels = N.zeros(len(labels),dtype=N.int)
+
+    # loop and convert to one-of-M
+    for i, c in enumerate(ulabels):
+        new_labels[labels == c] = i+1
+
+    return [str(l) for l in new_labels.tolist()]
+
+
+class GLMNET(Classifier):
+    """GLM-Net regression (GLMNET) `Classifier`.
+
+    GLM-Net is the model selection algorithm from:
 
     :ref:`Zou and Hastie (2005) <ZH05>` 'Regularization and Variable
     Selection via the Elastic Net' Journal of the Royal Statistical
@@ -52,15 +66,13 @@ class GLMNET(Classifier):
     also tries to keep redundant features, which may be very very good
     for fMRI classification.
 
-    In the true nature of the PyMVPA framework, this algorithm was
-    actually implemented in R by Zou and Hastie and wrapped via RPy.
-    To make use of ENET, you must have R and RPy installed as well as
-    both the lars and elasticnet contributed package. You can install
-    the R and RPy with the following command on Debian-based machines:
+    To make use of GLMNET, you must have R and RPy installed as well
+    as both the glmnet contributed package. You can install the R and
+    RPy with the following command on Debian-based machines:
 
     sudo aptitude install python-rpy python-rpy-doc r-base-dev
 
-    You can then install the lars and elasticnet package by running R
+    You can then install the glmnet package by running R
     as root and calling:
 
     install.packages()
@@ -70,37 +82,39 @@ class GLMNET(Classifier):
     _clf_internals = [ 'glmnet', 'regression', 'linear', 'has_sensitivity',
                        'does_feature_selection'
                        ]
-    def __init__(self, lm=1.0, trace=False, normalize=True,
-                 intercept=True, max_steps=None, **kwargs):
+
+    family = Parameter('gaussian',
+                       allowedtype='basestring',
+                       choices=["gaussian", "multinomial"],
+                       doc="""Response type of your labels
+                       (either regression or classification.""")
+
+    alpha = Parameter(1.0, min=0.01, max=1.0, allowedtype='float',
+                      doc="""The elastic net mixing parameter.
+                      Larger values will give rise to
+                      less L2 regularization with alpha=1.0
+                      as a true lasso penalty.""")
+
+    nlambda = Parameter(100, allowedtype='int', min=1,
+                        doc="""Maximum number of lambdas to calculate
+                        before stopping if not converged.""")
+
+    standardize = Parameter(True, allowedtype='bool',
+                            doc="""Whether to standardize the variables
+                            prior to fitting.""")
+
+    thresh = Parameter(1e-4, min=1e-10, max=1.0, allowedtype='float',
+             doc="""Convergence threshold for coordinate descent.""")
+
+
+    def __init__(self, **kwargs):
         """
         Initialize GLM-Net.
 
-        See the help in R for further details on the following parameters:
-
-        :Parameters:
-          lm : float
-            Penalty parameter.  0 will perform LARS with no ridge regression.
-            Default is 1.0.
-          trace : boolean
-            Whether to print progress in R as it works.
-          normalize : boolean
-            Whether to normalize the L2 Norm.
-          intercept : boolean
-            Whether to add a non-penalized intercept to the model.
-          max_steps : None or int
-            If not None, specify the total number of iterations to run. Each
-            iteration adds a feature, but leaving it none will add until
-            convergence.
+        See the help in R for further details on the parameters
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
-
-        # set up the params
-        self.__lm = lm
-        self.__normalize = normalize
-        self.__intercept = intercept
-        self.__trace = trace
-        self.__max_steps = max_steps
 
         # pylint friendly initializations
         self.__weights = None
@@ -108,77 +122,103 @@ class GLMNET(Classifier):
         self.__trained_model = None
         """The model object after training that will be used for
         predictions."""
+        self.__trained_model_dict = None
+        """The model object in dict form after training that will be
+        used for predictions."""
 
         # It does not make sense to calculate a confusion matrix for a
         # regression
-        self.states.enable('training_confusion', False)
+        if self.params.family == 'gaussian':
+            self.states.enable('training_confusion', False)
 
-    def __repr__(self):
-        """String summary of the object
-        """
-        return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_states=%s)""" % \
-               (self.__lm,
-                self.__normalize,
-                self.__intercept,
-                self.__trace,
-                self.__max_steps,
-                str(self.states.enabled))
+#     def __repr__(self):
+#         """String summary of the object
+#         """
+#         return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_states=%s)""" % \
+#                (self.__lm,
+#                 self.__normalize,
+#                 self.__intercept,
+#                 self.__trace,
+#                 self.__max_steps,
+#                 str(self.states.enabled))
 
 
-    def _train(self, data):
+    def _train(self, dataset):
         """Train the classifier using `data` (`Dataset`).
         """
-        if self.__max_steps is None:
-            # train without specifying max_steps
-            self.__trained_model = rpy.r.enet(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              self.__lm,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace)
-        else:
-            # train with specifying max_steps
-            self.__trained_model = rpy.r.enet(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              self.__lm,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace,
-                                              max_steps=self.__max_steps)
+        # process the labels based on the model family
+        if self.params.family == 'gaussian':
+            # do nothing, just save the labels as a list
+            labels = dataset.labels.tolist()
+            pass
+        elif self.params.family == 'multinomial':
+            # turn lables into list of range values starting at 1
+            labels = _label2indlist(dataset.labels,
+                                    dataset.uniquelabels)
+        self.__ulabels = dataset.uniquelabels.copy()
 
-        # find the step with the lowest Cp (risk)
-        # it is often the last step if you set a max_steps
-        # must first convert dictionary to array
-#         Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
-#                              for x in range(len(self.__trained_model['Cp']))])
-#         self.__lowest_Cp_step = Cp_vals.argmin()
+        # train with specifying max_steps
+        # must not convert trained model to dict or we'll get segfault
+        rpy.set_default_mode(rpy.NO_CONVERSION)
+        self.__trained_model = rpy.r.glmnet(dataset.samples,
+                                            labels,
+                                            family=self.params.family,
+                                            alpha=self.params.alpha,
+                                            nlambda=self.params.nlambda,
+                                            standardize=self.params.standardize,
+                                            thresh=self.params.thresh)
+        rpy.set_default_mode(rpy.NO_DEFAULT)
+
+        # get a dict version of the model
+        self.__trained_model_dict = rpy.r.as_list(self.__trained_model)
+
+        # save the lambda of last step
+        self.__last_lambda = self.__trained_model_dict['lambda'][-1]
         
         # set the weights to the last step
-        self.__weights = N.zeros(data.nfeatures,dtype=self.__trained_model['beta.pure'].dtype)
-        ind = N.asarray(self.__trained_model['allset'])-1
-        self.__weights[ind] = self.__trained_model['beta.pure'][-1,:]
-        
-#         # set the weights to the final state
-#         self.__weights = self.__trained_model['beta'][-1,:]
+        weights = rpy.r.coef(self.__trained_model, s=self.__last_lambda)
+        if self.params.family == 'multinomial':
+            self.__weights = N.hstack([rpy.r.as_matrix(weights[str(i)])[1:]
+                                       for i in range(1,len(self.__ulabels)+1)])
+        elif self.params.family == 'gaussian':
+            self.__weights = rpy.r.as_matrix(weights)
 
 
     def _predict(self, data):
         """
         Predict the output for the provided data.
         """
+        # predict with standard method
+        values = rpy.r.predict(self.__trained_model,
+                               newx=data,
+                               type='link',
+                               s=self.__last_lambda)[:,:,0]
+        
         # predict with the final state (i.e., the last step)
-        res = rpy.r.predict_enet(self.__trained_model,
-                                 data,
-                                 mode='step',
-                                 type='fit',
-                                 s=self.__trained_model['beta.pure'].shape[0])
-                                 #s=self.__lowest_Cp_step)
-                                 
-        fit = N.asarray(res['fit'])
-        if len(fit.shape) == 0:
-            # if we just got 1 sample with a scalar
-            fit = fit.reshape( (1,) )
-        return fit
+        classes = None
+        if self.params.family == 'multinomial':
+            # get the classes too (they are 1-indexed)
+            rpy.set_default_mode(rpy.NO_CONVERSION)
+            class_ind = rpy.r.predict(self.__trained_model,
+                                      newx=data,
+                                      type='class',
+                                      s=self.__last_lambda)
+            rpy.set_default_mode(rpy.NO_DEFAULT)
+            class_ind = rpy.r.as_vector(class_ind)
+
+            # convert the strings to ints and subtract 1
+            class_ind = N.array([int(float(c))-1 for c in class_ind])
+            
+            # convert to actual labels
+            classes = self.__ulabels[class_ind]
+            
+        if not classes is None:
+            # set the values and return none
+            self.values = values
+            return classes
+        else:
+            # return the values as predictions
+            return values
 
 
     def _getFeatureIds(self):
@@ -189,31 +229,31 @@ class GLMNET(Classifier):
 
 
     def getSensitivityAnalyzer(self, **kwargs):
-        """Returns a sensitivity analyzer for ENET."""
-        return ENETWeights(self, **kwargs)
+        """Returns a sensitivity analyzer for GLMNET."""
+        return GLMNETWeights(self, **kwargs)
 
     weights = property(lambda self: self.__weights)
 
 
 
-class ENETWeights(Sensitivity):
-    """`SensitivityAnalyzer` that reports the weights ENET trained
+class GLMNETWeights(Sensitivity):
+    """`SensitivityAnalyzer` that reports the weights GLMNET trained
     on a given `Dataset`.
     """
 
-    _LEGAL_CLFS = [ ENET ]
+    _LEGAL_CLFS = [ GLMNET ]
 
     def _call(self, dataset=None):
-        """Extract weights from ENET classifier.
+        """Extract weights from GLMNET classifier.
 
-        ENET always has weights available, so nothing has to be computed here.
+        GLMNET always has weights available, so nothing has to be computed here.
         """
         clf = self.clf
         weights = clf.weights
 
         if __debug__:
-            debug('ENET',
-                  "Extracting weights for ENET - "+
+            debug('GLMNET',
+                  "Extracting weights for GLMNET - "+
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 
