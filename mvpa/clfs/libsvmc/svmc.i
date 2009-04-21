@@ -33,7 +33,7 @@ svm_node_matrix2numpy_array(struct svm_node** matrix, int rows, int cols)
     int dims[2] = {rows,cols};
 
     PyObject* array = 0;
-    array = PyArray_FromDims ( 2, dims, NPY_DOUBLE );
+    array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
 
     /* array subscription is [row][column] */
     PyArrayObject* a = (PyArrayObject*) array;
@@ -64,7 +64,7 @@ static PyObject* doubleppcarray2numpy_array(double** carray, int rows, int cols)
     int dims[2] = {rows,cols};
 
     PyObject* array = 0;
-    array = PyArray_FromDims ( 2, dims, NPY_DOUBLE );
+    array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
 
     /* array subscription is [row][column] */
     PyArrayObject* a = (PyArrayObject*) array;
