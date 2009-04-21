@@ -157,7 +157,11 @@ modref-templates-stamp:
 
 examples2rst: prepare-docsrc examples2rst-stamp
 examples2rst-stamp:
-	tools/examples2rst.py
+	tools/ex2rst \
+		--project PyMVPA \
+		--outdir build/docsrc/examples \
+		--exclude doc/examples/searchlight.py \
+		doc/examples
 	touch $@
 
 apidoc: apidoc-stamp
