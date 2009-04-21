@@ -7,35 +7,34 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper to automagically generate ReST versions of examples under doc/"""
+"""Helper to automagically generate ReST versions of examples"""
 
 __docformat__ = 'restructuredtext'
 
 
-import os, sys, re, glob
+import os
+import sys
+import re
+import glob
+from optparse import OptionParser
+from warnings import warn
 
-exclude_list = ['searchlight.py']
-
-outpath = os.path.join('build', 'docsrc', 'examples')
-if not os.path.exists(outpath):
-    os.mkdir(outpath)
-
-
-def procExample(filename):
+def proc_example(filename, opts):
     #  doc filename
-    dfilename = filename[:-3] + '.rst'
+    dfilename = os.path.basename(filename[:-3]) + '.rst'
 
     # open source file
     xfile = open(filename)
     # open dest file
-    dfile = open(os.path.join(outpath, os.path.basename(dfilename)), 'w')
+    dfile = open(os.path.join(opts.outdir, os.path.basename(dfilename)), 'w')
 
     # place header
     dfile.write('.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n')
 
     # place cross-ref target
-    dfile.write('.. _example_' + os.path.basename(filename)[:-3] + ':\n\n')
+    dfile.write('.. _example_' + dfilename[:-4] + ':\n\n')
 
+    # parser status vars
     inheader = True
     indocs = False
     doc2code = False
@@ -120,17 +119,77 @@ def procExample(filename):
             # has to be code
             dfile.write('  >>> ' + line)
 
-    # write post example see also box
-    dfile.write("\n.. seealso::\n  The full source code of this example is "
-                "included in the PyMVPA source distribution (`%s`).\n"
-                % filename)
+    if opts.sourceref:
+        # write post example see also box
+        dfile.write("\n.. seealso::\n  The full source code of this example is "
+                    "included in the %s source distribution (`%s`).\n"
+                    % (opts.project, filename))
 
     xfile.close()
     dfile.close()
 
 
-# for all examples
-for f in glob.glob(os.path.join('doc','examples','*.py')):
-    if not os.path.basename(f) in exclude_list:
-        procExample(f)
-#procExample('doc/examples/gpr.py')
+
+def main():
+    parser = OptionParser( \
+        usage="%prog [options] <filename|directory> [...]", \
+        version="%prog 0.1", description="""\
+%prog does ...
+""" )
+
+    # define options
+    parser.add_option('--verbose', action='store_true', dest='verbose',
+                      default=False, help='print status messages')
+    parser.add_option('-x', '--exclude', action='append', dest='excluded',
+                      help="""\
+""" )
+    parser.add_option('-o', '--outdir', action='store', dest='outdir',
+                      type='string', default=None, help="""\
+""" )
+    parser.add_option('--no-sourceref', action='store_false', default=True,
+                      dest='sourceref', help="""\
+""" )
+    parser.add_option('--project', type='string', action='store', default='',
+                      dest='project', help="""\
+Name of the project that contains the examples. This name is used in the
+'seealso' source references. Default: ''
+""" )
+
+    # parse options
+    (opts, args) = parser.parse_args() # read sys.argv[1:] by default
+
+    # check for required options
+    if opts.outdir is None:
+        print('Required option -o, --outdir not specified.')
+        sys.exit(1)
+
+    # build up list of things to parse
+    toparse = []
+    for t in args:
+        # expand dirs
+        if os.path.isdir(t):
+            # add all python files in that dir
+            toparse += glob.glob(os.path.join(t, '*.py'))
+        else:
+            toparse.append(t)
+
+    # filter parse list
+    if not opts.excluded is None:
+        toparse = [t for t in toparse if not t in opts.excluded]
+
+    toparse_list = toparse
+    toparse = set(toparse)
+
+    if len(toparse) != len(toparse_list):
+        print('Ignoring duplicate parse targets.')
+
+    if not os.path.exists(opts.outdir):
+        os.mkdir(outdir)
+
+    # finally process all examples
+    for t in toparse:
+        proc_example(t, opts)
+
+
+if __name__ == '__main__':
+    main()
