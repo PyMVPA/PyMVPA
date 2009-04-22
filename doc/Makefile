@@ -8,7 +8,7 @@ PAPER         =
 
 
 # Internal variables.
-BUILDROOT       = ..
+BUILDROOT       = ../build
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDROOT)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
@@ -24,7 +24,11 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 
 clean:
-	-rm -rf $(BUILDROOT)/*
+	-rm -rf $(BUILDROOT)/html
+	-rm -rf $(BUILDROOT)/latex
+
+distclean: clean
+	-rm -rf $(BUILDROOT)/doctrees
 
 html:
 	mkdir -p $(BUILDROOT)/html $(BUILDROOT)/doctrees
