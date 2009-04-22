@@ -9,7 +9,7 @@
 
 
 .. index:: dataset, sample attribute, dataset attribute
-.. _datasets:
+.. _chap_datasets:
 
 ********
 Datasets
@@ -165,7 +165,7 @@ results and information maps on the original dataspace.
 
 Another feature of mapped datasets is that valid mapping information is
 maintained even when the feature space changes. When running some feature
-selection algorithm (see :ref:`featsel`) some features of the original features
+selection algorithm (see :ref:`chap_featsel`) some features of the original features
 set will be removed, but after feature selection one will most likely want
 to know where the selected (or removed) features are in the original dataspace.
 To make use of the neuro-imaging example again: The most convenient way to

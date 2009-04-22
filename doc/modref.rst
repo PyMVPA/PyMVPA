@@ -1,7 +1,7 @@
 .. -*- mode: rst -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
-.. _modref:
+.. _chap_modref:
 
 ****************
 Module Reference

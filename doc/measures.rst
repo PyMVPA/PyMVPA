@@ -9,7 +9,7 @@
 
 
 .. index:: measure, sensitivity
-.. _measure:
+.. _chap_measures:
 
 ********
 Measures

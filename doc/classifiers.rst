@@ -7,7 +7,7 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _classifiers:
+.. _chap_classifiers:
 
 .. index:: classifier
 

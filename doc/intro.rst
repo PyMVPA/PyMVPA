@@ -7,7 +7,7 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _intro:
+.. _chap_intro:
 
 ************
 Introduction
@@ -52,13 +52,13 @@ package, but is instead focused on the user perspective. Developers should have
 a look at the `API documentation`_, which is a detailed, comprehensive and
 up-to-date description of the whole package. Users looking for an overview of
 the public programming interface of the framework are referred to the
-:ref:`modref`. The :ref:`modref` is similar to the API reference, but hides
+:ref:`chap_modref`. The :ref:`chap_modref` is similar to the API reference, but hides
 overly technical information, which are only relevant for people intending to
 extend the framework by adding more functionality.
 
 More examples and usage patterns extending the ones described here can be taken
 from the examples shipped with the PyMVPA source distribution (`doc/examples/`;
-some of them are also available in the :ref:`examples` chapter of this manual)
+some of them are also available in the :ref:`chap_examples` chapter of this manual)
 or even the unit test battery, also part of the source distribution (in the
 `tests/` directory).
 

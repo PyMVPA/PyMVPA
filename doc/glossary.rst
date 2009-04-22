@@ -7,7 +7,7 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _glossary:
+.. _chap_glossary:
 
 ********
 Glossary
@@ -71,6 +71,10 @@ terms found in the literature to the terminology used in this manual.
 
   Feature
     This is a name for a variable in the :term:`dataset`.
+
+
+  fMRI
+    This abbrevation stands for *functional magnetic resonance imaging*.
 
 
   Label
