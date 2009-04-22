@@ -1,13 +1,14 @@
-PROFILE_FILE=$(CURDIR)/build/main.pstats
-COVERAGE_REPORT=$(CURDIR)/build/coverage
-HTML_DIR=build/html
-DOCSRC_DIR=build/docsrc
-MAN_DIR=build/man
+PROFILE_FILE=$(CURDIR)/$(BUILDDIR)/main.pstats
+COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
+BUILDDIR=$(CURDIR)/build
+HTML_DIR=$(BUILDDIR)/html
+DOCSRC_DIR=$(BUILDDIR)/docsrc
+MAN_DIR=$(BUILDDIR)/man
 APIDOC_DIR=$(HTML_DIR)/api
-PDF_DIR=build/pdf
-LATEX_DIR=build/latex
-WWW_DIR=build/website
-SWARM_DIR=build/swarm
+PDF_DIR=$(BUILDDIR)/pdf
+LATEX_DIR=$(BUILDDIR)/latex
+WWW_DIR=$(BUILDDIR)/website
+SWARM_DIR=$(BUILDDIR)/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
 DATA_URI=apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data
 SWARMTOOL_DIR=tools/codeswarm
@@ -133,14 +134,14 @@ references:
 	tools/bib2rst_ref.py
 
 htmldoc: modref-templates examples2rst build
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR) $(MAKE) html
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR) $(MAKE) html BUILDROOT=$(BUILDDIR)
 	cd $(HTML_DIR)/modref && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../.. $(MAKE) latex
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../.. $(MAKE) latex BUILDROOT=$(BUILDDIR)
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -159,7 +160,7 @@ examples2rst: prepare-docsrc examples2rst-stamp
 examples2rst-stamp:
 	tools/ex2rst \
 		--project PyMVPA \
-		--outdir build/docsrc/examples \
+		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight.py \
 		doc/examples
 	touch $@
