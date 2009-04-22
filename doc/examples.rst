@@ -9,7 +9,7 @@
 
 .. index:: example
 
-.. _examples:
+.. _chap_examples:
 
 *************
 Full Examples

@@ -60,7 +60,7 @@ dataset splits is stored in `error`.
 
 If you think that is a good start, take the remaining four minutes to take a
 look at the examples shipped in the source distribution of PyMVPA
-(`doc/examples/`; some of them are also listed in :ref:`examples` section of
+(`doc/examples/`; some of them are also listed in :ref:`chap_examples` section of
 this manual). The examples provide a coarse overview of a substantial portion
 of the functionality provided by PyMVPA, ranging from basic classifier usage,
 over more sophisticated analysis strategies to simple visualization demos.
@@ -85,7 +85,7 @@ Module Overview
 ===============
 
 The PyMVPA package consists of three major parts: :ref:`Data handling
-<datasets>`, :ref:`Classifiers <classifiers>` and various algorithms and
+<chap_datasets>`, :ref:`Classifiers <chap_classifiers>` and various algorithms and
 measures that operate on datasets and classifiers.
 In the following sections the basic concept of all three parts will be
 described and examples using certain parts of the PyMVPA package will be
@@ -97,7 +97,7 @@ given.
 
 The manual does not cover all bits and pieces of PyMVPA. Detailed information
 about the module layout and additional documentation about all included
-functionality is available from the :ref:`Module Reference <modref>` -- or the
+functionality is available from the :ref:`Module Reference <chap_modref>` -- or the
 `API Reference`_ if you are interested in a more technical document.  The main
 purpose of the manual is to give an idea how the individual parts of PyMVPA can
 be combined to perform complex analyses -- easily.
