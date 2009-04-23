@@ -40,6 +40,8 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import *
 if externals.exists('elasticnet'):
     from mvpa.clfs.enet import *
+if externals.exists('glmnet'):
+    from mvpa.clfs.glmnet import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.stats import *
