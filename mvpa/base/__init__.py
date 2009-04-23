@@ -255,6 +255,9 @@ if __debug__:
     debug.register('ENET',    "ENET")
     debug.register('ENET_',   "ENET (verbose)")
 
+    debug.register('GLMNET',    "GLMNET")
+    debug.register('GLMNET_',   "GLMNET (verbose)")
+
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KERNEL',  "Kernels module")
