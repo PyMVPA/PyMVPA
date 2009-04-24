@@ -14,25 +14,23 @@ import numpy as N
 
 import operator
 
-from mvpa.misc.param import Parameter
-from mvpa.base import warning, externals
+from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 
-from mvpa.clfs.base import Classifier
 from mvpa.clfs._svmbase import _SVM
-from mvpa.measures.base import Sensitivity
 
 from mvpa.clfs.libsvmc import _svm as svm
-from sens import *
+from sens import LinearSVMWeights
 
 if __debug__:
     from mvpa.base import debug
 
 # we better expose those since they are mentioned in docstrings
+# although pylint would not be happy
 from mvpa.clfs.libsvmc._svmc import \
-     C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
+     C_SVC, NU_SVC, EPSILON_SVR, \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
-     PRECOMPUTED
+     PRECOMPUTED, ONE_CLASS
 
 
 class SVM(_SVM):
@@ -104,7 +102,7 @@ class SVM(_SVM):
             if svm_impl is None:
                 svm_impl = 'C_SVC'
                 if __debug__:
-                      debug('SVM', 'Assign C_SVC "by default"')
+                    debug('SVM', 'Assign C_SVC "by default"')
         kwargs['svm_impl'] = svm_impl
 
         # init base class
@@ -113,8 +111,8 @@ class SVM(_SVM):
         self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
 
         if 'nu' in self._KNOWN_PARAMS and 'epsilon' in self._KNOWN_PARAMS:
-            # overwrite eps param with new default value (information taken from libSVM
-            # docs
+            # overwrite eps param with new default value (information
+            # taken from libSVM docs
             self.params['epsilon'].setDefault(0.001)
 
         self.__model = None
@@ -134,8 +132,8 @@ class SVM(_SVM):
         svmprob = svm.SVMProblem( dataset.labels.tolist(), src )
 
         # Translate few params
-        TRANSLATEDICT={'epsilon': 'eps',
-                       'tube_epsilon': 'p'}
+        TRANSLATEDICT = {'epsilon': 'eps',
+                         'tube_epsilon': 'p'}
         args = []
         for paramname, param in self.params.items.items() \
                 + self.kernel_params.items.items():
@@ -150,8 +148,9 @@ class SVM(_SVM):
                 continue
             args.append( (argname, param.value) )
 
-        # XXX All those parameters should be fetched if present from
-        # **kwargs and create appropriate parameters within .params or .kernel_params
+        # ??? All those parameters should be fetched if present from
+        # **kwargs and create appropriate parameters within .params or
+        # .kernel_params
         libsvm_param = svm.SVMParameter(
             kernel_type=self._kernel_type,
             svm_type=self._svm_type,
@@ -166,7 +165,7 @@ class SVM(_SVM):
 
             Cs = list(C[:])               # copy
             for i in xrange(len(Cs)):
-                if Cs[i]<0:
+                if Cs[i] < 0:
                     Cs[i] = self._getDefaultC(dataset.samples)*abs(Cs[i])
                     if __debug__:
                         debug("SVM", "Default C for %s was computed to be %s" %
@@ -206,33 +205,42 @@ class SVM(_SVM):
             else:
                 trained_labels = self.trained_labels
                 nlabels = len(trained_labels)
-                # XXX We do duplicate work. model.predict calls predictValuesRaw
-                # internally and then does voting or thresholding. So if speed becomes
-                # a factor we might want to move out logic from libsvm over here to base
-                # predictions on obtined values, or adjust libsvm to spit out values from
-                # predict() as well
+                # XXX We do duplicate work. model.predict calls
+                # predictValuesRaw internally and then does voting or
+                # thresholding. So if speed becomes a factor we might
+                # want to move out logic from libsvm over here to base
+                # predictions on obtined values, or adjust libsvm to
+                # spit out values from predict() as well
                 if nlabels == 2:
-                    # Apperently libsvm reorders labels so we need to track (1,0)
-                    # values instead of (0,1) thus just lets take negative reverse
-                    values = [ self.model.predictValues(p)[(trained_labels[1], trained_labels[0])] for p in src ]
-                    if len(values)>0:
+                    # Apperently libsvm reorders labels so we need to
+                    # track (1,0) values instead of (0,1) thus just
+                    # lets take negative reverse
+                    values = [ self.model.predictValues(p)[(trained_labels[1],
+                                                            trained_labels[0])]
+                               for p in src ]
+                    if len(values) > 0:
                         if __debug__:
-                            debug("SVM","Forcing values to be ndarray and reshaping " +
-                                  "them to be 1D vector")
+                            debug("SVM",
+                                  "Forcing values to be ndarray and reshaping"
+                                  " them into 1D vector")
                         values = N.asarray(values).reshape(len(values))
                 else:
-                    # In multiclass we return dictionary for all pairs of labels,
-                    # since libsvm does 1-vs-1 pairs
+                    # In multiclass we return dictionary for all pairs
+                    # of labels, since libsvm does 1-vs-1 pairs
                     values = [ self.model.predictValues(p) for p in src ]
             states.values = values
 
         if states.isEnabled("probabilities"):
-            self.probabilities = [ self.model.predictProbability(p) for p in src ]
+            # XXX Is this really necesssary? yoh don't think so since
+            # assignment to states is doing the same
+            #self.probabilities = [ self.model.predictProbability(p)
+            #                       for p in src ]
             try:
-                states.probabilities = [ self.model.predictProbability(p) for p in src ]
+                states.probabilities = [ self.model.predictProbability(p)
+                                         for p in src ]
             except TypeError:
-                warning("Current SVM %s doesn't support probability estimation," %
-                        self + " thus no 'values' state")
+                warning("Current SVM %s doesn't support probability " %
+                        self + " estimation.")
         return predictions
 
 
@@ -248,7 +256,8 @@ class SVM(_SVM):
                 # i.e. so called 'bounded SVs'
                 inside_margin = N.sum(
                     # take 0.99 to avoid rounding issues
-                    N.abs(self.__model.getSVCoef()) >= 0.99*svm.svmc.svm_parameter_C_get(prm))
+                    N.abs(self.__model.getSVCoef())
+                          >= 0.99*svm.svmc.svm_parameter_C_get(prm))
                 s += ' #bounded SVs:%d' % inside_margin
                 s += ' used C:%5g' % C
             except:
@@ -257,6 +266,8 @@ class SVM(_SVM):
 
 
     def untrain(self):
+        """Untrain libsvm's SVM: forget the model
+        """
         if __debug__:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
         super(SVM, self).untrain()
@@ -347,61 +358,5 @@ try:
 except AttributeError:
     warning("Available LIBSVM has no way to control verbosity of the output")
 
-
-class LinearSVMWeights(Sensitivity):
-    """`SensitivityAnalyzer` for the LIBSVM implementation of a linear SVM.
-    """
-
-    biases = StateVariable(enabled=True,
-                           doc="Offsets of separating hyperplanes")
-
-
-    _LEGAL_CLFS = [ SVM ]
-
-
-    def __init__(self, clf, **kwargs):
-        """Initialize the analyzer with the classifier it shall use.
-
-        :Parameters:
-          clf: LinearSVM
-            classifier to use. Only classifiers sub-classed from
-            `LinearSVM` may be used.
-        """
-        # init base classes first
-        Sensitivity.__init__(self, clf, **kwargs)
-
-
-    def _call(self, dataset, callables=[]):
-        if self.clf.model.nr_class != 2:
-            warning("You are estimating sensitivity for SVM %s trained on %d" %
-                    (str(self.clf), self.clf.model.nr_class) +
-                    " classes. Make sure that it is what you intended to do" )
-
-        svcoef = N.matrix(self.clf.model.getSVCoef())
-        svs = N.matrix(self.clf.model.getSV())
-        rhos = N.asarray(self.clf.model.getRho())
-
-        self.biases = rhos
-        # XXX yoh: .mean() is effectively
-        # averages across "sensitivities" of all paired classifiers (I
-        # think). See more info on this topic in svm.py on how sv_coefs
-        # are stored
-        #
-        # First multiply SV coefficients with the actuall SVs to get
-        # weighted impact of SVs on decision, then for each feature
-        # take mean across SVs to get a single weight value
-        # per feature
-        weights = svcoef * svs
-
-        if __debug__:
-            debug('SVM',
-                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
-                  (self.clf.model.nr_class, str(self.clf.model.getNSV())) + \
-                  " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
-                  (svcoef.shape, svs.shape, rhos) + \
-                  " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
-
-        return N.asarray(weights.T)
-
-
-    _customizeDocInherit = True
+# Assign SVM class to limited set of LinearSVMWeights
+LinearSVMWeights._LEGAL_CLFS = [SVM]
