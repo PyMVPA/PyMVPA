@@ -15,7 +15,7 @@ externals.exists('scipy', raiseException=True)
 
 import scipy.stats as stats
 import numpy as N
-import copy 
+import copy
 
 def chisquare(obs, exp=None):
     """Compute the chisquare value of a contingency table with arbitrary
@@ -44,31 +44,39 @@ def chisquare(obs, exp=None):
     # return chisq and probability (upper tail)
     return chisq, stats.chisqprob(chisq, N.prod(obs.shape) - 1)
 
-class DSMatrix(object):
-    """ Class DSMatrix allows for the creation of dissilimarity matrices using
-            arbitrary distance metrics.
-    """
-    # data_vectors are an m x n collection of vectors where m is the number of exemplars
-    # and n is the number of features per exemplar
-    # metric is a string (single quote offset) indicating one of the distance metrics
-    # listed above, e.g., 'euclidean', 'spearman', 'pearson', 'confusion'
-    def __init__(self, data_vectors, metric='spearman'):
 
+class DSMatrix(object):
+    """DSMatrix allows for the creation of dissilimarity matrices using
+       arbitrary distance metrics.
+    """
+
+    # metric is a string
+    def __init__(self, data_vectors, metric='spearman'):
+        """Initialize DSMatrix
+
+        :Parameters:
+          data_vectors : ndarray
+             m x n collection of vectors, where m is the number of exemplars
+             and n is the number of features per exemplar
+          metric : string
+             Distance metric to use (e.g., 'euclidean', 'spearman', 'pearson',
+             'confusion')
+        """
         # init members
         self.full_matrix = []
         self.u_triangle = None
         self.vector_form = None
 
-        # this one we know straight away, so set it 
+        # this one we know straight away, so set it
         self.metric = metric
 
         # size of dataset (checking if we're dealing with a column vector only
         num_exem = N.shape(data_vectors)[0]
-        flag_1d = False;
+        flag_1d = False
         if (isinstance(data_vectors, N.ndarray)):
             num_features = N.shape(data_vectors)[1]
         else:
-            flag_1d = True;
+            flag_1d = True
             num_features = 1
 
         # generate output (dissimilarity) matrix
@@ -99,7 +107,8 @@ class DSMatrix(object):
             for i in range(num_exem):
                 # across columns
                 for j in range(num_exem):
-                    dsmatrix[i,j] = 1 - stats.pearsonr(data_vectors[i,:],data_vectors[j,:])[0]
+                    dsmatrix[i, j] = 1 - stats.pearsonr(
+                        data_vectors[i,:],data_vectors[j,:])[0]
 
         elif (metric == 'confusion'):
             #print 'Using confusion correlation metric...'
@@ -108,9 +117,13 @@ class DSMatrix(object):
                 # across columns
                 for j in range(num_exem):
                     if (not(flag_1d)):
-                        dsmatrix[i,j] = 1 - int(N.floor(N.sum((data_vectors[i,:] == data_vectors[j,:]).astype(N.int32)) / num_features))
+                        dsmatrix[i, j] = 1 - int(
+                            N.floor(N.sum((
+                                data_vectors[i, :] == data_vectors[j, :]
+                                ).astype(N.int32)) / num_features))
                     else:
-                        dsmatrix[i,j] = 1 - int(data_vectors[i] == data_vectors[j])
+                        dsmatrix[i, j] = 1 - int(
+                            data_vectors[i] == data_vectors[j])
 
         self.full_matrix = dsmatrix
 
@@ -129,12 +142,15 @@ class DSMatrix(object):
     # certain problems:
     #  1.  Set all 0-valued elements in the original matrix to -1 (an impossible
     #        value for a dissimilarity matrix)
-    #    2.  Find the upper triangle of the matrix
-    #  3.  Create a vector from the upper triangle, but only with the elements whose
-    #      absolute value is greater than 0 -- this will keep everything from the original
-    #      matrix that wasn't part of the zero'ed-out portion when we took the upper triangle
-    #  4.    Set all the -1-valued elements in the vector to 0 (their original value)
-    #    5.  Cast to numpy array
+    #  2.  Find the upper triangle of the matrix
+    #  3.  Create a vector from the upper triangle, but only with the
+    #      elements whose absolute value is greater than 0 -- this
+    #      will keep everything from the original matrix that wasn't
+    #      part of the zero'ed-out portion when we took the upper
+    #      triangle
+    #  4.  Set all the -1-valued elements in the vector to 0 (their
+    #      original value)
+    #  5.  Cast to numpy array
     def getVectorForm(self):
         if (not(self.vector_form == None)):
             return self.vector_form
@@ -154,6 +170,8 @@ class DSMatrix(object):
 
         return self.vector_form
 
+    # XXX is there any reason to have these get* methods
+    #     instead of plain access to full_matrix and method?
     def getFullMatrix(self):
         return self.full_matrix
 
