@@ -757,6 +757,7 @@ class DSMDatasetMeasure(DatasetMeasure):
     """DSMDatasetMeasure creates a DatasetMeasure object
        where metric can be one of 'euclidean', 'spearman', 'pearson'
        or 'confusion'"""
+
     def __init__(self, dsmatrix, dset_metric, output_metric='spearman'):
         DatasetMeasure.__init__(self)
 
@@ -778,8 +779,10 @@ class DSMDatasetMeasure(DatasetMeasure):
         test_dsmatrix = DSMatrix(test_mat, self.output_metric)
 
         # return correct dissimilarity value
-        return test_dsmatrix.getFullMatrix()[0,1]
+        return test_dsmatrix.getFullMatrix()[0, 1]
 
-    def printme(self):
-        print 'DSMDatasetMeasure object'
+    # XXX lets not pollute the name space ;) use __str__ or __repr__
+    #     accordingly if there is a need
+    #def printme(self):
+    #    print 'DSMDatasetMeasure object'
 
