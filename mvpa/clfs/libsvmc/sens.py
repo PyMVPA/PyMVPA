@@ -69,3 +69,5 @@ class LinearSVMWeights(Sensitivity):
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
 
         return N.asarray(weights.T)
+
+    _customizeDocInherit = True
