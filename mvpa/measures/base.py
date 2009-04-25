@@ -29,7 +29,6 @@ from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals
 from mvpa.clfs.stats import autoNullDist
-from mvpa.misc.stats import DSMatrix
 
 if __debug__:
     from mvpa.base import debug
@@ -752,34 +751,4 @@ class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAn
         # devguide's TODO lists this point to 'disguss'
         sens_mapped = self.clf.maskclf.mapper.reverse(sens.T)
         return sens_mapped.T
-
-class DSMDatasetMeasure(DatasetMeasure):
-    """DSMDatasetMeasure creates a DatasetMeasure object
-       where metric can be one of 'euclidean', 'spearman', 'pearson'
-       or 'confusion'"""
-    def __init__(self, dsmatrix, dset_metric, output_metric='spearman'):
-        DatasetMeasure.__init__(self)
-
-        self.dsmatrix = dsmatrix
-        self.dset_metric = dset_metric
-        self.output_metric = output_metric
-        self.dset_dsm = []
-
-    def __call__(self, dataset):
-        # create the dissimilarity matrix for the data in the input dataset
-        self.dset_dsm = DSMatrix(dataset.samples, self.dset_metric)
-
-        in_vec = self.dsmatrix.getVectorForm()
-        dset_vec = self.dset_dsm.getVectorForm()
-
-        # concatenate the two vectors, send to dissimlarity function
-        test_mat = N.asarray([in_vec, dset_vec])
-
-        test_dsmatrix = DSMatrix(test_mat, self.output_metric)
-
-        # return correct dissimilarity value
-        return test_dsmatrix.getFullMatrix()[0,1]
-
-    def printme(self):
-        print 'DSMDatasetMeasure object'
 
