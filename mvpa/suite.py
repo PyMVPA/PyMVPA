@@ -131,6 +131,7 @@ if externals.exists("pylab"):
 
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *
+    from mvpa.measures.ds import *
     from mvpa.clfs.ridge import *
     from mvpa.clfs.plr import *
     from mvpa.misc.stats import *
