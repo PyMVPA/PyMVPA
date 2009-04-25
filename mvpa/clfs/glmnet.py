@@ -44,27 +44,14 @@ def _label2indlist(labels, ulabels):
     return [str(l) for l in new_labels.tolist()]
 
 
-class GLMNET(Classifier):
+class _GLMNET(Classifier):
     """GLM-Net regression (GLMNET) `Classifier`.
 
     GLM-Net is the model selection algorithm from:
 
-    :ref:`Zou and Hastie (2005) <ZH05>` 'Regularization and Variable
-    Selection via the Elastic Net' Journal of the Royal Statistical
-    Society, Series B, 67, 301-320.
-
     Friedman, J., Hastie, T. and Tibshirani, R. (2008) Regularization
     Paths for Generalized Linear Models via Coordinate
-    Descent. http://www-stat.stanford.edu/~hastie/Papers/ glmnet.pdf
-
-    Similar to SMLR, it performs a feature selection while performing
-    classification, but instead of starting with all features, it
-    starts with none and adds them in, which is similar to boosting.
-
-    Unlike LARS it has both L1 and L2 regularization (instead of just
-    L1).  This means that while it tries to sparsify the features it
-    also tries to keep redundant features, which may be very very good
-    for fMRI classification.
+    Descent. http://www-stat.stanford.edu/~hastie/Papers/glmnet.pdf
 
     To make use of GLMNET, you must have R and RPy installed as well
     as both the glmnet contributed package. You can install the R and
@@ -78,8 +65,8 @@ class GLMNET(Classifier):
     install.packages()
 
     """
-
-    _clf_internals = [ 'glmnet', 'regression', 'linear', 'has_sensitivity',
+ 
+    _clf_internals = [ 'glmnet', 'linear', 'has_sensitivity',
                        'does_feature_selection'
                        ]
 
@@ -92,7 +79,7 @@ class GLMNET(Classifier):
     alpha = Parameter(1.0, min=0.01, max=1.0, allowedtype='float',
                       doc="""The elastic net mixing parameter.
                       Larger values will give rise to
-                      less L2 regularization with alpha=1.0
+                      less L2 regularization, with alpha=1.0
                       as a true lasso penalty.""")
 
     nlambda = Parameter(100, allowedtype='int', min=1,
@@ -106,6 +93,22 @@ class GLMNET(Classifier):
     thresh = Parameter(1e-4, min=1e-10, max=1.0, allowedtype='float',
              doc="""Convergence threshold for coordinate descent.""")
 
+    pmax = Parameter(None, min=1, allowedtype='None or int',
+             doc="""Limit the maximum number of variables ever to be
+             nonzero.""")
+
+    maxit = Parameter(100, min=10, allowedtype='int',
+             doc="""Maximum number of outer-loop iterations for
+             'multinomial' families.""")
+
+    model_type = Parameter('covariance',
+                           allowedtype='basestring',
+                           choices=["covariance", "naive"],
+             doc="""'covariance' saves all inner-products ever
+             computed and can be much faster than 'naive'. The
+             latter can be more efficient for
+             nfeatures >> nsamples situations.
+             """)
 
     def __init__(self, **kwargs):
         """
@@ -157,6 +160,14 @@ class GLMNET(Classifier):
                                     dataset.uniquelabels)
         self.__ulabels = dataset.uniquelabels.copy()
 
+        # process the pmax
+        if self.params.pmax is None:
+            # set it to the num features
+            pmax = dataset.nfeatures
+        else:
+            # use the value
+            pmax = self.params.pmax
+
         # train with specifying max_steps
         # must not convert trained model to dict or we'll get segfault
         rpy.set_default_mode(rpy.NO_CONVERSION)
@@ -166,7 +177,10 @@ class GLMNET(Classifier):
                                             alpha=self.params.alpha,
                                             nlambda=self.params.nlambda,
                                             standardize=self.params.standardize,
-                                            thresh=self.params.thresh)
+                                            thresh=self.params.thresh,
+                                            pmax=pmax,
+                                            maxit=self.params.maxit,
+                                            type=self.params.model_type)
         rpy.set_default_mode(rpy.NO_DEFAULT)
 
         # get a dict version of the model
@@ -247,7 +261,7 @@ class GLMNETWeights(Sensitivity):
     on a given `Dataset`.
     """
 
-    _LEGAL_CLFS = [ GLMNET ]
+    _LEGAL_CLFS = [ _GLMNET ]
 
     def _call(self, dataset=None):
         """Extract weights from GLMNET classifier.
@@ -264,4 +278,69 @@ class GLMNETWeights(Sensitivity):
                   (N.min(weights), N.max(weights)))
 
         return weights
+
+class GLMNET_Reg(_GLMNET):
+    """
+    GLM-NET Gaussian Regression Classifier.
+
+    This is the GLM-NET algorithm from
+
+    Friedman, J., Hastie, T. and Tibshirani, R. (2008) Regularization
+    Paths for Generalized Linear Models via Coordinate
+    Descent. http://www-stat.stanford.edu/~hastie/Papers/glmnet.pdf
+
+    parameterized to be a regression.
+
+    See GLMNET_Class for the multinomial classifier version.
+
+    """
+
+    _clf_internals = _GLMNET._clf_internals + ['regression']
+
+    def __init__(self,  **kwargs):
+        """
+        Initialize GLM-Net.
+
+        See the help in R for further details on the parameters
+        """
+        # make sure they didn't specify regression
+        if not kwargs.pop('family', None) is None:
+            warning('You specified the "family" parameter, but we ' + \
+                    'force this to be "gaussian".')
+        
+        # init base class first, forcing regression
+        _GLMNET.__init__(self, family='gaussian', **kwargs)
+
+
+class GLMNET_Class(_GLMNET):
+    """
+    GLM-NET Multinomial Classifier.
+
+    This is the GLM-NET algorithm from
+
+    Friedman, J., Hastie, T. and Tibshirani, R. (2008) Regularization
+    Paths for Generalized Linear Models via Coordinate
+    Descent. http://www-stat.stanford.edu/~hastie/Papers/glmnet.pdf
+
+    parameterized to be a multinomial classifier.
+
+    See GLMNET_Class for the gaussian regression version.
+
+    """
+
+    _clf_internals = _GLMNET._clf_internals + ['multiclass', 'binary']
+
+    def __init__(self,  **kwargs):
+        """
+        Initialize GLM-Net multinomial classifier.
+
+        See the help in R for further details on the parameters
+        """
+        # make sure they didn't specify regression
+        if not kwargs.pop('family', None) is None:
+            warning('You specified the "family" parameter, but we ' + \
+                    'force this to be "multinomial".')
+        
+        # init base class first, forcing regression
+        _GLMNET.__init__(self, family='multinomial', **kwargs)
 
