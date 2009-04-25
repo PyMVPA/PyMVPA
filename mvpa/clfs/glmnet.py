@@ -279,7 +279,7 @@ class GLMNETWeights(Sensitivity):
 
         return weights
 
-class GLMNET_Reg(_GLMNET):
+class GLMNET_R(_GLMNET):
     """
     GLM-NET Gaussian Regression Classifier.
 
@@ -291,7 +291,7 @@ class GLMNET_Reg(_GLMNET):
 
     parameterized to be a regression.
 
-    See GLMNET_Class for the multinomial classifier version.
+    See GLMNET_C for the multinomial classifier version.
 
     """
 
@@ -312,7 +312,7 @@ class GLMNET_Reg(_GLMNET):
         _GLMNET.__init__(self, family='gaussian', **kwargs)
 
 
-class GLMNET_Class(_GLMNET):
+class GLMNET_C(_GLMNET):
     """
     GLM-NET Multinomial Classifier.
 

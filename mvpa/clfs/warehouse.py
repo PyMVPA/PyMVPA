@@ -279,9 +279,9 @@ if externals.exists('lars'):
 
 # glmnet from R via RPy
 if externals.exists('glmnet'):
-    from mvpa.clfs.glmnet import GLMNET_Class, GLMNET_Reg
-    clfswh += GLMNET_Class(descr="GLMNET_Class()")
-    regrswh += GLMNET_Reg(descr="GLMNET_Reg()")
+    from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
+    clfswh += GLMNET_C(descr="GLMNET_C()")
+    regrswh += GLMNET_R(descr="GLMNET_R()")
     
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
