@@ -118,7 +118,7 @@ debian-clean:
 doc: website manpages
 
 manpages: mkdir-MAN_DIR
-	PYTHONPATH=. help2man -N -n 'preprocess fMRI data for PyMVPA' \
+	PYTHONPATH=.:$(PYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
 		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
 # no manpage for atlaslabeler now, since it implies build-deps for
 # pynifti and lxml
@@ -133,14 +133,14 @@ references:
 	tools/bib2rst_ref.py
 
 htmldoc: modref-templates examples2rst build
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR) $(MAKE) html
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html
 	cd $(HTML_DIR)/modref && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../.. $(MAKE) latex
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -152,7 +152,7 @@ handbook: pdfdoc
 
 modref-templates: prepare-docsrc modref-templates-stamp
 modref-templates-stamp:
-	PYTHONPATH=. tools/build_modref_templates.py
+	PYTHONPATH=.:$(PYTHONPATH) tools/build_modref_templates.py
 	touch $@
 
 examples2rst: prepare-docsrc examples2rst-stamp
@@ -174,7 +174,7 @@ apidoc-stamp: build
 
 # this takes some minutes !!
 profile: build mvpa/tests/main.py
-	@PYTHONPATH=. tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
 
 
 #
@@ -208,29 +208,30 @@ upload-htmldoc: htmldoc
 #
 
 ut-%: build
-	PYTHONPATH=. python mvpa/tests/test_$*.py
+	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	PYTHONPATH=. python mvpa/tests/main.py
+	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/main.py
+	
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa/tests/badexternals:. python mvpa/tests/main.py 2>&1 \
+	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) python mvpa/tests/main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
 # only non-labile tests
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
-	@PYTHONPATH=. MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
 	@echo "I: Running unittests with python -O."
-	@PYTHONPATH=. python -O mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) python -O mvpa/tests/main.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
@@ -238,7 +239,7 @@ unittest-optimization: build
 #     debug() calls validation, etc
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
-	@PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
        python mvpa/tests/main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
@@ -251,7 +252,7 @@ unittests: unittest-nonlabile unittest unittest-badexternals \
 
 te-%: build
 	@echo -n "I: Testing example $*: "
-	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
 	 python doc/examples/$*.py >| temp-$@.log 2>&1 \
 	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
 	@rm -f temp-$@.log
@@ -262,12 +263,12 @@ testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot
 
 tm-%: build
-	PYTHONPATH=. nosetests --with-doctest --doctest-extension .rst \
+	PYTHONPATH=.:$(PYTHONPATH) nosetests --with-doctest --doctest-extension .rst \
 	                       --doctest-tests doc/$*.rst
 
 testmanual: build
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=. MVPA_MATPLOTLIB_BACKEND=agg \
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
 	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/
 
 # Check if everything (with few exclusions) is imported in unitests is
@@ -305,7 +306,7 @@ testrefactor: unittest testmanual testsuite testapiref testexamples
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@{ \
-	  export PYTHONPATH=. MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
+	  export PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
 	  python-coverage -x mvpa/tests/main.py >/dev/null 2>&1; \
 	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
 	  grep -v '100%$$' $(COVERAGE_REPORT); \
