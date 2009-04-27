@@ -30,7 +30,7 @@ struct svm_model
 static PyObject* 
 svm_node_matrix2numpy_array(struct svm_node** matrix, int rows, int cols)
 {
-    int dims[2] = {rows,cols};
+    npy_intp dims[2] = {rows,cols};
 
     PyObject* array = 0;
     array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
@@ -61,7 +61,7 @@ static PyObject* doubleppcarray2numpy_array(double** carray, int rows, int cols)
         return(NULL);
     }
 
-    int dims[2] = {rows,cols};
+    npy_intp dims[2] = {rows,cols};
 
     PyObject* array = 0;
     array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
