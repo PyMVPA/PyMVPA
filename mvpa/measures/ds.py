@@ -44,9 +44,3 @@ class DSMDatasetMeasure(DatasetMeasure):
 
         # return correct dissimilarity value
         return test_dsmatrix.getFullMatrix()[0, 1]
-
-    # XXX lets not pollute the name space ;) use __str__ or __repr__
-    #     accordingly if there is a need
-    #def printme(self):
-    #    print 'DSMDatasetMeasure object'
-
