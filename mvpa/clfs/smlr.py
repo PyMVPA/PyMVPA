@@ -108,7 +108,7 @@ class SMLR(Classifier):
              doc="""Seed to be used to initialize random generator, might be
              used to replicate the run""")
 
-    unsparsify = Parameter(True, allowedtype='bool',
+    unsparsify = Parameter(False, allowedtype='bool',
              doc="""***EXPERIMENTAL*** Whether to unsparsify the weights via
              regression.
              Note that it likely leads to worse classifier
