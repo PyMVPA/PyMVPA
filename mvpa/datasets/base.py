@@ -983,8 +983,6 @@ class Dataset(object):
         also cause major headaches! Order would is verified when
         running in non-optimized code (if __debug__)
         """
-        ids = copy.deepcopy(ids)
-        
         if ids is None and groups is None:
             raise ValueError, "No feature selection specified."
 
@@ -1003,6 +1001,7 @@ class Dataset(object):
         # XXX set sort default to True, now sorting has to be explicitely
         # disabled and warning is not necessary anymore
         if sort:
+            ids = copy.deepcopy(ids)
             ids.sort()
         elif __debug__ and 'CHECK_DS_SORTED' in debug.active:
             from mvpa.misc.support import isSorted
