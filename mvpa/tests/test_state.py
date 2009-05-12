@@ -20,6 +20,9 @@ from mvpa.misc.state import StateVariable, ClassWithCollections, \
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
+if __debug__:
+    from mvpa.base import debug
+
 class TestClassEmpty(ClassWithCollections):
     pass
 
