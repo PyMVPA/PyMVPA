@@ -81,7 +81,10 @@ class Searchlight(DatasetMeasure):
             self.spheresizes = []
 
         if __debug__:
-            nspheres = dataset.nfeatures
+            if not self.__center_ids == None:
+                nspheres = len(self.__center_ids)
+            else:
+                nspheres = dataset.nfeatures
             sphere_count = 0
 
         # collect the results in a list -- you never know what you get
