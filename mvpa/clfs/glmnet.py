@@ -107,8 +107,7 @@ class _GLMNET(Classifier):
              doc="""'covariance' saves all inner-products ever
              computed and can be much faster than 'naive'. The
              latter can be more efficient for
-             nfeatures >> nsamples situations.
-             """)
+             nfeatures>>nsamples situations.""")
 
     def __init__(self, **kwargs):
         """

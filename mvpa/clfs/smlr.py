@@ -110,8 +110,7 @@ class SMLR(Classifier):
 
     unsparsify = Parameter(False, allowedtype='bool',
              doc="""***EXPERIMENTAL*** Whether to unsparsify the weights via
-             regression.
-             Note that it likely leads to worse classifier
+             regression. Note that it likely leads to worse classifier
              performance, but more interpretable weights.""")
 
     std_to_keep = Parameter(2.0, allowedtype='float',
