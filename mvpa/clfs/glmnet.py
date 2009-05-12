@@ -35,7 +35,7 @@ def _label2indlist(labels, ulabels):
     """
 
     # allocate for the new one-of-M labels
-    new_labels = N.zeros(len(labels),dtype=N.int)
+    new_labels = N.zeros(len(labels), dtype=N.int)
 
     # loop and convert to one-of-M
     for i, c in enumerate(ulabels):
@@ -65,7 +65,7 @@ class _GLMNET(Classifier):
     install.packages()
 
     """
- 
+
     _clf_internals = [ 'glmnet', 'linear', 'has_sensitivity',
                        'does_feature_selection'
                        ]
@@ -188,7 +188,7 @@ class _GLMNET(Classifier):
 
         # save the lambda of last step
         self.__last_lambda = self.__trained_model_dict['lambda'][-1]
-        
+
         # set the weights to the last step
         weights = rpy.r.coef(self.__trained_model, s=self.__last_lambda)
         if self.params.family == 'multinomial':
@@ -207,13 +207,13 @@ class _GLMNET(Classifier):
                                newx=data,
                                type='link',
                                s=self.__last_lambda)
-        
+
         # predict with the final state (i.e., the last step)
         classes = None
         if self.params.family == 'multinomial':
             # remove last dimension of values
             values = values[:,:,0]
-            
+
             # get the classes too (they are 1-indexed)
             rpy.set_default_mode(rpy.NO_CONVERSION)
             class_ind = rpy.r.predict(self.__trained_model,
@@ -225,13 +225,13 @@ class _GLMNET(Classifier):
 
             # convert the strings to ints and subtract 1
             class_ind = N.array([int(float(c))-1 for c in class_ind])
-            
+
             # convert to actual labels
             classes = self.__ulabels[class_ind]
         else:
             # is gaussian, so just remove last dim of values
             values = values[:,0]
-            
+
         if not classes is None:
             # set the values and return none
             self.values = values
@@ -305,9 +305,9 @@ class GLMNET_R(_GLMNET):
         """
         # make sure they didn't specify regression
         if not kwargs.pop('family', None) is None:
-            warning('You specified the "family" parameter, but we ' + \
+            warning('You specified the "family" parameter, but we '
                     'force this to be "gaussian".')
-        
+
         # init base class first, forcing regression
         _GLMNET.__init__(self, family='gaussian', **kwargs)
 
@@ -338,9 +338,9 @@ class GLMNET_C(_GLMNET):
         """
         # make sure they didn't specify regression
         if not kwargs.pop('family', None) is None:
-            warning('You specified the "family" parameter, but we ' + \
+            warning('You specified the "family" parameter, but we '
                     'force this to be "multinomial".')
-        
+
         # init base class first, forcing regression
         _GLMNET.__init__(self, family='multinomial', **kwargs)
 
