@@ -70,10 +70,12 @@ class DSMatrix(object):
         # this one we know straight away, so set it
         self.metric = metric
 
-        # size of dataset (checking if we're dealing with a column vector only
+        # size of dataset (checking if we're dealing with a column vector only)
         num_exem = N.shape(data_vectors)[0]
         flag_1d = False
-        if (isinstance(data_vectors, N.ndarray)):
+        # changed 4/26/09 to new way of figuring out if array is 1-D
+        #if (isinstance(data_vectors, N.ndarray)):
+        if (not(num_exem == N.size(data_vectors))):
             num_features = N.shape(data_vectors)[1]
         else:
             flag_1d = True
