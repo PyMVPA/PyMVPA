@@ -2,7 +2,7 @@ PROFILE_FILE=$(CURDIR)/$(BUILDDIR)/main.pstats
 COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
 BUILDDIR=$(CURDIR)/build
 HTML_DIR=$(BUILDDIR)/html
-DOCSRC_DIR=$(BUILDDIR)/docsrc
+DOCSRC_DIR=$(BUILDDIR)/doc
 MAN_DIR=$(BUILDDIR)/man
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=$(BUILDDIR)/pdf
@@ -126,9 +126,9 @@ manpages: mkdir-MAN_DIR
 #	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
 #		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
 
-prepare-docsrc: mkdir-DOCSRC_DIR
-	cp -Lpurv doc/* $(DOCSRC_DIR)
-	cp -Lpurv doc/pics $(DOCSRC_DIR)/examples/
+prepare-docsrc: mkdir-BUILDDIR
+	rsync --copy-unsafe-links -rvuhp doc/ $(BUILDDIR)/doc
+	rsync --copy-unsafe-links -rvhup doc/pics/ $(DOCSRC_DIR)/examples/pics
 
 references:
 	tools/bib2rst_ref.py
