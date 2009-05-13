@@ -33,7 +33,7 @@ Unreleased changes
 Releases
 ========
 
-* 0.4.2 (Mon, 6 Apr 2009)
+* 0.4.2 (..., ...)
 
   * New correlation stability measure
     (:class:`~mvpa.measures.corrstability.CorrStability`).
@@ -43,6 +43,8 @@ Releases
     :class:`~mvpa.measures.splitmeasure.TScoredFeaturewiseMeasure`.
   * New basic :class:`~mvpa.measures.glm.GLM` implementation.
   * New examples for Gaussian process regression.
+  * New example showing a searchlight analysis employing a dissimilarity
+    matrix based measure.
   * New :class:`~mvpa.mappers.zscore.ZScoreMapper`.
   * New import helper for FSL design matrices
     (:class:`~mvpa.misc.fsl.base.FslGLMDesign`).
