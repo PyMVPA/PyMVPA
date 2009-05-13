@@ -49,6 +49,7 @@ Analysis
    examples/gpr
    examples/searchlight_minimal
    examples/searchlight_2d
+   examples/searchlight_dsm
    examples/sensanas
    examples/svdclf
    examples/permutation_test
