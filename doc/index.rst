@@ -58,7 +58,8 @@ For users
 * :ref:`FAQ <chap_faq>` (short answers to common problems)
 * :ref:`Module Reference <chap_modref>` (user-oriented reference)
 * :ref:`Bibliography <chap_references>` (references to interesting literature)
-* :ref:`Development Changelog <chap_changelog>` (see what has changed)
+* :ref:`Development Changelog <chap_changelog>` [:ref:`Movie version
+  <chap_code_swarm>`] (see what has changed)
 
 .. _online documentation editor: edt/
 .. _PDF-manual: PyMVPA-Manual.pdf

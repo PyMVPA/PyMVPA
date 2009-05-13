@@ -11,7 +11,7 @@
 
 .. index:: references
 
-.. _references:
+.. _chap_references:
 
 **********
 References
