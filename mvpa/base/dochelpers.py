@@ -87,17 +87,28 @@ def _indent(text, istr='  '):
     return '\n'.join(istr + s for s in text.split('\n'))
 
 
-def _splitOutParametersStr(initdoc):
-    """ header, parameters, suffix <- initdoc
+def _splitOutParametersStr(initdoc, initial=False):
+    """Split documentation into (header, parameters, suffix)
+
+    :Parameters:
+      initdoc : string
+        The documentation string
+      initial : bool
+        Either this is an original initdoc or the one which
+        was already processed (i.e. of parent class)
     """
-    if not (":Parameters:" in initdoc):
+    sep = (_rst_sep2, ':')[int(initial)]
+    parameters_str = "%sParameters%s" % (sep, sep)
+
+    # TODO: bind it to the only word in the line
+    if not (parameters_str in initdoc):
         result = initdoc, "", ""
     else:
         # Could have been accomplished also via re.match
 
         # where new line is after :Parameters:
         # parameters header index
-        ph_i = initdoc.index(':Parameters:')
+        ph_i = initdoc.index(parameters_str)
 
         # parameters body index
         pb_i = initdoc.index('\n', ph_i+1)
@@ -201,7 +212,10 @@ def enhancedDocString(item, *args, **kwargs):
 
         # either to extend arguments
         # do only if kwargs is one of the arguments
-        extend_args = force_extend or 'kwargs' in func.func_code.co_names
+        # in python 2.5 args are no longer in co_names but in varnames
+        extend_args = force_extend or \
+                      'kwargs' in (func.func_code.co_names +
+                                   func.func_code.co_varnames)
 
         if __debug__ and not extend_args:
             debug('DOCH', 'Not extending parameters for %s' % name)
@@ -209,7 +223,7 @@ def enhancedDocString(item, *args, **kwargs):
         if initdoc is None:
             initdoc = "Initialize instance of %s" % name
 
-        initdoc, params, suffix = _splitOutParametersStr(initdoc)
+        initdoc, params, suffix = _splitOutParametersStr(initdoc, initial=True)
 
         if lcl.has_key('_paramsdoc'):
             params += '\n' + handleDocString(lcl['_paramsdoc'])
@@ -274,8 +288,9 @@ def enhancedDocString(item, *args, **kwargs):
 
     # Add information about the states if available
     if lcl.has_key('_statesdoc'):
+        # no indent is necessary since states list must be already indented
         docs += [_rst('.. note::\n  ') + 'Available state variables:',
-                 _indent(handleDocString(item._statesdoc))]
+                     handleDocString(item._statesdoc)]
 
     if len(args):
         bc_intro = _rst('  ') + 'Please refer to the documentation of the ' \
