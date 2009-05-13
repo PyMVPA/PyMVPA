@@ -195,7 +195,7 @@ class _GLMNET(Classifier):
             self.__weights = N.hstack([rpy.r.as_matrix(weights[str(i)])[1:]
                                        for i in range(1,len(self.__ulabels)+1)])
         elif self.params.family == 'gaussian':
-            self.__weights = rpy.r.as_matrix(weights)
+            self.__weights = rpy.r.as_matrix(weights)[1:]
 
 
     def _predict(self, data):
