@@ -7,18 +7,19 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Minimal Searchlight Example using Dissimilarity Matrix DatasetMeasure
-===========================
+A searchlight computing a dissimilarity matrix measure
+======================================================
 
 .. index:: searchlight, cross-validation, dissimilarity matrix
 
-This example extends the minimal Searchlight example to use a dissimilarity matrix-
-based DatasetMetric to compute Searchlight-center significance.  This is based on
-representational similarity analysis (RSA) as presented in Kriegeskorte et al. (2008,
-Frontiers in Systems Neuroscience).
+This example extends the minimal Searchlight example to use a dissimilarity
+matrix-based DatasetMetric to compute Searchlight-center significance.  This
+is based on representational similarity analysis (RSA) as presented in
+:ref:`Kriegeskorte et al. (2008) <KMB08>`.
 
 First import all necessary parts of PyMVPA.
 """
+
 from mvpa.suite import *
 
 """Create a small artificial dataset."""
@@ -34,15 +35,17 @@ dataset = MaskedDataset(samples=ds.samples, labels=ds.labels,
 in our test dataset.  This will allow us to see if there is a correlation
 between any given searchlight sphere and the experimental conditions."""
 
-# create dissimilarity matrix using the 'confusion' distance metric
+# create dissimilarity matrix using the 'confusion' distance
+# metric
 dsm = DSMatrix(dataset.labels, 'confusion')
 
 """Now it only takes three lines for a searchlight analysis."""
 
-# setup measure to be computed in each sphere (correlation distance
-# between dissimilarity matrix and the dissimilarities of a particular
-# searchlight sphere across experimental conditions), N.B. in this example
-# between-condition dissimilarity is also pearson's r (i.e., correlation distance)
+# setup measure to be computed in each sphere (correlation
+# distance between dissimilarity matrix and the dissimilarities
+# of a particular searchlight sphere across experimental
+# conditions), N.B. in this example between-condition
+# dissimilarity is also pearson's r (i.e., correlation distance)
 dsmetric = DSMDatasetMeasure(dsm, 'pearson', 'pearson')
  
 # setup searchlight with 5 mm radius and measure configured above
@@ -55,8 +58,8 @@ print 'Best performing sphere error:', max(sl_map)
 
 """
 If this analysis is done on a fMRI dataset using `NiftiDataset` the resulting
-searchlight map (`sl_map`) can be mapped back into the original dataspace
-and viewed as a brain overlay. :ref:`Another example <example_searchlight_2d>`
+searchlight map (`sl_map`) can be mapped back into the original dataspace and
+viewed as a brain overlay. :ref:`Another example <example_searchlight_2d>`
 shows a typical application of this algorithm.
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
