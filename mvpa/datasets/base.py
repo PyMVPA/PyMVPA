@@ -1656,3 +1656,162 @@ Dataset._registerAttribute("labels",  "_data", abbr='L', hasunique=True)
 Dataset._registerAttribute("chunks",  "_data", abbr='C', hasunique=True)
 # samples ids (already unique by definition)
 Dataset._registerAttribute("origids",  "_data", abbr='I', hasunique=False)
+
+
+
+# XXX This is the place to redo the Dataset base class in a more powerful, yet
+# simpler way. The basic goal is to allow for all kinds of attributes:
+#
+# 1) Samples attributes (per-sample full)
+# 2) Features attributes (per-feature stuff)
+#
+# 3) Dataset attributes (per-dataset stuff)
+#
+# Use cases:
+#
+#     1) labels and chunks -- goal: it should be possible to have multivariate
+#     labels, e.g. to specify targets for a neural network output layer
+#
+#     2) feature binding/grouping -- goal: easily define ROIs in datasets, or
+#     group/mark various types of feature so they could be selected or
+#     discarded all together
+#
+#     3) Mappers, or chains of them (this should be possible already, but could
+#     be better integrated to make applyMapper() obsolete).
+#
+#
+# Perform distortion correction on __init__(). The copy contructor
+# implementation should move into a separate classmethod.
+#
+# Think about implementing the current 'clever' attributes in terms of one-time
+# properties as suggested by Fernando on nipy-devel.
+
+# ...
+
+
+# Remaining public interface of Dataset
+class _Dataset(object):
+    """
+    """
+    def __init__(self,
+                 # for copy constructor
+                 data=None,
+                 dsattr=None,
+                 # automatic dtype conversion
+                 dtype=None,
+                 # new instances
+                 samples=None,
+                 labels=None,
+                 labels_map=None,
+                 chunks=None,
+                 origids=None,
+                 # flags
+                 check_data=True,
+                 copy_samples=False,
+                 copy_data=True,
+                 copy_dsattr=True):
+        """
+        """
+        pass
+
+
+    @property
+    def idhash(self):
+        pass
+
+
+    def idsonboundaries(self, prior=0, post=0,
+                        attributes_to_track=['labels', 'chunks'],
+                        affected_labels=None,
+                        revert=False):
+        pass
+
+
+    def summary(self, uniq=True, stats=True, idhash=False, lstats=True,
+                maxc=30, maxl=20):
+        pass
+
+
+    def summary_labels(self, maxc=30, maxl=20):
+        pass
+
+
+    def __iadd__(self, other):
+        pass
+
+
+    def __add__( self, other ):
+        pass
+
+
+    def copy(self):
+        pass
+
+
+    def selectFeatures(self, ids=None, sort=True, groups=None):
+        pass
+
+
+    def applyMapper(self, featuresmapper=None, samplesmapper=None,
+                    train=True):
+        pass
+
+
+    def selectSamples(self, ids):
+        pass
+
+
+    def index(self, *args, **kwargs):
+        pass
+
+
+    def select(self, *args, **kwargs):
+        pass
+
+
+    def where(self, *args, **kwargs):
+        pass
+
+
+    def __getitem__(self, *args):
+        pass
+
+
+    def permuteLabels(self, status, perchunk=True, assure_permute=False):
+        pass
+
+
+    def getRandomSamples(self, nperlabel):
+        pass
+
+
+    def getNSamples( self ):
+        pass
+
+
+    def getNFeatures( self ):
+        pass
+
+
+    def getLabelsMap(self):
+        pass
+
+
+    def setLabelsMap(self, lm):
+        pass
+
+
+    def setSamplesDType(self, dtype):
+        pass
+
+
+    def defineFeatureGroups(self, definition):
+        pass
+
+
+    def convertFeatureIds2FeatureMask(self, ids):
+        pass
+
+
+    def convertFeatureMask2FeatureIds(self, mask):
+        pass
