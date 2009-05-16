@@ -11,6 +11,8 @@
 
 import unittest
 import numpy as N
+from numpy.linalg import norm
+from mvpa.datasets import Dataset
 from tests_warehouse import datasets
 from mvpa.mappers.procrustean import ProcrusteanMapper
 
@@ -36,21 +38,28 @@ class ProcrusteanMapperTests(unittest.TestCase):
             if nf_s == nf_t:
                 # Test if it is indeed a rotation matrix ;)
                 self.failUnless(N.abs(1.0 - N.linalg.det(R)) < 1e-10)
-                self.failUnless(N.linalg.norm(N.dot(R, R.T)
+                self.failUnless(norm(N.dot(R, R.T)
                                               - N.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
                 pm = ProcrusteanMapper(scaling=scaling)
+                pm2 = ProcrusteanMapper(scaling=scaling)
 
-                t1, t2 = 0.2, 0.5
+                t1, t2 = d_orig[23, 1], d_orig[22, 1]
 
                 # Create source/target data
                 d = d_orig[:, :nf_s]
                 d_s = d + t1
                 d_t = N.dot(s * d, R) + t2
 
-                # train bloody mapper
+                # train bloody mapper(s)
                 pm.train(d_s, d_t)
+                ds2 = Dataset(samples=d_s, labels=d_t)
+                pm2.train(ds2)
+
+                # verify that both created the same transformation
+                self.failUnless(norm(pm._T - pm2._T) <= 1e-12)
+                self.failUnless(norm(pm._trans - pm2._trans) <= 1e-12)
 
                 # do forward transformation on the same source data
                 d_s_f = pm.forward(d_s)
@@ -59,9 +68,9 @@ class ProcrusteanMapperTests(unittest.TestCase):
                     msg="Mapped shape should be identical to the d_t")
 
                 dsf = d_s_f - d_t
-                ndsf = N.linalg.norm(dsf)/N.linalg.norm(d_t)
+                ndsf = norm(dsf)/norm(d_t)
                 if full_test:
-                    dR = N.linalg.norm(R - pm._T)
+                    dR = norm(R - pm._T)
                     self.failUnless(dR <= 1e-12,
                         msg="We should have got reconstructed rotation "
                             "perfectly. Now got dR=%g" % dR)
@@ -78,7 +87,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 d_s_f_r = pm.reverse(d_s_f)
 
                 dsfr = d_s_f_r - d_s
-                ndsfr = N.linalg.norm(dsfr)/N.linalg.norm(d_s)
+                ndsfr = norm(dsfr)/norm(d_s)
                 if full_test:
                     self.failUnless(ndsfr <= 1e-12,
                       msg="%s: Failed to reconstruct into source space correctly."

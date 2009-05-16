@@ -64,19 +64,16 @@ class ProcrusteanMapper(Mapper):
         return s
 
     # XXX we have to override train since now we have multiple datasets
-    #     alternative might be to adjust parent's train to take optional
-    #     2nd dataset
-    #
-    #     alternative could be feature groups in dataset, so we join
-    #     two datasets prior training... but since we don't have a convenience
-    #     functionality for that it might be more natural to change API here
-    def train(self, source, target):
+    #     alternative way is to assign target to the labels of the source
+    #     dataset
+    def train(self, source, target=None):
         """Train Procrustean transformation
 
         :Parameters:
           source : dataset or ndarray
-            Source space for determining the transformation
-          target : dataset or ndarray
+            Source space for determining the transformation. If target
+            is None, then labels of 'source' dataset are taken as the target
+          target : dataset or ndarray or Null
             Target space for determining the transformation
         """
 
@@ -85,8 +82,11 @@ class ProcrusteanMapper(Mapper):
         odatas = ()
         means = ()
         shapes = ()
-        #scales = ()
+
         assess_residuals = __debug__ and 'MAP_' in debug.active
+
+        if target is None:
+            target = source.labels
 
         for i,ds in enumerate((source, target)):
             if isinstance(ds, Dataset): data = N.asarray(ds.samples)
@@ -155,7 +155,7 @@ class ProcrusteanMapper(Mapper):
             T = N.dot(U[:, :nsv] * s, Vh)
 
         # figure out scale and final translation
-        # XXX with reflection False -- not sure if here or there or anywhere?
+        # XXX with reflection False -- not sure if here or there or anywhere...
         ss = sum(s)
 
         # if we were to collect standardized distance
