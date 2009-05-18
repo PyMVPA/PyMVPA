@@ -18,4 +18,9 @@ def test_initSimple():
     ok_(ds.sa.labels == labels)
     ok_(ds.sa.chunks == chunks)
 
+    # XXX but why is this puking, or rather do we want to keep cluttering the
+    # interface like this -- I'd prefer having it all inside the collection.
+    ok_(ds.labels == labels)
+    ok_(ds.chunks == chunks)
+
     ok_(sorted(ds.sa.names) == ['chunks', 'labels'])
