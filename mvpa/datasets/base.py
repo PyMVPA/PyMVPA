@@ -1694,7 +1694,7 @@ from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
 
 # Remaining public interface of Dataset
 class _Dataset(ClassWithCollections):
-    """
+    """The successor of Dataset.
     """
     # placeholder for all three basic collections of a Dataset
     # put here to be able to check whether the AttributesCollector already
@@ -1803,6 +1803,19 @@ class _Dataset(ClassWithCollections):
         # common checks should go into __init__
         return klass(samples, sa=sa)
 
+
+    def getNSamples( self ):
+        """Currently available number of patterns.
+        """
+        return self.samples.shape[0]
+
+
+    def getNFeatures( self ):
+        """Number of features per pattern.
+        """
+        return self.samples.shape[1]
+
+
 #
 #    @property
 #    def idhash(self):
@@ -1871,14 +1884,6 @@ class _Dataset(ClassWithCollections):
 #
 #
 #    def getRandomSamples(self, nperlabel):
-#        pass
-#
-#
-#    def getNSamples( self ):
-#        pass
-#
-#
-#    def getNFeatures( self ):
 #        pass
 #
 #
