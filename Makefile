@@ -213,7 +213,7 @@ upload-htmldoc: htmldoc
 #
 
 ut-%: build
-	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/test_$*.py
+	@PYTHONPATH=.:$(PYTHONPATH) nosetests mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
