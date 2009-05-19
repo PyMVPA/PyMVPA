@@ -83,6 +83,28 @@ static PyObject* doubleppcarray2numpy_array(double** carray, int rows, int cols)
     return PyArray_Return ( (PyArrayObject*) array  );
 }
 
+/* rely on built-in facility to control verbose output
+ * in the versions of libsvm >= 2.89
+ */
+#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
+
+/* borrowed from original libsvm code */
+static void print_null(const char *s) {}
+
+static void print_string_stdout(const char *s)
+{
+    fputs(s,stdout);
+    fflush(stdout);
+}
+
+/* provide convenience wrapper */
+void svm_set_verbosity(int verbosity_flag){
+    if (verbosity_flag)
+        svm_print_string = &print_string_stdout;
+    else
+        svm_print_string = &print_null;
+}
+#endif
 
 %}
 
