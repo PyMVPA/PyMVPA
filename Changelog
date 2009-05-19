@@ -61,6 +61,7 @@ Releases
     larger splits.
   * Improved speed of LIBSVM backend. Thanks to Valentin Haenel and Tiziano
     Zito.
+  * Updated included LIBSVM version to 2.89.
   * Adjust LIBSVM Python interface for recent NumPy API and latest LIBSVM
     release 2.89.
   * Refactored examples parser into a standalone tool to turn PyMVPA examples
