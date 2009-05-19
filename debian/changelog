@@ -8,8 +8,9 @@ pymvpa (0.4.2-1) unstable; urgency=low
     (Closes: #521332).
   * Bump Standards-Version to 3.8.1 -- no changes necessary.
   * Added dependency on python to the python-mvpa package to satisfy lintian.
+  * Added rsync as build-dependency, which is required for building the docs.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Mon, 06 Apr 2009 10:22:56 +0200
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 19 May 2009 08:32:49 +0200
 
 pymvpa (0.4.1-1) unstable; urgency=low
 
