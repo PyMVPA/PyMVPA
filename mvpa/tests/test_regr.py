@@ -62,7 +62,8 @@ class RegressionsTests(unittest.TestCase):
                         "dataset. Got correlation error of %s " % corr)
 
         # Test access to summary statistics
-        self.failUnless(cve.confusion.stats['Summary CCe'] < 0.5)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cve.confusion.stats['Summary CCe'] < 0.5)
 
         # To test basic plotting
         #import pylab as P
