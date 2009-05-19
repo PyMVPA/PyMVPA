@@ -9,7 +9,7 @@
 
 
 .. index:: feature selection
-.. _featsel:
+.. _chap_featsel:
 
 *****************
 Feature Selection

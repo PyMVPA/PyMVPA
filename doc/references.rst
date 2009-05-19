@@ -11,7 +11,7 @@
 
 .. index:: references
 
-.. _references:
+.. _chap_references:
 
 **********
 References
@@ -129,6 +129,13 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nn1444
 
 
+.. _KFS+09:
+
+**Kienzle, W., Franz, M. O., Schölkopf, B. & Wichmann, F. A.** (in press). Center-surround patterns emerge as optimal predictors for human saccade targets. *Journal of Vision*.
+  *This paper offers an approach to make sense out of feature sensitivities of
+  non-linear classifiers.*
+
+
 .. _KGB06:
 
 **Kriegeskorte, N., Goebel, R. & Bandettini, P.** (2006). Information-based functional brain mapping. *Proceedings of the National Academy of Sciences of the USA*, *103*, 3863–3868.
@@ -137,6 +144,12 @@ experiments.
   Keywords: :keyword:`searchlight`
 
   DOI: http://dx.doi.org/10.1073/pnas.0600244103
+
+
+.. _KMB08:
+
+**Kriegeskorte, N., Mur, M. & Bandettini, P.** (2008). Representational similarity analysis - connecting the branches of systems neuroscience. *Frontiers in Systems Neuroscience*, *2*, 4.
+  DOI: http://dx.doi.org/10.3389/neuro.06.004.2008
 
 
 .. _KCF+05:

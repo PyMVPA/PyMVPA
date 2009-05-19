@@ -7,7 +7,7 @@ from apigen import ApiDocWriter
 
 if __name__ == '__main__':
     package = 'mvpa'
-    outdir = os.path.join('build', 'docsrc', 'modref')
+    outdir = os.path.join('build', 'doc', 'modref')
     docwriter = ApiDocWriter(package, rst_extension='.rst')
     #docwriter.package_skip_patterns += ['\\.fixes$',
     #                                    '\\.externals$']

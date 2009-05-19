@@ -35,7 +35,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
-        'notrain2predict', 'ridge', 'blr', 'gnpp']
+        'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -260,11 +260,29 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
-        lars = LARS(descr="LARS(%s)" % model, model_type=model)
-        clfswh += lars
+        lars_model = LARS(descr="LARS(%s)" % model, model_type=model)
+        clfswh += lars_model
+
+        # is a regression, too
+        regrswh += lars_model
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
 
+## PBS: enet has some weird issue that causes it to fail.  GLMNET is
+## better anyway, so just use that instead
+# # enet from R via RPy
+# if externals.exists('elasticnet'):
+#     from mvpa.clfs.enet import ENET
+#     enet = ENET(descr="ENET()")
+#     clfswh += enet
+#     regrswh += enet
+
+# glmnet from R via RPy
+if externals.exists('glmnet'):
+    from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
+    clfswh += GLMNET_C(descr="GLMNET_C()")
+    regrswh += GLMNET_R(descr="GLMNET_R()")
+    
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
 

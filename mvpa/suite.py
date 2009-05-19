@@ -40,6 +40,8 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import *
 if externals.exists('elasticnet'):
     from mvpa.clfs.enet import *
+if externals.exists('glmnet'):
+    from mvpa.clfs.glmnet import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.stats import *
@@ -129,6 +131,7 @@ if externals.exists("pylab"):
 
 if externals.exists("scipy"):
     from mvpa.measures.corrcoef import *
+    from mvpa.measures.ds import *
     from mvpa.clfs.ridge import *
     from mvpa.clfs.plr import *
     from mvpa.misc.stats import *

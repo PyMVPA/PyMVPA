@@ -108,6 +108,14 @@ class SMLR(Classifier):
              doc="""Seed to be used to initialize random generator, might be
              used to replicate the run""")
 
+    unsparsify = Parameter(False, allowedtype='bool',
+             doc="""***EXPERIMENTAL*** Whether to unsparsify the weights via
+             regression. Note that it likely leads to worse classifier
+             performance, but more interpretable weights.""")
+
+    std_to_keep = Parameter(2.0, allowedtype='float',
+             doc="""Standard deviation threshold of weights to keep when
+             unsparsifying.""")
 
     def __init__(self, **kwargs):
         """Initialize an SMLR classifier.
@@ -376,6 +384,11 @@ class SMLR(Classifier):
                   "More than %d Iterations without convergence" % \
                   (self.params.maxiter)
 
+        # see if unsparsify the weights
+        if self.params.unsparsify:
+            # unsparsify
+            w = self._unsparsify_weights(X, w)
+
         # save the weights
         self.__weights_all = w
         self.__weights = w[:dataset.nfeatures, :]
@@ -393,6 +406,54 @@ class SMLR(Classifier):
                   (cycles, X.shape) +
                   "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
                   (N.min(X), N.max(X), N.min(w), N.max(w)))
+
+    def _unsparsify_weights(self, samples, weights):
+        """Unsparsify weights via least squares regression."""
+        # allocate for the new weights
+        new_weights = N.zeros(weights.shape, dtype=N.double)
+
+        # get the sample data we're predicting and the sum squared
+        # total variance
+        b = samples
+        sst = N.power(b - b.mean(0),2).sum(0)
+
+        # loop over each column
+        for i in range(weights.shape[1]):
+            w = weights[:,i]
+
+            # get the nonzero ind
+            ind = w!=0
+
+            # get the features with non-zero weights
+            a = b[:,ind]
+
+            # predict all the data with the non-zero features
+            betas = N.linalg.lstsq(a,b)[0]
+
+            # determine the R^2 for each feature based on the sum
+            # squared prediction error
+            f = N.dot(a,betas)
+            sse = N.power((b-f),2).sum(0)
+            rsquare = N.zeros(sse.shape,dtype=sse.dtype)
+            gind = sst>0
+            rsquare[gind] = 1-(sse[gind]/sst[gind])
+
+            # derrive new weights by combining the betas and weights
+            # scaled by the rsquare
+            new_weights[:,i] = N.dot(w[ind],betas)*rsquare
+
+        # take the tails
+        tozero = N.abs(new_weights) < self.params.std_to_keep*N.std(new_weights)
+        orig_zero = weights==0.0
+        if orig_zero.sum() < tozero.sum():
+            # should not end up with fewer than start
+            tozero = orig_zero
+        new_weights[tozero] = 0.0
+
+        debug('SMLR_', "Start nonzero: %d; Finish nonzero: %d" % \
+              ((weights!=0).sum(), (new_weights!=0).sum()))
+        
+        return new_weights
 
 
     def _getFeatureIds(self):

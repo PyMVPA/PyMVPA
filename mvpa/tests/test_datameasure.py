@@ -172,6 +172,57 @@ class SensitivityAnalysersTests(unittest.TestCase):
                               svmnl.getSensitivityAnalyzer)
 
 
+    @sweepargs(svm=clfswh['linear', 'svm'])
+    def testLinearSVMWeights(self, svm):
+        # assumming many defaults it is as simple as
+        sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
+
+        # and lets look at all sensitivities
+        map_ = sana(self.dataset)
+        # for now we can do only linear SVM, so lets check if we raise
+        # a concern
+        svmnl = clfswh['non-linear', 'svm'][0]
+        self.failUnlessRaises(NotImplementedError,
+                              svmnl.getSensitivityAnalyzer)
+
+    # XXX doesn't work easily with meta since it would need
+    #     to be explicitely passed to the slave classifier's
+    #     getSengetSensitivityAnalyzer
+    @sweepargs(svm=clfswh['linear', 'svm', 'libsvm', '!sg', '!meta'])
+    def testLinearSVMWeightsPerClass(self, svm):
+        # assumming many defaults it is as simple as
+        kwargs = dict(combiner=None, transformer=None,
+                      enable_states=["sensitivities"])
+        sana_split = svm.getSensitivityAnalyzer(
+            split_weights=True, **kwargs)
+        sana_full = svm.getSensitivityAnalyzer(
+            force_training=False, **kwargs)
+
+        # and lets look at all sensitivities
+        ds2 = datasets['uni4large'].copy()
+        ds2.zscore(baselinelabels = [2, 3])
+        ds2 = ds2['labels', [0,1]]
+
+        map_split = sana_split(ds2)
+        map_full = sana_full(ds2)
+
+        self.failUnlessEqual(map_split.shape, (ds2.nfeatures, 2))
+        self.failUnlessEqual(map_full.shape,  (ds2.nfeatures, ))
+
+        # just to verify that we split properly and if we reconstruct
+        # manually we obtain the same
+        dmap = (-1*map_split[:, 1]  + map_split[:, 0]) - map_full
+        self.failUnless((N.abs(dmap) <= 1e-10).all())
+        #print "____"
+        #print map_split
+        #print SMLR().getSensitivityAnalyzer(combiner=None)(ds2)
+
+        # for now we can do split weights for binary tasks only, so
+        # lets check if we raise a concern
+        self.failUnlessRaises(NotImplementedError,
+                              sana_split, datasets['uni3medium'])
+
+
     def testSplitFeaturewiseDatasetMeasure(self):
         ds = datasets['uni3small']
         sana = SplitFeaturewiseDatasetMeasure(

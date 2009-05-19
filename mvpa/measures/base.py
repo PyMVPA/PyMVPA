@@ -751,3 +751,4 @@ class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAn
         # devguide's TODO lists this point to 'disguss'
         sens_mapped = self.clf.maskclf.mapper.reverse(sens.T)
         return sens_mapped.T
+

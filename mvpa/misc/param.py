@@ -10,11 +10,16 @@
 
 __docformat__ = 'restructuredtext'
 
+import re
 import textwrap
 from mvpa.misc.state import CollectableAttribute
 
 if __debug__:
     from mvpa.base import debug
+
+_whitespace_re = re.compile('\n\s+|^\s+')
+
+__all__ = [ 'Parameter', 'KernelParameter' ]
 
 class Parameter(CollectableAttribute):
     """This class shall serve as a representation of a parameter.
@@ -84,8 +89,12 @@ class Parameter(CollectableAttribute):
                 doc += " (Default: %s)" % self.default
             except:
                 pass
+            # Explicitly deal with multiple spaces, for some reason
+            # replace_whitespace is non-effective
+            doc = _whitespace_re.sub(' ', doc)
             paramsdoc += ['  ' + x
-                          for x in textwrap.wrap(doc, width=width-len(indent))]
+                          for x in textwrap.wrap(doc, width=width-len(indent),
+                                                 replace_whitespace=True)]
         except Exception, e:
             pass
 

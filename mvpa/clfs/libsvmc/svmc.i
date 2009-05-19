@@ -30,10 +30,10 @@ struct svm_model
 static PyObject* 
 svm_node_matrix2numpy_array(struct svm_node** matrix, int rows, int cols)
 {
-    int dims[2] = {rows,cols};
+    npy_intp dims[2] = {rows,cols};
 
     PyObject* array = 0;
-    array = PyArray_FromDims ( 2, dims, NPY_DOUBLE );
+    array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
 
     /* array subscription is [row][column] */
     PyArrayObject* a = (PyArrayObject*) array;
@@ -61,10 +61,10 @@ static PyObject* doubleppcarray2numpy_array(double** carray, int rows, int cols)
         return(NULL);
     }
 
-    int dims[2] = {rows,cols};
+    npy_intp dims[2] = {rows,cols};
 
     PyObject* array = 0;
-    array = PyArray_FromDims ( 2, dims, NPY_DOUBLE );
+    array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
 
     /* array subscription is [row][column] */
     PyArrayObject* a = (PyArrayObject*) array;
@@ -83,6 +83,28 @@ static PyObject* doubleppcarray2numpy_array(double** carray, int rows, int cols)
     return PyArray_Return ( (PyArrayObject*) array  );
 }
 
+/* rely on built-in facility to control verbose output
+ * in the versions of libsvm >= 2.89
+ */
+#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
+
+/* borrowed from original libsvm code */
+static void print_null(const char *s) {}
+
+static void print_string_stdout(const char *s)
+{
+    fputs(s,stdout);
+    fflush(stdout);
+}
+
+/* provide convenience wrapper */
+void svm_set_verbosity(int verbosity_flag){
+    if (verbosity_flag)
+        svm_print_string = &print_string_stdout;
+    else
+        svm_print_string = &print_null;
+}
+#endif
 
 %}
 

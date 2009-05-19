@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""Singular-value decomposition mapper"""
 
 __docformat__ = 'restructuredtext'
 

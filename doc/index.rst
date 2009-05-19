@@ -36,7 +36,7 @@ The `online documentation editor`_ is now available [11 Feb 2009]
 PyMVPA 0.4.1 is out [23 Jan 2009]
 
   This is mostly a bugfix release with a futher improved documentation.
-  See the :ref:`changelog <changelog>` for details.
+  See the :ref:`changelog <chap_changelog>` for details.
 
 
 New articles on PyMVPA available [21 Jan 2009]
@@ -54,11 +54,12 @@ For users
 * :ref:`User Documentation <contents>` [PDF-manual_] (**the** documentation) --
   it is also possible to edit and improve the documentation, using the `online
   documentation editor`_.
-* :ref:`Installation Instructions <installation>`
-* :ref:`FAQ <faq>` (short answers to common problems)
-* :ref:`Module Reference <modref>` (user-oriented reference)
-* :ref:`Bibliography <references>` (references to interesting literature)
-* :ref:`Development Changelog <changelog>` (see what has changed)
+* :ref:`Installation Instructions <chap_installation>`
+* :ref:`FAQ <chap_faq>` (short answers to common problems)
+* :ref:`Module Reference <chap_modref>` (user-oriented reference)
+* :ref:`Bibliography <chap_references>` (references to interesting literature)
+* :ref:`Development Changelog <chap_changelog>` [:ref:`Movie version
+  <chap_code_swarm>`] (see what has changed)
 
 .. _online documentation editor: edt/
 .. _PDF-manual: PyMVPA-Manual.pdf
@@ -75,7 +76,7 @@ For users
 For developers
 --------------
 
-* :ref:`Developer Guidelines <devguide>` [PDF-guide_] (information for people
+* :ref:`Developer Guidelines <chap_devguide>` [PDF-guide_] (information for people
   contributing code)
 * `API Reference`_ (comprehensive and up-to-date information about the details
   of the implementation)
@@ -90,7 +91,7 @@ License
 PyMVPA is free-software (beer and speech) and covered by the `MIT License`_.
 This applies to all source code, documentation, examples and snippets inside
 the source distribution (including this website). Please see the
-:ref:`appendix of the manual <license>` for the copyright statement and the
+:ref:`appendix of the manual <chap_license>` for the copyright statement and the
 full text of the license.
 
 .. _MIT License: http://www.opensource.org/licenses/mit-license.php
