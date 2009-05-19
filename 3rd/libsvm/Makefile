@@ -22,4 +22,4 @@ $(LIB): $(MISC:.cpp=.o)
 
 clean:
 	rm -rf $(TDIR)
-	rm *-stamp
+	rm -f *-stamp
