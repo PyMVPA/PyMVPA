@@ -9,9 +9,12 @@
 """Wavelet mappers"""
 
 from mvpa.base import externals
-externals.exists('pywt', raiseException=True)
 
-import pywt
+if externals.exists('pywt', raiseException=True):
+    # import conditional to be able to import the whole module while building
+    # the docs even if pywt is not installed
+    import pywt
+
 import numpy as N
 
 from mvpa.base import warning
