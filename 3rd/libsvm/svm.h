@@ -1,9 +1,13 @@
 #ifndef _LIBSVM_H
 #define _LIBSVM_H
 
+#define LIBSVM_VERSION 289
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern int libsvm_version;
 
 struct svm_node
 {
@@ -62,7 +66,8 @@ void svm_destroy_param(struct svm_parameter *param);
 
 const char *svm_check_parameter(const struct svm_problem *prob, const struct svm_parameter *param);
 int svm_check_probability_model(const struct svm_model *model);
-void svm_set_verbosity(int verbosity_flag);
+
+extern void (*svm_print_string) (const char *);
 
 #ifdef __cplusplus
 }
