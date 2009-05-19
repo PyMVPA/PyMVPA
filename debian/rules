@@ -12,8 +12,10 @@ DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
 
 doc: doc-stamp
 doc-stamp:
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) doc
 	touch $@
+endif
 
 clean::
 	$(MAKE) distclean
@@ -33,8 +35,13 @@ install/python-mvpa-doc::
 
 install/python-mvpa-lib::
 	# move libraries into the python-mvpa-lib package
-	mkdir -p debian/python-mvpa-lib/usr/
-	mv debian/python-mvpa/usr/lib debian/python-mvpa-lib/usr/
+	for lib in $$(find debian/python-mvpa/usr -name '*.so'); do \
+	   sdir=$$(dirname $$lib) ; \
+	   tdir=debian/python-mvpa-lib/$${sdir#*python-mvpa/} ; \
+	   mkdir -p $$tdir ; \
+	   echo "Moving '$$lib' into '$$tdir'." ; \
+	   mv $$lib $$tdir ; \
+	done
 
 # we need to move libraries away first, hence dependence on -lib
 binary-install/python-mvpa:: install/python-mvpa-lib
@@ -43,7 +50,7 @@ binary-install/python-mvpa-lib::
 	# assure that there is no mvpa module itself
 	# actually remove everything under ../share/.. since that is provided
 	# by python-mvpa. That prevents e.g. duplicate egg-info files.
-	rm -rf debian/python-mvpa-lib/usr/share/python-support/python-mvpa-lib/*
+#	rm -rf debian/python-mvpa-lib/usr/share/python-support/python-mvpa-lib/*
 
 # install directly into package directory (despite multiple packages)
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
@@ -51,6 +58,8 @@ DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
 # and exemplar data (they are small excerpts anyways)
 DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
 # -doc package contents
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/latex/PyMVPA*.pdf
 DEB_INSTALL_EXAMPLES_python-mvpa-doc := doc/examples/*
+endif
 

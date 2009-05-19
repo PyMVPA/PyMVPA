@@ -9,6 +9,8 @@ pymvpa (0.4.2-1) unstable; urgency=low
   * Bump Standards-Version to 3.8.1 -- no changes necessary.
   * Added dependency on python to the python-mvpa package to satisfy lintian.
   * Added rsync as build-dependency, which is required for building the docs.
+  * The package now honors 'nodoc' in DEB_BUILD_OPTIONS. This is intended to
+    help backporting to releases with insufficient python-sphinx versions.
 
  -- Michael Hanke <michael.hanke@gmail.com>  Tue, 19 May 2009 08:32:49 +0200
 
