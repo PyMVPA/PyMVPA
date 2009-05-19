@@ -76,6 +76,7 @@ from mvpa.mappers.base import *
 from mvpa.mappers.metric import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
+from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.samplegroup import *
 from mvpa.mappers.som import *
