@@ -3,7 +3,10 @@
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 DEB_PYTHON_SYSTEM = pysupport
+# for earlier cdbs versions
 DEB_PYTHON_MODULE_PACKAGE = python-mvpa
+# for cdbs >= 0.4.54
+DEB_PYTHON_MODULE_PACKAGES = python-mvpa python-mvpa-lib
 include /usr/share/cdbs/1/class/python-distutils.mk
 
 # enable the LIBSVM wrapper
@@ -44,7 +47,9 @@ install/python-mvpa-lib::
 	done
 
 # we need to move libraries away first, hence dependence on -lib
-binary-install/python-mvpa:: install/python-mvpa-lib
+# Also without this step, movemodules from pysupport would not
+# move arch-indep part of the module under pyshared
+install/python-mvpa:: install/python-mvpa-lib
 
 binary-install/python-mvpa-lib::
 	# assure that there is no mvpa module itself
