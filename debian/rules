@@ -23,10 +23,18 @@ endif
 clean::
 	$(MAKE) distclean
 
-build/python-mvpa::
+# run at install otherwise at build it tends to do them twice for some
+# reason
+install/python-mvpa::
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	MVPA_TESTS_LOWMEM=yes MVPA_TESTS_QUICK=yes MVPA_TESTS_LABILE=no \
-		$(MAKE) unittest
+	for buildver in $(cdbs_python_build_versions); do \
+		echo "I: Running PyMVPA unittests using python$$buildver"; \
+        cd $(CURDIR) && cd $(DEB_SRCDIR)/build/lib.*-$$buildver && \
+		ln -s $(CURDIR)/mvpa/data mvpa/ && \
+		MVPA_TESTS_LOWMEM=yes MVPA_TESTS_QUICK=yes MVPA_TESTS_LABILE=no PYTHONPATH=. \
+         $(call cdbs_python_binary,python$$buildver) mvpa/tests/main.py && \
+		rm mvpa/data; \
+    done
 endif
 
 build/python-mvpa-doc:: doc
