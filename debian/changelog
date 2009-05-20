@@ -1,6 +1,7 @@
 pymvpa (0.4.2-1) unstable; urgency=low
 
-  * new upstream release.
+  [ Michael Hanke ]
+  * New upstream release.
   * Removing the circular dependency between python-mvpa and python-mvpa-lib
     (Closes: #519129).
   * Improve long description of python-mvpa-lib and turn it into complete
@@ -12,7 +13,12 @@ pymvpa (0.4.2-1) unstable; urgency=low
   * The package now honors 'nodoc' in DEB_BUILD_OPTIONS. This is intended to
     help backporting to releases with insufficient python-sphinx versions.
 
- -- Michael Hanke <michael.hanke@gmail.com>  Tue, 19 May 2009 08:32:49 +0200
+  [ Yaroslav Halchenko ]
+  * Compatible with cdbs >= 0.4.54 (use of DEB_PYTHON_MODULE_PACKAGES) and
+    recent pysupport (>=0.9).
+  * Run unittests for each supported python version during build.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 May 2009 23:43:04 -0400
 
 pymvpa (0.4.1-1) unstable; urgency=low
 
