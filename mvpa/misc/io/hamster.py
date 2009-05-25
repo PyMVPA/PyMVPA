@@ -13,8 +13,6 @@ __docformat__ = 'restructuredtext'
 import os
 
 from mvpa.base import externals
-externals.exists('cPickle', raiseException=True)
-externals.exists('gzip', raiseException=True)
 
 _d_geti_ = dict.__getitem__
 _d_seti_ = dict.__setitem__
@@ -22,7 +20,9 @@ _d_seti_ = dict.__setitem__
 _o_geta_ = dict.__getattribute__
 _o_seta_ = dict.__setattr__
 
-import cPickle, gzip
+if externals.exists('cPickle', raiseException=True) and \
+   externals.exists('gzip', raiseException=True):
+    import cPickle, gzip
 
 if __debug__:
     from mvpa.base import debug

@@ -13,12 +13,12 @@ import unittest
 import numpy as N
 
 from mvpa.base import externals
-externals.exists('scipy', raiseException=True)
 
 from mvpa.datasets import Dataset
 from mvpa.datasets.miscfx import removeInvariantFeatures
 
-from scipy import linalg
+if externals.exists('scipy', raiseException=True):
+    from scipy import linalg
 from mvpa.datasets.miscfx import detrend
 
 class MiscDatasetFxSpTests(unittest.TestCase):

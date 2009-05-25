@@ -16,15 +16,16 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base import externals
-externals.exists("pylab", raiseException=True)
-import pylab as P
-import matplotlib.numerix.ma as M
 
-externals.exists("griddata", raiseException=True)
-from mvpa.support.griddata import griddata
+if externals.exists("pylab", raiseException=True):
+    import pylab as P
+    import matplotlib.numerix.ma as M
 
-externals.exists("scipy", raiseException=True)
-from scipy.optimize import leastsq
+if externals.exists("griddata", raiseException=True):
+    from mvpa.support.griddata import griddata
+
+if externals.exists("scipy", raiseException=True):
+    from scipy.optimize import leastsq
 
 
 # TODO : add optional plotting labels for the sensors
