@@ -15,12 +15,13 @@ This is a wrapper class around the corresponding MDP nodes LLE and HLLE
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
-externals.exists('mdp >= 2.4', raiseException=True)
 
 import numpy as N
 
 from mvpa.mappers.base import Mapper
-from mdp.nodes import LLENode, HLLENode
+
+if externals.exists('mdp >= 2.4', raiseException=True):
+    from mdp.nodes import LLENode, HLLENode
 
 
 class LLEMapper(Mapper):

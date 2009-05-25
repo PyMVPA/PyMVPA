@@ -14,11 +14,10 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 import mvpa.base.externals as externals
-externals.exists('rpy', raiseException=True)
-externals.exists('elasticnet', raiseException=True)
 
 # do conditional to be able to build module reference
-if externals.exists('rpy') and externals.exists('elasticnet'):
+if externals.exists('rpy', raiseException=True) and \
+   externals.exists('elasticnet', raiseException=True):
     import rpy
     rpy.r.library('elasticnet')
 

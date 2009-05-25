@@ -24,10 +24,12 @@ from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.datasets import Dataset
 
-externals.exists("scipy", raiseException=True)
-from scipy.linalg import cho_solve as SLcho_solve
-from scipy.linalg import cholesky as SLcholesky
-import scipy.linalg as SL
+if externals.exists("scipy", raiseException=True):
+    from scipy.linalg import cho_solve as SLcho_solve
+    from scipy.linalg import cholesky as SLcholesky
+    import scipy.linalg as SL
+    # Some local binding for bits of speed up
+    SLAError = SL.basic.LinAlgError
 
 if __debug__:
     from mvpa.base import debug
@@ -39,7 +41,6 @@ Ndiag = N.diag
 NLAcholesky = N.linalg.cholesky
 NLAsolve = N.linalg.solve
 NLAError = N.linalg.linalg.LinAlgError
-SLAError = SL.basic.LinAlgError
 eps64 = N.finfo(N.float64).eps
 
 # Some precomputed items. log is relatively expensive
