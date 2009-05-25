@@ -16,8 +16,8 @@ import numpy as N
 from mvpa.base import externals
 from mvpa.misc.exceptions import InvalidHyperparameterError
 
-externals.exists("scipy", raiseException=True)
-import scipy.linalg as SL
+if externals.exists("scipy", raiseException=True):
+    import scipy.linalg as SL
 
 # no sense to import this module if openopt is not available
 if externals.exists("openopt", raiseException=True):

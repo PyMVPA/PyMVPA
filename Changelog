@@ -33,7 +33,7 @@ Unreleased changes
 Releases
 ========
 
-* 0.4.2 (Tue, 19 May 2009)
+* 0.4.2 (Mon, 25 May 2009)
 
   * New correlation stability measure
     (:class:`~mvpa.measures.corrstability.CorrStability`).

@@ -10,9 +10,13 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
-import nifti
 import os
+import numpy as N
+
+from mvpa.base import externals
+if externals.exists('nifti', raiseException=True):
+    import nifti
+
 
 class MelodicResults( object ):
     """Easy access to MELODIC output.
