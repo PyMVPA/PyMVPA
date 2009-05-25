@@ -15,8 +15,8 @@ import mvpa
 from mvpa.misc.cmdline import parser, opts, opt
 from mvpa.base import verbose, warning, externals
 
-externals.exists('nifti', raiseException=True)
-from nifti import NiftiImage
+if externals.exists('nifti', raiseException=True):
+    from nifti import NiftiImage
 
 if __debug__:
     from mvpa.base import debug

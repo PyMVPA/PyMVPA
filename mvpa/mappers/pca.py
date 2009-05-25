@@ -16,7 +16,9 @@ from mvpa.base import warning
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import ProjectionMapper
 
-from mdp.nodes import NIPALSNode
+import mvpa.base.externals as externals
+if externals.exists('mdp', raiseException=True):
+    from mdp.nodes import NIPALSNode
 
 
 class PCAMapper(ProjectionMapper):

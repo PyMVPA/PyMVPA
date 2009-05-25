@@ -16,8 +16,8 @@ import matplotlib as mpl
 
 from mvpa.base import warning, externals
 
-externals.exists('nifti', raiseException=True)
-from nifti import NiftiImage
+if externals.exists('nifti', raiseException=True):
+    from nifti import NiftiImage
 
 _interactive_backends = ['GTKAgg', 'TkAgg']
 
