@@ -12,13 +12,15 @@ pymvpa (0.4.2-1) unstable; urgency=low
   * Added rsync as build-dependency, which is required for building the docs.
   * The package now honors 'nodoc' in DEB_BUILD_OPTIONS. This is intended to
     help backporting to releases with insufficient python-sphinx versions.
+  * Added 'graphviz' as a build-dependency (necessary for Sphinx' inheritance
+    graphs).
 
   [ Yaroslav Halchenko ]
   * Compatible with cdbs >= 0.4.54 (use of DEB_PYTHON_MODULE_PACKAGES) and
     recent pysupport (>=0.9).
   * Run unittests for each supported python version during build.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 May 2009 23:43:04 -0400
+ -- Michael Hanke <michael.hanke@gmail.com>  Mon, 25 May 2009 11:21:39 +0200
 
 pymvpa (0.4.1-1) unstable; urgency=low
 
