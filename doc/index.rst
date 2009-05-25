@@ -27,16 +27,16 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
+PyMVPA 0.4.2 is out [25 May 2009]
+
+  This release brings lots of new stuff, fixes for old stuff and some speed
+  improvements. See the :ref:`changelog <chap_changelog>` for details.
+
+
 The `online documentation editor`_ is now available [11 Feb 2009]
 
   It is powered by pydocweb_ -- the same software that also drives the Numpy
   documentation editor.
-
-
-PyMVPA 0.4.1 is out [23 Jan 2009]
-
-  This is mostly a bugfix release with a futher improved documentation.
-  See the :ref:`changelog <chap_changelog>` for details.
 
 
 New articles on PyMVPA available [21 Jan 2009]
