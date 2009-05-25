@@ -13,9 +13,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 from mvpa.base import externals
-externals.exists("scipy", raiseException=True)
 
-from scipy.linalg import lstsq
+if externals.exists("scipy", raiseException=True):
+    from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier
 

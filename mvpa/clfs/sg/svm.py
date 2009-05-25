@@ -25,11 +25,13 @@ import numpy as N
 
 
 # Rely on SG
-import shogun.Features
-import shogun.Classifier
-import shogun.Regression
-import shogun.Kernel
-import shogun.Library
+from mvpa.base import externals
+if externals.exists('shogun', raiseException=True):
+    import shogun.Features
+    import shogun.Classifier
+    import shogun.Regression
+    import shogun.Kernel
+    import shogun.Library
 
 import operator
 
@@ -107,11 +109,17 @@ class SVM(_SVM):
                             doc='Number of threads to utilize')
 
     # NOTE: gamma is width in SG notation for RBF(Gaussian)
-    _KERNELS = { "linear": (shogun.Kernel.LinearKernel,   ('scale',), LinearSVMWeights),
-                 "rbf" :   (shogun.Kernel.GaussianKernel, ('gamma',), None),
-                 "rbfshift" : (shogun.Kernel.GaussianShiftKernel, ('gamma', 'max_shift', 'shift_step'), None),
-                 "sigmoid" : (shogun.Kernel.SigmoidKernel, ('cache_size', 'gamma', 'coef0'), None),
-                }
+    _KERNELS = {}
+    if externals.exists('shogun', raiseException=True):
+        _KERNELS = { "linear": (shogun.Kernel.LinearKernel,
+                               ('scale',), LinearSVMWeights),
+                     "rbf" :   (shogun.Kernel.GaussianKernel,
+                               ('gamma',), None),
+                     "rbfshift": (shogun.Kernel.GaussianShiftKernel,
+                                 ('gamma', 'max_shift', 'shift_step'), None),
+                     "sigmoid": (shogun.Kernel.SigmoidKernel,
+                                ('cache_size', 'gamma', 'coef0'), None),
+                    }
 
     _KNOWN_PARAMS = [ 'epsilon' ]
     _KNOWN_KERNEL_PARAMS = [ ]
@@ -147,31 +155,37 @@ class SVM(_SVM):
     And yes currently we only implemented parallel training for svmlight,
     however all SVMs can be evaluated in parallel.
     """
-    _KNOWN_IMPLEMENTATIONS = {
-        "libsvm" : (shogun.Classifier.LibSVM, ('C',), ('multiclass', 'binary'),
-                    "LIBSVM's C-SVM (L2 soft-margin SVM)"),
-        "gmnp" : (shogun.Classifier.GMNPSVM, ('C',), ('multiclass', 'binary'),
-                  "Generalized Nearest Point Problem SVM"),
-        # XXX should have been GPDT, shogun has it fixed since some version
-        "gpbt" : (shogun.Classifier.GPBTSVM, ('C',), ('binary',),
-                  "Gradient Projection Decomposition Technique for large-scale SVM problems"),
-        "gnpp" : (shogun.Classifier.GNPPSVM, ('C',), ('binary',),
-                  "Generalized Nearest Point Problem SVM"),
+    _KNOWN_IMPLEMENTATIONS = {}
+    if externals.exists('shogun', raiseException=True):
+        _KNOWN_IMPLEMENTATIONS = {
+            "libsvm" : (shogun.Classifier.LibSVM, ('C',),
+                       ('multiclass', 'binary'),
+                        "LIBSVM's C-SVM (L2 soft-margin SVM)"),
+            "gmnp" : (shogun.Classifier.GMNPSVM, ('C',),
+                     ('multiclass', 'binary'),
+                      "Generalized Nearest Point Problem SVM"),
+            # XXX should have been GPDT, shogun has it fixed since some version
+            "gpbt" : (shogun.Classifier.GPBTSVM, ('C',), ('binary',),
+                      "Gradient Projection Decomposition Technique for " \
+                      "large-scale SVM problems"),
+            "gnpp" : (shogun.Classifier.GNPPSVM, ('C',), ('binary',),
+                      "Generalized Nearest Point Problem SVM"),
 
-        ## TODO: Needs sparse features...
-        # "svmlin" : (shogun.Classifier.SVMLin, ''),
-        # "liblinear" : (shogun.Classifier.LibLinear, ''),
-        # "subgradient" : (shogun.Classifier.SubGradientSVM, ''),
-        ## good 2-class linear SVMs
-        # "ocas" : (shogun.Classifier.SVMOcas, ''),
-        # "sgd" : ( shogun.Classifier.SVMSGD, ''),
+            ## TODO: Needs sparse features...
+            # "svmlin" : (shogun.Classifier.SVMLin, ''),
+            # "liblinear" : (shogun.Classifier.LibLinear, ''),
+            # "subgradient" : (shogun.Classifier.SubGradientSVM, ''),
+            ## good 2-class linear SVMs
+            # "ocas" : (shogun.Classifier.SVMOcas, ''),
+            # "sgd" : ( shogun.Classifier.SVMSGD, ''),
 
-        # regressions
-        "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',), ('regression',),
-                   "LIBSVM's epsilon-SVR"),
-        "krr": (shogun.Regression.KRR, ('tau',), ('regression',),
-                "Kernel Ridge Regression"),
-        }
+            # regressions
+            "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',),
+                      ('regression',),
+                       "LIBSVM's epsilon-SVR"),
+            "krr": (shogun.Regression.KRR, ('tau',), ('regression',),
+                    "Kernel Ridge Regression"),
+            }
 
 
     def __init__(self,
