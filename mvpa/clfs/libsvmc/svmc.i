@@ -3,7 +3,7 @@
 %{
 #include "svm.h"
 #include <Python.h>
-#include <numpy/arrayobject.h>
+#include <arrayobject.h>
 
 struct svm_model
 {
