@@ -235,9 +235,10 @@ class _GLMNET(Classifier):
             # is gaussian, so just remove last dim of values
             values = values[:,0]
 
-        if not classes is None:
+        # values need to be set anyways if values state is enabled
+        self.values = values
+        if classes is not None:
             # set the values and return none
-            self.values = values
             return classes
         else:
             # return the values as predictions
