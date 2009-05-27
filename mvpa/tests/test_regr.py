@@ -13,11 +13,12 @@ from mvpa.support.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.errorfx import RMSErrorFx, RelativeRMSErrorFx, \
      CorrErrorFx, CorrErrorPFx
 
+from mvpa.clfs.meta import SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -48,22 +49,34 @@ class RegressionsTests(unittest.TestCase):
             enable_states=['training_confusion', 'confusion'])
         corr = cve(ds)
 
-        #TODO: test confusion statistics
-        s0 = cve.confusion.asstring(short=True)
-        s1 = cve.confusion.asstring(short=False)
+        splitregr = SplitClassifier(regr,
+                                    splitter=OddEvenSplitter(),
+                                    enable_states=['training_confusion', 'confusion'])
+        splitregr.train(ds)
+        split_corr = cve.confusion.stats['Summary CCe']
 
-        for s in [s0, s1]:
-            self.failUnless(len(s) > 10,
-                            msg="We should get some string representation "
-                            "of regression summary. Got %s" % s)
+        for confusion, error in ((cve.confusion, corr),
+                                 (splitregr.confusion, split_corr),
+                                 (splitregr.training_confusion, split_corr),
+                                 ):
+            #TODO: test confusion statistics
+            s0 = confusion.asstring(short=True)
+            s1 = confusion.asstring(short=False)
 
-        self.failUnless(corr<0.2,
-                        msg="Regressions should perform well on a simple "
-                        "dataset. Got correlation error of %s " % corr)
+            for s in [s0, s1]:
+                self.failUnless(len(s) > 10,
+                                msg="We should get some string representation "
+                                "of regression summary. Got %s" % s)
 
-        # Test access to summary statistics
-        if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve.confusion.stats['Summary CCe'] < 0.5)
+            self.failUnless(error<0.2,
+                            msg="Regressions should perform well on a simple "
+                            "dataset. Got correlation error of %s " % error)
+
+            # Test access to summary statistics
+            if cfg.getboolean('tests', 'labile', default='yes'):
+                self.failUnless(confusion.stats['Summary CCe'] < 0.5)
+
+        split_predictions = splitregr.predict(ds.samples) # just to check if it works fine
 
         # To test basic plotting
         #import pylab as P
@@ -85,6 +98,7 @@ class RegressionsTests(unittest.TestCase):
         cverror = cv(ds)
         self.failUnless(len(clf.values) == ds['chunks', 1].nsamples)
         clf.states._resetEnabledTemporarily()
+
 
 
 def suite():
