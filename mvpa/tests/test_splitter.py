@@ -91,24 +91,29 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[1] != None)
 
     def testNGroupSplit(self):
+        """Test NGroupSplitter alongside with the reversal of the
+        order of spit out datasets
+        """
         # Test 2 groups like HalfSplitter first
         hs = NGroupSplitter(2)
-        splits = [ (train, test) for (train, test) in hs(self.data) ]
+        hs_reversed = NGroupSplitter(2, reverse=True)
 
-        self.failUnless(len(splits) == 2)
+        for isreversed, splitter in enumerate((hs, hs_reversed)):
+            splits = list(splitter(self.data))
+            self.failUnless(len(splits) == 2)
 
-        for i,p in enumerate(splits):
-            self.failUnless( len(p) == 2 )
-            self.failUnless( p[0].nsamples == 50 )
-            self.failUnless( p[1].nsamples == 50 )
+            for i, p in enumerate(splits):
+                self.failUnless( len(p) == 2 )
+                self.failUnless( p[0].nsamples == 50 )
+                self.failUnless( p[1].nsamples == 50 )
 
-        self.failUnless((splits[0][1].uniquechunks == [0, 1, 2, 3, 4]).all())
-        self.failUnless((splits[0][0].uniquechunks == [5, 6, 7, 8, 9]).all())
-        self.failUnless((splits[1][1].uniquechunks == [5, 6, 7, 8, 9]).all())
-        self.failUnless((splits[1][0].uniquechunks == [0, 1, 2, 3, 4]).all())
+            self.failUnless((splits[0][1-isreversed].uniquechunks == [0, 1, 2, 3, 4]).all())
+            self.failUnless((splits[0][isreversed].uniquechunks == [5, 6, 7, 8, 9]).all())
+            self.failUnless((splits[1][1-isreversed].uniquechunks == [5, 6, 7, 8, 9]).all())
+            self.failUnless((splits[1][isreversed].uniquechunks == [0, 1, 2, 3, 4]).all())
 
         # check if it works on pure odd and even chunk ids
-        moresplits = [ (train, test) for (train, test) in hs(splits[0][0])]
+        moresplits = list(hs(splits[0][0]))
 
         for split in moresplits:
             self.failUnless(split[0] != None)
@@ -116,22 +121,25 @@ class SplitterTests(unittest.TestCase):
 
         # now test more groups
         s5 = NGroupSplitter(5)
+        s5_reversed = NGroupSplitter(5, reverse=True)
 
         # get the splits
-        splits = [ (train, test) for (train, test) in s5(self.data) ]
+        for isreversed, s5splitter in enumerate((s5, s5_reversed)):
+            splits = list(s5splitter(self.data))
 
-        # must have 10 splits
-        self.failUnless(len(splits) == 5)
+            # must have 10 splits
+            self.failUnless(len(splits) == 5)
 
-        # check split content
-        self.failUnless((splits[0][1].uniquechunks == [0, 1]).all())
-        self.failUnless((splits[0][0].uniquechunks == [2, 3, 4, 5, 6, 7, 8, 9]).all())
-        self.failUnless((splits[1][1].uniquechunks == [2, 3]).all())
-        self.failUnless((splits[1][0].uniquechunks == [0, 1, 4, 5, 6, 7, 8, 9]).all())
-        # ...
-        self.failUnless((splits[4][1].uniquechunks == [8, 9]).all())
-        self.failUnless((splits[4][0].uniquechunks == [0, 1, 2, 3, 4, 5, 6, 7]).all())
-        
+            # check split content
+            self.failUnless((splits[0][1-isreversed].uniquechunks == [0, 1]).all())
+            self.failUnless((splits[0][isreversed].uniquechunks == [2, 3, 4, 5, 6, 7, 8, 9]).all())
+            self.failUnless((splits[1][1-isreversed].uniquechunks == [2, 3]).all())
+            self.failUnless((splits[1][isreversed].uniquechunks == [0, 1, 4, 5, 6, 7, 8, 9]).all())
+            # ...
+            self.failUnless((splits[4][1-isreversed].uniquechunks == [8, 9]).all())
+            self.failUnless((splits[4][isreversed].uniquechunks == [0, 1, 2, 3, 4, 5, 6, 7]).all())
+
+
         # Test for too many groups
         def splitcall(spl, dat):
             return [ (train, test) for (train, test) in spl(dat) ]
