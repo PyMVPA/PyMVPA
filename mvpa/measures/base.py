@@ -69,7 +69,7 @@ class DatasetMeasure(ClassWithCollections):
     def __init__(self, transformer=None, null_dist=None, **kwargs):
         """Does nothing special.
 
-        :Parameter:
+        :Parameters:
           transformer: Functor
             This functor is called in `__call__()` to perform a final
             processing step on the to be returned dataset measure. If None,

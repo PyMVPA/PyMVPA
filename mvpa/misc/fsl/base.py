@@ -93,9 +93,9 @@ class McFlirtParams(ColumnData):
     header_def = ['rot1', 'rot2', 'rot3', 'x', 'y', 'z']
 
     def __init__(self, source):
-        """
-        :Parameter:
+        """Initialize McFlirtParams
 
+        :Parameter:
             source: str
                 Filename of a parameter file.
         """

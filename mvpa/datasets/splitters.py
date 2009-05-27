@@ -497,7 +497,7 @@ class HalfSplitter(Splitter):
 
 class NGroupSplitter(Splitter):
     """Split a dataset into N-groups of the sample attribute.
-    
+
     For example, NGroupSplitter(2) is the same as the HalfSplitter and
     yields to splits: first (1st half, 2nd half) and second (2nd half,
     1st half).
@@ -505,7 +505,7 @@ class NGroupSplitter(Splitter):
     def __init__(self, ngroups=4, **kwargs):
         """Initialize the N-group splitter.
 
-        :Parameter:
+        :Parameters:
           ngroups: Int
             Number of groups to split the attribute into.
           kwargs
@@ -532,7 +532,7 @@ class NGroupSplitter(Splitter):
         # use coarsenChunks to get the split indices
         split_ind = coarsenChunks(uniqueattrs, nchunks=self.__ngroups)
         split_ind = N.asarray(split_ind)
-        
+
         # loop and create splits
         split_list = [(None, uniqueattrs[split_ind==i])
                        for i in range(self.__ngroups)]
@@ -579,7 +579,7 @@ class NFoldSplitter(Splitter):
                  **kwargs):
         """Initialize the N-fold splitter.
 
-        :Parameter:
+        :Parameters:
           cvtype: Int
             Type of cross-validation: N-(cvtype)
           kwargs
