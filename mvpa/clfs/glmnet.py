@@ -14,11 +14,10 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 import mvpa.base.externals as externals
-externals.exists('rpy', raiseException=True)
-externals.exists('glmnet', raiseException=True)
 
 # do conditional to be able to build module reference
-if externals.exists('rpy') and externals.exists('glmnet'):
+if externals.exists('rpy', raiseException=True) and \
+   externals.exists('glmnet', raiseException=True):
     import rpy
     rpy.r.library('glmnet')
 

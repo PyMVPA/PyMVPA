@@ -20,6 +20,14 @@ extra_link_args = []
 include_dirs = []
 library_dirs = []
 
+# platform-specific settings
+if sys.platform == "darwin":
+    extra_link_args.append("-bundle")
+
+if sys.platform.startswith('linux'):
+    # need to look for numpy (header location changes with v1.3)
+    include_dirs += ['/usr/include/numpy']
+
 # only if libsvm.a is available
 if os.path.exists(os.path.join('build', 'libsvm', 'libsvm.a')):
     include_dirs += [os.path.join('3rd', 'libsvm')]
@@ -42,10 +50,6 @@ if sys.argv.count('--with-libsvm'):
             # no clue on windows
             pass
     have_libsvm = True
-
-# platform-specific settings
-if sys.platform == "darwin":
-    extra_link_args.append("-bundle")
 
 
 # define the extension modules

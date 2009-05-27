@@ -12,14 +12,14 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
-externals.exists('scipy', raiseException=True)
 
 if __debug__:
     from mvpa.base import debug
 
-import scipy
-import scipy.stats
-import scipy.stats as stats
+if externals.exists('scipy', raiseException=True):
+    import scipy
+    import scipy.stats
+    import scipy.stats as stats
 
 if not externals.exists('good scipy.stats.rdist'):
     if __debug__:

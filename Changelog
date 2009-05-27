@@ -33,12 +33,14 @@ Unreleased changes
 Releases
 ========
 
-* 0.4.2 (..., ...)
+* 0.4.2 (Mon, 25 May 2009)
 
   * New correlation stability measure
     (:class:`~mvpa.measures.corrstability.CorrStability`).
   * New elastic net classifier (:class:`~mvpa.clfs.enet.ENET`).
+  * New GLM-Net regression/classifier (:class:`~mvpa.clfs.glmnet.GLMNET`).
   * New measure :class:`~mvpa.measures.anova.CompoundOneWayAnova`.
+  * New measure :class:`~mvpa.measures.ds.DSMDatasetMeasure`.
   * New meta-measure
     :class:`~mvpa.measures.splitmeasure.TScoredFeaturewiseMeasure`.
   * New basic :class:`~mvpa.measures.glm.GLM` implementation.
@@ -57,7 +59,13 @@ Releases
     :func:`~mvpa.misc.plot.plotErrLine` for consistency.
   * Fixed :class:`~mvpa.datasets.splitters.NFoldSplitter` to support N-3 and
     larger splits.
-
+  * Improved speed of LIBSVM backend. Thanks to Valentin Haenel and Tiziano
+    Zito.
+  * Updated included LIBSVM version to 2.89.
+  * Adjust LIBSVM Python interface for recent NumPy API and latest LIBSVM
+    release 2.89.
+  * Refactored examples parser into a standalone tool to turn PyMVPA examples
+    into restructured text sources.
 
 * 0.4.1 (Sat, 24 Jan 2009)
 

@@ -1656,3 +1656,256 @@ Dataset._registerAttribute("labels",  "_data", abbr='L', hasunique=True)
 Dataset._registerAttribute("chunks",  "_data", abbr='C', hasunique=True)
 # samples ids (already unique by definition)
 Dataset._registerAttribute("origids",  "_data", abbr='I', hasunique=False)
+
+
+
+# XXX This is the place to redo the Dataset base class in a more powerful, yet
+# simpler way. The basic goal is to allow for all kinds of attributes:
+#
+# 1) Samples attributes (per-sample full)
+# 2) Features attributes (per-feature stuff)
+#
+# 3) Dataset attributes (per-dataset stuff)
+#
+# Use cases:
+#
+#     1) labels and chunks -- goal: it should be possible to have multivariate
+#     labels, e.g. to specify targets for a neural network output layer
+#
+#     2) feature binding/grouping -- goal: easily define ROIs in datasets, or
+#     group/mark various types of feature so they could be selected or
+#     discarded all together
+#
+#     3) Mappers, or chains of them (this should be possible already, but could
+#     be better integrated to make applyMapper() obsolete).
+#
+#
+# Perform distortion correction on __init__(). The copy contructor
+# implementation should move into a separate classmethod.
+#
+# Think about implementing the current 'clever' attributes in terms of one-time
+# properties as suggested by Fernando on nipy-devel.
+
+# ...
+
+from mvpa.misc.state import ClassWithCollections, Collection
+from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
+        DatasetAttribute
+
+# Remaining public interface of Dataset
+class _Dataset(ClassWithCollections):
+    """The successor of Dataset.
+    """
+    # placeholder for all three basic collections of a Dataset
+    # put here to be able to check whether the AttributesCollector already
+    # instanciated a particular collection
+    # XXX maybe it should not do this at all for Dataset
+    sa = None
+    fa = None
+    dsa = None
+
+    # storage of samples in a plain NumPy array for fast access
+    samples = None
+
+    def __init__(self, samples, sa=None, fa=None, dsa=None):
+        """
+        This is the generic internal constructor. Its main task is to allow
+        for a maximum level of customization during dataset construction,
+        including fast copy construction.
+
+        Parameters
+        ----------
+        samples : ndarray
+          Data samples.
+        sa : Collection
+          Samples attributes collection.
+        fa : Collection
+          Features attributes collection.
+        dsa : Collection
+          Dataset attributes collection.
+        """
+        # init base class
+        ClassWithCollections.__init__(self)
+
+        # Internal constructor -- users focus on init* Methods
+
+        # Every dataset needs data (aka samples), completely data-driven
+        # analyses might not even need labels, so this is the only mandatory
+        # argument
+        # XXX add checks
+        self.samples = samples
+
+        # Everything else in a dataset (except for samples) is organized in
+        # collections
+        # copy attributes from source collections (scol) into target
+        # collections (tcol)
+        for scol, tcol in ((sa, self.sa),
+                           (fa, self.fa),
+                           (dsa, self.dsa)):
+            # make sure we have the target collection
+            if tcol is None:
+                # XXX maybe use different classes for the collections
+                # but currently no reason to do so
+                tcol = Collection(owner=self)
+
+            # transfer the attributes
+            if not scol is None:
+                for name, attr in scol.items.iteritems():
+                    # this will also update the owner of the attribute
+                    # XXX discuss the implications of always copying
+                    tcol.add(copy.copy(attr))
+
+
+    @classmethod
+    def initSimple(klass, samples, labels, chunks):
+        # use Numpy convention
+        """
+        One line summary.
+
+        Long description.
+
+        Parameters
+        ----------
+        samples : ndarray
+          The two-dimensional samples matrix.
+        labels : ndarray
+        chunks : ndarray
+
+        Returns
+        -------
+        blah blah
+
+        Notes
+        -----
+        blah blah
+
+        See Also
+        --------
+        blah blah
+
+        Examples
+        --------
+        blah blah
+        """
+        # Demo user contructor
+
+        # compile the necessary samples attributes collection
+        labels_ = SampleAttribute(name='labels')
+        labels_.value = labels
+        chunks_ = SampleAttribute(name='chunks')
+        chunks_.value = chunks
+
+        # feels strange that one has to give the name again
+        # XXX why does items have to be a dict when each samples
+        # attr already knows its name
+        sa = Collection(items={'labels': labels_, 'chunks': chunks_})
+
+        # common checks should go into __init__
+        return klass(samples, sa=sa)
+
+
+    def getNSamples( self ):
+        """Currently available number of patterns.
+        """
+        return self.samples.shape[0]
+
+
+    def getNFeatures( self ):
+        """Number of features per pattern.
+        """
+        return self.samples.shape[1]
+
+
+#
+#    @property
+#    def idhash(self):
+#        pass
+#
+#
+#    def idsonboundaries(self, prior=0, post=0,
+#                        attributes_to_track=['labels', 'chunks'],
+#                        affected_labels=None,
+#                        revert=False):
+#        pass
+#
+#
+#    def summary(self, uniq=True, stats=True, idhash=False, lstats=True,
+#                maxc=30, maxl=20):
+#        pass
+#
+#
+#    def summary_labels(self, maxc=30, maxl=20):
+#        pass
+#
+#
+#    def __iadd__(self, other):
+#        pass
+#
+#
+#    def __add__( self, other ):
+#        pass
+#
+#
+#    def copy(self):
+#        pass
+#
+#
+#    def selectFeatures(self, ids=None, sort=True, groups=None):
+#        pass
+#
+#
+#    def applyMapper(self, featuresmapper=None, samplesmapper=None,
+#                    train=True):
+#        pass
+#
+#
+#    def selectSamples(self, ids):
+#        pass
+#
+#
+#    def index(self, *args, **kwargs):
+#        pass
+#
+#
+#    def select(self, *args, **kwargs):
+#        pass
+#
+#
+#    def where(self, *args, **kwargs):
+#        pass
+#
+#
+#    def __getitem__(self, *args):
+#        pass
+#
+#
+#    def permuteLabels(self, status, perchunk=True, assure_permute=False):
+#        pass
+#
+#
+#    def getRandomSamples(self, nperlabel):
+#        pass
+#
+#
+#    def getLabelsMap(self):
+#        pass
+#
+#
+#    def setLabelsMap(self, lm):
+#        pass
+#
+#
+#    def setSamplesDType(self, dtype):
+#        pass
+#
+#
+#    def defineFeatureGroups(self, definition):
+#        pass
+#
+#
+#    def convertFeatureIds2FeatureMask(self, ids):
+#        pass
+#
+#
+#    def convertFeatureMask2FeatureIds(self, mask):
+#        pass

@@ -16,8 +16,8 @@ import numpy as N
 from mvpa.base import warning, externals
 from mvpa.misc.support import reuseAbsolutePath
 
-externals.exists('nifti', raiseException=True)
-from nifti import NiftiImage
+if externals.exists('nifti', raiseException=True):
+    from nifti import NiftiImage
 
 from mvpa.atlases.base import XMLBasedAtlas, LabelsLevel
 

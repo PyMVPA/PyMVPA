@@ -213,12 +213,12 @@ upload-htmldoc: htmldoc
 #
 
 ut-%: build
-	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/test_$*.py
+	@PYTHONPATH=.:$(PYTHONPATH) nosetests mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
 	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/main.py
-	
+
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build

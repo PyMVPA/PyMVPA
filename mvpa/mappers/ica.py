@@ -15,7 +15,9 @@ import numpy as N
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import ProjectionMapper
 
-from mdp.nodes import FastICANode, CuBICANode
+import mvpa.base.externals as externals
+if externals.exists('mdp', raiseException=True):
+    from mdp.nodes import FastICANode, CuBICANode
 
 
 class ICAMapper(ProjectionMapper):

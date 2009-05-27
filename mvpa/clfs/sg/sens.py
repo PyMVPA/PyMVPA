@@ -12,7 +12,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-import shogun.Classifier
+from mvpa.base import externals
+if externals.exists('shogun', raiseException=True):
+    import shogun.Classifier
 
 from mvpa.misc.state import StateVariable
 from mvpa.measures.base import Sensitivity
