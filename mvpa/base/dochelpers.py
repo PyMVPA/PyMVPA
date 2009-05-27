@@ -86,32 +86,30 @@ def _indent(text, istr='  '):
     """
     return '\n'.join(istr + s for s in text.split('\n'))
 
+__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n")
+"""regexp to match :Parameter: and :Parameters: stand alone in a line"""
 
-def _splitOutParametersStr(initdoc, initial=False):
+def _splitOutParametersStr(initdoc):
     """Split documentation into (header, parameters, suffix)
 
     :Parameters:
       initdoc : string
         The documentation string
-      initial : bool
-        Either this is an original initdoc or the one which
-        was already processed (i.e. of parent class)
     """
-    sep = (_rst_sep2, ':')[int(initial)]
-    parameters_str = "%sParameters%s" % (sep, sep)
 
     # TODO: bind it to the only word in the line
-    if not (parameters_str in initdoc):
+    p_res = __parameters_str_re.search(initdoc)
+    if p_res is None:
         result = initdoc, "", ""
     else:
         # Could have been accomplished also via re.match
 
         # where new line is after :Parameters:
         # parameters header index
-        ph_i = initdoc.index(parameters_str)
+        ph_i = p_res.start()
 
         # parameters body index
-        pb_i = initdoc.index('\n', ph_i+1)
+        pb_i = p_res.end()
 
         # end of parameters
         try:
@@ -223,7 +221,7 @@ def enhancedDocString(item, *args, **kwargs):
         if initdoc is None:
             initdoc = "Initialize instance of %s" % name
 
-        initdoc, params, suffix = _splitOutParametersStr(initdoc, initial=True)
+        initdoc, params, suffix = _splitOutParametersStr(initdoc)
 
         if lcl.has_key('_paramsdoc'):
             params += '\n' + handleDocString(lcl['_paramsdoc'])

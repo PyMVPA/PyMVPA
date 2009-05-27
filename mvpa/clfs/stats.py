@@ -191,7 +191,7 @@ class MCNullDist(NullDist):
     def __init__(self, dist_class=Nonparametric, permutations=100, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
-        :Parameter:
+        :Parameters:
           dist_class: class
             This can be any class which provides parameters estimate
             using `fit()` method to initialize the instance, and
@@ -216,7 +216,7 @@ class MCNullDist(NullDist):
         """Fit the distribution by performing multiple cycles which repeatedly
         permuted labels in the training dataset.
 
-        :Parameter:
+        :Parameters:
           measure: (`Featurewise`)`DatasetMeasure` | `TransferError`
             TransferError instance used to compute all errors.
           wdata: `Dataset` which gets permuted and used to compute the
