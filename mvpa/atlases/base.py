@@ -28,8 +28,8 @@ mvpa.atlases.base module contains support for various atlases
 
 from mvpa.base import externals
 
-externals.exists('lxml', raiseException=True)
-from lxml import etree, objectify
+if externals.exists('lxml', raiseException=True):
+    from lxml import etree, objectify
 
 import os, re
 import numpy as N
@@ -38,8 +38,8 @@ from numpy.linalg import norm
 from mvpa.atlases.transformation import SpaceTransformation, Linear
 from mvpa.misc.support import reuseAbsolutePath
 
-externals.exists('nifti', raiseException=True)
-from nifti import NiftiImage
+if externals.exists('nifti', raiseException=True):
+    from nifti import NiftiImage
 
 from mvpa.base import warning
 if __debug__:

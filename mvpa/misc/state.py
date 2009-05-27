@@ -814,9 +814,9 @@ _known_collections = {
     'KernelParameter': ("kernel_params", ParameterCollection),
     # For datasets
     # XXX custom collections needed?
-    'SampleAttribute':  ("s_attr", SampleAttributesCollection),
-    'FeatureAttribute': ("f_attr", SampleAttributesCollection),
-    'DatasetAttribute': ("ds_attr", SampleAttributesCollection),
+    'SampleAttribute':  ("sa", SampleAttributesCollection),
+    'FeatureAttribute': ("fa", SampleAttributesCollection),
+    'DatasetAttribute': ("dsa", SampleAttributesCollection),
     }
 
 
@@ -824,7 +824,7 @@ _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
 
-_COLLECTIONS_ORDER = ['s_attr', 'f_attr', 'ds_attr',
+_COLLECTIONS_ORDER = ['sa', 'fa', 'dsa',
                       'params', 'kernel_params', 'states']
 
 

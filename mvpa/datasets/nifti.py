@@ -11,7 +11,6 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
-externals.exists('nifti', raiseException=True)
 
 import sys
 import numpy as N
@@ -20,17 +19,19 @@ from mvpa.support.copy import deepcopy
 if __debug__:
     from mvpa.base import debug
 
-if sys.version_info[:2] >= (2, 5):
-    # enforce absolute import
-    NiftiImage = __import__('nifti', globals(), locals(), [], 0).NiftiImage
-else:
-    # little trick to be able to import 'nifti' package (which has same name)
-    oldname = __name__
-    # crazy name with close to zero possibility to cause whatever
-    __name__ = 'iaugf9zrkjsbdv89'
-    from nifti import NiftiImage
-    # restore old settings
-    __name__ = oldname
+if externals.exists('nifti', raiseException=True):
+    if sys.version_info[:2] >= (2, 5):
+        # enforce absolute import
+        NiftiImage = __import__('nifti', globals(), locals(), [], 0).NiftiImage
+    else:
+        # little trick to be able to import 'nifti' package (which has same
+        # name)
+        oldname = __name__
+        # crazy name with close to zero possibility to cause whatever
+        __name__ = 'iaugf9zrkjsbdv89'
+        from nifti import NiftiImage
+        # restore old settings
+        __name__ = oldname
 
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.mapped import MappedDataset

@@ -12,7 +12,6 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
-externals.exists('scipy', raiseException=True)
 
 import numpy as N
 
@@ -21,9 +20,11 @@ from operator import isSequenceType
 from mvpa.datasets.base import Dataset, datasetmethod
 from mvpa.misc.support import getBreakPoints
 
-from scipy import signal
-from scipy.linalg import lstsq
-from scipy.special import legendre
+if externals.exists('scipy', raiseException=True):
+    from scipy import signal
+    from scipy.linalg import lstsq
+    from scipy.special import legendre
+
 
 @datasetmethod
 def detrend(dataset, perchunk=False, model='linear',

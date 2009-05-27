@@ -11,17 +11,18 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import warning, externals
-externals.exists('scipy', raiseException=True)
 
 import numpy as N
-import scipy.sparse
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import ProjectionMapper
 
-if externals.versions['scipy'] >= (0, 7, 0):
-    _identity = scipy.sparse.identity
-else:
-    _identity = scipy.sparse.spidentity
+if externals.exists('scipy', raiseException=True):
+    import scipy.sparse
+    if externals.versions['scipy'] >= (0, 7, 0):
+        _identity = scipy.sparse.identity
+    else:
+        _identity = scipy.sparse.spidentity
+
 
 __all__ = [ 'ZScoreMapper' ]            # just to don't leak all the evil ;)
 
