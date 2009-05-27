@@ -74,7 +74,8 @@ class Splitter(object):
                  count=None,
                  strategy='equidistant',
                  discard_boundary=None,
-                 attr='chunks'):
+                 attr='chunks',
+                 reverse=False):
         """Initialize splitter base.
 
         :Parameters:
@@ -119,12 +120,17 @@ class Splitter(object):
              2 samples from training which are on the boundary with testing.
           attr : str
             Sample attribute used to determine splits.
+          reverse : bool
+            If True, the order of datasets in the split is reversed, e.g.
+            instead of (training, testing), (training, testing) will be spit
+            out
         """
         # pylint happyness block
         self.__nperlabel = None
         self.__runspersplit = nrunspersplit
         self.__permute = permute
         self.__splitattr = attr
+        self._reverse = reverse
         self.discard_boundary = discard_boundary
 
         # we don't check it, thus no reason to make it private.
@@ -277,7 +283,10 @@ class Splitter(object):
                         finalized_datasets.append(
                             DS_getRandomSamples(ds, npl))
 
-                yield finalized_datasets
+                if self._reverse:
+                    yield finalized_datasets[::-1]
+                else:
+                    yield finalized_datasets
 
 
     def splitDataset(self, dataset, specs):
