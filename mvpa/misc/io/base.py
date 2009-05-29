@@ -18,6 +18,8 @@ from sets import Set
 from re import sub as re_sub
 from mvpa.base import warning
 
+from mvpa.misc.support import Event
+
 if __debug__:
     from mvpa.base import debug
 
@@ -398,6 +400,56 @@ class SampleAttributes(ColumnData):
         """Returns the number of samples in the file.
         """
         return self.getNRows()
+
+
+    def toEvents(self, **kwargs):
+        """Convert into a list of `Event` instances.
+
+        Each change in the label or chunks value is taken as a new event onset.
+        The length of an event is determined by the number of identical
+        consecutive label-chunk combinations. Since the attributes list has no
+        sense of absolute timing, both `onset` and `duration` are determined and
+        stored in #samples units.
+
+        :Parameters:
+          kwargs
+            Any keyword arugment provided would be replicated, through all
+            the entries.
+        """
+        events = []
+        prev_onset = 0
+        old_comb = None
+        duration = 1
+        # over all samples
+        for r in xrange(self.nrows):
+            # the label-chunk combination
+            comb = (self.labels[r], self.chunks[r])
+
+            # check if things changed
+            if not comb == old_comb:
+                # did we ever had an event
+                if not old_comb is None:
+                    events.append(
+                        Event(onset=prev_onset, duration=duration,
+                              label=old_comb[0], chunk=old_comb[1], **kwargs))
+                    # reset duration for next event
+                    duration = 1
+                    # store the current samples as onset for the next event
+                    prev_onset = r
+
+                # update the reference combination
+                old_comb = comb
+            else:
+                # current event is lasting
+                duration += 1
+
+        # push the last event in the pipeline
+        if not old_comb is None:
+            events.append(
+                Event(onset=prev_onset, duration=duration,
+                      label=old_comb[0], chunk=old_comb[1], **kwargs))
+
+        return events
 
 
     nsamples = property(fget=getNSamples)
