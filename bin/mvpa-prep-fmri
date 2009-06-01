@@ -113,7 +113,7 @@ def main():
 
     if not os.path.exists(opath):
         verbose(1, "Create output directory '%s'" % opath)
-        os.mkdir(opath)
+        os.makedirs(opath)
     else:
         verbose(2, "Using output path '%s'" % opath)
 
