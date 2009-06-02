@@ -145,7 +145,8 @@ class BoxcarMapper(Mapper):
         else:
             raise ValueError, "BoxcarMapper operates either on single samples" \
                   " %s or on the full dataset in 'reverse()' which must have " \
-                  "shape %s" % (`self._outshape[1:]`, `self._outshape`)
+                  "shape %s. Got data of shape %s" \
+                  % (self._outshape[1:], self._outshape, data.shape)
 
         # the rest of this method deals with reconstructing the full input
         # space from the boxcar samples
