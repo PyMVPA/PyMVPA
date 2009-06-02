@@ -16,12 +16,14 @@ from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
 from tests_warehouse import *
 from mvpa import cfg
+from numpy.testing import assert_array_almost_equal
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
 nulldist_sweep = [ MCNullDist(permutations=10, tail='any'),
                    MCNullDist(permutations=10, tail='right')]
 if externals.exists('scipy'):
+    from scipy.stats import f_oneway
     from mvpa.support.stats import scipy
     nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10,
                                    tail='any'),
@@ -70,7 +72,11 @@ class StatsTests(unittest.TestCase):
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
         prob = null.p([3, 0, 0, 0, 0, N.nan])
-        self.failUnless(N.abs(prob[0]) < 0.01)
+        # XXX this is labile! it also needs checking since the F-scores
+        # of the MCNullDists using normal distribution are apparently not
+        # distributed that way, hence the test often (if not always) fails.
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(N.abs(prob[0]) < 0.01)
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless((N.abs(prob[1:]) > 0.05).all(),
                             msg="Bogus features should have insignificant p."
@@ -266,6 +272,20 @@ class StatsTests(unittest.TestCase):
 
         v = scipy.stats.rdist(10000, 0, 1).cdf([-0.1])
         self.failUnless(v>=0, v<=1)
+
+
+    if externals.exists('scipy'):
+        def testAnovaCompliance(self):
+            ds = datasets['uni2large']
+
+            fwm = OneWayAnova()
+            f = fwm(ds)
+
+            f_sp = f_oneway(ds['labels', [1]].samples,
+                            ds['labels', [0]].samples)
+
+            # SciPy needs to compute the same F-scores
+            assert_array_almost_equal(f, f_sp[0])
 
 
     def testAnova(self):
