@@ -76,24 +76,29 @@ class AtlasesTests(unittest.TestCase):
 
     def testFind(self):
         if not externals.exists('atlas_fsl'): return
-
+        tshape = (182, 218, 182)        # target shape of fsl atlas chosen by default
         atl = Atlas(name='HarvardOxford-Cortical')
         atl.levels_dict[0].find('Frontal Pole')
         self.failUnlessEqual(
-            len(atl.levels_dict[0].find(re.compile('Fusiform'), unique=False)),
+            len(atl.find(re.compile('Fusiform'), unique=False)),
             4)
 
         m = atl.getMap(1)
-        self.failUnlessEqual(m.shape, (182, 218, 182))
+        self.failUnlessEqual(m.shape, tshape)
         self.failUnless(N.max(m)==100)
         self.failUnless(N.min(m)==0)
 
         ms = atl.getMaps('Fusiform')
         self.failUnlessEqual(len(ms), 4)
-        self.failUnlessEqual(ms[0].shape, (182, 218, 182))
+        self.failUnlessEqual(ms[0].shape, tshape)
 
-        ms = atl.getMaps('XXXXX')
+        ms = atl.getMaps('ZaZaZa')
         self.failUnless(not len(ms))
+
+        self.failUnlessRaises(ValueError, atl.getMap, 'Fusiform')
+        self.failUnless(len(atl.find('Fusiform', unique=False)) == 4)
+        self.failUnlessEqual(atl.getMap('Fusiform', strategy='max').shape,
+                             tshape)
 
         # Test loading of custom atlas
         # for now just on the original file
@@ -111,7 +116,8 @@ class AtlasesTests(unittest.TestCase):
                                              'example4d.nii.gz'))
 
         # we should get not even comparable maps now ;)
-        self.failUnless(atl.getMap('Frontal Pole').shape != atl2.getMap('Frontal Pole').shape)
+        self.failUnless(atl.getMap('Frontal Pole').shape
+                        != atl2.getMap('Frontal Pole').shape)
 
 
 def suite():
