@@ -29,9 +29,9 @@ def reuseAbsolutePath(file1, file2, force=False):
       force : bool
         if True, force it even if the file2 starts with /
     """
-    if not file2.startswith('/') or force:
+    if not file2.startswith(os.path.sep) or force:
         # lets reuse path to file1
-        return os.path.join(os.path.dirname(file1), file2.lstrip('/'))
+        return os.path.join(os.path.dirname(file1), file2.lstrip(os.path.sep))
     else:
         return file2
 
