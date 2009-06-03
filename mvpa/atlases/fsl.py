@@ -199,20 +199,34 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
         return result
 
-    def getMap(self, target):
+    def find(self, *args, **kwargs):
+        """Just a shortcut to the only level.
+
+        See :class:`~mvpa.atlases.base.Level.find` for more info
+        """
+        return self.levels_dict[0].find(*args, **kwargs)
+
+    def getMap(self, target, strategy='unique'):
         """Return a probability map
 
         :Parameters:
           target : int or str or re._pattern_type
             If int, map for given index is returned. Otherwise, .find is called
             with unique=True to find matching area
+          strategy : str in ('unique', 'max')
+            If 'unique', then if multiple areas match, exception would be raised.
+            In case of 'max', each voxel would get maximal value of probabilities
+            from all matching areas
         """
         if isinstance(target, int):
             return self._data[target]
         else:
             lev = self.levels_dict[0]       # we have just 1 here
-            return self.getMap(lev.find(target, unique=True).index)
-
+            if strategy == 'unique':
+                return self.getMap(lev.find(target, unique=True).index)
+            else:
+                maps = N.array(self.getMaps(target))
+                return N.max(maps, axis=0)
 
     def getMaps(self, target):
         """Return a list of probability maps for the target
@@ -226,8 +240,9 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
 
 class FSLLabelsAtlas(XMLBasedAtlas):
-
+    """Not sure what this one was for"""
     def __init__(self, *args, **kwargs):
+        """not implemented"""
         FSLAtlas.__init__(self, *args, **kwargs)
         raise NotImplementedError
 
