@@ -207,10 +207,22 @@ struct svm_node *svm_node_array(int size)
 	return (struct svm_node *)malloc(sizeof(struct svm_node)*size);
 }
 
-void svm_node_array_set(struct svm_node *array, int i, int index, double value)
+
+void svm_node_array_set(struct svm_node *array, int i, int index, double value){
+    array[i].index = index;
+    array[i].value = value;
+}
+
+void svm_node_array_set(struct svm_node *array, PyObject *indices, PyObject *values)
 {
-	array[i].index = index;
-	array[i].value = value;
+    int length = PyList_Size(indices);
+    int i;
+    for (i = 0; i< length; i++){
+        array[i].index = (int)PyInt_AS_LONG(PyList_GetItem(indices,i));
+        PyObject* obj = PyArray_GETITEM(values,PyArray_GETPTR1(values,i));
+        array[i].value = (double)PyFloat_AS_DOUBLE(obj);
+        Py_DECREF(obj);
+    }
 }
 
 void svm_node_array_destroy(struct svm_node *array)
