@@ -10,14 +10,16 @@
 
 """
 
-import os, re
-import numpy as N
-
 from mvpa.base import warning, externals
-from mvpa.misc.support import reuseAbsolutePath
 
 if externals.exists('nifti', raiseException=True):
     from nifti import NiftiImage
+
+import os, re
+import numpy as N
+
+from mvpa.misc.support import reuseAbsolutePath
+from mvpa.base.dochelpers import enhancedDocString
 
 from mvpa.atlases.base import XMLBasedAtlas, LabelsLevel
 
@@ -34,19 +36,15 @@ class FSLAtlas(XMLBasedAtlas):
     """
     source = 'FSL'
 
+
     def __init__(self, *args, **kwargs):
         """
-
-        :Parameters:
-          filename : string
-            Filename for the xml definition of the atlas
-          resolution : None or float
-            Some atlases link to multiple images at different
-            resolutions. if None -- best resolution is selected
-            using 0th dimension resolution
         """
         XMLBasedAtlas.__init__(self, *args, **kwargs)
         self.space = 'MNI'
+
+
+    __doc__ = enhancedDocString('FSLAtlas', locals(), XMLBasedAtlas)
 
 
     def _loadImages(self):
@@ -58,11 +56,14 @@ class FSLAtlas(XMLBasedAtlas):
         #     effort with PyMVPAAtlas
         ni_image = None
         resolutions = []
-        for image in images:
-            imagefile = image.imagefile
-            imagefilename = reuseAbsolutePath(
-                self._filename, imagefile.text, force=True)
+        if self._force_image_file is None:
+            imagefile_candidates = [
+                reuseAbsolutePath(self._filename, i.imagefile.text, force=True)
+                for i in images]
+        else:
+            imagefile_candidates = [self._force_image_file]
 
+        for imagefilename in imagefile_candidates:
             try:
                 ni_image_  = NiftiImage(imagefilename, load=False)
             except RuntimeError, e:
@@ -74,11 +75,11 @@ class FSLAtlas(XMLBasedAtlas):
                 if ni_image is None or \
                        resolution_ < ni_image.pixdim[0]:
                     ni_image = ni_image_
-                    self._imagefile = imagefilename
+                    self._image_file = imagefilename
             else:
                 if resolution_ == resolution:
                     ni_image = ni_image_
-                    self._imagefile = imagefilename
+                    self._image_file = imagefilename
                     break
                 else:
                     resolutions += [resolution_]
@@ -91,7 +92,7 @@ class FSLAtlas(XMLBasedAtlas):
                       (resolutions,)
             raise RuntimeError, msg
         if __debug__:
-            debug('ATL__', "Loading atlas data from %s" % self._imagefile)
+            debug('ATL__', "Loading atlas data from %s" % self._image_file)
         self._image = ni_image
         self._resolution = ni_image.pixdim[0]
         self._origin = N.abs(ni_image.header['qoffset']) * 1.0  # XXX
@@ -128,6 +129,8 @@ class FSLAtlas(XMLBasedAtlas):
 
 
 class FSLProbabilisticAtlas(FSLAtlas):
+    """Probabilistic FSL atlases
+    """
 
     def __init__(self, thr=0.0, strategy='all', sort=True, *args, **kwargs):
         """
@@ -149,7 +152,16 @@ class FSLProbabilisticAtlas(FSLAtlas):
         self.strategy = strategy
         self.sort = sort
 
+    __doc__ = enhancedDocString('FSLProbabilisticAtlas', locals(), FSLAtlas)
+
     def labelVoxel(self, c, levels=None):
+        """Return labels for the voxel
+
+        :Parameters:
+          - c : tuple of coordinates (xyz)
+          - levels : just for API consistency (heh heh). Must be 0 for FSL atlases
+        """
+
         if levels is not None and not (levels in [0, [0], (0,)]):
             raise ValueError, \
                   "I guess we don't support levels other than 0 in FSL atlas"
@@ -187,9 +199,50 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
         return result
 
+    def find(self, *args, **kwargs):
+        """Just a shortcut to the only level.
+
+        See :class:`~mvpa.atlases.base.Level.find` for more info
+        """
+        return self.levels_dict[0].find(*args, **kwargs)
+
+    def getMap(self, target, strategy='unique'):
+        """Return a probability map
+
+        :Parameters:
+          target : int or str or re._pattern_type
+            If int, map for given index is returned. Otherwise, .find is called
+            with unique=True to find matching area
+          strategy : str in ('unique', 'max')
+            If 'unique', then if multiple areas match, exception would be raised.
+            In case of 'max', each voxel would get maximal value of probabilities
+            from all matching areas
+        """
+        if isinstance(target, int):
+            return self._data[target]
+        else:
+            lev = self.levels_dict[0]       # we have just 1 here
+            if strategy == 'unique':
+                return self.getMap(lev.find(target, unique=True).index)
+            else:
+                maps = N.array(self.getMaps(target))
+                return N.max(maps, axis=0)
+
+    def getMaps(self, target):
+        """Return a list of probability maps for the target
+
+        :Parameters:
+          target : str or re._pattern_type
+            .find is called with a target and unique=False to find all matches
+        """
+        lev = self.levels_dict[0]       # we have just 1 here
+        return [self.getMap(l.index) for l in lev.find(target, unique=False)]
+
 
 class FSLLabelsAtlas(XMLBasedAtlas):
+    """Not sure what this one was for"""
     def __init__(self, *args, **kwargs):
+        """not implemented"""
         FSLAtlas.__init__(self, *args, **kwargs)
         raise NotImplementedError
 

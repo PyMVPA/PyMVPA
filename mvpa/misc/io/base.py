@@ -163,9 +163,12 @@ class ColumnData(dict):
 
         Is used for automatically added properties to the class.
 
-        :raises: ValueError, if `key` is not known to given instance
+        :Raises:
+          ValueError:
+            If `key` is not known to given instance
 
-        :return: value if `key` is known
+        :Returns:
+          Value if `key` is known
         """
         if self.has_key(key):
             return self[key]
@@ -305,18 +308,22 @@ class ColumnData(dict):
     def tofile(self, filename, header=True, header_order=None, sep=' '):
         """Write column data to a text file.
 
-        :Parameter:
-          filename: Think about it!
-          header: If `True` a column header is written, using the column
-                   keys. If `False` no header is written.
-          header_order: If it is a list of strings, they will be used instead
-                          of simply asking for the dictionary keys. However
-                          these strings must match the dictionary keys in number
-                          and identity. This argument type can be used to
-                          determine the order of the columns in the output file.
-                          The default value is `None`. In this case the columns
-                          will be in an arbitrary order.
-          sep: String that is written as a separator between to data columns.
+        :Parameters:
+          filename : basestring
+            Target filename
+          header : bool
+            If `True` a column header is written, using the column
+            keys. If `False` no header is written.
+          header_order : None or list of basestring
+            If it is a list of strings, they will be used instead
+            of simply asking for the dictionary keys. However
+            these strings must match the dictionary keys in number
+            and identity. This argument type can be used to
+            determine the order of the columns in the output file.
+            The default value is `None`. In this case the columns
+            will be in an arbitrary order.
+          sep : basestring
+            String that is written as a separator between to data columns.
         """
         # XXX do the try: except: dance
         file_ = open(filename, 'w')
@@ -371,19 +378,27 @@ class SampleAttributes(ColumnData):
     """Read and write PyMVPA sample attribute definitions from and to text
     files.
     """
-    def __init__(self, source, literallabels=False):
+    def __init__(self, source, literallabels=False, header=None):
         """Read PyMVPA sample attributes from disk.
 
-        :Parameter:
-          source: filename of an atrribute file
+        :Parameters:
+          source: basestring
+            Filename of an atrribute file
+          literallabels: bool
+            Either labels are given as literal strings
+          header: None or bool or list of str
+            If None, ['labels', 'chunks'] is assumed. Otherwise the same
+            behavior as of `ColumnData`
         """
         if literallabels:
             dtypes = [str, float]
         else:
             dtypes = float
 
+        if header is None:
+            header = ['labels', 'chunks']
         ColumnData.__init__(self, source,
-                            header=['labels', 'chunks'],
+                            header=header,
                             sep=None, dtype=dtypes)
 
 
