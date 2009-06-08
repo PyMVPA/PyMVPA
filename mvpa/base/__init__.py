@@ -246,6 +246,7 @@ if __debug__:
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
+    debug.register('CLFSPL_',"SplitClassifier (verbose)")
     debug.register('CLFFS',  "FeatureSelectionClassifier")
     debug.register('CLFFS_', "FeatureSelectionClassifier (verbose)")
 
