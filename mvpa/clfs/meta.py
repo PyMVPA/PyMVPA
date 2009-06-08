@@ -870,7 +870,7 @@ class SplitClassifier(CombinedClassifier):
         # train them
         for split in self.__splitter.splitcfg(dataset):
             if __debug__:
-                debug("CLFSPL",
+                debug("CLFSPL_",
                       "Deepcopying %(clf)s for %(sclf)s",
                       msgargs={'clf':clf_template,
                                'sclf':self})
@@ -903,6 +903,14 @@ class SplitClassifier(CombinedClassifier):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions,
                                    clf.states.get('values', None))
+                if __debug__:
+                    dact = debug.active
+                    if 'CLFSPL_' in dact:
+                        debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
+                    elif 'CLFSPL' in dact:
+                        debug('CLFSPL', 'Split %d error %.2f%%'
+                              % (i, self.confusion.summaries[-1].error))
+
             if states.isEnabled("training_confusion"):
                 states.training_confusion += \
                                                clf.states.training_confusion
