@@ -83,6 +83,12 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         msb = ssbn / float(dfbn)
         msw = sswn / float(dfwn)
         f = msb / msw
+        # assure no NaNs -- otherwise it leads instead of
+        # sane unittest failure (check of NaNs) to crazy
+        #   File "mtrand.pyx", line 1661, in mtrand.shuffle
+        #  TypeError: object of type 'numpy.int64' has no len()
+        # without any sane backtrace
+        f[N.isnan(f)] = 0
 
         return f
 
