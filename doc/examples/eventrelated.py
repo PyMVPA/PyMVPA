@@ -88,7 +88,6 @@ extract a set of twelve consecutive volume a as sample for each event.
 
 """
 
-# only the first four volumes of each event
 for ev in evs:
     ev['onset'] -= 1
     ev['duration'] = 12
