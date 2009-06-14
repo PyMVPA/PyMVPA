@@ -89,6 +89,9 @@ class SummaryStatistics(object):
         self.__sets = (sets, [])[int(sets is None)]
         """Datasets (target, prediction) to compute confusion matrix on"""
 
+        self._stats = {}
+        """Dictionary to keep statistics. Initialized here to please pylint"""
+
         if not targets is None or not predictions is None:
             if not targets is None and not predictions is None:
                 self.add(targets=targets, predictions=predictions,
@@ -126,6 +129,12 @@ class SummaryStatistics(object):
                 if isinstance(predictions, tuple):
                     predictions = list(predictions)
                 predictions[i] = t1(predictions[i])
+
+        if values is not None:
+            # assure that we have a copy, or otherwise further in-place
+            # modifications might screw things up (some classifiers share
+            # values and spit out results)
+            values = copy.deepcopy(values)
 
         self.__sets.append( (targets, predictions, values) )
         self._computed = False
@@ -193,6 +202,8 @@ class SummaryStatistics(object):
 
 
     def _compute(self):
+        """Compute basic statistics
+        """
         self._stats = {'# of sets' : len(self.sets)}
 
 
@@ -279,23 +290,31 @@ class ROCCurve(object):
         # check if all had values, if not -- complain
         Nsets_wv = len(sets_wv)
         if Nsets_wv > 0 and len(sets) != Nsets_wv:
-            warning("Only %d sets have values assigned from %d sets" %
+            warning("Only %d sets have values assigned from %d sets. "
+                    "ROC estimates might be incorrect." %
                     (Nsets_wv, len(sets)))
         # bring all values to the same 'shape':
         #  1 value per each label. In binary classifier, if only a single
         #  value is provided, add '0' for 0th label 'value'... it should
         #  work taking drunk Yarik logic ;-)
+        # yoh: apparently it caused problems whenever we had just a single
+        #      unique label in the sets. Introduced handling for
+        #      NLabels == 1
         for iset,s in enumerate(sets_wv):
             # we will do inplace modification, thus go by index
             values = s[2]
             # we would need it to be a list to reassign element with a list
             if isinstance(values, N.ndarray) and len(values.shape)==1:
+                # XXX ??? so we are going away from inplace modifications?
                 values = list(values)
             rangev = None
             for i in xrange(len(values)):
                 v = values[i]
                 if N.isscalar(v):
-                    if Nlabels == 2:
+                    if Nlabels == 1:
+                        # ensure the right dimensionality
+                        values[i] = N.array(v, ndmin=2)
+                    elif Nlabels == 2:
                         def last_el(x):
                             """Helper function. Returns x if x is scalar, and
                             last element if x is not (ie list/tuple)"""
@@ -327,10 +346,10 @@ class ROCCurve(object):
             aucs_pl = []
             ROCs_pl = []
             for s in sets_wv:
-                targets_pl = (s[0] == label).astype(int)
+                targets_pl = (N.asanyarray(s[0]) == label).astype(int)
                 # XXX we might unify naming between AUC/ROC
                 ROC = AUCErrorFx()
-                aucs_pl += [ROC([x[i] for x in s[2]], targets_pl)]
+                aucs_pl += [ROC([N.asanyarray(x)[i] for x in s[2]], targets_pl)]
                 ROCs_pl.append(ROC)
             if len(aucs_pl)>0:
                 ROCs += [ROCs_pl]
