@@ -27,7 +27,9 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * None yet.
+  * Fixed :class:`~mvpa.measures.anova.OneWayAnova` to compute F-scores with
+    expected distributions. Previous implementation did not properly took
+    degrees of freedom into account.
 
 
 Releases
