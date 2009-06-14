@@ -52,6 +52,8 @@ from mvpa.clfs.warehouse import *
 
 from mvpa import datasets
 from mvpa.datasets import *
+# just to make testsuite happy
+from mvpa.datasets.base import *
 from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
 from mvpa.datasets.miscfx import *
