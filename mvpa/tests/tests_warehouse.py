@@ -81,7 +81,7 @@ def sweepargs(**kwargs):
                         break
             if exception is not None:
                 exception.__init__('\n'.join(failed_tests_str))
-                raise
+                raise exception
 
         do_sweep.func_name = method.func_name
         return do_sweep
