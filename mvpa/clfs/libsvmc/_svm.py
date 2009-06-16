@@ -180,17 +180,30 @@ def convert2SVMNode(x):
     """convert a sequence or mapping to an SVMNode array"""
     import operator
 
-    if type(x) == dict:
+    length = len(x)
+
+    # make two lists, one of indices, one of values
+    # YYY Use isinstance  instead of type...is so we could
+    #     easily use derived subclasses
+    if isinstance(x, dict):
         iter_range = list(x).sort()
+        iter_values = N.ndarray(x.values())
+    elif isinstance(x, N.ndarray):
+        iter_range = range(length)
+        iter_values = x
     elif operator.isSequenceType(x):
-        iter_range = range(len(x))
+        iter_range = range(length)
+        iter_values = N.asarray(x)
     else:
-        raise TypeError, "data must be a mapping or a sequence"
+        raise TypeError, "data must be a mapping or an ndarray or a sequence"
 
-    data = svmc.svm_node_array(len(iter_range)+1)
-    svmc.svm_node_array_set(data, len(iter_range), -1, 0)
+    # allocate c struct
+    data = svmc.svm_node_array(length + 1)
+    # insert markers into the c struct
+    svmc.svm_node_array_set(data, length, -1, 0.0)
+    # pass the list and the ndarray to the c struct
+    svmc.svm_node_array_set(data, iter_range, iter_values)
 
-    [svmc.svm_node_array_set(data, j, k, x[k]) for j, k in enumerate(iter_range)]
     return data
 
 

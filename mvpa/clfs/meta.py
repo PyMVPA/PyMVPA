@@ -161,25 +161,27 @@ class BoostedClassifier(Classifier, Harvestable):
         self.__clfs = clfs
         """Classifiers to use"""
 
-        for flag in ['regression']:
-            values = N.array([clf.params[flag].value for clf in self.__clfs])
-            value = values.any()
-            if __debug__:
-                debug("CLFBST", "Setting %(flag)s=%(value)s for classifiers "
-                      "%(clfs)s with %(values)s",
-                      msgargs={'flag' : flag, 'value' : value,
-                               'clfs' : self.__clfs,
-                               'values' : values})
-            # set flag if it needs to be trained before predicting
-            self.params[flag].value = value
+        if len(clfs):
+            for flag in ['regression']:
+                values = N.array([clf.params[flag].value for clf in clfs])
+                value = values.any()
+                if __debug__:
+                    debug("CLFBST", "Setting %(flag)s=%(value)s for classifiers "
+                          "%(clfs)s with %(values)s",
+                          msgargs={'flag' : flag, 'value' : value,
+                                   'clfs' : clfs,
+                                   'values' : values})
+                # set flag if it needs to be trained before predicting
+                self.params[flag].value = value
 
-        # enable corresponding states in the slave-classifiers
-        if self.__propagate_states:
-            for clf in self.__clfs:
-                clf.states.enable(self.states.enabled, missingok=True)
+            # enable corresponding states in the slave-classifiers
+            if self.__propagate_states:
+                for clf in self.__clfs:
+                    clf.states.enable(self.states.enabled, missingok=True)
 
         # adhere to their capabilities + 'multiclass'
         # XXX do intersection across all classifiers!
+        # TODO: this seems to be wrong since it can be regression etc
         self._clf_internals = [ 'binary', 'multiclass', 'meta' ]
         if len(clfs)>0:
             self._clf_internals += self.__clfs[0]._clf_internals
@@ -580,9 +582,10 @@ class CombinedClassifier(BoostedClassifier):
                 self.values = self.__combiner.values
             else:
                 if __debug__:
-                    warning("Boosted classifier %s has 'values' state" % self +
-                            " enabled, but combiner has it active, thus no" +
-                            " values could be provided directly, access .clfs")
+                    warning("Boosted classifier %s has 'values' state enabled,"
+                            " but combiner doesn't have 'values' active, thus "
+                            " .values cannot be provided directly, access .clfs"
+                            % self)
         return predictions
 
 
@@ -867,7 +870,7 @@ class SplitClassifier(CombinedClassifier):
         # train them
         for split in self.__splitter.splitcfg(dataset):
             if __debug__:
-                debug("CLFSPL",
+                debug("CLFSPL_",
                       "Deepcopying %(clf)s for %(sclf)s",
                       msgargs={'clf':clf_template,
                                'sclf':self})
@@ -900,6 +903,14 @@ class SplitClassifier(CombinedClassifier):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions,
                                    clf.states.get('values', None))
+                if __debug__:
+                    dact = debug.active
+                    if 'CLFSPL_' in dact:
+                        debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
+                    elif 'CLFSPL' in dact:
+                        debug('CLFSPL', 'Split %d error %.2f%%'
+                              % (i, self.confusion.summaries[-1].error))
+
             if states.isEnabled("training_confusion"):
                 states.training_confusion += \
                                                clf.states.training_confusion

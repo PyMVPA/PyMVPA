@@ -97,6 +97,17 @@ class ErrorsTests(unittest.TestCase):
                              msg="Test if we get proper error value")
 
 
+    def testDegenerateConfusion(self):
+        # We must not just puke -- some testing splits might
+        # have just a single target label
+
+        for orig in ([1], [1, 1], [0], [0, 0]):
+            cm = ConfusionMatrix(targets=orig, predictions=orig, values=orig)
+
+            scm = str(cm)
+            self.failUnless(cm.stats['ACC%'] == 100)
+
+
     def testConfusionMatrixACC(self):
         reg  = [0,0,1,1]
         regl = [1,0,1,0]

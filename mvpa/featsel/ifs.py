@@ -60,7 +60,7 @@ class IFS(FeatureSelection):
                  ):
         """Initialize incremental feature search
 
-        :Parameter:
+        :Parameters:
             data_measure : DatasetMeasure
                 Computed for each candidate feature selection.
             transfer_error : TransferError

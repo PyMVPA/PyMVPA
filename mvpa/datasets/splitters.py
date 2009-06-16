@@ -74,7 +74,8 @@ class Splitter(object):
                  count=None,
                  strategy='equidistant',
                  discard_boundary=None,
-                 attr='chunks'):
+                 attr='chunks',
+                 reverse=False):
         """Initialize splitter base.
 
         :Parameters:
@@ -119,12 +120,17 @@ class Splitter(object):
              2 samples from training which are on the boundary with testing.
           attr : str
             Sample attribute used to determine splits.
+          reverse : bool
+            If True, the order of datasets in the split is reversed, e.g.
+            instead of (training, testing), (training, testing) will be spit
+            out
         """
         # pylint happyness block
         self.__nperlabel = None
         self.__runspersplit = nrunspersplit
         self.__permute = permute
         self.__splitattr = attr
+        self._reverse = reverse
         self.discard_boundary = discard_boundary
 
         # we don't check it, thus no reason to make it private.
@@ -277,7 +283,10 @@ class Splitter(object):
                         finalized_datasets.append(
                             DS_getRandomSamples(ds, npl))
 
-                yield finalized_datasets
+                if self._reverse:
+                    yield finalized_datasets[::-1]
+                else:
+                    yield finalized_datasets
 
 
     def splitDataset(self, dataset, specs):
@@ -497,7 +506,7 @@ class HalfSplitter(Splitter):
 
 class NGroupSplitter(Splitter):
     """Split a dataset into N-groups of the sample attribute.
-    
+
     For example, NGroupSplitter(2) is the same as the HalfSplitter and
     yields to splits: first (1st half, 2nd half) and second (2nd half,
     1st half).
@@ -505,7 +514,7 @@ class NGroupSplitter(Splitter):
     def __init__(self, ngroups=4, **kwargs):
         """Initialize the N-group splitter.
 
-        :Parameter:
+        :Parameters:
           ngroups: Int
             Number of groups to split the attribute into.
           kwargs
@@ -532,7 +541,7 @@ class NGroupSplitter(Splitter):
         # use coarsenChunks to get the split indices
         split_ind = coarsenChunks(uniqueattrs, nchunks=self.__ngroups)
         split_ind = N.asarray(split_ind)
-        
+
         # loop and create splits
         split_list = [(None, uniqueattrs[split_ind==i])
                        for i in range(self.__ngroups)]
@@ -579,7 +588,7 @@ class NFoldSplitter(Splitter):
                  **kwargs):
         """Initialize the N-fold splitter.
 
-        :Parameter:
+        :Parameters:
           cvtype: Int
             Type of cross-validation: N-(cvtype)
           kwargs
