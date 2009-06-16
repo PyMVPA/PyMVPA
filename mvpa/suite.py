@@ -52,6 +52,8 @@ from mvpa.clfs.warehouse import *
 
 from mvpa import datasets
 from mvpa.datasets import *
+# just to make testsuite happy
+from mvpa.datasets.base import *
 from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
 from mvpa.datasets.miscfx import *
@@ -76,6 +78,7 @@ from mvpa.mappers.base import *
 from mvpa.mappers.metric import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
+from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.samplegroup import *
 from mvpa.mappers.som import *

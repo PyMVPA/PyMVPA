@@ -45,7 +45,7 @@ from mvpa.base import warning
 def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
     """Load/access NIfTI data from files or instances.
 
-    :Parameter:
+    :Parameters:
       src: str | NiftiImage
         Filename of a NIfTI image or a `NiftiImage` instance.
       ensure : bool

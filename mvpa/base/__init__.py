@@ -23,6 +23,7 @@ PyMVPA code, and are generic building blocks
 __docformat__ = 'restructuredtext'
 
 
+import sys
 from mvpa.base.config import ConfigManager
 from mvpa.base.verbosity import LevelLogger, OnceLogger
 
@@ -73,6 +74,20 @@ verbose = __Singleton("verbose", LevelLogger(
 # 2 -- cmdline handling
 # 3 --
 # 4 -- computation/algorithm relevant thingies
+
+# Helper for errors printing
+def error(msg, critical=True):
+    """Helper function to output errors in a consistent way.
+
+    :Parameters:
+      msg : string
+        Actual error message (will be prefixed with ERROR:)
+      critical : bool
+        If critical error -- exit with
+    """
+    verbose(0, "ERROR: " + msg)
+    if critical:
+        raise sys.exit(1)
 
 # Lets check if environment can tell us smth
 if cfg.has_option('general', 'verbose'):
@@ -231,6 +246,7 @@ if __debug__:
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
+    debug.register('CLFSPL_',"SplitClassifier (verbose)")
     debug.register('CLFFS',  "FeatureSelectionClassifier")
     debug.register('CLFFS_', "FeatureSelectionClassifier (verbose)")
 

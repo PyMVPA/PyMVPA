@@ -54,6 +54,7 @@ Analysis
    examples/svdclf
    examples/permutation_test
    examples/match_distribution
+   examples/eventrelated
 
 
 Visualization

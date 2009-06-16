@@ -1,4 +1,7 @@
 //-*-c++-*-
+/*emacs: -*- mode: c++; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: t -*-
+  ex: set sts=4 ts=4 sw=4 noet: */
+
 %module svmc
 %{
 #include "svm.h"
@@ -7,80 +10,80 @@
 
 struct svm_model
 {
-	svm_parameter param;	// parameter
+	svm_parameter param;// parameter
 	int nr_class;		// number of classes, = 2 in regression/one class svm
-	int l;			// total #SV
+	int l;				// total #SV
 	svm_node **SV;		// SVs (SV[l])
 	double **sv_coef;	// coefficients for SVs in decision functions (sv_coef[k-1][l])
 	double *rho;		// constants in decision functions (rho[k*(k-1)/2])
-	double *probA;          // pariwise probability information
+	double *probA;		// pariwise probability information
 	double *probB;
 
 	// for classification only
 
 	int *label;		// label of each class (label[k])
 	int *nSV;		// number of SVs for each class (nSV[k])
-				// nSV[0] + nSV[1] + ... + nSV[k-1] = l
+					// nSV[0] + nSV[1] + ... + nSV[k-1] = l
 	// XXX
-	int free_sv;		// 1 if svm_model is created by svm_load_model
-				// 0 if svm_model is created by svm_train
+	int free_sv;	// 1 if svm_model is created by svm_load_model
+					// 0 if svm_model is created by svm_train
 };
 
 /* convert node matrix into a numpy array */
-static PyObject* 
+static PyObject*
 svm_node_matrix2numpy_array(struct svm_node** matrix, int rows, int cols)
 {
-    npy_intp dims[2] = {rows,cols};
+	npy_intp dims[2] = {rows,cols};
 
-    PyObject* array = 0;
-    array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
+	PyObject* array = 0;
+	array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
 
-    /* array subscription is [row][column] */
-    PyArrayObject* a = (PyArrayObject*) array;
+	/* array subscription is [row][column] */
+	PyArrayObject* a = (PyArrayObject*) array;
 
-    double* data = (double *)a->data;
+	double* data = (double *)a->data;
 
-    int i,j;
+	int i,j;
 
-    for (i = 0; i<rows; ++i)
-    {
-        for (j = 0; j<cols; ++j)
-        {
-            data[cols*i+j] = (matrix[i][j]).value;
-        }
-    }
+	for (i = 0; i<rows; ++i)
+	{
+		for (j = 0; j<cols; ++j)
+		{
+			data[cols*i+j] = (matrix[i][j]).value;
+		}
+	}
 
-    return PyArray_Return ( (PyArrayObject*) array  );
+	return PyArray_Return ( (PyArrayObject*) array	);
 }
 
 static PyObject* doubleppcarray2numpy_array(double** carray, int rows, int cols)
 {
-    if (!carray)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "Zero pointer passed instead of valid double**.");
-        return(NULL);
-    }
+	if (!carray)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "Zero pointer passed instead of valid double**.");
+		return(NULL);
+	}
 
-    npy_intp dims[2] = {rows,cols};
+	npy_intp dims[2] = {rows,cols};
 
-    PyObject* array = 0;
-    array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
+	PyObject* array = 0;
+	array = PyArray_SimpleNew ( 2, dims, NPY_DOUBLE );
 
-    /* array subscription is [row][column] */
-    PyArrayObject* a = (PyArrayObject*) array;
+	/* array subscription is [row][column] */
+	PyArrayObject* a = (PyArrayObject*) array;
 
-    double* data = (double *)a->data;
+	double* data = (double *)a->data;
 
-    int i,j;
-    for (i = 0; i<rows; ++i)
-    {
-        for (j = 0; j<cols; ++j)
-        {
-            data[cols*i+j] = carray[i][j];
-        }
-    }
+	int i,j;
+	for (i = 0; i<rows; ++i)
+	{
+		for (j = 0; j<cols; ++j)
+		{
+			data[cols*i+j] = carray[i][j];
+		}
+	}
 
-    return PyArray_Return ( (PyArrayObject*) array  );
+	return PyArray_Return ( (PyArrayObject*) array	);
 }
 
 /* rely on built-in facility to control verbose output
@@ -93,16 +96,16 @@ static void print_null(const char *s) {}
 
 static void print_string_stdout(const char *s)
 {
-    fputs(s,stdout);
-    fflush(stdout);
+	fputs(s,stdout);
+	fflush(stdout);
 }
 
 /* provide convenience wrapper */
 void svm_set_verbosity(int verbosity_flag){
-    if (verbosity_flag)
-        svm_print_string = &print_string_stdout;
-    else
-        svm_print_string = &print_null;
+	if (verbosity_flag)
+		svm_print_string = &print_string_stdout;
+	else
+		svm_print_string = &print_null;
 }
 #endif
 
@@ -110,30 +113,30 @@ void svm_set_verbosity(int verbosity_flag){
 
 %init
 %{
-    import_array();
+	import_array();
 %}
 
-enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR };	/* svm_type */
+enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR }; /* svm_type */
 enum { LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED };	/* kernel_type */
 
 struct svm_parameter
 {
 	int svm_type;
 	int kernel_type;
-	int degree;	// for poly
+	int degree; 	// for poly
 	double gamma;	// for poly/rbf/sigmoid
 	double coef0;	// for poly/sigmoid
 
 	// these are for training only
-	double cache_size; // in MB
-	double eps;	// stopping criteria
-	double C;	// for C_SVC, EPSILON_SVR and NU_SVR
+	double cache_size;	// in MB
+	double eps; 		// stopping criteria
+	double C;			// for C_SVC, EPSILON_SVR and NU_SVR
 	int nr_weight;		// for C_SVC
 	int *weight_label;	// for C_SVC
 	double* weight;		// for C_SVC
-	double nu;	// for NU_SVC, ONE_CLASS, and NU_SVR
-	double p;	// for EPSILON_SVR
-	int shrinking;	// use the shrinking heuristics
+	double nu;			// for NU_SVC, ONE_CLASS, and NU_SVR
+	double p;			// for EPSILON_SVR
+	int shrinking;		// use the shrinking heuristics
 	int probability;
 };
 
@@ -150,22 +153,22 @@ struct svm_problem
 struct svm_model
 {
 	svm_parameter param;	// parameter
-	int nr_class;		// number of classes, = 2 in regression/one class svm
-	int l;			// total #SV
-	svm_node **SV;		// SVs (SV[l])
-	double **sv_coef;	// coefficients for SVs in decision functions (sv_coef[k-1][l])
-	double *rho;		// constants in decision functions (rho[k*(k-1)/2])
-	double *probA;          // pariwise probability information
+	int nr_class;			// number of classes, = 2 in regression/one class svm
+	int l;					// total #SV
+	svm_node **SV;			// SVs (SV[l])
+	double **sv_coef;		// coefficients for SVs in decision functions (sv_coef[k-1][l])
+	double *rho;			// constants in decision functions (rho[k*(k-1)/2])
+	double *probA;			// pariwise probability information
 	double *probB;
 
 	// for classification only
 
 	int *label;		// label of each class (label[k])
 	int *nSV;		// number of SVs for each class (nSV[k])
-				// nSV[0] + nSV[1] + ... + nSV[k-1] = l
+					// nSV[0] + nSV[1] + ... + nSV[k-1] = l
 	// XXX
-	int free_sv;		// 1 if svm_model is created by svm_load_model
-				// 0 if svm_model is created by svm_train
+	int free_sv;	// 1 if svm_model is created by svm_load_model
+					// 0 if svm_model is created by svm_train
 };
 
 /* one really wants to configure verbosity within python! */
@@ -211,6 +214,18 @@ void svm_node_array_set(struct svm_node *array, int i, int index, double value)
 {
 	array[i].index = index;
 	array[i].value = value;
+}
+
+void svm_node_array_set(struct svm_node *array, PyObject *indices, PyObject *values)
+{
+	int length = PyList_Size(indices);
+	int i;
+	for (i = 0; i< length; i++){
+		array[i].index = (int)PyInt_AS_LONG(PyList_GetItem(indices, i));
+		PyObject* obj = PyArray_GETITEM(values, PyArray_GETPTR1(values, i));
+		array[i].value = (double)PyFloat_AS_DOUBLE(obj);
+		Py_DECREF(obj);
+	}
 }
 
 void svm_node_array_destroy(struct svm_node *array)

@@ -68,10 +68,11 @@ def sweepargs(**kwargs):
                     except Exception, e:
                         exception = e
                         # Adjust message making it more informative
-                        failed_tests_str.append("%s on %s = %s" % (str(e), argname, `argvalue`))
+                        msg = "%s on %s = %s" % (e, argname, `argvalue`)
+                        failed_tests_str.append(msg)
                         untrain_clf(argvalue) # untrain classifier
                         if __debug__:
-                            debug('TEST', 'Failed #%d' % len(failed_tests_str))
+                            debug('TEST', 'Failed #%d: %s' % (len(failed_tests_str), msg))
                     # TODO: handle different levels of unittests properly
                     if cfg.getboolean('tests', 'quick', False):
                         # on TESTQUICK just run test for 1st entry in the list,
@@ -80,7 +81,7 @@ def sweepargs(**kwargs):
                         break
             if exception is not None:
                 exception.__init__('\n'.join(failed_tests_str))
-                raise
+                raise exception
 
         do_sweep.func_name = method.func_name
         return do_sweep
