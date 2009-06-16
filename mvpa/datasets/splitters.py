@@ -111,13 +111,13 @@ class Splitter(object):
              equidistant
               Splits which are equidistant from each other
           discard_boundary : None or int or sequence of int
-             If not `None`, how many samples on the boundaries between
-             parts of the split to discard in the training part.
-             If int, then discarded in all parts.  If a sequence, numbers
-             to discard are given per part of the split.
-             E.g. if splitter splits only into (training, testing)
-             parts, then `discard_boundary`=(2,0) would instruct to discard
-             2 samples from training which are on the boundary with testing.
+            If not `None`, how many samples on the boundaries between
+            parts of the split to discard in the training part.
+            If int, then discarded in all parts.  If a sequence, numbers
+            to discard are given per part of the split.
+            E.g. if splitter splits only into (training, testing)
+            parts, then `discard_boundary`=(2,0) would instruct to discard
+            2 samples from training which are on the boundary with testing.
           attr : str
             Sample attribute used to determine splits.
           reverse : bool
@@ -438,13 +438,13 @@ class OddEvenSplitter(Splitter):
         """Cheap init.
 
         :Parameters:
-            usevalues: Boolean
-                If True the values of the attribute used for splitting will be
-                used to determine odd and even samples. If False odd and even
-                chunks are defined by the order of attribute values, i.e. first
-                unique attribute is odd, second is even, despite the
-                corresponding values might indicate the opposite (e.g. in case
-                of [2,3].
+          usevalues: bool
+            If True the values of the attribute used for splitting will be
+            used to determine odd and even samples. If False odd and even
+            chunks are defined by the order of attribute values, i.e. first
+            unique attribute is odd, second is even, despite the
+            corresponding values might indicate the opposite (e.g. in case
+            of [2,3].
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -515,7 +515,7 @@ class NGroupSplitter(Splitter):
         """Initialize the N-group splitter.
 
         :Parameters:
-          ngroups: Int
+          ngroups: int
             Number of groups to split the attribute into.
           kwargs
             Additional parameters are passed to the `Splitter` base class.
@@ -589,7 +589,7 @@ class NFoldSplitter(Splitter):
         """Initialize the N-fold splitter.
 
         :Parameters:
-          cvtype: Int
+          cvtype: int
             Type of cross-validation: N-(cvtype)
           kwargs
             Additional parameters are passed to the `Splitter` base class.
