@@ -638,6 +638,36 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(N.any(ds.uniquechunks != ds_.uniquechunks))
 
 
+    def testIdsonboundaries(self):
+        """Test detection of transition points
+
+        Shame on Yarik -- he didn't create unittests right away... damn me
+        """
+        ds = Dataset(samples=N.array(range(10), ndmin=2).T,
+                     labels=[0,0,1,1,0,0,1,1,0,0],
+                     chunks=[0,0,0,0,0,1,1,1,1,1])
+        self.failUnless(ds.idsonboundaries() == [0,2,4,5,6,8],
+                        "We should have got ids whenever either chunk or "
+                        "label changes")
+        self.failUnless(ds.idsonboundaries(attributes_to_track=['chunks'])
+                        == [0, 5])
+        # Preceding samples
+        self.failUnless(ds.idsonboundaries(prior=1, post=-1,
+                                           attributes_to_track=['chunks'])
+                        == [4, 9])
+        self.failUnless(ds.idsonboundaries(prior=2, post=-1,
+                                           attributes_to_track=['chunks'])
+                        == [3, 4, 8, 9])
+        self.failUnless(ds.idsonboundaries(prior=2, post=-1,
+                                           attributes_to_track=['chunks'],
+                                           revert=True)
+                        == [0, 1, 2, 5, 6, 7])
+        self.failUnless(ds.idsonboundaries(prior=1, post=1,
+                                           attributes_to_track=['chunks'])
+                        == [0, 1, 4, 5, 6, 9])
+        # all should be there
+        self.failUnless(ds.idsonboundaries(prior=2) == range(10))
+
 
 def suite():
     return unittest.makeSuite(DatasetTests)

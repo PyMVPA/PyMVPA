@@ -504,18 +504,21 @@ class Dataset(object):
         labels = self.labels
         nsamples = self.nsamples
 
-        lastseen = [None for attr in attributes_to_track]
+        lastseen = none = [None for attr in attributes_to_track]
         transitions = []
 
-        for i in xrange(nsamples):
-            current = [_data[attr][i] for attr in attributes_to_track]
+        for i in xrange(nsamples+1):
+            if i < nsamples:
+                current = [_data[attr][i] for attr in attributes_to_track]
+            else:
+                current = none
             if lastseen != current:
                 # transition point
                 new_transitions = range(max(0, i-prior),
                                         min(nsamples-1, i+post)+1)
                 if affected_labels is not None:
-                    new_transitions = filter(lambda i: labels[i] in affected_labels,
-                                             new_transitions)
+                    new_transitions = [labels[i] for i in new_transitions
+                                       if i in affected_labels]
                 transitions += new_transitions
                 lastseen = current
 
