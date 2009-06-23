@@ -206,8 +206,7 @@ class SupportFxTests(unittest.TestCase):
 
         self.failUnless(version_to_tuple('0.0.01') == (0, 0, 1))
         self.failUnless(version_to_tuple('0.7.1rc3') == (0, 7, 1, 'rc', 3))
-        print version_to_tuple('0.7.rc3')
-        print version_to_tuple('0.7~dev1-1.2')
+
 
     def testSmartVersion(self):
         """Test our ad-hoc SmartVersion
