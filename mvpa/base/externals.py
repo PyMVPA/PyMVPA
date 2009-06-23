@@ -14,6 +14,7 @@ import os
 
 from mvpa.base import warning
 from mvpa import cfg
+from mvpa.misc.support import SmartVersion
 
 if __debug__:
     from mvpa.base import debug
@@ -21,20 +22,6 @@ if __debug__:
 versions = {}
 """Versions of available externals, as tuples
 """
-
-def __version_to_tuple(v):
-    """Simple helper to convert version given as a string into a tuple.
-
-    Tuple of integers constructed by splitting at '.'.
-    """
-    if isinstance(v, basestring):
-        v = tuple([int(x) for x in v.split('.') if not x.startswith('dev')])
-    elif isinstance(v, tuple) or isinstance(v, list):
-        # assure tuple
-        v = tuple(v)
-    else:
-        raise ValueError, "Do not know how to treat version '%s'" % str(v)
-    return v
 
 
 def __check_scipy():
@@ -51,11 +38,11 @@ def __check_scipy():
     warnings.simplefilter('default', DeprecationWarning)
     # Infiltrate warnings if necessary
     numpy_ver = versions['numpy']
-    scipy_ver = versions['scipy'] = __version_to_tuple(sp.__version__)
+    scipy_ver = versions['scipy'] = SmartVersion(sp.__version__)
     # There is way too much deprecation warnings spit out onto the
     # user. Lets assume that they should be fixed by scipy 0.7.0 time
-    if scipy_ver >= (0, 6, 0) and scipy_ver < (0, 7, 0) \
-        and numpy_ver > (1, 1, 0):
+    if scipy_ver >= "0.6.0" and scipy_ver < "0.7.0" \
+        and numpy_ver > "1.1.0":
         import warnings
         if not __debug__ or (__debug__ and not 'PY' in debug.active):
             debug('EXT', "Setting up filters for numpy DeprecationWarnings")
@@ -77,7 +64,7 @@ def __check_numpy():
     """Check if numpy is present (it must be) an if it is -- store its version
     """
     import numpy as N
-    versions['numpy'] = __version_to_tuple(N.__version__)
+    versions['numpy'] = SmartVersion(N.__version__)
 
 
 def __check_pywt(features=None):
