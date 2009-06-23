@@ -7,6 +7,8 @@
 *.pstats
 *.py[co]
 *.swp
+*.o
+*.a
 *.valgrind.out*
 *~
 .coverage
@@ -16,10 +18,11 @@
 /logs
 /temp
 /trash
+/debugs
 \#*
 \.\#*
-build
-build-arch*
+/build
+/build-arch*
 data/haxby8x6
 debian/*.debhelper
 debian/*.substvars
@@ -32,3 +35,7 @@ svmc_wrap.cpp
 tests/.noseids
 tools/codeswarm
 tools/pdfbook
+*_flymake.py
+.ropeproject
+logs
+nobackup_*
