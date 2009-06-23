@@ -310,10 +310,17 @@ class StatsTests(unittest.TestCase):
 
         ds = datasets['uni4large']
         ac = mc(ds)
+
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
             self.failUnless((ac[(N.array(ds.nonbogus_features),
                                  N.arange(4))] >= 1).all())
+        # All features should have slightly but different CompoundAnova
+        # values. I really doubt that there will be a case when this
+        # test would fail just to being 'labile'
+        self.failUnless(N.max(N.std(ac, axis=1))>0,
+                        msg='In compound anova, we should get different'
+                        ' results for different labels. Got %s' % ac)
 
 
     def testGLM(self):
