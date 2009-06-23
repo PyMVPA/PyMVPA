@@ -45,7 +45,12 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         # However, it got tweaked and optimized to better fit into PyMVPA.
 
         # number of groups
-        na = len(dataset.uniquelabels)
+        if labels is None:
+            labels = dataset.labels
+
+        ul = N.unique(labels)
+
+        na = len(ul)
         bign = float(dataset.nsamples)
         alldata = dataset.samples
 
@@ -59,9 +64,9 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
 
         # between group sum of squares
         ssbn = 0
-        for l in dataset.uniquelabels:
+        for l in ul:
             # all samples for the respective label
-            d = alldata[dataset.labels == l]
+            d = alldata[labels == l]
             sos = N.sum(d, axis=0)
             sos *= sos
             ssbn += sos / float(len(d))
