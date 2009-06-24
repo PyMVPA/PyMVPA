@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from os import environ
 
-import unittest
+import unittest, traceback, sys
 import numpy as N
 
 from mvpa import cfg
@@ -64,15 +64,24 @@ def sweepargs(**kwargs):
                             debug('TEST', 'Running %s on args=%s and kwargs=%s' %
                                   (method.__name__, `args_`, `kwargs_`))
                         method(*args_, **kwargs_)
-                        untrain_clf(argvalue)
                     except Exception, e:
                         exception = e
+                        estr = str(e)
+                        if estr == '':
+                            # If we hadn't provided meaningful message
+                            # lets extract useful part of the traceback
+                            etype, value, tb = sys.exc_info()
+                            estr = '  ' + '  '.join(
+                                [l for l in traceback.format_exception(etype, value, tb)
+                                 if not ('do_sweep' in l or 'unittest.py' in l
+                                         or 'AssertionError' in l or 'Traceback (most' in l)])
+
                         # Adjust message making it more informative
-                        msg = "%s on %s = %s" % (e, argname, `argvalue`)
+                        msg = "%s on %s = %s" % (estr, argname, `argvalue`)
                         failed_tests_str.append(msg)
-                        untrain_clf(argvalue) # untrain classifier
                         if __debug__:
                             debug('TEST', 'Failed #%d: %s' % (len(failed_tests_str), msg))
+                    untrain_clf(argvalue)
                     # TODO: handle different levels of unittests properly
                     if cfg.getboolean('tests', 'quick', False):
                         # on TESTQUICK just run test for 1st entry in the list,
@@ -80,7 +89,9 @@ def sweepargs(**kwargs):
                         # TODO: proper partitioning of unittests
                         break
             if exception is not None:
-                exception.__init__('\n'.join(failed_tests_str))
+                exception.__init__("Method %s failed %d times with:\n" %
+                                   (method.func_name, len(failed_tests_str))
+                                   + '\n'.join(failed_tests_str))
                 raise exception
 
         do_sweep.func_name = method.func_name
