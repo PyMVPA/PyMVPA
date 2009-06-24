@@ -123,6 +123,10 @@ class NullDist(ClassWithCollections):
 
         self._setTail(tail)
 
+    def __repr__(self, prefixes=[]):
+        return super(NullDist, self).__repr__(
+            prefixes=["tail=%s" % str(self.__tail)] + prefixes)
+
 
     def _setTail(self, tail):
         # sanity check
@@ -210,6 +214,12 @@ class MCNullDist(NullDist):
         """Number of permutations to compute the estimate the null
         distribution."""
 
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ["permutations=%s" % self.__permutations]
+        if self._dist_class != Nonparametric:
+            prefixes_.insert(0, 'dist_class=%s' % `self._dist_class`)
+        return super(MCNullDist, self).__repr__(
+            prefixes=prefixes_ + prefixes)
 
 
     def fit(self, measure, wdata, vdata=None):
