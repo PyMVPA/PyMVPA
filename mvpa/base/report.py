@@ -1,0 +1,315 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Creating simple PDF reports using reportlab
+
+You can attach report to the existing 'verbose' with
+
+  report = Report()
+  verbose.handlers += [report]
+
+then all verbose messages present on the screen will also be recorded
+in the report.  Use
+  report.text("string")
+to add additional text, or
+  report.figure()
+to add the current figure to the report.
+
+report.figures() will add existing figures to the report, but they
+might not be properly interleaved with verbose messages if there were
+any between the creations of the figures.
+
+Inspired by Andy Connolly
+"""
+
+__docformat__ = 'restructuredtext'
+
+
+import os
+from datetime import datetime
+
+import mvpa
+from mvpa.base import externals, verbose
+
+if __debug__:
+    from mvpa.base import debug
+
+if externals.exists('reportlab', raiseException=True):
+    import reportlab as rl
+    from reportlab.platypus import  SimpleDocTemplate, Paragraph, Spacer, Image
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import inch
+
+# Although somewhat optional -- let it be firm requirement
+if externals.exists('pylab', raiseException=True):
+    import pylab as P
+    figure = P.matplotlib.figure
+
+__all__ = [ 'rl', 'Report' ]
+
+if externals.versions['reportlab'] >= '2.2':
+    _fig_ext_default = 'pdf'
+else:
+    _fig_ext_default = 'jpg'
+
+
+def _escapeXML(s):
+    s = s.replace('&', '&amp;')
+    s = s.replace('<', '&lt;')
+    s = s.replace('>', '&gt;')
+    return s
+
+class Report(object):
+    """Simple report using reportlab
+
+    Named report 'report' generates 'report.pdf' and directory 'report/' with
+    images which were requested to be included in the report
+    """
+
+    _styles = getSampleStyleSheet()
+
+    def __init__(self, name='report', title=None, path=None,
+                 author=None, style="Normal",
+                 fig_ext=_fig_ext_default, font='Helvetica',
+                 pagesize=None):
+        """Initialize report
+
+        :Parameters:
+          name : string
+            Name of the report
+          title : string or None
+            Title to start the report, if None, name will be used
+          path : string
+            Top directory where named report will be stored. Has to be
+            set now to have correct path for storing image renderings.
+            Default: current directory
+          author : string or None
+            Optional author identity to be printed
+          style : string
+            One of the known to reportlab styles, e.g. Normal
+          fig_ext : string
+            What extension to use for figures by default.
+            Versions prior 2.2 of reportlab might do not support pdf,
+            hence 'jpg' is default for those, 'pdf' otherwise
+          font : string
+            Name of the font to use
+          pagesize : tuple of floats
+            Optional page size if not to be default
+        """
+
+        if pagesize is None:
+            pagesize = rl.rl_config.defaultPageSize
+        self.pagesize = pagesize
+
+        self.name = name
+        self.author = author
+        self.font = font
+        self.title = title
+        self.fig_ext = fig_ext
+
+        if path is None:
+            self._filename = name
+        else:
+            self._filename = os.path.join(path, name)
+
+        self.__nfigures = 0
+
+        try:
+            styles = self._styles
+            self.style = self._styles.byName[style]
+        except KeyError:
+            raise ValueError, \
+                  "Style %s is not know to reportlab. Known are %s" \
+                  % (styles.keys())
+
+        self._story = []
+
+
+    @property
+    def __preamble(self):
+        """Compose the beginning of the report
+        """
+        date = datetime.today().isoformat(' ')
+
+        owner = 'PyMVPA v. %s' % mvpa.__version__
+        if self.author is not None:
+            owner += '   Author: %s' % self.author
+
+        return [ Spacer(1, 0.8*inch),
+                 Paragraph("Generated on " + date, self.style),
+                 Paragraph(owner, self.style)] + self.__flowbreak
+
+
+    def clear(self):
+        """Clear the report
+        """
+        self._story = []
+
+
+    def text(self, line, isxml=False, style=None):
+        """Add a string to the report
+        """
+        if __debug__ and not self in debug.handlers:
+            debug("REP", "Adding text '%s'" % line.strip())
+        if style is None:
+            style = self.style
+        if not isxml:
+            # we need to convert some of the characters to make it
+            # legal XML
+            line = _escapeXML(line)
+        self._story.append(Paragraph(line, style=style))
+
+    write = text
+    """Just an alias for .text, so we could simply provide report
+    as a handler for verbose
+    """
+
+    def figure(self, fig=None, name=None, savefig_kwargs={}, **kwargs):
+        """Add a figure to the report
+
+        :Parameters:
+          fig : None or string or `figure.Figure`
+            If string -- treat as a filename
+               Figure -- stores it into a file under directory
+                         and embedds into the report
+               None -- takes the current figure
+          savefig_kwargs : dict
+            Additional keyword arguments to provide savefig with (e.g. dpi)
+          **kwargs
+            Passed to :class:`reportlab.platypus.Image` constructor
+        """
+
+        if fig is None:
+            fig = P.gcf()
+
+        if isinstance(fig, figure.Figure):
+            # Create directory if needed
+            if not (os.path.exists(self._filename) and
+                    os.path.isdir(self._filename)):
+                os.makedirs(self._filename)
+
+            # Figure out the name for image
+            self.__nfigures += 1
+            if name is None:
+                name = 'Figure#'
+            name = name.replace('#', str(self.__nfigures))
+
+            # Save image
+            fig_filename = os.path.join(self._filename,
+                                        '%s.%s' % (name, self.fig_ext))
+            if __debug__ and not self in debug.handlers:
+                debug("REP_", "Saving figure '%s' into %s"
+                      % (fig, fig_filename))
+
+            fig.savefig(fig_filename, **savefig_kwargs)
+
+            # adjust fig to the one to be included
+            fig = fig_filename
+
+        if __debug__ and not self in debug.handlers:
+            debug("REP", "Adding figure '%s'" % fig)
+
+        im = Image(fig, **kwargs)
+
+        # If the inherent or provided width/height are too large -- shrink down
+        imsize = (im.drawWidth, im.drawHeight)
+
+        # Reduce the size if necessary so reportlab does not puke later on
+        r = [float(d)/m for d,m in zip(imsize, self.pagesize)]
+        maxr = max(r)
+        if maxr > 1.0:
+            if __debug__ and not self in debug.handlers:
+                debug("REP_", "Shrinking figure by %.3g" % maxr)
+            im.drawWidth  /= maxr
+            im.drawHeight /= maxr
+
+        self._story.append(im)
+
+
+    def figures(self, *args, **kwargs):
+        """Adds all present figures at once
+
+        If called twice, it might add the same figure multiple times,
+        so make sure to close all previous figures if you use
+        figures() multiple times
+        """
+        figs = P.matplotlib._pylab_helpers.Gcf.figs
+        if __debug__ and not self in debug.handlers:
+            debug('REP', "Saving all %d present figures" % len(figs))
+        for fid, f in figs.iteritems():
+            self.figure(f.canvas.figure, *args, **kwargs)
+
+    @property
+    def __flowbreak(self):
+        return [Spacer(1, 0.2*inch),
+                Paragraph("-" * 150, self.style),
+                Spacer(1, 0.2*inch)]
+
+    def flowbreak(self):
+        """Just a marker for the break of the flow
+        """
+        if __debug__ and not self in debug.handlers:
+            debug("REP", "Adding flowbreak")
+
+        self._story.append(self.__flowbreak)
+
+
+##     def __del__(self):
+##         """Store report upon deletion
+##         """
+##         if __debug__ and not self in debug.handlers:
+##             debug("REP", "Report is being deleted. Storing")
+##         self.save()
+
+
+    def save(self, add_preamble=True):
+        """Saves PDF
+
+        :Parameters:
+          add_preamble : bool
+            Either to add preamble containing title/date/author information
+        """
+
+        if self.title is None:
+            title = self.name + " report"
+        else:
+            title = self.title
+
+        pageinfo = self.name + " data"
+
+        def myFirstPage(canvas, doc):
+            canvas.saveState()
+            canvas.setFont(self.font, 16)
+            canvas.drawCentredString(self.pagesize[0]/2.0,
+                                     self.pagesize[1]-108, title)
+            canvas.setFont(self.font, 9)
+            canvas.drawString(inch, 0.75 * inch,
+                              "First Page / %s" % pageinfo)
+            canvas.restoreState()
+
+        def myLaterPages(canvas, doc):
+            canvas.saveState()
+            canvas.setFont(self.font, 9)
+            canvas.drawString(inch, 0.75 * inch,
+                              "Page %d %s" % (doc.page, pageinfo))
+            canvas.restoreState()
+
+        filename = self._filename + ".pdf"
+        doc = SimpleDocTemplate(filename)
+
+        story = self._story
+        if add_preamble:
+            story = self.__preamble + story
+
+        if __debug__ and not self in debug.handlers:
+            debug("REP", "Saving the report into %s" % filename)
+
+        doc.build(story,
+                  onFirstPage=myFirstPage,
+                  onLaterPages=myLaterPages)
+
