@@ -125,7 +125,7 @@ class NullDist(ClassWithCollections):
 
     def __repr__(self, prefixes=[]):
         return super(NullDist, self).__repr__(
-            prefixes=["tail=%s" % str(self.__tail)] + prefixes)
+            prefixes=["tail=%s" % `self.__tail`] + prefixes)
 
 
     def _setTail(self, tail):
@@ -370,6 +370,12 @@ class FixedNullDist(NullDist):
         """Return value of the cumulative distribution function at `x`.
         """
         return self._dist.cdf(x)
+
+
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ["dist=%s" % `self._dist`]
+        return super(FixedNullDist, self).__repr__(
+            prefixes=prefixes_ + prefixes)
 
 
 class AdaptiveNullDist(FixedNullDist):
