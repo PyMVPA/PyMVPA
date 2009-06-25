@@ -20,16 +20,16 @@ from numpy.testing import assert_array_almost_equal
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
-nulldist_sweep = [ MCNullDist(permutations=10, tail='any'),
-                   MCNullDist(permutations=10, tail='right')]
+nulldist_sweep = [ MCNullDist(permutations=30, tail='any'),
+                   MCNullDist(permutations=30, tail='right')]
 if externals.exists('scipy'):
     from scipy.stats import f_oneway
     from mvpa.support.stats import scipy
-    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=10,
+    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=30,
                                    tail='any'),
-                        MCNullDist(scipy.stats.norm, permutations=10,
+                        MCNullDist(scipy.stats.norm, permutations=30,
                                    tail='right'),
-                        MCNullDist(scipy.stats.expon, permutations=10,
+                        MCNullDist(scipy.stats.expon, permutations=30,
                                    tail='right'),
                         FixedNullDist(scipy.stats.norm(0, 0.1), tail='any'),
                         FixedNullDist(scipy.stats.norm(0, 0.1), tail='right'),
@@ -71,12 +71,13 @@ class StatsTests(unittest.TestCase):
         # check reasonable output.
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
-        prob = null.p([3, 0, 0, 0, 0, N.nan])
+        prob = null.p([10, 0, 0, 0, 0, N.nan])
         # XXX this is labile! it also needs checking since the F-scores
         # of the MCNullDists using normal distribution are apparently not
         # distributed that way, hence the test often (if not always) fails.
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.abs(prob[0]) < 0.01)
+            self.failUnless(N.abs(prob[0]) < 0.05,
+                            msg="Expected small p, got %g" % prob[0])
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless((N.abs(prob[1:]) > 0.05).all(),
                             msg="Bogus features should have insignificant p."
