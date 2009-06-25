@@ -43,12 +43,13 @@ def sweepargs(**kwargs):
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):
             def untrain_clf(argvalue):
+                """Little helper"""
                 if isinstance(argvalue, Classifier):
                     # clear classifier after its use -- just to be sure ;-)
                     argvalue.retrainable = False
                     argvalue.untrain()
-            failed_tests_str = []
-            exception = None
+
+            failed_tests = {}
             for argname in kwargs.keys():
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
@@ -64,23 +65,27 @@ def sweepargs(**kwargs):
                             debug('TEST', 'Running %s on args=%s and kwargs=%s' %
                                   (method.__name__, `args_`, `kwargs_`))
                         method(*args_, **kwargs_)
-                    except Exception, e:
-                        exception = e
+                    except AssertionError, e:
                         estr = str(e)
-                        if estr == '':
-                            # If we hadn't provided meaningful message
-                            # lets extract useful part of the traceback
-                            etype, value, tb = sys.exc_info()
-                            estr = '  ' + '  '.join(
-                                [l for l in traceback.format_exception(etype, value, tb)
-                                 if not ('do_sweep' in l or 'unittest.py' in l
-                                         or 'AssertionError' in l or 'Traceback (most' in l)])
+                        etype, value, tb = sys.exc_info()
+                        # literal representation of exception tb, so
+                        # we could group them later on
+                        eidstr = '  '.join(
+                            [l for l in traceback.format_exception(etype, value, tb)
+                             if not ('do_sweep' in l or 'unittest.py' in l
+                                     or 'AssertionError' in l or 'Traceback (most' in l)])
 
-                        # Adjust message making it more informative
-                        msg = "%s on %s = %s" % (estr, argname, `argvalue`)
-                        failed_tests_str.append(msg)
+                        # Store exception information for later on groupping
+                        if not eidstr in failed_tests:
+                            failed_tests[eidstr] = []
+
+                        failed_tests[eidstr].append(
+                            # skip top-most tb in sweep_args
+                            (argname, `argvalue`, tb.tb_next, estr))
+
                         if __debug__:
-                            debug('TEST', 'Failed #%d: %s' % (len(failed_tests_str), msg))
+                            msg = "%s on %s=%s" % (estr, argname, `argvalue`)
+                            debug('TEST', 'Failed unittest: %s\n%s' % (eidstr, msg))
                     untrain_clf(argvalue)
                     # TODO: handle different levels of unittests properly
                     if cfg.getboolean('tests', 'quick', False):
@@ -88,11 +93,29 @@ def sweepargs(**kwargs):
                         # the rest are omitted
                         # TODO: proper partitioning of unittests
                         break
-            if exception is not None:
-                exception.__init__("Method %s failed %d times with:\n" %
-                                   (method.func_name, len(failed_tests_str))
-                                   + '\n'.join(failed_tests_str))
-                raise exception
+
+            if len(failed_tests):
+                # Lets now create a single AssertionError exception which would nicely
+                # incorporate all failed exceptions
+                multiple = len(failed_tests) != 1 # is it unique?
+                # if so, we don't need to reinclude traceback since it
+                # would be spitted out anyways below
+                estr = ""
+                cestr = "lead to failures of unittest %s" % method.__name__
+                if multiple:
+                    estr += "\n Different scenarios %s (specific tracebacks are below):" % cestr
+                else:
+                    estr += "\n Single scenario %s:" % cestr
+                for ek, els in failed_tests.iteritems():
+                    estr += '\n'
+                    if multiple: estr += ek
+                    estr += "  on\n    %s" % ("    ".join(
+                            ["%s=%s%s\n" % (ea, eav,
+                                            # Why didn't I just do regular for loop? ;)
+                                            ":\n     ".join([x for x in [' ', es] if x != '']))
+                             for ea, eav, etb, es in els]))
+                    etb = els[0][2] # take first one... they all should be identical
+                raise AssertionError(estr), None, etb
 
         do_sweep.func_name = method.func_name
         return do_sweep
