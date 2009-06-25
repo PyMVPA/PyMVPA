@@ -82,9 +82,13 @@ class ReportTest(unittest.TestCase):
                     msg="We should have got some lines from figures")
 
         report.text("Dugi bugi")
+        # make sure we don't puke on xml like text with crap
+        report.text("<kaj>$lkj&*()^$%#%</kaj>")
+        report.text("locals:\n%s globals:\n%s" % (`locals()`, `globals()`))
         # bloody XML - just to check that there is no puke
-        report.text("<b>Dugi bugi</b>")
+        report.xml("<b>Dugi bugi</b>")
         report.save()
+
         # cleanup
         if os.path.exists(dirname):
             # poor man recursive remove

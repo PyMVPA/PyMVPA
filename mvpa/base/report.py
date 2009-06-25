@@ -7,24 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Creating simple PDF reports using reportlab
-
-You can attach report to the existing 'verbose' with
-
-  report = Report()
-  verbose.handlers += [report]
-
-then all verbose messages present on the screen will also be recorded
-in the report.  Use
-  report.text("string")
-to add additional text, or
-  report.figure()
-to add the current figure to the report.
-
-report.figures() will add existing figures to the report, but they
-might not be properly interleaved with verbose messages if there were
-any between the creations of the figures.
-
-Inspired by Andy Connolly
 """
 
 __docformat__ = 'restructuredtext'
@@ -50,7 +32,7 @@ if externals.exists('pylab', raiseException=True):
     import pylab as P
     figure = P.matplotlib.figure
 
-__all__ = [ 'rl', 'Report' ]
+__all__ = [ 'rl', 'Report', 'escapeXML' ]
 
 # Actually current reportlab's Image can't deal directly with .pdf images
 # Lets use png for now
@@ -60,17 +42,34 @@ else:
     _fig_ext_default = 'png'
 
 
-def _escapeXML(s):
+def escapeXML(s):
     s = s.replace('&', '&amp;')
     s = s.replace('<', '&lt;')
     s = s.replace('>', '&gt;')
     return s
 
 class Report(object):
-    """Simple report using reportlab
+    """Simple PDF reports using reportlab
 
     Named report 'report' generates 'report.pdf' and directory 'report/' with
     images which were requested to be included in the report
+
+    You can attach report to the existing 'verbose' with
+
+      report = Report()
+      verbose.handlers += [report]
+
+    and then all verbose messages present on the screen will also be recorded
+    in the report.  Use
+      report.text("string")          to add arbitrary text
+      report.xml("<H1>skajdsf</H1>") to add XML snippet
+     or
+      report.figure()  to add the current figure to the report.
+      report.figures() to add existing figures to the report, but they
+        might not be properly interleaved with verbose messages if there were
+        any between the creations of the figures.
+
+    Inspired by Andy Connolly
     """
 
     _styles = getSampleStyleSheet()
@@ -93,7 +92,8 @@ class Report(object):
           author : string or None
             Optional author identity to be printed
           style : string
-            One of the known to reportlab styles, e.g. Normal
+            Default Paragraph to be used. Must be the one of the known
+            to reportlab styles, e.g. Normal
           fig_ext : string
             What extension to use for figures by default.
             Versions prior 2.2 of reportlab might do not support pdf,
@@ -153,33 +153,42 @@ class Report(object):
         self._story = []
 
 
-    def text(self, line, isxml=False, style=None):
-        """Add a string to the report
+    def xml(self, line, style=None):
+        """Adding XML string to the report
         """
         if __debug__ and not self in debug.handlers:
-            debug("REP", "Adding text '%s'" % line.strip())
+            debug("REP", "Adding xml '%s'" % line.strip())
         if style is None:
             style = self.style
-        if not isxml:
-            # we need to convert some of the characters to make it
-            # legal XML
-            line = _escapeXML(line)
         self._story.append(Paragraph(line, style=style))
+
+    def text(self, line, **kwargs):
+        """Add a text string to the report
+        """
+        if __debug__ and not self in debug.handlers:
+            debug("REP_", "Adding text '%s'" % line.strip())
+        # we need to convert some of the characters to make it
+        # legal XML
+        line = escapeXML(line)
+        self.xml(line, **kwargs)
 
     write = text
     """Just an alias for .text, so we could simply provide report
     as a handler for verbose
     """
 
+
+
     def figure(self, fig=None, name=None, savefig_kwargs={}, **kwargs):
         """Add a figure to the report
 
         :Parameters:
           fig : None or string or `figure.Figure`
-            If string -- treat as a filename
-               Figure -- stores it into a file under directory
-                         and embedds into the report
-               None -- takes the current figure
+            Figure to place into report
+              string : treat as a filename
+              Figure : stores it into a file under directory
+                       and embedds into the report
+              None :   takes the current figure
           savefig_kwargs : dict
             Additional keyword arguments to provide savefig with (e.g. dpi)
           **kwargs
