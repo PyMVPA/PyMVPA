@@ -52,10 +52,12 @@ if externals.exists('pylab', raiseException=True):
 
 __all__ = [ 'rl', 'Report' ]
 
-if externals.versions['reportlab'] >= '2.2':
+# Actually current reportlab's Image can't deal directly with .pdf images
+# Lets use png for now
+if externals.versions['reportlab'] >= '1112.2':
     _fig_ext_default = 'pdf'
 else:
-    _fig_ext_default = 'jpg'
+    _fig_ext_default = 'png'
 
 
 def _escapeXML(s):
