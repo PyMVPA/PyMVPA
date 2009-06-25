@@ -258,6 +258,12 @@ def __check_griddata():
     from matplotlib.mlab import griddata as __
     return True
 
+
+def __check_reportlab():
+    import reportlab as rl
+    versions['reportlab'] = SmartVersion(rl.Version)
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
@@ -297,6 +303,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
           'running ipython env': "__check_in_ipython()",
+          'reportlab': "__check_reportlab()",
           }
 
 

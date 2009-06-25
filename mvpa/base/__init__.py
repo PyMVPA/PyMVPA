@@ -301,6 +301,9 @@ if __debug__:
     debug.register('ATL_',   "Atlases (verbose)")
     debug.register('ATL__',  "Atlases (very verbose)")
 
+    debug.register('REP',    "Reports")
+    debug.register('REP_',   "Reports (verbose)")
+
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
         debug.setActiveFromString(cfg.get('general', 'debug'))
