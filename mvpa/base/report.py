@@ -27,11 +27,6 @@ if externals.exists('reportlab', raiseException=True):
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.units import inch
 
-# Although somewhat optional -- let it be firm requirement
-if externals.exists('pylab', raiseException=True):
-    import pylab as P
-    figure = P.matplotlib.figure
-
 __all__ = [ 'rl', 'Report', 'escapeXML' ]
 
 # Actually current reportlab's Image can't deal directly with .pdf images
@@ -195,6 +190,10 @@ class Report(object):
             Passed to :class:`reportlab.platypus.Image` constructor
         """
 
+        if externals.exists('pylab', raiseException=True):
+            import pylab as P
+            figure = P.matplotlib.figure
+
         if fig is None:
             fig = P.gcf()
 
@@ -249,6 +248,8 @@ class Report(object):
         so make sure to close all previous figures if you use
         figures() multiple times
         """
+        if externals.exists('pylab', raiseException=True):
+            import pylab as P
         figs = P.matplotlib._pylab_helpers.Gcf.figs
         if __debug__ and not self in debug.handlers:
             debug('REP', "Saving all %d present figures" % len(figs))
