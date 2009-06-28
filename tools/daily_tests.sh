@@ -78,6 +78,8 @@ succeeded=0
 
 # skip the tests we can't fully trust to sleep well
 export MVPA_TESTS_LABILE=no
+# Lets use backend allowing to draw without DISPLAY
+export MVPA_MATPLOTLIB_BACKEND=agg
 
 # need to be a function to share global failed/succeded
 sweep()
