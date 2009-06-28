@@ -63,7 +63,7 @@ class ReportTest(unittest.TestCase):
 
         os.makedirs(dirname)
 
-        if externals.exists('pylab'):
+        if externals.exists('pylab plottable'):
             if not isdummy:
                 clen = len(report._story)
             import pylab as P
