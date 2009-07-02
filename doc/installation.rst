@@ -286,6 +286,12 @@ machine.
 
 *The MacPort of PyMVPA is kindly maintained by James Kyle <jameskyle@ucla.edu>.*
 
+.. note::
+
+  MacPorts_ needs `XCode developer tools`_ to be installed first, as the
+  operating system does not come with a compiler by default.
+
+.. _XCode developer tools: http://developer.apple.com/tools/xcode/
 .. _MacPorts: http://www.macports.org
 
 In the context of PyMVPA MacPorts is much easier to handle than the previously
@@ -686,7 +692,6 @@ operating system does not come with a compiler by default. If you want to use
 or even work on the latest development code, you should also install Git_.
 There is a `MacOS installer for Git`_, that make this step very easy.
 
-.. _XCode developer tools: http://developer.apple.com/tools/xcode/
 .. _MacOS installer for Git: http://code.google.com/p/git-osx-installer/
 
 Otherwise follow the :ref:`general build instructions <buildfromsource>`.
