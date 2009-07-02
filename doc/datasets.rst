@@ -212,7 +212,7 @@ Attribute        Abbreviation Definition class
 samples          S            :class:`~mvpa.datasets.base.Dataset`
 labels           L            :class:`~mvpa.datasets.base.Dataset`
 uniquelabels     UL           :class:`~mvpa.datasets.base.Dataset`
-chunks           O            :class:`~mvpa.datasets.base.Dataset`
+chunks           C            :class:`~mvpa.datasets.base.Dataset`
 uniquechunks     UC           :class:`~mvpa.datasets.base.Dataset`
 origids          I            :class:`~mvpa.datasets.base.Dataset`
 samples_original O            :class:`~mvpa.datasets.mapped.MappedDataset`
