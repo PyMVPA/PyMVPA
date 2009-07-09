@@ -27,19 +27,15 @@ if externals.exists('reportlab', raiseException=True):
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.units import inch
 
-# Although somewhat optional -- let it be firm requirement
-if externals.exists('pylab', raiseException=True):
-    import pylab as P
-    figure = P.matplotlib.figure
+    # Actually current reportlab's Image can't deal directly with .pdf images
+    # Lets use png for now
+    if externals.versions['reportlab'] >= '1112.2':
+        _fig_ext_default = 'pdf'
+    else:
+        _fig_ext_default = 'png'
+
 
 __all__ = [ 'rl', 'Report', 'escapeXML' ]
-
-# Actually current reportlab's Image can't deal directly with .pdf images
-# Lets use png for now
-if externals.versions['reportlab'] >= '1112.2':
-    _fig_ext_default = 'pdf'
-else:
-    _fig_ext_default = 'png'
 
 
 def escapeXML(s):
@@ -72,11 +68,9 @@ class Report(object):
     Inspired by Andy Connolly
     """
 
-    _styles = getSampleStyleSheet()
-
     def __init__(self, name='report', title=None, path=None,
                  author=None, style="Normal",
-                 fig_ext=_fig_ext_default, font='Helvetica',
+                 fig_ext=None, font='Helvetica',
                  pagesize=None):
         """Initialize report
 
@@ -95,9 +89,9 @@ class Report(object):
             Default Paragraph to be used. Must be the one of the known
             to reportlab styles, e.g. Normal
           fig_ext : string
-            What extension to use for figures by default.
-            Versions prior 2.2 of reportlab might do not support pdf,
-            hence 'jpg' is default for those, 'pdf' otherwise
+            What extension to use for figures by default. If None, a default
+            will be used. Since versions prior 2.2 of reportlab might do not
+            support pdf, 'png' is default for those, 'pdf' otherwise
           font : string
             Name of the font to use
           pagesize : tuple of floats
@@ -112,7 +106,10 @@ class Report(object):
         self.author = author
         self.font = font
         self.title = title
-        self.fig_ext = fig_ext
+        if fig_ext is None:
+            self.fig_ext = _fig_ext_default
+        else:
+            self.fig_ext = fig_ext
 
         if path is None:
             self._filename = name
@@ -122,8 +119,8 @@ class Report(object):
         self.__nfigures = 0
 
         try:
-            styles = self._styles
-            self.style = self._styles.byName[style]
+            styles = getSampleStyleSheet()
+            self.style = styles.byName[style]
         except KeyError:
             raise ValueError, \
                   "Style %s is not know to reportlab. Known are %s" \
@@ -195,6 +192,10 @@ class Report(object):
             Passed to :class:`reportlab.platypus.Image` constructor
         """
 
+        if externals.exists('pylab', raiseException=True):
+            import pylab as P
+            figure = P.matplotlib.figure
+
         if fig is None:
             fig = P.gcf()
 
@@ -249,6 +250,8 @@ class Report(object):
         so make sure to close all previous figures if you use
         figures() multiple times
         """
+        if externals.exists('pylab', raiseException=True):
+            import pylab as P
         figs = P.matplotlib._pylab_helpers.Gcf.figs
         if __debug__ and not self in debug.handlers:
             debug('REP', "Saving all %d present figures" % len(figs))
