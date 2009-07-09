@@ -84,5 +84,9 @@ class SVDMapper(ProjectionMapper):
         else:
             ProjectionMapper.selectOut(self, outIds)
 
+    def _computeRecon(self):
+        """Since singular vectors are orthonormal, sufficient to take hermitian
+        """
+        return self._proj.H
 
     sv = property(fget=lambda self: self._sv, doc="Singular values")
