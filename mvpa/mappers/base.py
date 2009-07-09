@@ -218,18 +218,20 @@ class ProjectionMapper(Mapper):
 
     This class cannot be used directly. Sub-classes have to implement
     the `_train()` method, which has to compute the projection matrix
-    given a dataset (see `_train()` docstring for more information).
+    `_proj` and demeaning (offset) vector `_mean` (if initialized with
+    demean=True, which is default) given a dataset (see `_train()`
+    docstring for more information).
 
     Once the projection matrix is available, this class provides
-    functionality to perform forward and backwards mapping of data, the
-    latter using the hermitian (conjugate) transpose of the projection
-    matrix. Additionally, `ProjectionMapper` supports optional (but done
-    by default) demeaning of the data and selection of arbitrary
-    component (i.e. columns of the projection matrix) of the projection.
+    functionality to perform forward and backwards linear mapping of
+    data, the latter using the hermitian (conjugate) transpose of the
+    projection matrix. Additionally, `ProjectionMapper` supports
+    optional (but done by default) selection of arbitrary component
+    (i.e. columns of the projection matrix) of the projection.
 
     Forward and back-projection matrices (a.k.a. *projection* and
     *reconstruction*) are available via the `proj` and `recon`
-    properties. the latter only after it has been computed (after first
+    properties. The latter only after it has been computed (after first
     call to `reverse`).
     """
 
@@ -260,8 +262,6 @@ class ProjectionMapper(Mapper):
         """
         self._mean = None
         """Data mean"""
-        self._mean_out = None
-        """Forward projected data mean."""
 
     __doc__ = enhancedDocString('ProjectionMapper', locals(), Mapper)
 
@@ -319,10 +319,13 @@ class ProjectionMapper(Mapper):
 
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be train before used."
+
+        d = N.asmatrix(data)
+
         if demean and self._mean is not None:
-            return ((N.asmatrix(data) - self._mean) * self._proj).A
-        else:
-            return (N.asmatrix(data) * self._proj).A
+            d = d - self._mean
+
+        return (d * self._proj).A
 
 
     def reverse(self, data):
@@ -334,24 +337,15 @@ class ProjectionMapper(Mapper):
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be trained before used."
 
-        # get feature-wise mean in out-space
-        if self._demean and self._mean_out is None:
-            # forward project mean and cache result
-            self._mean_out = self.forward(self._mean, demean=False)
-            if __debug__:
-                debug("MAP_",
-                      "Mean of data in input space %s became %s in " \
-                      "outspace" % (self._mean, self._mean_out))
-
-
         # (re)build reconstruction matrix
         if self._recon is None:
             self._recon = self._proj.H
 
+        res = (N.asmatrix(data) * self._recon).A
         if self._demean:
-            return ((N.asmatrix(data) + self._mean_out) * self._recon).A
-        else:
-            return ((N.asmatrix(data)) * self._recon).A
+            res += self._mean
+
+        return res
 
 
     def getInSize(self):
@@ -369,8 +363,6 @@ class ProjectionMapper(Mapper):
         self._proj = self._proj[:, outIds]
         # invalidate reconstruction matrix
         self._recon = None
-        self._mean_out = None
-
 
     proj  = property(fget=lambda self: self._proj, doc="Projection matrix")
     recon = property(fget=lambda self: self._recon, doc="Backprojection matrix")
