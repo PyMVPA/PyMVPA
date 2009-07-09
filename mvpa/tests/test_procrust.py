@@ -29,17 +29,18 @@ class ProcrusteanMapperTests(unittest.TestCase):
                     ('3D -> 2D', 3,  2,  False)):
 
             # lets do evil -- use the mapper itself on some data to
-            # figure out some "random" rotation matrix for us to use ;)
-            pm_orig = ProcrusteanMapper(reflection=False)
+            # figure out some "random" rotation+scaling matrix for us to use ;)
+            pm_orig = ProcrusteanMapper(reflection=False, scaling=True)
             d = max(nf_s, nf_t)
             pm_orig.train(d_orig[:50, :d], d_orig2[10:60, :d])
-            R = pm_orig._T[:nf_s, :nf_t].copy()
-
+            P = pm_orig.proj[:nf_s, :nf_t].copy()
+            # Just rotation part
+            R = P/pm_orig._scale
             if nf_s == nf_t:
-                # Test if it is indeed a rotation matrix ;)
+                # Test if it is indeed a rotation+global scaling matrix ;)
                 self.failUnless(N.abs(1.0 - N.linalg.det(R)) < 1e-10)
                 self.failUnless(norm(N.dot(R, R.T)
-                                              - N.eye(R.shape[0])) < 1e-10)
+                                     - N.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
                 pm = ProcrusteanMapper(scaling=scaling)
@@ -58,8 +59,9 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 pm2.train(ds2)
 
                 # verify that both created the same transformation
-                self.failUnless(norm(pm._T - pm2._T) <= 1e-12)
-                self.failUnless(norm(pm._trans - pm2._trans) <= 1e-12)
+                self.failUnless(norm(pm.proj - pm2.proj) <= 1e-12)
+                self.failUnless(norm(pm._offset_in - pm2._offset_in) <= 1e-12)
+                self.failUnless(norm(pm._offset_out - pm2._offset_out) <= 1e-12)
 
                 # do forward transformation on the same source data
                 d_s_f = pm.forward(d_s)
@@ -70,10 +72,10 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 dsf = d_s_f - d_t
                 ndsf = norm(dsf)/norm(d_t)
                 if full_test:
-                    dR = norm(R - pm._T)
-                    self.failUnless(dR <= 1e-12,
-                        msg="We should have got reconstructed rotation "
-                            "perfectly. Now got dR=%g" % dR)
+                    dsR = norm(s*R - pm.proj)
+                    self.failUnless(dsR <= 1e-12,
+                        msg="We should have got reconstructed rotation+scaling "
+                            "perfectly. Now got d scale*R=%g" % dsR)
 
                     self.failUnless(N.abs(s - pm._scale) < 1e-12,
                         msg="We should have got reconstructed scale "

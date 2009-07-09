@@ -14,6 +14,7 @@ import numpy as N
 
 from mvpa.mappers.metric import Metric
 
+from mvpa.datasets import Dataset
 from mvpa.misc.vproperty import VProperty
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -214,41 +215,42 @@ class Mapper(object):
 
 
 class ProjectionMapper(Mapper):
-    """Mapper using a projection matrix to transform the data.
+    """Linear mapping between multidimensional spaces.
 
     This class cannot be used directly. Sub-classes have to implement
     the `_train()` method, which has to compute the projection matrix
-    `_proj` and demeaning (offset) vector `_mean` (if initialized with
-    demean=True, which is default) given a dataset (see `_train()`
-    docstring for more information).
+    `_proj` and optionally offset vectors `_offset_in` and
+    `_offset_out` (if initialized with demean=True, which is default)
+    given a dataset (see `_train()` docstring for more information).
 
     Once the projection matrix is available, this class provides
     functionality to perform forward and backwards linear mapping of
-    data, the latter using the hermitian (conjugate) transpose of the
-    projection matrix. Additionally, `ProjectionMapper` supports
-    optional (but done by default) selection of arbitrary component
-    (i.e. columns of the projection matrix) of the projection.
+    data, the latter by default using pseudo-inverse (but could be
+    altered in subclasses, like hermitian (conjugate) transpose in
+    case of SVD).  Additionally, `ProjectionMapper` supports optional
+    selection of arbitrary component (i.e. columns of the projection
+    matrix) of the projection.
 
     Forward and back-projection matrices (a.k.a. *projection* and
     *reconstruction*) are available via the `proj` and `recon`
-    properties. The latter only after it has been computed (after first
-    call to `reverse`).
+    properties.
     """
+
+    _DEV__doc__ = """Think about renaming `demean`, may be `translation`?"""
 
     def __init__(self, selector=None, demean=True):
         """Initialize the ProjectionMapper
 
         :Parameters:
-            selector: None | list
-                Which components (i.e. columns of the projection matrix)
-                should be used for mapping. If `selector` is `None` all
-                components are used. If a list is provided, all list
-                elements are treated as component ids and the respective
-                components are selected (all others are discarded).
-            demean: bool
-                Either data should be demeaned while computing
-                projections and applied back while doing reverse()
-
+          selector: None | list
+            Which components (i.e. columns of the projection matrix)
+            should be used for mapping. If `selector` is `None` all
+            components are used. If a list is provided, all list
+            elements are treated as component ids and the respective
+            components are selected (all others are discarded).
+          demean: bool
+            Either data should be demeaned while computing
+            projections and applied back while doing reverse()
         """
         Mapper.__init__(self)
 
@@ -260,18 +262,38 @@ class ProjectionMapper(Mapper):
         self._demean = demean
         """Flag whether to demean the to be projected data, prior to projection.
         """
-        self._mean = None
-        """Data mean"""
+        self._offset_in = None
+        """Offset (most often just mean) in the input space"""
+        self._offset_out = None
+        """Offset (most often just mean) in the output space"""
 
     __doc__ = enhancedDocString('ProjectionMapper', locals(), Mapper)
 
 
-    def train(self, dataset):
-        """Determine the projection matrix."""
+    def train(self, dataset, *args, **kwargs):
+        """Determine the projection matrix.
+
+        :Parameters:
+          dataset : Dataset
+            Dataset to operate on
+          *args
+            Optional positional arguments to pass to _train
+            of subclass
+          **kwargs
+            Optional keyword arguments to pass to _train
+            of subclass
+        """
         # store the feature wise mean
-        self._mean = dataset.samples.mean(axis=0)
+        if isinstance(dataset, Dataset):
+            samples = dataset.samples
+        else:
+            samples = dataset
+        self._offset_in = samples.mean(axis=0)
+        # ??? Setting of _offset_out is to be done in a child
+        # class
+
         # compute projection matrix with subclass logic
-        self._train(dataset)
+        self._train(dataset, *args, **kwargs)
 
         # perform component selection
         if self._selector is not None:
@@ -283,12 +305,12 @@ class ProjectionMapper(Mapper):
         """
         if self._demean:
             # demean the training data
-            data = data - self._mean
+            data = data - self._offset_in
 
             if __debug__ and "MAP_" in debug.active:
                 debug("MAP_",
                       "%s: Mean of data in input space %s was subtracted" %
-                      (self.__class__.__name__, self._mean))
+                      (self.__class__.__name__, self._offset_in))
         return data
 
 
@@ -322,10 +344,18 @@ class ProjectionMapper(Mapper):
 
         d = N.asmatrix(data)
 
-        if demean and self._mean is not None:
-            d = d - self._mean
+        # Remove input offset if present
+        if demean and self._offset_in is not None:
+            d = d - self._offset_in
 
-        return (d * self._proj).A
+        # Do forward projection
+        res = (d * self._proj).A
+
+        # Add output offset if present
+        if demean and self._offset_out is not None:
+            res += self._offset_out
+
+        return res
 
 
     def reverse(self, data):
@@ -336,16 +366,35 @@ class ProjectionMapper(Mapper):
         """
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be trained before used."
+        d = N.asmatrix(data)
+        # Remove offset if present in output space
+        if self._demean and self._offset_out is not None:
+            d = d - self._offset_out
 
-        # (re)build reconstruction matrix
-        if self._recon is None:
-            self._recon = self._proj.H
+        # Do reverse projection
+        res = (d * self.recon).A
 
-        res = (N.asmatrix(data) * self._recon).A
-        if self._demean:
-            res += self._mean
+        # Add offset in input space
+        if self._demean and self._offset_in is not None:
+            res += self._offset_in
 
         return res
+
+    def _computeRecon(self):
+        """Given that a projection is present -- compute reconstruction matrix.
+        By default -- pseudoinverse of projection matrix.  Might be overridden
+        in derived classes for efficiency.
+        """
+        return N.linalg.pinv(self._proj)
+
+    def _getRecon(self):
+        """Compute (if necessary) and return reconstruction matrix
+        """
+        # (re)build reconstruction matrix
+        recon = self._recon
+        if recon is None:
+            self._recon = recon = self._computeRecon()
+        return recon
 
 
     def getInSize(self):
@@ -361,11 +410,13 @@ class ProjectionMapper(Mapper):
     def selectOut(self, outIds):
         """Choose a subset of components (and remove all others)."""
         self._proj = self._proj[:, outIds]
+        if self._offset_out is not None:
+            self._offset_out = self._offset_out[outIds]
         # invalidate reconstruction matrix
         self._recon = None
 
     proj  = property(fget=lambda self: self._proj, doc="Projection matrix")
-    recon = property(fget=lambda self: self._recon, doc="Backprojection matrix")
+    recon = property(fget=_getRecon, doc="Backprojection matrix")
 
 
 

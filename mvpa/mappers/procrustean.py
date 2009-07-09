@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import Mapper
+from mvpa.mappers.base import ProjectionMapper
 from mvpa.datasets import Dataset
 from mvpa.featsel.helpers import ElementSelector
 
@@ -21,7 +21,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class ProcrusteanMapper(Mapper):
+class ProcrusteanMapper(ProjectionMapper):
     """Mapper to project from one space to another using Procrustean
     transformation (shift + scaling + rotation)
     """
@@ -42,22 +42,22 @@ class ProcrusteanMapper(Mapper):
             space. Forward transformation might be suboptimal then and reverse
             transformation might not recover all original variance
         """
-        Mapper.__init__(self, **kwargs)
+        ProjectionMapper.__init__(self, **kwargs)
 
         self._scaling = scaling
         """Either to determine the scaling factor"""
 
         self._reduction = reduction
         self._reflection = reflection
-        self._T = None
+        # self._T = None
         """Rotation matrix"""
 
-    __doc__ = enhancedDocString('ProcrusteanMapper', locals(), Mapper)
+    __doc__ = enhancedDocString('ProcrusteanMapper', locals(), ProjectionMapper)
 
     # XXX we should just use beautiful ClassWithCollections everywhere... makes
     # life so easier... for now -- manual
     def __repr__(self):
-        s = Mapper.__repr__(self).rstrip(' )')
+        s = ProjectionMapper.__repr__(self).rstrip(' )')
         if not s[-1] == '(': s += ', '
         s += "scaling=%d, reflection=%d, reduction=%d)" % \
              (self._scaling, self._reflection, self._reduction)
@@ -66,7 +66,7 @@ class ProcrusteanMapper(Mapper):
     # XXX we have to override train since now we have multiple datasets
     #     alternative way is to assign target to the labels of the source
     #     dataset
-    def train(self, source, target=None):
+    def _train(self, source, target=None):
         """Train Procrustean transformation
 
         :Parameters:
@@ -89,11 +89,16 @@ class ProcrusteanMapper(Mapper):
             target = source.labels
 
         for i,ds in enumerate((source, target)):
-            if isinstance(ds, Dataset): data = N.asarray(ds.samples)
-            else: data = ds
+            if isinstance(ds, Dataset):
+                data = N.asarray(ds.samples)
+            else:
+                data = ds
             if assess_residuals:
                 odatas += (data,)
-            mean = data.mean(axis=0)
+            if i == 0:
+                mean = self._offset_in
+            else:
+                mean = data.mean(axis=0)
             data = data - mean
             means += (mean,)
             datas += (data,)
@@ -108,8 +113,6 @@ class ProcrusteanMapper(Mapper):
             raise ValueError, "Data for both spaces should have the same " \
                   "number of samples. Got %d in source and %d in target space" \
                   % (sn, tn)
-
-        ## if tm < sm:
 
         # Sums of squares
         ssqs = [N.sum(d**2, axis=0) for d in datas]
@@ -165,11 +168,16 @@ class ProcrusteanMapper(Mapper):
         if sm != tm:
             T = T[:sm, :tm]
 
-        self._T = T
         self._scale = scale = ss * norms[1] / norms[0]
-        mT = N.dot(means[0], T)
-        self._trans =  means[1] - scale * mT
-        self._trans_unscaled =  means[1] - mT
+        # Assign projection
+        if self._scaling:
+            proj = scale * T
+        else:
+            proj = T
+        self._proj = proj
+
+        if self._demean:
+            self._offset_out = means[1]
 
         if __debug__ and 'MAP_' in debug.active:
             # compute the residuals
@@ -179,45 +187,4 @@ class ProcrusteanMapper(Mapper):
             d_r = N.linalg.norm(odatas[0] - res_r)/N.linalg.norm(odatas[0])
             debug('MAP_', "%s, residuals are forward: %g,"
                   " reverse: %g" % (`self`, d_f, d_r))
-        # Combine rotation + scale into _T
-        #self._T = self._scale * R
-
-    ## def __getT(self):
-    ##     """A little helper function to return proper translation
-    ##     """
-    ##     return (self._trans_unscaled, self._trans)[int(self._scaling)]]
-
-
-    def forward(self, data):
-        """Project data using precomputed Procrustean
-
-        :Parameters:
-           data: ndarray
-             Data array to map
-        """
-        if self._T is None:
-            raise RuntimeError, "Mapper needs to be trained before used."
-        if self._scaling:
-            return self._scale * N.dot(data, self._T) + self._trans
-        else:
-            return N.dot(data, self._T) + self._trans_unscaled
-
-
-    def reverse(self, data):
-        """Project data back using precomputed Procrustean
-        """
-        if self._scaling:
-            return N.dot((data - self._trans)/self._scale, self._T.T)
-        else:
-            return N.dot((data - self._trans_unscaled), self._T.T)
-
-
-    def getInSize(self):
-        """Returns the number of original features."""
-        return self._T.shape[0]
-
-
-    def getOutSize(self):
-        """Returns the number of components to project on."""
-        return self._T.shape[1]
 
