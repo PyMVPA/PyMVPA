@@ -67,6 +67,7 @@ class ReportTest(unittest.TestCase):
             if not isdummy:
                 clen = len(report._story)
             import pylab as P
+            P.ioff()
             P.close('all')
             P.figure()
             P.plot([1, 2], [3, 2])
@@ -88,6 +89,10 @@ class ReportTest(unittest.TestCase):
         # bloody XML - just to check that there is no puke
         report.xml("<b>Dugi bugi</b>")
         report.save()
+
+        if externals.exists('pylab'):
+            P.close('all')
+            P.ion()
 
         # cleanup
         if os.path.exists(dirname):
