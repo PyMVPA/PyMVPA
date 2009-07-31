@@ -324,7 +324,6 @@ on editing shell paths please see:
 A typical `.bash_profile` set up for MacPorts might look like::
 
   > export PATH=/opt/local/bin:/opt/local/sbin:$PATH
-  > export DYLD_LIBRARY_PATH=/opt/local/lib:$DYLD_LIBRARY_PATH
 
 Be sure to source your .bash_profile or close Terminal.app and reopen it for
 these changes to take effect.
