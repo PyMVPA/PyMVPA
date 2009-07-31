@@ -28,7 +28,8 @@ class ProcrusteanMapper(ProjectionMapper):
 
     _DEV__doc__ = """Possibly revert back to inherit from ProjectionMapper"""
 
-    def __init__(self, scaling=True, reflection=True, reduction=True, **kwargs):
+    def __init__(self, scaling=True, reflection=True, reduction=True,
+                 oblique=False, oblique_rcond=-1, **kwargs):
         """Initialize the ProcrusteanMapper
 
         :Parameters:
@@ -36,11 +37,18 @@ class ProcrusteanMapper(ProjectionMapper):
             Scale data for the transformation (no longer rigid body
             transformation)
           reflection: bool
-            Allow for the data to be reflected (so it might not be a rotation)
+            Allow for the data to be reflected (so it might not be a rotation).
+            Effective only for non-oblique transformations
           reduction: bool
             If true, it is allowed to map into lower-dimensional
             space. Forward transformation might be suboptimal then and reverse
             transformation might not recover all original variance
+          oblique: bool
+            Either to allow non-orthogonal transformation -- might heavily overfit
+            the data if there is less samples than dimensions. Use `oblique_rcond`.
+          oblique_rcond: float
+            Cutoff for 'small' singular values to regularize the inverse. See
+            :class:`~numpy.linalg.lstsq` for more information.
         """
         ProjectionMapper.__init__(self, **kwargs)
 
@@ -49,8 +57,10 @@ class ProcrusteanMapper(ProjectionMapper):
 
         self._reduction = reduction
         self._reflection = reflection
-        # self._T = None
-        """Rotation matrix"""
+        self._oblique = oblique
+        self._oblique_rcond = oblique_rcond
+        self._scale = None
+        """Estimated scale"""
 
     __doc__ = enhancedDocString('ProcrusteanMapper', locals(), ProjectionMapper)
 
@@ -59,8 +69,10 @@ class ProcrusteanMapper(ProjectionMapper):
     def __repr__(self):
         s = ProjectionMapper.__repr__(self).rstrip(' )')
         if not s[-1] == '(': s += ', '
-        s += "scaling=%d, reflection=%d, reduction=%d)" % \
-             (self._scaling, self._reflection, self._reduction)
+        s += "scaling=%d, reflection=%d, reduction=%d, " \
+             "oblique=%s, oblique_rcond=%g)" % \
+             (self._scaling, self._reflection, self._reduction,
+              self._oblique, self._oblique_rcond)
         return s
 
     # XXX we have to override train since now we have multiple datasets
@@ -88,7 +100,7 @@ class ProcrusteanMapper(ProjectionMapper):
         if target is None:
             target = source.labels
 
-        for i,ds in enumerate((source, target)):
+        for i, ds in enumerate((source, target)):
             if isinstance(ds, Dataset):
                 data = N.asarray(ds.samples)
             else:
@@ -140,26 +152,36 @@ class ProcrusteanMapper(ProjectionMapper):
                       "source space is not supported. Source space had %d " \
                       "while target %d dimensions (features)" % (sm, tm)
 
+        source, target = normed
+        if self._oblique:
+            # Just do silly linear system of equations ;) or naive
+            # inverse problem
+            if sn == sm and tm == 1:
+                T = N.linalg.solve(source, target)
+            else:
+                T = N.linalg.lstsq(source, target, rcond=self._oblique_rcond)[0]
+            ss = 1.0
+        else:
+            # Orthogonal transformation
+            # figure out optimal rotation
+            U, s, Vh = N.linalg.svd(N.dot(target.T, source),
+                                    full_matrices=False)
+            T = N.dot(Vh.T, U.T)
 
-        # figure out optimal rotation
-        U, s, Vh = N.linalg.svd(N.dot(normed[1].T, normed[0]),
-                                full_matrices=False)
-        T = N.dot(Vh.T, U.T)
+            if not self._reflection:
+                # then we need to assure that it is only rotation
+                # "recipe" from
+                # http://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem
+                # for more and info and original references, see
+                # http://dx.doi.org/10.1007%2FBF02289451
+                nsv = len(s)
+                s[:-1] = 1
+                s[-1] = N.linalg.det(T)
+                T = N.dot(U[:, :nsv] * s, Vh)
 
-        if not self._reflection:
-            # then we need to assure that it is only rotation
-            # "recipe" from
-            # http://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem
-            # for more and info and original references, see
-            # http://dx.doi.org/10.1007%2FBF02289451
-            nsv = len(s)
-            s[:-1] = 1
-            s[-1] = N.linalg.det(T)
-            T = N.dot(U[:, :nsv] * s, Vh)
-
-        # figure out scale and final translation
-        # XXX with reflection False -- not sure if here or there or anywhere...
-        ss = sum(s)
+            # figure out scale and final translation
+            # XXX with reflection False -- not sure if here or there or anywhere...
+            ss = sum(s)
 
         # if we were to collect standardized distance
         # std_d = 1 - sD**2
@@ -186,5 +208,6 @@ class ProcrusteanMapper(ProjectionMapper):
             res_r = self.reverse(odatas[1])
             d_r = N.linalg.norm(odatas[0] - res_r)/N.linalg.norm(odatas[0])
             debug('MAP_', "%s, residuals are forward: %g,"
-                  " reverse: %g" % (`self`, d_f, d_r))
+                  " reverse: %g" % (repr(self), d_f, d_r))
+
 
