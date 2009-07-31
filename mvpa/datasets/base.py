@@ -985,8 +985,8 @@ class Dataset(object):
             incremental order. If not such, in non-optimized code
             selectFeatures would verify the order and sort
 
-        Returns a new Dataset object with a view of the original
-        samples array (no copying is performed).
+        Returns a new Dataset object with a copy of corresponding features
+		from the original samples array.
 
         WARNING: The order of ids determines the order of features in
         the returned dataset. This might be useful sometimes, but can
