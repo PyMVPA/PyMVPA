@@ -13,13 +13,14 @@ import unittest
 import numpy as N
 from numpy.linalg import norm
 from mvpa.datasets import Dataset
-from tests_warehouse import datasets
+from tests_warehouse import datasets, sweepargs
 from mvpa.mappers.procrustean import ProcrusteanMapper
 
 
 class ProcrusteanMapperTests(unittest.TestCase):
 
-    def testSimple(self):
+    @sweepargs(oblique=(False,True))
+    def testSimple(self, oblique):
         d_orig = datasets['uni2large'].samples
         d_orig2 = datasets['uni4large'].samples
         for sdim, nf_s, nf_t, full_test \
@@ -27,10 +28,11 @@ class ProcrusteanMapperTests(unittest.TestCase):
                     ('Same 10D', 10, 10, True),
                     ('2D -> 3D', 2,  3,  True),
                     ('3D -> 2D', 3,  2,  False)):
-
             # lets do evil -- use the mapper itself on some data to
             # figure out some "random" rotation+scaling matrix for us to use ;)
-            pm_orig = ProcrusteanMapper(reflection=False, scaling=True)
+            # XXX for now actually discovery of correct oblique transformation
+            #     is not tested :-/
+            pm_orig = ProcrusteanMapper(reflection=False, scaling=True, oblique=False)
             d = max(nf_s, nf_t)
             pm_orig.train(d_orig[:50, :d], d_orig2[10:60, :d])
             P = pm_orig.proj[:nf_s, :nf_t].copy()
@@ -38,13 +40,14 @@ class ProcrusteanMapperTests(unittest.TestCase):
             R = P/pm_orig._scale
             if nf_s == nf_t:
                 # Test if it is indeed a rotation+global scaling matrix ;)
-                self.failUnless(N.abs(1.0 - N.linalg.det(R)) < 1e-10)
-                self.failUnless(norm(N.dot(R, R.T)
-                                     - N.eye(R.shape[0])) < 1e-10)
+                if not oblique:
+                    self.failUnless(N.abs(1.0 - N.linalg.det(R)) < 1e-10)
+                    self.failUnless(norm(N.dot(R, R.T)
+                                         - N.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
-                pm = ProcrusteanMapper(scaling=scaling)
-                pm2 = ProcrusteanMapper(scaling=scaling)
+                pm = ProcrusteanMapper(scaling=scaling, oblique=oblique)
+                pm2 = ProcrusteanMapper(scaling=scaling, oblique=oblique)
 
                 t1, t2 = d_orig[23, 1], d_orig[22, 1]
 
@@ -73,13 +76,15 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 ndsf = norm(dsf)/norm(d_t)
                 if full_test:
                     dsR = norm(s*R - pm.proj)
-                    self.failUnless(dsR <= 1e-12,
-                        msg="We should have got reconstructed rotation+scaling "
-                            "perfectly. Now got d scale*R=%g" % dsR)
 
-                    self.failUnless(N.abs(s - pm._scale) < 1e-12,
-                        msg="We should have got reconstructed scale "
-                            "perfectly. Now got %g for %g" % (pm._scale, s))
+                    if not oblique:
+                        self.failUnless(dsR <= 1e-12,
+                            msg="We should have got reconstructed rotation+scaling "
+                                "perfectly. Now got d scale*R=%g" % dsR)
+
+                        self.failUnless(N.abs(s - pm._scale) < 1e-12,
+                            msg="We should have got reconstructed scale "
+                                "perfectly. Now got %g for %g" % (pm._scale, s))
 
                     self.failUnless(ndsf <= 1e-12,
                       msg="%s: Failed to get to the target space correctly."
