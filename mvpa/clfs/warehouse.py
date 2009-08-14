@@ -270,19 +270,18 @@ if externals.exists('lars'):
 
 ## PBS: enet has some weird issue that causes it to fail.  GLMNET is
 ## better anyway, so just use that instead
-# # enet from R via RPy
-# if externals.exists('elasticnet'):
-#     from mvpa.clfs.enet import ENET
-#     enet = ENET(descr="ENET()")
-#     clfswh += enet
-#     regrswh += enet
+## # enet from R via RPy
+## if externals.exists('elasticnet'):
+##     from mvpa.clfs.enet import ENET
+##     clfswh += ENET(descr="ENET()")
+##     regrswh += ENET(descr="ENET(regression=True)", regression=True)
 
 # glmnet from R via RPy
 if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
     clfswh += GLMNET_C(descr="GLMNET_C()")
     regrswh += GLMNET_R(descr="GLMNET_R()")
-    
+
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
 
