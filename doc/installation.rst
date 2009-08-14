@@ -140,7 +140,9 @@ using PyMVPA.
     Since version 0.2.2, PyMVPA contains a minimal copy of LIBSVM in its
     source distribution.
   R_ and RPy_: more classifiers
-    Currently PyMVPA provides a wrapper around the LARS library.
+    Currently PyMVPA provides wrappers around LARS, ElasticNet, and GLMNet R
+    libraries available from CRAN_.  On Debian-based machines you might like
+    to install r-cran-* packages from cran2deb_ repository.
   matplotlib_: Matlab-style plotting library for Python
     This is a very powerful plotting library that allows you to export into
     a large variety of raster and vector formats (e.g. SVG), and thus, is ideal
@@ -159,9 +161,10 @@ using PyMVPA.
 .. _showmedo.com: http://showmedo.com
 .. _FSL: http://www.fmrib.ox.ac.uk/fsl/
 .. _AFNI: http://afni.nimh.nih.gov/afni/
-.. _RPy: http://rpy.sourceforge.net/
+.. _RPy: http://rpy.sourceforge.net
 .. _R: http://www.r-project.org
-
+.. _cran2deb: http://debian.cran.r-project.org
+.. _CRAN: http://cran.r-project.org
 
 .. index:: installation, binary packages
 
