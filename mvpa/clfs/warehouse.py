@@ -260,11 +260,13 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
-        lars_model = LARS(descr="LARS(%s)" % model, model_type=model)
-        clfswh += lars_model
+        lars_clf = LARS(descr="LARS(%s)" % model, model_type=model)
+        clfswh += lars_clf
 
         # is a regression, too
-        regrswh += lars_model
+        lars_regr = LARS(descr="_LARS(%s, regression=True)" % model,
+                         regression=True, model_type=model)
+        regrswh += lars_regr
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
 
