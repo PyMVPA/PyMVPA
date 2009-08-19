@@ -28,22 +28,18 @@ class ProcrusteanMapperTests(unittest.TestCase):
                     ('Same 10D', 10, 10, True),
                     ('2D -> 3D', 2,  3,  True),
                     ('3D -> 2D', 3,  2,  False)):
-            # lets do evil -- use the mapper itself on some data to
-            # figure out some "random" rotation+scaling matrix for us to use ;)
-            # XXX for now actually discovery of correct oblique transformation
-            #     is not tested :-/
-            pm_orig = ProcrusteanMapper(reflection=False, scaling=True, oblique=False)
+            # figure out some "random" rotation
             d = max(nf_s, nf_t)
-            pm_orig.train(d_orig[:50, :d], d_orig2[10:60, :d])
-            P = pm_orig.proj[:nf_s, :nf_t].copy()
-            # Just rotation part
-            R = P/pm_orig._scale
+            _u, _s, _vh = N.linalg.svd(d_orig[:, :d])
+            R = _vh[:nf_s, :nf_t]
             if nf_s == nf_t:
-                # Test if it is indeed a rotation+global scaling matrix ;)
-                if not oblique:
-                    self.failUnless(N.abs(1.0 - N.linalg.det(R)) < 1e-10)
-                    self.failUnless(norm(N.dot(R, R.T)
-                                         - N.eye(R.shape[0])) < 1e-10)
+                # Test if it is indeed a rotation matrix ;)
+                adR = N.abs(1.0 - N.linalg.det(R))
+                self.failUnless(adR < 1e-10,
+                                "Determinant of rotation matrix should "
+                                "be 1. Got it 1+%g" % adR)
+                self.failUnless(norm(N.dot(R, R.T)
+                                     - N.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
                 pm = ProcrusteanMapper(scaling=scaling, oblique=oblique)
@@ -62,9 +58,12 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 pm2.train(ds2)
 
                 # verify that both created the same transformation
-                self.failUnless(norm(pm.proj - pm2.proj) <= 1e-12)
-                self.failUnless(norm(pm._offset_in - pm2._offset_in) <= 1e-12)
-                self.failUnless(norm(pm._offset_out - pm2._offset_out) <= 1e-12)
+                npm2proj = norm(pm.proj - pm2.proj)
+                self.failUnless(npm2proj <= 1e-10,
+                                msg="Got transformation different by norm %g."
+                                " Had to be less than 1e-10" % npm2proj)
+                self.failUnless(norm(pm._offset_in - pm2._offset_in) <= 1e-10)
+                self.failUnless(norm(pm._offset_out - pm2._offset_out) <= 1e-10)
 
                 # do forward transformation on the same source data
                 d_s_f = pm.forward(d_s)
