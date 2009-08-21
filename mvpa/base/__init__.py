@@ -244,7 +244,7 @@ if __debug__:
     debug.register('CLFBST', "BoostClassifier")
     #debug.register('CLFBST_TB', "BoostClassifier traceback")
     debug.register('CLFBIN', "BinaryClassifier")
-    debug.register('CLFGRP', "GroupClassifier")
+    debug.register('CLFTREE', "TreeClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
     debug.register('CLFSPL_',"SplitClassifier (verbose)")
