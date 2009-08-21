@@ -594,72 +594,81 @@ class CombinedClassifier(BoostedClassifier):
 
 
 
-class GroupClassifier(ProxyClassifier):
-    """`GroupClassifier` which allows to create hierarchy of classifiers XXX
+class TreeClassifier(ProxyClassifier):
+    """`TreeClassifier` which allows to create hierarchy of classifiers
+
+    Functions by groupping some labels into a single "meta-label" and training
+    classifier first to separate between meta-labels.  Then
+    each group further proceeds with classification within each group.
+
+    Possible scenarios:
+
+        TreeClassifier(SVM(),
+         {'animate':  ((1,2,3,4),
+                       TreeClassifier(SVM(),
+                           {'human': (('male', 'female'), SVM()),
+                            'animals': (('monkey', 'dog'), SMLR())})),
+          'inanimate': ((5,6,7,8), SMLR())})
+
+    would create classifier which would first do binary classification
+    to separate animate from inanimates, then for animate result it
+    would separate to classify human vs animal and so on
+
+                                   SVM
+                                 /      \
+                            animate   inanimate
+                             /             \
+                           SVM             SMLR
+                         /     \          / | \ \
+                    human    animal      5  6 7  8
+                     |          |
+                    SVM        SVM
+                   /   \       /  \
+                 male female monkey dog
+                  1      2    3      4
+    """
+
+    _DEV__doc = """
+    Questions:
+     * how to collect confusion matrices at a particular layer if such
+       classifier is given to SplitClassifier or CVTE
+
+     * What additional states to add, smth like
+        clf_labels  -- store remapped labels for the dataset
+        clf_values  ...
+
+     * What do we store into values ? just values from the clfs[]
+       for corresponding samples, or toplevel clf values as well?
+
+     * what should be SensitivityAnalyzer?  by default it would just
+       use top slave classifier (i.e. animate/inanimate)
+
+    Problems?
+     *  .clf is not actually "proxied" per se, so not sure what things
+        should be taken care of yet...
+
+    TODO:
+     * Allow a group to be just a single category, so no further
+        classifier is needed, it just should stay separate from the
+        other groups
+
+    Possible TODO:
+     *  Add ability to provide results of clf.values as features into
+        input of clfs[]. This way we could provide additional 'similarity'
+        information to the "other" branch
+
     """
 
     def __init__(self, clf, groups, **kwargs):
-        """ TODO
+        """Initialize TreeClassifier
 
-        Possible scenarios:
-
-GroupClassifier(SVM(),
- {'animate':  ((1,2,3,4),
-               GroupClassifier(SVM(),
-                   {'human': (('male', 'female'), SVM()),
-                    'animals': (('monkey', 'dog'), SMLR())})),
-  'inanimate': ((5,6,7,8), SMLR())})
-
- would create classifier which would first do binary classification to
- separate animate from inanimates, then for animate result it would separate into
-
-                           SVM
-                         /      \
-                    animate   inanimate
-                     /             \
-                   SVM             SMLR
-                 /     \          / | \ \
-            human    animal      5  6 7  8
-             |          |
-            SVM        SVM
-           /   \       /  \
-         male female monkey dog
-          1      2    3      4
-
-  Questions:
-   * how to collect confusion matrices at a particular layer if such
-     classifier is given to SplitClassifier or CVTE
-
-   * What additional states to add, smth like
-      clf_labels  -- store remapped labels for the dataset
-      clf_values  ...
-
-   * What do we store into values ? just values from the clfs[]
-     for corresponding samples, or toplevel clf values as well?
-
-   * what should be SensitivityAnalyzer?  by default it would just
-     use top slave classifier (i.e. animate/inanimate)
-
-   * and again -- how to access lower levels' classifiers and
-     sensitivities?
-
-     could be
-       .clfs['animate']
-     or just by index?
-       .clfs[0]
-
-     or may be should be by groups?
-       .groups['animate'] ?
-
-  Problems?
-   *  .clf is not actually "proxied" per se, so not sure what things
-      should be taken care of yet...
-
-  Possible TODO:
-   *  Add ability to provide results of clf.values as features into
-      input of clfs[]. This way we could provide additional 'similarity'
-      information to the "other" branch
-"""
+        :Parameters:
+          clf : Classifier
+            Classifier to separate between the groups
+          groups : dict of meta-label: tuple of (tuple of labels, classifier)
+            Defines the groups of labels and their classifiers.
+            See :class:`~mvpa.clfs.meta.TreeClassifier` for example
+        """
 
         # Basic initialization
         ProxyClassifier.__init__(self, clf, **kwargs)
@@ -671,8 +680,9 @@ GroupClassifier(SVM(),
 
         self._groups = groups
         self._index2group = groups.keys()
+
         # All processing of groups needs to be handled within _train
-        # since labelsmap is not available here and definition
+        # since labels_map is not available here and definition
         # is allowed to carry both symbolic and numeric values for
         # labels
 
@@ -680,13 +690,16 @@ GroupClassifier(SVM(),
         self.clfs = dict([(gk, c) for gk, (ls, c) in groups.iteritems()])
         """Dictionary of classifiers used by the groups"""
 
+
     def __repr__(self, prefixes=[]):
-        prefix = "groups=%s" % `self._groups`
-        return super(GroupClassifier, self).__repr__([prefix] + prefixes)
+        """String representation of TreeClassifier
+        """
+        prefix = "groups=%s" % repr(self._groups)
+        return super(TreeClassifier, self).__repr__([prefix] + prefixes)
 
 
     def _train(self, dataset):
-        """Train GroupClassifier
+        """Train TreeClassifier
 
         First train .clf on groupped samples, then train each of .clfs
         on a corresponding subset of samples.
@@ -701,11 +714,9 @@ GroupClassifier(SVM(),
         if labels_map is None: labels_map = {}
         groups_labels = {}              # just groups with numeric indexes
         label2index = {}                # how to map old labels to new
-        self._index2group = index2group = \
-            [None for i in len(groups)] # go from group index into group key
         known = set()
         for gi, gk in enumerate(index2group):
-            (ls, c) = groups[gk]
+            ls = groups[gk][0]
             # if mapping exists -- map
             ls_ = [labels_map.get(l, l) for l in ls]
             known_already = known.intersection(ls_)
@@ -719,7 +730,7 @@ GroupClassifier(SVM(),
             known = known.union(ls_)
         # TODO: check if different literal labels weren't mapped into
         #       same numerical but here asked to belong to different groups
-        #   yoh: actually above should catch it
+        #  yoh: actually above should catch it
 
         # Check if none of the labels is missing from known groups
         dsul = set(dataset.uniquelabels)
@@ -744,7 +755,7 @@ GroupClassifier(SVM(),
             dataset.labels = groupped_labels
             # train primary classifier
             if __debug__:
-                debug('CLFGRP', "Training primary %(clf)s on %(ds)s",
+                debug('CLFTREE', "Training primary %(clf)s on %(ds)s",
                       msgargs=dict(clf=clf, ds=dataset))
             clf.train(dataset)
         finally:
@@ -765,17 +776,17 @@ GroupClassifier(SVM(),
             ids = dataset.idsbylabels(groups_labels[gk])
             ds_group = dataset.selectSamples(ids)
             if __debug__:
-                debug('CLFGRP', "Training %(clf)s for group %(gk)s on %(ds)s",
+                debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
                       msgargs=dict(clf=clfs[gk], gk=gk, ds=ds_group))
             # and train corresponding slave clf
             clfs[gk].train(ds_group)
 
 
     def untrain(self):
-        """Untrain GroupClassifier
+        """Untrain TreeClassifier
         """
-        super(GroupClassifier, self).untrain(self)
-        for clf in self.clfs:
+        super(TreeClassifier, self).untrain()
+        for clf in self.clfs.values():
             clf.untrain()
 
 
@@ -783,18 +794,20 @@ GroupClassifier(SVM(),
         """
         """
         # Local bindings
-        clfs, groups, index2group = self.clfs, self._groups, self._index2group
+        clfs, index2group = self.clfs, self._index2group
         clf_predictions = N.asanyarray(ProxyClassifier._predict(self, data))
+        # assure that predictions are indexes, ie int
+        clf_predictions = clf_predictions.astype(int)
 
         # now for predictions pointing to specific groups go into
         # corresponding one
-        predictions = N.array([N.nan for x in len(data)])
+        predictions = N.array([N.nan]*len(data))
         for pred_group in set(clf_predictions):
             gk = index2group[pred_group]
             clf_ = clfs[gk]
             group_indexes = (clf_predictions == pred_group)
             if __debug__:
-                debug('CLFGRP', 'Predicting for group %s using %s on %d samples' %
+                debug('CLFTREE', 'Predicting for group %s using %s on %d samples' %
                       (gk, clf_, N.sum(group_indexes)))
             predictions[group_indexes] = clf_.predict(data[group_indexes])
         return predictions
