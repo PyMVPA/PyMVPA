@@ -264,6 +264,27 @@ def __check_reportlab():
     versions['reportlab'] = SmartVersion(rl.Version)
 
 
+def __check_rpy():
+    """Check either rpy is available and also set it for the sane execution
+    """
+    #import rpy_options
+    #rpy_options.set_options(VERBOSE=False, SETUP_READ_CONSOLE=False) # SETUP_WRITE_CONSOLE=False)
+    #rpy_options.set_options(VERBOSE=False, SETUP_WRITE_CONSOLE=False) # SETUP_WRITE_CONSOLE=False)
+    #    if not cfg.get('rpy', 'read_console', default=False):
+    #        print "no read"
+    #        rpy_options.set_options(SETUP_READ_CONSOLE=False)
+    #    if not cfg.get('rpy', 'write_console', default=False):
+    #        print "no write"
+    #        rpy_options.set_options(SETUP_WRITE_CONSOLE=False)
+    import rpy
+    if not cfg.getboolean('rpy', 'interactive', default=False) \
+           and (rpy.get_rpy_input() is rpy.rpy_io.rpy_input):
+        if __debug__:
+            debug('EXT_', "RPy: providing dummy callback for input to return '1'")
+        def input1(*args): return "1"      # which is "1: abort (with core dump, if enabled)"
+        rpy.set_rpy_input(input1)
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
@@ -282,7 +303,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
-          'rpy': "import rpy as __",
+          'rpy': "__check_rpy()",
           'lars': "import rpy; rpy.r.library('lars')",
           'elasticnet': "import rpy; rpy.r.library('elasticnet')",
           'glmnet': "import rpy; rpy.r.library('glmnet')",
@@ -373,6 +394,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # take seconds and therefore is quite nasty...
         if dep.count('rpy') or _KNOWN[dep].count('rpy'):
             try:
+                __check_rpy()          # needed to be run to adjust options first
                 from rpy import RException
                 _caught_exceptions += [RException]
             except:
