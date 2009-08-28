@@ -26,8 +26,10 @@ from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
 from mvpa.base.dochelpers import enhancedDocString, table2string
 
+from mvpa.base import warning
+
 if __debug__:
-    from mvpa.base import debug, warning
+    from mvpa.base import debug
 
     def _validate_indexes_uniq_sorted(seq, fname, item):
         """Helper function to validate that seq contains unique sorted values
