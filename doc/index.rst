@@ -45,9 +45,7 @@ Documentation
 For users
 ---------
 
-* :ref:`User Documentation <contents>` [PDF-manual_] (**the** documentation) --
-  it is also possible to edit and improve the documentation, using the `online
-  documentation editor`_.
+* :ref:`User Documentation <contents>` [PDF-manual_] (**the** documentation)
 * :ref:`Installation Instructions <chap_installation>`
 * :ref:`FAQ <chap_faq>` (short answers to common problems)
 * :ref:`Module Reference <chap_modref>` (user-oriented reference)
