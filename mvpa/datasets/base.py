@@ -60,9 +60,9 @@ class Dataset(object):
         `applyMapper`
       - `Mutators`: `permuteLabels`
 
-    Important: labels assumed to be immutable, i.e. noone should modify
+    Important: labels assumed to be immutable, i.e. no one should modify
     them externally by accessing indexed items, ie something like
-    ``dataset.labels[1] += "_bad"`` should not be used. If a label has
+    ``dataset.labels[1] += 100`` should not be used. If a label has
     to be modified, full copy of labels should be obtained, operated on,
     and assigned back to the dataset, otherwise dataset.uniquelabels
     would not work.  The same applies to any other attribute which has
@@ -158,7 +158,9 @@ class Dataset(object):
           samples : ndarray
             2d array (samples x features)
           labels
-            An array or scalar value defining labels for each samples
+            An array or scalar value defining labels for each samples.
+            Generally `labels` should be numeric, unless `labels_map`
+            is used
           labels_map : None or bool or dict
             Map original labels into numeric labels.  If True, the
             mapping is computed if labels are literal.  If is False,
