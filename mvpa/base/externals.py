@@ -277,7 +277,7 @@ def __check_rpy():
     #        print "no write"
     #        rpy_options.set_options(SETUP_WRITE_CONSOLE=False)
     import rpy
-    if not cfg.getboolean('rpy', 'interactive', default=False) \
+    if not cfg.getboolean('rpy', 'interactive', default=True) \
            and (rpy.get_rpy_input() is rpy.rpy_io.rpy_input):
         if __debug__:
             debug('EXT_', "RPy: providing dummy callback for input to return '1'")
