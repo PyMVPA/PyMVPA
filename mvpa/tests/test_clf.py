@@ -124,7 +124,6 @@ class ClassifiersTests(unittest.TestCase):
                         msg="BinaryClassifier should not alter labels")
 
 
-    # TODO: gune up default GPR?
     @sweepargs(clf=clfswh['binary'])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
