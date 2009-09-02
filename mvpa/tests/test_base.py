@@ -11,10 +11,11 @@
 import unittest
 import os.path
 import numpy as N
+from tempfile import mktemp
 
 from mvpa import cfg
 from mvpa.base import externals
-
+from mvpa.base.sysinfo import sysInfo
 
 class TestBases(unittest.TestCase):
 
@@ -77,6 +78,21 @@ class TestBases(unittest.TestCase):
 
         externals._KNOWN.pop('checker2')
 
+
+    def testSysInfo(self):
+        """Very basic testing -- just to see if it doesn't crash"""
+
+        try:
+            sysInfo()
+        except Exception, e:
+            self.fail('Testing of systemInfo failed with "%s"' % str(e))
+
+        filename = mktemp('mvpa', 'test')
+        sysInfo(filename)
+        try:
+            syslines = open(filename, 'r').readlines()
+        except Exception, e:
+            self.fail('Testing of dumping systemInfo into a file failed: %s' % str(e))
 
 def suite():
     return unittest.makeSuite(TestBases)
