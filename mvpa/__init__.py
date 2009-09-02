@@ -55,6 +55,7 @@ import random
 import numpy as N
 from mvpa.base import cfg
 from mvpa.base import externals
+from mvpa.base.sysinfo import sysInfo
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
@@ -97,6 +98,15 @@ externals.exists('numpy', force=True, raiseException=True)
 # We might need to suppress the warnings so enforcing check here,
 # it is ok if it would fail
 externals.exists('scipy', force=True, raiseException=False)
+
+# Provide __sysinfo__ as property?
+# TODO: There should be cleaner way
+class __SysInfoCALL(object):
+    def sysInfoStdout(self):
+        #return sysInfo()
+        return ""
+    sysinfo = property(fget=sysInfoStdout)
+__sysinfo__ = __SysInfoCALL().sysinfo
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
