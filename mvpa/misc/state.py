@@ -1170,7 +1170,7 @@ class ClassWithCollections(object):
         # Description if present
         descr = self.__descr
         if descr is not None:
-            prefixes.append("descr='%s'" % (descr))
+            prefixes.append("descr=%s" % repr(descr))
 
         return "%s%s(%s)%s" % (module_str, self.__class__.__name__,
                                ', '.join(prefixes), id_str)
