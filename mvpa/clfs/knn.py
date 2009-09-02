@@ -162,14 +162,9 @@ class kNN(Classifier):
     def getMajorityVote(self, knn_ids):
         """Simple voting by choosing the majority of class neighbors.
         """
-
         # local bindings
         _data = self.__data
-        uniquelabels = _data.uniquelabels
         labels = _data.labels
-
-        # translate knn ids into class labels
-        knn_labels = N.array([ labels[nn] for nn in knn_ids ])
 
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
@@ -178,7 +173,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.asarray(votes).argmax()], \
+        return max(votes.iteritems(), key=lambda x:x[1])[0], \
                votes
 
 
