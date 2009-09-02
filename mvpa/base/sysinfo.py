@@ -30,9 +30,9 @@ def _t2s(t):
             res += [e]
     return '/'.join(res)
 
-__all__ = ['sysInfo']
+__all__ = ['sysinfo']
 
-def sysInfo(filename=None):
+def sysinfo(filename=None):
     """Report summary about PyMVPA and the system
 
     :Keywords:
@@ -152,4 +152,4 @@ def sysInfo(filename=None):
         return out.getvalue()
 
 if __name__ == '__main__':
-    print sysInfo()
+    print sysinfo()

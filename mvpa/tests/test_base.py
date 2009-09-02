@@ -15,7 +15,7 @@ from tempfile import mktemp
 
 from mvpa import cfg
 from mvpa.base import externals
-from mvpa.base.sysinfo import sysInfo
+from mvpa.base.sysinfo import sysinfo
 
 class TestBases(unittest.TestCase):
 
@@ -83,12 +83,12 @@ class TestBases(unittest.TestCase):
         """Very basic testing -- just to see if it doesn't crash"""
 
         try:
-            sysInfo()
+            sysinfo()
         except Exception, e:
             self.fail('Testing of systemInfo failed with "%s"' % str(e))
 
         filename = mktemp('mvpa', 'test')
-        sysInfo(filename)
+        sysinfo(filename)
         try:
             syslines = open(filename, 'r').readlines()
         except Exception, e:
