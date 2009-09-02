@@ -28,6 +28,7 @@ def __check_scipy():
     """Check if scipy is present an if it is -- store its version
     """
     import warnings
+    exists('numpy', raiseException=True)
     # To don't allow any crappy warning to sneak in
     warnings.simplefilter('ignore', DeprecationWarning)
     try:
