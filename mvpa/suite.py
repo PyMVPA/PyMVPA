@@ -23,7 +23,6 @@ __docformat__ = 'restructuredtext'
 
 
 from mvpa import *
-sysinfo = sysinfo.sysinfo
 
 from mvpa.base import *
 from mvpa.base.config import *
@@ -155,3 +154,6 @@ if externals.exists("pylab"):
 
 if externals.exists("lxml") and externals.exists("nifti"):
     from mvpa.atlases import *
+
+# Assure that sysinfo is just a function
+sysinfo = sysinfo.sysinfo
