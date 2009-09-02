@@ -304,9 +304,9 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
-          'lars': "import rpy; rpy.r.library('lars')",
-          'elasticnet': "import rpy; rpy.r.library('elasticnet')",
-          'glmnet': "import rpy; rpy.r.library('glmnet')",
+          'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
+          'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
+          'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
@@ -394,9 +394,14 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # take seconds and therefore is quite nasty...
         if dep.count('rpy') or _KNOWN[dep].count('rpy'):
             try:
-                __check_rpy()          # needed to be run to adjust options first
-                from rpy import RException
-                _caught_exceptions += [RException]
+                if dep == 'rpy':
+                    __check_rpy()          # needed to be run to adjust options first
+                else:
+                    if exists('rpy'):
+                        # otherwise no need to add anything -- test
+                        # would fail since rpy isn't available
+                        from rpy import RException
+                        _caught_exceptions += [RException]
             except:
                 pass
 
