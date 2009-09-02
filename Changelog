@@ -71,7 +71,7 @@ Releases
 
 * 0.4.1 (Sat, 24 Jan 2009)
 
-  * Unit tests and example data are now also installed. In conjuction with
+  * Unit tests and example data are now also installed. In conjunction with
     :func:`mvpa.test`, this allow to easily run unittests from within Python.
   * :class:`~mvpa.datasets.nifti.NiftiDataset` capable to handle files
     with less than 4 dimensions, which can, optionally, be provided as
@@ -229,7 +229,7 @@ Releases
     quickly fix your custom code.
   * Change all references to PyMVPA website to www.pymvpa.org.
   * Make website stylesheet compatible with sphinx 0.4.
-  * Several minor improvements of the compatibilty with MacOS.
+  * Several minor improvements of the compatibility with MacOS.
   * Extended FAQ section of the manual.
   * Bugfix: doubleGammaHRF() ignoring K2 argument.
 
@@ -265,7 +265,7 @@ Releases
   * New sparse multinomial logistic regression (SMLR) classifier and
     associated sensitivity analyzer.
   * New least angle regression classifier (LARS).
-  * New gaussian process regression classifier (GPR).
+  * New Gaussian process regression classifier (GPR).
   * Initial documentation on extending PyMVPA.
   * Switch to Sphinx for documentation handling.
   * New example comparing the performance of all classifiers on some

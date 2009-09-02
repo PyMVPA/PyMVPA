@@ -323,16 +323,16 @@ regression algorithms) that can be plug into the various algorithms
 that are also part of the framework. Most importantly they all can be
 combined or enhanced with :ref:`metaclassifiers`.
 
-.. index:: gaussian process regression, GPR
+.. index:: Gaussian process regression, GPR
 
 
 Gaussian Process Regression
 ---------------------------
 
 :class:`~mvpa.clfs.gpr.GPR`
-(`Wikipedia entry about gaussian process regression`_).
+(`Wikipedia entry about Gaussian process regression`_).
 
-.. _Wikipedia entry about gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
+.. _Wikipedia entry about Gaussian process regression: http://en.wikipedia.org/wiki/Gaussian_process_regression
 
 
 .. index:: k-nearest-neighbour, kNN
@@ -341,7 +341,7 @@ k-Nearest-Neighbour
 -------------------
 
 The :class:`~mvpa.clfs.knn.kNN` classifier makes predictions based on the
-labels of nearby samples.  It currently uses Euclidian distance to determine
+labels of nearby samples.  It currently uses Euclidean distance to determine
 the nearest neighbours, but future enhancements may include support for other
 kernels.
 

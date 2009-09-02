@@ -244,6 +244,7 @@ if __debug__:
     debug.register('CLFBST', "BoostClassifier")
     #debug.register('CLFBST_TB', "BoostClassifier traceback")
     debug.register('CLFBIN', "BinaryClassifier")
+    debug.register('CLFTREE', "TreeClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
     debug.register('CLFSPL', "SplitClassifier")
     debug.register('CLFSPL_',"SplitClassifier (verbose)")
@@ -300,6 +301,9 @@ if __debug__:
     debug.register('ATL',    "Atlases")
     debug.register('ATL_',   "Atlases (verbose)")
     debug.register('ATL__',  "Atlases (very verbose)")
+
+    debug.register('REP',    "Reports")
+    debug.register('REP_',   "Reports (verbose)")
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):

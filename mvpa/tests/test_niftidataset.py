@@ -256,6 +256,36 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnless((ds2.samples[2] == dsfull.samples[3]).all())
         self.failUnless((ds2.labels == labels).all())
 
+    def testNiftiDatasetROIMaskNeighbors(self):
+        """Test if we could request neighbors within spherical ROI whenever
+           center is outside of the mask
+           """
+
+        # check whether we can use a plain ndarray as mask
+        mask_roi = N.zeros((24, 96, 128), dtype='bool')
+        mask_roi[12, 20, 38:42] = True
+        mask_roi[23, 20, 38:42] = True  # far away
+        ds_full = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+                               labels=[1,2])
+        ds_roi = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+                               labels=[1,2], mask=mask_roi)
+        # Should just work since we are in the mask
+        ids_roi = ds_roi.mapper.getNeighbors(ds_roi.mapper.getOutId((12, 20, 40)),
+                                       radius=20)
+        self.failUnless(len(ids_roi) == 4)
+
+        # Trying to request feature outside of the mask
+        self.failUnlessRaises(ValueError, ds_roi.mapper.getOutId, (12, 20, 37))
+
+        # Lets work around using full (non-masked) volume
+        ids_out = []
+        for id_in in ds_full.mapper.getNeighborIn( (12, 20, 37), radius=20):
+            try:
+                ids_out.append(ds_roi.mapper.getOutId(id_in))
+            except ValueError:
+                pass
+        self.failUnless(ids_out == ids_roi)
+
 
 def suite():
     return unittest.makeSuite(NiftiDatasetTests)

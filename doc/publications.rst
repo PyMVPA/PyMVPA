@@ -3,7 +3,8 @@
 
 Below is a list of all publications about PyMVPA that have been published so
 far (in chronological order). If you use PyMVPA in your research please cite
-the one that matches best.
+the one that matches best. In addition there is also a list of studies done by
+other groups employing PyMVPA somewhere in the analysis.
 
 Peer-reviewed publications
 --------------------------
@@ -38,3 +39,9 @@ Posters
 .. _Magdeburg: http://www.magdeburg.de/
 
 
+Studies employing PyMVPA
+------------------------
+
+* :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
+  Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
+  Atlas and Machine Learning Algorithms.*

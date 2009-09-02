@@ -13,13 +13,14 @@ import unittest
 import numpy as N
 from numpy.linalg import norm
 from mvpa.datasets import Dataset
-from tests_warehouse import datasets
+from tests_warehouse import datasets, sweepargs
 from mvpa.mappers.procrustean import ProcrusteanMapper
 
 
 class ProcrusteanMapperTests(unittest.TestCase):
 
-    def testSimple(self):
+    @sweepargs(oblique=(False,True))
+    def testSimple(self, oblique):
         d_orig = datasets['uni2large'].samples
         d_orig2 = datasets['uni4large'].samples
         for sdim, nf_s, nf_t, full_test \
@@ -27,23 +28,22 @@ class ProcrusteanMapperTests(unittest.TestCase):
                     ('Same 10D', 10, 10, True),
                     ('2D -> 3D', 2,  3,  True),
                     ('3D -> 2D', 3,  2,  False)):
-
-            # lets do evil -- use the mapper itself on some data to
-            # figure out some "random" rotation matrix for us to use ;)
-            pm_orig = ProcrusteanMapper(reflection=False)
+            # figure out some "random" rotation
             d = max(nf_s, nf_t)
-            pm_orig.train(d_orig[:50, :d], d_orig2[10:60, :d])
-            R = pm_orig._T[:nf_s, :nf_t].copy()
-
+            _u, _s, _vh = N.linalg.svd(d_orig[:, :d])
+            R = _vh[:nf_s, :nf_t]
             if nf_s == nf_t:
                 # Test if it is indeed a rotation matrix ;)
-                self.failUnless(N.abs(1.0 - N.linalg.det(R)) < 1e-10)
+                adR = N.abs(1.0 - N.linalg.det(R))
+                self.failUnless(adR < 1e-10,
+                                "Determinant of rotation matrix should "
+                                "be 1. Got it 1+%g" % adR)
                 self.failUnless(norm(N.dot(R, R.T)
-                                              - N.eye(R.shape[0])) < 1e-10)
+                                     - N.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
-                pm = ProcrusteanMapper(scaling=scaling)
-                pm2 = ProcrusteanMapper(scaling=scaling)
+                pm = ProcrusteanMapper(scaling=scaling, oblique=oblique)
+                pm2 = ProcrusteanMapper(scaling=scaling, oblique=oblique)
 
                 t1, t2 = d_orig[23, 1], d_orig[22, 1]
 
@@ -58,8 +58,12 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 pm2.train(ds2)
 
                 # verify that both created the same transformation
-                self.failUnless(norm(pm._T - pm2._T) <= 1e-12)
-                self.failUnless(norm(pm._trans - pm2._trans) <= 1e-12)
+                npm2proj = norm(pm.proj - pm2.proj)
+                self.failUnless(npm2proj <= 1e-10,
+                                msg="Got transformation different by norm %g."
+                                " Had to be less than 1e-10" % npm2proj)
+                self.failUnless(norm(pm._offset_in - pm2._offset_in) <= 1e-10)
+                self.failUnless(norm(pm._offset_out - pm2._offset_out) <= 1e-10)
 
                 # do forward transformation on the same source data
                 d_s_f = pm.forward(d_s)
@@ -70,14 +74,16 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 dsf = d_s_f - d_t
                 ndsf = norm(dsf)/norm(d_t)
                 if full_test:
-                    dR = norm(R - pm._T)
-                    self.failUnless(dR <= 1e-12,
-                        msg="We should have got reconstructed rotation "
-                            "perfectly. Now got dR=%g" % dR)
+                    dsR = norm(s*R - pm.proj)
 
-                    self.failUnless(N.abs(s - pm._scale) < 1e-12,
-                        msg="We should have got reconstructed scale "
-                            "perfectly. Now got %g for %g" % (pm._scale, s))
+                    if not oblique:
+                        self.failUnless(dsR <= 1e-12,
+                            msg="We should have got reconstructed rotation+scaling "
+                                "perfectly. Now got d scale*R=%g" % dsR)
+
+                        self.failUnless(N.abs(s - pm._scale) < 1e-12,
+                            msg="We should have got reconstructed scale "
+                                "perfectly. Now got %g for %g" % (pm._scale, s))
 
                     self.failUnless(ndsf <= 1e-12,
                       msg="%s: Failed to get to the target space correctly."

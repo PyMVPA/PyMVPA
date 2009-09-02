@@ -95,8 +95,8 @@ clean:
 		 -o -iname '*.gch' \
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
-	-@rm -rf dist
-	-@rm *-stamp
+	-@rm -rf dist *_report
+	-@rm *-stamp *_report.pdf
 
 # this target should put the source tree into shape for building the source
 # distribution

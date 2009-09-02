@@ -34,8 +34,8 @@ class RegressionsTests(unittest.TestCase):
         """Test If binary regression-based  classifiers have proper tag
         """
         self.failUnless(('binary' in ml._clf_internals) != ml.regression,
-                        msg="Inconsistent markin with "
-                        "binary and regression features detected")
+            msg="Inconsistent markin with binary and regression features"
+                " detected in %s having %s" % (ml, `ml._clf_internals`))
 
     @sweepargs(regr=regrswh['regression'])
     def testRegressions(self, regr):

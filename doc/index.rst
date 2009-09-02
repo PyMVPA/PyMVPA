@@ -33,12 +33,6 @@ PyMVPA 0.4.2 is out [25 May 2009]
   improvements. See the :ref:`changelog <chap_changelog>` for details.
 
 
-The `online documentation editor`_ is now available [11 Feb 2009]
-
-  It is powered by pydocweb_ -- the same software that also drives the Numpy
-  documentation editor.
-
-
 New articles on PyMVPA available [21 Jan 2009]
 
   Please see the Publications_ section for details.
@@ -61,7 +55,6 @@ For users
 * :ref:`Development Changelog <chap_changelog>` [:ref:`Movie version
   <chap_code_swarm>`] (see what has changed)
 
-.. _online documentation editor: edt/
 .. _PDF-manual: PyMVPA-Manual.pdf
 
 * :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001

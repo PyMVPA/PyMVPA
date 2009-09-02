@@ -149,10 +149,12 @@ class Classifier(ClassWithCollections):
             self._summaryClass = RegressionStatistics
         else:
             self._summaryClass = ConfusionMatrix
-            if 'regression' in self._clf_internals:
+            clf_internals = self._clf_internals
+            if 'regression' in clf_internals and not ('binary' in clf_internals):
                 # regressions are used as binary classifiers if not
-                # asked to perform regression explicitely
-                self._clf_internals.append('binary')
+                # asked to perform regression explicitly
+                # We need a copy of the list, so we don't override class-wide
+                self._clf_internals = clf_internals + ['binary']
 
         # deprecate
         #self.__trainedidhash = None
