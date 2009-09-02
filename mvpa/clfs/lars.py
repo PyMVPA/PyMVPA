@@ -118,18 +118,22 @@ class LARS(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # regression
-        self.states.enable('training_confusion', False)
+        # YOH: we do have summary statistics for regressions
+        #self.states.enable('training_confusion', False)
 
     def __repr__(self):
         """String summary of the object
         """
-        return """LARS(type=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, use_Gram=%s, enable_states=%s)""" % \
+        return "LARS(type='%s', normalize=%s, intercept=%s, trace=%s, " \
+               "max_steps=%s, use_Gram=%s, regression=%s, " \
+               "enable_states=%s)" % \
                (self.__type,
                 self.__normalize,
                 self.__intercept,
                 self.__trace,
                 self.__max_steps,
                 self.__use_Gram,
+                self.regression,
                 str(self.states.enabled))
 
 
@@ -167,10 +171,10 @@ class LARS(Classifier):
         else:
             # determine the lowest
             self.__lowest_Cp_step = Cp_vals.argmin()
-        
+
         # set the weights to the lowest Cp step
         self.__weights = self.__trained_model['beta'][self.__lowest_Cp_step,:]
-        
+
 #         # set the weights to the final state
 #         self.__weights = self.__trained_model['beta'][-1,:]
 
@@ -191,6 +195,8 @@ class LARS(Classifier):
         if len(fit.shape) == 0:
             # if we just got 1 sample with a scalar
             fit = fit.reshape( (1,) )
+
+        self.values = fit
         return fit
 
 

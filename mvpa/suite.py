@@ -28,6 +28,12 @@ from mvpa.base import *
 from mvpa.base.config import *
 from mvpa.base.verbosity import *
 
+if externals.exists('reportlab'):
+    from mvpa.base.report import *
+else:
+    from mvpa.base.report_dummy import Report
+
+
 from mvpa.algorithms.cvtranserror import *
 
 from mvpa import clfs

@@ -147,19 +147,18 @@ class ENET(Classifier):
 #         Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
 #                              for x in range(len(self.__trained_model['Cp']))])
 #         self.__lowest_Cp_step = Cp_vals.argmin()
-        
+
         # set the weights to the last step
         self.__weights = N.zeros(data.nfeatures,dtype=self.__trained_model['beta.pure'].dtype)
         ind = N.asarray(self.__trained_model['allset'])-1
         self.__weights[ind] = self.__trained_model['beta.pure'][-1,:]
-        
+
 #         # set the weights to the final state
 #         self.__weights = self.__trained_model['beta'][-1,:]
 
 
     def _predict(self, data):
-        """
-        Predict the output for the provided data.
+        """Predict the output for the provided data.
         """
         # predict with the final state (i.e., the last step)
         res = rpy.r.predict_enet(self.__trained_model,
@@ -168,7 +167,7 @@ class ENET(Classifier):
                                  type='fit',
                                  s=self.__trained_model['beta.pure'].shape[0])
                                  #s=self.__lowest_Cp_step)
-                                 
+
         fit = N.asarray(res['fit'])
         if len(fit.shape) == 0:
             # if we just got 1 sample with a scalar

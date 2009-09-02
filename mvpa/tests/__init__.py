@@ -43,6 +43,7 @@ def collectTestSuites():
         'test_support',
         'test_verbosity',
         'test_iohelpers',
+        'test_report',
         'test_datasetfx',
         'test_cmdline',
         'test_args',
