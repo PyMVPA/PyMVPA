@@ -23,6 +23,7 @@ __docformat__ = 'restructuredtext'
 
 
 from mvpa import *
+sysinfo = sysinfo.sysinfo
 
 from mvpa.base import *
 from mvpa.base.config import *
