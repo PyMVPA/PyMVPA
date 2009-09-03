@@ -293,6 +293,18 @@ class StatsTestsScipy(unittest.TestCase):
                 msg='with signal should have higher zstats')
 
 
+    def testBinomdistPPF(self):
+        """Test if binomial distribution works ok
+
+        after possibly a monkey patch
+        """
+        bdist = scipy.stats.binom(100, 0.5)
+        self.failUnless(bdist.ppf(1.0) == 100)
+        self.failUnless(bdist.ppf(0.9) <= 60)
+        self.failUnless(bdist.ppf(0.5) == 50)
+        self.failUnless(bdist.ppf(0) == -1)
+
+
 def suite():
     """Create the suite"""
     return unittest.makeSuite(StatsTestsScipy)
