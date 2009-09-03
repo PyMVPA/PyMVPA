@@ -95,9 +95,14 @@ class StatsTestsScipy(unittest.TestCase):
                 msg="Nonbogus features should have high t-score. Got %s"
                     % (m.null_t[ds.nonbogus_features]))
 
-            self.failUnless((N.abs(m.null_t[ds.bogus_features]) < 4).all(),
-                msg="Bogus features should have low t-score. Got (t,p,sens):%s"
-                    % (zip(m.null_t, m.null_prob, score)))
+            bogus_min = min(N.abs(m.null_t[ds.bogus_features]))
+            self.failUnless(bogus_min < 4,
+                msg="Some bogus features should have low t-score of %g."
+                    "Got (t,p,sens):%s"
+                    % (bogus_min,
+                       zip(m.null_t[ds.bogus_features],
+                       m.null_prob[ds.bogus_features],
+                       score[ds.bogus_features])))
 
 
     def testNegativeT(self):
