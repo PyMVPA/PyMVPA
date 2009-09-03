@@ -24,8 +24,8 @@ nulldist_sweep = [ MCNullDist(permutations=30, tail='any'),
                    MCNullDist(permutations=30, tail='right')]
 
 if externals.exists('scipy'):
-    from scipy.stats import f_oneway
     from mvpa.support.stats import scipy
+    from scipy.stats import f_oneway
     nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=30,
                                    tail='any'),
                         MCNullDist(scipy.stats.norm, permutations=30,
