@@ -49,17 +49,26 @@ class RegressionsTests(unittest.TestCase):
             enable_states=['training_confusion', 'confusion'])
         corr = cve(ds)
 
+        self.failUnless(corr == cve.confusion.stats['CCe'])
+
         splitregr = SplitClassifier(regr,
                                     splitter=OddEvenSplitter(),
                                     enable_states=['training_confusion', 'confusion'])
         splitregr.train(ds)
-        split_corr = cve.confusion.stats['Summary CCe']
+        split_corr = splitregr.confusion.stats['CCe']
+        split_corr_tr = splitregr.training_confusion.stats['CCe']
 
         for confusion, error in ((cve.confusion, corr),
                                  (splitregr.confusion, split_corr),
-                                 (splitregr.training_confusion, split_corr),
+                                 (splitregr.training_confusion, split_corr_tr),
                                  ):
             #TODO: test confusion statistics
+            # Part of it for now -- CCe
+            for conf in confusion.summaries:
+                stats = conf.stats
+                self.failUnless(stats['CCe'] < 0.5)
+                self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
+
             s0 = confusion.asstring(short=True)
             s1 = confusion.asstring(short=False)
 
@@ -68,13 +77,17 @@ class RegressionsTests(unittest.TestCase):
                                 msg="We should get some string representation "
                                 "of regression summary. Got %s" % s)
 
-            self.failUnless(error<0.2,
+            self.failUnless(error < 0.2,
                             msg="Regressions should perform well on a simple "
                             "dataset. Got correlation error of %s " % error)
 
             # Test access to summary statistics
-            if cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(confusion.stats['Summary CCe'] < 0.5)
+            # YOH: lets start making testing more reliable.
+            #      p-value for such accident to have is verrrry tiny,
+            #      so if regression works -- it better has at least 0.5 ;)
+            #      otherwise fix it! ;)
+            #if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(confusion.stats['CCe'] < 0.5)
 
         split_predictions = splitregr.predict(ds.samples) # just to check if it works fine
 
