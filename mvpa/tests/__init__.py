@@ -87,6 +87,7 @@ def collectTestSuites():
 
 
     __optional_tests = [ ('scipy', 'ridge'),
+                         ('scipy', 'stats_sp'),
                          ('scipy', 'datasetfx_sp'),
                          (['lars','scipy'], 'lars'),
                          ('nifti', 'niftidataset'),

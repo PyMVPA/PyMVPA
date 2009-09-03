@@ -28,6 +28,7 @@ def __check_scipy():
     """Check if scipy is present an if it is -- store its version
     """
     import warnings
+    exists('numpy', raiseException=True)
     # To don't allow any crappy warning to sneak in
     warnings.simplefilter('ignore', DeprecationWarning)
     try:
@@ -209,6 +210,17 @@ def __check_stablerdist():
         raise RuntimeError, "RDist in scipy is still unstable on the boundaries"
 
 
+def __check_rv_discrete_ppf():
+    """Unfortunately 0.6.0-12 of scipy pukes on simple ppf
+    """
+    import scipy.stats
+    try:
+        bdist = scipy.stats.binom(100, 0.5)
+        bdist.ppf(0.9)
+    except TypeError:
+        raise RuntimeError, "pmf is broken in discrete dists of scipy.stats"
+
+
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
@@ -299,6 +311,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'numpy': "__check_numpy()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
+          'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",

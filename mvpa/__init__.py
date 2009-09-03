@@ -55,6 +55,7 @@ import random
 import numpy as N
 from mvpa.base import cfg
 from mvpa.base import externals
+from mvpa.base.sysinfo import sysinfo
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location

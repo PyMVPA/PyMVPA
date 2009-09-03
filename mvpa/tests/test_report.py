@@ -91,6 +91,7 @@ class ReportTest(unittest.TestCase):
         report.save()
 
         if externals.exists('pylab'):
+            import pylab as P
             P.close('all')
             P.ion()
 
