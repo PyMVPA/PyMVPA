@@ -698,6 +698,18 @@ class TreeClassifier(ProxyClassifier):
         return super(TreeClassifier, self).__repr__([prefix] + prefixes)
 
 
+    def summary(self):
+        """Provide summary for the `TreeClassifier`.
+        """
+        s = super(TreeClassifier, self).summary()
+        if self.trained:
+            s += "\n Node classifiers summaries:"
+            for i, (clfname, clf) in enumerate(self.clfs.iteritems()):
+                s += '\n + %d %s clf: %s' % \
+                     (i, clfname, clf.summary().replace('\n', '\n |'))
+        return s
+
+
     def _train(self, dataset):
         """Train TreeClassifier
 
