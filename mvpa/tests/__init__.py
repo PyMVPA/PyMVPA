@@ -132,7 +132,8 @@ def run(limit=None, verbosity=None):
         e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
         'niftidataset'.
       verbosity: None | int
-        Explain me
+        Verbosity of unittests execution. If None, controlled by PyMVPA
+        configuration tests/verbosity
     """
     if __debug__:
         from mvpa.base import debug
