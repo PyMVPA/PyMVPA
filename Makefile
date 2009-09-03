@@ -96,7 +96,7 @@ clean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist *_report
-	-@rm *-stamp *_report.pdf
+	-@rm *-stamp *_report.pdf pymvpa.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
@@ -302,7 +302,17 @@ testapiref: apidoc
 testsphinx: htmldoc
 	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
 
-test: unittests testmanual testsuite testapiref testexamples
+# Check if stored cfg after whole suite is imported is safe to be
+# reloaded
+testcfg: build
+	@echo "I: Running test to check that stored configuration is acceptable."
+	-@rm -f pymvpa.cfg
+	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
+	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *;'
+	@echo "+I: Running non-labile testing to verify safety of stored configuration"
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+
+test: unittests testmanual testsuite testapiref testexamples testcfg
 
 # Target to be called after some major refactoring
 # It skips some flavors of unittests
