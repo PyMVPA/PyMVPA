@@ -135,12 +135,17 @@ class ClassifiersTests(unittest.TestCase):
                             msg="Got transfer error %g" % (cve))
 
 
-    @sweepargs(clf=clfswh[:])
+    @sweepargs(clf=clfswh[:] + regrswh[:])
     def testSummary(self, clf):
         """Basic testing of the clf summary
         """
+        summary1 = clf.summary()
+        self.failUnless('not yet trained' in summary1)
         clf.train(datasets['uni2small'])
         summary = clf.summary()
+        # It should get bigger ;)
+        self.failUnless(len(summary) > len(summary1))
+        self.failUnless(not 'not yet trained' in summary)
 
 
     # TODO: validate for regressions as well!!!
