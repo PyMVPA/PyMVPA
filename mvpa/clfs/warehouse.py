@@ -286,6 +286,7 @@ if externals.exists('glmnet'):
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
+clfswh += kNN(k=5, voting='majority', descr="kNN(k=5, voting='majority')")
 
 clfswh += \
     FeatureSelectionClassifier(

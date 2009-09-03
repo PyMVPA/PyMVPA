@@ -237,6 +237,16 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.jneumeth.2008.04.008
 
 
+.. _SET+09:
+
+**Sun, D., van Erp, T. G., Thompson, P. M., Bearden, C. E., Daley, M., Kushan, L., Hardt, M. E., Nuechterlein, K. H., Toga, A. W. & Cannon, T. D.** (2009). Elucidating an MRI-Based Neuroanatomic Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain Atlas and Machine Learning Algorithms. *Biological Psychiatry*.
+  *First published study employing PyMVPA for MRI-based analysis of Psychosis.*
+
+  Keywords: :keyword:`PyMVPA`, :keyword:`psychosis`, :keyword:`MRI`
+
+  URL: http://www.journals.elsevierhealth.com/periodicals/bps/content/0900486abs
+
+
 .. _Vap95:
 
 **Vapnik, V.** (1995). The Nature of Statistical Learning Theory. Springer: New York.

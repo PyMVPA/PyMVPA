@@ -26,8 +26,10 @@ from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
 from mvpa.base.dochelpers import enhancedDocString, table2string
 
+from mvpa.base import warning
+
 if __debug__:
-    from mvpa.base import debug, warning
+    from mvpa.base import debug
 
     def _validate_indexes_uniq_sorted(seq, fname, item):
         """Helper function to validate that seq contains unique sorted values
@@ -58,9 +60,9 @@ class Dataset(object):
         `applyMapper`
       - `Mutators`: `permuteLabels`
 
-    Important: labels assumed to be immutable, i.e. noone should modify
+    Important: labels assumed to be immutable, i.e. no one should modify
     them externally by accessing indexed items, ie something like
-    ``dataset.labels[1] += "_bad"`` should not be used. If a label has
+    ``dataset.labels[1] += 100`` should not be used. If a label has
     to be modified, full copy of labels should be obtained, operated on,
     and assigned back to the dataset, otherwise dataset.uniquelabels
     would not work.  The same applies to any other attribute which has
@@ -156,13 +158,17 @@ class Dataset(object):
           samples : ndarray
             2d array (samples x features)
           labels
-            An array or scalar value defining labels for each samples
+            An array or scalar value defining labels for each samples.
+            Generally `labels` should be numeric, unless `labels_map`
+            is used
           labels_map : None or bool or dict
-            Map from labels into literal names. If is None or True,
-            the mapping is computed, from labels which must be literal.
-            If is False, no mapping is computed. If dict -- mapping is
-            verified and taken, labels get remapped. Dict must map
-            literal -> number
+            Map original labels into numeric labels.  If True, the
+            mapping is computed if labels are literal.  If is False,
+            no mapping is computed. If dict instance -- provided
+            mapping is verified and applied.  If you want to have
+            labels_map just be present given already numeric labels,
+            just assign labels_map dictionary to existing dataset
+            instance
           chunks
             An array or scalar value defining chunks for each sample
 
@@ -219,7 +225,7 @@ class Dataset(object):
         """Dataset attriibutes."""
 
         # store samples (and possibly transform/reshape/retype them)
-        if not samples == None:
+        if not samples is None:
             if __debug__:
                 if lcl_data.has_key('samples'):
                     debug('DS',
@@ -233,7 +239,7 @@ class Dataset(object):
         #       ie if no labels present -- assign arange
         #   MH: don't think this is necessary -- or is there a use case?
         # labels
-        if not labels == None:
+        if not labels is None:
             if __debug__:
                 if lcl_data.has_key('labels'):
                     debug('DS',
@@ -286,8 +292,8 @@ class Dataset(object):
         labels_ = N.asarray(lcl_data['labels'])
         labels_map_known = lcl_dsattr.has_key('labels_map')
         if labels_map is True:
-            # need to composte labels_map
-            if labels_.dtype.char == 'S' or not labels_map_known:
+            # need to compose labels_map
+            if labels_.dtype.char == 'S': # or not labels_map_known:
                 # Create mapping
                 ulabels = list(Set(labels_))
                 ulabels.sort()
@@ -592,6 +598,10 @@ class Dataset(object):
         if not (uniques == sorted_ids).all():
             raise DatasetError, "Samples IDs are not unique."
 
+        # Check if labels as not literal
+        if N.asanyarray(_data['labels'].dtype.char == 'S'):
+            warning('Labels for dataset %s are literal, should be numeric. '
+                    'You might like to use labels_map argument.' % self)
 
     def _expandSampleAttribute(self, attr, attr_name):
         """If a sample attribute is given as a scalar expand/repeat it to a
