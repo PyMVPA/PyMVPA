@@ -32,8 +32,8 @@ if externals.exists('scipy'):
                                    tail='right'),
                         MCNullDist(scipy.stats.expon, permutations=30,
                                    tail='right'),
-                        FixedNullDist(scipy.stats.norm(0, 0.1), tail='any'),
-                        FixedNullDist(scipy.stats.norm(0, 0.1), tail='right'),
+                        FixedNullDist(scipy.stats.norm(0, 10.0), tail='any'),
+                        FixedNullDist(scipy.stats.norm(0, 10.0), tail='right'),
                         scipy.stats.norm(0, 0.1)
                         ]
 
@@ -53,7 +53,7 @@ class StatsTests(unittest.TestCase):
         # check reasonable output.
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
-        prob = null.p([10, 0, 0, 0, 0, N.nan])
+        prob = null.p([20, 0, 0, 0, 0, N.nan])
         # XXX this is labile! it also needs checking since the F-scores
         # of the MCNullDists using normal distribution are apparently not
         # distributed that way, hence the test often (if not always) fails.
