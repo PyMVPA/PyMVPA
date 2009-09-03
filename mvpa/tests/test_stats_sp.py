@@ -136,7 +136,10 @@ class StatsTestsScipy(unittest.TestCase):
         """
         from mvpa.clfs.stats import matchDistribution, rv_semifrozen
 
-        data = datasets['uni2small'].samples[:, 1]
+        ds = datasets['uni2medium']      # large to get stable stats
+        data = ds.samples[:, ds.bogus_features[0]]
+        # choose bogus feature, which
+        # should have close to normal distribution
 
         # Lets test ad-hoc rv_semifrozen
         floc = rv_semifrozen(scipy.stats.norm, loc=0).fit(data)
