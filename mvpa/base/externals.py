@@ -19,7 +19,15 @@ from mvpa.misc.support import SmartVersion
 if __debug__:
     from mvpa.base import debug
 
-versions = {}
+class _VersionsChecker(dict):
+    """Helper class to check the versions of the available externals
+    """
+    def __getitem__(self, key):
+        if not self.has_key(key):
+            exists(key, force=True, raiseException=True)
+        return super(_VersionsChecker, self).__getitem__(key)
+
+versions = _VersionsChecker()
 """Versions of available externals, as tuples
 """
 
