@@ -1274,6 +1274,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         Has to untrain any known classifier
         """
+        if self.__feature_selection is not None:
+            self.__feature_selection.untrain()
         if not self.trained:
             return
         if not self.__maskclf is None:
