@@ -30,10 +30,10 @@ def _t2s(t):
             res += [e]
     return '/'.join(res)
 
-__all__ = ['sysinfo']
+__all__ = ['wtf']
 
-class Sysinfo(object):
-    """Convenience class to contain sysinfo information
+class WTF(object):
+    """Convenience class to contain information about PyMVPA and OS
 
     TODO: refactor to actually not contain just string representation
     but rather a dictionary (of dictionaries)
@@ -161,7 +161,7 @@ class Sysinfo(object):
     __str__ = __repr__
 
 
-def sysinfo(filename=None):
+def wtf(filename=None):
     """Report summary about PyMVPA and the system
 
     :Keywords:
@@ -170,7 +170,7 @@ def sysinfo(filename=None):
         to the screen
     """
 
-    info = Sysinfo()
+    info = WTF()
     if filename is not None:
         out = file(filename, 'w').write(str(info))
     else:
@@ -178,4 +178,4 @@ def sysinfo(filename=None):
 
 
 if __name__ == '__main__':
-    print sysinfo()
+    print wtf()

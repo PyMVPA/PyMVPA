@@ -11,20 +11,20 @@
 import unittest
 from tempfile import mktemp
 
-from mvpa.base.sysinfo import sysinfo
+from mvpa.base.info import wtf
 
 class TestBases(unittest.TestCase):
 
-    def testSysInfo(self):
+    def testWtf(self):
         """Very basic testing -- just to see if it doesn't crash"""
 
         try:
-            sysinfo()
+            wtf()
         except Exception, e:
             self.fail('Testing of systemInfo failed with "%s"' % str(e))
 
         filename = mktemp('mvpa', 'test')
-        sysinfo(filename)
+        wtf(filename)
         try:
             syslines = open(filename, 'r').readlines()
         except Exception, e:

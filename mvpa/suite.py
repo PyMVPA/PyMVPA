@@ -155,6 +155,3 @@ if externals.exists("pylab"):
 
 if externals.exists("lxml") and externals.exists("nifti"):
     from mvpa.atlases import *
-
-# Assure that sysinfo is just a function
-sysinfo = sysinfo.sysinfo
