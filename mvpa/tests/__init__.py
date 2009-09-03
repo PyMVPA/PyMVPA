@@ -24,6 +24,7 @@ def collectTestSuites():
     # list all test modules (without .py extension)
     tests = [
         # Basic data structures/manipulators
+        'test_externals',
         'test_base',
         'test_dochelpers',
         'test_dataset',
