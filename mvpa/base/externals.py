@@ -309,7 +309,7 @@ def __check_rpy():
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
-          'nifti >= 0.20090205.1':
+          'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
@@ -333,10 +333,10 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
-          'mdp >= 2.4': "from mdp.nodes import LLENode as __",
+          'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
-          'sg >= 0.6.4': "__check_shogun(3318)",
+          'sg ge 0.6.4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",

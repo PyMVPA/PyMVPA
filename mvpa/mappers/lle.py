@@ -20,7 +20,7 @@ import numpy as N
 
 from mvpa.mappers.base import Mapper
 
-if externals.exists('mdp >= 2.4', raiseException=True):
+if externals.exists('mdp ge 2.4', raiseException=True):
     from mdp.nodes import LLENode, HLLENode
 
 

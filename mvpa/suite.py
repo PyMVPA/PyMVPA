@@ -94,7 +94,7 @@ if externals.exists('scipy'):
 if externals.exists('mdp'):
     from mvpa.mappers.pca import *
     from mvpa.mappers.ica import *
-if externals.exists('mdp >= 2.4'):
+if externals.exists('mdp ge 2.4'):
     from mvpa.mappers.lle import *
 
 from mvpa import measures
