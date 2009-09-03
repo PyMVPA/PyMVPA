@@ -148,7 +148,7 @@ class Sysinfo(object):
             procstat = open('/proc/%d/status' % os.getpid()).readlines()
             out.write(' Process Information:\n')
             out.write('  ' + '  '.join(procstat))
-        finally:
+        except:
             pass
 
         self._info = out.getvalue()
