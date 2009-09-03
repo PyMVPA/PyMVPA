@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals, warning
+from mvpa.base import externals, warning, cfg
 
 if __debug__:
     from mvpa.base import debug
@@ -65,12 +65,14 @@ if not externals.exists('good scipy.stats.rdist'):
     scipy.stats.distributions.rdist_gen = scipy.stats.rdist_gen = rdist_gen
     scipy.stats.distributions.rdist = scipy.stats.rdist = rdist
 
-    externals.exists('good scipy.stats.rdist', force=True)
-    try:
-        externals.exists('good scipy.stats.rdist', raiseException=True)
+    try: # Retest
+        externals.exists('good scipy.stats.rdist', force=True,
+                         raiseException=True)
     except RuntimeError:
         warning("scipy.stats.rdist was not fixed with a monkey-patch. "
                 "It remains broken")
+    # Revert so if configuration stored, we know the true flow of things ;)
+    cfg.set('externals', 'have good scipy.stats.rdist', 'no')
 
 
 if not externals.exists('good scipy.stats.rv_discrete.ppf'):
@@ -122,9 +124,10 @@ if not externals.exists('good scipy.stats.rv_discrete.ppf'):
         return output
 
     scipy.stats.distributions.rv_discrete.ppf = ppf7
-    externals.exists('good scipy.stats.rv_discrete.ppf', force=True)
     try:
-        externals.exists('good scipy.stats.rv_discrete.ppf', raiseException=True)
+        externals.exists('good scipy.stats.rv_discrete.ppf', force=True,
+                         raiseException=True)
     except RuntimeError:
         warning("rv_discrete.ppf was not fixed with a monkey-patch. "
                 "It remains broken")
+    cfg.set('externals', 'have good scipy.stats.rv_discrete.ppf', 'no')
