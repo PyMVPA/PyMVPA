@@ -698,6 +698,18 @@ class TreeClassifier(ProxyClassifier):
         return super(TreeClassifier, self).__repr__([prefix] + prefixes)
 
 
+    def summary(self):
+        """Provide summary for the `TreeClassifier`.
+        """
+        s = super(TreeClassifier, self).summary()
+        if self.trained:
+            s += "\n Node classifiers summaries:"
+            for i, (clfname, clf) in enumerate(self.clfs.iteritems()):
+                s += '\n + %d %s clf: %s' % \
+                     (i, clfname, clf.summary().replace('\n', '\n |'))
+        return s
+
+
     def _train(self, dataset):
         """Train TreeClassifier
 
@@ -740,26 +752,22 @@ class TreeClassifier(ProxyClassifier):
                   "Known are %s" % \
                   (dataset, dsul.difference(known), known)
 
-        # We can operate on the same dataset here  T1 XXX
-        # Store original labels
+        # We can operate on the same dataset here 
+        # Nope: doesn't work nicely with the classifier like kNN
+        #      which links to the dataset used in the training,
+        #      so whenever if we simply restore labels back, we
+        #      would get kNN confused in _predict()
+        #      Therefore we need to create a shallow copy of
+        #      dataset and provide it with new labels
+        ds_group = dataset.copy(deep=False)
+        # assign new labels group samples into groups of labels
+        ds_group.labels = [label2index[l] for l in dataset.labels]
 
-        # XXX non-thread safe... starting to mark such places
-        #     thread safe would be to create a new dataset
-        #     with the same *attr but the labels
-        #     ;)
-        orig_labels = dataset.labels
-        # group samples into groups of labels
-        groupped_labels = [label2index[l] for l in orig_labels]
-
-        try:
-            dataset.labels = groupped_labels
-            # train primary classifier
-            if __debug__:
-                debug('CLFTREE', "Training primary %(clf)s on %(ds)s",
-                      msgargs=dict(clf=clf, ds=dataset))
-            clf.train(dataset)
-        finally:
-            dataset.labels = orig_labels
+        # train primary classifier
+        if __debug__:
+            debug('CLFTREE', "Training primary %(clf)s on %(ds)s",
+                  msgargs=dict(clf=clf, ds=ds_group))
+        clf.train(ds_group)
 
         # ??? should we obtain values for anything?
         #     may be we could training values of .clfs to be added
@@ -1266,6 +1274,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         Has to untrain any known classifier
         """
+        if self.__feature_selection is not None:
+            self.__feature_selection.untrain()
         if not self.trained:
             return
         if not self.__maskclf is None:

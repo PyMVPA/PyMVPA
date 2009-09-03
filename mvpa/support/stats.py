@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa.base import externals, warning, cfg
 
 if __debug__:
     from mvpa.base import debug
@@ -65,3 +65,69 @@ if not externals.exists('good scipy.stats.rdist'):
     scipy.stats.distributions.rdist_gen = scipy.stats.rdist_gen = rdist_gen
     scipy.stats.distributions.rdist = scipy.stats.rdist = rdist
 
+    try: # Retest
+        externals.exists('good scipy.stats.rdist', force=True,
+                         raiseException=True)
+    except RuntimeError:
+        warning("scipy.stats.rdist was not fixed with a monkey-patch. "
+                "It remains broken")
+    # Revert so if configuration stored, we know the true flow of things ;)
+    cfg.set('externals', 'have good scipy.stats.rdist', 'no')
+
+
+if not externals.exists('good scipy.stats.rv_discrete.ppf'):
+    # Local rebindings for ppf7 (7 is for the scipy version from
+    # which code was borrowed)
+    arr = N.asarray
+    from scipy.stats.distributions import valarray, argsreduce
+    from numpy import shape, place, any
+
+    def ppf7(self,q,*args,**kwds):
+        """
+        Percent point function (inverse of cdf) at q of the given RV
+
+        Parameters
+        ----------
+        q : array-like
+            lower tail probability
+        arg1, arg2, arg3,... : array-like
+            The shape parameter(s) for the distribution (see docstring of the
+            instance object for more information)
+        loc : array-like, optional
+            location parameter (default=0)
+
+        Returns
+        -------
+        k : array-like
+            quantile corresponding to the lower tail probability, q.
+
+        """
+        loc = kwds.get('loc')
+        args, loc = self._rv_discrete__fix_loc(args, loc)
+        q,loc  = map(arr,(q,loc))
+        args = tuple(map(arr,args))
+        cond0 = self._argcheck(*args) & (loc == loc)
+        cond1 = (q > 0) & (q < 1)
+        cond2 = (q==1) & cond0
+        cond = cond0 & cond1
+        output = valarray(shape(cond),value=self.badvalue,typecode='d')
+        #output type 'd' to handle nin and inf
+        place(output,(q==0)*(cond==cond), self.a-1)
+        place(output,cond2,self.b)
+        if any(cond):
+            goodargs = argsreduce(cond, *((q,)+args+(loc,)))
+            loc, goodargs = goodargs[-1], goodargs[:-1]
+            place(output,cond,self._ppf(*goodargs) + loc)
+
+        if output.ndim == 0:
+            return output[()]
+        return output
+
+    scipy.stats.distributions.rv_discrete.ppf = ppf7
+    try:
+        externals.exists('good scipy.stats.rv_discrete.ppf', force=True,
+                         raiseException=True)
+    except RuntimeError:
+        warning("rv_discrete.ppf was not fixed with a monkey-patch. "
+                "It remains broken")
+    cfg.set('externals', 'have good scipy.stats.rv_discrete.ppf', 'no')

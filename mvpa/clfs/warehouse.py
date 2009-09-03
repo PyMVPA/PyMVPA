@@ -337,7 +337,7 @@ if len(clfswh['linear', 'svm']) > 0:
     # "Interesting" classifiers
     clfswh += \
          FeatureSelectionClassifier(
-             linearSVMC,
+             linearSVMC.clone(),
              SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=0.1, implementation="C")),
                 RangeElementSelector(mode='select')),
@@ -346,7 +346,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=1.0, implementation="C")),
                 RangeElementSelector(mode='select')),
@@ -364,7 +364,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                OneWayAnova(),
                FractionTailSelector(0.05, mode='select', tail='upper')),
@@ -372,7 +372,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                OneWayAnova(),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
@@ -380,7 +380,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
                FractionTailSelector(0.05, mode='select', tail='upper')),
@@ -388,7 +388,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
                FixedNElementTailSelector(50, mode='select', tail='upper')),

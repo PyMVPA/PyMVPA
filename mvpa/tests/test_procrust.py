@@ -34,6 +34,9 @@ class ProcrusteanMapperTests(unittest.TestCase):
             R = _vh[:nf_s, :nf_t]
             if nf_s == nf_t:
                 # Test if it is indeed a rotation matrix ;)
+                # Lets flip first axis if necessary
+                if N.linalg.det(R) < 0:
+                    R[:, 0] *= -1.0
                 adR = N.abs(1.0 - N.linalg.det(R))
                 self.failUnless(adR < 1e-10,
                                 "Determinant of rotation matrix should "

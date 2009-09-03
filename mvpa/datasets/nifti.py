@@ -127,7 +127,7 @@ def getNiftiData(nim):
     This function will make use of advanced features of PyNIfTI to prevent
     unnecessary copying if a sufficent version is available.
     """
-    if externals.exists('nifti >= 0.20090205.1'):
+    if externals.exists('nifti ge 0.20090205.1'):
         return nim.data
     else:
         return nim.asarray()
