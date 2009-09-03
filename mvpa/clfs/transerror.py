@@ -1123,7 +1123,7 @@ class RegressionStatistics(SummaryStatistics):
                 # " RMSE/RMP_t:%(RMSE/RMP_t).2f" \
                 return "%(# of sets)d sets CCe=%(CCe).2f p=%(CCp).2g" \
                        " RMSE:%(RMSE).2f" \
-                       " Summary: " \
+                       " Summary (stacked data): " \
                        "CCe=%(Summary CCe).2f p=%(Summary CCp).2g" \
                        % stats
             else:
