@@ -35,7 +35,10 @@ class TestExternals(unittest.TestCase):
             for o,v in self.backup:
                 cfg.set('externals', o,v)
         # paranoid check
-        self.failUnlessEqual(self.cfgstr, str(cfg))
+        # since order can't be guaranteed, lets check
+        # each item after sorting
+        self.failUnlessEqual(sorted(self.cfgstr.split('\n')),
+                             sorted(str(cfg).split('\n')))
 
 
     def testExternals(self):
