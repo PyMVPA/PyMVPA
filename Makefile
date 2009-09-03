@@ -309,8 +309,14 @@ testcfg: build
 	-@rm -f pymvpa.cfg
 	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
 	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *;'
-	@echo "+I: Running non-labile testing to verify safety of stored configuration"
+	@echo "+I: Run non-labile testing to verify safety of stored configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@echo "+I: Check all known dependencies and store them"
+	@PYTHONPATH=.:$(PYTHONPATH)	python -c \
+	  'from mvpa.suite import *; mvpa.base.externals.testAllDependencies(force=False); cfg.save("pymvpa.cfg");'
+	@echo "+I: Run non-labile testing to verify safety of stored configuration"
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	-@rm -f pymvpa.cfg
 
 test: unittests testmanual testsuite testapiref testexamples testcfg
 
