@@ -350,7 +350,10 @@ class ClassifiersTests(unittest.TestCase):
         """Basic tests for TreeClassifier
         """
         ds = datasets['uni4small']
-        clfs = clfswh['binary', '!multiclass']         # pool of classifiers
+        clfs = clfswh['binary']         # pool of classifiers
+        # Lets permute so each time we try some different combination
+        # of the classifiers
+        clfs = [clfs[i] for i in N.random.permutation(len(clfs))]
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),

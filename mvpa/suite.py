@@ -139,6 +139,7 @@ if externals.exists("pylab"):
         from mvpa.misc.plot.mri import plotMRI
 
 if externals.exists("scipy"):
+    from mvpa.support.stats import scipy
     from mvpa.measures.corrcoef import *
     from mvpa.measures.ds import *
     from mvpa.clfs.ridge import *
@@ -154,3 +155,6 @@ if externals.exists("pylab"):
 
 if externals.exists("lxml") and externals.exists("nifti"):
     from mvpa.atlases import *
+
+# Assure that sysinfo is just a function
+sysinfo = sysinfo.sysinfo
