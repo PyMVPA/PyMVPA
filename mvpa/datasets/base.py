@@ -959,9 +959,13 @@ class Dataset(object):
         return out
 
 
-    def copy(self):
+    def copy(self, deep=True):
         """Create a copy (clone) of the dataset, by fully copying current one
 
+        :Keywords:
+          deep : bool
+            deep flag is provided to __init__ for
+            copy_{samples,data,dsattr}. By default full copy is done.
         """
         # create a new object of the same type it is now and NOT only Dataset
         out = super(Dataset, self).__new__(self.__class__)

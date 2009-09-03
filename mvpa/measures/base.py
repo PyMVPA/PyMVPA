@@ -192,6 +192,13 @@ class DatasetMeasure(ClassWithCollections):
             prefixes.append("null_dist=%s" % self.__null_dist)
         return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
 
+    def untrain(self):
+        """'Untraining' Measure
+
+        Some derived classes might used classifiers, so we need to
+        untrain those
+        """
+        pass
 
     @property
     def null_dist(self):
@@ -434,6 +441,12 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         self.__clf = clf
 
 
+    def untrain(self):
+        """Untrain corresponding classifier for Sensitivity
+        """
+        if self.__clf is not None:
+            self.__clf.untrain()
+
     @property
     def feature_ids(self):
         """Return feature_ids used by the underlying classifier
@@ -500,6 +513,13 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         return sensitivities
 
 
+    def untrain(self):
+        """Untrain CombinedFDM
+        """
+        if self.__analyzers is not None:
+            for anal in self.__analyzers:
+                anal.untrain()
+
     def _setAnalyzers(self, analyzers):
         """Set the analyzers
         """
@@ -561,6 +581,14 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         """Splitter to be used on the dataset"""
 
         self.__insplit_index = insplit_index
+
+
+    def untrain(self):
+        """Untrain SplitFeaturewiseDatasetMeasure
+        """
+        if self.__analyzer is not None:
+            self.__analyzer.untrain()
+
 
     def _call(self, dataset):
         # local bindings
@@ -632,6 +660,14 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
+    def untrain(self):
+        """Untrain BoostedClassifierSensitivityAnalyzer
+        """
+        if self.__analyzer is not None:
+            self.__analyzer.untrain()
+        self.__combined_analyzer.untrain()
+
+
     def _call(self, dataset):
         analyzers = []
         # create analyzers
@@ -689,6 +725,12 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
 
         self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
+
+
+    def untrain(self):
+        super(ProxyClassifierSensitivityAnalyzer, self).untrain()
+        if self.__analyzer is not None:
+            self.__analyzer.untrain()
 
 
     def _call(self, dataset):

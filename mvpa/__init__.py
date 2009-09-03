@@ -55,6 +55,7 @@ import random
 import numpy as N
 from mvpa.base import cfg
 from mvpa.base import externals
+from mvpa.base.info import wtf
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
@@ -101,3 +102,22 @@ externals.exists('scipy', force=True, raiseException=False)
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
     debug('INIT', 'mvpa end')
+
+# Attach custom top-level exception handler
+if cfg.getboolean('debug', 'wtf', default=False):
+    import sys
+    _sys_excepthook = sys.excepthook
+    def _pymvpa_excepthook(*args):
+        """Custom exception handler to report also pymvpa's wtf
+
+        Calls original handler, and then collects WTF and spits it out
+        """
+        ret = _sys_excepthook(*args)
+        sys.stdout.write("PyMVPA's WTF: collecting information... hold on...")
+        sys.stdout.flush()
+        wtfs = wtf()
+        sys.stdout.write("\rPyMVPA's WTF:                                       \n")
+        sys.stdout.write(str(wtfs))
+        return ret
+    sys.excepthook = _pymvpa_excepthook
+

@@ -19,7 +19,15 @@ from mvpa.misc.support import SmartVersion
 if __debug__:
     from mvpa.base import debug
 
-versions = {}
+class _VersionsChecker(dict):
+    """Helper class to check the versions of the available externals
+    """
+    def __getitem__(self, key):
+        if not self.has_key(key):
+            exists(key, force=True, raiseException=True)
+        return super(_VersionsChecker, self).__getitem__(key)
+
+versions = _VersionsChecker()
 """Versions of available externals, as tuples
 """
 
@@ -28,6 +36,7 @@ def __check_scipy():
     """Check if scipy is present an if it is -- store its version
     """
     import warnings
+    exists('numpy', raiseException=True)
     # To don't allow any crappy warning to sneak in
     warnings.simplefilter('ignore', DeprecationWarning)
     try:
@@ -209,6 +218,17 @@ def __check_stablerdist():
         raise RuntimeError, "RDist in scipy is still unstable on the boundaries"
 
 
+def __check_rv_discrete_ppf():
+    """Unfortunately 0.6.0-12 of scipy pukes on simple ppf
+    """
+    import scipy.stats
+    try:
+        bdist = scipy.stats.binom(100, 0.5)
+        bdist.ppf(0.9)
+    except TypeError:
+        raise RuntimeError, "pmf is broken in discrete dists of scipy.stats"
+
+
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
@@ -289,7 +309,7 @@ def __check_rpy():
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
-          'nifti >= 0.20090205.1':
+          'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
@@ -299,6 +319,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'numpy': "__check_numpy()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
+          'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
@@ -312,10 +333,10 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
-          'mdp >= 2.4': "from mdp.nodes import LLENode as __",
+          'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
-          'sg >= 0.6.4': "__check_shogun(3318)",
+          'sg ge 0.6.4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",

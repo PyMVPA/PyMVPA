@@ -48,6 +48,15 @@ class FeatureSelection(ClassWithCollections):
         raise NotImplementedError
 
 
+    def untrain(self):
+        """ 'Untrain' feature selection
+
+        Necessary for full 'untraining' of the classifiers. By default
+        does nothing, needs to be overridden in corresponding feature
+        selections to pass to the sensitivities
+        """
+        pass
+
 
 class SensitivityBasedFeatureSelection(FeatureSelection):
     """Feature elimination.
@@ -84,6 +93,11 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         self.__feature_selector = feature_selector
         """Functor which takes care about removing some features."""
 
+
+    def untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining sensitivity-based FS: %s" % self)
+        self.__sensitivity_analyzer.untrain()
 
 
     def __call__(self, dataset, testdataset=None):
@@ -161,6 +175,13 @@ class FeatureSelectionPipeline(FeatureSelection):
         """Selectors to use in turn"""
 
 
+    def untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining FS pipeline: %s" % self)
+        for fs in self.__feature_selections:
+            fs.untrain()
+
+
     def __call__(self, dataset, testdataset=None, **kwargs):
         """Invocation of the feature selection
         """
@@ -226,6 +247,13 @@ class CombinedFeatureSelection(FeatureSelection):
 
         self.__feature_selections = feature_selections
         self.__combiner = combiner
+
+
+    def untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining combined FS: %s" % self)
+        for fs in self.__feature_selections:
+            fs.untrain()
 
 
     def __call__(self, dataset, testdataset=None):

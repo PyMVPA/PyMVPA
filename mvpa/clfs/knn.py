@@ -174,7 +174,7 @@ class kNN(Classifier):
         # find the class with most votes
         # return votes as well to store them in the state
         return max(votes.iteritems(), key=lambda x:x[1])[0], \
-               votes
+                [votes[ul] for ul in _data.uniquelabels] # transform into lists
 
 
     def getWeightedVote(self, knn_ids):
