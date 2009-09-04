@@ -37,8 +37,8 @@ Releases
 
 * 0.4.3 (???, ?? Sep 2009) (Total: 165 commits)
 
-  * Online documentation editor is deprecated -- please submit changes
-    via email.
+  * Online documentation editor is no longer available due to low
+    demand -- please submit changes via email.
 
   * Performance (Contributed by Valentin Haenel) (3 OPT commits):
 
