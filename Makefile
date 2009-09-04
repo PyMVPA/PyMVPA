@@ -281,7 +281,7 @@ testmanual: build
 testsuite:
 	@echo "I: Running full testsuite"
 	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
-	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
+	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa\.base\.dochelpers' \
 			 -e 'mvpa\.\(tests\|support\)' \
