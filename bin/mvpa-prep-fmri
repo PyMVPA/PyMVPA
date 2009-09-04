@@ -29,12 +29,17 @@ from subprocess import call
 import numpy as N
 
 from mvpa.misc.cmdline import parser, opt
-from mvpa.base import verbose, externals
+from mvpa.base import verbose, externals, error
 import mvpa
 
 if __debug__:
     from mvpa.base import debug
 
+
+_EXFUNC_CONV_DICT = {'last' :  lambda x: x-1,
+                     'first':  lambda x: 0,
+                     'middle': lambda x: int(x/2)}
+"""Dictionary to get exemplar volume given a literal string"""
 
 def prepParser(parser):
     # use module docstring for help output
@@ -49,22 +54,27 @@ def prepParser(parser):
                       default=None,
                       help="Subject ID used as output path")
 
-    parser.add_option("--example-func-vol",
-                      action="store", type="int", dest="exfuncid",
-                      default=10,
-                      help="Volume ID to be used a example functional image. " \
+    parser.add_option("-e", "--example-func-vol",
+                      action="store", type="string", dest="exfunc",
+                      default='middle',
+                      help="Volume (numeric ID or 'last', 'first', 'middle') "
+                           "to be used as an example functional image. "
                            "Default: 10")
 
-    parser.add_option("--mcflirt-options",
+    parser.add_option("-m", "--mcflirt-options",
                       action="store", type="string", dest="mcflirt_opts",
                       default='',
-                      help="Options for MCFLIRT. '-plot' is auto-added ")
+                      help="Options for MCFLIRT. '-plots' is auto-added ")
 
-    parser.add_option("--bet-options",
+    parser.add_option("-p", "--mcflirt-plots",
+                      action="store_true", dest="mcflirt_plots",
+                      help="Create a .pdf with plots of motion parameters")
+
+    parser.add_option("-b", "--bet-options",
                       action="store", type="string", dest="bet_opts",
                       default='-f 0.3',
-                      help="Options for BET. '-m' is auto-added. " \
-                           "Default: '-f 0.3' for a safe guess of the brain " \
+                      help="Options for BET. '-m' is auto-added. "
+                           "Default: '-f 0.3' for a safe guess of the brain "
                            "outline")
 
 
@@ -81,8 +91,8 @@ def main():
     from nifti import NiftiImage
 
     if len(infiles) > 1 or not len(infiles):
-        print "%s needs exactly one input fMRI image as argument." % sys.argv[0]
-        sys.exit(1)
+        error("%s needs exactly one input fMRI image as argument. "
+                "Got %s" % (sys.argv[0], str(infiles)))
 
     func_fname = infiles[0]
 
@@ -103,15 +113,31 @@ def main():
 
     if not os.path.exists(opath):
         verbose(1, "Create output directory '%s'" % opath)
-        os.mkdir(opath)
+        os.makedirs(opath)
     else:
         verbose(2, "Using output path '%s'" % opath)
 
     verbose(2, "Load image file from '%s'" % func_fname)
     func_nim = NiftiImage(func_fname, load=True)
 
-    verbose(2, "Extract volume %i as example volume" % options.exfuncid)
-    ef_nim = NiftiImage(func_nim.data[options.exfuncid], func_nim.header)
+    # process exfunc option
+    exfunc = options.exfunc.lower()
+    timepoints = func_nim.timepoints
+    if exfunc in _EXFUNC_CONV_DICT.keys():
+        exfuncid = _EXFUNC_CONV_DICT[exfunc](timepoints)
+    else:
+        try:
+            exfuncid = int(exfunc)
+        except ValueError, e:
+            error("Failed to convert '%s' into numerical id of "
+                  "volume." % (exfunc))
+
+    if exfuncid >= timepoints or exfuncid < 0:
+        error("Example functional volume id must be in the "
+              "range 0 .. %d. Got %d." % (timepoints-1, exfuncid))
+
+    verbose(2, "Extract volume %i as example volume" % exfuncid)
+    ef_nim = NiftiImage(func_nim.data[exfuncid], func_nim.header)
     ef_nim.save(os.path.join(opath, 'example_func' + nii_ext))
 
     # close input file -- will operate on motion-corrected one later on
@@ -131,8 +157,26 @@ def main():
 
     # run MCFLIRT (silence stderr; 5 being some random file descriptor)
     if call(mcflirt_call, shell=True, stderr=None):
-        print "MCFLIRT failed to perform the motion correction."
-        sys.exit(1)
+        error("MCFLIRT failed to perform the motion correction.")
+
+    if options.mcflirt_plots:
+        verbose(2, "Plot motion parameters estimates")
+        externals.exists('pylab', raiseException=True)
+        mc = McFlirtParams(os.path.join(opath, 'func_mc.par'))
+
+        for k, (title, fields, ylabel) in enumerate(
+            (('Translation', ('x', 'y', 'z'), 'mm'),
+             ('Rotation', ('rot1', 'rot2', 'rot3'), 'radians'))):
+            P.subplot(211+k)
+            P.title(title)
+            P.plot([0, timepoints], [0, 0], '0.6')
+            for dim in fields:
+                P.plot(mc[dim], label=dim)
+            P.legend()
+            P.axis('tight')
+            P.ylabel(ylabel)
+
+        P.gcf().savefig(os.path.join(opath, 'func_mc.pdf'))
 
     bet_call = \
         ' '.join(
@@ -146,8 +190,7 @@ def main():
 
     # run BET (silence stderr; 5 being some random file descriptor)
     if call(bet_call, shell=True, stderr=None):
-        print "BET failed to perform the skull stripping."
-        sys.exit(1)
+        error("BET failed to perform the skull stripping.")
 
 
     verbose(2, "Threshold image background using brain mask")

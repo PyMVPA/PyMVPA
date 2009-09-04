@@ -38,43 +38,63 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
     """
 
     def _call(self, dataset, labels=None):
-        """Computes featurewise f-scores using simple comparisons."""
-        # group means
-        means = []
-        # with group variance
-        vars_ = []
+        # This code is based on SciPy's stats.f_oneway()
+        # Copyright (c) Gary Strangman.  All rights reserved
+        # License: BSD
+        #
+        # However, it got tweaked and optimized to better fit into PyMVPA.
 
-        # if no labels were provided -- use the ones within the dataset
+        # number of groups
         if labels is None:
             labels = dataset.labels
 
-        # split by groups -> [groups x [samples x features]]
-        for ul in N.unique(labels):
-            ul_samples = dataset.samples[labels == ul]
-            means.append(ul_samples.mean(axis=0))
-            vars_.append(ul_samples.var(axis=0))
+        ul = N.unique(labels)
 
-        # mean of within group variances
-        mvw = N.array(vars_).mean(axis=0)
-        # variance of group means
-        vgm = N.array(means).var(axis=0)
+        na = len(ul)
+        bign = float(dataset.nsamples)
+        alldata = dataset.samples
 
-        # compute f-scores (in-place to save some cycles)
-        # XXX may cause problems when there are features with no variance in
-        # some groups. One could deal with them here and possibly assign a
-        # zero f-score to throw them out, but at least theoretically zero
-        # variance is possible. Another possiblilty could be to apply
-        # N.nan_to_num(), but this might hide the problem.
-        # Michael therefore thinks that it is best to let the user deal with
-        # it prior to any analysis.
+        # total squares of sums
+        sostot = N.sum(alldata, axis=0)
+        sostot *= sostot
+        sostot /= bign
 
-        # for features where there is no variance between the groups,
-        # we should simply leave 0 as is, and avoid that way NaNs for
-        # invariance features
-        vgm0 = vgm.nonzero()
-        vgm[vgm0] /= mvw[vgm0]
+        # total sum of squares
+        sstot = N.sum(alldata * alldata, axis=0) - sostot
 
-        return vgm
+        # between group sum of squares
+        ssbn = 0
+        for l in ul:
+            # all samples for the respective label
+            d = alldata[labels == l]
+            sos = N.sum(d, axis=0)
+            sos *= sos
+            ssbn += sos / float(len(d))
+
+        ssbn -= sostot
+        # within
+        sswn = sstot - ssbn
+
+        # degrees of freedom
+        dfbn = na-1
+        dfwn = bign - na
+
+        # mean sums of squares
+        msb = ssbn / float(dfbn)
+        msw = sswn / float(dfwn)
+        f = msb / msw
+        # assure no NaNs -- otherwise it leads instead of
+        # sane unittest failure (check of NaNs) to crazy
+        #   File "mtrand.pyx", line 1661, in mtrand.shuffle
+        #  TypeError: object of type 'numpy.int64' has no len()
+        # without any sane backtrace
+        f[N.isnan(f)] = 0
+
+        return f
+
+        # XXX maybe also compute p-values?
+        #prob = scipy.stats.fprob(dfbn, dfwn, f)
+        #return prob
 
 
 class CompoundOneWayAnova(OneWayAnova):

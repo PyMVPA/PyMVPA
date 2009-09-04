@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from os import environ
 
-import unittest
+import unittest, traceback, sys
 import numpy as N
 
 from mvpa import cfg
@@ -43,12 +43,13 @@ def sweepargs(**kwargs):
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):
             def untrain_clf(argvalue):
+                """Little helper"""
                 if isinstance(argvalue, Classifier):
                     # clear classifier after its use -- just to be sure ;-)
                     argvalue.retrainable = False
                     argvalue.untrain()
-            failed_tests_str = []
-            exception = None
+
+            failed_tests = {}
             for argname in kwargs.keys():
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
@@ -64,23 +65,57 @@ def sweepargs(**kwargs):
                             debug('TEST', 'Running %s on args=%s and kwargs=%s' %
                                   (method.__name__, `args_`, `kwargs_`))
                         method(*args_, **kwargs_)
-                        untrain_clf(argvalue)
-                    except Exception, e:
-                        exception = e
-                        # Adjust message making it more informative
-                        failed_tests_str.append("%s on %s = %s" % (str(e), argname, `argvalue`))
-                        untrain_clf(argvalue) # untrain classifier
+                    except AssertionError, e:
+                        estr = str(e)
+                        etype, value, tb = sys.exc_info()
+                        # literal representation of exception tb, so
+                        # we could group them later on
+                        eidstr = '  '.join(
+                            [l for l in traceback.format_exception(etype, value, tb)
+                             if not ('do_sweep' in l or 'unittest.py' in l
+                                     or 'AssertionError' in l or 'Traceback (most' in l)])
+
+                        # Store exception information for later on groupping
+                        if not eidstr in failed_tests:
+                            failed_tests[eidstr] = []
+
+                        failed_tests[eidstr].append(
+                            # skip top-most tb in sweep_args
+                            (argname, `argvalue`, tb.tb_next, estr))
+
                         if __debug__:
-                            debug('TEST', 'Failed #%d' % len(failed_tests_str))
+                            msg = "%s on %s=%s" % (estr, argname, `argvalue`)
+                            debug('TEST', 'Failed unittest: %s\n%s' % (eidstr, msg))
+                    untrain_clf(argvalue)
                     # TODO: handle different levels of unittests properly
                     if cfg.getboolean('tests', 'quick', False):
                         # on TESTQUICK just run test for 1st entry in the list,
                         # the rest are omitted
                         # TODO: proper partitioning of unittests
                         break
-            if exception is not None:
-                exception.__init__('\n'.join(failed_tests_str))
-                raise
+
+            if len(failed_tests):
+                # Lets now create a single AssertionError exception which would nicely
+                # incorporate all failed exceptions
+                multiple = len(failed_tests) != 1 # is it unique?
+                # if so, we don't need to reinclude traceback since it
+                # would be spitted out anyways below
+                estr = ""
+                cestr = "lead to failures of unittest %s" % method.__name__
+                if multiple:
+                    estr += "\n Different scenarios %s (specific tracebacks are below):" % cestr
+                else:
+                    estr += "\n Single scenario %s:" % cestr
+                for ek, els in failed_tests.iteritems():
+                    estr += '\n'
+                    if multiple: estr += ek
+                    estr += "  on\n    %s" % ("    ".join(
+                            ["%s=%s%s\n" % (ea, eav,
+                                            # Why didn't I just do regular for loop? ;)
+                                            ":\n     ".join([x for x in [' ', es] if x != '']))
+                             for ea, eav, etb, es in els]))
+                    etb = els[0][2] # take first one... they all should be identical
+                raise AssertionError(estr), None, etb
 
         do_sweep.func_name = method.func_name
         return do_sweep
@@ -92,9 +127,11 @@ def sweepargs(**kwargs):
 # Define datasets to be used all over. Split-half later on is used to
 # split into training/testing
 #
-specs = { 'large' : { 'perlabel' : 99, 'nchunks' : 11, 'nfeatures' : 20, 'snr' : 8 },
-          'medium' : { 'perlabel' : 24, 'nchunks' : 6, 'nfeatures' : 14, 'snr' : 8 },
-          'small' : { 'perlabel' : 12,  'nchunks' : 4, 'nfeatures' : 6, 'snr' : 14} }
+snr_scale = cfg.getAsDType('tests', 'snr scale', float, default=1.0)
+
+specs = {'large' : { 'perlabel': 99, 'nchunks': 11, 'nfeatures': 20, 'snr': 8 * snr_scale},
+         'medium' :{ 'perlabel': 24, 'nchunks': 6,  'nfeatures': 14, 'snr': 8 * snr_scale},
+         'small' : { 'perlabel': 12, 'nchunks': 4,  'nfeatures': 6, 'snr' : 14 * snr_scale} }
 nonbogus_pool = [0, 1, 3, 5]
 
 datasets = {}

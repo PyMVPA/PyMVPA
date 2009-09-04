@@ -1,4 +1,3 @@
-"""This module provides a k-Nearest-Neighbour classifier."""
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -75,11 +74,13 @@ class kNN(Classifier):
         self.__data = None
 
 
-    def __repr__(self):
+    def __repr__(self, prefixes=[]):
         """Representation of the object
         """
-        return "kNN(k=%d, dfx=%s enable_states=%s)" % \
-            (self.__k, self.__dfx, str(self.states.enabled))
+        return super(kNN, self).__repr__(
+            ["k=%d" % self.__k, "dfx=%s" % self.__dfx,
+             "voting=%s" % repr(self.__voting)]
+            + prefixes)
 
 
     def __str__(self):
@@ -135,14 +136,14 @@ class kNN(Classifier):
 
         # predicted class labels will go here
         predicted = []
-        votes = []
 
         if self.__voting == 'majority':
             vfx = self.getMajorityVote
         elif self.__voting == 'weighted':
             vfx = self.getWeightedVote
         else:
-            raise ValueError, "kNN told to perform unknown voting '%s'." % self.__voting
+            raise ValueError, "kNN told to perform unknown voting '%s'." \
+                  % self.__voting
 
         # perform voting
         results = [vfx(knn) for knn in knns]
@@ -159,29 +160,29 @@ class kNN(Classifier):
 
 
     def getMajorityVote(self, knn_ids):
-        """Simple voting by choosing the majority of class neighbours.
+        """Simple voting by choosing the majority of class neighbors.
         """
-
-        uniquelabels = self.__data.uniquelabels
-
-        # translate knn ids into class labels
-        knn_labels = N.array([ self.__data.labels[nn] for nn in knn_ids ])
+        # local bindings
+        _data = self.__data
+        labels = _data.labels
 
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
         for nn in knn_ids:
-            votes[self.__labels[nn]] += 1
+            votes[labels[nn]] += 1
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.asarray(votes).argmax()], \
-               votes
+        return max(votes.iteritems(), key=lambda x:x[1])[0], \
+                [votes[ul] for ul in _data.uniquelabels] # transform into lists
 
 
     def getWeightedVote(self, knn_ids):
         """Vote with classes weighted by the number of samples per class.
         """
-        uniquelabels = self.__data.uniquelabels
+        # local bindings
+        _data = self.__data
+        uniquelabels = _data.uniquelabels
 
         # Lazy evaluation
         if self.__weights is None:
@@ -189,8 +190,8 @@ class kNN(Classifier):
             # It seemed to Yarik that this has to be evaluated just once per
             # training dataset.
             #
-            self.__labels = self.__data.labels
-            Nlabels = len(self.__labels)
+            self.__labels = labels = self.__data.labels
+            Nlabels = len(labels)
             Nuniquelabels = len(uniquelabels)
 
             # TODO: To get proper speed up for the next line only,
@@ -200,15 +201,15 @@ class kNN(Classifier):
             # compute the relative proportion of samples belonging to each
             # class (do it in one loop to improve speed and reduce readability
             self.__weights = \
-                [ 1.0 - ((self.__labels == label).sum() / Nlabels) \
+                [ 1.0 - ((labels == label).sum() / Nlabels) \
                     for label in uniquelabels ]
             self.__weights = dict(zip(uniquelabels, self.__weights))
 
-
+        labels = self.__labels
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
         for nn in knn_ids:
-            votes[self.__labels[nn]] += 1
+            votes[labels[nn]] += 1
 
         # weight votes
         votes = [ self.__weights[ul] * votes[ul] for ul in uniquelabels]

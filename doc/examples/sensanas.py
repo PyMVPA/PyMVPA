@@ -114,7 +114,7 @@ for s in keys:
 
     # uniform scaling per base sensitivity analyzer
     if s.count('ANOVA'):
-        P.clim(0, 0.4)
+        P.clim(0, 30)
     elif s.count('SVM'):
         P.clim(0, 0.055)
     else:

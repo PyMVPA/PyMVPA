@@ -13,6 +13,10 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import re, os
 
+# for SmartVersion
+from distutils.version import Version
+from types import StringType, TupleType, ListType
+
 from mvpa.base import warning
 from mvpa.support.copy import copy, deepcopy
 from operator import isSequenceType
@@ -29,9 +33,9 @@ def reuseAbsolutePath(file1, file2, force=False):
       force : bool
         if True, force it even if the file2 starts with /
     """
-    if not file2.startswith('/') or force:
+    if not file2.startswith(os.path.sep) or force:
         # lets reuse path to file1
-        return os.path.join(os.path.dirname(file1), file2.lstrip('/'))
+        return os.path.join(os.path.dirname(file1), file2.lstrip(os.path.sep))
     else:
         return file2
 
@@ -315,6 +319,113 @@ def isInVolume(coord, shape):
             return False
     return True
 
+
+def version_to_tuple(v):
+    """Convert literal string into a tuple, if possible of ints
+
+    Tuple of integers constructed by splitting at '.' or interleaves
+    of numerics and alpha numbers
+    """
+    if isinstance(v, basestring):
+        v = v.split('.')
+    elif isinstance(v, tuple) or isinstance(v, list):
+        # assure tuple
+        pass
+    else:
+        raise ValueError, "Do not know how to treat version '%s'" % str(v)
+
+    # Try to convert items into ints
+    vres = []
+
+    regex = re.compile('(?P<numeric>[0-9]*)'
+                       '(?P<alpha>[~+-]*[A-Za-z]*)(?P<suffix>.*)')
+    for x in v:
+        try:
+            vres += [int(x)]
+        except ValueError:
+            # try to split into sequences of literals and numerics
+            suffix = x
+            while suffix != '':
+                res = regex.search(suffix)
+                if res:
+                    resd = res.groupdict()
+                    if resd['numeric'] != '':
+                        vres += [int(resd['numeric'])]
+                    if resd['alpha'] != '':
+                        vres += [resd['alpha']]
+                    suffix = resd['suffix']
+                else:
+                    # We can't detech anything meaningful -- let it go as is
+                    resd += [suffix]
+                    break
+    v = tuple(vres)
+
+    return v
+
+class SmartVersion(Version):
+    """A bit evolved comparison of versions
+
+    The reason for not using python's distutil.version is that it
+    seems to have no clue about somewhat common conventions of using
+    '-dev' or 'dev' or 'rc' suffixes for upcoming releases (so major
+    version does contain upcoming release already).
+
+    So here is an ad-hoc and not as nice implementation
+    """
+
+    def parse(self, vstring):
+        self.vstring = vstring
+        self.version = version_to_tuple(vstring)
+
+    def __str__(self):
+        return self.vstring
+
+    def __cmp__(self, other):
+        if isinstance(other, (StringType, TupleType, ListType)):
+            other = SmartVersion(other)
+        elif isinstance(other, SmartVersion):
+            pass
+        elif isinstance(other, Version):
+            other = SmartVersion(other.vstring)
+        else:
+            raise ValueError("Do not know how to treat version %s"
+                             % str(other))
+
+        # Do ad-hoc comparison of strings
+        i = 0
+        s, o = self.version, other.version
+        regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre', re.I)
+        for i in xrange(max(len(s), len(o))):
+            if i < len(s): si = s[i]
+            else: si = None
+            if i < len(o): oi = o[i]
+            else: oi = None
+
+            if si == oi:
+                continue
+
+            for x,y,mult in ((si, oi, 1), (oi, si, -1)):
+                if x is None:
+                    if isinstance(y, int):
+                        return -mult #  we got '.1' suffix
+                    if isinstance(y, StringType):
+                        if (regex_prerelease.match(y)):
+                            return mult        # so we got something to signal
+                                               # pre-release, so first one won
+                        else:
+                            # otherwise the other one wins
+                            return -mult
+                    else:
+                        raise RuntimeError, "Should not have got here with %s" \
+                              % y
+                elif isinstance(x, int):
+                    if not isinstance(y, int):
+                        return mult
+                    return mult*cmp(x, y) # both are ints
+                elif isinstance(x, StringType):
+                    if isinstance(y, StringType):
+                        return mult*cmp(x,y)
+        return 0
 
 def getBreakPoints(items, contiguous=True):
     """Return a list of break points.
@@ -622,6 +733,7 @@ class Harvester(object):
                 results = results[0]
 
         return results
+
 
 
 # XXX MH: this doesn't work in all cases, as you cannot have *args after a

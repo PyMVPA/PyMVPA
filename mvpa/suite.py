@@ -27,6 +27,13 @@ from mvpa import *
 from mvpa.base import *
 from mvpa.base.config import *
 from mvpa.base.verbosity import *
+from mvpa.base.info import *
+
+if externals.exists('reportlab'):
+    from mvpa.base.report import *
+else:
+    from mvpa.base.report_dummy import Report
+
 
 from mvpa.algorithms.cvtranserror import *
 
@@ -52,6 +59,8 @@ from mvpa.clfs.warehouse import *
 
 from mvpa import datasets
 from mvpa.datasets import *
+# just to make testsuite happy
+from mvpa.datasets.base import *
 from mvpa.datasets.meta import *
 from mvpa.datasets.masked import *
 from mvpa.datasets.miscfx import *
@@ -76,6 +85,7 @@ from mvpa.mappers.base import *
 from mvpa.mappers.metric import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
+from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.samplegroup import *
 from mvpa.mappers.som import *
@@ -85,7 +95,7 @@ if externals.exists('scipy'):
 if externals.exists('mdp'):
     from mvpa.mappers.pca import *
     from mvpa.mappers.ica import *
-if externals.exists('mdp >= 2.4'):
+if externals.exists('mdp ge 2.4'):
     from mvpa.mappers.lle import *
 
 from mvpa import measures
@@ -130,6 +140,7 @@ if externals.exists("pylab"):
         from mvpa.misc.plot.mri import plotMRI
 
 if externals.exists("scipy"):
+    from mvpa.support.stats import scipy
     from mvpa.measures.corrcoef import *
     from mvpa.measures.ds import *
     from mvpa.clfs.ridge import *

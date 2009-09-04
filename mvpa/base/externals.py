@@ -14,33 +14,29 @@ import os
 
 from mvpa.base import warning
 from mvpa import cfg
+from mvpa.misc.support import SmartVersion
 
 if __debug__:
     from mvpa.base import debug
 
-versions = {}
+class _VersionsChecker(dict):
+    """Helper class to check the versions of the available externals
+    """
+    def __getitem__(self, key):
+        if not self.has_key(key):
+            exists(key, force=True, raiseException=True)
+        return super(_VersionsChecker, self).__getitem__(key)
+
+versions = _VersionsChecker()
 """Versions of available externals, as tuples
 """
-
-def __version_to_tuple(v):
-    """Simple helper to convert version given as a string into a tuple.
-
-    Tuple of integers constructed by splitting at '.'.
-    """
-    if isinstance(v, basestring):
-        v = tuple([int(x) for x in v.split('.') if not x.startswith('dev')])
-    elif isinstance(v, tuple) or isinstance(v, list):
-        # assure tuple
-        v = tuple(v)
-    else:
-        raise ValueError, "Do not know how to treat version '%s'" % str(v)
-    return v
 
 
 def __check_scipy():
     """Check if scipy is present an if it is -- store its version
     """
     import warnings
+    exists('numpy', raiseException=True)
     # To don't allow any crappy warning to sneak in
     warnings.simplefilter('ignore', DeprecationWarning)
     try:
@@ -51,11 +47,11 @@ def __check_scipy():
     warnings.simplefilter('default', DeprecationWarning)
     # Infiltrate warnings if necessary
     numpy_ver = versions['numpy']
-    scipy_ver = versions['scipy'] = __version_to_tuple(sp.__version__)
+    scipy_ver = versions['scipy'] = SmartVersion(sp.__version__)
     # There is way too much deprecation warnings spit out onto the
     # user. Lets assume that they should be fixed by scipy 0.7.0 time
-    if scipy_ver >= (0, 6, 0) and scipy_ver < (0, 7, 0) \
-        and numpy_ver > (1, 1, 0):
+    if scipy_ver >= "0.6.0" and scipy_ver < "0.7.0" \
+        and numpy_ver > "1.1.0":
         import warnings
         if not __debug__ or (__debug__ and not 'PY' in debug.active):
             debug('EXT', "Setting up filters for numpy DeprecationWarnings")
@@ -77,7 +73,7 @@ def __check_numpy():
     """Check if numpy is present (it must be) an if it is -- store its version
     """
     import numpy as N
-    versions['numpy'] = __version_to_tuple(N.__version__)
+    versions['numpy'] = SmartVersion(N.__version__)
 
 
 def __check_pywt(features=None):
@@ -222,6 +218,17 @@ def __check_stablerdist():
         raise RuntimeError, "RDist in scipy is still unstable on the boundaries"
 
 
+def __check_rv_discrete_ppf():
+    """Unfortunately 0.6.0-12 of scipy pukes on simple ppf
+    """
+    import scipy.stats
+    try:
+        bdist = scipy.stats.binom(100, 0.5)
+        bdist.ppf(0.9)
+    except TypeError:
+        raise RuntimeError, "pmf is broken in discrete dists of scipy.stats"
+
+
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
@@ -271,11 +278,38 @@ def __check_griddata():
     from matplotlib.mlab import griddata as __
     return True
 
+
+def __check_reportlab():
+    import reportlab as rl
+    versions['reportlab'] = SmartVersion(rl.Version)
+
+
+def __check_rpy():
+    """Check either rpy is available and also set it for the sane execution
+    """
+    #import rpy_options
+    #rpy_options.set_options(VERBOSE=False, SETUP_READ_CONSOLE=False) # SETUP_WRITE_CONSOLE=False)
+    #rpy_options.set_options(VERBOSE=False, SETUP_WRITE_CONSOLE=False) # SETUP_WRITE_CONSOLE=False)
+    #    if not cfg.get('rpy', 'read_console', default=False):
+    #        print "no read"
+    #        rpy_options.set_options(SETUP_READ_CONSOLE=False)
+    #    if not cfg.get('rpy', 'write_console', default=False):
+    #        print "no write"
+    #        rpy_options.set_options(SETUP_WRITE_CONSOLE=False)
+    import rpy
+    if not cfg.getboolean('rpy', 'interactive', default=True) \
+           and (rpy.get_rpy_input() is rpy.rpy_io.rpy_input):
+        if __debug__:
+            debug('EXT_', "RPy: providing dummy callback for input to return '1'")
+        def input1(*args): return "1"      # which is "1: abort (with core dump, if enabled)"
+        rpy.set_rpy_input(input1)
+
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
-          'nifti >= 0.20090205.1':
+          'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
@@ -285,23 +319,24 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'numpy': "__check_numpy()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
+          'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
-          'rpy': "import rpy as __",
-          'lars': "import rpy; rpy.r.library('lars')",
-          'elasticnet': "import rpy; rpy.r.library('elasticnet')",
-          'glmnet': "import rpy; rpy.r.library('glmnet')",
+          'rpy': "__check_rpy()",
+          'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
+          'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
+          'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "import scikits.openopt as __",
           'mdp': "import mdp as __",
-          'mdp >= 2.4': "from mdp.nodes import LLENode as __",
+          'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
-          'sg >= 0.6.4': "__check_shogun(3318)",
+          'sg ge 0.6.4': "__check_shogun(3318)",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",
@@ -310,6 +345,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
           'running ipython env': "__check_in_ipython()",
+          'reportlab': "__check_reportlab()",
           }
 
 
@@ -379,8 +415,14 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # take seconds and therefore is quite nasty...
         if dep.count('rpy') or _KNOWN[dep].count('rpy'):
             try:
-                from rpy import RException
-                _caught_exceptions += [RException]
+                if dep == 'rpy':
+                    __check_rpy()          # needed to be run to adjust options first
+                else:
+                    if exists('rpy'):
+                        # otherwise no need to add anything -- test
+                        # would fail since rpy isn't available
+                        from rpy import RException
+                        _caught_exceptions += [RException]
             except:
                 pass
 

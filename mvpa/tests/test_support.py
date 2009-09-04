@@ -200,6 +200,51 @@ class SupportFxTests(unittest.TestCase):
         # external validity check -- we are dealing with correlations
         self.failUnless(C2[10,2] - N.corrcoef(X[10], Y[2])[0,1] < 0.000001)
 
+    def test_version_to_tuple(self):
+        """Test conversion of versions from strings
+        """
+
+        self.failUnless(version_to_tuple('0.0.01') == (0, 0, 1))
+        self.failUnless(version_to_tuple('0.7.1rc3') == (0, 7, 1, 'rc', 3))
+
+
+    def testSmartVersion(self):
+        """Test our ad-hoc SmartVersion
+        """
+        SV = SmartVersion
+
+        for v1, v2 in (
+            ('0.0.1', '0.0.2'),
+            ('0.0.1', '0.1'),
+            ('0.0.1', '0.1.0'),
+            ('0.0.1', '0.0.1a'),        # this might be a bit unconventional?
+            ('0.0.1', '0.0.1+svn234'),
+            ('0.0.1+svn234', '0.0.1+svn235'),
+            ('0.0.1dev1', '0.0.1'),
+            ('0.0.1dev1', '0.0.1rc3'),
+            ('0.7.1rc3', '0.7.1'),
+            ('0.0.1-dev1', '0.0.1'),
+            ('0.0.1-svn1', '0.0.1'),
+            ('0.0.1~p', '0.0.1'),
+            ('0.0.1~prior.1.2', '0.0.1'),
+            ):
+            self.failUnless(SV(v1) < SV(v2),
+                            msg="Failed to compare %s to %s" % (v1, v2))
+            self.failUnless(SV(v2) > SV(v1),
+                            msg="Failed to reverse compare %s to %s" % (v2, v1))
+            # comparison to strings
+            self.failUnless(SV(v1) < v2,
+                            msg="Failed to compare %s to string %s" % (v1, v2))
+            self.failUnless(v1 < SV(v2),
+                            msg="Failed to compare string %s to %s" % (v1, v2))
+            # to tuples
+            self.failUnless(SV(v1) < version_to_tuple(v2),
+                            msg="Failed to compare %s to tuple of %s"
+                            % (v1, v2))
+            self.failUnless(version_to_tuple(v1) < SV(v2),
+                            msg="Failed to compare tuple of %s to %s"
+                            % (v1, v2))
+
 
 def suite():
     return unittest.makeSuite(SupportFxTests)

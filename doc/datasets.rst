@@ -189,9 +189,9 @@ because the mapping is automatically updated upon feature selection.
 
 The above example selects four features from the set of the 12 original
 ones, by passing their ids to the `selectFeatures()` method. The method
-returns a new dataset only containing the four selected features. Both datasets
-share the sample data (using a NumPy array view). Using `selectFeatures()`
-is therefore both memory efficient and relatively fast. All other
+returns a new dataset only containing the four selected features. Resultant
+dataset contains a copy of the corresponding features of the original
+dataset. All other
 information like class labels and chunks are maintained. By calling
 `mapReverse()` on the new dataset one can see that the remaining four features
 are precisely mapped back onto their original locations in the data space.
@@ -212,7 +212,7 @@ Attribute        Abbreviation Definition class
 samples          S            :class:`~mvpa.datasets.base.Dataset`
 labels           L            :class:`~mvpa.datasets.base.Dataset`
 uniquelabels     UL           :class:`~mvpa.datasets.base.Dataset`
-chunks           O            :class:`~mvpa.datasets.base.Dataset`
+chunks           C            :class:`~mvpa.datasets.base.Dataset`
 uniquechunks     UC           :class:`~mvpa.datasets.base.Dataset`
 origids          I            :class:`~mvpa.datasets.base.Dataset`
 samples_original O            :class:`~mvpa.datasets.mapped.MappedDataset`
