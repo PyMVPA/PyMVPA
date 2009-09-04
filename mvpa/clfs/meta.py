@@ -597,22 +597,22 @@ class CombinedClassifier(BoostedClassifier):
 class TreeClassifier(ProxyClassifier):
     """`TreeClassifier` which allows to create hierarchy of classifiers
 
-    Functions by groupping some labels into a single "meta-label" and training
+    Functions by grouping some labels into a single "meta-label" and training
     classifier first to separate between meta-labels.  Then
     each group further proceeds with classification within each group.
 
-    Possible scenarios:
+    Possible scenarios::
 
-        TreeClassifier(SVM(),
-         {'animate':  ((1,2,3,4),
-                       TreeClassifier(SVM(),
-                           {'human': (('male', 'female'), SVM()),
-                            'animals': (('monkey', 'dog'), SMLR())})),
-          'inanimate': ((5,6,7,8), SMLR())})
+      TreeClassifier(SVM(),
+       {'animate':  ((1,2,3,4),
+                     TreeClassifier(SVM(),
+                         {'human': (('male', 'female'), SVM()),
+                          'animals': (('monkey', 'dog'), SMLR())})),
+        'inanimate': ((5,6,7,8), SMLR())})
 
     would create classifier which would first do binary classification
-    to separate animate from inanimates, then for animate result it
-    would separate to classify human vs animal and so on
+    to separate animate from inanimate, then for animate result it
+    would separate to classify human vs animal and so on::
 
                                    SVM
                                  /      \
@@ -626,6 +626,7 @@ class TreeClassifier(ProxyClassifier):
                    /   \       /  \
                  male female monkey dog
                   1      2    3      4
+
     """
 
     _DEV__doc = """
@@ -633,12 +634,12 @@ class TreeClassifier(ProxyClassifier):
      * how to collect confusion matrices at a particular layer if such
        classifier is given to SplitClassifier or CVTE
 
-     * What additional states to add, smth like
+     * What additional states to add, something like
         clf_labels  -- store remapped labels for the dataset
         clf_values  ...
 
      * What do we store into values ? just values from the clfs[]
-       for corresponding samples, or toplevel clf values as well?
+       for corresponding samples, or top level clf values as well?
 
      * what should be SensitivityAnalyzer?  by default it would just
        use top slave classifier (i.e. animate/inanimate)
