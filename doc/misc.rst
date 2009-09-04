@@ -307,6 +307,18 @@ the internal logic, thus enabled when full test suite is ran.
 .. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__
 
 
+PyMVPA Status Summary
+---------------------
+
+While reporting found bugs, it is advised to provide information about the
+operating system/environment and availability of PyMVPA externals.  Please use
+:func:`~mvpa.base.info.wtf` to collect such useful information to be included
+with the bug reports.
+
+Alternatively, same printout can be obtained upon not handled exception
+automagically, if environment variable :envvar:`MVPA_DEBUG_WTF` is set.
+
+
 Additional Little Helpers
 =========================
 
