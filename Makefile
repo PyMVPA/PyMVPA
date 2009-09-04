@@ -93,10 +93,11 @@ clean:
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '*.gch' \
+		 -o -iname '*_flymake.*' \
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist *_report
-	-@rm *-stamp *_report.pdf pymvpa.cfg
+	-@rm -f *-stamp *_report.pdf pymvpa.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
