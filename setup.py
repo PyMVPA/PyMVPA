@@ -82,7 +82,7 @@ if have_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.4.2',
+      version      = '0.4.3',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -94,7 +94,7 @@ setup(name         = 'pymvpa',
           "typical processing steps and a number of implementations of some " \
           "popular algorithms. While it is not limited to neuroimaging data " \
           "it is eminently suited for such datasets.\n" \
-          "PyMVPA is truely free software (in every respect) and " \
+          "PyMVPA is truly free software (in every respect) and " \
           "additionally requires nothing but free-software to run.",
       # please maintain alphanumeric order
       packages     = [ 'mvpa',
