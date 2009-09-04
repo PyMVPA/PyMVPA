@@ -324,6 +324,7 @@ test: unittests testmanual testsuite testapiref testexamples testcfg
 # It skips some flavors of unittests
 testrefactor: unittest testmanual testsuite testapiref testexamples
 
+coverage: $(COVERAGE_REPORT)
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@{ \
@@ -458,7 +459,8 @@ upload-codeswarm: codeswarm
 
 .PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual \
         all profile website fetch-data-misc upload-website \
-        test testsuite testmanual testapiref testexamples distclean debian-clean \
+        test testsuite testmanual testapiref testexamples testrefactor \
         unittest unittest-debug unittest-optimization unittest-nonlabile \
         unittest-badexternals unittests \
-        handbook codeswarm upload-codeswarm
+        distclean debian-clean \
+        handbook codeswarm upload-codeswarm coverage
