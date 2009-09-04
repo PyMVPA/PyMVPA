@@ -97,7 +97,7 @@ PyMVPA at once with `from mvpa.suite import *` statement.
 
 .. note::
 
-   The dataset used in the :ref:`examples <examples>` shipped with PyMVPA is
+   The dataset used in the :ref:`examples <chap_examples>` shipped with PyMVPA is
    actually a minimal version (posterior half of a single brain slice) of this
    full dataset. After appropriately adjusting the path, it is possible to run
    several of the examples on this full dataset.
