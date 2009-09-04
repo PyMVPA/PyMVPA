@@ -27,6 +27,7 @@ from mvpa import *
 from mvpa.base import *
 from mvpa.base.config import *
 from mvpa.base.verbosity import *
+from mvpa.base.info import *
 
 if externals.exists('reportlab'):
     from mvpa.base.report import *
