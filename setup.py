@@ -116,6 +116,7 @@ setup(name         = 'pymvpa',
                        'mvpa.misc.plot',
                        'mvpa.support',
                        'mvpa.tests',
+                       'mvpa.tests.badexternals',
                        ],
       data_files = [('mvpa/data',
                      [f for f in glob(os.path.join('mvpa', 'data', '*'))
