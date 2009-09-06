@@ -13,11 +13,12 @@ from mvpa.support.copy import deepcopy
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
-from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.errorfx import RMSErrorFx, RelativeRMSErrorFx, \
      CorrErrorFx, CorrErrorPFx
 
+from mvpa.clfs.meta import SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
 
@@ -33,8 +34,8 @@ class RegressionsTests(unittest.TestCase):
         """Test If binary regression-based  classifiers have proper tag
         """
         self.failUnless(('binary' in ml._clf_internals) != ml.regression,
-                        msg="Inconsistent markin with "
-                        "binary and regression features detected")
+            msg="Inconsistent markin with binary and regression features"
+                " detected in %s having %s" % (ml, `ml._clf_internals`))
 
     @sweepargs(regr=regrswh['regression'])
     def testRegressions(self, regr):
@@ -48,22 +49,47 @@ class RegressionsTests(unittest.TestCase):
             enable_states=['training_confusion', 'confusion'])
         corr = cve(ds)
 
-        #TODO: test confusion statistics
-        s0 = cve.confusion.asstring(short=True)
-        s1 = cve.confusion.asstring(short=False)
+        self.failUnless(corr == cve.confusion.stats['CCe'])
 
-        for s in [s0, s1]:
-            self.failUnless(len(s) > 10,
-                            msg="We should get some string representation "
-                            "of regression summary. Got %s" % s)
+        splitregr = SplitClassifier(regr,
+                                    splitter=OddEvenSplitter(),
+                                    enable_states=['training_confusion', 'confusion'])
+        splitregr.train(ds)
+        split_corr = splitregr.confusion.stats['CCe']
+        split_corr_tr = splitregr.training_confusion.stats['CCe']
 
-        self.failUnless(corr<0.2,
-                        msg="Regressions should perform well on a simple "
-                        "dataset. Got correlation error of %s " % corr)
+        for confusion, error in ((cve.confusion, corr),
+                                 (splitregr.confusion, split_corr),
+                                 (splitregr.training_confusion, split_corr_tr),
+                                 ):
+            #TODO: test confusion statistics
+            # Part of it for now -- CCe
+            for conf in confusion.summaries:
+                stats = conf.stats
+                self.failUnless(stats['CCe'] < 0.5)
+                self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
 
-        # Test access to summary statistics
-        if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve.confusion.stats['Summary CCe'] < 0.5)
+            s0 = confusion.asstring(short=True)
+            s1 = confusion.asstring(short=False)
+
+            for s in [s0, s1]:
+                self.failUnless(len(s) > 10,
+                                msg="We should get some string representation "
+                                "of regression summary. Got %s" % s)
+
+            self.failUnless(error < 0.2,
+                            msg="Regressions should perform well on a simple "
+                            "dataset. Got correlation error of %s " % error)
+
+            # Test access to summary statistics
+            # YOH: lets start making testing more reliable.
+            #      p-value for such accident to have is verrrry tiny,
+            #      so if regression works -- it better has at least 0.5 ;)
+            #      otherwise fix it! ;)
+            #if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(confusion.stats['CCe'] < 0.5)
+
+        split_predictions = splitregr.predict(ds.samples) # just to check if it works fine
 
         # To test basic plotting
         #import pylab as P
@@ -85,6 +111,7 @@ class RegressionsTests(unittest.TestCase):
         cverror = cv(ds)
         self.failUnless(len(clf.values) == ds['chunks', 1].nsamples)
         clf.states._resetEnabledTemporarily()
+
 
 
 def suite():

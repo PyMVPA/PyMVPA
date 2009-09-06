@@ -27,11 +27,82 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * None yet.
+  * Fixed :class:`~mvpa.measures.anova.OneWayAnova` to compute F-scores with
+    expected distributions. Previous implementation did not properly took
+    degrees of freedom into account.
 
 
 Releases
 ========
+
+* 0.4.3 (Sat, 5 Sep 2009) (Total: 165 commits)
+
+  * Online documentation editor is no longer available due to low
+    demand -- please submit changes via email.
+
+  * Performance (Contributed by Valentin Haenel) (3 OPT commits):
+
+    - Further optimized LIBSVM bindings.
+    - Copy-if-sorted in
+      :class:`~mvpa.datasets.base.Dataset.selectFeatures`.
+
+  * New functionality (25 NF commits):
+
+    - :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` with
+      orthogonal and oblique transformations.
+    - Ability to generate simple reports using :mod:`reportlab`.
+      See/run :file:`examples/match_distribution.py` for example.
+    - :class:`~mvpa.clfs.meta.TreeClassifier` -- construct simple
+      hierarchies of classifiers.
+    - :func:`~mvpa.base.info.wtf` to report information about the
+      system/PyMVPA to be included in the bug reports.
+    - Parameter 'reverse' to swap training/testing splits in
+      :class:`~mvpa.datasets.splitters.Splitter` .
+    - Example code for the analysis of event-related dataset using
+      :class:`~mvpa.datasets.nifti.ERNiftiDataset`.
+    - :meth:`~mvpa.misc.io.base.SampleAttributes.toEvents` to create
+      lists of :class:`~mvpa.misc.support.Event`.
+    - :file:`mvpa-prep-fmri` was extended with plotting of motion
+      correction parameters.
+    - :class:`~mvpa.misc.io.base.ColumnData` can be explicitly told
+      either file contains a header.
+    - In :class:`~mvpa.atlases.base.XMLBasedAtlas`
+      (e.g. :mod:`~mvpa.atlases.fsl` atlases) it is now possible to
+      provide custom 'image_file' to get maps or
+      indexes for the areas given an atlas's volume registered into
+      subject space.
+    - Updated included LIBSVM version to 2.89 and provided support for
+      its "silencing".
+
+  * Refactored (27 RF commits):
+
+    - Dataset's :meth:`~mvpa.datasets.base.Dataset.copy` with
+      deep=False allows for shallow copying the dataset.
+    - :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` s in
+      :mod:`~mvpa.clfs.warehouse` not to reuse the same classifiers,
+      but to use clones.
+
+  * Fixed (70 BF commits):
+
+    - :class:`~mvpa.measures.anova.OneWayAnova`: previously degrees of
+      freedom were not considered while computing F-scores.
+    - Majority voting strategy in :class:`~mvpa.clfs.knn.kNN`: it was
+      not working.
+    - Various fixes to ensure cross-platform building (:mod:`numpy` header
+      locations, etc).
+    - Stability fixes in :class:`~mvpa.clfs.transerror.ConfusionMatrix`.
+    - :meth:`~mvpa.datasets.base.Dataset.idsonboundaries`: samples
+      at the end of the sequence were not handled properly.
+    - Proper "untraining" of
+      :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` s
+      classifiers which use sensitivities: it could lead to various
+      unpleasant side-effects if the same slave classifier was used
+      simultaneously by multiple :class:`MetaClassifiers` (like
+      :class:`~mvpa.clfs.meta.TreeClassifier`).
+
+  * Documentation (25 DOC commits): citations, spelling corrections,
+    etc.
+
 
 * 0.4.2 (Mon, 25 May 2009)
 
@@ -69,7 +140,7 @@ Releases
 
 * 0.4.1 (Sat, 24 Jan 2009)
 
-  * Unit tests and example data are now also installed. In conjuction with
+  * Unit tests and example data are now also installed. In conjunction with
     :func:`mvpa.test`, this allow to easily run unittests from within Python.
   * :class:`~mvpa.datasets.nifti.NiftiDataset` capable to handle files
     with less than 4 dimensions, which can, optionally, be provided as
@@ -227,7 +298,7 @@ Releases
     quickly fix your custom code.
   * Change all references to PyMVPA website to www.pymvpa.org.
   * Make website stylesheet compatible with sphinx 0.4.
-  * Several minor improvements of the compatibilty with MacOS.
+  * Several minor improvements of the compatibility with MacOS.
   * Extended FAQ section of the manual.
   * Bugfix: doubleGammaHRF() ignoring K2 argument.
 
@@ -263,7 +334,7 @@ Releases
   * New sparse multinomial logistic regression (SMLR) classifier and
     associated sensitivity analyzer.
   * New least angle regression classifier (LARS).
-  * New gaussian process regression classifier (GPR).
+  * New Gaussian process regression classifier (GPR).
   * Initial documentation on extending PyMVPA.
   * Switch to Sphinx for documentation handling.
   * New example comparing the performance of all classifiers on some

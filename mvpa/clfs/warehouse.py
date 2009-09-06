@@ -260,31 +260,33 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
-        lars_model = LARS(descr="LARS(%s)" % model, model_type=model)
-        clfswh += lars_model
+        lars_clf = LARS(descr="LARS(%s)" % model, model_type=model)
+        clfswh += lars_clf
 
         # is a regression, too
-        regrswh += lars_model
+        lars_regr = LARS(descr="_LARS(%s, regression=True)" % model,
+                         regression=True, model_type=model)
+        regrswh += lars_regr
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
 
 ## PBS: enet has some weird issue that causes it to fail.  GLMNET is
 ## better anyway, so just use that instead
-# # enet from R via RPy
-# if externals.exists('elasticnet'):
-#     from mvpa.clfs.enet import ENET
-#     enet = ENET(descr="ENET()")
-#     clfswh += enet
-#     regrswh += enet
+## # enet from R via RPy
+## if externals.exists('elasticnet'):
+##     from mvpa.clfs.enet import ENET
+##     clfswh += ENET(descr="ENET()")
+##     regrswh += ENET(descr="ENET(regression=True)", regression=True)
 
 # glmnet from R via RPy
 if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
     clfswh += GLMNET_C(descr="GLMNET_C()")
     regrswh += GLMNET_R(descr="GLMNET_R()")
-    
+
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
+clfswh += kNN(k=5, voting='majority', descr="kNN(k=5, voting='majority')")
 
 clfswh += \
     FeatureSelectionClassifier(
@@ -335,7 +337,7 @@ if len(clfswh['linear', 'svm']) > 0:
     # "Interesting" classifiers
     clfswh += \
          FeatureSelectionClassifier(
-             linearSVMC,
+             linearSVMC.clone(),
              SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=0.1, implementation="C")),
                 RangeElementSelector(mode='select')),
@@ -344,7 +346,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=1.0, implementation="C")),
                 RangeElementSelector(mode='select')),
@@ -362,7 +364,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                OneWayAnova(),
                FractionTailSelector(0.05, mode='select', tail='upper')),
@@ -370,7 +372,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                OneWayAnova(),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
@@ -378,7 +380,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
                FractionTailSelector(0.05, mode='select', tail='upper')),
@@ -386,7 +388,7 @@ if len(clfswh['linear', 'svm']) > 0:
 
     clfswh += \
         FeatureSelectionClassifier(
-            linearSVMC,
+            linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
                FixedNElementTailSelector(50, mode='select', tail='upper')),

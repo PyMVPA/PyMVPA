@@ -161,25 +161,27 @@ class BoostedClassifier(Classifier, Harvestable):
         self.__clfs = clfs
         """Classifiers to use"""
 
-        for flag in ['regression']:
-            values = N.array([clf.params[flag].value for clf in self.__clfs])
-            value = values.any()
-            if __debug__:
-                debug("CLFBST", "Setting %(flag)s=%(value)s for classifiers "
-                      "%(clfs)s with %(values)s",
-                      msgargs={'flag' : flag, 'value' : value,
-                               'clfs' : self.__clfs,
-                               'values' : values})
-            # set flag if it needs to be trained before predicting
-            self.params[flag].value = value
+        if len(clfs):
+            for flag in ['regression']:
+                values = N.array([clf.params[flag].value for clf in clfs])
+                value = values.any()
+                if __debug__:
+                    debug("CLFBST", "Setting %(flag)s=%(value)s for classifiers "
+                          "%(clfs)s with %(values)s",
+                          msgargs={'flag' : flag, 'value' : value,
+                                   'clfs' : clfs,
+                                   'values' : values})
+                # set flag if it needs to be trained before predicting
+                self.params[flag].value = value
 
-        # enable corresponding states in the slave-classifiers
-        if self.__propagate_states:
-            for clf in self.__clfs:
-                clf.states.enable(self.states.enabled, missingok=True)
+            # enable corresponding states in the slave-classifiers
+            if self.__propagate_states:
+                for clf in self.__clfs:
+                    clf.states.enable(self.states.enabled, missingok=True)
 
         # adhere to their capabilities + 'multiclass'
         # XXX do intersection across all classifiers!
+        # TODO: this seems to be wrong since it can be regression etc
         self._clf_internals = [ 'binary', 'multiclass', 'meta' ]
         if len(clfs)>0:
             self._clf_internals += self.__clfs[0]._clf_internals
@@ -580,15 +582,244 @@ class CombinedClassifier(BoostedClassifier):
                 self.values = self.__combiner.values
             else:
                 if __debug__:
-                    warning("Boosted classifier %s has 'values' state" % self +
-                            " enabled, but combiner has it active, thus no" +
-                            " values could be provided directly, access .clfs")
+                    warning("Boosted classifier %s has 'values' state enabled,"
+                            " but combiner doesn't have 'values' active, thus "
+                            " .values cannot be provided directly, access .clfs"
+                            % self)
         return predictions
 
 
     combiner = property(fget=lambda x:x.__combiner,
                         doc="Used combiner to derive a single result")
 
+
+
+class TreeClassifier(ProxyClassifier):
+    """`TreeClassifier` which allows to create hierarchy of classifiers
+
+    Functions by grouping some labels into a single "meta-label" and training
+    classifier first to separate between meta-labels.  Then
+    each group further proceeds with classification within each group.
+
+    Possible scenarios::
+
+      TreeClassifier(SVM(),
+       {'animate':  ((1,2,3,4),
+                     TreeClassifier(SVM(),
+                         {'human': (('male', 'female'), SVM()),
+                          'animals': (('monkey', 'dog'), SMLR())})),
+        'inanimate': ((5,6,7,8), SMLR())})
+
+    would create classifier which would first do binary classification
+    to separate animate from inanimate, then for animate result it
+    would separate to classify human vs animal and so on::
+
+                                   SVM
+                                 /      \
+                            animate   inanimate
+                             /             \
+                           SVM             SMLR
+                         /     \          / | \ \
+                    human    animal      5  6 7  8
+                     |          |
+                    SVM        SVM
+                   /   \       /  \
+                 male female monkey dog
+                  1      2    3      4
+
+    """
+
+    _DEV__doc = """
+    Questions:
+     * how to collect confusion matrices at a particular layer if such
+       classifier is given to SplitClassifier or CVTE
+
+     * What additional states to add, something like
+        clf_labels  -- store remapped labels for the dataset
+        clf_values  ...
+
+     * What do we store into values ? just values from the clfs[]
+       for corresponding samples, or top level clf values as well?
+
+     * what should be SensitivityAnalyzer?  by default it would just
+       use top slave classifier (i.e. animate/inanimate)
+
+    Problems?
+     *  .clf is not actually "proxied" per se, so not sure what things
+        should be taken care of yet...
+
+    TODO:
+     * Allow a group to be just a single category, so no further
+        classifier is needed, it just should stay separate from the
+        other groups
+
+    Possible TODO:
+     *  Add ability to provide results of clf.values as features into
+        input of clfs[]. This way we could provide additional 'similarity'
+        information to the "other" branch
+
+    """
+
+    def __init__(self, clf, groups, **kwargs):
+        """Initialize TreeClassifier
+
+        :Parameters:
+          clf : Classifier
+            Classifier to separate between the groups
+          groups : dict of meta-label: tuple of (tuple of labels, classifier)
+            Defines the groups of labels and their classifiers.
+            See :class:`~mvpa.clfs.meta.TreeClassifier` for example
+        """
+
+        # Basic initialization
+        ProxyClassifier.__init__(self, clf, **kwargs)
+        self._regressionIsBogus()
+
+        # XXX RF: probably create internal structure with dictionary,
+        # not just a tuple, and store all information in there
+        # accordingly
+
+        self._groups = groups
+        self._index2group = groups.keys()
+
+        # All processing of groups needs to be handled within _train
+        # since labels_map is not available here and definition
+        # is allowed to carry both symbolic and numeric values for
+        # labels
+
+        # We can only assign respective classifiers
+        self.clfs = dict([(gk, c) for gk, (ls, c) in groups.iteritems()])
+        """Dictionary of classifiers used by the groups"""
+
+
+    def __repr__(self, prefixes=[]):
+        """String representation of TreeClassifier
+        """
+        prefix = "groups=%s" % repr(self._groups)
+        return super(TreeClassifier, self).__repr__([prefix] + prefixes)
+
+
+    def summary(self):
+        """Provide summary for the `TreeClassifier`.
+        """
+        s = super(TreeClassifier, self).summary()
+        if self.trained:
+            s += "\n Node classifiers summaries:"
+            for i, (clfname, clf) in enumerate(self.clfs.iteritems()):
+                s += '\n + %d %s clf: %s' % \
+                     (i, clfname, clf.summary().replace('\n', '\n |'))
+        return s
+
+
+    def _train(self, dataset):
+        """Train TreeClassifier
+
+        First train .clf on groupped samples, then train each of .clfs
+        on a corresponding subset of samples.
+        """
+        # Local bindings
+        clf, clfs, index2group = self.clf, self.clfs, self._index2group
+
+        # Handle groups of labels
+        groups = self._groups
+        labels_map = dataset.labels_map
+        # just for convenience
+        if labels_map is None: labels_map = {}
+        groups_labels = {}              # just groups with numeric indexes
+        label2index = {}                # how to map old labels to new
+        known = set()
+        for gi, gk in enumerate(index2group):
+            ls = groups[gk][0]
+            # if mapping exists -- map
+            ls_ = [labels_map.get(l, l) for l in ls]
+            known_already = known.intersection(ls_)
+            if len(known_already):
+                raise ValueError, "Grouping of labels is not appropriate. " \
+                      "Got labels %s already among known in %s. " \
+                      "Used labelsmap %s" % (known_already, known, labels_map)
+            groups_labels[gk] = ls_     # needed? XXX
+            for l in ls_:
+                label2index[l] = gi
+            known = known.union(ls_)
+        # TODO: check if different literal labels weren't mapped into
+        #       same numerical but here asked to belong to different groups
+        #  yoh: actually above should catch it
+
+        # Check if none of the labels is missing from known groups
+        dsul = set(dataset.uniquelabels)
+        if known.intersection(dsul) != dsul:
+            raise ValueError, \
+                  "Dataset %s had some labels not defined in groups: %s. " \
+                  "Known are %s" % \
+                  (dataset, dsul.difference(known), known)
+
+        # We can operate on the same dataset here 
+        # Nope: doesn't work nicely with the classifier like kNN
+        #      which links to the dataset used in the training,
+        #      so whenever if we simply restore labels back, we
+        #      would get kNN confused in _predict()
+        #      Therefore we need to create a shallow copy of
+        #      dataset and provide it with new labels
+        ds_group = dataset.copy(deep=False)
+        # assign new labels group samples into groups of labels
+        ds_group.labels = [label2index[l] for l in dataset.labels]
+
+        # train primary classifier
+        if __debug__:
+            debug('CLFTREE', "Training primary %(clf)s on %(ds)s",
+                  msgargs=dict(clf=clf, ds=ds_group))
+        clf.train(ds_group)
+
+        # ??? should we obtain values for anything?
+        #     may be we could training values of .clfs to be added
+        #     as features to the next level -- i.e. .clfs
+
+        # Proceed with next 'layer' and train all .clfs on corresponding
+        # selection of samples
+        # ??? should we may be allow additional 'the other' category, to
+        #     signal contain all the other categories data? probably not
+        #     since then it would lead to undetermined prediction (which
+        #     might be not a bad thing altogether...)
+        for gk in groups.iterkeys():
+            # select samples per each group
+            ids = dataset.idsbylabels(groups_labels[gk])
+            ds_group = dataset.selectSamples(ids)
+            if __debug__:
+                debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
+                      msgargs=dict(clf=clfs[gk], gk=gk, ds=ds_group))
+            # and train corresponding slave clf
+            clfs[gk].train(ds_group)
+
+
+    def untrain(self):
+        """Untrain TreeClassifier
+        """
+        super(TreeClassifier, self).untrain()
+        for clf in self.clfs.values():
+            clf.untrain()
+
+
+    def _predict(self, data):
+        """
+        """
+        # Local bindings
+        clfs, index2group = self.clfs, self._index2group
+        clf_predictions = N.asanyarray(ProxyClassifier._predict(self, data))
+        # assure that predictions are indexes, ie int
+        clf_predictions = clf_predictions.astype(int)
+
+        # now for predictions pointing to specific groups go into
+        # corresponding one
+        predictions = N.array([N.nan]*len(data))
+        for pred_group in set(clf_predictions):
+            gk = index2group[pred_group]
+            clf_ = clfs[gk]
+            group_indexes = (clf_predictions == pred_group)
+            if __debug__:
+                debug('CLFTREE', 'Predicting for group %s using %s on %d samples' %
+                      (gk, clf_, N.sum(group_indexes)))
+            predictions[group_indexes] = clf_.predict(data[group_indexes])
+        return predictions
 
 
 class BinaryClassifier(ProxyClassifier):
@@ -867,7 +1098,7 @@ class SplitClassifier(CombinedClassifier):
         # train them
         for split in self.__splitter.splitcfg(dataset):
             if __debug__:
-                debug("CLFSPL",
+                debug("CLFSPL_",
                       "Deepcopying %(clf)s for %(sclf)s",
                       msgargs={'clf':clf_template,
                                'sclf':self})
@@ -900,6 +1131,14 @@ class SplitClassifier(CombinedClassifier):
                 predictions = clf.predict(split[1].samples)
                 self.confusion.add(split[1].labels, predictions,
                                    clf.states.get('values', None))
+                if __debug__:
+                    dact = debug.active
+                    if 'CLFSPL_' in dact:
+                        debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
+                    elif 'CLFSPL' in dact:
+                        debug('CLFSPL', 'Split %d error %.2f%%'
+                              % (i, self.confusion.summaries[-1].error))
+
             if states.isEnabled("training_confusion"):
                 states.training_confusion += \
                                                clf.states.training_confusion
@@ -1036,6 +1275,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         Has to untrain any known classifier
         """
+        if self.__feature_selection is not None:
+            self.__feature_selection.untrain()
         if not self.trained:
             return
         if not self.__maskclf is None:

@@ -16,7 +16,7 @@ Monte-Carlo testing of Classifier-based Analyses
 It is often desirable to be able to make statements like *"Performance is
 significantly above chance-level"*.  PyMVPA supports *NULL* (aka *H0*)
 hypothesis testing for :ref:`transfer errors <transfer_error>` and all
-:ref:`dataset measures <measure>`. In both cases the object computing the
+:ref:`dataset measures <chap_measures>`. In both cases the object computing the
 measure or transfer error takes an optional constructor argument `null_dist`.
 The value of this argument is an instance of some
 :class:`~mvpa.clfs.stats.NullDist` estimator.  If *NULL* distribution is

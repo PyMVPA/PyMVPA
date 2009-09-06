@@ -13,7 +13,7 @@ from StringIO import StringIO
 
 from mvpa.base.verbosity import OnceLogger
 
-from mvpa.base import verbose
+from mvpa.base import verbose, error
 
 if __debug__:
     from mvpa.base import debug
@@ -126,6 +126,12 @@ class VerboseOutputTest(unittest.TestCase):
         self.once("Y", "XXX", 2)
         self.once("Y", "XXX", 2)
         self.failUnlessEqual(self.sout.getvalue(), self.msg+"\nXXX\nXXX\n")
+
+
+    def testError(self):
+        """Test error message"""
+        error(self.msg, critical=False) # should not exit
+        self.failUnless(self.sout.getvalue().startswith("ERROR"))
 
 
     if __debug__:

@@ -24,6 +24,7 @@ def collectTestSuites():
     # list all test modules (without .py extension)
     tests = [
         # Basic data structures/manipulators
+        'test_externals',
         'test_base',
         'test_dochelpers',
         'test_dataset',
@@ -43,6 +44,7 @@ def collectTestSuites():
         'test_support',
         'test_verbosity',
         'test_iohelpers',
+        'test_report',
         'test_datasetfx',
         'test_cmdline',
         'test_args',
@@ -58,6 +60,7 @@ def collectTestSuites():
         'test_smlr',
         # Various algorithms
         'test_svdmapper',
+        'test_procrust',
         'test_samplegroupmapper',
         'test_transformers',
         'test_transerror',
@@ -85,6 +88,7 @@ def collectTestSuites():
 
 
     __optional_tests = [ ('scipy', 'ridge'),
+                         ('scipy', 'stats_sp'),
                          ('scipy', 'datasetfx_sp'),
                          (['lars','scipy'], 'lars'),
                          ('nifti', 'niftidataset'),
@@ -129,7 +133,8 @@ def run(limit=None, verbosity=None):
         e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
         'niftidataset'.
       verbosity: None | int
-        Explain me
+        Verbosity of unittests execution. If None, controlled by PyMVPA
+        configuration tests/verbosity
     """
     if __debug__:
         from mvpa.base import debug

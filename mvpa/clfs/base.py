@@ -89,6 +89,9 @@ class Classifier(ClassWithCollections):
     trained_labels = StateVariable(enabled=True,
         doc="Set of unique labels it has been trained on")
 
+    trained_nsamples = StateVariable(enabled=True,
+        doc="Number of samples it has been trained on")
+
     trained_dataset = StateVariable(enabled=False,
         doc="The dataset it has been trained on")
 
@@ -149,10 +152,12 @@ class Classifier(ClassWithCollections):
             self._summaryClass = RegressionStatistics
         else:
             self._summaryClass = ConfusionMatrix
-            if 'regression' in self._clf_internals:
+            clf_internals = self._clf_internals
+            if 'regression' in clf_internals and not ('binary' in clf_internals):
                 # regressions are used as binary classifiers if not
-                # asked to perform regression explicitely
-                self._clf_internals.append('binary')
+                # asked to perform regression explicitly
+                # We need a copy of the list, so we don't override class-wide
+                self._clf_internals = clf_internals + ['binary']
 
         # deprecate
         #self.__trainedidhash = None
@@ -237,6 +242,7 @@ class Classifier(ClassWithCollections):
             self.trained_labels = dataset.uniquelabels
 
         self.trained_dataset = dataset
+        self.trained_nsamples = dataset.nsamples
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
@@ -296,10 +302,18 @@ class Classifier(ClassWithCollections):
             s += ' on data with'
             if states.isSet('trained_labels'):
                 s += ' labels:%s' % list(states.trained_labels)
+
+            nsamples, nchunks = None, None
+            if states.isSet('trained_nsamples'):
+                nsamples = states.trained_nsamples
             if states.isSet('trained_dataset'):
                 td = states.trained_dataset
-                s += ' #samples:%d #chunks:%d' % (td.nsamples,
-                                                  len(td.uniquechunks))
+                nsamples, nchunks = td.nsamples, len(td.uniquechunks)
+            if nsamples is not None:
+                s += ' #samples:%d' % nsamples
+            if nchunks is not None:
+                s += ' #chunks:%d' % nchunks
+
             s += " #features:%d" % self.__trainednfeatures
             if states.isSet('feature_ids'):
                 s += ", used #features:%d" % len(states.feature_ids)

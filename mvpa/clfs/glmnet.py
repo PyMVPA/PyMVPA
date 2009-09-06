@@ -72,14 +72,14 @@ class _GLMNET(Classifier):
     family = Parameter('gaussian',
                        allowedtype='basestring',
                        choices=["gaussian", "multinomial"],
-                       doc="""Response type of your labels
-                       (either regression or classification.""")
+                       doc="""Response type of your labels (either 'gaussian'
+                       for regression or 'multinomial' for classification).""")
 
     alpha = Parameter(1.0, min=0.01, max=1.0, allowedtype='float',
                       doc="""The elastic net mixing parameter.
                       Larger values will give rise to
                       less L2 regularization, with alpha=1.0
-                      as a true lasso penalty.""")
+                      as a true LASSO penalty.""")
 
     nlambda = Parameter(100, allowedtype='int', min=1,
                         doc="""Maximum number of lambdas to calculate
@@ -129,8 +129,13 @@ class _GLMNET(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # regression
-        if self.params.family == 'gaussian':
-            self.states.enable('training_confusion', False)
+        # YOH: sorry for not clear semantics... pyvmpa is evolving,
+        #      regressions will store RegressionStatistics within the
+        #      confusion, so it is ok to have training_confusion
+        #      enabled, but .regression parameter needs to be set to true,
+        #      therefor above conditioning and tuneup of kwargs in _R
+        #if self.params.family == 'gaussian':
+        #    self.states.enable('training_confusion', False)
 
 #     def __repr__(self):
 #         """String summary of the object
@@ -230,9 +235,10 @@ class _GLMNET(Classifier):
             # is gaussian, so just remove last dim of values
             values = values[:,0]
 
-        if not classes is None:
+        # values need to be set anyways if values state is enabled
+        self.values = values
+        if classes is not None:
             # set the values and return none
-            self.values = values
             return classes
         else:
             # return the values as predictions
@@ -301,13 +307,24 @@ class GLMNET_R(_GLMNET):
 
         See the help in R for further details on the parameters
         """
-        # make sure they didn't specify regression
-        if not kwargs.pop('family', None) is None:
-            warning('You specified the "family" parameter, but we '
-                    'force this to be "gaussian".')
+        # make sure they didn't specify incompatible model
+        regr_family = 'gaussian'
+        family = kwargs.pop('family', regr_family).lower()
+        if family != regr_family:
+            warning('You specified the parameter family=%s, but we '
+                    'force this to be "%s" for regression.'
+                    % (family, regr_family))
+            family = regr_family
+
+        regression = kwargs.pop('regression', None)
+        if regression is None:
+            # enforce regression by default, but regression might be used as
+            # a binary classifier as well, so leave it as is if it was
+            # explicitly specified
+            regression = True
 
         # init base class first, forcing regression
-        _GLMNET.__init__(self, family='gaussian', **kwargs)
+        _GLMNET.__init__(self, family=family, regression=regression, **kwargs)
 
 
 class GLMNET_C(_GLMNET):
