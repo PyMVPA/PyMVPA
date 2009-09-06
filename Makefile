@@ -93,10 +93,11 @@ clean:
 		 -o -iname '*~' \
 		 -o -iname '*.kcache' \
 		 -o -iname '*.gch' \
+		 -o -iname '*_flymake.*' \
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
-	-@rm -rf dist
-	-@rm *-stamp
+	-@rm -rf dist *_report
+	-@rm -f *-stamp *_report.pdf pymvpa.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
@@ -121,10 +122,8 @@ doc: website manpages
 manpages: mkdir-MAN_DIR
 	PYTHONPATH=.:$(PYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
 		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
-# no manpage for atlaslabeler now, since it implies build-deps for
-# pynifti and lxml
-#	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
-#		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
+	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
+		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
 
 prepare-docsrc: mkdir-BUILDDIR
 	rsync --copy-unsafe-links -rvuhp doc/ $(BUILDDIR)/doc
@@ -213,7 +212,7 @@ upload-htmldoc: htmldoc
 #
 
 ut-%: build
-	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/test_$*.py
+	@PYTHONPATH=.:$(PYTHONPATH) nosetests --nocapture mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
@@ -281,7 +280,7 @@ testmanual: build
 testsuite:
 	@echo "I: Running full testsuite"
 	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
-	 sed -e 's/^\W*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
+	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa\.base\.dochelpers' \
 			 -e 'mvpa\.\(tests\|support\)' \
@@ -302,12 +301,29 @@ testapiref: apidoc
 testsphinx: htmldoc
 	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
 
-test: unittests testmanual testsuite testapiref testexamples
+# Check if stored cfg after whole suite is imported is safe to be
+# reloaded
+testcfg: build
+	@echo "I: Running test to check that stored configuration is acceptable."
+	-@rm -f pymvpa.cfg
+	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
+	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *;'
+	@echo "+I: Run non-labile testing to verify safety of stored configuration"
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@echo "+I: Check all known dependencies and store them"
+	@PYTHONPATH=.:$(PYTHONPATH)	python -c \
+	  'from mvpa.suite import *; mvpa.base.externals.testAllDependencies(force=False); cfg.save("pymvpa.cfg");'
+	@echo "+I: Run non-labile testing to verify safety of stored configuration"
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	-@rm -f pymvpa.cfg
+
+test: unittests testmanual testsuite testapiref testexamples testcfg
 
 # Target to be called after some major refactoring
 # It skips some flavors of unittests
 testrefactor: unittest testmanual testsuite testapiref testexamples
 
+coverage: $(COVERAGE_REPORT)
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@{ \
@@ -442,7 +458,8 @@ upload-codeswarm: codeswarm
 
 .PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual \
         all profile website fetch-data-misc upload-website \
-        test testsuite testmanual testapiref testexamples distclean debian-clean \
+        test testsuite testmanual testapiref testexamples testrefactor \
         unittest unittest-debug unittest-optimization unittest-nonlabile \
         unittest-badexternals unittests \
-        handbook codeswarm upload-codeswarm
+        distclean debian-clean \
+        handbook codeswarm upload-codeswarm coverage

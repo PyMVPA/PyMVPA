@@ -140,7 +140,9 @@ using PyMVPA.
     Since version 0.2.2, PyMVPA contains a minimal copy of LIBSVM in its
     source distribution.
   R_ and RPy_: more classifiers
-    Currently PyMVPA provides a wrapper around the LARS library.
+    Currently PyMVPA provides wrappers around LARS, ElasticNet, and GLMNet R
+    libraries available from CRAN_.  On Debian-based machines you might like
+    to install r-cran-* packages from cran2deb_ repository.
   matplotlib_: Matlab-style plotting library for Python
     This is a very powerful plotting library that allows you to export into
     a large variety of raster and vector formats (e.g. SVG), and thus, is ideal
@@ -159,9 +161,10 @@ using PyMVPA.
 .. _showmedo.com: http://showmedo.com
 .. _FSL: http://www.fmrib.ox.ac.uk/fsl/
 .. _AFNI: http://afni.nimh.nih.gov/afni/
-.. _RPy: http://rpy.sourceforge.net/
+.. _RPy: http://rpy.sourceforge.net
 .. _R: http://www.r-project.org
-
+.. _cran2deb: http://debian.cran.r-project.org
+.. _CRAN: http://cran.r-project.org
 
 .. index:: installation, binary packages
 
@@ -286,6 +289,12 @@ machine.
 
 *The MacPort of PyMVPA is kindly maintained by James Kyle <jameskyle@ucla.edu>.*
 
+.. note::
+
+  MacPorts_ needs `XCode developer tools`_ to be installed first, as the
+  operating system does not come with a compiler by default.
+
+.. _XCode developer tools: http://developer.apple.com/tools/xcode/
 .. _MacPorts: http://www.macports.org
 
 In the context of PyMVPA MacPorts is much easier to handle than the previously
@@ -318,7 +327,6 @@ on editing shell paths please see:
 A typical `.bash_profile` set up for MacPorts might look like::
 
   > export PATH=/opt/local/bin:/opt/local/sbin:$PATH
-  > export DYLD_LIBRARY_PATH=/opt/local/lib:$DYLD_LIBRARY_PATH
 
 Be sure to source your .bash_profile or close Terminal.app and reopen it for
 these changes to take effect.
@@ -686,7 +694,6 @@ operating system does not come with a compiler by default. If you want to use
 or even work on the latest development code, you should also install Git_.
 There is a `MacOS installer for Git`_, that make this step very easy.
 
-.. _XCode developer tools: http://developer.apple.com/tools/xcode/
 .. _MacOS installer for Git: http://code.google.com/p/git-osx-installer/
 
 Otherwise follow the :ref:`general build instructions <buildfromsource>`.

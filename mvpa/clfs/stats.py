@@ -123,6 +123,10 @@ class NullDist(ClassWithCollections):
 
         self._setTail(tail)
 
+    def __repr__(self, prefixes=[]):
+        return super(NullDist, self).__repr__(
+            prefixes=["tail=%s" % `self.__tail`] + prefixes)
+
 
     def _setTail(self, tail):
         # sanity check
@@ -191,7 +195,7 @@ class MCNullDist(NullDist):
     def __init__(self, dist_class=Nonparametric, permutations=100, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
-        :Parameter:
+        :Parameters:
           dist_class: class
             This can be any class which provides parameters estimate
             using `fit()` method to initialize the instance, and
@@ -210,13 +214,19 @@ class MCNullDist(NullDist):
         """Number of permutations to compute the estimate the null
         distribution."""
 
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ["permutations=%s" % self.__permutations]
+        if self._dist_class != Nonparametric:
+            prefixes_.insert(0, 'dist_class=%s' % `self._dist_class`)
+        return super(MCNullDist, self).__repr__(
+            prefixes=prefixes_ + prefixes)
 
 
     def fit(self, measure, wdata, vdata=None):
         """Fit the distribution by performing multiple cycles which repeatedly
         permuted labels in the training dataset.
 
-        :Parameter:
+        :Parameters:
           measure: (`Featurewise`)`DatasetMeasure` | `TransferError`
             TransferError instance used to compute all errors.
           wdata: `Dataset` which gets permuted and used to compute the
@@ -360,6 +370,12 @@ class FixedNullDist(NullDist):
         """Return value of the cumulative distribution function at `x`.
         """
         return self._dist.cdf(x)
+
+
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ["dist=%s" % `self._dist`]
+        return super(FixedNullDist, self).__repr__(
+            prefixes=prefixes_ + prefixes)
 
 
 class AdaptiveNullDist(FixedNullDist):

@@ -19,7 +19,8 @@ from mvpa.misc.exceptions import UnknownStateError
 from mvpa.clfs.base import Classifier
 from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
-     SplitClassifier, MappedClassifier, FeatureSelectionClassifier
+     SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
+     TreeClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
@@ -123,7 +124,6 @@ class ClassifiersTests(unittest.TestCase):
                         msg="BinaryClassifier should not alter labels")
 
 
-    # TODO: gune up default GPR?
     @sweepargs(clf=clfswh['binary'])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
@@ -135,12 +135,17 @@ class ClassifiersTests(unittest.TestCase):
                             msg="Got transfer error %g" % (cve))
 
 
-    @sweepargs(clf=clfswh[:])
+    @sweepargs(clf=clfswh[:] + regrswh[:])
     def testSummary(self, clf):
         """Basic testing of the clf summary
         """
+        summary1 = clf.summary()
+        self.failUnless('not yet trained' in summary1)
         clf.train(datasets['uni2small'])
         summary = clf.summary()
+        # It should get bigger ;)
+        self.failUnless(len(summary) > len(summary1))
+        self.failUnless(not 'not yet trained' in summary)
 
 
     # TODO: validate for regressions as well!!!
@@ -344,6 +349,63 @@ class ClassifiersTests(unittest.TestCase):
         res = clf_reg.predict(dat.samples)
         self.failIf((N.array(clf_reg.values)-clf_reg.predictions).sum()==0,
                     msg="Values were set to the predictions.")
+
+
+    def testTreeClassifier(self):
+        """Basic tests for TreeClassifier
+        """
+        ds = datasets['uni4small']
+        clfs = clfswh['binary']         # pool of classifiers
+        # Lets permute so each time we try some different combination
+        # of the classifiers
+        clfs = [clfs[i] for i in N.random.permutation(len(clfs))]
+        # Test conflicting definition
+        tclf = TreeClassifier(clfs[0], {
+            'L0+2' : (('L0', 'L2'), clfs[1]),
+            'L2+3' : ((2, 3),       clfs[2])})
+        self.failUnlessRaises(ValueError, tclf.train, ds)
+        """Should raise exception since label 2 is in both"""
+
+        # Test insufficient definition
+        tclf = TreeClassifier(clfs[0], {
+            'L0+5' : (('L0', 'L5'), clfs[1]),
+            'L2+3' : ((2, 3),       clfs[2])})
+        self.failUnlessRaises(ValueError, tclf.train, ds)
+        """Should raise exception since no group for L1"""
+
+        # proper definition now
+        tclf = TreeClassifier(clfs[0], {
+            'L0+1' : (('L0', 1), clfs[1]),
+            'L2+3' : ((2, 3),    clfs[2])})
+
+        # Lets test train/test cycle using CVTE
+        cv = CrossValidatedTransferError(
+            TransferError(tclf),
+            OddEvenSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        cverror = cv(ds)
+        try:
+            rtclf = repr(tclf)
+        except:
+            self.fail(msg="Could not obtain repr for TreeClassifier")
+
+        # Test accessibility of .clfs
+        self.failUnless(tclf.clfs['L0+1'] is clfs[1])
+        self.failUnless(tclf.clfs['L2+3'] is clfs[2])
+
+        cvtrc = cv.training_confusion
+        cvtc = cv.confusion
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            # just a dummy check to make sure everything is working
+            self.failUnless(cvtrc != cvtc)
+            self.failUnless(cverror < 0.3)
+
+        # TODO: whenever implemented
+        tclf = TreeClassifier(clfs[0], {
+            'L0' : (('L0',), clfs[1]),
+            'L1+2+3' : ((1, 2, 3),    clfs[2])})
+        # TEST ME
+
 
     @sweepargs(clf=clfswh[:])
     def testValues(self, clf):

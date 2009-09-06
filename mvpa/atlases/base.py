@@ -31,6 +31,8 @@ from mvpa.base import externals
 if externals.exists('lxml', raiseException=True):
     from lxml import etree, objectify
 
+from mvpa.base.dochelpers import enhancedDocString
+
 import os, re
 import numpy as N
 from numpy.linalg import norm
@@ -85,7 +87,9 @@ class XMLAtlasException(Exception):
 
 class XMLBasedAtlas(BaseAtlas):
 
-    def __init__(self, filename=None, resolution=None, query_voxel=False,
+    def __init__(self, filename=None,
+                 resolution=None, image_file=None,
+                 query_voxel=False,
                  coordT=None, levels=None):
         """
         :Parameters:
@@ -95,6 +99,9 @@ class XMLBasedAtlas(BaseAtlas):
             Some atlases link to multiple images at different
             resolutions. if None -- best resolution is selected
             using 0th dimension resolution
+          image_file : None or str
+            If None, overrides filename for the used imagefile, so
+            it could load a custom (re-registered) atlas maps
           query_voxel : bool
             By default [x,y,z] assumes coordinates in space, but if
             query_voxel is True, they are assumed to be voxel coordinates
@@ -106,10 +113,11 @@ class XMLBasedAtlas(BaseAtlas):
         BaseAtlas.__init__(self)
         self.__version = None
         self.__type = None              # XXX use or remove
-        self._imagefile = None
+        self._image_file = None
         self.__atlas = None
         self._filename = filename
         self._resolution = resolution
+        self._force_image_file = image_file
         self.query_voxel = query_voxel
         self.levels = levels
 
@@ -234,7 +242,14 @@ class XMLBasedAtlas(BaseAtlas):
     def labelPoint(self, coord, levels=None):
         """Return labels for the given spatial point at specified levels
 
-        so we first transform point into the voxel space
+        Function takes care about first transforming the point into
+        the voxel space
+
+        :Parameters:
+          coord : tuple
+            Coordinates of the point (xyz)
+          levels : None or list of int
+            At what levels to return the results
         """
         coord_ = N.asarray(coord)          # or we would alter what should be constant
         #if not isinstance(coord, N.numpy):
@@ -504,6 +519,30 @@ class LabelsLevel(Level):
     def __getitem__(self, index):
         return self.__labels[index]
 
+    def find(self, target, unique=True):
+        """Return labels descr of which matches the string
+
+        :Parameters:
+          target : str or re._pattern_type
+            Substring in abbreviation to be searched for, or compiled
+            regular expression to be searched or matched if anchored.
+          unique : bool
+            If True, raise exception if none or more than 1 was found. Return
+            just a single item if found (not list).
+        """
+        if isinstance(target, re._pattern_type):
+            res = [l for l in self.__labels if target.search(l.abbr)]
+        else:
+            res = [l for l in self.__labels if target in l.abbr]
+
+        if unique:
+            if len(res) != 1:
+                raise ValueError, "Got %d matches whenever just 1 was " \
+                      "looked for (target was %s)." % (len(res), target)
+            return res[0]
+        else:
+            return res
+
 
 class ReferencesLevel(Level):
     """Level which carries reference points
@@ -553,6 +592,9 @@ class PyMVPAAtlas(XMLBasedAtlas):
         self.__spaceFlavor = header['space-flavor'].text
 
 
+    __doc__ = enhancedDocString('PyMVPAAtlas', locals(), XMLBasedAtlas)
+
+
     def _loadImages(self):
         # shortcut
         imagefile = self.header.images.imagefile
@@ -561,18 +603,22 @@ class PyMVPAAtlas(XMLBasedAtlas):
         # Set offset if defined in XML file
         # XXX: should just take one from the qoffset... now that one is
         #       defined... this origin might be misleading actually
-        self._origin = N.array( (0,0,0) )
+        self._origin = N.array( (0, 0, 0) )
         if imagefile.attrib.has_key('offset'):
-            self._origin = N.array( map(int,
-                                        imagefile.get('offset').split(',')) )
+            self._origin = N.array( [int(x) for x in
+                                     imagefile.get('offset').split(',')] )
 
         # Load the image file which has labels
-        imagefilename = reuseAbsolutePath(self._filename, imagefile.text)
+        if self._force_image_file is not None:
+            imagefilename = self._force_image_file
+        else:
+            imagefilename = imagefile.text
+        imagefilename = reuseAbsolutePath(self._filename, imagefilename)
 
         try:
             self._image  = NiftiImage(imagefilename)
         except RuntimeError, e:
-            raise RuntimeError, " Cannot open file " + imagefilename
+            raise RuntimeError, " Cannot open file %s due to %s" % (imagefilename, e)
 
         self._data   = self._image.data
 
@@ -666,6 +712,9 @@ class LabelsAtlas(PyMVPAAtlas):
         result['labels'] = resultLevels
         return result
 
+    __doc__ = enhancedDocString('LabelsAtlas', locals(), PyMVPAAtlas)
+
+
 
 class ReferencesAtlas(PyMVPAAtlas):
     """
@@ -699,6 +748,7 @@ class ReferencesAtlas(PyMVPAAtlas):
         self.__referenceLevel = None
         self.setDistance(distance)
 
+    __doc__ = enhancedDocString('ReferencesAtlas', locals(), PyMVPAAtlas)
 
     # number of levels must be of the referenced atlas due to
     # handling of that in __getitem__

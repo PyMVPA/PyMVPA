@@ -9,74 +9,26 @@
 """Test some base functionality which did not make it into a separate unittests"""
 
 import unittest
-import os.path
-import numpy as N
+from tempfile import mktemp
 
-from mvpa import cfg
-from mvpa.base import externals
-
+from mvpa.base.info import wtf
 
 class TestBases(unittest.TestCase):
 
-    def setUp(self):
-        self.backup = []
-        # clean up externals cfg for proper testing
-        if cfg.has_section('externals'):
-            self.backup = cfg.items('externals')
-        cfg.remove_section('externals')
+    def testWtf(self):
+        """Very basic testing -- just to see if it doesn't crash"""
 
+        try:
+            wtf()
+        except Exception, e:
+            self.fail('Testing of systemInfo failed with "%s"' % str(e))
 
-    def tearDown(self):
-        if len(self.backup):
-            if not cfg.has_section('externals'):
-                cfg.add_section('externals')
-            for o,v in self.backup:
-                cfg.set('externals', o,v)
-
-
-    def testExternals(self):
-        self.failUnlessRaises(ValueError, externals.exists, 'BoGuS')
-
-
-    def testExternalsNoDoubleInvocation(self):
-        # no external should be checking twice (unless specified
-        # explicitely)
-
-        class Checker(object):
-            """Helper class to increment count of actual checks"""
-            def __init__(self): self.checked = 0
-            def check(self): self.checked += 1
-
-        checker = Checker()
-
-        externals._KNOWN['checker'] = 'checker.check()'
-        externals.__dict__['checker'] = checker
-        externals.exists('checker')
-        self.failUnlessEqual(checker.checked, 1)
-        externals.exists('checker')
-        self.failUnlessEqual(checker.checked, 1)
-        externals.exists('checker', force=True)
-        self.failUnlessEqual(checker.checked, 2)
-        externals.exists('checker')
-        self.failUnlessEqual(checker.checked, 2)
-
-        # restore original externals
-        externals.__dict__.pop('checker')
-        externals._KNOWN.pop('checker')
-
-
-    def testExternalsCorrect2ndInvocation(self):
-        # always fails
-        externals._KNOWN['checker2'] = 'raise ImportError'
-
-        self.failUnless(not externals.exists('checker2'),
-                        msg="Should be False on 1st invocation")
-
-        self.failUnless(not externals.exists('checker2'),
-                        msg="Should be False on 2nd invocation as well")
-
-        externals._KNOWN.pop('checker2')
-
+        filename = mktemp('mvpa', 'test')
+        wtf(filename)
+        try:
+            syslines = open(filename, 'r').readlines()
+        except Exception, e:
+            self.fail('Testing of dumping systemInfo into a file failed: %s' % str(e))
 
 def suite():
     return unittest.makeSuite(TestBases)

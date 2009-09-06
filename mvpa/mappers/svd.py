@@ -27,14 +27,14 @@ class SVDMapper(ProjectionMapper):
         """Initialize the SVDMapper
 
         :Parameters:
-            **kwargs:
-                All keyword arguments are passed to the ProjectionMapper
-                constructor.
+          **kwargs:
+            All keyword arguments are passed to the ProjectionMapper
+            constructor.
 
-                Note, that for the 'selector' argument this class also supports
-                passing a `ElementSelector` instance, which will be used to
-                determine the to be selected features, based on the singular
-                values of each component.
+            Note, that for the 'selector' argument this class also supports
+            passing a `ElementSelector` instance, which will be used to
+            determine the to be selected features, based on the singular
+            values of each component.
         """
         ProjectionMapper.__init__(self, **kwargs)
 
@@ -66,18 +66,27 @@ class SVDMapper(ProjectionMapper):
             debug("MAP", "SVD was done on %s and obtained %d SVs " %
                   (dataset, len(SV)) + " (%d non-0, max=%f)" %
                   (len(SV.nonzero()), SV[0]))
-
-            debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
-                  (self._proj.shape, N.linalg.norm(self._proj)))
+            # .norm might be somewhat expensive to compute
+            if "MAP_" in debug.active:
+                debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
+                      (self._proj.shape, N.linalg.norm(self._proj)))
 
 
     def selectOut(self, outIds):
         """Choose a subset of SVD components (and remove all others)."""
         # handle ElementSelector operating on SV (base class has no idea about)
+        # XXX think about more generic interface, where some 'measure' is assigned
+        # per each projection dimension, like in _sv in case of SVD.
+        # May be selector could be parametrized with an instance + attribute as literal
+        # so later on it could extract necessary values?
         if isinstance(self._selector, ElementSelector):
             ProjectionMapper.selectOut(self, self._selector(self._sv))
         else:
             ProjectionMapper.selectOut(self, outIds)
 
+    def _computeRecon(self):
+        """Since singular vectors are orthonormal, sufficient to take hermitian
+        """
+        return self._proj.H
 
     sv = property(fget=lambda self: self._sv, doc="Singular values")
