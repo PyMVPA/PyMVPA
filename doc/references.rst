@@ -120,6 +120,17 @@ experiments.
   DOI: http://dx.doi.org/10.3389/neuro.11.005.2009
 
 
+.. _JSW09:
+
+**Jäkel, F., Schölkopf, B. & Wichmann, F. A.** (2009). Does Cognitive Science Need Kernels?. *Trends in Cognitive Sciences*, *13*, 381–388.
+  *A summary of the relationship of machine learning and cognitive science.
+  Moreover it also points out the role of kernel-based methods in this context.*
+
+  Keywords: :keyword:`kernel`, :keyword:`similarity`
+
+  DOI: http://dx.doi.org/10.1016/j.tics.2009.06.002
+
+
 .. _KT05:
 
 **Kamitani, Y. & Tong, F.** (2005). Decoding the visual and subjective contents of the human brain. *Nature Neuroscience*, *8*, 679–685.
