@@ -93,13 +93,13 @@ experiments.
 
 .. _HMH04:
 
-**Hanson, S., Matsuka, T. & Haxby, J.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *Neuroimage*, *23*, 156–166.
+**Hanson, S. J., Matsuka, T. & Haxby, J. V.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *Neuroimage*, *23*, 156–166.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2004.05.020
 
 
 .. _HGF+01:
 
-**Haxby, J., Gobbini, M., Furey, M., Ishai, A., Schouten, J. & Pietrini, P.** (2001). Distributed and overlapping representations of faces and objects in ventral temporal cortex. *Science*, *293*, 2425–2430.
+**Haxby, J. V., Gobbini, M. I., Furey, M. L., Ishai, A., Schouten, J. L. & Pietrini, P.** (2001). Distributed and overlapping representations of faces and objects in ventral temporal cortex. *Science*, *293*, 2425–2430.
   Keywords: :keyword:`split-correlation classifier`
 
   DOI: http://dx.doi.org/10.1126/science.1063736
@@ -149,7 +149,7 @@ experiments.
 
 .. _KGB06:
 
-**Kriegeskorte, N., Goebel, R. & Bandettini, P.** (2006). Information-based functional brain mapping. *Proceedings of the National Academy of Sciences of the USA*, *103*, 3863–3868.
+**Kriegeskorte, N., Goebel, R. & Bandettini, P. A.** (2006). Information-based functional brain mapping. *Proceedings of the National Academy of Sciences of the USA*, *103*, 3863–3868.
   *Paper introducing the searchlight algorithm.*
 
   Keywords: :keyword:`searchlight`
@@ -159,7 +159,7 @@ experiments.
 
 .. _KMB08:
 
-**Kriegeskorte, N., Mur, M. & Bandettini, P.** (2008). Representational similarity analysis - connecting the branches of systems neuroscience. *Frontiers in Systems Neuroscience*, *2*, 4.
+**Kriegeskorte, N., Mur, M. & Bandettini, P. A.** (2008). Representational similarity analysis - connecting the branches of systems neuroscience. *Frontiers in Systems Neuroscience*, *2*, 4.
   DOI: http://dx.doi.org/10.3389/neuro.06.004.2008
 
 
@@ -255,7 +255,7 @@ experiments.
 
   Keywords: :keyword:`PyMVPA`, :keyword:`psychosis`, :keyword:`MRI`
 
-  URL: http://www.journals.elsevierhealth.com/periodicals/bps/content/0900486abs
+  DOI: http://dx.doi.org/10.1016/j.biopsych.2009.07.019
 
 
 .. _Vap95:
