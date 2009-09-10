@@ -4,8 +4,8 @@
 
 The PyMVPA developers team currently consists of:
 
-* `Michael Hanke`_, University of Magdeburg, Germany
-* `Yaroslav O. Halchenko`_, Rutgers University Newark, USA
+* `Michael Hanke`_, Dartmouth College, USA
+* `Yaroslav O. Halchenko`_, Dartmouth College, USA
 * `Per B. Sederberg`_, Princeton University, USA
 * `Emanuele Olivetti`_, University of Trento, Italy
 
