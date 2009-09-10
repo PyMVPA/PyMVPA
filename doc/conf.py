@@ -284,7 +284,7 @@ master_doc = 'contents'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
+copyright = '2006-2009, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
