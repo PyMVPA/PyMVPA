@@ -209,13 +209,13 @@ Debian backports and inofficial Ubuntu packages
 -----------------------------------------------
 
 Backports for the current Debian stable release and binary packages for recent
-Ubuntu releases are available from a `repository at the University of
-Magdeburg`_. Please read the `package repository instructions`_ to learn about
+Ubuntu releases are available from a `Debian Neuroscience Repository`_.
+Please read the `package repository instructions`_ to learn about
 how to obtain them. Otherwise install as you would do with any other Debian
 package.
 
-.. _repository at the University of Magdeburg: http://apsy.gse.uni-magdeburg.de
-.. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
+.. _Debian Neuroscience Repository: http://neuro.debian.net
+.. _package repository instructions: http://neuro.debian.net/#how-to-use-this-repository
 
 .. index:: Windows, Windows installer
 .. _install_win:
