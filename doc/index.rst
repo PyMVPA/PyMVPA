@@ -129,7 +129,7 @@ platform, you need to compile your own. The manual contains :ref:`instructions
 
 .. _MacPorts: http://www.macports.org
 .. _official Debian package: http://packages.debian.org/python-mvpa
-.. _package repository instructions: http://apsy.gse.uni-magdeburg.de/main/index.psp?sec=1&page=hanke/debian&lang=en
+.. _package repository instructions: http://neuro.debian.net/#how-to-use-this-repository
 .. _Suse and Mandriva-related: http://download.opensuse.org/repositories/home:/hankem/
 .. _Fedora, Redhat and CentOS-related: http://download.opensuse.org/repositories/home://hankem://rh5/
 .. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
