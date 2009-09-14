@@ -259,22 +259,87 @@ def getSamplesPerChunkLabel(dataset):
 class SequenceStats(dict):
     """ Simple helper to provide convenient representation of `getSequenceStat` output
 
-       WARNING: Experimental -- API might change without warning! ;)
+    Matlab analog:
+    http://cfn.upenn.edu/aguirre/code/matlablib/mseq/mtest.m
+
+    WARNING: Experimental -- API might change without warning!
+    Current implementation is ugly!
     """
 
-    def __str__(self):
-        # Print counter-balancing counts
-        ulabels = self['ulabels']
-        nlabels = len(ulabels)
-        seq = self['seq']
-        order = self['order']
-        cbcounts = self['counts']
-        corr = self['corrcoef']
-        sumcorr = self['corrcoef']
-        sumabscorr = self['sumabscorr']
+    def __init__(self, seq, order=2):#, chunks=None, perchunk=False):
+        """Initialize SequenceStats
 
-        # XXX move into a helper function
-        t = [ [""] * (1+order*(nlabels+1)) for i in xrange(nlabels+1) ]
+        :Parameters:
+          seq : list or ndarray
+            Actual sequence of labels
+
+        :Keywords:
+          order : int
+            Maximal order of counter-balancing check. For perfect
+            counterbalancing all matrices should be identical
+        """
+        """
+          chunks : None or list or ndarray
+            Chunks to use if `perchunk`=True
+          perchunk .... TODO
+          """
+        self.order = order
+        self._seq = seq
+        self.stats = None
+        self.__compute()
+
+
+    def __repr__(self):
+        """Representation of SequenceStats
+        """
+        return "SequenceStats(%s, order=%d)" % (repr(self._seq), self.order)
+
+    def __str__(self):
+        return self._str_stats
+
+    def __compute(self):
+        """Compute stats and string representation
+        """
+        # Do actual computation
+        order = self.order
+        seq = list(self._seq)               # assure list
+        nsamples = len(seq)                 # # of samples/labels
+        ulabels = sorted(list(set(seq)))    # unique labels
+        nlabels = len(ulabels)              # # of labels
+
+        labels_map = dict([(l, i) for i,l in enumerate(ulabels)]) # mapping for labels
+
+        # map sequence first
+        seqm = [labels_map[i] for i in seq]
+        nperlabel = N.bincount(seqm)
+
+        res = dict(ulabels=ulabels)
+        # Estimate counter-balance
+        cbcounts = N.zeros((order, nlabels, nlabels), dtype=int)
+        for cb in xrange(order):
+            for i,j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
+                cbcounts[cb, i, j] += 1
+        res['cbcounts'] = cbcounts
+
+        """
+        Lets compute relative counter-balancing
+        Ideally, nperlabel[i]/nlabels should precede each label
+        """
+        # Autocorrelation
+        corr = []
+        # for all possible shifts:
+        for shift in xrange(1, nsamples):
+            shifted = seqm[shift:] + seqm[:shift]
+            # ??? User pearsonsr with p may be?
+            corr += [N.corrcoef(seqm, shifted)[0, 1]]
+            # ??? report high (anti)correlations?
+        res['corrcoef'] = corr = N.array(corr)
+        res['sumabscorr'] = sumabscorr = N.sum(N.abs(corr))
+        self.update(res)
+
+        # Assign textual summary
+        # XXX move into a helper function and do on demand
+        t = [ [""] * (1 + self.order*(nlabels+1)) for i in xrange(nlabels+1) ]
         t[0][0] = "Labels/Order"
         for i,l  in enumerate(ulabels):
             t[i+1][0] = '%s:' % l
@@ -293,7 +358,9 @@ class SequenceStats(dict):
                + table2string(t)
         sout += "Correlations: min=%.2g max=%.2g mean=%.2g sum(abs)=%.2g" \
                 % (min(corr), max(corr), N.mean(corr), sumabscorr)
-        return sout
+        self._str_stats = sout
+
+        print self
 
     def plot(self):
         """Plot correlation coefficients
@@ -306,56 +373,3 @@ class SequenceStats(dict):
         P.ylabel('Correlation Coefficient')
         P.show()
 
-
-# TODO: chunks/boundaries ?
-def getSequenceStat(seq, order=2):
-    """Test sequence of labels for counterbalancing and auto-correlation
-
-    :Parameters:
-      seq
-        Sequence of labels
-
-    :Keywords:
-      order : int
-        Maximal order of counter-balancing check. For perfect
-        counterbalancing all matrices should be identical
-
-    :Returns:
-      `dict`-like SequenceStats containing accumulated statistics
-
-    Matlab analog:
-    http://cfn.upenn.edu/aguirre/code/matlablib/mseq/mtest.m
-
-    WARNING: Experimental -- API might change without warning! ;)
-    """
-
-    seq = list(seq)                     # assure list
-    nsamples = len(seq)                 # # of samples/labels
-    ulabels = sorted(list(set(seq)))    # unique labels
-    nlabels = len(ulabels)              # # of labels
-
-    labels_map = dict([(l, i) for i,l in enumerate(ulabels)]) # mapping for labels
-    res = SequenceStats(seq=seq, ulabels=ulabels, order=order)
-
-    # map sequence first
-    seqm = [labels_map[i] for i in seq]
-
-    # Estimate counter-balance
-    cbcounts = N.zeros((order, nlabels, nlabels), dtype=int)
-    for cb in xrange(order):
-        for i,j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
-            cbcounts[cb, i, j] += 1
-    res['counts'] = cbcounts
-
-    # Autocorrelation
-    corr = []
-    # for all possible shifts:
-    for shift in xrange(1, nsamples):
-        shifted = seqm[shift:] + seqm[:shift]
-        # ??? User pearsonsr with p may be?
-        corr += [N.corrcoef(seqm, shifted)[0, 1]]
-        # ??? report high (anti)correlations?
-    res['corrcoef'] = corr = N.array(corr)
-    res['sumabscorr'] = sumabscorr = N.sum(N.abs(corr))
-
-    return res
