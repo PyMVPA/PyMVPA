@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.base import externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks, \
-     getSequenceStat
+     SequenceStats
 
 from mvpa.misc.data_generators import normalFeatureDataset
 
@@ -84,30 +84,30 @@ class MiscDatasetFxTests(unittest.TestCase):
         sp = N.array([-1,  1,  1, -1,  1, -1, -1,  1, -1, -1, -1,
                       -1,  1, -1,  1, -1,  1,  1,  1, -1,  1,  1,
                       -1, -1, -1,  1,  1,  1,  1,  1, -1], dtype=int)
-        rp = getSequenceStat(sp, order=order)
+        rp = SequenceStats(sp, order=order)
         self.failUnlessAlmostEqual(rp['sumabscorr'], 1.0)
         self.failUnlessAlmostEqual(N.max(rp['corrcoef'] * (len(sp)-1) + 1.0), 0.0)
 
         # Now some random but loong one still binary (boolean)
         sb = (N.random.random_sample((1000,)) >= 0.5)
-        rb = getSequenceStat(sb, order=order)
+        rb = SequenceStats(sb, order=order)
 
         # Now lets do multiclass with literal labels
         s5 = N.random.permutation(['f', 'bu', 'd', 0, 'zz']*200)
-        r5 = getSequenceStat(s5, order=order)
+        r5 = SequenceStats(s5, order=order)
 
         # Degenerate one but still should be valid
         s1 = ['aaa']*100
-        r1 = getSequenceStat(s1, order=order)
+        r1 = SequenceStats(s1, order=order)
 
         # Generic conformance tests
         for r in (rp, rb, r5, r1):
             ulabels = r['ulabels']
             nlabels = len(r['ulabels'])
-            counts = r['counts']
-            self.failUnlessEqual(len(counts), order)
-            for c in counts:
-                self.failUnlessEqual(N.asarray(c).shape, (nlabels, nlabels))
+            cbcounts = r['cbcounts']
+            self.failUnlessEqual(len(cbcounts), order)
+            for cb in cbcounts:
+                self.failUnlessEqual(N.asarray(cb).shape, (nlabels, nlabels))
             # Check if str works fine
             sr = str(r)
             # TODO: check the content
