@@ -14,6 +14,7 @@ import mvpa.support.copy as copy
 from mvpa.misc.state import ClassWithCollections, Collection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
+from mvpa.misc.exceptions import DatasetError
 
 if __debug__:
     from mvpa.base import debug
@@ -136,27 +137,28 @@ class Dataset(ClassWithCollections):
 
         # sanity checks
         if not len(samples.shape) == 2:
-            raise ValueError('The samples array must be 2D or mappable into 2D'
-                             '(current shape is: %s)' % str(samples.shape))
+            raise DatasetError('The samples array must be 2D or mappable into'
+                               ' 2D (current shape is: %s)'
+                               % str(samples.shape))
         self.samples = samples
 
         # XXX should we make them conditional?
         # samples attributes
         for attr in self.sa.names:
             if not len(self.sa.getvalue(attr)) == self.nsamples:
-                raise ValueError("Length of samples attribute '%s' (%i) doesn't"
-                                 " match the number of samples (%i)"
-                                 % (attr,
-                                    len(self.sa.getvalue(attr)),
-                                    self.nsamples))
+                raise DatasetError("Length of samples attribute '%s' (%i) "
+                                   "doesn't match the number of samples (%i)"
+                                   % (attr,
+                                      len(self.sa.getvalue(attr)),
+                                      self.nsamples))
         # feature attributes
         for attr in self.fa.names:
             if not len(self.fa.getvalue(attr)) == self.nfeatures:
-                raise ValueError("Length of feature attribute '%s' (%i) doesn't"
-                                 " match the number of features (%i)"
-                                 % (attr,
-                                    len(self.fa.getvalue(attr).attr),
-                                    self.nfeatures))
+                raise DatasetError("Length of feature attribute '%s' (%i) "
+                                   "doesn't match the number of features (%i)"
+                                   % (attr,
+                                      len(self.fa.getvalue(attr).attr),
+                                      self.nfeatures))
 
 
     def __deepcopy__(self, memo=None):
