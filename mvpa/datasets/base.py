@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
 import mvpa.support.copy as copy
 from mvpa.misc.state import ClassWithCollections, Collection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
@@ -144,6 +146,7 @@ class Dataset(ClassWithCollections):
 
         # XXX should we make them conditional?
         # samples attributes
+        # this should rather be self.sa.iteritems(), but there is none yet
         for attr in self.sa.names:
             if not len(self.sa.getvalue(attr)) == self.nsamples:
                 raise DatasetError("Length of samples attribute '%s' (%i) "
@@ -215,12 +218,26 @@ class Dataset(ClassWithCollections):
         --------
         blah blah
         """
-        # compile the necessary samples attributes collection
+        # put mapper as a dataset attribute in the general attributes collection
+        # need to do that first, since we want to know the final
+        # #samples/#features
+        a = None
+        if not mapper is None:
+            # forward-map the samples
+            samples = mapper.forward(samples)
+            # and store the mapper
+            mapper_ = DatasetAttribute(name='mapper')
+            mapper_.value = mapper
+            a = Collection(items={'mapper': mapper_})
+
+       # compile the necessary samples attributes collection
         sa_items={}
 
         if not labels is None:
             labels_ = SampleAttribute(name='labels')
-            labels_.value = labels
+            labels_.value = _expand_attribute(labels,
+                                              samples.shape[0],
+                                              'labels')
             # feels strange that one has to give the name again
             # XXX why does items have to be a dict when each samples
             # attr already knows its name
@@ -230,18 +247,10 @@ class Dataset(ClassWithCollections):
             # unlike previous implementation, we do not do magic to do chunks
             # if there are none, there are none
             chunks_ = SampleAttribute(name='chunks')
-            chunks_.value = chunks
+            chunks_.value = _expand_attribute(chunks,
+                                              samples.shape[0],
+                                              'chunks')
             sa_items['chunks'] = chunks_
-
-        # put mapper as a dataset attribute in the general attributes collection
-        a = None
-        if not mapper is None:
-            # forward-map the samples
-            samples = mapper.forward(samples)
-            # and store the mapper
-            mapper_ = DatasetAttribute(name='mapper')
-            mapper_.value = mapper
-            a = Collection(items={'mapper': mapper_})
 
         # the final collection for samples attributes
         # XXX advantages of using SamplesAttributeCollection?
@@ -293,6 +302,28 @@ def datasetmethod(func):
     return func
 
 
+def _expand_attribute(attr, length, attr_name):
+    """Helper function to expand attributes to a desired length.
+
+    If e.g. a sample attribute is given as a scalar expand/repeat it to a
+    length matching the number of samples in the dataset.
+    """
+    try:
+        # if we are initializing with a single string -- we should
+        # treat it as a single label
+        if isinstance(attr, basestring):
+            raise TypeError
+        if len(attr) != length:
+            raise DatasetError, \
+                  "Length of attribute '%s' [%d] has to be %d." \
+                  % (attr_name, len(attr), length) \
+        # sequence as array
+        return N.array(attr)
+
+    except TypeError:
+        # make sequence of identical value matching the desired length
+        return N.repeat(attr, length)
+
 #    def __iadd__(self, other):
 #        pass
 #
@@ -339,7 +370,6 @@ def datasetmethod(func):
 #OLD:# import operator
 #OLD:# import random
 #OLD:# import mvpa.support.copy as copy
-#OLD:# import numpy as N
 #OLD:# 
 #OLD:# from sets import Set
 #OLD:# 
