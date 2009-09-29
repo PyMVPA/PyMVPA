@@ -8,6 +8,7 @@ from mvpa.datasets.base import Dataset
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
+from mvpa.misc.exceptions import DatasetError
 
 def test_from_labeled():
     samples = N.arange(12).reshape((4,3))
@@ -39,14 +40,14 @@ def test_from_labeled():
     ok_(not ds.a.isKnown('mapper'))
 
     # has to complain about misshaped samples attributes
-    assert_raises(ValueError, Dataset.from_labeled, samples, labels + labels)
+    assert_raises(DatasetError, Dataset.from_labeled, samples, labels + labels)
 
 
 def test_basic_datamapping():
     samples = N.arange(24).reshape((4,3,2))
 
     # cannot handle 3d samples without a mapper
-    assert_raises(ValueError, Dataset, samples)
+    assert_raises(DatasetError, Dataset, samples)
 
     ds = Dataset.from_unlabeled(samples,
             mapper=DenseArrayMapper(shape=samples.shape[1:]))
