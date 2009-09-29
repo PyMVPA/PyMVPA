@@ -27,12 +27,12 @@ def test_from_labeled():
     # maybe we need some form of leightweightCollection?
 
     assert_array_equal(ds.samples, samples)
-    ok_(ds.sa.labels == labels)
-    ok_(ds.sa.chunks == chunks)
+    assert_array_equal(ds.sa.labels, labels)
+    assert_array_equal(ds.sa.chunks, chunks)
 
     # same should work for shortcuts
-    ok_(ds.labels == labels)
-    ok_(ds.chunks == chunks)
+    assert_array_equal(ds.labels, labels)
+    assert_array_equal(ds.chunks, chunks)
 
     ok_(sorted(ds.sa.names) == ['chunks', 'labels'])
 
@@ -91,3 +91,24 @@ def test_ds_copy():
     #ok_(N.any(ds.uniquechunks != ds_.uniquechunks))
 
 
+def test_mergeds():
+    data0 = Dataset.from_labeled(N.ones((5, 5)), labels=1)
+    data1 = Dataset.from_labeled(N.ones((5, 5)), labels=1, chunks=1)
+    data2 = Dataset.from_labeled(N.ones((3, 5)), labels=2, chunks=1)
+
+    # cannot merge if there are attributes missing in one of the datasets
+    assert_raises(DatasetError, data1.__iadd__, data0)
+
+    merged = data1 + data2
+
+    ok_( merged.nfeatures == 5 )
+    l12 = [1]*5 + [2]*3
+    l1 = [1]*8
+    ok_((merged.labels == l12).all())
+    ok_((merged.chunks == l1).all())
+
+    data1 += data2
+
+    ok_(data1.nfeatures == 5)
+    ok_((data1.labels == l12).all())
+    ok_((data1.chunks == l1).all())
