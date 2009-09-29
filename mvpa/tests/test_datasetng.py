@@ -6,7 +6,8 @@ from nose.tools import ok_, assert_raises
 
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.array import DenseArrayMapper
-
+from mvpa.misc.data_generators import normalFeatureDataset
+import mvpa.support.copy as copy
 
 def test_from_labeled():
     samples = N.arange(12).reshape((4,3))
@@ -37,6 +38,9 @@ def test_from_labeled():
     # there is not necessarily a mapper present
     ok_(not ds.a.isKnown('mapper'))
 
+    # has to complain about misshaped samples attributes
+    assert_raises(ValueError, Dataset.from_labeled, samples, labels + labels)
+
 
 def test_basic_datamapping():
     samples = N.arange(24).reshape((4,3,2))
@@ -53,4 +57,36 @@ def test_basic_datamapping():
     # check correct mapping
     ok_(ds.nsamples == 4)
     ok_(ds.nfeatures == 6)
+
+
+def test_ds_copy():
+    # lets use some instance of somewhat evolved dataset
+    ds = normalFeatureDataset()
+    # Clone the beast
+    ds_ = copy.deepcopy(ds)
+    # verify that we have the same data
+    assert_array_equal(ds.samples, ds_.samples)
+    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.chunks, ds_.chunks)
+
+    # modify and see if we don't change data in the original one
+    ds_.samples[0, 0] = 1234
+    ok_(N.any(ds.samples != ds_.samples))
+    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.chunks, ds_.chunks)
+
+    ds_.sa.labels = N.hstack(([123], ds_.labels[1:]))
+    ok_(N.any(ds.samples != ds_.samples))
+    ok_(N.any(ds.labels != ds_.labels))
+    assert_array_equal(ds.chunks, ds_.chunks)
+
+    ds_.sa.chunks = N.hstack(([1234], ds_.chunks[1:]))
+    ok_(N.any(ds.samples != ds_.samples))
+    ok_(N.any(ds.labels != ds_.labels))
+    ok_(N.any(ds.chunks != ds_.chunks))
+
+    # XXX implement me
+    #ok_(N.any(ds.uniquelabels != ds_.uniquelabels))
+    #ok_(N.any(ds.uniquechunks != ds_.uniquechunks))
+
 
