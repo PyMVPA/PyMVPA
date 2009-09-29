@@ -1093,10 +1093,13 @@ class ClassWithCollections(object):
         if index in collections:
             return collections[index]
 
-        # check if it is a part of any collection
-        known_attribs = s_dict['_known_attribs']
-        if index in known_attribs:
-            return collections[known_attribs[index]].getvalue(index)
+        # MH: No implicite outbreak of collection items into the namespace of
+        #     the parent class
+        ## check if it is a part of any collection
+        #known_attribs = s_dict['_known_attribs']
+        #if index in known_attribs:
+        #    return collections[known_attribs[index]].getvalue(index)
+
 
         # just a generic return
         return _object_getattribute(self, index)
