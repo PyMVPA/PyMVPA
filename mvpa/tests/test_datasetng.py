@@ -2,9 +2,10 @@
 import numpy as N
 
 from numpy.testing import assert_array_equal
-from nose.tools import ok_
+from nose.tools import ok_, assert_raises
 
 from mvpa.datasets.base import Dataset
+from mvpa.mappers.array import DenseArrayMapper
 
 
 def test_from_labeled():
@@ -32,3 +33,24 @@ def test_from_labeled():
     ok_(ds.chunks == chunks)
 
     ok_(sorted(ds.sa.names) == ['chunks', 'labels'])
+
+    # there is not necessarily a mapper present
+    ok_(not ds.a.isKnown('mapper'))
+
+
+def test_basic_datamapping():
+    samples = N.arange(24).reshape((4,3,2))
+
+    # cannot handle 3d samples without a mapper
+    assert_raises(ValueError, Dataset, samples)
+
+    ds = Dataset.from_unlabeled(samples,
+            mapper=DenseArrayMapper(shape=samples.shape[1:]))
+
+    # mapper should end up in the dataset
+    ok_(ds.a.isKnown('mapper') == ds.a.isSet('mapper') == True)
+
+    # check correct mapping
+    ok_(ds.nsamples == 4)
+    ok_(ds.nfeatures == 6)
+

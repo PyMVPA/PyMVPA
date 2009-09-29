@@ -65,14 +65,16 @@ class Dataset(ClassWithCollections):
 
     def __init__(self, samples, sa=None, fa=None, a=None):
         """
-        This is the generic constructor. Its main task is to allow
-        for a maximum level of customization during dataset construction,
-        including fast copy construction.
+        A Dataset might have an arbitrary number of attributes for samples,
+        features, or the dataset as a whole. However, only the data samples
+        themselves are required.
 
         Parameters
         ----------
         samples : ndarray
-          Data samples.
+          Data samples. This has to be a two-dimensional (samples x features)
+          array. If the samples are not in that format, please consider one of
+          the `Dataset.from_*` classmethods.
         sa : Collection
           Samples attributes collection.
         fa : Collection
@@ -84,7 +86,7 @@ class Dataset(ClassWithCollections):
         --------
 
         The simplest way to create a dataset is from a 2D array, the so-called
-        :term:`samples-matrix`:
+        :term:`samples matrix`:
 
         >>> import numpy as N
         >>> from mvpa.datasets import Dataset
@@ -103,15 +105,7 @@ class Dataset(ClassWithCollections):
         # init base class
         ClassWithCollections.__init__(self)
 
-        # Internal constructor -- users focus on init* Methods
-
-        # Every dataset needs data (aka samples), completely data-driven
-        # analyses might not even need labels, so this is the only mandatory
-        # argument
-        # XXX add checks
-        self.samples = samples
-
-        # Everything else in a dataset (except for samples) is organized in
+        # Everything in a dataset (except for samples) is organized in
         # collections
         # make sure we have the target collection
         # XXX maybe use different classes for the collections
@@ -134,10 +128,16 @@ class Dataset(ClassWithCollections):
                     # XXX discuss the implications of always copying
                     tcol.add(copy.copy(attr))
 
+        # sanity checks
+        if not len(samples.shape) == 2:
+            raise ValueError('The samples array must be 2D or mappable into 2D'
+                             '(current shape is: %s)' % str(samples.shape))
+        self.samples = samples
+
 
     @classmethod
-    def from_labeled(klass, samples, labels, chunks=None):
-        """Create a Dataset from labeled samples.
+    def from_basic(klass, samples, labels=None, chunks=None, mapper=None):
+        """Create a Dataset from samples and elementary attributes.
 
         Parameters
         ----------
@@ -145,6 +145,11 @@ class Dataset(ClassWithCollections):
           The two-dimensional samples matrix.
         labels : ndarray
         chunks : ndarray
+        mapper : Mapper instance
+          A (potentially trained) mapper instance that is used to forward-map
+          the samples upon construction of the dataset. The mapper must
+          have a simple feature space (samples x features) as output. Use
+          chained mappers to achieve that, if necessary.
 
         Returns
         -------
@@ -162,33 +167,63 @@ class Dataset(ClassWithCollections):
         --------
         blah blah
         """
-        # Demo user contructor
-
         # compile the necessary samples attributes collection
-        items={}
+        sa_items={}
 
-        # we always have labels with this methods
-        labels_ = SampleAttribute(name='labels')
-        labels_.value = labels
-        # feels strange that one has to give the name again
-        # XXX why does items have to be a dict when each samples
-        # attr already knows its name
-        items['labels'] = labels_
+        if not labels is None:
+            labels_ = SampleAttribute(name='labels')
+            labels_.value = labels
+            # feels strange that one has to give the name again
+            # XXX why does items have to be a dict when each samples
+            # attr already knows its name
+            sa_items['labels'] = labels_
 
         if not chunks is None:
-            # but we might not have chunks
             # unlike previous implementation, we do not do magic to do chunks
             # if there are none, there are none
             chunks_ = SampleAttribute(name='chunks')
             chunks_.value = chunks
-            items['chunks'] = chunks_
+            sa_items['chunks'] = chunks_
 
-        # the final collection
+        # put mapper as a dataset attribute in the general attributes collection
+        a = None
+        if not mapper is None:
+            # forward-map the samples
+            samples = mapper.forward(samples)
+            # and store the mapper
+            mapper_ = DatasetAttribute(name='mapper')
+            mapper_.value = mapper
+            a = Collection(items={'mapper': mapper_})
+
+        # the final collection for samples attributes
         # XXX advantages of using SamplesAttributeCollection?
-        sa = Collection(items=items)
+        sa = Collection(items=sa_items)
 
         # common checks should go into __init__
-        return klass(samples, sa=sa)
+        return klass(samples, sa=sa, a=a)
+
+
+    @classmethod
+    def from_unlabeled(klass, samples, chunks=None, mapper=None):
+        """Create a Dataset from unlabeled samples.
+
+        This is a convenience method. Please see :meth:`Dataset.from_basic`
+        for details.
+        """
+        return klass.from_basic(samples, labels=None,
+                                chunks=chunks, mapper=mapper)
+
+
+    @classmethod
+    def from_labeled(klass, samples, labels, chunks=None, mapper=None):
+        """Create a Dataset from labeled samples.
+
+        This is a convenience method. Please see :meth:`Dataset.from_basic`
+        for details.
+        """
+        return klass.from_basic(samples, labels=labels,
+                                chunks=chunks, mapper=mapper)
+
 
 
     # shortcut properties
