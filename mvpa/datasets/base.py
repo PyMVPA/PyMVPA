@@ -79,6 +79,26 @@ class Dataset(ClassWithCollections):
           Features attributes collection.
         a : Collection
           Dataset attributes collection.
+
+        Examples
+        --------
+
+        The simplest way to create a dataset is from a 2D array, the so-called
+        :term:`samples-matrix`:
+
+        >>> import numpy as N
+        >>> from mvpa.datasets import Dataset
+        >>> samples = N.arange(12).reshape((4,3))
+        >>> ds = Dataset(samples)
+        >>> ds.nsamples
+        4
+        >>> ds.nfeatures
+        3
+        >>> ds.samples
+        array([[ 0,  1,  2],
+               [ 3,  4,  5],
+               [ 6,  7,  8],
+               [ 9, 10, 11]])
         """
         # init base class
         ClassWithCollections.__init__(self)
@@ -116,12 +136,8 @@ class Dataset(ClassWithCollections):
 
 
     @classmethod
-    def initSimple(klass, samples, labels, chunks):
-        # use Numpy convention
-        """
-        One line summary.
-
-        Long description.
+    def from_labeled(klass, samples, labels, chunks=None):
+        """Create a Dataset from labeled samples.
 
         Parameters
         ----------
@@ -132,7 +148,7 @@ class Dataset(ClassWithCollections):
 
         Returns
         -------
-        blah blah
+        An instance of a dataset
 
         Notes
         -----
@@ -149,22 +165,37 @@ class Dataset(ClassWithCollections):
         # Demo user contructor
 
         # compile the necessary samples attributes collection
+        items={}
+
+        # we always have labels with this methods
         labels_ = SampleAttribute(name='labels')
         labels_.value = labels
-        chunks_ = SampleAttribute(name='chunks')
-        chunks_.value = chunks
-
         # feels strange that one has to give the name again
         # XXX why does items have to be a dict when each samples
         # attr already knows its name
-        sa = Collection(items={'labels': labels_, 'chunks': chunks_})
+        items['labels'] = labels_
+
+        if not chunks is None:
+            # but we might not have chunks
+            # unlike previous implementation, we do not do magic to do chunks
+            # if there are none, there are none
+            chunks_ = SampleAttribute(name='chunks')
+            chunks_.value = chunks
+            items['chunks'] = chunks_
+
+        # the final collection
+        # XXX advantages of using SamplesAttributeCollection?
+        sa = Collection(items=items)
 
         # common checks should go into __init__
         return klass(samples, sa=sa)
 
 
+    # shortcut properties
     nsamples = property(fget=lambda self:self.samples.shape[0])
     nfeatures = property(fget=lambda self:self.samples.shape[1])
+    labels = property(fget=lambda self:self.sa.labels)
+    chunks = property(fget=lambda self:self.sa.chunks)
 
 #    @property
 #    def idhash(self):
