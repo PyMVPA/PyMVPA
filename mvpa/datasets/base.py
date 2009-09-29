@@ -51,6 +51,12 @@ if __debug__:
 # Remaining public interface of Dataset
 class Dataset(ClassWithCollections):
     """The successor of Dataset.
+
+    Conventions
+    -----------
+    Any dataset might have a mapper attached that is stored as a dataset
+    attribute called `mapper`.
+
     """
     # placeholder for all three basic collections of a Dataset
     # put here to be able to check whether the AttributesCollector already
@@ -133,6 +139,46 @@ class Dataset(ClassWithCollections):
             raise ValueError('The samples array must be 2D or mappable into 2D'
                              '(current shape is: %s)' % str(samples.shape))
         self.samples = samples
+
+        # XXX should we make them conditional?
+        # samples attributes
+        for attr in self.sa.names:
+            if not len(self.sa.getvalue(attr)) == self.nsamples:
+                raise ValueError("Length of samples attribute '%s' (%i) doesn't"
+                                 " match the number of samples (%i)"
+                                 % (attr,
+                                    len(self.sa.getvalue(attr)),
+                                    self.nsamples))
+        # feature attributes
+        for attr in self.fa.names:
+            if not len(self.fa.getvalue(attr)) == self.nfeatures:
+                raise ValueError("Length of feature attribute '%s' (%i) doesn't"
+                                 " match the number of features (%i)"
+                                 % (attr,
+                                    len(self.fa.getvalue(attr).attr),
+                                    self.nfeatures))
+
+
+    def __deepcopy__(self, memo=None):
+        # first we create new collections of the right type for each of the
+        # three essential collections of a dataset
+        sa = self.sa.__class__()
+        fa = self.fa.__class__()
+        a = self.a.__class__()
+
+        # now we copy the attributes
+        for tcol, scol in ((sa, self.sa),
+                           (fa, self.fa),
+                           (a, self.a)):
+            for name, attr in scol.items.iteritems():
+                tcol.add(copy.deepcopy(attr, memo))
+
+        # and finally the samples
+        samples = copy.deepcopy(self.samples, memo)
+
+        # call the generic init
+        out = self.__class__(samples, sa=sa, fa=fa, a=a)
+        return out
 
 
     @classmethod
@@ -225,34 +271,26 @@ class Dataset(ClassWithCollections):
                                 chunks=chunks, mapper=mapper)
 
 
-
     # shortcut properties
     nsamples = property(fget=lambda self:self.samples.shape[0])
     nfeatures = property(fget=lambda self:self.samples.shape[1])
     labels = property(fget=lambda self:self.sa.labels)
     chunks = property(fget=lambda self:self.sa.chunks)
 
-#    @property
-#    def idhash(self):
-#        pass
-#
-#
-#    def idsonboundaries(self, prior=0, post=0,
-#                        attributes_to_track=['labels', 'chunks'],
-#                        affected_labels=None,
-#                        revert=False):
-#        pass
-#
-#
-#    def summary(self, uniq=True, stats=True, idhash=False, lstats=True,
-#                maxc=30, maxl=20):
-#        pass
-#
-#
-#    def summary_labels(self, maxc=30, maxl=20):
-#        pass
-#
-#
+
+def datasetmethod(func):
+    """Decorator to easily bind functions to a Dataset class
+    """
+    if __debug__:
+        debug("DS_",  "Binding function %s to Dataset class" % func.func_name)
+
+    # Bind the function
+    setattr(Dataset, func.func_name, func)
+
+    # return the original one
+    return func
+
+
 #    def __iadd__(self, other):
 #        pass
 #
@@ -266,11 +304,6 @@ class Dataset(ClassWithCollections):
 #
 #
 #    def selectFeatures(self, ids=None, sort=True, groups=None):
-#        pass
-#
-#
-#    def applyMapper(self, featuresmapper=None, samplesmapper=None,
-#                    train=True):
 #        pass
 #
 #
@@ -294,38 +327,8 @@ class Dataset(ClassWithCollections):
 #        pass
 #
 #
-#    def permuteLabels(self, status, perchunk=True, assure_permute=False):
-#        pass
-#
-#
-#    def getRandomSamples(self, nperlabel):
-#        pass
-#
-#
-#    def getLabelsMap(self):
-#        pass
-#
-#
-#    def setLabelsMap(self, lm):
-#        pass
-#
-#
 #    def setSamplesDType(self, dtype):
 #        pass
-#
-#
-#    def defineFeatureGroups(self, definition):
-#        pass
-#
-#
-#    def convertFeatureIds2FeatureMask(self, ids):
-#        pass
-#
-#
-#    def convertFeatureMask2FeatureIds(self, mask):
-#        pass
-
-
 
 
 

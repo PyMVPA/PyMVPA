@@ -110,7 +110,7 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                                 for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    ds = Dataset(samples=data, labels=labels, chunks=chunks, labels_map=True)
+    ds = Dataset.from_labeled(data, labels=labels, chunks=chunks)
     ds.nonbogus_features = nonbogus_features
     return ds
 
