@@ -276,25 +276,6 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( (fpsel.samples == [[1, 2], [16, 17]]).all() )
 
 
-    def testPatternMerge(self):
-        data1 = Dataset(samples=N.ones((5, 5)), labels=1, chunks=1 )
-        data2 = Dataset(samples=N.ones((3, 5)), labels=2, chunks=1 )
-
-        merged = data1 + data2
-
-        self.failUnless( merged.nfeatures == 5 )
-        l12 = [1]*5 + [2]*3
-        l1 = [1]*8
-        self.failUnless( (merged.labels == l12).all() )
-        self.failUnless( (merged.chunks == l1).all() )
-
-        data1 += data2
-
-        self.failUnless( data1.nfeatures == 5 )
-        self.failUnless( (data1.labels == l12).all() )
-        self.failUnless( (data1.chunks == l1).all() )
-
-
     def testLabelRandomizationAndSampling(self):
         """
         """

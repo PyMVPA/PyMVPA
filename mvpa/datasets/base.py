@@ -186,6 +186,41 @@ class Dataset(ClassWithCollections):
         return out
 
 
+    def __iadd__(self, other):
+        """Merge the samples of one Dataset object to another (in-place).
+
+        Note
+        ----
+        No dataset attributes, or feature attributes will be merged! These
+        respective properties of the *other* dataset or neither checked for
+        compatibility nor copied over to this dataset.
+        """
+        if not self.nfeatures == other.nfeatures:
+            raise DatasetError("Cannot merge datasets, because the number of "
+                               "features does not match.")
+
+        if not sorted(self.sa.names) == sorted(other.sa.names):
+            raise DatasetError("Cannot merge dataset. This datasets samples "
+                               "attributes %s cannot be mapped into the other "
+                               "set %s" % (self.sa.names, other.sa.names))
+        # concat all samples attributes
+        for k, v in other.sa.items.iteritems():
+            self.sa[k].value = N.concatenate((self.sa[k].value, v.value), axis=0)
+
+        # concat the samples as well
+        self.samples = N.concatenate((self.samples, other.samples), axis=0)
+
+        return self
+
+
+    def __add__( self, other ):
+        """Merge the samples two datasets.
+        """
+        merged = copy.deepcopy(self)
+        merged += other
+        return merged
+
+
     @classmethod
     def from_basic(klass, samples, labels=None, chunks=None, mapper=None):
         """Create a Dataset from samples and elementary attributes.
