@@ -192,7 +192,7 @@ class Dataset(ClassWithCollections):
         Note
         ----
         No dataset attributes, or feature attributes will be merged! These
-        respective properties of the *other* dataset or neither checked for
+        respective properties of the *other* dataset are neither checked for
         compatibility nor copied over to this dataset.
         """
         if not self.nfeatures == other.nfeatures:
@@ -213,7 +213,7 @@ class Dataset(ClassWithCollections):
         return self
 
 
-    def __add__( self, other ):
+    def __add__(self, other):
         """Merge the samples two datasets.
         """
         merged = copy.deepcopy(self)
@@ -221,8 +221,12 @@ class Dataset(ClassWithCollections):
         return merged
 
 
+    def select_basic(self, samples=None, features=None):
+        pass
+
+
     @classmethod
-    def from_basic(klass, samples, labels=None, chunks=None, mapper=None):
+    def from_basic(cls, samples, labels=None, chunks=None, mapper=None):
         """Create a Dataset from samples and elementary attributes.
 
         Parameters
@@ -266,7 +270,7 @@ class Dataset(ClassWithCollections):
             a = Collection(items={'mapper': mapper_})
 
        # compile the necessary samples attributes collection
-        sa_items={}
+        sa_items = {}
 
         if not labels is None:
             labels_ = SampleAttribute(name='labels')
@@ -292,29 +296,29 @@ class Dataset(ClassWithCollections):
         sa = Collection(items=sa_items)
 
         # common checks should go into __init__
-        return klass(samples, sa=sa, a=a)
+        return cls(samples, sa=sa, a=a)
 
 
     @classmethod
-    def from_unlabeled(klass, samples, chunks=None, mapper=None):
+    def from_unlabeled(cls, samples, chunks=None, mapper=None):
         """Create a Dataset from unlabeled samples.
 
         This is a convenience method. Please see :meth:`Dataset.from_basic`
         for details.
         """
-        return klass.from_basic(samples, labels=None,
-                                chunks=chunks, mapper=mapper)
+        return cls.from_basic(samples, labels=None,
+                              chunks=chunks, mapper=mapper)
 
 
     @classmethod
-    def from_labeled(klass, samples, labels, chunks=None, mapper=None):
+    def from_labeled(cls, samples, labels, chunks=None, mapper=None):
         """Create a Dataset from labeled samples.
 
         This is a convenience method. Please see :meth:`Dataset.from_basic`
         for details.
         """
-        return klass.from_basic(samples, labels=labels,
-                                chunks=chunks, mapper=mapper)
+        return cls.from_basic(samples, labels=labels,
+                              chunks=chunks, mapper=mapper)
 
 
     # shortcut properties
@@ -359,18 +363,6 @@ def _expand_attribute(attr, length, attr_name):
         # make sequence of identical value matching the desired length
         return N.repeat(attr, length)
 
-#    def __iadd__(self, other):
-#        pass
-#
-#
-#    def __add__( self, other ):
-#        pass
-#
-#
-#    def copy(self):
-#        pass
-#
-#
 #    def selectFeatures(self, ids=None, sort=True, groups=None):
 #        pass
 #
