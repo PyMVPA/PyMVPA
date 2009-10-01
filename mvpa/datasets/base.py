@@ -134,8 +134,7 @@ class Dataset(ClassWithCollections):
             if not scol is None:
                 for name, attr in scol.items.iteritems():
                     # this will also update the owner of the attribute
-                    # XXX discuss the implications of always copying
-                    tcol.add(copy.copy(attr))
+                    tcol.add(attr)
 
         # sanity checks
         if not len(samples.shape) == 2:
@@ -221,8 +220,85 @@ class Dataset(ClassWithCollections):
         return merged
 
 
-    def select_basic(self, samples=None, features=None):
-        pass
+    def __getitem__(self, args):
+        """
+        """
+        # uniformize for checks below; it is not a tuple if just single slicing
+        # spec is passed
+        if not isinstance(args, tuple):
+            args = (args,)
+
+        if len(args) > 2:
+            raise ValueError("Too many arguments (%i). At most there can be "
+                             "two arguments, one for samples selection and one "
+                             "for features selection" % len(args))
+
+        # simplify things below and always have samples and feature slicing
+        if len(args) == 1:
+            args = (args[0], slice(None))
+
+        samples = None
+
+        # get the intended subset of the samples array
+        #
+        # need to deal with some special cases to ensure proper behavior
+        # simultaneous slicing of numpy arrays only yields intended results
+        # if at least one of the slicing args is an actual slice and not
+        # and index list are selection mask vector
+        if N.any([isinstance(a, slice) for a in args]):
+            samples = self.samples[args[0], args[1]]
+        else:
+            # in all other cases we have to do the selection sequentially
+            #
+            # samples subset: only alter if subset is requested
+            samples = self.samples[args[0]]
+            # features subset
+            if not args[1] is slice(None):
+                samples = samples[:, args[1]]
+
+        # and now for the attributes -- we want to maintain the type of the
+        # collections
+        sa = self.sa.__class__()
+        fa = self.fa.__class__()
+        a = self.a.__class__()
+
+        # per-sample attributes; always needs to run even if slice(None), since
+        # we need fresh SamplesAttributes even if they share the data
+        for attr in self.sa.items.values():
+            # preserve attribute type
+            newattr = attr.__class__(name=attr.name)
+            # slice
+            newattr.value = attr.value[args[0]]
+            # assign to target collection
+            sa.add(newattr)
+
+        # per-feature attributes; always needs to run even if slice(None),
+        # since we need fresh SamplesAttributes even if they share the data
+        for attr in self.fa.items.values():
+            # preserve attribute type
+            newattr = attr.__class__(name=attr.name)
+            # slice
+            newattr.value = attr.value[args[1]]
+            # assign to target collection
+            fa.add(newattr)
+
+            # and finally dataset attributes: this time copying
+        for attr in self.a.items.values():
+            # preserve attribute type
+            newattr = attr.__class__(name=attr.name)
+            # do a shallow copy here
+            # XXX every DatasetAttribute should have meaningful __copy__ if
+            # necessary -- most likely all mappers need to have one
+            newattr.value = copy.copy(attr)
+            # assign to target collection
+            a.add(newattr)
+
+        # and adjusting the mapper (if any)
+        if a.isKnown('mapper') and a.isSet('mapper'):
+            a.mapper.selectOut(args[1])
+
+        # and after a long way instantiate the new dataset of the same type
+        return self.__class__(samples, sa=sa, fa=fa, a=a)
 
 
     @classmethod

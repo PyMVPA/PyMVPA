@@ -112,3 +112,14 @@ def test_mergeds():
     ok_(data1.nfeatures == 5)
     ok_((data1.labels == l12).all())
     ok_((data1.chunks == l1).all())
+
+
+def test_combined_samplesfeature_selection():
+        data = Dataset(N.arange(20).reshape((4, 5)))
+
+        ok_(data.nsamples == 4)
+        ok_(data.nfeatures == 5)
+        sel = data[[0, 3], [1, 2]]
+        ok_(sel.nsamples == 2)
+        ok_(sel.nfeatures == 2)
+        assert_array_equal(sel.samples, [[1, 2], [16, 17]])
