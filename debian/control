@@ -16,7 +16,7 @@ Depends: ${misc:Depends}, ${python:Depends}, python, python-numpy, python-mvpa-l
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab
-Suggests: fslview, fsl, python-nose, python-lxml, python-scikits-openopt, python-rpy
+Suggests: fslview, fsl, python-nose, python-lxml, python-scikits-openopt, python-rpy, python-mvpa-doc
 Description: multivariate pattern analysis with Python
  Python module to ease pattern classification analyses of large
  datasets. It provides high-level abstraction of typical processing
