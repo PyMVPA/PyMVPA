@@ -163,6 +163,42 @@ class Dataset(ClassWithCollections):
                                       self.nfeatures))
 
 
+    def __copy__(self):
+        # first we create new collections of the right type for each of the
+        # three essential collections of a dataset
+        sa = self.sa.__class__()
+        fa = self.fa.__class__()
+        a = self.a.__class__()
+
+        # for all the pieces that are known to be arrays
+        for tcol, scol in ((sa, self.sa),
+                           (fa, self.fa)):
+            for attr in scol.items.values():
+                # preserve attribute type
+                newattr = attr.__class__(name=attr.name)
+                # just get a view of the old data!
+                newattr.value = attr.value.view()
+                # assign to target collection
+                tcol.add(newattr)
+
+        # dataset attributes might be anythings, so they are SHALLOW copied
+        # individually
+        for attr in self.a.items.values():
+            # preserve attribute type
+            newattr = attr.__class__(name=attr.name)
+            # SHALLOW copy!
+            newattr.value = copy.copy(attr.value)
+            # assign to target collection
+            a.add(newattr)
+
+        # and finally the samples
+        samples = self.samples.view()
+
+        # call the generic init
+        out = self.__class__(samples, sa=sa, fa=fa, a=a)
+        return out
+
+
     def __deepcopy__(self, memo=None):
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset

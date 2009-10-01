@@ -2,13 +2,14 @@
 import numpy as N
 
 from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises
+from nose.tools import ok_, assert_raises, assert_false
 
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.misc.exceptions import DatasetError
+import mvpa.datasets.miscfx
 
 def test_from_labeled():
     samples = N.arange(12).reshape((4,3))
@@ -60,7 +61,36 @@ def test_basic_datamapping():
     ok_(ds.nfeatures == 6)
 
 
-def test_ds_copy():
+def test_ds_shallowcopy():
+    # lets use some instance of somewhat evolved dataset
+    ds = normalFeatureDataset()
+    # SHALLOW copy the beast
+    ds_ = copy.copy(ds)
+    # verify that we have the same data
+    assert_array_equal(ds.samples, ds_.samples)
+    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.chunks, ds_.chunks)
+
+    # modify and see that we actually DO change the data in both
+    ds_.samples[0, 0] = 1234
+    assert_array_equal(ds.samples, ds_.samples)
+    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.chunks, ds_.chunks)
+
+    ds_.sa.labels[0] = 'ab'
+    ds_.sa.chunks[0] = 234
+    assert_array_equal(ds.samples, ds_.samples)
+    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.chunks, ds_.chunks)
+    ok_(ds.sa.labels[0] == 'ab')
+    ok_(ds.sa.chunks[0] == 234)
+
+    # XXX implement me
+    #ok_(N.any(ds.uniquelabels != ds_.uniquelabels))
+    #ok_(N.any(ds.uniquechunks != ds_.uniquechunks))
+
+
+def test_ds_deepcopy():
     # lets use some instance of somewhat evolved dataset
     ds = normalFeatureDataset()
     # Clone the beast
@@ -123,3 +153,39 @@ def test_combined_samplesfeature_selection():
         ok_(sel.nsamples == 2)
         ok_(sel.nfeatures == 2)
         assert_array_equal(sel.samples, [[1, 2], [16, 17]])
+
+
+def test_labelpermutation_randomsampling():
+    ds  = Dataset.from_basic(N.ones((5, 1)),     labels=range(5), chunks=1)
+    ds += Dataset.from_basic(N.ones((5, 1)) + 1, labels=range(5), chunks=2)
+    ds += Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3)
+    ds += Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4)
+    ds += Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5)
+
+    # XXX put me back
+    #self.failUnless( data.samplesperlabel == {0:5, 1:5, 2:5, 3:5, 4:5} )
+#    sample = data.getRandomSamples( 2 )
+#    self.failUnless( sample.samplesperlabel.values() == [ 2, 2, 2, 2, 2 ] )
+#    self.failUnless( (data.uniquechunks == range(1, 6)).all() )
+
+    # keep the orig labels
+    orig_labels = ds.labels.copy()
+
+    # also keep the orig dataset, but SHALLOW copy and leave everything
+    # else as a view!
+    ods = copy.copy(ds)
+
+    ds.permute_labels()
+    # some permutation should have happened
+    assert_false((ds.labels == orig_labels).all())
+
+    # but the original dataset should be uneffected
+    assert_array_equal(ods.labels, orig_labels)
+
+    # samples are really shared
+    ds.samples[0,0] = 123456
+    assert_array_equal(ds.samples, ods.samples)
+
+    # and other samples attributes too
+    ds.chunks[0] = 9876
+    assert_array_equal(ds.chunks, ods.chunks)

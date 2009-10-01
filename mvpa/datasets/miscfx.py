@@ -253,3 +253,62 @@ def getSamplesPerChunkLabel(dataset):
                                                 dataset.chunks == c))
 
     return count
+
+
+@datasetmethod
+def permute_labels(dataset, perchunk=True, assure_permute=False):
+    """Permute the labels of a Dataset in-place.
+
+    Parameters
+    ----------
+    perchunk : bool
+      If True, permutation is limited to samples sharing the same chunk
+      value.  Therefore only the association of a certain sample with
+      a label is permuted while keeping the absolute number of
+      occurences of each label value within a certain chunk constant.
+      If there is no `chunks` information in the dataset this flag has
+      no effect.
+    assure_permute : bool
+      If True, assures that labels are permutted, i.e. any one is
+      different from the original one
+    """
+    if __debug__:
+        if len(N.unique(dataset.sa.labels)) < 2:
+            raise RuntimeError(
+                  "Permuting labels is only meaningful if there are "
+                  "more than two different labels.")
+
+    # local binding
+    labels = dataset.sa['labels'].value
+
+    # now scramble
+    if perchunk and dataset.sa.isKnown('chunks'):
+        chunks = dataset.sa['chunks'].value
+
+        plabels = N.zeros(labels.shape)
+
+        # XXX put me back: for o in self.uniquechunks:
+        for o in N.unique(chunks):
+            plabels[chunks == o] = \
+                N.random.permutation(labels[chunks == o])
+    else:
+        plabels = N.random.permutation(labels)
+
+    if assure_permute:
+        if not (plabels != labels).any():
+            if not (assure_permute is True):
+                if assure_permute == 1:
+                    raise RuntimeError, \
+                          "Cannot assure permutation of labels %s for " \
+                          "some reason with chunks %s and while " \
+                          "perchunk=%s . Should not happen" % \
+                          (labels, self.chunks, perchunk)
+            else:
+                assure_permute = 11 # make 10 attempts
+            if __debug__:
+                debug("DS",  "Recalling permute to assure different labels")
+            permute_labels(dataset,
+                           perchunk=perchunk,
+                           assure_permute=assure_permute-1)
+    # reassign to the dataset
+    dataset.sa.labels = plabels
