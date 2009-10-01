@@ -261,21 +261,6 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(data.where(labels=[123]) == [])
 
 
-    def testCombinedPatternAndFeatureMasking(self):
-        data = Dataset(samples=N.arange( 20 ).reshape( (4, 5) ),
-                       labels=1,
-                       chunks=1)
-
-        self.failUnless( data.nsamples == 4 )
-        self.failUnless( data.nfeatures == 5 )
-        fsel = data.selectFeatures([1, 2])
-        fpsel = fsel.selectSamples([0, 3])
-        self.failUnless( fpsel.nsamples == 2 )
-        self.failUnless( fpsel.nfeatures == 2 )
-
-        self.failUnless( (fpsel.samples == [[1, 2], [16, 17]]).all() )
-
-
     def testLabelRandomizationAndSampling(self):
         """
         """
