@@ -199,7 +199,8 @@ class MCNullDist(NullDist):
     dist_samples = StateVariable(enabled=False,
                                  doc='Samples obtained for each permutation')
 
-    def __init__(self, dist_class=Nonparametric, permutations=100, **kwargs):
+    def __init__(self, dist_class=Nonparametric, permutations=100,
+                 perchunk=False, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
@@ -212,6 +213,8 @@ class MCNullDist(NullDist):
         permutations : int
           This many permutations of label will be performed to
           determine the distribution under the null hypothesis.
+        perchunk: bool
+            If True, only permutes labels within each chunk
         """
         NullDist.__init__(self, **kwargs)
 
@@ -222,8 +225,12 @@ class MCNullDist(NullDist):
         """Number of permutations to compute the estimate the null
         distribution."""
 
+        self.__perchunk = perchunk
+
     def __repr__(self, prefixes=[]):
         prefixes_ = ["permutations=%s" % self.__permutations]
+        if self.__perchunk:
+            prefixes_ += ['perchunk=True']
         if self._dist_class != Nonparametric:
             prefixes_.insert(0, 'dist_class=%s' % `self._dist_class`)
         return super(MCNullDist, self).__repr__(
@@ -262,7 +269,7 @@ class MCNullDist(NullDist):
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
             permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_targets(perchunk=False)
+            permuted_wdata.permute_targets(perchunk=self.__perchunk)
 
             # decide on the arguments to measure
             if not vdata is None:
