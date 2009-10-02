@@ -78,7 +78,7 @@ class MetricTests(unittest.TestCase):
 
         # neighbors in compat space will be simply propagated along remaining
         # dimensions (somewhat like a backprojection from the subspace into the
-        # original space
+        # original space)
         self.failUnless((metric.getNeighbors([0]*4, 1) ==
                         [[-1, 0, 0, 0], [0, 0, 0, 0], [1, 0, 0, 0]]).all())
         # test different radius in compat and in remaining space
@@ -94,6 +94,17 @@ class MetricTests(unittest.TestCase):
         # check axis scaling in non-compat space
         self.failUnless(len(metric.getNeighbors([0]*4, [7.9, 0, 0, 0])) == 9)
 
+        # check if we can modify compatmask and still perform fine
+        old_filter = metric.filter_coord.copy()
+        cm = metric.compatmask
+        cm[0] = 1
+        metric.compatmask = cm
+        self.failUnless((metric.compatmask == [True]*4).all())
+        self.failUnless((metric.getNeighbors([0]*4, 3) ==
+                         [[-1,  0,  0,  0], [ 0,  0, -1,  0], [ 0,  0,  0, -1],
+                          [ 0,  0,  0,  0], [ 0,  0,  0,  1], [ 0,  0,  1,  0],
+                          [ 1,  0,  0,  0]]).all())
+        self.failUnless(N.any(old_filter != metric.filter_coord))
 
     def testGetNeighbors(self):
         """Test if generator getNeighbor and method getNeighbors
