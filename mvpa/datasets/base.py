@@ -511,11 +511,6 @@ def _expand_attribute(attr, length, attr_name):
 #
 #    def where(self, *args, **kwargs):
 #        pass
-#
-#
-#    def setSamplesDType(self, dtype):
-#        pass
-
 
 
 

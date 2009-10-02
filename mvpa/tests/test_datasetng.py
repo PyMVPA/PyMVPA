@@ -10,6 +10,9 @@ from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.misc.exceptions import DatasetError
 import mvpa.datasets.miscfx
+from mvpa.misc.attributes import SampleAttribute
+
+#from tests_warehouse import *
 
 def test_from_labeled():
     samples = N.arange(12).reshape((4,3))
@@ -42,6 +45,9 @@ def test_from_labeled():
 
     # has to complain about misshaped samples attributes
     assert_raises(DatasetError, Dataset.from_labeled, samples, labels + labels)
+
+    # check that we actually have attributes of the expected type
+    ok_(isinstance(ds.sa['labels'], SampleAttribute))
 
 
 def test_basic_datamapping():
@@ -155,6 +161,7 @@ def test_combined_samplesfeature_selection():
     ok_(sel.nsamples == 2)
     ok_(sel.nfeatures == 2)
     assert_array_equal(sel.labels, [1,4])
+    assert_array_equal(sel.chunks, [5,8])
     assert_array_equal(sel.samples, [[1, 2], [16, 17]])
 
     # should yield the same result if done sequentially
