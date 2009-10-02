@@ -53,7 +53,7 @@ def zscore(dataset, mean=None, std=None,
     """
 
     if __debug__ and perchunk \
-      and N.array(dataset.samplesperchunk.values()).min() < 2:
+      and N.array(get_nsamples_per_attr(dataset, 'chunks').values()).min() < 2:
         warning("Z-scoring chunk-wise and one chunk with less than two " \
                 "samples will set features in these samples to zero.")
 
@@ -105,7 +105,7 @@ def zscore(dataset, mean=None, std=None,
     # for the sake of speed yoh didn't simply create a list
     # [True]*dataset.nsamples to provide easy selection of everything
     if perchunk:
-        for c in dataset.uniquechunks:
+        for c in dataset.sa['chunks'].unique:
             slicer = N.where(dataset.chunks == c)[0]
             if not statids is None:
                 statslicer = list(statids.intersection(Set(slicer)))
@@ -135,16 +135,14 @@ def aggregateFeatures(dataset, fx=N.mean):
     """
     agg = fx(dataset.samples, axis=1)
 
-    return Dataset(samples=N.array(agg, ndmin=2).T,
-                   labels=dataset.labels,
-                   chunks=dataset.chunks)
+    return Dataset(samples=N.array(agg, ndmin=2).T, sa=dataset.sa)
 
 
 @datasetmethod
 def removeInvariantFeatures(dataset):
     """Returns a new dataset with all invariant features removed.
     """
-    return dataset.selectFeatures(dataset.samples.std(axis=0).nonzero()[0])
+    return dataset[:, dataset.samples.std(axis=0).nonzero()[0]]
 
 
 @datasetmethod
@@ -217,7 +215,8 @@ def coarsenChunks(source, nchunks=4):
         for c in group:
             chunks_map[c] = i
 
-    chunks_new = [chunks_map[x] for x in chunks]
+    # we always want an array!
+    chunks_new = N.array([chunks_map[x] for x in chunks])
 
     if __debug__:
         debug("DS_", "Using dictionary %s to remap old chunks %s into new %s"
@@ -227,7 +226,7 @@ def coarsenChunks(source, nchunks=4):
         if __debug__:
             debug("DS", "Coarsing %d chunks into %d chunks for %s"
                   %(nchunks_orig, len(chunks_new), source))
-        source.chunks = chunks_new
+        source.sa['chunks'].value = chunks_new
         return
     else:
         return chunks_new
@@ -243,8 +242,8 @@ def getSamplesPerChunkLabel(dataset):
       dataset: Dataset
         Source dataset.
     """
-    ul = dataset.uniquelabels
-    uc = dataset.uniquechunks
+    ul = dataset.sa['labels'].unique
+    uc = dataset.sa['chunks'].unique
 
     count = N.zeros((len(uc), len(ul)), dtype='uint')
 
@@ -293,8 +292,7 @@ def permute_labels(dataset, perchunk=True, assure_permute=False):
 
         plabels = N.zeros(labels.shape)
 
-        # XXX put me back: for o in self.uniquechunks:
-        for o in N.unique(chunks):
+        for o in dataset.sa['chunks'].unique:
             plabels[chunks == o] = \
                 N.random.permutation(labels[chunks == o])
     else:

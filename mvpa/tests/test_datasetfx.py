@@ -9,11 +9,12 @@
 """Unit tests for PyMVPA miscelaneouse functions operating on datasets"""
 
 import unittest
+from numpy.testing import assert_array_equal
 
 import numpy as N
 
 from mvpa.base import externals
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks
 
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -22,7 +23,7 @@ class MiscDatasetFxTests(unittest.TestCase):
 
     def testInvarFeaturesRemoval(self):
         r = N.random.normal(size=(3,1))
-        ds = Dataset(samples=N.hstack((N.zeros((3,2)), r)),
+        ds = dataset(samples=N.hstack((N.zeros((3,2)), r)),
                      labels=1)
 
         self.failUnless(ds.nfeatures == 3)
@@ -36,15 +37,16 @@ class MiscDatasetFxTests(unittest.TestCase):
     def testCoarsenChunks(self):
         """Just basic testing for now"""
         chunks = [1,1,2,2,3,3,4,4]
-        ds = Dataset(samples=N.arange(len(chunks)).reshape(
+        ds = dataset(samples=N.arange(len(chunks)).reshape(
             (len(chunks),1)), labels=[1]*8, chunks=chunks)
         coarsenChunks(ds, nchunks=2)
         chunks1 = coarsenChunks(chunks, nchunks=2)
+        print type(chunks1)
         self.failUnless((chunks1 == ds.chunks).all())
         self.failUnless((chunks1 == N.asarray([0,0,0,0,1,1,1,1])).all())
 
-        ds2 = Dataset(samples=N.arange(len(chunks)).reshape(
-            (len(chunks),1)), labels=[1]*8)
+        ds2 = dataset(samples=N.arange(len(chunks)).reshape(
+            (len(chunks),1)), labels=[1]*8, chunks=range(len(chunks)))
         coarsenChunks(ds2, nchunks=2)
         self.failUnless((chunks1 == ds.chunks).all())
 
@@ -64,7 +66,7 @@ class MiscDatasetFxTests(unittest.TestCase):
                             N.any(ds.chunks != ds_chunks),
                 msg="We should have modified original dataset with %s" % f)
             ds.samples = ds_data.copy()
-            ds.chunks = ds_chunks.copy()
+            ds.sa['chunks'].value = ds_chunks.copy()
 
         # and some which should just return results
         for f in ['aggregateFeatures', 'removeInvariantFeatures',
