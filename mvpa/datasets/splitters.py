@@ -43,7 +43,7 @@ import numpy as N
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.datasets.miscfx import coarsenChunks
+from mvpa.datasets.miscfx import coarsenChunks, permute_labels
 
 if __debug__:
     from mvpa.base import debug
@@ -186,7 +186,6 @@ class Splitter(object):
 
         # local bindings to methods to gain some speedup
         ds_class = dataset.__class__
-        DS_permuteLabels = ds_class.permuteLabels
         try:
             DS_getNSamplesPerLabel = ds_class._getNSamplesPerAttr
         except AttributeError:
@@ -252,7 +251,7 @@ class Splitter(object):
                 for ds, nperlabel in zip(split_ds, nperlabelsplit):
                     # permute the labels
                     if self.__permute:
-                        DS_permuteLabels(ds, True, perchunk=True)
+                        permute_labels(ds, perchunk=True)
 
                     # select subset of samples if requested
                     if nperlabel == 'all' or ds is None:
