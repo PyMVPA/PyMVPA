@@ -14,7 +14,7 @@ import numpy as N
 
 from mvpa.base import externals
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 from mvpa.datasets.miscfx import removeInvariantFeatures
 
 if externals.exists('scipy', raiseException=True):
@@ -34,21 +34,18 @@ class MiscDatasetFxSpTests(unittest.TestCase):
                                [2, 0, -2, -2, 0, 2]], ndmin=2 ).T
 
 
-        ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                     copy_samples=True)
+        ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
         detrend(ds, perchunk=False)
 
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                 msg="Detrend should have detrended all the samples at once")
 
 
-        ds_bad = Dataset(samples=samples, labels=chunks, chunks=chunks_bad,
-                         copy_samples=True)
+        ds_bad = dataset(samples.copy(), labels=chunks, chunks=chunks_bad)
         self.failUnlessRaises(ValueError, detrend, ds_bad, perchunk=True)
 
 
-        ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                     copy_samples=True)
+        ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
         detrend(ds, perchunk=True)
 
         self.failUnless(linalg.norm(ds.samples) < thr,
@@ -59,21 +56,19 @@ class MiscDatasetFxSpTests(unittest.TestCase):
 
 
         # small additional test for break points
-        ds = Dataset(samples=N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
-                     labels=chunks, chunks=chunks, copy_samples=True)
+        ds = dataset(N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
+                     labels=chunks, chunks=chunks)
         detrend(ds, perchunk=True)
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have removed all the signal")
 
         # tests of the regress version of detrend
-        ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                     copy_samples=True)
+        ds = dataset(samples=samples.copy(), labels=chunks, chunks=chunks)
         detrend(ds, perchunk=False, model='regress', polyord=1)
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                 msg="Detrend should have detrended all the samples at once")
 
-        ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                     copy_samples=True)
+        ds = dataset(samples=samples.copy(), labels=chunks, chunks=chunks)
         (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=2)
         psamps = ds.samples.copy()
         self.failUnless(linalg.norm(ds.samples) < thr,
@@ -82,8 +77,7 @@ class MiscDatasetFxSpTests(unittest.TestCase):
         self.failUnless(ds.samples.shape == samples.shape,
                         msg="Detrend must preserve the size of dataset")
 
-        ods = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                      copy_samples=True)
+        ods = dataset(samples=samples.copy(), labels=chunks, chunks=chunks)
         opt_reg = reg.copy()
         (ores, oreg) = detrend(ods, perchunk=True, model='regress',
                                opt_reg=opt_reg)
@@ -101,21 +95,18 @@ class MiscDatasetFxSpTests(unittest.TestCase):
         target_mixed = N.array( [[-1.0, 0, 1, 0, 0, 0],
                                  [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
 
-        ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                     copy_samples=True)
+        ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
         (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=[0,1])
         self.failUnless(linalg.norm(ds.samples - target_mixed) < thr,
             msg="Detrend should have baseline corrected the first chunk, " + \
                 "but baseline and linear detrended the second.")
 
         # test applying detrend in sequence
-        ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                     copy_samples=True)
+        ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
         (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=1)
         opt_reg = reg[N.ix_(range(reg.shape[0]),[1,3])]
         final_samps = ds.samples.copy()
-        ds = Dataset(samples=samples, labels=chunks, chunks=chunks,
-                     copy_samples=True)
+        ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
         (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=0)
         (res, reg) = detrend(ds, perchunk=True, model='regress',
                              opt_reg=opt_reg)
