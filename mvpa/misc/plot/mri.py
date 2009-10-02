@@ -26,7 +26,8 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             vlim=(0.0, None), vlim_type=None,
             do_stretch_colors=False,
             add_info=True, add_hist=True, add_colorbar=True,
-            fig=None, interactive=None
+            fig=None, interactive=None,
+            ncolumns=None
             ):
     """Very basic plotting of 3D data with interactive thresholding.
 
@@ -47,6 +48,15 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
            often could be assumed when total distribution is a mixture of
            by-chance performance normal around 0, and some other in the
            positive tail
+      ncolumns : int or None
+        Explicit number of columns into which position the slice renderings.
+        If None, square arrangement would be used
+      add_hist : bool or tuple (int, int)
+        If True, add histogram and position automagically.
+        If a tuple -- use as (row, column)
+      add_info : bool or tuple (int, int)
+        If True, add information and position automagically.
+        If a tuple -- use as (row, column).
 
     Available colormaps are presented nicely on
       http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps
@@ -174,7 +184,9 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             vlim = self._locals['vlim']
             bg = self._locals['bg']
             bg_mask = self._locals['bg_mask']
-
+            ncolumns = self._locals['ncolumns']
+            add_info = self._locals['add_info']
+            add_hist = self._locals['add_hist']
             #print locals()
             if N.isscalar(vlim): vlim = (vlim, None)
             if vlim[0] is None: vlim = (N.min(func), vlim[1])
@@ -226,16 +238,32 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             nslices = func.shape[0]
 
             # more or less square alignment ;-)
-            ndcolumns = ncolumns = int(N.sqrt(nslices))
+            if ncolumns is None:
+                ncolumns = int(N.sqrt(nslices))
+            ndcolumns = ncolumns
             nrows = int(N.ceil(nslices*1.0/ncolumns))
 
-            # we need 1 more column for info and hist
-            ncolumns += int(add_info or add_hist)
+            # Decide where to position info and hist
+            for v in (add_info, add_hist):
+                if v:
+                    if isinstance(v, bool):
+                        if ndcolumns == ncolumns:
+                            ncolumns += 1
+                        else:           # so we had already one -- need 2nd row
+                            nrows += 1
+                    else:
+                        ncolumns = max(ncolumns, v[1]+1)
+                        nrows = max(nrows, v[0]+1)
 
-            # we might need to assure 2 rows
-            if add_info and add_hist and nrows < 2:
-                nrows = 2
-
+            crow = 0
+            if add_hist and isinstance(add_hist, bool):
+                add_hist = (0, ndcolumns) # add to 0th row
+                crow += 1
+            if add_info and isinstance(add_info, bool):
+                add_info = (crow, ndcolumns) # add to crow
+            print ncolumns, nrows
+            print add_hist
+            print add_info
             # should compare by backend?
             if P.matplotlib.get_backend() in _interactive_backends:
                 P.ioff()
@@ -307,7 +335,7 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
 
             # Add histogram
             if add_hist:
-                self.hist_sp = fig.add_subplot(nrows, ncolumns, ncolumns, frame_on=True)
+                self.hist_sp = fig.add_subplot(nrows, ncolumns, add_hist[0]*ncolumns+add_hist[1]+1, frame_on=True)
                 minv, maxv = N.min(func_masked), N.max(func_masked)
                 if minv<0 and maxv>0:               # then make it centered on 0
                     maxx = max(-minv, maxv)
@@ -333,7 +361,8 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             # Add summary information
             func_thr = func[N.logical_and(func_mask, thresholder(func))]
             if add_info and len(func_thr):
-                ax = fig.add_subplot(nrows, ncolumns, (1+int(add_hist))*ncolumns, frame_on=False)
+                ax = fig.add_subplot(nrows, ncolumns,
+                                     add_info[0]*ncolumns + add_info[1]+1, frame_on=False)
                 #    cb = P.colorbar(shrink=0.8)
                 #    #cb.set_clim(clim[0], clim[1])
                 ax.axison = False
@@ -376,7 +405,7 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
 
 
             fig.subplots_adjust(left=0.01, right=0.95, bottom=0.01, hspace=0.01)
-            if ncolumns - int(add_info or add_hist) < 2:
+            if ncolumns - int(bool(add_info) or bool(add_hist)) < 2:
                 fig.subplots_adjust(wspace=0.4)
             else:
                 fig.subplots_adjust(wspace=0.1)
