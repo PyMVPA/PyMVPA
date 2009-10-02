@@ -221,6 +221,26 @@ class Dataset(ClassWithCollections):
         return out
 
 
+    def copy(self, deep=True):
+        """Create a copy of a dataset.
+
+        By default this is going to be a deep copy of the dataset, hence no
+        data is shared between the original dataset and its copy.
+
+        Parameter
+        ---------
+        deep : boolean
+          If False, a shallow copy of the dataset is return instead. The copy
+          contains only views of the samples, sample attributes and feature
+          feature attributes, as well as shallow copies of all dataset
+          attributes.
+        """
+        if deep:
+            return copy.deepcopy(self)
+        else:
+            return copy.copy(self)
+
+
     def __iadd__(self, other):
         """Merge the samples of one Dataset object to another (in-place).
 
@@ -251,7 +271,9 @@ class Dataset(ClassWithCollections):
     def __add__(self, other):
         """Merge the samples two datasets.
         """
-        merged = copy.deepcopy(self)
+        # shallow copies should be sufficient, since __iadd__ will concatenate
+        # most pieces anyway
+        merged = self.copy(deep=False)
         merged += other
         return merged
 
@@ -440,6 +462,9 @@ class Dataset(ClassWithCollections):
     chunks = property(fget=lambda self:self.sa.chunks)
 
 
+# convenience alias
+dataset = Dataset.from_basic
+
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
     """
@@ -469,20 +494,13 @@ def _expand_attribute(attr, length, attr_name):
                   "Length of attribute '%s' [%d] has to be %d." \
                   % (attr_name, len(attr), length) \
         # sequence as array
-        return N.array(attr)
+        return N.asanyarray(attr)
 
     except TypeError:
         # make sequence of identical value matching the desired length
         return N.repeat(attr, length)
 
-#    def selectFeatures(self, ids=None, sort=True, groups=None):
-#        pass
-#
-#
-#    def selectSamples(self, ids):
-#        pass
-#
-#
+
 #    def index(self, *args, **kwargs):
 #        pass
 #
@@ -492,10 +510,6 @@ def _expand_attribute(attr, length, attr_name):
 #
 #
 #    def where(self, *args, **kwargs):
-#        pass
-#
-#
-#    def __getitem__(self, *args):
 #        pass
 #
 #
