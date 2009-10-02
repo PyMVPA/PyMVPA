@@ -257,7 +257,12 @@ def getSamplesPerChunkLabel(dataset):
 
 @datasetmethod
 def permute_labels(dataset, perchunk=True, assure_permute=False):
-    """Permute the labels of a Dataset in-place.
+    """Permute the labels of a Dataset.
+
+    A new permuted set of labels is assigned to the dataset, replacing
+    the previous labels. The labels are not modified in-place, hence
+    it is safe to call the function on shallow copies of a dataset
+    without modifying the original dataset's labels.
 
     Parameters
     ----------
