@@ -182,10 +182,10 @@ def test_labelpermutation_randomsampling():
     ds += Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5)
 
     # XXX put me back
-    #self.failUnless( data.samplesperlabel == {0:5, 1:5, 2:5, 3:5, 4:5} )
-#    sample = data.getRandomSamples( 2 )
-#    self.failUnless( sample.samplesperlabel.values() == [ 2, 2, 2, 2, 2 ] )
-#    self.failUnless( (data.uniquechunks == range(1, 6)).all() )
+    ok_(ds.get_nsamples_per_attr('labels') == {0:5, 1:5, 2:5, 3:5, 4:5})
+    sample = ds.random_samples(2)
+    ok_(sample.get_nsamples_per_attr('labels').values() == [ 2, 2, 2, 2, 2 ])
+    ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
     # keep the orig labels
     orig_labels = ds.labels.copy()

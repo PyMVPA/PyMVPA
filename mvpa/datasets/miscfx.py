@@ -16,6 +16,7 @@ __docformat__ = 'restructuredtext'
 
 from sets import Set
 from operator import isSequenceType
+import random
 
 import numpy as N
 
@@ -317,3 +318,62 @@ def permute_labels(dataset, perchunk=True, assure_permute=False):
                            assure_permute=assure_permute-1)
     # reassign to the dataset
     dataset.sa.labels = plabels
+
+
+@datasetmethod
+def random_samples(dataset, nperlabel):
+    """Create a dataset with a random subset of samples.
+
+    Parameters
+    ----------
+    nperlabel : int, list
+
+      If an integer is given, the specified number of samples is randomly
+      choosen from the group of samples sharing a unique label value (total
+      number of selected samples: nperlabel x len(uniquelabels).
+
+      If a list is given which's length is matching the unique label values, it
+      will specify the number of samples chosen for each particular unique
+      label.
+
+    Returns
+    -------
+    A dataset instance for the chosen samples. All feature attributes and
+    dataset attribute share there data with the source dataset.
+    """
+    uniquelabels = dataset.sa['labels'].unique
+    # if interger is given take this value for all classes
+    if isinstance(nperlabel, int):
+        nperlabel = [nperlabel for i in uniquelabels]
+
+    sample = []
+    # for each available class
+    labels = dataset.labels
+    for i, r in enumerate(uniquelabels):
+        # get the list of pattern ids for this class
+        sample += random.sample((labels == r).nonzero()[0], nperlabel[i] )
+
+    return dataset[sample]
+
+
+@datasetmethod
+def get_nsamples_per_attr(dataset, attr):
+    """Returns the number of samples per unique value of a sample attribute.
+
+    Parameters
+    ----------
+    attr : str
+      Name of the sample attribute
+
+    Returns
+    -------
+    dict with the number of samples (value) per unique attribute (key).
+    """
+    uniqueattr = dataset.sa[attr].unique
+
+    # use dictionary to cope with arbitrary labels
+    result = dict(zip(uniqueattr, [ 0 ] * len(uniqueattr)))
+    for l in dataset.sa[attr].value:
+        result[l] += 1
+
+    return result

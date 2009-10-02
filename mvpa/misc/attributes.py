@@ -13,6 +13,8 @@ dedicated containers aka. `Collections`.
 __docformat__ = 'restructuredtext'
 
 
+import numpy as N
+
 from mvpa.misc.exceptions import UnknownStateError
 
 if __debug__:
@@ -188,8 +190,8 @@ class AttributeWithUnique(CollectableAttribute):
             self._uniqueValues = N.unique(N.asanyarray(self.value))
         return self._uniqueValues
 
-    uniqueValues = property(fget=_getUniqueValues)
-    hasunique = property(fget=lambda self:self._hasunique)
+    unique = property(fget=_getUniqueValues)
+    has_unique = property(fget=lambda self:self._hasunique)
 
 
 
