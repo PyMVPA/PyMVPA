@@ -91,17 +91,9 @@ class DescreteMetric(Metric):
         self.__filter_radius = None
         self.__filter_coord = None
         self.__distance_function = distance_function
-
         self.__elementsize = N.array(elementsize, ndmin=1)
         self.__Ndims = len(self.__elementsize)
-        if compatmask is None:
-            self.__compatmask = N.ones(self.__elementsize.shape, dtype='bool')
-        else:
-            self.__compatmask = N.array(compatmask, dtype='bool')
-            if not self.__elementsize.shape == self.__compatmask.shape:
-                raise ValueError, '`compatmask` is of incompatible shape ' \
-                        '(need %s, got %s)' % (`self.__elementsize.shape`,
-                                               `self.__compatmask.shape`)
+        self.compatmask = compatmask
 
 
     def _expandRadius(self, radius):
@@ -174,9 +166,9 @@ class DescreteMetric(Metric):
             variant radii for all other dimensions.
         """
         if len(origin) != self.__Ndims:
-            raise ValueError("Obtained coordinates [%s] which have different "
+            raise ValueError("Obtained coordinates [%r] which have different "
                              "number of dimensions (%d) from known "
-                             "elementsize" % (`origin`, self.__Ndims))
+                             "elementsize" % (origin, self.__Ndims))
 
         # take care of postprocessing the radius the ensure validity of the next
         # conditional
@@ -210,9 +202,34 @@ class DescreteMetric(Metric):
         self.__Ndims = len(_elementsize)
         self.__filter_radius = None
 
+
+    def _getCompatMask(self):
+        """Return compatmask
+
+        .. note::
+          Don't modify in place since it would need to require to reset
+          __filter_radius whenever changed
+        """
+        return self.__compatmask
+
+    def _setCompatMask(self, compatmask):
+        """Set new value of compatmask
+        """
+        if compatmask is None:
+            self.__compatmask = N.ones(self.__elementsize.shape, dtype='bool')
+        else:
+            self.__compatmask = N.array(compatmask, dtype='bool')
+            if not self.__elementsize.shape == self.__compatmask.shape:
+                raise ValueError, '`compatmask` is of incompatible shape ' \
+                        '(need %s, got %s)' % (`self.__elementsize.shape`,
+                                               `self.__compatmask.shape`)
+        self.__filter_radius = None     # reset so filter gets recomputed
+
+
     filter_coord = property(fget=_getFilter, fset=_setFilter)
     elementsize = property(fget=lambda self: self.__elementsize,
                            fset=_setElementSize)
+    compatmask = property(_getCompatMask, _setCompatMask)
 
 # Template for future classes
 #
