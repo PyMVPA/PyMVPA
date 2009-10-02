@@ -4,7 +4,7 @@ import numpy as N
 from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false
 
-from mvpa.datasets.base import Dataset
+from mvpa.datasets.base import dataset, Dataset
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
@@ -145,14 +145,26 @@ def test_mergeds():
 
 
 def test_combined_samplesfeature_selection():
-        data = Dataset(N.arange(20).reshape((4, 5)))
+    data = dataset(N.arange(20).reshape((4, 5)),
+                   labels=[1,2,3,4],
+                   chunks=[5,6,7,8])
 
-        ok_(data.nsamples == 4)
-        ok_(data.nfeatures == 5)
-        sel = data[[0, 3], [1, 2]]
-        ok_(sel.nsamples == 2)
-        ok_(sel.nfeatures == 2)
-        assert_array_equal(sel.samples, [[1, 2], [16, 17]])
+    ok_(data.nsamples == 4)
+    ok_(data.nfeatures == 5)
+    sel = data[[0, 3], [1, 2]]
+    ok_(sel.nsamples == 2)
+    ok_(sel.nfeatures == 2)
+    assert_array_equal(sel.labels, [1,4])
+    assert_array_equal(sel.samples, [[1, 2], [16, 17]])
+
+    # should yield the same result if done sequentially
+    sel2 = data[:,[1,2]]
+    sel2 = sel2[[0,3]]
+    assert_array_equal(sel.samples, sel2.samples)
+    ok_(sel2.nsamples == 2)
+    ok_(sel2.nfeatures == 2)
+
+    assert_raises(ValueError, data.__getitem__, (1,2,3))
 
 
 def test_labelpermutation_randomsampling():
