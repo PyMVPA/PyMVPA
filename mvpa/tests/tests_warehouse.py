@@ -18,7 +18,6 @@ import numpy as N
 from mvpa import cfg
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
-from mvpa.datasets.masked import MaskedDataset
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
@@ -171,8 +170,8 @@ for kind, spec in specs.iteritems():
     mask = N.ones( (3, 6, 6) )
     mask[0,0,0] = 0
     mask[1,3,2] = 0
-    datasets['3d%s' % kind] = MaskedDataset(samples=data, labels=labels,
-                                            chunks=chunks, mask=mask)
+    datasets['3d%s' % kind] = Dataset.from_masked(samples=data, labels=labels,
+                                                  chunks=chunks, mask=mask)
 
 # some additional datasets
 datasets['dumb2'] = dumbFeatureBinaryDataset()

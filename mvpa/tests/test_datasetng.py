@@ -13,7 +13,7 @@ from mvpa.misc.exceptions import DatasetError
 import mvpa.datasets.miscfx
 from mvpa.misc.attributes import SampleAttribute
 
-#from tests_warehouse import *
+from tests_warehouse import *
 
 def test_from_basic():
     samples = N.arange(12).reshape((4,3))
@@ -201,6 +201,50 @@ def test_mergeds():
 
     # we need the same samples attributes in both datasets
     assert_raises(DatasetError, data2.__iadd__, data3)
+
+
+def test_mergeds2():
+    """Test composition of new datasets by addition of existing ones
+    """
+    data = dataset([range(5)], labels=1, chunks=1)
+
+    assert_array_equal(data.UL, [1])
+
+    # simple sequence has to be a single pattern
+    assert_equal(data.nsamples, 1)
+    # check correct pattern layout (1x5)
+    assert_array_equal(data.samples, [[0, 1, 2, 3, 4]])
+
+    # check for single labels and origin
+    assert_array_equal(data.labels, [1])
+    assert_array_equal(data.chunks, [1])
+
+    # now try adding pattern with wrong shape
+    assert_raises(DatasetError,
+                  data.__iadd__,
+                  dataset(N.ones((2,3)), labels=1, chunks=1))
+
+    # now add two real patterns
+    dss = datasets['uni2large'].samples
+    data += dataset(dss[:2, :5], labels=2, chunks=2)
+    assert_equal(data.nfeatures, 5)
+    assert_array_equal(data.labels, [1, 2, 2])
+    assert_array_equal(data.chunks, [1, 2, 2])
+
+    # test automatic origins
+    data += dataset(dss[3:5, :5], labels=3, chunks=[0, 1])
+    assert_array_equal(data.chunks, [1, 2, 2, 0, 1])
+
+    # test unique class labels
+    assert_array_equal(data.UL, [1, 2, 3])
+
+    # test wrong label length
+    assert_raises(DatasetError, dataset, dss[:4, :5], labels=[ 1, 2, 3 ],
+                                         chunks=2)
+
+    # test wrong origin length
+    assert_raises(DatasetError, dataset, dss[:4, :5], labels=[ 1, 2, 3, 4 ],
+                                         chunks=[ 2, 2, 2 ])
 
 
 def test_combined_samplesfeature_selection():

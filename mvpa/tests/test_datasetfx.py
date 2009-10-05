@@ -10,16 +10,29 @@
 
 import unittest
 from numpy.testing import assert_array_equal
+from nose.tools import ok_
 
 import numpy as N
 
 from mvpa.base import externals
 from mvpa.datasets.base import dataset
-from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks
+from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks, \
+        aggregateFeatures
+
 
 from mvpa.misc.data_generators import normalFeatureDataset
 
 class MiscDatasetFxTests(unittest.TestCase):
+
+    def testAggregation(self):
+        data = dataset(N.arange( 20 ).reshape((4, 5)), labels=1, chunks=1)
+
+        ag_data = aggregateFeatures(data, N.mean)
+
+        ok_(ag_data.nsamples == 4)
+        ok_(ag_data.nfeatures == 1)
+        assert_array_equal(ag_data.samples[:, 0], [2, 7, 12, 17])
+
 
     def testInvarFeaturesRemoval(self):
         r = N.random.normal(size=(3,1))
