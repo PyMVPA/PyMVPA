@@ -27,7 +27,7 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             do_stretch_colors=False,
             add_info=True, add_hist=True, add_colorbar=True,
             fig=None, interactive=None,
-            ncolumns=None
+            nrows=None, ncolumns=None
             ):
     """Very basic plotting of 3D data with interactive thresholding.
 
@@ -49,7 +49,12 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
            by-chance performance normal around 0, and some other in the
            positive tail
       ncolumns : int or None
-        Explicit number of columns into which position the slice renderings.
+        Explicit starting number of columns into which position the
+        slice renderings.
+        If None, square arrangement would be used
+      nrows : int or None
+        Explicit starting number of rows into which position the
+        slice renderings.
         If None, square arrangement would be used
       add_hist : bool or tuple (int, int)
         If True, add histogram and position automagically.
@@ -185,6 +190,7 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             bg = self._locals['bg']
             bg_mask = self._locals['bg_mask']
             ncolumns = self._locals['ncolumns']
+            nrows = self._locals['nrows']
             add_info = self._locals['add_info']
             add_hist = self._locals['add_hist']
             #print locals()
@@ -237,33 +243,45 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             dshape = func.shape
             nslices = func.shape[0]
 
+            # Check if additional column/row information was provided and extend nrows/ncolumns
+            for v in (add_hist, add_info):
+                if v and not isinstance(v, bool):
+                    ncolumns = max(ncolumns, v[1]+1)
+                    nrows = max(nrows, v[0]+1)
+
             # more or less square alignment ;-)
             if ncolumns is None:
                 ncolumns = int(N.sqrt(nslices))
             ndcolumns = ncolumns
-            nrows = int(N.ceil(nslices*1.0/ncolumns))
+            nrows = max(nrows, int(N.ceil(nslices*1.0/ncolumns)))
 
-            # Decide where to position info and hist
-            for v in (add_info, add_hist):
-                if v:
-                    if isinstance(v, bool):
-                        if ndcolumns == ncolumns:
-                            ncolumns += 1
-                        else:           # so we had already one -- need 2nd row
-                            nrows += 1
-                    else:
-                        ncolumns = max(ncolumns, v[1]+1)
-                        nrows = max(nrows, v[0]+1)
 
-            crow = 0
+            # Decide either we need more cells where to add hist and/or info
+            nadd = bool(add_info) + bool(add_hist)
+            while ncolumns*nrows - (nslices + nadd) < 0:
+                ncolumns += 1
+
+            locs = ['' for i in xrange(ncolumns*nrows)]
+
+            # Fill in predefined locations
+            for v,vl in ((add_hist, 'hist'),
+                         (add_info, 'info')):
+                if v and not isinstance(v, bool):
+                    locs[ncolumns*v[0] + v[1]] = vl
+
+            # Fill in slices
+            for islice in xrange(nslices):
+                locs[locs.index('')] = islice
+
+            # Fill the last available if necessary
             if add_hist and isinstance(add_hist, bool):
-                add_hist = (0, ndcolumns) # add to 0th row
-                crow += 1
+                locs[locs.index('')] = 'hist'
             if add_info and isinstance(add_info, bool):
-                add_info = (crow, ndcolumns) # add to crow
+                locs[locs.index('')] = 'info'
+
             print ncolumns, nrows
-            print add_hist
-            print add_info
+            print locs
+
             # should compare by backend?
             if P.matplotlib.get_backend() in _interactive_backends:
                 P.ioff()
@@ -281,9 +299,12 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
 
             #
             # Draw all slices
+            self.slices = []
             for si in range(nslices)[::-1]:
                 ax = fig.add_subplot(nrows, ncolumns,
-                                     (si/ndcolumns)*ncolumns + si%ndcolumns + 1, frame_on=False)
+                                     locs.index(si) + 1,
+                                     frame_on=False)
+                self.slices.append(ax)
                 ax.axison = False
                 slice_bg = bg[si]
                 slice_bg_ = N.ma.masked_array(slice_bg,
@@ -326,43 +347,15 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
                 if si == 0:
                     im0 = im
 
-            if add_colorbar:
-                cb = P.colorbar(im0, shrink=0.8, pad=0.0, drawedges=False,
-                                extend=extend, cmap=func_cmap)
-                cb.set_clim(*clim)
-
             func_masked = func[func_mask]
-
-            # Add histogram
-            if add_hist:
-                self.hist_sp = fig.add_subplot(nrows, ncolumns, add_hist[0]*ncolumns+add_hist[1]+1, frame_on=True)
-                minv, maxv = N.min(func_masked), N.max(func_masked)
-                if minv<0 and maxv>0:               # then make it centered on 0
-                    maxx = max(-minv, maxv)
-                    range_ = (-maxx, maxx)
-                else:
-                    range_ = (minv, maxv)
-                H = N.histogram(func_masked, range=range_, bins=31)
-                H2 = P.hist(func_masked, bins=H[1], align='center', facecolor='r', hold=True)
-                for a, kwparams in add_dist2hist:
-                    dbin = (H[1][1] - H[1][0])
-                    P.plot(H2[1], [a(x) * dbin for x in H2[1]], **kwparams)
-                if add_colorbar:
-                    cbrgba = cb.to_rgba(H2[1])
-                    for face, facecolor, value in zip(H2[2], cbrgba, H2[1]):
-                        if not thresholder(value):
-                            color = None
-                        else:
-                            color = facecolor
-                        face.set_facecolor(color)
-
 
             #
             # Add summary information
             func_thr = func[N.logical_and(func_mask, thresholder(func))]
             if add_info and len(func_thr):
-                ax = fig.add_subplot(nrows, ncolumns,
-                                     add_info[0]*ncolumns + add_info[1]+1, frame_on=False)
+                self.info = ax = fig.add_subplot(nrows, ncolumns,
+                                     locs.index('info')+1,
+                                     frame_on=False)
                 #    cb = P.colorbar(shrink=0.8)
                 #    #cb.set_clim(clim[0], clim[1])
                 ax.axison = False
@@ -403,8 +396,45 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
                     transform = ax.transAxes,
                     fontsize=14)
 
+            if add_colorbar:
+                kwargs_cb = {}
+                #if add_hist:
+                #    kwargs_cb['cax'] = self.hist
+                self.cb = cb = P.colorbar(
+                    im0, #self.hist,
+                    shrink=0.8, pad=0.0, drawedges=False,
+                    extend=extend, cmap=func_cmap, **kwargs_cb)
+                cb.set_clim(*clim)
 
-            fig.subplots_adjust(left=0.01, right=0.95, bottom=0.01, hspace=0.01)
+            # Add histogram
+            if add_hist:
+                self.hist = fig.add_subplot(nrows, ncolumns,
+                                               locs.index('hist') + 1,
+                                               frame_on=True)
+
+                minv, maxv = N.min(func_masked), N.max(func_masked)
+                if minv<0 and maxv>0:               # then make it centered on 0
+                    maxx = max(-minv, maxv)
+                    range_ = (-maxx, maxx)
+                else:
+                    range_ = (minv, maxv)
+                H = N.histogram(func_masked, range=range_, bins=31)
+                H2 = P.hist(func_masked, bins=H[1], align='center',
+                            facecolor='#FFFFFF', hold=True)
+                for a, kwparams in add_dist2hist:
+                    dbin = (H[1][1] - H[1][0])
+                    P.plot(H2[1], [a(x) * dbin for x in H2[1]], **kwparams)
+                if add_colorbar:
+                    cbrgba = cb.to_rgba(H2[1])
+                    for face, facecolor, value in zip(H2[2], cbrgba, H2[1]):
+                        if not thresholder(value):
+                            color = '#FFFFFF'
+                        else:
+                            color = facecolor
+                        face.set_facecolor(color)
+
+
+            fig.subplots_adjust(left=0.01, right=0.95, hspace=0.01) # , bottom=0.01
             if ncolumns - int(bool(add_info) or bool(add_hist)) < 2:
                 fig.subplots_adjust(wspace=0.4)
             else:
@@ -417,7 +447,7 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
         def on_click(self, event):
             """Actions to perform on click
             """
-            if id(event.inaxes) != id(plotter.hist_sp):
+            if id(event.inaxes) != id(plotter.hist):
                 return
             xdata, ydata, button = event.xdata, event.ydata, event.button
             print xdata, ydata, button
@@ -442,4 +472,5 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
         P.connect('button_press_event', plotter.on_click)
         P.show()
 
+    plotter.fig.plotter = plotter
     return plotter.fig
