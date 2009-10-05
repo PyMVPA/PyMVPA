@@ -859,6 +859,10 @@ class AttributesCollector(type):
                 # and assign name if not yet was set
                 if value.name is None:
                     value._setName(name)
+                # !!! We do not keep copy of this attribute static in the class.
+                #     Due to below traversal of base classes, we should be
+                #     able to construct proper collections even in derived classes
+                delattr(cls, name)
 
         # XXX can we first collect parent's states and then populate with ours?
         # TODO
