@@ -84,7 +84,7 @@ class DescreteMetric(Metric):
             dataspace elements.
           compatmask: 1D bool array | None
             A mask where all non-zero elements indicate dimensions
-            with compatiable spacemetrics. If None (default) all dimensions
+            with compatible spacemetrics. If None (default) all dimensions
             are assumed to have compatible spacemetrics.
         """
         Metric.__init__(self)
