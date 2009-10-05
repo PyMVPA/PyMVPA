@@ -274,13 +274,23 @@ class MaskMapper(Mapper):
         discarded = N.array([ True ] * self.nfeatures)
         discarded[outIds] = False    # create a map of discarded Ids
         discardedin = tuple(self.getInId(discarded))
-        self.__mask[discardedin] = False
+        # XXX need to perform copy on write; implement properly during rewrite
+        #self.__mask[discardedin] = False
+        mask = self.__mask.copy()
+        mask[discardedin] = False
+        self.__mask = mask
 
         # XXX for now do evil expanding of slice args
         # this should be implemented properly when rewriting MaskMapper into
         # a 1D -> 1D Mapper
         if isinstance(outIds, slice):
             outIds = range(*outIds.indices(self.getOutSize()))
+
+        # XXX for now do evil expanding of selection arrays
+        # this should be implemented properly when rewriting MaskMapper into
+        # a 1D -> 1D Mapper
+        if isinstance(outIds, N.ndarray):
+            outIds = outIds.nonzero()[0]
 
         self.__masknonzerosize = len(outIds)
         self.__masknonzero = [ x[outIds] for x in self.__masknonzero ]
@@ -289,8 +299,13 @@ class MaskMapper(Mapper):
         # since we merged _tent/maskmapper-init-noloop it is not necessary
         # to zero-out discarded entries since we anyway would check with mask
         # in getOutId(s)
-        self.__forwardmap[self.__masknonzero] = \
-            N.arange(self.__masknonzerosize)
+        # XXX this also needs to do copy on write; reimplement properly during
+        # rewrite
+        #self.__forwardmap[self.__masknonzero] = \
+        #    N.arange(self.__masknonzerosize)
+        fmap = self.__forwardmap.copy()
+        fmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
+        self.__forwardmap = fmap
 
 
     def discardOut(self, outIds):

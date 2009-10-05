@@ -17,6 +17,7 @@ from mvpa.misc.state import ClassWithCollections, Collection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
 from mvpa.misc.exceptions import DatasetError
+from mvpa.mappers.mask import MaskMapper
 
 if __debug__:
     from mvpa.base import debug
@@ -302,11 +303,18 @@ class Dataset(ClassWithCollections):
         # get the intended subset of the samples array
         #
         # need to deal with some special cases to ensure proper behavior
+        #
         # ints need to become lists to prevent silent dimensionality changes
         # of the arrays when slicing
         for i, a in enumerate(args):
             if isinstance(a, int):
                 args[i] = [a]
+
+        # if we get an slicing array for feature selection and it is *not* 1D
+        # try feeding it through the mapper (if there is any)
+        if isinstance(args[1], N.ndarray) and len(args[1].shape) > 1 and \
+                self.a.isKnown('mapper') and self.a.isSet('mapper'):
+                    args[1] = self.a.mapper.forward(args[1])
 
         # simultaneous slicing of numpy arrays only yields intended results
         # if at least one of the slicing args is an actual slice and not
@@ -442,32 +450,34 @@ class Dataset(ClassWithCollections):
 
 
     @classmethod
-    def from_unlabeled(cls, samples, chunks=None, mapper=None):
-        """Create a Dataset from unlabeled samples.
-
-        This is a convenience method. Please see :meth:`Dataset.from_basic`
-        for details.
+    def from_masked(cls, samples, labels=None, chunks=None, mask=None):
         """
-        return cls.from_basic(samples, labels=None,
-                              chunks=chunks, mapper=mapper)
-
-
-    @classmethod
-    def from_labeled(cls, samples, labels, chunks=None, mapper=None):
-        """Create a Dataset from labeled samples.
-
-        This is a convenience method. Please see :meth:`Dataset.from_basic`
-        for details.
         """
-        return cls.from_basic(samples, labels=labels,
-                              chunks=chunks, mapper=mapper)
+        # need to have arrays
+        samples = N.asanyarray(samples)
+
+        # use full mask if none is provided
+        if mask is None:
+            mask = N.ones(samples.shape[1:], dtype='bool')
+
+        mapper = MaskMapper(mask)
+        return cls.from_basic(samples, labels=labels, chunks=chunks,
+                              mapper=mapper)
 
 
     # shortcut properties
+    S = property(fget=lambda self:self.samples)
     nsamples = property(fget=lambda self:self.samples.shape[0])
     nfeatures = property(fget=lambda self:self.samples.shape[1])
     labels = property(fget=lambda self:self.sa.labels)
+    L = labels
+    UL = property(fget=lambda self:self.sa['labels'].unique)
     chunks = property(fget=lambda self:self.sa.chunks)
+    C = chunks
+    UC = property(fget=lambda self:self.sa['chunks'].unique)
+    mapper = property(fget=lambda self:self.a.mapper)
+    O = property(fget=lambda self:self.a.mapper.reverse(self.samples))
+
 
 
 # convenience alias

@@ -1,8 +1,9 @@
 '''Tests for the dataset implementation'''
 import numpy as N
+import random
 
 from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false
+from nose.tools import ok_, assert_raises, assert_false, assert_equal
 
 from mvpa.datasets.base import dataset, Dataset
 from mvpa.mappers.array import DenseArrayMapper
@@ -14,12 +15,12 @@ from mvpa.misc.attributes import SampleAttribute
 
 #from tests_warehouse import *
 
-def test_from_labeled():
+def test_from_basic():
     samples = N.arange(12).reshape((4,3))
     labels = range(4)
     chunks = [1, 1, 2, 2]
 
-    ds = Dataset.from_labeled(samples, labels, chunks)
+    ds = Dataset.from_basic(samples, labels, chunks)
 
     ## XXX stuff that needs thought:
 
@@ -44,10 +45,58 @@ def test_from_labeled():
     ok_(not ds.a.isKnown('mapper'))
 
     # has to complain about misshaped samples attributes
-    assert_raises(DatasetError, Dataset.from_labeled, samples, labels + labels)
+    assert_raises(DatasetError, Dataset.from_basic, samples, labels + labels)
 
     # check that we actually have attributes of the expected type
     ok_(isinstance(ds.sa['labels'], SampleAttribute))
+
+
+def test_from_masked():
+    ds = Dataset.from_masked(samples=[range(5)], labels=1, chunks=1)
+    # simple sequence has to be a single pattern
+    assert_equal(ds.nsamples, 1)
+    # check correct pattern layout (1x5)
+    assert_array_equal(ds.samples, [[0, 1, 2, 3, 4]])
+
+    # check for single label and origin
+    assert_array_equal(ds.labels, [1])
+    assert_array_equal(ds.chunks, [1])
+
+    # now try adding pattern with wrong shape
+    assert_raises(DatasetError, ds.__iadd__,
+                  Dataset.from_masked(N.ones((2,3)), labels=1, chunks=1))
+
+    # now add two real patterns
+    ds += Dataset.from_masked(N.random.standard_normal((2,5)),
+                              labels=2, chunks=2)
+    assert_equal(ds.nsamples, 3)
+    assert_array_equal(ds.labels, [1,2,2])
+    assert_array_equal(ds.chunks, [1,2,2])
+
+    # test unique class labels
+    ds += Dataset.from_masked(N.random.standard_normal((2,5)),
+                              labels=3, chunks=5)
+    assert_array_equal(ds.sa['labels'].unique, [1,2,3])
+
+    # test wrong attributes length
+    assert_raises(DatasetError, Dataset.from_masked,
+                  N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3],
+                  chunks=2)
+    assert_raises(DatasetError, Dataset.from_masked,
+                  N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3, 4],
+                  chunks=[2, 2, 2])
+
+
+def test_shape_conversion():
+    ds = Dataset.from_masked(N.arange(24).reshape((2,3,4)), labels=1, chunks=1)
+    assert_equal(ds.nsamples, 2)
+    assert_equal(ds.samples.shape, (2,12))
+    assert_array_equal(ds.samples, [range(12),range(12,24)])
+
+
+def test_samples_shape():
+    ds = Dataset.from_masked(N.ones((10,2,3,4)), labels=1, chunks=1)
+    ok_(ds.samples.shape == (10,24))
 
 
 def test_basic_datamapping():
@@ -56,7 +105,7 @@ def test_basic_datamapping():
     # cannot handle 3d samples without a mapper
     assert_raises(DatasetError, Dataset, samples)
 
-    ds = Dataset.from_unlabeled(samples,
+    ds = Dataset.from_basic(samples,
             mapper=DenseArrayMapper(shape=samples.shape[1:]))
 
     # mapper should end up in the dataset
@@ -128,9 +177,10 @@ def test_ds_deepcopy():
 
 
 def test_mergeds():
-    data0 = Dataset.from_labeled(N.ones((5, 5)), labels=1)
-    data1 = Dataset.from_labeled(N.ones((5, 5)), labels=1, chunks=1)
-    data2 = Dataset.from_labeled(N.ones((3, 5)), labels=2, chunks=1)
+    data0 = Dataset.from_basic(N.ones((5, 5)), labels=1)
+    data1 = Dataset.from_basic(N.ones((5, 5)), labels=1, chunks=1)
+    data2 = Dataset.from_basic(N.ones((3, 5)), labels=2, chunks=1)
+    data3 = Dataset.from_basic(N.ones((4, 5)), labels=2)
 
     # cannot merge if there are attributes missing in one of the datasets
     assert_raises(DatasetError, data1.__iadd__, data0)
@@ -148,6 +198,9 @@ def test_mergeds():
     ok_(data1.nfeatures == 5)
     ok_((data1.labels == l12).all())
     ok_((data1.chunks == l1).all())
+
+    # we need the same samples attributes in both datasets
+    assert_raises(DatasetError, data2.__iadd__, data3)
 
 
 def test_combined_samplesfeature_selection():
@@ -223,3 +276,133 @@ def test_labelpermutation_randomsampling():
     # and other samples attributes too
     ds.chunks[0] = 9876
     assert_array_equal(ds.chunks, ods.chunks)
+
+
+def test_feature2coord():
+    origdata = N.random.standard_normal((10,2,4,3,5))
+    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+
+    def random_coord(shape):
+        return [random.sample(range(size),1)[0] for size in shape]
+
+    # check 100 random coord2feature transformations
+    for i in xrange(100):
+        # choose random coord
+        c = random_coord((2,4,3,5))
+        # tranform to feature_id
+        id = data.a.mapper.getOutId(c)
+
+        # compare data from orig array (selected by coord)
+        # and data from pattern array (selected by feature id)
+        orig = origdata[:,c[0],c[1],c[2],c[3]]
+        pat = data.samples[:, id]
+
+        assert_array_equal(orig, pat)
+
+
+def test_coord2feature():
+    origdata = N.random.standard_normal((10,2,4,3,5))
+    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+
+    def random_coord(shape):
+        return [random.sample(range(size),1)[0] for size in shape]
+
+    for id in xrange(data.nfeatures):
+        # transform to coordinate
+        c = data.a.mapper.getInId(id)
+        assert_equal(len(c), 4)
+
+        # compare data from orig array (selected by coord)
+        # and data from pattern array (selected by feature id)
+        orig = origdata[:,c[0],c[1],c[2],c[3]]
+        pat = data.samples[:, id]
+
+        assert_array_equal(orig, pat)
+
+
+def test_masked_featureselection():
+    origdata = N.random.standard_normal((10,2,4,3,5))
+    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+
+    unmasked = data.samples.copy()
+
+    # default must be no mask
+    ok_(data.nfeatures == 120)
+    ok_(data.a.mapper.getOutSize() == 120)
+
+    # check that full mask uses all features
+    # this uses auto-mapping of selection arrays in __getitem__
+    sel = data[:,N.ones((2,4,3,5),dtype='bool')]
+    ok_(sel.nfeatures == data.samples.shape[1])
+    ok_(data.nfeatures == 120)
+
+    # check partial array mask
+    partial_mask = N.zeros((2,4,3,5), dtype='bool')
+    partial_mask[0,0,2,2] = 1
+    partial_mask[1,2,2,0] = 1
+
+    sel = data[:, partial_mask]
+    ok_(sel.nfeatures == 2)
+    ok_(sel.a.mapper.getMask().shape == (2,4,3,5))
+
+    # check that feature selection does not change source data
+    ok_(data.nfeatures == 120)
+    assert_equal(data.a.mapper.getOutSize(), 120)
+
+    # check selection with feature list
+    sel = data[:, [0,37,119]]
+    ok_(sel.nfeatures == 3)
+
+    # check size of the masked samples
+    ok_(sel.samples.shape == (10,3))
+
+    # check that the right features are selected
+    assert_array_equal(unmasked[:,[0,37,119]], sel.samples)
+
+
+def test_origmask_extraction():
+    origdata = N.random.standard_normal((10,2,4,3))
+    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+
+    # check with custom mask
+    sel = data[:, 5]
+    ok_(sel.samples.shape[1] == 1)
+    origmask = sel.a.mapper.getMask()
+    ok_(origmask[0,1,2] == True)
+    ok_(origmask.shape == (2,4,3))
+
+
+def test_feature_masking():
+    mask = N.zeros((5,3),dtype='bool')
+    mask[2,1] = True; mask[4,0] = True
+    data = Dataset.from_masked(N.arange(60).reshape((4,5,3)),
+                               labels=1, chunks=1, mask=mask)
+
+    # check simple masking
+    ok_(data.nfeatures == 2)
+    ok_(data.a.mapper.getOutId((2,1)) == 0 and
+        data.a.mapper.getOutId((4,0)) == 1 )
+    assert_raises(ValueError, data.a.mapper.getOutId, (2,3))
+    ok_(data.a.mapper.getMask().shape == (5,3))
+    ok_(tuple(data.a.mapper.getInId(1)) == (4,0))
+
+    # selection should be idempotent
+    ok_(data[:, mask].nfeatures == data.nfeatures)
+    # check that correct feature get selected
+    assert_array_equal(data[:, 1].samples[:,0], [12, 27, 42, 57])
+    ok_(tuple(data[:,1].a.mapper.getInId(0)) == (4,0))
+    ok_(data[:, 1].a.mapper.getMask().sum() == 1)
+
+    # previous selections should not affect the original mapper
+    ok_(data.a.mapper.getOutId((2,1)) == 0 and
+        data.a.mapper.getOutId((4,0)) == 1 )
+
+    # check sugarings
+    # XXX put me back
+    #self.failUnless(N.all(data.I == data.origids))
+    assert_array_equal(data.C, data.chunks)
+    assert_array_equal(data.UC, N.unique(data.chunks))
+    assert_array_equal(data.L, data.labels)
+    assert_array_equal(data.UL, N.unique(data.labels))
+    assert_array_equal(data.S, data.samples)
+    assert_array_equal(data.O, data.mapper.reverse(data.samples))
