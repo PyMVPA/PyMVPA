@@ -293,13 +293,21 @@ class Dataset(ClassWithCollections):
 
         # simplify things below and always have samples and feature slicing
         if len(args) == 1:
-            args = (args[0], slice(None))
+            args = [args[0], slice(None)]
+        else:
+            args = [a for a in args]
 
         samples = None
 
         # get the intended subset of the samples array
         #
         # need to deal with some special cases to ensure proper behavior
+        # ints need to become lists to prevent silent dimensionality changes
+        # of the arrays when slicing
+        for i, a in enumerate(args):
+            if isinstance(a, int):
+                args[i] = [a]
+
         # simultaneous slicing of numpy arrays only yields intended results
         # if at least one of the slicing args is an actual slice and not
         # and index list are selection mask vector
@@ -347,13 +355,13 @@ class Dataset(ClassWithCollections):
             # do a shallow copy here
             # XXX every DatasetAttribute should have meaningful __copy__ if
             # necessary -- most likely all mappers need to have one
-            newattr.value = copy.copy(attr)
+            newattr.value = copy.copy(attr.value)
             # assign to target collection
             a.add(newattr)
 
         # and adjusting the mapper (if any)
         if a.isKnown('mapper') and a.isSet('mapper'):
-            a.mapper.selectOut(args[1])
+            a['mapper'].value.selectOut(args[1])
 
         # and after a long way instantiate the new dataset of the same type
         return self.__class__(samples, sa=sa, fa=fa, a=a)
