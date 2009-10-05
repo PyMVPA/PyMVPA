@@ -173,6 +173,21 @@ def test_combined_samplesfeature_selection():
 
     assert_raises(ValueError, data.__getitem__, (1,2,3))
 
+    # test correct behavior when selecting just single rows/columns
+    single = data[0]
+    ok_(single.nsamples == 1)
+    ok_(single.nfeatures == 5)
+    assert_array_equal(single.samples, [[0,1,2,3,4]])
+    single = data[:,0]
+    ok_(single.nsamples == 4)
+    ok_(single.nfeatures == 1)
+    assert_array_equal(single.samples, [[0],[5],[10],[15]])
+    single = data[1,1]
+    ok_(single.nsamples == 1)
+    ok_(single.nfeatures == 1)
+    assert_array_equal(single.samples, [[6]])
+
+
 
 def test_labelpermutation_randomsampling():
     ds  = Dataset.from_basic(N.ones((5, 1)),     labels=range(5), chunks=1)
