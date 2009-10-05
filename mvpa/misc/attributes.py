@@ -115,6 +115,12 @@ class CollectableAttribute(object):
 
 
     def _setName(self, name):
+        """Set the name of parameter
+
+        .. note::
+          Should not be called for an attribute which is already assigned
+          to a collection
+        """
         if name is not None:
             if isinstance(name, basestring):
                 if name[0] == '_':
@@ -133,7 +139,7 @@ class CollectableAttribute(object):
     #     to see which is more effective. My wild guess is that
     #     _[gs]etVirtual would be faster
     value = property(_getVirtual, _setVirtual)
-    name = property(_getName, _setName)
+    name = property(_getName) #, _setName)
 
 
 

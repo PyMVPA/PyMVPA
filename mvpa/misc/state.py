@@ -281,18 +281,21 @@ class Collection(object):
 
               Also we might convert to __setitem__
         """
+        # local binding
+        name = item.name
         if not isinstance(item, CollectableAttribute):
             raise ValueError, \
                   "Collection can add only instances of " + \
                   "CollectableAttribute-derived classes. Got %s" % `item`
-        if item.name is None:
+
+        if name is None:
             raise ValueError, \
                   "CollectableAttribute to be added %s must have 'name' set" % \
                   item
-        self._items[item.name] = item
+        self._items[name] = item
 
         if not self.owner is None:
-            self._updateOwner(item.name)
+            self._updateOwner(name)
 
 
     def remove(self, index):
@@ -855,7 +858,7 @@ class AttributesCollector(type):
                 collections[col][name] = value
                 # and assign name if not yet was set
                 if value.name is None:
-                    value.name = name
+                    value._setName(name)
 
         # XXX can we first collect parent's states and then populate with ours?
         # TODO
