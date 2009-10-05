@@ -14,7 +14,6 @@ import numpy as N
 
 from mvpa.mappers.metric import Metric
 
-from mvpa.datasets import Dataset
 from mvpa.misc.vproperty import VProperty
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -284,7 +283,7 @@ class ProjectionMapper(Mapper):
             of subclass
         """
         # store the feature wise mean
-        if isinstance(dataset, Dataset):
+        if hasattr(dataset, 'samples'):
             samples = dataset.samples
         else:
             samples = dataset

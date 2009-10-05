@@ -35,8 +35,6 @@ if externals.exists('nifti', raiseException=True):
         __name__ = oldname
 
 from mvpa.datasets.base import Dataset
-from mvpa.datasets.mapped import MappedDataset
-from mvpa.datasets.event import EventDataset
 from mvpa.mappers.base import CombinedMapper
 from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.mappers.array import DenseArrayMapper
@@ -274,7 +272,7 @@ class NiftiDataset(Dataset):
 nifti_dataset = NiftiDataset.from_anynifti
 
 
-class ERNiftiDataset(EventDataset):
+class ERNiftiDataset(Dataset):
     """Dataset with event-defined samples from a NIfTI timeseries image.
 
     This is a convenience dataset to facilitate the analysis of event-related

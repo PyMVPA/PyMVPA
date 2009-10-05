@@ -32,7 +32,6 @@ def collectTestSuites():
         'test_boxcarmapper',
         'test_som',
         'test_neighbor',
-        'test_maskeddataset',
         'test_metadataset',
         'test_splitter',
         'test_state',
