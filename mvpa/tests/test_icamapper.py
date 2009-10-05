@@ -14,7 +14,7 @@ from mvpa.support.copy import deepcopy
 import numpy as N
 from mvpa.mappers.ica import ICAMapper
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 
 class ICAMapperTests(unittest.TestCase):
 
@@ -23,13 +23,13 @@ class ICAMapperTests(unittest.TestCase):
         samples = N.vstack([N.arange(40.) for i in range(2)]).T
         samples -= samples.mean()
         samples +=  N.random.normal(size=samples.shape, scale=0.1)
-        self.ndlin = Dataset(samples=samples, labels=1, chunks=1)
+        self.ndlin = dataset(samples, labels=1, chunks=1)
 
         # data: 40 sample feature line in 50d space (40x50; samples x features)
         samples = N.vstack([N.arange(40.) for i in range(50)]).T
         samples -= samples.mean()
         samples +=  N.random.normal(size=samples.shape, scale=0.1)
-        self.largefeat = Dataset(samples=samples, labels=1, chunks=1)
+        self.largefeat = dataset(samples, labels=1, chunks=1)
 
         self.pm = ICAMapper()
 
