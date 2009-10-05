@@ -150,7 +150,7 @@ class Collection(object):
         """Initialize `index` (no check performed) with `value`
         """
         # by default we just set corresponding value
-        self.setvalue(index, value)
+        self[index].value = value
 
 
     def __repr__(self):
@@ -344,12 +344,6 @@ class Collection(object):
     #    _object_setattr(self, index, value)
 
 
-    def getvalue(self, index):
-        """Returns the value by index"""
-        self._checkIndex(index)
-        return self._items[index].value
-
-
     def get(self, index, default):
         """Access the value by a given index.
 
@@ -363,12 +357,6 @@ class Collection(object):
             return default
             #else:
             #    raise e
-
-
-    def setvalue(self, index, value):
-        """Sets the value by index"""
-        self._checkIndex(index)
-        self._items[index].value = value
 
 
     def _action(self, index, func, missingok=False, **kwargs):
@@ -1093,7 +1081,7 @@ class ClassWithCollections(object):
         # check if it is a part of any collection
         known_attribs = s_dict['_known_attribs']
         if index in known_attribs:
-            return collections[known_attribs[index]].getvalue(index)
+            return collections[known_attribs[index]]._items[index].value
 
         # just a generic return
         return _object_getattribute(self, index)
@@ -1108,7 +1096,8 @@ class ClassWithCollections(object):
         known_attribs = s_dict['_known_attribs']
         if index in known_attribs:
             collections = s_dict['_collections']
-            return collections[known_attribs[index]].setvalue(index, value)
+            collections[known_attribs[index]][index].value = value
+            return value
 
         # Generic setattr
         return _object_setattr(self, index, value)
