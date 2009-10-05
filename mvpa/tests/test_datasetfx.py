@@ -10,14 +10,14 @@
 
 import unittest
 from numpy.testing import assert_array_equal
-from nose.tools import ok_
+from nose.tools import ok_, assert_equal
 
 import numpy as N
 
 from mvpa.base import externals
 from mvpa.datasets.base import dataset
 from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks, \
-        aggregateFeatures
+        aggregateFeatures, zscore
 
 
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -89,6 +89,44 @@ class MiscDatasetFxTests(unittest.TestCase):
                 msg='We should have got result from function %s' % f)
             self.failUnless(N.all(ds.samples == ds_data),
                 msg="Function %s should have not modified original dataset" % f)
+
+
+def test_zscoring():
+    """Test z-scoring transformation
+    """
+    # dataset: mean=2, std=1
+    samples = N.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2)).\
+        reshape((16, 1))
+    data = dataset(samples.copy(), labels=range(16), chunks=[0] * 16)
+    assert_equal(data.samples.mean(), 2.0)
+    assert_equal(data.samples.std(), 1.0)
+    zscore(data, perchunk=True)
+
+    # check z-scoring
+    check = N.array([-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0],
+                    dtype='float64').reshape(16, 1)
+    assert_array_equal(data.samples, check)
+
+    data = dataset(samples.copy(), labels=range(16), chunks=[0] * 16)
+    zscore(data, perchunk=False)
+    assert_array_equal(data.samples, check)
+
+    # check z-scoring taking set of labels as a baseline
+    data = dataset(samples.copy(),
+                   labels=[0, 2, 2, 2, 1] + [2] * 11,
+                   chunks=[0] * 16)
+    zscore(data, baselinelabels=[0, 1])
+    assert_array_equal(samples, data.samples + 1.0)
+
+    # check that zscore modifies in-place
+    data = dataset(samples,
+                   labels=[0, 2, 2, 2, 1] + [2] * 11,
+                   chunks=[0] * 16)
+    zscore(data, baselinelabels=[0, 1])
+    assert_array_equal(samples, data.samples)
+
+
+
 
 
 def suite():
