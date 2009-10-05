@@ -471,6 +471,8 @@ class Collection(object):
          XXX Needs refactoring since we duplicate the logic of expansion of
          index value
         """
+        # Yarik standing behind me, forcing me to do this -- I have no clue....
+        return
         if not index is None:
             if not index in self._items:
                 raise ValueError, \

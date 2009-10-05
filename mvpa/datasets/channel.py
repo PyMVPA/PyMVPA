@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.mapped import MappedDataset
+from mvpa.datasets.base import Dataset
 from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -25,7 +25,7 @@ if externals.exists('scipy'):
     from scipy import signal
 
 
-class ChannelDataset(MappedDataset):
+class ChannelDataset(Dataset):
     """Dataset handling data structured into channels.
 
     Channels are assumes to contain several timepoints, thus this Dataset
@@ -83,7 +83,7 @@ class ChannelDataset(MappedDataset):
                                **(kwargs))
 
 
-    __doc__ = enhancedDocString('ChannelDataset', locals(), MappedDataset)
+    __doc__ = enhancedDocString('ChannelDataset', locals(), Dataset)
 
 
     def substractBaseline(self, t=None):

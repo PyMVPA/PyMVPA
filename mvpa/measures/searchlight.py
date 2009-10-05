@@ -13,7 +13,6 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa.base import debug
 
-from mvpa.datasets.mapped import MappedDataset
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.base.dochelpers import enhancedDocString

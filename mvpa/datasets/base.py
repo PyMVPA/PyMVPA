@@ -444,6 +444,12 @@ class Dataset(ClassWithCollections):
                                               'chunks')
             sa_items['chunks'] = chunks_
 
+        # TODO: for now create orig ids here. Probably has to move somewhere
+        # else once the notion of a 'samples space' becomes clearer
+        origids_ = SampleAttribute(name='origids')
+        origids_.value = N.arange(samples.shape[0])
+        sa_items['origids'] = origids_
+
         # the final collection for samples attributes
         # XXX advantages of using SamplesAttributeCollection?
         sa = Collection(items=sa_items)

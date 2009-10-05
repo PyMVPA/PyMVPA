@@ -232,7 +232,7 @@ class ProxyClassifier(Classifier):
             classifier based on which mask classifiers is created
           """
 
-        Classifier.__init__(self, regression=clf.regression, **kwargs)
+        Classifier.__init__(self, regression=clf.params.regression, **kwargs)
 
         self.__clf = clf
         """Store the classifier to use."""
@@ -526,7 +526,8 @@ class CombinedClassifier(BoostedClassifier):
 
         # assign default combiner
         if combiner is None:
-            combiner = (MaximalVote, MeanPrediction)[int(self.regression)]()
+            combiner = (MaximalVote,
+                        MeanPrediction)[int(self.params.regression)]()
         self.__combiner = combiner
         """Functor destined to combine results of multiple classifiers"""
 
@@ -1064,7 +1065,7 @@ class SplitClassifier(CombinedClassifier):
             `Splitter` to use to split the dataset prior training
           """
 
-        CombinedClassifier.__init__(self, regression=clf.regression, **kwargs)
+        CombinedClassifier.__init__(self, regression=clf.params.regression, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
 

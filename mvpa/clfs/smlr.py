@@ -292,8 +292,9 @@ class SMLR(Classifier):
         """Train the classifier using `dataset` (`Dataset`).
         """
         # Process the labels to turn into 1 of N encoding
-        labels = _label2oneofm(dataset.labels, dataset.uniquelabels)
-        self.__ulabels = dataset.uniquelabels.copy()
+        uniquelabels = dataset.sa['labels'].unique
+        labels = _label2oneofm(dataset.sa.labels, uniquelabels)
+        self.__ulabels = uniquelabels.copy()
 
         Y = labels
         M = len(self.__ulabels)
