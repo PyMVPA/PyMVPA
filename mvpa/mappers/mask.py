@@ -276,6 +276,12 @@ class MaskMapper(Mapper):
         discardedin = tuple(self.getInId(discarded))
         self.__mask[discardedin] = False
 
+        # XXX for now do evil expanding of slice args
+        # this should be implemented properly when rewriting MaskMapper into
+        # a 1D -> 1D Mapper
+        if isinstance(outIds, slice):
+            outIds = range(*outIds.indices(self.getOutSize()))
+
         self.__masknonzerosize = len(outIds)
         self.__masknonzero = [ x[outIds] for x in self.__masknonzero ]
 

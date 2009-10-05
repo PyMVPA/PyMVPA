@@ -25,33 +25,35 @@ class NiftiDatasetTests(unittest.TestCase):
     def testNiftiDataset(self):
         """Basic testing of NiftiDataset
         """
-        data = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+        data = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                             labels=[1,2])
         self.failUnless(data.nfeatures == 294912)
         self.failUnless(data.nsamples == 2)
 
-        self.failUnless((data.mapper.metric.elementsize \
-                         == data.niftihdr['pixdim'][3:0:-1]).all())
+        self.failUnless((data.a.mapper.metric.elementsize \
+                         == data.a.niftihdr['pixdim'][3:0:-1]).all())
 
         #check that mapper honours elementsize
-        nb22 = N.array([i for i in data.mapper.getNeighborIn((1, 1, 1), 2.2)])
-        nb20 = N.array([i for i in data.mapper.getNeighborIn((1, 1, 1), 2.0)])
+        nb22 = N.array([i for i in data.a.mapper.getNeighborIn((1, 1, 1), 2.2)])
+        nb20 = N.array([i for i in data.a.mapper.getNeighborIn((1, 1, 1), 2.0)])
         self.failUnless(nb22.shape[0] == 7)
         self.failUnless(nb20.shape[0] == 5)
 
-        # Can't rely on released pynifties, so doing really vague testing
-        # XXX
-        self.failUnless(data.dt in [2.0, 2000.0])
-        self.failUnless(data.samplingrate in [5e-4, 5e-1])
-        merged = data + data
+        # New datasets should be stupid and leave such stuff to spaces
+        # XXX put back when implemented
+        ## Can't rely on released pynifties, so doing really vague testing
+        ## XXX
+        #self.failUnless(data.dt in [2.0, 2000.0])
+        #self.failUnless(data.samplingrate in [5e-4, 5e-1])
 
+        merged = data + data
         self.failUnless(merged.nfeatures == 294912)
         self.failUnless(merged.nsamples == 4)
 
         # check that the header survives
         #self.failUnless(merged.niftihdr == data.niftihdr)
-        for k in merged.niftihdr.keys():
-            self.failUnless(N.mean(merged.niftihdr[k] == data.niftihdr[k]) == 1)
+        for k in merged.a.niftihdr.keys():
+            self.failUnless(N.mean(merged.a.niftihdr[k] == data.a.niftihdr[k]) == 1)
 
         # throw away old dataset and see if new one survives
         del data
@@ -60,11 +62,11 @@ class NiftiDatasetTests(unittest.TestCase):
         # check whether we can use a plain ndarray as mask
         mask = N.zeros((24, 96, 128), dtype='bool')
         mask[12, 20, 40] = True
-        nddata = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+        nddata = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                               labels=[1,2],
                               mask=mask)
         self.failUnless(nddata.nfeatures == 1)
-        rmap = nddata.mapReverse([44])
+        rmap = nddata.a.mapper.reverse([44])
         self.failUnless(rmap.shape == (24, 96, 128))
         self.failUnless(N.sum(rmap) == 44)
         self.failUnless(rmap[12, 20, 40] == 44)
@@ -73,7 +75,7 @@ class NiftiDatasetTests(unittest.TestCase):
     def testNiftiMapper(self):
         """Basic testing of map2Nifti
         """
-        data = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+        data = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                             labels=[1,2])
 
         # test mapping of ndarray
@@ -91,8 +93,8 @@ class NiftiDatasetTests(unittest.TestCase):
         """
         example_path = os.path.join(pymvpa_dataroot, 'example4d')
         example = NiftiImage(example_path)
-        data = NiftiDataset(samples=example_path,
-                            labels=[1,2])
+        data = nifti_dataset(samples=example_path,
+                             labels=[1,2])
 
         # Map read data to itself
         vol = data.map2Nifti()
@@ -108,9 +110,9 @@ class NiftiDatasetTests(unittest.TestCase):
     def testMultipleCalls(self):
         """Test if doing exactly the same operation twice yields the same result
         """
-        data = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+        data = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                             labels=1)
-        data2 = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+        data2 = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                              labels=1)
 
         # Currently this test fails and I don't know why!
@@ -121,8 +123,8 @@ class NiftiDatasetTests(unittest.TestCase):
         # there is already a mapper present. Actually this test is just looking
         # for a symptom of a buggy dsattr handling.
         # The tricky part is: I have no clue, what is going on... :(
-        self.failUnless((data.mapper.metric.elementsize \
-                         == data2.mapper.metric.elementsize).all())
+        self.failUnless((data.a.mapper.metric.elementsize \
+                         == data2.a.mapper.metric.elementsize).all())
 
 
     def testERNiftiDataset(self):
@@ -188,7 +190,7 @@ class NiftiDatasetTests(unittest.TestCase):
                                     Event(onset=1, duration=2, label=2,
                                           chunk=1, features=[2000, 2001])],
                             mask=dsmask)
-        nfeatures = ds.mapper._mappers[1].getInSize()
+        nfeatures = ds.a.mapper._mappers[1].getInSize()
         mask = N.zeros(sample_size)
         mask[0, 0, 0] = mask[1, 0, 1] = mask[0, 0, 1] = 1 # select only 3
         # but since 0th is masked out in the dataset, we should end up
@@ -197,7 +199,7 @@ class NiftiDatasetTests(unittest.TestCase):
 
         # select using mask in volume and all features in the other part
         ds_sel = ds.selectFeatures(
-            ds.mapper.forward([mask, [1]*nfeatures]).nonzero()[0])
+            ds.a.mapper.forward([mask, [1]*nfeatures]).nonzero()[0])
 
         # now tests
         self.failUnless((mask.reshape(24).nonzero()[0] == [0, 1, 7]).all())
@@ -225,10 +227,10 @@ class NiftiDatasetTests(unittest.TestCase):
         # Test loading of 3D volumes
 
         # it should puke if we are not enforcing 4D:
-        self.failUnlessRaises(Exception, NiftiDataset,
+        self.failUnlessRaises(Exception, nifti_dataset,
                               masrc, mask=masrc, labels=1, enforce4D=False)
         # by default we are enforcing it
-        ds = NiftiDataset(masrc, mask=masrc, labels=1)
+        ds = nifti_dataset(masrc, mask=masrc, labels=1)
 
         plain_data = NiftiImage(masrc).data
         # Lets check if mapping back works as well
@@ -238,18 +240,18 @@ class NiftiDatasetTests(unittest.TestCase):
         # test loading from a list of filenames
 
         # for now we should fail if trying to load a mix of 4D and 3D volumes
-        self.failUnlessRaises(ValueError, NiftiDataset, (masrc, tssrc),
+        self.failUnlessRaises(ValueError, nifti_dataset, (masrc, tssrc),
                               mask=masrc, labels=1)
 
         # Lets prepare some custom NiftiImage
-        dsfull = NiftiDataset(tssrc, mask=masrc, labels=1)
-        ds_selected = dsfull['samples', [3]]
+        dsfull = nifti_dataset(tssrc, mask=masrc, labels=1)
+        ds_selected = dsfull[3]
         nifti_selected = ds_selected.map2Nifti()
 
         # Load dataset from a mix of 3D volumes
         # (given by filenames and NiftiImages)
         labels = [123, 2, 123]
-        ds2 = NiftiDataset((masrc, masrc, nifti_selected),
+        ds2 = nifti_dataset((masrc, masrc, nifti_selected),
                            mask=masrc, labels=labels)
         self.failUnless(ds2.nsamples == 3)
         self.failUnless((ds2.samples[0] == ds2.samples[1]).all())
@@ -265,23 +267,26 @@ class NiftiDatasetTests(unittest.TestCase):
         mask_roi = N.zeros((24, 96, 128), dtype='bool')
         mask_roi[12, 20, 38:42] = True
         mask_roi[23, 20, 38:42] = True  # far away
-        ds_full = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+        ds_full = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                                labels=[1,2])
-        ds_roi = NiftiDataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+        ds_roi = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                                labels=[1,2], mask=mask_roi)
         # Should just work since we are in the mask
-        ids_roi = ds_roi.mapper.getNeighbors(ds_roi.mapper.getOutId((12, 20, 40)),
-                                       radius=20)
+        ids_roi = ds_roi.a.mapper.getNeighbors(
+                        ds_roi.a.mapper.getOutId((12, 20, 40)),
+                        radius=20)
         self.failUnless(len(ids_roi) == 4)
 
         # Trying to request feature outside of the mask
-        self.failUnlessRaises(ValueError, ds_roi.mapper.getOutId, (12, 20, 37))
+        self.failUnlessRaises(ValueError,
+                              ds_roi.a.mapper.getOutId,
+                              (12, 20, 37))
 
         # Lets work around using full (non-masked) volume
         ids_out = []
-        for id_in in ds_full.mapper.getNeighborIn( (12, 20, 37), radius=20):
+        for id_in in ds_full.a.mapper.getNeighborIn( (12, 20, 37), radius=20):
             try:
-                ids_out.append(ds_roi.mapper.getOutId(id_in))
+                ids_out.append(ds_roi.a.mapper.getOutId(id_in))
             except ValueError:
                 pass
         self.failUnless(ids_out == ids_roi)
