@@ -214,12 +214,6 @@ class Collection(object):
         return self._items.has_key(index)
 
 
-    def __isSet1(self, index):
-        """Returns `True` if state `index` has value set"""
-        self._checkIndex(index)
-        return self._items[index].isSet
-
-
     def isSet(self, index=None):
         """If item (or any in the present or listed) was set
 
