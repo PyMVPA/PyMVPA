@@ -257,7 +257,7 @@ def getSamplesPerChunkLabel(dataset):
 
 
 class SequenceStats(dict):
-    """ Simple helper to provide convenient representation of `getSequenceStat` output
+    """Simple helper to provide representation of sequence statistics
 
     Matlab analog:
     http://cfn.upenn.edu/aguirre/code/matlablib/mseq/mtest.m
@@ -283,9 +283,11 @@ class SequenceStats(dict):
             Chunks to use if `perchunk`=True
           perchunk .... TODO
           """
+        dict.__init__(self)
         self.order = order
         self._seq = seq
         self.stats = None
+        self._str_stats = None
         self.__compute()
 
 
@@ -307,7 +309,8 @@ class SequenceStats(dict):
         ulabels = sorted(list(set(seq)))    # unique labels
         nlabels = len(ulabels)              # # of labels
 
-        labels_map = dict([(l, i) for i,l in enumerate(ulabels)]) # mapping for labels
+        # mapping for labels
+        labels_map = dict([(l, i) for i,l in enumerate(ulabels)])
 
         # map sequence first
         seqm = [labels_map[i] for i in seq]
@@ -341,16 +344,17 @@ class SequenceStats(dict):
         # XXX move into a helper function and do on demand
         t = [ [""] * (1 + self.order*(nlabels+1)) for i in xrange(nlabels+1) ]
         t[0][0] = "Labels/Order"
-        for i,l  in enumerate(ulabels):
+        for i, l  in enumerate(ulabels):
             t[i+1][0] = '%s:' % l
         for cb in xrange(order):
             t[0][1+cb*(nlabels+1)] = "O%d" % (cb+1)
             for i  in xrange(nlabels+1):
                 t[i][(cb+1)*(nlabels+1)] = " | "
             m = cbcounts[cb]
-            ind = N.where(~N.isnan(m))        # should be better way to get indexes
-            for i,j in zip(*ind):
-                t[1+i][1+cb*(nlabels+1)+j] = '%d' % m[i,j]
+            # ??? there should be better way to get indexes
+            ind = N.where(~N.isnan(m))
+            for i, j in zip(*ind):
+                t[1+i][1+cb*(nlabels+1)+j] = '%d' % m[i, j]
 
         sout = "Original sequence had %d entries from set %s\n" \
                % (len(seq), ulabels) + \
@@ -360,7 +364,6 @@ class SequenceStats(dict):
                 % (min(corr), max(corr), N.mean(corr), sumabscorr)
         self._str_stats = sout
 
-        print self
 
     def plot(self):
         """Plot correlation coefficients
