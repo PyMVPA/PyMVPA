@@ -72,8 +72,8 @@ class Searchlight(DatasetMeasure):
     def _call(self, dataset):
         """Perform the spheresearch.
         """
-        if not isinstance(dataset, MappedDataset) \
-               or dataset.mapper.metric is None:
+        if not (dataset.a.isKnown('mapper') and dataset.a.isSet('mapper')) \
+               or dataset.a.mapper.metric is None:
             raise ValueError, "Searchlight only works with MappedDatasets " \
                               "that has metric assigned."
 
