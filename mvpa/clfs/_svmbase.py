@@ -190,7 +190,7 @@ class _SVM(Classifier):
                     raise ValueError, "Unknown parameter %s" % paramname + \
                           ". Known SVM params are: %s" % self._SVM_PARAMS.keys()
                 param = deepcopy(self._SVM_PARAMS[paramname])
-                param.name = paramname
+                param._setName(paramname)
                 if paramname in _args:
                     param.value = _args[paramname]
                     # XXX might want to set default to it -- not just value
@@ -359,5 +359,5 @@ sensitivity.
 
 # populate names in parameters
 for k,v in _SVM._SVM_PARAMS.iteritems():
-    v.name = k
+    v._setName(k)
 
