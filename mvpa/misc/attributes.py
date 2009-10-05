@@ -55,6 +55,8 @@ class CollectableAttribute(object):
         self._instance_index = index
         self.__doc__ = doc
         self.__name = name
+        # XXX any reason not to have a corresponding constructor
+        # arg?
         self._value = None
         self._isset = False
         self.reset()
