@@ -17,11 +17,10 @@ from mvpa.mappers.array import DenseArrayMapper
 from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.base import Dataset
-from mvpa.datasets.mapped import MappedDataset
 from mvpa.mappers.base import ChainMapper, CombinedMapper
 from mvpa.base import warning
 
-class EventDataset(MappedDataset):
+class EventDataset(Dataset):
     """Event-based dataset
 
     This dataset type can be used to segment 'raw' data input into meaningful

@@ -20,23 +20,21 @@ from mvpa.suite import *
 
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                        labels=attr.labels,
+                        chunks=attr.chunks,
+                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # do chunkswise linear detrending on dataset
 detrend(dataset, perchunk=True, model='linear')
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=[0],
-       targetdtype='float32')
+zscore(dataset, perchunk=True, baselinelabels=[0])
 
 # select class 1 and 2 for this demo analysis
 # would work with full datasets (just a little slower)
-dataset = dataset.selectSamples(
-                N.array([l in [1, 2] for l in dataset.labels],
-                        dtype='bool'))
+dataset = dataset[N.array([l in [1, 2] for l in dataset.labels],
+                          dtype='bool')]
 
 # setup cross validation procedure, using SMLR classifier
 cv = CrossValidatedTransferError(
@@ -45,5 +43,6 @@ cv = CrossValidatedTransferError(
 # and run it
 error = cv(dataset)
 
+# UC: unique chunks, UL: unique labels
 print "Error for %i-fold cross-validation on %i-class problem: %f" \
-      % (len(dataset.uniquechunks), len(dataset.uniquelabels), error)
+      % (len(dataset.UC), len(dataset.UL), error)

@@ -239,7 +239,7 @@ class Classifier(ClassWithCollections):
             Data which was used for training
         """
         if self.states.isEnabled('trained_labels'):
-            self.trained_labels = dataset.uniquelabels
+            self.trained_labels = dataset.sa['labels'].unique
 
         self.trained_dataset = dataset
         self.trained_nsamples = dataset.nsamples
@@ -308,7 +308,7 @@ class Classifier(ClassWithCollections):
                 nsamples = states.trained_nsamples
             if states.isSet('trained_dataset'):
                 td = states.trained_dataset
-                nsamples, nchunks = td.nsamples, len(td.uniquechunks)
+                nsamples, nchunks = td.nsamples, len(td.sa['chunks'].unique)
             if nsamples is not None:
                 s += ' #samples:%d' % nsamples
             if nchunks is not None:
