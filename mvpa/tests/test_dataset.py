@@ -22,60 +22,6 @@ from tests_warehouse import datasets
 
 class DatasetTests(unittest.TestCase):
 
-    def testAddPatterns(self):
-        """Test composition of new datasets by addition of existing ones
-        """
-        data = Dataset(samples=range(5), labels=1, chunks=1)
-
-        self.failUnlessEqual(
-            data.uniquelabels, [1],
-            msg="uniquelabels must be correctly recomputed")
-
-        # simple sequence has to be a single pattern
-        self.failUnlessEqual( data.nsamples, 1)
-        # check correct pattern layout (1x5)
-        self.failUnless(
-            (data.samples == N.array([[0, 1, 2, 3, 4]])).all() )
-
-        # check for single labels and origin
-        self.failUnless( (data.labels == N.array([1])).all() )
-        self.failUnless( (data.chunks == N.array([1])).all() )
-
-        # now try adding pattern with wrong shape
-        self.failUnlessRaises( DatasetError,
-                               data.__iadd__, Dataset(samples=N.ones((2,3)),
-                                                      labels=1,
-                                                      chunks=1))
-
-        # now add two real patterns
-        dss = datasets['uni2large'].samples
-        data += Dataset(samples=dss[:2, :5], labels=2, chunks=2 )
-        self.failUnlessEqual( data.nfeatures, 5 )
-        self.failUnless((data.labels == N.array([1, 2, 2])).all() )
-        self.failUnless((data.chunks == N.array([1, 2, 2])).all() )
-
-        # test automatic origins
-        data += Dataset(samples=dss[3:5, :5], labels=3)
-        self.failUnless((data.chunks == N.array([1, 2, 2, 0, 1]) ).all())
-
-        # test unique class labels
-        self.failUnless((data.uniquelabels == N.array([1, 2, 3]) ).all())
-
-        # test wrong label length
-        self.failUnlessRaises(DatasetError,
-                              Dataset,
-                              samples=dss[:4, :5],
-                              labels=[ 1, 2, 3 ],
-                              chunks=2)
-
-        # test wrong origin length
-        self.failUnlessRaises(DatasetError,
-                              Dataset,
-                              samples=dss[:4, :5],
-                              labels=[ 1, 2, 3, 4 ],
-                              chunks=[ 2, 2, 2 ])
-
-
     def testFeatureSelection(self):
         """Testing feature selection: sorted/not sorted, feature groups
         """
@@ -261,96 +207,6 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(data.where(labels=[123]) == [])
 
 
-    def testLabelRandomizationAndSampling(self):
-        """
-        """
-        data = Dataset(samples=N.ones((5, 1)), labels=range(5), chunks=1 )
-        data += Dataset(samples=N.ones((5, 1))+1, labels=range(5), chunks=2 )
-        data += Dataset(samples=N.ones((5, 1))+2, labels=range(5), chunks=3 )
-        data += Dataset(samples=N.ones((5, 1))+3, labels=range(5), chunks=4 )
-        data += Dataset(samples=N.ones((5, 1))+4, labels=range(5), chunks=5 )
-        self.failUnless( data.samplesperlabel == {0:5, 1:5, 2:5, 3:5, 4:5} )
-
-
-        sample = data.getRandomSamples( 2 )
-        self.failUnless( sample.samplesperlabel.values() == [ 2, 2, 2, 2, 2 ] )
-
-        self.failUnless( (data.uniquechunks == range(1, 6)).all() )
-
-        # store the old labels
-        origlabels = data.labels.copy()
-
-        data.permuteLabels(True)
-
-        self.failIf( (data.labels == origlabels).all() )
-
-        data.permuteLabels(False)
-
-        self.failUnless( (data.labels == origlabels).all() )
-
-        # now try another object with the same data
-        data2 = Dataset(samples=data.samples,
-                        labels=data.labels,
-                        chunks=data.chunks )
-
-        # labels are the same as the originals
-        self.failUnless( (data2.labels == origlabels).all() )
-
-        # now permute in the new object
-        data2.permuteLabels( True )
-
-        # must not affect the old one
-        self.failUnless( (data.labels == origlabels).all() )
-        # but only the new one
-        self.failIf( (data2.labels == origlabels).all() )
-
-
-    def testAttributes(self):
-        """Test adding custom attributes to a dataset
-        """
-        #class BlobbyDataset(Dataset):
-        #    pass
-        # TODO: we can't assign attributes to those for now...
-        ds = Dataset(samples=range(5), labels=1, chunks=1)
-        self.failUnlessRaises(AttributeError, lambda x:x.blobs, ds)
-        """Dataset.blobs should fail since .blobs wasn't yet registered"""
-
-        #register new attribute but it would alter only new instances
-        Dataset._registerAttribute("blobs", "_data", hasunique=True)
-        ds = Dataset(samples=range(5), labels=1, chunks=1)
-        self.failUnless(not ds.blobs != [ 0 ],
-             msg="By default new attributes supposed to get 0 as the value")
-
-        try:
-            ds.blobs = [1, 2]
-            self.fail(msg="Dataset.blobs=[1,2] should fail since "
-                      "there is 5 samples")
-        except ValueError, e:
-            pass
-
-        try:
-            ds.blobs = [1]
-        except  e:
-            self.fail(msg="We must be able to assign the attribute")
-
-        # Dataset still shouldn't have blobs... just BlobbyDataset
-        #self.failUnlessRaises(AttributeError, lambda x:x.blobs,
-        #                      Dataset(samples=range(5), labels=1, chunks=1))
-
-
-    def testRequiredAtrributes(self):
-        """Verify that we have required attributes
-        """
-        self.failUnlessRaises(DatasetError, Dataset)
-        self.failUnlessRaises(DatasetError, Dataset, samples=[1])
-        self.failUnlessRaises(DatasetError, Dataset, labels=[1])
-        try:
-            ds = Dataset(samples=[1], labels=[1])
-        except:
-            self.fail(msg="samples and labels are 2 required parameters")
-        assert(ds is not None)          # silence pylint
-
-
     def testZScoring(self):
         """Test z-scoring transformation
         """
@@ -379,18 +235,6 @@ class DatasetTests(unittest.TestCase):
                        chunks=[0]*16)
         zscore(data, baselinelabels=[0, 1])
         self.failUnless((samples == data.samples+1.0).all())
-
-
-    def testAggregation(self):
-        data = Dataset(samples=N.arange( 20 ).reshape( (4, 5) ),
-                       labels=1,
-                       chunks=1)
-
-        ag_data = aggregateFeatures(data, N.mean)
-
-        self.failUnless(ag_data.nsamples == 4)
-        self.failUnless(ag_data.nfeatures == 1)
-        self.failUnless((ag_data.samples[:, 0] == [2, 7, 12, 17]).all())
 
 
     def testApplyMapper(self):

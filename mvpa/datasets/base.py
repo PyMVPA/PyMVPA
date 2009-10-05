@@ -407,6 +407,9 @@ class Dataset(ClassWithCollections):
         --------
         blah blah
         """
+        # we depend on arrays
+        samples = N.asanyarray(samples)
+
         # put mapper as a dataset attribute in the general attributes collection
         # need to do that first, since we want to know the final
         # #samples/#features
