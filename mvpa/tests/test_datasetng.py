@@ -362,7 +362,7 @@ def test_coord2feature():
 
     for id_ in xrange(data.nfeatures):
         # transform to coordinate
-        c = data.a.mapper.getInId(id)
+        c = data.a.mapper.getInId(id_)
         assert_equal(len(c), 4)
 
         # compare data from orig array (selected by coord)

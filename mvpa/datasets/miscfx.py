@@ -35,14 +35,13 @@ if externals.exists('scipy'):
 @datasetmethod
 def zscore(dataset, mean=None, std=None,
            perchunk=True, baselinelabels=None,
-           pervoxel=True, targetdtype='float64'):
+           pervoxel=True):
     """Z-Score the samples of a `Dataset` (in-place).
 
     `mean` and `std` can be used to pass custom values to the z-scoring.
     Both may be scalars or arrays.
 
-    All computations are done *in place*. Data upcasting is done
-    automatically if necessary into `targetdtype`
+    All computations are done *in place*.
 
     If `baselinelabels` provided, and `mean` or `std` aren't provided, it would
     compute the corresponding measure based only on labels in `baselinelabels`
@@ -57,10 +56,10 @@ def zscore(dataset, mean=None, std=None,
         warning("Z-scoring chunk-wise and one chunk with less than two " \
                 "samples will set features in these samples to zero.")
 
-    # cast to floating point datatype if necessary
-    if str(dataset.samples.dtype).startswith('uint') \
-       or str(dataset.samples.dtype).startswith('int'):
-        dataset.setSamplesDType(targetdtype)
+    # need to make sure  that std is float, as otherwise no upcasting is done
+    # automatically
+    if not std is None:
+        std = float(std)
 
     def doit(samples, mean, std, statsamples=None):
         """Internal method."""
@@ -100,7 +99,7 @@ def zscore(dataset, mean=None, std=None,
     if baselinelabels is None:
         statids = None
     else:
-        statids = Set(dataset.idsbylabels(baselinelabels))
+        statids = Set(get_samples_by_attr(dataset, 'labels', baselinelabels))
 
     # for the sake of speed yoh didn't simply create a list
     # [True]*dataset.nsamples to provide easy selection of everything
@@ -375,3 +374,27 @@ def get_nsamples_per_attr(dataset, attr):
         result[l] += 1
 
     return result
+
+
+@datasetmethod
+def get_samples_by_attr(dataset, attr, values, sort=True):
+    """Return indecies of samples given a list of attributes
+    """
+
+    if not isSequenceType(values) \
+           or isinstance(values, basestring):
+        values = [ values ]
+
+    # TODO: compare to plain for loop through the labels
+    #       on a real data example
+    sel = N.array([], dtype=N.int16)
+    sa = dataset.sa
+    for value in values:
+        sel = N.concatenate((
+            sel, N.where(sa[attr].value == value)[0]))
+
+    if sort:
+        # place samples in the right order
+        sel.sort()
+
+    return sel

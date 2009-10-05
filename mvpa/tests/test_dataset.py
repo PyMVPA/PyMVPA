@@ -13,7 +13,6 @@ import random
 import numpy as N
 from sets import Set
 from mvpa.datasets import Dataset
-from mvpa.datasets.miscfx import zscore, aggregateFeatures
 from mvpa.mappers.mask import MaskMapper
 from mvpa.misc.exceptions import DatasetError
 from mvpa.support import copy
@@ -205,36 +204,6 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(data.where() is None)
         # empty result
         self.failUnless(data.where(labels=[123]) == [])
-
-
-    def testZScoring(self):
-        """Test z-scoring transformation
-        """
-        # dataset: mean=2, std=1
-        samples = N.array( (0,1,3,4,2,2,3,1,1,3,3,1,2,2,2,2) ).\
-            reshape((16, 1))
-        data = Dataset(samples=samples,
-                       labels=range(16), chunks=[0]*16)
-        self.failUnlessEqual( data.samples.mean(), 2.0 )
-        self.failUnlessEqual( data.samples.std(), 1.0 )
-        zscore(data, perchunk=True)
-
-        # check z-scoring
-        check = N.array([-2,-1,1,2,0,0,1,-1,-1,1,1,-1,0,0,0,0],
-                        dtype='float64').reshape(16,1)
-        self.failUnless( (data.samples ==  check).all() )
-
-        data = Dataset(samples=samples,
-                       labels=range(16), chunks=[0]*16)
-        zscore(data, perchunk=False)
-        self.failUnless( (data.samples ==  check).all() )
-
-        # check z-scoring taking set of labels as a baseline
-        data = Dataset(samples=samples,
-                       labels=[0, 2, 2, 2, 1] + [2]*11,
-                       chunks=[0]*16)
-        zscore(data, baselinelabels=[0, 1])
-        self.failUnless((samples == data.samples+1.0).all())
 
 
     def testApplyMapper(self):
