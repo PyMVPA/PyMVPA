@@ -207,7 +207,7 @@ class _SVM(Classifier):
 
         # Some postchecks
         if self.params.isKnown('weight') and self.params.isKnown('weight_label'):
-            if not len(self.weight_label) == len(self.weight):
+            if not len(self.params.weight_label) == len(self.params.weight):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
                       "must be equal."
 
