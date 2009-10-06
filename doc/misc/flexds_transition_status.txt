@@ -47,7 +47,7 @@ test_datasetfx_sp.py        pass
 test_datasetng.py           pass
 test_dataset.py             broken
 test_dochelpers.py          pass
-test_eepdataset.py          broken
+test_eepdataset.py          pass (missing test)
 test_enet.py                not checked
 test_externals.py           pass
 test_hamster.py             pass
