@@ -87,5 +87,5 @@ test_transerror.py          broken
 test_transformers.py        pass
 test_verbosity.py           pass
 test_waveletmapper.py       pass
-test_zscoremapper.py        broken
+test_zscoremapper.py        pass
 
