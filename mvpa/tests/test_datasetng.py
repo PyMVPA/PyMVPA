@@ -47,7 +47,7 @@ def test_from_basic():
     assert_array_equal(ds.labels, labels)
     assert_array_equal(ds.chunks, chunks)
 
-    ok_(sorted(ds.sa.names) == ['chunks', 'labels'])
+    ok_(sorted(ds.sa.names) == ['chunks', 'labels', 'origids'])
 
     # there is not necessarily a mapper present
     ok_(not ds.a.isKnown('mapper'))

@@ -1130,7 +1130,7 @@ class SplitClassifier(CombinedClassifier):
 
             if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
-                self.confusion.add(split[1].labels, predictions,
+                self.states.confusion.add(split[1].labels, predictions,
                                    clf.states.get('values', None))
                 if __debug__:
                     dact = debug.active
@@ -1138,11 +1138,11 @@ class SplitClassifier(CombinedClassifier):
                         debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
                     elif 'CLFSPL' in dact:
                         debug('CLFSPL', 'Split %d error %.2f%%'
-                              % (i, self.confusion.summaries[-1].error))
+                              % (i, self.states.confusion.summaries[-1].error))
 
             if states.isEnabled("training_confusion"):
-                states.training_confusion += \
-                                               clf.states.training_confusion
+                # XXX this is broken, as it cannot deal with not yet set states
+                states.training_confusion += clf.states.training_confusion
         # hackish way -- so it should work only for ConfusionMatrix???
         try:
             if states.isEnabled("confusion"):

@@ -126,10 +126,10 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
                   (sensitivity, selected_ids))
 
         # Create a dataset only with selected features
-        wdataset = dataset.selectFeatures(selected_ids)
+        wdataset = dataset[:, selected_ids]
 
         if not testdataset is None:
-            wtestdataset = testdataset.selectFeatures(selected_ids)
+            wtestdataset = testdataset[:, selected_ids]
         else:
             wtestdataset = None
 
@@ -296,10 +296,10 @@ class CombinedFeatureSelection(FeatureSelection):
         # take care of optional second dataset
         td_sel = None
         if not testdataset is None:
-            td_sel = testdataset.selectFeatures(self.selected_ids)
+            td_sel = testdataset[:, self.selected_ids]
 
         # and main dataset
-        d_sel = dataset.selectFeatures(selected_ids)
+        d_sel = dataset[:, selected_ids]
 
         # finally store ids in state
         self.selected_ids = selected_ids

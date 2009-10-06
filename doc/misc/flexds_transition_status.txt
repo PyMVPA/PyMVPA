@@ -9,8 +9,8 @@ clfs_examples.py            broken
 curvefitting.py             pass
 erp_plot.py                 pass
 eventrelated.py             broken
-gpr_model_selection0.py     broken
-gpr.py                      broken
+gpr_model_selection0.py     broken by design
+gpr.py                      pass
 kerneldemo.py               pass
 match_distribution.py       broken
 mri_plot.py                 broken
@@ -44,7 +44,7 @@ test_config.py              pass
 test_datameasure.py         broken
 test_datasetfx.py           pass
 test_datasetfx_sp.py        pass
-test_datasetng.py           fail
+test_datasetng.py           pass
 test_dataset.py             broken
 test_dochelpers.py          pass
 test_eepdataset.py          broken

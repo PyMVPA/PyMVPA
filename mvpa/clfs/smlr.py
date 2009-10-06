@@ -551,7 +551,7 @@ class SMLRWeights(Sensitivity):
         #            " sensitivities available %s. Make sure that it is what you"
         #            " intended to do" % (self, weights.shape) )
 
-        if clf.has_bias:
+        if clf.params.has_bias:
             self.biases = clf.biases
 
         if __debug__:

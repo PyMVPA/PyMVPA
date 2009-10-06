@@ -234,7 +234,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sens = sana(ds)
 
         self.failUnless(sens.shape == (
-            len(ds.uniquechunks), ds.nfeatures, len(ds.uniquelabels)))
+            len(ds.sa['chunks'].unique), ds.nfeatures, len(ds.sa['labels'].unique)))
 
 
         # Lets try more complex example with 'boosting'
@@ -253,7 +253,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessEqual(len(splits), 2)
         self.failUnless(N.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
-        self.failUnless(N.any([splits[0][0].origids != splits[1][0].origids]))
+        self.failUnless(N.any([splits[0][0].sa.origids != splits[1][0].sa.origids]))
         # and should have got different sensitivities
         self.failUnless(N.any(sens[0] != sens[1]))
 
