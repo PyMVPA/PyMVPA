@@ -12,10 +12,10 @@ dedicated containers aka. `Collections`.
 
 __docformat__ = 'restructuredtext'
 
-
 import numpy as N
 
 from mvpa.misc.exceptions import UnknownStateError
+import mvpa.support.copy as copy
 
 if __debug__:
     from mvpa.base import debug
@@ -32,7 +32,7 @@ class CollectableAttribute(object):
     Derived classes will have specific semantics:
 
     * StateVariable: conditional storage
-    * AttributeWithUnique: easy access to a set of unique values
+    * AttributeWithArray: easy access to a set of unique values
       within a container
     * Parameter: attribute with validity ranges.
 
@@ -63,6 +63,14 @@ class CollectableAttribute(object):
         if __debug__:
             debug("COL",
                   "Initialized new collectable #%d:%s" % (index,name) + `self`)
+
+
+    def __copy__(self):
+        # preserve attribute type
+        copied = self.__class__(name=self.name)
+        # just get a view of the old data!
+        copied.value = copy.copy(self.value)
+        return copied
 
 
     # Instead of going for VProperty lets make use of virtual method
@@ -143,38 +151,31 @@ class CollectableAttribute(object):
 
 
 
-# XXX think that may be discard hasunique and just devise top
-#     class DatasetAttribute
-class AttributeWithUnique(CollectableAttribute):
-    """Container which also takes care about recomputing unique values
+class AttributeWithArray(CollectableAttribute):
+    """Container which embeds an array.
 
-    XXX may be we could better link original attribute to additional
-    attribute which actually stores the values (and do reverse there
-    as well).
-
-    Pros:
-      * don't need to mess with getattr since it would become just another
-        attribute
-
-    Cons:
-      * might be worse design in terms of comprehension
-      * take care about _set, since we shouldn't allow
-        change it externally
-
-    For now lets do it within a single class and tune up getattr
+    It also takes care about caching and recomputing unique values.
     """
 
-    def __init__(self, name=None, hasunique=True, doc="Attribute with unique"):
+    def __init__(self, name=None, hasunique=True, doc="Attribute with array"):
         CollectableAttribute.__init__(self, name, doc)
         self._hasunique = hasunique
         self._resetUnique()
         if __debug__:
             debug("UATTR",
-                  "Initialized new AttributeWithUnique %s " % name + `self`)
+                  "Initialized new AttributeWithArray %s " % name + `self`)
+
+
+    def __copy__(self):
+        # preserve attribute type
+        copied = self.__class__(name=self.name)
+        # just get a view of the old data!
+        copied.value = self.value.view()
+        return copied
 
 
     def reset(self):
-        super(AttributeWithUnique, self).reset()
+        super(AttributeWithArray, self).reset()
         self._resetUnique()
 
 
@@ -204,17 +205,17 @@ class AttributeWithUnique(CollectableAttribute):
 
 
 # Hooks for comprehendable semantics and automatic collection generation
-class SampleAttribute(AttributeWithUnique):
+class SampleAttribute(AttributeWithArray):
     pass
 
 
 
-class FeatureAttribute(AttributeWithUnique):
+class FeatureAttribute(AttributeWithArray):
     pass
 
 
 
-class DatasetAttribute(AttributeWithUnique):
+class DatasetAttribute(CollectableAttribute):
     pass
 
 

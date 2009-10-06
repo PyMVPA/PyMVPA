@@ -152,7 +152,7 @@ class NiftiDataset(Dataset):
     pynifti.
     """
     @classmethod
-    def from_anynifti(cls, samples, labels=None, chunks=Nonei, mask=None,
+    def from_anynifti(cls, samples, labels=None, chunks=None, mask=None,
                       enforce_dim=4):
         """
         :Parameters:

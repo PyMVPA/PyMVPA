@@ -17,7 +17,8 @@ It was devised to provide conditional storage
 #          access. Can we refactor that?
 __docformat__ = 'restructuredtext'
 
-import operator, copy
+import operator
+import mvpa.support.copy as copy
 from sets import Set
 from textwrap import TextWrapper
 
@@ -309,15 +310,35 @@ class Collection(object):
         raise NotImplementedError
 
 
-    def update(self, source):
+    def update(self, source, copyvalues=None):
         """
+        Parameters
+        ----------
+        source : dict, Collection
+        copyvalues : None, shallow, deep
         """
         if isinstance(source, Collection):
             for a in source._items.values():
-                self.add_collectable(a)
+                if copyvalues is None:
+                    self.add_collectable(a)
+                elif copyvalues is 'shallow':
+                    self.add_collectable(copy.copy(a))
+                elif copyvalues is 'deep':
+                    self.add_collectable(copy.deepcopy(a))
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
         elif isinstance(source, dict):
             for k, v in source.iteritems():
-                self.add(k, v)
+                if copyvalues is None:
+                    self.add(k, v)
+                elif copyvalues is 'shallow':
+                    self.add(k, copy.copy(v))
+                elif copyvalues is 'deep':
+                    self.add(k, copy.deepcopy(v))
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
         else:
             raise ValueError("Collection.upate() can only handle Collections "
                              "dictionarie as arguments.")

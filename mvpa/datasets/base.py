@@ -148,29 +148,11 @@ class Dataset(ClassWithCollections):
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
         sa = self.sa.__class__()
+        sa.update(self.sa, copyvalues='shallow')
         fa = self.fa.__class__()
+        fa.update(self.fa, copyvalues='shallow')
         a = self.a.__class__()
-
-        # for all the pieces that are known to be arrays
-        for tcol, scol in ((sa, self.sa),
-                           (fa, self.fa)):
-            for attr in scol.items.values():
-                # preserve attribute type
-                newattr = attr.__class__(name=attr.name)
-                # just get a view of the old data!
-                newattr.value = attr.value.view()
-                # assign to target collection
-                tcol.add_collectable(newattr)
-
-        # dataset attributes might be anythings, so they are SHALLOW copied
-        # individually
-        for attr in self.a.items.values():
-            # preserve attribute type
-            newattr = attr.__class__(name=attr.name)
-            # SHALLOW copy!
-            newattr.value = copy.copy(attr.value)
-            # assign to target collection
-            a.add_collectable(newattr)
+        a.update(self.a, copyvalues='shallow')
 
         # and finally the samples
         samples = self.samples.view()
@@ -184,15 +166,11 @@ class Dataset(ClassWithCollections):
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
         sa = self.sa.__class__()
+        sa.update(self.sa, copyvalues='deep')
         fa = self.fa.__class__()
+        fa.update(self.fa, copyvalues='deep')
         a = self.a.__class__()
-
-        # now we copy the attributes
-        for tcol, scol in ((sa, self.sa),
-                           (fa, self.fa),
-                           (a, self.a)):
-            for name, attr in scol.items.iteritems():
-                tcol.add_collectable(copy.deepcopy(attr, memo))
+        a.update(self.a, copyvalues='deep')
 
         # and finally the samples
         samples = copy.deepcopy(self.samples, memo)
