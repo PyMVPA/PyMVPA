@@ -32,8 +32,9 @@ class ChannelDataset(Dataset):
     stores some additional properties (reference time `t0`, temporal
     distance of two timepoints `dt` and `channelids` (names)).
     """
-    def __init__(self, samples=None, dsattr=None,
-                 t0=None, dt=None, channelids=None, **kwargs):
+    @classmethod
+    def from_temporaldata(cls, samples, labels=None, chunks=None,
+                          t0=None, dt=None, channelids=None):
         """Initialize ChannelDataset.
 
         :Parameters:
@@ -50,22 +51,19 @@ class ChannelDataset(Dataset):
           channelids: list
             List of channel names.
         """
-        # if dsattr is none, set it to an empty dict
-        if dsattr is None:
-            dsattr = {}
-
         # check samples
-        if not samples is None and len(samples.shape) != 3:
-                raise ValueError, \
-                  "ChannelDataset takes 3D array as samples."
+        if len(samples.shape) != 3:
+            raise DatasetError("ChannelDataset takes 3D array as samples.")
+
+        ds = cls.from_basic(samples, labels=labels, chunks=chunks)
 
         # charge dataset properties
         # but only if some value
-        if (not dt is None) or not dsattr.has_key('ch_dt'):
+        if not dt is None:
             dsattr['ch_dt'] = dt
-        if (not channelids is None) or not dsattr.has_key('ch_ids'):
+        if not channelids is None:
             dsattr['ch_ids'] = channelids
-        if (not t0 is None) or not dsattr.has_key('ch_t0'):
+        if not t0 is None:
             dsattr['ch_t0'] = t0
 
         # come up with mapper if fresh samples were provided
