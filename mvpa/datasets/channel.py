@@ -55,31 +55,18 @@ class ChannelDataset(Dataset):
         if len(samples.shape) != 3:
             raise DatasetError("ChannelDataset takes 3D array as samples.")
 
-        ds = cls.from_basic(samples, labels=labels, chunks=chunks)
+        ds = cls.from_masked(samples, labels=labels, chunks=chunks)
 
         # charge dataset properties
         # but only if some value
         if not dt is None:
-            dsattr['ch_dt'] = dt
+            ds.a.add('dt', dt)
         if not channelids is None:
-            dsattr['ch_ids'] = channelids
+            ds.a.add('channelids', channelids)
         if not t0 is None:
-            dsattr['ch_t0'] = t0
+            ds.a.add('t0', t0)
 
-        # come up with mapper if fresh samples were provided
-        if not samples is None:
-            mapper = MaskMapper(N.ones(samples.shape[1:], dtype='bool'))
-        else:
-            # Doesn't make difference at the moment, but might come 'handy'?
-            mapper = dsattr.get('mapper', None)
-
-        # init dataset
-        MappedDataset.__init__(self,
-                               samples=samples,
-                               mapper=mapper,
-                               dsattr=dsattr,
-                               **(kwargs))
-
+        return ds
 
     __doc__ = enhancedDocString('ChannelDataset', locals(), Dataset)
 
@@ -125,6 +112,9 @@ class ChannelDataset(Dataset):
 
 
     if externals.exists('scipy'):
+        #XXX MH: The whole things needs to get out of this class and be turned
+        # into a generec function that deals with all datasets having some
+        # frequency information
         def resample(self, nt=None, sr=None, dt=None, window='ham',
                      inplace=True, **kwargs):
             """Convenience method to resample data sample channel-wise.
@@ -183,11 +173,9 @@ class ChannelDataset(Dataset):
             data = signal.resample(orig_data, nt, axis=2, window=window, **kwargs)
             new_dt = float(orig_length) / nt
 
-            dsattr = self._dsattr
-
             # would be needed for not inplace generation
             if inplace:
-                dsattr['ch_dt'] = new_dt
+                self.a['dt'].value = new_dt
                 # XXX We could have resampled range(nsamples) and
                 #     rounded  it. and adjust then mapper's mask
                 #     accordingly instead of creating a new one.
@@ -195,7 +183,8 @@ class ChannelDataset(Dataset):
                 #     resampling did...
                 mapper = MaskMapper(N.ones(data.shape[1:], dtype='bool'))
                 # reassign a new mapper.
-                dsattr['mapper'] = mapper
+                # XXX this is very evil -- who knows what mapper it is replacing
+                self.a['mapper'].value = mapper
                 self.samples = mapper.forward(data)
                 return self
             else:
@@ -203,7 +192,8 @@ class ChannelDataset(Dataset):
                 # some additional attributes such as
                 # labels_map
                 dsattr = copy.deepcopy(dsattr)
-                return ChannelDataset(data=self._data,
+                return ChannelDataset.from_temporaldata(
+                        data=self._data,
                                       dsattr=dsattr,
                                       samples=data,
                                       t0=self.t0,
@@ -212,14 +202,14 @@ class ChannelDataset(Dataset):
                                       copy_data=True,
                                       copy_dsattr=False)
 
-    channelids = property(fget=lambda self: self._dsattr['ch_ids'],
+    channelids = property(fget=lambda self: self.a.channelids,
                           doc='List of channel IDs')
-    t0 = property(fget=lambda self: self._dsattr['ch_t0'],
+    t0 = property(fget=lambda self: self.a.t0,
                           doc='Temporal position of first sample in the ' \
                               'timeseries (in seconds) -- possibly relative ' \
                               'to stimulus onset.')
-    dt = property(fget=lambda self: self._dsattr['ch_dt'],
+    dt = property(fget=lambda self: self.a.dt,
                           doc='Time difference between two samples ' \
                               '(in seconds).')
-    samplingrate = property(fget=lambda self: 1.0 / self._dsattr['ch_dt'],
+    samplingrate = property(fget=lambda self: 1.0 / self.a.dt,
                           doc='Yeah, sampling rate.')
