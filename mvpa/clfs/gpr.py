@@ -286,11 +286,13 @@ class GPR(Classifier):
 
         if not retrainable or newkernel or _changedData['params']:
             if __debug__:
-                debug("GPR", "Computing L. sigma_noise=%g" % self.sigma_noise)
+                debug("GPR", "Computing L. sigma_noise=%g" \
+                             % self.params.sigma_noise)
             # XXX it seems that we do not need binding to object, but may be
             # commented out code would return?
             self._C = km_train_train + \
-                  self.sigma_noise**2 * N.identity(km_train_train.shape[0], 'd')
+                  self.params.sigma_noise ** 2 * \
+                  N.identity(km_train_train.shape[0], 'd')
             # The following decomposition could raise
             # N.linalg.linalg.LinAlgError because of numerical
             # reasons, due to the too rapid decay of 'self._C'
@@ -404,7 +406,7 @@ class GPR(Classifier):
             #     + self.sigma_noise**2
             # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
             self.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
-                                       + self.sigma_noise ** 2
+                                       + self.params.sigma_noise ** 2
             pass
 
         if __debug__:
@@ -438,7 +440,7 @@ class GPR(Classifier):
         """
         if hyperparameter[0] < self.params['sigma_noise'].min:
             raise InvalidHyperparameterError()
-        self.sigma_noise = hyperparameter[0]
+        self.params.sigma_noise = hyperparameter[0]
         if hyperparameter.size > 1:
             self.__kernel.set_hyperparameters(hyperparameter[1:])
             pass

@@ -110,7 +110,7 @@ class CompoundOneWayAnova(OneWayAnova):
         labels = orig_labels.copy()
 
         results = []
-        for ul in dataset.uniquelabels:
+        for ul in dataset.sa['labels'].unique:
             labels[orig_labels == ul] = 1
             labels[orig_labels != ul] = 2
             results.append(OneWayAnova._call(self, dataset, labels))
