@@ -5,29 +5,28 @@ dataset implementation. May the source be with us!
 Examples
 --------
 
-clfs_examples.py            not checked
-curvefitting.py             not checked
-erp_plot.py                 not checked
-eventrelated.py             not checked
-gpr_model_selection0.py     not checked
-gpr.py                      not checked
-kerneldemo.py               not checked
-match_distribution.py       not checked
-mri_plot.py                 not checked
-permutation_test.py         not checked
-projections.py              not checked
-pymvpa.cfg                  not checked
-searchlight_2d.py           not checked
-searchlight_dsm.py          not checked
-searchlight_minimal.py      not checked
+clfs_examples.py            broken
+curvefitting.py             pass
+erp_plot.py                 pass
+eventrelated.py             broken
+gpr_model_selection0.py     broken
+gpr.py                      broken
+kerneldemo.py               pass
+match_distribution.py       broken
+mri_plot.py                 broken
+permutation_test.py         broken
+projections.py              pass
+searchlight_2d.py           broken
+searchlight_dsm.py          broken
+searchlight_minimal.py      broken
 searchlight.py              not checked
-sensanas.py                 not checked
-smellit.py                  not checked
-smlr.py                     not checked
-som.py                      not checked
-start_easy.py               completed
-svdclf.py                   not checked
-topo_plot.py                not checked
+sensanas.py                 broken
+smellit.py                  broken
+smlr.py                     broken
+som.py                      broken
+start_easy.py               pass
+svdclf.py                   broken
+topo_plot.py                pass
 
 
 Unit tests
