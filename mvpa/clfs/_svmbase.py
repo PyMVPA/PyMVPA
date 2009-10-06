@@ -195,7 +195,7 @@ class _SVM(Classifier):
                     param.value = _args[paramname]
                     # XXX might want to set default to it -- not just value
 
-                paramset.add(param)
+                paramset.add_collectable(param)
 
         # tune up C if it has one and non-linear classifier is used
         if self.params.isKnown('C') and kernel_type != "linear" \

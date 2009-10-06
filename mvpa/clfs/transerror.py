@@ -1257,7 +1257,7 @@ class ClassifierError(ClassWithCollections):
                         enable_states=['training_confusion'])
                 self.__clf.train(trainingdataset)
                 if self.states.isEnabled('training_confusion'):
-                    self.training_confusion = self.__clf.training_confusion
+                    self.states.training_confusion = self.__clf.states.training_confusion
                     self.__clf.states._resetEnabledTemporarily()
 
         if self.__clf.states.isEnabled('trained_labels') and \
@@ -1406,7 +1406,7 @@ class TransferError(ClassifierError):
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
         #  not from test/train datasets explicitely, see
-        #  `ConfusionBasedError`, where confusion is simply
+        #  `ConfusionBasedError`, wherestates. confusion is simply
         #  bound to classifiers confusion matrix
         states = self.states
         if states.isEnabled('confusion'):
@@ -1426,7 +1426,7 @@ class TransferError(ClassifierError):
             for i, p in enumerate(predictions):
                 samples_error.append(self.__errorfx(p, testdataset.labels[i]))
 
-            states.samples_error = dict(zip(testdataset.origids, samples_error))
+            states.samples_error = dict(zip(testdataset.sa.origids, samples_error))
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.labels)
@@ -1508,5 +1508,5 @@ class ConfusionBasedError(ClassifierError):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
         confusion = self.clf.states.getvalue(self.__confusion_state)
-        self.confusion = confusion
+        self.states.confusion = confusion
         return confusion.error

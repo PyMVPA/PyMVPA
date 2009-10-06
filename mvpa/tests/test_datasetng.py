@@ -460,3 +460,12 @@ def test_feature_masking():
     assert_array_equal(data.UL, N.unique(data.labels))
     assert_array_equal(data.S, data.samples)
     assert_array_equal(data.O, data.mapper.reverse(data.samples))
+
+
+def test_origid_handling():
+    ds = dataset(N.atleast_2d(N.arange(35)).T)
+    ok_(ds.nsamples == 35)
+    assert_equal(len(N.unique(ds.sa.origids)), 35)
+    selector = [3, 7, 10, 15]
+    subds = ds[selector]
+    assert_array_equal(subds.sa.origids, ds.sa.origids[selector])

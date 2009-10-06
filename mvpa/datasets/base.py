@@ -393,12 +393,19 @@ class Dataset(ClassWithCollections):
                                                    samples.shape[0],
                                                    'chunks')
 
+        # common checks should go into __init__
+        ds = cls(samples, sa=sa_items, a=a_items)
+
         # TODO: for now create orig ids here. Probably has to move somewhere
         # else once the notion of a 'samples space' becomes clearer
-        sa_items['origids'] = N.arange(samples.shape[0])
+        # now do evil to ensure unique ids across multiple datasets
+        # so that they could be merged together
+        thisid = str(id(ds))
+        ds.sa.add('origids',
+                  N.asanyarray(['%s-%i' % (thisid, i)
+                                    for i in xrange(samples.shape[0])]))
+        return ds
 
-        # common checks should go into __init__
-        return cls(samples, sa=sa_items, a=a_items)
 
 
     @classmethod
