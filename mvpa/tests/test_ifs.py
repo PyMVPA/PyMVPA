@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA incremental feature search."""
 
-from mvpa.datasets.masked import MaskedDataset
+from mvpa.datasets.base import Dataset
 from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
@@ -27,7 +27,7 @@ class IFSTests(unittest.TestCase):
                                   N.repeat( 1, 50 ) ) )
         chunks = N.repeat( range(5), 10 )
         chunks = N.concatenate( (chunks, chunks) )
-        return MaskedDataset(samples=data, labels=labels, chunks=chunks)
+        return Dataset.from_masked(samples=data, labels=labels, chunks=chunks)
 
 
     # XXX just testing based on a single classifier. Not sure if

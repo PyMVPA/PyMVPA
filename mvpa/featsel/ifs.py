@@ -128,7 +128,7 @@ class IFS(FeatureSelection):
                 # select a new temporay feature subset from the dataset
                 # XXX assume MappedDataset and issue plain=True ??
                 tmp_dataset = \
-                    dataset.selectFeatures(selected + [candidate])
+                        dataset[:, selected + [candidate]]
 
                 # compute data measure on this feature set
                 measures.append(self.__data_measure(tmp_dataset))
@@ -147,8 +147,8 @@ class IFS(FeatureSelection):
 
             # compute transfer error for the new set
             # XXX assume MappedDataset and issue plain=True ??
-            error = self.__transfer_error(testdataset.selectFeatures(selected),
-                                          dataset.selectFeatures(selected))
+            error = self.__transfer_error(testdataset[:, selected],
+                                          dataset[:, selected])
             errors.append(error)
 
             # Check if it is time to stop and if we got
@@ -175,5 +175,4 @@ class IFS(FeatureSelection):
         self.errors = errors
 
         # best dataset ever is returned
-        return dataset.selectFeatures(results), \
-               testdataset.selectFeatures(results)
+        return dataset[:, results], testdataset[:, results]
