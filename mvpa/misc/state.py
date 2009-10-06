@@ -25,7 +25,8 @@ import numpy as N
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attributes import CollectableAttribute, StateVariable
+from mvpa.misc.attributes import CollectableAttribute, StateVariable, \
+        SampleAttribute, FeatureAttribute, DatasetAttribute
 from mvpa.base.dochelpers import enhancedDocString
 
 from mvpa.base import externals
@@ -269,7 +270,7 @@ class Collection(object):
                      index)
 
 
-    def add(self, item):
+    def add_collectable(self, item):
         """Add a new CollectableAttribute to the collection
 
         :Parameters:
@@ -296,6 +297,30 @@ class Collection(object):
 
         if not self.owner is None:
             self._updateOwner(name)
+
+
+    def add(self, name, value):
+        """Convenience method to add an attributes to the collection.
+
+        The method has to be implemented in derived collections to
+        instantiate Collectable Attributes of the desired type and add
+        than to the collection via add_collectable().
+        """
+        raise NotImplementedError
+
+
+    def update(self, source):
+        """
+        """
+        if isinstance(source, Collection):
+            for a in source._items.values():
+                self.add_collectable(a)
+        elif isinstance(source, dict):
+            for k, v in source.iteritems():
+                self.add(k, v)
+        else:
+            raise ValueError("Collection.upate() can only handle Collections "
+                             "dictionarie as arguments.")
 
 
     def remove(self, index):
@@ -550,24 +575,78 @@ class ParameterCollection(Collection):
 
 
 class SampleAttributesCollection(Collection):
-    """Container for data and attributes of samples (ie data/labels/chunks/...)
+    """Container for attributes of samples (i.e. labels, chunks...)
     """
-
-#    def __init__(self, items=None, owner=None, name=None):
-#        """Initialize the state variables of a derived class
-#
-#        :Parameters:
-#          items : dict
-#            dictionary of states
-#        """
-#        Collection.__init__(self, items, owner, name)
-#
-
     def _cls_repr(self):
         """Part of __repr__ for the owner object
         """
         return [] # TODO: return I guess samples/labels/chunks
 
+
+    def add(self, name, value):
+        """Convenience method to add samples attributes to the collection.
+
+        Parameters
+        ----------
+        name : str
+          The name that the attribute should be made available under in the
+          collection.
+        value : array
+          The actual attribute value.
+        """
+        attr = SampleAttribute(name=name)
+        attr.value = value
+        self.add_collectable(attr)
+
+
+class FeatureAttributesCollection(Collection):
+    """Container for attributes of features
+    """
+    def _cls_repr(self):
+        """Part of __repr__ for the owner object
+        """
+        return [] # TODO
+
+
+    def add(self, name, value):
+        """Convenience method to add dataset attributes to the collection.
+
+        Parameters
+        ----------
+        name : str
+          The name that the attribute should be made available under in the
+          collection.
+        value : array
+          The actual attribute value.
+        """
+        attr = FeatureAttribute(name=name)
+        attr.value = value
+        self.add_collectable(attr)
+
+
+class DatasetAttributesCollection(Collection):
+    """Container for attributes of datasets (i.e. mappers, ...)
+    """
+    def _cls_repr(self):
+        """Part of __repr__ for the owner object
+        """
+        return [] # TODO
+
+
+    def add(self, name, value):
+        """Convenience method to add dataset attributes to the collection.
+
+        Parameters
+        ----------
+        name : str
+          The name that the attribute should be made available under in the
+          collection.
+        value : array
+          The actual attribute value.
+        """
+        attr = DatasetAttribute(name=name)
+        attr.value = value
+        self.add_collectable(attr)
 
 
 class StateCollection(Collection):
@@ -817,11 +896,12 @@ _known_collections = {
     # For classifiers only
     'Parameter': ("params", ParameterCollection),
     'KernelParameter': ("kernel_params", ParameterCollection),
-    # For datasets
-    # XXX custom collections needed?
-    'SampleAttribute':  ("sa", SampleAttributesCollection),
-    'FeatureAttribute': ("fa", SampleAttributesCollection),
-    'DatasetAttribute': ("dsa", SampleAttributesCollection),
+#MH: no magic for datasets
+#    # For datasets
+#    # XXX custom collections needed?
+#    'SampleAttribute':  ("sa", SampleAttributesCollection),
+#    'FeatureAttribute': ("fa", SampleAttributesCollection),
+#    'DatasetAttribute': ("dsa", SampleAttributesCollection),
     }
 
 
@@ -829,8 +909,10 @@ _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
 
-_COLLECTIONS_ORDER = ['sa', 'fa', 'dsa',
-                      'params', 'kernel_params', 'states']
+#MH: no magic for datasets
+#_COLLECTIONS_ORDER = ['sa', 'fa', 'dsa',
+#                      'params', 'kernel_params', 'states']
+_COLLECTIONS_ORDER = ['params', 'kernel_params', 'states']
 
 
 class AttributesCollector(type):

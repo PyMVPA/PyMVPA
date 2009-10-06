@@ -199,9 +199,7 @@ class NiftiDataset(Dataset):
         # of the complex Python-C-Swig hybrid might be a tricky task.
         # Only storing the header dict should achieve the same and is more
         # memory efficient and even simpler
-        header_attr = DatasetAttribute(name='niftihdr')
-        header_attr.value = niftisamples.header
-        ds.a.add(header_attr)
+        ds.a.add('niftihdr', niftisamples.header)
 
         return ds
 

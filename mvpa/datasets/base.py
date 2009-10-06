@@ -13,7 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 import mvpa.support.copy as copy
-from mvpa.misc.state import ClassWithCollections, Collection
+from mvpa.misc.state import ClassWithCollections, SampleAttributesCollection, \
+        FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
 from mvpa.misc.exceptions import DatasetError
@@ -62,17 +63,6 @@ class Dataset(ClassWithCollections):
     attribute called `mapper`.
 
     """
-    # placeholder for all three basic collections of a Dataset
-    # put here to be able to check whether the AttributesCollector already
-    # instanciated a particular collection
-    # XXX maybe it should not do this at all for Dataset
-    sa = None
-    fa = None
-    a = None
-
-    # storage of samples in a plain NumPy array for fast access
-    samples = None
-
     def __init__(self, samples, sa=None, fa=None, a=None):
         """
         A Dataset might have an arbitrary number of attributes for samples,
@@ -117,25 +107,15 @@ class Dataset(ClassWithCollections):
 
         # Everything in a dataset (except for samples) is organized in
         # collections
-        # make sure we have the target collection
-        # XXX maybe use different classes for the collections
-        # but currently no reason to do so
-        if self.sa is None:
-            self.sa = Collection(owner=self)
-        if self.fa is None:
-            self.fa = Collection(owner=self)
-        if self.a is None:
-            self.a = Collection(owner=self)
-        # copy attributes from source collections (scol) into target
-        # collections (tcol)
-        for scol, tcol in ((sa, self.sa),
-                           (fa, self.fa),
-                           (a, self.a)):
-            # transfer the attributes
-            if not scol is None:
-                for name, attr in scol.items.iteritems():
-                    # this will also update the owner of the attribute
-                    tcol.add(attr)
+        self.sa = SampleAttributesCollection(owner=self)
+        if not sa is None:
+            self.sa.update(sa)
+        self.fa = FeatureAttributesCollection(owner=self)
+        if not fa is None:
+            self.fa.update(fa)
+        self.a = DatasetAttributesCollection(owner=self)
+        if not a is None:
+            self.a.update(a)
 
         # sanity checks
         if not len(samples.shape) == 2:
@@ -180,7 +160,7 @@ class Dataset(ClassWithCollections):
                 # just get a view of the old data!
                 newattr.value = attr.value.view()
                 # assign to target collection
-                tcol.add(newattr)
+                tcol.add_collectable(newattr)
 
         # dataset attributes might be anythings, so they are SHALLOW copied
         # individually
@@ -190,7 +170,7 @@ class Dataset(ClassWithCollections):
             # SHALLOW copy!
             newattr.value = copy.copy(attr.value)
             # assign to target collection
-            a.add(newattr)
+            a.add_collectable(newattr)
 
         # and finally the samples
         samples = self.samples.view()
@@ -212,7 +192,7 @@ class Dataset(ClassWithCollections):
                            (fa, self.fa),
                            (a, self.a)):
             for name, attr in scol.items.iteritems():
-                tcol.add(copy.deepcopy(attr, memo))
+                tcol.add_collectable(copy.deepcopy(attr, memo))
 
         # and finally the samples
         samples = copy.deepcopy(self.samples, memo)
@@ -344,7 +324,7 @@ class Dataset(ClassWithCollections):
             # slice
             newattr.value = attr.value[args[0]]
             # assign to target collection
-            sa.add(newattr)
+            sa.add_collectable(newattr)
 
         # per-feature attributes; always needs to run even if slice(None),
         # since we need fresh SamplesAttributes even if they share the data
@@ -354,7 +334,7 @@ class Dataset(ClassWithCollections):
             # slice
             newattr.value = attr.value[args[1]]
             # assign to target collection
-            fa.add(newattr)
+            fa.add_collectable(newattr)
 
             # and finally dataset attributes: this time copying
         for attr in self.a.items.values():
@@ -365,7 +345,7 @@ class Dataset(ClassWithCollections):
             # necessary -- most likely all mappers need to have one
             newattr.value = copy.copy(attr.value)
             # assign to target collection
-            a.add(newattr)
+            a.add_collectable(newattr)
 
         # and adjusting the mapper (if any)
         if a.isKnown('mapper') and a.isSet('mapper'):
@@ -413,49 +393,34 @@ class Dataset(ClassWithCollections):
         # put mapper as a dataset attribute in the general attributes collection
         # need to do that first, since we want to know the final
         # #samples/#features
-        a = None
+        a_items = {}
         if not mapper is None:
             # forward-map the samples
             samples = mapper.forward(samples)
             # and store the mapper
-            mapper_ = DatasetAttribute(name='mapper')
-            mapper_.value = mapper
-            a = Collection(items={'mapper': mapper_})
+            a_items['mapper'] = mapper
 
        # compile the necessary samples attributes collection
         sa_items = {}
 
         if not labels is None:
-            labels_ = SampleAttribute(name='labels')
-            labels_.value = _expand_attribute(labels,
-                                              samples.shape[0],
-                                              'labels')
-            # feels strange that one has to give the name again
-            # XXX why does items have to be a dict when each samples
-            # attr already knows its name
-            sa_items['labels'] = labels_
+            sa_items['labels'] = _expand_attribute(labels,
+                                                   samples.shape[0],
+                                                  'labels')
 
         if not chunks is None:
             # unlike previous implementation, we do not do magic to do chunks
             # if there are none, there are none
-            chunks_ = SampleAttribute(name='chunks')
-            chunks_.value = _expand_attribute(chunks,
-                                              samples.shape[0],
-                                              'chunks')
-            sa_items['chunks'] = chunks_
+            sa_items['chunks'] = _expand_attribute(chunks,
+                                                   samples.shape[0],
+                                                   'chunks')
 
         # TODO: for now create orig ids here. Probably has to move somewhere
         # else once the notion of a 'samples space' becomes clearer
-        origids_ = SampleAttribute(name='origids')
-        origids_.value = N.arange(samples.shape[0])
-        sa_items['origids'] = origids_
-
-        # the final collection for samples attributes
-        # XXX advantages of using SamplesAttributeCollection?
-        sa = Collection(items=sa_items)
+        sa_items['origids'] = N.arange(samples.shape[0])
 
         # common checks should go into __init__
-        return cls(samples, sa=sa, a=a)
+        return cls(samples, sa=sa_items, a=a_items)
 
 
     @classmethod
