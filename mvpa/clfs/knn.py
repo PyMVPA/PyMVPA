@@ -104,7 +104,7 @@ class kNN(Classifier):
         self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.uniquelabels
+        uniquelabels = data.sa['labels'].unique
         self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
@@ -165,6 +165,7 @@ class kNN(Classifier):
         # local bindings
         _data = self.__data
         labels = _data.labels
+        uniquelabels = _data.sa['labels'].unique
 
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
@@ -174,7 +175,7 @@ class kNN(Classifier):
         # find the class with most votes
         # return votes as well to store them in the state
         return max(votes.iteritems(), key=lambda x:x[1])[0], \
-                [votes[ul] for ul in _data.uniquelabels] # transform into lists
+                [votes[ul] for ul in uniquelabels] # transform into lists
 
 
     def getWeightedVote(self, knn_ids):
@@ -182,7 +183,7 @@ class kNN(Classifier):
         """
         # local bindings
         _data = self.__data
-        uniquelabels = _data.uniquelabels
+        uniquelabels = _data.sa['labels'].unique
 
         # Lazy evaluation
         if self.__weights is None:

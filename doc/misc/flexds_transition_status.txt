@@ -52,10 +52,10 @@ test_enet.py                not checked
 test_externals.py           pass
 test_hamster.py             pass
 test_icamapper.py           pass
-test_ifs.py                 broken
+test_ifs.py                 pass
 test_iohelpers.py           pass
 test_kernel.py              pass
-test_knn.py                 broken
+test_knn.py                 pass
 test_lars.py                not checked
 test_meg.py                 pass
 test_neighbor.py            pass
@@ -81,7 +81,7 @@ test_stats.py               broken
 test_stats_sp.py            broken
 test_suite.py               pass
 test_support.py             broken
-test_svdmapper.py           broken
+test_svdmapper.py           pass
 test_svm.py                 broken
 test_transerror.py          broken
 test_transformers.py        pass

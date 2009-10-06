@@ -139,14 +139,14 @@ class SupportFxTests(unittest.TestCase):
 
         # has to be perfect
         self.failUnless((err < 0.1).all())
-        self.failUnlessEqual(err.shape, (len(data.uniquechunks),))
+        self.failUnlessEqual(err.shape, (len(data.sa['chunks'].unique),))
 
         # now same stuff but two classifiers at once
         cv = Harvester(NFoldSplitter(cvtype=1),
                   [HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0]),
                    HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0])])
         err = N.array(cv(data))
-        self.failUnlessEqual(err.shape, (2,len(data.uniquechunks)))
+        self.failUnlessEqual(err.shape, (2,len(data.sa['chunks'].unique)))
 
         # only one again, but this time remember confusion matrix
         cv = Harvester(NFoldSplitter(cvtype=1),
@@ -157,7 +157,7 @@ class SupportFxTests(unittest.TestCase):
 
         self.failUnless(isinstance(res, dict))
         self.failUnless(res.has_key('confusion') and res.has_key('result'))
-        self.failUnless(len(res['result']) == len(data.uniquechunks))
+        self.failUnless(len(res['result']) == len(data.sa['chunks'].unique))
 
 
     @sweepargs(pair=[(N.random.normal(size=(10,20)), N.random.normal(size=(10,20))),

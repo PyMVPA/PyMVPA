@@ -28,8 +28,8 @@ class KNNTests(unittest.TestCase):
             p_mv = clf.predict( test.samples )
             mv_perf.append( N.mean(p_mv==test.labels) )
 
-            clf.train(train.selectFeatures([0]))
-            p_uv = clf.predict( test.selectFeatures([0]).samples )
+            clf.train(train[:, 0])
+            p_uv = clf.predict(test[:, 0].samples)
             uv_perf.append( N.mean(p_uv==test.labels) )
 
         mean_mv_perf = N.mean(mv_perf)
