@@ -139,10 +139,10 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         summaryClass = clf._summaryClass
         clf_hastestdataset = hasattr(clf, 'testdataset')
 
-        self.confusion = summaryClass()
-        self.training_confusion = summaryClass()
-        self.transerrors = []
-        self.samples_error = dict([(id, []) for id in dataset.sa.origids])
+        self.states.confusion = summaryClass()
+        self.states.training_confusion = summaryClass()
+        self.states.transerrors = []
+        self.states.samples_error = dict([(id, []) for id in dataset.sa.origids])
 
         # enable requested states in child TransferError instance (restored
         # again below)
@@ -189,7 +189,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             if states.isEnabled("samples_error"):
                 for k, v in \
                   transerror.states.getvalue("samples_error").iteritems():
-                    self.samples_error[k].append(v)
+                    self.states.samples_error[k].append(v)
 
             # pull in child states
             for state_var in ['confusion', 'training_confusion']:

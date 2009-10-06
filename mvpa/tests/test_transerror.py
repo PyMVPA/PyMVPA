@@ -206,14 +206,15 @@ class ErrorsTests(unittest.TestCase):
         clf.states._changeTemporarily(enable_states = ['values'])
         # uni2 dataset with reordered labels
         ds2 = datasets['uni2small'].copy()
-        ds2.labels = 1 - ds2.labels   # revert labels
+        # revert labels
+        ds2.sa['labels'].value = ds2.labels[::-1].copy()
         # same with uni3
         ds3 = datasets['uni3small'].copy()
-        ul = ds3.uniquelabels
+        ul = ds3.sa['labels'].unique
         nl = ds3.labels.copy()
         for l in xrange(3):
             nl[ds3.labels == ul[l]] = ul[(l+1)%3]
-        ds3.labels = nl
+        ds3.sa.labels = nl
         for ds in [datasets['uni2small'], ds2,
                    datasets['uni3small'], ds3]:
             cv = CrossValidatedTransferError(

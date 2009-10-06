@@ -1411,7 +1411,8 @@ class Harvestable(ClassWithCollections):
             return
 
         if not self.states.isSet('harvested'):
-            self.harvested = dict([(a['name'], []) for a in self.__attribs])
+            self.states.harvested = dict([(a['name'], [])
+                                        for a in self.__attribs])
 
         for attrib in self.__attribs:
             attrv = vars[attrib['obj']]
@@ -1425,7 +1426,7 @@ class Harvestable(ClassWithCollections):
                      'deepcopy':copy.deepcopy,
                      None:lambda x:x}[attrib['copy']](attrv)
 
-            self.harvested[attrib['name']].append(attrv)
+            self.states.harvested[attrib['name']].append(attrv)
 
 
     harvest_attribs = property(fget=lambda self:self.__attribs,

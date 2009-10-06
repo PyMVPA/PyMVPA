@@ -71,8 +71,8 @@ class SVMTests(unittest.TestCase):
             mv_lin_perf.append(N.mean(p_lin_mv==test.labels))
 
             # use non-linear CLF on 1d data
-            nl_clf.train(train.selectFeatures([0]))
-            p_uv = nl_clf.predict(test.selectFeatures([0]).samples)
+            nl_clf.train(train[:, 0])
+            p_uv = nl_clf.predict(test[:, 0].samples)
             uv_perf.append(N.mean(p_uv==test.labels))
 
         mean_mv_perf = N.mean(mv_perf)

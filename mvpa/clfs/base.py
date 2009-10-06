@@ -265,12 +265,12 @@ class Classifier(ClassWithCollections):
                 self.__changedData_isset = False
             predictions = self.predict(dataset.samples)
             self.states._resetEnabledTemporarily()
-            self.training_confusion = self._summaryClass(
+            self.states.training_confusion = self._summaryClass(
                 targets=dataset.labels,
                 predictions=predictions)
 
             try:
-                self.training_confusion.labels_map = dataset.labels_map
+                self.states.training_confusion.labels_map = dataset.labels_map
             except:
                 pass
 
@@ -374,7 +374,7 @@ class Classifier(ClassWithCollections):
                       "is called")
             result = None
 
-        self.training_time = time.time() - t0
+        self.states.training_time = time.time() - t0
         self._posttrain(dataset)
         return result
 

@@ -37,7 +37,7 @@ test_arraymapper.py         pass
 test_atlases.py             pass
 test_base.py                pass
 test_boxcarmapper.py        pass
-test_clfcrossval.py         broken
+test_clfcrossval.py         pass
 test_clf.py                 broken
 test_cmdline.py             pass
 test_config.py              pass
@@ -82,7 +82,7 @@ test_stats_sp.py            broken
 test_suite.py               pass
 test_support.py             broken
 test_svdmapper.py           pass
-test_svm.py                 broken
+test_svm.py                 pass
 test_transerror.py          broken
 test_transformers.py        pass
 test_verbosity.py           pass
