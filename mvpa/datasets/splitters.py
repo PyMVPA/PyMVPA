@@ -307,7 +307,7 @@ class Splitter(object):
             else:
                 discard_boundary = None
 
-        splitattr_data = eval('dataset.' + self.__splitattr)
+        splitattr_data = dataset.sa[self.__splitattr].value
         for spec in specs:
             if spec is None:
                 filters.append(None)
