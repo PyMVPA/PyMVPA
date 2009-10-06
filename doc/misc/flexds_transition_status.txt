@@ -1,0 +1,92 @@
+This file documents the current state of the transition to the new
+dataset implementation. May the source be with us!
+
+
+Examples
+--------
+
+clfs_examples.py            not checked
+curvefitting.py             not checked
+erp_plot.py                 not checked
+eventrelated.py             not checked
+gpr_model_selection0.py     not checked
+gpr.py                      not checked
+kerneldemo.py               not checked
+match_distribution.py       not checked
+mri_plot.py                 not checked
+permutation_test.py         not checked
+projections.py              not checked
+pymvpa.cfg                  not checked
+searchlight_2d.py           not checked
+searchlight_dsm.py          not checked
+searchlight_minimal.py      not checked
+searchlight.py              not checked
+sensanas.py                 not checked
+smellit.py                  not checked
+smlr.py                     not checked
+som.py                      not checked
+start_easy.py               completed
+svdclf.py                   not checked
+topo_plot.py                not checked
+
+
+Unit tests
+----------
+
+test_args.py                pass
+test_arraymapper.py         pass
+test_atlases.py             pass
+test_base.py                pass
+test_boxcarmapper.py        pass
+test_clfcrossval.py         broken
+test_clf.py                 broken
+test_cmdline.py             pass
+test_config.py              pass
+test_datameasure.py         broken
+test_datasetfx.py           pass
+test_datasetfx_sp.py        pass
+test_datasetng.py           fail
+test_dataset.py             broken
+test_dochelpers.py          pass
+test_eepdataset.py          broken
+test_enet.py                not checked
+test_externals.py           pass
+test_hamster.py             pass
+test_icamapper.py           pass
+test_ifs.py                 broken
+test_iohelpers.py           pass
+test_kernel.py              pass
+test_knn.py                 broken
+test_lars.py                not checked
+test_meg.py                 pass
+test_neighbor.py            pass
+test_niftidataset.py        broken
+test_params.py              broken
+test_pcamapper.py           broken
+test_perturbsensana.py      broken
+test_plr.py                 pass
+test_pls.py                 pass/empty!
+test_procrust.py            pass
+test_regr.py                broken
+test_report.py              pass
+test_rfe.py                 broken
+test_ridge.py               pass
+test_samplegroupmapper.py   broken
+test_searchlight.py         broken
+test_smlr.py                broken
+test_som.py                 broken
+test_splitsensana.py        broken
+test_splitter.py            pass
+test_state.py               broken
+test_stats.py               broken
+test_stats_sp.py            broken
+test_suite.py               pass
+test_support.py             broken
+test_svdmapper.py           broken
+test_svm.py                 broken
+test_transerror.py          broken
+test_transformers.py        pass
+test_verbosity.py           pass
+test_waveletmapper.py       pass
+test_zscoremapper.py        broken
+
