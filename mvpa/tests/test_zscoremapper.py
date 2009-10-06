@@ -16,8 +16,9 @@ externals.exists('scipy', raiseException=True)
 
 from mvpa.support.copy import deepcopy
 import numpy as N
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 from mvpa.mappers.zscore import ZScoreMapper
 from mvpa.datasets.miscfx import zscore
 
@@ -32,7 +33,7 @@ class ZScoreMapperTests(unittest.TestCase):
         """
         # data: 40 sample feature line in 20d space (40x20; samples x features)
         self.dss = [
-            Dataset(samples=N.concatenate(
+            dataset(N.concatenate(
                 [N.arange(40) for i in range(20)]).reshape(20,-1).T,
                     labels=1, chunks=1),
             ] + datasets.values()
@@ -50,13 +51,11 @@ class ZScoreMapperTests(unittest.TestCase):
             ds1z = zsm.forward(ds1.samples)
 
             zscore(ds2, perchunk=False)
-            self.failUnless(N.linalg.norm(ds1z - ds2.samples) < 1e-12)
-            self.failUnless((ds1.samples == ds.samples).all(),
-                            msg="It seems we modified original dataset!")
+            assert_array_almost_equal(ds1z, ds2.samples)
+            assert_array_equal(ds1.samples, ds.samples)
 
             ds0 = zsm.reverse(ds1z)
-            self.failUnless(N.linalg.norm(ds0 - ds.samples) < 1e-12,
-                            msg="Can't reconstruct from z-scores")
+            assert_array_almost_equal(ds0, ds.samples)
 
 
 def suite():

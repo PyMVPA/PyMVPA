@@ -35,13 +35,14 @@ if externals.exists('scipy'):
 @datasetmethod
 def zscore(dataset, mean=None, std=None,
            perchunk=True, baselinelabels=None,
-           pervoxel=True):
+           pervoxel=True, targetdtype='float64'):
     """Z-Score the samples of a `Dataset` (in-place).
 
     `mean` and `std` can be used to pass custom values to the z-scoring.
     Both may be scalars or arrays.
 
-    All computations are done *in place*.
+    All computations are done *in place*. Data upcasting is done
+    automatically if necessary into `targetdtype`
 
     If `baselinelabels` provided, and `mean` or `std` aren't provided, it would
     compute the corresponding measure based only on labels in `baselinelabels`
@@ -56,10 +57,9 @@ def zscore(dataset, mean=None, std=None,
         warning("Z-scoring chunk-wise and one chunk with less than two " \
                 "samples will set features in these samples to zero.")
 
-    # need to make sure  that std is float, as otherwise no upcasting is done
-    # automatically
-    if not std is None:
-        std = float(std)
+    # cast the data to float, since in-place operations below to not upcast!
+    if N.issubdtype(dataset.samples.dtype, N.integer):
+        dataset.samples = dataset.samples.astype(targetdtype)
 
     def doit(samples, mean, std, statsamples=None):
         """Internal method."""
@@ -79,6 +79,7 @@ def zscore(dataset, mean=None, std=None,
 
         # de-mean
         samples -= mean
+
 
         # calculate std-deviation if necessary
         # XXX YOH: would that be actually what we want?
