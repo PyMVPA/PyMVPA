@@ -109,21 +109,21 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(len(proper3.states.enabled), 0,
             msg="disable_states should override anything in enable_states")
 
-        proper.state2 = 1000
-        value = proper.state2
-        self.failUnlessEqual(proper.state2, 1000, msg="Simple assignment/retrieval")
+        proper.states.state2 = 1000
+        value = proper.states.state2
+        self.failUnlessEqual(proper.states.state2, 1000, msg="Simple assignment/retrieval")
 
         proper.states.disable('state2')
-        proper.state2 = 10000
-        self.failUnlessEqual(proper.state2, 1000, msg="Simple assignment after being disabled")
+        proper.states.state2 = 10000
+        self.failUnlessEqual(proper.states.state2, 1000, msg="Simple assignment after being disabled")
 
         proper4 = copy.deepcopy(proper)
 
         proper.states.reset('state2')
-        self.failUnlessRaises(UnknownStateError, proper.__getattribute__, 'state2')
+        self.failUnlessRaises(UnknownStateError, proper.states.__getattribute__, 'state2')
         """Must be blank after being reset"""
 
-        self.failUnlessEqual(proper4.state2, 1000,
+        self.failUnlessEqual(proper4.states.state2, 1000,
             msg="Simple assignment after being reset in original instance")
 
 
@@ -159,8 +159,8 @@ class StateTests(unittest.TestCase):
 
         # now reset them
         proper2.states.reset('all')
-        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state1')
-        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state2')
+        self.failUnlessRaises(UnknownStateError, proper2.states.__getattribute__, 'state1')
+        self.failUnlessRaises(UnknownStateError, proper2.states.__getattribute__, 'state2')
 
 
     def testGetSaveEnabled(self):
@@ -257,7 +257,7 @@ class StateTests(unittest.TestCase):
             msg="Should raise an exception if argument doesn't correspond to"
                 "any parameter")
         a = TestClassParametrized(p1=123, enable_states=['state1'])
-        self.failUnlessEqual(a.p1, 123, msg="We must have assigned value to instance")
+        self.failUnlessEqual(a.params.p1, 123, msg="We must have assigned value to instance")
         self.failUnless('state1' in a.states.enabled,
                         msg="state1 must have been enabled")
 

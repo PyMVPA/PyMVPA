@@ -13,7 +13,7 @@ import unittest
 import numpy as N
 from mvpa import cfg
 from mvpa.mappers.som import SimpleSOMMapper
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 
 class SOMMapperTests(unittest.TestCase):
 
@@ -21,7 +21,7 @@ class SOMMapperTests(unittest.TestCase):
         colors = [[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                   [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                   [1., 1., 0.], [1., 1., 1.]]
-        ds = Dataset(samples=colors, labels=1)
+        ds = dataset(samples=colors)
 
         # only small SOM for speed reasons
         som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)

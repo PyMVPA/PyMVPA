@@ -33,7 +33,7 @@ class RegressionsTests(unittest.TestCase):
     def testNonRegressions(self, ml):
         """Test If binary regression-based  classifiers have proper tag
         """
-        self.failUnless(('binary' in ml._clf_internals) != ml.regression,
+        self.failUnless(('binary' in ml._clf_internals) != ml.params.regression,
             msg="Inconsistent markin with binary and regression features"
                 " detected in %s having %s" % (ml, `ml._clf_internals`))
 
@@ -49,18 +49,18 @@ class RegressionsTests(unittest.TestCase):
             enable_states=['training_confusion', 'confusion'])
         corr = cve(ds)
 
-        self.failUnless(corr == cve.confusion.stats['CCe'])
+        self.failUnless(corr == cve.states.confusion.stats['CCe'])
 
         splitregr = SplitClassifier(regr,
                                     splitter=OddEvenSplitter(),
                                     enable_states=['training_confusion', 'confusion'])
         splitregr.train(ds)
-        split_corr = splitregr.confusion.stats['CCe']
-        split_corr_tr = splitregr.training_confusion.stats['CCe']
+        split_corr = splitregr.states.confusion.stats['CCe']
+        split_corr_tr = splitregr.states.training_confusion.stats['CCe']
 
-        for confusion, error in ((cve.confusion, corr),
-                                 (splitregr.confusion, split_corr),
-                                 (splitregr.training_confusion, split_corr_tr),
+        for confusion, error in ((cve.states.confusion, corr),
+                                 (splitregr.states.confusion, split_corr),
+                                 (splitregr.states.training_confusion, split_corr_tr),
                                  ):
             #TODO: test confusion statistics
             # Part of it for now -- CCe

@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA perturbation sensitivity analyzer."""
 
-from mvpa.datasets.masked import MaskedDataset
+from mvpa.datasets.base import Dataset
 from mvpa.measures.noiseperturbation import NoisePerturbationSensitivity
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -28,8 +28,8 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         mask = N.ones( (3, 4, 2) )
         mask[0,0,0] = 0
         mask[1,3,1] = 0
-        self.dataset = MaskedDataset(samples=data, labels=labels,
-                                     chunks=chunks, mask=mask)
+        self.dataset = Dataset.from_masked(samples=data, labels=labels,
+                                           chunks=chunks, mask=mask)
 
 
     def testPerturbationSensitivityAnalyzer(self):

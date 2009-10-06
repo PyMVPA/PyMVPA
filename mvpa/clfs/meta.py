@@ -136,13 +136,13 @@ class BoostedClassifier(Classifier, Harvestable):
         """Predict using `BoostedClassifier`
         """
         raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
-        self.raw_predictions = raw_predictions
+        self.states.raw_predictions = raw_predictions
         assert(len(self.__clfs)>0)
         if self.states.isEnabled("values"):
             if N.array([x.states.isEnabled("values")
                         for x in self.__clfs]).all():
-                values = [ clf.values for clf in self.__clfs ]
-                self.raw_values = values
+                values = [ clf.states.values for clf in self.__clfs ]
+                self.states.raw_values = values
             else:
                 warning("One or more classifiers in %s has no 'values' state" %
                         self + "enabled, thus BoostedClassifier can't have" +
@@ -376,7 +376,7 @@ class MaximalVote(PredictionsCombiner):
             if not clf.states.isEnabled("predictions"):
                 raise ValueError, "MaximalVote needs classifiers (such as " + \
                       "%s) with state 'predictions' enabled" % clf
-            predictions = clf.predictions
+            predictions = clf.states.predictions
             if all_label_counts is None:
                 all_label_counts = [ {} for i in xrange(len(predictions)) ]
 
@@ -415,8 +415,8 @@ class MaximalVote(PredictionsCombiner):
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
-        self.all_label_counts = all_label_counts
-        self.predictions = predictions
+        self.states.all_label_counts = all_label_counts
+        self.states.predictions = predictions
         return predictions
 
 
@@ -441,11 +441,11 @@ class MeanPrediction(PredictionsCombiner):
             if not clf.states.isEnabled("predictions"):
                 raise ValueError, "MeanPrediction needs classifiers (such " \
                       " as %s) with state 'predictions' enabled" % clf
-            all_predictions.append(clf.predictions)
+            all_predictions.append(clf.states.predictions)
 
         # compute mean
         predictions = N.mean(N.asarray(all_predictions), axis=0)
-        self.predictions = predictions
+        self.states.predictions = predictions
         return predictions
 
 
@@ -575,12 +575,12 @@ class CombinedClassifier(BoostedClassifier):
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
         predictions = self.__combiner(self.clfs, data)
-        self.predictions = predictions
+        self.states.predictions = predictions
 
         if self.states.isEnabled("values"):
             if self.__combiner.states.isActive("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
-                self.values = self.__combiner.values
+                self.states.values = self.__combiner.values
             else:
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state enabled,"
@@ -747,7 +747,7 @@ class TreeClassifier(ProxyClassifier):
         #  yoh: actually above should catch it
 
         # Check if none of the labels is missing from known groups
-        dsul = set(dataset.uniquelabels)
+        dsul = set(dataset.sa['labels'].unique)
         if known.intersection(dsul) != dsul:
             raise ValueError, \
                   "Dataset %s had some labels not defined in groups: %s. " \
@@ -796,7 +796,7 @@ class TreeClassifier(ProxyClassifier):
         """Untrain TreeClassifier
         """
         super(TreeClassifier, self).untrain()
-        for clf in self.clfs.values():
+        for clf in self.clfs.states.values():
             clf.untrain()
 
 
@@ -921,7 +921,7 @@ class BinaryClassifier(ProxyClassifier):
 
         # now we got a dataset with only 2 labels
         if __debug__:
-            assert((datasetselected.uniquelabels == [-1, 1]).all())
+            assert((datasetselected.sa['labels'].unique == [-1, 1]).all())
 
         self.clf.train(datasetselected)
 
@@ -937,10 +937,10 @@ class BinaryClassifier(ProxyClassifier):
         return not a list but just that single label.
         """
         binary_predictions = ProxyClassifier._predict(self, data)
-        self.values = binary_predictions
+        self.states.values = binary_predictions
         predictions = [ {-1: self.__predictneg,
                          +1: self.__predictpos}[x] for x in binary_predictions]
-        self.predictions = predictions
+        self.states.predictions = predictions
         return predictions
 
 
@@ -995,7 +995,7 @@ class MulticlassClassifier(CombinedClassifier):
         """Train classifier
         """
         # construct binary classifiers
-        ulabels = dataset.uniquelabels
+        ulabels = dataset.sa['labels'].unique
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
             biclfs = []
@@ -1107,14 +1107,14 @@ class SplitClassifier(CombinedClassifier):
             bclfs.append(clf)
         self.clfs = bclfs
 
-        self.splits = []
+        self.states.splits = []
 
         for i, split in enumerate(self.__splitter(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
             if states.isEnabled("splits"):
-                self.splits.append(split)
+                self.states.splits.append(split)
 
             clf = self.clfs[i]
 
