@@ -14,19 +14,19 @@ from mvpa.support.copy import deepcopy
 import numpy as N
 from mvpa.mappers.pca import PCAMapper
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 
 
 class PCAMapperTests(unittest.TestCase):
 
     def setUp(self):
         # data: 40 sample feature line in 20d space (40x20; samples x features)
-        self.ndlin = Dataset(samples=N.concatenate(
+        self.ndlin = dataset(samples=N.concatenate(
                         [N.arange(40) for i in range(20)]).reshape(20,-1).T, labels=1, chunks=1)
 
         # data: 10 sample feature line in 40d space
         #       (10x40; samples x features)
-        self.largefeat = Dataset(samples=N.concatenate(
+        self.largefeat = dataset(samples=N.concatenate(
                         [N.arange(10) for i in range(40)]).reshape(40,-1).T, labels=1, chunks=1)
 
         self.pm = PCAMapper()

@@ -152,7 +152,7 @@ class SupportFxTests(unittest.TestCase):
         cv = Harvester(NFoldSplitter(cvtype=1),
                   [HarvesterCall(TransferError(sample_clf_nl,
                                                enable_states=['confusion']),
-                                 argfilter=[1,0], attribs=['confusion'])])
+                                 argfilter=[1,0], attribs=['states.confusion'])])
         res = cv(data)
 
         self.failUnless(isinstance(res, dict))

@@ -71,8 +71,7 @@ class Searchlight(DatasetMeasure):
     def _call(self, dataset):
         """Perform the spheresearch.
         """
-        if not (dataset.a.isKnown('mapper') and dataset.a.isSet('mapper')) \
-               or dataset.a.mapper.metric is None:
+        if not (dataset.a.isKnown('mapper') and dataset.a.isSet('mapper')):
             raise ValueError, "Searchlight only works with MappedDatasets " \
                               "that has metric assigned."
 
@@ -99,9 +98,7 @@ class Searchlight(DatasetMeasure):
         # put spheres around all features in the dataset and compute the
         # measure within them
         for f in generator:
-            sphere = dataset.selectFeatures(
-                dataset.mapper.getNeighbors(f, self.__radius),
-                plain=True)
+            sphere = dataset[:, dataset.mapper.getNeighbors(f, self.__radius)]
 
             # compute the datameasure and store in results
             measure = self.__datameasure(sphere)
