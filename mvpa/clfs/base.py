@@ -578,10 +578,10 @@ class Classifier(ClassWithCollections):
                             " since classifier has no such capability. It would"
                             " just lead to resources consumption and slowdown"
                             % self)
-                states.add(StateVariable(enabled=True,
+                states.add_collectable(StateVariable(enabled=True,
                         name='retrained',
                         doc="Either retrainable classifier was retrained"))
-                states.add(StateVariable(enabled=True,
+                states.add_collectable(StateVariable(enabled=True,
                         name='repredicted',
                         doc="Either retrainable classifier was repredicted"))
 
