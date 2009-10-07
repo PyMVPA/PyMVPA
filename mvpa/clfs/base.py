@@ -267,7 +267,7 @@ class Classifier(ClassWithCollections):
             predictions = self.predict(dataset.samples)
             self.states._resetEnabledTemporarily()
             self.states.training_confusion = self._summaryClass(
-                targets=dataset.labels,
+                targets=dataset.sa.labels,
                 predictions=predictions)
 
             try:
@@ -276,7 +276,7 @@ class Classifier(ClassWithCollections):
                 pass
 
         if self.states.isEnabled('feature_ids'):
-            self.feature_ids = self._getFeatureIds()
+            self.states.feature_ids = self._getFeatureIds()
 
 
     def _getFeatureIds(self):
