@@ -183,7 +183,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(len(clf.states.confusion.sets),
                              len(ds.UC),
                              msg="Should have 1 confusion per each split")
-        self.failUnlessEqual(len(clf.states.clfs), len(ds.UC),
+        self.failUnlessEqual(len(clf.clfs), len(ds.UC),
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
