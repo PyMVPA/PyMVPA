@@ -428,10 +428,12 @@ class Dataset(ClassWithCollections):
     S = property(fget=lambda self:self.samples)
     nsamples = property(fget=lambda self:self.samples.shape[0])
     nfeatures = property(fget=lambda self:self.samples.shape[1])
-    labels = property(fget=lambda self:self.sa.labels)
+    labels = property(fget=lambda self:self.sa.labels,
+                      fset=lambda self, v:self.sa.__setattr__('labels', v))
     L = labels
     UL = property(fget=lambda self:self.sa['labels'].unique)
-    chunks = property(fget=lambda self:self.sa.chunks)
+    chunks = property(fget=lambda self:self.sa.chunks,
+                      fset=lambda self, v:self.sa.__setattr__('chunks', v))
     C = chunks
     UC = property(fget=lambda self:self.sa['chunks'].unique)
     mapper = property(fget=lambda self:self.a.mapper)
