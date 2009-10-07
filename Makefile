@@ -231,6 +231,11 @@ unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
 
+# test if no errors would result if we force enabling of all states
+unittest-states: build
+	@echo "I: Running unittests with all states enabled."
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=CHECK_STATES_ENABLED python mvpa/tests/main.py
+
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
@@ -252,7 +257,7 @@ unittest-debug: build
 #  Run with 'make -k' if you like to sweep through all of them, so
 #  failure in one of them does not stop the full sweep
 unittests: unittest-nonlabile unittest unittest-badexternals \
-           unittest-optimization unittest-debug
+           unittest-optimization unittest-states unittest-debug
 
 te-%: build
 	@echo -n "I: Testing example $*: "
