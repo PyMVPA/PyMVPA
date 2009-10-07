@@ -28,10 +28,10 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( data.nsamples == 120 )
         self.failUnless( data.nfeatures == 2 )
         self.failUnless(
-            (data.labels == \
+            (data.sa.labels == \
                 [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0] * 6).all())
         self.failUnless(
-            (data.chunks == \
+            (data.sa.chunks == \
                 [k for k in range(1, 7) for i in range(20)]).all())
         assert_equal(len(N.unique(data.sa.origids)), data.nsamples)
 

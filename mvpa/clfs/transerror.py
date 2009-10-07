@@ -1412,7 +1412,7 @@ class TransferError(ClassifierError):
         if states.isEnabled('confusion'):
             confusion = clf._summaryClass(
                 #labels=self.labels,
-                targets=testdataset.labels,
+                targets=testdataset.sa.labels,
                 predictions=predictions,
                 values=clf.states.get('values', None))
             try:
@@ -1424,7 +1424,7 @@ class TransferError(ClassifierError):
         if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx(p, testdataset.labels[i]))
+                samples_error.append(self.__errorfx(p, testdataset.sa.labels[i]))
 
             states.samples_error = dict(zip(testdataset.sa.origids, samples_error))
 
