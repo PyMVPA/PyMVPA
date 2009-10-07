@@ -106,7 +106,7 @@ def zscore(dataset, mean=None, std=None,
     # [True]*dataset.nsamples to provide easy selection of everything
     if perchunk:
         for c in dataset.sa['chunks'].unique:
-            slicer = N.where(dataset.chunks == c)[0]
+            slicer = N.where(dataset.sa.chunks == c)[0]
             if not statids is None:
                 statslicer = list(statids.intersection(Set(slicer)))
                 dataset.samples[slicer] = doit(dataset.samples[slicer],

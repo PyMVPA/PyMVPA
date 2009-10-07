@@ -492,7 +492,7 @@ class SMLR(Classifier):
                    N.min(E), N.max(E)))
 
         values = E / S[:, N.newaxis].repeat(E.shape[1], axis=1)
-        self.values = values
+        self.states.values = values
 
         # generate predictions
         predictions = N.asarray([self.__ulabels[N.argmax(vals)]

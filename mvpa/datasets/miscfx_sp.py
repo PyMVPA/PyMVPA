@@ -68,7 +68,7 @@ def detrend(dataset, perchunk=False, model='linear',
 
         if perchunk:
             try:
-                bp = getBreakPoints(dataset.chunks)
+                bp = getBreakPoints(dataset.sa.chunks)
             except ValueError, e:
                 raise ValueError, \
                       "Failed to assess break points between chunks. Often " \

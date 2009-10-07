@@ -121,7 +121,7 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        self.raw_result = result
+        self.states.raw_result = result
         if not self.__transformer is None:
             if __debug__:
                 debug("SA_", "Applying transformer %s" % self.__transformer)

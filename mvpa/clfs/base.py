@@ -238,11 +238,12 @@ class Classifier(ClassWithCollections):
           dataset : Dataset
             Data which was used for training
         """
-        if self.states.isEnabled('trained_labels'):
-            self.trained_labels = dataset.sa['labels'].unique
+        states = self.states
+        if states.isEnabled('trained_labels'):
+            states.trained_labels = dataset.sa['labels'].unique
 
-        self.trained_dataset = dataset
-        self.trained_nsamples = dataset.nsamples
+        states.trained_dataset = dataset
+        states.trained_nsamples = dataset.nsamples
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
@@ -412,7 +413,7 @@ class Classifier(ClassWithCollections):
     def _postpredict(self, data, result):
         """Functionality after prediction is computed
         """
-        self.predictions = result
+        self.states.predictions = result
         if self.params.retrainable:
             self.__changedData_isset = False
 

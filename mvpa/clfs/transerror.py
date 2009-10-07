@@ -1263,7 +1263,7 @@ class ClassifierError(ClassWithCollections):
         if self.__clf.states.isEnabled('trained_labels') and \
                not testdataset is None:
             newlabels = Set(testdataset.sa['labels'].unique) \
-                        - Set(self.__clf.trained_labels)
+                        - Set(self.__clf.states.trained_labels)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (`self.__clf`, `newlabels`) +
@@ -1429,7 +1429,7 @@ class TransferError(ClassifierError):
             states.samples_error = dict(zip(testdataset.sa.origids, samples_error))
 
         # compute error from desired and predicted values
-        error = self.__errorfx(predictions, testdataset.labels)
+        error = self.__errorfx(predictions, testdataset.sa.labels)
 
         return error
 
