@@ -34,7 +34,13 @@ from mvpa.base import externals
 
 if __debug__:
     from mvpa.base import debug
-
+    # XXX
+    # To debug references on top level -- useful to keep around for now,
+    # don't remove until refactoring is complete
+    import sys
+    _debug_references = 'ATTRREFER' in debug.active
+    _debug_shits = []                   # remember all to don't complaint twice
+    import traceback
 
 _in_ipython = externals.exists('running ipython env')
 # Separators around definitions, needed for ReST, but bogus for
@@ -43,7 +49,6 @@ _def_sep = ('`', '')[int(_in_ipython)]
 
 _object_getattribute = object.__getattribute__
 _object_setattr = object.__setattr__
-
 
 ###################################################################
 # Collections
@@ -518,7 +523,8 @@ class Collection(object):
          index value
         """
         # Yarik standing behind me, forcing me to do this -- I have no clue....
-        return
+        if not (__debug__ and _debug_references):
+            return
         if not index is None:
             if not index in self._items:
                 raise ValueError, \
@@ -1192,6 +1198,22 @@ class ClassWithCollections(object):
 
     #__doc__ = enhancedDocString('ClassWithCollections', locals())
 
+    if __debug__ and _debug_references:
+        def __debug_references_call(self, method, index):
+            """Helper for debugging location of the call
+            """
+            s_dict = _object_getattribute(self, '__dict__')
+            known_attribs = s_dict['_known_attribs']
+            if index in known_attribs:
+                colname = known_attribs[index]
+                # figure out and report invocation location
+                ftb = traceback.extract_stack(limit=4)[-3]
+                shit = '%s:%d:[%s %s.%s]: %s\n' % \
+                       (ftb[:2] + (method, colname, index) + (ftb[3],))
+                if not (shit in _debug_shits):
+                    _debug_shits.append(shit)
+                    sys.stderr.write(shit)
+
 
     def __getattribute__(self, index):
         # return all private ones first since smth like __dict__ might be
@@ -1212,6 +1234,9 @@ class ClassWithCollections(object):
         #if index in known_attribs:
         #    return collections[known_attribs[index]].getvalue(index)
 
+        if __debug__ and _debug_references:
+            # Report the invocation location if applicable
+            self.__debug_references_call('get', index)
 
         # just a generic return
         return _object_getattribute(self, index)
@@ -1221,12 +1246,19 @@ class ClassWithCollections(object):
         if index[0] == '_':
             return _object_setattr(self, index, value)
 
-        # Check if a part of a collection, and set appropriately
-        s_dict = _object_getattribute(self, '__dict__')
-        known_attribs = s_dict['_known_attribs']
-        if index in known_attribs:
-            collections = s_dict['_collections']
-            return collections[known_attribs[index]].setvalue(index, value)
+        if __debug__ and _debug_references:
+            # Report the invocation location if applicable
+            self.__debug_references_call('set', index)
+
+        ## YOH: if we are to disable access at instance level -- do it in
+        ##      set as well ;)
+        ##
+        ## # Check if a part of a collection, and set appropriately
+        ## s_dict = _object_getattribute(self, '__dict__')
+        ## known_attribs = s_dict['_known_attribs']
+        ## if index in known_attribs:
+        ##     collections = s_dict['_collections']
+        ##     return collections[known_attribs[index]].setvalue(index, value)
 
         # Generic setattr
         return _object_setattr(self, index, value)
