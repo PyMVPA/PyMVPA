@@ -11,6 +11,7 @@
 from sets import Set
 
 from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.datasets.miscfx import get_nsamples_per_attr
 from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -95,18 +96,15 @@ class SVMTests(unittest.TestCase):
     # as well -- need to be fixed :-/
     @sweepargs(clf=clfswh['svm', 'sg', '!regression', '!gnpp', '!meta'])
     def testCperClass(self, clf):
-        try:
-            if clf.C > 0:
-                # skip those with fixed C
-                return
-        except:
-            # classifier has no C
+        if not (clf.params.isKnown('C')):
+            # skip those without C
             return
 
-        if clf.C < -5:
-            # too soft margin helps to fight disbalance, thus skip
-            # it in testing
-            return
+#        if clf.params.C < -5:
+#            # too soft margin helps to fight disbalance, thus skip
+#            # it in testing
+#            return
+
         #print clf
         ds = datasets['uni2small'].copy()
         ds__ = datasets['uni2small'].copy()
@@ -119,9 +117,9 @@ class SVMTests(unittest.TestCase):
         # disballanced set
         # lets overpopulate label 0
         times = 10
-        ds_ = ds.selectSamples(range(ds.nsamples) + range(ds.nsamples/2) * times)
+        ds_ = ds[(range(ds.nsamples) + range(ds.nsamples/2) * times)]
         ds_.samples = ds_.samples + 0.7 * N.random.normal(size=(ds_.samples.shape))
-        spl = ds_.samplesperlabel
+        spl = get_nsamples_per_attr(ds_, 'labels') #_.samplesperlabel
         #print ds_.labels, ds_.chunks
 
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
@@ -129,7 +127,7 @@ class SVMTests(unittest.TestCase):
         e = cve(ds__)
         if cfg.getboolean('tests', 'labile', default='yes'):
             # without disballance we should already have some hits
-            self.failUnless(cve.confusion.stats["P'"][1] > 0)
+            self.failUnless(cve.states.confusion.stats["P'"][1] > 0)
 
         e = cve(ds_)
         if cfg.getboolean('tests', 'labile', default='yes'):

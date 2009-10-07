@@ -543,7 +543,7 @@ class CombinedMapper(Mapper):
         for m in self._mappers:
             # need to split the dataset
             fsum_new = fsum + m.getOutSize()
-            m.train(dataset.selectFeatures(range(fsum, fsum_new)))
+            m.train(dataset[:, range(fsum, fsum_new)])
             fsum = fsum_new
 
 

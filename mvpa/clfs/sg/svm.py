@@ -252,7 +252,7 @@ class SVM(_SVM):
         if 'regression' in self._clf_internals:
             labels_ = N.asarray(dataset.labels, dtype='double')
         else:
-            ul = dataset.uniquelabels
+            ul = dataset.sa['labels'].unique
             ul.sort()
 
             if len(ul) == 2:
@@ -446,7 +446,7 @@ class SVM(_SVM):
         # XXX For now it can be done only for regressions since labels need to
         #     be remapped and that becomes even worse if we use regression
         #     as a classifier so mapping happens upstairs
-        if self.regression and self.states.isEnabled('training_confusion'):
+        if self.params.regression and self.states.isEnabled('training_confusion'):
             self.states.training_confusion = self._summaryClass(
                 targets=dataset.labels,
                 predictions=trained_labels)
@@ -549,7 +549,7 @@ class SVM(_SVM):
         # store state variable
         # TODO: extract values properly for multiclass SVMs --
         #       ie 1 value per label or pairs for all 1-vs-1 classifications
-        self.values = values
+        self.states.values = values
 
         ## to avoid leaks with not yet properly fixed shogun
         if not retrainable:
