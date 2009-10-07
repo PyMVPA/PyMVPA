@@ -1205,6 +1205,11 @@ class ClassWithCollections(object):
             s_dict = _object_getattribute(self, '__dict__')
             known_attribs = s_dict['_known_attribs']
             if index in known_attribs:
+                clsstr = str(self.__class__)
+                # Skip some False positives
+                if 'mvpa.datasets' in clsstr and 'Dataset' in clsstr and \
+                       (index in ['labels', 'chunks', 'samples', 'mapper']):
+                    return
                 colname = known_attribs[index]
                 # figure out and report invocation location
                 ftb = traceback.extract_stack(limit=4)[-3]
