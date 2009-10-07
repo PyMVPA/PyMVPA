@@ -1215,53 +1215,52 @@ class ClassWithCollections(object):
                     sys.stderr.write(shit)
 
 
-    def __getattribute__(self, index):
-        # return all private ones first since smth like __dict__ might be
-        # queried by copy before instance is __init__ed
-        if index[0] == '_':
-            return _object_getattribute(self, index)
+        def __getattribute__(self, index):
+            # return all private ones first since smth like __dict__ might be
+            # queried by copy before instance is __init__ed
+            if index[0] == '_':
+                return _object_getattribute(self, index)
 
-        s_dict = _object_getattribute(self, '__dict__')
-        # check if it is a known collection
-        collections = s_dict['_collections']
-        if index in collections:
-            return collections[index]
+            s_dict = _object_getattribute(self, '__dict__')
+            # check if it is a known collection
+            collections = s_dict['_collections']
+            if index in collections:
+                return collections[index]
 
-        # MH: No implicite outbreak of collection items into the namespace of
-        #     the parent class
-        ## check if it is a part of any collection
-        #known_attribs = s_dict['_known_attribs']
-        #if index in known_attribs:
-        #    return collections[known_attribs[index]].getvalue(index)
+            # MH: No implicite outbreak of collection items into the namespace of
+            #     the parent class
+            ## check if it is a part of any collection
+            #known_attribs = s_dict['_known_attribs']
+            #if index in known_attribs:
+            #    return collections[known_attribs[index]].getvalue(index)
 
-        if __debug__ and _debug_references:
             # Report the invocation location if applicable
             self.__debug_references_call('get', index)
 
-        # just a generic return
-        return _object_getattribute(self, index)
+            # just a generic return
+            return _object_getattribute(self, index)
 
 
-    def __setattr__(self, index, value):
-        if index[0] == '_':
+        def __setattr__(self, index, value):
+            if index[0] == '_':
+                return _object_setattr(self, index, value)
+
+            if __debug__ and _debug_references:
+                # Report the invocation location if applicable
+                self.__debug_references_call('set', index)
+
+            ## YOH: if we are to disable access at instance level -- do it in
+            ##      set as well ;)
+            ##
+            ## # Check if a part of a collection, and set appropriately
+            ## s_dict = _object_getattribute(self, '__dict__')
+            ## known_attribs = s_dict['_known_attribs']
+            ## if index in known_attribs:
+            ##     collections = s_dict['_collections']
+            ##     return collections[known_attribs[index]].setvalue(index, value)
+
+            # Generic setattr
             return _object_setattr(self, index, value)
-
-        if __debug__ and _debug_references:
-            # Report the invocation location if applicable
-            self.__debug_references_call('set', index)
-
-        ## YOH: if we are to disable access at instance level -- do it in
-        ##      set as well ;)
-        ##
-        ## # Check if a part of a collection, and set appropriately
-        ## s_dict = _object_getattribute(self, '__dict__')
-        ## known_attribs = s_dict['_known_attribs']
-        ## if index in known_attribs:
-        ##     collections = s_dict['_collections']
-        ##     return collections[known_attribs[index]].setvalue(index, value)
-
-        # Generic setattr
-        return _object_setattr(self, index, value)
 
 
     # XXX not sure if we shouldn't implement anything else...
