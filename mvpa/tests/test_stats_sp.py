@@ -52,7 +52,7 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(null.p([100, 0, 0, 0, 0, 0])[0] == 0)
 
         # same test with just scalar measure/feature
-        null.fit(CorrCoef(), ds.selectFeatures([0]))
+        null.fit(CorrCoef(), ds[:, 0])
         self.failUnless(null.p(-100) == 0)
         self.failUnless(null.p(100) == 0)
 

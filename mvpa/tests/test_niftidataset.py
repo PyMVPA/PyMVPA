@@ -198,8 +198,7 @@ class NiftiDatasetTests(unittest.TestCase):
         #sel_orig_features = [1, 7]
 
         # select using mask in volume and all features in the other part
-        ds_sel = ds.selectFeatures(
-            ds.a.mapper.forward([mask, [1]*nfeatures]).nonzero()[0])
+        ds_sel = ds[:, ds.a.mapper.forward([mask, [1]*nfeatures]).nonzero()[0]]
 
         # now tests
         self.failUnless((mask.reshape(24).nonzero()[0] == [0, 1, 7]).all())
