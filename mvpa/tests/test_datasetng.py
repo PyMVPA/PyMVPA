@@ -59,6 +59,29 @@ def test_from_basic():
     ok_(isinstance(ds.sa['labels'], SampleAttribute))
 
 
+def test_labelschunks_access():
+    samples = N.arange(12).reshape((4, 3))
+    labels = range(4)
+    chunks = [1, 1, 2, 2]
+    ds = Dataset.from_basic(N.arange(12).reshape((4,3)),
+                            labels, chunks)
+
+    assert_array_equal(ds.labels, labels)
+    assert_array_equal(ds.chunks, chunks)
+
+    # moreover they should point to the same thing
+    ok_(ds.labels is ds.sa.labels)
+    ok_(ds.labels is ds.sa['labels'].value)
+    ok_(ds.chunks is ds.sa.chunks)
+    ok_(ds.chunks is ds.sa['chunks'].value)
+
+    # assignment should work at all levels including 1st
+    ds.labels = chunks
+    assert_array_equal(ds.labels, chunks)
+    ok_(ds.labels is ds.sa.labels)
+    ok_(ds.labels is ds.sa['labels'].value)
+
+
 def test_from_masked():
     ds = Dataset.from_masked(samples=[range(5)], labels=1, chunks=1)
     # simple sequence has to be a single pattern
