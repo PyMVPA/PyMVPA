@@ -156,11 +156,11 @@ class GPR(Classifier):
         """
         if __debug__:
             debug("GPR", "Computing log_marginal_likelihood")
-        self.log_marginal_likelihood = \
+        self.states.log_marginal_likelihood = \
                                  -0.5*Ndot(self._train_labels, self._alpha) - \
                                   Nlog(self._L.diagonal()).sum() - \
                                   self._km_train_train.shape[0] * _halflog2pi
-        return self.log_marginal_likelihood
+        return self.states.log_marginal_likelihood
 
 
     def compute_gradient_log_marginal_likelihood(self):
@@ -268,7 +268,7 @@ class GPR(Classifier):
             _changedData = self._changedData
 
         self._train_fv = train_fv = data.samples
-        self._train_labels = train_labels = data.labels
+        self._train_labels = train_labels = data.sa.labels
 
         if not retrainable or _changedData['traindata'] \
                or _changedData.get('kernel_params', False):
@@ -405,7 +405,7 @@ class GPR(Classifier):
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
             # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
-            self.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
+            self.states.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
                                        + self.params.sigma_noise ** 2
             pass
 
