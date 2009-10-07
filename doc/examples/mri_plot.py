@@ -25,14 +25,13 @@ from mvpa.suite import *
 
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
-dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       labels_map=True,
-                       chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                        labels=attr.labels,
+                        chunks=attr.chunks,
+                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # since we don't have a proper anatomical -- lets overlay on BOLD
-nianat = NiftiImage(dataset.O[0], header=dataset.niftihdr)
+nianat = NiftiImage(dataset.O[0], header=dataset.a.niftihdr)
 
 # do chunkswise linear detrending on dataset
 detrend(dataset, perchunk=True, model='linear')

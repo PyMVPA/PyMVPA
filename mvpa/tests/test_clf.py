@@ -177,13 +177,13 @@ class ClassifiersTests(unittest.TestCase):
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (tr_error, tr_cverror))
 
-        self.failUnlessEqual(clf.confusion.percentCorrect,
+        self.failUnlessEqual(clf.states.confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.confusion.sets),
+        self.failUnlessEqual(len(clf.states.confusion.sets),
                              len(ds.UC),
                              msg="Should have 1 confusion per each split")
-        self.failUnlessEqual(len(clf.clfs), len(ds.UC),
+        self.failUnlessEqual(len(clf.states.clfs), len(ds.UC),
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
@@ -250,7 +250,7 @@ class ClassifiersTests(unittest.TestCase):
                 descr="DESCR")
         clf.train(ds)                   # train the beast
         # Number of harvested items should be equal to number of chunks
-        self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
+        self.failUnlessEqual(len(clf.states.harvested['clf.feature_ids']),
                              len(ds.UC))
         # if we can blame multiple inheritance and ClassWithCollections.__init__
         self.failUnlessEqual(clf.descr, "DESCR")
@@ -310,11 +310,11 @@ class ClassifiersTests(unittest.TestCase):
 
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
         # just silly test if we get values assigned in the 'ProxyClassifier'
-        self.failUnless(len(clf011.values) == len(res110),
+        self.failUnless(len(clf011.states.values) == len(res110),
                         msg="We need to pass values into ProxyClassifier")
         self.clf_sign.states._resetEnabledTemporarily()
 
-        self.failUnlessEqual(len(clf011.feature_ids), 2)
+        self.failUnlessEqual(len(clf011.states.feature_ids), 2)
         "Feature selection classifier had to be trained on 2 features"
 
         # first classifier -- last feature should be discarded
@@ -347,7 +347,7 @@ class ClassifiersTests(unittest.TestCase):
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
         res = clf_reg.predict(dat.samples)
-        self.failIf((N.array(clf_reg.values)-clf_reg.predictions).sum()==0,
+        self.failIf((N.array(clf_reg.states.values)-clf_reg.states.predictions).sum()==0,
                     msg="Values were set to the predictions.")
 
 
@@ -421,7 +421,7 @@ class ClassifiersTests(unittest.TestCase):
         cverror = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
-        self.failUnlessEqual(len(clf.values), ds.nsamples/2)
+        self.failUnlessEqual(len(clf.states.values), ds.nsamples/2)
 
         clf.states._resetEnabledTemporarily()
 

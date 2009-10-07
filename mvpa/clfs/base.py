@@ -480,7 +480,7 @@ class Classifier(ClassWithCollections):
                     # they do not overlap
                     states.values = states.values.copy()
 
-            trained_labels = self.trained_labels
+            trained_labels = self.states.trained_labels
             for i, value in enumerate(result):
                 dists = N.abs(value - trained_labels)
                 result[i] = trained_labels[N.argmin(dists)]

@@ -262,7 +262,7 @@ class MCNullDist(NullDist):
             dist_samples.append(measure(*measure_args))
 
         # store samples
-        self.dist_samples = dist_samples = N.asarray(dist_samples)
+        self.states.dist_samples = dist_samples = N.asarray(dist_samples)
 
         # fit distribution per each element
 

@@ -59,8 +59,8 @@ class LinearSVMWeights(Sensitivity):
         svs = N.matrix(model.getSV())
         rhos = N.asarray(model.getRho())
 
-        self.biases = rhos
-        if self.split_weights:
+        self.states.biases = rhos
+        if self.params.split_weights:
             if nr_class != 2:
                 raise NotImplementedError, \
                       "Cannot compute per-class weights for" \
@@ -68,7 +68,7 @@ class LinearSVMWeights(Sensitivity):
             # libsvm might have different idea on the ordering
             # of labels, so we would need to map them back explicitely
             svm_labels = model.getLabels() # labels as assigned by libsvm
-            ds_labels = list(dataset.uniquelabels) # labels in the dataset
+            ds_labels = list(dataset.sa['labels'].unique) # labels in the dataset
             senses = [None for i in ds_labels]
             # first label is given positive value
             for i, (c, l) in enumerate( [(svcoef > 0, lambda x: x),

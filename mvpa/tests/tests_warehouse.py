@@ -46,7 +46,7 @@ def sweepargs(**kwargs):
                 """Little helper"""
                 if isinstance(argvalue, Classifier):
                     # clear classifier after its use -- just to be sure ;-)
-                    argvalue.retrainable = False
+                    argvalue.params.retrainable = False
                     argvalue.untrain()
 
             failed_tests = {}

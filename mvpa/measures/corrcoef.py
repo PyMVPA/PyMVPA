@@ -46,8 +46,10 @@ class CorrCoef(FeaturewiseDatasetMeasure):
     def _call(self, dataset):
         """Computes featurewise scores."""
 
-        attrdata = eval('dataset.' + self.__attr)
+        attrdata = dataset.sa[self.__attr].value
         samples = dataset.samples
+        print attrdata
+        print samples.shape
         pvalue_index = self.__pvalue
         result = N.empty((dataset.nfeatures,), dtype=float)
 

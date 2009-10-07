@@ -22,19 +22,19 @@ import os
 from mvpa import pymvpa_dataroot
 from mvpa.misc.plot import plotFeatureHist, plotSamplesDistance
 from mvpa import cfg
-from mvpa.datasets.nifti import NiftiDataset
+from mvpa.datasets.nifti import nifti_dataset
 from mvpa.misc.io import SampleAttributes
 from mvpa.datasets.miscfx import zscore, detrend
 
 # load example fmri dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-ds = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                  labels=attr.labels,
-                  chunks=attr.chunks,
-                  mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+ds = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                   labels=attr.labels,
+                   chunks=attr.chunks,
+                   mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # only use the first 5 chunks to save some cpu-cycles
-ds = ds.selectSamples(ds.chunks < 5)
+ds = ds[ds.chunks < 5]
 
 # take a look at the distribution of the feature values in all
 # sample categories and chunks
@@ -44,7 +44,7 @@ if cfg.getboolean('examples', 'interactive', True):
     P.show()
 
 # next only works with floating point data
-ds.setSamplesDType('float')
+ds.samples = ds.samples.astype('float')
 
 # look at sample similiarity
 # Note, the decreasing similarity with increasing temporal distance

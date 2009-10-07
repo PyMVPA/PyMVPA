@@ -5,27 +5,27 @@ dataset implementation. May the source be with us!
 Examples
 --------
 
-clfs_examples.py            broken
+clfs_examples.py            broken (SVM cannot handle literallabels)
 curvefitting.py             pass
 erp_plot.py                 pass
-eventrelated.py             broken
+eventrelated.py             broken (event-stuff is waiting for new mappers)
 gpr_model_selection0.py     broken by design
 gpr.py                      pass
 kerneldemo.py               pass
-match_distribution.py       broken
-mri_plot.py                 broken
-permutation_test.py         broken
+match_distribution.py       pass
+mri_plot.py                 pass (warning about literal labels)
+permutation_test.py         pass
 projections.py              pass
-searchlight_2d.py           broken
-searchlight_dsm.py          broken
-searchlight_minimal.py      broken
+searchlight_2d.py           broken (PySwigObject deepcopy issue)
+searchlight_dsm.py          broken (waiting for new-style mapper)
+searchlight_minimal.py      broken (waiting for new-style mapper)
 searchlight.py              not checked
-sensanas.py                 broken
-smellit.py                  broken
-smlr.py                     broken
-som.py                      broken
+sensanas.py                 pass
+smellit.py                  pass
+smlr.py                     pass
+som.py                      pass
 start_easy.py               pass
-svdclf.py                   broken
+svdclf.py                   broken (waiting for new-style mappers)
 topo_plot.py                pass
 
 
@@ -38,10 +38,10 @@ test_atlases.py             pass
 test_base.py                pass
 test_boxcarmapper.py        pass
 test_clfcrossval.py         pass
-test_clf.py                 broken
+test_clf.py                 broken (literal labels)
 test_cmdline.py             pass
 test_config.py              pass
-test_datameasure.py         broken
+test_datameasure.py         broken (literal labels)
 test_datasetfx.py           pass
 test_datasetfx_sp.py        pass
 test_datasetng.py           pass
@@ -78,7 +78,7 @@ test_splitsensana.py        broken (SVMProblem)
 test_splitter.py            pass
 test_state.py               pass
 test_stats.py               pass
-test_stats_sp.py            pass
+test_stats_sp.py            broken (CorrCoef relies on numeric labels)
 test_suite.py               pass
 test_support.py             broken (Harvester cannot look into states?)
 test_svdmapper.py           pass

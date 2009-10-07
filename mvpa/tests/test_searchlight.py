@@ -43,12 +43,12 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless(0.4 < results.mean() < 0.6)
 
         # check resonable sphere sizes
-        self.failUnless(len(sl.spheresizes) == 106)
-        self.failUnless(max(sl.spheresizes) == 7)
-        self.failUnless(min(sl.spheresizes) == 4)
+        self.failUnless(len(sl.states.spheresizes) == 106)
+        self.failUnless(max(sl.states.spheresizes) == 7)
+        self.failUnless(min(sl.states.spheresizes) == 4)
 
         # check base-class state
-        self.failUnlessEqual(len(sl.raw_results), 106)
+        self.failUnlessEqual(len(sl.states.raw_results), 106)
 
 
     def testPartialSearchlightWithFullReport(self):

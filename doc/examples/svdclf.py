@@ -26,10 +26,10 @@ if __debug__:
 # load PyMVPA example dataset
 #
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = nifti_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                        labels=attr.labels,
+                        chunks=attr.chunks,
+                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
 # preprocessing
@@ -39,17 +39,14 @@ dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'cats' and 'scissors' samples from dataset
-dataset = dataset.selectSamples(
-                N.array([ l in [0,4,5] for l in dataset.labels],
-                dtype='bool'))
+dataset = dataset[N.array([ l in [0,4,5] for l in dataset.labels],
+                  dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
 zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
-                                        dtype='bool'))
-print dataset
+dataset = dataset[N.array([l != 0 for l in dataset.labels], dtype='bool')]
 
 # Specify the base classifier to be used
 # To parametrize the classifier to be used
@@ -61,7 +58,7 @@ Clf = LinearCSVMC
 # built-in SVDs
 clfs = [('All orig.\nfeatures (%i)' % dataset.nfeatures, Clf()),
         ('All Comps\n(%i)' % (dataset.nsamples \
-                 - (dataset.nsamples / len(dataset.uniquechunks)),),
+                 - (dataset.nsamples / len(dataset.UC)),),
                         MappedClassifier(Clf(), SVDMapper())),
         ('First 5\nComp.', MappedClassifier(Clf(),
                         SVDMapper(selector=range(5)))),

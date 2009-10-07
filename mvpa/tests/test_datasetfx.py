@@ -118,7 +118,9 @@ def test_zscoring():
     zscore(data, baselinelabels=[0, 1])
     assert_array_equal(samples, data.samples + 1.0)
 
-    # check that zscore modifies in-place
+    # check that zscore modifies in-place; only guaranteed if no upcasting is
+    # necessary
+    samples = samples.astype('float')
     data = dataset(samples,
                    labels=[0, 2, 2, 2, 1] + [2] * 11,
                    chunks=[0] * 16)

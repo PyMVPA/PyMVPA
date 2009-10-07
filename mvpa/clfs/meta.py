@@ -29,6 +29,7 @@ from sets import Set
 from mvpa.misc.args import group_kwargs
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
 
 from mvpa.clfs.base import Classifier
@@ -128,7 +129,7 @@ class BoostedClassifier(Classifier, Harvestable):
         # return union of all used features by slave classifiers
         feature_ids = Set([])
         for clf in self.__clfs:
-            feature_ids = feature_ids.union(Set(clf.feature_ids))
+            feature_ids = feature_ids.union(Set(clf.states.feature_ids))
         return list(feature_ids)
 
 
@@ -783,8 +784,8 @@ class TreeClassifier(ProxyClassifier):
         #     might be not a bad thing altogether...)
         for gk in groups.iterkeys():
             # select samples per each group
-            ids = dataset.idsbylabels(groups_labels[gk])
-            ds_group = dataset.selectSamples(ids)
+            ids = get_samples_by_attr(dataset, 'labels', groups_labels[gk])
+            ds_group = dataset[ids]
             if __debug__:
                 debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
                       msgargs=dict(clf=clfs[gk], gk=gk, ds=ds_group))
@@ -883,8 +884,10 @@ class BinaryClassifier(ProxyClassifier):
     def _train(self, dataset):
         """Train `BinaryClassifier`
         """
-        idlabels = [(x, +1) for x in dataset.idsbylabels(self.__poslabels)] + \
-                    [(x, -1) for x in dataset.idsbylabels(self.__neglabels)]
+        idlabels = [(x, +1) for x in get_samples_by_attr(dataset, 'labels',
+                                                         self.__poslabels)] + \
+                    [(x, -1) for x in get_samples_by_attr(dataset, 'labels',
+                                                          self.__neglabels)]
         # XXX we have to sort ids since at the moment Dataset.selectSamples
         #     doesn't take care about order
         idlabels.sort()
@@ -917,7 +920,7 @@ class BinaryClassifier(ProxyClassifier):
                       ". Selected %s" % datasetselected)
 
         # adjust the labels
-        datasetselected.labels = [ x[1] for x in idlabels ]
+        datasetselected.sa['labels'].value = [ x[1] for x in idlabels ]
 
         # now we got a dataset with only 2 labels
         if __debug__:
@@ -926,7 +929,7 @@ class BinaryClassifier(ProxyClassifier):
         self.clf.train(datasetselected)
 
         if not orig_labels is None:
-            dataset.labels = orig_labels
+            dataset.sa['labels'].value = orig_labels
 
     def _predict(self, data):
         """Predict the labels for a given `data`
@@ -1313,7 +1316,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
         mappermask = N.zeros(dataset.nfeatures)
-        mappermask[self.__feature_selection.selected_ids] = 1
+        mappermask[self.__feature_selection.states.selected_ids] = 1
         mapper = MaskMapper(mappermask)
 
         self.__feature_selection.states._resetEnabledTemporarily()
@@ -1332,7 +1335,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """Return used feature ids for `FeatureSelectionClassifier`
 
         """
-        return self.__feature_selection.selected_ids
+        return self.__feature_selection.states.selected_ids
 
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`

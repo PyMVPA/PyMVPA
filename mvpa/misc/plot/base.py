@@ -15,6 +15,7 @@ import numpy as N
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.distance import squared_euclidean_distance
+from mvpa.datasets.miscfx import get_samples_by_attr
 
 
 
@@ -138,8 +139,8 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
     lsplit = NFoldSplitter(1, attr='labels')
     csplit = NFoldSplitter(1, attr='chunks')
 
-    nrows = len(dataset.uniquelabels)
-    ncols = len(dataset.uniquechunks)
+    nrows = len(dataset.sa['labels'].unique)
+    ncols = len(dataset.sa['chunks'].unique)
 
     def doplot(data):
         P.hist(data, **kwargs)
@@ -162,16 +163,16 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
                 doplot(d.samples.ravel())
 
                 if row == 0:
-                    P.title('C:' + str(d.uniquechunks[0]))
+                    P.title('C:' + str(d.sa['chunks'].unique[0]))
                 if col == 0:
-                    P.ylabel('L:' + str(d.uniquelabels[0]))
+                    P.ylabel('L:' + str(d.sa['labels'].unique[0]))
 
                 fig += 1
         else:
             P.subplot(1, nrows, fig)
             doplot(ds.samples)
 
-            P.title('L:' + str(ds.uniquelabels[0]))
+            P.title('L:' + str(ds.sa['labels'].unique[0]))
 
             fig += 1
 
@@ -191,9 +192,9 @@ def plotSamplesDistance(dataset, sortbyattr=None):
     """
     if sortbyattr is not None:
         slicer = []
-        for attr in dataset.__getattribute__('unique' + sortbyattr):
+        for attr in dataset.sa[sortbyattr].unique:
             slicer += \
-                dataset.__getattribute__('idsby' + sortbyattr)(attr).tolist()
+                get_samples_by_attr(dataset, sortbyattr, attr).tolist()
         samples = dataset.samples[slicer]
     else:
         samples = dataset.samples

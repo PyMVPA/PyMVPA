@@ -1450,7 +1450,7 @@ class TransferError(ClassifierError):
 
         # get probability of error under NULL hypothesis if available
         if not error is None and not self.__null_dist is None:
-            self.null_prob = self.__null_dist.p(error)
+            self.states.null_prob = self.__null_dist.p(error)
 
 
     @property

@@ -12,7 +12,7 @@
 import unittest
 import numpy as N
 from numpy.linalg import norm
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 from tests_warehouse import datasets, sweepargs
 from mvpa.mappers.procrustean import ProcrusteanMapper
 
@@ -57,7 +57,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
 
                 # train bloody mapper(s)
                 pm.train(d_s, d_t)
-                ds2 = Dataset(samples=d_s, labels=d_t)
+                ds2 = dataset(samples=d_s, labels=d_t)
                 pm2.train(ds2)
 
                 # verify that both created the same transformation
