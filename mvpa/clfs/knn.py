@@ -153,8 +153,8 @@ class kNN(Classifier):
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
-        self.predictions = predicted
-        self.values = [r[1] for r in results]
+        self.states.predictions = predicted
+        self.states.values = [r[1] for r in results]
 
         return predicted
 
@@ -191,7 +191,7 @@ class kNN(Classifier):
             # It seemed to Yarik that this has to be evaluated just once per
             # training dataset.
             #
-            self.__labels = labels = self.__data.labels
+            self.__labels = labels = self.__data.sa.labels
             Nlabels = len(labels)
             Nuniquelabels = len(uniquelabels)
 

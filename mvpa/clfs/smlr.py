@@ -395,7 +395,7 @@ class SMLR(Classifier):
         self.__weights = w[:dataset.nfeatures, :]
 
         if self.states.isEnabled('feature_ids'):
-            self.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
+            self.states.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
                                              axis=1)>0)[0]
 
         # and a bias
