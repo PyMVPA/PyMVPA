@@ -610,6 +610,11 @@ class SampleAttributesCollection(Collection):
         return [] # TODO: return I guess samples/labels/chunks
 
 
+    # XXX YOH: refactor -- each collection has a corresponding collectable class
+    #          assigned... for now it is only in _known_collections but doesn't
+    #          (shouldn't) be there... def add should be defined in 'Collection'
+    #          and just take a corresponding class to instantiate
+    #    Also: what about the rest of **kwargs to be added to Collectable? like doc, etc?
     def add(self, name, value):
         """Convenience method to add samples attributes to the collection.
 
