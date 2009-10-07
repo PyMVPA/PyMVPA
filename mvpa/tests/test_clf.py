@@ -47,7 +47,7 @@ class ClassifiersTests(unittest.TestCase):
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
 
-        self.failUnlessRaises(UnknownStateError, clf.states.getvalue,
+        self.failUnlessRaises(UnknownStateError, clf.states.__getattribute__,
                               "trained_dataset")
 
         self.failUnlessEqual(clf.states.training_confusion.percentCorrect,
@@ -56,7 +56,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
                              list(self.data_bin_1.labels))
 
-        self.failUnlessEqual(len(clf.predictions), self.data_bin_1.nsamples,
+        self.failUnlessEqual(len(clf.states.predictions), self.data_bin_1.nsamples,
             msg="Trained classifier stores predictions by default")
 
         clf = SameSignClassifier(enable_states=['trained_dataset'])
@@ -523,7 +523,7 @@ class ClassifiersTests(unittest.TestCase):
         err_1 = trerr(dstest, dstrain)
         self.failUnless(err_1<0.3,
             msg="We should test here on easy dataset. Got error of %s" % err_1)
-        values_1 = clf.values[:]
+        values_1 = clf.states.values[:]
         # some times retraining gets into deeper optimization ;-)
         eps = 0.05
         corrcoef_eps = 0.85             # just to get no failures... usually > 0.95
@@ -532,8 +532,8 @@ class ClassifiersTests(unittest.TestCase):
         def batch_test(retrain=True, retest=True, closer=True):
             err = trerr(dstest, dstrain)
             err_re = trerr_re(dstest, dstrain)
-            corr = N.corrcoef(clf.values, clf_re.values)[0,1]
-            corr_old = N.corrcoef(values_1, clf_re.values)[0,1]
+            corr = N.corrcoef(clf.states.values, clf_re.states.values)[0,1]
+            corr_old = N.corrcoef(values_1, clf_re.states.values)[0,1]
             if __debug__:
                 debug('TEST', "Retraining stats: errors %g %g corr %g "
                       "with old error %g corr %g" %

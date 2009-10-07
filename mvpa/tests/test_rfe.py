@@ -340,15 +340,15 @@ class RFETests(unittest.TestCase):
         self.failUnless( (nfeatures[::-1] == rfe.states.nfeatures).all() )
 
         # check if history has elements for every step
-        self.failUnless(Set(rfe.history)
-                        == Set(range(len(N.array(rfe.errors)))))
+        self.failUnless(Set(rfe.states.history)
+                        == Set(range(len(N.array(rfe.states.errors)))))
 
         # Last (the largest number) can be present multiple times even
         # if we remove 1 feature at a time -- just need to stop well
         # in advance when we have more than 1 feature left ;)
-        self.failUnless(rfe.nfeatures[-1]
-                        == len(N.where(rfe.history
-                                       ==max(rfe.history))[0]))
+        self.failUnless(rfe.states.nfeatures[-1]
+                        == len(N.where(rfe.states.history
+                                       ==max(rfe.states.history))[0]))
 
         # XXX add a test where sensitivity analyser and transfer error do not
         # use the same classifier
