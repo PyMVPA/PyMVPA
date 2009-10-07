@@ -19,7 +19,7 @@ projections.py              pass
 searchlight_2d.py           broken (PySwigObject deepcopy issue)
 searchlight_dsm.py          broken (waiting for new-style mapper)
 searchlight_minimal.py      broken (waiting for new-style mapper)
-searchlight.py              not checked
+searchlight.py              broken (needs new Datasets definition)
 sensanas.py                 pass
 smellit.py                  pass
 smlr.py                     pass
@@ -45,10 +45,10 @@ test_datameasure.py         broken (literal labels)
 test_datasetfx.py           pass
 test_datasetfx_sp.py        pass
 test_datasetng.py           pass
-test_dataset.py             broken
+test_dataset.py             broken (by design now?)
 test_dochelpers.py          pass
 test_eepdataset.py          pass (missing test)
-test_enet.py                not checked
+test_enet.py                broken (literal labels, so Rpy complaints  Numeric/NumPy arrays containing numpy.ndarray are not supported)
 test_externals.py           pass
 test_hamster.py             pass
 test_icamapper.py           pass
@@ -56,7 +56,7 @@ test_ifs.py                 pass
 test_iohelpers.py           pass
 test_kernel.py              pass
 test_knn.py                 pass
-test_lars.py                not checked
+test_lars.py                broken (same as for _enet)
 test_meg.py                 pass
 test_neighbor.py            pass
 test_niftidataset.py        broken (ERNiftiDataset waiting for nextgen Mappers)
@@ -83,7 +83,7 @@ test_suite.py               pass
 test_support.py             broken (Harvester cannot look into states?)
 test_svdmapper.py           pass
 test_svm.py                 pass (PySwigObject deepcopy issue)
-test_transerror.py          broken (evil puking)
+test_transerror.py          broken (evil puking, SVMProblem)
 test_transformers.py        pass
 test_verbosity.py           pass
 test_waveletmapper.py       pass
