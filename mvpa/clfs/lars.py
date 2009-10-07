@@ -133,7 +133,7 @@ class LARS(Classifier):
                 self.__trace,
                 self.__max_steps,
                 self.__use_Gram,
-                self.regression,
+                self.params.regression,
                 str(self.states.enabled))
 
 
@@ -196,7 +196,7 @@ class LARS(Classifier):
             # if we just got 1 sample with a scalar
             fit = fit.reshape( (1,) )
 
-        self.values = fit
+        self.states.values = fit
         return fit
 
 

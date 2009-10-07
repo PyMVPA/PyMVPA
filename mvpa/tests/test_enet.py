@@ -47,7 +47,7 @@ class ENETTests(unittest.TestCase):
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.predictions).all())
+        self.failUnless((p == clf.states.predictions).all())
 
 
     def testENETSensitivities(self):

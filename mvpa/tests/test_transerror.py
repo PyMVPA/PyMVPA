@@ -222,7 +222,7 @@ class ErrorsTests(unittest.TestCase):
                 OddEvenSplitter(),
                 enable_states=['confusion', 'training_confusion'])
             cverror = cv(ds)
-            stats = cv.confusion.stats
+            stats = cv.states.confusion.stats
             Nlabels = len(ds.uniquelabels)
             # so we at least do slightly above chance
             self.failUnless(stats['ACC'] > 1.2 / Nlabels)
