@@ -46,8 +46,8 @@ class SameSignClassifier(Classifier):
         values = []
         for d in data:
             values.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
-        self.predictions = values
-        self.values = values            # just for the sake of having values
+        self.states.predictions = values
+        self.states.values = values            # just for the sake of having values
         return values
 
 

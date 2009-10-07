@@ -88,7 +88,7 @@ class SplitFeaturewiseMeasure(FeaturewiseDatasetMeasure):
 
             maps.append(sensitivity)
 
-        self.maps = maps
+        self.states.maps = maps
         """Store the maps across splits"""
 
         # return all maps

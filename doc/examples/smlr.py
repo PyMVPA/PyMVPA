@@ -39,13 +39,13 @@ samp2 = N.random.randn(nsamp,nfeat)
 samp2[:,:goodfeat] -= offset
 
 # create the pymvpa training dataset from the labeled features
-patternsPos = Dataset(samples=samp1[:ntrain,:], labels=1)
-patternsNeg = Dataset(samples=samp2[:ntrain,:], labels=0)
+patternsPos = dataset(samples=samp1[:ntrain,:], labels=1)
+patternsNeg = dataset(samples=samp2[:ntrain,:], labels=0)
 trainpat = patternsPos + patternsNeg
 
 # create patters for the testing dataset
-patternsPos = Dataset(samples=samp1[ntrain:,:], labels=1)
-patternsNeg = Dataset(samples=samp2[ntrain:,:], labels=0)
+patternsPos = dataset(samples=samp1[ntrain:,:], labels=1)
+patternsNeg = dataset(samples=samp2[ntrain:,:], labels=0)
 testpat = patternsPos + patternsNeg
 
 # set up the SMLR classifier
@@ -63,7 +63,7 @@ pre = smlr.predict(testpat.samples)
 
 # calculate the confusion matrix
 smlr_confusion = ConfusionMatrix(
-    labels=trainpat.uniquelabels, targets=testpat.labels,
+    labels=trainpat.UL, targets=testpat.labels,
     predictions=pre)
 
 # now do the same for a linear SVM
@@ -81,15 +81,15 @@ pre = lsvm.predict(testpat.samples)
 
 # calculate the confusion matrix
 lsvm_confusion = ConfusionMatrix(
-    labels=trainpat.uniquelabels, targets=testpat.labels,
+    labels=trainpat.UL, targets=testpat.labels,
     predictions=pre)
 
 # now train SVM with selected features
 print "Evaluating Linear SVM classifier with SMLR's features..."
 
 keepInd = (N.abs(smlr.weights).mean(axis=1)!=0)
-newtrainpat = trainpat.selectFeatures(keepInd, sort=False)
-newtestpat = testpat.selectFeatures(keepInd, sort=False)
+newtrainpat = trainpat[:, keepInd]
+newtestpat = testpat[:, keepInd]
 
 # train with the known points
 lsvm.train(newtrainpat)
@@ -99,7 +99,7 @@ pre = lsvm.predict(newtestpat.samples)
 
 # calculate the confusion matrix
 lsvm_confusion_sparse = ConfusionMatrix(
-    labels=newtrainpat.uniquelabels, targets=newtestpat.labels,
+    labels=newtrainpat.UL, targets=newtestpat.labels,
     predictions=pre)
 
 

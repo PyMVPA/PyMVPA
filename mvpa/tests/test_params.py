@@ -60,7 +60,7 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(simple.params["C"].isDefault, True)
         self.failUnlessEqual(simple.params["C"].equalDefault, True)
 
-        simple.C = 1.0
+        simple.params.C = 1.0
         # we are not actually setting the value if == default
         self.failUnlessEqual(simple.params["C"].isDefault, True)
         self.failUnlessEqual(simple.params["C"].equalDefault, True)
@@ -75,7 +75,7 @@ class ParamsTests(unittest.TestCase):
         simple.params["C"].resetvalue()
         self.failUnlessEqual(simple.params.isSet("C"), True)
         # TODO: Test if we 'train' a classifier f we get isSet to false
-        self.failUnlessEqual(simple.C, 1.0)
+        self.failUnlessEqual(simple.params.C, 1.0)
         self.failUnlessRaises(AttributeError, simple.params.__getattribute__, 'B')
 
     def testMixed(self):

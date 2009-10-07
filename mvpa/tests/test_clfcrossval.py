@@ -49,8 +49,6 @@ class CrossValidationTests(unittest.TestCase):
         # CrossValidatedTransferError
 
         self.failUnless(isinstance(cv.states.samples_error, dict))
-        print cv.states.samples_error
-        print len(cv.states.samples_error), data.nsamples
         self.failUnless(len(cv.states.samples_error) == data.nsamples)
         # one value for each origid
         assert_array_equal(sorted(cv.states.samples_error.keys()),

@@ -95,8 +95,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessEqual(len(map_), self.dataset.nfeatures)
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            for conf_matrix in [sana.clf.training_confusion] \
-                              + sana.clf.confusion.matrices:
+            for conf_matrix in [sana.clf.states.training_confusion] \
+                              + sana.clf.states.confusion.matrices:
                 self.failUnless(
                     conf_matrix.percentCorrect>75,
                     msg="We must have trained on each one more or " \
@@ -105,7 +105,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                      len(self.dataset.uniquelabels)))
 
         errors = [x.percentCorrect
-                    for x in sana.clf.confusion.matrices]
+                    for x in sana.clf.states.confusion.matrices]
 
         # XXX
         # That is too much to ask if the dataset is easy - thus
@@ -249,7 +249,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sens = sana(ds)
 
         self.failUnless(sens.shape == (2, ds.nfeatures, 3))
-        splits = sana.splits
+        splits = sana.states.splits
         self.failUnlessEqual(len(splits), 2)
         self.failUnless(N.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
@@ -332,16 +332,16 @@ class SensitivityAnalysersTests(unittest.TestCase):
         od, otd = fs(self.dataset)
 
         self.failUnless(fs.combiner == 'union')
-        self.failUnless(len(fs.selections_ids))
-        self.failUnless(len(fs.selections_ids) <= self.dataset.nfeatures)
+        self.failUnless(len(fs.states.selections_ids))
+        self.failUnless(len(fs.states.selections_ids) <= self.dataset.nfeatures)
         # should store one set per methods
-        self.failUnless(len(fs.selections_ids) == len(fss))
+        self.failUnless(len(fs.states.selections_ids) == len(fss))
         # no individual can be larger than union
-        for s in fs.selections_ids:
-            self.failUnless(len(s) <= len(fs.selected_ids))
+        for s in fs.states.selections_ids:
+            self.failUnless(len(s) <= len(fs.states.selected_ids))
         # check output dataset
-        self.failUnless(od.nfeatures == len(fs.selected_ids))
-        for i, id in enumerate(fs.selected_ids):
+        self.failUnless(od.nfeatures == len(fs.states.selected_ids))
+        for i, id in enumerate(fs.states.selected_ids):
             self.failUnless((od.samples[:,i]
                              == self.dataset.samples[:,id]).all())
 

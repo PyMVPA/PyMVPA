@@ -131,6 +131,7 @@ class SVM(_SVM):
 
         svmprob = svm.SVMProblem( dataset.labels.tolist(), src )
 
+
         # Translate few params
         TRANSLATEDICT = {'epsilon': 'eps',
                          'tube_epsilon': 'p'}
@@ -203,7 +204,7 @@ class SVM(_SVM):
             if self.params.regression:
                 values = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
-                trained_labels = self.trained_labels
+                trained_labels = self.states.trained_labels
                 nlabels = len(trained_labels)
                 # XXX We do duplicate work. model.predict calls
                 # predictValuesRaw internally and then does voting or

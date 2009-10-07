@@ -64,12 +64,10 @@ color_names = \
 
 """
 Since we are going to use a mapper, we will put the color vectors into
-a dataset. To be able to do this, we will assign an arbitrary label,
-although it will not be used at all, since this SOM mapper uses an
-unsupervised training algorithm.
+a dataset.
 """
 
-ds = Dataset(samples=colors, labels=1)
+ds = dataset(colors)
 
 """
 Now we can instantiate the mapper. It will internally use a so-called

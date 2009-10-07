@@ -76,7 +76,7 @@ class Searchlight(DatasetMeasure):
                               "that has metric assigned."
 
         if self.states.isEnabled('spheresizes'):
-            self.spheresizes = []
+            self.states.spheresizes = []
 
         if __debug__:
             if not self.__center_ids == None:
@@ -106,7 +106,7 @@ class Searchlight(DatasetMeasure):
 
             # store the size of the sphere dataset
             if self.states.isEnabled('spheresizes'):
-                self.spheresizes.append(sphere.nfeatures)
+                self.states.spheresizes.append(sphere.nfeatures)
 
             if __debug__:
                 sphere_count += 1
@@ -120,7 +120,7 @@ class Searchlight(DatasetMeasure):
             debug('SLC', '')
 
         # charge state
-        self.raw_results = results
+        self.states.raw_results = results
 
         # return raw results, base-class will take care of transformations
         return results

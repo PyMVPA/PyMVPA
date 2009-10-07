@@ -24,10 +24,10 @@ from mvpa.suite import *
 
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                        labels=attr.labels,
+                        chunks=attr.chunks,
+                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 """As with classifiers it is easy to define a bunch of sensitivity
 analyzers. It is usually possible to simply call `getSensitivityAnalyzer()`
@@ -67,16 +67,13 @@ of each feature to a standard mean and variance."""
 detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
-dataset = dataset.selectSamples(
-                N.array([ l in [0,3,7] for l in dataset.labels],
-                dtype='bool'))
+dataset = dataset[N.array([l in [0,3,7] for l in dataset.labels], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
 zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
-                                        dtype='bool'))
+dataset = dataset[N.array([l != 0 for l in dataset.labels], dtype='bool')]
 
 """Finally, we will loop over all defined analyzers and let them compute
 the sensitivity scores. The resulting vectors are then mapped back into the
@@ -98,7 +95,7 @@ for s in keys:
     smap = sensanas[s](dataset)+0.00001
 
     # map sensitivity map into original dataspace
-    orig_smap = dataset.mapReverse(smap)
+    orig_smap = dataset.mapper.reverse(smap)
     masked_orig_smap = N.ma.masked_array(orig_smap, mask=orig_smap == 0)
 
     # make a new subplot for each classifier

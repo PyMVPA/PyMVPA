@@ -552,7 +552,7 @@ class SMLRWeights(Sensitivity):
         #            " intended to do" % (self, weights.shape) )
 
         if clf.params.has_bias:
-            self.biases = clf.biases
+            self.states.biases = clf.biases
 
         if __debug__:
             debug('SMLR',

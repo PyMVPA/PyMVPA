@@ -28,20 +28,18 @@ def main():
     # Load Haxby dataset example
     attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
                                           'attributes_literal.txt'))
-    haxby8 = NiftiDataset(samples=os.path.join(pymvpa_dataroot,
+    haxby8 = nifti_dataset(samples=os.path.join(pymvpa_dataroot,
                                                'bold.nii.gz'),
-                          labels=attrs.labels,
-                          labels_map=True,
-                          chunks=attrs.chunks,
-                          mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-                          dtype=N.float32)
+                           labels=attrs.labels,
+                           chunks=attrs.chunks,
+                           mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+    haxby8.samples = haxby8.samples.astype(N.float32)
 
     # preprocess slightly
-    rest_label = haxby8.labels_map['rest']
     detrend(haxby8, perchunk=True, model='linear')
-    zscore(haxby8, perchunk=True, baselinelabels=[rest_label],
+    zscore(haxby8, perchunk=True, baselinelabels=['rest'],
            targetdtype='float32')
-    haxby8_no0 = haxby8.selectSamples(haxby8.labels != rest_label)
+    haxby8_no0 = haxby8[haxby8.labels != 'rest']
 
     dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
                                   nfeatures=100,
@@ -60,7 +58,8 @@ def main():
           "Haxby 8-cat subject 1"),
           clfswh['multiclass']),
         ]:
-        print "%s\n %s" % (datasetdescr, dataset.summary(idhash=False))
+        # XXX put back whenever there is summary() again
+        #print "%s\n %s" % (datasetdescr, dataset.summary(idhash=False))
         print " Classifier                               " \
               "%corr  #features\t train predict  full"
         for clf in clfs_:
@@ -75,7 +74,7 @@ def main():
             #print cv.confusion
 
             # to report transfer error
-            confusion = ConfusionMatrix(labels_map=dataset.labels_map)
+            confusion = ConfusionMatrix()#labels_map=dataset.labels_map)
             times = []
             nf = []
             t0 = time.time()
@@ -83,12 +82,12 @@ def main():
             for nfold, (training_ds, validation_ds) in \
                     enumerate(NFoldSplitter()(dataset)):
                 clf.train(training_ds)
-                nf.append(len(clf.feature_ids))
+                nf.append(len(clf.states.feature_ids))
                 if nf[-1] == 0:
                     break
                 predictions = clf.predict(validation_ds.samples)
                 confusion.add(validation_ds.labels, predictions)
-                times.append([clf.training_time, clf.predicting_time])
+                times.append([clf.states.training_time, clf.states.predicting_time])
             if nf[-1] == 0:
                 print "no features were selected. skipped"
                 continue
