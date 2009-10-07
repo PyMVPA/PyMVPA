@@ -910,7 +910,7 @@ class BinaryClassifier(ProxyClassifier):
                       " classification among labels %s/+1 and %s/-1" %
                       (self.__poslabels, self.__neglabels))
         else:
-            datasetselected = dataset.selectSamples([ x[0] for x in idlabels ])
+            datasetselected = dataset[[ x[0] for x in idlabels ]]
             if __debug__:
                 debug('CLFBIN',
                       "Selected %d samples out of %d samples for binary " %
