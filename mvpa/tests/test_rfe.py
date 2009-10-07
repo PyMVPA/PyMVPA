@@ -169,9 +169,9 @@ class RFETests(unittest.TestCase):
         self.failUnless((selector(data) == target10).all())
 
         selector.nelements = 3
-        self.failUnless(selector.nelements == 3)
+        self.failUnless(selector.states.nelements == 3)
         self.failUnless((selector(data) == target30).all())
-        self.failUnless(selector.ndiscarded == 3)
+        self.failUnless(selector.states.ndiscarded == 3)
 
         # test range selector
         # simple range 'above'
@@ -254,7 +254,7 @@ class RFETests(unittest.TestCase):
         self.failUnlessEqual(len(fe.states.sensitivity), wdata_nfeatures,
             msg="Sensitivity have to have # of features equal to original")
 
-        self.failUnlessEqual(len(fe.selected_ids), sdata.nfeatures,
+        self.failUnlessEqual(len(fe.states.selected_ids), sdata.nfeatures,
             msg="# of selected features must be equal the one in the result dataset")
 
 
@@ -291,13 +291,13 @@ class RFETests(unittest.TestCase):
                              msg="Test the property feature_selections")
 
         desired_nfeatures = int(N.ceil(wdata_nfeatures*0.75))
-        self.failUnlessEqual(feat_sel_pipeline.nfeatures,
+        self.failUnlessEqual(feat_sel_pipeline.states.nfeatures,
                              [wdata_nfeatures, desired_nfeatures],
                              msg="Test if nfeatures get assigned properly."
-                             " Got %s!=%s" % (feat_sel_pipeline.nfeatures,
+                             " Got %s!=%s" % (feat_sel_pipeline.states.nfeatures,
                                               [wdata_nfeatures, desired_nfeatures]))
 
-        self.failUnlessEqual(list(feat_sel_pipeline.selected_ids),
+        self.failUnlessEqual(list(feat_sel_pipeline.states.selected_ids),
                              range(int(wdata_nfeatures*0.25)+4, wdata_nfeatures))
 
 
@@ -335,9 +335,9 @@ class RFETests(unittest.TestCase):
             self.failUnless(sdata.nfeatures == wdata_nfeatures)
 
         # silly check if nfeatures is in decreasing order
-        nfeatures = N.array(rfe.nfeatures).copy()
+        nfeatures = N.array(rfe.states.nfeatures).copy()
         nfeatures.sort()
-        self.failUnless( (nfeatures[::-1] == rfe.nfeatures).all() )
+        self.failUnless( (nfeatures[::-1] == rfe.states.nfeatures).all() )
 
         # check if history has elements for every step
         self.failUnless(Set(rfe.history)
