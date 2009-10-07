@@ -225,6 +225,10 @@ class StateVariable(CollectableAttribute):
     """
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
+        # Force enabled state regardless of the input
+        # to facilitate testing
+        if __debug__ and 'CHECK_STATES_ENABLED' in debug.active:
+            enabled = True
         CollectableAttribute.__init__(self, name, doc)
         self._isenabled = enabled
         self._defaultenabled = enabled

@@ -129,6 +129,9 @@ class StateTests(unittest.TestCase):
 
         proper.states.enable(['state2'])
         self.failUnlessEqual(Set(proper.states.names), Set(['state1', 'state2']))
+        if __debug__ and 'CHECK_STATES_ENABLED' in debug.active:
+            # skip testing since all states are on now
+            return
         self.failUnless(proper.states.enabled == ['state2'])
 
         self.failUnless(Set(proper2.states.enabled) == Set(['state1']))
@@ -166,6 +169,10 @@ class StateTests(unittest.TestCase):
     def testGetSaveEnabled(self):
         """Check if we can store/restore set of enabled states"""
 
+        if __debug__ and 'CHECK_STATES_ENABLED' in debug.active:
+            # skip testing since all states are on now
+            return
+
         proper  = TestClassProper()
         enabled_states = proper.states.enabled
         proper.states.enable('state1')
@@ -186,6 +193,10 @@ class StateTests(unittest.TestCase):
     def testStoredTemporarily(self):
         proper   = TestClassProper()
         properch = TestClassProperChild(enable_states=["state1"])
+
+        if __debug__ and 'CHECK_STATES_ENABLED' in debug.active:
+            # skip testing since all states are on now
+            return
 
         self.failUnlessEqual(proper.states.enabled, ["state2"])
         proper.states._changeTemporarily(
