@@ -156,9 +156,9 @@ class StateTests(unittest.TestCase):
         proper2.states.enable("all")
         self.failUnlessEqual(len(proper2.states.enabled), 2)
 
-        proper2.state1, proper2.state2 = 1,2
-        self.failUnlessEqual(proper2.state1, 1)
-        self.failUnlessEqual(proper2.state2, 2)
+        proper2.states.state1, proper2.states.state2 = 1,2
+        self.failUnlessEqual(proper2.states.state1, 1)
+        self.failUnlessEqual(proper2.states.state2, 2)
 
         # now reset them
         proper2.states.reset('all')
@@ -247,15 +247,15 @@ class StateTests(unittest.TestCase):
         s1, s2, s1_, s1__, s12 = S1(), S2(), S1_(), S1__(), S12()
 
         self.failUnlessEqual(s1.states.isEnabled("v1"), True)
-        s1.v1 = 12
-        s12.v1 = 120
-        s2.v2 = 100
+        s1.states.v1 = 12
+        s12.states.v1 = 120
+        s2.states.v2 = 100
 
         self.failUnlessEqual(len(s2.states.listing), 1)
 
-        self.failUnlessEqual(s1.v1, 12)
+        self.failUnlessEqual(s1.states.v1, 12)
         try:
-            tempvalue = s1__.v1__
+            tempvalue = s1__.states.v1__
             self.fail("Should have puked since values were not enabled yet")
         except:
             pass
