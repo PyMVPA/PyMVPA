@@ -201,7 +201,8 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
 
         # Create a dataset only for 'selected' features NB there is
         # sideeffect that selectFeatures will sort those ind provided
-        ds = dataset.selectFeatures(ind)
+        # does not sort anymore, and does not exist anymore
+        ds = dataset[:, ind]
         ds.samples[:] = 0.0             # zero them out
 
         # assign data
