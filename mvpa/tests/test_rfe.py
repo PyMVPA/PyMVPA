@@ -156,12 +156,12 @@ class RFETests(unittest.TestCase):
         target30 = N.array([0, 1, 2, 3, 7, 8, 9])
 
         self.failUnlessRaises(UnknownStateError,
-                              selector.__getattribute__, 'ndiscarded')
+                              selector.states.__getattribute__, 'ndiscarded')
         self.failUnless((selector(data) == target10).all())
         selector.felements = 0.30      # discard 30%
         self.failUnless(selector.felements == 0.3)
         self.failUnless((selector(data) == target30).all())
-        self.failUnless(selector.ndiscarded == 3) # se 3 were discarded
+        self.failUnless(selector.states.ndiscarded == 3) # se 3 were discarded
 
         selector = FixedNElementTailSelector(1)
         #                   0   1   2  3   4    5  6  7  8   9
@@ -251,7 +251,7 @@ class RFETests(unittest.TestCase):
         self.failUnlessEqual(tdata.nfeatures, stdata.nfeatures+Nremove,
             msg="We had to remove just a single feature in testing as well")
 
-        self.failUnlessEqual(len(fe.sensitivity), wdata_nfeatures,
+        self.failUnlessEqual(len(fe.states.sensitivity), wdata_nfeatures,
             msg="Sensitivity have to have # of features equal to original")
 
         self.failUnlessEqual(len(fe.selected_ids), sdata.nfeatures,
@@ -328,8 +328,8 @@ class RFETests(unittest.TestCase):
         self.failUnless(tdata.nfeatures == tdata_nfeatures)
 
         # check that the features set with the least error is selected
-        if len(rfe.errors):
-            e = N.array(rfe.errors)
+        if len(rfe.states.errors):
+            e = N.array(rfe.states.errors)
             self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
         else:
             self.failUnless(sdata.nfeatures == wdata_nfeatures)

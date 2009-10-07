@@ -1213,7 +1213,7 @@ class ClassWithCollections(object):
                 colname = known_attribs[index]
                 # figure out and report invocation location
                 ftb = traceback.extract_stack(limit=4)[-3]
-                shit = '%s:%d:[%s %s.%s]: %s\n' % \
+                shit = '\n%s:%d:[%s %s.%s]: %s\n' % \
                        (ftb[:2] + (method, colname, index) + (ftb[3],))
                 if not (shit in _debug_shits):
                     _debug_shits.append(shit)

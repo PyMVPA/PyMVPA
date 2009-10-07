@@ -188,9 +188,9 @@ class FeatureSelectionPipeline(FeatureSelection):
         wdataset = dataset
         wtestdataset = testdataset
 
-        self.selected_ids = None
+        self.states.selected_ids = None
 
-        self.nfeatures = []
+        self.states.nfeatures = []
         """Number of features at each step (before running selection)"""
 
         for fs in self.__feature_selections:
@@ -199,7 +199,7 @@ class FeatureSelectionPipeline(FeatureSelection):
             fs.states._changeTemporarily(
                 enable_states=["selected_ids"], other=self)
             if self.states.isEnabled("nfeatures"):
-                self.nfeatures.append(wdataset.nfeatures)
+                self.states.nfeatures.append(wdataset.nfeatures)
 
             if __debug__:
                 debug('FSPL', 'Invoking %s on (%s, %s)' %
@@ -207,10 +207,10 @@ class FeatureSelectionPipeline(FeatureSelection):
             wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
 
             if self.states.isEnabled("selected_ids"):
-                if self.selected_ids == None:
-                    self.selected_ids = fs.selected_ids
+                if self.states.selected_ids == None:
+                    self.states.selected_ids = fs.states.selected_ids
                 else:
-                    self.selected_ids = self.selected_ids[fs.selected_ids]
+                    self.states.selected_ids = self.states.selected_ids[fs.states.selected_ids]
 
             fs.states._resetEnabledTemporarily()
 
