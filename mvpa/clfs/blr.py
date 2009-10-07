@@ -61,9 +61,11 @@ class BLR(Classifier):
         # set noise level:
         self.sigma_noise = sigma_noise
 
-        self.predicted_variances = None
-        self.log_marginal_likelihood = None
-        self.labels = None
+        self.states.predicted_variances = None
+        self.states.log_marginal_likelihood = None
+        # Yarik: what was those about??? just for future in
+        #        compute_log_marginal_likelihood ?
+        # self.labels = None
         pass
 
     def __repr__(self):

@@ -33,7 +33,7 @@ zscore(dataset, perchunk=True, baselinelabels=[0])
 
 # select class 1 and 2 for this demo analysis
 # would work with full datasets (just a little slower)
-dataset = dataset[N.array([l in [1, 2] for l in dataset.labels],
+dataset = dataset[N.array([l in [1, 2] for l in dataset.sa.labels],
                           dtype='bool')]
 
 # setup cross validation procedure, using SMLR classifier

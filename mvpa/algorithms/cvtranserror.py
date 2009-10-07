@@ -122,7 +122,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         """
         # store the results of the splitprocessor
         results = []
-        self.splits = []
+        self.states.splits = []
 
         # local bindings
         states = self.states
@@ -209,7 +209,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         if len(terr_enable):
             self.__transerror.states._resetEnabledTemporarily()
 
-        self.results = results
+        self.states.results = results
         """Store state variable if it is enabled"""
 
         # Provide those labels_map if appropriate
