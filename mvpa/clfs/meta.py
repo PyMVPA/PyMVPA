@@ -797,7 +797,7 @@ class TreeClassifier(ProxyClassifier):
         """Untrain TreeClassifier
         """
         super(TreeClassifier, self).untrain()
-        for clf in self.clfs.states.values():
+        for clf in self.clfs.values():
             clf.untrain()
 
 
