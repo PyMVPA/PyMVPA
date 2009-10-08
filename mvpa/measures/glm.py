@@ -76,7 +76,7 @@ class GLM(FeaturewiseDatasetMeasure):
         betas = self._inv_design * dataset.samples
 
         # charge state
-        self.pe = betas.T.A
+        self.states.pe = betas.T.A
 
         # if betas and no z-stats are desired return them right away
         if self._voi == 'pe' and not self.states.isEnabled('zstat'):
@@ -99,7 +99,7 @@ class GLM(FeaturewiseDatasetMeasure):
         zstat = betas.A.T / N.sqrt(beta_vars)
 
         # charge state
-        self.zstat = zstat
+        self.states.zstat = zstat
 
         if self._voi == 'pe':
             # return as (feature x beta)
