@@ -226,7 +226,7 @@ if __debug__:
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
-    debug.register('CHECK_STATES_ENABLED', "Forcing all states to be enabled")
+    debug.register('ENFORCE_STATES_ENABLED', "Forcing all states to be enabled")
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
