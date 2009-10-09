@@ -231,9 +231,8 @@ class StatsTestsScipy(unittest.TestCase):
 
         fwm = OneWayAnova()
         f = fwm(ds)
-
-        f_sp = f_oneway(ds[ds.labels == 1].samples,
-                        ds[ds.labels == 0].samples)
+        f_sp = f_oneway(ds[ds.labels == 'L1'].samples,
+                        ds[ds.labels == 'L0'].samples)
 
         # SciPy needs to compute the same F-scores
         assert_array_almost_equal(f, f_sp[0])

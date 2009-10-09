@@ -78,7 +78,7 @@ test_splitsensana.py        broken (SVMProblem)
 test_splitter.py            pass
 test_state.py               pass
 test_stats.py               pass
-test_stats_sp.py            broken (Anova scipy compliance fails)
+test_stats_sp.py            pass
 test_suite.py               pass
 test_support.py             pass
 test_svdmapper.py           pass
