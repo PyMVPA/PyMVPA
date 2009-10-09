@@ -13,8 +13,10 @@ externals.exists('scipy', raiseException=True)
 
 from scipy import signal
 from mvpa.misc.stats import chisquare
+from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.base import dataset
 
+from nose.tools import assert_raises
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
@@ -44,6 +46,10 @@ class StatsTestsScipy(unittest.TestCase):
         ds = datasets['uni2small']
 
         null = MCNullDist(permutations=10, tail='any')
+
+        assert_raises(ValueError, null.fit, CorrCoef(), ds)
+        # cheat and map to numeric for this test
+        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
