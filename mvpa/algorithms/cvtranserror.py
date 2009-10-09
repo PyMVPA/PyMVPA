@@ -39,7 +39,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
     splits = StateVariable(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
     transerrors = StateVariable(enabled=False, doc=
-       """Store copies of transerrors at each step""")
+       """Store copies of transerrors at each step. If enabled -
+       operates on clones of transerror""")
     confusion = StateVariable(enabled=False, doc=
        """Store total confusion matrix (if available)""")
     training_confusion = StateVariable(enabled=False, doc=
