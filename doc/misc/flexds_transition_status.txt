@@ -80,7 +80,7 @@ test_state.py               pass
 test_stats.py               pass
 test_stats_sp.py            broken (CorrCoef relies on numeric labels)
 test_suite.py               pass
-test_support.py             broken (Harvester cannot look into states?)
+test_support.py             pass
 test_svdmapper.py           pass
 test_svm.py                 pass (PySwigObject deepcopy issue)
 test_transerror.py          broken (evil puking, SVMProblem)
