@@ -116,7 +116,7 @@ class _SVM(Classifier):
             String must be a valid key for cls._KERNELS
 
         TODO: handling of parameters might migrate to be generic for
-        all classifiers. SVMs are choosen to be testbase for that
+        all classifiers. SVMs are chosen to be testbase for that
         functionality to see how well it would fit.
         """
 
