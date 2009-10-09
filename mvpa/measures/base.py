@@ -27,7 +27,7 @@ from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.base import externals
+from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
 
 if __debug__:
@@ -295,10 +295,10 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                 else:
                     biases = self.states.biases
                     if len(self.states.biases) != n_base:
-                        raise ValueError, \
-                          "Number of biases %d is " % len(self.states.biases) \
-                          + "different from number of base sensitivities" \
-                          + "%d" % n_base
+                        warning("Number of biases %d differs from number "
+                                "of base sensitivities %d which could happen "
+                                "when measure is collided across labels."
+                                % (len(self.states.biases), n_base))
                 for i in xrange(n_base):
                     if not biases is None:
                         bias = biases[i]
