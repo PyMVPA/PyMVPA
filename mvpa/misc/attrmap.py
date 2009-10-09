@@ -70,6 +70,28 @@ class AttributeMap(object):
         # map from numeric TO literal
         self._lmap = None
 
+    def keys(self):
+        """Returns the literal names of the attribute map."""
+        if self._nmap is None:
+            return None
+        else:
+            return self._nmap.keys()
+
+    def values(self):
+        """Returns the numerical values of the attribute map."""
+        if self._nmap is None:
+            return None
+        else:
+            return self._nmap.values()
+
+    def iteritems(self):
+        """Dict-like generator yielding literal/numerical pairs."""
+        if self._nmap is None:
+            raise StopIteration
+        else:
+            for k, v in self._nmap:
+                yield k, v
+
     def to_numeric(self, attr):
         """Map literal attribute values to numerical ones.
 
