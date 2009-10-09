@@ -337,6 +337,8 @@ class Classifier(ClassWithCollections):
 
         TODO: think about proper re-implementation, without enrollment of deepcopy
         """
+        if __debug__:
+            debug("CLF", "Cloning %s#%s" % (self, id(self)))
         try:
             return deepcopy(self)
         except:
