@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from numpy.testing import assert_array_equal
-from nose.tools import assert_raises
+from nose.tools import assert_raises, ok_
 
 from mvpa.misc.attrmap import AttributeMap
 
@@ -51,3 +51,8 @@ def test_attrmap():
     # and now reverse
     am = AttributeMap(map=map_custom)
     assert_raises(KeyError, am.to_literal, num_default)
+
+    # dict-like interface
+    am = AttributeMap()
+
+    ok_([(k, v) for k, v in am.iteritems()] == [])
