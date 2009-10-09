@@ -41,7 +41,7 @@ class DatasetMeasure(ClassWithCollections):
     after it has been computed. Transformation are done by processing the
     measure with a functor that is specified via the `transformer` keyword
     argument of the constructor. Upon request, the raw measure (before
-    transformations are applied) is stored in the `raw_result` state variable.
+    transformations are applied) is stored in the `raw_results` state variable.
 
     Additionally all dataset measures support the estimation of the
     probabilit(y,ies) of a measure under some distribution. Typically this will
@@ -57,7 +57,7 @@ class DatasetMeasure(ClassWithCollections):
       multiple datasets by passing them to the __call__() method successively.
     """
 
-    raw_result = StateVariable(enabled=False,
+    raw_results = StateVariable(enabled=False,
         doc="Computed results before applying any " +
             "transformation algorithm")
     null_prob = StateVariable(enabled=True)
@@ -121,7 +121,7 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        self.raw_result = result
+        self.raw_results = result
         if not self.__transformer is None:
             if __debug__:
                 debug("SA_", "Applying transformer %s" % self.__transformer)
