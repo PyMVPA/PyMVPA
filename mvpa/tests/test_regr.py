@@ -21,6 +21,7 @@ from mvpa.misc.errorfx import RMSErrorFx, RelativeRMSErrorFx, \
 from mvpa.clfs.meta import SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
+from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
@@ -42,6 +43,9 @@ class RegressionsTests(unittest.TestCase):
         """Simple tests on regressions
         """
         ds = datasets['chirp_linear']
+        # we want numeric labels to maintain the previous behavior, especially
+        # since we deal with regressions here
+        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
 
         cve = CrossValidatedTransferError(
             TransferError(regr, CorrErrorFx()),
@@ -108,8 +112,11 @@ class RegressionsTests(unittest.TestCase):
             NFoldSplitter(),
             enable_states=['confusion', 'training_confusion'])
         ds = datasets['uni2small']
+        # we want numeric labels to maintain the previous behavior, especially
+        # since we deal with regressions here
+        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
         cverror = cv(ds)
-        self.failUnless(len(clf.values) == ds['chunks', 1].nsamples)
+        self.failUnless(len(clf.states.values) == ds['chunks', 1].nsamples)
         clf.states._resetEnabledTemporarily()
 
 
