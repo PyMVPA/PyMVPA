@@ -54,7 +54,6 @@ class MiscDatasetFxTests(unittest.TestCase):
             (len(chunks),1)), labels=[1]*8, chunks=chunks)
         coarsenChunks(ds, nchunks=2)
         chunks1 = coarsenChunks(chunks, nchunks=2)
-        print type(chunks1)
         self.failUnless((chunks1 == ds.chunks).all())
         self.failUnless((chunks1 == N.asarray([0,0,0,0,1,1,1,1])).all())
 

@@ -128,7 +128,7 @@ class Dataset(ClassWithCollections):
         # samples attributes
         # this should rather be self.sa.iteritems(), but there is none yet
         for attr in self.sa.names:
-            if not len(self.sa.getvalue(attr)) == self.nsamples:
+            if not len(self.sa[attr].value) == self.nsamples:
                 raise DatasetError("Length of samples attribute '%s' (%i) "
                                    "doesn't match the number of samples (%i)"
                                    % (attr,

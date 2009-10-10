@@ -84,7 +84,7 @@ test_support.py             pass
 test_svdmapper.py           pass
 test_svm.py                 pass (PySwigObject deepcopy issue)
 test_transerror.py          broken (evil puking, SVMProblem)
-test_transformers.py        pass
+test_transformers.py        fails after merge of yoh/master
 test_verbosity.py           pass
 test_waveletmapper.py       pass
 test_zscoremapper.py        pass
