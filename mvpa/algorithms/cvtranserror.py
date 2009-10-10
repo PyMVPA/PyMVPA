@@ -189,14 +189,14 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             # that can add dict elements into a list
             if states.isEnabled("samples_error"):
                 for k, v in \
-                  transerror.states.getvalue("samples_error").iteritems():
+                  transerror.states.samples_error.iteritems():
                     self.states.samples_error[k].append(v)
 
             # pull in child states
             for state_var in ['confusion', 'training_confusion']:
                 if states.isEnabled(state_var):
-                    states.getvalue(state_var).__iadd__(
-                        transerror.states.getvalue(state_var))
+                    states[state_var].value.__iadd__(
+                        transerror.states[state_var].value)
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" \

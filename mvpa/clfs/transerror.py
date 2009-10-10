@@ -1507,6 +1507,6 @@ class ConfusionBasedError(ClassifierError):
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
-        confusion = self.clf.states.getvalue(self.__confusion_state)
+        confusion = self.clf.states[self.__confusion_state].value
         self.states.confusion = confusion
         return confusion.error

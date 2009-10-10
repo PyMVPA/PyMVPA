@@ -340,7 +340,7 @@ Supported states:
     State Name      Description                                      Default
 ------------------ ----------------------------------------------   ---------
 null_prob           State variable.                                  Enabled
-raw_result          Computed results before applying any             Disabled
+raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
 
@@ -373,7 +373,7 @@ Supported states:
 base_sensitivities  Stores basic sensitivities if the sensitivity    Disabled
                     relies on combining multiple ones.
 null_prob           State variable.                                  Enabled
-raw_result          Computed results before applying any             Disabled
+raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
 

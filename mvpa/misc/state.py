@@ -157,7 +157,7 @@ class Collection(object):
         """Initialize `index` (no check performed) with `value`
         """
         # by default we just set corresponding value
-        self.setvalue(index, value)
+        self[index].value = value
 
 
     def __repr__(self):
@@ -219,12 +219,6 @@ class Collection(object):
     def isKnown(self, index):
         """Returns `True` if state `index` is known at all"""
         return self._items.has_key(index)
-
-
-    def __isSet1(self, index):
-        """Returns `True` if state `index` has value set"""
-        self._checkIndex(index)
-        return self._items[index].isSet
 
 
     def isSet(self, index=None):
@@ -401,12 +395,6 @@ class Collection(object):
     #    _object_setattr(self, index, value)
 
 
-    def getvalue(self, index):
-        """Returns the value by index"""
-        self._checkIndex(index)
-        return self._items[index].value
-
-
     def get(self, index, default):
         """Access the value by a given index.
 
@@ -420,12 +408,6 @@ class Collection(object):
             return default
             #else:
             #    raise e
-
-
-    def setvalue(self, index, value):
-        """Sets the value by index"""
-        self._checkIndex(index)
-        self._items[index].value = value
 
 
     def _action(self, index, func, missingok=False, **kwargs):
