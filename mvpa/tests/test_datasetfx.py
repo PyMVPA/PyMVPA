@@ -17,7 +17,7 @@ import numpy as N
 from mvpa.base import externals
 from mvpa.datasets.base import dataset
 from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks, \
-        aggregateFeatures, zscore
+        aggregateFeatures, zscore, SequenceStats
 
 
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -90,6 +90,41 @@ class MiscDatasetFxTests(unittest.TestCase):
             self.failUnless(N.all(ds.samples == ds_data),
                 msg="Function %s should have not modified original dataset" % f)
 
+    def testSequenceStat(self):
+        """Test sequence statistics
+        """
+        order = 3
+        # Close to perfectly balanced one
+        sp = N.array([-1,  1,  1, -1,  1, -1, -1,  1, -1, -1, -1,
+                      -1,  1, -1,  1, -1,  1,  1,  1, -1,  1,  1,
+                      -1, -1, -1,  1,  1,  1,  1,  1, -1], dtype=int)
+        rp = SequenceStats(sp, order=order)
+        self.failUnlessAlmostEqual(rp['sumabscorr'], 1.0)
+        self.failUnlessAlmostEqual(N.max(rp['corrcoef'] * (len(sp)-1) + 1.0), 0.0)
+
+        # Now some random but loong one still binary (boolean)
+        sb = (N.random.random_sample((1000,)) >= 0.5)
+        rb = SequenceStats(sb, order=order)
+
+        # Now lets do multiclass with literal labels
+        s5 = N.random.permutation(['f', 'bu', 'd', 0, 'zz']*200)
+        r5 = SequenceStats(s5, order=order)
+
+        # Degenerate one but still should be valid
+        s1 = ['aaa']*100
+        r1 = SequenceStats(s1, order=order)
+
+        # Generic conformance tests
+        for r in (rp, rb, r5, r1):
+            ulabels = r['ulabels']
+            nlabels = len(r['ulabels'])
+            cbcounts = r['cbcounts']
+            self.failUnlessEqual(len(cbcounts), order)
+            for cb in cbcounts:
+                self.failUnlessEqual(N.asarray(cb).shape, (nlabels, nlabels))
+            # Check if str works fine
+            sr = str(r)
+            # TODO: check the content
 
 def test_zscoring():
     """Test z-scoring transformation
