@@ -116,7 +116,19 @@ class RegressionsTests(unittest.TestCase):
         # since we deal with regressions here
         ds.sa.labels = AttributeMap().to_numeric(ds.labels)
         cverror = cv(ds)
-        self.failUnless(len(clf.states.values) == ds['chunks', 1].nsamples)
+
+        # if transerrors state is enabled -- internally cv should operate on a clone
+        # of transerror, and thus of clf as well
+        if cv.states.isEnabled('transerrors'):
+            # should be a clone
+            tclf = cv.transerror.clf
+            self.failUnless(not cv.transerror.clf is clf)
+        else:
+            # should be the same classifier
+            tclf = clf
+            self.failUnless(cv.transerror.clf is clf)
+
+        self.failUnless(len(tclf.values) == ds['chunks', 1].nsamples)
         clf.states._resetEnabledTemporarily()
 
 
