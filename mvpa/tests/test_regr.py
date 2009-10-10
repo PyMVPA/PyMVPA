@@ -128,7 +128,7 @@ class RegressionsTests(unittest.TestCase):
             tclf = clf
             self.failUnless(cv.transerror.clf is clf)
 
-        self.failUnless(len(tclf.values) == ds['chunks', 1].nsamples)
+        self.failUnless(len(tclf.states.values) == ds[ds.chunks == 1].nsamples)
         clf.states._resetEnabledTemporarily()
 
 

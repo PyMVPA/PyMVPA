@@ -66,7 +66,7 @@ test_perturbsensana.py      pass
 test_plr.py                 pass
 test_pls.py                 pass/empty!
 test_procrust.py            pass
-test_regr.py                broken (numeric labels, state problems)
+test_regr.py                pass
 test_report.py              pass
 test_rfe.py                 broken (SVMProblem)
 test_ridge.py               pass
