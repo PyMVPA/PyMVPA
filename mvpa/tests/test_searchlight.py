@@ -31,7 +31,7 @@ class SearchlightTests(unittest.TestCase):
                 NFoldSplitter(cvtype=1))
         # contruct radius 1 searchlight
         sl = Searchlight(cv, radius=1.0, transformer=N.array,
-                         enable_states=['spheresizes'])
+                         enable_states=['spheresizes', 'raw_results'])
 
         # run searchlight
         results = sl(self.dataset)
