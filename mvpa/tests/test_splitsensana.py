@@ -38,7 +38,7 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
             msg='Lengths of the map %d is different from number of features %d'
                  % (len(maps), nfeatures))
         self.failUnless(sana.states.isKnown('maps'))
-        allmaps = N.array(sana.maps)
+        allmaps = N.array(sana.states.maps)
         self.failUnless(allmaps[:,0].mean() == maps[0])
         self.failUnless(allmaps.shape == (nchunks, nfeatures))
 
@@ -69,7 +69,7 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
 
         # check whether SplitSensitivityAnalyzer 'maps' state is accessible
         self.failUnless(sana.states.isKnown('maps'))
-        self.failUnless(N.array(sana.maps).shape == (20,4))
+        self.failUnless(N.array(sana.states.maps).shape == (20,4))
 
 
 
