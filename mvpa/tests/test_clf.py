@@ -47,8 +47,9 @@ class ClassifiersTests(unittest.TestCase):
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
 
-        self.failUnlessRaises(UnknownStateError, clf.states.__getattribute__,
-                              "trained_dataset")
+        if not _all_states_enabled:
+            self.failUnlessRaises(UnknownStateError, clf.states.__getattribute__,
+                                  "trained_dataset")
 
         self.failUnlessEqual(clf.training_confusion.percentCorrect,
                              100,
@@ -87,7 +88,8 @@ class ClassifiersTests(unittest.TestCase):
                                   enable_states=['feature_ids'])
 
         # check states enabling propagation
-        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'),
+                             _all_states_enabled)
         self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
 
         bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
@@ -95,8 +97,10 @@ class ClassifiersTests(unittest.TestCase):
                                   propagate_states=False,
                                   enable_states=['feature_ids'])
 
-        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'), False)
-        self.failUnlessEqual(bclf2.clfs[0].states.isEnabled('feature_ids'), False)
+        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'),
+                             _all_states_enabled)
+        self.failUnlessEqual(bclf2.clfs[0].states.isEnabled('feature_ids'),
+                             _all_states_enabled)
 
 
 
@@ -421,7 +425,7 @@ class ClassifiersTests(unittest.TestCase):
         cverror = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
-        self.failUnlessEqual(len(clf.values), ds.nsamples/2)
+        self.failUnlessEqual(len(cv.transerror.clf.values), ds.nsamples/2)
 
         clf.states._resetEnabledTemporarily()
 
