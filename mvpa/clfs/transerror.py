@@ -1308,6 +1308,12 @@ class ClassifierError(ClassWithCollections):
         return error
 
 
+    def untrain(self):
+        """Untrain the *Error which relies on the classifier
+        """
+        self.clf.untrain()
+
+
     @property
     def clf(self):
         return self.__clf
