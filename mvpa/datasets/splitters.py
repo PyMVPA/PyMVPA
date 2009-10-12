@@ -222,9 +222,11 @@ class Splitter(object):
                     debug("SPL", "For %s strategy selected %s splits "
                           "from %d total" % (strategy, indexes, Ncfgs))
                 cfgs = [cfgs[i] for i in indexes]
+            # update Ncfgs
+            Ncfgs = len(cfgs)
 
         # Finally split the data
-        for split in cfgs:
+        for isplit, split in enumerate(cfgs):
 
             # determine sample sizes
             if not operator.isSequenceType(self.__nperlabel) \
@@ -243,6 +245,12 @@ class Splitter(object):
                 finalized_datasets = []
 
                 for ds, nperlabel in zip(split_ds, nperlabelsplit):
+                    # Set flag of dataset either this was the last split
+                    # ??? per our discussion this might be the best
+                    #     solution which would scale if we care about
+                    #     thread-safety etc
+                    if ds is not None:
+                        ds._dsattr['lastsplit'] = (isplit == Ncfgs-1)
                     # permute the labels
                     if self.__permute:
                         permute_labels(ds, perchunk=True)

@@ -170,11 +170,12 @@ class ErrorsTests(unittest.TestCase):
 
         # check reasonable error range
         err = terr(train, train)
+        print err
         self.failUnless(err < 0.4)
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.null_prob
+        null_prob = terr.states.null_prob
         self.failUnless(null_prob < 0.01,
             msg="Failed to check that the result is highly significant "
                 "(got %f) since we know that the data has signal"
@@ -186,7 +187,7 @@ class ErrorsTests(unittest.TestCase):
         train = datasets['uni2medium']
         terr = TransferError(clf=l_clf, enable_states=['samples_error'])
         err = terr(train, train)
-        se = terr.samples_error
+        se = terr.states.samples_error
 
         # one error per sample
         self.failUnless(len(se) == train.nsamples)
