@@ -117,7 +117,7 @@ class RegressionsTests(unittest.TestCase):
         ds.sa.labels = AttributeMap().to_numeric(ds.labels)
         cverror = cv(ds)
 
-        self.failUnless(len(tclf.states.values) == ds[ds.chunks == 1].nsamples)
+        self.failUnless(len(clf.states.values) == ds[ds.chunks == 1].nsamples)
         clf.states._resetEnabledTemporarily()
 
 
