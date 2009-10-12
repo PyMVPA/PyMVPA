@@ -170,7 +170,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 lastsplit = None
                 for ds in split:
                     if ds is not None:
-                        lastsplit = ds._dsattr['lastsplit']
+                        lastsplit = ds.a.lastsplit
                         break
                 if lastsplit:
                     # only if we could deduce that it was last split

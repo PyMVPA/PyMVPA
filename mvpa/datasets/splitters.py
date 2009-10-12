@@ -250,7 +250,14 @@ class Splitter(object):
                     #     solution which would scale if we care about
                     #     thread-safety etc
                     if ds is not None:
-                        ds._dsattr['lastsplit'] = (isplit == Ncfgs-1)
+                        ds_a = ds.a
+                        lastsplit = (isplit == Ncfgs-1)
+                        if not ds_a.isKnown('lastsplit'):
+                            # if not yet known -- add one
+                            ds_a.add('lastsplit', lastsplit)
+                        else:
+                            # otherwise just assign a new value
+                            ds_a.lastsplit = lastsplit
                     # permute the labels
                     if self.__permute:
                         permute_labels(ds, perchunk=True)

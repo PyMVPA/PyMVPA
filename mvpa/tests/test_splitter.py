@@ -304,11 +304,11 @@ class SplitterTests(unittest.TestCase):
                 if nsplits > 0:
                     # dummy-proof testing of last split
                     for ds_ in splits[-1]:
-                        self.failUnless(ds_._dsattr['lastsplit'])
+                        self.failUnless(ds_.a.lastsplit)
                     # test all now
                     for isplit,split in enumerate(splits):
                         for ds_ in split:
-                            ds_._dsattr['lastsplit'] == isplit==nsplits-1
+                            ds_.a.lastsplit == isplit==nsplits-1
 
                 # Check results of different strategies
                 if strategy == 'first':
