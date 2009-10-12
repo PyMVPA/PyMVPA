@@ -123,7 +123,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         """
         # store the results of the splitprocessor
         results = []
-        self.splits = []
+        self.states.splits = []
 
         # local bindings
         states = self.states
@@ -140,10 +140,10 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         summaryClass = clf._summaryClass
         clf_hastestdataset = hasattr(clf, 'testdataset')
 
-        self.confusion = summaryClass()
-        self.training_confusion = summaryClass()
-        self.transerrors = []
-        self.samples_error = dict([(id, []) for id in dataset.origids])
+        self.states.confusion = summaryClass()
+        self.states.training_confusion = summaryClass()
+        self.states.transerrors = []
+        self.states.samples_error = dict([(id, []) for id in dataset.origids])
 
         # enable requested states in child TransferError instance (restored
         # again below)
@@ -156,7 +156,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             # only train classifier if splitter provides something in first
             # element of tuple -- the is the behavior of TransferError
             if states.isEnabled("splits"):
-                self.splits.append(split)
+                self.states.splits.append(split)
 
             if states.isEnabled("transerrors"):
                 # copy first and then train, as some classifiers cannot be copied
@@ -183,14 +183,14 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             # XXX Look below -- may be we should have not auto added .?
             #     then transerrors also could be deprecated
             if states.isEnabled("transerrors"):
-                self.transerrors.append(transerror)
+                self.states.transerrors.append(transerror)
 
             # XXX: could be merged with next for loop using a utility class
             # that can add dict elements into a list
             if states.isEnabled("samples_error"):
                 for k, v in \
                   transerror.states.samples_error.iteritems():
-                    self.samples_error[k].append(v)
+                    self.states.samples_error[k].append(v)
 
             # pull in child states
             for state_var in ['confusion', 'training_confusion']:
@@ -210,7 +210,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         if len(terr_enable):
             self.__transerror.states._resetEnabledTemporarily()
 
-        self.results = results
+        self.states.results = results
         """Store state variable if it is enabled"""
 
         # Provide those labels_map if appropriate
