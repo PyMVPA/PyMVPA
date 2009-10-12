@@ -689,8 +689,6 @@ Long and medium term TODOs (aka stuff that has been here forever)
     automatically optimizes its parameters. It is close in idea to
     classifier based on RFE)
 
- * provide for Dataset -- Dataset.__featattr which has attributes for
-    features similar to __dsattr way.
 
   in  --> data         -> dataShape
   out --> features     ->
