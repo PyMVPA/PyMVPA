@@ -161,13 +161,13 @@ dataset vs data
   expected to be simply a NumPy_ array, suffix should be ``data``. For
   example::
 
-    class Classifier(ClassWitCollections):
+    class Classifier(ClassWithCollections):
        ...
        def train(self, dataset):
        ...
        def predict(self, data):
 
-    class FeatureSelection(ClassWitCollections):
+    class FeatureSelection(ClassWithCollections):
        ...
        def __call__(self, dataset, testdataset):
 
@@ -560,7 +560,7 @@ Things to implement for the next release (Release goals)
         mvpa.featsel.ifs
 
   * several base classes with framework infrastructure (Harvester,
-    ClassWitCollections, virtual properties, ...)
+    ClassWithCollections, virtual properties, ...)
 
   * Transfer error calculation
   * Cross-validation support
