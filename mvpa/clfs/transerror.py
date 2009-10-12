@@ -1430,7 +1430,7 @@ class TransferError(ClassifierError):
         if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx(p, testdataset.labels[i]))
+                samples_error.append(self.__errorfx([p], testdataset.labels[i:i+1]))
 
             states.samples_error = dict(zip(testdataset.origids, samples_error))
 
