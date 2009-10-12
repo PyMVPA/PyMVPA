@@ -95,6 +95,8 @@ class AttributeMap(object):
     def to_numeric(self, attr):
         """Map literal attribute values to numerical ones.
 
+        Arguments with numerical data type will be returned as is.
+
         Parameters
         ----------
         attr : sequence
