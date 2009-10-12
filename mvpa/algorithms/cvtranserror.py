@@ -184,15 +184,14 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
             # assign testing dataset if given classifier can digest it
             if clf_hastestdataset and expose_testdataset:
-                clf.testdataset = split[1]
-                pass
+                transerror.clf.testdataset = split[1]
 
             # run the beast
             result = transerror(split[1], split[0])
 
             # unbind the testdataset from the classifier
             if clf_hastestdataset and expose_testdataset:
-                clf.testdataset = None
+                transerror.clf.testdataset = None
 
             # next line is important for 'self._harvest' call
             self._harvest(locals())
