@@ -1,6 +1,7 @@
 .. -*- mode: rst -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
+
 PyMVPA is a Python_ module intended to ease pattern classification analyses of
 large datasets. In the neuroimaging contexts such analysis techniques are also
 known as :term:`decoding` or :term:`MVPA` analysis. PyMVPA provides high-level
