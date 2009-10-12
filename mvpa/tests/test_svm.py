@@ -139,6 +139,9 @@ class SVMTests(unittest.TestCase):
             #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
 
         # Set '1 C per label'
+        # recreate cvte since previous might have operated on copies
+        cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
+                                          enable_states='confusion')
         oldC = clf.C
         ratio = N.sqrt(float(spl[0])/spl[1])
         clf.C = (-1/ratio, -1*ratio)
