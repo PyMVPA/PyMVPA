@@ -11,7 +11,7 @@
 import unittest
 from mvpa.support.copy import copy
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 
@@ -150,6 +150,7 @@ class ErrorsTests(unittest.TestCase):
 
         # this will print nasty WARNING but it is ok -- it is just checking code
         # NB warnings are not printed while doing whole testing
+        warning("Don't worry about the following warning.")
         self.failIf(terr(test3) is None)
 
         # try copying the beast
