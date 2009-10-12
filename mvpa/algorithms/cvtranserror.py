@@ -151,6 +151,11 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             self.__transerror.states._changeTemporarily(
                 enable_states=terr_enable)
 
+        # We better ensure that underlying classifier is not trained if we
+        # are going to deepcopy transerror
+        if states.isEnabled("transerrors"):
+            self.__transerror.untrain()
+
         # splitter
         for split in self.__splitter(dataset):
             # only train classifier if splitter provides something in first
