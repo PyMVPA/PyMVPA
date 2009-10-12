@@ -40,7 +40,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
        """Store the actual splits of the data. Can be memory expensive""")
     transerrors = StateVariable(enabled=False, doc=
        """Store copies of transerrors at each step. If enabled -
-       operates on clones of transerror""")
+       operates on clones of transerror, but for the last split original
+       transerror is used""")
     confusion = StateVariable(enabled=False, doc=
        """Store total confusion matrix (if available)""")
     training_confusion = StateVariable(enabled=False, doc=
@@ -166,7 +167,18 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             if states.isEnabled("transerrors"):
                 # copy first and then train, as some classifiers cannot be copied
                 # when already trained, e.g. SWIG'ed stuff
-                transerror = deepcopy(self.__transerror)
+                lastsplit = None
+                for ds in split:
+                    if ds is not None:
+                        lastsplit = ds._dsattr['lastsplit']
+                        break
+                if lastsplit:
+                    # only if we could deduce that it was last split
+                    # use the 'mother' transerror
+                    transerror = self.__transerror
+                else:
+                    # otherwise -- deep copy
+                    transerror = deepcopy(self.__transerror)
             else:
                 transerror = self.__transerror
 

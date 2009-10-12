@@ -425,7 +425,7 @@ class ClassifiersTests(unittest.TestCase):
         cverror = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
-        self.failUnlessEqual(len(cv.transerror.clf.values), ds.nsamples/2)
+        self.failUnlessEqual(len(clf.values), ds.nsamples/2)
 
         clf.states._resetEnabledTemporarily()
 
