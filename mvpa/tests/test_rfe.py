@@ -358,7 +358,7 @@ class RFETests(unittest.TestCase):
         percent = 80
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
-        FeatureSelection = \
+        fs = \
             RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
                 transfer_error=TransferError(rfesvm_split),
                 feature_selector=FractionTailSelector(
@@ -368,7 +368,7 @@ class RFETests(unittest.TestCase):
         clf = FeatureSelectionClassifier(
             clf = LinearCSVMC(),
             # on features selected via RFE
-            feature_selection = FeatureSelection)
+            feature_selection = fs)
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
         clf.states.enable('feature_ids')
@@ -382,9 +382,9 @@ class RFETests(unittest.TestCase):
         try:
             error = cv(dataset)
             self.failUnless(error < 0.2)
-        except:
+        except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
-                      'feature selection')
+                      'feature selection. Got exception: %s' % e)
 
 
 
