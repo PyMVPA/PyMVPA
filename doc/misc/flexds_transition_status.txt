@@ -64,7 +64,6 @@ test_params.py              pass
 test_pcamapper.py           broken by design
 test_perturbsensana.py      pass
 test_plr.py                 pass
-test_pls.py                 pass/empty!
 test_procrust.py            pass
 test_regr.py                pass
 test_report.py              pass
