@@ -301,7 +301,11 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                                 % (len(self.states.biases), n_base))
                 for i in xrange(n_base):
                     if not biases is None:
-                        bias = biases[i]
+                        if n_base > 1 and len(biases) == 1:
+                            # The same bias for all bases
+                            bias = biases[0]
+                        else:
+                            bias = biases[i]
                     else:
                         bias = None
                     b_sensitivities = StaticDatasetMeasure(
