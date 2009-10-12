@@ -521,7 +521,8 @@ class ClassifiersTests(unittest.TestCase):
 
         clf.untrain()
         clf_re.untrain()
-        trerr, trerr_re = TransferError(clf), TransferError(clf_re)
+        trerr, trerr_re = TransferError(clf), \
+                          TransferError(clf_re, disable_states=['training_confusion'])
 
         # Just check for correctness of retraining
         err_1 = trerr(dstest, dstrain)
