@@ -183,9 +183,9 @@ class AttributeWithArray(CollectableAttribute):
         self._uniqueValues = None
 
 
-    def _set(self, *args, **kwargs):
+    def _set(self, val):
         self._resetUnique()
-        CollectableAttribute._set(self, *args, **kwargs)
+        CollectableAttribute._set(self, N.asanyarray(val))
 
 
     def _getUniqueValues(self):
@@ -196,7 +196,7 @@ class AttributeWithArray(CollectableAttribute):
             #     N.unique was more efficient. May be we should check
             #     on the the class and use Set only if we are not
             #     dealing with ndarray (or lists/tuples)
-            self._uniqueValues = N.unique(N.asanyarray(self.value))
+            self._uniqueValues = N.unique(self.value)
         return self._uniqueValues
 
     unique = property(fget=_getUniqueValues)
