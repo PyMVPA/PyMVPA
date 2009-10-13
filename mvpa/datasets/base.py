@@ -18,6 +18,7 @@ from mvpa.misc.state import ClassWithCollections, SampleAttributesCollection, \
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
 from mvpa.misc.exceptions import DatasetError
+from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.mask import MaskMapper
 
 if __debug__:
@@ -178,6 +179,26 @@ class Dataset(ClassWithCollections):
         # call the generic init
         out = self.__class__(samples, sa=sa, fa=fa, a=a)
         return out
+
+
+    @property
+    def idhash(self):
+        """To verify if dataset is in the same state as when smth else was done
+
+        Like if classifier was trained on the same dataset as in question
+        """
+
+        res = 'self@%s samples@%s' % (idhash_(self), idhash_(self.samples))
+
+        for col in (self.a, self.sa, self.fa):
+            # We cannot count on the order the values in the dict will show up
+            # with `self._data.value()` and since idhash will be order-dependent
+            # we have to make it deterministic
+            keys = col._items.keys()
+            keys.sort()
+            for k in keys:
+                res += ' %s@%s' % (k, idhash_(col[k].value))
+        return res
 
 
     def copy(self, deep=True):
