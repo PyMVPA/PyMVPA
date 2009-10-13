@@ -170,7 +170,6 @@ class ErrorsTests(unittest.TestCase):
 
         # check reasonable error range
         err = terr(train, train)
-        print err
         self.failUnless(err < 0.4)
 
         # check that the result is highly significant since we know that the
