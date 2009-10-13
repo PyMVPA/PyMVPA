@@ -529,3 +529,19 @@ def test_idhash():
     ds.labels = orig_labels
     ok_(origid == ds.idhash,
         msg="idhash should be restored after reassigning orig labels")
+
+
+def test_arrayattributes():
+    samples = N.arange(12).reshape((4, 3))
+    labels = range(4)
+    chunks = [1, 1, 2, 2]
+    ds = dataset(samples, labels, chunks)
+
+    for a in (ds.samples, ds.labels, ds.chunks):
+        ok_(isinstance(a, N.ndarray))
+
+    ds.labels = labels
+    ok_(isinstance(ds.labels, N.ndarray))
+
+    ds.chunks = chunks
+    ok_(isinstance(ds.chunks, N.ndarray))
