@@ -13,6 +13,7 @@ from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure, \
         TScoredFeaturewiseMeasure
 from mvpa.misc.data_generators import normalFeatureDataset
 from mvpa.misc.transformers import Absolute
+from mvpa.misc.attrmap import AttributeMap
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -23,6 +24,9 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
     @sweepargs(svm=clfswh['linear', 'svm', '!meta'])
     def testAnalyzer(self, svm):
         dataset = datasets['uni2small']
+        # XXX for now convert to numeric labels, but should better be taken
+        # care of during clf refactoring
+        dataset.labels = AttributeMap().to_numeric(dataset.labels)
 
         svm_weigths = svm.getSensitivityAnalyzer()
 
@@ -51,6 +55,9 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
                                             nonbogus_features=[0,1],
                                             nfeatures=4,
                                             snr=10)
+        # XXX for now convert to numeric labels, but should better be taken
+        # care of during clf refactoring
+        self.dataset.labels = AttributeMap().to_numeric(self.dataset.labels)
         svm_weigths = svm.getSensitivityAnalyzer()
 
         sana = TScoredFeaturewiseMeasure(
