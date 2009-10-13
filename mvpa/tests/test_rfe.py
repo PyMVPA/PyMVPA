@@ -26,6 +26,7 @@ from mvpa.featsel.helpers import \
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
+from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.misc.state import UnknownStateError
 
@@ -169,7 +170,7 @@ class RFETests(unittest.TestCase):
         self.failUnless((selector(data) == target10).all())
 
         selector.nelements = 3
-        self.failUnless(selector.states.nelements == 3)
+        self.failUnless(selector.nelements == 3)
         self.failUnless((selector(data) == target30).all())
         self.failUnless(selector.states.ndiscarded == 3)
 
@@ -234,8 +235,14 @@ class RFETests(unittest.TestCase):
                 enable_states=["sensitivity", "selected_ids"])
 
         wdata = self.getData()
-        wdata_nfeatures = wdata.nfeatures
         tdata = self.getDataT()
+        # XXX for now convert to numeric labels, but should better be taken
+        # care of during clf refactoring
+        am = AttributeMap()
+        wdata.labels = am.to_numeric(wdata.labels)
+        tdata.labels = am.to_numeric(tdata.labels)
+
+        wdata_nfeatures = wdata.nfeatures
         tdata_nfeatures = tdata.nfeatures
 
         sdata, stdata = fe(wdata, tdata)
