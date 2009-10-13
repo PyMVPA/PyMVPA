@@ -45,7 +45,7 @@ test_datameasure.py         broken (literal labels)
 test_datasetfx.py           pass
 test_datasetfx_sp.py        pass
 test_datasetng.py           pass
-test_dataset.py             broken (by design now?)
+test_dataset.py             broken by design (merge remaining tests elsewhere)
 test_dochelpers.py          pass
 test_eepdataset.py          pass (missing test)
 test_enet.py                broken (literal labels, so Rpy complaints  Numeric/NumPy arrays containing numpy.ndarray are not supported)
