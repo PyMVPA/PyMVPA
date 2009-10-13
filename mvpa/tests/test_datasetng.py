@@ -332,7 +332,7 @@ def test_labelpermutation_randomsampling():
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
     # keep the orig labels
-    orig_labels = ds.labels.copy()
+    orig_labels = ds.labels[:]
 
     # also keep the orig dataset, but SHALLOW copy and leave everything
     # else as a view!
@@ -492,3 +492,40 @@ def test_origid_handling():
     selector = [3, 7, 10, 15]
     subds = ds[selector]
     assert_array_equal(subds.sa.origids, ds.sa.origids[selector])
+
+
+def test_idhash():
+    ds = dataset(N.arange(12).reshape((4, 3)),
+                 labels=1, chunks=1)
+    origid = ds.idhash
+    #XXX BUG -- no assurance that labels would become an array... for now -- do manually
+    ds.labels = N.array([3, 1, 2, 3])   # change all labels
+    ok_(origid != ds.idhash,
+                    msg="Changing all labels should alter dataset's idhash")
+
+    origid = ds.idhash
+
+    z = ds.labels[1]
+    assert_equal(origid, ds.idhash,
+                 msg="Accessing shouldn't change idhash")
+    z = ds.chunks
+    assert_equal(origid, ds.idhash,
+                 msg="Accessing shouldn't change idhash")
+    z[2] = 333
+    ok_(origid != ds.idhash,
+        msg="Changing value in attribute should change idhash")
+
+    origid = ds.idhash
+    ds.samples[1, 1] = 1000
+    ok_(origid != ds.idhash,
+        msg="Changing value in data should change idhash")
+
+    origid = ds.idhash
+    orig_labels = ds.labels #.copy()
+    ds.permute_labels()
+    ok_(origid != ds.idhash,
+        msg="Permutation also changes idhash")
+
+    ds.labels = orig_labels
+    ok_(origid == ds.idhash,
+        msg="idhash should be restored after reassigning orig labels")
