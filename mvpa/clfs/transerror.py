@@ -1407,8 +1407,6 @@ class TransferError(ClassifierError):
             raise ValueError, "Transfer error call obtained None " \
                   "as a dataset for testing.%s" % msg
         predictions = clf.predict(testdataset.samples)
-        print predictions
-        print testdataset.sa.labels
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
