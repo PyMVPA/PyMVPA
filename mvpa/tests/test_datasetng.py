@@ -545,3 +545,15 @@ def test_arrayattributes():
 
     ds.chunks = chunks
     ok_(isinstance(ds.chunks, N.ndarray))
+
+
+def test_attr_repr():
+    attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', value=array([0, 1, 2, 3, 4]))"
+    sattr = SampleAttribute(name='TestAttr', doc='my own test', value=N.arange(5))
+    # check precise formal representation
+    ok_(repr(sattr) == attr_repr)
+    # check that it actually works as a Python expression
+    from numpy import array
+    eattr = eval(repr(sattr))
+    ok_(repr(eattr), attr_repr)
+

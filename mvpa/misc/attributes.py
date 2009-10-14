@@ -132,6 +132,17 @@ class CollectableAttribute(object):
         return res
 
 
+    def __repr__(self):
+        if not self._isset:
+            value = None
+        else:
+            value = self.value
+        return "%s(name=%s, doc=%s, value=%s)" % (self.__class__.__name__,
+                                                  repr(self.name),
+                                                  repr(self.__doc__),
+                                                  repr(value))
+
+
     def _getName(self):
         return self.__name
 
