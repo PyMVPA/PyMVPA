@@ -26,6 +26,7 @@ if __debug__:
 # Various attributes which will be collected into collections
 #
 class CollectableAttribute(object):
+    # XXX Most of the stuff below should go into the module docstring
     """Base class for any custom behaving attribute intended to become
     part of a collection.
 
@@ -48,18 +49,31 @@ class CollectableAttribute(object):
 
     _instance_index = 0
 
-    def __init__(self, name=None, doc=None, index=None):
+    def __init__(self, name=None, doc=None, index=None, value=None):
+        """
+        Parameters
+        ----------
+        name : str
+          Name of the attribute under which it should be available in its
+          respective collection.
+        doc : str
+          Documentation about the purpose of this attribute.
+        index : ???
+          ???
+        value : arbitrary (see derived implementations)
+          The actual value of this attribute.
+        """
         if index is None:
             CollectableAttribute._instance_index += 1
             index = CollectableAttribute._instance_index
         self._instance_index = index
         self.__doc__ = doc
         self.__name = name
-        # XXX any reason not to have a corresponding constructor
-        # arg?
         self._value = None
         self._isset = False
         self.reset()
+        if not value is None:
+            self._set(value)
         if __debug__:
             debug("COL",
                   "Initialized new collectable #%d:%s" % (index,name) + `self`)
@@ -67,7 +81,7 @@ class CollectableAttribute(object):
 
     def __copy__(self):
         # preserve attribute type
-        copied = self.__class__(name=self.name)
+        copied = self.__class__(name=self.name, doc=self.__doc__)
         # just get a view of the old data!
         copied.value = copy.copy(self.value)
         return copied
@@ -157,8 +171,22 @@ class AttributeWithArray(CollectableAttribute):
     It also takes care about caching and recomputing unique values.
     """
 
-    def __init__(self, name=None, hasunique=True, doc="Attribute with array"):
-        CollectableAttribute.__init__(self, name, doc)
+    def __init__(self, name=None, hasunique=True, doc="Attribute with array",
+                 value=None):
+        """
+        Parameters
+        ----------
+        name : str
+          Name of the attribute under which it should be available in its
+          respective collection.
+        doc : str
+          Documentation about the purpose of this attribute.
+        value : arbitrary (see derived implementations)
+          The actual value of this attribute.
+        """
+        CollectableAttribute.__init__(self, name=name, doc=doc, value=value)
+        # XXX what is this good for? it seems to be used nowhere, not even in
+        # tests
         self._hasunique = hasunique
         self._resetUnique()
         if __debug__:
@@ -168,7 +196,7 @@ class AttributeWithArray(CollectableAttribute):
 
     def __copy__(self):
         # preserve attribute type
-        copied = self.__class__(name=self.name)
+        copied = self.__class__(name=self.name, doc=self.__doc__)
         # just get a view of the old data!
         copied.value = self.value.view()
         return copied
@@ -225,11 +253,25 @@ class StateVariable(CollectableAttribute):
     """
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
+        """
+        Parameters
+        ----------
+        name : str
+          Name of the attribute under which it should be available in its
+          respective collection.
+        doc : str
+          Documentation about the purpose of this attribute.
+        enabled : bool
+          If a StateVariable is not enabled then assignment of any value has no
+          effect, i.e. nothing is stored.
+        value : arbitrary (see derived implementations)
+          The actual value of this attribute.
+        """
         # Force enabled state regardless of the input
         # to facilitate testing
         if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
             enabled = True
-        CollectableAttribute.__init__(self, name, doc)
+        CollectableAttribute.__init__(self, name=name, doc=doc)
         self._isenabled = enabled
         self._defaultenabled = enabled
         if __debug__:
