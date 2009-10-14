@@ -171,7 +171,7 @@ class AttributeWithArray(CollectableAttribute):
     It also takes care about caching and recomputing unique values.
     """
 
-    def __init__(self, name=None, hasunique=True, doc="Attribute with array",
+    def __init__(self, name=None, doc="Attribute with array",
                  value=None):
         """
         Parameters
@@ -185,9 +185,6 @@ class AttributeWithArray(CollectableAttribute):
           The actual value of this attribute.
         """
         CollectableAttribute.__init__(self, name=name, doc=doc, value=value)
-        # XXX what is this good for? it seems to be used nowhere, not even in
-        # tests
-        self._hasunique = hasunique
         self._resetUnique()
         if __debug__:
             debug("UATTR",
@@ -228,7 +225,6 @@ class AttributeWithArray(CollectableAttribute):
         return self._uniqueValues
 
     unique = property(fget=_getUniqueValues)
-    has_unique = property(fget=lambda self:self._hasunique)
 
 
 
