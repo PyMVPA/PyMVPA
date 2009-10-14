@@ -319,7 +319,7 @@ class Dataset(ClassWithCollections):
         # we need fresh SamplesAttributes even if they share the data
         for attr in self.sa.items.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name)
+            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # slice
             newattr.value = attr.value[args[0]]
             # assign to target collection
@@ -329,7 +329,7 @@ class Dataset(ClassWithCollections):
         # since we need fresh SamplesAttributes even if they share the data
         for attr in self.fa.items.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name)
+            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # slice
             newattr.value = attr.value[args[1]]
             # assign to target collection
@@ -338,7 +338,7 @@ class Dataset(ClassWithCollections):
             # and finally dataset attributes: this time copying
         for attr in self.a.items.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name)
+            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # do a shallow copy here
             # XXX every DatasetAttribute should have meaningful __copy__ if
             # necessary -- most likely all mappers need to have one

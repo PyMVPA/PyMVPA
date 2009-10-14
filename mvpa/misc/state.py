@@ -299,7 +299,7 @@ class Collection(object):
             self._updateOwner(name)
 
 
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add an attributes to the collection.
 
         The method has to be implemented in derived collections to
@@ -329,12 +329,21 @@ class Collection(object):
                                      % copy)
         elif isinstance(source, dict):
             for k, v in source.iteritems():
+                # expand value and docs
+                if isinstance(v, tuple):
+                    value = v[0]
+                    doc = v[1]
+                else:
+                    value = v
+                    doc = None
+
+                # add the attribute with optional docs
                 if copyvalues is None:
-                    self.add(k, v)
+                    self.add(k, v, doc=doc)
                 elif copyvalues is 'shallow':
-                    self.add(k, copy.copy(v))
+                    self.add(k, copy.copy(v), doc=doc)
                 elif copyvalues is 'deep':
-                    self.add(k, copy.deepcopy(v))
+                    self.add(k, copy.deepcopy(v), doc=doc)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
@@ -597,7 +606,7 @@ class SampleAttributesCollection(Collection):
     #          (shouldn't) be there... def add should be defined in 'Collection'
     #          and just take a corresponding class to instantiate
     #    Also: what about the rest of **kwargs to be added to Collectable? like doc, etc?
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add samples attributes to the collection.
 
         Parameters
@@ -607,9 +616,10 @@ class SampleAttributesCollection(Collection):
           collection.
         value : array
           The actual attribute value.
+        doc : str
+          Documentation for this attribute.
         """
-        attr = SampleAttribute(name=name)
-        attr.value = value
+        attr = SampleAttribute(name=name, doc=doc, value=value)
         self.add_collectable(attr)
 
 
@@ -622,7 +632,7 @@ class FeatureAttributesCollection(Collection):
         return [] # TODO
 
 
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add dataset attributes to the collection.
 
         Parameters
@@ -632,9 +642,10 @@ class FeatureAttributesCollection(Collection):
           collection.
         value : array
           The actual attribute value.
+        doc : str
+          Documentation for this attribute.
         """
-        attr = FeatureAttribute(name=name)
-        attr.value = value
+        attr = FeatureAttribute(name=name, doc=doc, value=value)
         self.add_collectable(attr)
 
 
@@ -647,7 +658,7 @@ class DatasetAttributesCollection(Collection):
         return [] # TODO
 
 
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add dataset attributes to the collection.
 
         Parameters
@@ -657,9 +668,10 @@ class DatasetAttributesCollection(Collection):
           collection.
         value : array
           The actual attribute value.
+        doc : str
+          Documentation for this attribute.
         """
-        attr = DatasetAttribute(name=name)
-        attr.value = value
+        attr = DatasetAttribute(name=name, doc=doc, value=value)
         self.add_collectable(attr)
 
 
