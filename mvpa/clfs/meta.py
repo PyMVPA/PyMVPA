@@ -384,7 +384,10 @@ class MaximalVote(PredictionsCombiner):
             # for every sample
             for i in xrange(len(predictions)):
                 prediction = predictions[i]
-                if not operator.isSequenceType(prediction):
+                # XXX fishy location due to literal labels,
+                # TODO simplify assumptions and logic
+                if isinstance(prediction, basestring) or \
+                       not operator.isSequenceType(prediction):
                     prediction = (prediction,)
                 for label in prediction: # for every label
                     # XXX we might have multiple labels assigned
@@ -688,6 +691,8 @@ class TreeClassifier(ProxyClassifier):
         # since labels_map is not available here and definition
         # is allowed to carry both symbolic and numeric values for
         # labels
+        # XXX TODO due to abandoning of labels_map -- may be this is
+        #     no longer the case?
 
         # We can only assign respective classifiers
         self.clfs = dict([(gk, c) for gk, (ls, c) in groups.iteritems()])
@@ -724,25 +729,20 @@ class TreeClassifier(ProxyClassifier):
 
         # Handle groups of labels
         groups = self._groups
-        labels_map = dataset.labels_map
-        # just for convenience
-        if labels_map is None: labels_map = {}
         groups_labels = {}              # just groups with numeric indexes
         label2index = {}                # how to map old labels to new
         known = set()
         for gi, gk in enumerate(index2group):
             ls = groups[gk][0]
-            # if mapping exists -- map
-            ls_ = [labels_map.get(l, l) for l in ls]
-            known_already = known.intersection(ls_)
+            known_already = known.intersection(ls)
             if len(known_already):
                 raise ValueError, "Grouping of labels is not appropriate. " \
-                      "Got labels %s already among known in %s. " \
-                      "Used labelsmap %s" % (known_already, known, labels_map)
-            groups_labels[gk] = ls_     # needed? XXX
-            for l in ls_:
+                      "Got labels %s already among known in %s. " % \
+                       (known_already, known  )
+            groups_labels[gk] = ls      # needed? XXX
+            for l in ls :
                 label2index[l] = gi
-            known = known.union(ls_)
+            known = known.union(ls )
         # TODO: check if different literal labels weren't mapped into
         #       same numerical but here asked to belong to different groups
         #  yoh: actually above should catch it
@@ -812,7 +812,8 @@ class TreeClassifier(ProxyClassifier):
 
         # now for predictions pointing to specific groups go into
         # corresponding one
-        predictions = N.array([N.nan]*len(data))
+        # defer initialization since dtype would depend on predictions
+        predictions = None
         for pred_group in set(clf_predictions):
             gk = index2group[pred_group]
             clf_ = clfs[gk]
@@ -820,7 +821,10 @@ class TreeClassifier(ProxyClassifier):
             if __debug__:
                 debug('CLFTREE', 'Predicting for group %s using %s on %d samples' %
                       (gk, clf_, N.sum(group_indexes)))
-            predictions[group_indexes] = clf_.predict(data[group_indexes])
+            p = clf_.predict(data[group_indexes])
+            if predictions is None:
+                predictions = N.zeros((len(data),), dtype=N.asanyarray(p).dtype)
+            predictions[group_indexes] = p
         return predictions
 
 
@@ -891,8 +895,6 @@ class BinaryClassifier(ProxyClassifier):
         # XXX we have to sort ids since at the moment Dataset.selectSamples
         #     doesn't take care about order
         idlabels.sort()
-        # select the samples
-        orig_labels = None
 
         # If we need all samples, why simply not perform on original
         # data, an just store/restore labels. But it really should be done
@@ -901,11 +903,10 @@ class BinaryClassifier(ProxyClassifier):
             and [x[0] for x in idlabels] == range(dataset.nsamples):
             # the last condition is not even necessary... just overly
             # cautious
-            datasetselected = dataset   # no selection is needed
-            orig_labels = dataset.labels # but we would need to restore labels
+            datasetselected = dataset.copy(deep=False)   # no selection is needed
             if __debug__:
                 debug('CLFBIN',
-                      "Assigned all %d samples for binary " %
+                      "Created shallow copy with %d samples for binary " %
                       (dataset.nsamples) +
                       " classification among labels %s/+1 and %s/-1" %
                       (self.__poslabels, self.__neglabels))
@@ -928,8 +929,6 @@ class BinaryClassifier(ProxyClassifier):
 
         self.clf.train(datasetselected)
 
-        if not orig_labels is None:
-            dataset.sa['labels'].value = orig_labels
 
     def _predict(self, data):
         """Predict the labels for a given `data`
@@ -1146,14 +1145,6 @@ class SplitClassifier(CombinedClassifier):
             if states.isEnabled("training_confusion"):
                 # XXX this is broken, as it cannot deal with not yet set states
                 states.training_confusion += clf.states.training_confusion
-        # hackish way -- so it should work only for ConfusionMatrix???
-        try:
-            if states.isEnabled("confusion"):
-                states.confusion.labels_map = dataset.labels_map
-            if states.isEnabled("training_confusion"):
-                states.training_confusion.labels_map = dataset.labels_map
-        except:
-            pass
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)

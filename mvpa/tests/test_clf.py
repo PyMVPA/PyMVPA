@@ -368,21 +368,21 @@ class ClassifiersTests(unittest.TestCase):
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),
-            'L2+3' : ((2, 3),       clfs[2])})
+            'L2+3' : (('L2', 'L3'), clfs[2])})
         self.failUnlessRaises(ValueError, tclf.train, ds)
         """Should raise exception since label 2 is in both"""
 
         # Test insufficient definition
         tclf = TreeClassifier(clfs[0], {
             'L0+5' : (('L0', 'L5'), clfs[1]),
-            'L2+3' : ((2, 3),       clfs[2])})
+            'L2+3' : (('L2', 'L3'),       clfs[2])})
         self.failUnlessRaises(ValueError, tclf.train, ds)
         """Should raise exception since no group for L1"""
 
         # proper definition now
         tclf = TreeClassifier(clfs[0], {
-            'L0+1' : (('L0', 1), clfs[1]),
-            'L2+3' : ((2, 3),    clfs[2])})
+            'L0+1' : (('L0', 'L1'), clfs[1]),
+            'L2+3' : (('L2', 'L3'), clfs[2])})
 
         # Lets test train/test cycle using CVTE
         cv = CrossValidatedTransferError(
@@ -409,7 +409,7 @@ class ClassifiersTests(unittest.TestCase):
         # TODO: whenever implemented
         tclf = TreeClassifier(clfs[0], {
             'L0' : (('L0',), clfs[1]),
-            'L1+2+3' : ((1, 2, 3),    clfs[2])})
+            'L1+2+3' : (('L1', 'L2', 'L3'),    clfs[2])})
         # TEST ME
 
 

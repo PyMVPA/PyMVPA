@@ -280,11 +280,6 @@ class Classifier(ClassWithCollections):
                 targets=dataset.sa.labels,
                 predictions=predictions)
 
-            try:
-                self.states.training_confusion.labels_map = dataset.labels_map
-            except:
-                pass
-
         if self.states.isEnabled('feature_ids'):
             self.states.feature_ids = self._getFeatureIds()
 
