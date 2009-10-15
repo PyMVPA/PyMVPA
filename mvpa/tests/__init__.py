@@ -33,7 +33,6 @@ def collectTestSuites():
         'test_boxcarmapper',
         'test_som',
         'test_neighbor',
-## deprecated        'test_metadataset',
         'test_splitter',
         'test_state',
         'test_params',
@@ -65,11 +64,11 @@ def collectTestSuites():
 ## broken        'test_transerror',
         'test_clfcrossval',
         'test_searchlight',
-## broken        'test_rfe',
+        'test_rfe',
         'test_ifs',
 ## broken        'test_datameasure',
         'test_perturbsensana',
-## broken        'test_splitsensana',
+        'test_splitsensana',
         # And the suite (all-in-1)
         'test_suite',
         ]

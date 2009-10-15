@@ -38,10 +38,10 @@ test_atlases.py             pass
 test_base.py                pass
 test_boxcarmapper.py        pass
 test_clfcrossval.py         pass
-test_clf.py                 broken (literal labels)
+test_clf.py                 broken (SG cannot handle literal labels, TreeClassifier relies on labels_map)
 test_cmdline.py             pass
 test_config.py              pass
-test_datameasure.py         broken (literal labels)
+test_datameasure.py         broken (sg literal labels)
 test_datasetfx.py           pass
 test_datasetfx_sp.py        pass
 test_datasetng.py           pass
@@ -67,13 +67,13 @@ test_plr.py                 pass
 test_procrust.py            pass
 test_regr.py                pass
 test_report.py              pass
-test_rfe.py                 broken (SVMProblem)
+test_rfe.py                 pass
 test_ridge.py               pass
 test_samplegroupmapper.py   broken (needs discussion of applyMapper)
 test_searchlight.py         pass
 test_smlr.py                pass
 test_som.py                 pass
-test_splitsensana.py        pass (SVM regression relies on numeric labels)
+test_splitsensana.py        pass
 test_splitter.py            pass
 test_state.py               pass
 test_stats.py               pass
@@ -81,9 +81,9 @@ test_stats_sp.py            pass
 test_suite.py               pass
 test_support.py             pass
 test_svdmapper.py           pass
-test_svm.py                 pass (PySwigObject deepcopy issue)
-test_transerror.py          broken (evil puking, SVMProblem, testAUC)
-test_transformers.py        pass (was: fails after merge of yoh/master, due to labile)
+test_svm.py                 pass
+test_transerror.py          broken (sg literal labels, testAUC)
+test_transformers.py        pass
 test_verbosity.py           pass
 test_waveletmapper.py       pass
 test_zscoremapper.py        pass

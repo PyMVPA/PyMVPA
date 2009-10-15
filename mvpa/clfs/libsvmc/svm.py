@@ -205,6 +205,9 @@ class SVM(_SVM):
         states = self.states
 
         predictions = [ self.model.predict(p) for p in src ]
+        # remap to literal labels if necessary
+        if self._attrmap:
+            predictions = self._attrmap.to_literal(predictions)
 
         if states.isEnabled("values"):
             if self.params.regression:
