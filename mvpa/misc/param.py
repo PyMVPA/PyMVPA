@@ -51,6 +51,16 @@ class Parameter(CollectableAttribute):
         """
         self.__default = default
 
+        # XXX probably is too generic...
+        # and potentially dangerous...
+        # let's at least keep track of what is passed
+        self._additional_props = []
+        for k, v in kwargs.iteritems():
+            self.__setattr__(k, v)
+            self._additional_props.append(k)
+
+        # needs to come after kwargs processing, since some debug statements
+        # rely on working repr()
         CollectableAttribute.__init__(self, name=name, doc=doc, index=index)
 
         self.resetvalue()
@@ -60,9 +70,6 @@ class Parameter(CollectableAttribute):
             if kwargs.has_key('val'):
                 raise ValueError, "'val' property name is illegal."
 
-        # XXX probably is too generic...
-        for k, v in kwargs.iteritems():
-            self.__setattr__(k, v)
 
 
     def __str__(self):
@@ -70,6 +77,21 @@ class Parameter(CollectableAttribute):
         # it is enabled but no value is assigned yet
         res += '=%s' % (self.value,)
         return res
+
+
+    def __repr__(self):
+        # cannot use CollectableAttribute's repr(), since the contructor
+        # needs to handle the mandatory 'default' argument
+        s = "%s(%s, name=%s, doc=%s" % (self.__class__.__name__,
+                                        self.__default,
+                                        repr(self.name),
+                                        repr(self.__doc__))
+        plist = ["%s=%s" % (p, self.__getattribute__(p))
+                    for p in self._additional_props]
+        if len(plist):
+            s += ', ' + ', '.join(plist)
+        s += ')'
+        return s
 
 
     def doc(self, indent="  ", width=70):

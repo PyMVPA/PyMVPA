@@ -18,6 +18,7 @@ from mvpa.misc.state import ClassWithCollections, SampleAttributesCollection, \
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
 from mvpa.misc.exceptions import DatasetError
+from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.mask import MaskMapper
 
 if __debug__:
@@ -128,7 +129,7 @@ class Dataset(ClassWithCollections):
         # samples attributes
         # this should rather be self.sa.iteritems(), but there is none yet
         for attr in self.sa.names:
-            if not len(self.sa.getvalue(attr)) == self.nsamples:
+            if not len(self.sa[attr].value) == self.nsamples:
                 raise DatasetError("Length of samples attribute '%s' (%i) "
                                    "doesn't match the number of samples (%i)"
                                    % (attr,
@@ -178,6 +179,26 @@ class Dataset(ClassWithCollections):
         # call the generic init
         out = self.__class__(samples, sa=sa, fa=fa, a=a)
         return out
+
+
+    @property
+    def idhash(self):
+        """To verify if dataset is in the same state as when smth else was done
+
+        Like if classifier was trained on the same dataset as in question
+        """
+
+        res = 'self@%s samples@%s' % (idhash_(self), idhash_(self.samples))
+
+        for col in (self.a, self.sa, self.fa):
+            # We cannot count on the order the values in the dict will show up
+            # with `self._data.value()` and since idhash will be order-dependent
+            # we have to make it deterministic
+            keys = col._items.keys()
+            keys.sort()
+            for k in keys:
+                res += ' %s@%s' % (k, idhash_(col[k].value))
+        return res
 
 
     def copy(self, deep=True):
@@ -298,7 +319,7 @@ class Dataset(ClassWithCollections):
         # we need fresh SamplesAttributes even if they share the data
         for attr in self.sa.items.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name)
+            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # slice
             newattr.value = attr.value[args[0]]
             # assign to target collection
@@ -308,7 +329,7 @@ class Dataset(ClassWithCollections):
         # since we need fresh SamplesAttributes even if they share the data
         for attr in self.fa.items.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name)
+            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # slice
             newattr.value = attr.value[args[1]]
             # assign to target collection
@@ -317,7 +338,7 @@ class Dataset(ClassWithCollections):
             # and finally dataset attributes: this time copying
         for attr in self.a.items.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name)
+            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # do a shallow copy here
             # XXX every DatasetAttribute should have meaningful __copy__ if
             # necessary -- most likely all mappers need to have one
@@ -331,6 +352,15 @@ class Dataset(ClassWithCollections):
 
         # and after a long way instantiate the new dataset of the same type
         return self.__class__(samples, sa=sa, fa=fa, a=a)
+
+
+    def __repr__(self):
+        return "%s(%s, sa=%s, fa=%s, a=%s)" \
+                % (self.__class__.__name__,
+                   repr(self.samples),
+                   repr(self.sa),
+                   repr(self.fa),
+                   repr(self.a))
 
 
     @classmethod

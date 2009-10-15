@@ -84,7 +84,6 @@ class SVM(_SVM):
         Default implementation (C/nu/epsilon SVM) is chosen depending
         on the given parameters (C/nu/tube_epsilon).
         """
-
         svm_impl = kwargs.get('svm_impl', None)
         # Depending on given arguments, figure out desired SVM
         # implementation
@@ -129,7 +128,10 @@ class SVM(_SVM):
         else:
             src = dataset.samples.astype('double')
 
-        svmprob = svm.SVMProblem( dataset.labels.tolist(), src )
+        # libsvm cannot handle literal labels
+        labels = self._attrmap.to_numeric(dataset.sa.labels).tolist()
+
+        svmprob = svm.SVMProblem(labels, src )
 
 
         # Translate few params
@@ -204,7 +206,12 @@ class SVM(_SVM):
             if self.params.regression:
                 values = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
-                trained_labels = self.states.trained_labels
+                # if 'trained_labels' are literal they have to be mapped
+                if N.issubdtype(self.states.trained_labels.dtype, 'c'):
+                    trained_labels = self._attrmap.to_numeric(
+                            self.states.trained_labels)
+                else:
+                    trained_labels = self.states.trained_labels
                 nlabels = len(trained_labels)
                 # XXX We do duplicate work. model.predict calls
                 # predictValuesRaw internally and then does voting or

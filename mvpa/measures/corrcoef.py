@@ -47,9 +47,11 @@ class CorrCoef(FeaturewiseDatasetMeasure):
         """Computes featurewise scores."""
 
         attrdata = dataset.sa[self.__attr].value
+        if N.issubdtype(attrdata.dtype, 'c'):
+            raise ValueError("Correlation coefficent measure is not meaningful "
+                             "for datasets with literal labels.")
+
         samples = dataset.samples
-        print attrdata
-        print samples.shape
         pvalue_index = self.__pvalue
         result = N.empty((dataset.nfeatures,), dtype=float)
 

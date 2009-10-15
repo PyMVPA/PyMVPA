@@ -34,34 +34,35 @@ def detrend(dataset, perchunk=False, model='linear',
     or per each chunk
 
     :Parameters:
-      `dataset` : `Dataset`
+      dataset : Dataset
         dataset to operate on
-      `perchunk` : bool
+      perchunk : bool
         either to operate on whole dataset at once or on each chunk
         separately
-      `model`
+      model
         Type of detrending model to run.  If 'linear' or 'constant',
         scipy.signal.detrend is used to perform a linear or demeaning
         detrend. Polynomial detrending is activated when 'regress' is
         used or when polyord or opt_reg are specified.
-      `polyord` : int or list
+      polyord : int or list
         Order of the Legendre polynomial to remove from the data.  This
         will remove every polynomial up to and including the provided
         value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
-        polynomials from the data.  N.B.: The 0th polynomial is the 
+        polynomials from the data.  N.B.: The 0th polynomial is the
         baseline shift, the 1st is the linear trend.
         If you specify a single int and perchunk is True, then this value
-        is used for each chunk.  You can also specify a differnt polyord 
+        is used for each chunk.  You can also specify a different polyord
         value for each chunk by providing a list or ndarray of polyord
         values the length of the number of chunks.
-      `opt_reg` : ndarray
+      opt_reg : ndarray
         Optional ndarray of additional information to regress out from the
         dataset.  One example would be to regress out motion parameters.
         As with the data, time is on the first axis.
 
     """
-    if polyord is not None or opt_reg is not None: model='regress'
-    
+    if polyord is not None or opt_reg is not None:
+        model='regress'
+
     if model in ['linear', 'constant']:
         # perform scipy detrend
         bp = 0                              # no break points by default
@@ -95,24 +96,24 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
     terms as well as optional regressors, such as motion parameters.
 
     :Parameters:
-      `dataset`: `Dataset`
+      dataset : Dataset
         Dataset to operate on
-      `perchunk` : bool
+      perchunk : bool
         Either to operate on whole dataset at once or on each chunk
         separately.  If perchunk is True, all the samples within a
         chunk should be contiguous and the chunks should be sorted in
         order from low to high.
-      `polyord` : int
+      polyord : int
         Order of the Legendre polynomial to remove from the data.  This
         will remove every polynomial up to and including the provided
         value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
-        polynomials from the data.  N.B.: The 0th polynomial is the 
+        polynomials from the data.  N.B.: The 0th polynomial is the
         baseline shift, the 1st is the linear trend.
         If you specify a single int and perchunk is True, then this value
-        is used for each chunk.  You can also specify a differnt polyord 
+        is used for each chunk.  You can also specify a different polyord
         value for each chunk by providing a list or ndarray of polyord
         values the length of the number of chunks.
-      `opt_reg` : ndarray
+      opt_reg : ndarray
         Optional ndarray of additional information to regress out from the
         dataset.  One example would be to regress out motion parameters.
         As with the data, time is on the first axis.
@@ -139,7 +140,7 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
             # get the indices for that chunk
             cinds = dataset.chunks == chunk
 
-            # see if add in polyord values    
+            # see if add in polyord values
             if not polyord is None:
                 # create the timespan
                 x = N.linspace(-1, 1, cinds.sum())
@@ -151,7 +152,7 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
     else:
         # take out mean over entire dataset
         reg = []
-        # see if add in polyord values    
+        # see if add in polyord values
         if not polyord is None:
             # create the timespan
             x = N.linspace(-1, 1, dataset.nsamples)

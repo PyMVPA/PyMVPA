@@ -235,7 +235,7 @@ class ElementSelector(ClassWithCollections):
     sequence of values.
     """
 
-    ndiscarded = StateVariable(True,
+    ndiscarded = StateVariable(enabled=True,
         doc="Store number of discarded elements.")
 
     def __init__(self, mode='discard', **kwargs):

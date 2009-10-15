@@ -80,16 +80,19 @@ class Collection(object):
           name : basestring
             name of the collection (as seen in the owner, e.g. 'states')
         """
+        # first set all stuff to nothing and later on charge it
+        # this is important, since some of the stuff below relies in the
+        # defaults
+        self.__name = None
+        self.__owner = None
+        self._items = {}
+        if not owner is None:
+            self._setOwner(owner)
+        if not name is None:
+            self._setName(name)
+        if not items is None:
+            self.update(items)
 
-        self.__owner = owner
-
-        if items == None:
-            items = {}
-        self._items = items
-        """Dictionary to contain registered states as keys and
-        values signal either they are enabled
-        """
-        self.__name = name
 
     def _setName(self, name):
         self.__name = name
@@ -157,11 +160,18 @@ class Collection(object):
         """Initialize `index` (no check performed) with `value`
         """
         # by default we just set corresponding value
-        self.setvalue(index, value)
+        self[index].value = value
 
 
     def __repr__(self):
-        s = "%s(" % self.__class__.__name__
+        # do not include the owner arg, since that will most likely
+        # cause recursions when the collection it self is included
+        # into the repr() of the ClassWithCollections instance
+        return "%s(items=%s, name=%s)" \
+                  % (self.__class__.__name__,
+                     repr(self._items.values()),
+                     repr(self.name))
+
         items_s = ""
         sep = ""
         for item in self._items:
@@ -219,12 +229,6 @@ class Collection(object):
     def isKnown(self, index):
         """Returns `True` if state `index` is known at all"""
         return self._items.has_key(index)
-
-
-    def __isSet1(self, index):
-        """Returns `True` if state `index` has value set"""
-        self._checkIndex(index)
-        return self._items[index].isSet
 
 
     def isSet(self, index=None):
@@ -305,7 +309,7 @@ class Collection(object):
             self._updateOwner(name)
 
 
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add an attributes to the collection.
 
         The method has to be implemented in derived collections to
@@ -322,8 +326,12 @@ class Collection(object):
         source : dict, Collection
         copyvalues : None, shallow, deep
         """
-        if isinstance(source, Collection):
-            for a in source._items.values():
+        if isinstance(source, Collection) or isinstance(source, list):
+            if isinstance(source, Collection):
+                attrs = source._items.values()
+            else:
+                attrs = source
+            for a in attrs:
                 if copyvalues is None:
                     self.add_collectable(a)
                 elif copyvalues is 'shallow':
@@ -335,12 +343,21 @@ class Collection(object):
                                      % copy)
         elif isinstance(source, dict):
             for k, v in source.iteritems():
+                # expand value and docs
+                if isinstance(v, tuple):
+                    value = v[0]
+                    doc = v[1]
+                else:
+                    value = v
+                    doc = None
+
+                # add the attribute with optional docs
                 if copyvalues is None:
-                    self.add(k, v)
+                    self.add(k, v, doc=doc)
                 elif copyvalues is 'shallow':
-                    self.add(k, copy.copy(v))
+                    self.add(k, copy.copy(v), doc=doc)
                 elif copyvalues is 'deep':
-                    self.add(k, copy.deepcopy(v))
+                    self.add(k, copy.deepcopy(v), doc=doc)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
@@ -401,12 +418,6 @@ class Collection(object):
     #    _object_setattr(self, index, value)
 
 
-    def getvalue(self, index):
-        """Returns the value by index"""
-        self._checkIndex(index)
-        return self._items[index].value
-
-
     def get(self, index, default):
         """Access the value by a given index.
 
@@ -420,12 +431,6 @@ class Collection(object):
             return default
             #else:
             #    raise e
-
-
-    def setvalue(self, index, value):
-        """Sets the value by index"""
-        self._checkIndex(index)
-        self._items[index].value = value
 
 
     def _action(self, index, func, missingok=False, **kwargs):
@@ -615,7 +620,7 @@ class SampleAttributesCollection(Collection):
     #          (shouldn't) be there... def add should be defined in 'Collection'
     #          and just take a corresponding class to instantiate
     #    Also: what about the rest of **kwargs to be added to Collectable? like doc, etc?
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add samples attributes to the collection.
 
         Parameters
@@ -625,9 +630,10 @@ class SampleAttributesCollection(Collection):
           collection.
         value : array
           The actual attribute value.
+        doc : str
+          Documentation for this attribute.
         """
-        attr = SampleAttribute(name=name)
-        attr.value = value
+        attr = SampleAttribute(name=name, doc=doc, value=value)
         self.add_collectable(attr)
 
 
@@ -640,7 +646,7 @@ class FeatureAttributesCollection(Collection):
         return [] # TODO
 
 
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add dataset attributes to the collection.
 
         Parameters
@@ -650,9 +656,10 @@ class FeatureAttributesCollection(Collection):
           collection.
         value : array
           The actual attribute value.
+        doc : str
+          Documentation for this attribute.
         """
-        attr = FeatureAttribute(name=name)
-        attr.value = value
+        attr = FeatureAttribute(name=name, doc=doc, value=value)
         self.add_collectable(attr)
 
 
@@ -665,7 +672,7 @@ class DatasetAttributesCollection(Collection):
         return [] # TODO
 
 
-    def add(self, name, value):
+    def add(self, name, value, doc=None):
         """Convenience method to add dataset attributes to the collection.
 
         Parameters
@@ -675,9 +682,10 @@ class DatasetAttributesCollection(Collection):
           collection.
         value : array
           The actual attribute value.
+        doc : str
+          Documentation for this attribute.
         """
-        attr = DatasetAttribute(name=name)
-        attr.value = value
+        attr = DatasetAttribute(name=name, doc=doc, value=value)
         self.add_collectable(attr)
 
 
@@ -1025,7 +1033,15 @@ class AttributesCollector(type):
         # XXX should we switch to tuple?
 
         for col, colitems in collections.iteritems():
-            collections[col] = _col2class[col](colitems)
+            # so far we collected the collection items in a dict, but the new
+            # API requires to pass a _list_ of collectables instead of a dict.
+            # So, whenever there are items, we pass just the values of the dict.
+            # There is no information last, since the keys of the dict are the
+            # name attributes of each collectable in the list.
+            if not colitems is None:
+                collections[col] = _col2class[col](items=colitems.values())
+            else:
+                collections[col] = _col2class[col]()
 
         setattr(cls, "_collections_template", collections)
 

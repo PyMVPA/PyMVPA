@@ -131,27 +131,32 @@ class SVMTests(unittest.TestCase):
 
         e = cve(ds_)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve.confusion.stats["P'"][1] < 5,
+            self.failUnless(cve.states.confusion.stats["P'"][1] < 5,
                             msg="With disballance we should have almost no "
-                            "hits. Got %f" % cve.confusion.stats["P'"][1])
+                            "hits. Got %f" % cve.states.confusion.stats["P'"][1])
             #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
 
         # Set '1 C per label'
-        oldC = clf.C
-        ratio = N.sqrt(float(spl[0])/spl[1])
-        clf.C = (-1/ratio, -1*ratio)
+        # recreate cvte since previous might have operated on copies
+        cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
+                                          enable_states='confusion')
+        oldC = clf.params.C
+        # TODO: provide clf.params.C not with a tuple but dictionary
+        #       with C per label (now order is deduced in a cruel way)
+        ratio = N.sqrt(float(spl[ds_.UL[0]])/spl[ds_.UL[1]])
+        clf.params.C = (-1/ratio, -1*ratio)
         try:
             e_ = cve(ds_)
             # reassign C
-            clf.C = oldC
+            clf.params.C = oldC
         except:
-            clf.C = oldC
+            clf.params.C = oldC
             raise
         #print "B:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Finally test if we get any 'hit' for minor category. In the
             # classifier, which has way to 'ballance' should be non-0
-            self.failUnless(cve.confusion.stats["P'"][1] > 0)
+            self.failUnless(cve.states.confusion.stats["P'"][1] > 0)
 
 
     def testSillyness(self):

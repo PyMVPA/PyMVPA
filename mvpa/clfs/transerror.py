@@ -1308,6 +1308,12 @@ class ClassifierError(ClassWithCollections):
         return error
 
 
+    def untrain(self):
+        """Untrain the *Error which relies on the classifier
+        """
+        self.clf.untrain()
+
+
     @property
     def clf(self):
         return self.__clf
@@ -1401,7 +1407,6 @@ class TransferError(ClassifierError):
             raise ValueError, "Transfer error call obtained None " \
                   "as a dataset for testing.%s" % msg
         predictions = clf.predict(testdataset.samples)
-
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
@@ -1424,7 +1429,7 @@ class TransferError(ClassifierError):
         if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx(p, testdataset.sa.labels[i]))
+                samples_error.append(self.__errorfx([p], testdataset.sa.labels[i:i+1]))
 
             states.samples_error = dict(zip(testdataset.sa.origids, samples_error))
 
@@ -1507,6 +1512,6 @@ class ConfusionBasedError(ClassifierError):
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
-        confusion = self.clf.states.getvalue(self.__confusion_state)
+        confusion = self.clf.states[self.__confusion_state].value
         self.states.confusion = confusion
         return confusion.error

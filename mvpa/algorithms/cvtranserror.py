@@ -39,7 +39,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
     splits = StateVariable(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
     transerrors = StateVariable(enabled=False, doc=
-       """Store copies of transerrors at each step""")
+       """Store copies of transerrors at each step. If enabled -
+       operates on clones of transerror, but for the last split original
+       transerror is used""")
     confusion = StateVariable(enabled=False, doc=
        """Store total confusion matrix (if available)""")
     training_confusion = StateVariable(enabled=False, doc=
@@ -150,6 +152,11 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             self.__transerror.states._changeTemporarily(
                 enable_states=terr_enable)
 
+        # We better ensure that underlying classifier is not trained if we
+        # are going to deepcopy transerror
+        if states.isEnabled("transerrors"):
+            self.__transerror.untrain()
+
         # splitter
         for split in self.__splitter(dataset):
             # only train classifier if splitter provides something in first
@@ -160,21 +167,31 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             if states.isEnabled("transerrors"):
                 # copy first and then train, as some classifiers cannot be copied
                 # when already trained, e.g. SWIG'ed stuff
-                transerror = deepcopy(self.__transerror)
+                lastsplit = None
+                for ds in split:
+                    if ds is not None:
+                        lastsplit = ds.a.lastsplit
+                        break
+                if lastsplit:
+                    # only if we could deduce that it was last split
+                    # use the 'mother' transerror
+                    transerror = self.__transerror
+                else:
+                    # otherwise -- deep copy
+                    transerror = deepcopy(self.__transerror)
             else:
                 transerror = self.__transerror
 
             # assign testing dataset if given classifier can digest it
             if clf_hastestdataset and expose_testdataset:
-                clf.testdataset = split[1]
-                pass
+                transerror.clf.testdataset = split[1]
 
             # run the beast
             result = transerror(split[1], split[0])
 
             # unbind the testdataset from the classifier
             if clf_hastestdataset and expose_testdataset:
-                clf.testdataset = None
+                transerror.clf.testdataset = None
 
             # next line is important for 'self._harvest' call
             self._harvest(locals())
@@ -188,14 +205,14 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             # that can add dict elements into a list
             if states.isEnabled("samples_error"):
                 for k, v in \
-                  transerror.states.getvalue("samples_error").iteritems():
+                  transerror.states.samples_error.iteritems():
                     self.states.samples_error[k].append(v)
 
             # pull in child states
             for state_var in ['confusion', 'training_confusion']:
                 if states.isEnabled(state_var):
-                    states.getvalue(state_var).__iadd__(
-                        transerror.states.getvalue(state_var))
+                    states[state_var].value.__iadd__(
+                        transerror.states[state_var].value)
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" \

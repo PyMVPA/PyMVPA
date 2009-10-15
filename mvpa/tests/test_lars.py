@@ -53,7 +53,7 @@ class LARSTests(unittest.TestCase):
 
 
     def testLARSSensitivities(self):
-        data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+        data = datasets['chirp_linear']
 
         # use LARS on binary problem
         clf = LARS()
