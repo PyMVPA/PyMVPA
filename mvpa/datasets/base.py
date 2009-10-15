@@ -58,8 +58,9 @@ if __debug__:
 class Dataset(ClassWithCollections):
     """The successor of Dataset.
 
-    Conventions
-    -----------
+    Notes
+    -----
+
     Any dataset might have a mapper attached that is stored as a dataset
     attribute called `mapper`.
 
@@ -207,8 +208,8 @@ class Dataset(ClassWithCollections):
         By default this is going to be a deep copy of the dataset, hence no
         data is shared between the original dataset and its copy.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         deep : boolean
           If False, a shallow copy of the dataset is return instead. The copy
           contains only views of the samples, sample attributes and feature
@@ -381,11 +382,13 @@ class Dataset(ClassWithCollections):
 
         Returns
         -------
-        An instance of a dataset
+        instance : Dataset
 
         Notes
         -----
         blah blah
+
+        it needs to be a little longer to be able to pick it up
 
         See Also
         --------
