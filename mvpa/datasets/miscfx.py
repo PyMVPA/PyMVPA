@@ -291,7 +291,7 @@ def permute_labels(dataset, perchunk=True, assure_permute=False):
     if perchunk and dataset.sa.isKnown('chunks'):
         chunks = dataset.sa['chunks'].value
 
-        plabels = N.zeros(labels.shape)
+        plabels = N.zeros(labels.shape, dtype=labels.dtype)
 
         for o in dataset.sa['chunks'].unique:
             plabels[chunks == o] = \
