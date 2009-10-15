@@ -354,6 +354,15 @@ class Dataset(ClassWithCollections):
         return self.__class__(samples, sa=sa, fa=fa, a=a)
 
 
+    def __repr__(self):
+        return "%s(%s, sa=%s, fa=%s, a=%s)" \
+                % (self.__class__.__name__,
+                   repr(self.samples),
+                   repr(self.sa),
+                   repr(self.fa),
+                   repr(self.a))
+
+
     @classmethod
     def from_basic(cls, samples, labels=None, chunks=None, mapper=None):
         """Create a Dataset from samples and elementary attributes.
