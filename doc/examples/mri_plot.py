@@ -24,7 +24,8 @@ plotting.
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
+attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'),
+                        literallabels=True)
 dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                         labels=attr.labels,
                         chunks=attr.chunks,
@@ -45,15 +46,15 @@ It might be convinient to pre-define common arguments for multiple calls to
 plotMRI
 """
 mri_args = {
-	'background' : nianat,              # could be a filename
-	'background_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-	'overlay_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-	'do_stretch_colors' : False,
-	'cmap_bg' : 'gray',
-	'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
-	'fig' : None,              # create new figure
+    'background' : nianat,              # could be a filename
+    'background_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+    'overlay_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+    'do_stretch_colors' : False,
+    'cmap_bg' : 'gray',
+    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'fig' : None,              # create new figure
     'interactive' : cfg.getboolean('examples', 'interactive', True),
-	}
+    }
 
 fig = plotMRI(overlay=dataset.map2Nifti(sens),
               vlim=(0.5, None),

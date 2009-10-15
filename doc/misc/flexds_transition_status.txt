@@ -13,13 +13,13 @@ gpr_model_selection0.py     broken by design
 gpr.py                      pass
 kerneldemo.py               pass
 match_distribution.py       pass
-mri_plot.py                 pass (warning about literal labels)
+mri_plot.py                 pass
 permutation_test.py         pass
 projections.py              pass
-searchlight_2d.py           broken (PySwigObject deepcopy issue)
+searchlight_2d.py           pass
 searchlight_dsm.py          broken (waiting for new-style mapper)
 searchlight_minimal.py      broken (waiting for new-style mapper)
-searchlight.py              broken (needs new Datasets definition)
+searchlight.py              pass
 sensanas.py                 pass
 smellit.py                  pass
 smlr.py                     pass
