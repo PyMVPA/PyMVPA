@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from numpy.testing import assert_array_equal
-from nose.tools import assert_raises, ok_
+from nose.tools import assert_raises, ok_, assert_false
 
 from mvpa.misc.attrmap import AttributeMap
 
@@ -23,8 +23,12 @@ def test_attrmap():
 
     # no custom mapping given
     am = AttributeMap()
+    assert_false(am)
+    ok_(len(am) == 0)
     assert_array_equal(am.to_numeric(literal), num_default)
     assert_array_equal(am.to_literal(num_default), literal)
+    ok_(am)
+    ok_(len(am) == 3)
 
     # with custom mapping
     am = AttributeMap(map=map_custom)

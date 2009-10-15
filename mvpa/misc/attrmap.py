@@ -63,6 +63,15 @@ class AttributeMap(object):
                 raise ValueError("Custom map need to be a dict.")
             self._nmap = map
 
+    def __len__(self):
+        if self._nmap is None:
+            return 0
+        else:
+            return len(self._nmap)
+
+    def __bool__(self):
+        return not self._nmap is None
+
     def clear(self):
         """Remove previously established mappings."""
         # map from literal TO numeric
