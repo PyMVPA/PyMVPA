@@ -27,6 +27,8 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
+from numpy.testing import assert_array_equal
+
 class ClassifiersTests(unittest.TestCase):
 
     def setUp(self):
@@ -62,10 +64,10 @@ class ClassifiersTests(unittest.TestCase):
 
         clf = SameSignClassifier(enable_states=['trained_dataset'])
         clf.train(self.data_bin_1)
-        self.failUnless((clf.trained_dataset.samples ==
-                         self.data_bin_1.samples).all())
-        self.failUnless((clf.trained_dataset.labels ==
-                         self.data_bin_1.labels).all())
+        assert_array_equal(clf.states.trained_dataset.samples,
+                           self.data_bin_1.samples)
+        assert_array_equal(clf.states.trained_dataset.labels,
+                           self.data_bin_1.labels)
 
 
     def testBoosted(self):
@@ -254,7 +256,7 @@ class ClassifiersTests(unittest.TestCase):
                 descr="DESCR")
         clf.train(ds)                   # train the beast
         # Number of harvested items should be equal to number of chunks
-        self.failUnlessEqual(len(clf.states.harvested['clf.feature_ids']),
+        self.failUnlessEqual(len(clf.states.harvested['clf.states.feature_ids']),
                              len(ds.UC))
         # if we can blame multiple inheritance and ClassWithCollections.__init__
         self.failUnlessEqual(clf.descr, "DESCR")
@@ -486,11 +488,11 @@ class ClassifiersTests(unittest.TestCase):
             clf.train(traindata)
             predicts = clf.predict(testdata.samples)
             # values should be different from predictions for SVMs we have
-            self.failUnless( (predicts != clf.values).any() )
+            self.failUnless(N.any(predicts != clf.states.values))
 
             if knows_probabilities and clf.states.isSet('probabilities'):
                 # XXX test more thoroughly what we are getting here ;-)
-                self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
+                self.failUnlessEqual( len(clf.states.probabilities), len(testdata.samples)  )
         clf.states._resetEnabledTemporarily()
 
 
@@ -589,14 +591,14 @@ class ClassifiersTests(unittest.TestCase):
 
         # should retrain nicely if we change labels
         oldlabels = dstrain.labels[:]
-        dstrain.permuteLabels(status=True, assure_permute=True)
+        dstrain.permute_labels(assure_permute=True)
         self.failUnless((oldlabels != dstrain.labels).any(),
             msg="We should succeed at permutting -- now got the same labels")
         batch_test()
 
         # Change labels in testing
         oldlabels = dstest.labels[:]
-        dstest.permuteLabels(status=True, assure_permute=True)
+        dstest.permute_labels(assure_permute=True)
         self.failUnless((oldlabels != dstest.labels).any(),
             msg="We should succeed at permutting -- now got the same labels")
         batch_test()
