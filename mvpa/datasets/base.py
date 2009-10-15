@@ -363,6 +363,18 @@ class Dataset(ClassWithCollections):
                    repr(self.a))
 
 
+    def __str__(self):
+        """String summary of dataset
+        """
+        # XXX TODO very basic and ulgy __str__ for now
+        s = "Dataset %s %d x %d" % \
+            (self.samples.dtype, self.nsamples, self.nfeatures)
+        try:
+            s += " mapper: %s" % self.mapper
+        finally:
+            return s
+
+
     @classmethod
     def from_basic(cls, samples, labels=None, chunks=None, mapper=None):
         """Create a Dataset from samples and elementary attributes.
