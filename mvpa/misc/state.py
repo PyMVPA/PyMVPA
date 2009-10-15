@@ -80,16 +80,19 @@ class Collection(object):
           name : basestring
             name of the collection (as seen in the owner, e.g. 'states')
         """
+        # first set all stuff to nothing and later on charge it
+        # this is important, since some of the stuff below relies in the
+        # defaults
+        self.__name = None
+        self.__owner = None
+        self._items = {}
+        if not owner is None:
+            self._setOwner(owner)
+        if not name is None:
+            self._setName(name)
+        if not items is None:
+            self.update(items)
 
-        self.__owner = owner
-
-        if items == None:
-            items = {}
-        self._items = items
-        """Dictionary to contain registered states as keys and
-        values signal either they are enabled
-        """
-        self.__name = name
 
     def _setName(self, name):
         self.__name = name
@@ -161,7 +164,14 @@ class Collection(object):
 
 
     def __repr__(self):
-        s = "%s(" % self.__class__.__name__
+        # do not include the owner arg, since that will most likely
+        # cause recursions when the collection it self is included
+        # into the repr() of the ClassWithCollections instance
+        return "%s(items=%s, name=%s)" \
+                  % (self.__class__.__name__,
+                     repr(self._items.values()),
+                     repr(self.name))
+
         items_s = ""
         sep = ""
         for item in self._items:
@@ -316,8 +326,12 @@ class Collection(object):
         source : dict, Collection
         copyvalues : None, shallow, deep
         """
-        if isinstance(source, Collection):
-            for a in source._items.values():
+        if isinstance(source, Collection) or isinstance(source, list):
+            if isinstance(source, Collection):
+                attrs = source._items.values()
+            else:
+                attrs = source
+            for a in attrs:
                 if copyvalues is None:
                     self.add_collectable(a)
                 elif copyvalues is 'shallow':
@@ -1019,7 +1033,15 @@ class AttributesCollector(type):
         # XXX should we switch to tuple?
 
         for col, colitems in collections.iteritems():
-            collections[col] = _col2class[col](colitems)
+            # so far we collected the collection items in a dict, but the new
+            # API requires to pass a _list_ of collectables instead of a dict.
+            # So, whenever there are items, we pass just the values of the dict.
+            # There is no information last, since the keys of the dict are the
+            # name attributes of each collectable in the list.
+            if not colitems is None:
+                collections[col] = _col2class[col](items=colitems.values())
+            else:
+                collections[col] = _col2class[col]()
 
         setattr(cls, "_collections_template", collections)
 
