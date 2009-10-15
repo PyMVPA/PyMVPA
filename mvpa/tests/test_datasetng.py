@@ -20,6 +20,8 @@ from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.attributes import SampleAttribute
+from mvpa.misc.state import SampleAttributesCollection, \
+        FeatureAttributesCollection, DatasetAttributesCollection
 
 from tests_warehouse import *
 
@@ -547,7 +549,7 @@ def test_arrayattributes():
     ok_(isinstance(ds.chunks, N.ndarray))
 
 
-def test_attr_repr():
+def test_repr():
     attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', value=array([0, 1, 2, 3, 4]))"
     sattr = SampleAttribute(name='TestAttr', doc='my own test', value=N.arange(5))
     # check precise formal representation
@@ -556,4 +558,9 @@ def test_attr_repr():
     from numpy import array
     eattr = eval(repr(sattr))
     ok_(repr(eattr), attr_repr)
+
+    # should also work for a simple dataset
+    ds = datasets['uni2small']
+    ds_repr = repr(ds)
+    ok_(repr(eval(ds_repr)) == ds_repr)
 
