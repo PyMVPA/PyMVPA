@@ -384,7 +384,10 @@ class MaximalVote(PredictionsCombiner):
             # for every sample
             for i in xrange(len(predictions)):
                 prediction = predictions[i]
-                if not operator.isSequenceType(prediction):
+                # XXX fishy location due to literal labels,
+                # TODO simplify assumptions and logic
+                if isinstance(prediction, basestring) or \
+                       not operator.isSequenceType(prediction):
                     prediction = (prediction,)
                 for label in prediction: # for every label
                     # XXX we might have multiple labels assigned
@@ -891,8 +894,6 @@ class BinaryClassifier(ProxyClassifier):
         # XXX we have to sort ids since at the moment Dataset.selectSamples
         #     doesn't take care about order
         idlabels.sort()
-        # select the samples
-        orig_labels = None
 
         # If we need all samples, why simply not perform on original
         # data, an just store/restore labels. But it really should be done
@@ -901,11 +902,10 @@ class BinaryClassifier(ProxyClassifier):
             and [x[0] for x in idlabels] == range(dataset.nsamples):
             # the last condition is not even necessary... just overly
             # cautious
-            datasetselected = dataset   # no selection is needed
-            orig_labels = dataset.labels # but we would need to restore labels
+            datasetselected = dataset.copy(deep=False)   # no selection is needed
             if __debug__:
                 debug('CLFBIN',
-                      "Assigned all %d samples for binary " %
+                      "Created shallow copy with %d samples for binary " %
                       (dataset.nsamples) +
                       " classification among labels %s/+1 and %s/-1" %
                       (self.__poslabels, self.__neglabels))
@@ -928,8 +928,6 @@ class BinaryClassifier(ProxyClassifier):
 
         self.clf.train(datasetselected)
 
-        if not orig_labels is None:
-            dataset.sa['labels'].value = orig_labels
 
     def _predict(self, data):
         """Predict the labels for a given `data`
