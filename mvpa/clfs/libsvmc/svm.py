@@ -16,7 +16,6 @@ import operator
 
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable
-from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.clfs._svmbase import _SVM
 
@@ -85,9 +84,6 @@ class SVM(_SVM):
         Default implementation (C/nu/epsilon SVM) is chosen depending
         on the given parameters (C/nu/tube_epsilon).
         """
-        # the place to map literal to numerical labels (and back)
-        self._attrmap = AttributeMap()
-
         svm_impl = kwargs.get('svm_impl', None)
         # Depending on given arguments, figure out desired SVM
         # implementation
@@ -205,9 +201,6 @@ class SVM(_SVM):
         states = self.states
 
         predictions = [ self.model.predict(p) for p in src ]
-        # remap to literal labels if necessary
-        if self._attrmap:
-            predictions = self._attrmap.to_literal(predictions)
 
         if states.isEnabled("values"):
             if self.params.regression:
