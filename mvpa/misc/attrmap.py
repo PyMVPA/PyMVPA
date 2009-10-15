@@ -63,6 +63,13 @@ class AttributeMap(object):
                 raise ValueError("Custom map need to be a dict.")
             self._nmap = map
 
+    def __repr__(self):
+        """String representation of AttributeMap
+        """
+        s = "%s(%s)" % (self.__class__.__name__,
+                        {False: repr(self._nmap),
+                         True: ''} % self._nmap)
+
     def __len__(self):
         if self._nmap is None:
             return 0
