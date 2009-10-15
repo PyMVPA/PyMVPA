@@ -45,14 +45,14 @@ class ParamsTests(unittest.TestCase):
         blank  = BlankClass()
 
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'states')
-        self.failUnlessRaises(IndexError, blank.__getattribute__, '')
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
 
     def testSimple(self):
         simple  = SimpleClass()
 
         self.failUnlessEqual(len(simple.params.items), 1)
         self.failUnlessRaises(AttributeError, simple.__getattribute__, 'dummy')
-        self.failUnlessRaises(IndexError, simple.__getattribute__, '')
+        self.failUnlessRaises(AttributeError, simple.__getattribute__, '')
 
         self.failUnlessEqual(simple.params.C, 1.0)
         self.failUnlessEqual(simple.params.isSet("C"), False)

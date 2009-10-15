@@ -297,7 +297,20 @@ class SplitterTests(unittest.TestCase):
                 nfs = NFoldSplitter(cvtype=1, count=count, strategy=strategy)
                 splits = [ (train, test) for (train,test) in nfs(self.data) ]
                 self.failUnless(len(splits) == target)
-                chosenchunks = [int(s[1].sa['chunks'].unique) for s in splits]
+                chosenchunks = [int(s[1].uniquechunks) for s in splits]
+
+                # Check if "lastsplit" dsattr was assigned appropriately
+                nsplits = len(splits)
+                if nsplits > 0:
+                    # dummy-proof testing of last split
+                    for ds_ in splits[-1]:
+                        self.failUnless(ds_.a.lastsplit)
+                    # test all now
+                    for isplit,split in enumerate(splits):
+                        for ds_ in split:
+                            ds_.a.lastsplit == isplit==nsplits-1
+
+                # Check results of different strategies
                 if strategy == 'first':
                     self.failUnlessEqual(chosenchunks, range(target))
                 elif strategy == 'equidistant':

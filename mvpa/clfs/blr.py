@@ -87,6 +87,8 @@ class BLR(Classifier):
     def _train(self, data):
         """Train regression using `data` (`Dataset`).
         """
+        # BLR relies on numerical labels
+        train_labels = self._attrmap.to_numeric(data.sa.labels)
         # provide a basic (i.e. identity matrix) and correct prior
         # sigma_p, if not provided before or not compliant to 'data':
         if self.sigma_p == None: # case: not provided
@@ -109,7 +111,7 @@ class BLR(Classifier):
                                   N.linalg.inv(self.sigma_p))
         self.w = 1.0/(self.sigma_noise**2) * N.dot(self.A_inv,
                                                    N.dot(self.samples_train.T,
-                                                         data.labels))
+                                                         train_labels))
         pass
 
 

@@ -161,13 +161,13 @@ dataset vs data
   expected to be simply a NumPy_ array, suffix should be ``data``. For
   example::
 
-    class Classifier(ClassWitCollections):
+    class Classifier(ClassWithCollections):
        ...
        def train(self, dataset):
        ...
        def predict(self, data):
 
-    class FeatureSelection(ClassWitCollections):
+    class FeatureSelection(ClassWithCollections):
        ...
        def __call__(self, dataset, testdataset):
 
@@ -340,7 +340,7 @@ Supported states:
     State Name      Description                                      Default
 ------------------ ----------------------------------------------   ---------
 null_prob           State variable.                                  Enabled
-raw_result          Computed results before applying any             Disabled
+raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
 
@@ -373,7 +373,7 @@ Supported states:
 base_sensitivities  Stores basic sensitivities if the sensitivity    Disabled
                     relies on combining multiple ones.
 null_prob           State variable.                                  Enabled
-raw_result          Computed results before applying any             Disabled
+raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
 
@@ -560,7 +560,7 @@ Things to implement for the next release (Release goals)
         mvpa.featsel.ifs
 
   * several base classes with framework infrastructure (Harvester,
-    ClassWitCollections, virtual properties, ...)
+    ClassWithCollections, virtual properties, ...)
 
   * Transfer error calculation
   * Cross-validation support
@@ -689,8 +689,6 @@ Long and medium term TODOs (aka stuff that has been here forever)
     automatically optimizes its parameters. It is close in idea to
     classifier based on RFE)
 
- * provide for Dataset -- Dataset.__featattr which has attributes for
-    features similar to __dsattr way.
 
   in  --> data         -> dataShape
   out --> features     ->

@@ -61,24 +61,23 @@ def main():
     # TODO: We need some generic helper to read conditions stored in some
     #       common formats
     verbose(2, "Reading conditions from file %s" % cfile)
-    attrs = SampleAttributes(cfile)
+    attrs = SampleAttributes(cfile, literallabels=True)
 
     verbose(2, "Loading volume file %s" % dfile)
-    data = NiftiDataset(samples=dfile,
-                        labels=attrs.labels,
-                        chunks=attrs.chunks,
-                        mask=mfile,
-                        dtype=N.float32)
+    data = nifti_dataset(dfile,
+                         labels=attrs.labels,
+                         chunks=attrs.chunks,
+                         mask=mfile)
 
     # do not try to classify baseline condition
     # XXX this is only valid for our haxby8 example dataset and should
     # probably be turned into a proper --baselinelabel option that can
     # be used for zscoring as well.
-    data = data.selectSamples(data.labels != 0)
+    data = data[data.labels != 'rest']
 
     if options.zscore:
         verbose(1, "Zscoring data samples")
-        zscore(data, perchunk=True)
+        zscore(data, perchunk=True, targetdtype='float32')
 
     if options.clf == 'knn':
         clf = kNN(k=options.knearestdegree)

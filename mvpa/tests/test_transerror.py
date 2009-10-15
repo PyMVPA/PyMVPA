@@ -11,7 +11,7 @@
 import unittest
 from mvpa.support.copy import copy
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 
@@ -150,6 +150,7 @@ class ErrorsTests(unittest.TestCase):
 
         # this will print nasty WARNING but it is ok -- it is just checking code
         # NB warnings are not printed while doing whole testing
+        warning("Don't worry about the following warning.")
         self.failIf(terr(test3) is None)
 
         # try copying the beast
@@ -173,7 +174,7 @@ class ErrorsTests(unittest.TestCase):
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.null_prob
+        null_prob = terr.states.null_prob
         self.failUnless(null_prob < 0.01,
             msg="Failed to check that the result is highly significant "
                 "(got %f) since we know that the data has signal"
@@ -185,7 +186,7 @@ class ErrorsTests(unittest.TestCase):
         train = datasets['uni2medium']
         terr = TransferError(clf=l_clf, enable_states=['samples_error'])
         err = terr(train, train)
-        se = terr.samples_error
+        se = terr.states.samples_error
 
         # one error per sample
         self.failUnless(len(se) == train.nsamples)

@@ -26,6 +26,7 @@ from mvpa.featsel.helpers import \
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
+from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.misc.state import UnknownStateError
 
@@ -169,7 +170,7 @@ class RFETests(unittest.TestCase):
         self.failUnless((selector(data) == target10).all())
 
         selector.nelements = 3
-        self.failUnless(selector.states.nelements == 3)
+        self.failUnless(selector.nelements == 3)
         self.failUnless((selector(data) == target30).all())
         self.failUnless(selector.states.ndiscarded == 3)
 
@@ -234,8 +235,14 @@ class RFETests(unittest.TestCase):
                 enable_states=["sensitivity", "selected_ids"])
 
         wdata = self.getData()
-        wdata_nfeatures = wdata.nfeatures
         tdata = self.getDataT()
+        # XXX for now convert to numeric labels, but should better be taken
+        # care of during clf refactoring
+        am = AttributeMap()
+        wdata.labels = am.to_numeric(wdata.labels)
+        tdata.labels = am.to_numeric(tdata.labels)
+
+        wdata_nfeatures = wdata.nfeatures
         tdata_nfeatures = tdata.nfeatures
 
         sdata, stdata = fe(wdata, tdata)
@@ -358,7 +365,7 @@ class RFETests(unittest.TestCase):
         percent = 80
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
-        FeatureSelection = \
+        fs = \
             RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
                 transfer_error=TransferError(rfesvm_split),
                 feature_selector=FractionTailSelector(
@@ -368,7 +375,7 @@ class RFETests(unittest.TestCase):
         clf = FeatureSelectionClassifier(
             clf = LinearCSVMC(),
             # on features selected via RFE
-            feature_selection = FeatureSelection)
+            feature_selection = fs)
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
         clf.states.enable('feature_ids')
@@ -381,10 +388,10 @@ class RFETests(unittest.TestCase):
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset)
-            self.failUnless(error < 0.2)
-        except:
+        except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
-                      'feature selection')
+                      'feature selection. Got exception: %s' % e)
+        self.failUnless(error < 0.2)
 
 
 

@@ -104,7 +104,7 @@ for radius in [1,5,10]:
     sl_map = sl(dataset)
 
     # map sensitivity map into original dataspace
-    orig_sl_map = dataset.mapReverse(N.array(sl_map))
+    orig_sl_map = dataset.mapper.reverse(N.array(sl_map))
     masked_orig_sl_map = N.ma.masked_array(orig_sl_map,
                                            mask=orig_sl_map == 0)
 

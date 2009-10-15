@@ -268,7 +268,9 @@ class GPR(Classifier):
             _changedData = self._changedData
 
         self._train_fv = train_fv = data.samples
-        self._train_labels = train_labels = data.sa.labels
+        # GRP relies on numerical labels
+        train_labels = self._attrmap.to_numeric(data.sa.labels)
+        self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \
                or _changedData.get('kernel_params', False):

@@ -234,7 +234,7 @@ unittest-nonlabile: build
 # test if no errors would result if we force enabling of all states
 unittest-states: build
 	@echo "I: Running unittests with all states enabled."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=CHECK_STATES_ENABLED python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_STATES_ENABLED python mvpa/tests/main.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
