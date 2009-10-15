@@ -24,6 +24,7 @@ import time
 from mvpa.misc.support import idhash
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
+from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
@@ -133,6 +134,15 @@ class Classifier(ClassWithCollections):
         """Cheap initialization.
         """
         ClassWithCollections.__init__(self, **kwargs)
+
+        # the place to map literal to numerical labels (and back)
+        # this needs to be in the base class, since some classifiers also
+        # have this nasty 'regression' mode, and the code in this class
+        # needs to deal with converting the regression output into discrete
+        # labels
+        # however, preferably the mapping should be kept in the respective
+        # low-level implementations that need it
+        self._attrmap = AttributeMap()
 
 
         self.__trainednfeatures = None
@@ -368,6 +378,7 @@ class Classifier(ClassWithCollections):
         t0 = time.time()
 
         if dataset.nfeatures > 0:
+
             result = self._train(dataset)
         else:
             warning("Trying to train on dataset with no features present")
@@ -470,7 +481,7 @@ class Classifier(ClassWithCollections):
 
             # must be N.array so we copy it to assign labels directly
             # into labels, or should we just recreate "result"???
-            result_ = N.array(result)
+            result_ = N.asanyarray(result)
             if states.isEnabled('values'):
                 # values could be set by now so assigning 'result' would
                 # be misleading
@@ -483,15 +494,23 @@ class Classifier(ClassWithCollections):
                     states.values = states.values.copy()
 
             trained_labels = self.states.trained_labels
+            # if there is some labels mapping present, make sure we operate
+            # on numeric labels
+            if self._attrmap:
+                trained_labels = self._attrmap.to_numeric(trained_labels)
             for i, value in enumerate(result):
                 dists = N.abs(value - trained_labels)
                 result[i] = trained_labels[N.argmin(dists)]
-
             if __debug__:
                 debug("CLF_", "Converted regression result %(result_)s "
                       "into labels %(result)s for %(self_)s",
                       msgargs={'result_':result_, 'result':result,
                                'self_': self})
+
+        # with a labels mapping in-place, we also need to go back to the
+        # literal labels
+        if self._attrmap:
+            result = self._attrmap.to_literal(result)
 
         self._postpredict(data, result)
         return result
@@ -532,6 +551,9 @@ class Classifier(ClassWithCollections):
 
     def untrain(self):
         """Reset trained state"""
+        # any previous apping is obsolete now
+        self._attrmap.clear()
+
         self.__trainednfeatures = None
         # probably not needed... retrainable shouldn't be fully untrained
         # or should be???
