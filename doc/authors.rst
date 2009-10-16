@@ -7,12 +7,12 @@ The PyMVPA developers team currently consists of:
 * `Michael Hanke`_, Dartmouth College, USA
 * `Yaroslav O. Halchenko`_, Dartmouth College, USA
 * `Per B. Sederberg`_, Princeton University, USA
-* `Emanuele Olivetti`_, University of Trento, Italy
+* `Emanuele Olivetti`_, Fondazione Bruno Kessler, Italy
 
 .. _Michael Hanke: http://apsy.gse.uni-magdeburg.de/hanke
 .. _Yaroslav O. Halchenko: http://www.onerussian.com
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
-.. _Emanuele Olivetti: http://sra.itc.it/people/olivetti/
+.. _Emanuele Olivetti: http://sra.fbk.eu/people/olivetti/
 
 
 We are very grateful to the following people, who have contributed
