@@ -429,12 +429,12 @@ $(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames $(AUDIO_TRACK)
      ffmpeg -r $$(echo "scale=2; $$(ls -1 frames/ |wc -l) / 154" | bc) -f image2 \
       -i frames/code_swarm-%05d.png -r 15 -b 250k \
       -i ../../$(AUDIO_TRACK) -ar 22050 -ab 128k -acodec libmp3lame \
-      -ac 2 pymvpa-codeswarm.flv
+      -y -ac 2 pymvpa-codeswarm.flv
 
-$(SWARM_DIR)/git.log:
+$(SWARM_DIR)/git.log: Makefile
 	@echo "I: Dumping git log in codeswarm preferred format"
 	@mkdir -p $(SWARM_DIR)
-	@git log --name-status \
+	@git log --name-status --branches \
      --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
      sed -e 's,[a-z]*@onerussian.com,Yarik,g' \
          -e 's,\(michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\)\|neukom-data@neukom-data-desktop\.(none)\),Michael,g' \
@@ -442,19 +442,20 @@ $(SWARM_DIR)/git.log:
          -e 's,emanuele@relativita.com,Emanuele,g' \
          -e 's,jhughes@austin.cs.dartmouth.edu,James,g' \
          -e 's,valentin.haenel@gmx.de,Valentin,g' \
+         -e 's,gorlins@mit.edu,Scott,g' \
          -e 's,Ingo.Fruend@gmail.com,Ingo,g' >| $@
 
-$(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.log
+$(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR)/run.sh $(SWARM_DIR)/git.log
 	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
 	 -g $(SWARM_DIR)/git.log -o $(SWARM_DIR)/git.xml
 
-$(SWARMTOOL_DIR):
+$(SWARMTOOL_DIR)/run.sh:
 	@echo "I: Checking out codeswarm tool source code"
 	@svn checkout http://codeswarm.googlecode.com/svn/trunk/ $(SWARMTOOL_DIR)
 
 
 upload-codeswarm: codeswarm
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(SWARM_DIR)/*.flv $(WWW_UPLOAD_URI)/files/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw,o+r $(SWARM_DIR)/*.flv $(WWW_UPLOAD_URI)/files/
 
 
 #
