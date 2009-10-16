@@ -14,7 +14,7 @@
 set -e
 
 # what branches to test
-BRANCHES='master yoh/master' # mh/master' # maint/0.4'
+BRANCHES='master yoh/master mh/master' # maint/0.4'
 # where to send reports
 EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
 
