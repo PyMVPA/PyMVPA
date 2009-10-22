@@ -85,4 +85,6 @@ print "number of expected upcrossing on the unitary intervale:", \
 # P.figure()
 # compute_prediction(1.0, length_scale_best, sigma_noise_best, True, dataset,
 #                    dataset_test.samples, dataset_test.labels, F, True)
-P.show()
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()
