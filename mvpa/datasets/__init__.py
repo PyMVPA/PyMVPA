@@ -37,7 +37,7 @@ if __debug__:
     debug('INIT', 'mvpa.datasets')
 
 # nothing in here that works without the base class
-from mvpa.datasets.base import Dataset
+from mvpa.datasets.base import Dataset, dataset
 
 if __debug__:
     debug('INIT', 'mvpa.datasets end')
