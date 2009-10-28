@@ -439,7 +439,8 @@ class Classifier(ClassWithCollections):
         should call _predict if within _predict instead of predict()
         since otherwise it would loop
         """
-        data = N.asarray(data)
+        ## ??? yoh: changed to asany from as without exhaustive check
+        data = N.asanyarray(data)
         if __debug__:
             debug("CLF", "Predicting classifier %(clf)s on data %(data)s",
                 msgargs={'clf':self, 'data':data.shape})

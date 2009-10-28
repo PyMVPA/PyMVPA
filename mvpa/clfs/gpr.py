@@ -22,7 +22,7 @@ from mvpa.misc.param import Parameter
 from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
-from mvpa.datasets import Dataset
+from mvpa.datasets import dataset
 
 if externals.exists("scipy", raiseException=True):
     from scipy.linalg import cho_solve as SLcho_solve
@@ -188,7 +188,7 @@ class GPR(Classifier):
         # This scales up to huge number of hyperparameters:
         grad_LML_hypers = self.__kernel.compute_lml_gradient(
             tmp, self._train_fv)
-        grad_K_sigma_n = 2.0*self.sigma_noise*N.eye(tmp.shape[0])
+        grad_K_sigma_n = 2.0*self.params.sigma_noise*N.eye(tmp.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
         # Faster formula: tr(AB) = (A*B.T).sum()
@@ -210,7 +210,7 @@ class GPR(Classifier):
         tmp = alphalphaT - Kinv
         grad_LML_log_hypers = \
             self.__kernel.compute_lml_gradient_logscale(tmp, self._train_fv)
-        grad_K_log_sigma_n = 2.0 * self.sigma_noise ** 2 * N.eye(Kinv.shape[0])
+        grad_K_log_sigma_n = 2.0 * self.params.sigma_noise ** 2 * N.eye(Kinv.shape[0])
         # Add the term related to sigma_noise:
         # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp, grad_K_log_sigma_n))
         # Faster formula: tr(AB) = (A * B.T).sum()
@@ -506,8 +506,12 @@ if externals.exists('openopt'):
 
         _LEGAL_CLFS = [ GPR ]
 
-        def _call(self, dataset):
+        def _call(self, ds_):
             """Extract weights from GPR
+
+            .. note:
+              Input dataset is not actually used. New dataset is
+              constructed from what is known to the classifier
             """
 
             clf = self.clf
@@ -516,14 +520,14 @@ if externals.exists('openopt'):
                                 / clf._train_labels.std()
             # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0)) \
             #                  /clf._train_fv.std(0)
-            dataset = Dataset(samples=clf._train_fv, labels=clf._train_labels)
+            ds = dataset(samples=clf._train_fv, labels=clf._train_labels)
             clf.states.enable("log_marginal_likelihood")
-            ms = ModelSelector(clf, dataset)
+            ms = ModelSelector(clf, ds)
             # Note that some kernels does not have gradient yet!
             sigma_noise_initial = 1.0e-5
             sigma_f_initial = 1.0
-            length_scale_initial = N.ones(dataset.nfeatures)*1.0e4
-            # length_scale_initial = N.random.rand(dataset.nfeatures)*1.0e4
+            length_scale_initial = N.ones(ds.nfeatures)*1.0e4
+            # length_scale_initial = N.random.rand(ds.nfeatures)*1.0e4
             hyp_initial_guess = N.hstack([sigma_noise_initial,
                                           sigma_f_initial,
                                           length_scale_initial])
