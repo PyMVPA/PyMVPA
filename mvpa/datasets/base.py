@@ -26,20 +26,171 @@ if __debug__:
 
 
 class Dataset(ClassWithCollections):
-    """The successor of Dataset.
+    """Generic storage class for all datasets in PyMVPA
+
+    A dataset consists of four pieces. The core is a two-dimensional
+    array that has variables (so-called `features`) in its columns and
+    the associated observations (so-called `samples`) in the rows. In
+    addition a dataset may have any number of attributes for features
+    and samples. Unsuprisingly, these are called 'feature attributes'
+    and 'sample attributes'. Each attribute is a vector of any datatype
+    that contains a value per each item (feature or sample). Both types
+    of attributes are organized in their respective collections --
+    accessible via the `sa` (sample attribute) and `fa` (feature
+    attribute) attributes. Finally, a dataset itself may have any number
+    of additional attributes (i.e. a mapper) that are stored in their
+    own collection that is accessible via the `a` attribute (see
+    examples below).
 
     Attributes
     ----------
     sa : Collection
+      Access to all sample attributes, where each attribute is a named
+      vector (1d-array) of an arbitrary datatype, with as many elements
+      as rows in the `samples` array of the dataset.
     fa : Collection
+      Access to all feature attributes, where each attribute is a named
+      vector (1d-array) of an arbitrary datatype, with as many elements
+      as columns in the `samples` array of the dataset.
     a : Collection
+      Access to all dataset attributes, where each attribute is a named
+      element of an arbitrary datatype.
 
     Notes
     -----
-
     Any dataset might have a mapper attached that is stored as a dataset
     attribute called `mapper`.
 
+    Examples
+    --------
+
+    The simplest way to create a dataset is from a 2D array.
+
+    >>> import numpy as N
+    >>> from mvpa.datasets import *
+    >>> samples = N.arange(12).reshape((4,3))
+    >>> ds = Dataset(samples)
+    >>> ds.nsamples
+    4
+    >>> ds.nfeatures
+    3
+    >>> ds.samples
+    array([[ 0,  1,  2],
+           [ 3,  4,  5],
+           [ 6,  7,  8],
+           [ 9, 10, 11]])
+
+    The above dataset can only be used for unsupervised machine-learning
+    algorithms, since it doesn't have any labels associated with its
+    samples. However, creating a labeled dataset is equally simple.
+
+    >>> ds_labeled = Dataset.from_basic(samples, labels=range(4))
+
+    For convenience `Dataset.from_basic` is also available as `dataset`,
+    so the above call is equivalent to:
+
+    >>> ds_labeled = dataset(samples, labels=range(4))
+
+    Both the labeled and the unlabeled dataset share the same samples
+    array. No copying is performed.
+
+    >>> ds.samples is ds_labeled.samples
+    True
+
+    If the data should not be shared the samples array has to be copied
+    beforehand.
+
+    The labels are available from the samples attributes collection, but
+    also via the convenience property `labels`.
+
+    >>> ds_labeled.sa.labels is ds_labeled.labels
+    True
+
+    If desired, it is possible to add an arbitrary amount of additional
+    attributes. Regardless if their original sequence type they will be
+    converted into an array.
+
+    >>> ds_labeled.sa.add('lovesme', [0,0,1,0])
+    >>> ds_labeled.sa.lovesme
+    array([0, 0, 1, 0])
+
+    Using this low-level access, there is no sanity checking, hence it
+    is possible to create invalid datasets:
+
+    >>> ds_labeled.sa.add('nasty', range(100))
+
+    An alternative method to create datasets with arbitrary attributes
+    is to provide the attribute collections to the constructor itself --
+    which would also test for an appropriate size of the givenm
+    attributes:
+
+    >>> fancyds = Dataset(samples, sa={'labels': range(4),
+    ...                                'lovesme': [0,0,1,0]})
+    >>> fancyds.sa.lovesme
+    array([0, 0, 1, 0])
+
+    Exactly the same logic applies to feature attributes as well.
+
+    Datasets can be sliced (selecting a subset of samples and/or
+    features) similar to arrays. Selection is possible using boolean
+    selection masks, index sequences or slicing arguments. The following
+    calls for samples selection all result in the same dataset:
+
+    >>> sel1 = ds[N.array([False, True, True])]
+    >>> sel2 = ds[[1,2]]
+    >>> sel3 = ds[1:3]
+    >>> N.all(sel1.samples == sel2.samples)
+    True
+    >>> N.all(sel2.samples == sel3.samples)
+    True
+
+    During selection data is only copied if necessary. If the slicing
+    syntax is used the resulting dataset will share the samples with the
+    original dataset.
+
+    >>> sel1.samples.base is ds.samples
+    False
+    >>> sel2.samples.base is ds.samples
+    False
+    >>> sel3.samples.base is ds.samples
+    True
+
+    For feature selection the syntax is very similar they are just
+    represented on the second axis of the samples array. Plain feature
+    selection is achieved be keeping all samples and select a subset of
+    features (all syntax variants for samples selection are also
+    supported for feature selection).
+
+    >>> fsel = ds[:, 1:3]
+    >>> fsel.samples
+    array([[ 1,  2],
+           [ 4,  5],
+           [ 7,  8],
+           [10, 11]])
+
+    It is also possible to simultaneously selection a subset of samples
+    *and* features. Using the slicing syntax now copying will be
+    performed.
+
+    >>> fsel = ds[:3, 1:3]
+    >>> fsel.samples
+    array([[1, 2],
+           [4, 5],
+           [7, 8]])
+    >>> fsel.samples.base is ds.samples
+    True
+
+    Please note that simultaneous selection of samples and features is
+    *not* always congruent to array slicing.
+
+    >>> ds[[0,1,2], [1,2]].samples
+    array([[1, 2],
+           [4, 5],
+           [7, 8]])
+
+    Whereas the call: 'ds.samples[[0,1,2], [1,2]]' would not be
+    possible. In `Datasets` selection of samples and features is always
+    applied individually and independently to each axis.
     """
     def __init__(self, samples, sa=None, fa=None, a=None):
         """
@@ -60,25 +211,6 @@ class Dataset(ClassWithCollections):
         a : Collection
           Dataset attributes collection.
 
-        Examples
-        --------
-
-        The simplest way to create a dataset is from a 2D array, the so-called
-        :term:`samples matrix`:
-
-        >>> import numpy as N
-        >>> from mvpa.datasets import Dataset
-        >>> samples = N.arange(12).reshape((4,3))
-        >>> ds = Dataset(samples)
-        >>> ds.nsamples
-        4
-        >>> ds.nfeatures
-        3
-        >>> ds.samples
-        array([[ 0,  1,  2],
-               [ 3,  4,  5],
-               [ 6,  7,  8],
-               [ 9, 10, 11]])
         """
         # init base class
         ClassWithCollections.__init__(self)
@@ -110,7 +242,7 @@ class Dataset(ClassWithCollections):
                 raise DatasetError("Length of samples attribute '%s' (%i) "
                                    "doesn't match the number of samples (%i)"
                                    % (attr,
-                                      len(self.sa.getvalue(attr)),
+                                      len(self.sa[attr].value),
                                       self.nsamples))
         # feature attributes
         for attr in self.fa.names:
@@ -118,7 +250,7 @@ class Dataset(ClassWithCollections):
                 raise DatasetError("Length of feature attribute '%s' (%i) "
                                    "doesn't match the number of features (%i)"
                                    % (attr,
-                                      len(self.fa.getvalue(attr).attr),
+                                      len(self.fa[attr].value),
                                       self.nfeatures))
 
 
