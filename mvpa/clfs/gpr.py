@@ -524,6 +524,8 @@ if externals.exists('openopt'):
             clf.states.enable("log_marginal_likelihood")
             ms = ModelSelector(clf, ds)
             # Note that some kernels does not have gradient yet!
+            # XXX Make it initialize to clf's current hyperparameter values
+            #     or may be add ability to specify starting points in the constructor
             sigma_noise_initial = 1.0e-5
             sigma_f_initial = 1.0
             length_scale_initial = N.ones(ds.nfeatures)*1.0e4

@@ -269,7 +269,8 @@ te-%: build
 testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo te-clfs_examples \
               te-erp_plot te-match_distribution te-permutation_test \
-              te-searchlight_minimal te-smlr te-start_easy te-topo_plot
+              te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
+              te-gpr te-gpr_model_selection0
 
 tm-%: build
 	PYTHONPATH=.:$(PYTHONPATH) nosetests --with-doctest --doctest-extension .rst \

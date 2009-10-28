@@ -16,8 +16,6 @@ Gaussian Process Regression (GPR) on a simple 1D example.
 __docformat__ = 'restructuredtext'
 
 import numpy as N
-raise RuntimeError, "Not yet fixed: sorry ;)"
-from gpr import compute_prediction
 from mvpa.suite import *
 import pylab as P
 
@@ -81,8 +79,12 @@ print "number of expected upcrossing on the unitary intervale:", \
       1.0/(2*N.pi*length_scale_best)
 
 
+# TODO: reincarnate by providing a function within gpr.py
+#
 # Plot predicted values using best hyperparameters:
-P.figure()
-compute_prediction(1.0, length_scale_best, sigma_noise_best, True, dataset,
-                   dataset_test.samples, dataset_test.labels, F, True)
-P.show()
+# P.figure()
+# compute_prediction(1.0, length_scale_best, sigma_noise_best, True, dataset,
+#                    dataset_test.samples, dataset_test.labels, F, True)
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()
