@@ -1,0 +1,99 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+.. _chap_workshop_2009fall:
+
+*********************************
+Development Workshop -- Fall 2009
+*********************************
+
+This development workshop will take place at Dartmouth College (Nov 30th -- Dec
+4th).
+
+
+Goals
+=====
+
+The primary purpose of this first PyMVPA workshop is to gather all people
+involved in (or related to) the development of PyMVPA. Participants will
+introduce their projects and will discuss their integration into the PyMVPA
+main line.
+
+In addition, we will discuss changes scheduled for the upcoming 0.5 release of
+PyMVPA that are supposed to improve shortcomings of the original design, or
+missing features that have been identified over the past two years. This
+includes:
+
+* More flexible data storage: A new dataset implementation.
+* Better integration of PyMVPA and MDP_.
+* Establishing an optimization framework within PyMVPA.
+* Various performance improvements, e.g. kernel-caching, parallelization,
+  potential of CUDA.
+
+.. _MDP: http://mdp-toolkit.sourceforge.net/
+
+
+Participants
+============
+
+(confirmed)
+
+* Scott Gorlin, MIT, USA
+* Valentin Haenel, BCCN, Germany
+* Yaroslav O. Halchenko, Dartmouth College, USA
+* Michael Hanke, Dartmouth College, USA
+* James M. Hughes, Dartmouth College, USA
+* Emanuele Olivetti, Fondazione Bruno Kessler, Italy
+* Per B. Sederberg, Princeton University, USA
+* Tiziano Zito, BCCN, Germany
+
+
+Tentative Schedule
+==================
+
+The workshop will start on Monday Nov 30th with a series of talks covering the
+various aspects of the workshop:
+
+
+The future of PyMVPA (Yarik & Michael)
+
+  (abstract yet to come)
+
+
+MDP inside out (Tiziano)
+
+  (abstract yet to come)
+
+
+Profiling PyMVPA (Valentin)
+
+  (abstract yet to come)
+
+
+Tract segmentation with PyMVPA (Emanuele)
+
+  (abstract yet to come)
+
+
+CUDA for world-domination (Per)
+
+  (abstract yet to come)
+
+
+Educating PyMVPA for faster ML-analyses (Scott)
+
+  (abstract yet to come)
+
+
+
+Workshop Results
+================
+
+(yet to come)
