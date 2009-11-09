@@ -242,3 +242,26 @@ class FslGLMDesign(object):
         P.ylabel('Samples (top to bottom)')
         P.xlabel('Regressors')
         P.ylim(self.mat.shape[0],0)
+
+
+def read_fsl_design(fsf_file):
+    """Reads an FSL design.fsf file and returns as a python dict"""
+
+    infile=open(fsf_file,'r');
+    all_lines=infile.readlines();
+    fsl=dict()
+
+    for line in all_lines:
+        if line[0] != '#' and line[0] != '\n':
+           if line.find('_files(') > -1:
+               cmd=line.strip().replace('set ','fsl["').replace('(1)','"]=')
+               exec(cmd)
+           else:
+               if line.find('con_mode')>-1:
+                   line=line.replace('orig','"orig"')
+
+               cmd=line.strip().replace('set fmri(','fsl["').replace(')','"] =').replace('y-','"y"')
+               exec(cmd)
+
+    return fsl
+
