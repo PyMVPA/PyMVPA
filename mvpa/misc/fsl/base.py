@@ -245,23 +245,54 @@ class FslGLMDesign(object):
 
 
 def read_fsl_design(fsf_file):
-    """Reads an FSL design.fsf file and returns as a python dict"""
+    """Reads an FSL FEAT design.fsf file and return the content as a dictionary.
 
-    infile=open(fsf_file,'r');
-    all_lines=infile.readlines();
-    fsl=dict()
+    Parameters
+    ----------
+    fsf_file : filename, file-like
+    """
+    # This function was originally contributed by Russell Poldrack
 
-    for line in all_lines:
-        if line[0] != '#' and line[0] != '\n':
-           if line.find('_files(') > -1:
-               cmd=line.strip().replace('set ','fsl["').replace('(1)','"]=')
-               exec(cmd)
-           else:
-               if line.find('con_mode')>-1:
-                   line=line.replace('orig','"orig"')
+    if isinstance(fsf_file, basestring):
+        infile = open(fsf_file, 'r')
+    else:
+        infile = fsf_file
 
-               cmd=line.strip().replace('set fmri(','fsl["').replace(')','"] =').replace('y-','"y"')
-               exec(cmd)
+    # target dict
+    fsl = {}
+
+    # loop over all lines
+    for line in infile:
+        line = line.strip()
+        # if there is nothing on the line, do nothing
+        if not line or line[0] == '#':
+            continue
+
+        # strip leading TCL 'set'
+        key, value = line.split()[1:]
+
+        # fixup the 'y-' thing
+        if value == 'y-':
+            value = "y"
+
+        # special case of variable keyword
+        if line.count('_files('):
+            # e.g. feat_files(1) -> feat_files
+            key = key.split('(')[0]
+
+        # decide which type we have for the value
+        # int?
+        if value.isdigit():
+            fsl[key] = int(value)
+        else:
+            # float?
+            try:
+                fsl[key] = float(value)
+            except ValueError:
+                # must be string then, but...
+                # sometimes there are quotes, sometimes not, but if the value
+                # should be a string we remove them, since the value is already
+                # of this type
+                fsl[key] = value.strip('"')
 
     return fsl
-
