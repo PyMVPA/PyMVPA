@@ -102,7 +102,7 @@ def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
         for c in curves:
             xc, yc = c
             # scales line array to same range as datapoints
-            P.plot(xc, yc, linestyle=linestyle)
+            P.plot(xc, yc, linestyle)
 
         # no line between data points
         linestyle = 'None'
@@ -207,7 +207,7 @@ def plotSamplesDistance(dataset, sortbyattr=None):
 
 def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
                width=0.2, offset=0.2, color='0.6', distance=1.0,
-               yerr='ste', **kwargs):
+               yerr='ste', xloc=None, **kwargs):
     """Make bar plots with automatically computed error bars.
 
     Candlestick plot (multiple interleaved barplots) can be done,
@@ -238,11 +238,14 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         Distance of two adjacent bars.
       yerr: 'ste' | 'std' | None
         Type of error for the errorbars. If `None` no errorbars are plotted.
+      xloc: sequence
+        Locations of the bars on the x axis.
       **kwargs:
         Any additional arguments are passed to matplotlib's `bar()` function.
     """
     # determine location of bars
-    xlocations = (N.arange(len(data)) * distance) + offset
+    if xloc is None:
+        xloc = (N.arange(len(data)) * distance) + offset
 
     if yerr == 'ste':
         yerr = [N.std(d) / N.sqrt(len(d)) for d in data]
@@ -253,7 +256,7 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         pass
 
     # plot bars
-    plot = P.bar(xlocations,
+    plot = P.bar(xloc,
                  [N.mean(d) for d in data],
                  yerr=yerr,
                  width=width,
@@ -267,13 +270,13 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         P.title(title)
 
     if labels:
-        P.xticks(xlocations + width / 2, labels)
+        P.xticks(xloc + width / 2, labels)
 
     if ylabel:
         P.ylabel(ylabel)
 
     # leave some space after last bar
-    P.xlim(0, xlocations[-1] + width + offset)
+    P.xlim(0, xloc[-1] + width + offset)
 
     return plot
 
