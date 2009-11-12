@@ -57,7 +57,7 @@ class SampleGroupMapper(Mapper):
     __doc__ = enhancedDocString('SampleGroupMapper', locals(), Mapper)
 
 
-    def train(self, dataset):
+    def _train(self, dataset):
         """
         """
         # local binding

@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as N
-from mvpa.mappers.base import Mapper
+from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 
 if __debug__:
     from mvpa.base import debug
@@ -72,17 +72,18 @@ class SimpleSOMMapper(Mapper):
         self._K = None
 
 
-    def train(self, ds):
+    @accepts_dataset_as_samples
+    def _train(self, samples):
         """Perform network training.
 
-        :Parameter:
-          ds: Dataset
-            All samples in the dataset will be used for unsupervised training of
-            the SOM.
+        Parameter
+        ---------
+        samples: array-like
+          Used for unsupervised training of the SOM.
         """
         # XXX initialize with clever default, e.g. plain of first two PCA
         # components
-        self._K = N.random.standard_normal(tuple(self.kshape) + (ds.nfeatures,))
+        self._K = N.random.standard_normal(tuple(self.kshape) + (samples.shape[1],))
 
         # units weight vector deltas for batch training
         # (height x width x #features)
@@ -102,7 +103,7 @@ class SimpleSOMMapper(Mapper):
             k = self._computeInfluenceKernel(it, dqd)
 
             # for all training vectors
-            for s in ds.samples:
+            for s in samples:
                 # determine closest unit (as element coordinate)
                 b = self._getBMU(s)
 
