@@ -25,6 +25,8 @@ from mvpa.misc.state import SampleAttributesCollection, \
 
 from tests_warehouse import *
 
+# TODO Urgently need test to ensure that multidimensional samples and feature
+#      attributes work and adjust docs to mention that we support such
 def test_from_basic():
     samples = N.arange(12).reshape((4, 3))
     labels = range(4)
