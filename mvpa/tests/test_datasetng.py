@@ -14,6 +14,7 @@ import random
 from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal
 
+from mvpa.base.types import is_datasetlike
 from mvpa.datasets.base import dataset, Dataset
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -33,6 +34,9 @@ def test_from_basic():
     chunks = [1, 1, 2, 2]
 
     ds = Dataset.from_basic(samples, labels, chunks)
+
+    ok_(is_datasetlike(ds))
+    ok_(not is_datasetlike(labels))
 
     ## XXX stuff that needs thought:
 
