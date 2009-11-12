@@ -18,10 +18,9 @@ from mvpa.datasets.base import dataset
 class SOMMapperTests(unittest.TestCase):
 
     def testSimpleSOM(self):
-        colors = [[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
-                  [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
-                  [1., 1., 0.], [1., 1., 1.]]
-        ds = dataset(samples=colors)
+        colors = N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+                          [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
+                          [1., 1., 0.], [1., 1., 1.]])
 
         # only small SOM for speed reasons
         som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
@@ -31,7 +30,7 @@ class SOMMapperTests(unittest.TestCase):
         self.failUnlessRaises(RuntimeError, som.getInSize)
         self.failUnlessRaises(RuntimeError, som.getOutSize)
 
-        som.train(ds)
+        som.train(colors)
 
         self.failUnless(som.getInSize() == 3)
         self.failUnless(som.getOutSize() == (10,5))
@@ -46,8 +45,8 @@ class SOMMapperTests(unittest.TestCase):
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             # should approximately restore the input, but could fail
-            # with bas initialisation
-            self.failUnless((N.round(rmapped) == ds.samples).all())
+            # with bad initialisation
+            self.failUnless((N.round(rmapped) == colors).all())
 
 
 def suite():

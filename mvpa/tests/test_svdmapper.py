@@ -20,15 +20,13 @@ class SVDMapperTests(unittest.TestCase):
 
     def setUp(self):
         # data: 40 sample feature line in 20d space (40x20; samples x features)
-        self.ndlin = dataset(N.concatenate(
-            [N.arange(40) for i in range(20)]).reshape(20,-1).T,
-            labels=1, chunks=1)
+        self.ndlin = N.concatenate([N.arange(40)
+                                        for i in range(20)]).reshape(20,-1).T
 
         # data: 10 sample feature line in 40d space
         #       (10x40; samples x features)
-        self.largefeat = dataset(N.concatenate(
-            [N.arange(10) for i in range(40)]).reshape(40,-1).T,
-            labels=1, chunks=1)
+        self.largefeat = N.concatenate([N.arange(10)
+                                        for i in range(40)]).reshape(40,-1).T
 
 
     def testSimpleSVD(self):
@@ -39,7 +37,7 @@ class SVDMapperTests(unittest.TestCase):
         self.failUnlessEqual(pm.proj.shape, (20, 20))
 
         # now project data into PCA space
-        p = pm.forward(self.ndlin.samples)
+        p = pm.forward(self.ndlin)
 
         # only first eigenvalue significant
         self.failUnless(pm.sv[:1] > 1.0)
@@ -56,7 +54,7 @@ class SVDMapperTests(unittest.TestCase):
         pr = pm.reverse(p)
 
         self.failUnlessEqual(pr.shape, (40,20))
-        self.failUnless(N.abs(pm.reverse(p) - self.ndlin.samples).sum() < 0.0001)
+        self.failUnless(N.abs(pm.reverse(p) - self.ndlin).sum() < 0.0001)
 
 
     def testMoreSVD(self):
@@ -72,7 +70,7 @@ class SVDMapperTests(unittest.TestCase):
         self.failUnless((pm.sv[1:] < 10).all())
 
         # now project data into SVD space
-        p = pm.forward(self.largefeat.samples)
+        p = pm.forward(self.largefeat)
 
         # only variance of first component significant
         var = p.var(axis=0)
@@ -83,8 +81,8 @@ class SVDMapperTests(unittest.TestCase):
 
         # check that the mapped data can be fully recovered by 'reverse()'
         rp = pm.reverse(p)
-        self.failUnlessEqual(rp.shape, self.largefeat.samples.shape)
-        self.failUnless((N.round(rp) == self.largefeat.samples).all())
+        self.failUnlessEqual(rp.shape, self.largefeat.shape)
+        self.failUnless((N.round(rp) == self.largefeat).all())
 
         self.failUnlessEqual(pm.getInSize(), 40)
         self.failUnlessEqual(pm.getOutSize(), 10)
@@ -105,8 +103,8 @@ class SVDMapperTests(unittest.TestCase):
 
         # data should still be fully recoverable by 'reverse()'
         rp2 = pm2.reverse(p[:,[0,1]])
-        self.failUnlessEqual(rp2.shape, self.largefeat.samples.shape)
-        self.failUnless(N.abs(rp2 - self.largefeat.samples).sum() < 0.0001)
+        self.failUnlessEqual(rp2.shape, self.largefeat.shape)
+        self.failUnless(N.abs(rp2 - self.largefeat).sum() < 0.0001)
 
 
         # now make new random data and do forward->reverse check

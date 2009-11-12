@@ -12,6 +12,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base.types import is_datasetlike
+
 from mvpa.mappers.metric import Metric
 
 from mvpa.misc.vproperty import VProperty
@@ -20,6 +22,22 @@ from mvpa.base.dochelpers import enhancedDocString
 if __debug__:
     from mvpa.base import warning
     from mvpa.base import debug
+
+
+def accepts_dataset_as_samples(fx):
+    """Decorator to extract samples from Datasets.
+
+    Little helper to allow methods to be written for plain data (if they
+    don't need information from a Dataset), but at the same time also
+    accept whole Datasets as input.
+    """
+    def extract_samples(obj, data):
+        if is_datasetlike(data):
+            return fx(obj, data.samples)
+        else:
+            return fx(obj, data)
+    return extract_samples
+
 
 
 class Mapper(object):
@@ -116,13 +134,62 @@ class Mapper(object):
         """Perform training of the mapper.
 
         This method is called to put the mapper in a state that allows it to
-        perform to intended mapping.
+        perform the intended mapping. It takes care of running pre- and
+        postprocessing that is potentially implemented in derived classes.
 
-        :Parameter:
-          dataset: Dataset or subclass
+        Parameters
+        ----------
+        dataset: Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
 
-        .. note::
-          The default behavior of this method is to do nothing.
+        Results
+        -------
+        whoknows
+          Returns whatever is returned by the derived class.
+        """
+        # this mimics Classifier.train() -- we might merge them all at some
+        # point
+        self._pretrain(dataset)
+        result = self._train(dataset)
+        self._posttrain(dataset)
+        return result
+
+
+    def _train(self, dataset):
+        """Worker method. Needs to be implemented by subclass."""
+        raise NotImplementedError
+
+
+    def _pretrain(self, dataset):
+        """Preprocessing before actual mapper training.
+
+        This method can be reimplemented in derived classes. By default it does
+        nothing.
+
+        Parameters
+        ----------
+        dataset: Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
+        """
+        pass
+
+
+    def _posttrain(self, dataset):
+        """Postprocessing after actual mapper training.
+
+        This method can be reimplemented in derived classes. By default it does
+        nothing.
+
+        Parameters
+        ----------
+        dataset: Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
         """
         pass
 
@@ -269,31 +336,18 @@ class ProjectionMapper(Mapper):
     __doc__ = enhancedDocString('ProjectionMapper', locals(), Mapper)
 
 
-    def train(self, dataset, *args, **kwargs):
+    @accepts_dataset_as_samples
+    def _pretrain(self, samples):
         """Determine the projection matrix.
 
         :Parameters:
           dataset : Dataset
             Dataset to operate on
-          *args
-            Optional positional arguments to pass to _train
-            of subclass
-          **kwargs
-            Optional keyword arguments to pass to _train
-            of subclass
         """
-        # store the feature wise mean
-        if hasattr(dataset, 'samples'):
-            samples = dataset.samples
-        else:
-            samples = dataset
         self._offset_in = samples.mean(axis=0)
-        # ??? Setting of _offset_out is to be done in a child
-        # class
 
-        # compute projection matrix with subclass logic
-        self._train(dataset, *args, **kwargs)
 
+    def _posttrain(self, dataset):
         # perform component selection
         if self._selector is not None:
             self.selectOut(self._selector)
@@ -311,15 +365,6 @@ class ProjectionMapper(Mapper):
                       "%s: Mean of data in input space %s was subtracted" %
                       (self.__class__.__name__, self._offset_in))
         return data
-
-
-    def _train(self, dataset):
-        """Worker method. Needs to be implemented by subclass.
-
-        This method has to train the mapper and store the resulting
-        transformation matrix in `self._proj`.
-        """
-        raise NotImplementedError
 
 
     def forward(self, data, demean=None):
