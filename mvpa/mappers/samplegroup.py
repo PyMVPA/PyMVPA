@@ -70,7 +70,7 @@ class SampleGroupMapper(Mapper):
         self.__datashape = (dataset.nfeatures, )
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """
         """
         if self.__datashape is None:
@@ -86,11 +86,6 @@ class SampleGroupMapper(Mapper):
                                                           self.__chunks == c)]))
 
         return N.array(mdata)
-
-
-    def reverse(self, data):
-        """This is not implemented."""
-        raise NotImplementedError
 
 
     def getInSize(self):

@@ -70,15 +70,101 @@ class Mapper(object):
     #
 
     def forward(self, data):
-        """Map data from the IN dataspace into OUT space.
+        """Map data from input to output space.
+
+        Parameters
+        ----------
+        data: Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation. If such an object is Dataset-like it
+          is handled by a dedicated method that also transforms dataset
+          attributes if necessary.
+        """
+        if is_datasetlike(data):
+            return self._forward_dataset(data)
+        else:
+            return self._forward_data(data)
+
+
+    def _forward_data(self, data):
+        """Forward-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
         """
         raise NotImplementedError
+
+
+    def _forward_dataset(self, dataset):
+        """Forward-map a dataset.
+
+        This is a private method that can be reimplemented in derived
+        classes. The default implementation forward-maps the dataset samples
+        and returns a new dataset that is a shallow copy of the input with
+        the mapped samples.
+
+        Parameters
+        ----------
+        dataset : Dataset-like
+        """
+        msamples = self._forward_data(dataset.samples)
+        mds = dataset.copy(deep=False)
+        mds.samples = msamples
+        return mds
 
 
     def reverse(self, data):
-        """Reverse map data from OUT space into the IN space.
+        """Reverse-map data from output back into input space.
+
+        Parameters
+        ----------
+        data: Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation. If such an object is Dataset-like it
+          is handled by a dedicated method that also transforms dataset
+          attributes if necessary.
+        """
+        if is_datasetlike(data):
+            return self._reverse_dataset(data)
+        else:
+            return self._reverse_data(data)
+
+
+    def _reverse_data(self, data):
+        """Reverse-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
         """
         raise NotImplementedError
+
+
+    def _reverse_dataset(self, dataset):
+        """Reverse-map a dataset.
+
+        This is a private method that can be reimplemented in derived
+        classes. The default implementation reverse-maps the dataset samples
+        and returns a new dataset that is a shallow copy of the input with
+        the mapped samples.
+
+        Parameters
+        ----------
+        dataset : Dataset-like
+        """
+        msamples = self._reverse_data(dataset.samples)
+        mds = dataset.copy(deep=False)
+        mds.samples = msamples
+        return mds
 
 
     def getInSize(self):
