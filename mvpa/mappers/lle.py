@@ -89,17 +89,11 @@ class LLEMapper(Mapper):
         self._node.stop_training()
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """Map data from the IN dataspace into OUT space.
         """
         # experience the beauty of MDP -- just call the beast and be done ;-)
         return self.node(data)
-
-
-    def reverse(self, data):
-        """Reverse map data from OUT space into the IN space.
-        """
-        raise NotImplementedError
 
 
     def getInSize(self):

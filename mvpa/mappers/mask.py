@@ -109,7 +109,7 @@ class MaskMapper(Mapper):
             N.arange(self.__masknonzerosize)
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """Map data from the original dataspace into featurespace.
         """
         data = N.asanyarray(data)          # assure it is an array
@@ -138,7 +138,7 @@ class MaskMapper(Mapper):
                   "exceeding the mask shape is supported."
 
 
-    def reverse(self, data):
+    def _reverse_data(self, data):
         """Reverse map data from featurespace into the original dataspace.
         """
         data = N.asanyarray(data)

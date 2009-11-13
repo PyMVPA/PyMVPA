@@ -183,7 +183,7 @@ class SimpleSOMMapper(Mapper):
         return (N.divide(loc, self.kshape[1]), loc % self.kshape[1])
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """Map data from the IN dataspace into OUT space.
 
         Mapping is performs by simple determining the best matching Kohonen
@@ -192,7 +192,7 @@ class SimpleSOMMapper(Mapper):
         return N.array([self._getBMU(d) for d in data])
 
 
-    def reverse(self, data):
+    def _reverse_data(self, data):
         """Reverse map data from OUT space into the IN space.
         """
         # simple transform into appropriate array slicing and

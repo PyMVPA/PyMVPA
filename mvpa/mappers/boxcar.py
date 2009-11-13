@@ -84,7 +84,7 @@ class BoxcarMapper(Mapper):
                           str(self.__collision_resolution)), 1)
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """Project an ND matrix into N+1D matrix
 
         This method also handles the special of forward mapping a single 'raw'
@@ -128,7 +128,7 @@ class BoxcarMapper(Mapper):
         return selected
 
 
-    def reverse(self, data):
+    def _reverse_data(self, data):
         """Uncombine features back into original space.
 
         Samples which were not touched by forward will get value 0 assigned
