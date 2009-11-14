@@ -390,3 +390,210 @@ class MaskMapper(Mapper):
     #      array from tuples while performing arithm operations...
 
 
+class FeatureSubsetMapper(Mapper):
+    """Mapper to select a subset of features.
+
+    This mapper only operates on one-dimensional samples or two-dimensional
+    samples matrices. If necessary it can be combined for FlattenMapper to
+    handle multidimensional data.
+    """
+    def __init__(self, mask):
+        """
+        Parameters
+        ----------
+        mask : array
+          This is a one-dimensional array whos non-zero elements define both
+          the feature subset and the data shape the mapper is going to handle.
+        """
+        Mapper.__init__(self)
+        self.__forwardmap = None
+
+        if not len(mask.shape) == 1:
+            raise ValueError("The mask has to be a one-dimensional vector. "
+                             "For multidimensional data consider FlattenMapper "
+                             "before running SubsetMapper.")
+        self.__mask = (mask != 0)
+        self.__masknonzerosize = N.sum(self.__mask) # number of non-zeros
+
+
+    def _init_forwardmap(self):
+        """Init the forward coordinate map needed for id translation.
+
+        This is a separate function for lazy-computation of this map
+        """
+        # Store forward mapping (ie from coord into outId)
+        # we do not initialize to save some CPU-cycles, especially for
+        # large datasets -- This should be save, since we only need it
+        # for coordinate lookup that is limited to non-zero mask elements
+        # which are initialized next
+        self.__forwardmap = N.empty(self.__mask.shape, dtype=N.int64)
+        self.__forwardmap[self.__mask] = N.arange(self.__masknonzerosize)
+
+
+    def _forward_data(self, data):
+        """Map data from the original dataspace into featurespace.
+
+        Parameters
+        ----------
+        data : array-like
+          Either one-dimensional sample or two-dimensional samples matrix.
+        """
+        datadim = len(data.shape)
+        # single sample and matching data shape
+        if datadim == 1 and data.shape == self.__mask.shape:
+            return data[self.__mask]
+        # multiple samples and matching sample shape
+        elif datadim == 2 and data.shape[1:] == self.__mask.shape:
+            return data[:, self.__mask]
+        else:
+            raise ValueError(
+                  "Shape of the to be mapped data, does not match the mapper "
+                  "mask %s. Only one (optional) additional dimension (for "
+                  "multiple samples) exceeding the mask shape is supported."
+                    % `self.__mask.shape`)
+
+
+    def _reverse_data(self, data):
+        """Reverse map data from featurespace into the original dataspace.
+
+        Parameters
+        ----------
+        data : array-like
+          Either one-dimensional sample or two-dimensional samples matrix.
+        """
+        datadim = len(data.shape)
+
+        # single sample, matching shape
+        if datadim == 1 and len(data) == self.__masknonzerosize:
+            # Verify that we are trying to reverse data of proper dimension.
+            # In 1D case numpy would not complain and will broadcast
+            # the values
+            mapped = N.zeros(self.__mask.shape, dtype=data.dtype)
+            mapped[self.__mask] = data
+            return mapped
+        # multiple samples, matching shape
+        elif datadim == 2 and len(data[0]) == self.__masknonzerosize:
+            mapped = N.zeros(data.shape[:1] + self.__mask.shape,
+                             dtype=data.dtype)
+            mapped[:, self.__mask] = data
+            return mapped
+        else:
+            raise ValueError(
+                  "Only 2d or 1d data can be reverse mapped. Additionally, "
+                  "each sample vector has to match the size of the mask. "
+                  "Got data of shape %s, when mask is %s"
+                  % (data.shape, self.__mask.shape))
+
+
+    def get_outsize(self):
+        """OutSize is a number of non-0 elements in the mask"""
+        return self.__masknonzerosize
+
+
+    def get_mask(self, copy=True):
+        """By default returns a copy of the current mask.
+
+        Parameters
+        ----------
+        copy : bool
+          If False a reference to the mask is returned, a copy otherwise.
+          This shared mask must not be modified!
+        """
+        if copy:
+            return self.__mask.copy()
+        else:
+            return self.__mask
+
+
+    def is_valid_outid(self, id):
+        """Return whether a particular id is a valid output id/coordinate.
+
+        Parameters
+        ----------
+        id : int
+        """
+        return id >=0 and id < self.get_outsize()
+
+
+    def is_valid_inid(self, id):
+        """Return whether a particular id is a valid input id/coordinate.
+
+        Parameters
+        ----------
+        id : int
+        """
+        # if it exceeds range it cannot be right
+        if not (id >=0 and id < len(self.__mask)):
+            return False
+        # otherwise look into the mask
+        return self.__mask[id]
+
+
+    def get_outids(self, in_id):
+        """Translate an input id/coordinate into an output id/coordinate.
+
+        Parameters
+        ----------
+        in_id : int
+
+        Returns
+        -------
+        list
+          A one-element list with an integer id.
+        """
+        if not self.is_valid_inid(in_id):
+            raise ValueError("Input id/coordinated '%s' is not mapped into the "
+                             "the output space (i.e. not part of the mask)."
+                             % str(in_id))
+        # lazy forward mapping
+        if self.__forwardmap is None:
+            self._init_forwardmap()
+        return [self.__forwardmap[in_id]]
+
+
+    def select_out(self, slicearg, cow=True):
+        """Limit the feature subset selection.
+
+        Parameters
+        ----------
+        slicearg : array(bool), list, slice
+          Any valid Numpy slicing argument defining a subset of the current
+          feature set.
+        cow: bool
+          For internal use only!
+          If `True`, it is safe to call the function on a shallow copy of
+          another FeatureSubsetMapper instance without affecting the original
+          mapper instance. If `False`, modifications done to one instance
+          invalidate the other.
+        """
+        # create a boolean mask covering all present 'out' features
+        # before subset selection
+        submask = N.zeros(self.__masknonzerosize, dtype='bool')
+        # now apply the slicearg to it to enable the desired features
+        # everything slicing that numpy supports is possible and even better
+        # the order of ids in the case of a list argument is irrelevant
+        submask[slicearg] = True
+
+        if cow:
+            mask = self.__mask.copy()
+            # do not update the forwardmap right away but wait till it becomes
+            # necessary
+            self.__forwardmap = forwardmap = None
+        else:
+            mask = self.__mask
+            forwardmap = self.__forwardmap
+
+        # adjust the mask: self-masking will give current feature set, assigning
+        # the desired submask will do incremental masking
+        mask[mask] = submask
+        self.__masknonzerosize = N.sum(submask)
+        # regenerate forward map if not COW and lazy computing -- old values
+        # can remain since we only consider values with a corresponding mask
+        # element that is True
+        if not forwardmap is None:
+            forwardmap[mask] = N.arange(self.__masknonzerosize)
+
+        # reassign
+        self.__mask = mask
+        self.__forwardmap = forwardmap
+
