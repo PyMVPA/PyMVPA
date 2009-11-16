@@ -651,7 +651,8 @@ class ClassifiersTests(unittest.TestCase):
 
     # XXX TODO: should work on smlr, knn, ridgereg, lars as well! but now
     #     they fail to train
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!lars', '!meta', '!ridge'])
+    #    GNB -- cannot train since 1 sample isn't sufficient to assess variance
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lars', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
