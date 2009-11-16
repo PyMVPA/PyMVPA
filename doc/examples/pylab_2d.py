@@ -72,7 +72,11 @@ clfs = {'Ridge Regression': RidgeReg(),
                       enable_states=['probabilities']),
         'SMLR': SMLR(lm=0.01),
         'Logistic Regression': PLR(criterion=0.00001),
-        'k-Nearest-Neighbour': kNN(k=10)}
+        'k-Nearest-Neighbour': kNN(k=10),
+        'GNB': GNB(common_variance=True),
+        'GNB(common_variance=False)': GNB(common_variance=False),
+        }
+
 
 """Now we are ready to run the classifiers. The following loop trains
 and queries each classifier to finally generate a nice plot showing
@@ -94,7 +98,7 @@ for id, ds in datasets.iteritems():
 
         # make a new subplot for each classifier
         fig += 1
-        P.subplot(2, 3, fig)
+        P.subplot(3, 3, fig)
 
         # plot the training points
         P.plot(ds.samples[ds.labels == 1, 0],
@@ -123,8 +127,13 @@ for id, ds in datasets.iteritems():
         elif c == 'Logistic Regression':
             # get out the values used for the prediction
             res = N.asarray(clf.values)
-        elif c == 'SMLR':
+        elif c in ['SMLR']:
             res = N.asarray(clf.values[:, 1])
+        elif c.startswith('GNB'):
+            # Since probabilities are raw: for visualization lets
+            # operate on logprobs and in comparison one to another
+            res = N.log(clf.values[:, 1]) - N.log(clf.values[:, 0])
+            res = 0.5 + res/max(N.abs(res))
         else:
             # get the probabilities from the svm
             res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
@@ -138,7 +147,7 @@ for id, ds in datasets.iteritems():
         P.clim(0, 1)
         P.colorbar()
         P.contour(x, y, z, linewidths=1, colors='black', hold=True)
-
+        P.axis('tight')
         # add the title
         P.title(c)
 
