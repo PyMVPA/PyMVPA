@@ -132,7 +132,7 @@ for id, ds in datasets.iteritems():
         elif c.startswith('GNB'):
             # Since probabilities are raw: for visualization lets
             # operate on logprobs and in comparison one to another
-            res = N.log(clf.values[:, 1]) - N.log(clf.values[:, 0])
+            res = clf.values[:, 1] - clf.values[:, 0]
             res = 0.5 + res/max(N.abs(res))
         else:
             # get the probabilities from the svm
