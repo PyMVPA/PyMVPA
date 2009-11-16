@@ -352,7 +352,8 @@ class ClassifiersTests(unittest.TestCase):
         clf_reg.train(dat)
         res = clf_reg.predict(dat.samples)
         self.failIf((N.array(clf_reg.values)-clf_reg.predictions).sum()==0,
-                    msg="Values were set to the predictions.")
+                    msg="Values were set to the predictions in %s." %
+                    sample_clf_reg)
 
 
     def testTreeClassifier(self):
