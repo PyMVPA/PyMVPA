@@ -54,7 +54,9 @@ class GNB(Classifier):
              exponentiation and loose precision.
              If set, logprobs are stored in `values`""")
     normalize = Parameter(False, allowedtype='bool',
-             doc="""Normalize (log)prob by P(data). TODO""")
+             doc="""Normalize (log)prob by P(data).  Requires probabilities thus for
+             logprob case would require exponentiation of 'logprob's, thus
+             disabled by default since does not impact classification per se.""")
 
     def __init__(self, **kwargs):
         """Initialize an GNB classifier.
@@ -206,9 +208,17 @@ class GNB(Classifier):
             # Incorporate class probabilities:
             prob_cs_cp = prob_cs * self.priors[:, N.newaxis]
 
-        # Normalize by evidence function P(data)
+        # Normalize by evidence P(data)
         if params.normalize:
-            raise NotImplemented, "Since is not impacting actual predict, wasn't yet implemented"
+            if params.logprob:
+                prob_cs_cp_real = N.exp(prob_cs_cp)
+            else:
+                prob_cs_cp_real = prob_cs_cp
+            prob_s_cp_marginals = N.sum(prob_cs_cp_real, axis=0)
+            if params.logprob:
+                prob_cs_cp -= N.log(prob_s_cp_marginals)
+            else:
+                prob_cs_cp /= prob_s_cp_marginals
 
         # Take the class with maximal (log)probability
         winners = prob_cs_cp.argmax(axis=0)
