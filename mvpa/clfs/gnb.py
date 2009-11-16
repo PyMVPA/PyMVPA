@@ -42,7 +42,7 @@ class GNB(Classifier):
     # XXX decide when should we set corresponding internal,
     #     since it depends actually on the data -- no clear way,
     #     so set both linear and non-linear
-    _clf_internals = [ 'gnb', 'linear', 'nonlinear' ]
+    _clf_internals = [ 'gnb', 'linear', 'non-linear' ]
 
     common_variance = Parameter(False, allowedtype='bool',
              doc="""Assume variance common across all classes.""")
@@ -127,7 +127,7 @@ class GNB(Classifier):
             std2s[non0labels] /= nsamples_per_class[non0labels]
 
         # Store class_probabilities
-        self.class_prob = nsamples_per_class / float(nsamples)
+        self.class_prob = N.squeeze(nsamples_per_class) / float(nsamples)
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "training finished on data.shape=%s " %
@@ -143,7 +143,7 @@ class GNB(Classifier):
         self.std2s = None
         self.ulabels = None
         self.class_prob = None
-        super(GNB, self).reset()
+        super(GNB, self).untrain()
 
 
     def _predict(self, data):
@@ -153,7 +153,7 @@ class GNB(Classifier):
             # Just a regular Normal distribution with per
             # feature/class mean and std2s
             prob_csfs = \
-                 1.0/N.sqrt(2*N.pi*self.std2s) * \
+                 1.0/N.sqrt(2*N.pi*self.std2s[:, N.newaxis, ...]) * \
                  N.exp(-0.5 * (((data - self.means[:, N.newaxis, ...])**2)\
                                / self.std2s[:, N.newaxis, ...]))
         else:
