@@ -111,7 +111,7 @@ class GNB(Classifier):
             means[il] += s
 
         ## Actually compute the means
-        non0labels = nsamples_per_class != 0
+        non0labels = (nsamples_per_class.squeeze() != 0)
         means[non0labels] /= nsamples_per_class[non0labels]
 
         # Estimate variances
