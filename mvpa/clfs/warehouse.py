@@ -318,7 +318,7 @@ clfswh += \
 # GNB
 clfswh += GNB(descr="GNB()")
 clfswh += GNB(common_variance=True, descr="GNB(common_variance=True)")
-clfswh += GNB(uniform_prior=False, descr="GNB(uniform_prior=False)")
+clfswh += GNB(prior='uniform', descr="GNB(prior='uniform')")
 clfswh += \
     FeatureSelectionClassifier(
         GNB(),

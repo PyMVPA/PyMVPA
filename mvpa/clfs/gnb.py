@@ -46,8 +46,10 @@ class GNB(Classifier):
 
     common_variance = Parameter(False, allowedtype='bool',
              doc="""Use the same variance across all classes.""")
-    uniform_prior = Parameter(True, allowedtype='bool',
-             doc="""Use the same prior for all classes.""")
+    prior = Parameter('laplacian_smoothing',
+             allowedtype='basestring',
+             choices=["laplacian_smoothing", "uniform", "ratio"],
+             doc="""How to compute prior distribution.""")
 
     logprob = Parameter(True, allowedtype='bool',
              doc="""Operate on log probabilities.  Preferable to avoid unneeded
@@ -132,11 +134,15 @@ class GNB(Classifier):
             variances[non0labels] /= nsamples_per_class[non0labels]
 
         # Store prior probabilities
-        if params.uniform_prior:
+        prior = params.prior
+        if prior == 'uniform':
             self.priors = N.ones((nlabels,))/nlabels
-        else:
-            # XXX check if valid... mvpa has (1+nsamples_per_class)/(nlabels+nsamples)
+        elif prior == 'laplacian_smoothing':
+            self.priors = (1+N.squeeze(nsamples_per_class)) / (float(nsamples) + nlabels)
+        elif prior == 'ratio':
             self.priors = N.squeeze(nsamples_per_class) / float(nsamples)
+        else:
+            raise "No idea on how to handle '%s' way to compute priors" % params.prior
 
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
