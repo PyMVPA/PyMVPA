@@ -32,13 +32,40 @@ if __debug__:
 class GNB(Classifier):
     """Gaussian Naive Bayes `Classifier`.
 
+    GNB is a probabilistic classifier relying on Bayes rule to
+    estimate posterior probabilities of labels given the data.  Naive
+    assumption in it is an independence of the features, which allows
+    to combine per-feature likelihoods by a simple product across
+    likelihoods of"independent" features.
+    See http://en.wikipedia.org/wiki/Naive_bayes for more information.
+
+    Provided here implementation is "naive" on its own -- various
+    aspects could be improved, but has its own advantages:
+
+     - implementation is simple and straightforward
+     - no data copying while considering samples of specific class
+     - provides alternative ways to assess prior distribution of the
+       classes in the case of unbalanced sets of samples (see parameter
+       `prior`)
+     - makes use of NumPy broadcasting mechanism, so should be
+       relatively efficient
+     - should work for any dimensionality of samples
+
+    GNB is listed both as linear and non-linear classifier, since
+    specifics of separating boundary depends on the data and/or
+    parameters: linear separation is achieved whenever samples are
+    balanced (or prior='uniform') and features have the same variance
+    across different classes (i.e. if common_variance=True to enforce
+    this).
+
+    Whenever decisions are made based on log-probabilities (parameter
+    logprob=True, which is the default), then state variable `values`
+    if enabled would also contain log-probabilities.  Also mention
+    that normalization by the evidence (P(data)) is disabled by
+    default since it has no impact per se on classification decision.
+    You might like set parameter normalize to True if you want to
+    access properly scaled probabilities in `values` state variable.
     """
-
-    # Has linear separation iff
-    # 1. number of training samples is balanced across classes
-    # and
-    # 2. variance is told to be class-independent
-
     # XXX decide when should we set corresponding internal,
     #     since it depends actually on the data -- no clear way,
     #     so set both linear and non-linear
@@ -92,13 +119,6 @@ class GNB(Classifier):
 
         # set the feature dimensions
         nsamples = len(X)
-
-        # XXX Sloppy implementation for now but it would have its advantages:
-        #     0.  simple and straightforward
-        #     1.  no data copying
-        #     2.  should work for any dimensionality of samples
-        #  Let's later see how more efficient, more numpy-friendly
-        #  approaches would perform
         s_shape = X.shape[1:]           # shape of a single sample
 
         self.means = means = \
