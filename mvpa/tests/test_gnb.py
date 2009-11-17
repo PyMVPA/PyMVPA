@@ -27,14 +27,14 @@ class GNBTests(unittest.TestCase):
         bools = (True, False)
         # There should be better way... heh
         for cv in bools:                # common_variance?
-          for up in bools:
+          for prior in ('uniform', 'laplacian_smoothing', 'ratio'):
             tp = None                   # predictions -- all above should
                                         # result in the same predictions
             for n in bools:             # normalized?
               for ls in bools:          # logspace?
                 for es in ((), ('values')):
                     gnb_ = GNB(common_variance=cv,
-                               uniform_prior=up,
+                               prior=prior,
                                normalize=n,
                                logprob=ls,
                                enable_states=es)
