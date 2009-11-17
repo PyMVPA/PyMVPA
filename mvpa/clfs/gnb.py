@@ -69,7 +69,8 @@ class GNB(Classifier):
     # XXX decide when should we set corresponding internal,
     #     since it depends actually on the data -- no clear way,
     #     so set both linear and non-linear
-    _clf_internals = [ 'gnb', 'linear', 'non-linear' ]
+    _clf_internals = [ 'gnb', 'linear', 'non-linear',
+                       'binary', 'multiclass' ]
 
     common_variance = Parameter(False, allowedtype='bool',
              doc="""Use the same variance across all classes.""")
