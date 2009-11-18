@@ -354,7 +354,8 @@ class ClassifiersTests(unittest.TestCase):
         clf_reg.train(dat)
         res = clf_reg.predict(dat.samples)
         self.failIf((N.array(clf_reg.states.values)-clf_reg.states.predictions).sum()==0,
-                    msg="Values were set to the predictions.")
+                    msg="Values were set to the predictions in %s." %
+                    sample_clf_reg)
 
 
     def testTreeClassifier(self):
@@ -652,7 +653,8 @@ class ClassifiersTests(unittest.TestCase):
 
     # XXX TODO: should work on smlr, knn, ridgereg, lars as well! but now
     #     they fail to train
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!lars', '!meta', '!ridge'])
+    #    GNB -- cannot train since 1 sample isn't sufficient to assess variance
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lars', '!meta', '!ridge'])
     def testCorrectDimensionsOrder(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about

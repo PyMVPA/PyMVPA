@@ -53,6 +53,7 @@ def collectTestSuites():
 ## broken        'test_clf',
         'test_regr',
         'test_knn',
+        'test_gnb',
         'test_svm',
         'test_plr',
         'test_smlr',
