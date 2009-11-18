@@ -15,11 +15,10 @@ from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal
 
 from mvpa.base.types import is_datasetlike
-from mvpa.datasets.base import dataset, Dataset
+from mvpa.datasets.base import dataset, Dataset, DatasetError
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
-from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.attributes import SampleAttribute
 from mvpa.misc.state import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
@@ -34,6 +33,7 @@ def test_from_basic():
     chunks = [1, 1, 2, 2]
 
     ds = Dataset.from_basic(samples, labels, chunks)
+    ds.init_origids('both')
 
     ok_(is_datasetlike(ds))
     ok_(not is_datasetlike(labels))
@@ -61,7 +61,7 @@ def test_from_basic():
     ok_(not ds.a.isKnown('mapper'))
 
     # has to complain about misshaped samples attributes
-    assert_raises(DatasetError, Dataset.from_basic, samples, labels + labels)
+    assert_raises(ValueError, Dataset.from_basic, samples, labels + labels)
 
     # check that we actually have attributes of the expected type
     ok_(isinstance(ds.sa['labels'], SampleAttribute))
@@ -118,10 +118,10 @@ def test_from_masked():
     assert_array_equal(ds.sa['labels'].unique, [1, 2, 3])
 
     # test wrong attributes length
-    assert_raises(DatasetError, Dataset.from_masked,
+    assert_raises(ValueError, Dataset.from_masked,
                   N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3],
                   chunks=2)
-    assert_raises(DatasetError, Dataset.from_masked,
+    assert_raises(ValueError, Dataset.from_masked,
                   N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
@@ -143,7 +143,7 @@ def test_basic_datamapping():
     samples = N.arange(24).reshape((4, 3, 2))
 
     # cannot handle 3d samples without a mapper
-    assert_raises(DatasetError, Dataset, samples)
+    assert_raises(ValueError, Dataset, samples)
 
     ds = Dataset.from_basic(samples,
             mapper=DenseArrayMapper(shape=samples.shape[1:]))
@@ -279,11 +279,11 @@ def test_mergeds2():
     assert_array_equal(data.UL, [1, 2, 3])
 
     # test wrong label length
-    assert_raises(DatasetError, dataset, dss[:4, :5], labels=[ 1, 2, 3 ],
+    assert_raises(ValueError, dataset, dss[:4, :5], labels=[ 1, 2, 3 ],
                                          chunks=2)
 
     # test wrong origin length
-    assert_raises(DatasetError, dataset, dss[:4, :5], labels=[ 1, 2, 3, 4 ],
+    assert_raises(ValueError, dataset, dss[:4, :5], labels=[ 1, 2, 3, 4 ],
                                          chunks=[ 2, 2, 2 ])
 
 
@@ -495,6 +495,7 @@ def test_feature_masking():
 
 def test_origid_handling():
     ds = dataset(N.atleast_2d(N.arange(35)).T)
+    ds.init_origids('samples')
     ok_(ds.nsamples == 35)
     assert_equal(len(N.unique(ds.sa.origids)), 35)
     selector = [3, 7, 10, 15]

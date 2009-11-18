@@ -17,7 +17,6 @@ from mvpa.misc.state import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
-from mvpa.misc.exceptions import DatasetError
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.mask import MaskMapper
 
@@ -226,9 +225,9 @@ class Dataset(object):
 
         # sanity checks
         if not len(samples.shape) == 2:
-            raise DatasetError('The samples array must be 2D or mappable into'
-                               ' 2D (current shape is: %s)'
-                               % str(samples.shape))
+            raise ValueError('The samples array must be 2D or mappable into'
+                             ' 2D (current shape is: %s)'
+                             % str(samples.shape))
         self.samples = samples
 
         # XXX should we make them conditional?
@@ -236,19 +235,19 @@ class Dataset(object):
         # this should rather be self.sa.iteritems(), but there is none yet
         for attr in self.sa.names:
             if not len(self.sa[attr].value) == self.nsamples:
-                raise DatasetError("Length of samples attribute '%s' (%i) "
-                                   "doesn't match the number of samples (%i)"
-                                   % (attr,
-                                      len(self.sa[attr].value),
-                                      self.nsamples))
+                raise ValueError("Length of samples attribute '%s' (%i) "
+                                 "doesn't match the number of samples (%i)"
+                                 % (attr,
+                                    len(self.sa[attr].value),
+                                    self.nsamples))
         # feature attributes
         for attr in self.fa.names:
             if not len(self.fa.getvalue(attr)) == self.nfeatures:
-                raise DatasetError("Length of feature attribute '%s' (%i) "
-                                   "doesn't match the number of features (%i)"
-                                   % (attr,
-                                      len(self.fa[attr].value),
-                                      self.nfeatures))
+                raise ValueError("Length of feature attribute '%s' (%i) "
+                                 "doesn't match the number of features (%i)"
+                                 % (attr,
+                                    len(self.fa[attr].value),
+                                    self.nfeatures))
 
 
     def init_origids(self, which, attr='origids'):
@@ -655,12 +654,25 @@ def _expand_attribute(attr, length, attr_name):
         if isinstance(attr, basestring):
             raise TypeError
         if len(attr) != length:
-            raise DatasetError, \
-                  "Length of attribute '%s' [%d] has to be %d." \
-                  % (attr_name, len(attr), length) \
+            raise ValueError("Length of attribute '%s' [%d] has to be %d."
+                             % (attr_name, len(attr), length))
         # sequence as array
         return N.asanyarray(attr)
 
     except TypeError:
         # make sequence of identical value matching the desired length
         return N.repeat(attr, length)
+
+
+
+class DatasetError(Exception):
+    """Thrown if there is a problem with the internal integrity of a Dataset.
+    """
+    # A ValueError exception is too generic to be used for any needed case,
+    # thus this one is created
+    def __init__(self, msg=""):
+        Exception.__init__(self)
+        self.__msg = msg
+
+    def __str__(self):
+        return "Dataset handling exception: " + self.__msg
