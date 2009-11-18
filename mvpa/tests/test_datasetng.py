@@ -495,9 +495,10 @@ def test_feature_masking():
 
 def test_origid_handling():
     ds = dataset(N.atleast_2d(N.arange(35)).T)
-    ds.init_origids('samples')
+    ds.init_origids('both')
     ok_(ds.nsamples == 35)
     assert_equal(len(N.unique(ds.sa.origids)), 35)
+    assert_equal(len(N.unique(ds.fa.origids)), 1)
     selector = [3, 7, 10, 15]
     subds = ds[selector]
     assert_array_equal(subds.sa.origids, ds.sa.origids[selector])
