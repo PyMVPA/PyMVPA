@@ -143,7 +143,7 @@ def test_subset():
     subsm.select_out(sids, cow=False)
     assert_equal(subsm.get_outsize(), 4)
     assert_array_equal(sm.get_mask(copy=False), subsm.get_mask(copy=False))
-    # however, the original mapper is not invalid, hence only for internal use
+    # however, the original mapper is now invalid, hence only for internal use
     assert_equal(sm.get_outsize(), 16)
 
     # check for some bug catchers
