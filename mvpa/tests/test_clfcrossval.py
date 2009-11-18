@@ -24,6 +24,7 @@ class CrossValidationTests(unittest.TestCase):
 
     def testSimpleNMinusOneCV(self):
         data = getMVPattern(3)
+        data.init_origids('samples')
 
         self.failUnless( data.nsamples == 120 )
         self.failUnless( data.nfeatures == 2 )
