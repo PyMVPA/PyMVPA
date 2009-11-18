@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 import mvpa.support.copy as copy
-from mvpa.misc.state import ClassWithCollections, SampleAttributesCollection, \
+from mvpa.misc.state import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
@@ -25,7 +25,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class Dataset(ClassWithCollections):
+class Dataset(object):
     """Generic storage class for all datasets in PyMVPA
 
     A dataset consists of four pieces. The core is a two-dimensional
@@ -212,18 +212,15 @@ class Dataset(ClassWithCollections):
           Dataset attributes collection.
 
         """
-        # init base class
-        ClassWithCollections.__init__(self)
-
         # Everything in a dataset (except for samples) is organized in
         # collections
-        self.sa = SampleAttributesCollection(owner=self)
+        self.sa = SampleAttributesCollection()
         if not sa is None:
             self.sa.update(sa)
-        self.fa = FeatureAttributesCollection(owner=self)
+        self.fa = FeatureAttributesCollection()
         if not fa is None:
             self.fa.update(fa)
-        self.a = DatasetAttributesCollection(owner=self)
+        self.a = DatasetAttributesCollection()
         if not a is None:
             self.a.update(a)
 
