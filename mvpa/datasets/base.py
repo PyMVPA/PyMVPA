@@ -254,6 +254,47 @@ class Dataset(ClassWithCollections):
                                       self.nfeatures))
 
 
+    def init_origids(self, which, attr='origids'):
+        """Initialize the dataset's 'origids' attribute.
+
+        The purpose of origids is that they allow to track the identity of
+        a feature or a sample through the liftime of a dataset (i.e. subsequent
+        feature selections).
+
+        Calling this method will overwrite any potentially existing IDs (of the
+
+        Parameters
+        ----------
+        which : {'features', 'samples', 'both'}
+          An attribute is generated for each feature, sample, or both that
+          represents a unique ID. This ID incorporates the dataset instance ID
+          and should allow merging multiple datasets without causing multiple
+          identical ID and the resulting dataset.
+        attr : str
+          Name of the attribute to store the generated IDs in. By convention
+          this should be 'origids' (the default), but might be changed for
+          specific purposes.
+        """
+        # now do evil to ensure unique ids across multiple datasets
+        # so that they could be merged together
+        if not which is None:
+            thisid = str(id(self))
+            if which == 'samples' or which == 'both':
+                ids = N.array(['%s-%i' % (thisid, i)
+                                    for i in xrange(self.samples.shape[0])])
+                if self.sa.items.has_key(attr):
+                    self.sa[attr].value = ids
+                else:
+                    self.sa.add(attr, ids)
+            if which == 'features' or which == 'both':
+                ids = N.array(['%s-%i' % (thisid, i)
+                                    for i in xrange(self.samples.shape[1])])
+                if self.fa.items.has_key(attr):
+                    self.fa[attr].value = ids
+                else:
+                    self.fa.add(attr, ids)
+
+
     def __copy__(self):
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
@@ -549,14 +590,6 @@ class Dataset(ClassWithCollections):
         # common checks should go into __init__
         ds = cls(samples, sa=sa_items, a=a_items)
 
-        # TODO: for now create orig ids here. Probably has to move somewhere
-        # else once the notion of a 'samples space' becomes clearer
-        # now do evil to ensure unique ids across multiple datasets
-        # so that they could be merged together
-        thisid = str(id(ds))
-        ds.sa.add('origids',
-                  N.asanyarray(['%s-%i' % (thisid, i)
-                                    for i in xrange(samples.shape[0])]))
         return ds
 
 
