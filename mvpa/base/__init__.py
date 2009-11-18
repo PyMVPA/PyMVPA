@@ -276,6 +276,8 @@ if __debug__:
     debug.register('GLMNET',    "GLMNET")
     debug.register('GLMNET_',   "GLMNET (verbose)")
 
+    debug.register('GNB',     "GNB - Gaussian Naive Bayes")
+
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KERNEL',  "Kernels module")

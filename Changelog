@@ -35,6 +35,14 @@ Unreleased changes
 Releases
 ========
 
+* 0.?.? (???, ? ??? 20??) (Total: ? commits)
+
+  * New functionality (25 NF commits):
+
+    - :class:`~mvpa.clfs.gnb.GNB` implements Gaussian Naïve Bayes
+      Classifier.
+
+
 * 0.4.3 (Sat, 5 Sep 2009) (Total: 165 commits)
 
   * Online documentation editor is no longer available due to low
