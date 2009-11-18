@@ -11,8 +11,8 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+import copy
 
-import mvpa.support.copy as copy
 from mvpa.misc.state import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
