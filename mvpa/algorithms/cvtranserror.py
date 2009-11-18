@@ -144,7 +144,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         self.states.confusion = summaryClass()
         self.states.training_confusion = summaryClass()
         self.states.transerrors = []
-        self.states.samples_error = dict([(id, []) for id in dataset.sa.origids])
+        if states.isEnabled('samples_error'):
+            self.states.samples_error = dict([(id, [])
+                                               for id in dataset.sa.origids])
 
         # enable requested states in child TransferError instance (restored
         # again below)
