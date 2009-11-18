@@ -242,7 +242,7 @@ class Dataset(object):
                                     self.nsamples))
         # feature attributes
         for attr in self.fa.names:
-            if not len(self.fa.getvalue(attr)) == self.nfeatures:
+            if not len(self.fa[attr].value) == self.nfeatures:
                 raise ValueError("Length of feature attribute '%s' (%i) "
                                  "doesn't match the number of features (%i)"
                                  % (attr,
