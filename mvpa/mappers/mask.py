@@ -565,6 +565,10 @@ class FeatureSubsetMapper(Mapper):
           another FeatureSubsetMapper instance without affecting the original
           mapper instance. If `False`, modifications done to one instance
           invalidate the other.
+
+        Seealso
+        -------
+        `FeatureSubsetMapper.discard_out()`
         """
         # create a boolean mask covering all present 'out' features
         # before subset selection
@@ -573,7 +577,41 @@ class FeatureSubsetMapper(Mapper):
         # everything slicing that numpy supports is possible and even better
         # the order of ids in the case of a list argument is irrelevant
         submask[slicearg] = True
+        # call the utility method
+        self.__select_out(submask, cow)
 
+
+    def discard_out(self, slicearg, cow=True):
+        """Limit the feature subset selection.
+
+        Parameters
+        ----------
+        slicearg : array(bool), list, slice
+          Any valid Numpy slicing argument defining a subset of the current
+          feature set that should be discarded.
+        cow: bool
+          For internal use only!
+          If `True`, it is safe to call the function on a shallow copy of
+          another FeatureSubsetMapper instance without affecting the original
+          mapper instance. If `False`, modifications done to one instance
+          invalidate the other.
+
+        Seealso
+        -------
+        `FeatureSubsetMapper.select_out()`
+        """
+        # create a boolean mask covering all present 'out' features
+        # before subset selection
+        submask = N.ones(self.__masknonzerosize, dtype='bool')
+        # now apply the slicearg to it to disable the desired features
+        # everything slicing that numpy supports is possible and even better
+        # the order of ids in the case of a list argument is irrelevant
+        submask[slicearg] = False
+        # call the utility method
+        self.__select_out(submask, cow)
+
+
+    def __select_out(self, submask, cow):
         if cow:
             mask = self.__mask.copy()
             # do not update the forwardmap right away but wait till it becomes
