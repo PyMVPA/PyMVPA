@@ -126,6 +126,7 @@ def collectNoseTests():
     """
     tests = [ 'test_datasetng',
               'test_attrmap',
+              'test_mapper',
               ]
     return tests
 
