@@ -15,7 +15,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.mask import FeatureSubsetMapper
+from mvpa.mappers.base import FeatureSubsetMapper
 from mvpa.support.copy import copy
 
 def test_flatten():
