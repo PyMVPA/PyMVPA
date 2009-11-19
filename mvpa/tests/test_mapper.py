@@ -11,7 +11,8 @@
 import numpy as N
 
 from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal
+from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_true
 
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.mask import FeatureSubsetMapper
@@ -44,9 +45,10 @@ def test_flatten():
     for i in xrange(samples_shape[0]):
         for j in xrange(samples_shape[1]):
             for k in xrange(samples_shape[2]):
-                id = fm.get_outids((i, j, k))[0]
+                id = fm.get_outids([(i, j, k)])[0]
+                assert_equal(len(id), 1)
                 # mark that we got this particular ID
-                got_coord[id] = True
+                got_coord[id[0]] = True
     # each id has to have occurred
     ok_(got_coord.all())
     # invalid caught?
@@ -69,9 +71,9 @@ def test_flatten():
     fm.train(oned)
     assert_array_equal(fm.forward(oned), oned_target)
     assert_array_equal(fm.reverse(N.array(oned_target)), oned)
-    assert_equal(fm.get_outids(0), [0])
-    assert_raises(ValueError, fm.get_outids, 5)
-    assert_raises(ValueError, fm.get_outids, (0,0))
+    assert_equal(fm.get_outids([0])[0], [0])
+    assert_raises(ValueError, fm.get_outids, [5])
+    assert_raises(ValueError, fm.get_outids, [(0,0)])
 
     # check one dimensional samples
     oneds = N.array([range(5)])
@@ -81,10 +83,10 @@ def test_flatten():
     assert_array_equal(fm.forward(oneds[0]), oneds_target[0])
     assert_array_equal(fm.reverse(N.array(oneds_target)), oneds)
     assert_array_equal(fm.reverse(N.array(oneds_target[0])), oneds[0])
-    assert_equal(fm.get_outids(0), [0])
-    assert_equal(fm.get_outids(3), [3])
-    assert_raises(ValueError, fm.get_outids, 5)
-    assert_raises(ValueError, fm.get_outids, (0,0))
+    assert_equal(fm.get_outids([0])[0], [0])
+    assert_equal(fm.get_outids([3])[0], [3])
+    assert_raises(ValueError, fm.get_outids, [5])
+    assert_raises(ValueError, fm.get_outids, [(0,0)])
 
 
 
@@ -114,7 +116,7 @@ def test_subset():
     for id in range(16):
         ok_(sm.is_valid_inid(id))
         ok_(sm.is_valid_outid(id))  
-        assert_equal(sm.get_outids(id), [id])
+        assert_equal(sm.get_outids([id])[0], [id])
 
     # test subsets
     sids = [3,4,5,6]
@@ -157,5 +159,32 @@ def test_subset():
     # invalid ids
     assert_false(subsm.is_valid_inid(-1))
     assert_false(subsm.is_valid_inid(16))
-    assert_raises(ValueError, subsm.get_outids, 16)
+    assert_raises(ValueError, subsm.get_outids, [16])
 
+
+def test_coordspaces():
+    sm = FeatureSubsetMapper(N.ones(5), inspace='myspace')
+
+    # id transformation
+    # works without spaces (see above) should still work with them
+    for id in range(5):
+        ok_(sm.is_valid_inid(id))
+        ok_(sm.is_valid_outid(id))
+        assert_equal(sm.get_outids([id])[0], [id])
+    # we should achieve them same when providing the same information as space
+    # specific coords
+    for id in range(5):
+        ok_(sm.is_valid_inid(id))
+        ok_(sm.is_valid_outid(id))
+        # space coord can be anything, whatever a mapper might digest
+        out = sm.get_outids(myspace=[id], someother="blabla")
+        assert_equal(out[0], [id])
+        # space coords should be processed and no longer be part of the dicts
+        assert_false(out[1].has_key('myspace'))
+        assert_true(out[1].has_key('someother'))
+    # however, if the mapper doesn't know about a space, it should leave it
+    # alone and confess that there is nothing it can do
+    for id in range(5):
+        out = sm.get_outids(unknown=[id])
+        assert_equal(out[0], [])
+        assert_true(out[1].has_key('unknown'))

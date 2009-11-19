@@ -39,7 +39,6 @@ def accepts_dataset_as_samples(fx):
     return extract_samples
 
 
-
 class Mapper(object):
     """Interface to provide mapping between two spaces: IN and OUT.
     Methods are prefixed correspondingly. forward/reverse operate
@@ -51,13 +50,14 @@ class Mapper(object):
              <--------/
                reverse
     """
-    def __init__(self, metric=None):
+    def __init__(self, metric=None, inspace=None):
         """
         :Parameters:
           metric : Metric
             Optional metric
         """
         self.__metric = None
+        self.__inspace = inspace
         """Pylint happiness"""
         self.setMetric(metric)
         """Actually assign the metric"""
@@ -261,6 +261,26 @@ class Mapper(object):
         pass
 
 
+    def _get_outids(self, in_ids):
+        """Determine the output ids from a list of input space id/coordinates.
+
+        Parameters
+        ----------
+        in_ids : list
+          List of input ids whos output ids shall be determined.
+
+        Returns
+        -------
+        list
+          The list that contains all corresponding output ids. The default
+          implementation returns an empty list -- meaning there is no
+          one-to-one, or one-to-many correspondance of input and output feature
+          spaces.
+        """
+        # reimplement in derived classes to actually perform something useful
+        return []
+
+
     def getNeighbor(self, outId, *args, **kwargs):
         """Get feature neighbors in input space, given an id in output space.
 
@@ -314,6 +334,61 @@ class Mapper(object):
         return [ x for x in self.getNeighbor(outId, *args, **kwargs) ]
 
 
+    def get_outids(self, in_ids=None, **kwargs):
+        """Determine the output ids from a list of input space id/coordinates.
+
+        Parameters
+        ----------
+        in_ids : list
+          List of input ids whos output ids shall be determined.
+        **kwargs: anything
+          Further qualification of coordinates in particular spaces. Spaces are
+          identified by the respected keyword and the values expresses an
+          additional criterion. If the mapper has any information about the
+          given space it uses this information to further restrict the set of
+          output ids. Information about unkown spaces is returned as is.
+
+        Returns
+        -------
+        (list, dict)
+          The list that contains all corresponding output ids. The default
+          implementation returns an empty list -- meaning there is no
+          one-to-one, or one-to-many correspondance of input and output feature
+          spaces. The dictionary contains all space-related information that
+          have not been processed by the mapper (i.e. the spaces they referred
+          to are unknown to the mapper. By default all additional keyword
+          arguments are returned as is.
+        """
+        ourspace = self.get_inspace()
+        # first contrain the set of in_ids if a known space is given
+        if not ourspace is None and kwargs.has_key(ourspace):
+            # merge with the current set, if there is any
+            if in_ids is None:
+                in_ids = kwargs[ourspace]
+            else:
+                # XXX maybe allow for a 'union' mode??
+                in_ids = list(set(in_ids).intersection(kwargs[ourspace]))
+
+            # remove the space contraint, since it has been processed
+            del kwargs[ourspace]
+
+        # return early if there is nothing to do
+        if in_ids is None:
+            return ([], kwargs)
+
+        if __debug__:
+            # check for proper coordinate (also handle the case of 1d coords
+            # given
+            for in_id in in_ids:
+                if not self.is_valid_inid(in_id):
+                    raise ValueError(
+                            "Invalid input id/coordinate (%s) for mapper '%s' "
+                            % (str(in_id), self))
+
+        # this whole thing only works for C-ordered arrays
+        return (self._get_outids(in_ids), kwargs)
+
+
     def __repr__(self):
         if self.__metric is not None:
             s = "metric=%s" % repr(self.__metric)
@@ -326,6 +401,18 @@ class Mapper(object):
         """Calls the mappers forward() method.
         """
         return self.forward(data)
+
+
+    def get_inspace(self):
+        """
+        """
+        return self.__inspace
+
+
+    def set_inspace(self, name):
+        """
+        """
+        self.__inspace = name
 
 
     def getMetric(self):
@@ -810,6 +897,23 @@ class ChainMapper(Mapper):
     def get_outsize(self):
         """Returns the size of the entity in output space"""
         return self._mappers[-1].get_outsize()
+
+
+    def get_outids(self, in_id):
+        """Determine the output id from a input space id/coordinate.
+
+        Parameters
+        ----------
+        in_id : tuple, int
+
+        Returns
+        -------
+        list
+          The list contains all corresponding output ids. The default
+          implementation return an empty list -- meaning there is no one-to-one,
+          or one-to-many correspondance of input and output feature spaces.
+        """
+        return []
 
 
     def selectOut(self, outIds):
