@@ -62,6 +62,7 @@ def collectTestSuites():
         # Various algorithms
         'test_svdmapper',
         'test_procrust',
+        'test_hyperalignment',
         'test_samplegroupmapper',
         'test_transformers',
         'test_transerror',
