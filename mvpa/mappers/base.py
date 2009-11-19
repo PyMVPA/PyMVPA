@@ -181,7 +181,7 @@ class Mapper(object):
     # The following methods are candidates for reimplementation in derived
     # classes, in cases where the provided default behavior is not appropriate.
     #
-    def isValidOutId(self, outId):
+    def is_valid_outid(self, outId):
         """Validate feature id in OUT space.
 
         Override if OUT space is not simly a 1D vector
@@ -189,7 +189,7 @@ class Mapper(object):
         return(outId >= 0 and outId < self.get_outsize())
 
 
-    def isValidInId(self, inId):
+    def is_valid_inid(self, inId):
         """Validate id in IN space.
 
         Override if IN space is not simly a 1D vector
@@ -271,7 +271,7 @@ class Mapper(object):
             raise RuntimeError, "No metric was assigned to %s, thus no " \
                   "neighboring information is present" % self
 
-        if self.isValidOutId(outId):
+        if self.is_valid_outid(outId):
             inId = self.getInId(outId)
             for inId in self.getNeighborIn(inId, *args, **kwargs):
                 yield self.getOutId(inId)
@@ -298,10 +298,10 @@ class Mapper(object):
             raise RuntimeError, "No metric was assigned to %s, thus no " \
                   "neighboring information is present" % self
 
-        isValidInId = self.isValidInId
-        if isValidInId(inId):
+        is_valid_inid = self.is_valid_inid
+        if is_valid_inid(inId):
             for neighbor in self.metric.getNeighbor(inId, *args, **kwargs):
-                if isValidInId(neighbor):
+                if is_valid_inid(neighbor):
                     yield neighbor
 
 

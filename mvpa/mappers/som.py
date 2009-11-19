@@ -228,7 +228,7 @@ class SimpleSOMMapper(Mapper):
         raise NotImplementedError
 
 
-    def isValidOutId(self, outId):
+    def is_valid_outid(self, outId):
         """Validate feature id in OUT space.
         """
         return (outId >= 0).all() and (outId < self.kshape).all()

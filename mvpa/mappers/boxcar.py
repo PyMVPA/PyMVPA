@@ -179,7 +179,7 @@ class BoxcarMapper(Mapper):
 
         return self._inshape[0]
 
-    def isValidOutId(self, outId):
+    def is_valid_outid(self, outId):
         """Validate if OutId is valid
 
         """
@@ -188,7 +188,7 @@ class BoxcarMapper(Mapper):
         except:
             return False
 
-    def isValidInId(self, inId):
+    def is_valid_inid(self, inId):
         """Validate if InId is valid
 
         """

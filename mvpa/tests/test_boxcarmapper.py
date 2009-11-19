@@ -99,13 +99,13 @@ class BoxcarMapperTests(unittest.TestCase):
         bcm = BoxcarMapper([1, 4, 6], 3)
         trans = bcm(data)
 
-        self.failUnlessEqual(bcm.isValidInId( [1] ), True)
-        self.failUnlessEqual(bcm.isValidInId( [0,1] ), False)
+        self.failUnlessEqual(bcm.is_valid_inid( [1] ), True)
+        self.failUnlessEqual(bcm.is_valid_inid( [0,1] ), False)
 
-        self.failUnlessEqual(bcm.isValidOutId( [1] ), True)
-        self.failUnlessEqual(bcm.isValidOutId( [3] ), False)
-        self.failUnlessEqual(bcm.isValidOutId( [0,1] ), True)
-        self.failUnlessEqual(bcm.isValidOutId( [0,1,0] ), False)
+        self.failUnlessEqual(bcm.is_valid_outid( [1] ), True)
+        self.failUnlessEqual(bcm.is_valid_outid( [3] ), False)
+        self.failUnlessEqual(bcm.is_valid_outid( [0,1] ), True)
+        self.failUnlessEqual(bcm.is_valid_outid( [0,1,0] ), False)
 
 
 
