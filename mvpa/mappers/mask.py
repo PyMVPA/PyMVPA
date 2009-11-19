@@ -213,7 +213,7 @@ class MaskMapper(Mapper):
         return N.transpose(self.__masknonzero)
 
 
-    def isValidInId(self, inId):
+    def is_valid_inid(self, inId):
         mask = self.mask
         return (isInVolume(inId, mask.shape) and mask[tuple(inId)] != 0)
 

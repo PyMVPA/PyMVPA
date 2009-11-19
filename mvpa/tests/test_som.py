@@ -38,7 +38,7 @@ class SOMMapperTests(unittest.TestCase):
         fmapped = som(colors)
         self.failUnless(fmapped.shape == (8, 2))
         for fm in fmapped:
-            self.failUnless(som.isValidOutId(fm))
+            self.failUnless(som.is_valid_outid(fm))
 
         # reverse mapping
         rmapped = som.reverse(fmapped)
