@@ -606,7 +606,54 @@ class ParameterCollection(Collection):
         self._action(index, Parameter.resetvalue, missingok=False)
 
 
-class SampleAttributesCollection(Collection):
+class UniformLengthCollection(Collection):
+    """Container for attributes with the same length.
+    """
+    def __init__(self, length=None, *args, **kwargs):
+        """
+        Parameters
+        ----------
+        length : int
+          When adding items to the collection, they are checked if the have this
+          length.
+        """
+        # cannot call set_length(), since base class __getattribute__ goes wild
+        # before its __init__ is called.
+        self.__uniform_length = length
+        Collection.__init__(self, *args, **kwargs)
+
+
+    def set_length(self, value):
+        """
+        Parameters
+        ----------
+        value : int
+          When adding new items to the collection, they are checked if the have
+          this length.
+        """
+        self.__uniform_length = value
+
+
+    def add_collectable(self, item):
+        """Add a new CollectableAttribute to the collection
+
+        :Parameters:
+          item : CollectableAttribute
+            or of derived class. Must have 'name' assigned.
+        """
+        if self.__uniform_length is None:
+            self.__uniform_length = len(item.value)
+        elif not len(item.value) == self.__uniform_length:
+            raise ValueError("Collection item '%s' does not match the required "
+                             "length [%i] of collection '%s'."
+                             % (item.name,
+                                self.__uniform_length,
+                                str(self)))
+
+        Collection.add_collectable(self, item)
+
+
+class SampleAttributesCollection(UniformLengthCollection):
     """Container for attributes of samples (i.e. labels, chunks...)
     """
     def _cls_repr(self):
@@ -637,7 +684,7 @@ class SampleAttributesCollection(Collection):
         self.add_collectable(attr)
 
 
-class FeatureAttributesCollection(Collection):
+class FeatureAttributesCollection(UniformLengthCollection):
     """Container for attributes of features
     """
     def _cls_repr(self):

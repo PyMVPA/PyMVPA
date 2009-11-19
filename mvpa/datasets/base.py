@@ -203,32 +203,32 @@ class Dataset(object):
           Data samples. This has to be a two-dimensional (samples x features)
           array. If the samples are not in that format, please consider one of
           the `Dataset.from_*` classmethods.
-        sa : Collection
+        sa : SampleAttributesCollection
           Samples attributes collection.
-        fa : Collection
+        fa : FeatureAttributesCollection
           Features attributes collection.
-        a : Collection
+        a : DatasetAttributesCollection
           Dataset attributes collection.
 
         """
-        # Everything in a dataset (except for samples) is organized in
-        # collections
-        self.sa = SampleAttributesCollection()
-        if not sa is None:
-            self.sa.update(sa)
-        self.fa = FeatureAttributesCollection()
-        if not fa is None:
-            self.fa.update(fa)
-        self.a = DatasetAttributesCollection()
-        if not a is None:
-            self.a.update(a)
-
         # sanity checks
         if not len(samples.shape) == 2:
             raise ValueError('The samples array must be 2D or mappable into'
                              ' 2D (current shape is: %s)'
                              % str(samples.shape))
         self.samples = samples
+
+       # Everything in a dataset (except for samples) is organized in
+        # collections
+        self.sa = SampleAttributesCollection(length=len(samples))
+        if not sa is None:
+            self.sa.update(sa)
+        self.fa = FeatureAttributesCollection(length=samples.shape[1])
+        if not fa is None:
+            self.fa.update(fa)
+        self.a = DatasetAttributesCollection()
+        if not a is None:
+            self.a.update(a)
 
         # XXX should we make them conditional?
         # samples attributes
@@ -294,9 +294,9 @@ class Dataset(object):
     def __copy__(self):
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
-        sa = self.sa.__class__()
+        sa = self.sa.__class__(length=self.samples.shape[0])
         sa.update(self.sa, copyvalues='shallow')
-        fa = self.fa.__class__()
+        fa = self.fa.__class__(length=self.samples.shape[1])
         fa.update(self.fa, copyvalues='shallow')
         a = self.a.__class__()
         a.update(self.a, copyvalues='shallow')
@@ -312,9 +312,9 @@ class Dataset(object):
     def __deepcopy__(self, memo=None):
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
-        sa = self.sa.__class__()
+        sa = self.sa.__class__(length=self.samples.shape[0])
         sa.update(self.sa, copyvalues='deep')
-        fa = self.fa.__class__()
+        fa = self.fa.__class__(length=self.samples.shape[1])
         fa.update(self.fa, copyvalues='deep')
         a = self.a.__class__()
         a.update(self.a, copyvalues='deep')
@@ -384,12 +384,14 @@ class Dataset(object):
             raise DatasetError("Cannot merge dataset. This datasets samples "
                                "attributes %s cannot be mapped into the other "
                                "set %s" % (self.sa.names, other.sa.names))
-        # concat all samples attributes
-        for k, v in other.sa.items.iteritems():
-            self.sa[k].value = N.concatenate((self.sa[k].value, v.value), axis=0)
 
         # concat the samples as well
         self.samples = N.concatenate((self.samples, other.samples), axis=0)
+
+        # concat all samples attributes
+        self.sa.set_length(len(self.samples))
+        for k, v in other.sa.items.iteritems():
+            self.sa[k].value = N.concatenate((self.sa[k].value, v.value), axis=0)
 
         return self
 
@@ -457,8 +459,8 @@ class Dataset(object):
 
         # and now for the attributes -- we want to maintain the type of the
         # collections
-        sa = self.sa.__class__()
-        fa = self.fa.__class__()
+        sa = self.sa.__class__(length=samples.shape[0])
+        fa = self.fa.__class__(length=samples.shape[1])
         a = self.a.__class__()
 
         # per-sample attributes; always needs to run even if slice(None), since
