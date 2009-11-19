@@ -15,6 +15,8 @@ import numpy as N
 from mvpa.mappers.base import Mapper
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.misc.support import isInVolume
+from mvpa.mappers.metric import Metric
+
 
 if __debug__:
     from mvpa.base import debug, warning
@@ -24,16 +26,21 @@ if __debug__:
 class MaskMapper(Mapper):
     """Mapper which uses a binary mask to select "Features" """
 
-    def __init__(self, mask, **kwargs):
+    def __init__(self, mask, metric=None, **kwargs):
         """Initialize MaskMapper
 
         :Parameters:
           mask : array
             an array in the original dataspace and its nonzero elements are
             used to define the features included in the dataset
+          metric : Metric
+            Optional metric
         """
         Mapper.__init__(self, **kwargs)
 
+        self.__metric = None
+        self.setMetric(metric)
+        """Actually assign the metric"""
         self.__mask = self.__maskdim = self.__masksize = \
                       self.__masknonzerosize = self.__forwardmap = \
                       self.__masknonzero = None # to make pylint happy
@@ -47,9 +54,15 @@ class MaskMapper(Mapper):
         return "MaskMapper: %d -> %d" \
             % (self.__masksize, self.__masknonzerosize)
 
+
     def __repr__(self):
-        s = super(MaskMapper, self).__repr__()
-        return s.replace("(", "(mask=%s," % self.__mask, 1)
+        if self.__metric is not None:
+            s = "metric=%s" % repr(self.__metric)
+        else:
+            s = ''
+        return "%s(%s, mask=%s)" % (self.__class__.__name__,
+                                    s,
+                                    self.__mask)
 
 # XXX
 # XXX HAS TO TAKE CARE OF SUBCLASSES!!!
@@ -334,6 +347,71 @@ class MaskMapper(Mapper):
         # for selectOut but such index has to be figured out first there
         #      ....
 
+    def getNeighbor(self, outId, *args, **kwargs):
+        """Get feature neighbors in input space, given an id in output space.
+
+        This method has to be reimplemented whenever a derived class does not
+        provide an implementation for :meth:`~mvpa.mappers.base.Mapper.getInId`.
+        """
+        if self.metric is None:
+            raise RuntimeError, "No metric was assigned to %s, thus no " \
+                  "neighboring information is present" % self
+
+        if self.is_valid_outid(outId):
+            inId = self.getInId(outId)
+            for inId in self.getNeighborIn(inId, *args, **kwargs):
+                yield self.getOutId(inId)
+
+
+    def getNeighborIn(self, inId, *args, **kwargs):
+        """Return the list of coordinates for the neighbors.
+
+        :Parameters:
+          inId
+            id (index) of an element in input dataspace.
+          *args, **kwargs
+            Any additional arguments are passed to the embedded metric of the
+            mapper.
+
+        XXX See TODO below: what to return -- list of arrays or list
+        of tuples?
+        """
+        if self.metric is None:
+            raise RuntimeError, "No metric was assigned to %s, thus no " \
+                  "neighboring information is present" % self
+
+        is_valid_inid = self.is_valid_inid
+        if is_valid_inid(inId):
+            for neighbor in self.metric.getNeighbor(inId, *args, **kwargs):
+                if is_valid_inid(neighbor):
+                    yield neighbor
+
+
+    def getNeighbors(self, outId, *args, **kwargs):
+        """Return the list of coordinates for the neighbors.
+
+        By default it simply constructs the list based on
+        the generator returned by getNeighbor()
+        """
+        return [ x for x in self.getNeighbor(outId, *args, **kwargs) ]
+
+
+    def getMetric(self):
+        """To make pylint happy"""
+        return self.__metric
+
+
+    def setMetric(self, metric):
+        """To make pylint happy"""
+        if metric is not None and not isinstance(metric, Metric):
+            raise ValueError, "metric for Mapper must be an " \
+                              "instance of a Metric class . Got %s" \
+                                % `type(metric)`
+        self.__metric = metric
+
+
+
+
 
 # comment out for now... introduce when needed
 #    def getInEmpty(self):
@@ -380,6 +458,7 @@ class MaskMapper(Mapper):
         return self.reverse(self.convertOutIds2OutMask(outIds))
 
 
+    metric = property(fget=getMetric, fset=setMetric)
     # Read-only props
     mask = property(fget=lambda self:self.getMask(False))
 
