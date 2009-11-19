@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import ProjectionMapper
+from mvpa.mappers.projection import ProjectionMapper
 from mvpa.datasets import Dataset
 from mvpa.featsel.helpers import ElementSelector
 
