@@ -14,7 +14,8 @@ from mvpa.base import warning, externals
 
 import numpy as N
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import ProjectionMapper, accepts_dataset_as_samples
+from mvpa.mappers.base import accepts_dataset_as_samples
+from mvpa.mappers.projection import ProjectionMapper
 
 if externals.exists('scipy', raiseException=True):
     import scipy.sparse

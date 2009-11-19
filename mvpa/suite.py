@@ -81,6 +81,7 @@ from mvpa.featsel.rfe import *
 from mvpa import mappers
 #from mvpa.mappers import *
 from mvpa.mappers.base import *
+from mvpa.mappers.projection import *
 from mvpa.mappers.metric import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
