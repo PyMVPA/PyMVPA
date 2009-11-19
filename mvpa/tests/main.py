@@ -54,5 +54,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # run before main(), since that one might sys.exit() on error
     runNoseTests()
+    main()
