@@ -56,17 +56,18 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 d_t = N.dot(s * d, R) + t2
 
                 # train bloody mapper(s)
-                pm.train(d_s, d_t)
-                ds2 = dataset(samples=d_s, labels=d_t)
-                pm2.train(ds2)
+                ds = dataset(samples=d_s, labels=d_t)
+                pm.train(ds)
+                ## not possible with new interface
+                #pm2.train(d_s, d_t)
 
-                # verify that both created the same transformation
-                npm2proj = norm(pm.proj - pm2.proj)
-                self.failUnless(npm2proj <= 1e-10,
-                                msg="Got transformation different by norm %g."
-                                " Had to be less than 1e-10" % npm2proj)
-                self.failUnless(norm(pm._offset_in - pm2._offset_in) <= 1e-10)
-                self.failUnless(norm(pm._offset_out - pm2._offset_out) <= 1e-10)
+                ## verify that both created the same transformation
+                #npm2proj = norm(pm.proj - pm2.proj)
+                #self.failUnless(npm2proj <= 1e-10,
+                #                msg="Got transformation different by norm %g."
+                #                " Had to be less than 1e-10" % npm2proj)
+                #self.failUnless(norm(pm._offset_in - pm2._offset_in) <= 1e-10)
+                #self.failUnless(norm(pm._offset_out - pm2._offset_out) <= 1e-10)
 
                 # do forward transformation on the same source data
                 d_s_f = pm.forward(d_s)
