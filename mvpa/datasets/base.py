@@ -388,8 +388,9 @@ class Dataset(object):
         # concat the samples as well
         self.samples = N.concatenate((self.samples, other.samples), axis=0)
 
+        # tell the collection the new desired length of all attributes
+        self.sa.set_length_check(len(self.samples))
         # concat all samples attributes
-        self.sa.set_length(len(self.samples))
         for k, v in other.sa.items.iteritems():
             self.sa[k].value = N.concatenate((self.sa[k].value, v.value), axis=0)
 

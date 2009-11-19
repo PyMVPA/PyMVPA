@@ -195,6 +195,7 @@ class AttributeWithArray(CollectableAttribute):
         value : arbitrary (see derived implementations)
           The actual value of this attribute.
         """
+        self.__target_length = None
         CollectableAttribute.__init__(self, name=name, doc=doc, value=value)
         self._resetUnique()
         if __debug__:
@@ -220,8 +221,29 @@ class AttributeWithArray(CollectableAttribute):
 
 
     def _set(self, val):
+        # check if the new value has the desired length -- fi length checking is
+        # desired at all
+        if not self.__target_length is None \
+           and len(val) != self.__target_length:
+            raise ValueError("Value length [%i] does not match the required "
+                             "length [%i] of attribute '%s'."
+                             % (len(val),
+                                self.__target_length,
+                                str(self.name)))
+
         self._resetUnique()
         CollectableAttribute._set(self, N.asanyarray(val))
+
+
+    def set_length_check(self, value):
+        """
+        Parameters
+        ----------
+        value : int
+          When setting the value of this attribute it is checked if it has
+          this length.
+        """
+        self.__target_length = value
 
 
     def _getUniqueValues(self):

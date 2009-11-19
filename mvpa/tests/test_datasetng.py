@@ -66,6 +66,18 @@ def test_from_basic():
     # check that we actually have attributes of the expected type
     ok_(isinstance(ds.sa['labels'], SampleAttribute))
 
+    # the dataset will take care of not adding stupid stuff
+    assert_raises(ValueError, ds.sa.add, 'stupid', N.arange(3))
+    assert_raises(ValueError, ds.fa.add, 'stupid', N.arange(4))
+    # or change proper attributes to stupid shapes
+    try:
+        ds.sa.labels = N.arange(3)
+    except ValueError:
+        pass
+    else:
+        ok_(False, msg="Assigning value with improper shape to attribute "
+                       "did not raise exception.")
+
 
 def test_labelschunks_access():
     samples = N.arange(12).reshape((4, 3))

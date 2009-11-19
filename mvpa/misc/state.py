@@ -623,7 +623,7 @@ class UniformLengthCollection(Collection):
         Collection.__init__(self, *args, **kwargs)
 
 
-    def set_length(self, value):
+    def set_length_check(self, value):
         """
         Parameters
         ----------
@@ -632,6 +632,8 @@ class UniformLengthCollection(Collection):
           this length.
         """
         self.__uniform_length = value
+        for v in self.items.values():
+            v.set_length_check(value)
 
 
     def add_collectable(self, item):
@@ -649,7 +651,8 @@ class UniformLengthCollection(Collection):
                              % (item.name,
                                 self.__uniform_length,
                                 str(self)))
-
+        # tell the attribute to maintain the desired length
+        item.set_length_check(self.__uniform_length)
         Collection.add_collectable(self, item)
 
 
