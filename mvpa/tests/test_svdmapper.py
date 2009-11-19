@@ -84,8 +84,8 @@ class SVDMapperTests(unittest.TestCase):
         self.failUnlessEqual(rp.shape, self.largefeat.shape)
         self.failUnless((N.round(rp) == self.largefeat).all())
 
-        self.failUnlessEqual(pm.getInSize(), 40)
-        self.failUnlessEqual(pm.getOutSize(), 10)
+        self.failUnlessEqual(pm.get_insize(), 40)
+        self.failUnlessEqual(pm.get_outsize(), 10)
 
         # copy mapper
         pm2 = deepcopy(pm)
@@ -94,12 +94,12 @@ class SVDMapperTests(unittest.TestCase):
         pm2.selectOut([0,1])
 
         # sanity check
-        self.failUnlessEqual(pm2.getInSize(), 40)
-        self.failUnlessEqual(pm2.getOutSize(), 2)
+        self.failUnlessEqual(pm2.get_insize(), 40)
+        self.failUnlessEqual(pm2.get_outsize(), 2)
 
         # but orginal mapper must be left intact
-        self.failUnlessEqual(pm.getInSize(), 40)
-        self.failUnlessEqual(pm.getOutSize(), 10)
+        self.failUnlessEqual(pm.get_insize(), 40)
+        self.failUnlessEqual(pm.get_outsize(), 10)
 
         # data should still be fully recoverable by 'reverse()'
         rp2 = pm2.reverse(p[:,[0,1]])

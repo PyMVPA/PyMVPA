@@ -454,7 +454,7 @@ def test_masked_featureselection():
 
     # default must be no mask
     ok_(data.nfeatures == 120)
-    ok_(data.a.mapper.getOutSize() == 120)
+    ok_(data.a.mapper.get_outsize() == 120)
 
     # check that full mask uses all features
     # this uses auto-mapping of selection arrays in __getitem__
@@ -473,7 +473,7 @@ def test_masked_featureselection():
 
     # check that feature selection does not change source data
     ok_(data.nfeatures == 120)
-    assert_equal(data.a.mapper.getOutSize(), 120)
+    assert_equal(data.a.mapper.get_outsize(), 120)
 
     # check selection with feature list
     sel = data[:, [0, 37, 119]]

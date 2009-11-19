@@ -90,12 +90,12 @@ class _WaveletMapper(Mapper):
         raise NotImplementedError
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the number of original features."""
         return self._inshape[1:]
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the number of wavelet components."""
         return self._outshape[1:]
 
@@ -274,7 +274,7 @@ class WaveletPacketMapper(_WaveletMapper):
             mode=self._mode, maxlevel=self.__level)
 
         # prepare storage
-        signal_shape = wp.shape[:1] + self.getInSize()
+        signal_shape = wp.shape[:1] + self.get_insize()
         signal = N.zeros(signal_shape)
         Ntime_points = self._intimepoints
         for indexes in _getIndexes(signal_shape,

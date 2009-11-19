@@ -27,13 +27,13 @@ class SOMMapperTests(unittest.TestCase):
 
         # no acces when nothing is there
         self.failUnlessRaises(RuntimeError, som._accessKohonen)
-        self.failUnlessRaises(RuntimeError, som.getInSize)
-        self.failUnlessRaises(RuntimeError, som.getOutSize)
+        self.failUnlessRaises(RuntimeError, som.get_insize)
+        self.failUnlessRaises(RuntimeError, som.get_outsize)
 
         som.train(colors)
 
-        self.failUnless(som.getInSize() == 3)
-        self.failUnless(som.getOutSize() == (10,5))
+        self.failUnless(som.get_insize() == 3)
+        self.failUnless(som.get_outsize() == (10,5))
 
         fmapped = som(colors)
         self.failUnless(fmapped.shape == (8, 2))

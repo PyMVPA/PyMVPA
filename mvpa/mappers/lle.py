@@ -96,12 +96,12 @@ class LLEMapper(Mapper):
         return self.node(data)
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the size of the entity in input space"""
         return self.node.input_dim
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the size of the entity in output space"""
         return self.node.output_dim
 

@@ -88,13 +88,13 @@ class SampleGroupMapper(Mapper):
         return N.array(mdata)
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the number of original samples which were combined.
         """
         return self.__datashape[0]
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the number of output samples.
         """
         return self.__datashape[0]

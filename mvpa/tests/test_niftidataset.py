@@ -190,7 +190,7 @@ class NiftiDatasetTests(unittest.TestCase):
                                     Event(onset=1, duration=2, label=2,
                                           chunk=1, features=[2000, 2001])],
                             mask=dsmask)
-        nfeatures = ds.a.mapper._mappers[1].getInSize()
+        nfeatures = ds.a.mapper._mappers[1].get_insize()
         mask = N.zeros(sample_size)
         mask[0, 0, 0] = mask[1, 0, 1] = mask[0, 0, 1] = 1 # select only 3
         # but since 0th is masked out in the dataset, we should end up
