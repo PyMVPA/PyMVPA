@@ -31,8 +31,8 @@ class FlattenMapper(Mapper):
     At present this mapper is only designed (and tested) to work with C-ordered
     arrays.
     """
-    def __init__(self):
-        Mapper.__init__(self)
+    def __init__(self, **kwargs):
+        Mapper.__init__(self, **kwargs)
         self.__origshape = None
         self.__nfeatures = None
         self.__coord_helper = None
@@ -149,23 +149,7 @@ class FlattenMapper(Mapper):
         return False
 
 
-    def get_outids(self, in_id):
-        """Determined the output id from a input space id/coordinate.
-
-        Parameters
-        ----------
-        in_id : tuple, int
-
-        Returns
-        -------
-        list
-          The list contains exactly one integer element, since the mapper
-          performs a one-to-one mapping between input and input features.
-        """
-        # check for proper coordinate (also handle the case of 1d coords given
-        if not self.is_valid_inid(in_id):
-            raise ValueError("Invalid input id/coordinate (%s). Mapper input "
-                             "shape is '%s' with %i output feature(s)t ."
-                             % (str(in_id), self.__origshape, self.__nfeatures))
+    def _get_outids(self, in_ids):
         # this whole thing only works for C-ordered arrays
-        return [N.sum(self.__coord_helper * N.asanyarray(in_id))]
+        return [N.sum(self.__coord_helper * N.asanyarray(in_id))
+                    for in_id in in_ids]

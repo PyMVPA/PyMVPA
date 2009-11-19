@@ -397,7 +397,7 @@ class FeatureSubsetMapper(Mapper):
     samples matrices. If necessary it can be combined for FlattenMapper to
     handle multidimensional data.
     """
-    def __init__(self, mask):
+    def __init__(self, mask, **kwargs):
         """
         Parameters
         ----------
@@ -405,7 +405,7 @@ class FeatureSubsetMapper(Mapper):
           This is a one-dimensional array whos non-zero elements define both
           the feature subset and the data shape the mapper is going to handle.
         """
-        Mapper.__init__(self)
+        Mapper.__init__(self, **kwargs)
         self.__forwardmap = None
 
         if not len(mask.shape) == 1:
@@ -485,6 +485,11 @@ class FeatureSubsetMapper(Mapper):
                   % (data.shape, self.__mask.shape))
 
 
+    def get_insize(self):
+        """Return the length of the input space vectors."""
+        return len(self.__mask)
+
+
     def get_outsize(self):
         """OutSize is a number of non-0 elements in the mask"""
         return self.__masknonzerosize
@@ -529,26 +534,11 @@ class FeatureSubsetMapper(Mapper):
         return self.__mask[id]
 
 
-    def get_outids(self, in_id):
-        """Translate an input id/coordinate into an output id/coordinate.
-
-        Parameters
-        ----------
-        in_id : int
-
-        Returns
-        -------
-        list
-          A one-element list with an integer id.
-        """
-        if not self.is_valid_inid(in_id):
-            raise ValueError("Input id/coordinated '%s' is not mapped into the "
-                             "the output space (i.e. not part of the mask)."
-                             % str(in_id))
+    def _get_outids(self, in_ids):
         # lazy forward mapping
         if self.__forwardmap is None:
             self._init_forwardmap()
-        return [self.__forwardmap[in_id]]
+        return [self.__forwardmap[in_id] for in_id in in_ids]
 
 
     def select_out(self, slicearg, cow=True):
