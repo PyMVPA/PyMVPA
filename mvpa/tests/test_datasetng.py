@@ -134,6 +134,36 @@ def test_shape_conversion():
     assert_array_equal(ds.samples, [range(12), range(12, 24)])
 
 
+def test_multidim_attrs():
+    samples = N.arange(24).reshape(2, 3, 4)
+    # have a dataset with two samples -- mapped from 2d into 1d
+    # but have 2d labels and 3d chunks -- whatever that is
+    ds = Dataset.from_masked(samples.copy(),
+                             labels=samples.copy(),
+                             chunks=N.random.normal(size=(2,10,4,2)))
+    assert_equal(ds.nsamples, 2)
+    assert_equal(ds.nfeatures, 12)
+    assert_equal(ds.sa.labels.shape, (2,3,4))
+    assert_equal(ds.sa.chunks.shape, (2,10,4,2))
+
+    # try slicing
+    subds = ds[0]
+    assert_equal(subds.nsamples, 1)
+    assert_equal(subds.nfeatures, 12)
+    assert_equal(subds.sa.labels.shape, (1,3,4))
+    assert_equal(subds.sa.chunks.shape, (1,10,4,2))
+
+    # add multidim feature attr
+    fattr = ds.mapper.forward(samples)
+    assert_equal(fattr.shape, (2,12))
+    # should puke -- first axis is #samples
+    assert_raises(ValueError, ds.fa.add, 'moresamples', fattr)
+    # but that should be fine
+    ds.fa.add('moresamples', fattr.T)
+    assert_equal(ds.fa.moresamples.shape, (12,2))
+
+
+
 def test_samples_shape():
     ds = Dataset.from_masked(N.ones((10, 2, 3, 4)), labels=1, chunks=1)
     ok_(ds.samples.shape == (10, 24))
