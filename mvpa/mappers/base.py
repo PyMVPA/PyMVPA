@@ -14,8 +14,6 @@ import numpy as N
 
 from mvpa.base.types import is_datasetlike
 
-from mvpa.mappers.metric import Metric
-
 from mvpa.misc.vproperty import VProperty
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -50,17 +48,12 @@ class Mapper(object):
              <--------/
                reverse
     """
-    def __init__(self, metric=None, inspace=None):
+    def __init__(self, inspace=None):
         """
         :Parameters:
-          metric : Metric
-            Optional metric
         """
-        self.__metric = None
         self.__inspace = inspace
         """Pylint happiness"""
-        self.setMetric(metric)
-        """Actually assign the metric"""
 
     #
     # The following methods are abstract and merely define the intended
@@ -281,59 +274,10 @@ class Mapper(object):
         return []
 
 
-    def getNeighbor(self, outId, *args, **kwargs):
-        """Get feature neighbors in input space, given an id in output space.
-
-        This method has to be reimplemented whenever a derived class does not
-        provide an implementation for :meth:`~mvpa.mappers.base.Mapper.getInId`.
-        """
-        if self.metric is None:
-            raise RuntimeError, "No metric was assigned to %s, thus no " \
-                  "neighboring information is present" % self
-
-        if self.is_valid_outid(outId):
-            inId = self.getInId(outId)
-            for inId in self.getNeighborIn(inId, *args, **kwargs):
-                yield self.getOutId(inId)
-
-
     #
     # The following methods provide common functionality for all mappers
     # and there should be no immediate need to reimplement them
     #
-    def getNeighborIn(self, inId, *args, **kwargs):
-        """Return the list of coordinates for the neighbors.
-
-        :Parameters:
-          inId
-            id (index) of an element in input dataspace.
-          *args, **kwargs
-            Any additional arguments are passed to the embedded metric of the
-            mapper.
-
-        XXX See TODO below: what to return -- list of arrays or list
-        of tuples?
-        """
-        if self.metric is None:
-            raise RuntimeError, "No metric was assigned to %s, thus no " \
-                  "neighboring information is present" % self
-
-        is_valid_inid = self.is_valid_inid
-        if is_valid_inid(inId):
-            for neighbor in self.metric.getNeighbor(inId, *args, **kwargs):
-                if is_valid_inid(neighbor):
-                    yield neighbor
-
-
-    def getNeighbors(self, outId, *args, **kwargs):
-        """Return the list of coordinates for the neighbors.
-
-        By default it simply constructs the list based on
-        the generator returned by getNeighbor()
-        """
-        return [ x for x in self.getNeighbor(outId, *args, **kwargs) ]
-
-
     def get_outids(self, in_ids=None, **kwargs):
         """Determine the output ids from a list of input space id/coordinates.
 
@@ -390,10 +334,8 @@ class Mapper(object):
 
 
     def __repr__(self):
-        if self.__metric is not None:
-            s = "metric=%s" % repr(self.__metric)
-        else:
-            s = ''
+        # TODO come on!
+        s=''
         return "%s(%s)" % (self.__class__.__name__, s)
 
 
@@ -415,21 +357,6 @@ class Mapper(object):
         self.__inspace = name
 
 
-    def getMetric(self):
-        """To make pylint happy"""
-        return self.__metric
-
-
-    def setMetric(self, metric):
-        """To make pylint happy"""
-        if metric is not None and not isinstance(metric, Metric):
-            raise ValueError, "metric for Mapper must be an " \
-                              "instance of a Metric class . Got %s" \
-                                % `type(metric)`
-        self.__metric = metric
-
-
-    metric = property(fget=getMetric, fset=setMetric)
     nfeatures = VProperty(fget=get_outsize)
 
 
