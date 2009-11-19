@@ -167,32 +167,13 @@ class Mapper(object):
         return mds
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the size of the entity in input space"""
         raise NotImplementedError
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the size of the entity in output space"""
-        raise NotImplementedError
-
-
-    def selectOut(self, outIds):
-        """Limit the OUT space to a certain set of features.
-
-        :Parameters:
-          outIds: sequence
-            Subset of ids of the current feature in OUT space to keep.
-        """
-        raise NotImplementedError
-
-
-    def getInId(self, outId):
-        """Translate a feature id into a coordinate/index in input space.
-
-        Such a translation might not be meaningful or even possible for a
-        particular mapping algorithm and therefore cannot be relied upon.
-        """
         raise NotImplementedError
 
 
@@ -205,7 +186,7 @@ class Mapper(object):
 
         Override if OUT space is not simly a 1D vector
         """
-        return(outId >= 0 and outId < self.getOutSize())
+        return(outId >= 0 and outId < self.get_outsize())
 
 
     def isValidInId(self, inId):
@@ -362,7 +343,7 @@ class Mapper(object):
 
 
     metric = property(fget=getMetric, fset=setMetric)
-    nfeatures = VProperty(fget=getOutSize)
+    nfeatures = VProperty(fget=get_outsize)
 
 
 
@@ -527,12 +508,12 @@ class ProjectionMapper(Mapper):
         return recon
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the number of original features."""
         return self._proj.shape[0]
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the number of components to project on."""
         return self._proj.shape[1]
 
@@ -637,7 +618,7 @@ class CombinedMapper(Mapper):
         # along first dimension
         data = N.asanyarray(data).T
 
-        if not len(data) == self.getOutSize():
+        if not len(data) == self.get_outsize():
             raise ValueError, \
                   "Data shape does match mapper reverse mapping properties."
 
@@ -645,7 +626,7 @@ class CombinedMapper(Mapper):
         fsum = 0
         for m in self._mappers:
             # calculate upper border
-            fsum_new = fsum + m.getOutSize()
+            fsum_new = fsum + m.get_outsize()
 
             result.append(m.reverse(data[fsum:fsum_new].T))
 
@@ -666,26 +647,26 @@ class CombinedMapper(Mapper):
             A dataset with the number of features matching the `outSize` of the
             `CombinedMapper`.
         """
-        if dataset.nfeatures != self.getOutSize():
+        if dataset.nfeatures != self.get_outsize():
             raise ValueError, "Training dataset does not match the mapper " \
                               "properties."
 
         fsum = 0
         for m in self._mappers:
             # need to split the dataset
-            fsum_new = fsum + m.getOutSize()
+            fsum_new = fsum + m.get_outsize()
             m.train(dataset[:, range(fsum, fsum_new)])
             fsum = fsum_new
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the size of the entity in input space"""
-        return N.sum(m.getInSize() for m in self._mappers)
+        return N.sum(m.get_insize() for m in self._mappers)
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the size of the entity in output space"""
-        return N.sum(m.getOutSize() for m in self._mappers)
+        return N.sum(m.get_outsize() for m in self._mappers)
 
 
     def selectOut(self, outIds):
@@ -704,10 +685,10 @@ class CombinedMapper(Mapper):
         fsum = 0
         for m in self._mappers:
             # bool which meta feature ids belongs to this mapper
-            selector = N.logical_and(ids < fsum + m.getOutSize(), ids >= fsum)
+            selector = N.logical_and(ids < fsum + m.get_outsize(), ids >= fsum)
             # make feature ids relative to this dataset
             selected = ids[selector] - fsum
-            fsum += m.getOutSize()
+            fsum += m.get_outsize()
             # finally apply to mapper
             m.selectOut(selected)
 
@@ -727,7 +708,7 @@ class CombinedMapper(Mapper):
         """
         fsum = 0
         for m in self._mappers:
-            fsum_new = fsum + m.getOutSize()
+            fsum_new = fsum + m.get_outsize()
             if outId >= fsum and outId < fsum_new:
                 return m.getNeighbor(outId - fsum, *args, **kwargs)
             fsum = fsum_new
@@ -814,21 +795,21 @@ class ChainMapper(Mapper):
             last mapper in the chain (which is identical to the one of the
             `ChainMapper` itself).
         """
-        if dataset.nfeatures != self.getOutSize():
+        if dataset.nfeatures != self.get_outsize():
             raise ValueError, "Training dataset does not match the mapper " \
                               "properties."
 
         self._mappers[-1].train(dataset)
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the size of the entity in input space"""
-        return self._mappers[0].getInSize()
+        return self._mappers[0].get_insize()
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the size of the entity in output space"""
-        return self._mappers[-1].getOutSize()
+        return self._mappers[-1].get_outsize()
 
 
     def selectOut(self, outIds):

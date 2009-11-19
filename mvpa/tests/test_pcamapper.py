@@ -71,9 +71,9 @@ class PCAMapperTests(unittest.TestCase):
         self.failUnlessEqual(rp.shape, self.largefeat.shape)
         self.failUnless((N.round(rp) == self.largefeat).all())
 
-        self.failUnlessEqual(self.pm.getInSize(), 40)
-#        self.failUnlessEqual(self.pm.getOutSize(), 10)
-        self.failUnlessEqual(self.pm.getOutSize(), 40)
+        self.failUnlessEqual(self.pm.get_insize(), 40)
+#        self.failUnlessEqual(self.pm.get_outsize(), 10)
+        self.failUnlessEqual(self.pm.get_outsize(), 40)
 
         # copy mapper
         pm2 = deepcopy(self.pm)
@@ -82,13 +82,13 @@ class PCAMapperTests(unittest.TestCase):
         pm2.selectOut([0,1])
 
         # sanity check
-        self.failUnlessEqual(pm2.getInSize(), 40)
-        self.failUnlessEqual(pm2.getOutSize(), 2)
+        self.failUnlessEqual(pm2.get_insize(), 40)
+        self.failUnlessEqual(pm2.get_outsize(), 2)
 
         # but orginal mapper must be left intact
-        self.failUnlessEqual(self.pm.getInSize(), 40)
-#        self.failUnlessEqual(self.pm.getOutSize(), 10)
-        self.failUnlessEqual(self.pm.getOutSize(), 40)
+        self.failUnlessEqual(self.pm.get_insize(), 40)
+#        self.failUnlessEqual(self.pm.get_outsize(), 10)
+        self.failUnlessEqual(self.pm.get_outsize(), 40)
 
         # data should still be fully recoverable by 'reverse()'
         rp2 = pm2.reverse(p[:,[0,1]])

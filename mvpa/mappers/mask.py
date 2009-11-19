@@ -166,12 +166,12 @@ class MaskMapper(Mapper):
         return mapped
 
 
-    def getInSize(self):
+    def get_insize(self):
         """InShape is a shape of original mask"""
         return self.__masksize
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """OutSize is a number of non-0 elements in the mask"""
         return self.__masknonzerosize
 
@@ -284,7 +284,7 @@ class MaskMapper(Mapper):
         # this should be implemented properly when rewriting MaskMapper into
         # a 1D -> 1D Mapper
         if isinstance(outIds, slice):
-            outIds = range(*outIds.indices(self.getOutSize()))
+            outIds = range(*outIds.indices(self.get_outsize()))
 
         # XXX for now do evil expanding of selection arrays
         # this should be implemented properly when rewriting MaskMapper into

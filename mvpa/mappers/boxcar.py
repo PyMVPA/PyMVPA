@@ -173,7 +173,7 @@ class BoxcarMapper(Mapper):
         return output
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the number of original samples which were combined.
         """
 
@@ -198,7 +198,7 @@ class BoxcarMapper(Mapper):
             return False
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the number of output samples.
         """
 
