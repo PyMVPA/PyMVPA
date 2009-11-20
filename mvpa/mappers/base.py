@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+import copy
 
 from mvpa.base.types import is_datasetlike
 
@@ -459,8 +460,8 @@ class FeatureSubsetMapper(Mapper):
             raise ValueError(
                   "Only 2d or 1d data can be reverse mapped. Additionally, "
                   "each sample vector has to match the size of the mask. "
-                  "Got data of shape %s, when mask is %s"
-                  % (data.shape, self.__mask.shape))
+                  "Got data of shape %s, when mask non-zeros are %i"
+                  % (data.shape, self.__masknonzerosize))
 
 
     def _train(self, dataset):
@@ -824,6 +825,12 @@ class ChainMapper(Mapper):
             raise ValueError, 'ChainMapper needs at least one embedded mapper.'
 
         self._mappers = mappers
+
+
+    def __copy__(self):
+        # XXX need to copy the base class stuff as well
+        return self.__class__([copy.copy(m) for m in self],
+                              inspace=self.get_inspace())
 
 
     def forward(self, data):
