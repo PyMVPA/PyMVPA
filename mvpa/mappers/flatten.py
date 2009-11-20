@@ -31,11 +31,20 @@ class FlattenMapper(Mapper):
     At present this mapper is only designed (and tested) to work with C-ordered
     arrays.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, shape=None, **kwargs):
+        """
+        Parameters
+        ----------
+        shape : tuple
+          The shape of a single sample. If this argument is given the mapper
+          is going to be fully configured and no training is necessary anymore.
+        """
         Mapper.__init__(self, **kwargs)
         self.__origshape = None
         self.__nfeatures = None
         self.__coord_helper = None
+        if not shape is None:
+            self._train_with_shape(shape)
 
 
     @accepts_dataset_as_samples
@@ -52,10 +61,15 @@ class FlattenMapper(Mapper):
         if N.isfortran(samples):
             raise ValueError("FlattenMapper currently works for C-ordered "
                              "arrays only.")
+        self._train_with_shape(samples.shape[1:])
 
+
+    def _train_with_shape(self, shape):
+        """Configure the mapper with a particular sample shape.
+        """
         # infer the sample shape from the data under the assumption that the
         # first axis is the samples-separating dimension
-        self.__origshape = samples.shape[1:]
+        self.__origshape = shape
         # total number of features in a sample
         self.__nfeatures = N.prod(self.__origshape)
         # compute a vector that aids computing in coords into feature ids
