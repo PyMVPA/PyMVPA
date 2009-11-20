@@ -261,3 +261,14 @@ def test_chainmapper():
     assert_false(cm.is_valid_outid(2))
     # but input is still full
     assert_equal(cm.get_insize(), 16)
+
+    # let's map something
+    mdata = cm.forward(data)
+    assert_array_equal(mdata, target[:,[10,15]])
+    # and back
+    rdata = cm.reverse(mdata)
+    # original shape
+    assert_equal(rdata.shape, data.shape)
+    # content as far it could be restored
+    assert_array_equal(rdata[rdata > 0], data[rdata > 0])
+    assert_equal(N.sum(rdata > 0), 8)
