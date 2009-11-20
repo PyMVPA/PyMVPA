@@ -51,8 +51,8 @@ class Mapper(object):
         """
         :Parameters:
         """
-        self.__inspace = inspace
-        """Pylint happiness"""
+        self.__inspace = None
+        self.set_inspace(inspace)
 
     #
     # The following methods are abstract and merely define the intended
@@ -265,12 +265,10 @@ class Mapper(object):
         -------
         list
           The list that contains all corresponding output ids. The default
-          implementation returns an empty list -- meaning there is no
-          one-to-one, or one-to-many correspondance of input and output feature
-          spaces.
+          implementation returns the `in_ids` as is.
         """
         # reimplement in derived classes to actually perform something useful
-        return []
+        return in_ids
 
 
     #
@@ -371,22 +369,32 @@ class FeatureSubsetMapper(Mapper):
         """
         Parameters
         ----------
-        mask : array
+        mask : array, int
           This is a one-dimensional array whos non-zero elements define both
           the feature subset and the data shape the mapper is going to handle.
+          In case `mask` is an int, it is expaned into a boolean vector consisting
+          of as many `True` elements.
         """
         Mapper.__init__(self, **kwargs)
         self.__forwardmap = None
 
-        if not len(mask.shape) == 1:
-            raise ValueError("The mask has to be a one-dimensional vector. "
-                             "For multidimensional data consider FlattenMapper "
-                             "before running SubsetMapper.")
-        self.__mask = (mask != 0)
+        if isinstance(mask, int):
+            self.__mask = N.ones(mask, dtype='bool')
+        else:
+            if not len(mask.shape) == 1:
+                raise ValueError("The mask has to be a one-dimensional vector. "
+                                 "For multidimensional data consider FlattenMapper "
+                                 "before running SubsetMapper.")
+            self.__mask = (mask != 0)
         self.__masknonzerosize = N.sum(self.__mask) # number of non-zeros
 
 
-    def _init_forwardmap(self):
+    def __repr__(self):
+        s = super(FeatureSubsetMapper, self).__repr__()
+        return s.replace("(", "(mask=%s," % repr(self.__mask), 1)
+
+
+    def __init_forwardmap(self):
         """Init the forward coordinate map needed for id translation.
 
         This is a separate function for lazy-computation of this map
@@ -455,6 +463,11 @@ class FeatureSubsetMapper(Mapper):
                   % (data.shape, self.__mask.shape))
 
 
+    def _train(self, dataset):
+        # nothing to be trained here
+        pass
+
+
     def get_insize(self):
         """Return the length of the input space vectors."""
         return len(self.__mask)
@@ -507,7 +520,7 @@ class FeatureSubsetMapper(Mapper):
     def _get_outids(self, in_ids):
         # lazy forward mapping
         if self.__forwardmap is None:
-            self._init_forwardmap()
+            self.__init_forwardmap()
         return [self.__forwardmap[in_id] for in_id in in_ids]
 
 
@@ -793,21 +806,10 @@ class CombinedMapper(Mapper):
 
 
 class ChainMapper(Mapper):
-    """Meta mapper that embedded a chain of other mappers.
+    """Meta mapper that embeds a chain of other mappers.
 
     Each mapper in the chain is called successively to perform forward or
-    reverse mapping.
-
-    .. note::
-
-      In its current implementation the `ChainMapper` treats all but the last
-      mapper as simple pre-processing (in forward()) or post-processing (in
-      reverse()) steps. All other capabilities, e.g. training and neighbor
-      metrics are provided by or affect *only the last mapper in the chain*.
-
-      With respect to neighbor metrics this means that they are determined
-      based on the input space of the *last mapper* in the chain and *not* on
-      the input dataspace of the `ChainMapper` as a whole
+    reverse mapping. The class behaves to some degree like a list container.
     """
     def __init__(self, mappers, **kwargs):
         """
@@ -825,112 +827,152 @@ class ChainMapper(Mapper):
 
 
     def forward(self, data):
-        """Calls all mappers in the chain successively.
+        """Forward data or datasets through the chain.
 
-        :Parameter:
-          data
-            data to be chain-mapped.
+        See baseclass method for more information.
         """
         mp = data
-        for m in self._mappers:
+        for m in self:
             mp = m.forward(mp)
-
         return mp
 
 
     def reverse(self, data):
-        """Calls all mappers in the chain successively, in reversed order.
+        """Reverse-maps data or datasets through the chain (backwards).
 
-        :Parameter:
-          data: array
-            data array to be reverse mapped into the orginal dataspace.
+        See baseclass method for more information.
         """
         mp = data
-        for m in reversed(self._mappers):
+        for m in reversed(self):
             mp = m.reverse(mp)
-
         return mp
 
 
-    def train(self, dataset):
-        """Trains the *last* mapper in the chain.
+    def _train(self, dataset):
+        """Trains the mapper chain.
 
-        :Parameter:
-          dataset: :class:`~mvpa.datasets.base.Dataset` or subclass
-            A dataset with the number of features matching the `outSize` of the
-            last mapper in the chain (which is identical to the one of the
-            `ChainMapper` itself).
+        The training dataset is used to train the first mapper. Afterwards it is
+        forward-mapped by this (now trained) mapper and the transformed dataset
+        and then used to train the next mapper. This procedure is done till all
+        mapper are trained.
+
+        Parameters
+        ----------
+        dataset: `Dataset`
         """
-        if dataset.nfeatures != self.get_outsize():
-            raise ValueError, "Training dataset does not match the mapper " \
-                              "properties."
-
-        self._mappers[-1].train(dataset)
+        nmappers = len(self) - 1
+        tdata = dataset
+        for i, mapper in enumerate(self):
+            mapper.train(tdata)
+            # forward through all but the last mapper
+            if i < nmappers:
+                tdata = mapper.forward(tdata)
 
 
     def get_insize(self):
         """Returns the size of the entity in input space"""
-        return self._mappers[0].get_insize()
+        return self[0].get_insize()
 
 
     def get_outsize(self):
         """Returns the size of the entity in output space"""
-        return self._mappers[-1].get_outsize()
+        return self[-1].get_outsize()
 
 
-    def get_outids(self, in_id):
-        """Determine the output id from a input space id/coordinate.
+    def is_valid_inid(self, id):
+        """Queries the first mapper in the chain for this information."""
+        return self[0].is_valid_inid(id)
 
-        Parameters
-        ----------
-        in_id : tuple, int
 
-        Returns
-        -------
-        list
-          The list contains all corresponding output ids. The default
-          implementation return an empty list -- meaning there is no one-to-one,
-          or one-to-many correspondance of input and output feature spaces.
+    def is_valid_outid(self, id):
+        """Queries the last mapper in the chain for this information."""
+        return self[-1].is_valid_outid(id)
+
+
+    def get_outids(self, in_ids=None, **kwargs):
+        """Determine the output ids from a list of input space id/coordinates.
+
+        See the documentation of this method in the base class for more
+        information. This implementation simply calls this method subsequently
+        for all mappers in the chain.
         """
-        return []
+        # first call the baseclass method to let it take care of any
+        # space-specific kwargs that apply to the chain mapper itself
+        # no in_ids will be transformed, since the base class implementation
+        # of _get_outids() does nothing by default
+        in_ids, kwargs = Mapper.get_outids(self, in_ids=in_ids, **kwargs)
+
+        # no feed it though the chain
+        for mapper in (self):
+            in_ids, kwargs = mapper.get_outids(in_ids, **kwargs)
+
+        return (in_ids, kwargs)
 
 
-    def selectOut(self, outIds):
-        """Remove some elements from the *last* mapper in the chain.
+    def __ensure_selectable_tail(self):
+        """Append a FeatureSubsetMapper to the chain if there is none yet."""
+        last_mapper = self[-1]
+        if not isinstance(last_mapper, FeatureSubsetMapper):
+            self.append(FeatureSubsetMapper(last_mapper.get_outsize()))
 
-        :Parameter:
-          outIds: sequence
-            All output feature ids to be selected/kept.
+
+    def select_out(self, slicearg, cow=True):
+        """Limit the feature subset selection.
+
+        To achieve this a FeatureSubsetMapper is appended to the mapper chain
+        (if necessary) and the arguments are passed to it.
+
+        See baseclass method for more information.
         """
-        self._mappers[-1].selectOut(outIds)
+        self.__ensure_selectable_tail()
+        self[-1].select_out(slicearg, cow)
 
 
-    def getNeighbor(self, outId, *args, **kwargs):
-        """Get the ids of the neighbors of a single feature in output dataspace.
+    def discard_out(self, slicearg, cow=True):
+        """Limit the feature subset selection.
 
-        .. note::
+        To achieve this a FeatureSubsetMapper is appended to the mapper chain
+        (if necessary) and the arguments are passed to it.
 
-          The neighbors are determined based on the input space of the *last
-          mapper* in the chain and *not* on the input dataspace of the
-          `ChainMapper` as a whole!
-
-        :Parameters:
-          outId: int
-            Single id of a feature in output space, whos neighbors should be
-            determined.
-          *args, **kwargs
-            Additional arguments are passed to the metric of the embedded
-            mapper, that is responsible for the corresponding feature.
-
-        Returns a list of outIds
+        See baseclass method for more information.
         """
-        return self._mappers[-1].getNeighbor(outId, *args, **kwargs)
+        self.__ensure_selectable_tail()
+        self[-1].discard_out(slicearg, cow)
 
 
     def __repr__(self):
-        s = Mapper.__repr__(self).rstrip(' )')
-        # beautify
-        if not s[-1] == '(':
-            s += ' '
-        s += 'mappers=[%s])' % ', '.join([m.__repr__() for m in self._mappers])
-        return s
+        s = Mapper.__repr__(self)
+        m_repr = 'mappers=[%s]' % ', '.join([repr(m) for m in self])
+        return s.replace("(", "(%s," % m_repr, 1)
+
+    #
+    # Behave as a container
+    #
+    def append(self, mapper):
+        """Append a mapper to the chain.
+
+        The mapper's input size has to match the output size of the current
+        chain.
+        """
+        if not self.get_outsize() == mapper.get_insize():
+            raise ValueError("To be appended mapper does not match the output "
+                             "size of the current chain (%i vs. %i)."
+                             % (mapper.get_insize(),  self.get_outsize()))
+        self._mappers.append(mapper)
+
+
+    def __len__(self):
+        return len(self._mappers)
+
+
+    def __iter__(self):
+        for m in self._mappers:
+            yield m
+
+
+    def __reversed__(self):
+        return reversed(self._mappers)
+
+
+    def __getitem__(self, key):
+        return self._mappers[key]

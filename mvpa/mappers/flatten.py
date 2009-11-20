@@ -153,3 +153,16 @@ class FlattenMapper(Mapper):
         # this whole thing only works for C-ordered arrays
         return [N.sum(self.__coord_helper * N.asanyarray(in_id))
                     for in_id in in_ids]
+
+
+    def get_insize(self):
+        """Return the (flattened) size of input space vectors."""
+        return self.__nfeatures
+
+
+    def get_outsize(self):
+        """Return the size of output space vectors."""
+        return self.__nfeatures
+
+
+
