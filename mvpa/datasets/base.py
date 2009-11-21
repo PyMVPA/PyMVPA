@@ -18,7 +18,8 @@ from mvpa.misc.state import SampleAttributesCollection, \
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
 from mvpa.misc.support import idhash as idhash_
-from mvpa.mappers.mask import MaskMapper
+from mvpa.mappers.base import ChainMapper, FeatureSubsetMapper
+from mvpa.mappers.flatten import FlattenMapper
 
 if __debug__:
     from mvpa.base import debug
@@ -497,7 +498,7 @@ class Dataset(object):
 
         # and adjusting the mapper (if any)
         if a.isKnown('mapper') and a.isSet('mapper'):
-            a['mapper'].value.selectOut(args[1])
+            a['mapper'].value.select_out(args[1])
 
         # and after a long way instantiate the new dataset of the same type
         return self.__class__(samples, sa=sa, fa=fa, a=a)
@@ -604,7 +605,9 @@ class Dataset(object):
         if mask is None:
             mask = N.ones(samples.shape[1:], dtype='bool')
 
-        mapper = MaskMapper(mask)
+        fm = FlattenMapper(shape=mask.shape)
+        submapper = FeatureSubsetMapper(mask=fm.forward(mask))
+        mapper = ChainMapper([fm, submapper])
         return cls.from_basic(samples, labels=labels, chunks=chunks,
                               mapper=mapper)
 
