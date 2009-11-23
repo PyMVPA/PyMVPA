@@ -25,10 +25,14 @@ from mvpa.misc.state import SampleAttributesCollection, \
 
 from tests_warehouse import *
 
+class myarray(N.ndarray):
+    pass
+
+
 # TODO Urgently need test to ensure that multidimensional samples and feature
 #      attributes work and adjust docs to mention that we support such
 def test_from_basic():
-    samples = N.arange(12).reshape((4, 3))
+    samples = N.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
 
@@ -38,9 +42,10 @@ def test_from_basic():
     ok_(is_datasetlike(ds))
     ok_(not is_datasetlike(labels))
 
-    ## XXX stuff that needs thought:
+    # array subclass survives
+    ok_(isinstance(ds.samples, myarray))
 
-    # ds.reset() << I guess we don't want that, but it is there.
+    ## XXX stuff that needs thought:
 
     # ds.sa (empty) has this in the public namespace:
     #   add, get, getvalue, isKnown, isSet, items, listing, name, names
@@ -80,11 +85,13 @@ def test_from_basic():
 
 
 def test_labelschunks_access():
-    samples = N.arange(12).reshape((4, 3))
+    samples = N.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
-    ds = Dataset.from_basic(N.arange(12).reshape((4,3)),
-                            labels, chunks)
+    ds = Dataset.from_basic(samples, labels, chunks)
+
+    # array subclass survives
+    ok_(isinstance(ds.samples, myarray))
 
     assert_array_equal(ds.labels, labels)
     assert_array_equal(ds.chunks, chunks)
@@ -103,9 +110,13 @@ def test_labelschunks_access():
 
 
 def test_from_masked():
-    ds = Dataset.from_masked(samples=[range(5)], labels=1, chunks=1)
+    ds = Dataset.from_masked(samples=N.atleast_2d(N.arange(5)).view(myarray),
+                             labels=1, chunks=1)
     # simple sequence has to be a single pattern
     assert_equal(ds.nsamples, 1)
+    # array subclass survives
+    ok_(isinstance(ds.samples, myarray))
+
     # check correct pattern layout (1x5)
     assert_array_equal(ds.samples, [[0, 1, 2, 3, 4]])
 
@@ -139,8 +150,11 @@ def test_from_masked():
 
 
 def test_shape_conversion():
-    ds = Dataset.from_masked(N.arange(24).reshape((2, 3, 4)),
+    ds = Dataset.from_masked(N.arange(24).reshape((2, 3, 4)).view(myarray),
                              labels=1, chunks=1)
+    # array subclass survives
+    ok_(isinstance(ds.samples, myarray))
+
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.samples.shape, (2, 12))
     assert_array_equal(ds.samples, [range(12), range(12, 24)])
@@ -182,13 +196,16 @@ def test_samples_shape():
 
 
 def test_basic_datamapping():
-    samples = N.arange(24).reshape((4, 3, 2))
+    samples = N.arange(24).reshape((4, 3, 2)).view(myarray)
 
     # cannot handle 3d samples without a mapper
     assert_raises(ValueError, Dataset, samples)
 
     ds = Dataset.from_basic(samples,
             mapper=DenseArrayMapper(shape=samples.shape[1:]))
+
+    # array subclass survives
+    ok_(isinstance(ds.samples, myarray))
 
     # mapper should end up in the dataset
     ok_(ds.a.isKnown('mapper') == ds.a.isSet('mapper') == True)
@@ -201,12 +218,18 @@ def test_basic_datamapping():
 def test_ds_shallowcopy():
     # lets use some instance of somewhat evolved dataset
     ds = normalFeatureDataset()
+    ds.samples = ds.samples.view(myarray)
+
     # SHALLOW copy the beast
     ds_ = copy.copy(ds)
     # verify that we have the same data
     assert_array_equal(ds.samples, ds_.samples)
     assert_array_equal(ds.labels, ds_.labels)
     assert_array_equal(ds.chunks, ds_.chunks)
+
+    # array subclass survives
+    ok_(isinstance(ds_.samples, myarray))
+
 
     # modify and see that we actually DO change the data in both
     ds_.samples[0, 0] = 1234
@@ -230,8 +253,12 @@ def test_ds_shallowcopy():
 def test_ds_deepcopy():
     # lets use some instance of somewhat evolved dataset
     ds = normalFeatureDataset()
+    ds.samples = ds.samples.view(myarray)
     # Clone the beast
     ds_ = copy.deepcopy(ds)
+    # array subclass survives
+    ok_(isinstance(ds_.samples, myarray))
+
     # verify that we have the same data
     assert_array_equal(ds.samples, ds_.samples)
     assert_array_equal(ds.labels, ds_.labels)
@@ -330,9 +357,12 @@ def test_mergeds2():
 
 
 def test_combined_samplesfeature_selection():
-    data = dataset(N.arange(20).reshape((4, 5)),
+    data = dataset(N.arange(20).reshape((4, 5)).view(myarray),
                    labels=[1,2,3,4],
                    chunks=[5,6,7,8])
+
+    # array subclass survives
+    ok_(isinstance(data.samples, myarray))
 
     ok_(data.nsamples == 4)
     ok_(data.nfeatures == 5)
@@ -342,6 +372,9 @@ def test_combined_samplesfeature_selection():
     assert_array_equal(sel.labels, [1, 4])
     assert_array_equal(sel.chunks, [5, 8])
     assert_array_equal(sel.samples, [[1, 2], [16, 17]])
+    # array subclass survives
+    ok_(isinstance(sel.samples, myarray))
+
 
     # should yield the same result if done sequentially
     sel2 = data[:, [1, 2]]
@@ -349,6 +382,9 @@ def test_combined_samplesfeature_selection():
     assert_array_equal(sel.samples, sel2.samples)
     ok_(sel2.nsamples == 2)
     ok_(sel2.nfeatures == 2)
+    # array subclass survives
+    ok_(isinstance(sel.samples, myarray))
+
 
     assert_raises(ValueError, data.__getitem__, (1, 2, 3))
 
@@ -365,6 +401,8 @@ def test_combined_samplesfeature_selection():
     ok_(single.nsamples == 1)
     ok_(single.nfeatures == 1)
     assert_array_equal(single.samples, [[6]])
+    # array subclass survives
+    ok_(isinstance(single.samples, myarray))
 
 
 
@@ -374,8 +412,9 @@ def test_labelpermutation_randomsampling():
     ds += Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3)
     ds += Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4)
     ds += Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5)
+    # use subclass for testing if it would survive
+    ds.samples = ds.samples.view(myarray)
 
-    # XXX put me back
     ok_(ds.get_nsamples_per_attr('labels') == {0:5, 1:5, 2:5, 3:5, 4:5})
     sample = ds.random_samples(2)
     ok_(sample.get_nsamples_per_attr('labels').values() == [ 2, 2, 2, 2, 2 ])
@@ -394,6 +433,8 @@ def test_labelpermutation_randomsampling():
 
     # but the original dataset should be uneffected
     assert_array_equal(ods.labels, orig_labels)
+    # array subclass survives
+    ok_(isinstance(ods.samples, myarray))
 
     # samples are really shared
     ds.samples[0, 0] = 123456
@@ -448,10 +489,12 @@ def test_coord2feature():
 
 
 def test_masked_featureselection():
-    origdata = N.random.standard_normal((10, 2, 4, 3, 5))
+    origdata = N.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
     data = Dataset.from_masked(origdata, labels=2, chunks=2)
 
     unmasked = data.samples.copy()
+    # array subclass survives
+    ok_(isinstance(data.samples, myarray))
 
     # default must be no mask
     ok_(data.nfeatures == 120)
