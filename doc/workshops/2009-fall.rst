@@ -65,10 +65,18 @@ various aspects of the workshop:
 PyMVPA: Where we are now, and where we are going
 ------------------------------------------------
 
-Yaroslav O. Halchenko
+Yaroslav O. Halchenko,
 Michael Hanke
 
-(abstract yet to come)
+This talk will give a brief summary of our original concept of PyMVPA that we
+had in mind when designing it two years ago, and how the project evolved since
+then.  We will touch upon several issues we had to face concerning development,
+quality assurance, and deployment. While the latest PyMVPA release offers a wide
+array of tools and algorithms, we also identified a number of problems that
+limit further integration of novel techniques into the framework. The talk will
+conclude with an outline how we believe these issues can be resolved and
+introduces a number of improvements that will become available with the next
+milestone release: PyMVPA **0.5**.
 
 
 MDP inside out
@@ -105,6 +113,8 @@ optimization in general.
 
 Supervised Tract Segmentation
 -----------------------------
+
+Emanuele Olivetti
 
 Automatic segmentation of tractography data into pathways/tracts is a
 problem traditionally addressed by means of unsupervised techniques,
