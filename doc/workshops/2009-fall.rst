@@ -22,9 +22,9 @@ Goals
 =====
 
 The primary purpose of this first PyMVPA workshop is to gather all people
-involved in (or related to) the development of PyMVPA. Participants will
-introduce their projects and will discuss their integration into the PyMVPA
-main line.
+involved in (or related to) the development of PyMVPA. Participants introduce
+their projects and we will discuss their integration into, or interoperation
+with the PyMVPA main line.
 
 In addition, we will discuss changes scheduled for the upcoming 0.5 release of
 PyMVPA that are supposed to improve shortcomings of the original design, or
@@ -51,7 +51,7 @@ Participants
 * Michael Hanke, Dartmouth College, USA
 * James M. Hughes, Dartmouth College, USA
 * Emanuele Olivetti, Fondazione Bruno Kessler, Italy
-* Per B. Sederberg, Princeton University, USA
+* Per B. Sederberg, Princeton University, USA (virtual)
 * Tiziano Zito, BCCN, Germany
 
 
@@ -62,8 +62,8 @@ The workshop will start on Monday Nov 30th with a series of talks covering the
 various aspects of the workshop:
 
 
-Past, present and future of PyMVPA
-----------------------------------
+PyMVPA: Where we are now, and where we are going
+------------------------------------------------
 
 Yaroslav O. Halchenko
 Michael Hanke
@@ -94,7 +94,13 @@ Profiling PyMVPA
 
 Valentin Haenel
 
-(abstract yet to come)
+In this talk I will present the work we did to compare the PyMVPA and Matlab
+implementations of the searchlight algorithm. This will include a description
+of how we iteratively discovered various bottlenecks and the steps taken to
+eliminate these. In particular, I will first present modifications of the
+source code and then show the resulting change in profiler output. I may
+conclude with some ideas for future work and some additional remarks about
+optimization in general.
 
 
 Supervised Tract Segmentation
@@ -129,4 +135,4 @@ general, to provide novel machine learning approaches to the users.
 Workshop Results
 ================
 
-(yet to come)
+(to be reported)
