@@ -213,10 +213,10 @@ class Dataset(object):
 
         """
         # sanity checks
-        if not len(samples.shape) == 2:
-            raise ValueError('The samples array must be 2D or mappable into'
-                             ' 2D (current shape is: %s)'
-                             % str(samples.shape))
+        #if not len(samples.shape) == 2:
+        #    raise ValueError('The samples array must be 2D or mappable into'
+        #                     ' 2D (current shape is: %s)'
+        #                     % str(samples.shape))
         self.samples = samples
 
        # Everything in a dataset (except for samples) is organized in
