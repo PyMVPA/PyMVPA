@@ -10,9 +10,9 @@
 
 .. _chap_workshop_2009fall:
 
-*********************************
-PyMVPA Extravanganza -- Fall 2009
-*********************************
+********************************
+PyMVPA Extravaganza -- Fall 2009
+********************************
 
 This development workshop will take place at Dartmouth College (Nov 30th -- Dec
 4th).
