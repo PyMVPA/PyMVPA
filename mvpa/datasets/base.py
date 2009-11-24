@@ -234,7 +234,7 @@ class Dataset(object):
         # XXX should we make them conditional?
         # samples attributes
         # this should rather be self.sa.iteritems(), but there is none yet
-        for attr in self.sa.names:
+        for attr in self.sa.keys():
             if not len(self.sa[attr].value) == self.nsamples:
                 raise ValueError("Length of samples attribute '%s' (%i) "
                                  "doesn't match the number of samples (%i)"
@@ -242,7 +242,7 @@ class Dataset(object):
                                     len(self.sa[attr].value),
                                     self.nsamples))
         # feature attributes
-        for attr in self.fa.names:
+        for attr in self.fa.keys():
             if not len(self.fa[attr].value) == self.nfeatures:
                 raise ValueError("Length of feature attribute '%s' (%i) "
                                  "doesn't match the number of features (%i)"
@@ -279,14 +279,14 @@ class Dataset(object):
             if which == 'samples' or which == 'both':
                 ids = N.array(['%s-%i' % (thisid, i)
                                     for i in xrange(self.samples.shape[0])])
-                if self.sa.items.has_key(attr):
+                if self.sa.has_key(attr):
                     self.sa[attr].value = ids
                 else:
                     self.sa.add(attr, ids)
             if which == 'features' or which == 'both':
                 ids = N.array(['%s-%i' % (thisid, i)
                                     for i in xrange(self.samples.shape[1])])
-                if self.fa.items.has_key(attr):
+                if self.fa.has_key(attr):
                     self.fa[attr].value = ids
                 else:
                     self.fa.add(attr, ids)
@@ -341,7 +341,7 @@ class Dataset(object):
             # We cannot count on the order the values in the dict will show up
             # with `self._data.value()` and since idhash will be order-dependent
             # we have to make it deterministic
-            keys = col._items.keys()
+            keys = col.keys()
             keys.sort()
             for k in keys:
                 res += ' %s@%s' % (k, idhash_(col[k].value))
@@ -381,10 +381,10 @@ class Dataset(object):
             raise DatasetError("Cannot merge datasets, because the number of "
                                "features does not match.")
 
-        if not sorted(self.sa.names) == sorted(other.sa.names):
+        if not sorted(self.sa.keys()) == sorted(other.sa.keys()):
             raise DatasetError("Cannot merge dataset. This datasets samples "
                                "attributes %s cannot be mapped into the other "
-                               "set %s" % (self.sa.names, other.sa.names))
+                               "set %s" % (self.sa.keys(), other.sa.keys()))
 
         # concat the samples as well
         self.samples = N.concatenate((self.samples, other.samples), axis=0)
@@ -392,7 +392,7 @@ class Dataset(object):
         # tell the collection the new desired length of all attributes
         self.sa.set_length_check(len(self.samples))
         # concat all samples attributes
-        for k, v in other.sa.items.iteritems():
+        for k, v in other.sa.iteritems():
             self.sa[k].value = N.concatenate((self.sa[k].value, v.value), axis=0)
 
         return self
@@ -442,7 +442,7 @@ class Dataset(object):
         # if we get an slicing array for feature selection and it is *not* 1D
         # try feeding it through the mapper (if there is any)
         if isinstance(args[1], N.ndarray) and len(args[1].shape) > 1 and \
-                self.a.isKnown('mapper') and self.a.isSet('mapper'):
+                self.a.has_key('mapper'):
                     args[1] = self.a.mapper.forward(args[1])
 
         # simultaneous slicing of numpy arrays only yields intended results
@@ -467,7 +467,7 @@ class Dataset(object):
 
         # per-sample attributes; always needs to run even if slice(None), since
         # we need fresh SamplesAttributes even if they share the data
-        for attr in self.sa.items.values():
+        for attr in self.sa.values():
             # preserve attribute type
             newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # slice
@@ -477,7 +477,7 @@ class Dataset(object):
 
         # per-feature attributes; always needs to run even if slice(None),
         # since we need fresh SamplesAttributes even if they share the data
-        for attr in self.fa.items.values():
+        for attr in self.fa.values():
             # preserve attribute type
             newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # slice
@@ -486,7 +486,7 @@ class Dataset(object):
             fa.add_collectable(newattr)
 
             # and finally dataset attributes: this time copying
-        for attr in self.a.items.values():
+        for attr in self.a.values():
             # preserve attribute type
             newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
             # do a shallow copy here
@@ -497,7 +497,7 @@ class Dataset(object):
             a.add_collectable(newattr)
 
         # and adjusting the mapper (if any)
-        if a.isKnown('mapper') and a.isSet('mapper'):
+        if a.has_key('mapper'):
             a['mapper'].value.select_out(args[1])
 
         # and after a long way instantiate the new dataset of the same type

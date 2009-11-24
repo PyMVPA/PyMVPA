@@ -56,6 +56,170 @@ _object_setattr = object.__setattr__
 # TODO: refactor into collections.py. state.py now has
 #       little in common with the main part of this file
 #
+
+class SimpleCollection(object):
+    """Container of some CollectableAttributes.
+    """
+    def __init__(self, items=None):
+        """Initialize the Collection
+
+        :Parameters:
+          items : dict of CollectableAttribute's
+            items to initialize with
+        """
+        self.__name = None
+        self._items = {}
+        if not items is None:
+            self.update(items)
+
+
+    def iteritems(self):
+        return self._items.iteritems()
+
+    def keys(self):
+        return self._items.keys()
+
+    def values(self):
+        return self._items.values()
+
+    def has_key(self, key):
+        return self._items.has_key(key)
+
+
+    def add_collectable(self, item):
+        """Add a new CollectableAttribute to the collection
+
+        :Parameters:
+          item : CollectableAttribute
+            or of derived class. Must have 'name' assigned
+
+        TODO: we should make it stricter to don't add smth of
+              wrong type into Collection since it might lead to problems
+
+              Also we might convert to __setitem__
+        """
+        # local binding
+        name = item.name
+        if not isinstance(item, CollectableAttribute):
+            raise ValueError, \
+                  "Collection can add only instances of " + \
+                  "CollectableAttribute-derived classes. Got %s" % `item`
+
+        if name is None:
+            raise ValueError, \
+                  "CollectableAttribute to be added %s must have 'name' set" % \
+                  item
+        self._items[name] = item
+
+
+    def add(self, name, value, doc=None):
+        """Convenience method to add an attributes to the collection.
+
+        The method has to be implemented in derived collections to
+        instantiate Collectable Attributes of the desired type and add
+        than to the collection via add_collectable().
+        """
+        raise NotImplementedError
+
+
+    def update(self, source, copyvalues=None):
+        """
+        Parameters
+        ----------
+        source : dict, Collection
+        copyvalues : None, shallow, deep
+        """
+        if isinstance(source, SimpleCollection) or isinstance(source, list):
+            if isinstance(source, SimpleCollection):
+                attrs = source._items.values()
+            else:
+                attrs = source
+            for a in attrs:
+                if copyvalues is None:
+                    self.add_collectable(a)
+                elif copyvalues is 'shallow':
+                    self.add_collectable(copy.copy(a))
+                elif copyvalues is 'deep':
+                    self.add_collectable(copy.deepcopy(a))
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
+        elif isinstance(source, dict):
+            for k, v in source.iteritems():
+                # expand value and docs
+                if isinstance(v, tuple):
+                    value = v[0]
+                    doc = v[1]
+                else:
+                    value = v
+                    doc = None
+
+                # add the attribute with optional docs
+                if copyvalues is None:
+                    self.add(k, v, doc=doc)
+                elif copyvalues is 'shallow':
+                    self.add(k, copy.copy(v), doc=doc)
+                elif copyvalues is 'deep':
+                    self.add(k, copy.deepcopy(v), doc=doc)
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
+        else:
+            raise ValueError("Collection.upate() can only handle Collections "
+                             "dictionarie as arguments.")
+
+
+    def remove(self, index):
+        """Remove item from the collection
+        """
+        #self._checkIndex(index)
+        self._updateOwner(index, register=False)
+        discard = self._items.pop(index)
+
+
+    def __getattribute__(self, index):
+        """
+        """
+        #return all private and protected ones first since we will not have
+        # collectable's with _ (we should not have!)
+        if index[0] == '_':
+            return _object_getattribute(self, index)
+        _items = _object_getattribute(self, '_items')
+        if index in _items:
+            return _items[index].value
+        return _object_getattribute(self, index)
+
+
+    def __setattr__(self, index, value):
+        if index[0] == '_':
+            return _object_setattr(self, index, value)
+        _items = _object_getattribute(self, '_items')
+        if index in _items:
+            _items[index].value = value
+        else:
+            _object_setattr(self, index, value)
+
+
+    def __getitem__(self, index):
+        _items = _object_getattribute(self, '_items')
+        if index in _items:
+            #self._checkIndex(index)
+            return _items[index]
+        else:
+            raise AttributeError("State collection %s has no %s attribute" 
+                                 % (self, index))
+
+
+    def __repr__(self):
+        # do not include the owner arg, since that will most likely
+        # cause recursions when the collection it self is included
+        # into the repr() of the ClassWithCollections instance
+        return "%s(items=%s)" \
+                  % (self.__class__.__name__,
+                     repr(self.values()))
+
+
+
 class Collection(object):
     """Container of some CollectableAttributes.
 
@@ -606,7 +770,7 @@ class ParameterCollection(Collection):
         self._action(index, Parameter.resetvalue, missingok=False)
 
 
-class UniformLengthCollection(Collection):
+class UniformLengthCollection(SimpleCollection):
     """Container for attributes with the same length.
     """
     def __init__(self, length=None, *args, **kwargs):
@@ -620,7 +784,7 @@ class UniformLengthCollection(Collection):
         # cannot call set_length(), since base class __getattribute__ goes wild
         # before its __init__ is called.
         self.__uniform_length = length
-        Collection.__init__(self, *args, **kwargs)
+        SimpleCollection.__init__(self, *args, **kwargs)
 
 
     def set_length_check(self, value):
@@ -632,7 +796,7 @@ class UniformLengthCollection(Collection):
           this length.
         """
         self.__uniform_length = value
-        for v in self.items.values():
+        for v in self.values():
             v.set_length_check(value)
 
 
@@ -653,7 +817,7 @@ class UniformLengthCollection(Collection):
                                 str(self)))
         # tell the attribute to maintain the desired length
         item.set_length_check(self.__uniform_length)
-        Collection.add_collectable(self, item)
+        SimpleCollection.add_collectable(self, item)
 
 
 class SampleAttributesCollection(UniformLengthCollection):
@@ -713,7 +877,7 @@ class FeatureAttributesCollection(UniformLengthCollection):
         self.add_collectable(attr)
 
 
-class DatasetAttributesCollection(Collection):
+class DatasetAttributesCollection(SimpleCollection):
     """Container for attributes of datasets (i.e. mappers, ...)
     """
     def _cls_repr(self):
