@@ -19,17 +19,25 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.base import FeatureSubsetMapper, ChainMapper
 from mvpa.support.copy import copy
+from mvpa.datasets.base import Dataset
+
+# arbitrary ndarray subclass for testing
+class myarray(N.ndarray):
+    pass
 
 def test_flatten():
     samples_shape = (2, 2, 4)
     data_shape = (4,) + samples_shape
-    data = N.arange(N.prod(data_shape)).reshape(data_shape)
+    data = N.arange(N.prod(data_shape)).reshape(data_shape).view(myarray)
     pristinedata = data.copy()
     target = [[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
               [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
               [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
               [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]]
-    target = N.array(target)
+    target = N.array(target).view(myarray)
+
+    # array subclass survives
+    ok_(isinstance(data, myarray))
 
     # actually, there should be no difference between a plain FlattenMapper and
     # a chain that only has a FlattenMapper as the one element
@@ -41,6 +49,8 @@ def test_flatten():
 
         fm.train(data)
 
+        ok_(isinstance(fm.forward(data), myarray))
+        ok_(isinstance(fm.forward(data[2]), myarray))
         assert_array_equal(fm.forward(data), target)
         assert_array_equal(fm.forward(data[2]), target[2])
         assert_raises(ValueError, fm.forward, N.arange(4))
@@ -65,6 +75,9 @@ def test_flatten():
         assert_array_equal(data, pristinedata)
 
         # reverse mapping
+        ok_(isinstance(fm.reverse(target), myarray))
+        ok_(isinstance(fm.reverse(target[0]), myarray))
+        ok_(isinstance(fm.reverse(target[1:2]), myarray))
         assert_array_equal(fm.reverse(target), data)
         assert_array_equal(fm.reverse(target[0]), data[0])
         assert_array_equal(fm.reverse(target[1:2]), data[1:2])
@@ -94,6 +107,14 @@ def test_flatten():
         assert_raises(ValueError, fm.get_outids, [5])
         assert_raises(ValueError, fm.get_outids, [(0,0)])
 
+        # try dataset mode
+        ds = Dataset(data)
+        assert_equal(ds.samples.shape, data_shape)
+        fm.train(ds)
+        dsflat = fm.forward(ds)
+        ok_(isinstance(dsflat, Dataset))
+        ok_(isinstance(dsflat.samples, myarray))
+        assert_array_equal(dsflat.samples, target)
 
 
 
