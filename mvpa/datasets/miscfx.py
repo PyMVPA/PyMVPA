@@ -288,7 +288,7 @@ def permute_labels(dataset, perchunk=True, assure_permute=False):
     labels = dataset.sa['labels'].value
 
     # now scramble
-    if perchunk and dataset.sa.isKnown('chunks'):
+    if perchunk and dataset.sa.has_key('chunks'):
         chunks = dataset.sa['chunks'].value
 
         plabels = N.zeros(labels.shape, dtype=labels.dtype)

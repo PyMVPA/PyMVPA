@@ -60,10 +60,10 @@ def test_from_basic():
     assert_array_equal(ds.labels, labels)
     assert_array_equal(ds.chunks, chunks)
 
-    ok_(sorted(ds.sa.names) == ['chunks', 'labels', 'origids'])
+    ok_(sorted(ds.sa.keys()) == ['chunks', 'labels', 'origids'])
 
     # there is not necessarily a mapper present
-    ok_(not ds.a.isKnown('mapper'))
+    ok_(not ds.a.has_key('mapper'))
 
     # has to complain about misshaped samples attributes
     assert_raises(ValueError, Dataset.from_basic, samples, labels + labels)
@@ -209,7 +209,7 @@ def test_basic_datamapping():
     ok_(isinstance(ds.samples, myarray))
 
     # mapper should end up in the dataset
-    ok_(ds.a.isKnown('mapper') == ds.a.isSet('mapper') == True)
+    ok_(ds.a.has_key('mapper'))
 
     # check correct mapping
     ok_(ds.nsamples == 4)

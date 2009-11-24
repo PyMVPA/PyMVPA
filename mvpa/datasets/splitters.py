@@ -252,7 +252,7 @@ class Splitter(object):
                     if ds is not None:
                         ds_a = ds.a
                         lastsplit = (isplit == Ncfgs-1)
-                        if not ds_a.isKnown('lastsplit'):
+                        if not ds_a.has_key('lastsplit'):
                             # if not yet known -- add one
                             ds_a.add('lastsplit', lastsplit)
                         else:
