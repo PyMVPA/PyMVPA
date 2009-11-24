@@ -112,13 +112,7 @@ class SimpleCollection(object):
         self._items[name] = item
 
 
-    def add(self, name, value, doc=None):
-        """Convenience method to add an attributes to the collection.
-
-        The method has to be implemented in derived collections to
-        instantiate Collectable Attributes of the desired type and add
-        than to the collection via add_collectable().
-        """
+    def __setitem__(self, key, value):
         raise NotImplementedError
 
 
@@ -169,6 +163,7 @@ class SimpleCollection(object):
                              "dictionarie as arguments.")
 
 
+    # XXX become __delitem__()
     def remove(self, index):
         """Remove item from the collection
         """
