@@ -9,7 +9,7 @@ other groups employing PyMVPA somewhere in the analysis.
 Peer-reviewed publications
 --------------------------
 
-Hanke, M., Halchenko, Y. O., Haxby, J. V., and Pollmann, S. (accepted) `Statistical learning analysis in neuroscience: aiming for transparency`_. Frontiers in Neuroscience.
+Hanke, M., Halchenko, Y. O., Haxby, J. V., and Pollmann, S. (accepted) *Statistical learning analysis in neuroscience: aiming for transparency*. Frontiers in Neuroscience.
   Focused review article emphasizing the role of transparency to facilitate
   adoption and evaluation of statistical learning techniques in neuroimaging
   research.
