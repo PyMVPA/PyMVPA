@@ -58,8 +58,8 @@ Participants
 Tentative Schedule
 ==================
 
-The workshop will start on Monday Nov 30th with a series of talks covering the
-various aspects of the workshop:
+The workshop will start on *Monday Nov 30th at 9:30* am with a series of talks
+covering the various aspects of the workshop:
 
 
 PyMVPA: Where we are now, and where we are going
