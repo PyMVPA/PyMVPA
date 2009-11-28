@@ -61,6 +61,7 @@ def collectTestSuites():
         'test_svdmapper',
         'test_procrust',
 ## broken        'test_samplegroupmapper',
+        'test_hyperalignment',
         'test_transformers',
 ## broken        'test_transerror',
         'test_clfcrossval',
