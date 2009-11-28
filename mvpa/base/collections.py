@@ -166,7 +166,7 @@ class ArrayCollectable(Collectable):
                        repr(self.name),
                        repr(self.__doc__),
                        repr(value),
-                       repr(self.__target_length)
+                       repr(self.__target_length))
 
 
     def _resetUnique(self):
