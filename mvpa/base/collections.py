@@ -12,7 +12,7 @@ dedicated containers aka. `Collections`.
 
 __docformat__ = 'restructuredtext'
 
-from copy import copy
+import copy
 
 
 if __debug__:
@@ -42,7 +42,7 @@ class Collectable(object):
         self._value = None
         if not value is None:
             self._set(value)
-        if __mvpadebug__:
+        if __debug__ and __mvpadebug__:
             debug("COL", "Initialized new collectable: %s" % `self`)
 
 
@@ -50,7 +50,7 @@ class Collectable(object):
         # preserve attribute type
         copied = self.__class__(name=self.name, doc=self.__doc__)
         # just get a view of the old data!
-        copied.value = copy(self.value)
+        copied.value = copy.copy(self.value)
         return copied
 
 
@@ -59,7 +59,7 @@ class Collectable(object):
 
 
     def _set(self, val):
-        if __mvpadebug__:
+        if __debug__ and __mvpadebug__:
             # Since this call is quite often, don't convert
             # values to strings here, rely on passing them
             # withing msgargs
@@ -119,13 +119,8 @@ class Collectable(object):
     name = property(_getName, _setName)
 
 
-
-class ArrayCollectable(Collectable):
-    """Container which embeds an array.
-
-    It also takes care about caching and recomputing unique values.
-    """
-    def __init__(self, value=None, name=None, doc="Attribute with array",
+class SequenceCollectable(Collectable):
+    def __init__(self, value=None, name=None, doc="Sequence attribute",
                  length=None):
         """
         Parameters
@@ -142,21 +137,11 @@ class ArrayCollectable(Collectable):
           to be of this `length`. If an array does not match this requirement
           it is not modified, but a ValueError is raised.
         """
+        # first configure the value checking, to enable it for the base class
+        # init
         self._target_length = length
-        Collectable.__init__(self, name=name, doc=doc, value=value)
+        Collectable.__init__(self, value=value, name=name, doc=doc)
         self._resetUnique()
-        if __mvpadebug__:
-            debug("UATTR",
-                  "Initialized new AttributeWithArray %s " % name + `self`)
-
-
-    def __copy__(self):
-        # preserve attribute type
-        copied = self.__class__(name=self.name, doc=self.__doc__,
-                                length=self._target_length)
-        # just get a view of the old data!
-        copied.value = self.value.view()
-        return copied
 
 
     def __repr__(self):
@@ -166,38 +151,25 @@ class ArrayCollectable(Collectable):
                        repr(self.name),
                        repr(self.__doc__),
                        repr(value),
-                       repr(self.__target_length))
-
-
-    def _resetUnique(self):
-        self._uniqueValues = None
+                       repr(self._target_length))
 
 
     def _set(self, val):
         # check if the new value has the desired length -- if length checking is
         # desired at all
         if not self._target_length is None \
-           and len(val) != self.__target_length:
+           and len(val) != self._target_length:
             raise ValueError("Value length [%i] does not match the required "
                              "length [%i] of attribute '%s'."
                              % (len(val),
-                                self.__target_length,
+                                self._target_length,
                                 str(self.name)))
-
         self._resetUnique()
-        CollectableAttribute._set(self, val)
+        Collectable._set(self, val)
 
 
-    def set_length_check(self, value):
-        """
-        Parameters
-        ----------
-        value : int
-          If not None, enforce any array assigned as value of this collectable
-          to be of this `length`. If an array does not match this requirement
-          it is not modified, but a ValueError is raised.
-        """
-        self._target_length = value
+    def _resetUnique(self):
+        self._uniqueValues = None
 
 
     def _getUniqueValues(self):
@@ -212,4 +184,43 @@ class ArrayCollectable(Collectable):
         return self._uniqueValues
 
 
+    def set_length_check(self, value):
+        """
+        Parameters
+        ----------
+        value : int
+          If not None, enforce any array assigned as value of this collectable
+          to be of this `length`. If an array does not match this requirement
+          it is not modified, but a ValueError is raised.
+        """
+        self._target_length = value
+
+
     unique = property(fget=_getUniqueValues)
+
+
+
+class ArrayCollectable(SequenceCollectable):
+    """Container which embeds an array.
+
+    It also takes care about caching and recomputing unique values.
+    """
+    def __copy__(self):
+        # preserve attribute type
+        copied = self.__class__(name=self.name, doc=self.__doc__,
+                                length=self._target_length)
+        print copied
+        # just get a view of the old data!
+        copied.value = self.value.view()
+        print copied
+        return copied
+
+
+    def _set(self, val):
+        if not hasattr(val, 'view'):
+            raise ValueError("%s only takes ndarrays (or array-likes providing "
+                             "view() (got '%s')." % (self.__class__.__name__,
+                                                     str(type(val))))
+        SequenceCollectable._set(self, val)
+
+
