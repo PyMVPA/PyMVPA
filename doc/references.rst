@@ -58,6 +58,14 @@ experiments.
   URL: http://www.jmlr.org/papers/v3/guyon03a.html
 
 
+.. _HHH+10:
+
+**Hanke, M., Halchenko, Y. O., Haxby, J. V. & Pollmann, S.** (accepted). Statistical learning analysis in neuroscience: aiming for transparency. *Frontiers in Neuroscience*.
+  *Focused review article emphasizing the role of transparency to facilitate
+  adoption and evaluation of statistical learning techniques in neuroimaging
+  research.*
+
+
 .. _HHS+latest:
 
 **Hanke, M., Halchenko, Y. O., Sederberg, P. B. & Hughes, J. M.** The PyMVPA Manual. Available online at http://www.pymvpa.org/PyMVPA-Manual.pdf.
