@@ -124,7 +124,8 @@ def collectTestSuites():
 def collectNoseTests():
     """Return list of tests which are pure nose-based
     """
-    tests = [ 'test_datasetng',
+    tests = [ 'test_collections',
+              'test_datasetng',
               'test_attrmap',
               'test_mapper',
               ]
