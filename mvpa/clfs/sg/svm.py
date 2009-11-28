@@ -25,13 +25,25 @@ import numpy as N
 
 
 # Rely on SG
-from mvpa.base import externals
+from mvpa.base import externals, warning
 if externals.exists('shogun', raiseException=True):
     import shogun.Features
     import shogun.Classifier
     import shogun.Regression
     import shogun.Kernel
     import shogun.Library
+
+    # Figure out debug IDs once and for all
+    if hasattr(shogun.Kernel, 'M_DEBUG'):
+        _M_DEBUG = shogun.Kernel.M_DEBUG
+        _M_ERROR = shogun.Kernel.M_ERROR
+    elif hasattr(shogun.Kernel, 'MSG_DEBUG'):
+        _M_DEBUG = shogun.Kernel.MSG_DEBUG
+        _M_ERROR = shogun.Kernel.MSG_ERROR
+    else:
+        _M_DEBUG, _M_ERROR = None, None
+        warning("Could not figure out debug IDs within shogun. "
+                "No control over shogun verbosity would be provided")
 
 import operator
 
@@ -42,14 +54,11 @@ from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.misc.state import StateVariable
 from mvpa.measures.base import Sensitivity
-from mvpa.base import externals
 
 from sens import *
 
 if __debug__:
     from mvpa.base import debug
-
-
 
 
 def _setdebug(obj, partname):
@@ -61,10 +70,12 @@ def _setdebug(obj, partname):
         For what kind of object we are talking about... could be automated
         later on (TODO)
     """
+    if _M_DEBUG is None:
+        return
     debugname = "SG_%s" % partname.upper()
 
-    switch = {True: (shogun.Kernel.M_DEBUG, 'M_DEBUG', "enable"),
-              False: (shogun.Kernel.M_ERROR, 'M_ERROR', "disable")}
+    switch = {True: (_M_DEBUG, 'M_DEBUG', "enable"),
+              False: (_M_ERROR, 'M_ERROR', "disable")}
 
     key = __debug__ and debugname in debug.active
 
