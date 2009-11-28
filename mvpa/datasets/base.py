@@ -525,6 +525,10 @@ class Dataset(object):
             return s
 
 
+    def __array__(self, dtype=None):
+        return self.samples.__array__(dtype)
+
+
     @classmethod
     def from_basic(cls, samples, labels=None, chunks=None, mapper=None):
         """Create a Dataset from samples and elementary attributes.
