@@ -435,10 +435,12 @@ $(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames $(AUDIO_TRACK)
 $(SWARM_DIR)/git.log: Makefile
 	@echo "I: Dumping git log in codeswarm preferred format"
 	@mkdir -p $(SWARM_DIR)
-	@git log --name-status --branches \
+	@git log --name-status --all \
      --pretty=format:'%n------------------------------------------------------------------------%nr%h | %an | %ai (%aD) | x lines%nChanged paths:' | \
      perl -pe 's/Ingo .*d \|/Ingo Fruend |/' | \
      sed -e 's,Yaroslav.*Halchenko,Yaroslav O. Halchenko,g' \
+         -e 's,gorlins,Scott,g' -e 's,Scott Gorlin,Scott,g' -e 's,Scott,Scott Gorlin,g' \
+         -e 's,hanke,Michael Hanke,g' \
          -e 's,Per.*Sederberg,Per B. Sederberg,g' \
          -e 's,Neukom Institute,James M. Hughes,g' >| $@
 
