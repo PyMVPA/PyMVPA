@@ -436,15 +436,14 @@ $(SWARM_DIR)/git.log: Makefile
 	@echo "I: Dumping git log in codeswarm preferred format"
 	@mkdir -p $(SWARM_DIR)
 	@git log --name-status --branches \
-     --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
-     sed -e 's,[a-z]*@onerussian.com,Yarik,g' \
-         -e 's,\(michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\)\|neukom-data@neukom-data-desktop\.(none)\),Michael,g' \
-         -e 's,\(per@parsec.Princeton.EDU\|per@sync.(none)\|psederberg@gmail.com\),Per,g' \
-         -e 's,emanuele@relativita.com,Emanuele,g' \
-         -e 's,jhughes@austin.cs.dartmouth.edu,James,g' \
-         -e 's,valentin.haenel@gmx.de,Valentin,g' \
-         -e 's,gorlins@mit.edu,Scott,g' \
-         -e 's,Ingo.Fruend@gmail.com,Ingo,g' >| $@
+     --pretty=format:'%n------------------------------------------------------------------------%nr%h | %an | %ai (%aD) | x lines%nChanged paths:' | \
+     perl -pe 's/Ingo .*d \|/Ingo Fruend |/' | \
+     sed -e 's,Yaroslav.*Halchenko,Yaroslav O. Halchenko,g' \
+         -e 's,Per.*Sederberg,Per B. Sederberg,g' \
+         -e 's,Neukom Institute,James M. Hughes,g' >| $@
+
+
+
 
 $(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR)/run.sh $(SWARM_DIR)/git.log
 	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
