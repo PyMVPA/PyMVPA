@@ -137,9 +137,26 @@ in order to support tractography data analysis natively and, more in
 general, to provide novel machine learning approaches to the users.
 
 
+Caching kernels
+---------------
+
+Scott Gorlin
+
+A major bottleneck in a standard classification analysis relies on
+calculating the dot product between vectors in high-dimensional space.
+This is especially time consuming when there are few samples but the
+number of dimensions is high, such as the case of fMRI data.  In fact,
+many common analysis techniques such as cross validation, bootstrapping,
+and model selection require that the kernel be recalculated for each
+permutation, even if that exact calculation has been done before.  This
+presentation analyzes the problem inherent in a high-level library such
+as PyMVPA and illustrates one example of how to cache and reuse kernels,
+greatly simplifying the underlying computations and accelerating many
+analytical technique implementations by several orders of magnitude.
+
+
 .. CUDA for world-domination (Per)
 
-.. Educating PyMVPA for faster ML-analyses (Scott)
 
 
 Workshop Results
