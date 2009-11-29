@@ -25,6 +25,11 @@ if __debug__:
 
 
 class Collectable(object):
+    """Collection element.
+
+    A named single item container that allows for type, or property checks of
+    an assigned value, and also offers utility functionality.
+    """
     def __init__(self, value=None, name=None, doc=None):
         """
         Parameters
@@ -120,6 +125,11 @@ class Collectable(object):
 
 
 class SequenceCollectable(Collectable):
+    """Collectable to handle sequences.
+
+    It takes care about caching and recomputing unique values, as well as
+    optional checking if assigned sequences have a desired length.
+    """
     def __init__(self, value=None, name=None, doc="Sequence attribute",
                  length=None):
         """
@@ -185,7 +195,8 @@ class SequenceCollectable(Collectable):
 
 
     def set_length_check(self, value):
-        """
+        """Set a target length of the value in this collectable.
+
         Parameters
         ----------
         value : int
@@ -201,18 +212,16 @@ class SequenceCollectable(Collectable):
 
 
 class ArrayCollectable(SequenceCollectable):
-    """Container which embeds an array.
+    """Collectable embedding an array.
 
-    It also takes care about caching and recomputing unique values.
+    When shallow-copied it includes a view of the array in the copy.
     """
     def __copy__(self):
         # preserve attribute type
         copied = self.__class__(name=self.name, doc=self.__doc__,
                                 length=self._target_length)
-        print copied
         # just get a view of the old data!
         copied.value = self.value.view()
-        print copied
         return copied
 
 
@@ -222,5 +231,3 @@ class ArrayCollectable(SequenceCollectable):
                              "view() (got '%s')." % (self.__class__.__name__,
                                                      str(type(val))))
         SequenceCollectable._set(self, val)
-
-
