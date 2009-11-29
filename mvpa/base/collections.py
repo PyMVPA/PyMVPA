@@ -13,6 +13,8 @@ dedicated containers aka. `Collections`.
 __docformat__ = 'restructuredtext'
 
 import copy
+import numpy as N
+from operator import isSequenceType
 
 
 if __debug__:
@@ -22,6 +24,11 @@ if __debug__:
         __mvpadebug__ = True
     except ImportError:
         __mvpadebug__ = False
+
+
+_object_getattribute = dict.__getattribute__
+_object_setattr = dict.__setattr__
+_object_setitem = dict.__setitem__
 
 
 class Collectable(object):
@@ -149,6 +156,10 @@ class SequenceCollectable(Collectable):
         """
         # first configure the value checking, to enable it for the base class
         # init
+        # XXX should we disallow empty Collectables??
+        if not value is None and not hasattr(value, '__len__'):
+            raise ValueError("%s only takes sequences as value."
+                             % self.__class__.__name__)
         self._target_length = length
         Collectable.__init__(self, value=value, name=name, doc=doc)
         self._resetUnique()
@@ -162,6 +173,10 @@ class SequenceCollectable(Collectable):
                        repr(self.__doc__),
                        repr(value),
                        repr(self._target_length))
+
+
+    def __len__(self):
+        return self.value.__len__()
 
 
     def _set(self, val):
@@ -227,7 +242,203 @@ class ArrayCollectable(SequenceCollectable):
 
     def _set(self, val):
         if not hasattr(val, 'view'):
-            raise ValueError("%s only takes ndarrays (or array-likes providing "
-                             "view() (got '%s')." % (self.__class__.__name__,
-                                                     str(type(val))))
+            if isSequenceType(val):
+                val = N.asanyarray(val)
+            else:
+                raise ValueError("%s only takes ndarrays (or array-likes "
+                                 "providing view(), or sequence that can "
+                                 "be converted into arrays (got '%s')."
+                                 % (self.__class__.__name__,
+                                    str(type(val))))
         SequenceCollectable._set(self, val)
+
+
+
+class Collection(dict):
+    """Container of some Collectables.
+    """
+    def __init__(self, items=None):
+        """
+        Parameters
+        ----------
+        items : all types accepted by update()
+        """
+        dict.__init__(self)
+        if not items is None:
+            self.update(items)
+
+
+    def __setitem__(self, key, value):
+        """Add a new Collectable to the collection
+
+        Parameters
+        ----------
+        key : str
+          The name of the collectable under which it is available in the
+          collection. This name is also stored in the item itself
+        value : anything
+          The actual item the should become part of the collection. If this is
+          not an instance of `Collectable` or a subclass the value is
+          automatically wrapped into it.
+        """
+        if not isinstance(value, Collectable):
+            value = Collectable(value)
+        # overwrite the Collectable's name with the given one
+        value.name = key
+        _object_setitem(self, key, value)
+
+
+    def update(self, source, copyvalues=None):
+        """
+        Parameters
+        ----------
+        source : list, Collection, dict
+        copyvalues : None, shallow, deep
+        """
+        if isinstance(source, list):
+            for a in source:
+                if copyvalues is None:
+                    self[a.name] = a
+                elif copyvalues is 'shallow':
+                    self[a.name] = copy.copy(a)
+                elif copyvalues is 'deep':
+                    self[a.name] = copy.deepcopy(a)
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
+        elif isinstance(source, dict):
+            for k, v in source.iteritems():
+                # expand the docs
+                if isinstance(v, tuple):
+                    value = v[0]
+                    doc = v[1]
+                else:
+                    value = v
+                    doc = None
+                # add the attribute with optional docs
+                if copyvalues is None:
+                    self[k] = v
+                elif copyvalues is 'shallow':
+                    self[k] = copy.copy(v)
+                elif copyvalues is 'deep':
+                    self[k] = copy.deepcopy(v)
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
+                # store documentation
+                self[k].__doc__ = doc
+        else:
+            raise ValueError("Collection.upate() cannot handle '%s'."
+                             % str(type(source)))
+
+
+    def __getattribute__(self, key):
+        #return all private and protected ones first since we will not have
+        # collectable's with _ (we should not have!)
+        if key[0] == '_':
+            return _object_getattribute(self, key)
+        # bypass the Collectable and return value
+        if key in self:
+            return self[key].value
+        # fallback
+        return _object_getattribute(self, key)
+
+
+    def __setattr__(self, key, value):
+        # don't mess with private stuff
+        if key[0] == '_':
+            return _object_setattr(self, key, value)
+        # directly assign the value for Collectables
+        if key in self:
+            self[key].value = value
+        else:
+            _object_setattr(self, key, value)
+
+
+    def __repr__(self):
+        return "%s(items=%s)" \
+                  % (self.__class__.__name__,
+                     repr(self.values()))
+
+
+
+class UniformLengthCollection(Collection):
+    """Container for attributes with the same length.
+    """
+    def __init__(self, items=None, length=None):
+        """
+        Parameters
+        ----------
+        length : int
+          When adding items to the collection, they are checked if the have this
+          length.
+        """
+        # cannot call set_length(), since base class __getattribute__ goes wild
+        # before its __init__ is called.
+        self._uniform_length = length
+        Collection.__init__(self, items)
+
+
+    def set_length_check(self, value):
+        """
+        Parameters
+        ----------
+        value : int
+          When adding new items to the collection, they are checked if the have
+          this length.
+        """
+        self._uniform_length = value
+        for v in self.values():
+            v.set_length_check(value)
+
+
+    def __setitem__(self, key, value):
+        """Add a new CollectableAttribute to the collection
+
+        :Parameters:
+          item : CollectableAttribute
+            or of derived class. Must have 'name' assigned.
+        """
+        if not isinstance(value, SequenceCollectable):
+            # XXX should we check whether it is some other Collectable?
+            value = SequenceCollectable(value)
+        if self._uniform_length is None:
+            self._uniform_length = len(value)
+        elif not len(value.value) == self._uniform_length:
+            raise ValueError("Collectable '%s' does not match the required "
+                             "length [%i] of collection '%s'."
+                             % (key,
+                                self._uniform_length,
+                                str(self)))
+        # tell the attribute to maintain the desired length
+        value.set_length_check(self._uniform_length)
+        Collection.__setitem__(self, key, value)
+
+
+
+class SampleAttributesCollection(UniformLengthCollection):
+    """Container for attributes of samples (i.e. labels, chunks...)
+    """
+    def __setitem__(self, key, value):
+        if not isinstance(value, ArrayCollectable):
+            # XXX should we check whether it is some other Collectable?
+            value = ArrayCollectable(value)
+        UniformLengthCollection.__setitem__(self, key, value)
+
+
+
+class FeatureAttributesCollection(UniformLengthCollection):
+    """Container for attributes of features
+    """
+    def __setitem__(self, key, value):
+        if not isinstance(value, ArrayCollectable):
+            # XXX should we check whether it is some other Collectable?
+            value = ArrayCollectable(value)
+        UniformLengthCollection.__setitem__(self, key, value)
+
+
+
+class DatasetAttributesCollection(Collection):
+    """Container for attributes of datasets (i.e. mappers, ...)
+    """
+    pass

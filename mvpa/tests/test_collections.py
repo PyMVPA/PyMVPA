@@ -15,7 +15,9 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
     assert_true
 
-from mvpa.base.collections import Collectable, ArrayCollectable
+from mvpa.base.collections import Collectable, ArrayCollectable, \
+        SampleAttributesCollection
+
 
 def test_basic_collectable():
     c = Collectable()
@@ -86,6 +88,7 @@ def test_array_collectable():
 
     # cannot assign array of wrong length
     assert_raises(ValueError, c._set, N.arange(5))
+    assert_equal(len(c), 3)
 
     # shallow copy DOES create a view of value array
     c.value = N.arange(3)
@@ -94,3 +97,15 @@ def test_array_collectable():
 
     # names starting with _ are not allowed
     assert_raises(ValueError, c._setName, "_underscore")
+
+
+def test_collections():
+    sa = SampleAttributesCollection()
+    assert_equal(len(sa), 0)
+
+    assert_raises(ValueError, sa.__setitem__, 'test', 0)
+    l = range(5)
+    sa['test'] = l
+    # auto-wrapped
+    assert_true(isinstance(sa['test'], ArrayCollectable))
+    assert_equal(len(sa), 1)

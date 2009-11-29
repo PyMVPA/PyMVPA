@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import copy
 
-from mvpa.misc.state import SampleAttributesCollection, \
+from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
         DatasetAttribute
@@ -282,14 +282,14 @@ class Dataset(object):
                 if self.sa.has_key(attr):
                     self.sa[attr].value = ids
                 else:
-                    self.sa.add(attr, ids)
+                    self.sa[attr] = ids
             if which == 'features' or which == 'both':
                 ids = N.array(['%s-%i' % (thisid, i)
                                     for i in xrange(self.samples.shape[1])])
                 if self.fa.has_key(attr):
                     self.fa[attr].value = ids
                 else:
-                    self.fa.add(attr, ids)
+                    self.fa[attr] = ids
 
 
     def __copy__(self):
@@ -469,21 +469,21 @@ class Dataset(object):
         # we need fresh SamplesAttributes even if they share the data
         for attr in self.sa.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
+            newattr = attr.__class__(doc=attr.__doc__)
             # slice
             newattr.value = attr.value[args[0]]
             # assign to target collection
-            sa.add_collectable(newattr)
+            sa[attr.name] = newattr
 
         # per-feature attributes; always needs to run even if slice(None),
         # since we need fresh SamplesAttributes even if they share the data
         for attr in self.fa.values():
             # preserve attribute type
-            newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
+            newattr = attr.__class__(doc=attr.__doc__)
             # slice
             newattr.value = attr.value[args[1]]
             # assign to target collection
-            fa.add_collectable(newattr)
+            fa[attr.name] = newattr
 
             # and finally dataset attributes: this time copying
         for attr in self.a.values():
@@ -494,7 +494,7 @@ class Dataset(object):
             # necessary -- most likely all mappers need to have one
             newattr.value = copy.copy(attr.value)
             # assign to target collection
-            a.add_collectable(newattr)
+            a[attr.name] = newattr
 
         # and adjusting the mapper (if any)
         if a.has_key('mapper'):
