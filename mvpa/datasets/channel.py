@@ -60,11 +60,11 @@ class ChannelDataset(Dataset):
         # charge dataset properties
         # but only if some value
         if not dt is None:
-            ds.a.add('dt', dt)
+            ds.a['dt'] = dt
         if not channelids is None:
-            ds.a.add('channelids', channelids)
+            ds.a['channelids'] = channelids
         if not t0 is None:
-            ds.a.add('t0', t0)
+            ds.a['t0'] = t0
 
         return ds
 

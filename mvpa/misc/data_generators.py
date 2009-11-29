@@ -32,7 +32,7 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
         dataset_ = func(*args, **kwargs)
         # might not have chunks at all
         if not dataset_.sa.has_key('chunks'):
-            dataset_.sa.add('chunks',  N.repeat(chunk + 1, dataset_.nsamples))
+            dataset_.sa['chunks'] = N.repeat(chunk + 1, dataset_.nsamples)
         else:
             dataset_.sa.chunks[:] = chunk + 1
         if chunk == 0:

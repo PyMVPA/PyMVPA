@@ -20,8 +20,9 @@ from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.misc.attributes import SampleAttribute
-from mvpa.misc.state import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection
+from mvpa.base.collections import SampleAttributesCollection, \
+        FeatureAttributesCollection, DatasetAttributesCollection, \
+        ArrayCollectable
 
 from tests_warehouse import *
 
@@ -69,11 +70,11 @@ def test_from_basic():
     assert_raises(ValueError, Dataset.from_basic, samples, labels + labels)
 
     # check that we actually have attributes of the expected type
-    ok_(isinstance(ds.sa['labels'], SampleAttribute))
+    ok_(isinstance(ds.sa['labels'], ArrayCollectable))
 
     # the dataset will take care of not adding stupid stuff
-    assert_raises(ValueError, ds.sa.add, 'stupid', N.arange(3))
-    assert_raises(ValueError, ds.fa.add, 'stupid', N.arange(4))
+    assert_raises(ValueError, ds.sa.__setitem__, 'stupid', N.arange(3))
+    assert_raises(ValueError, ds.fa.__setitem__, 'stupid', N.arange(4))
     # or change proper attributes to stupid shapes
     try:
         ds.sa.labels = N.arange(3)
@@ -183,9 +184,9 @@ def test_multidim_attrs():
     fattr = ds.mapper.forward(samples)
     assert_equal(fattr.shape, (2,12))
     # should puke -- first axis is #samples
-    assert_raises(ValueError, ds.fa.add, 'moresamples', fattr)
+    assert_raises(ValueError, ds.fa.__setitem__, 'moresamples', fattr)
     # but that should be fine
-    ds.fa.add('moresamples', fattr.T)
+    ds.fa['moresamples'] = fattr.T
     assert_equal(ds.fa.moresamples.shape, (12,2))
 
 
