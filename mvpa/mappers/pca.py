@@ -14,7 +14,8 @@ import numpy as N
 
 from mvpa.base import warning
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import ProjectionMapper
+from mvpa.mappers.base import accepts_dataset_as_samples
+from mvpa.mappers.projection import ProjectionMapper
 
 import mvpa.base.externals as externals
 if externals.exists('mdp', raiseException=True):
@@ -36,11 +37,11 @@ class PCAMapper(ProjectionMapper):
     __doc__ = enhancedDocString('PCAMapper', locals(), ProjectionMapper)
 
 
-    def _train(self, dataset):
+    @accepts_dataset_as_samples
+    def _train(self, samples):
         """Determine the projection matrix onto the components from
         a 2D samples x feature data matrix.
         """
-        samples = dataset.samples
         dtype = samples.dtype
         if str(dtype).startswith('uint') \
                or str(dtype).startswith('int'):

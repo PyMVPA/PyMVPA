@@ -15,6 +15,7 @@ from mvpa.base import externals
 import sys
 import numpy as N
 from mvpa.support.copy import deepcopy
+from mvpa.base.collections import DatasetAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -34,8 +35,6 @@ if externals.exists('nifti', raiseException=True):
         __name__ = oldname
 
 from mvpa.datasets.base import Dataset
-from mvpa.datasets.mapped import MappedDataset
-from mvpa.datasets.event import EventDataset
 from mvpa.mappers.base import CombinedMapper
 from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.mappers.array import DenseArrayMapper
@@ -49,7 +48,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
       src: str | NiftiImage
         Filename of a NIfTI image or a `NiftiImage` instance.
       ensure : bool
-        If True, through ValueError exception if cannot be loaded.
+        If True, throw ValueError exception if cannot be loaded.
       enforce_dim : int or None
         If not None, it is the dimensionality of the data to be enforced,
         commonly 4D for the data, and 3D for the mask in case of fMRI.
@@ -133,7 +132,7 @@ def getNiftiData(nim):
         return nim.asarray()
 
 
-class NiftiDataset(MappedDataset):
+class NiftiDataset(Dataset):
     """Dataset loading its samples from a NIfTI image or file.
 
     Samples can be loaded from a NiftiImage instance or directly from a NIfTI
@@ -152,10 +151,9 @@ class NiftiDataset(MappedDataset):
     http://niftilib.sourceforge.net/pynifti/ for more information about
     pynifti.
     """
-    # XXX: Every dataset should really have an example of howto instantiate
-    #      it (necessary parameters).
-    def __init__(self, samples=None, mask=None, dsattr=None,
-                 enforce_dim=4, **kwargs):
+    @classmethod
+    def from_anynifti(cls, samples, labels=None, chunks=None, mask=None,
+                      enforce_dim=4):
         """
         :Parameters:
           samples: str | NiftiImage
@@ -167,31 +165,10 @@ class NiftiDataset(MappedDataset):
             If not None, it is the dimensionality of the data to be enforced,
             commonly 4D for the data, and 3D for the mask in case of fMRI.
         """
-        # if in copy constructor mode
-        if not dsattr is None and dsattr.has_key('mapper'):
-            MappedDataset.__init__(self,
-                                   samples=samples,
-                                   dsattr=dsattr,
-                                   **kwargs)
-            return
-
-        #
-        # the following code only deals with contructing fresh datasets from
-        # scratch
-        #
-
         # load the samples
         niftisamples = getNiftiFromAnySource(samples, ensure=True,
                                              enforce_dim=enforce_dim)
         samples = niftisamples.data
-
-        # do not put the whole NiftiImage in the dict as this will most
-        # likely be deepcopy'ed at some point and ensuring data integrity
-        # of the complex Python-C-Swig hybrid might be a tricky task.
-        # Only storing the header dict should achieve the same and is more
-        # memory efficient and even simpler
-        dsattr = {'niftihdr': niftisamples.header}
-
 
         # figure out what the mask is, but onyl handle known cases, the rest
         # goes directly into the mapper which maybe knows more
@@ -214,11 +191,17 @@ class NiftiDataset(MappedDataset):
                     metric=DescreteMetric(elementsize=elementsize,
                                           distance_function=cartesianDistance))
 
-        MappedDataset.__init__(self,
-                               samples=samples,
-                               mapper=mapper,
-                               dsattr=dsattr,
-                               **kwargs)
+        ds = cls.from_basic(samples, labels=labels, chunks=chunks,
+                            mapper=mapper)
+
+        # do not put the whole NiftiImage in the dict as this will most
+        # likely be deepcopy'ed at some point and ensuring data integrity
+        # of the complex Python-C-Swig hybrid might be a tricky task.
+        # Only storing the header dict should achieve the same and is more
+        # memory efficient and even simpler
+        ds.a.add('niftihdr', niftisamples.header)
+
+        return ds
 
 
     def map2Nifti(self, data=None):
@@ -237,63 +220,57 @@ class NiftiDataset(MappedDataset):
         elif isinstance(data, Dataset):
             # ease users life
             data = data.samples
-        dsarray = self.mapper.reverse(data)
-        return NiftiImage(dsarray, self.niftihdr)
+        dsarray = self.a.mapper.reverse(data)
+        return NiftiImage(dsarray, self.a.niftihdr)
 
 
-    def getDt(self):
-        """Return the temporal distance of two samples/volumes.
-
-        This method tries to be clever and always returns `dt` in seconds, by
-        using unit information from the NIfTI header. If such information is
-        not present the assumed unit will also be `seconds`.
-        """
-        # plain value
-        hdr = self.niftihdr
-        TR = hdr['pixdim'][4]
-
-        # by default assume seconds as unit and do not scale
-        scale = 1.0
-
-        # figure out units, if available
-        if hdr.has_key('time_unit'):
-            unit_code = hdr['time_unit'] / 8
-        elif hdr.has_key('xyzt_unit'):
-            unit_code = int(hdr['xyzt_unit']) / 8
-        else:
-            warning("No information on time units is available. Assuming "
-                    "seconds")
-            unit_code = 0
-
-        # handle known units
-        # XXX should be refactored to use actual unit labels from pynifti
-        # when version 0.20090205 or later is assumed to be available on all
-        # machines
-        if unit_code in [0, 1, 2, 3]:
-            if unit_code == 0:
-                warning("Time units were not specified in NiftiImage. "
-                        "Assuming seconds.")
-            scale = [ 1.0, 1.0, 1e-3, 1e-6 ][unit_code]
-        else:
-            warning("Time units are incorrectly coded: value %d whenever "
-                    "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
-                    "Assuming seconds." % (unit_code * 8,)
-                    )
-        return TR * scale
-
-
-    niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
-                        doc='Access to the NIfTI header dictionary.')
-
-    dt = property(fget=getDt,
-                  doc='Time difference between two samples (in seconds). '
-                  'AKA TR in fMRI world.')
-
-    samplingrate = property(fget=lambda self: 1.0 / self.dt,
-                          doc='Sampling rate (based on .dt).')
+#    def getDt(self):
+#        """Return the temporal distance of two samples/volumes.
+#
+#        This method tries to be clever and always returns `dt` in seconds, by
+#        using unit information from the NIfTI header. If such information is
+#        not present the assumed unit will also be `seconds`.
+#        """
+#        # plain value
+#        hdr = self.niftihdr
+#        TR = hdr['pixdim'][4]
+#
+#        # by default assume seconds as unit and do not scale
+#        scale = 1.0
+#
+#        # figure out units, if available
+#        if hdr.has_key('time_unit'):
+#            unit_code = hdr['time_unit'] / 8
+#        elif hdr.has_key('xyzt_unit'):
+#            unit_code = int(hdr['xyzt_unit']) / 8
+#        else:
+#            warning("No information on time units is available. Assuming "
+#                    "seconds")
+#            unit_code = 0
+#
+#        # handle known units
+#        # XXX should be refactored to use actual unit labels from pynifti
+#        # when version 0.20090205 or later is assumed to be available on all
+#        # machines
+#        if unit_code in [0, 1, 2, 3]:
+#            if unit_code == 0:
+#                warning("Time units were not specified in NiftiImage. "
+#                        "Assuming seconds.")
+#            scale = [ 1.0, 1.0, 1e-3, 1e-6 ][unit_code]
+#        else:
+#            warning("Time units are incorrectly coded: value %d whenever "
+#                    "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
+#                    "Assuming seconds." % (unit_code * 8,)
+#                    )
+#        return TR * scale
 
 
-class ERNiftiDataset(EventDataset):
+
+# convenience alias
+nifti_dataset = NiftiDataset.from_anynifti
+
+
+class ERNiftiDataset(Dataset):
     """Dataset with event-defined samples from a NIfTI timeseries image.
 
     This is a convenience dataset to facilitate the analysis of event-related

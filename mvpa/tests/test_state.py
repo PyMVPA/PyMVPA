@@ -109,21 +109,21 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(len(proper3.states.enabled), 0,
             msg="disable_states should override anything in enable_states")
 
-        proper.state2 = 1000
-        value = proper.state2
-        self.failUnlessEqual(proper.state2, 1000, msg="Simple assignment/retrieval")
+        proper.states.state2 = 1000
+        value = proper.states.state2
+        self.failUnlessEqual(proper.states.state2, 1000, msg="Simple assignment/retrieval")
 
         proper.states.disable('state2')
-        proper.state2 = 10000
-        self.failUnlessEqual(proper.state2, 1000, msg="Simple assignment after being disabled")
+        proper.states.state2 = 10000
+        self.failUnlessEqual(proper.states.state2, 1000, msg="Simple assignment after being disabled")
 
         proper4 = copy.deepcopy(proper)
 
         proper.states.reset('state2')
-        self.failUnlessRaises(UnknownStateError, proper.__getattribute__, 'state2')
+        self.failUnlessRaises(UnknownStateError, proper.states.__getattribute__, 'state2')
         """Must be blank after being reset"""
 
-        self.failUnlessEqual(proper4.state2, 1000,
+        self.failUnlessEqual(proper4.states.state2, 1000,
             msg="Simple assignment after being reset in original instance")
 
 
@@ -156,14 +156,14 @@ class StateTests(unittest.TestCase):
         proper2.states.enable("all")
         self.failUnlessEqual(len(proper2.states.enabled), 2)
 
-        proper2.state1, proper2.state2 = 1,2
-        self.failUnlessEqual(proper2.state1, 1)
-        self.failUnlessEqual(proper2.state2, 2)
+        proper2.states.state1, proper2.states.state2 = 1,2
+        self.failUnlessEqual(proper2.states.state1, 1)
+        self.failUnlessEqual(proper2.states.state2, 2)
 
         # now reset them
         proper2.states.reset('all')
-        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state1')
-        self.failUnlessRaises(UnknownStateError, proper2.__getattribute__, 'state2')
+        self.failUnlessRaises(UnknownStateError, proper2.states.__getattribute__, 'state1')
+        self.failUnlessRaises(UnknownStateError, proper2.states.__getattribute__, 'state2')
 
 
     def testGetSaveEnabled(self):
@@ -247,15 +247,15 @@ class StateTests(unittest.TestCase):
         s1, s2, s1_, s1__, s12 = S1(), S2(), S1_(), S1__(), S12()
 
         self.failUnlessEqual(s1.states.isEnabled("v1"), True)
-        s1.v1 = 12
-        s12.v1 = 120
-        s2.v2 = 100
+        s1.states.v1 = 12
+        s12.states.v1 = 120
+        s2.states.v2 = 100
 
         self.failUnlessEqual(len(s2.states.listing), 1)
 
-        self.failUnlessEqual(s1.v1, 12)
+        self.failUnlessEqual(s1.states.v1, 12)
         try:
-            tempvalue = s1__.v1__
+            tempvalue = s1__.states.v1__
             self.fail("Should have puked since values were not enabled yet")
         except:
             pass
@@ -268,7 +268,7 @@ class StateTests(unittest.TestCase):
             msg="Should raise an exception if argument doesn't correspond to"
                 "any parameter")
         a = TestClassParametrized(p1=123, enable_states=['state1'])
-        self.failUnlessEqual(a.p1, 123, msg="We must have assigned value to instance")
+        self.failUnlessEqual(a.params.p1, 123, msg="We must have assigned value to instance")
         self.failUnless('state1' in a.states.enabled,
                         msg="state1 must have been enabled")
 

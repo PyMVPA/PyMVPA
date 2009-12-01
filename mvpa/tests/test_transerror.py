@@ -11,7 +11,7 @@
 import unittest
 from mvpa.support.copy import copy
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 
@@ -150,6 +150,7 @@ class ErrorsTests(unittest.TestCase):
 
         # this will print nasty WARNING but it is ok -- it is just checking code
         # NB warnings are not printed while doing whole testing
+        warning("Don't worry about the following warning.")
         self.failIf(terr(test3) is None)
 
         # try copying the beast
@@ -173,7 +174,7 @@ class ErrorsTests(unittest.TestCase):
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.null_prob
+        null_prob = terr.states.null_prob
         self.failUnless(null_prob < 0.01,
             msg="Failed to check that the result is highly significant "
                 "(got %f) since we know that the data has signal"
@@ -185,7 +186,7 @@ class ErrorsTests(unittest.TestCase):
         train = datasets['uni2medium']
         terr = TransferError(clf=l_clf, enable_states=['samples_error'])
         err = terr(train, train)
-        se = terr.samples_error
+        se = terr.states.samples_error
 
         # one error per sample
         self.failUnless(len(se) == train.nsamples)
@@ -206,14 +207,15 @@ class ErrorsTests(unittest.TestCase):
         clf.states._changeTemporarily(enable_states = ['values'])
         # uni2 dataset with reordered labels
         ds2 = datasets['uni2small'].copy()
-        ds2.labels = 1 - ds2.labels   # revert labels
+        # revert labels
+        ds2.sa['labels'].value = ds2.labels[::-1].copy()
         # same with uni3
         ds3 = datasets['uni3small'].copy()
-        ul = ds3.uniquelabels
+        ul = ds3.sa['labels'].unique
         nl = ds3.labels.copy()
         for l in xrange(3):
             nl[ds3.labels == ul[l]] = ul[(l+1)%3]
-        ds3.labels = nl
+        ds3.sa.labels = nl
         for ds in [datasets['uni2small'], ds2,
                    datasets['uni3small'], ds3]:
             cv = CrossValidatedTransferError(
@@ -221,7 +223,7 @@ class ErrorsTests(unittest.TestCase):
                 OddEvenSplitter(),
                 enable_states=['confusion', 'training_confusion'])
             cverror = cv(ds)
-            stats = cv.confusion.stats
+            stats = cv.states.confusion.stats
             Nlabels = len(ds.uniquelabels)
             # so we at least do slightly above chance
             self.failUnless(stats['ACC'] > 1.2 / Nlabels)

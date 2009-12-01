@@ -12,8 +12,10 @@ dedicated containers aka. `Collections`.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
 
 from mvpa.misc.exceptions import UnknownStateError
+import mvpa.support.copy as copy
 
 if __debug__:
     from mvpa.base import debug
@@ -24,14 +26,13 @@ if __debug__:
 # Various attributes which will be collected into collections
 #
 class CollectableAttribute(object):
+    # XXX Most of the stuff below should go into the module docstring
     """Base class for any custom behaving attribute intended to become
     part of a collection.
 
     Derived classes will have specific semantics:
 
     * StateVariable: conditional storage
-    * AttributeWithUnique: easy access to a set of unique values
-      within a container
     * Parameter: attribute with validity ranges.
 
       - ClassifierParameter: specialization to become a part of
@@ -46,7 +47,20 @@ class CollectableAttribute(object):
 
     _instance_index = 0
 
-    def __init__(self, name=None, doc=None, index=None):
+    def __init__(self, name=None, doc=None, index=None, value=None):
+        """
+        Parameters
+        ----------
+        name : str
+          Name of the attribute under which it should be available in its
+          respective collection.
+        doc : str
+          Documentation about the purpose of this attribute.
+        index : ???
+          ???
+        value : arbitrary (see derived implementations)
+          The actual value of this attribute.
+        """
         if index is None:
             CollectableAttribute._instance_index += 1
             index = CollectableAttribute._instance_index
@@ -56,9 +70,19 @@ class CollectableAttribute(object):
         self._value = None
         self._isset = False
         self.reset()
+        if not value is None:
+            self._set(value)
         if __debug__:
             debug("COL",
                   "Initialized new collectable #%d:%s" % (index,name) + `self`)
+
+
+    def __copy__(self):
+        # preserve attribute type
+        copied = self.__class__(name=self.name, doc=self.__doc__)
+        # just get a view of the old data!
+        copied.value = copy.copy(self.value)
+        return copied
 
 
     # Instead of going for VProperty lets make use of virtual method
@@ -106,6 +130,17 @@ class CollectableAttribute(object):
         return res
 
 
+    def __repr__(self):
+        if not self._isset:
+            value = None
+        else:
+            value = self.value
+        return "%s(name=%s, doc=%s, value=%s)" % (self.__class__.__name__,
+                                                  repr(self.name),
+                                                  repr(self.__doc__),
+                                                  repr(value))
+
+
     def _getName(self):
         return self.__name
 
@@ -139,92 +174,30 @@ class CollectableAttribute(object):
 
 
 
-# XXX think that may be discard hasunique and just devise top
-#     class DatasetAttribute
-class AttributeWithUnique(CollectableAttribute):
-    """Container which also takes care about recomputing unique values
-
-    XXX may be we could better link original attribute to additional
-    attribute which actually stores the values (and do reverse there
-    as well).
-
-    Pros:
-      * don't need to mess with getattr since it would become just another
-        attribute
-
-    Cons:
-      * might be worse design in terms of comprehension
-      * take care about _set, since we shouldn't allow
-        change it externally
-
-    For now lets do it within a single class and tune up getattr
-    """
-
-    def __init__(self, name=None, hasunique=True, doc="Attribute with unique"):
-        CollectableAttribute.__init__(self, name, doc)
-        self._hasunique = hasunique
-        self._resetUnique()
-        if __debug__:
-            debug("UATTR",
-                  "Initialized new AttributeWithUnique %s " % name + `self`)
-
-
-    def reset(self):
-        super(AttributeWithUnique, self).reset()
-        self._resetUnique()
-
-
-    def _resetUnique(self):
-        self._uniqueValues = None
-
-
-    def _set(self, *args, **kwargs):
-        self._resetUnique()
-        CollectableAttribute._set(self, *args, **kwargs)
-
-
-    def _getUniqueValues(self):
-        if self.value is None:
-            return None
-        if self._uniqueValues is None:
-            # XXX we might better use Set, but yoh recalls that
-            #     N.unique was more efficient. May be we should check
-            #     on the the class and use Set only if we are not
-            #     dealing with ndarray (or lists/tuples)
-            self._uniqueValues = N.unique(N.asanyarray(self.value))
-        return self._uniqueValues
-
-    uniqueValues = property(fget=_getUniqueValues)
-    hasunique = property(fget=lambda self:self._hasunique)
-
-
-
-# Hooks for comprehendable semantics and automatic collection generation
-class SampleAttribute(AttributeWithUnique):
-    pass
-
-
-
-class FeatureAttribute(AttributeWithUnique):
-    pass
-
-
-
-class DatasetAttribute(AttributeWithUnique):
-    pass
-
-
-
 class StateVariable(CollectableAttribute):
     """Simple container intended to conditionally store the value
     """
 
     def __init__(self, name=None, enabled=True, doc="State variable"):
+        """
+        Parameters
+        ----------
+        name : str
+          Name of the attribute under which it should be available in its
+          respective collection.
+        doc : str
+          Documentation about the purpose of this attribute.
+        enabled : bool
+          If a StateVariable is not enabled then assignment of any value has no
+          effect, i.e. nothing is stored.
+        value : arbitrary (see derived implementations)
+          The actual value of this attribute.
+        """
         # Force enabled state regardless of the input
         # to facilitate testing
         if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
             enabled = True
-        CollectableAttribute.__init__(self, name, doc)
+        CollectableAttribute.__init__(self, name=name, doc=doc)
         self._isenabled = enabled
         self._defaultenabled = enabled
         if __debug__:

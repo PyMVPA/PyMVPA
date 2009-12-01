@@ -15,6 +15,7 @@ import numpy as N
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.distance import squared_euclidean_distance
+from mvpa.datasets.miscfx import get_samples_by_attr
 
 
 
@@ -101,7 +102,7 @@ def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
         for c in curves:
             xc, yc = c
             # scales line array to same range as datapoints
-            P.plot(xc, yc, linestyle=linestyle)
+            P.plot(xc, yc, linestyle)
 
         # no line between data points
         linestyle = 'None'
@@ -138,8 +139,8 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
     lsplit = NFoldSplitter(1, attr='labels')
     csplit = NFoldSplitter(1, attr='chunks')
 
-    nrows = len(dataset.uniquelabels)
-    ncols = len(dataset.uniquechunks)
+    nrows = len(dataset.sa['labels'].unique)
+    ncols = len(dataset.sa['chunks'].unique)
 
     def doplot(data):
         P.hist(data, **kwargs)
@@ -162,16 +163,16 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
                 doplot(d.samples.ravel())
 
                 if row == 0:
-                    P.title('C:' + str(d.uniquechunks[0]))
+                    P.title('C:' + str(d.sa['chunks'].unique[0]))
                 if col == 0:
-                    P.ylabel('L:' + str(d.uniquelabels[0]))
+                    P.ylabel('L:' + str(d.sa['labels'].unique[0]))
 
                 fig += 1
         else:
             P.subplot(1, nrows, fig)
             doplot(ds.samples)
 
-            P.title('L:' + str(ds.uniquelabels[0]))
+            P.title('L:' + str(ds.sa['labels'].unique[0]))
 
             fig += 1
 
@@ -191,9 +192,9 @@ def plotSamplesDistance(dataset, sortbyattr=None):
     """
     if sortbyattr is not None:
         slicer = []
-        for attr in dataset.__getattribute__('unique' + sortbyattr):
+        for attr in dataset.sa[sortbyattr].unique:
             slicer += \
-                dataset.__getattribute__('idsby' + sortbyattr)(attr).tolist()
+                get_samples_by_attr(dataset, sortbyattr, attr).tolist()
         samples = dataset.samples[slicer]
     else:
         samples = dataset.samples
@@ -206,7 +207,7 @@ def plotSamplesDistance(dataset, sortbyattr=None):
 
 def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
                width=0.2, offset=0.2, color='0.6', distance=1.0,
-               yerr='ste', **kwargs):
+               yerr='ste', xloc=None, **kwargs):
     """Make bar plots with automatically computed error bars.
 
     Candlestick plot (multiple interleaved barplots) can be done,
@@ -237,11 +238,14 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         Distance of two adjacent bars.
       yerr: 'ste' | 'std' | None
         Type of error for the errorbars. If `None` no errorbars are plotted.
+      xloc: sequence
+        Locations of the bars on the x axis.
       **kwargs:
         Any additional arguments are passed to matplotlib's `bar()` function.
     """
     # determine location of bars
-    xlocations = (N.arange(len(data)) * distance) + offset
+    if xloc is None:
+        xloc = (N.arange(len(data)) * distance) + offset
 
     if yerr == 'ste':
         yerr = [N.std(d) / N.sqrt(len(d)) for d in data]
@@ -252,7 +256,7 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         pass
 
     # plot bars
-    plot = P.bar(xlocations,
+    plot = P.bar(xloc,
                  [N.mean(d) for d in data],
                  yerr=yerr,
                  width=width,
@@ -266,13 +270,13 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
         P.title(title)
 
     if labels:
-        P.xticks(xlocations + width / 2, labels)
+        P.xticks(xloc + width / 2, labels)
 
     if ylabel:
         P.ylabel(ylabel)
 
     # leave some space after last bar
-    P.xlim(0, xlocations[-1] + width + offset)
+    P.xlim(0, xloc[-1] + width + offset)
 
     return plot
 

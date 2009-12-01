@@ -13,7 +13,6 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa.base import debug
 
-from mvpa.datasets.mapped import MappedDataset
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.base.dochelpers import enhancedDocString
@@ -72,13 +71,12 @@ class Searchlight(DatasetMeasure):
     def _call(self, dataset):
         """Perform the spheresearch.
         """
-        if not isinstance(dataset, MappedDataset) \
-               or dataset.mapper.metric is None:
+        if not (dataset.a.has_key('mapper')):
             raise ValueError, "Searchlight only works with MappedDatasets " \
                               "that has metric assigned."
 
         if self.states.isEnabled('spheresizes'):
-            self.spheresizes = []
+            self.states.spheresizes = []
 
         if __debug__:
             if not self.__center_ids == None:
@@ -100,9 +98,7 @@ class Searchlight(DatasetMeasure):
         # put spheres around all features in the dataset and compute the
         # measure within them
         for f in generator:
-            sphere = dataset.selectFeatures(
-                dataset.mapper.getNeighbors(f, self.__radius),
-                plain=True)
+            sphere = dataset[:, dataset.mapper.getNeighbors(f, self.__radius)]
 
             # compute the datameasure and store in results
             measure = self.__datameasure(sphere)
@@ -110,7 +106,7 @@ class Searchlight(DatasetMeasure):
 
             # store the size of the sphere dataset
             if self.states.isEnabled('spheresizes'):
-                self.spheresizes.append(sphere.nfeatures)
+                self.states.spheresizes.append(sphere.nfeatures)
 
             if __debug__:
                 sphere_count += 1
@@ -124,7 +120,7 @@ class Searchlight(DatasetMeasure):
             debug('SLC', '')
 
         # charge state
-        self.raw_results = results
+        self.states.raw_results = results
 
         # return raw results, base-class will take care of transformations
         return results

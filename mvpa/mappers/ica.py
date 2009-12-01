@@ -13,7 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import ProjectionMapper
+from mvpa.mappers.base import accepts_dataset_as_samples
+from mvpa.mappers.projection import ProjectionMapper
 
 import mvpa.base.externals as externals
 if externals.exists('mdp', raiseException=True):
@@ -35,7 +36,8 @@ class ICAMapper(ProjectionMapper):
     __doc__ = enhancedDocString('ICAMapper', locals(), ProjectionMapper)
 
 
-    def _train(self, dataset):
+    @accepts_dataset_as_samples
+    def _train(self, samples):
         """Determine the projection matrix onto the components from
         a 2D samples x feature data matrix.
         """
@@ -43,23 +45,23 @@ class ICAMapper(ProjectionMapper):
 
         # more features than samples? -> rank deficiancy
         # if not tranposing the data, MDP has to do SVD prior to ICA
-        if dataset.samples.shape[1] > dataset.samples.shape[0] \
+        if samples.shape[1] > samples.shape[0] \
            and not self._transpose:
             white_param['svd'] = True
 
         if self._algorithm == 'fastica':
             node = FastICANode(white_parm=white_param,
-                               dtype=dataset.samples.dtype)
+                               dtype=samples.dtype)
         elif self._algorithm == 'cubica':
             node = CuBICANode(white_parm=white_param,
-                              dtype=dataset.samples.dtype)
+                              dtype=samples.dtype)
         else:
             raise NotImplementedError
 
-#            node.train(dataset.samples.T)
-#            self._proj = dataset.samples.T * N.asmatrix(node.get_projmatrix())
+#            node.train(samples.T)
+#            self._proj = samples.T * N.asmatrix(node.get_projmatrix())
 #            print self._proj.shape
 #        else:
-        node.train(dataset.samples)
+        node.train(samples)
         self._proj = N.asmatrix(node.get_projmatrix())
         self._recon = N.asmatrix(node.get_recmatrix())

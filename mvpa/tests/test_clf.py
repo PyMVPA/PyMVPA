@@ -10,7 +10,7 @@
 
 from mvpa.support.copy import deepcopy
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
@@ -27,6 +27,8 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
+from numpy.testing import assert_array_equal
+
 class ClassifiersTests(unittest.TestCase):
 
     def setUp(self):
@@ -34,7 +36,7 @@ class ClassifiersTests(unittest.TestCase):
         self.clf_less1 = Less1Classifier()
 
         # simple binary dataset
-        self.data_bin_1 = Dataset(
+        self.data_bin_1 = dataset(
             samples=[[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
             labels=[1, 1, 1, -1, -1], # labels
             chunks=[0, 1, 2,  2, 3])  # chunks
@@ -51,21 +53,21 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnlessRaises(UnknownStateError, clf.states.__getattribute__,
                                   "trained_dataset")
 
-        self.failUnlessEqual(clf.training_confusion.percentCorrect,
+        self.failUnlessEqual(clf.states.training_confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
                              list(self.data_bin_1.labels))
 
-        self.failUnlessEqual(len(clf.predictions), self.data_bin_1.nsamples,
+        self.failUnlessEqual(len(clf.states.predictions), self.data_bin_1.nsamples,
             msg="Trained classifier stores predictions by default")
 
         clf = SameSignClassifier(enable_states=['trained_dataset'])
         clf.train(self.data_bin_1)
-        self.failUnless((clf.trained_dataset.samples ==
-                         self.data_bin_1.samples).all())
-        self.failUnless((clf.trained_dataset.labels ==
-                         self.data_bin_1.labels).all())
+        assert_array_equal(clf.states.trained_dataset.samples,
+                           self.data_bin_1.samples)
+        assert_array_equal(clf.states.trained_dataset.labels,
+                           self.data_bin_1.labels)
 
 
     def testBoosted(self):
@@ -105,7 +107,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def testBinaryDecorator(self):
-        ds = Dataset(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
+        ds = dataset(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
                      labels=[ 'sp', 'sp', 'sp', 'dn', 'sn', 'dp'])
         testdata = [ [0,0], [10,10], [-10, -1], [0.1, -0.1], [-0.2, 0.2] ]
         # labels [s]ame/[d]ifferent (sign), and [p]ositive/[n]egative first element
@@ -160,8 +162,8 @@ class ClassifiersTests(unittest.TestCase):
                 enable_states=['confusion', 'training_confusion',
                                'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.confusion.error
-        tr_error = clf.training_confusion.error
+        error = clf.states.confusion.error
+        tr_error = clf.states.training_confusion.error
 
         clf2 = clf.clone()
         cv = CrossValidatedTransferError(
@@ -169,7 +171,7 @@ class ClassifiersTests(unittest.TestCase):
             NFoldSplitter(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds)
-        tr_cverror = cv.training_confusion.error
+        tr_cverror = cv.states.training_confusion.error
 
         self.failUnlessEqual(error, cverror,
                 msg="We should get the same error using split classifier as"
@@ -181,13 +183,13 @@ class ClassifiersTests(unittest.TestCase):
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (tr_error, tr_cverror))
 
-        self.failUnlessEqual(clf.confusion.percentCorrect,
+        self.failUnlessEqual(clf.states.confusion.percentCorrect,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.confusion.sets),
-                             len(ds.uniquechunks),
+        self.failUnlessEqual(len(clf.states.confusion.sets),
+                             len(ds.UC),
                              msg="Should have 1 confusion per each split")
-        self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
+        self.failUnlessEqual(len(clf.clfs), len(ds.UC),
                              msg="Should have number of classifiers equal # of epochs")
         self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
                              msg="Should classify correctly")
@@ -215,7 +217,7 @@ class ClassifiersTests(unittest.TestCase):
                 splitter=NFoldSplitter(1),
                 enable_states=['confusion', 'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.confusion.error
+        error = clf.states.confusion.error
 
         cv = CrossValidatedTransferError(
             TransferError(clf2),
@@ -232,9 +234,9 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnless(error < 0.25,
                 msg="clf should generalize more or less fine. "
                     "Got error %s" % error)
-        self.failUnlessEqual(len(clf.confusion.sets), len(ds.uniquechunks),
+        self.failUnlessEqual(len(clf.states.confusion.sets), len(ds.UC),
             msg="Should have 1 confusion per each split")
-        self.failUnlessEqual(len(clf.clfs), len(ds.uniquechunks),
+        self.failUnlessEqual(len(clf.clfs), len(ds.UC),
             msg="Should have number of classifiers equal # of epochs")
         #self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
         #                     msg="Should classify correctly")
@@ -249,20 +251,20 @@ class ClassifiersTests(unittest.TestCase):
                 splitter=NFoldSplitter(1),
                 enable_states=['confusion', 'training_confusion',
                                'feature_ids'],
-                harvest_attribs=['clf.feature_ids',
-                                 'clf.training_time'],
+                harvest_attribs=['clf.states.feature_ids',
+                                 'clf.states.training_time'],
                 descr="DESCR")
         clf.train(ds)                   # train the beast
         # Number of harvested items should be equal to number of chunks
-        self.failUnlessEqual(len(clf.harvested['clf.feature_ids']),
-                             len(ds.uniquechunks))
+        self.failUnlessEqual(len(clf.states.harvested['clf.states.feature_ids']),
+                             len(ds.UC))
         # if we can blame multiple inheritance and ClassWithCollections.__init__
         self.failUnlessEqual(clf.descr, "DESCR")
 
 
     def testMappedClassifier(self):
         samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
-        testdata3 = Dataset(samples=samples, labels=1)
+        testdata3 = dataset(samples=samples, labels=1)
         res110 = [1, 1, 1, -1, -1]
         res101 = [-1, 1, -1, -1, 1]
         res011 = [-1, 1, -1, 1, -1]
@@ -297,9 +299,9 @@ class ClassifiersTests(unittest.TestCase):
 
         samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
 
-        testdata3 = Dataset(samples=samples, labels=1)
+        testdata3 = dataset(samples=samples, labels=1)
         # dummy train data so proper mapper gets created
-        traindata = Dataset(samples=N.array([ [0, 0,-1], [1,0,1] ]), labels=[1,2])
+        traindata = dataset(samples=N.array([ [0, 0,-1], [1,0,1] ]), labels=[1,2])
 
         # targets
         res110 = [1, 1, 1, -1, -1]
@@ -314,11 +316,11 @@ class ClassifiersTests(unittest.TestCase):
 
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
         # just silly test if we get values assigned in the 'ProxyClassifier'
-        self.failUnless(len(clf011.values) == len(res110),
+        self.failUnless(len(clf011.states.values) == len(res110),
                         msg="We need to pass values into ProxyClassifier")
         self.clf_sign.states._resetEnabledTemporarily()
 
-        self.failUnlessEqual(len(clf011.feature_ids), 2)
+        self.failUnlessEqual(len(clf011.states.feature_ids), 2)
         "Feature selection classifier had to be trained on 2 features"
 
         # first classifier -- last feature should be discarded
@@ -347,11 +349,11 @@ class ClassifiersTests(unittest.TestCase):
         # then setting the values from the results, which the second
         # time is set to predictions.  The final outcome is that the
         # values are actually predictions...
-        dat = Dataset(samples=N.random.randn(4,10),labels=[-1,-1,1,1])
+        dat = dataset(samples=N.random.randn(4,10),labels=[-1,-1,1,1])
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
         res = clf_reg.predict(dat.samples)
-        self.failIf((N.array(clf_reg.values)-clf_reg.predictions).sum()==0,
+        self.failIf((N.array(clf_reg.states.values)-clf_reg.states.predictions).sum()==0,
                     msg="Values were set to the predictions in %s." %
                     sample_clf_reg)
 
@@ -367,21 +369,21 @@ class ClassifiersTests(unittest.TestCase):
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),
-            'L2+3' : ((2, 3),       clfs[2])})
+            'L2+3' : (('L2', 'L3'), clfs[2])})
         self.failUnlessRaises(ValueError, tclf.train, ds)
         """Should raise exception since label 2 is in both"""
 
         # Test insufficient definition
         tclf = TreeClassifier(clfs[0], {
             'L0+5' : (('L0', 'L5'), clfs[1]),
-            'L2+3' : ((2, 3),       clfs[2])})
+            'L2+3' : (('L2', 'L3'),       clfs[2])})
         self.failUnlessRaises(ValueError, tclf.train, ds)
         """Should raise exception since no group for L1"""
 
         # proper definition now
         tclf = TreeClassifier(clfs[0], {
-            'L0+1' : (('L0', 1), clfs[1]),
-            'L2+3' : ((2, 3),    clfs[2])})
+            'L0+1' : (('L0', 'L1'), clfs[1]),
+            'L2+3' : (('L2', 'L3'), clfs[2])})
 
         # Lets test train/test cycle using CVTE
         cv = CrossValidatedTransferError(
@@ -398,8 +400,8 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(tclf.clfs['L0+1'] is clfs[1])
         self.failUnless(tclf.clfs['L2+3'] is clfs[2])
 
-        cvtrc = cv.training_confusion
-        cvtc = cv.confusion
+        cvtrc = cv.states.training_confusion
+        cvtc = cv.states.confusion
         if cfg.getboolean('tests', 'labile', default='yes'):
             # just a dummy check to make sure everything is working
             self.failUnless(cvtrc != cvtc)
@@ -408,7 +410,7 @@ class ClassifiersTests(unittest.TestCase):
         # TODO: whenever implemented
         tclf = TreeClassifier(clfs[0], {
             'L0' : (('L0',), clfs[1]),
-            'L1+2+3' : ((1, 2, 3),    clfs[2])})
+            'L1+2+3' : (('L1', 'L2', 'L3'),    clfs[2])})
         # TEST ME
 
 
@@ -426,7 +428,7 @@ class ClassifiersTests(unittest.TestCase):
         cverror = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
-        self.failUnlessEqual(len(clf.values), ds.nsamples/2)
+        self.failUnlessEqual(len(clf.states.values), ds.nsamples/2)
 
         clf.states._resetEnabledTemporarily()
 
@@ -436,9 +438,9 @@ class ClassifiersTests(unittest.TestCase):
         # XXX somewhat ugly way to force non-dataspecific C value.
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
         # in results
-        if clf.params.isKnown('C') and clf.C<0:
-            oldC = clf.C
-            clf.C = 1.0                 # reset C to be 1
+        if clf.params.isKnown('C') and clf.params.C<0:
+            oldC = clf.params.C
+            clf.params.C = 1.0                 # reset C to be 1
 
         svm, svm2 = clf, clf.clone()
         svm2.states.enable(['training_confusion'])
@@ -448,8 +450,8 @@ class ClassifiersTests(unittest.TestCase):
 
         svm2.train(datasets['uni2small_train'])
         mclf.train(datasets['uni2small_train'])
-        s1 = str(mclf.training_confusion)
-        s2 = str(svm2.training_confusion)
+        s1 = str(mclf.states.training_confusion)
+        s2 = str(svm2.states.training_confusion)
         self.failUnlessEqual(s1, s2,
             msg="Multiclass clf should provide same results as built-in "
                 "libsvm's %s. Got %s and %s" % (svm2, s1, s2))
@@ -472,7 +474,7 @@ class ClassifiersTests(unittest.TestCase):
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
         if oldC is not None:
-            clf.C = oldC
+            clf.params.C = oldC
 
     # XXX meta should also work but TODO
     @sweepargs(clf=clfswh['svm', '!meta'])
@@ -487,11 +489,11 @@ class ClassifiersTests(unittest.TestCase):
             clf.train(traindata)
             predicts = clf.predict(testdata.samples)
             # values should be different from predictions for SVMs we have
-            self.failUnless( (predicts != clf.values).any() )
+            self.failUnless(N.any(predicts != clf.states.values))
 
             if knows_probabilities and clf.states.isSet('probabilities'):
                 # XXX test more thoroughly what we are getting here ;-)
-                self.failUnlessEqual( len(clf.probabilities), len(testdata.samples)  )
+                self.failUnlessEqual( len(clf.states.probabilities), len(testdata.samples)  )
         clf.states._resetEnabledTemporarily()
 
 
@@ -529,7 +531,7 @@ class ClassifiersTests(unittest.TestCase):
         err_1 = trerr(dstest, dstrain)
         self.failUnless(err_1<0.3,
             msg="We should test here on easy dataset. Got error of %s" % err_1)
-        values_1 = clf.values[:]
+        values_1 = clf.states.values[:]
         # some times retraining gets into deeper optimization ;-)
         eps = 0.05
         corrcoef_eps = 0.85             # just to get no failures... usually > 0.95
@@ -538,8 +540,8 @@ class ClassifiersTests(unittest.TestCase):
         def batch_test(retrain=True, retest=True, closer=True):
             err = trerr(dstest, dstrain)
             err_re = trerr_re(dstest, dstrain)
-            corr = N.corrcoef(clf.values, clf_re.values)[0,1]
-            corr_old = N.corrcoef(values_1, clf_re.values)[0,1]
+            corr = N.corrcoef(clf.states.values, clf_re.states.values)[0,1]
+            corr_old = N.corrcoef(values_1, clf_re.states.values)[0,1]
             if __debug__:
                 debug('TEST', "Retraining stats: errors %g %g corr %g "
                       "with old error %g corr %g" %
@@ -590,14 +592,14 @@ class ClassifiersTests(unittest.TestCase):
 
         # should retrain nicely if we change labels
         oldlabels = dstrain.labels[:]
-        dstrain.permuteLabels(status=True, assure_permute=True)
+        dstrain.permute_labels(assure_permute=True)
         self.failUnless((oldlabels != dstrain.labels).any(),
             msg="We should succeed at permutting -- now got the same labels")
         batch_test()
 
         # Change labels in testing
         oldlabels = dstest.labels[:]
-        dstest.permuteLabels(status=True, assure_permute=True)
+        dstest.permute_labels(assure_permute=True)
         self.failUnless((oldlabels != dstest.labels).any(),
             msg="We should succeed at permutting -- now got the same labels")
         batch_test()
@@ -663,17 +665,17 @@ class ClassifiersTests(unittest.TestCase):
         # the same storage, problem becomes unseparable. Like in this case
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
-            Dataset(samples=N.array([ [0, 0, 1.0],
+            dataset(samples=N.array([ [0, 0, 1.0],
                                         [1, 0, 0] ]), labels=[-1, 1]),
-            Dataset(samples=N.array([ [0, 0.0],
+            dataset(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
 
         clf.states._changeTemporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
             clf.train(traindata)
-            self.failUnlessEqual(clf.training_confusion.percentCorrect, 100.0,
+            self.failUnlessEqual(clf.states.training_confusion.percentCorrect, 100.0,
                 "Classifier %s must have 100%% correct learning on %s. Has %f" %
-                (`clf`, traindata.samples, clf.training_confusion.percentCorrect))
+                (`clf`, traindata.samples, clf.states.training_confusion.percentCorrect))
 
             # and we must be able to predict every original sample thus
             for i in xrange(traindata.nsamples):

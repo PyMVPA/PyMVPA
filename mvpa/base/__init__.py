@@ -308,6 +308,9 @@ if __debug__:
     debug.register('REP',    "Reports")
     debug.register('REP_',   "Reports (verbose)")
 
+    debug.register('ATTRREFER', "Debugging of top-level attribute referencing, "
+                   "needed for current refactoring carried out in tent/flexds")
+
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
         debug.setActiveFromString(cfg.get('general', 'debug'))

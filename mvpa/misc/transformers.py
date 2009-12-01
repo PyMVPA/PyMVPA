@@ -372,8 +372,8 @@ class DistPValue(ClassWithCollections):
 
         # charge state variables
         # XXX might want to populate them for non-adaptive handling as well
-        self.nulldist_number = nulldist_number
-        self.positives_recovered = positives_recovered
+        self.states.nulldist_number = nulldist_number
+        self.states.positives_recovered = positives_recovered
 
         # transpose if needed
         if sd == 0:

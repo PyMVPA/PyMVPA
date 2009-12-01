@@ -236,7 +236,7 @@ class _GLMNET(Classifier):
             values = values[:,0]
 
         # values need to be set anyways if values state is enabled
-        self.values = values
+        self.states.values = values
         if classes is not None:
             # set the values and return none
             return classes

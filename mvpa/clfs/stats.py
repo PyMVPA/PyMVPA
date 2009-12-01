@@ -238,12 +238,6 @@ class MCNullDist(NullDist):
         dist_samples = []
         """Holds the values for randomized labels."""
 
-        # decide on the arguments to measure
-        if not vdata is None:
-            measure_args = [vdata, wdata]
-        else:
-            measure_args = [wdata]
-
         # estimate null-distribution
         for p in xrange(self.__permutations):
             # new permutation all the time
@@ -254,17 +248,21 @@ class MCNullDist(NullDist):
             # classifier, hence the number of permutations to estimate the
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
-            wdata.permuteLabels(True, perchunk=False)
+            permuted_wdata = wdata.copy('shallow')
+            permuted_wdata.permute_labels(perchunk=False)
+
+            # decide on the arguments to measure
+            if not vdata is None:
+                measure_args = [vdata, permuted_wdata]
+            else:
+                measure_args = [permuted_wdata]
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
             dist_samples.append(measure(*measure_args))
 
-        # restore original labels
-        wdata.permuteLabels(False, perchunk=False)
-
         # store samples
-        self.dist_samples = dist_samples = N.asarray(dist_samples)
+        self.states.dist_samples = dist_samples = N.asarray(dist_samples)
 
         # fit distribution per each element
 

@@ -24,6 +24,7 @@ import time
 from mvpa.misc.support import idhash
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
+from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
@@ -134,6 +135,15 @@ class Classifier(ClassWithCollections):
         """
         ClassWithCollections.__init__(self, **kwargs)
 
+        # the place to map literal to numerical labels (and back)
+        # this needs to be in the base class, since some classifiers also
+        # have this nasty 'regression' mode, and the code in this class
+        # needs to deal with converting the regression output into discrete
+        # labels
+        # however, preferably the mapping should be kept in the respective
+        # low-level implementations that need it
+        self._attrmap = AttributeMap()
+
 
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
@@ -238,11 +248,12 @@ class Classifier(ClassWithCollections):
           dataset : Dataset
             Data which was used for training
         """
-        if self.states.isEnabled('trained_labels'):
-            self.trained_labels = dataset.uniquelabels
+        states = self.states
+        if states.isEnabled('trained_labels'):
+            states.trained_labels = dataset.sa['labels'].unique
 
-        self.trained_dataset = dataset
-        self.trained_nsamples = dataset.nsamples
+        states.trained_dataset = dataset
+        states.trained_nsamples = dataset.nsamples
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
@@ -265,17 +276,12 @@ class Classifier(ClassWithCollections):
                 self.__changedData_isset = False
             predictions = self.predict(dataset.samples)
             self.states._resetEnabledTemporarily()
-            self.training_confusion = self._summaryClass(
-                targets=dataset.labels,
+            self.states.training_confusion = self._summaryClass(
+                targets=dataset.sa.labels,
                 predictions=predictions)
 
-            try:
-                self.training_confusion.labels_map = dataset.labels_map
-            except:
-                pass
-
         if self.states.isEnabled('feature_ids'):
-            self.feature_ids = self._getFeatureIds()
+            self.states.feature_ids = self._getFeatureIds()
 
 
     def _getFeatureIds(self):
@@ -308,7 +314,7 @@ class Classifier(ClassWithCollections):
                 nsamples = states.trained_nsamples
             if states.isSet('trained_dataset'):
                 td = states.trained_dataset
-                nsamples, nchunks = td.nsamples, len(td.uniquechunks)
+                nsamples, nchunks = td.nsamples, len(td.sa['chunks'].unique)
             if nsamples is not None:
                 s += ' #samples:%d' % nsamples
             if nchunks is not None:
@@ -367,6 +373,7 @@ class Classifier(ClassWithCollections):
         t0 = time.time()
 
         if dataset.nfeatures > 0:
+
             result = self._train(dataset)
         else:
             warning("Trying to train on dataset with no features present")
@@ -376,7 +383,7 @@ class Classifier(ClassWithCollections):
                       "is called")
             result = None
 
-        self.training_time = time.time() - t0
+        self.states.training_time = time.time() - t0
         self._posttrain(dataset)
         return result
 
@@ -414,7 +421,7 @@ class Classifier(ClassWithCollections):
     def _postpredict(self, data, result):
         """Functionality after prediction is computed
         """
-        self.predictions = result
+        self.states.predictions = result
         if self.params.retrainable:
             self.__changedData_isset = False
 
@@ -432,7 +439,8 @@ class Classifier(ClassWithCollections):
         should call _predict if within _predict instead of predict()
         since otherwise it would loop
         """
-        data = N.asarray(data)
+        ## ??? yoh: changed to asany from as without exhaustive check
+        data = N.asanyarray(data)
         if __debug__:
             debug("CLF", "Predicting classifier %(clf)s on data %(data)s",
                 msgargs={'clf':self, 'data':data.shape})
@@ -469,7 +477,7 @@ class Classifier(ClassWithCollections):
 
             # must be N.array so we copy it to assign labels directly
             # into labels, or should we just recreate "result"???
-            result_ = N.array(result)
+            result_ = N.asanyarray(result)
             if states.isEnabled('values'):
                 # values could be set by now so assigning 'result' would
                 # be misleading
@@ -481,16 +489,24 @@ class Classifier(ClassWithCollections):
                     # they do not overlap
                     states.values = states.values.copy()
 
-            trained_labels = self.trained_labels
+            trained_labels = self.states.trained_labels
+            # if there is some labels mapping present, make sure we operate
+            # on numeric labels
+            if self._attrmap:
+                trained_labels = self._attrmap.to_numeric(trained_labels)
             for i, value in enumerate(result):
                 dists = N.abs(value - trained_labels)
                 result[i] = trained_labels[N.argmin(dists)]
-
             if __debug__:
                 debug("CLF_", "Converted regression result %(result_)s "
                       "into labels %(result)s for %(self_)s",
                       msgargs={'result_':result_, 'result':result,
                                'self_': self})
+
+        # with a labels mapping in-place, we also need to go back to the
+        # literal labels
+        if self._attrmap:
+            result = self._attrmap.to_literal(result)
 
         self._postpredict(data, result)
         return result
@@ -531,6 +547,9 @@ class Classifier(ClassWithCollections):
 
     def untrain(self):
         """Reset trained state"""
+        # any previous apping is obsolete now
+        self._attrmap.clear()
+
         self.__trainednfeatures = None
         # probably not needed... retrainable shouldn't be fully untrained
         # or should be???
@@ -579,10 +598,10 @@ class Classifier(ClassWithCollections):
                             " since classifier has no such capability. It would"
                             " just lead to resources consumption and slowdown"
                             % self)
-                states.add(StateVariable(enabled=True,
+                states.add_collectable(StateVariable(enabled=True,
                         name='retrained',
                         doc="Either retrainable classifier was retrained"))
-                states.add(StateVariable(enabled=True,
+                states.add_collectable(StateVariable(enabled=True,
                         name='repredicted',
                         doc="Either retrainable classifier was repredicted"))
 

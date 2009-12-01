@@ -39,7 +39,8 @@ variations of 'blue', which are supposed to be represented in more
 detail in the SOM.
 """
 
-colors = [[0., 0., 0.],
+colors = N.array(
+         [[0., 0., 0.],
           [0., 0., 1.],
           [0., 0., 0.5],
           [0.125, 0.529, 1.0],
@@ -53,7 +54,7 @@ colors = [[0., 0., 0.],
           [1., 1., 1.],
           [.33, .33, .33],
           [.5, .5, .5],
-          [.66, .66, .66]]
+          [.66, .66, .66]])
 
 # store the names of the colors for visualization later on
 color_names = \
@@ -61,15 +62,6 @@ color_names = \
          'greyblue', 'lilac', 'green', 'red',
          'cyan', 'violet', 'yellow', 'white',
          'darkgrey', 'mediumgrey', 'lightgrey']
-
-"""
-Since we are going to use a mapper, we will put the color vectors into
-a dataset. To be able to do this, we will assign an arbitrary label,
-although it will not be used at all, since this SOM mapper uses an
-unsupervised training algorithm.
-"""
-
-ds = Dataset(samples=colors, labels=1)
 
 """
 Now we can instantiate the mapper. It will internally use a so-called
@@ -85,7 +77,7 @@ som = SimpleSOMMapper((20, 30), 400, learning_rate=0.05)
 Finally, we train the mapper with the previously defined 'color' dataset.
 """
 
-som.train(ds)
+som.train(colors)
 
 """
 Each unit in the Kohonen layer can be treated as a pointer into the

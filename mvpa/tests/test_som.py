@@ -13,41 +13,40 @@ import unittest
 import numpy as N
 from mvpa import cfg
 from mvpa.mappers.som import SimpleSOMMapper
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 
 class SOMMapperTests(unittest.TestCase):
 
     def testSimpleSOM(self):
-        colors = [[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
-                  [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
-                  [1., 1., 0.], [1., 1., 1.]]
-        ds = Dataset(samples=colors, labels=1)
+        colors = N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+                          [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
+                          [1., 1., 0.], [1., 1., 1.]])
 
         # only small SOM for speed reasons
         som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
 
         # no acces when nothing is there
         self.failUnlessRaises(RuntimeError, som._accessKohonen)
-        self.failUnlessRaises(RuntimeError, som.getInSize)
-        self.failUnlessRaises(RuntimeError, som.getOutSize)
+        self.failUnlessRaises(RuntimeError, som.get_insize)
+        self.failUnlessRaises(RuntimeError, som.get_outsize)
 
-        som.train(ds)
+        som.train(colors)
 
-        self.failUnless(som.getInSize() == 3)
-        self.failUnless(som.getOutSize() == (10,5))
+        self.failUnless(som.get_insize() == 3)
+        self.failUnless(som.get_outsize() == (10,5))
 
         fmapped = som(colors)
         self.failUnless(fmapped.shape == (8, 2))
         for fm in fmapped:
-            self.failUnless(som.isValidOutId(fm))
+            self.failUnless(som.is_valid_outid(fm))
 
         # reverse mapping
         rmapped = som.reverse(fmapped)
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             # should approximately restore the input, but could fail
-            # with bas initialisation
-            self.failUnless((N.round(rmapped) == ds.samples).all())
+            # with bad initialisation
+            self.failUnless((N.round(rmapped) == colors).all())
 
 
 def suite():

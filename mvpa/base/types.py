@@ -6,6 +6,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for Partial Least Squares measures."""
+"""Things concerned with types and type-checking in PyMVPA"""
 
+def is_datasetlike(obj):
+    """Check if an object looks like a Dataset."""
+    if hasattr(obj, 'samples') and \
+       hasattr(obj, 'sa') and \
+       hasattr(obj, 'fa') and \
+       hasattr(obj, 'a'):
+        return True
 
+    return False

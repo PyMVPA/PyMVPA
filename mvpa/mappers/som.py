@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as N
-from mvpa.mappers.base import Mapper
+from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 
 if __debug__:
     from mvpa.base import debug
@@ -72,17 +72,18 @@ class SimpleSOMMapper(Mapper):
         self._K = None
 
 
-    def train(self, ds):
+    @accepts_dataset_as_samples
+    def _train(self, samples):
         """Perform network training.
 
-        :Parameter:
-          ds: Dataset
-            All samples in the dataset will be used for unsupervised training of
-            the SOM.
+        Parameter
+        ---------
+        samples: array-like
+          Used for unsupervised training of the SOM.
         """
         # XXX initialize with clever default, e.g. plain of first two PCA
         # components
-        self._K = N.random.standard_normal(tuple(self.kshape) + (ds.nfeatures,))
+        self._K = N.random.standard_normal(tuple(self.kshape) + (samples.shape[1],))
 
         # units weight vector deltas for batch training
         # (height x width x #features)
@@ -102,7 +103,7 @@ class SimpleSOMMapper(Mapper):
             k = self._computeInfluenceKernel(it, dqd)
 
             # for all training vectors
-            for s in ds.samples:
+            for s in samples:
                 # determine closest unit (as element coordinate)
                 b = self._getBMU(s)
 
@@ -182,7 +183,7 @@ class SimpleSOMMapper(Mapper):
         return (N.divide(loc, self.kshape[1]), loc % self.kshape[1])
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """Map data from the IN dataspace into OUT space.
 
         Mapping is performs by simple determining the best matching Kohonen
@@ -191,7 +192,7 @@ class SimpleSOMMapper(Mapper):
         return N.array([self._getBMU(d) for d in data])
 
 
-    def reverse(self, data):
+    def _reverse_data(self, data):
         """Reverse map data from OUT space into the IN space.
         """
         # simple transform into appropriate array slicing and
@@ -199,12 +200,12 @@ class SimpleSOMMapper(Mapper):
         return self.K[tuple(N.transpose(data))]
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the size of the entity in input space"""
         return self.K.shape[-1]
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the size of the entity in output space"""
         return self.K.shape[:-1]
 
@@ -227,7 +228,7 @@ class SimpleSOMMapper(Mapper):
         raise NotImplementedError
 
 
-    def isValidOutId(self, outId):
+    def is_valid_outid(self, outId):
         """Validate feature id in OUT space.
         """
         return (outId >= 0).all() and (outId < self.kshape).all()

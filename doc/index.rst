@@ -27,20 +27,21 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-PyMVPA 0.4.3 is out [5 Sep 2009]
+PyMVPA Extravaganza 2009 at Dartmotuh College [30th Nov -- 4th Dec]
+  :ref:`Read more ... <chap_workshop_2009fall>`
 
+PyMVPA 0.4.3 is out [5 Sep 2009]
   This release brings some new stuff,  lots of fixes for old stuff and some speed
   improvements. See the :ref:`changelog <chap_changelog>` for details.
 
-First publication from outside of PyMVPA team employing PyMVPA [19 Jul 2009]
+.. raw:: html
 
+   <dt></dt><dd><script type="text/javascript" src="http://www.ohloh.net/p/16363/widgets/project_users_logo.js"></script></dd>
+
+First publication from outside the PyMVPA team employing PyMVPA [19 Jul 2009]
   :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
   Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
   Atlas and Machine Learning Algorithms.*
-
-New articles on PyMVPA available [21 Jan 2009]
-
-  Please see the Publications_ section for details.
 
 .. _pydocweb: https://code.launchpad.net/~pauli-virtanen/scipy/pydocweb
 

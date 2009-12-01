@@ -13,7 +13,7 @@ import unittest, copy
 import numpy as N
 from sets import Set
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 from mvpa.misc.state import ClassWithCollections, StateVariable
 from mvpa.misc.param import Parameter, KernelParameter
 
@@ -26,7 +26,7 @@ class ParametrizedClassifier(SameSignClassifier):
 class ParametrizedClassifierExtended(ParametrizedClassifier):
     def __init__(self):
         ParametrizedClassifier.__init__(self)
-        self.kernel_params.add(KernelParameter(200.0, doc="Very useful param", name="kp2"))
+        self.kernel_params.add_collectable(KernelParameter(200.0, doc="Very useful param", name="kp2"))
 
 class BlankClass(ClassWithCollections):
     pass
@@ -45,37 +45,37 @@ class ParamsTests(unittest.TestCase):
         blank  = BlankClass()
 
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'states')
-        self.failUnlessRaises(IndexError, blank.__getattribute__, '')
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
 
     def testSimple(self):
         simple  = SimpleClass()
 
         self.failUnlessEqual(len(simple.params.items), 1)
         self.failUnlessRaises(AttributeError, simple.__getattribute__, 'dummy')
-        self.failUnlessRaises(IndexError, simple.__getattribute__, '')
+        self.failUnlessRaises(AttributeError, simple.__getattribute__, '')
 
-        self.failUnlessEqual(simple.C, 1.0)
+        self.failUnlessEqual(simple.params.C, 1.0)
         self.failUnlessEqual(simple.params.isSet("C"), False)
         self.failUnlessEqual(simple.params.isSet(), False)
         self.failUnlessEqual(simple.params["C"].isDefault, True)
         self.failUnlessEqual(simple.params["C"].equalDefault, True)
 
-        simple.C = 1.0
+        simple.params.C = 1.0
         # we are not actually setting the value if == default
         self.failUnlessEqual(simple.params["C"].isDefault, True)
         self.failUnlessEqual(simple.params["C"].equalDefault, True)
 
-        simple.C = 10.0
+        simple.params.C = 10.0
         self.failUnlessEqual(simple.params.isSet("C"), True)
         self.failUnlessEqual(simple.params.isSet(), True)
         self.failUnlessEqual(simple.params["C"].isDefault, False)
         self.failUnlessEqual(simple.params["C"].equalDefault, False)
 
-        self.failUnlessEqual(simple.C, 10.0)
+        self.failUnlessEqual(simple.params.C, 10.0)
         simple.params["C"].resetvalue()
         self.failUnlessEqual(simple.params.isSet("C"), True)
         # TODO: Test if we 'train' a classifier f we get isSet to false
-        self.failUnlessEqual(simple.C, 1.0)
+        self.failUnlessEqual(simple.params.C, 1.0)
         self.failUnlessRaises(AttributeError, simple.params.__getattribute__, 'B')
 
     def testMixed(self):
@@ -85,14 +85,14 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(len(mixed.states.items), 1)
         self.failUnlessRaises(AttributeError, mixed.__getattribute__, 'kernel_params')
 
-        self.failUnlessEqual(mixed.C, 1.0)
+        self.failUnlessEqual(mixed.params.C, 1.0)
         self.failUnlessEqual(mixed.params.isSet("C"), False)
         self.failUnlessEqual(mixed.params.isSet(), False)
-        mixed.C = 10.0
+        mixed.params.C = 10.0
         self.failUnlessEqual(mixed.params.isSet("C"), True)
         self.failUnlessEqual(mixed.params.isSet("D"), False)
         self.failUnlessEqual(mixed.params.isSet(), True)
-        self.failUnlessEqual(mixed.D, 3.0)
+        self.failUnlessEqual(mixed.params.D, 3.0)
 
 
     def testClassifier(self):
@@ -106,11 +106,11 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(len(clfe.kernel_params.listing), 2)
 
         # check assignment once again
-        self.failUnlessEqual(clfe.kp2, 200.0)
-        clfe.kp2 = 201.0
-        self.failUnlessEqual(clfe.kp2, 201.0)
+        self.failUnlessEqual(clfe.kernel_params.kp2, 200.0)
+        clfe.kernel_params.kp2 = 201.0
+        self.failUnlessEqual(clfe.kernel_params.kp2, 201.0)
         self.failUnlessEqual(clfe.kernel_params.isSet("kp2"), True)
-        clfe.train(Dataset(samples=[[0,0]], labels=[1], chunks=[1]))
+        clfe.train(dataset(samples=[[0,0]], labels=[1], chunks=[1]))
         self.failUnlessEqual(clfe.kernel_params.isSet("kp2"), False)
         self.failUnlessEqual(clfe.kernel_params.isSet(), False)
         self.failUnlessEqual(clfe.params.isSet(), False)

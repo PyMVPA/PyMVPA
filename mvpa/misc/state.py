@@ -17,7 +17,8 @@ It was devised to provide conditional storage
 #          access. Can we refactor that?
 __docformat__ = 'restructuredtext'
 
-import operator, copy
+import operator
+import mvpa.support.copy as copy
 from sets import Set
 from textwrap import TextWrapper
 
@@ -32,7 +33,13 @@ from mvpa.base import externals
 
 if __debug__:
     from mvpa.base import debug
-
+    # XXX
+    # To debug references on top level -- useful to keep around for now,
+    # don't remove until refactoring is complete
+    import sys
+    _debug_references = 'ATTRREFER' in debug.active
+    _debug_shits = []                   # remember all to don't complaint twice
+    import traceback
 
 _in_ipython = externals.exists('running ipython env')
 # Separators around definitions, needed for ReST, but bogus for
@@ -42,13 +49,14 @@ _def_sep = ('`', '')[int(_in_ipython)]
 _object_getattribute = object.__getattribute__
 _object_setattr = object.__setattr__
 
-
 ###################################################################
 # Collections
 #
 # TODO: refactor into collections.py. state.py now has
 #       little in common with the main part of this file
 #
+
+
 class Collection(object):
     """Container of some CollectableAttributes.
 
@@ -73,16 +81,19 @@ class Collection(object):
           name : basestring
             name of the collection (as seen in the owner, e.g. 'states')
         """
+        # first set all stuff to nothing and later on charge it
+        # this is important, since some of the stuff below relies in the
+        # defaults
+        self.__name = None
+        self.__owner = None
+        self._items = {}
+        if not owner is None:
+            self._setOwner(owner)
+        if not name is None:
+            self._setName(name)
+        if not items is None:
+            self.update(items)
 
-        self.__owner = owner
-
-        if items == None:
-            items = {}
-        self._items = items
-        """Dictionary to contain registered states as keys and
-        values signal either they are enabled
-        """
-        self.__name = name
 
     def _setName(self, name):
         self.__name = name
@@ -154,7 +165,14 @@ class Collection(object):
 
 
     def __repr__(self):
-        s = "%s(" % self.__class__.__name__
+        # do not include the owner arg, since that will most likely
+        # cause recursions when the collection it self is included
+        # into the repr() of the ClassWithCollections instance
+        return "%s(items=%s, name=%s)" \
+                  % (self.__class__.__name__,
+                     repr(self._items.values()),
+                     repr(self.name))
+
         items_s = ""
         sep = ""
         for item in self._items:
@@ -263,7 +281,7 @@ class Collection(object):
                      index)
 
 
-    def add(self, item):
+    def add_collectable(self, item):
         """Add a new CollectableAttribute to the collection
 
         :Parameters:
@@ -290,6 +308,63 @@ class Collection(object):
 
         if not self.owner is None:
             self._updateOwner(name)
+
+
+    def add(self, name, value, doc=None):
+        """Convenience method to add an attributes to the collection.
+
+        The method has to be implemented in derived collections to
+        instantiate Collectable Attributes of the desired type and add
+        than to the collection via add_collectable().
+        """
+        raise NotImplementedError
+
+
+    def update(self, source, copyvalues=None):
+        """
+        Parameters
+        ----------
+        source : dict, Collection
+        copyvalues : None, shallow, deep
+        """
+        if isinstance(source, Collection) or isinstance(source, list):
+            if isinstance(source, Collection):
+                attrs = source._items.values()
+            else:
+                attrs = source
+            for a in attrs:
+                if copyvalues is None:
+                    self.add_collectable(a)
+                elif copyvalues is 'shallow':
+                    self.add_collectable(copy.copy(a))
+                elif copyvalues is 'deep':
+                    self.add_collectable(copy.deepcopy(a))
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
+        elif isinstance(source, dict):
+            for k, v in source.iteritems():
+                # expand value and docs
+                if isinstance(v, tuple):
+                    value = v[0]
+                    doc = v[1]
+                else:
+                    value = v
+                    doc = None
+
+                # add the attribute with optional docs
+                if copyvalues is None:
+                    self.add(k, v, doc=doc)
+                elif copyvalues is 'shallow':
+                    self.add(k, copy.copy(v), doc=doc)
+                elif copyvalues is 'deep':
+                    self.add(k, copy.deepcopy(v), doc=doc)
+                else:
+                    raise ValueError("Unknown value ('%s') for copy argument."
+                                     % copy)
+        else:
+            raise ValueError("Collection.upate() can only handle Collections "
+                             "dictionarie as arguments.")
 
 
     def remove(self, index):
@@ -453,6 +528,9 @@ class Collection(object):
          XXX Needs refactoring since we duplicate the logic of expansion of
          index value
         """
+        # Yarik standing behind me, forcing me to do this -- I have no clue....
+        if not (__debug__ and _debug_references):
+            return
         if not index is None:
             if not index in self._items:
                 raise ValueError, \
@@ -527,27 +605,6 @@ class ParameterCollection(Collection):
         """Reset all parameters to default values"""
         from param import Parameter
         self._action(index, Parameter.resetvalue, missingok=False)
-
-
-class SampleAttributesCollection(Collection):
-    """Container for data and attributes of samples (ie data/labels/chunks/...)
-    """
-
-#    def __init__(self, items=None, owner=None, name=None):
-#        """Initialize the state variables of a derived class
-#
-#        :Parameters:
-#          items : dict
-#            dictionary of states
-#        """
-#        Collection.__init__(self, items, owner, name)
-#
-
-    def _cls_repr(self):
-        """Part of __repr__ for the owner object
-        """
-        return [] # TODO: return I guess samples/labels/chunks
-
 
 
 class StateCollection(Collection):
@@ -797,11 +854,12 @@ _known_collections = {
     # For classifiers only
     'Parameter': ("params", ParameterCollection),
     'KernelParameter': ("kernel_params", ParameterCollection),
-    # For datasets
-    # XXX custom collections needed?
-    'SampleAttribute':  ("sa", SampleAttributesCollection),
-    'FeatureAttribute': ("fa", SampleAttributesCollection),
-    'DatasetAttribute': ("dsa", SampleAttributesCollection),
+#MH: no magic for datasets
+#    # For datasets
+#    # XXX custom collections needed?
+#    'SampleAttribute':  ("sa", SampleAttributesCollection),
+#    'FeatureAttribute': ("fa", SampleAttributesCollection),
+#    'DatasetAttribute': ("dsa", SampleAttributesCollection),
     }
 
 
@@ -809,8 +867,10 @@ _col2class = dict(_known_collections.values())
 """Mapping from collection name into Collection class"""
 
 
-_COLLECTIONS_ORDER = ['sa', 'fa', 'dsa',
-                      'params', 'kernel_params', 'states']
+#MH: no magic for datasets
+#_COLLECTIONS_ORDER = ['sa', 'fa', 'dsa',
+#                      'params', 'kernel_params', 'states']
+_COLLECTIONS_ORDER = ['params', 'kernel_params', 'states']
 
 
 class AttributesCollector(type):
@@ -891,7 +951,15 @@ class AttributesCollector(type):
         # XXX should we switch to tuple?
 
         for col, colitems in collections.iteritems():
-            collections[col] = _col2class[col](colitems)
+            # so far we collected the collection items in a dict, but the new
+            # API requires to pass a _list_ of collectables instead of a dict.
+            # So, whenever there are items, we pass just the values of the dict.
+            # There is no information last, since the keys of the dict are the
+            # name attributes of each collectable in the list.
+            if not colitems is None:
+                collections[col] = _col2class[col](items=colitems.values())
+            else:
+                collections[col] = _col2class[col]()
 
         setattr(cls, "_collections_template", collections)
 
@@ -1069,42 +1137,74 @@ class ClassWithCollections(object):
 
     #__doc__ = enhancedDocString('ClassWithCollections', locals())
 
+    if __debug__ and _debug_references:
+        def __debug_references_call(self, method, index):
+            """Helper for debugging location of the call
+            """
+            s_dict = _object_getattribute(self, '__dict__')
+            known_attribs = s_dict['_known_attribs']
+            if index in known_attribs:
+                clsstr = str(self.__class__)
+                # Skip some False positives
+                if 'mvpa.datasets' in clsstr and 'Dataset' in clsstr and \
+                       (index in ['labels', 'chunks', 'samples', 'mapper']):
+                    return
+                colname = known_attribs[index]
+                # figure out and report invocation location
+                ftb = traceback.extract_stack(limit=4)[-3]
+                shit = '\n%s:%d:[%s %s.%s]: %s\n' % \
+                       (ftb[:2] + (method, colname, index) + (ftb[3],))
+                if not (shit in _debug_shits):
+                    _debug_shits.append(shit)
+                    sys.stderr.write(shit)
 
-    def __getattribute__(self, index):
-        # return all private ones first since smth like __dict__ might be
-        # queried by copy before instance is __init__ed
-        if index[0] == '_':
+
+        def __getattribute__(self, index):
+            # return all private ones first since smth like __dict__ might be
+            # queried by copy before instance is __init__ed
+            if index[0] == '_':
+                return _object_getattribute(self, index)
+
+            s_dict = _object_getattribute(self, '__dict__')
+            # check if it is a known collection
+            collections = s_dict['_collections']
+            if index in collections:
+                return collections[index]
+
+            # MH: No implicite outbreak of collection items into the namespace of
+            #     the parent class
+            ## check if it is a part of any collection
+            #known_attribs = s_dict['_known_attribs']
+            #if index in known_attribs:
+            #    return collections[known_attribs[index]].getvalue(index)
+
+            # Report the invocation location if applicable
+            self.__debug_references_call('get', index)
+
+            # just a generic return
             return _object_getattribute(self, index)
 
-        s_dict = _object_getattribute(self, '__dict__')
-        # check if it is a known collection
-        collections = s_dict['_collections']
-        if index in collections:
-            return collections[index]
 
-        # check if it is a part of any collection
-        known_attribs = s_dict['_known_attribs']
-        if index in known_attribs:
-            return collections[known_attribs[index]]._items[index].value
+        def __setattr__(self, index, value):
+            if index[0] == '_':
+                return _object_setattr(self, index, value)
 
-        # just a generic return
-        return _object_getattribute(self, index)
+            if __debug__ and _debug_references:
+                # Report the invocation location if applicable
+                self.__debug_references_call('set', index)
 
+            ## YOH: if we are to disable access at instance level -- do it in
+            ##      set as well ;)
+            ##
+            ## # Check if a part of a collection, and set appropriately
+            ## s_dict = _object_getattribute(self, '__dict__')
+            ## known_attribs = s_dict['_known_attribs']
+            ## if index in known_attribs:
+            ##     collections = s_dict['_collections']
+            ##     return collections[known_attribs[index]].setvalue(index, value)
 
-    def __setattr__(self, index, value):
-        if index[0] == '_':
+            # Generic setattr
             return _object_setattr(self, index, value)
-
-        # Check if a part of a collection, and set appropriately
-        s_dict = _object_getattribute(self, '__dict__')
-        known_attribs = s_dict['_known_attribs']
-        if index in known_attribs:
-            collections = s_dict['_collections']
-            collections[known_attribs[index]][index].value = value
-            return value
-
-        # Generic setattr
-        return _object_setattr(self, index, value)
 
 
     # XXX not sure if we shouldn't implement anything else...
@@ -1286,7 +1386,8 @@ class Harvestable(ClassWithCollections):
             return
 
         if not self.states.isSet('harvested'):
-            self.harvested = dict([(a['name'], []) for a in self.__attribs])
+            self.states.harvested = dict([(a['name'], [])
+                                        for a in self.__attribs])
 
         for attrib in self.__attribs:
             attrv = vars[attrib['obj']]
@@ -1300,7 +1401,7 @@ class Harvestable(ClassWithCollections):
                      'deepcopy':copy.deepcopy,
                      None:lambda x:x}[attrib['copy']](attrv)
 
-            self.harvested[attrib['name']].append(attrv)
+            self.states.harvested[attrib['name']].append(attrv)
 
 
     harvest_attribs = property(fget=lambda self:self.__attribs,

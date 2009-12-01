@@ -1,0 +1,90 @@
+This file documents the current state of the transition to the new
+dataset implementation. May the source be with us!
+
+
+Examples
+--------
+
+clfs_examples.py            broken (SVM cannot handle literallabels)
+curvefitting.py             pass
+erp_plot.py                 pass
+eventrelated.py             broken (event-stuff is waiting for new mappers)
+gpr_model_selection0.py     broken by design
+gpr.py                      pass
+kerneldemo.py               pass
+match_distribution.py       pass
+mri_plot.py                 pass
+permutation_test.py         pass
+projections.py              pass
+searchlight_2d.py           pass
+searchlight_dsm.py          broken (waiting for new-style mapper)
+searchlight_minimal.py      broken (waiting for new-style mapper)
+searchlight.py              pass
+sensanas.py                 pass
+smellit.py                  pass
+smlr.py                     pass
+som.py                      pass
+start_easy.py               pass
+svdclf.py                   broken (waiting for new-style mappers)
+topo_plot.py                pass
+
+
+Unit tests
+----------
+
+test_args.py                pass
+test_arraymapper.py         pass
+test_atlases.py             pass
+test_base.py                pass
+test_boxcarmapper.py        pass
+test_clfcrossval.py         pass
+test_clf.py                 broken (SG cannot handle literal labels, TreeClassifier relies on labels_map)
+test_cmdline.py             pass
+test_config.py              pass
+test_datameasure.py         broken (sg literal labels)
+test_datasetfx.py           pass
+test_datasetfx_sp.py        pass
+test_datasetng.py           pass
+test_dataset.py             broken by design (merge remaining tests elsewhere)
+test_dochelpers.py          pass
+test_eepdataset.py          pass (missing test)
+test_enet.py                broken (literal labels, so Rpy complaints  Numeric/NumPy arrays containing numpy.ndarray are not supported)
+test_externals.py           pass
+test_hamster.py             pass
+test_icamapper.py           pass
+test_ifs.py                 pass
+test_iohelpers.py           pass
+test_kernel.py              pass
+test_knn.py                 pass
+test_lars.py                pass (same as for _enet)
+test_meg.py                 pass
+test_neighbor.py            pass
+test_niftidataset.py        broken (ERNiftiDataset waiting for nextgen Mappers)
+test_params.py              pass
+test_pcamapper.py           broken by design
+test_perturbsensana.py      pass
+test_plr.py                 pass
+test_procrust.py            pass
+test_regr.py                pass
+test_report.py              pass
+test_rfe.py                 pass
+test_ridge.py               pass
+test_samplegroupmapper.py   broken (needs discussion of applyMapper)
+test_searchlight.py         pass
+test_smlr.py                pass
+test_som.py                 pass
+test_splitsensana.py        pass
+test_splitter.py            pass
+test_state.py               pass
+test_stats.py               pass
+test_stats_sp.py            pass
+test_suite.py               pass
+test_support.py             pass
+test_svdmapper.py           pass
+test_svm.py                 pass
+test_transerror.py          broken (sg literal labels, testAUC)
+test_transformers.py        pass
+test_verbosity.py           pass
+test_waveletmapper.py       pass
+test_zscoremapper.py        pass
+

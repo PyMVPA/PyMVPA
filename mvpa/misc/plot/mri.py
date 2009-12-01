@@ -279,9 +279,6 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             if add_info and isinstance(add_info, bool):
                 locs[locs.index('')] = 'info'
 
-            print ncolumns, nrows
-            print locs
-
             # should compare by backend?
             if P.matplotlib.get_backend() in _interactive_backends:
                 P.ioff()
@@ -450,7 +447,6 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             if id(event.inaxes) != id(plotter.hist):
                 return
             xdata, ydata, button = event.xdata, event.ydata, event.button
-            print xdata, ydata, button
             vlim = self._locals['vlim']
             if button == 1:
                 vlim[0] = xdata

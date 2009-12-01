@@ -13,7 +13,7 @@ import sys
 
 from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
-from mvpa.tests import collectTestSuites
+from mvpa.tests import collectTestSuites, runNoseTests
 
 
 def main():
@@ -54,4 +54,6 @@ def main():
 
 
 if __name__ == '__main__':
+    # run before main(), since that one might sys.exit() on error
+    runNoseTests()
     main()

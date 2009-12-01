@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.mapped import MappedDataset
+from mvpa.datasets.base import Dataset
 from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -25,15 +25,16 @@ if externals.exists('scipy'):
     from scipy import signal
 
 
-class ChannelDataset(MappedDataset):
+class ChannelDataset(Dataset):
     """Dataset handling data structured into channels.
 
     Channels are assumes to contain several timepoints, thus this Dataset
     stores some additional properties (reference time `t0`, temporal
     distance of two timepoints `dt` and `channelids` (names)).
     """
-    def __init__(self, samples=None, dsattr=None,
-                 t0=None, dt=None, channelids=None, **kwargs):
+    @classmethod
+    def from_temporaldata(cls, samples, labels=None, chunks=None,
+                          t0=None, dt=None, channelids=None):
         """Initialize ChannelDataset.
 
         :Parameters:
@@ -50,40 +51,24 @@ class ChannelDataset(MappedDataset):
           channelids: list
             List of channel names.
         """
-        # if dsattr is none, set it to an empty dict
-        if dsattr is None:
-            dsattr = {}
-
         # check samples
-        if not samples is None and len(samples.shape) != 3:
-                raise ValueError, \
-                  "ChannelDataset takes 3D array as samples."
+        if len(samples.shape) != 3:
+            raise DatasetError("ChannelDataset takes 3D array as samples.")
+
+        ds = cls.from_masked(samples, labels=labels, chunks=chunks)
 
         # charge dataset properties
         # but only if some value
-        if (not dt is None) or not dsattr.has_key('ch_dt'):
-            dsattr['ch_dt'] = dt
-        if (not channelids is None) or not dsattr.has_key('ch_ids'):
-            dsattr['ch_ids'] = channelids
-        if (not t0 is None) or not dsattr.has_key('ch_t0'):
-            dsattr['ch_t0'] = t0
+        if not dt is None:
+            ds.a['dt'] = dt
+        if not channelids is None:
+            ds.a['channelids'] = channelids
+        if not t0 is None:
+            ds.a['t0'] = t0
 
-        # come up with mapper if fresh samples were provided
-        if not samples is None:
-            mapper = MaskMapper(N.ones(samples.shape[1:], dtype='bool'))
-        else:
-            # Doesn't make difference at the moment, but might come 'handy'?
-            mapper = dsattr.get('mapper', None)
+        return ds
 
-        # init dataset
-        MappedDataset.__init__(self,
-                               samples=samples,
-                               mapper=mapper,
-                               dsattr=dsattr,
-                               **(kwargs))
-
-
-    __doc__ = enhancedDocString('ChannelDataset', locals(), MappedDataset)
+    __doc__ = enhancedDocString('ChannelDataset', locals(), Dataset)
 
 
     def substractBaseline(self, t=None):
@@ -127,6 +112,9 @@ class ChannelDataset(MappedDataset):
 
 
     if externals.exists('scipy'):
+        #XXX MH: The whole things needs to get out of this class and be turned
+        # into a generec function that deals with all datasets having some
+        # frequency information
         def resample(self, nt=None, sr=None, dt=None, window='ham',
                      inplace=True, **kwargs):
             """Convenience method to resample data sample channel-wise.
@@ -185,11 +173,9 @@ class ChannelDataset(MappedDataset):
             data = signal.resample(orig_data, nt, axis=2, window=window, **kwargs)
             new_dt = float(orig_length) / nt
 
-            dsattr = self._dsattr
-
             # would be needed for not inplace generation
             if inplace:
-                dsattr['ch_dt'] = new_dt
+                self.a['dt'].value = new_dt
                 # XXX We could have resampled range(nsamples) and
                 #     rounded  it. and adjust then mapper's mask
                 #     accordingly instead of creating a new one.
@@ -197,7 +183,8 @@ class ChannelDataset(MappedDataset):
                 #     resampling did...
                 mapper = MaskMapper(N.ones(data.shape[1:], dtype='bool'))
                 # reassign a new mapper.
-                dsattr['mapper'] = mapper
+                # XXX this is very evil -- who knows what mapper it is replacing
+                self.a['mapper'].value = mapper
                 self.samples = mapper.forward(data)
                 return self
             else:
@@ -205,7 +192,8 @@ class ChannelDataset(MappedDataset):
                 # some additional attributes such as
                 # labels_map
                 dsattr = copy.deepcopy(dsattr)
-                return ChannelDataset(data=self._data,
+                return ChannelDataset.from_temporaldata(
+                        data=self._data,
                                       dsattr=dsattr,
                                       samples=data,
                                       t0=self.t0,
@@ -214,14 +202,14 @@ class ChannelDataset(MappedDataset):
                                       copy_data=True,
                                       copy_dsattr=False)
 
-    channelids = property(fget=lambda self: self._dsattr['ch_ids'],
+    channelids = property(fget=lambda self: self.a.channelids,
                           doc='List of channel IDs')
-    t0 = property(fget=lambda self: self._dsattr['ch_t0'],
+    t0 = property(fget=lambda self: self.a.t0,
                           doc='Temporal position of first sample in the ' \
                               'timeseries (in seconds) -- possibly relative ' \
                               'to stimulus onset.')
-    dt = property(fget=lambda self: self._dsattr['ch_dt'],
+    dt = property(fget=lambda self: self.a.dt,
                           doc='Time difference between two samples ' \
                               '(in seconds).')
-    samplingrate = property(fget=lambda self: 1.0 / self._dsattr['ch_dt'],
+    samplingrate = property(fget=lambda self: 1.0 / self.a.dt,
                           doc='Yeah, sampling rate.')
