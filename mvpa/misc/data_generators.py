@@ -14,7 +14,9 @@ import numpy as N
 
 from sets import Set
 
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset, Dataset
+from mvpa.base.collections import DatasetAttribute
+
 
 if __debug__:
     from mvpa.base import debug
@@ -28,7 +30,11 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
     """
     for chunk in xrange(n_chunks):
         dataset_ = func(*args, **kwargs)
-        dataset_.chunks[:] = chunk + 1
+        # might not have chunks at all
+        if not dataset_.sa.has_key('chunks'):
+            dataset_.sa['chunks'] = N.repeat(chunk + 1, dataset_.nsamples)
+        else:
+            dataset_.sa.chunks[:] = chunk + 1
         if chunk == 0:
             dataset = dataset_
         else:
@@ -46,7 +52,7 @@ def dumbFeatureDataset():
             [12, 1]]
     regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
-    return Dataset(samples=data, labels=regs)
+    return dataset(samples=data, labels=regs, chunks=range(len(regs)))
 
 
 def dumbFeatureBinaryDataset():
@@ -58,7 +64,7 @@ def dumbFeatureBinaryDataset():
             [12, 1]]
     regs = ([0] * 12) + ([1] * 12)
 
-    return Dataset(samples=data, labels=regs)
+    return dataset(samples=data, labels=regs, chunks=range(len(regs)))
 
 
 
@@ -110,7 +116,7 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                                 for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    ds = Dataset(samples=data, labels=labels, chunks=chunks, labels_map=True)
+    ds = Dataset.from_basic(data, labels=labels, chunks=chunks)
     ds.nonbogus_features = nonbogus_features
     return ds
 
@@ -142,7 +148,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     # two conditions
     regs = N.array(([0] * patterns) + ([1] * 2 * patterns) + ([0] * patterns))
 
-    return Dataset(samples=data, labels=regs, chunks=chunks)
+    return dataset(samples=data, labels=regs, chunks=chunks)
 
 
 def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
@@ -195,7 +201,8 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
 
         # Create a dataset only for 'selected' features NB there is
         # sideeffect that selectFeatures will sort those ind provided
-        ds = dataset.selectFeatures(ind)
+        # does not sort anymore, and does not exist anymore
+        ds = dataset[:, ind]
         ds.samples[:] = 0.0             # zero them out
 
         # assign data
@@ -278,7 +285,7 @@ def wr1996(size=200):
     x34 = x + N.random.randn(size, 2)*0.02
     x56 = N.random.randn(size, 2)
     x = N.hstack([x, x34, x56])
-    return Dataset(samples=x, labels=y)
+    return dataset(samples=x, labels=y)
 
 
 def sinModulated(n_instances, n_features,
@@ -295,7 +302,7 @@ def sinModulated(n_instances, n_features,
         data = N.random.rand(n_instances, n_features)*N.pi
     label = N.sin((data**2).sum(1)).round()
     label += N.random.rand(label.size)*noise
-    return Dataset(samples=data, labels=label)
+    return dataset(samples=data, labels=label)
 
 def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
                 data_noise=0.4, noise=0.1):
@@ -314,7 +321,7 @@ def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
 
     labels = y + N.random.normal(size=(n_instances,))*noise
 
-    return Dataset(samples=data, labels=labels)
+    return dataset(samples=data, labels=labels)
 
 
 def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
@@ -337,7 +344,7 @@ def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
     y = N.dot(x, slope)[:, N.newaxis] \
         + (N.random.randn(*(x.shape[0], 1)) * noise_std) + intercept
 
-    return Dataset(samples=x, labels=y)
+    return dataset(samples=x, labels=y)
 
 
 def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
@@ -360,4 +367,4 @@ def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
 
     samples += N.array(center)
 
-    return Dataset(samples=samples, labels=labels)
+    return dataset(samples=samples, labels=labels)

@@ -261,7 +261,7 @@ look at the subclasses of :class:`~mvpa.datasets.base.Dataset`):
 
 
 .. _PyNIfTI: http://niftilib.sf.net/pynifti
-.. _eeprobe: http://http://www.ant-neuro.com/products/eeprobe
+.. _eeprobe: http://www.ant-neuro.com/products/eeprobe
 
 
 .. index:: data splitting, splitter, leave-one-out

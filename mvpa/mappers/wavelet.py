@@ -68,34 +68,34 @@ class _WaveletMapper(Mapper):
         """Periodization mode"""
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         data = N.asanyarray(data)
         self._inshape = data.shape
         self._intimepoints = data.shape[self._dim]
-        res = self._forward(data)
+        res = self._wm_forward(data)
         self._outshape = res.shape
         return res
 
 
-    def reverse(self, data):
+    def _reverse_data(self, data):
         data = N.asanyarray(data)
-        return self._reverse(data)
+        return self._wm_reverse(data)
 
 
-    def _forward(self, *args):
+    def _wm_forward(self, *args):
         raise NotImplementedError
 
 
-    def _reverse(self, *args):
+    def _wm_reverse(self, *args):
         raise NotImplementedError
 
 
-    def getInSize(self):
+    def get_insize(self):
         """Returns the number of original features."""
         return self._inshape[1:]
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the number of wavelet components."""
         return self._outshape[1:]
 
@@ -251,7 +251,7 @@ class WaveletPacketMapper(_WaveletMapper):
         return wp
 
 
-    def _forward(self, data):
+    def _wm_forward(self, data):
         if __debug__:
             debug('MAP', "Converting signal using DWP")
 
@@ -274,7 +274,7 @@ class WaveletPacketMapper(_WaveletMapper):
             mode=self._mode, maxlevel=self.__level)
 
         # prepare storage
-        signal_shape = wp.shape[:1] + self.getInSize()
+        signal_shape = wp.shape[:1] + self.get_insize()
         signal = N.zeros(signal_shape)
         Ntime_points = self._intimepoints
         for indexes in _getIndexes(signal_shape,
@@ -290,7 +290,7 @@ class WaveletPacketMapper(_WaveletMapper):
         return signal
 
 
-    def _reverse(self, data):
+    def _wm_reverse(self, data):
         if __debug__:
             debug('MAP', "Converting signal back using DWP")
 
@@ -314,7 +314,7 @@ class WaveletTransformationMapper(_WaveletMapper):
     """Convert signal into wavelet representaion
     """
 
-    def _forward(self, data):
+    def _wm_forward(self, data):
         """Decompose signal into wavelets's coefficients via dwt
         """
         if __debug__:
@@ -359,7 +359,7 @@ class WaveletTransformationMapper(_WaveletMapper):
         return wd
 
 
-    def _reverse(self, wd):
+    def _wm_reverse(self, wd):
         if __debug__:
             debug('MAP', "Performing iDWT")
         signal = None

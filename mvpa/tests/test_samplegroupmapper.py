@@ -12,9 +12,10 @@
 import unittest
 from mvpa.support.copy import deepcopy
 import numpy as N
+from numpy.testing import assert_array_equal
 
 from mvpa.mappers.samplegroup import SampleGroupMapper
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import dataset
 
 
 class SampleGroupMapperTests(unittest.TestCase):
@@ -29,7 +30,7 @@ class SampleGroupMapperTests(unittest.TestCase):
         clabels = [0, 1, 0, 1]
         cchunks = [0, 0, 1, 1]
 
-        ds = Dataset(samples=data, labels=labels, chunks=chunks)
+        ds = dataset(samples=data, labels=labels, chunks=chunks)
 
         # default behavior
         m = SampleGroupMapper()
@@ -39,10 +40,9 @@ class SampleGroupMapperTests(unittest.TestCase):
 
         # train mapper first
         m.train(ds)
-
-        self.failUnless((m.forward(ds.samples) == csamples).all())
-        self.failUnless((m.forward(ds.labels) == clabels).all())
-        self.failUnless((m.forward(ds.chunks) == cchunks).all())
+        assert_array_equal(m.forward(ds.samples), csamples)
+        assert_array_equal(m.forward(ds.labels), clabels)
+        assert_array_equal(m.forward(ds.chunks), cchunks)
 
 
         # directly apply to dataset
@@ -51,11 +51,11 @@ class SampleGroupMapperTests(unittest.TestCase):
 
         self.failUnless(mapped.nsamples == 4)
         self.failUnless(mapped.nfeatures == 3)
-        self.failUnless((mapped.samples == csamples).all())
-        self.failUnless((mapped.labels == clabels).all())
-        self.failUnless((mapped.chunks == cchunks).all())
+        assert_array_equal(mapped.samples, csamples)
+        assert_array_equal(mapped.labels, clabels)
+        assert_array_equal(mapped.chunks, cchunks)
         # make sure origids get regenerated
-        self.failUnless((mapped.origids == range(4)).all())
+        assert_array_equal(mapped.origids, range(4))
 
 
 def suite():

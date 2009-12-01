@@ -62,8 +62,6 @@ from mvpa import datasets
 from mvpa.datasets import *
 # just to make testsuite happy
 from mvpa.datasets.base import *
-from mvpa.datasets.meta import *
-from mvpa.datasets.masked import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.channel import *
 from mvpa.datasets.event import *
@@ -83,6 +81,7 @@ from mvpa.featsel.rfe import *
 from mvpa import mappers
 #from mvpa.mappers import *
 from mvpa.mappers.base import *
+from mvpa.mappers.projection import *
 from mvpa.mappers.metric import *
 from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
@@ -111,6 +110,7 @@ from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *
 from mvpa.misc.fx import *
+from mvpa.misc.attrmap import *
 from mvpa.misc.errorfx import *
 from mvpa.misc.cmdline import *
 from mvpa.misc.data_generators import *

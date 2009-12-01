@@ -17,8 +17,8 @@ import numpy as N
 
 from mvpa import cfg
 from mvpa.datasets import Dataset
+from mvpa.mappers.array import DenseArrayMapper
 from mvpa.datasets.splitters import OddEvenSplitter
-from mvpa.datasets.masked import MaskedDataset
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
@@ -51,7 +51,7 @@ def sweepargs(**kwargs):
                 """Little helper"""
                 if isinstance(argvalue, Classifier):
                     # clear classifier after its use -- just to be sure ;-)
-                    argvalue.retrainable = False
+                    argvalue.params.retrainable = False
                     argvalue.untrain()
 
             failed_tests = {}
@@ -176,8 +176,12 @@ for kind, spec in specs.iteritems():
     mask = N.ones( (3, 6, 6) )
     mask[0,0,0] = 0
     mask[1,3,2] = 0
-    datasets['3d%s' % kind] = MaskedDataset(samples=data, labels=labels,
-                                            chunks=chunks, mask=mask)
+    # HACK: stick it a mapper with a metric in the butt
+    ds = Dataset.from_masked(samples=data, labels=labels, chunks=chunks,
+                             mask=mask)
+    ds.a.mapper = DenseArrayMapper(mask=mask)
+    datasets['3d%s' % kind] = ds
+
 
 # some additional datasets
 datasets['dumb2'] = dumbFeatureBinaryDataset()

@@ -87,7 +87,7 @@ class StatsTests(unittest.TestCase):
         a, ac = m(ds), mc(ds)
 
         self.failUnless(a.shape == (ds.nfeatures,))
-        self.failUnless(ac.shape == (ds.nfeatures, len(ds.uniquelabels)))
+        self.failUnless(ac.shape == (ds.nfeatures, len(ds.UL)))
 
         self.failUnless((ac[:, 0] == ac[:, 1]).all())
         self.failUnless((a == ac[:, 1]).all())

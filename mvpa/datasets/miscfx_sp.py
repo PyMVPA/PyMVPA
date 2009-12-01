@@ -69,7 +69,7 @@ def detrend(dataset, perchunk=False, model='linear',
 
         if perchunk:
             try:
-                bp = getBreakPoints(dataset.chunks)
+                bp = getBreakPoints(dataset.sa.chunks)
             except ValueError, e:
                 raise ValueError, \
                       "Failed to assess break points between chunks. Often " \
@@ -118,13 +118,13 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
         dataset.  One example would be to regress out motion parameters.
         As with the data, time is on the first axis.
     """
-
+    uniquechunks = dataset.sa['chunks'].unique
     # Process the polyord to be a list with length of the number of chunks
     if not polyord is None:
         if not isSequenceType(polyord):
             # repeat to be proper length
-            polyord = [polyord]*len(dataset.uniquechunks)
-        elif perchunk and len(polyord) != len(dataset.uniquechunks):
+            polyord = [polyord]*len(uniquechunks)
+        elif perchunk and len(polyord) != len(uniquechunks):
             raise ValueError("If you specify a sequence of polyord values " + \
                                  "they sequence length must match the " + \
                                  "number of unique chunks in the dataset.")
@@ -132,7 +132,7 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
     # loop over chunks if necessary
     if perchunk:
         # get the unique chunks
-        uchunks = dataset.uniquechunks
+        uchunks = uniquechunks
 
         # loop over each chunk
         reg = []

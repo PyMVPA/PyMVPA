@@ -13,7 +13,10 @@ externals.exists('scipy', raiseException=True)
 
 from scipy import signal
 from mvpa.misc.stats import chisquare
+from mvpa.misc.attrmap import AttributeMap
+from mvpa.datasets.base import dataset
 
+from nose.tools import assert_raises
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
@@ -43,6 +46,10 @@ class StatsTestsScipy(unittest.TestCase):
         ds = datasets['uni2small']
 
         null = MCNullDist(permutations=10, tail='any')
+
+        assert_raises(ValueError, null.fit, CorrCoef(), ds)
+        # cheat and map to numeric for this test
+        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
@@ -51,7 +58,7 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(null.p([100, 0, 0, 0, 0, 0])[0] == 0)
 
         # same test with just scalar measure/feature
-        null.fit(CorrCoef(), ds.selectFeatures([0]))
+        null.fit(CorrCoef(), ds[:, 0])
         self.failUnless(null.p(-100) == 0)
         self.failUnless(null.p(100) == 0)
 
@@ -73,8 +80,8 @@ class StatsTestsScipy(unittest.TestCase):
         # plausability check
         self.failUnless(score_bogus < score_nonbogus)
 
-        null_prob_nonbogus = m.null_prob[ds.nonbogus_features]
-        null_prob_bogus = m.null_prob[ds.bogus_features]
+        null_prob_nonbogus = m.states.null_prob[ds.nonbogus_features]
+        null_prob_bogus = m.states.null_prob[ds.bogus_features]
 
         self.failUnless((null_prob_nonbogus < 0.05).all(),
             msg="Nonbogus features should have a very unlikely value. Got %s"
@@ -91,17 +98,17 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless((N.abs(m.null_t[ds.nonbogus_features]) >= 5).all(),
+            self.failUnless((N.abs(m.states.null_t[ds.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
-                    % (m.null_t[ds.nonbogus_features]))
+                    % (m.states.null_t[ds.nonbogus_features]))
 
-            bogus_min = min(N.abs(m.null_t[ds.bogus_features]))
+            bogus_min = min(N.abs(m.states.null_t[ds.bogus_features]))
             self.failUnless(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
                     % (bogus_min,
-                       zip(m.null_t[ds.bogus_features],
-                       m.null_prob[ds.bogus_features],
+                       zip(m.states.null_t[ds.bogus_features],
+                       m.states.null_prob[ds.bogus_features],
                        score[ds.bogus_features])))
 
 
@@ -125,7 +132,7 @@ class StatsTestsScipy(unittest.TestCase):
         m = BogusMeasure(null_dist=nd, enable_states=['null_t'])
         ds = datasets['uni2small']
         score = m(ds)
-        t, p = m.null_t, m.null_prob
+        t, p = m.states.null_t, m.states.null_prob
         self.failUnless((p>=0).all())
         self.failUnless((t[:2] > 0).all())
         self.failUnless((t[2:4] < 0).all())
@@ -224,9 +231,8 @@ class StatsTestsScipy(unittest.TestCase):
 
         fwm = OneWayAnova()
         f = fwm(ds)
-
-        f_sp = f_oneway(ds['labels', [1]].samples,
-                        ds['labels', [0]].samples)
+        f_sp = f_oneway(ds[ds.labels == 'L1'].samples,
+                        ds[ds.labels == 'L0'].samples)
 
         # SciPy needs to compute the same F-scores
         assert_array_almost_equal(f, f_sp[0])
@@ -267,7 +273,7 @@ class StatsTestsScipy(unittest.TestCase):
         X = N.array([model_lr, N.repeat(1, len(model_lr))]).T
 
         # two 'voxel' dataset
-        data = Dataset(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
+        data = dataset(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
 
         # check GLM betas
         glm = GLM(X, combiner=None)

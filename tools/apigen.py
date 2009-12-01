@@ -228,10 +228,10 @@ class ApiDocWriter(object):
             title = ':mod:`' + uri_short + '`'
         ad += title + '\n' + self.rst_section_levels[2] * len(title)
 
-        if len(classes):
-            ad += '\nInheritance diagram for ``%s``:\n\n' % uri
-            ad += '.. inheritance-diagram:: %s \n' % uri
-            ad += '   :parts: 3\n'
+        #if len(classes):
+        #    ad += '\nInheritance diagram for ``%s``:\n\n' % uri
+        #    ad += '.. inheritance-diagram:: %s \n' % uri
+        #    ad += '   :parts: 3\n'
 
         ad += '\n.. automodule:: ' + uri + '\n'
         ad += '\n.. currentmodule:: ' + uri + '\n'
@@ -250,8 +250,8 @@ class ApiDocWriter(object):
             ad += '\n.. autoclass:: ' + c + '\n'
             # must NOT exclude from index to keep cross-refs working
             ad += '  :members:\n' \
-                  '  :undoc-members:\n' \
-                  '  :show-inheritance:\n'
+                  '  :undoc-members:\n'# \
+                  #'  :show-inheritance:\n'
         if multi_fx:
             ad += '\n' + 'Functions' + '\n' + \
                   self.rst_section_levels[2] * 9 + '\n\n'

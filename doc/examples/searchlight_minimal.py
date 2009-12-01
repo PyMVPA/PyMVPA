@@ -26,7 +26,7 @@ draft of a complete analysis.
 
 First import a necessary pieces of PyMVPA -- this time each bit individually.
 """
-from mvpa.datasets.masked import MaskedDataset
+from mvpa.datasets.base import dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.clfs.svm import LinearCSVMC
 from mvpa.clfs.transerror import TransferError
@@ -40,8 +40,8 @@ from mvpa.misc.data_generators import normalFeatureDataset
 ds = normalFeatureDataset(perlabel=10, nlabels=2, nchunks=2,
                           nfeatures=10, nonbogus_features=[3, 7],
                           snr=5.0)
-dataset = MaskedDataset(samples=ds.samples, labels=ds.labels,
-                        chunks=ds.chunks)
+dataset = dataset(samples=ds.samples, labels=ds.labels,
+                  chunks=ds.chunks)
 
 """Now it only takes three lines for a searchlight analysis."""
 

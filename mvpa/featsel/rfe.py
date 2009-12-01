@@ -165,15 +165,16 @@ class RFE(FeatureSelection):
         errors = []
         """Computed error for each tested features set."""
 
-        self.nfeatures = []
+        states = self.states
+        states.nfeatures = []
         """Number of features at each step. Since it is not used by the
         algorithm it is stored directly in the state variable"""
 
-        self.history = arange(dataset.nfeatures)
+        states.history = arange(dataset.nfeatures)
         """Store the last step # when the feature was still present
         """
 
-        self.sensitivities = []
+        states.sensitivities = []
 
         stop = False
         """Flag when RFE should be stopped."""
@@ -213,14 +214,14 @@ class RFE(FeatureSelection):
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
             # only mark on removed features at each step
-            self.history[orig_feature_ids] = step
+            states.history[orig_feature_ids] = step
 
             # Compute sensitivity map
             if self.__update_sensitivity or sensitivity == None:
                 sensitivity = self.__sensitivity_analyzer(wdataset)
 
-            if self.states.isEnabled("sensitivities"):
-                self.sensitivities.append(sensitivity)
+            if states.isEnabled("sensitivities"):
+                states.sensitivities.append(sensitivity)
 
             # do not retrain clf if not necessary
             if self.__train_clf:
@@ -238,8 +239,8 @@ class RFE(FeatureSelection):
 
             nfeatures = wdataset.nfeatures
 
-            if self.states.isEnabled("nfeatures"):
-                self.nfeatures.append(wdataset.nfeatures)
+            if states.isEnabled("nfeatures"):
+                states.nfeatures.append(wdataset.nfeatures)
 
             # store result
             if isthebest:
@@ -265,7 +266,7 @@ class RFE(FeatureSelection):
 
 
             # Create a dataset only with selected features
-            wdataset = wdataset.selectFeatures(selected_ids)
+            wdataset = wdataset[:, selected_ids]
 
             # select corresponding sensitivity values if they are not
             # recomputed
@@ -280,7 +281,7 @@ class RFE(FeatureSelection):
             #      on a wdataset
             # TODO: document these cases in this class
             if not testdataset is None:
-                wtestdataset = wtestdataset.selectFeatures(selected_ids)
+                wtestdataset = wtestdataset[:, selected_ids]
 
             step += 1
 
@@ -293,8 +294,8 @@ class RFE(FeatureSelection):
             if hasattr(self.__transfer_error, "clf"):
                 self.__transfer_error.clf.untrain()
         # charge state variables
-        self.errors = errors
-        self.selected_ids = result_selected_ids
+        self.states.errors = errors
+        self.states.selected_ids = result_selected_ids
 
         # best dataset ever is returned
         return results

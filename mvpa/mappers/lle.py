@@ -18,7 +18,7 @@ from mvpa.base import externals
 
 import numpy as N
 
-from mvpa.mappers.base import Mapper
+from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 
 if externals.exists('mdp ge 2.4', raiseException=True):
     from mdp.nodes import LLENode, HLLENode
@@ -72,41 +72,36 @@ class LLEMapper(Mapper):
         self._node = None
 
 
-    def train(self, ds):
+    @accepts_dataset_as_samples
+    def _train(self, samples):
         """Train the mapper.
         """
         if self._algorithm == 'lle':
-            self._node = LLENode(self._k, dtype=ds.samples.dtype,
+            self._node = LLENode(self._k, dtype=samples.dtype,
                                  **self._node_kwargs)
         elif self._algorithm == 'hlle':
-            self._node = HLLENode(self._k, dtype=ds.samples.dtype,
+            self._node = HLLENode(self._k, dtype=samples.dtype,
                                   **self._node_kwargs)
         else:
             raise NotImplementedError
 
-        self._node.train(ds.samples)
+        self._node.train(samples)
         self._node.stop_training()
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """Map data from the IN dataspace into OUT space.
         """
         # experience the beauty of MDP -- just call the beast and be done ;-)
         return self.node(data)
 
 
-    def reverse(self, data):
-        """Reverse map data from OUT space into the IN space.
-        """
-        raise NotImplementedError
-
-
-    def getInSize(self):
+    def get_insize(self):
         """Returns the size of the entity in input space"""
         return self.node.input_dim
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the size of the entity in output space"""
         return self.node.output_dim
 

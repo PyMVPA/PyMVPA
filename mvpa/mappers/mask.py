@@ -15,6 +15,8 @@ import numpy as N
 from mvpa.mappers.base import Mapper
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.misc.support import isInVolume
+from mvpa.mappers.metric import Metric
+
 
 if __debug__:
     from mvpa.base import debug, warning
@@ -24,16 +26,21 @@ if __debug__:
 class MaskMapper(Mapper):
     """Mapper which uses a binary mask to select "Features" """
 
-    def __init__(self, mask, **kwargs):
+    def __init__(self, mask, metric=None, **kwargs):
         """Initialize MaskMapper
 
         :Parameters:
           mask : array
             an array in the original dataspace and its nonzero elements are
             used to define the features included in the dataset
+          metric : Metric
+            Optional metric
         """
         Mapper.__init__(self, **kwargs)
 
+        self.__metric = None
+        self.setMetric(metric)
+        """Actually assign the metric"""
         self.__mask = self.__maskdim = self.__masksize = \
                       self.__masknonzerosize = self.__forwardmap = \
                       self.__masknonzero = None # to make pylint happy
@@ -47,9 +54,15 @@ class MaskMapper(Mapper):
         return "MaskMapper: %d -> %d" \
             % (self.__masksize, self.__masknonzerosize)
 
+
     def __repr__(self):
-        s = super(MaskMapper, self).__repr__()
-        return s.replace("(", "(mask=%s," % self.__mask, 1)
+        if self.__metric is not None:
+            s = "metric=%s" % repr(self.__metric)
+        else:
+            s = ''
+        return "%s(%s, mask=%s)" % (self.__class__.__name__,
+                                    s,
+                                    self.__mask)
 
 # XXX
 # XXX HAS TO TAKE CARE OF SUBCLASSES!!!
@@ -109,7 +122,7 @@ class MaskMapper(Mapper):
             N.arange(self.__masknonzerosize)
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """Map data from the original dataspace into featurespace.
         """
         data = N.asanyarray(data)          # assure it is an array
@@ -138,7 +151,7 @@ class MaskMapper(Mapper):
                   "exceeding the mask shape is supported."
 
 
-    def reverse(self, data):
+    def _reverse_data(self, data):
         """Reverse map data from featurespace into the original dataspace.
         """
         data = N.asanyarray(data)
@@ -166,12 +179,12 @@ class MaskMapper(Mapper):
         return mapped
 
 
-    def getInSize(self):
+    def get_insize(self):
         """InShape is a shape of original mask"""
         return self.__masksize
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """OutSize is a number of non-0 elements in the mask"""
         return self.__masknonzerosize
 
@@ -213,7 +226,7 @@ class MaskMapper(Mapper):
         return N.transpose(self.__masknonzero)
 
 
-    def isValidInId(self, inId):
+    def is_valid_inid(self, inId):
         mask = self.mask
         return (isInVolume(inId, mask.shape) and mask[tuple(inId)] != 0)
 
@@ -274,7 +287,23 @@ class MaskMapper(Mapper):
         discarded = N.array([ True ] * self.nfeatures)
         discarded[outIds] = False    # create a map of discarded Ids
         discardedin = tuple(self.getInId(discarded))
-        self.__mask[discardedin] = False
+        # XXX need to perform copy on write; implement properly during rewrite
+        #self.__mask[discardedin] = False
+        mask = self.__mask.copy()
+        mask[discardedin] = False
+        self.__mask = mask
+
+        # XXX for now do evil expanding of slice args
+        # this should be implemented properly when rewriting MaskMapper into
+        # a 1D -> 1D Mapper
+        if isinstance(outIds, slice):
+            outIds = range(*outIds.indices(self.get_outsize()))
+
+        # XXX for now do evil expanding of selection arrays
+        # this should be implemented properly when rewriting MaskMapper into
+        # a 1D -> 1D Mapper
+        if isinstance(outIds, N.ndarray):
+            outIds = outIds.nonzero()[0]
 
         self.__masknonzerosize = len(outIds)
         self.__masknonzero = [ x[outIds] for x in self.__masknonzero ]
@@ -283,8 +312,13 @@ class MaskMapper(Mapper):
         # since we merged _tent/maskmapper-init-noloop it is not necessary
         # to zero-out discarded entries since we anyway would check with mask
         # in getOutId(s)
-        self.__forwardmap[self.__masknonzero] = \
-            N.arange(self.__masknonzerosize)
+        # XXX this also needs to do copy on write; reimplement properly during
+        # rewrite
+        #self.__forwardmap[self.__masknonzero] = \
+        #    N.arange(self.__masknonzerosize)
+        fmap = self.__forwardmap.copy()
+        fmap[self.__masknonzero] = N.arange(self.__masknonzerosize)
+        self.__forwardmap = fmap
 
 
     def discardOut(self, outIds):
@@ -312,6 +346,71 @@ class MaskMapper(Mapper):
         # the smallest outId among discarded. Similar strategy could be done
         # for selectOut but such index has to be figured out first there
         #      ....
+
+    def getNeighbor(self, outId, *args, **kwargs):
+        """Get feature neighbors in input space, given an id in output space.
+
+        This method has to be reimplemented whenever a derived class does not
+        provide an implementation for :meth:`~mvpa.mappers.base.Mapper.getInId`.
+        """
+        if self.metric is None:
+            raise RuntimeError, "No metric was assigned to %s, thus no " \
+                  "neighboring information is present" % self
+
+        if self.is_valid_outid(outId):
+            inId = self.getInId(outId)
+            for inId in self.getNeighborIn(inId, *args, **kwargs):
+                yield self.getOutId(inId)
+
+
+    def getNeighborIn(self, inId, *args, **kwargs):
+        """Return the list of coordinates for the neighbors.
+
+        :Parameters:
+          inId
+            id (index) of an element in input dataspace.
+          *args, **kwargs
+            Any additional arguments are passed to the embedded metric of the
+            mapper.
+
+        XXX See TODO below: what to return -- list of arrays or list
+        of tuples?
+        """
+        if self.metric is None:
+            raise RuntimeError, "No metric was assigned to %s, thus no " \
+                  "neighboring information is present" % self
+
+        is_valid_inid = self.is_valid_inid
+        if is_valid_inid(inId):
+            for neighbor in self.metric.getNeighbor(inId, *args, **kwargs):
+                if is_valid_inid(neighbor):
+                    yield neighbor
+
+
+    def getNeighbors(self, outId, *args, **kwargs):
+        """Return the list of coordinates for the neighbors.
+
+        By default it simply constructs the list based on
+        the generator returned by getNeighbor()
+        """
+        return [ x for x in self.getNeighbor(outId, *args, **kwargs) ]
+
+
+    def getMetric(self):
+        """To make pylint happy"""
+        return self.__metric
+
+
+    def setMetric(self, metric):
+        """To make pylint happy"""
+        if metric is not None and not isinstance(metric, Metric):
+            raise ValueError, "metric for Mapper must be an " \
+                              "instance of a Metric class . Got %s" \
+                                % `type(metric)`
+        self.__metric = metric
+
+
+
 
 
 # comment out for now... introduce when needed
@@ -359,6 +458,7 @@ class MaskMapper(Mapper):
         return self.reverse(self.convertOutIds2OutMask(outIds))
 
 
+    metric = property(fget=getMetric, fset=setMetric)
     # Read-only props
     mask = property(fget=lambda self:self.getMask(False))
 
@@ -367,5 +467,6 @@ class MaskMapper(Mapper):
     #      for easy reference, arrays are needed when doing computation on
     #      coordinates: for some reason numpy doesn't handle casting into
     #      array from tuples while performing arithm operations...
+
 
 

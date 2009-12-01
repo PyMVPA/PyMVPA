@@ -1257,13 +1257,13 @@ class ClassifierError(ClassWithCollections):
                         enable_states=['training_confusion'])
                 self.__clf.train(trainingdataset)
                 if self.states.isEnabled('training_confusion'):
-                    self.training_confusion = self.__clf.training_confusion
+                    self.states.training_confusion = self.__clf.states.training_confusion
                     self.__clf.states._resetEnabledTemporarily()
 
         if self.__clf.states.isEnabled('trained_labels') and \
                not testdataset is None:
-            newlabels = Set(testdataset.uniquelabels) \
-                        - Set(self.__clf.trained_labels)
+            newlabels = Set(testdataset.sa['labels'].unique) \
+                        - Set(self.__clf.states.trained_labels)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (`self.__clf`, `newlabels`) +
@@ -1407,18 +1407,17 @@ class TransferError(ClassifierError):
             raise ValueError, "Transfer error call obtained None " \
                   "as a dataset for testing.%s" % msg
         predictions = clf.predict(testdataset.samples)
-
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
         #  not from test/train datasets explicitely, see
-        #  `ConfusionBasedError`, where confusion is simply
+        #  `ConfusionBasedError`, wherestates. confusion is simply
         #  bound to classifiers confusion matrix
         states = self.states
         if states.isEnabled('confusion'):
             confusion = clf._summaryClass(
                 #labels=self.labels,
-                targets=testdataset.labels,
+                targets=testdataset.sa.labels,
                 predictions=predictions,
                 values=clf.states.get('values', None))
             try:
@@ -1430,12 +1429,12 @@ class TransferError(ClassifierError):
         if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx([p], testdataset.labels[i:i+1]))
+                samples_error.append(self.__errorfx([p], testdataset.sa.labels[i:i+1]))
 
-            states.samples_error = dict(zip(testdataset.origids, samples_error))
+            states.samples_error = dict(zip(testdataset.sa.origids, samples_error))
 
         # compute error from desired and predicted values
-        error = self.__errorfx(predictions, testdataset.labels)
+        error = self.__errorfx(predictions, testdataset.sa.labels)
 
         return error
 
@@ -1456,7 +1455,7 @@ class TransferError(ClassifierError):
 
         # get probability of error under NULL hypothesis if available
         if not error is None and not self.__null_dist is None:
-            self.null_prob = self.__null_dist.p(error)
+            self.states.null_prob = self.__null_dist.p(error)
 
 
     @property
@@ -1514,5 +1513,5 @@ class ConfusionBasedError(ClassifierError):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
         confusion = self.clf.states[self.__confusion_state].value
-        self.confusion = confusion
+        self.states.confusion = confusion
         return confusion.error

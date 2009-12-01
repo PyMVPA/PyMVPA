@@ -8,19 +8,14 @@ PyMVPA Documentation Contents
 
    intro
    installation
-   overview
-   datasets
-   classifiers
-   measures
-   featsel
-   misc
+   tutorial
    examples
    matlab
    faq
    glossary
+   refman
    references
    legal
    changelog
    history
    todo
-   modref

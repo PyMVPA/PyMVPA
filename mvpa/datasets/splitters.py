@@ -43,7 +43,8 @@ import numpy as N
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.datasets.miscfx import coarsenChunks
+from mvpa.datasets.miscfx import coarsenChunks, permute_labels, random_samples, \
+                                 get_nsamples_per_attr
 
 if __debug__:
     from mvpa.base import debug
@@ -186,14 +187,6 @@ class Splitter(object):
 
         # local bindings to methods to gain some speedup
         ds_class = dataset.__class__
-        DS_permuteLabels = ds_class.permuteLabels
-        try:
-            DS_getNSamplesPerLabel = ds_class._getNSamplesPerAttr
-        except AttributeError:
-            # Some "not-real" datasets e.g. MetaDataset, might not
-            # have it
-            pass
-        DS_getRandomSamples = ds_class.getRandomSamples
 
         # for each split
         cfgs = self.splitcfg(dataset)
@@ -257,39 +250,46 @@ class Splitter(object):
                     #     solution which would scale if we care about
                     #     thread-safety etc
                     if ds is not None:
-                        ds._dsattr['lastsplit'] = (isplit == Ncfgs-1)
+                        ds_a = ds.a
+                        lastsplit = (isplit == Ncfgs-1)
+                        if not ds_a.has_key('lastsplit'):
+                            # if not yet known -- add one
+                            ds_a['lastsplit'] = lastsplit
+                        else:
+                            # otherwise just assign a new value
+                            ds_a.lastsplit = lastsplit
                     # permute the labels
                     if self.__permute:
-                        DS_permuteLabels(ds, True, perchunk=True)
+                        permute_labels(ds, perchunk=True)
 
                     # select subset of samples if requested
                     if nperlabel == 'all' or ds is None:
                         finalized_datasets.append(ds)
                     else:
                         # We need to select a subset of samples
-                        # TODO: move all this logic within getRandomSamples
+                        # TODO: move all this logic within random_sample
 
                         # go for maximum possible number of samples provided
                         # by each label in this dataset
                         if nperlabel == 'equal':
                             # determine the min number of samples per class
-                            npl = N.array(DS_getNSamplesPerLabel(
-                                ds, attrib='labels').values()).min()
+                            npl = N.array(get_nsamples_per_attr(
+                                ds, 'labels').values()).min()
                         elif isinstance(nperlabel, float) or (
                             operator.isSequenceType(nperlabel) and
                             len(nperlabel) > 0 and
                             isinstance(nperlabel[0], float)):
                             # determine number of samples per class and take
                             # a ratio
-                            counts = N.array(DS_getNSamplesPerLabel(
-                                ds, attrib='labels').values())
+                            counts = N.array(get_nsamples_per_attr(
+                                ds, 'labels').values())
                             npl = (counts * nperlabel).round().astype(int)
                         else:
                             npl = nperlabel
 
                         # finally select the patterns
                         finalized_datasets.append(
-                            DS_getRandomSamples(ds, npl))
+                            random_samples(ds, npl))
 
                 if self._reverse:
                     yield finalized_datasets[::-1]
@@ -322,7 +322,7 @@ class Splitter(object):
             else:
                 discard_boundary = None
 
-        splitattr_data = eval('dataset.' + self.__splitattr)
+        splitattr_data = dataset.sa[self.__splitattr].value
         for spec in specs:
             if spec is None:
                 filters.append(None)
@@ -364,13 +364,11 @@ class Splitter(object):
         #      keeping it this way for now, to maintain current behavior
         split_datasets = []
 
-        # local bindings
-        dataset_selectSamples = dataset.selectSamples
         for filter_ in filters:
             if (filter_ == False).all():
                 split_datasets.append(None)
             else:
-                split_datasets.append(dataset_selectSamples(filter_))
+                split_datasets.append(dataset[filter_])
 
         return split_datasets
 
@@ -385,7 +383,7 @@ class Splitter(object):
 
     def splitcfg(self, dataset):
         """Return splitcfg for a given dataset"""
-        return self._getSplitConfig(eval('dataset.unique' + self.__splitattr))
+        return self._getSplitConfig(dataset.sa[self.__splitattr].unique)
 
 
     strategy = property(fget=lambda self:self.__strategy,

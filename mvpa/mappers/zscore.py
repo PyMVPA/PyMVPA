@@ -14,7 +14,8 @@ from mvpa.base import warning, externals
 
 import numpy as N
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import ProjectionMapper
+from mvpa.mappers.base import accepts_dataset_as_samples
+from mvpa.mappers.projection import ProjectionMapper
 
 if externals.exists('scipy', raiseException=True):
     import scipy.sparse
@@ -59,10 +60,10 @@ class ZScoreMapper(ProjectionMapper):
     __doc__ = enhancedDocString('ZScoreMapper', locals(), ProjectionMapper)
 
 
-    def _train(self, dataset):
+    @accepts_dataset_as_samples
+    def _train(self, samples):
         """Determine the diagonal matrix with coefficients for standartization
         """
-        samples = dataset.samples
         X = self._demeanData(samples)
         std = X.std(axis=0)
 

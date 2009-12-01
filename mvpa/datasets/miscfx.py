@@ -16,6 +16,7 @@ __docformat__ = 'restructuredtext'
 
 from sets import Set
 from operator import isSequenceType
+import random
 
 import numpy as N
 
@@ -53,14 +54,13 @@ def zscore(dataset, mean=None, std=None,
     """
 
     if __debug__ and perchunk \
-      and N.array(dataset.samplesperchunk.values()).min() < 2:
+      and N.array(get_nsamples_per_attr(dataset, 'chunks').values()).min() < 2:
         warning("Z-scoring chunk-wise and one chunk with less than two " \
                 "samples will set features in these samples to zero.")
 
-    # cast to floating point datatype if necessary
-    if str(dataset.samples.dtype).startswith('uint') \
-       or str(dataset.samples.dtype).startswith('int'):
-        dataset.setSamplesDType(targetdtype)
+    # cast the data to float, since in-place operations below to not upcast!
+    if N.issubdtype(dataset.samples.dtype, N.integer):
+        dataset.samples = dataset.samples.astype(targetdtype)
 
     def doit(samples, mean, std, statsamples=None):
         """Internal method."""
@@ -81,6 +81,7 @@ def zscore(dataset, mean=None, std=None,
         # de-mean
         samples -= mean
 
+
         # calculate std-deviation if necessary
         # XXX YOH: would that be actually what we want?
         #          may be we want actually estimate of deviation from the mean,
@@ -100,13 +101,13 @@ def zscore(dataset, mean=None, std=None,
     if baselinelabels is None:
         statids = None
     else:
-        statids = Set(dataset.idsbylabels(baselinelabels))
+        statids = Set(get_samples_by_attr(dataset, 'labels', baselinelabels))
 
     # for the sake of speed yoh didn't simply create a list
     # [True]*dataset.nsamples to provide easy selection of everything
     if perchunk:
-        for c in dataset.uniquechunks:
-            slicer = N.where(dataset.chunks == c)[0]
+        for c in dataset.sa['chunks'].unique:
+            slicer = N.where(dataset.sa.chunks == c)[0]
             if not statids is None:
                 statslicer = list(statids.intersection(Set(slicer)))
                 dataset.samples[slicer] = doit(dataset.samples[slicer],
@@ -135,16 +136,14 @@ def aggregateFeatures(dataset, fx=N.mean):
     """
     agg = fx(dataset.samples, axis=1)
 
-    return Dataset(samples=N.array(agg, ndmin=2).T,
-                   labels=dataset.labels,
-                   chunks=dataset.chunks)
+    return Dataset(samples=N.array(agg, ndmin=2).T, sa=dataset.sa)
 
 
 @datasetmethod
 def removeInvariantFeatures(dataset):
     """Returns a new dataset with all invariant features removed.
     """
-    return dataset.selectFeatures(dataset.samples.std(axis=0).nonzero()[0])
+    return dataset[:, dataset.samples.std(axis=0).nonzero()[0]]
 
 
 @datasetmethod
@@ -217,7 +216,8 @@ def coarsenChunks(source, nchunks=4):
         for c in group:
             chunks_map[c] = i
 
-    chunks_new = [chunks_map[x] for x in chunks]
+    # we always want an array!
+    chunks_new = N.array([chunks_map[x] for x in chunks])
 
     if __debug__:
         debug("DS_", "Using dictionary %s to remap old chunks %s into new %s"
@@ -227,7 +227,7 @@ def coarsenChunks(source, nchunks=4):
         if __debug__:
             debug("DS", "Coarsing %d chunks into %d chunks for %s"
                   %(nchunks_orig, len(chunks_new), source))
-        source.chunks = chunks_new
+        source.sa['chunks'].value = chunks_new
         return
     else:
         return chunks_new
@@ -243,8 +243,8 @@ def getSamplesPerChunkLabel(dataset):
       dataset: Dataset
         Source dataset.
     """
-    ul = dataset.uniquelabels
-    uc = dataset.uniquechunks
+    ul = dataset.sa['labels'].unique
+    uc = dataset.sa['chunks'].unique
 
     count = N.zeros((len(uc), len(ul)), dtype='uint')
 
@@ -254,6 +254,152 @@ def getSamplesPerChunkLabel(dataset):
                                                 dataset.chunks == c))
 
     return count
+
+
+@datasetmethod
+def permute_labels(dataset, perchunk=True, assure_permute=False):
+    """Permute the labels of a Dataset.
+
+    A new permuted set of labels is assigned to the dataset, replacing
+    the previous labels. The labels are not modified in-place, hence
+    it is safe to call the function on shallow copies of a dataset
+    without modifying the original dataset's labels.
+
+    Parameters
+    ----------
+    perchunk : bool
+      If True, permutation is limited to samples sharing the same chunk
+      value.  Therefore only the association of a certain sample with
+      a label is permuted while keeping the absolute number of
+      occurences of each label value within a certain chunk constant.
+      If there is no `chunks` information in the dataset this flag has
+      no effect.
+    assure_permute : bool
+      If True, assures that labels are permutted, i.e. any one is
+      different from the original one
+    """
+    if __debug__:
+        if len(N.unique(dataset.sa.labels)) < 2:
+            raise RuntimeError(
+                  "Permuting labels is only meaningful if there are "
+                  "more than two different labels.")
+
+    # local binding
+    labels = dataset.sa['labels'].value
+
+    # now scramble
+    if perchunk and dataset.sa.has_key('chunks'):
+        chunks = dataset.sa['chunks'].value
+
+        plabels = N.zeros(labels.shape, dtype=labels.dtype)
+
+        for o in dataset.sa['chunks'].unique:
+            plabels[chunks == o] = \
+                N.random.permutation(labels[chunks == o])
+    else:
+        plabels = N.random.permutation(labels)
+
+    if assure_permute:
+        if not (plabels != labels).any():
+            if not (assure_permute is True):
+                if assure_permute == 1:
+                    raise RuntimeError, \
+                          "Cannot assure permutation of labels %s for " \
+                          "some reason with chunks %s and while " \
+                          "perchunk=%s . Should not happen" % \
+                          (labels, self.chunks, perchunk)
+            else:
+                assure_permute = 11 # make 10 attempts
+            if __debug__:
+                debug("DS",  "Recalling permute to assure different labels")
+            permute_labels(dataset,
+                           perchunk=perchunk,
+                           assure_permute=assure_permute-1)
+    # reassign to the dataset
+    dataset.sa.labels = plabels
+
+
+@datasetmethod
+def random_samples(dataset, nperlabel):
+    """Create a dataset with a random subset of samples.
+
+    Parameters
+    ----------
+    nperlabel : int, list
+
+      If an integer is given, the specified number of samples is randomly
+      choosen from the group of samples sharing a unique label value (total
+      number of selected samples: nperlabel x len(uniquelabels).
+
+      If a list is given which's length is matching the unique label values, it
+      will specify the number of samples chosen for each particular unique
+      label.
+
+    Returns
+    -------
+    A dataset instance for the chosen samples. All feature attributes and
+    dataset attribute share there data with the source dataset.
+    """
+    uniquelabels = dataset.sa['labels'].unique
+    # if interger is given take this value for all classes
+    if isinstance(nperlabel, int):
+        nperlabel = [nperlabel for i in uniquelabels]
+
+    sample = []
+    # for each available class
+    labels = dataset.labels
+    for i, r in enumerate(uniquelabels):
+        # get the list of pattern ids for this class
+        sample += random.sample((labels == r).nonzero()[0], nperlabel[i] )
+
+    return dataset[sample]
+
+
+@datasetmethod
+def get_nsamples_per_attr(dataset, attr):
+    """Returns the number of samples per unique value of a sample attribute.
+
+    Parameters
+    ----------
+    attr : str
+      Name of the sample attribute
+
+    Returns
+    -------
+    dict with the number of samples (value) per unique attribute (key).
+    """
+    uniqueattr = dataset.sa[attr].unique
+
+    # use dictionary to cope with arbitrary labels
+    result = dict(zip(uniqueattr, [ 0 ] * len(uniqueattr)))
+    for l in dataset.sa[attr].value:
+        result[l] += 1
+
+    return result
+
+
+@datasetmethod
+def get_samples_by_attr(dataset, attr, values, sort=True):
+    """Return indecies of samples given a list of attributes
+    """
+
+    if not isSequenceType(values) \
+           or isinstance(values, basestring):
+        values = [ values ]
+
+    # TODO: compare to plain for loop through the labels
+    #       on a real data example
+    sel = N.array([], dtype=N.int16)
+    sa = dataset.sa
+    for value in values:
+        sel = N.concatenate((
+            sel, N.where(sa[attr].value == value)[0]))
+
+    if sort:
+        # place samples in the right order
+        sel.sort()
+
+    return sel
 
 
 class SequenceStats(dict):
@@ -375,4 +521,3 @@ class SequenceStats(dict):
         P.xlabel('Offset')
         P.ylabel('Correlation Coefficient')
         P.show()
-

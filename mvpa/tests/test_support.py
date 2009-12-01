@@ -122,44 +122,6 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless((mo.ovstats_map == [1,0,2./3,1./3]).all())
 
 
-    def testHarvester(self):
-        # do very simple list comprehension
-        self.failUnlessEqual(
-            [(-1)*i for i in range(5)],
-            Harvester(xrange,
-                      [HarvesterCall(lambda x: (-1)*x, expand_args=False)])
-            (5))
-
-
-        # do clf cross-validation on a dataset with a very high SNR
-        cv = Harvester(NFoldSplitter(cvtype=1),
-                       [HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0])])
-        data = getMVPattern(10)
-        err = N.array(cv(data))
-
-        # has to be perfect
-        self.failUnless((err < 0.1).all())
-        self.failUnlessEqual(err.shape, (len(data.uniquechunks),))
-
-        # now same stuff but two classifiers at once
-        cv = Harvester(NFoldSplitter(cvtype=1),
-                  [HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0]),
-                   HarvesterCall(TransferError(sample_clf_nl), argfilter=[1,0])])
-        err = N.array(cv(data))
-        self.failUnlessEqual(err.shape, (2,len(data.uniquechunks)))
-
-        # only one again, but this time remember confusion matrix
-        cv = Harvester(NFoldSplitter(cvtype=1),
-                  [HarvesterCall(TransferError(sample_clf_nl,
-                                               enable_states=['confusion']),
-                                 argfilter=[1,0], attribs=['confusion'])])
-        res = cv(data)
-
-        self.failUnless(isinstance(res, dict))
-        self.failUnless(res.has_key('confusion') and res.has_key('result'))
-        self.failUnless(len(res['result']) == len(data.uniquechunks))
-
-
     @sweepargs(pair=[(N.random.normal(size=(10,20)), N.random.normal(size=(10,20))),
                      ([1,2,3,0], [1,3,2,0]),
                      ((1,2,3,1), (1,3,2,1))])

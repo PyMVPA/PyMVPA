@@ -144,7 +144,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         self.states.confusion = summaryClass()
         self.states.training_confusion = summaryClass()
         self.states.transerrors = []
-        self.states.samples_error = dict([(id, []) for id in dataset.origids])
+        if states.isEnabled('samples_error'):
+            self.states.samples_error = dict([(id, [])
+                                               for id in dataset.sa.origids])
 
         # enable requested states in child TransferError instance (restored
         # again below)
@@ -170,7 +172,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 lastsplit = None
                 for ds in split:
                     if ds is not None:
-                        lastsplit = ds._dsattr['lastsplit']
+                        lastsplit = ds.a.lastsplit
                         break
                 if lastsplit:
                     # only if we could deduce that it was last split

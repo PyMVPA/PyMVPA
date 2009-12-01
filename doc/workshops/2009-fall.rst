@@ -1,0 +1,165 @@
+.. -*- mode: rst; fill-column: 78 -*-
+.. ex: set sts=4 ts=4 sw=4 et tw=79:
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+.. _chap_workshop_2009fall:
+
+********************************
+PyMVPA Extravaganza -- Fall 2009
+********************************
+
+This development workshop will take place at Dartmouth College (Nov 30th -- Dec
+4th).
+
+
+Goals
+=====
+
+The primary purpose of this first PyMVPA workshop is to gather all people
+involved in (or related to) the development of PyMVPA. Participants introduce
+their projects and we will discuss their integration into, or interoperation
+with the PyMVPA main line.
+
+In addition, we will discuss changes scheduled for the upcoming 0.5 release of
+PyMVPA that are supposed to improve shortcomings of the original design, or
+missing features that have been identified over the past two years. This
+includes:
+
+* More flexible data storage: A new dataset implementation.
+* Better integration of PyMVPA and MDP_.
+* Establishing an optimization framework within PyMVPA.
+* Various performance improvements, e.g. kernel-caching, parallelization,
+  potential of CUDA.
+
+.. _MDP: http://mdp-toolkit.sourceforge.net/
+
+
+Participants
+============
+
+(confirmed)
+
+* Scott Gorlin, MIT, USA
+* Valentin Haenel, BCCN, Germany
+* Yaroslav O. Halchenko, Dartmouth College, USA
+* Michael Hanke, Dartmouth College, USA
+* James M. Hughes, Dartmouth College, USA
+* Emanuele Olivetti, Fondazione Bruno Kessler, Italy
+* Per B. Sederberg, Princeton University, USA (virtual)
+* Tiziano Zito, BCCN, Germany
+
+
+Tentative Schedule
+==================
+
+The workshop will start on *Monday Nov 30th at 9:30* am with a series of talks
+covering the various aspects of the workshop:
+
+
+PyMVPA: Where we are now, and where we are going
+------------------------------------------------
+
+Yaroslav O. Halchenko,
+Michael Hanke
+
+This talk will give a brief summary of our original concept of PyMVPA that we
+had in mind when designing it two years ago, and how the project evolved since
+then.  We will touch upon several issues we had to face concerning development,
+quality assurance, and deployment. While the latest PyMVPA release offers a wide
+array of tools and algorithms, we also identified a number of problems that
+limit further integration of novel techniques into the framework. The talk will
+conclude with an outline how we believe these issues can be resolved and
+introduces a number of improvements that will become available with the next
+milestone release: PyMVPA **0.5**.
+
+
+MDP inside out
+--------------
+
+Tiziano Zito
+
+MDP is a Python collection of machine learning algorithms and a framework
+for implementing new algorithms and combining them into data processing
+workflows. MDP has been designed around two main ideas: expose a simple
+API, to allow scientific users to use it as a standalone library, and
+organize the internal structure of the objects to encourage developers to
+extend it and embed it in other libraries such as PyMVPA. In my talk, I
+will use MDP as a starting point to hash over some basic principles of
+scientific software design. I will discuss the criteria that inform the
+design of MDP and their specific implementation, and examine their
+advantages, limitations and possible alternatives. I will conclude with a
+summary of the current status and future plans for MDP development.
+
+
+Profiling PyMVPA
+----------------
+
+Valentin Haenel
+
+In this talk I will present the work we did to compare the PyMVPA and Matlab
+implementations of the searchlight algorithm. This will include a description
+of how we iteratively discovered various bottlenecks and the steps taken to
+eliminate these. In particular, I will first present modifications of the
+source code and then show the resulting change in profiler output. I may
+conclude with some ideas for future work and some additional remarks about
+optimization in general.
+
+
+Supervised Tract Segmentation
+-----------------------------
+
+Emanuele Olivetti
+
+Automatic segmentation of tractography data into pathways/tracts is a
+problem traditionally addressed by means of unsupervised techniques,
+i.e., clustering streamlines. The core of this work is to adopt
+instead a supervised approach, learning from the segmentation made by
+an expert neuroanatomist in order to predict tracts in new brains.
+
+In this talk a novel set of supervised approaches to the tract
+segmentation problem will be illustrated. The proposed solutions are
+based on machine learning topics like "supervised clustering",
+"learning with similarity functions" and "transduction". These
+solutions allow to exploit both diffusion and functional MRI data, to
+avoid co-registration between different subjects and to predict tracts
+in hemispheres different from the training example. Preliminary
+results support these claims.
+
+An intended goal of this talk is to open a discussion on how to map
+the building blocks of the proposed methods into the PyMVPA framework
+in order to support tractography data analysis natively and, more in
+general, to provide novel machine learning approaches to the users.
+
+
+Caching kernels
+---------------
+
+Scott Gorlin
+
+A major bottleneck in a standard classification analysis relies on
+calculating the dot product between vectors in high-dimensional space.
+This is especially time consuming when there are few samples but the
+number of dimensions is high, such as the case of fMRI data.  In fact,
+many common analysis techniques such as cross validation, bootstrapping,
+and model selection require that the kernel be recalculated for each
+permutation, even if that exact calculation has been done before.  This
+presentation analyzes the problem inherent in a high-level library such
+as PyMVPA and illustrates one example of how to cache and reuse kernels,
+greatly simplifying the underlying computations and accelerating many
+analytical technique implementations by several orders of magnitude.
+
+
+.. CUDA for world-domination (Per)
+
+
+
+Workshop Results
+================
+
+(to be reported)

@@ -36,10 +36,10 @@ preprocessing steps on it."""
 # load PyMVPA example dataset
 #
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                        labels=attr.labels,
+                        chunks=attr.chunks,
+                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
 # preprocessing
@@ -49,16 +49,13 @@ dataset = NiftiDataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 detrend(dataset, perchunk=True, model='linear')
 
 # only use 'rest', 'house' and 'scrambled' samples from dataset
-dataset = dataset.selectSamples(
-                N.array([ l in [0,2,6] for l in dataset.labels],
-                dtype='bool'))
+dataset = dataset[N.array([l in [0,2,6] for l in dataset.labels], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
 zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset.selectSamples(N.array([l != 0 for l in dataset.labels],
-                                        dtype='bool'))
+dataset = dataset[N.array([l != 0 for l in dataset.labels], dtype='bool')]
 
 """But now for the interesting part: Next we define the measure that shall be
 computed for each sphere. Theoretically, this can be anything, but here we
@@ -107,7 +104,7 @@ for radius in [1,5,10]:
     sl_map = sl(dataset)
 
     # map sensitivity map into original dataspace
-    orig_sl_map = dataset.mapReverse(N.array(sl_map))
+    orig_sl_map = dataset.mapper.reverse(N.array(sl_map))
     masked_orig_sl_map = N.ma.masked_array(orig_sl_map,
                                            mask=orig_sl_map == 0)
 

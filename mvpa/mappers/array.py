@@ -117,4 +117,4 @@ class DenseArrayMapper(MaskMapper):
 
     def __str__(self):
         return "DenseArrayMapper: %d -> %d" \
-            % (self.getInSize(), self.getOutSize())
+            % (self.get_insize(), self.get_outsize())

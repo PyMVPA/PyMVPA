@@ -21,6 +21,7 @@ from mvpa.misc.errorfx import RMSErrorFx, RelativeRMSErrorFx, \
 from mvpa.clfs.meta import SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
+from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
@@ -33,7 +34,7 @@ class RegressionsTests(unittest.TestCase):
     def testNonRegressions(self, ml):
         """Test If binary regression-based  classifiers have proper tag
         """
-        self.failUnless(('binary' in ml._clf_internals) != ml.regression,
+        self.failUnless(('binary' in ml._clf_internals) != ml.params.regression,
             msg="Inconsistent markin with binary and regression features"
                 " detected in %s having %s" % (ml, `ml._clf_internals`))
 
@@ -42,6 +43,9 @@ class RegressionsTests(unittest.TestCase):
         """Simple tests on regressions
         """
         ds = datasets['chirp_linear']
+        # we want numeric labels to maintain the previous behavior, especially
+        # since we deal with regressions here
+        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
 
         cve = CrossValidatedTransferError(
             TransferError(regr, CorrErrorFx()),
@@ -49,18 +53,18 @@ class RegressionsTests(unittest.TestCase):
             enable_states=['training_confusion', 'confusion'])
         corr = cve(ds)
 
-        self.failUnless(corr == cve.confusion.stats['CCe'])
+        self.failUnless(corr == cve.states.confusion.stats['CCe'])
 
         splitregr = SplitClassifier(regr,
                                     splitter=OddEvenSplitter(),
                                     enable_states=['training_confusion', 'confusion'])
         splitregr.train(ds)
-        split_corr = splitregr.confusion.stats['CCe']
-        split_corr_tr = splitregr.training_confusion.stats['CCe']
+        split_corr = splitregr.states.confusion.stats['CCe']
+        split_corr_tr = splitregr.states.training_confusion.stats['CCe']
 
-        for confusion, error in ((cve.confusion, corr),
-                                 (splitregr.confusion, split_corr),
-                                 (splitregr.training_confusion, split_corr_tr),
+        for confusion, error in ((cve.states.confusion, corr),
+                                 (splitregr.states.confusion, split_corr),
+                                 (splitregr.states.training_confusion, split_corr_tr),
                                  ):
             #TODO: test confusion statistics
             # Part of it for now -- CCe
@@ -108,9 +112,12 @@ class RegressionsTests(unittest.TestCase):
             NFoldSplitter(),
             enable_states=['confusion', 'training_confusion'])
         ds = datasets['uni2small']
+        # we want numeric labels to maintain the previous behavior, especially
+        # since we deal with regressions here
+        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
         cverror = cv(ds)
 
-        self.failUnless(len(clf.values) == ds['chunks', 1].nsamples)
+        self.failUnless(len(clf.states.values) == ds[ds.chunks == 1].nsamples)
         clf.states._resetEnabledTemporarily()
 
 

@@ -57,18 +57,20 @@ class SampleGroupMapper(Mapper):
     __doc__ = enhancedDocString('SampleGroupMapper', locals(), Mapper)
 
 
-    def train(self, dataset):
+    def _train(self, dataset):
         """
         """
+        # local binding
+        sa = dataset.sa
         # just store the relevant information
-        self.__uniquechunks = dataset.uniquechunks
-        self.__uniquelabels = dataset.uniquelabels
-        self.__chunks = dataset.chunks
-        self.__labels = dataset.labels
+        self.__uniquechunks = sa['chunks'].unique
+        self.__uniquelabels = sa['labels'].unique
+        self.__chunks = sa['chunks'].value
+        self.__labels = sa['labels'].value
         self.__datashape = (dataset.nfeatures, )
 
 
-    def forward(self, data):
+    def _forward_data(self, data):
         """
         """
         if self.__datashape is None:
@@ -86,18 +88,13 @@ class SampleGroupMapper(Mapper):
         return N.array(mdata)
 
 
-    def reverse(self, data):
-        """This is not implemented."""
-        raise NotImplementedError
-
-
-    def getInSize(self):
+    def get_insize(self):
         """Returns the number of original samples which were combined.
         """
         return self.__datashape[0]
 
 
-    def getOutSize(self):
+    def get_outsize(self):
         """Returns the number of output samples.
         """
         return self.__datashape[0]

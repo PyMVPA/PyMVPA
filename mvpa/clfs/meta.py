@@ -29,6 +29,7 @@ from sets import Set
 from mvpa.misc.args import group_kwargs
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
 
 from mvpa.clfs.base import Classifier
@@ -128,7 +129,7 @@ class BoostedClassifier(Classifier, Harvestable):
         # return union of all used features by slave classifiers
         feature_ids = Set([])
         for clf in self.__clfs:
-            feature_ids = feature_ids.union(Set(clf.feature_ids))
+            feature_ids = feature_ids.union(Set(clf.states.feature_ids))
         return list(feature_ids)
 
 
@@ -136,13 +137,13 @@ class BoostedClassifier(Classifier, Harvestable):
         """Predict using `BoostedClassifier`
         """
         raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
-        self.raw_predictions = raw_predictions
+        self.states.raw_predictions = raw_predictions
         assert(len(self.__clfs)>0)
         if self.states.isEnabled("values"):
             if N.array([x.states.isEnabled("values")
                         for x in self.__clfs]).all():
-                values = [ clf.values for clf in self.__clfs ]
-                self.raw_values = values
+                values = [ clf.states.values for clf in self.__clfs ]
+                self.states.raw_values = values
             else:
                 warning("One or more classifiers in %s has no 'values' state" %
                         self + "enabled, thus BoostedClassifier can't have" +
@@ -232,7 +233,7 @@ class ProxyClassifier(Classifier):
             classifier based on which mask classifiers is created
           """
 
-        Classifier.__init__(self, regression=clf.regression, **kwargs)
+        Classifier.__init__(self, regression=clf.params.regression, **kwargs)
 
         self.__clf = clf
         """Store the classifier to use."""
@@ -376,14 +377,17 @@ class MaximalVote(PredictionsCombiner):
             if not clf.states.isEnabled("predictions"):
                 raise ValueError, "MaximalVote needs classifiers (such as " + \
                       "%s) with state 'predictions' enabled" % clf
-            predictions = clf.predictions
+            predictions = clf.states.predictions
             if all_label_counts is None:
                 all_label_counts = [ {} for i in xrange(len(predictions)) ]
 
             # for every sample
             for i in xrange(len(predictions)):
                 prediction = predictions[i]
-                if not operator.isSequenceType(prediction):
+                # XXX fishy location due to literal labels,
+                # TODO simplify assumptions and logic
+                if isinstance(prediction, basestring) or \
+                       not operator.isSequenceType(prediction):
                     prediction = (prediction,)
                 for label in prediction: # for every label
                     # XXX we might have multiple labels assigned
@@ -415,8 +419,8 @@ class MaximalVote(PredictionsCombiner):
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
-        self.all_label_counts = all_label_counts
-        self.predictions = predictions
+        self.states.all_label_counts = all_label_counts
+        self.states.predictions = predictions
         return predictions
 
 
@@ -441,11 +445,11 @@ class MeanPrediction(PredictionsCombiner):
             if not clf.states.isEnabled("predictions"):
                 raise ValueError, "MeanPrediction needs classifiers (such " \
                       " as %s) with state 'predictions' enabled" % clf
-            all_predictions.append(clf.predictions)
+            all_predictions.append(clf.states.predictions)
 
         # compute mean
         predictions = N.mean(N.asarray(all_predictions), axis=0)
-        self.predictions = predictions
+        self.states.predictions = predictions
         return predictions
 
 
@@ -526,7 +530,8 @@ class CombinedClassifier(BoostedClassifier):
 
         # assign default combiner
         if combiner is None:
-            combiner = (MaximalVote, MeanPrediction)[int(self.regression)]()
+            combiner = (MaximalVote,
+                        MeanPrediction)[int(self.params.regression)]()
         self.__combiner = combiner
         """Functor destined to combine results of multiple classifiers"""
 
@@ -574,12 +579,12 @@ class CombinedClassifier(BoostedClassifier):
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
         predictions = self.__combiner(self.clfs, data)
-        self.predictions = predictions
+        self.states.predictions = predictions
 
         if self.states.isEnabled("values"):
             if self.__combiner.states.isActive("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
-                self.values = self.__combiner.values
+                self.states.values = self.__combiner.values
             else:
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state enabled,"
@@ -686,6 +691,8 @@ class TreeClassifier(ProxyClassifier):
         # since labels_map is not available here and definition
         # is allowed to carry both symbolic and numeric values for
         # labels
+        # XXX TODO due to abandoning of labels_map -- may be this is
+        #     no longer the case?
 
         # We can only assign respective classifiers
         self.clfs = dict([(gk, c) for gk, (ls, c) in groups.iteritems()])
@@ -722,31 +729,26 @@ class TreeClassifier(ProxyClassifier):
 
         # Handle groups of labels
         groups = self._groups
-        labels_map = dataset.labels_map
-        # just for convenience
-        if labels_map is None: labels_map = {}
         groups_labels = {}              # just groups with numeric indexes
         label2index = {}                # how to map old labels to new
         known = set()
         for gi, gk in enumerate(index2group):
             ls = groups[gk][0]
-            # if mapping exists -- map
-            ls_ = [labels_map.get(l, l) for l in ls]
-            known_already = known.intersection(ls_)
+            known_already = known.intersection(ls)
             if len(known_already):
                 raise ValueError, "Grouping of labels is not appropriate. " \
-                      "Got labels %s already among known in %s. " \
-                      "Used labelsmap %s" % (known_already, known, labels_map)
-            groups_labels[gk] = ls_     # needed? XXX
-            for l in ls_:
+                      "Got labels %s already among known in %s. " % \
+                       (known_already, known  )
+            groups_labels[gk] = ls      # needed? XXX
+            for l in ls :
                 label2index[l] = gi
-            known = known.union(ls_)
+            known = known.union(ls )
         # TODO: check if different literal labels weren't mapped into
         #       same numerical but here asked to belong to different groups
         #  yoh: actually above should catch it
 
         # Check if none of the labels is missing from known groups
-        dsul = set(dataset.uniquelabels)
+        dsul = set(dataset.sa['labels'].unique)
         if known.intersection(dsul) != dsul:
             raise ValueError, \
                   "Dataset %s had some labels not defined in groups: %s. " \
@@ -782,8 +784,8 @@ class TreeClassifier(ProxyClassifier):
         #     might be not a bad thing altogether...)
         for gk in groups.iterkeys():
             # select samples per each group
-            ids = dataset.idsbylabels(groups_labels[gk])
-            ds_group = dataset.selectSamples(ids)
+            ids = get_samples_by_attr(dataset, 'labels', groups_labels[gk])
+            ds_group = dataset[ids]
             if __debug__:
                 debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
                       msgargs=dict(clf=clfs[gk], gk=gk, ds=ds_group))
@@ -810,7 +812,8 @@ class TreeClassifier(ProxyClassifier):
 
         # now for predictions pointing to specific groups go into
         # corresponding one
-        predictions = N.array([N.nan]*len(data))
+        # defer initialization since dtype would depend on predictions
+        predictions = None
         for pred_group in set(clf_predictions):
             gk = index2group[pred_group]
             clf_ = clfs[gk]
@@ -818,7 +821,10 @@ class TreeClassifier(ProxyClassifier):
             if __debug__:
                 debug('CLFTREE', 'Predicting for group %s using %s on %d samples' %
                       (gk, clf_, N.sum(group_indexes)))
-            predictions[group_indexes] = clf_.predict(data[group_indexes])
+            p = clf_.predict(data[group_indexes])
+            if predictions is None:
+                predictions = N.zeros((len(data),), dtype=N.asanyarray(p).dtype)
+            predictions[group_indexes] = p
         return predictions
 
 
@@ -882,13 +888,13 @@ class BinaryClassifier(ProxyClassifier):
     def _train(self, dataset):
         """Train `BinaryClassifier`
         """
-        idlabels = [(x, +1) for x in dataset.idsbylabels(self.__poslabels)] + \
-                    [(x, -1) for x in dataset.idsbylabels(self.__neglabels)]
+        idlabels = [(x, +1) for x in get_samples_by_attr(dataset, 'labels',
+                                                         self.__poslabels)] + \
+                    [(x, -1) for x in get_samples_by_attr(dataset, 'labels',
+                                                          self.__neglabels)]
         # XXX we have to sort ids since at the moment Dataset.selectSamples
         #     doesn't take care about order
         idlabels.sort()
-        # select the samples
-        orig_labels = None
 
         # If we need all samples, why simply not perform on original
         # data, an just store/restore labels. But it really should be done
@@ -897,16 +903,15 @@ class BinaryClassifier(ProxyClassifier):
             and [x[0] for x in idlabels] == range(dataset.nsamples):
             # the last condition is not even necessary... just overly
             # cautious
-            datasetselected = dataset   # no selection is needed
-            orig_labels = dataset.labels # but we would need to restore labels
+            datasetselected = dataset.copy(deep=False)   # no selection is needed
             if __debug__:
                 debug('CLFBIN',
-                      "Assigned all %d samples for binary " %
+                      "Created shallow copy with %d samples for binary " %
                       (dataset.nsamples) +
                       " classification among labels %s/+1 and %s/-1" %
                       (self.__poslabels, self.__neglabels))
         else:
-            datasetselected = dataset.selectSamples([ x[0] for x in idlabels ])
+            datasetselected = dataset[[ x[0] for x in idlabels ]]
             if __debug__:
                 debug('CLFBIN',
                       "Selected %d samples out of %d samples for binary " %
@@ -916,16 +921,14 @@ class BinaryClassifier(ProxyClassifier):
                       ". Selected %s" % datasetselected)
 
         # adjust the labels
-        datasetselected.labels = [ x[1] for x in idlabels ]
+        datasetselected.sa['labels'].value = [ x[1] for x in idlabels ]
 
         # now we got a dataset with only 2 labels
         if __debug__:
-            assert((datasetselected.uniquelabels == [-1, 1]).all())
+            assert((datasetselected.sa['labels'].unique == [-1, 1]).all())
 
         self.clf.train(datasetselected)
 
-        if not orig_labels is None:
-            dataset.labels = orig_labels
 
     def _predict(self, data):
         """Predict the labels for a given `data`
@@ -936,10 +939,10 @@ class BinaryClassifier(ProxyClassifier):
         return not a list but just that single label.
         """
         binary_predictions = ProxyClassifier._predict(self, data)
-        self.values = binary_predictions
+        self.states.values = binary_predictions
         predictions = [ {-1: self.__predictneg,
                          +1: self.__predictpos}[x] for x in binary_predictions]
-        self.predictions = predictions
+        self.states.predictions = predictions
         return predictions
 
 
@@ -994,7 +997,7 @@ class MulticlassClassifier(CombinedClassifier):
         """Train classifier
         """
         # construct binary classifiers
-        ulabels = dataset.uniquelabels
+        ulabels = dataset.sa['labels'].unique
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
             biclfs = []
@@ -1064,7 +1067,7 @@ class SplitClassifier(CombinedClassifier):
             `Splitter` to use to split the dataset prior training
           """
 
-        CombinedClassifier.__init__(self, regression=clf.regression, **kwargs)
+        CombinedClassifier.__init__(self, regression=clf.params.regression, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
 
@@ -1106,14 +1109,14 @@ class SplitClassifier(CombinedClassifier):
             bclfs.append(clf)
         self.clfs = bclfs
 
-        self.splits = []
+        self.states.splits = []
 
         for i, split in enumerate(self.__splitter(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
             if states.isEnabled("splits"):
-                self.splits.append(split)
+                self.states.splits.append(split)
 
             clf = self.clfs[i]
 
@@ -1129,7 +1132,7 @@ class SplitClassifier(CombinedClassifier):
 
             if states.isEnabled("confusion"):
                 predictions = clf.predict(split[1].samples)
-                self.confusion.add(split[1].labels, predictions,
+                self.states.confusion.add(split[1].labels, predictions,
                                    clf.states.get('values', None))
                 if __debug__:
                     dact = debug.active
@@ -1137,19 +1140,11 @@ class SplitClassifier(CombinedClassifier):
                         debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
                     elif 'CLFSPL' in dact:
                         debug('CLFSPL', 'Split %d error %.2f%%'
-                              % (i, self.confusion.summaries[-1].error))
+                              % (i, self.states.confusion.summaries[-1].error))
 
             if states.isEnabled("training_confusion"):
-                states.training_confusion += \
-                                               clf.states.training_confusion
-        # hackish way -- so it should work only for ConfusionMatrix???
-        try:
-            if states.isEnabled("confusion"):
-                states.confusion.labels_map = dataset.labels_map
-            if states.isEnabled("training_confusion"):
-                states.training_confusion.labels_map = dataset.labels_map
-        except:
-            pass
+                # XXX this is broken, as it cannot deal with not yet set states
+                states.training_confusion += clf.states.training_confusion
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
@@ -1312,7 +1307,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
         mappermask = N.zeros(dataset.nfeatures)
-        mappermask[self.__feature_selection.selected_ids] = 1
+        mappermask[self.__feature_selection.states.selected_ids] = 1
         mapper = MaskMapper(mappermask)
 
         self.__feature_selection.states._resetEnabledTemporarily()
@@ -1331,7 +1326,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """Return used feature ids for `FeatureSelectionClassifier`
 
         """
-        return self.__feature_selection.selected_ids
+        return self.__feature_selection.states.selected_ids
 
     def _predict(self, data):
         """Predict using `FeatureSelectionClassifier`

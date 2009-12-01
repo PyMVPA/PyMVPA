@@ -13,6 +13,7 @@ from mvpa.measures.splitmeasure import SplitFeaturewiseMeasure, \
         TScoredFeaturewiseMeasure
 from mvpa.misc.data_generators import normalFeatureDataset
 from mvpa.misc.transformers import Absolute
+from mvpa.misc.attrmap import AttributeMap
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -23,6 +24,9 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
     @sweepargs(svm=clfswh['linear', 'svm', '!meta'])
     def testAnalyzer(self, svm):
         dataset = datasets['uni2small']
+        # XXX for now convert to numeric labels, but should better be taken
+        # care of during clf refactoring
+        dataset.labels = AttributeMap().to_numeric(dataset.labels)
 
         svm_weigths = svm.getSensitivityAnalyzer()
 
@@ -38,7 +42,7 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
             msg='Lengths of the map %d is different from number of features %d'
                  % (len(maps), nfeatures))
         self.failUnless(sana.states.isKnown('maps'))
-        allmaps = N.array(sana.maps)
+        allmaps = N.array(sana.states.maps)
         self.failUnless(allmaps[:,0].mean() == maps[0])
         self.failUnless(allmaps.shape == (nchunks, nfeatures))
 
@@ -51,6 +55,9 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
                                             nonbogus_features=[0,1],
                                             nfeatures=4,
                                             snr=10)
+        # XXX for now convert to numeric labels, but should better be taken
+        # care of during clf refactoring
+        self.dataset.labels = AttributeMap().to_numeric(self.dataset.labels)
         svm_weigths = svm.getSensitivityAnalyzer()
 
         sana = TScoredFeaturewiseMeasure(
@@ -69,7 +76,7 @@ class SplitSensitivityAnalyserTests(unittest.TestCase):
 
         # check whether SplitSensitivityAnalyzer 'maps' state is accessible
         self.failUnless(sana.states.isKnown('maps'))
-        self.failUnless(N.array(sana.maps).shape == (20,4))
+        self.failUnless(N.array(sana.states.maps).shape == (20,4))
 
 
 

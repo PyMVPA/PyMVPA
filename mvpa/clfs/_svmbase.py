@@ -195,7 +195,7 @@ class _SVM(Classifier):
                     param.value = _args[paramname]
                     # XXX might want to set default to it -- not just value
 
-                paramset.add(param)
+                paramset.add_collectable(param)
 
         # tune up C if it has one and non-linear classifier is used
         if self.params.isKnown('C') and kernel_type != "linear" \
@@ -207,7 +207,7 @@ class _SVM(Classifier):
 
         # Some postchecks
         if self.params.isKnown('weight') and self.params.isKnown('weight_label'):
-            if not len(self.weight_label) == len(self.weight):
+            if not len(self.params.weight_label) == len(self.params.weight):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
                       "must be equal."
 

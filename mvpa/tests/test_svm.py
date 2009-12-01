@@ -11,6 +11,7 @@
 from sets import Set
 
 from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.datasets.miscfx import get_nsamples_per_attr
 from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -71,8 +72,8 @@ class SVMTests(unittest.TestCase):
             mv_lin_perf.append(N.mean(p_lin_mv==test.labels))
 
             # use non-linear CLF on 1d data
-            nl_clf.train(train.selectFeatures([0]))
-            p_uv = nl_clf.predict(test.selectFeatures([0]).samples)
+            nl_clf.train(train[:, 0])
+            p_uv = nl_clf.predict(test[:, 0].samples)
             uv_perf.append(N.mean(p_uv==test.labels))
 
         mean_mv_perf = N.mean(mv_perf)
@@ -95,18 +96,15 @@ class SVMTests(unittest.TestCase):
     # as well -- need to be fixed :-/
     @sweepargs(clf=clfswh['svm', 'sg', '!regression', '!gnpp', '!meta'])
     def testCperClass(self, clf):
-        try:
-            if clf.C > 0:
-                # skip those with fixed C
-                return
-        except:
-            # classifier has no C
+        if not (clf.params.isKnown('C')):
+            # skip those without C
             return
 
-        if clf.C < -5:
-            # too soft margin helps to fight disbalance, thus skip
-            # it in testing
-            return
+#        if clf.params.C < -5:
+#            # too soft margin helps to fight disbalance, thus skip
+#            # it in testing
+#            return
+
         #print clf
         ds = datasets['uni2small'].copy()
         ds__ = datasets['uni2small'].copy()
@@ -119,9 +117,9 @@ class SVMTests(unittest.TestCase):
         # disballanced set
         # lets overpopulate label 0
         times = 10
-        ds_ = ds.selectSamples(range(ds.nsamples) + range(ds.nsamples/2) * times)
+        ds_ = ds[(range(ds.nsamples) + range(ds.nsamples/2) * times)]
         ds_.samples = ds_.samples + 0.7 * N.random.normal(size=(ds_.samples.shape))
-        spl = ds_.samplesperlabel
+        spl = get_nsamples_per_attr(ds_, 'labels') #_.samplesperlabel
         #print ds_.labels, ds_.chunks
 
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
@@ -129,34 +127,36 @@ class SVMTests(unittest.TestCase):
         e = cve(ds__)
         if cfg.getboolean('tests', 'labile', default='yes'):
             # without disballance we should already have some hits
-            self.failUnless(cve.confusion.stats["P'"][1] > 0)
+            self.failUnless(cve.states.confusion.stats["P'"][1] > 0)
 
         e = cve(ds_)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve.confusion.stats["P'"][1] < 5,
+            self.failUnless(cve.states.confusion.stats["P'"][1] < 5,
                             msg="With disballance we should have almost no "
-                            "hits. Got %f" % cve.confusion.stats["P'"][1])
+                            "hits. Got %f" % cve.states.confusion.stats["P'"][1])
             #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
 
         # Set '1 C per label'
         # recreate cvte since previous might have operated on copies
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
                                           enable_states='confusion')
-        oldC = clf.C
-        ratio = N.sqrt(float(spl[0])/spl[1])
-        clf.C = (-1/ratio, -1*ratio)
+        oldC = clf.params.C
+        # TODO: provide clf.params.C not with a tuple but dictionary
+        #       with C per label (now order is deduced in a cruel way)
+        ratio = N.sqrt(float(spl[ds_.UL[0]])/spl[ds_.UL[1]])
+        clf.params.C = (-1/ratio, -1*ratio)
         try:
             e_ = cve(ds_)
             # reassign C
-            clf.C = oldC
+            clf.params.C = oldC
         except:
-            clf.C = oldC
+            clf.params.C = oldC
             raise
         #print "B:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Finally test if we get any 'hit' for minor category. In the
             # classifier, which has way to 'ballance' should be non-0
-            self.failUnless(cve.confusion.stats["P'"][1] > 0)
+            self.failUnless(cve.states.confusion.stats["P'"][1] > 0)
 
 
     def testSillyness(self):

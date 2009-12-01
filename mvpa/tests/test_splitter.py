@@ -8,20 +8,21 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA pattern handling"""
 
-from mvpa.datasets.masked import MaskedDataset
+from mvpa.datasets.base import dataset
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter, NGroupSplitter
 import unittest
+from numpy.testing import assert_array_equal
+from nose.tools import ok_
 import numpy as N
 
 
 class SplitterTests(unittest.TestCase):
 
     def setUp(self):
-        self.data = \
-            MaskedDataset(samples=N.random.normal(size=(100,10)),
-                           labels=[ i%4 for i in range(100) ],
+        self.data = dataset(N.random.normal(size=(100,10)),
+                            labels=[ i%4 for i in range(100) ],
                             chunks=[ i/10 for i in range(100)])
 
 
@@ -53,10 +54,10 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[0].nsamples == 50 )
             self.failUnless( p[1].nsamples == 50 )
 
-        self.failUnless((splits[0][1].uniquechunks == [1, 3, 5, 7, 9]).all())
-        self.failUnless((splits[0][0].uniquechunks == [0, 2, 4, 6, 8]).all())
-        self.failUnless((splits[1][0].uniquechunks == [1, 3, 5, 7, 9]).all())
-        self.failUnless((splits[1][1].uniquechunks == [0, 2, 4, 6, 8]).all())
+        assert_array_equal(splits[0][1].sa['chunks'].unique, [1, 3, 5, 7, 9])
+        assert_array_equal(splits[0][0].sa['chunks'].unique, [0, 2, 4, 6, 8])
+        assert_array_equal(splits[1][0].sa['chunks'].unique, [1, 3, 5, 7, 9])
+        assert_array_equal(splits[1][1].sa['chunks'].unique, [0, 2, 4, 6, 8])
 
         # check if it works on pure odd and even chunk ids
         moresplits = [ (train, test) for (train, test) in oes(splits[0][0])]
@@ -78,10 +79,10 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[0].nsamples == 50 )
             self.failUnless( p[1].nsamples == 50 )
 
-        self.failUnless((splits[0][1].uniquechunks == [0, 1, 2, 3, 4]).all())
-        self.failUnless((splits[0][0].uniquechunks == [5, 6, 7, 8, 9]).all())
-        self.failUnless((splits[1][1].uniquechunks == [5, 6, 7, 8, 9]).all())
-        self.failUnless((splits[1][0].uniquechunks == [0, 1, 2, 3, 4]).all())
+        assert_array_equal(splits[0][1].sa['chunks'].unique, [0, 1, 2, 3, 4])
+        assert_array_equal(splits[0][0].sa['chunks'].unique, [5, 6, 7, 8, 9])
+        assert_array_equal(splits[1][1].sa['chunks'].unique, [5, 6, 7, 8, 9])
+        assert_array_equal(splits[1][0].sa['chunks'].unique, [0, 1, 2, 3, 4])
 
         # check if it works on pure odd and even chunk ids
         moresplits = [ (train, test) for (train, test) in hs(splits[0][0])]
@@ -107,10 +108,14 @@ class SplitterTests(unittest.TestCase):
                 self.failUnless( p[0].nsamples == 50 )
                 self.failUnless( p[1].nsamples == 50 )
 
-            self.failUnless((splits[0][1-isreversed].uniquechunks == [0, 1, 2, 3, 4]).all())
-            self.failUnless((splits[0][isreversed].uniquechunks == [5, 6, 7, 8, 9]).all())
-            self.failUnless((splits[1][1-isreversed].uniquechunks == [5, 6, 7, 8, 9]).all())
-            self.failUnless((splits[1][isreversed].uniquechunks == [0, 1, 2, 3, 4]).all())
+            assert_array_equal(splits[0][1-isreversed].sa['chunks'].unique,
+                               [0, 1, 2, 3, 4])
+            assert_array_equal(splits[0][isreversed].sa['chunks'].unique,
+                               [5, 6, 7, 8, 9])
+            assert_array_equal(splits[1][1-isreversed].sa['chunks'].unique,
+                               [5, 6, 7, 8, 9])
+            assert_array_equal(splits[1][isreversed].sa['chunks'].unique,
+                               [0, 1, 2, 3, 4])
 
         # check if it works on pure odd and even chunk ids
         moresplits = list(hs(splits[0][0]))
@@ -131,13 +136,19 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(len(splits) == 5)
 
             # check split content
-            self.failUnless((splits[0][1-isreversed].uniquechunks == [0, 1]).all())
-            self.failUnless((splits[0][isreversed].uniquechunks == [2, 3, 4, 5, 6, 7, 8, 9]).all())
-            self.failUnless((splits[1][1-isreversed].uniquechunks == [2, 3]).all())
-            self.failUnless((splits[1][isreversed].uniquechunks == [0, 1, 4, 5, 6, 7, 8, 9]).all())
+            assert_array_equal(splits[0][1-isreversed].sa['chunks'].unique,
+                               [0, 1])
+            assert_array_equal(splits[0][isreversed].sa['chunks'].unique,
+                               [2, 3, 4, 5, 6, 7, 8, 9])
+            assert_array_equal(splits[1][1-isreversed].sa['chunks'].unique,
+                               [2, 3])
+            assert_array_equal(splits[1][isreversed].sa['chunks'].unique,
+                               [0, 1, 4, 5, 6, 7, 8, 9])
             # ...
-            self.failUnless((splits[4][1-isreversed].uniquechunks == [8, 9]).all())
-            self.failUnless((splits[4][isreversed].uniquechunks == [0, 1, 2, 3, 4, 5, 6, 7]).all())
+            assert_array_equal(splits[4][1-isreversed].sa['chunks'].unique,
+                               [8, 9])
+            assert_array_equal(splits[4][isreversed].sa['chunks'].unique,
+                               [0, 1, 2, 3, 4, 5, 6, 7])
 
 
         # Test for too many groups
@@ -157,10 +168,10 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[0].nsamples == 50 )
             self.failUnless( p[1].nsamples == 50 )
 
-        self.failUnless((splits[0][1].uniquechunks == [0, 1, 2, 3, 4]).all())
-        self.failUnless((splits[0][0].uniquechunks == [5, 6, 7, 8, 9]).all())
-        self.failUnless((splits[1][1].uniquechunks == [5, 6, 7, 8, 9]).all())
-        self.failUnless((splits[1][0].uniquechunks == [0, 1, 2, 3, 4]).all())
+        assert_array_equal(splits[0][1].sa['chunks'].unique, [0, 1, 2, 3, 4])
+        assert_array_equal(splits[0][0].sa['chunks'].unique, [5, 6, 7, 8, 9])
+        assert_array_equal(splits[1][1].sa['chunks'].unique, [5, 6, 7, 8, 9])
+        assert_array_equal(splits[1][0].sa['chunks'].unique, [0, 1, 2, 3, 4])
 
 
         # check fully customized split with working and validation set specified
@@ -173,8 +184,8 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[0].nsamples == 30 )
             self.failUnless( p[1].nsamples == 20 )
 
-        self.failUnless((splits[0][1].uniquechunks == [5, 9]).all())
-        self.failUnless((splits[0][0].uniquechunks == [0, 3, 4]).all())
+        self.failUnless((splits[0][1].sa['chunks'].unique == [5, 9]).all())
+        self.failUnless((splits[0][0].sa['chunks'].unique == [0, 3, 4]).all())
 
         # full test with additional sampling and 3 datasets per split
         cs = CustomSplitter([([0,3,4],[5,9],[2])],
@@ -204,18 +215,21 @@ class SplitterTests(unittest.TestCase):
         splitsall = list(csall(self.data))
 
         self.failUnless(len(splits) == 3)
-        ul = self.data.uniquelabels
+        ul = self.data.sa['labels'].unique
 
-        self.failUnless(((N.array(splitsall[0][0].samplesperlabel.values())
-                          *[0.3, 0.6, 1.0, 0.5]).round().astype(int) ==
-                         N.array(splits[0][0].samplesperlabel.values())).all())
+        assert_array_equal(
+            (N.array(splitsall[0][0].get_nsamples_per_attr('labels').values())
+                *[0.3, 0.6, 1.0, 0.5]).round().astype(int),
+            N.array(splits[0][0].get_nsamples_per_attr('labels').values()))
 
-        self.failUnless(((N.array(splitsall[0][1].samplesperlabel.values())*0.5
-                          ).round().astype(int) ==
-                         N.array(splits[0][1].samplesperlabel.values())).all())
+        assert_array_equal(
+            (N.array(splitsall[0][1].get_nsamples_per_attr('labels').values())
+                * 0.5).round().astype(int),
+            N.array(splits[0][1].get_nsamples_per_attr('labels').values()))
 
-        self.failUnless((N.array(splitsall[0][2].samplesperlabel.values()) ==
-                         N.array(splits[0][2].samplesperlabel.values())).all())
+        assert_array_equal(
+            N.array(splitsall[0][2].get_nsamples_per_attr('labels').values()),
+            N.array(splits[0][2].get_nsamples_per_attr('labels').values()))
 
 
     def testNoneSplitter(self):
@@ -242,7 +256,8 @@ class SplitterTests(unittest.TestCase):
         for split in splits:
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 40)
-            self.failUnless(split[1].samplesperlabel.values() == [10,10,10,10])
+            ok_(split[1].get_nsamples_per_attr('labels').values() ==
+                [10,10,10,10])
 
         # auto-determined
         nos = NoneSplitter(nrunspersplit=3,
@@ -253,7 +268,8 @@ class SplitterTests(unittest.TestCase):
         for split in splits:
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 100)
-            self.failUnless(split[1].samplesperlabel.values() == [25,25,25,25])
+            ok_(split[1].get_nsamples_per_attr('labels').values() ==
+                [25,25,25,25])
 
 
     def testLabelSplitter(self):
@@ -261,15 +277,15 @@ class SplitterTests(unittest.TestCase):
 
         splits = [ (first, second) for (first, second) in oes(self.data) ]
 
-        self.failUnless((splits[0][0].uniquelabels == [0,2]).all())
-        self.failUnless((splits[0][1].uniquelabels == [1,3]).all())
-        self.failUnless((splits[1][0].uniquelabels == [1,3]).all())
-        self.failUnless((splits[1][1].uniquelabels == [0,2]).all())
+        assert_array_equal(splits[0][0].sa['labels'].unique, [0,2])
+        assert_array_equal(splits[0][1].sa['labels'].unique, [1,3])
+        assert_array_equal(splits[1][0].sa['labels'].unique, [1,3])
+        assert_array_equal(splits[1][1].sa['labels'].unique, [0,2])
 
 
     def testCountedSplitting(self):
         # count > #chunks, should result in 10 splits
-        nchunks = len(self.data.uniquechunks)
+        nchunks = len(self.data.sa['chunks'].unique)
         for strategy in NFoldSplitter._STRATEGIES:
             for count, target in [ (nchunks*2, nchunks),
                                    (nchunks, nchunks),
@@ -288,11 +304,11 @@ class SplitterTests(unittest.TestCase):
                 if nsplits > 0:
                     # dummy-proof testing of last split
                     for ds_ in splits[-1]:
-                        self.failUnless(ds_._dsattr['lastsplit'])
+                        self.failUnless(ds_.a.lastsplit)
                     # test all now
                     for isplit,split in enumerate(splits):
                         for ds_ in split:
-                            ds_._dsattr['lastsplit'] == isplit==nsplits-1
+                            ds_.a.lastsplit == isplit==nsplits-1
 
                 # Check results of different strategies
                 if strategy == 'first':

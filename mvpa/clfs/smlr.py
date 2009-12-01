@@ -292,8 +292,9 @@ class SMLR(Classifier):
         """Train the classifier using `dataset` (`Dataset`).
         """
         # Process the labels to turn into 1 of N encoding
-        labels = _label2oneofm(dataset.labels, dataset.uniquelabels)
-        self.__ulabels = dataset.uniquelabels.copy()
+        uniquelabels = dataset.sa['labels'].unique
+        labels = _label2oneofm(dataset.sa.labels, uniquelabels)
+        self.__ulabels = uniquelabels.copy()
 
         Y = labels
         M = len(self.__ulabels)
@@ -394,7 +395,7 @@ class SMLR(Classifier):
         self.__weights = w[:dataset.nfeatures, :]
 
         if self.states.isEnabled('feature_ids'):
-            self.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
+            self.states.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
                                              axis=1)>0)[0]
 
         # and a bias
@@ -491,7 +492,7 @@ class SMLR(Classifier):
                    N.min(E), N.max(E)))
 
         values = E / S[:, N.newaxis].repeat(E.shape[1], axis=1)
-        self.values = values
+        self.states.values = values
 
         # generate predictions
         predictions = N.asarray([self.__ulabels[N.argmax(vals)]
@@ -550,8 +551,8 @@ class SMLRWeights(Sensitivity):
         #            " sensitivities available %s. Make sure that it is what you"
         #            " intended to do" % (self, weights.shape) )
 
-        if clf.has_bias:
-            self.biases = clf.biases
+        if clf.params.has_bias:
+            self.states.biases = clf.biases
 
         if __debug__:
             debug('SMLR',

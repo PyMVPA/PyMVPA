@@ -13,7 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.mappers.base import ProjectionMapper
+from mvpa.mappers.base import accepts_dataset_as_samples
+from mvpa.mappers.projection import ProjectionMapper
 from mvpa.featsel.helpers import ElementSelector
 
 if __debug__:
@@ -44,11 +45,12 @@ class SVDMapper(ProjectionMapper):
     __doc__ = enhancedDocString('SVDMapper', locals(), ProjectionMapper)
 
 
-    def _train(self, dataset):
+    @accepts_dataset_as_samples
+    def _train(self, samples):
         """Determine the projection matrix onto the SVD components from
         a 2D samples x feature data matrix.
         """
-        X = N.asmatrix(dataset.samples)
+        X = N.asmatrix(samples)
         X = self._demeanData(X)
 
         # singular value decomposition
@@ -64,7 +66,7 @@ class SVDMapper(ProjectionMapper):
 
         if __debug__:
             debug("MAP", "SVD was done on %s and obtained %d SVs " %
-                  (dataset, len(SV)) + " (%d non-0, max=%f)" %
+                  (samples, len(SV)) + " (%d non-0, max=%f)" %
                   (len(SV.nonzero()), SV[0]))
             # .norm might be somewhat expensive to compute
             if "MAP_" in debug.active:

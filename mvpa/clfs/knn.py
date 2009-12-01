@@ -104,7 +104,7 @@ class kNN(Classifier):
         self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.uniquelabels
+        uniquelabels = data.sa['labels'].unique
         self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
@@ -153,8 +153,8 @@ class kNN(Classifier):
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
-        self.predictions = predicted
-        self.values = [r[1] for r in results]
+        self.states.predictions = predicted
+        self.states.values = [r[1] for r in results]
 
         return predicted
 
@@ -165,6 +165,7 @@ class kNN(Classifier):
         # local bindings
         _data = self.__data
         labels = _data.labels
+        uniquelabels = _data.sa['labels'].unique
 
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
@@ -174,7 +175,7 @@ class kNN(Classifier):
         # find the class with most votes
         # return votes as well to store them in the state
         return max(votes.iteritems(), key=lambda x:x[1])[0], \
-                [votes[ul] for ul in _data.uniquelabels] # transform into lists
+                [votes[ul] for ul in uniquelabels] # transform into lists
 
 
     def getWeightedVote(self, knn_ids):
@@ -182,7 +183,7 @@ class kNN(Classifier):
         """
         # local bindings
         _data = self.__data
-        uniquelabels = _data.uniquelabels
+        uniquelabels = _data.sa['labels'].unique
 
         # Lazy evaluation
         if self.__weights is None:
@@ -190,7 +191,7 @@ class kNN(Classifier):
             # It seemed to Yarik that this has to be evaluated just once per
             # training dataset.
             #
-            self.__labels = labels = self.__data.labels
+            self.__labels = labels = self.__data.sa.labels
             Nlabels = len(labels)
             Nuniquelabels = len(uniquelabels)
 

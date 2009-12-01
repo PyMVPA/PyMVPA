@@ -9,7 +9,6 @@
 """Unit tests for PyMVPA searchlight algorithm"""
 
 from mvpa.base import externals
-from mvpa.datasets.masked import MaskedDataset
 from mvpa.measures.searchlight import Searchlight
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -44,12 +43,12 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless(0.4 < results.mean() < 0.6)
 
         # check resonable sphere sizes
-        self.failUnless(len(sl.spheresizes) == 106)
-        self.failUnless(max(sl.spheresizes) == 7)
-        self.failUnless(min(sl.spheresizes) == 4)
+        self.failUnless(len(sl.states.spheresizes) == 106)
+        self.failUnless(max(sl.states.spheresizes) == 7)
+        self.failUnless(min(sl.states.spheresizes) == 4)
 
         # check base-class state
-        self.failUnlessEqual(len(sl.raw_results), 106)
+        self.failUnlessEqual(len(sl.states.raw_results), 106)
 
 
     def testPartialSearchlightWithFullReport(self):
@@ -67,7 +66,7 @@ class SearchlightTests(unittest.TestCase):
         results = sl(self.dataset)
 
         # only two spheres but error for all CV-folds
-        self.failUnlessEqual(results.shape, (2, len(self.dataset.uniquechunks)))
+        self.failUnlessEqual(results.shape, (2, len(self.dataset.UC)))
 
 
     def testChiSquareSearchlight(self):
@@ -86,7 +85,7 @@ class SearchlightTests(unittest.TestCase):
 
         def getconfusion(data):
             cv(data)
-            return chisquare(cv.confusion.matrix)[0]
+            return chisquare(cv.states.confusion.matrix)[0]
 
         # contruct radius 1 searchlight
         sl = Searchlight(getconfusion, radius=1.0,

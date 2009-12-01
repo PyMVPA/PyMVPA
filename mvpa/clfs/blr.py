@@ -61,9 +61,11 @@ class BLR(Classifier):
         # set noise level:
         self.sigma_noise = sigma_noise
 
-        self.predicted_variances = None
-        self.log_marginal_likelihood = None
-        self.labels = None
+        self.states.predicted_variances = None
+        self.states.log_marginal_likelihood = None
+        # Yarik: what was those about??? just for future in
+        #        compute_log_marginal_likelihood ?
+        # self.labels = None
         pass
 
     def __repr__(self):
@@ -85,6 +87,8 @@ class BLR(Classifier):
     def _train(self, data):
         """Train regression using `data` (`Dataset`).
         """
+        # BLR relies on numerical labels
+        train_labels = self._attrmap.to_numeric(data.sa.labels)
         # provide a basic (i.e. identity matrix) and correct prior
         # sigma_p, if not provided before or not compliant to 'data':
         if self.sigma_p == None: # case: not provided
@@ -107,7 +111,7 @@ class BLR(Classifier):
                                   N.linalg.inv(self.sigma_p))
         self.w = 1.0/(self.sigma_noise**2) * N.dot(self.A_inv,
                                                    N.dot(self.samples_train.T,
-                                                         data.labels))
+                                                         train_labels))
         pass
 
 
@@ -121,7 +125,7 @@ class BLR(Classifier):
         
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
-            self.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
+            self.states.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
 
         return predictions
 
