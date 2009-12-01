@@ -63,5 +63,6 @@ class ICAMapper(ProjectionMapper):
 #            print self._proj.shape
 #        else:
         node.train(samples)
+        node.stop_training()
         self._proj = N.asmatrix(node.get_projmatrix())
         self._recon = N.asmatrix(node.get_recmatrix())
