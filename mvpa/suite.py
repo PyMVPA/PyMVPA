@@ -51,6 +51,7 @@ if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
+from mvpa.clfs.gnb import *
 from mvpa.clfs.stats import *
 if externals.exists('libsvm') or externals.exists('shogun'):
     from mvpa.clfs.svm import *

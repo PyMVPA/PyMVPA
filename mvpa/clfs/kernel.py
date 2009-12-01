@@ -140,7 +140,6 @@ class KernelLinear(Kernel):
 
         # TODO: figure out cleaner way... probably by using KernelParameters ;-)
         self.Sigma_p = Sigma_p
-        self.Sigma_p_orig = Sigma_p
         self.sigma_0 = sigma_0
         self.kernel_matrix = None
 
@@ -152,7 +151,7 @@ class KernelLinear(Kernel):
 
     def reset(self):
         super(KernelLinear, self).reset()
-        self.Sigma_p = self.Sigma_p_orig
+        self._Sigma_p = self._Sigma_p_orig
 
 
     def compute(self, data1, data2=None):
@@ -170,34 +169,31 @@ class KernelLinear(Kernel):
             data2 = data1
             pass
 
-        # if Sigma_p is not set use a scalar 1.0
-        if self.Sigma_p is None:
-            self.Sigma_p = 1.0
-
         # it is better to use separate lines of computation, to don't
         # incure computation cost without need (otherwise
         # N.dot(self.Sigma_p, data2.T) can take forever for relatively
         # large number of features)
 
+        Sigma_p = self.Sigma_p          # local binding
         #if scalar - scale second term appropriately
-        if N.isscalar(self.Sigma_p):
-            if self.Sigma_p == 1.0:
+        if N.isscalar(Sigma_p):
+            if Sigma_p == 1.0:
                 data2_sc = data2.T
             else:
-                data2_sc = self.Sigma_p * data2.T
+                data2_sc = Sigma_p * data2.T
 
         # if vector use it as diagonal matrix -- ie scale each row by
         # the given value
-        elif len(self.Sigma_p.shape) == 1 and \
-                 self.Sigma_p.shape[0] == data1.shape[1]:
+        elif len(Sigma_p.shape) == 1 and \
+                 Sigma_p.shape[0] == data1.shape[1]:
             # which due to numpy broadcasting is the same as product
             # with scalar above
-            data2_sc = (self.Sigma_p * data1).T
+            data2_sc = (Sigma_p * data1).T
 
         # if it is a full matrix -- full-featured and lengthy
         # matrix product
         else:
-            data2_sc = N.dot(self.Sigma_p, data2.T)
+            data2_sc = N.dot(Sigma_p, data2.T)
             pass
 
         # XXX if Sigma_p is changed a warning should be issued!
@@ -216,7 +212,7 @@ class KernelLinear(Kernel):
         if N.any(hyperparameter < 0):
             raise InvalidHyperparameterError()
         self.sigma_0 = N.array(hyperparameter[0])
-        self.Sigma_p = N.diagflat(hyperparameter[1:])
+        self._Sigma_p = N.diagflat(hyperparameter[1:])
         return
 
     def compute_lml_gradient(self,alphaalphaT_Kinv,data):
@@ -224,32 +220,45 @@ class KernelLinear(Kernel):
             # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
             # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
-        self.lml_gradient = []
-        self.lml_gradient.append(2*self.sigma_0*alphaalphaT_Kinv.sum())
+        lml_gradient = []
+        lml_gradient.append(2*self.sigma_0*alphaalphaT_Kinv.sum())
         for i in range(self.Sigma_p.shape[0]):
             # Note that Sigma_p is not squared in compute() so it
             # disappears in the partial derivative:
             K_grad_i = N.multiply.outer(data[:,i],data[:,i])
-            self.lml_gradient.append(lml_grad(K_grad_i))
+            lml_gradient.append(lml_grad(K_grad_i))
             pass
-        self.lml_gradient = 0.5*N.array(self.lml_gradient)
-        return self.lml_gradient
+        self.lml_gradient = lml_gradient = 0.5*N.array(lml_gradient)
+        return lml_gradient
 
     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
         def lml_grad(K_grad_i):
             # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
             # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
-        self.lml_gradient = []
-        self.lml_gradient.append(2*self.sigma_0**2*alphaalphaT_Kinv.sum())
-        for i in range(self.Sigma_p.shape[0]):
+        lml_gradient = []
+        lml_gradient.append(2*self.sigma_0**2*alphaalphaT_Kinv.sum())
+        Sigma_p = self.Sigma_p          # local binding
+        for i in range(Sigma_p.shape[0]):
             # Note that Sigma_p is not squared in compute() so it
             # disappears in the partial derivative:
-            K_grad_log_i = self.Sigma_p[i,i]*N.multiply.outer(data[:,i],data[:,i])
-            self.lml_gradient.append(lml_grad(K_grad_log_i))
+            K_grad_log_i = Sigma_p[i,i]*N.multiply.outer(data[:,i],data[:,i])
+            lml_gradient.append(lml_grad(K_grad_log_i))
             pass
-        self.lml_gradient = 0.5*N.array(self.lml_gradient)
-        return self.lml_gradient
+        self.lml_gradient = lml_gradient = 0.5*N.array(lml_gradient)
+        return lml_gradient
+
+
+    def _setSigma_p(self, v):
+        """Set Sigma_p value and store _orig for reset
+        """
+        if (v is None):
+            # if Sigma_p is not set use a scalar 1.0
+            v = 1.0
+        self._Sigma_p_orig = self._Sigma_p = v
+
+    Sigma_p = property(fget=lambda x:x._Sigma_p,
+                       fset=_setSigma_p)
 
     pass
 
@@ -404,14 +413,13 @@ class KernelSquaredExponential(Kernel):
         Kernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
-        self.length_scale_orig = length_scale
         self.sigma_f = sigma_f
         self.kernel_matrix = None
 
 
     def reset(self):
         super(KernelSquaredExponential, self).reset()
-        self.length_scale = self.length_scale_orig
+        self._length_scale = self._length_scale_orig
 
 
     def __repr__(self):
@@ -445,7 +453,7 @@ class KernelSquaredExponential(Kernel):
         if N.any(hyperparameter < 0):
             raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
-        self.length_scale = hyperparameter[1:]
+        self._length_scale = hyperparameter[1:]
         return
 
     def compute_lml_gradient(self,alphaalphaT_Kinv,data):
@@ -501,6 +509,13 @@ class KernelSquaredExponential(Kernel):
         self.lml_gradient = 0.5*N.array(self.lml_gradient)
         return self.lml_gradient
 
+    def _setlength_scale(self, v):
+        """Set value of length_scale and its _orig
+        """
+        self._length_scale = self._length_scale_orig = v
+
+    length_scale = property(fget=lambda x:x._length_scale,
+                            fset=_setlength_scale)
     pass
 
 class KernelMatern_3_2(Kernel):
