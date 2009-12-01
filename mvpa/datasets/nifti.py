@@ -15,7 +15,7 @@ from mvpa.base import externals
 import sys
 import numpy as N
 from mvpa.support.copy import deepcopy
-from mvpa.misc.attributes import DatasetAttribute
+from mvpa.base.collections import DatasetAttribute
 
 if __debug__:
     from mvpa.base import debug

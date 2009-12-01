@@ -26,8 +26,7 @@ import numpy as N
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attributes import CollectableAttribute, StateVariable, \
-        SampleAttribute, FeatureAttribute, DatasetAttribute
+from mvpa.misc.attributes import CollectableAttribute, StateVariable
 from mvpa.base.dochelpers import enhancedDocString
 
 from mvpa.base import externals

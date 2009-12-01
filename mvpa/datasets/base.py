@@ -14,9 +14,8 @@ import numpy as N
 import copy
 
 from mvpa.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection
-from mvpa.misc.attributes import SampleAttribute, FeatureAttribute, \
-        DatasetAttribute
+        FeatureAttributesCollection, DatasetAttributesCollection, \
+        SampleAttribute, FeatureAttribute, DatasetAttribute
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.base import ChainMapper, FeatureSubsetMapper
 from mvpa.mappers.flatten import FlattenMapper

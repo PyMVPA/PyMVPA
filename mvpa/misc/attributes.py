@@ -33,8 +33,6 @@ class CollectableAttribute(object):
     Derived classes will have specific semantics:
 
     * StateVariable: conditional storage
-    * AttributeWithArray: easy access to a set of unique values
-      within a container
     * Parameter: attribute with validity ranges.
 
       - ClassifierParameter: specialization to become a part of
@@ -173,107 +171,6 @@ class CollectableAttribute(object):
     #     _[gs]etVirtual would be faster
     value = property(_getVirtual, _setVirtual)
     name = property(_getName) #, _setName)
-
-
-
-class AttributeWithArray(CollectableAttribute):
-    """Container which embeds an array.
-
-    It also takes care about caching and recomputing unique values.
-    """
-
-    def __init__(self, name=None, doc="Attribute with array",
-                 value=None):
-        """
-        Parameters
-        ----------
-        name : str
-          Name of the attribute under which it should be available in its
-          respective collection.
-        doc : str
-          Documentation about the purpose of this attribute.
-        value : arbitrary (see derived implementations)
-          The actual value of this attribute.
-        """
-        self.__target_length = None
-        CollectableAttribute.__init__(self, name=name, doc=doc, value=value)
-        self._resetUnique()
-        if __debug__:
-            debug("UATTR",
-                  "Initialized new AttributeWithArray %s " % name + `self`)
-
-
-    def __copy__(self):
-        # preserve attribute type
-        copied = self.__class__(name=self.name, doc=self.__doc__)
-        # just get a view of the old data!
-        copied.value = self.value.view()
-        return copied
-
-
-    def reset(self):
-        super(AttributeWithArray, self).reset()
-        self._resetUnique()
-
-
-    def _resetUnique(self):
-        self._uniqueValues = None
-
-
-    def _set(self, val):
-        # check if the new value has the desired length -- fi length checking is
-        # desired at all
-        if not self.__target_length is None \
-           and len(val) != self.__target_length:
-            raise ValueError("Value length [%i] does not match the required "
-                             "length [%i] of attribute '%s'."
-                             % (len(val),
-                                self.__target_length,
-                                str(self.name)))
-
-        self._resetUnique()
-        CollectableAttribute._set(self, N.asanyarray(val))
-
-
-    def set_length_check(self, value):
-        """
-        Parameters
-        ----------
-        value : int
-          When setting the value of this attribute it is checked if it has
-          this length.
-        """
-        self.__target_length = value
-
-
-    def _getUniqueValues(self):
-        if self.value is None:
-            return None
-        if self._uniqueValues is None:
-            # XXX we might better use Set, but yoh recalls that
-            #     N.unique was more efficient. May be we should check
-            #     on the the class and use Set only if we are not
-            #     dealing with ndarray (or lists/tuples)
-            self._uniqueValues = N.unique(self.value)
-        return self._uniqueValues
-
-    unique = property(fget=_getUniqueValues)
-
-
-
-# Hooks for comprehendable semantics and automatic collection generation
-class SampleAttribute(AttributeWithArray):
-    pass
-
-
-
-class FeatureAttribute(AttributeWithArray):
-    pass
-
-
-
-class DatasetAttribute(CollectableAttribute):
-    pass
 
 
 

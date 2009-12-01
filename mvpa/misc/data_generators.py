@@ -15,7 +15,7 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.base import dataset, Dataset
-from mvpa.misc.attributes import DatasetAttribute
+from mvpa.base.collections import DatasetAttribute
 
 
 if __debug__:
