@@ -218,7 +218,11 @@ class Dataset(object):
         self.sa = SampleAttributesCollection(length=len(samples))
         if not sa is None:
             self.sa.update(sa)
-        self.fa = FeatureAttributesCollection(length=samples.shape[1])
+        if hasattr(samples, 'shape'):
+            length = samples.shape[1]
+        else:
+            length = None
+        self.fa = FeatureAttributesCollection(length=length)
         if not fa is None:
             self.fa.update(fa)
         self.a = DatasetAttributesCollection()
