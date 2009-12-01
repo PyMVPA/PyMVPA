@@ -19,10 +19,9 @@ from mvpa.datasets.base import dataset, Dataset, DatasetError
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
-from mvpa.misc.attributes import SampleAttribute
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
-        ArrayCollectable
+        ArrayCollectable, SampleAttribute
 
 from tests_warehouse import *
 
@@ -641,7 +640,7 @@ def test_arrayattributes():
 
 
 def test_repr():
-    attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', value=array([0, 1, 2, 3, 4]))"
+    attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', value=array([0, 1, 2, 3, 4]), length=None)"
     sattr = SampleAttribute(name='TestAttr', doc='my own test', value=N.arange(5))
     # check precise formal representation
     ok_(repr(sattr) == attr_repr)

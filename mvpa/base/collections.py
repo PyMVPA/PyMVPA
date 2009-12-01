@@ -253,6 +253,16 @@ class ArrayCollectable(SequenceCollectable):
         SequenceCollectable._set(self, val)
 
 
+class SampleAttribute(ArrayCollectable):
+    pass
+
+class FeatureAttribute(ArrayCollectable):
+    pass
+
+class DatasetAttribute(ArrayCollectable):
+    pass
+
+
 
 class Collection(dict):
     """Container of some Collectables.
