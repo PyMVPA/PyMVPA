@@ -680,3 +680,46 @@ class DatasetError(Exception):
 
     def __str__(self):
         return "Dataset handling exception: " + self.__msg
+
+
+class DatasetAttributeExtractor(object):
+    """Helper to extract arbitrary attributes from dataset collections.
+
+    Examples
+    --------
+    >>> ds = Dataset(N.arange(12).reshape((4,3)),
+    ...              sa={'labels': range(4)},
+    ...              fa={'foo': [0,0,1]})
+    >>> ext = DAE('sa', 'labels')
+    >>> ext(ds)
+    array([0, 1, 2, 3])
+
+    >>> ext = DAE('fa', 'foo')
+    >>> ext(ds)
+    array([0, 0, 1])
+    """
+    def __init__(self, col, key):
+        """
+        Parameters
+        ----------
+        col : {'sa', 'fa', 'a'}
+          The respective collection to extract an attribute from.
+        key : arbitrary
+          The name/key of the attribute in the collection.
+        """
+        self._col = col
+        self._key = key
+
+    def __call__(self, ds):
+        """
+        Parameters
+        ----------
+        ds : Dataset
+        """
+        return ds.__dict__[self._col][self._key].value
+
+
+# shortcut that allows for more finger/screen-friendly specification of
+# attribute extraction
+DAE = DatasetAttributeExtractor
+
