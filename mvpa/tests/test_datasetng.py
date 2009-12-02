@@ -15,7 +15,8 @@ from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal
 
 from mvpa.base.types import is_datasetlike
-from mvpa.datasets.base import dataset, Dataset, DatasetError
+from mvpa.base.dataset import DatasetError
+from mvpa.datasets.base import dataset, Dataset
 from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
