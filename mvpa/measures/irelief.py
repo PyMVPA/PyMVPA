@@ -19,8 +19,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
-from mvpa.clfs.kernel import KernelSquaredExponential, KernelExponential, \
-     KernelMatern_3_2, KernelMatern_5_2
+from mvpa.kernels.np import ExponentialKernel
 from mvpa.clfs.distance import pnorm_w
 
 if __debug__:
@@ -58,7 +57,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
         # Threshold in W changes (stopping criterion for irelief)
         self.threshold = threshold
         if kernel == None:
-            self.kernel = KernelExponential
+            self.kernel = ExponentialKernel
         else:
             self.kernel = kernel
 
