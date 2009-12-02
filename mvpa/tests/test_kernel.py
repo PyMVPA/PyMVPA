@@ -14,9 +14,10 @@ from mvpa.datasets import Dataset
 from mvpa.clfs.distance import squared_euclidean_distance, \
      pnorm_w, pnorm_w_python
 
-import mvpa.kernels.base as K
+import mvpa.kernels.np as npK
+from mvpa.kernels.base import PrecomputedKernel
 try:
-    import mvpa.kernels.sg as SGK
+    import mvpa.kernels.sg as sgK
     _has_sg = True
 except RuntimeError:
     _has_sg = False
@@ -33,7 +34,7 @@ class KernelTests(unittest.TestCase):
     def testLinearKernel(self):
         """Simplistic testing of linear kernel"""
         d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
-        lk = K.LinearKernel()
+        lk = npK.LinearKernel()
         lk.compute(d1)
         self.failUnless(lk._k.shape == (10, 10),
                         "Failure computing LinearKernel (Size mismatch)")
@@ -43,7 +44,7 @@ class KernelTests(unittest.TestCase):
     def testPrecomputedKernel(self):
         """Statistic Kernels"""
         d = N.random.randn(50, 50)
-        nk = K.PrecomputedKernel(matrix=d)
+        nk = PrecomputedKernel(matrix=d)
         nk.compute()
         self.failUnless((d == nk._k).all(),
                         'Failure setting and retrieving PrecomputedKernel data')
@@ -52,7 +53,7 @@ class KernelTests(unittest.TestCase):
         # Unit tests which require shogun kernels
         # Note - there is a loss of precision from double to float32 in SG
         def testSgConversions(self):
-            nk = K.PrecomputedKernel(matrix=N.random.randn(50, 50))
+            nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
             nk.compute()
             sk = nk.as_sg()
             sk.compute()
@@ -65,8 +66,8 @@ class KernelTests(unittest.TestCase):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
             
-            nk = K.LinearKernel()
-            sk = SGK.LinearSGKernel()
+            nk = npK.LinearKernel()
+            sk = sgK.LinearSGKernel()
             nk.compute(d1, d2)
             sk.compute(d1,d2)
             
@@ -75,19 +76,36 @@ class KernelTests(unittest.TestCase):
                             'Numpy and SG linear kernels are inconsistent')
             
         def testPolySG(self):
-            d1 = datasets['uni4small']
-            sk = SGK.PolySGKernel()
-            sk.compute(d1)
-            pass
+            d1 = N.random.randn(105, 32)
+            d2 = N.random.randn(41, 32)
+            sk = sgK.PolySGKernel()
+            nk = npK.PolyKernel(offset=1)
+            ordervals = [1, 2, 3, 5, 7]
+            for p in ordervals:
+                sk.params.degree=p
+                nk.params.degree=p
+                sk.compute(d1, d2)
+                nk.compute(d1, d2)
+                self.failUnless(N.all(nk._k.astype('float32') == \
+                                      sk.as_np()._k.astype('float32')),
+                                'Numpy and SG PolyKernels differ with order=%s'\
+                                %p)
         
         def testRbfSG(self):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
-            sk = SGK.RbfSGKernel()
+            sk = sgK.RbfSGKernel()
+            nk = npK.RbfKernel()
             gammavals = N.logspace(-2, 5, num=10)
             for g in gammavals:
                 sk.params.gamma=g
+                nk.params.gamma=g
                 sk.compute(d1, d2)
+                nk.compute(d1, d2)
+                self.failUnless(N.all(nk._k.astype('float32') == \
+                                      sk.as_np()._k.astype('float32')),
+                                'Numpy and SG Rbf kernels differ with gamma=%s'\
+                                %g)
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
