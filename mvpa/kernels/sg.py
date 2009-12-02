@@ -52,6 +52,11 @@ class BasicSGKernel(SGKernel):
         d2 = SGKernel._data2features(d2)
         kvals = [self.params[kp].value for kp in self.params._getNames()]
         self._k = self.__kernel_impl__(d1, d2, *kvals)
+        
+        # XXX: Not sure if this is always the best thing to do - some kernels
+        # by default normalize with specific methods automatically, which
+        # can cause issues in CV etc -- SG
+        self._k.set_normalizer(sgk.IdentityKernelNormalizer())
 
 class CustomSGKernel(BasicSGKernel):
     # TODO: Don't know if this works or how to wrap generic SG func
@@ -68,7 +73,7 @@ class RbfSGKernel(BasicSGKernel):
         
 class PolySGKernel(BasicSGKernel):
     __kernel_impl__ = sgk.PolyKernel
-    degree = Parameter(2, doc="Polynomial order of the kernel")
+    degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
     inhomogenous = Parameter(True, allowedtype=bool,
                              doc="Whether +1 is added within the expression")
     

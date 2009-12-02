@@ -23,6 +23,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.misc.param import Parameter
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.clfs.distance import squared_euclidean_distance
 from mvpa.kernels.base import NumpyKernel
@@ -121,8 +122,28 @@ class LinearKernel(NumpyKernel):
     def _compute(self, d1, d2):
         self._k = N.dot(d1, d2.T)
 
+class PolyKernel(NumpyKernel):
+    degree = Parameter(2, doc="Polynomial degree")
+    offset = Parameter(1, doc="Offset added to dot product before exponent")
+    
+    def _compute(self, d1, d2):
+        self._k = N.power(N.dot(d1, d2.T)+self.params.offset,
+                          self.params.degree)
 
-
+class RbfKernel(NumpyKernel):
+    gamma = Parameter(1.0, allowedtype=float, doc="Scale parameter gamma")
+    
+    def _compute(self, d1, d2):
+        # Calculate squared distance between all points
+        Kij = N.dot(d1, d2.T)
+        Kii = (d1**2).sum(axis=1).reshape((d1.shape[0], 1))
+        Kjj = (d2**2).sum(axis=1).reshape((1, d2.shape[0]))
+        d2 = Kii-2*Kij+Kjj
+        d2 = N.where(d2 < 0, 0, d2)
+        
+        # Do the Rbf
+        self._k = N.exp(-d2 / self.params.gamma)
+        
 class GeneralizedLinearKernel(NumpyKernel):
     """The linear kernel class.
     """
