@@ -185,10 +185,10 @@ class KernelLinear(Kernel):
         # if vector use it as diagonal matrix -- ie scale each row by
         # the given value
         elif len(Sigma_p.shape) == 1 and \
-                 Sigma_p.shape[0] == data1.shape[1]:
+                 Sigma_p.shape[0] == data2.shape[1]:
             # which due to numpy broadcasting is the same as product
             # with scalar above
-            data2_sc = (Sigma_p * data1).T
+            data2_sc = (Sigma_p * data2).T
 
         # if it is a full matrix -- full-featured and lengthy
         # matrix product
