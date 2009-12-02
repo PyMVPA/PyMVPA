@@ -79,7 +79,9 @@ class Kernel(ClassWithCollections):
 
     def as_np(self):
         """Converts this kernel to a Numpy-based representation"""
-        return StaticKernel(N.array(self))
+        p = PrecomputedKernel(matrix=N.array(self))
+        p.compute()
+        return p
 
     def cleanup(self):
         """Wipe out internal representation
@@ -106,7 +108,7 @@ class NumpyKernel(Kernel):
 
 class CustomKernel(NumpyKernel):
 
-    kernelfunc = Parameter(None, doc="""Function to generate the kernel matrix""")
+    kernelfunc = Parameter(None, doc="""Function to generate the matrix""")
 
     def _compute(self, d1, d2):
         self._k = self.params.kernelfunc(d1, d2)
