@@ -1,4 +1,3 @@
-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,7 +15,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper
+from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper
 from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -96,3 +95,26 @@ def test_mdpmadness():
     assert_equal(ds.samples.shape, fds.samples.shape)
     rds = fm.reverse(fds)
     assert_array_almost_equal(ds.samples, rds.samples)
+
+
+def test_pcamapper():
+    # data: 40 sample feature line in 20d space (40x20; samples x features)
+    ndlin = Dataset(N.concatenate([N.arange(40)
+                               for i in range(20)]).reshape(20,-1).T)
+
+    pm = PCAMapper()
+    # train PCA
+    assert_raises(mdp.NodeException, pm.train, ndlin)
+    ndlin.samples = ndlin.samples.astype('float')
+    ndlin_noise = ndlin.copy()
+    ndlin_noise.samples += N.random.random(size=ndlin.samples.shape)
+    # we have no variance for more than one PCA component, hence just one
+    # actual non-zero eigenvalue
+    assert_raises(mdp.NodeException, pm.train, ndlin)
+    pm.train(ndlin_noise)
+    assert_equal(pm.proj.shape, (20, 20))
+    # now project data into PCA space
+    p = pm.forward(ndlin.samples)
+    assert_equal(p.shape, (40, 20))
+    # check that the mapped data can be fully recovered by 'reverse()'
+    assert_array_almost_equal(pm.reverse(p), ndlin)

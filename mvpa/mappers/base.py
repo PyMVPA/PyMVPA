@@ -334,7 +334,7 @@ class Mapper(object):
     def __repr__(self):
         return "%s(inspace=%s)" \
                 % (self.__class__.__name__,
-                   self.get_inspace())
+                   repr(self.get_inspace()))
 
 
     def __call__(self, data):
