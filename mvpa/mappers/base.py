@@ -174,20 +174,20 @@ class Mapper(object):
     # The following methods are candidates for reimplementation in derived
     # classes, in cases where the provided default behavior is not appropriate.
     #
-    def is_valid_outid(self, outId):
+    def is_valid_outid(self, outid):
         """Validate feature id in OUT space.
 
         Override if OUT space is not simly a 1D vector
         """
-        return(outId >= 0 and outId < self.get_outsize())
+        return(outid >= 0 and outid < self.get_outsize())
 
 
-    def is_valid_inid(self, inId):
+    def is_valid_inid(self, inid):
         """Validate id in IN space.
 
         Override if IN space is not simly a 1D vector
         """
-        return(inId >= 0 and inId < self.getInSize())
+        return(inid >= 0 and inid < self.get_insize())
 
 
     def train(self, dataset):
