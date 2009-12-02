@@ -10,7 +10,7 @@
 
 import unittest
 import numpy as N
-
+from mvpa.datasets import Dataset
 from mvpa.clfs.distance import squared_euclidean_distance, \
      pnorm_w, pnorm_w_python
 
@@ -26,12 +26,22 @@ except RuntimeError:
 from tests_warehouse import datasets
 
 class KernelTests(unittest.TestCase):
+
     # mvpa.kernel stuff
+    def testLinearKernel(self):
+        d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
+        lk = K.LinearKernel()
+        lk.compute(d1)
+        self.failUnless(lk._k.shape == (10,10),
+                        "Failure computing LinearKernel (Size mismatch)")
+        self.failUnless((lk._k == 30).all(),
+                        "Failure computing LinearKernel")
+        
     def testStaticKernel(self):
         d = N.random.randn(50, 50)
         sk = K.StaticKernel(d)
-        self.failIf(not (d == sk._k).all(),
-                    'Failure setting and retrieving StaticKernel data')
+        self.failUnless((d == sk._k).all(),
+                        'Failure setting and retrieving StaticKernel data')
         
     if _has_sg:
         # Unit tests which require shogun kernels
@@ -39,8 +49,8 @@ class KernelTests(unittest.TestCase):
             nk = K.StaticKernel(N.random.randn(50, 50))
             sk = nk.as_sg()
             # There is some loss of accuracy here - why???
-            self.failIf(not (N.abs(nk._k - sk.as_np()._k) < 1e-6).all(),
-                        'Failure converting arrays between NP as SG')
+            self.failUnless((N.abs(nk._k - sk.as_np()._k) < 1e-6).all(),
+                            'Failure converting arrays between NP as SG')
             
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
