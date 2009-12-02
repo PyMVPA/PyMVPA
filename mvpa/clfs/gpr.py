@@ -17,7 +17,7 @@ import numpy as N
 from mvpa.base import externals
 
 from mvpa.misc.state import StateVariable
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.misc.param import Parameter
 from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
 from mvpa.measures.base import Sensitivity
@@ -359,6 +359,7 @@ class GPR(Classifier):
         pass
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """
         Predict the output for the provided data.

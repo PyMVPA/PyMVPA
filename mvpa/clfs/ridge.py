@@ -17,7 +17,7 @@ from mvpa.base import externals
 if externals.exists("scipy", raiseException=True):
     from scipy.linalg import lstsq
 
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.
@@ -92,6 +92,7 @@ class RidgeReg(Classifier):
                               % self.__implementation
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """
         Predict the output for the provided data.
