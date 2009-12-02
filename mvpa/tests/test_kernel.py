@@ -50,13 +50,15 @@ class KernelTests(unittest.TestCase):
 
     if _has_sg:
         # Unit tests which require shogun kernels
+        # Note - there is a loss of precision from double to float32 in SG
         def testSgConversions(self):
             nk = K.PrecomputedKernel(matrix=N.random.randn(50, 50))
             nk.compute()
             sk = nk.as_sg()
             sk.compute()
-            # There is some loss of accuracy here - why???
-            self.failUnless((N.abs(nk._k - sk.as_np()._k) < 1e-6).all(),
+            
+            self.failUnless((nk._k.astype('float32') == \
+                             sk.as_np()._k.astype('float32')).all(),
                             'Failure converting arrays between NP as SG')
             
         def testLinearSG(self):
@@ -68,9 +70,16 @@ class KernelTests(unittest.TestCase):
             nk.compute(d1, d2)
             sk.compute(d1,d2)
             
-            self.failUnless(N.all(N.abs(nk._k - sk.as_np()._k)<1e-10),
+            self.failUnless(N.all(nk._k.astype('float32') == \
+                                  sk.as_np()._k.astype('float32')),
                             'Numpy and SG linear kernels are inconsistent')
             
+        def testPolySG(self):
+            d1 = datasets['uni4small']
+            sk = SGK.PolySGKernel()
+            sk.compute(d1)
+            pass
+        
         def testRbfSG(self):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
