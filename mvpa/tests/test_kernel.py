@@ -15,7 +15,7 @@ from mvpa.clfs.distance import squared_euclidean_distance, \
      pnorm_w, pnorm_w_python
 
 import mvpa.kernels.np as npK
-from mvpa.kernels.base import PrecomputedKernel
+from mvpa.kernels.base import PrecomputedKernel, CachedKernel
 try:
     import mvpa.kernels.sg as sgK
     _has_sg = True
@@ -49,6 +49,13 @@ class KernelTests(unittest.TestCase):
         self.failUnless((d == nk._k).all(),
                         'Failure setting and retrieving PrecomputedKernel data')
 
+    # Don't have sample id's yet
+    #def testCachedKernel(self):
+        #d = Dataset(N.random.randn(50, 132))
+        #k = CachedKernel(kernel=npK.LinearKernel())
+        #k.compute(d)
+        #pass
+    
     if _has_sg:
         # Unit tests which require shogun kernels
         # Note - there is a loss of precision from double to float32 in SG
@@ -106,6 +113,24 @@ class KernelTests(unittest.TestCase):
                                       sk.as_np()._k.astype('float32')),
                                 'Numpy and SG Rbf kernels differ with gamma=%s'\
                                 %g)
+                
+        def testCustomSG(self):
+            lk = sgK.LinearSGKernel()
+            cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
+            poly = sgK.PolySGKernel()
+            custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel, 
+                                        kernelparams=[('order',2),
+                                                      ('inhomogenous', True)])
+            d = N.random.randn(253, 52)
+            lk.compute(d)
+            cl.compute(d)
+            poly.compute(d)
+            custom.compute(d)
+            
+            self.failUnless(N.all(lk.as_np()._k == cl.as_np()._k),
+                            'CustomSGKernel does not agree with Linear')
+            self.failUnless(N.all(poly.as_np()._k == custom.as_np()._k),
+                            'CustomSGKernel does not agree with Poly')
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
