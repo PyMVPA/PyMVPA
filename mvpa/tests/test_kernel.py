@@ -26,18 +26,22 @@ except RuntimeError:
 from tests_warehouse import datasets
 
 class KernelTests(unittest.TestCase):
+    """Test bloody kernels
+    """
 
     # mvpa.kernel stuff
     def testLinearKernel(self):
+        """Simplistic testing of linear kernel"""
         d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
         lk = K.LinearKernel()
         lk.compute(d1)
-        self.failUnless(lk._k.shape == (10,10),
+        self.failUnless(lk._k.shape == (10, 10),
                         "Failure computing LinearKernel (Size mismatch)")
         self.failUnless((lk._k == 30).all(),
                         "Failure computing LinearKernel")
 
     def testStaticKernel(self):
+        """Statistic Kernels"""
         d = N.random.randn(50, 50)
         sk = K.StaticKernel(d)
         self.failUnless((d == sk._k).all(),
@@ -54,6 +58,7 @@ class KernelTests(unittest.TestCase):
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
+        """Euclidean distance kernel testing"""
 
         # select some block of data from already generated
         data = datasets['uni4large'].samples[:5, :8]
