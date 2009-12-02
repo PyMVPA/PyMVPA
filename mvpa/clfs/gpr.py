@@ -234,9 +234,9 @@ class GPR(Classifier):
         """
         # XXX The following two lines does not work since
         # self.__kernel is instance of LinearKernel and not
-        # just KernelLinear. How to fix?
-        # YYY yoh is not sure what is the problem... KernelLinear is actually
-        #     kernel.KernelLinear so everything shoudl be ok
+        # just LinearKernel. How to fix?
+        # YYY yoh is not sure what is the problem... LinearKernel is actually
+        #     kernel.LinearKernel so everything shoudl be ok
         if flavor == 'auto':
             flavor = ('model_select', 'linear')\
                      [int(isinstance(self.__kernel, GeneralizedLinearKernel))]
