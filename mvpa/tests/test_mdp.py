@@ -16,7 +16,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.mappers.mdp import MDPNodeMapper, MDPFlowMapper
+from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper
 from mvpa.datasets.base import Dataset, DAE
 from mvpa.misc.data_generators import normalFeatureDataset
 
