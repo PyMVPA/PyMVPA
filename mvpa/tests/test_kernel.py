@@ -20,7 +20,7 @@ try:
     _has_sg = True
 except RuntimeError:
     _has_sg = False
-    
+
 # from mvpa.clfs.kernel import Kernel
 
 from tests_warehouse import datasets
@@ -36,13 +36,13 @@ class KernelTests(unittest.TestCase):
                         "Failure computing LinearKernel (Size mismatch)")
         self.failUnless((lk._k == 30).all(),
                         "Failure computing LinearKernel")
-        
+
     def testStaticKernel(self):
         d = N.random.randn(50, 50)
         sk = K.StaticKernel(d)
         self.failUnless((d == sk._k).all(),
                         'Failure setting and retrieving StaticKernel data')
-        
+
     if _has_sg:
         # Unit tests which require shogun kernels
         def testSgConversions(self):
@@ -51,7 +51,7 @@ class KernelTests(unittest.TestCase):
             # There is some loss of accuracy here - why???
             self.failUnless((N.abs(nk._k - sk.as_np()._k) < 1e-6).all(),
                             'Failure converting arrays between NP as SG')
-            
+
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
 
