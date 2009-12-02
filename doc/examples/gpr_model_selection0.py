@@ -41,11 +41,11 @@ i = 0
 for x in sigma_noise_steps:
     j = 0
     for y in length_scale_steps:
-        kse = KernelSquaredExponential(length_scale=y)
+        kse = SquaredExponentialKernel(length_scale=y)
         g = GPR(kse, sigma_noise=x, regression=True)
         g.states.enable("log_marginal_likelihood")
         g.train(dataset)
-        lml[i, j] = g.log_marginal_likelihood
+        lml[i, j] = g.states.log_marginal_likelihood
         if lml[i, j] > lml_best:
             lml_best = lml[i, j]
             length_scale_best = y
