@@ -15,6 +15,9 @@ class Kernel(object):
     a different form depending on the intended use.  Some kernel types should
     be translatable to other representations where possible, e.g., between 
     Numpy and Shogun-based kernels.
+    
+    This class should not be used directly, but rather use a subclass which
+    enforces a consistent internal representation.
     """
 
     def __init__(self):
@@ -23,6 +26,8 @@ class Kernel(object):
     def compute(self, ds1, ds2=None):
         raise NotImplemented, "Abstract method"
 
+    # NB: __array__ is circular with as_np.  Any subclass must override either
+    # one of these and the other will work
     def __array__(self):
         return self.as_np()._k
     
@@ -37,6 +42,9 @@ class Kernel(object):
 class NumpyKernel(Kernel):
     """A Kernel object with internal representation as a 2d numpy array"""
     # Conversions
+    def __init__(self):
+        Kernel.__init__(self)
+        
     def __array__(self):
         # By definintion, a NumpyKernel's internal representation is an array
         return self._k
@@ -47,6 +55,25 @@ class NumpyKernel(Kernel):
 
     # wasn't that easy?
 
+class CustomKernel(NumpyKernel):
+    def __init__(self, kernelfunc):
+        NumpyKernel.__init__(self)
+        self._kf = kernelfunc
+        
+    def compute(self, d1,d2=None):
+        if d2 is None:
+            d2=d1
+        self._k = self._kf(d1, d2)
+        
+class LinearKernel(CustomKernel):
+    def __init__(self):
+        CustomKernel.__init__(self, self._compute)
+    @staticmethod
+    def _compute(d1, d2):
+        if d2 is None:
+            d2=d1
+        return N.dot(d1.samples, d2.samples.T)
+            
 class StaticKernel(NumpyKernel):
 
     def __init__(self, matrix):
