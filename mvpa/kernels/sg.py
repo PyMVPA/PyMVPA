@@ -42,34 +42,36 @@ class SGKernel(Kernel):
         return RealFeatures(data.astype(float).T)
 
 class BasicSGKernel(SGKernel):
-    """Class which can handle most shogun kernel types"""
+    """Abstract class which can handle most shogun kernel types"""
     #_KNOWN_KERNELS={'linear':sgk.LinearKernel, # Figure out shortcuts later
                     #'rbf':sgk.GaussianKernel,
                     #'poly':sgk.PolyKernel,
                     #}
-    # Subclasses should add params in the order in which they are called in the
-    # shogun constructor.  They should not have any other kernel params
-    kernel_impl = Parameter(None, allowedtype=sgk.Kernel,
-                            doc="Shogun Kernel class which calculates kernel")
-    def _compute(self, d1,d2):
+    def _compute(self, d1, d2):
         d1 = SGKernel._data2features(d1)
         d2 = SGKernel._data2features(d2)
-        kparams = self.params._getNames()[1:]
-        self._k = self.params.kernel_impl(d1, d2, 
-                                          *[p[kp].value for p in kparams])
+        kvals = [self.params[kp].value for kp in self.params._getNames()]
+        self._k = self.__kernel_impl__(d1, d2, *kvals)
 
-class LinearSGKernel(BasicSGKernel):
-    def __init__(self, *args, **kwargs):
+class CustomSGKernel(BasicSGKernel):
+    # TODO: Don't know if this works or how to wrap generic SG func
+    def __init__(self, kernel_cls, kps={}, **kwargs):
+        self.__kernel_impl__ = kernel_cls
+        self.params.update(kps)
         
-        BasicSGKernel.__init__(self, *args, kernel_impl=sgk.LinearKernel, 
-                               **kwargs)
+class LinearSGKernel(BasicSGKernel):
+    __kernel_impl__ = sgk.LinearKernel
         
 class RbfSGKernel(BasicSGKernel):
-    gamma = Parameter(1, doc="Scaling value for gaussian")
-    def __init__(self, *args, **kwargs):
-        BasicSGKernel.__init__(self, *args, kernel_impl=sgk.GaussianKernel, 
-                               **kwargs)
+    __kernel_impl__ = sgk.GaussianKernel
+    gamma = Parameter(1, doc="Scaling value for gaussian/rbf kernel")
         
+class PolySGKernel(BasicSGKernel):
+    __kernel_impl__ = sgk.PolyKernel
+    degree = Parameter(2, doc="Polynomial order of the kernel")
+    inhomogenous = Parameter(True, allowedtype=bool,
+                             doc="Whether +1 is added within the expression")
+    
 class PrecomputedSGKernel(SGKernel):
     # This class can't be handled directly by BasicSGKernel because it never
     # should take data, and never has compute called, etc
