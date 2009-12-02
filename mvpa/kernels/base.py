@@ -10,9 +10,21 @@
 
 """
 
+_DEV_DOC_ = """
+Concerns:
+
+- Assure proper type of _k assigned
+- The same issue "Dataset vs data" in input arguments
+
+"""
+
 __docformat__ = 'restructuredtext'
 
 import numpy as N
+
+from mvpa.base.types import is_datasetlike
+from mvpa.misc.state import ClassWithCollections
+from mvpa.misc.param import Parameter
 
 # Imports enough to convert to shogun kernels if shogun is installed
 #try:
@@ -21,7 +33,7 @@ import numpy as N
 #except RuntimeError:
     #_has_shogun=False
 
-class Kernel(object):
+class Kernel(ClassWithCollections):
     """Abstract class which calculates a kernel function between datasets
 
     Each instance has an internal representation self._k which might be of
@@ -33,11 +45,33 @@ class Kernel(object):
     enforces a consistent internal representation.
     """
 
-    def __init__(self):
+    _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
+
+    def __init__(self, *args, **kwargs):
+        ClassWithCollections.__init__(self, *args, **kwargs)
         self._k = None
         """Implementation specific version of the kernel"""
 
     def compute(self, ds1, ds2=None):
+        """Generic computation of any kernel
+
+        Assumptions:
+
+         - ds1, ds2 are either datasets or arrays,
+         - presumably 2D (not checked neither enforced here
+         - _compute takes ndarrays. If your kernel needs datasets,
+           override compute
+        """
+        if is_datasetlike(ds1):
+            ds1 = ds1.samples
+        if ds2 is None:
+            ds2 = ds1
+        elif is_datasetlike(ds2):
+            ds2 = ds2.samples
+        # TODO: assure 2D shape
+        self._compute(ds1, ds2)
+
+    def _compute(self, d1, d2):
         raise NotImplemented, "Abstract method"
 
     def __array__(self):
@@ -58,9 +92,6 @@ class Kernel(object):
 
 class NumpyKernel(Kernel):
     """A Kernel object with internal representation as a 2d numpy array"""
-    # Conversions
-    def __init__(self):
-        Kernel.__init__(self)
 
     def __array__(self):
         # By definintion, a NumpyKernel's internal representation is an array
@@ -72,45 +103,48 @@ class NumpyKernel(Kernel):
 
     # wasn't that easy?
 
+
 class CustomKernel(NumpyKernel):
-    def __init__(self, kernelfunc):
-        NumpyKernel.__init__(self)
-        self._kf = kernelfunc
 
-    def compute(self, d1,d2=None):
-        if d2 is None:
-            d2=d1
-        self._k = self._kf(d1, d2)
+    kernelfunc = Parameter(None, doc="""Function to generate the kernel matrix""")
+
+    def _compute(self, d1, d2):
+        self._k = self.params.kernelfunc(d1, d2)
 
 
-class LinearKernel(CustomKernel):
-    def __init__(self):
-        CustomKernel.__init__(self, self._compute)
-    @staticmethod
-    def _compute(d1, d2):
-        if d2 is None:
-            d2=d1
-        return N.dot(d1.samples, d2.samples.T)
+class LinearKernel(NumpyKernel):
+    """Simple linear kernel
+    """
+    def _compute(self, d1, d2):
+        self._k = N.dot(d1, d2.T)
 
 
-class StaticKernel(NumpyKernel):
+class PrecomputedKernel(NumpyKernel):
     """Precomputed matrix
     """
-    def __init__(self, matrix):
-        """Initialize StaticKernel
-        """
-        super(StaticKernel, self).__init__()
-        self._k = N.array(matrix)
+
+    matrix = Parameter(None, allowedtype="ndarray",
+                       doc="""ndarray to use as a matrix for the kernel""")
+
+    ## def __init__(self, matrix):
+    ##     """Initialize StaticKernel
+    ##     """
+    ##     super(StaticKernel, self).__init__()
+    ##     self._k = N.array(matrix)
 
     def compute(self, *args, **kwargs):
-        pass
+        self._k = N.asanyarray(self.params.matrix)
+        #pass
 
 
 class CachedKernel(NumpyKernel):
     """Kernel decorator to cache all data to avoid duplicate computation
     """
 
-    def __init__(self, kernel):
+    kernel = Parameter(None, allowedtype="Kernel",
+                       doc="""Base kernel to cache""")
+
+    def __init__(self, *args, **kwargs):
         """Initialize CachedKernel
 
         Parameters
@@ -118,9 +152,8 @@ class CachedKernel(NumpyKernel):
           kernel : Kernel
             Base kernel to cache
         """
-        super(CachedKernel, self).__init__()
-        self._ckernel = kernel
-        self._ds_cached_info = None
+        super(CachedKernel, self).__init__(*args, **kwargs)
+        self.params.update(self.params.kernel.params)
         self._rhids = self._lhids = None
 
     def _init(self, ds1, ds2=None):
@@ -132,9 +165,10 @@ class CachedKernel(NumpyKernel):
         else:
             self._rhsids = SampleLookup(ds2)
 
-        self._ckernel.compute(ds1, ds2)
-        self._kfull = self._ckernel.as_np()._k
-        self._ckernel.cleanup()
+        ckernel = self.params.kernel
+        ckernel.compute(ds1, ds2)
+        self._kfull = ckernel.as_np()._k
+        ckernel.cleanup()
         self._k = self._kfull
         # TODO: store params representation for later comparison
 
@@ -178,4 +212,10 @@ if ds1 is the "derived" dataset as it was computed on:
 else:
     compute (ds1, ds2)
       - different data ids
+
+
+ckernel = PrecomputedKernel(matrix=N.array([1,2,3]))
+ck = CachedKernel(kernel=ckernel)
+
 """
+
