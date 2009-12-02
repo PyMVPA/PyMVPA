@@ -1,8 +1,24 @@
 
 import numpy as N
-import shogun
+
+# Imports enough to convert to shogun kernels if shogun is installed
+#try:
+    #from mvpa.kernels.sg import SGKernel
+    #_has_shogun=True
+#except RuntimeError:
+    #_has_shogun=False
 
 class Kernel(object):
+    """Abstract class which calculates a kernel function between datasets
+    
+    Each instance has an internal representation self._k which might be of
+    a different form depending on the intended use.  Some kernel types should
+    be translatable to other representations where possible, e.g., between 
+    Numpy and Shogun-based kernels.
+    
+    This class should not be used directly, but rather use a subclass which
+    enforces a consistent internal representation.
+    """
 
     def __init__(self):
         self._k = None
@@ -10,14 +26,13 @@ class Kernel(object):
     def compute(self, ds1, ds2=None):
         raise NotImplemented, "Abstract method"
 
+    # NB: __array__ is circular with as_np.  Any subclass must override either
+    # one of these and the other will work
     def __array__(self):
-        raise NotImplemented, "Abstract method"
-
-    if externals.exists('sg'):
-        def as_sg(self):
-            return SGKernel(sg.CustomKernel, N.array(self))
-
+        return self.as_np()._k
+    
     def as_np(self):
+        """Converts this kernel to a Numpy-based representation"""
         return StaticKernel(N.array(self))
 
     def cleanup(self):
@@ -25,55 +40,48 @@ class Kernel(object):
 
 
 class NumpyKernel(Kernel):
-
+    """A Kernel object with internal representation as a 2d numpy array"""
     # Conversions
+    def __init__(self):
+        Kernel.__init__(self)
+        
     def __array__(self):
+        # By definintion, a NumpyKernel's internal representation is an array
         return self._k
-
+    
     def as_np(self):
+        # Already numpy!!
         return self
 
-    def _subkernel(self, i1, i2=None):
-        return
+    # wasn't that easy?
 
-
+class CustomKernel(NumpyKernel):
+    def __init__(self, kernelfunc):
+        NumpyKernel.__init__(self)
+        self._kf = kernelfunc
+        
+    def compute(self, d1,d2=None):
+        if d2 is None:
+            d2=d1
+        self._k = self._kf(d1, d2)
+        
+class LinearKernel(CustomKernel):
+    def __init__(self):
+        CustomKernel.__init__(self, self._compute)
+    @staticmethod
+    def _compute(d1, d2):
+        if d2 is None:
+            d2=d1
+        return N.dot(d1.samples, d2.samples.T)
+            
 class StaticKernel(NumpyKernel):
 
-    def __init__(self, a=None):
+    def __init__(self, matrix):
         super(StaticKernel, self).__init__()
-        self._k = a
+        self._k = N.array(matrix)
 
     def compute(self, *args, **kwargs):
         pass
-
-
-class SGKernel(Kernel):
-
-    def __init__(self, sg_cls, *args, **kwargs):
-        """
-        Parameters
-        ----------
-          cls : basestring or shogun kernel class
-            The shogun kernel class to instantiate upon compute
-        """
-        super(SGKernel, self).__init__()
-        # TODO: store args/kwargs to initiate sg_cls
-        pass # XXX
-
-    def compute(self, ds1, ds2=None):
-        # XXX
-        raise NotImplemented, "TODO"
-
-    def as_sg(self):
-        return self
-
-    def __array__(self):
-        return self._k.get_full_matrix()
-
-
-#class LIBSVMKernel(Kernel):
-#
-#    def as_libsvm(self)
 
 
 class CachedKernel(NumpyKernel):
@@ -85,7 +93,7 @@ class CachedKernel(NumpyKernel):
         self._rhids = self._lhids = None
 
     def _init(self, ds1, ds2=None):
-        """Initializes internal lookups + full _k
+        """Initializes internal lookups + _kfull
         """
         self._lhsids = SampleLookup(ds1)
         if ds2 is None:
