@@ -114,12 +114,6 @@ class CustomKernel(NumpyKernel):
         self._k = self.params.kernelfunc(d1, d2)
 
 
-class LinearKernel(NumpyKernel):
-    """Simple linear kernel
-    """
-    def _compute(self, d1, d2):
-        self._k = N.dot(d1, d2.T)
-
 
 class PrecomputedKernel(NumpyKernel):
     """Precomputed matrix
