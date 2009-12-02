@@ -17,7 +17,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import mdp
 
-from mvpa.datasets.base import DatasetAttributeExtractor
+from mvpa.base.dataset import DatasetAttributeExtractor
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 from mvpa.misc.support import isInVolume
 
@@ -72,6 +72,13 @@ class MDPNodeMapper(Mapper):
         self.__pristine_node = None
         self.node = node
         self.nodeargs = nodeargs
+
+
+    def __repr__(self):
+        s = super(MDPNodeMapper, self).__repr__()
+        return s.replace("(", "(node=%s, nodeargs=%s, "
+                              % (repr(self.node),
+                                 repr(self.nodeargs)), 1)
 
 
     def _expand_args(self, phase, ds=None):
@@ -157,6 +164,13 @@ class MDPFlowMapper(Mapper):
         self.__pristine_flow = None
         self.flow = flow
         self.data_iterables = data_iterables
+
+
+    def __repr__(self):
+        s = super(MDPFlowMapper, self).__repr__()
+        return s.replace("(", "(flow=%s, data_iterables=%s, "
+                              % (repr(self.flow),
+                                 repr(self.data_iterables)), 1)
 
 
     def _expand_nodeargs(self, ds, args):

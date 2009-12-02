@@ -332,9 +332,9 @@ class Mapper(object):
 
 
     def __repr__(self):
-        # TODO come on!
-        s=''
-        return "%s(%s)" % (self.__class__.__name__, s)
+        return "%s(inspace=%s)" \
+                % (self.__class__.__name__,
+                   self.get_inspace())
 
 
     def __call__(self, data):
