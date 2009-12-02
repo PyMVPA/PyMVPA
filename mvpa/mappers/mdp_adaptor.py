@@ -153,6 +153,35 @@ class MDPNodeMapper(Mapper):
         return []
 
 
+class PCAMapper(MDPNodeMapper):
+    def __init__(self, alg='PCA', **kwargs):
+        """
+        Parameters
+        ----------
+        alg : {'PCA', 'NIPALS'}
+          Which MDP implementation of a PCA to use.
+        **kwargs
+          See the base class for information about additional arguments.
+        """
+        if alg == 'PCA':
+            node = mdp.nodes.PCANode()
+        elif alg == 'NIPALS':
+            node = mdp.nodes.NIPALSNode()
+        else:
+            raise ValueError("Unkown algorithm '%s' for PCAMapper."
+                             % alg)
+        MDPNodeMapper.__init__(self, node, **kwargs)
+
+
+    proj = property(fget=lambda self: self.node.get_projmatrix(),
+                    doc="Projection matrix (as an array)")
+    recon = property(fget=lambda self: self.node.get_projmatrix(),
+                     doc="Backprojection matrix (as an array)")
+    var = property(fget=lambda self: self.node.d, doc="Variances per component")
+    centroid = property(fget=lambda self: self.node.avg,
+                        doc="Mean of the traiing data")
+
+
 
 class MDPFlowMapper(Mapper):
     def __init__(self, flow, data_iterables=None, inspace=None):
