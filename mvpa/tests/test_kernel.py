@@ -68,9 +68,17 @@ class KernelTests(unittest.TestCase):
             nk.compute(d1, d2)
             sk.compute(d1,d2)
             
-            self.failUnless(N.all(N.abs(nk._k - sk.as_np()._k).max()<1e-15),
+            self.failUnless(N.all(N.abs(nk._k - sk.as_np()._k)<1e-10),
                             'Numpy and SG linear kernels are inconsistent')
             
+        def testRbfSG(self):
+            d1 = N.random.randn(105, 32)
+            d2 = N.random.randn(41, 32)
+            sk = SGK.RbfSGKernel()
+            gammavals = N.logspace(-2, 5, num=10)
+            for g in gammavals:
+                sk.params.gamma=g
+                sk.compute(d1, d2)
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
