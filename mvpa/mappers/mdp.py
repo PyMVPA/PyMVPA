@@ -6,45 +6,70 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""MDP interface module.
+
+This module provides to mapper that allow embedding MDP nodes, or flows
+into PyMVPA.
+"""
 
 __docformat__ = 'restructuredtext'
 
 import numpy as N
 import mdp
 
+from mvpa.datasets.base import DatasetAttributeExtractor
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 from mvpa.misc.support import isInVolume
 
 
-class DatasetAttributeExtractor(object):
-    def __init__(self, col, key):
-        self._col = col
-        self._key = key
-
-    def __call__(self, ds):
-        return ds.__dict__[self._col][self._key]
-
-DAE = DatasetAttributeExtractor
-
 
 class MDPNodeMapper(Mapper):
+    """Mapper encapsulating an arbitray MDP node.
+
+    This mapper wraps an MDP node and uses it for forward and reverse data
+    mapping (reverse is only available if the underlying MDP node supports
+    it).  It is possible to specify arbitrary arguments for all processing
+    steps of an MDP node (training, training stop, execution, and
+    inverse).
+
+    Because MDP does not allow to 'reset' a node and (re)train it from
+    scratch the mapper uses a copy of the initially wrapped node for the
+    actual processing. Upon subsequent training attempts a new copy of the
+    original node is made and replaces the previous one.
+
+    Note
+    ----
+    MDP nodes requiring multiple training phases are not supported.
+    Moreover, it is not possible to perform incremental training of a
+    node.
+    """
     def __init__(self, node, nodeargs=None, inspace=None):
         """
         Parameters
         ----------
         node : mdp.Node instance
+          This node instance is taken as the pristine source of which a
+          copy is made for actual processing upon each training attempt.
         nodeargs : dict
-          'train' ((), {})
-          'stoptrain' ((), {})
-          'exec' ((), {})
-          'inv' ((), {})
+          Dictionary for additional arguments for all call to the MDP
+          node. The dictionary key's meaning is as follows:
+
+            'train': Arguments for calls to `Node.train()`
+            'stoptrain': Arguments for calls to `Node.stop_training()`
+            'exec': Arguments for calls to `Node.execute()`
+            'inv': Arguments for calls to `Node.inverse()`
+
+          The value for each item is always a 2-tuple, consiting of a
+          tuple (for the arguments), and a dictonary (for keyword
+          arguments), i.e.  ((), {}). Both, tuple and dictonary have to be
+          provided even if they are empty.
         """
         # Tiziano will check if there can be/is a public way to do it
         if not len(node._train_seq) == 1:
             raise ValueError("MDPNodeMapper does not support MDP nodes with "
                              "multiple training phases.")
         Mapper.__init__(self, inspace=inspace)
+        self.__pristine_node = None
         self.node = node
         self.nodeargs = nodeargs
 
@@ -77,18 +102,27 @@ class MDPNodeMapper(Mapper):
 
     def _train(self, ds):
         if not self.node.is_trainable():
-                return
+            return
+
+        # whenever we have no cannonical node source, we assign the current
+        # node -- this can only happen prior training and allows modifying
+        # the node of having the MDPNodeMapper instance
+        if self.__pristine_node is None:
+            self.__pristine_node = self.node
+
+        # training is done on a copy of the pristine node, because nodes cannot
+        # be reset, but PyMVPA's mapper need to be able to be retrained from
+        # scratch
+        self.node = self.__pristine_node.copy()
+        # train
         args, kwargs = self._expand_args('train', ds)
         self.node.train(ds.samples, *args, **kwargs)
+        # stop train
+        args, kwargs = self._expand_args('stoptrain', ds)
+        self.node.stop_training(*args, **kwargs)
 
 
     def _forward_data(self, data):
-        # XXX maybe move stop_training to the end of _train, but would
-        # prohibit incremental training
-        if self.node.is_training():
-            args, kwargs = self._expand_args('stoptrain', data)
-            self.node.stop_training(*args, **kwargs)
-
         args, kwargs = self._expand_args('exec', data)
         return self.node.execute(data, *args, **kwargs)
 
@@ -98,11 +132,75 @@ class MDPNodeMapper(Mapper):
         return self.node.inverse(data, *args, **kwargs)
 
 
-    def is_valid_outid(self, id):
-        """Checks for a valid output id for this (trained) mapper).
+    def get_insize(self):
+        """Returns the node's input dim."""
+        return self.node.input_dim
 
-        If the mapper is not trained any id is invalid.
-        """
+
+    def get_outsize(self):
+        """Returns the node's output dim."""
+        return self.node.output_dim
+
+
+    def _get_outids(self, in_ids):
+        return []
+
+
+
+class MDPFlowMapper(Mapper):
+    def __init__(self, flow, data_iterables=None, inspace=None):
+        if not data_iterables is None and len(data_iterables) != len(flow):
+            raise ValueError("Length of data_iterables (%i) does not match the "
+                             "number of nodes in the flow (%i)."
+                             % (len(data_iterables), len(flow)))
+        Mapper.__init__(self, inspace=inspace)
+        self.__pristine_flow = None
+        self.flow = flow
+        self.data_iterables = data_iterables
+
+
+    def _expand_nodeargs(self, ds, args):
+        enal = []
+        for a in args:
+            if isinstance(a, DatasetAttributeExtractor):
+                enal.append(a(ds))
+            else:
+                enal.append(a)
+        return enal
+
+
+    def _build_data_iterables(self, ds):
+        if self.data_iterables is not None:
+            data_iterables = [[ds.samples] + self._expand_nodeargs(ds, ndi)
+                                    for ndi in self.data_iterables]
+        else:
+            data_iterables = ds.samples
+        return data_iterables
+
+
+    def _train(self, ds):
+        # whenever we have no cannonical node source, we assign the current
+        # node -- this can only happen prior training and allow modifying
+        # the node of having the MDPNodeMapper instance
+        if self.__pristine_flow is None:
+            self.__pristine_flow = self.flow
+
+        # training is done on a copy of the pristine node, because nodes cannot
+        # be reset, but PyMVPA's mapper need to be able to be retrained from
+        # scratch
+        self.flow = self.__pristine_flow.copy()
+        self.flow.train(self._build_data_iterables(ds))
+
+
+    def _forward_data(self, data):
+        return self.flow.execute(data)
+
+
+    def _reverse_data(self, data):
+        return self.flow.inverse(data)
+
+
+    def is_valid_outid(self, id):
         # untrained -- all is invalid
         outdim = self.get_outsize()
         if outdim is None:
@@ -113,10 +211,6 @@ class MDPNodeMapper(Mapper):
 
 
     def is_valid_inid(self, id):
-        """Checks for a valid output id for this (trained) mapper).
-
-        If the mapper is not trained any id is invalid.
-        """
         # untrained -- all is invalid
         indim = self.get_insize()
         if indim is None:
@@ -126,39 +220,15 @@ class MDPNodeMapper(Mapper):
 
     def get_insize(self):
         """Return the (flattened) size of input space vectors."""
-        return self.node.input_dim
+        return self.flow[0].input_dim
 
 
     def get_outsize(self):
         """Return the size of output space vectors."""
-        return self.node.output_dim
+        return self.flow[-1].output_dim
 
 
     def get_outids(self, in_ids=None, **kwargs):
-        """Determine the output ids from a list of input space id/coordinates.
-
-        Parameters
-        ----------
-        in_ids : list
-          List of input ids whos output ids shall be determined.
-        **kwargs: anything
-          Further qualification of coordinates in particular spaces. Spaces are
-          identified by the respected keyword and the values expresses an
-          additional criterion. If the mapper has any information about the
-          given space it uses this information to further restrict the set of
-          output ids. Information about unkown spaces is returned as is.
-
-        Returns
-        -------
-        (list, dict)
-          The list that contains all corresponding output ids. The default
-          implementation returns an empty list -- meaning there is no
-          one-to-one, or one-to-many correspondance of input and output feature
-          spaces. The dictionary contains all space-related information that
-          have not been processed by the mapper (i.e. the spaces they referred
-          to are unknown to the mapper. By default all additional keyword
-          arguments are returned as is.
-        """
         ourspace = self.get_inspace()
         # first contrain the set of in_ids if a known space is given
         if not ourspace is None and ourspace in kwargs:

@@ -16,8 +16,8 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.mappers.mdp import MDPNodeMapper, DAE
-from mvpa.datasets.base import Dataset
+from mvpa.mappers.mdp import MDPNodeMapper, MDPFlowMapper
+from mvpa.datasets.base import Dataset, DAE
 from mvpa.misc.data_generators import normalFeatureDataset
 
 
@@ -31,9 +31,7 @@ def test_mdpnodemapper():
 
     assert_equal(mm.get_insize(), 4)
     assert_true(N.all([mm.is_valid_inid(i) for i in range(4)]))
-    # not finished training until .forward is called -- that allows to have
-    # incremental training
-    assert_equal(mm.get_outsize(), None)
+    assert_equal(mm.get_outsize(), 4)
 
     fds = mm.forward(ds)
     assert_true(hasattr(mm.node, 'cov_mtx'))
@@ -54,9 +52,43 @@ def test_mdpnodemapper():
 
     # reverse
     rfds = mm.reverse(fds)
-    assert_equal(rfds.samples.shape, ds.samples.shape)
-    assert_array_almost_equal(rfds, ds)
 
     # even smaller size works
     rlfds = mm.reverse(lfds)
     assert_equal(rfds.samples.shape, ds.samples.shape)
+
+    # retraining has to work on a new dataset too, since we copy the node
+    # internally
+    dsbig = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=10)
+    mm.train(dsbig)
+    assert_equal(mm.get_outsize(), 10)
+
+
+def test_mdpflowmapper():
+    flow = mdp.nodes.PCANode() + mdp.nodes.SFANode()
+    fm = MDPFlowMapper(flow)
+    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+
+    fm.train(ds)
+    assert_equal(fm.get_insize(), 4)
+    assert_true(N.all([fm.is_valid_inid(i) for i in range(4)]))
+    assert_equal(fm.get_outsize(), 4)
+    assert_false(fm.flow[0].is_training())
+    assert_false(fm.flow[1].is_training())
+
+    fds = fm.forward(ds)
+    assert_true(isinstance(fds, Dataset))
+    assert_equal(fds.samples.shape, ds.samples.shape)
+    assert_equal(fm.get_outsize(), ds.nfeatures)
+
+
+def test_mdpmadness():
+    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    #flow = mdp.nodes.PCANode() + mdp.nodes.FDANode()
+    #flow.train([[ds.samples],
+    #            [ds.samples, ds.sa.labels]])
+
+    #fm = MDPFlowMapper(flow,
+    #                   [[],
+    #                    [DAE('sa', 'labels')]])
+    #fm.train(ds)
