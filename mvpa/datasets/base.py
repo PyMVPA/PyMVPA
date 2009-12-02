@@ -109,14 +109,9 @@ class Dataset(object):
     attributes. Regardless if their original sequence type they will be
     converted into an array.
 
-    >>> ds_labeled.sa.add('lovesme', [0,0,1,0])
+    >>> ds_labeled.sa['lovesme'] = [0,0,1,0]
     >>> ds_labeled.sa.lovesme
     array([0, 0, 1, 0])
-
-    Using this low-level access, there is no sanity checking, hence it
-    is possible to create invalid datasets:
-
-    >>> ds_labeled.sa.add('nasty', range(100))
 
     An alternative method to create datasets with arbitrary attributes
     is to provide the attribute collections to the constructor itself --
