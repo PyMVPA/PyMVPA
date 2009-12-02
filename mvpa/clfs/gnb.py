@@ -18,7 +18,7 @@ import numpy as N
 
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa.base import warning, externals
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.misc.param import Parameter
 from mvpa.misc.state import StateVariable
 #from mvpa.measures.base import Sensitivity
@@ -189,6 +189,7 @@ class GNB(Classifier):
         super(GNB, self).untrain()
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict the output for the provided data.
         """
