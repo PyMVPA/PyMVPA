@@ -17,7 +17,8 @@ import numpy as N
 
 from operator import isSequenceType
 
-from mvpa.datasets.base import Dataset, datasetmethod
+from mvpa.base.dataset import datasetmethod
+from mvpa.datasets.base import Dataset
 from mvpa.misc.support import getBreakPoints
 
 if externals.exists('scipy', raiseException=True):

@@ -57,7 +57,7 @@ sl = Searchlight(cv, radius=5)
 # run searchlight on dataset
 sl_map = sl(dataset)
 
-print 'Best performing sphere error:', max(sl_map)
+print 'Best performing sphere error:', min(sl_map)
 
 """
 If this analysis is done on a fMRI dataset using `NiftiDataset` the resulting
