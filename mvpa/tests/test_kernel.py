@@ -40,21 +40,37 @@ class KernelTests(unittest.TestCase):
         self.failUnless((lk._k == 30).all(),
                         "Failure computing LinearKernel")
 
-    def testStaticKernel(self):
+    def testPrecomputedKernel(self):
         """Statistic Kernels"""
         d = N.random.randn(50, 50)
-        sk = K.StaticKernel(d)
-        self.failUnless((d == sk._k).all(),
-                        'Failure setting and retrieving StaticKernel data')
+        nk = K.PrecomputedKernel(matrix=d)
+        nk.compute()
+        self.failUnless((d == nk._k).all(),
+                        'Failure setting and retrieving PrecomputedKernel data')
 
     if _has_sg:
         # Unit tests which require shogun kernels
         def testSgConversions(self):
-            nk = K.StaticKernel(N.random.randn(50, 50))
+            nk = K.PrecomputedKernel(matrix=N.random.randn(50, 50))
+            nk.compute()
             sk = nk.as_sg()
+            sk.compute()
             # There is some loss of accuracy here - why???
             self.failUnless((N.abs(nk._k - sk.as_np()._k) < 1e-6).all(),
                             'Failure converting arrays between NP as SG')
+            
+        def testLinearSG(self):
+            d1 = N.random.randn(105, 32)
+            d2 = N.random.randn(41, 32)
+            
+            nk = K.LinearKernel()
+            sk = SGK.LinearSGKernel()
+            nk.compute(d1, d2)
+            sk.compute(d1,d2)
+            
+            self.failUnless(N.all(N.abs(nk._k - sk.as_np()._k).max()<1e-15),
+                            'Numpy and SG linear kernels are inconsistent')
+            
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
