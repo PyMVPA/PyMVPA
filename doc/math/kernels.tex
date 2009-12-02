@@ -101,26 +101,38 @@ Note that using $A$ as hyperparameter the gradient becomes constant.
 Let $\Ivec{\Sigma}_p$ be the $D \times D$ covariance matrix of the Gaussian
 prior probability $\mathcal{N}(\Ivec{0},\Ivec{\Sigma}_p)$ of the weights of
 the Bayesian linear regression.
-$$k(\x,\x') = \x^{\top} \Ivec{\Sigma}_p \x'$$
-$$\K(\X,\X') = \X \Ivec{\Sigma}_p \X'^{\top}$$
+$$k(\x,\x') = \x^{\top} \Ivec{\Sigma}_p \x' + \sigma_2^2$$
+$$\K(\X,\X') = \X \Ivec{\Sigma}_p \X'^{\top} + \Ivec{I}\sigma_0^2$$
 In order to simplify formulas we assume $\Ivec{\Sigma}_p$ is diagonal, i.e.,
 $\Ivec{\Sigma}_p = diag(\Ivec{\sigma}^2_p)$ where $\Ivec{\sigma}^2_p =
 ({\sigma^2_p}_1,\ldots,{\sigma^2_p}_D)$:
-$$k(\x,\x') = \sum_{i=1}^D {\sigma^2_p}_i x_i x'_i$$
-$$\mathbf{\Theta} = \{{\sigma_p}_1,\ldots,{\sigma_p}_D\}$$
+$$k(\x,\x') = \sum_{i=1}^D {\sigma^2_p}_i x_i x'_i + \sigma_0^2$$
+$$\mathbf{\Theta} = \{{\sigma_p}_1,\ldots,{\sigma_p}_D,\sigma_0\}$$
 $$\frac{\partial k}{\partial {\sigma_p}_i} = 2 {\sigma_p}_i x_i x'_i$$
 $$A_i = {\sigma_p^2}_i$$
 $$A_i \ge 0$$
 $$\mathbf{A} = (A_1,\ldots,A_D)^{\top}$$
-$$\mathbf{\Theta}^* = \{ \mathbf{A} \}$$
-$$k(\x,\x') = \x^{\top} diag(\mathbf{A}) \x'$$
-$$\K(\X,\X') = \X diag(\mathbf{A}) \X'^{\top}$$
+$$\frac{\partial k}{\partial \sigma_0} = 2 \sigma_0$$
+$$B = \sigma_0^2$$
+$$\mathbf{\Theta}^* = \{ \mathbf{A} , B\}$$
+$$k(\x,\x') = \x^{\top} diag(\mathbf{A}) \x' + B$$
+$$\K(\X,\X') = \X diag(\mathbf{A}) \X'^{\top} + \Ivec{I}B$$
 $$\frac{\partial k}{\partial A_i} = x_i x'_i$$
 $$\frac{\partial \K}{\partial A_i} = \X_{* i} {\X'_{* i}}^{\top}$$
 $$\nabla_{\mathbf{A}} \K = ( \X_{* 1} {\X'_{* 1}}^{\top}, \ldots,
 \X_{* D} {\X'_{* D}}^{\top})$$
+$$\frac{\partial k}{\partial B} = 1$$
+$$\frac{\partial \K}{\partial B} = \Ivec{I}$$
 As expected the gradient is independent of the hyperparameters values
 and can be computed once for all at the beginning.
+
+Logscale:
+$$A_i = \ln{\sigma_{p_i}^2}$$
+$$\sigma_{p_i}^2 = e^{A}$$
+$$B = \ln{\sigma_0}$$
+$$\sigma_0^2 = e^{2B}$$
+$$\frac{\partial k}{\partial B} = 2 e^{2B} = 2 \sigma_0^2$$
+
 
 \section{Polynomial kernel}
 $$k(\x,\x') = (\sigma_0^2 + \x^{\top} \Ivec{\Sigma}_p \x')^p =
@@ -353,3 +365,5 @@ $$\ell > 0$$
 
 
 \end{document}
+
+% LocalWords:  Logscale
