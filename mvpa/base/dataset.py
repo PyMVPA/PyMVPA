@@ -216,7 +216,7 @@ class Dataset(object):
         if not sa is None:
             self.sa.update(sa)
         if hasattr(samples, 'shape'):
-            length = samples.shape[1]
+            length = N.prod(samples.shape[1:])
         else:
             length = None
         self.fa = FeatureAttributesCollection(length=length)
