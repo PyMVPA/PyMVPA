@@ -84,11 +84,11 @@ def test_mdpflowmapper():
 
 def test_mdpmadness():
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
-    #flow = mdp.nodes.PCANode() + mdp.nodes.FDANode()
+    flow = mdp.nodes.PCANode() + mdp.nodes.FDANode()
     #flow.train([[ds.samples],
-    #            [ds.samples, ds.sa.labels]])
+    #            [[ds.samples, ds.sa.labels]]])
 
-    #fm = MDPFlowMapper(flow,
-    #                   [[],
-    #                    [DAE('sa', 'labels')]])
-    #fm.train(ds)
+    fm = MDPFlowMapper(flow,
+                       data_iterables = [[],
+                                         [DAE('sa', 'labels')]])
+    fm.train(ds)

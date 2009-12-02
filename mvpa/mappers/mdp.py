@@ -171,8 +171,11 @@ class MDPFlowMapper(Mapper):
 
     def _build_data_iterables(self, ds):
         if self.data_iterables is not None:
-            data_iterables = [[ds.samples] + self._expand_nodeargs(ds, ndi)
-                                    for ndi in self.data_iterables]
+            data_iterables = []
+            for ndi in self.data_iterables:
+                l = [ds.samples]
+                l.extend(self._expand_nodeargs(ds, ndi))
+                data_iterables.append([l])
         else:
             data_iterables = ds.samples
         return data_iterables
