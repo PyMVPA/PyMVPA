@@ -25,41 +25,41 @@ import numpy as N
 
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.clfs.distance import squared_euclidean_distance
-
+from mvpa.kernels.base import NumpyKernel
 if __debug__:
     from mvpa.base import debug, warning
 
 
-class Kernel(object):
-    """Kernel function base class.
+## class Kernel(object):
+##     """Kernel function base class.
 
-    """
+##     """
 
-    def __init__(self):
-        pass
+##     def __init__(self):
+##         pass
 
-    def __repr__(self):
-        return "Kernel()"
+##     def __repr__(self):
+##         return "Kernel()"
 
-    def compute(self, data1, data2=None):
-        raise NotImplementedError
+##     def compute(self, data1, data2=None):
+##         raise NotImplementedError
 
-    def reset(self):
-        """Resets the kernel dropping internal variables to the original values"""
-        pass
+##     def reset(self):
+##         """Resets the kernel dropping internal variables to the original values"""
+##         pass
 
-    def compute_gradient(self,alphaalphaTK):
-        raise NotImplementedError
+##     def compute_gradient(self,alphaalphaTK):
+##         raise NotImplementedError
 
-    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
-        raise NotImplementedError
+##     def compute_lml_gradient(self,alphaalphaT_Kinv,data):
+##         raise NotImplementedError
 
-    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
-        raise NotImplementedError
+##     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
+##         raise NotImplementedError
 
-    pass
+##     pass
 
-class KernelConstant(Kernel):
+class ConstantKernel(NumpyKernel):
     """The constant kernel class.
     """
     def __init__(self, sigma_0=1.0, **kwargs):
@@ -72,15 +72,14 @@ class KernelConstant(Kernel):
             (Defaults to 1.0)
         """
         # init base class first
-        Kernel.__init__(self, **kwargs)
+        NumpyKernel.__init__(self, **kwargs)
 
         self.sigma_0 = sigma_0
-        self.kernel_matrix = None
 
     def __repr__(self):
         return "%s(sigma_0=%s)" % (self.__class__.__name__, str(self.sigma_0))
 
-    def compute(self, data1, data2=None):
+    def _compute(self, data1, data2):
         """Compute kernel matrix.
 
         :Parameters:
@@ -90,12 +89,8 @@ class KernelConstant(Kernel):
             data
             (Defaults to None)
         """
-        if data2 is None:
-            data2 = data1
-            pass
-        self.kernel_matrix = \
+        self._k = \
             (self.sigma_0 ** 2) * N.ones((data1.shape[0], data2.shape[0]))
-        return self.kernel_matrix
 
     def set_hyperparameters(self, hyperparameter):
         if hyperparameter < 0:
@@ -119,7 +114,16 @@ class KernelConstant(Kernel):
     pass
 
 
-class KernelLinear(Kernel):
+class LinearKernel(NumpyKernel):
+    """Simple linear kernel
+    """
+
+    def _compute(self, d1, d2):
+        self._k = N.dot(d1, d2.T)
+
+
+
+class GeneralizedLinearKernel(NumpyKernel):
     """The linear kernel class.
     """
     def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
@@ -136,12 +140,11 @@ class KernelLinear(Kernel):
             (Deafults to 1.0)
         """
         # init base class first
-        Kernel.__init__(self, **kwargs)
+        NumpyKernel.__init__(self, **kwargs)
 
         # TODO: figure out cleaner way... probably by using KernelParameters ;-)
         self.Sigma_p = Sigma_p
         self.sigma_0 = sigma_0
-        self.kernel_matrix = None
 
 
     def __repr__(self):
@@ -150,11 +153,11 @@ class KernelLinear(Kernel):
 
 
     def reset(self):
-        super(KernelLinear, self).reset()
+        super(GeneralizedLinearKernel, self).reset()
         self._Sigma_p = self._Sigma_p_orig
 
 
-    def compute(self, data1, data2=None):
+    def _compute(self, data1, data2):
         """Compute kernel matrix.
         Set Sigma_p to correct dimensions and default value if necessary.
 
@@ -165,9 +168,6 @@ class KernelLinear(Kernel):
             data
             (Defaults to None)
         """
-        if data2 is None:
-            data2 = data1
-            pass
 
         # it is better to use separate lines of computation, to don't
         # incure computation cost without need (otherwise
@@ -198,8 +198,7 @@ class KernelLinear(Kernel):
 
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched
-        self.kernel_matrix = N.dot(data1, data2_sc) + self.sigma_0 ** 2
-        return self.kernel_matrix
+        self._k = N.dot(data1, data2_sc) + self.sigma_0 ** 2
 
     def set_hyperparameters(self, hyperparameter):
         # XXX in the next line we assume that the values we want to
@@ -263,7 +262,7 @@ class KernelLinear(Kernel):
     pass
 
 
-class KernelExponential(Kernel):
+class ExponentialKernel(NumpyKernel):
     """The Exponential kernel class.
 
     Note that it can handle a length scale for each dimension for
@@ -283,18 +282,18 @@ class KernelExponential(Kernel):
             (Defaults to 1.0)
         """
         # init base class first
-        Kernel.__init__(self, **kwargs)
+        NumpyKernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
         self.sigma_f = sigma_f
-        self.kernel_matrix = None
+        self._k = None
 
 
     def __repr__(self):
         return "%s(length_scale=%s, sigma_f=%s)" \
           % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
 
-    def compute(self, data1, data2=None):
+    def _compute(self, data1, data2):
         """Compute kernel matrix.
 
         :Parameters:
@@ -310,9 +309,8 @@ class KernelExponential(Kernel):
         # Weighted euclidean distance matrix:
         self.wdm = N.sqrt(squared_euclidean_distance(
             data1, data2, weight=(self.length_scale**-2)))
-        self.kernel_matrix = \
+        self._k = \
             self.sigma_f**2 * N.exp(-self.wdm)
-        return self.kernel_matrix
 
     def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
@@ -390,7 +388,7 @@ class KernelExponential(Kernel):
     pass
 
 
-class KernelSquaredExponential(Kernel):
+class SquaredExponentialKernel(NumpyKernel):
     """The Squared Exponential kernel class.
 
     Note that it can handle a length scale for each dimension for
@@ -410,15 +408,14 @@ class KernelSquaredExponential(Kernel):
             (Defaults to 1.0)
         """
         # init base class first
-        Kernel.__init__(self, **kwargs)
+        NumpyKernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
         self.sigma_f = sigma_f
-        self.kernel_matrix = None
 
 
     def reset(self):
-        super(KernelSquaredExponential, self).reset()
+        super(SquaredExponentialKernel, self).reset()
         self._length_scale = self._length_scale_orig
 
 
@@ -426,7 +423,7 @@ class KernelSquaredExponential(Kernel):
         return "%s(length_scale=%s, sigma_f=%s)" \
           % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
 
-    def compute(self, data1, data2=None):
+    def _compute(self, data1, data2):
         """Compute kernel matrix.
 
         :Parameters:
@@ -438,12 +435,11 @@ class KernelSquaredExponential(Kernel):
         """
         # weighted squared euclidean distance matrix:
         self.wdm2 = squared_euclidean_distance(data1, data2, weight=(self.length_scale**-2))
-        self.kernel_matrix = self.sigma_f**2 * N.exp(-0.5*self.wdm2)
+        self._k = self.sigma_f**2 * N.exp(-0.5*self.wdm2)
         # XXX EO: old implementation:
         # self.kernel_matrix = \
         #     self.sigma_f * N.exp(-squared_euclidean_distance(
         #         data1, data2, weight=0.5 / (self.length_scale ** 2)))
-        return self.kernel_matrix
 
     def set_hyperparameters(self, hyperparameter):
         """Set hyperaparmeters from a vector.
@@ -518,7 +514,7 @@ class KernelSquaredExponential(Kernel):
                             fset=_setlength_scale)
     pass
 
-class KernelMatern_3_2(Kernel):
+class Matern_3_2Kernel(NumpyKernel):
     """The Matern kernel class for the case ni=3/2 or ni=5/2.
 
     Note that it can handle a length scale for each dimension for
@@ -542,11 +538,10 @@ class KernelMatern_3_2(Kernel):
             (Defaults to 3.0)
         """
         # init base class first
-        Kernel.__init__(self, **kwargs)
+        NumpyKernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
         self.sigma_f = sigma_f
-        self.kernel_matrix = None
         if numerator == 3.0 or numerator == 5.0:
             self.numerator = numerator
         else:
@@ -556,7 +551,7 @@ class KernelMatern_3_2(Kernel):
         return "%s(length_scale=%s, ni=%d/2)" \
             % (self.__class__.__name__, str(self.length_scale), self.numerator)
 
-    def compute(self, data1, data2=None):
+    def _compute(self, data1, data2):
         """Compute kernel matrix.
 
         :Parameters:
@@ -570,15 +565,15 @@ class KernelMatern_3_2(Kernel):
                 data1, data2, weight=0.5 / (self.length_scale ** 2))
         if self.numerator == 3.0:
             tmp = N.sqrt(tmp)
-            self.kernel_matrix = \
+            self._k = \
                 self.sigma_f**2 * (1.0 + N.sqrt(3.0) * tmp) \
                 * N.exp(-N.sqrt(3.0) * tmp)
         elif self.numerator == 5.0:
             tmp2 = N.sqrt(tmp)
-            self.kernel_matrix = \
+            self._k = \
                 self.sigma_f**2 * (1.0 + N.sqrt(5.0) * tmp2 + 5.0 / 3.0 * tmp) \
                 * N.exp(-N.sqrt(5.0) * tmp2)
-        return self.kernel_matrix
+
 
     def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
@@ -604,10 +599,10 @@ class KernelMatern_3_2(Kernel):
     pass
 
 
-class KernelMatern_5_2(KernelMatern_3_2):
+class Matern_5_2Kernel(Matern_3_2Kernel):
     """The Matern kernel class for the case ni=5/2.
 
-    This kernel is just KernelMatern_3_2(numerator=5.0).
+    This kernel is just Matern_3_2Kernel(numerator=5.0).
     """
     def __init__(self, **kwargs):
         """Initialize a Squared Exponential kernel instance.
@@ -618,11 +613,11 @@ class KernelMatern_5_2(KernelMatern_3_2):
             phenomenon under investigation.
             (Defaults to 1.0)
         """
-        KernelMatern_3_2.__init__(self, numerator=5.0, **kwargs)
+        Matern_3_2Kernel.__init__(self, numerator=5.0, **kwargs)
         pass
 
 
-class KernelRationalQuadratic(Kernel):
+class RationalQuadraticKernel(NumpyKernel):
     """The Rational Quadratic (RQ) kernel class.
 
     Note that it can handle a length scale for each dimension for
@@ -645,18 +640,17 @@ class KernelRationalQuadratic(Kernel):
             (Defaults to 2.0)
         """
         # init base class first
-        Kernel.__init__(self, **kwargs)
+        NumpyKernel.__init__(self, **kwargs)
 
         self.length_scale = length_scale
         self.sigma_f = sigma_f
-        self.kernel_matrix = None
         self.alpha = alpha
 
     def __repr__(self):
         return "%s(length_scale=%s, alpha=%f)" \
             % (self.__class__.__name__, str(self.length_scale), self.alpha)
 
-    def compute(self, data1, data2=None):
+    def _compute(self, data1, data2):
         """Compute kernel matrix.
 
         :Parameters:
@@ -668,9 +662,8 @@ class KernelRationalQuadratic(Kernel):
         """
         tmp = squared_euclidean_distance(
                 data1, data2, weight=1.0 / (self.length_scale ** 2))
-        self.kernel_matrix = \
+        self._k = \
             self.sigma_f**2 * (1.0 + tmp / (2.0 * self.alpha)) ** -self.alpha
-        return self.kernel_matrix
 
     def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
@@ -697,10 +690,10 @@ class KernelRationalQuadratic(Kernel):
 
 
 # dictionary of avalable kernels with names as keys:
-kernel_dictionary = {'constant': KernelConstant,
-                     'linear': KernelLinear,
-                     'exponential': KernelExponential,
-                     'squared exponential': KernelSquaredExponential,
-                     'Matern ni=3/2': KernelMatern_3_2,
-                     'Matern ni=5/2': KernelMatern_5_2,
-                     'rational quadratic': KernelRationalQuadratic}
+kernel_dictionary = {'constant': ConstantKernel,
+                     'linear': GeneralizedLinearKernel,
+                     'exponential': ExponentialKernel,
+                     'squared exponential': SquaredExponentialKernel,
+                     'Matern ni=3/2': Matern_3_2Kernel,
+                     'Matern ni=5/2': Matern_5_2Kernel,
+                     'rational quadratic': RationalQuadraticKernel}
