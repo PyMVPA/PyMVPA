@@ -167,20 +167,20 @@ __________________
 
 Yaroslav O. Halchenko, Scott Gorlin, and Emanuele Olivetti
 
-Many underlying MVPA algorithms rely on underlying kernel computations.
-However, many of the algorithms have their own implementations which are not
-interchangeable, meaning that new advances in kernel logic or implementations
-are not generally beneficial to PyMVPA as a whole.  To solve this, we have 
-implemented a new class hierarchy which not only specifies a shared kernel
-namespace, but also allows the automatic translation of kernels from one
-software implementation to another.
+Many core MVPA algorithms rely on expensive kernel computations.  However,
+most of these algorithms have their own naming standards and backend 
+implementations which are not interchangeable, meaning that new advances in
+kernel logic or software implementations are not generally beneficial to PyMVPA
+as a whole.  To solve this, we have implemented a new class hierarchy which not
+only specifies a standarad kernel interface, but also allows the automatic
+translation of kernels from one software backend to another.
 
 Specifically, it is now possible to specify new kernel classes in pure Python 
 (or any method which can expose a Numpy array, such as PyCUDA or custom C) and
-automatically convert these back and forth as Shogun kernels.  This has the
+automatically convert these back and forth to Shogun kernels.  This has the
 immediate advantage of allowing custom kernels for any Shogun-based classifier
 (e.g. SVM), using Shogun kernels for fast computation in any other solver (e.g.,
-GPR).
+GPR), or the automatic exchange of kernels for any implementation in the future.
 
 
 
