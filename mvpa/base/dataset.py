@@ -594,6 +594,10 @@ class DatasetAttributeExtractor(object):
         """
         return ds.__dict__[self._col][self._key].value
 
+    def __repr__(self):
+        return "%s(%s, %s)" % (self.__class__.__name__,
+                               repr(self._col), repr(self._key))
+
 
 # shortcut that allows for more finger/screen-friendly specification of
 # attribute extraction
