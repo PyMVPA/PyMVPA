@@ -138,7 +138,9 @@ class Parameter(CollectableAttribute):
 
     def _set(self, val):
         comparison = self._value != val
-        if (isinstance(comparison, N.ndarray) and N.any(comparison)) or comparison:
+        isarray = isinstance(comparison, N.ndarray)
+        if (isarray and N.any(comparison)) or \
+           ((not isarray) and comparison):
             if __debug__:
                 debug("COL",
                       "Parameter: setting %s to %s " % (str(self), val))
