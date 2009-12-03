@@ -50,7 +50,7 @@ class _BasicSGKernel(SGKernel):
                     
     # Subclasses can specify new kernels using the following declarations:
     #__kernel_cls__ = Shogun kernel class
-    #__kp_order__ = Tuple which specifies order of kernel params
+    #__kp_order__ = Tuple which specifies the order of kernel params
     # If there is only one kernel param, this is not necessary
     
     def _compute(self, d1, d2):
@@ -65,13 +65,13 @@ class _BasicSGKernel(SGKernel):
         
         # XXX: Not sure if this is always the best thing to do - some kernels
         # by default normalize with specific methods automatically, which
-        # can cause issues in CV etc -- SG
+        # may cause issues in CV etc.  eg PolyKernel -- SG
         self._k.set_normalizer(sgk.IdentityKernelNormalizer())
 
 class CustomSGKernel(_BasicSGKernel):
-    # TODO: Don't know if this works or how to wrap generic SG func
     def __init__(self, kernel_cls, kernelparams=[], **kwargs):
-        """
+        """Class which can wrap any Shogun kernel and it's kernel parameters
+        
         :Parameters:
         kernelparams: list
           Each item in this list should be a tuple of (kernelparamname, value),
@@ -87,13 +87,18 @@ class CustomSGKernel(_BasicSGKernel):
         self.__kp_order__ = tuple(order)
         
 class LinearSGKernel(_BasicSGKernel):
+    """A basic linear kernel computed via Shogun: K(a,b) = a*b.T"""
     __kernel_cls__ = sgk.LinearKernel
         
 class RbfSGKernel(_BasicSGKernel):
+    """Radial basis function: K(a,b) = exp(-||a-b||**2/gamma)"""
     __kernel_cls__ = sgk.GaussianKernel
     gamma = Parameter(1, doc="Scaling value for gaussian/rbf kernel")
         
 class PolySGKernel(_BasicSGKernel):
+    """Polynomial kernel: K(a,b) = (a*b.T + c)**degree
+    c is 1 if and only if 'inhomogenous' is True
+    """
     __kernel_cls__ = sgk.PolyKernel
     __kp_order__ = ('degree', 'inhomogenous')
     degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
@@ -101,18 +106,23 @@ class PolySGKernel(_BasicSGKernel):
                              doc="Whether +1 is added within the expression")
     
 class PrecomputedSGKernel(SGKernel):
+    """A kernel which is precomputed from a numpy array or Shogun kernel"""
     # This class can't be handled directly by BasicSGKernel because it never
     # should take data, and never has compute called, etc
     
-    # TODO: currently matrix is stored twice, in params.matrix and in _k
-    # This was necessary for consistent interface w/ numpy PrecomputedKernel
-    # Also, now matrix can be a SGKernel meaning compute will update _k if
-    # SGKernel has been updated, since it's a pointer
+    # NB: To avoid storing kernel twice, self.params.matrix = self._k once the
+    # kernel is 'computed'
     matrix = Parameter(None, doc='NP array, SGKernel, or raw shogun kernel')
         
+    def __init__(self, *args, **kwargs):
+        SGKernel.__init__(self, *args, **kwargs)
+        self.compute() # Makes sure _k is always available
+        
     def compute(self, *args, **kwargs):
-        m = self.params.matrix
-        if isinstance(m, SGKernel):
-            m = m._k
-        self._k = sgk.CustomKernel(m)
+        if self._k is None:
+            m = self.params.matrix
+            if isinstance(m, SGKernel):
+                m = m._k
+            self._k = sgk.CustomKernel(m)
+            self.params.matrix = self._k
     

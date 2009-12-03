@@ -126,41 +126,55 @@ class PrecomputedKernel(NumpyKernel):
     matrix = Parameter(None, allowedtype="ndarray",
                        doc="""ndarray to use as a matrix for the kernel""")
 
-    ## def __init__(self, matrix):
-    ##     """Initialize StaticKernel
-    ##     """
-    ##     super(StaticKernel, self).__init__()
-    ##     self._k = N.array(matrix)
-
+    # NB: to avoid storing matrix twice, after compute 
+    # self.params.matrix = self._k
+    def __init__(self, *args, **kwargs):
+        NumpyKernel.__init__(self, *args, **kwargs)
+        self.compute() # Makes sure _k is always available
+        
     def compute(self, *args, **kwargs):
-        self._k = N.asanyarray(self.params.matrix)
+        if self._k is None:
+            self._k = N.asanyarray(self.params.matrix)
+            self.params.matrix = self._k
         #pass
 
 
 class CachedKernel(NumpyKernel):
-    """Kernel decorator to cache all data to avoid duplicate computation
+    """Kernel which caches all data to avoid duplicate computation
+    
+    This kernel is very usefull for any analysis which will retrain or
+    repredict the same data multiple times, as this kernel will avoid
+    recalculating the kernel function.  Examples of such analyses include cross
+    validation, bootstrapping, and model selection (assuming the kernel function
+    itself does not change, e.g. when selecting for C in an SVM).
+    
+    The kernel will automatically cache any new data sent through compute, and
+    will be able to use this cache whenever a subset of this data is sent
+    through compute again.  If new (uncached) data is sent through compute, then
+    the cache is recreated from scratch.  Therefore, you should compute the
+    kernel on the entire superset of your data before using this kernel
+    normally.
+    
+    The cache is asymmetric for lhs and rhs: 
     """
 
-    kernel = Parameter(None, allowedtype="Kernel",
-                       doc="""Base kernel to cache""")
+    # TODO: Figure out how to design objects like CrossValidation etc to
+    # precompute this kernel automatically, making it transparent to the user
+    
+    kernel = Parameter(None, allowedtype=Kernel,
+                       doc="Base kernel to cache.  Any kernel which can be " +\
+                       "converted to a NumpyKernel is allowed")
 
     def __init__(self, *args, **kwargs):
-        """Initialize CachedKernel
-
-        Parameters
-        ----------
-          kernel : Kernel
-            Base kernel to cache
-        """
         super(CachedKernel, self).__init__(*args, **kwargs)
         self.params.update(self.params.kernel.params)
         self._rhids = self._lhids = None
 
-    def _init(self, ds1, ds2=None):
-        """Initializes internal lookups + _kfull
+    def _cache(self, ds1, ds2=None):
+        """Initializes internal lookups + _kfull via caching the kernel matrix
         """
         self._lhsids = SamplesLookup(ds1)
-        if ds2 is None:
+        if (ds2 is None) or (ds2 is ds1):
             self._rhsids = self._lhsids
         else:
             self._rhsids = SamplesLookup(ds2)
@@ -170,11 +184,17 @@ class CachedKernel(NumpyKernel):
         self._kfull = ckernel.as_np()._k
         ckernel.cleanup()
         self._k = self._kfull
+        
+        self._recomputed=True
+        self.params.reset() 
         # TODO: store params representation for later comparison
 
     def compute(self, ds1, ds2=None):
-        """Computes full or extracts relevant part of kernel as _k
-        """
+        """Automatically computes computes and caches the kernel or extracts the 
+        relevant part of a precached kernel into self._k
+        """        
+        self._recomputed=False # Flag lets us know whether cache was recomputed
+        
         #if self._ds_cached_info is not None:
         # Check either those ds1, ds2 are coming from the same
         # dataset as before
@@ -182,13 +202,15 @@ class CachedKernel(NumpyKernel):
         # TODO: figure out if data were modified...
         # params_modified = True
         changedData = False
-        if len(self.params.whichSet()) or changedData:
-            self._init(ds1, ds2)
+        if len(self.params.whichSet()) or changedData \
+           or self._lhsids is None:
+            self._cache(ds1, ds2)# hopefully this will never reset values, just
+            # changed status
         else:
             # figure d1, d2
             # TODO: find saner numpy way to select both rows and columns
             try:
-                lhsids = self._lhsids(ds1)
+                lhsids = self._lhsids(ds1) # 
                 if ds2 is None:
                     rhsids = lhsids
                 else:
@@ -197,7 +219,7 @@ class CachedKernel(NumpyKernel):
                     lhsids, axis=0).take(
                     rhsids, axis=1)
             except KeyError:
-                self._init(ds1, ds2)
+                self._cache(ds1, ds2)
 
 """
 if ds1 is the "derived" dataset as it was computed on:
