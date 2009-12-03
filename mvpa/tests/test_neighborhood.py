@@ -18,6 +18,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
 
 from mvpa.datasets import nifti
 import mvpa.misc.neighborhood as ne
+from mvpa import pymvpa_dataroot
 
 def test_sphere():
     s = ne.Sphere(3)
@@ -45,13 +46,12 @@ def test_sphere():
 
 def test_query_enigne():
     # load example 4 d dataset
-    pymvpa_dataroot = "/home/esc/git-working/pymvpa/mvpa/data"
     data = nifti.nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
             labels=[1,2], space='voxel')
     s = ne.Sphere(9)
     qe = ne.QueryEngine(voxel=s)
     qe.train(data)
-    print "length:", len(qe(100000)[0])
+    #print "length:", len(qe(100000)[0])
 
 
 
