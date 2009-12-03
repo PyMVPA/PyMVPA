@@ -17,9 +17,9 @@ import numpy as N
 from mvpa.base import externals
 
 from mvpa.misc.state import StateVariable
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.misc.param import Parameter
-from mvpa.clfs.kernel import KernelSquaredExponential, KernelLinear
+from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.datasets import dataset
@@ -35,6 +35,7 @@ if __debug__:
     from mvpa.base import debug
 
 # Some local bindings for bits of speed up
+asarray = N.asarray
 Nlog = N.log
 Ndot = N.dot
 Ndiag = N.diag
@@ -95,7 +96,7 @@ class GPR(Classifier):
         :Parameters:
           kernel : Kernel
             a kernel object defining the covariance between instances.
-            (Defaults to KernelSquaredExponential if None in arguments)
+            (Defaults to SquaredExponentialKernel if None in arguments)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -107,13 +108,13 @@ class GPR(Classifier):
 
         # set kernel:
         if kernel is None:
-            kernel = KernelSquaredExponential()
+            kernel = SquaredExponentialKernel()
         self.__kernel = kernel
 
         # append proper clf_internal depending on the kernel
         # TODO: unify finally all kernel-based machines.
         #       make SMLR to use kernels
-        if isinstance(kernel, KernelLinear):
+        if isinstance(kernel, GeneralizedLinearKernel):
             self._clf_internals += ['linear']
         else:
             self._clf_internals += ['non-linear']
@@ -232,13 +233,13 @@ class GPR(Classifier):
             GPRLinearWeights and 'model_select' to GRPWeights
         """
         # XXX The following two lines does not work since
-        # self.__kernel is instance of kernel.KernelLinear and not
-        # just KernelLinear. How to fix?
-        # YYY yoh is not sure what is the problem... KernelLinear is actually
-        #     kernel.KernelLinear so everything shoudl be ok
+        # self.__kernel is instance of LinearKernel and not
+        # just LinearKernel. How to fix?
+        # YYY yoh is not sure what is the problem... LinearKernel is actually
+        #     kernel.LinearKernel so everything shoudl be ok
         if flavor == 'auto':
             flavor = ('model_select', 'linear')\
-                     [int(isinstance(self.__kernel, KernelLinear))]
+                     [int(isinstance(self.__kernel, GeneralizedLinearKernel))]
             if __debug__:
                 debug("GPR", "Returning '%s' sensitivity analyzer" % flavor)
 
@@ -276,7 +277,8 @@ class GPR(Classifier):
                or _changedData.get('kernel_params', False):
             if __debug__:
                 debug("GPR", "Computing train train kernel matrix")
-            self._km_train_train = km_train_train = self.__kernel.compute(train_fv)
+            self.__kernel.compute(train_fv)
+            self._km_train_train = km_train_train = asarray(self.__kernel)
             newkernel = True
             if retrainable:
                 self._km_train_test = None # reset to facilitate recomputation
@@ -359,6 +361,7 @@ class GPR(Classifier):
         pass
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """
         Predict the output for the provided data.
@@ -369,7 +372,8 @@ class GPR(Classifier):
                or self._km_train_test is None:
             if __debug__:
                 debug('GPR', "Computing train test kernel matrix")
-            km_train_test = self.__kernel.compute(self._train_fv, data)
+            self.__kernel.compute(self._train_fv, data)
+            km_train_test = asarray(self.__kernel)
             if retrainable:
                 self._km_train_test = km_train_test
                 self.states.repredicted = False
@@ -388,7 +392,8 @@ class GPR(Classifier):
                    or self._changedData['testdata']:
                 if __debug__:
                     debug('GPR', "Computing test test kernel matrix")
-                km_test_test = self.__kernel.compute(data)
+                self.__kernel.compute(data)
+                km_test_test = asarray(self.__kernel)
                 if retrainable:
                     self._km_test_test = km_test_test
             else:
@@ -456,7 +461,7 @@ class GPRLinearWeights(Sensitivity):
     """`SensitivityAnalyzer` that reports the weights GPR trained
     on a given `Dataset`.
 
-    In case of KernelLinear compute explicitly the coefficients
+    In case of LinearKernel compute explicitly the coefficients
     of the linear regression, together with their variances (if
     requested).
 
@@ -464,7 +469,7 @@ class GPRLinearWeights(Sensitivity):
     """
 
     variances = StateVariable(enabled=False,
-        doc="Variances of the weights (for KernelLinear)")
+        doc="Variances of the weights (for GeneralizedLinearKernel)")
 
     _LEGAL_CLFS = [ GPR ]
 
@@ -533,7 +538,7 @@ if externals.exists('openopt'):
             hyp_initial_guess = N.hstack([sigma_noise_initial,
                                           sigma_f_initial,
                                           length_scale_initial])
-            fixedHypers = N.array([0]*hyp_initial_guess.size, dtype=bool)
+            fixedHypers = array([0]*hyp_initial_guess.size, dtype=bool)
             fixedHypers = None
             problem =  ms.max_log_marginal_likelihood(
                 hyp_initial_guess=hyp_initial_guess,

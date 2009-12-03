@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import re
 import textwrap
+import numpy as N
 from mvpa.misc.state import CollectableAttribute
 
 if __debug__:
@@ -136,7 +137,10 @@ class Parameter(CollectableAttribute):
             self.value = self.__default
 
     def _set(self, val):
-        if self._value != val:
+        comparison = self._value != val
+        isarray = isinstance(comparison, N.ndarray)
+        if (isarray and N.any(comparison)) or \
+           ((not isarray) and comparison):
             if __debug__:
                 debug("COL",
                       "Parameter: setting %s to %s " % (str(self), val))

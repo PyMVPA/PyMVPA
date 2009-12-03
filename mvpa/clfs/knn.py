@@ -15,7 +15,7 @@ import numpy as N
 
 from mvpa.base import warning
 from mvpa.misc.support import indentDoc
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.clfs.distance import squared_euclidean_distance
 
@@ -109,6 +109,7 @@ class kNN(Classifier):
                                      [0] * len(uniquelabels)))
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict the class labels for the provided data.
 

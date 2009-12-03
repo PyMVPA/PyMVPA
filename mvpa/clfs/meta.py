@@ -133,10 +133,10 @@ class BoostedClassifier(Classifier, Harvestable):
         return list(feature_ids)
 
 
-    def _predict(self, data):
+    def _predict(self, dataset):
         """Predict using `BoostedClassifier`
         """
-        raw_predictions = [ clf.predict(data) for clf in self.__clfs ]
+        raw_predictions = [ clf.predict(dataset) for clf in self.__clfs ]
         self.states.raw_predictions = raw_predictions
         assert(len(self.__clfs)>0)
         if self.states.isEnabled("values"):
@@ -275,14 +275,14 @@ class ProxyClassifier(Classifier):
         #self.states._copy_states_(self.__clf, deep=False)
 
 
-    def _predict(self, data):
+    def _predict(self, dataset):
         """Predict using `ProxyClassifier`
         """
         clf = self.__clf
         if self.states.isEnabled('values'):
             clf.states.enable(['values'])
 
-        result = clf.predict(data)
+        result = clf.predict(dataset)
         # for the ease of access
         self.states._copy_states_(self.__clf, ['values'], deep=False)
         return result
@@ -572,13 +572,13 @@ class CombinedClassifier(BoostedClassifier):
         self.__combiner.train(self.clfs, dataset)
 
 
-    def _predict(self, data):
+    def _predict(self, dataset):
         """Predict using `CombinedClassifier`
         """
-        BoostedClassifier._predict(self, data)
+        BoostedClassifier._predict(self, dataset)
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
-        predictions = self.__combiner(self.clfs, data)
+        predictions = self.__combiner(self.clfs, dataset)
         self.states.predictions = predictions
 
         if self.states.isEnabled("values"):
@@ -801,12 +801,12 @@ class TreeClassifier(ProxyClassifier):
             clf.untrain()
 
 
-    def _predict(self, data):
+    def _predict(self, dataset):
         """
         """
         # Local bindings
         clfs, index2group = self.clfs, self._index2group
-        clf_predictions = N.asanyarray(ProxyClassifier._predict(self, data))
+        clf_predictions = N.asanyarray(ProxyClassifier._predict(self, dataset))
         # assure that predictions are indexes, ie int
         clf_predictions = clf_predictions.astype(int)
 
@@ -821,9 +821,9 @@ class TreeClassifier(ProxyClassifier):
             if __debug__:
                 debug('CLFTREE', 'Predicting for group %s using %s on %d samples' %
                       (gk, clf_, N.sum(group_indexes)))
-            p = clf_.predict(data[group_indexes])
+            p = clf_.predict(dataset[group_indexes])
             if predictions is None:
-                predictions = N.zeros((len(data),), dtype=N.asanyarray(p).dtype)
+                predictions = N.zeros((len(dataset),), dtype=N.asanyarray(p).dtype)
             predictions[group_indexes] = p
         return predictions
 
@@ -930,15 +930,15 @@ class BinaryClassifier(ProxyClassifier):
         self.clf.train(datasetselected)
 
 
-    def _predict(self, data):
-        """Predict the labels for a given `data`
+    def _predict(self, dataset):
+        """Predict the labels for a given `dataset`
 
         Predicts using binary classifier and spits out list (for each sample)
         where with either poslabels or neglabels as the "label" for the sample.
         If there was just a single label within pos or neg labels then it would
         return not a list but just that single label.
         """
-        binary_predictions = ProxyClassifier._predict(self, data)
+        binary_predictions = ProxyClassifier._predict(self, dataset)
         self.states.values = binary_predictions
         predictions = [ {-1: self.__predictneg,
                          +1: self.__predictpos}[x] for x in binary_predictions]
@@ -1131,7 +1131,7 @@ class SplitClassifier(CombinedClassifier):
                 clf.testdataset = None
 
             if states.isEnabled("confusion"):
-                predictions = clf.predict(split[1].samples)
+                predictions = clf.predict(split[1])
                 self.states.confusion.add(split[1].labels, predictions,
                                    clf.states.get('values', None))
                 if __debug__:
@@ -1208,10 +1208,10 @@ class MappedClassifier(ProxyClassifier):
         ProxyClassifier._train(self, wdataset)
 
 
-    def _predict(self, data):
+    def _predict(self, dataset):
         """Predict using `MappedClassifier`
         """
-        return ProxyClassifier._predict(self, self.__mapper.forward(data))
+        return ProxyClassifier._predict(self, self.__mapper.forward(dataset))
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
@@ -1328,14 +1328,14 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """
         return self.__feature_selection.states.selected_ids
 
-    def _predict(self, data):
+    def _predict(self, dataset):
         """Predict using `FeatureSelectionClassifier`
         """
         clf = self.__maskclf
         if self.states.isEnabled('values'):
             clf.states.enable(['values'])
 
-        result = clf._predict(data)
+        result = clf._predict(dataset)
         # for the ease of access
         self.states._copy_states_(clf, ['values'], deep=False)
         return result

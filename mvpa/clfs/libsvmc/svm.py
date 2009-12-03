@@ -17,6 +17,7 @@ import operator
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 
+from mvpa.clfs.base import accepts_dataset_as_samples
 from mvpa.clfs._svmbase import _SVM
 
 from mvpa.clfs.libsvmc import _svm as svm
@@ -190,6 +191,7 @@ class SVM(_SVM):
         self.__model = svm.SVMModel(svmprob, libsvm_param)
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict values for the data
         """
