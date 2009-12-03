@@ -126,14 +126,16 @@ class PrecomputedKernel(NumpyKernel):
     matrix = Parameter(None, allowedtype="ndarray",
                        doc="""ndarray to use as a matrix for the kernel""")
 
-    ## def __init__(self, matrix):
-    ##     """Initialize StaticKernel
-    ##     """
-    ##     super(StaticKernel, self).__init__()
-    ##     self._k = N.array(matrix)
-
+    # NB: to avoid storing matrix twice, after compute 
+    # self.params.matrix = self._k
+    def __init__(self, *args, **kwargs):
+        NumpyKernel.__init__(self, *args, **kwargs)
+        self.compute() # Makes sure _k is always available
+        
     def compute(self, *args, **kwargs):
-        self._k = N.asanyarray(self.params.matrix)
+        if self._k is None:
+            self._k = N.asanyarray(self.params.matrix)
+            self.params.matrix = self._k
         #pass
 
 

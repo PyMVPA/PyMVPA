@@ -110,15 +110,19 @@ class PrecomputedSGKernel(SGKernel):
     # This class can't be handled directly by BasicSGKernel because it never
     # should take data, and never has compute called, etc
     
-    # TODO: currently matrix is stored twice, in params.matrix and in _k
-    # This was necessary for consistent interface w/ numpy PrecomputedKernel
-    # Also, now matrix can be a SGKernel meaning compute will update _k if
-    # SGKernel has been updated, since it's a pointer
+    # NB: To avoid storing kernel twice, self.params.matrix = self._k once the
+    # kernel is 'computed'
     matrix = Parameter(None, doc='NP array, SGKernel, or raw shogun kernel')
         
+    def __init__(self, *args, **kwargs):
+        SGKernel.__init__(self, *args, **kwargs)
+        self.compute() # Makes sure _k is always available
+        
     def compute(self, *args, **kwargs):
-        m = self.params.matrix
-        if isinstance(m, SGKernel):
-            m = m._k
-        self._k = sgk.CustomKernel(m)
+        if self._k is None:
+            m = self.params.matrix
+            if isinstance(m, SGKernel):
+                m = m._k
+            self._k = sgk.CustomKernel(m)
+            self.params.matrix = self._k
     
