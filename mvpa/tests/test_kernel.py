@@ -49,28 +49,40 @@ class KernelTests(unittest.TestCase):
         self.failUnless((d == nk._k).all(),
                         'Failure setting and retrieving PrecomputedKernel data')
 
-    # Don't have sample id's yet
     def testCachedKernel(self):
-        n=100
+        nchunks = 5
+        n=50*nchunks
         d = Dataset(N.random.randn(n, 132))
-        d.sa.chunks = N.random.randint(3, size=n)
-        lk = npK.LinearKernel()
+        d.sa.chunks = N.random.randint(nchunks, size=n)
         
-        # Assure two kernels are independent
-        ck = CachedKernel(kernel=npK.LinearKernel())
-        ck.compute(d) # Initial cache
+        # We'll compare against an Rbf just because it has a parameter to change
+        rk = npK.RbfKernel(gamma=1.5)
+        
+        # Assure two kernels are independent for this test
+        ck = CachedKernel(kernel=npK.RbfKernel(gamma=1.5))
+        ck.compute(d) # Initial cache of all data
         
         self.failUnless(ck._recomputed,
                         'CachedKernel was not initially computed')
         
         # Try some splitting
-        for chunk in [d[d.sa.chunks==i] for i in range(3)]:
-            lk.compute(chunk)
+        for chunk in [d[d.sa.chunks==i] for i in range(nchunks)]:
+            rk.compute(chunk)
             ck.compute(chunk)
-            self.failUnless(N.all(lk._k == ck._k),
-                            'Cached and linear kernels do not agree')
+            self.failUnless(N.all(rk._k == ck._k),
+                            'Cached and rbf kernels do not agree')
             self.failIf(ck._recomputed,
                         "CachedKernel incorrectly recomputed it's kernel")
+
+        # Test what happens when a parameter changes
+        ck.params.gamma = 3.5
+        ck.compute(d)
+        self.failUnless(ck._recomputed,
+                        "CachedKernel doesn't recompute on kernel change")
+        rk.params.gamma = 3.5
+        rk.compute(d)
+        self.failUnless(N.all(rk._k == ck._k),
+                        'Cached and rbf kernels disagree after kernel change')
         
         # Now test handling new data
         d2 = Dataset(N.random.randn(32, 43))
@@ -79,7 +91,7 @@ class KernelTests(unittest.TestCase):
                         "CachedKernel did not automatically recompute new data")
         ck.compute(d)
         self.failUnless(ck._recomputed,
-                        "CachedKernel did not recompute old data which had " +\
+                        "CachedKernel did not recompute old data which had\n" +\
                         "previously been computed, but had the cache overriden")
     
     if _has_sg:
