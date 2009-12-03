@@ -162,4 +162,39 @@ analytical technique implementations by several orders of magnitude.
 Workshop Results
 ================
 
-(to be reported)
+Grand Kernel Unification
+__________________
+
+Yaroslav O. Halchenko, Scott Gorlin, and Emanuele Olivetti
+
+Many underlying MVPA algorithms rely on underlying kernel computations.
+However, many of the algorithms have their own implementations which are not
+interchangeable, meaning that new advances in kernel logic or implementations
+are not generally beneficial to PyMVPA as a whole.  To solve this, we have 
+implemented a new class hierarchy which not only specifies a shared kernel
+namespace, but also allows the automatic translation of kernels from one
+software implementation to another.
+
+Specifically, it is now possible to specify new kernel classes in pure Python 
+(or any method which can expose a Numpy array, such as PyCUDA or custom C) and
+automatically convert these back and forth as Shogun kernels.  This has the
+immediate advantage of allowing custom kernels for any Shogun-based classifier
+(e.g. SVM), using Shogun kernels for fast computation in any other solver (e.g.,
+GPR).
+
+
+
+Cached Kernel Optimization
+__________________________
+
+Yaroslav O. Halchenko, Scott Gorlin
+
+The main benefit of the kernel unification work is that new kernel classes can
+be specified in pure Python.  A new optimized kernel class we have implemented
+is a CachedKernel which can automatically cache and reuse kernel matrices from
+any other NumpyKernel (or any kernel which is convertible to Numpy, such as a
+Shogun kernel).  This class will prove extremely useful for techniques such as
+cross-validation, bootstrapping, etc, where the kernel product is normally
+recalculated every time it is computed - e.g., every time SVM.train(...) is
+called.  Caching the kernel will avoid these expensive computations and greatly
+speed up this type of analysis by several orders of magnitude.
