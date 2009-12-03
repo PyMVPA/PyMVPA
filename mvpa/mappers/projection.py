@@ -83,7 +83,8 @@ class ProjectionMapper(Mapper):
           dataset : Dataset
             Dataset to operate on
         """
-        self._offset_in = samples.mean(axis=0)
+        if self._demean:
+            self._offset_in = samples.mean(axis=0)
 
 
     def _posttrain(self, dataset):

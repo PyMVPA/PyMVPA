@@ -86,7 +86,7 @@ class KernelTests(unittest.TestCase):
         for chunk in [d[d.sa.chunks==i] for i in range(nchunks)]:
             rk.compute(chunk)
             ck.compute(chunk)
-            self.kernel_equiv(ck, rk, accuracy = 0)# Problems here?
+            self.kernel_equiv(rk, ck, accuracy=1e-12)
             self.failIf(ck._recomputed,
                         "CachedKernel incorrectly recomputed it's kernel")
 

@@ -38,7 +38,6 @@ if __debug__:
 
 # do not pull them all -- we have mvpa.suite for that
 #from mvpa.mappers.mask import MaskMapper
-#from mvpa.mappers.pca import PCAMapper
 #from mvpa.mappers.svd import SVDMapper
 #from mvpa.mappers.boxcar import BoxcarMapper
 #from mvpa.mappers.array import DenseArrayMapper
