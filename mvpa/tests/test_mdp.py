@@ -17,7 +17,8 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper
-from mvpa.datasets.base import Dataset, DAE
+from mvpa.datasets.base import Dataset
+from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normalFeatureDataset
 
 
@@ -84,11 +85,14 @@ def test_mdpflowmapper():
 
 def test_mdpmadness():
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
-    flow = mdp.nodes.PCANode() + mdp.nodes.FDANode()
+    flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
+    # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
     #            [[ds.samples, ds.sa.labels]]])
-
-    fm = MDPFlowMapper(flow,
-                       data_iterables = [[],
-                                         [DAE('sa', 'labels')]])
+    assert_raises(ValueError, MDPFlowMapper, flow, data_iterables=[[],[]])
+    fm = MDPFlowMapper(flow, data_iterables = [[], [], [DAE('sa', 'labels')]])
     fm.train(ds)
+    fds = fm.forward(ds)
+    assert_equal(ds.samples.shape, fds.samples.shape)
+    rds = fm.reverse(fds)
+    assert_array_almost_equal(ds.samples, rds.samples)
