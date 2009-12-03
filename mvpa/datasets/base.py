@@ -112,7 +112,10 @@ class Dataset(BaseDataset):
         --------
         blah blah
         """
-       # compile the necessary samples attributes collection
+        # for all non-ndarray samples you need to go with the constructor
+        samples = N.asanyarray(samples)
+
+        # compile the necessary samples attributes collection
         sa_items = {}
 
         if not labels is None:

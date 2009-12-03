@@ -1,0 +1,112 @@
+#!/usr/bin/env python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""
+
+MNIST handwritten digits
+========================
+
+.. index:: MDP
+
+
+MDP-style classification
+------------------------
+
+"""
+
+import cPickle
+import mdp
+import gzip
+import numpy as N
+
+class DigitsIterator:
+    def __init__(self, digits, labels):
+        self.digits = digits
+        self.labels = labels
+
+    def __iter__(self):
+        frac = 10
+        ll = len(self.labels)
+        for i in xrange(frac):
+            yield self.digits[i*ll/frac:(i+1)*ll/frac], \
+                  self.labels[i*ll/frac:(i+1)*ll/frac]
+
+data = cPickle.load(gzip.open('mnist.pickle.gz'))
+for k in ['traindata', 'testdata']:
+    data[k] = data[k].reshape(-1, 28 * 28)
+
+fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
+           mdp.nodes.PolynomialExpansionNode(2) +
+           mdp.nodes.FDANode(output_dim=9) +
+           mdp.nodes.GaussianClassifierNode())
+
+fdaflow.verbose = True
+
+fdaflow.train([[data['traindata']],
+               None,
+               DigitsIterator(data['traindata'],
+                              data['trainlabels']),
+               DigitsIterator(data['traindata'],
+                              data['trainlabels'])
+               ])
+
+feature_space = fdaflow[:-1](data['testdata'])
+guess = fdaflow[-1].classify(feature_space)
+err = 1 - N.mean(guess == data['testlabels'])
+print 'Test error:', err
+
+"""
+
+Doing it the PyMVPA way
+-----------------------
+
+"""
+
+import pylab as P
+from mvpa.suite import *
+
+data = cPickle.load(gzip.open('mnist.pickle.gz'))
+ds = Dataset.from_basic(
+        data['traindata'],
+        labels=data['trainlabels'],
+        mapper=FlattenMapper((28, 28)))
+testds = Dataset.from_basic(
+        data['testdata'],
+        labels=data['testlabels'],
+        mapper=ds.a.mapper)
+
+examples = [0, 25024, 50000, 59000]
+
+for i, id in enumerate(examples):
+    P.subplot(2, 2, i+1)
+    P.imshow(data['traindata'][id].T, cmap=P.cm.gist_yarg)
+
+P.show()
+
+fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
+           mdp.nodes.PolynomialExpansionNode(2) +
+           mdp.nodes.FDANode(output_dim=9))
+fdaflow.verbose = True
+
+mapper = MDPFlowMapper(fdaflow, ([], [], [DAE('sa', 'labels')]))
+
+terr = TransferError(MappedClassifier(SMLR(), mapper),
+                     enable_states=['confusion',
+                                    'samples_error'])
+err = terr(testds, ds)
+print 'Test error:', err
+
+fmts = ['bo', 'ro', 'ko', 'mo']
+for i, ex in enumerate(examples):
+    pts = mapper.forward(ds.samples[ex:ex+100])[:,:2].T
+    P.plot(pts[0], pts[1], fmts[i])
+
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()
