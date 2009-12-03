@@ -918,8 +918,7 @@ class ChainMapper(Mapper):
 
     def __ensure_selectable_tail(self):
         """Append a FeatureSubsetMapper to the chain if there is none yet."""
-        last_mapper = self[-1]
-        if not isinstance(last_mapper, FeatureSubsetMapper):
+        if not isinstance(self[-1], FeatureSubsetMapper):
             self.append(FeatureSubsetMapper(last_mapper.get_outsize()))
 
 
